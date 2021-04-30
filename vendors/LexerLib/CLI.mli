@@ -13,7 +13,7 @@ module type COMMENTS =
 
 (* Preprocessor CLI *)
 
-module type PREPROC_CLI =
+module type PREPROCESSOR_CLI =
   sig
     include COMMENTS
 
@@ -39,11 +39,11 @@ module type PREPROC_CLI =
 
 module type S =
   sig
-    module Preproc_CLI : PREPROC_CLI
+    module Preprocessor_CLI : PREPROCESSOR_CLI
 
     (* Run the preprocessor before lexing *)
 
-    val preproc : bool
+    val preprocess : bool
 
     (* If the value [mode] is [`Byte], then the unit in which source
        positions and regions are expressed in messages is the byte. If
@@ -69,7 +69,7 @@ module type S =
     (* Status *)
 
     type status = [
-      Preproc_CLI.status
+      Preprocessor_CLI.status
     | `Conflict of string * string (* Two conflicting options *)
     ]
 
@@ -79,4 +79,4 @@ module type S =
 (* The instantiation of functor [Make] reads the command line
    interface. *)
 
-module Make (Preproc_CLI: PREPROC_CLI) : S
+module Make (Preproc_CLI: PREPROCESSOR_CLI) : S

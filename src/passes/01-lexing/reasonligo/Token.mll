@@ -4,13 +4,14 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Markup = LexerLib.Markup
+module Region    = Simple_utils.Region
+module Markup    = LexerLib.Markup
+module Directive = LexerLib.Directive
 
 (* Utility modules *)
 
-module SMap   = Map.Make (String)
-module SSet   = Set.Make (String)
+module SMap = Map.Make (String)
+module SSet = Set.Make (String)
 
 (* TOKENS *)
 
@@ -19,9 +20,13 @@ type lexeme = string
 module T =
   struct
     type t =
+      (* Preprocessing directives *)
+
+      Directive of Directive.t
+
       (* Literals *)
 
-      String   of lexeme Region.reg
+    | String   of lexeme Region.reg
     | Verbatim of lexeme Region.reg
     | Bytes    of (lexeme * Hex.t) Region.reg
     | Int      of (lexeme * Z.t) Region.reg
@@ -34,7 +39,7 @@ module T =
 
     (* Symbols *)
 
-    | CAT      of Region.t (* "++"  *)
+    | PLUS2    of Region.t (* "++"  *)
     | MINUS    of Region.t (* "-"   *)
     | PLUS     of Region.t (* "+"   *)
     | SLASH    of Region.t (* "/"   *)
@@ -54,7 +59,7 @@ module T =
     | ARROW    of Region.t (* "=>"  *)
     | WILD     of Region.t (* "_"   *)
     | EQ       of Region.t (* "="   *)
-    | EQEQ     of Region.t (* "=="  *)
+    | EQ2      of Region.t (* "=="  *)
     | NE       of Region.t (* "!="  *)
     | LT       of Region.t (* "<"   *)
     | GT       of Region.t (* ">"   *)
@@ -76,6 +81,7 @@ module T =
     | Switch of Region.t  (* switch *)
     | True   of Region.t  (* true   *)
     | Type   of Region.t  (* type   *)
+    | Module of Region.t  (* module *)
 
     (* Data constructors *)
 
@@ -113,7 +119,7 @@ module T =
 
     (* Symbols *)
 
-    | "CAT" -> "++"
+    | "PLUS2" -> "++"
 
     (* Arithmetics *)
 
@@ -148,7 +154,7 @@ module T =
     (* Comparisons *)
 
     | "EQ"   -> "="
-    | "EQEQ" -> "=="
+    | "EQ2"  -> "=="
     | "NE"   -> "!="
     | "LT"   -> "<"
     | "GT"   -> ">"
@@ -173,6 +179,7 @@ module T =
     | "Switch"  -> "switch"
     | "True"    -> "true"
     | "Type"    -> "type"
+    | "Module"  -> "module"
 
     (* Data constructors *)
 
@@ -194,9 +201,14 @@ module T =
     type token = t
 
     let proj_token = function
+        (* Preprocessing directives *)
+
+      Directive d ->
+        Directive.project d
+
       (* Literals *)
 
-      String Region.{region; value} ->
+    | String Region.{region; value} ->
         region, sprintf "String %S" value
     | Verbatim Region.{region; value} ->
         region, sprintf "Verbatim %S" value
@@ -220,7 +232,7 @@ module T =
 
     (* Symbols *)
 
-    | CAT      region -> region, "CAT"
+    | PLUS2    region -> region, "PLUS2"
     | MINUS    region -> region, "MINUS"
     | PLUS     region -> region, "PLUS"
     | SLASH    region -> region, "SLASH"
@@ -239,7 +251,7 @@ module T =
     | ELLIPSIS region -> region, "ELLIPSIS"
     | WILD     region -> region, "WILD"
     | EQ       region -> region, "EQ"
-    | EQEQ     region -> region, "EQEQ"
+    | EQ2      region -> region, "EQ2"
     | NE       region -> region, "NE"
     | LT       region -> region, "LT"
     | GT       region -> region, "GT"
@@ -263,11 +275,16 @@ module T =
     | C_Some   region -> region, "C_Some"
     | EOF      region -> region, "EOF"
     | ES6FUN   region -> region, "ES6FUN"
+    | Module   region -> region, "Module"
 
     let to_lexeme = function
+      (* Directives *)
+
+      Directive d -> Directive.to_lexeme d
+
       (* Literals *)
 
-      String s   -> sprintf "%S" (String.escaped s.Region.value)
+    | String s   -> sprintf "%S" (String.escaped s.Region.value)
     | Verbatim v -> String.escaped v.Region.value
     | Bytes b    -> fst b.Region.value
     | Int i
@@ -280,7 +297,7 @@ module T =
 
     (* Symbols *)
 
-    | CAT      _ -> "++"
+    | PLUS2    _ -> "++"
     | MINUS    _ -> "-"
     | PLUS     _ -> "+"
     | SLASH    _ -> "/"
@@ -299,7 +316,7 @@ module T =
     | ELLIPSIS _ -> "..."
     | WILD     _ -> "_"
     | EQ       _ -> "="
-    | EQEQ     _ -> "=="
+    | EQ2      _ -> "=="
     | NE       _ -> "!="
     | LT       _ -> "<"
     | GT       _ -> ">"
@@ -322,6 +339,7 @@ module T =
     | Switch  _ -> "switch"
     | True    _ -> "true"
     | Type    _ -> "type"
+    | Module  _ -> "module"
 
     (* Data constructors *)
 
@@ -354,7 +372,8 @@ module T =
       (fun reg -> Mod    reg);
       (fun reg -> Or     reg);
       (fun reg -> True   reg);
-      (fun reg -> Type   reg)
+      (fun reg -> Type   reg);
+      (fun reg -> Module reg)
     ]
 
     let reserved =
@@ -381,7 +400,6 @@ module T =
       |> add "lsr"
       |> add "match"
       |> add "method"
-      |> add "module"
       |> add "mutable"
       |> add "new"
       |> add "nonrec"
@@ -448,7 +466,8 @@ let small   = ['a'-'z']
 let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
-let ident   = small (letter | '_' | digit)*
+let ident   = small (letter | '_' | digit)* |
+              '_' (letter | '_' (letter | digit) | digit)+
 let constr  = capital (letter | '_' | digit)*
 
 (* Rules *)
@@ -520,7 +539,7 @@ and scan_constr region lexicon = parse
 
     let eof region = EOF region
 
-    type sym_err = Invalid_symbol
+    type sym_err = Invalid_symbol of string
 
     let mk_sym lexeme region =
       match lexeme with
@@ -555,13 +574,13 @@ and scan_constr region lexicon = parse
       | "&&"   -> Ok (BOOL_AND region)
       | "..." ->  Ok (ELLIPSIS region)
       | "=>"  ->  Ok (ARROW    region)
-      | "=="  ->  Ok (EQEQ     region)
+      | "=="  ->  Ok (EQ2      region)
       | "!"   ->  Ok (NOT      region)
-      | "++"  ->  Ok (CAT      region)
+      | "++"  ->  Ok (PLUS2    region)
 
       (* Invalid symbols *)
 
-      | _ ->  Error Invalid_symbol
+      | s ->  Error (Invalid_symbol s)
 
 
     (* Identifiers *)
@@ -584,54 +603,13 @@ and scan_constr region lexicon = parse
 
     (* Predicates *)
 
-    let is_string   = function String _   -> true | _ -> false
-    let is_verbatim = function Verbatim _ -> true | _ -> false
-    let is_bytes    = function Bytes _    -> true | _ -> false
-    let is_int      = function Int _      -> true | _ -> false
-    let is_nat      = function Nat _      -> true | _ -> false
-    let is_mutez    = function Mutez _    -> true | _ -> false
-    let is_ident    = function Ident _    -> true | _ -> false
-    let is_constr   = function Constr _   -> true | _ -> false
-    let is_lang     = function Lang _     -> true | _ -> false
-    let is_minus    = function MINUS _    -> true | _ -> false
-    let is_eof      = function EOF _      -> true | _ -> false
+    let is_eof = function EOF _ -> true | _ -> false
 
-    let is_hexa = function
-      Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
-                     |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
-    | _ -> false
+    let support_string_delimiter c =
+      c = '"'
 
-    let is_sym = function
-      CAT _
-    | MINUS _
-    | PLUS _
-    | SLASH _
-    | TIMES _
-    | LPAR _
-    | RPAR _
-    | LBRACKET _
-    | RBRACKET _
-    | LBRACE _
-    | RBRACE _
-    | COMMA _
-    | SEMI _
-    | VBAR _
-    | COLON _
-    | DOT _
-    | ELLIPSIS _
-    | ARROW _
-    | WILD _
-    | EQ _
-    | EQEQ _
-    | NE _
-    | LT _
-    | GT _
-    | LE _
-    | GE _
-    | BOOL_OR _
-    | BOOL_AND _
-    | NOT _ -> true
-    | _ -> false
+    let verbatim_delimiters = ("{|", "|}")
+
   end
 
 include T

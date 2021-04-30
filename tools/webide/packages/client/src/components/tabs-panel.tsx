@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import { ConfigureTabComponent } from './configure/configure-tab';
 
@@ -32,7 +32,6 @@ const Tab = styled.div<{ selected?: boolean }>`
 `;
 
 const Content = styled.div`
-
   width: 100%;
   height: 100%;
   overflow: hidden;

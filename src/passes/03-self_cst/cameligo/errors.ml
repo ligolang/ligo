@@ -15,9 +15,11 @@ let duplicate_variant var = `Duplicate_variant var
 let non_linear_pattern var = `Non_linear_pattern var
 let duplicate_field_name var = `Duplicate_field_name var
 
-
-let error_ppformat : display_format:string display_format ->
-  Format.formatter -> self_cst_cameligo_error -> unit =
+let error_ppformat :
+  display_format:string display_format ->
+  Format.formatter ->
+  self_cst_cameligo_error ->
+  unit =
   fun ~display_format f a ->
   match display_format with
   | Human_readable | Dev -> (
@@ -43,35 +45,25 @@ let error_ppformat : display_format:string display_format ->
         var.value
   )
 
-let error_jsonformat : self_cst_cameligo_error -> Yojson.Safe.t = fun a ->
-  let json_error ~stage ~content =
-    `Assoc [
-      ("status", `String "error") ;
-      ("stage", `String stage) ;
-      ("content",  content )]
-  in
-  match a with
+let mk_error (var: string Region.reg) (msg: string) =
+  let loc = Location.lift @@ var.region in
+  let content =
+    `Assoc [("message",  `String msg);
+            ("variable", `String var.value);
+            ("location", Location.to_yojson loc)]
+  in `Assoc [("status",  `String "error");
+             ("stage",   `String stage);
+             ("content",  content )]
+
+let error_jsonformat : self_cst_cameligo_error -> Yojson.Safe.t =
+  function
     `Reserved_name var ->
-    let message = `String "Reserved name" in
-    let content = `Assoc [
-      ("message", message );
-      ("var", `String var.value);] in
-    json_error ~stage ~content
+       mk_error var "Reserved name"
   | `Duplicate_variant var ->
-    let message = `String "Duplicate constructor in this sum type declaration."  in
-    let content = `Assoc [
-      ("message", message );
-      ("var", `String var.value);] in
-    json_error ~stage ~content
+       mk_error var
+                "Duplicate constructor in this sum type declaration."
   | `Non_linear_pattern var ->
-    let message = `String "Repeated variable in this pattern." in
-    let content = `Assoc [
-      ("message", message );
-      ("var", `String var.value);] in
-    json_error ~stage ~content
+       mk_error var "Repeated variable in this pattern."
   | `Duplicate_field_name var ->
-    let message = `String "Duplicate field name in this record declaration." in
-    let content = `Assoc [
-      ("message", message );
-      ("var", `String var.value);] in
-    json_error ~stage ~content
+       mk_error var
+                "Duplicate field name in this record declaration."

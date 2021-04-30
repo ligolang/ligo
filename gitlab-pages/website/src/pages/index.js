@@ -69,7 +69,8 @@ Prism.languages = {
       /(^|[^\\])\/\*[\s\S]*?\*\//,
       /\(\*[\s\S]*?\*\)/,   
       /\/\/.*/   
-    ]}
+    ]},
+  jsligo: Prism.languages.typescript
 };
 
 
@@ -160,7 +161,7 @@ function HomePage() {
         </div>
         <div id="preview">
           <h1>A friendly Smart Contract Language for Tezos</h1>
-          <p>Tezos was never so easy</p>
+          <p>Smart contracts were never so easy</p>
           <CodeExamples /> 
         </div>
       </div>

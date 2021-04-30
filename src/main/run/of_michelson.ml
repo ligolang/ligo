@@ -86,7 +86,7 @@ let fetch_lambda_types (contract_ty : _ Michelson.t) =
   | _ -> fail Errors.unknown (*TODO*)
 
 let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_006_PsCARTHA in
+  let open! Tezos_raw_protocol_008_PtEdo2Zk in
   let%bind (input_ty, output_ty) = fetch_lambda_types exp_type in
   let%bind input_ty =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
@@ -112,16 +112,16 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
       root_name = None ; legacy_create_contract_literal = false } in
   let ty_stack_before = Script_typed_ir.Item_t (input_ty, Empty_t, None) in
   let ty_stack_after = Script_typed_ir.Item_t (output_ty, Empty_t, None) in
-  let%bind descr =
+  let%bind (descr : (_*unit,_*unit) Script_typed_ir.descr) =
     Trace.trace_tzresult_lwt Errors.parsing_code_tracer @@
     Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let%bind res =
     Trace.trace_tzresult_lwt Errors.error_of_execution_tracer @@
-    Memory_proto_alpha.failure_interpret ?options descr (Item(input, Empty)) in
+    Memory_proto_alpha.failure_interpret ?options descr (input, ()) in
   match res with
   | Memory_proto_alpha.Succeed stack ->
-    let (Item(output, Empty)) = stack in
+    let (output, ()) = stack in
     let%bind (ty, value) = ex_value_ty_to_michelson (Ex_typed_value (output_ty, output)) in
     ok @@ Success (ty, value)
   | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
@@ -131,7 +131,7 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
     | _              -> fail @@ Errors.unknown_failwith_type )
 
 let run_expression ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
-  let open! Tezos_raw_protocol_006_PsCARTHA in
+  let open! Tezos_raw_protocol_008_PtEdo2Zk in
   let%bind exp_type =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings exp_type in
@@ -147,10 +147,10 @@ let run_expression ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let%bind res =
     Trace.trace_tzresult_lwt Errors.error_of_execution_tracer @@
-    Memory_proto_alpha.failure_interpret ?options descr Empty in
+    Memory_proto_alpha.failure_interpret ?options descr () in
   match res with
   | Memory_proto_alpha.Succeed stack ->
-    let (Item(output, Empty)) = stack in
+    let (output, ()) = stack in
     let%bind (ty, value) = ex_value_ty_to_michelson (Ex_typed_value (exp_type', output)) in
     ok @@ Success (ty, value)
   | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with

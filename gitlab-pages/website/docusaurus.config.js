@@ -1,5 +1,6 @@
 
 const repoUrl = 'https://gitlab.com/ligolang/ligo';
+const versions = require('./versions.json');
 
 // let reasonHighlightJs = require('reason-highlightjs');
 
@@ -138,7 +139,7 @@ const siteConfig = {
         },
         versions: {
           current: {
-            label: `dunnox`,
+            label: `(unreleased)`,
           },
         
         }
@@ -153,7 +154,11 @@ const siteConfig = {
     algolia: {
       apiKey: '12be98d9fd4242a5f16b70a5cc6b0158',
       indexName: 'ligolang',
-      algoliaOptions: {} // Optional, if provided by Algolia
+      contextualSearch: true,
+      // searchParameters: {
+      //   facetFilters: ["version:0.7.1"]
+      // },
+      // algoliaOptions: {} // Optional, if provided by Algolia
     },
     navbar: {
       logo: {

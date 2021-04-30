@@ -5,7 +5,8 @@ let rec fold_type_value : ('a -> type_expression -> ('a,_) result) -> 'a -> type
   let self = fold_type_value f in
   let%bind init' = f init t in
   match t.type_content with
-  | T_pair ((_, a), (_, b))
+  | T_tuple ts ->
+    bind_fold_list self init' (List.map snd ts)
   | T_or ((_, a), (_, b))
   | T_function (a, b)
   | T_map (a, b)
@@ -50,6 +51,10 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_triple self init' (body,col,init) in
       ok res
   )
+  | E_fold_right (((_ , _) , body) , (col,_) , init) -> (
+      let%bind res = bind_fold_triple self init' (body,col,init) in
+      ok res
+  )
   | E_if_bool cab -> (
       let%bind res = bind_fold_triple self init' cab in
       ok res
@@ -70,10 +75,16 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
-  | E_let_pair (expr , (((_, _) , (_, _)) , body)) -> (
+  | E_tuple exprs ->
+      bind_fold_list self init' exprs
+  | E_let_tuple (expr, (_, body)) -> (
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
+  | E_proj (expr, _i, _n) ->
+      self init' expr
+  | E_update (expr, _i, update, _n) ->
+      bind_fold_pair self init' (expr, update)
 
 type 'err mapper = expression -> (expression,'err) result
 
@@ -104,6 +115,10 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
       let%bind (body',col',init') = bind_map_triple self (body,col,init) in
       return @@ E_fold (((name , tv) , body') , col', init')
   )
+  | E_fold_right (((name , tv) , body) , (col,el_ty) , init) -> (
+      let%bind (body',col',init') = bind_map_triple self (body,col,init) in
+      return @@ E_fold_right (((name , tv) , body') , (col',el_ty), init')
+  )
   | E_if_bool cab -> (
       let%bind cab' = bind_map_triple self cab in
       return @@ E_if_bool cab'
@@ -124,10 +139,20 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
       let%bind (expr',body') = bind_map_pair self (expr,body) in
       return @@ E_let_in (expr', inline, ((v , tv) , body'))
   )
-  | E_let_pair (expr, ((x, y), body)) -> (
+  | E_tuple exprs ->
+      let%bind exprs = bind_map_list self exprs in
+      return @@ E_tuple exprs
+  | E_let_tuple (expr, (xs, body)) -> (
       let%bind (expr', body') = bind_map_pair self (expr, body) in
-      return @@ E_let_pair (expr', ((x, y), body'))
+      return @@ E_let_tuple (expr', (xs, body'))
   )
+  | E_proj (expr, i, n) ->
+      let%bind expr = self expr in
+      return @@ E_proj (expr, i, n)
+  | E_update (expr, i, update, n) ->
+      let%bind expr = self expr in
+      let%bind update = self update in
+      return @@ E_update (expr, i, update, n)
 
 let map_sub_level_expression : 'err mapper -> expression -> (expression , 'err) result = fun f e ->
   match e.content with

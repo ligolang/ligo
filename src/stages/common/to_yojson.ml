@@ -25,6 +25,8 @@ let constant' = function
   | C_LOOP_CONTINUE      -> `List [`String "C_LOOP_CONTINUE"; `Null ]
   | C_LOOP_STOP          -> `List [`String "C_LOOP_STOP"; `Null ]
   | C_FOLD               -> `List [`String "C_FOLD"; `Null ]
+  | C_FOLD_LEFT          -> `List [`String "C_FOLD_LEFT"; `Null ]
+  | C_FOLD_RIGHT         -> `List [`String "C_FOLD_RIGHT"; `Null ]
   (* MATH *)
   | C_NEG                -> `List [`String "C_NEG"; `Null ]
   | C_ABS                -> `List [`String "C_ABS"; `Null ]
@@ -70,13 +72,17 @@ let constant' = function
   | C_SET_REMOVE         -> `List [`String "C_SET_REMOVE"; `Null ]
   | C_SET_ITER           -> `List [`String "C_SET_ITER"; `Null ]
   | C_SET_FOLD           -> `List [`String "C_SET_FOLD"; `Null ]
+  | C_SET_FOLD_DESC     -> `List [`String "C_SET_FOLD_DESC"; `Null ]
   | C_SET_MEM            -> `List [`String "C_SET_MEM"; `Null ]
+  | C_SET_UPDATE         -> `List [`String "C_SET_UPDATE"; `Null ]
   (* List *)
   | C_LIST_EMPTY         -> `List [`String "C_LIST_EMPTY"; `Null ]
   | C_LIST_LITERAL       -> `List [`String "C_LIST_LITERAL"; `Null ]
   | C_LIST_ITER          -> `List [`String "C_LIST_ITER"; `Null ]
   | C_LIST_MAP           -> `List [`String "C_LIST_MAP"; `Null ]
   | C_LIST_FOLD          -> `List [`String "C_LIST_FOLD"; `Null ]
+  | C_LIST_FOLD_LEFT     -> `List [`String "C_LIST_FOLD_LEFT"; `Null ]
+  | C_LIST_FOLD_RIGHT    -> `List [`String "C_LIST_FOLD_RIGHT"; `Null ]
   | C_LIST_HEAD_OPT      -> `List [`String "C_LIST_HEAD_OPT"; `Null ]
   | C_LIST_TAIL_OPT      -> `List [`String "C_LIST_TAIL_OPT"; `Null ]
   (* Maps *)
@@ -131,12 +137,19 @@ let constant' = function
   | C_TEST_ORIGINATE           -> `List [`String "TEST_ORIGINATE"; `Null ]
   | C_TEST_SET_NOW             -> `List [`String "TEST_SET_NOW"; `Null ]
   | C_TEST_SET_SOURCE          -> `List [`String "TEST_SET_SOURCE"; `Null ]
-  | C_TEST_SET_BALANCE         -> `List [`String "TEST_SET_BALANCE"; `Null ]
+  | C_TEST_SET_BAKER           -> `List [`String "TEST_SET_BAKER"; `Null ]
   | C_TEST_EXTERNAL_CALL       -> `List [`String "TEST_EXTERNAL_CALL"; `Null ]
+  | C_TEST_EXTERNAL_CALL_EXN   -> `List [`String "TEST_EXTERNAL_CALL_EXN"; `Null ]
   | C_TEST_GET_STORAGE         -> `List [`String "TEST_GET_STORAGE"; `Null ]
   | C_TEST_GET_BALANCE         -> `List [`String "TEST_GET_BALANCE"; `Null ]
-  | C_TEST_ASSERT_FAILURE      -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
+  | C_TEST_COMPILE_EXPRESSION  -> `List [`String "TEST_COMPILE_EXPRESSION"; `Null]
+  | C_TEST_MICHELSON_EQUAL        -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
+  | C_TEST_GET_NTH_BS          -> `List [`String "TEST_GET_NTH_BS"; `Null ]
   | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
+  | C_TEST_STATE_RESET         -> `List [`String "TEST_STATE_RESET"; `Null ]
+  | C_TEST_LAST_ORIGINATIONS   -> `List [`String "TEST_LAST_ORIGINATIONS"; `Null ]
+  | C_TEST_COMPILE_META_VALUE  -> `List [`String "TEST_COMPILE_META_VALUE"; `Null ]
+  | C_TEST_COMPILE_EXPRESSION_SUBST -> `List [`String "TEST_COMPILE_EXPRESSION_SUBST"; `Null ]
   | C_SHA3                     -> `List [`String "SHA3"; `Null ]
   | C_KECCAK                   -> `List [`String "KECCAK"; `Null ]
   | C_LEVEL                    -> `List [`String "LEVEL"; `Null ]
@@ -149,7 +162,8 @@ let constant' = function
   | C_PAIRING_CHECK            -> `List [`String "PAIRING_CHECK"; `Null ]
   | C_SAPLING_VERIFY_UPDATE    -> `List [`String "SAPLING_VERIFY_UPDATE"; `Null ]
   | C_SAPLING_EMPTY_STATE      -> `List [`String "SAPLING_EMPTY_STATE"; `Null ]
-
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD          -> `List [`String "POLYMORPHIC_ADD"; `Null ]
 
 let literal = function
   | Literal_unit        -> `List [`String "Literal_unit"; `Null ]
@@ -168,17 +182,24 @@ let literal = function
 
 let label (Label l) = `List [`String "Label"; `String l]
 let option f o =
-    match o with
-    | None   -> `List [ `String "None" ; `Null ]
-    | Some v -> `List [ `String "Some" ; f v ]
+  match o with
+  | None   -> `List [ `String "None" ; `Null ]
+  | Some v -> `List [ `String "Some" ; f v ]
+
+let option' f o =
+  match o with
+  | None -> `Null
+  | Some v -> f v
+
+let string s = `String s
 
 let list f lst = `List (List.map f lst)
 
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-    (fun acc (Label k, v) -> (k , f v)::acc)
-    [] lst
+      (fun acc (Label k, v) -> (k , f v)::acc)
+      [] lst
   in
   `Assoc lst'
 
@@ -201,7 +222,7 @@ let row_element g {associated_type; michelson_annotation; decl_pos} =
 
 let module_access f {module_name;element} =
   `Assoc [
-    ("module_name", `String module_name) ;
+    ("module_name", module_variable_to_yojson module_name) ;
     ("element", f element) ;
   ]
 let t_app f {type_operator ; arguments } =
@@ -339,6 +360,7 @@ let collect_type = function
   | Map  -> `List [ `String "Map"; `Null]
   | Set  -> `List [ `String "Set"; `Null]
   | List -> `List [ `String "List"; `Null]
+  | Any  -> `List [ `String "Any"; `Null]
 
 let for_each expression {fe_binder;collection;collection_type;fe_body} =
   `Assoc [
@@ -354,17 +376,77 @@ let while_loop expression {cond;body} =
     ("body", expression body);
   ]
 
+let rec list_pattern type_expression lp =
+  match lp with
+  | Cons (a,b) -> `List [`String "Cons" ; pattern type_expression a ; pattern type_expression b]
+  | List lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
+
+and pattern type_expression p =
+  match p.wrap_content with
+  | P_unit -> `List [`String "Unit" ; `Null]
+  | P_var b -> `List [`String "Var"; binder type_expression b]
+  | P_list lp -> `List [`String "List" ; list_pattern type_expression lp]
+  | P_variant (l,popt) -> `List [`String "Variant" ; label l ; option (pattern type_expression) popt ]
+  | P_tuple lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
+  | P_record (ll,lp) -> `List [`String "Record" ; list label ll ; list (pattern type_expression) lp ]
+
+and match_case expression type_expression {pattern=p ; body } =
+  `Assoc [
+    ("pattern", pattern type_expression p) ;
+    ("body", expression body) ;
+  ]
+
+let match_exp expression type_expression {matchee ; cases} =
+  `Assoc [
+    ("matchee", expression matchee) ;
+    ("cases", list (match_case expression type_expression) cases) ;
+  ]
+
 let declaration_type type_expression {type_binder; type_expr} =
   `Assoc [
     ("type_binder", type_variable_to_yojson type_binder);
     ("type_expr", type_expression type_expr);
   ]
 
-let declaration_constant expression type_expression {binder=b;attr;expr} =
+let declaration_constant expression type_expression {name; binder=b;attr;expr} =
   `Assoc [
+    ("name", option' string name);
     ("binder", binder type_expression b);
     ("expr", expression expr);
     ("attribute", attributes attr);
   ]
 
-let program declaration = list (Location.wrap_to_yojson declaration)
+let rec declaration_module expression type_expression {module_binder;module_} =
+  `Assoc [
+    ("module_binder", module_variable_to_yojson module_binder);
+    ("module_", (module' expression type_expression) module_);
+  ]
+
+and module_alias ({alias;binders} : module_alias) =
+  `Assoc [
+    ("alias"  , module_variable_to_yojson alias) ;
+    ("binders", list module_variable_to_yojson @@ List.Ne.to_list binders) ;
+  ]
+
+and declaration expression type_expression = function
+  Declaration_type    ty -> `List [ `String "Declaration_type"    ; declaration_type                type_expression ty ]
+| Declaration_constant c -> `List [ `String "Declaration_constant"; declaration_constant expression type_expression c  ]
+| Declaration_module   m -> `List [ `String "Declaration_module"  ; declaration_module   expression type_expression m  ] 
+| Module_alias        ma -> `List [ `String "Module_alias"        ; module_alias                                    ma ]
+
+and module' expression type_expression = list (Location.wrap_to_yojson (declaration expression type_expression))
+
+
+and mod_in expression type_expression {module_binder;rhs;let_result} =
+  `Assoc [
+    ("module_binder", module_variable_to_yojson module_binder );
+    ("rhs", (module' expression type_expression) rhs);
+    ("let_result", expression let_result);
+  ]
+
+and mod_alias expression {alias; binders; result} =
+  `Assoc [
+    ("alias",  module_variable_to_yojson alias  );
+    ("binders", list module_variable_to_yojson @@ List.Ne.to_list binders );
+    ("result", expression result );
+  ]

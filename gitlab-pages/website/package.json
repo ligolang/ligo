@@ -3,17 +3,17 @@
   "version": "0.0.1",
   "scripts": {
     "start": "docusaurus start --host 0.0.0.0 --port 3000",
-    "build": "docusaurus build",
+    "build": "USE_SIMPLE_CSS_MINIFIER=true docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy"
   },
   "devDependencies": {
-    "@docusaurus/core": "^2.0.0-alpha.64",
-    "@docusaurus/preset-classic": "^2.0.0-alpha.64",
+    "@docusaurus/core": "^2.0.0-alpha.70",
+    "@docusaurus/preset-classic": "^2.0.0-alpha.70",
     "classnames": "^2.2.6",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
-    "webpack": "4.41.2"
+    "webpack": "4.44.1"
   },
   "browserslist": {
     "production": [
@@ -32,7 +32,7 @@
     "@ligo/syntax": "file:src/@ligo/syntax",
     "@ligolang/ligo-snippets": "^1.0.1",
     "axios": "^0.19.2",
-    "react-codejar": "^1.0.1",
+    "react-codejar": "^1.0.2",
     "yaml": "^1.10.0"
   }
 }

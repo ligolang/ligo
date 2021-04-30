@@ -1,109 +1,136 @@
+type transfer =
+  [@layout:comb]
+  { [@annot:from] address_from : address;
+    [@annot:to] address_to : address;
+    value : nat }
+
+type approve =
+  [@layout:comb]
+  { spender : address;
+    value : nat }
+
+type allowance_key =
+  [@layout:comb]
+  { owner : address;
+    spender : address }
+
+type getAllowance =
+  [@layout:comb]
+  { request : allowance_key;
+    callback : nat contract }
+
+type getBalance =
+  [@layout:comb]
+  { owner : address;
+    callback : nat contract }
+
+type getTotalSupply =
+  [@layout:comb]
+  { request : unit ;
+    callback : nat contract }
+
 type tokens = (address, nat) big_map
-type allowances = (address * address, nat) big_map (* (sender,account) -> value *)
+type allowances = (allowance_key, nat) big_map
 
 type storage = {
-  tokens      : tokens;
-  allowances  : allowances;
-  total_amount : nat;
+  tokens : tokens;
+  allowances : allowances;
+  total_supply : nat;
 }
 
-type transfer = {
-	address_from : address;
-	address_to   : address;
-	value        : nat;
-}
+type parameter =
+  | Transfer of transfer
+  | Approve of approve
+  | GetAllowance of getAllowance
+  | GetBalance of getBalance
+  | GetTotalSupply of getTotalSupply
 
-type approve = {
-	spender : address;
-	value   : nat;
-}
+type result = operation list * storage
 
-type getAllowance = {
-	owner    : address;
-	spender  : address;
-	callback : nat contract;
-}
+[@inline]
+let positive (n : nat) : nat option =
+  if n = 0n
+  then (None : nat option)
+  else Some n
 
-type getBalance = {
-	owner    : address;
-	callback : nat contract;
-}
+let transfer (param, storage : transfer * storage) : result =
+  let allowances = storage.allowances in
+  let tokens = storage.tokens in
+  let allowances =
+    if Tezos.sender = param.address_from
+    then allowances
+    else
+      let allowance_key = { owner = param.address_from ; spender = Tezos.sender } in
+      let authorized_value =
+        match Big_map.find_opt allowance_key allowances with
+        | Some value -> value
+        | None -> 0n in
+      let authorized_value =
+        match is_nat (authorized_value - param.value) with
+        | None -> (failwith "NotEnoughAllowance" : nat)
+        | Some authorized_value -> authorized_value in
+      Big_map.update allowance_key (positive authorized_value) allowances in
+  let tokens =
+    let from_balance =
+      match Big_map.find_opt param.address_from tokens with
+      | Some value -> value
+      | None -> 0n in
+    let from_balance =
+      match is_nat (from_balance - param.value) with
+      | None -> (failwith "NotEnoughBalance" : nat)
+      | Some from_balance -> from_balance in
+    Big_map.update param.address_from (positive from_balance) tokens in
+  let tokens =
+    let to_balance =
+      match Big_map.find_opt param.address_to tokens with
+      | Some value -> value
+      | None -> 0n in
+    let to_balance = to_balance + param.value in
+    Big_map.update param.address_to (positive to_balance) tokens in
+  (([] : operation list), { storage with tokens = tokens; allowances = allowances })
 
-type getTotalSupply = {
-	callback : nat contract;
-}
+let approve (param, storage : approve * storage) : result =
+  let allowances = storage.allowances in
+  let allowance_key = { owner = Tezos.sender ; spender = param.spender } in
+  let previous_value =
+    match Big_map.find_opt allowance_key allowances with
+    | Some value -> value
+    | None -> 0n in
+  begin
+    if previous_value > 0n && param.value > 0n
+    then (failwith "UnsafeAllowanceChange")
+    else ();
+    let allowances = Big_map.update allowance_key (positive param.value) allowances in
+    (([] : operation list), { storage with allowances = allowances })
+  end
 
-type action =
-  	Transfer       of transfer
-|	Approve        of approve
-|	GetAllowance   of getAllowance
-|	GetBalance     of getBalance
-|	GetTotalSupply of getTotalSupply
+let getAllowance (param, storage : getAllowance * storage) : operation list =
+  let value =
+    match Big_map.find_opt param.request storage.allowances with
+    | Some value -> value
+    | None -> 0n in
+  [Tezos.transaction value 0mutez param.callback]
 
-let transfer (p,s : transfer * storage) : operation list * storage =
-   let new_allowances =   
-		if Tezos.sender = p.address_from then s.allowances
-		else
-			let authorized_value = match Big_map.find_opt (Tezos.sender,p.address_from) s.allowances with
-				Some value -> value
-			|	None       -> 0n
-			in
-			if (authorized_value < p.value)
-			then (failwith "Not Enough Allowance" : allowances)
-			else Big_map.update (Tezos.sender,p.address_from) (Some (abs(authorized_value - p.value))) s.allowances
-   in    
-	let sender_balance = match Big_map.find_opt p.address_from s.tokens with
-		Some value -> value
-	|	None        -> 0n
-	in
-	if (sender_balance < p.value)
-	then (failwith "Not Enough Balance" : operation list * storage)
-	else
-		let new_tokens = Big_map.update p.address_from (Some (abs(sender_balance - p.value))) s.tokens in
-		let receiver_balance = match Big_map.find_opt p.address_to s.tokens with
-			Some value -> value
-		|	None        -> 0n
-		in
-		let new_tokens = Big_map.update p.address_to (Some (receiver_balance + p.value)) new_tokens in
-		([]:operation list), {s with tokens = new_tokens; allowances = new_allowances}
+let getBalance (param, storage : getBalance * storage) : operation list =
+  let value =
+    match Big_map.find_opt param.owner storage.tokens with
+    | Some value -> value
+    | None -> 0n in
+  [Tezos.transaction value 0mutez param.callback]
 
-let approve (p,s : approve * storage) : operation list * storage =
-	let previous_value = match Big_map.find_opt (p.spender, Tezos.sender) s.allowances with
-		Some value -> value
-	|	None -> 0n
-	in
-	if previous_value > 0n && p.value > 0n
-	then (failwith "Unsafe Allowance Change" : operation list * storage)
-	else
-		let new_allowances = Big_map.update (p.spender, Tezos.sender) (Some (p.value)) s.allowances in
-		([] : operation list), {s with allowances = new_allowances}
+let getTotalSupply (param, storage : getTotalSupply * storage) : operation list =
+  let total = storage.total_supply in
+  [Tezos.transaction total 0mutez param.callback]
 
-let getAllowance (p,s : getAllowance * storage) : operation list * storage =
-	let value = match Big_map.find_opt (p.owner, p.spender) s.allowances with
-		Some value -> value
-	|	None -> 0n
-	in
-	let op = Tezos.transaction value 0mutez p.callback in
-	([op],s)
-
-let getBalance (p,s : getBalance * storage) : operation list * storage =
-	let value = match Big_map.find_opt p.owner s.tokens with
-		Some value -> value
-	|	None -> 0n
-	in
-	let op = Tezos.transaction value 0mutez p.callback in
-	([op],s)
-
-let getTotalSupply (p,s : getTotalSupply * storage) : operation list * storage =
-  let total = s.total_amount in
-  let op    = Tezos.transaction total 0mutez p.callback in
-  ([op],s)
-
-
-let main (a,s:action * storage) = 
- 	match a with
-   	Transfer p -> transfer (p,s)
-	|	Approve  p -> approve (p,s)
-	|	GetAllowance p -> getAllowance (p,s)
-	|  GetBalance p -> getBalance (p,s)
-	|	GetTotalSupply p -> getTotalSupply (p,s)
+let main (param, storage : parameter * storage) : result =
+  begin
+    if Tezos.amount <> 0mutez
+    then failwith "DontSendTez"
+    else ();
+    match param with
+    | Transfer param -> transfer (param, storage)
+    | Approve param -> approve (param, storage)
+    | GetAllowance param -> (getAllowance (param, storage), storage)
+    | GetBalance param -> (getBalance (param, storage), storage)
+    | GetTotalSupply param -> (getTotalSupply (param, storage), storage)
+  end

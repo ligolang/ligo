@@ -1,15 +1,35 @@
-import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
+import { NetworkType } from '@airgap/beacon-sdk';
+
+import {
+  ActionType as ExamplesActionType,
+  ChangeSelectedAction as ChangeSelectedExampleAction,
+} from './examples';
+
+export enum networkType {
+  Delphinet = 'delphinet',
+  Mainnet = 'mainnet',
+  Edonet = 'edonet',
+  Florencenet = 'florencenet',
+}
+
+export enum signerType {
+  Beacon = 'becon',
+  Tezbridge = 'tezbridge',
+  Sign = 'sign',
+}
 
 export enum ActionType {
   ChangeEntrypoint = 'deploy-change-entrypoint',
   ChangeStorage = 'deploy-change-storage',
-  UseTezBridge = 'deploy-use-tezbridge'
+  UseNetwork = 'deploy-network',
+  UseSigner = 'deploy-signer',
 }
 
 export interface DeployState {
   entrypoint: string;
   storage: string;
-  useTezBridge: boolean;
+  network: string;
+  signer: string;
 }
 
 export class ChangeEntrypointAction {
@@ -22,45 +42,61 @@ export class ChangeStorageAction {
   constructor(public payload: DeployState['storage']) {}
 }
 
-export class UseTezBridgeAction {
-  public readonly type = ActionType.UseTezBridge;
-  constructor(public payload: DeployState['useTezBridge']) {}
+export class UseNetworkAction {
+  public readonly type = ActionType.UseNetwork;
+  constructor(public payload: DeployState['network']) {}
+}
+
+export class UseSignerAction {
+  public readonly type = ActionType.UseSigner;
+  constructor(public payload: DeployState['signer']) {}
 }
 
 type Action =
   | ChangeEntrypointAction
   | ChangeStorageAction
-  | UseTezBridgeAction
-  | ChangeSelectedExampleAction;
+  | ChangeSelectedExampleAction
+  | UseNetworkAction
+  | UseSignerAction;
 
 const DEFAULT_STATE: DeployState = {
   entrypoint: '',
   storage: '',
-  useTezBridge: false
+  network: NetworkType.EDONET,
+  signer: signerType.Sign,
 };
 
-export default (state = DEFAULT_STATE, action: Action): DeployState => {
+const deploy = (state = DEFAULT_STATE, action: Action): DeployState => {
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
         ...state,
-        ...(!action.payload ? DEFAULT_STATE : action.payload.deploy)
+        ...(!action.payload ? DEFAULT_STATE : action.payload.deploy),
       };
     case ActionType.ChangeEntrypoint:
       return {
         ...state,
-        entrypoint: action.payload
+        entrypoint: action.payload,
       };
     case ActionType.ChangeStorage:
       return {
         ...state,
-        storage: action.payload
+        storage: action.payload,
       };
-    case ActionType.UseTezBridge:
+    case ActionType.UseNetwork:
       return {
         ...state,
-        useTezBridge: action.payload
+        network: action.payload,
       };
+    case ActionType.UseSigner:
+      return {
+        ...state,
+        signer: action.payload,
+      };
+
+    default:
+      return state;
   }
-  return state;
 };
+
+export default deploy;

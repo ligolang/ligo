@@ -15,7 +15,7 @@ const validateRequest = (body: any): { value: CompileBody; error?: any } => {
     .object({
       syntax: joi.string().required(),
       expression: joi.string().required(),
-      format: joi.string().optional()
+      format: joi.string().optional(),
     })
     .validate(body);
 };
@@ -30,7 +30,7 @@ export async function compileExpressionHandler(req: Request, res: Response) {
       const michelsonCode = await new LigoCompiler().compileExpression(
         body.syntax,
         body.expression,
-        body.format || 'text'
+        body.format || ''
       );
 
       res.send({ result: michelsonCode });

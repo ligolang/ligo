@@ -15,11 +15,11 @@ let empty set = {tree = RB.empty; cmp=set.cmp}
 
 let is_empty set = RB.is_empty set.tree
 
-let add elt set = {set with tree = RB.add ~cmp:set.cmp RB.New elt set.tree}
+let add ?debug elt set = {set with tree = RB.add ?debug ~cmp:set.cmp RB.New elt set.tree}
 
 let union set_a set_b = {set_a with tree = RB.union ~cmp:set_a.cmp RB.New set_a.tree set_b.tree}
 
-let remove elt set = {set with tree = RB.remove ~cmp:set.cmp elt set.tree}
+let remove ?debug elt set = {set with tree = RB.delete ?debug ~cmp:set.cmp elt set.tree}
 
 let find elt set =
   try RB.find ~cmp:set.cmp elt set.tree with
@@ -40,8 +40,14 @@ let add_list elts set =
 
 let elements set = RB.elements set.tree
 
+let map_elements f set = List.map f (elements set)
+
 let get_compare set = set.cmp
 
 let iter f set = RB.iter f set.tree
 
 let fold_inc f set = RB.fold_inc (fun ~elt -> f elt) set.tree
+
+let pp f ppf (map : 'elt t) =
+  Format.fprintf ppf "@[(%a)@]"
+  (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf " ,@ ") (fun ppf a -> Format.fprintf ppf "%a" f a)) (elements map)

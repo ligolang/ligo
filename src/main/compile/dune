@@ -1,13 +1,14 @@
 (library
-  (name compile)
-  (public_name ligo.compile)
+  ; ligo_compile instead of compile because of a dune bug
+  (name ligo_compile)
+  (public_name ligo.ligo_compile)
   (libraries
     main_errors
     simple-utils
     tezos-utils
     proto-alpha-utils
-    preproc
-    parser
+    preprocessing
+    parsing
     cst
     self_cst
     tree_abstraction
@@ -19,11 +20,10 @@
     desugaring
     ast_core
     self_ast_core
-    typer_new
-    typer
+    inference
+    checking
     ast_typed
     self_ast_typed
-    interpreter
     spilling
     mini_c
     self_mini_c

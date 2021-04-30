@@ -15,3 +15,5 @@ version.ml
 *.coverage
 /_coverage/
 /_coverage_*/
+.history
+/to-dos.html

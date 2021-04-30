@@ -27,8 +27,8 @@ export const MonacoComponent = ({editorHeight}) => {
     const cleanupFunc: Array<() => void> = [];
     const { editor: editorState } = store.getState();
     const model = monaco.editor.createModel(
-      editorState.code,
-      editorState.language
+      editorState && editorState.code,
+      editorState && editorState.language
     );
 
     monaco.editor.defineTheme('ligoTheme', {
@@ -78,13 +78,13 @@ export const MonacoComponent = ({editorHeight}) => {
       store.subscribe(() => {
         const { editor: editorState }: AppState = store.getState();
 
-        if (editorState.code !== editor.getValue()) {
+        if ( editorState && editorState.code !== editor.getValue()) {
           shouldDispatchCodeChangedAction = false;
           editor.setValue(editorState.code);
           shouldDispatchCodeChangedAction = true;
         }
 
-        if (editorState.language !== model.getModeId()) {
+        if (editorState && editorState.language !== model.getModeId()) {
           if (editorState.language === 'reasonligo') {
             monaco.editor.setModelLanguage(model, 'javascript');
           } else {

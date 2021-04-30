@@ -5,7 +5,7 @@
     simple-utils
     tezos-utils
     cst
-    parser
+    parsing
     ast_imperative
     predefined)
   (preprocess

@@ -71,6 +71,7 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
 let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result = fun f init e  ->
   let self = fold_expression f in
   let self_type = fold_type_expression f in
+  let self_module = fold_module f in
   let%bind init = f.e init e in
   let bin_op value =
     let {op=_;arg1;arg2} = value in
@@ -191,12 +192,23 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     let%bind res = self_type init type_expr in
     let%bind res = self res body in
     ok @@ res
+  | EModIn  {value;region=_} ->
+    let {mod_decl;semi=_;body} = value in
+    let {kwd_module=_;name=_;eq=_;lbrace=_;module_;rbrace=_} = mod_decl in
+    let%bind res = self_module init module_ in
+    let%bind res = self res body in
+    ok @@ res
+  | EModAlias  {value;region=_} ->
+    let {mod_alias;semi=_;body} = value in
+    let {kwd_module=_;alias=_;eq=_;binders=_} = mod_alias in
+    let%bind res = self init body in
+    ok @@ res
   | EFun     {value;region=_} ->
     let {binders=_; lhs_type; arrow=_; body} = value in
     let%bind res = self init body in
     (match lhs_type with
       Some (_, ty) -> self_type res ty
-    | None ->    ok @@ res
+    | None ->    ok res
     )
   | ESeq     {value;region=_} ->
     bind_fold_list self init @@ pseq_to_list value.elements
@@ -215,6 +227,7 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
   fun f init d ->
   let self_expr = fold_expression f in
   let self_type = fold_type_expression f in
+  let self_module = fold_module f in
   let%bind init = f.d init d in
   match d with
     ConstDecl {value;region=_} ->
@@ -223,14 +236,23 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
     let%bind res = self_expr init let_rhs in
     (match lhs_type with
       Some (_, ty) -> self_type res ty
-    | None ->    ok @@ res
+    | None -> ok res
     )
   | TypeDecl {value;region=_} ->
     let {kwd_type=_;name=_;eq=_;type_expr} = value in
     let%bind res = self_type init type_expr in
-    ok @@ res
+    ok res
 
-and fold_program : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
+  | ModuleDecl {value;region=_} ->
+    let {kwd_module=_;name=_;eq=_;lbrace=_;module_;rbrace=_} = value in
+    let%bind res = self_module init module_ in
+    ok res
+  | ModuleAlias {value;region=_} ->
+    let {kwd_module=_;alias=_;eq=_;binders=_} = value in
+    ok init
+  | Directive _ -> ok init
+
+and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {decl;eof=_} ->
   let self = fold_declaration f in
   bind_fold_ne_list self init @@ decl
@@ -296,6 +318,7 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
 let rec map_expression : ('err) mapper -> expr -> (expr, 'err) result = fun f e  ->
   let self = map_expression f in
   let self_type = map_type_expression f in
+  let self_module = map_module f in
   let return = ok in
   let%bind e = f.e e in
   let bin_op value =
@@ -470,6 +493,20 @@ let rec map_expression : ('err) mapper -> expr -> (expr, 'err) result = fun f e 
     let type_decl = {type_decl with type_expr} in
     let value = {type_decl;semi;body} in
     return @@ ETypeIn {value;region}
+  | EModIn  {value;region} ->
+    let {mod_decl;semi;body} = value in
+    let {kwd_module=_;name=_;eq=_;lbrace=_;module_;rbrace=_} = mod_decl in
+    let%bind module_ = self_module module_ in
+    let%bind body = self body in
+    let mod_decl = {mod_decl with module_} in
+    let value = {mod_decl;semi;body} in
+    return @@ EModIn {value;region}
+  | EModAlias  {value;region} ->
+    let {mod_alias;semi;body} = value in
+    let {kwd_module=_;alias=_;eq=_;binders=_} = mod_alias in
+    let%bind body = self body in
+    let value = {mod_alias;semi;body} in
+    return @@ EModAlias {value;region}
   | EFun     {value;region} ->
     let {binders=_; lhs_type; arrow=_; body} = value in
     let%bind body = self body in
@@ -500,6 +537,7 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
   fun f d ->
   let self_expr = map_expression f in
   let self_type = map_type_expression f in
+  let self_module = map_module f in
   let return = ok in
   match d with
     ConstDecl {value;region} ->
@@ -516,8 +554,17 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
     let%bind type_expr = self_type type_expr in
     let value = {value with type_expr} in
     return @@ TypeDecl {value;region}
+  | ModuleDecl {value;region} ->
+    let {kwd_module=_;name=_;eq=_;lbrace=_;module_;rbrace=_} = value in
+    let%bind module_ = self_module module_ in
+    let value = {value with module_} in
+    return @@ ModuleDecl {value;region}
+  | ModuleAlias {value;region} ->
+    let {kwd_module=_;alias=_;eq=_;binders=_} = value in
+    return @@ ModuleAlias {value;region}
+  | Directive _ as d -> return d
 
-and map_program : ('err) mapper -> t -> (t, 'err) result =
+and map_module : ('err) mapper -> t -> (t, 'err) result =
   fun f {decl;eof} ->
   let self = map_declaration f in
   map (fun decl -> {decl;eof}) @@

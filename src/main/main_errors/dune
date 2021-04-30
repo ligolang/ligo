@@ -3,8 +3,8 @@
   (public_name ligo.main_errors)
   (libraries
     simple-utils
-    preproc
-    parser
+    preprocessing
+    parsing
     self_cst
     tree_abstraction
     self_ast_imperative
@@ -13,14 +13,14 @@
     self_ast_sugar
     desugaring
     self_ast_core
-    typer
+    inference
+    checking
     self_ast_typed
-    interpreter
+    ligo_interpreter
     spilling
     self_mini_c
     stacking
     self_michelson
-    tezos-client-006-PsCARTHA
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

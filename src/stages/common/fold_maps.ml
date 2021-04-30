@@ -173,11 +173,37 @@ let declaration_type : ('acc -> 'a -> ('acc * 'b, _) result) -> 'acc -> 'a decla
   ok @@ (acc,{type_binder; type_expr})
 
 let declaration_constant : ('acc -> 'a -> ('acc * 'b,_) result) -> ('acc -> 'c -> ('acc * 'd,_) result) -> 'acc -> ('a,'c) declaration_constant -> ('acc * ('b,'d) declaration_constant, _) result
-= fun f g acc {binder=b; attr; expr} ->
+= fun f g acc {name; binder=b; attr; expr} ->
   let%bind acc,binder = binder g acc b in
   let%bind acc,expr   = f acc expr     in
-  ok @@ (acc,{binder;attr;expr})
+  ok @@ (acc,{name;binder;attr;expr})
 
-let program : ('acc -> 'a -> ('acc * 'b,_) result) -> 'acc -> 'a list -> ('acc * 'b list, _) result
-= fun d acc prg ->
-  bind_fold_map_list d acc prg
+let rec declaration_module : ('acc -> 'a -> ('acc * 'b, _) result) -> ('acc -> 'c -> ('acc * 'd,_) result) -> 'acc -> ('a,'c) declaration_module -> ('acc * ('b,'d) declaration_module, _) result
+= fun f g acc {module_binder; module_} ->
+  let%bind acc,module_ = module' f g acc module_ in
+  ok @@ (acc, {module_binder;module_})
+
+and module_alias
+= fun acc ma -> ok @@ (acc, ma)
+
+and declaration' :  ('acc -> 'a -> ('acc * 'b,_) result) -> (_) -> 'acc -> ('a,'c) declaration' -> ('acc * ('b,'d) declaration', _) result
+= fun f g acc -> function
+  Declaration_type    ty -> let%bind (acc,ty) = declaration_type      g acc ty in ok @@ (acc,Declaration_type   ty)
+| Declaration_constant c -> let%bind (acc,c)  = declaration_constant f g acc c in ok @@ (acc,Declaration_constant c)
+| Declaration_module   m -> let%bind (acc,m)  = declaration_module   f g acc m in ok @@ (acc,Declaration_module   m)
+| Module_alias        ma -> let%bind (acc,ma) = module_alias            acc ma in ok @@ (acc,Module_alias        ma)
+
+and module' : ('acc -> 'a -> ('acc * 'b,_) result) -> (_) -> 'acc -> ('a,'c) module' -> ('acc * ('b,'d) module', _) result
+= fun f g acc prg ->
+  bind_fold_map_list (bind_fold_map_location (declaration' f g)) acc prg
+
+let mod_in :  ('acc -> 'a -> ('acc * 'b, _) result) -> ('acc -> 'c -> ('acc * 'd, _) result) -> 'acc -> ('a,'c) mod_in -> ('acc * ('b,'d) mod_in, _) result
+= fun f g acc {module_binder; rhs; let_result} ->
+  let%bind acc,rhs        = module' f g acc rhs in
+  let%bind acc,let_result = f acc let_result in
+  ok @@ (acc,{module_binder; rhs; let_result})
+
+let mod_alias :  ('acc -> 'a -> ('acc * 'b, _) result) -> 'acc -> 'a mod_alias -> ('acc * 'b mod_alias, _) result
+= fun f acc {alias; binders; result} ->
+  let%bind acc,result = f acc result in
+  ok @@ (acc,{alias; binders; result})

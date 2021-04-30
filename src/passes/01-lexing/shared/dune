@@ -1,27 +1,26 @@
-(ocamllex Lexer)
+;; Build of the lexer by ocamllex
 
-;; Stuff common to lexers and parsers of LIGO
+(ocamllex Lexer)
 
 ;; Build of the lexer as a library
 
 (library
-  (name Shared_lexer)
-  (public_name ligo.lexer.shared)
+  (name lexing_shared)
+  (public_name ligo.lexing.shared)
   (libraries
      ;; Vendors
      simple-utils
      Preprocessor
      LexerLib
+     ;; LIGO
+     preprocessing
      ;; Third party
-     getopt
      zarith
-     str
-     menhirLib
-     terminal_size
-     pprint)
+     str)
   (modules
-     Comments File Token Lexer Self_lexing LexerMainGen)
+     Errors Formatter Token Common
+     Lexer Self_tokens LexerMainGen UnlexerGen)
   (modules_without_implementation
-     Token Comments File Self_lexing)
+     Token Self_tokens)
   (preprocess
     (pps bisect_ppx --conditional)))

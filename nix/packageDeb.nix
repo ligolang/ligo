@@ -1,11 +1,11 @@
 # Create a debian package from static executable
-{ stdenv, lib, writeTextFile, ligo-static, dpkg }:
+{ stdenv, lib, writeTextFile, dpkg }:
 let
   project = "ligo";
   version = "0.0.0";
   revision = lib.commitIdFromGitRepo ../.git;
   pkgArch = "amd64";
-  bin = "${ligo-static}/bin/ligo";
+  bin = "${../ligo}";
   pkgName = "${project}_0ubuntu${version}-${revision}_${pkgArch}";
   depends = "";
   maintainer = "ligolang ligolang.org";

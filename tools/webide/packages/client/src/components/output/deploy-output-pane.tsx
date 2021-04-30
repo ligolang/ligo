@@ -1,9 +1,6 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { connect } from 'react-redux';
 import styled from 'styled-components';
-
-import { AppState } from '../../redux/app';
-import { ResultState } from '../../redux/result';
 
 const Container = styled.div<{ visible?: boolean }>`
   display: flex;
@@ -25,29 +22,26 @@ const Pre = styled.pre`
   overflow: hidden;
   height: 100%;
   width: -webkit-fill-available;
+  white-space: normal;
 `;
 
-export const DeployOutputPane = () => {
-  const output = useSelector<AppState, ResultState['output']>(
-    state => state.result.output
-  );
-  const contract = useSelector<AppState, ResultState['contract']>(
-    state => state.result.contract
-  );
-
+const DeployOutputPane = (props) => {
+const {contract, output, network} = props
+let networkUrlPart = network
+if(network === 'edonet') networkUrlPart = 'edo2net'
   return (
     <Container>
       <Output id="output">
         {contract && (
           <div>
-            The contract was successfully deployed to the delphinet test network.
+            The contract was successfully deployed to the {network} test network.
             <br />
             <br />
             View your new contract using{' '}
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://better-call.dev/delphinet/${contract}`}
+              href={`https://better-call.dev/${networkUrlPart}/${contract}`}
             >
               Better Call Dev
             </a>
@@ -66,3 +60,14 @@ export const DeployOutputPane = () => {
     </Container>
   );
 };
+
+function mapStateToProps(state) {
+  const { result, deploy } = state
+  return { 
+    output: result.output,
+    contract: result.contract,
+    network: deploy.network
+   }
+}
+
+export default connect(mapStateToProps, null)(DeployOutputPane)

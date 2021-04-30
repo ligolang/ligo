@@ -1,8 +1,8 @@
 open Test_helpers
 module Core = Typesystem.Core
-open Ast_typed.Types
-open Ast_typed.Reasons
-open Ast_typed.Combinators
+open Ast_core.Types
+open Ast_core.Reasons
+open Ast_core.Combinators
 open Trace
 
 module Random_type_generator = struct
@@ -17,7 +17,7 @@ module Random_type_generator = struct
   let pp : Format.formatter -> m -> unit = fun ppf {var ; cor_opt} ->
     match cor_opt with
     | None -> Format.fprintf ppf "Alias %a" Var.pp var
-    | Some cor -> Format.fprintf ppf "Concrete %a -> %a" Var.pp var Ast_typed.PP.constructor_or_row cor
+    | Some cor -> Format.fprintf ppf "Concrete %a -> %a" Var.pp var Ast_core.PP.constructor_or_row cor
   let rec make_type ~base_type1 ~base_type2 ~max_depth i depth tmap  : int * m * m list =
     let tvar = make_var i in
     let continue () = make_type ~base_type1 ~base_type2 ~max_depth i 0 tmap in
@@ -33,22 +33,22 @@ module Random_type_generator = struct
         (i,t,tmap)
       | 0 ->
         let i,nv,tmap = nest (i-1) tmap in
-        let cor = make_constructor_or tvar C_set [ nv.var ] in
+        let cor = make_constructor_or 0 None tvar C_set [ nv.var ] in
         return i (concrete_t tvar cor) tmap
       | 1 -> 
         let i,nv,tmap = nest (i-1) tmap in
-        let cor = make_constructor_or tvar C_list [ nv.var ] in
+        let cor = make_constructor_or 0 None tvar C_list [ nv.var ] in
         return i (concrete_t tvar cor) tmap
       | 2 ->
         let i,l,tmap = nest (i-1) tmap in
         let i,r,tmap = nest (i-1) tmap in
-        let cor = make_constructor_or tvar C_map [ l.var ; r.var ] in
+        let cor = make_constructor_or 0 None tvar C_map [ l.var ; r.var ] in
         return i (concrete_t tvar cor) tmap
       | _ -> failwith "fix definition of n above"
     )
   let generate nb_type max_depth =
-    let base_type1 = make_constructor_or base_t_1 C_int [] in
-    let base_type2 = make_constructor_or base_t_2 C_nat [] in
+    let base_type1 = make_constructor_or 0 None base_t_1 C_int [] in
+    let base_type2 = make_constructor_or 0 None base_t_2 C_nat [] in
     let init_map = [
       {var = base_t_1 ; cor_opt = Some base_type1} ;
       {var = base_t_2 ; cor_opt = Some base_type2} ; ]
@@ -70,8 +70,8 @@ module Random_type_generator = struct
     let all_vars : type_variable list = List.map (fun ({var ;_}:m) -> var) map in
     let test_checker constraints_list =
       trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.typer_tracer) @@
-      Typer_new.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+      trace (Main_errors.inference_tracer) @@
+      Inference.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
     in
     let test_checker_neg lst =
       Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
@@ -106,23 +106,23 @@ module Small_env_manual_test = struct
   let find_assignment_mock : type_variable -> constructor_or_row option = fun v ->
     (* a = map(c,d) , b = a, c = nat, d = mutez, e = map(f, d), f = nat , g = variant | Foo | Bar , j = record {baz goo} , k = c -> c *)
     match v with
-    | a' when Var.equal a' a -> Some (make_constructor_or a C_map [c ; d])
+    | a' when Var.equal a' a -> Some (make_constructor_or 1 None a C_map [c ; d])
     | b' when Var.equal b' b -> None
-    | c' when Var.equal c' c -> Some (make_constructor_or c C_nat [])
-    | d' when Var.equal d' d -> Some (make_constructor_or d C_mutez [])
-    | e' when Var.equal e' e -> Some (make_constructor_or e C_map [f ; d])
-    | f' when Var.equal f' f -> Some (make_constructor_or f C_nat [])
+    | c' when Var.equal c' c -> Some (make_constructor_or 2 None c C_nat [])
+    | d' when Var.equal d' d -> Some (make_constructor_or 3 None d C_mutez [])
+    | e' when Var.equal e' e -> Some (make_constructor_or 4 None e C_map [f ; d])
+    | f' when Var.equal f' f -> Some (make_constructor_or 5 None f C_nat [])
     | g' when Var.equal g' g -> None
-    | h' when Var.equal h' h -> Some (make_row_or h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
-    | h' when Var.equal h' h -> Some (make_row_or h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
+    | h' when Var.equal h' h -> Some (make_row_or 6 None h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
+    | h' when Var.equal h' h -> Some (make_row_or 7 None h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
     | i' when Var.equal i' i -> None
-    | j' when Var.equal j' j -> Some (make_row_or j C_record [(Label "baz", b) ; (Label "goo", e)])
-    | k' when Var.equal k' k -> Some (make_constructor_or k C_arrow [h ; c])
+    | j' when Var.equal j' j -> Some (make_row_or 8 None j C_record [(Label "baz", b) ; (Label "goo", e)])
+    | k' when Var.equal k' k -> Some (make_constructor_or 9 None k C_arrow [h ; c])
     | v -> failwith ("test internal : FIND_ASSIGNENT_MOCK" ^ (Format.asprintf "%a" Var.pp v))
   let test_checker constraints_list =
     trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.typer_tracer) @@
-        Typer_new.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+      trace (Main_errors.inference_tracer) @@
+        Inference.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
   let test_checker_neg lst =
     Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
 end
@@ -137,27 +137,27 @@ let alias () =
   
 let constructor () =
   let open Small_env_manual_test in
-  let ctor_ok = make_sc_constructor a C_map [c ; d] in
+  let ctor_ok = make_sc_constructor 1 None a C_map [c ; d] in
   let%bind () = test_checker [ctor_ok] in
-  let ctor_ok2 = make_sc_constructor b C_map [c ; d] in
+  let ctor_ok2 = make_sc_constructor 2 None b C_map [c ; d] in
   let%bind () = test_checker [ctor_ok2] in
-  let ctor_ok3 = make_sc_constructor k C_arrow [ g ; c] in
+  let ctor_ok3 = make_sc_constructor 3 None k C_arrow [ g ; c] in
   let%bind () = test_checker [ctor_ok3] in
-  let ctor_nok = make_sc_constructor a C_list [c] in
+  let ctor_nok = make_sc_constructor 4 None a C_list [c] in
   let%bind () = test_checker_neg [ctor_nok] in
   ok ()
 
 let row () =
   let open Small_env_manual_test in
-  let row_ok = make_sc_row h C_variant [(Label "foo", c) ; (Label "bar", d)] in
+  let row_ok  = make_sc_row 1 None h C_variant [(Label "foo", c) ; (Label "bar", d)] in
   let%bind () = test_checker [row_ok] in
-  let row_ok2 = make_sc_row j C_record [(Label "baz", b) ; (Label "goo", e)] in
+  let row_ok2 = make_sc_row 2 None j C_record [(Label "baz", b) ; (Label "goo", e)] in
   let%bind () = test_checker [row_ok2] in
-  let row_ok3 = make_sc_row g C_variant [(Label "foo", c) ; (Label "bar", d)] in
+  let row_ok3 = make_sc_row 3 None g C_variant [(Label "foo", c) ; (Label "bar", d)] in
   let%bind () = test_checker [row_ok3] in
-  let row_ok3 = make_sc_row i C_record [(Label "baz", b) ; (Label "goo", e)] in
+  let row_ok3 = make_sc_row 4 None i C_record [(Label "baz", b) ; (Label "goo", e)] in
   let%bind () = test_checker [row_ok3] in
-  let row_nok = make_sc_row h C_record [(Label "foo", c) ; (Label "bar", d)] in
+  let row_nok = make_sc_row 5 None h C_record [(Label "foo", c) ; (Label "bar", d)] in
   let%bind () = test_checker_neg [row_nok] in
   ok ()
 
@@ -167,10 +167,10 @@ let typeclass () =
   let mutez = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_mutez ; p_ctor_args = [] } in
   let args = [c ; d] in
   let tc_ok : typeclass = [[nat ; mutez]; [mutez ; nat]] in
-  let tcc_ok = make_sc_typeclass tc_ok args in
+  let tcc_ok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_ok args in
   let%bind () = test_checker [tcc_ok] in
   let tc_nok : typeclass = [[nat ; nat]; [mutez ; nat]] in
-  let tcc_nok = make_sc_typeclass tc_nok args in
+  let tcc_nok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_nok args in
   let%bind () = test_checker_neg [tcc_nok] in
   ok ()
 
@@ -180,7 +180,7 @@ let forall () =
   (* a = map(c,d) , b = a, c = nat, d = mutez, e = map(f, d), f = nat , g = variant | Foo | Bar , j = record {baz goo} *)
   let unwrap (f:type_value) = match f.wrap_content with P_forall x -> x | _ -> failwith "test internal failure" in
   (* let d = wrap (Todo "test") @@ P_variable d in *)
-  let tc x = tc "test" [x] [ [nat] ; [int] ] in
+  let tc x = tc "test" ~bound:[] ~constraints:[] () [x] [ [nat] ; [int] ] in
   let map_lhs x = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_map ; p_ctor_args = [ x ; mutez ] } in
   let forall = forall_tc "x" @@ fun x -> [tc x] => map_lhs x in
   let forall_sc = make_sc_poly a (unwrap forall) in

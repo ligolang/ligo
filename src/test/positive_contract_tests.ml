@@ -17,7 +17,7 @@ let positive_contract_tests =
   List.map
     (fun path ->
       let run () =
-        let%bind prog = Ligo.Compile.Utils.type_file ~options path "auto" Env in
+        let%bind prog = Ligo_compile.Utils.type_file ~options path "auto" Env in
         let%bind _michelson = typed_program_to_michelson prog "main" in
         ok () in
         test ("src/test/"^path) run)

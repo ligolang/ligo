@@ -17,7 +17,7 @@ module type COMMENTS =
 
 (* Preprocessor CLI *)
 
-module type PREPROC_CLI =
+module type PREPROCESSING_CLI =
   sig
     include COMMENTS
 
@@ -43,14 +43,14 @@ module type PREPROC_CLI =
 
 module type LEXER_CLI =
   sig
-    module Preproc_CLI : PREPROC_CLI
+    module Preprocessor_CLI : PREPROCESSING_CLI
 
-    val preproc : bool
-    val mode    : [`Byte | `Point]
-    val command : [`Copy | `Units | `Tokens] option
+    val preprocess : bool
+    val mode       : [`Byte | `Point]
+    val command    : [`Copy | `Units | `Tokens] option
 
     type status = [
-      Preproc_CLI.status
+      Preprocessor_CLI.status
     | `Conflict of string * string
     ]
 

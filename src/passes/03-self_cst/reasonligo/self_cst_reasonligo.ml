@@ -5,8 +5,8 @@ let all_mapper = [
   Helpers.fold_to_map () Scoping.peephole
 ]
 
-let all_program =
-  let all_p = List.map Helpers.map_program all_mapper in
+let all_module =
+  let all_p = List.map Helpers.map_module all_mapper in
   bind_chain all_p
 
 let all_expression =

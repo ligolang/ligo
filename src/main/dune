@@ -1,9 +1,9 @@
 (library
-  (name main)
+  (name ligo_main)
   (public_name ligo.main)
   (libraries
     run
-    compile
+    ligo_compile
     decompile
     main_errors
     scopes

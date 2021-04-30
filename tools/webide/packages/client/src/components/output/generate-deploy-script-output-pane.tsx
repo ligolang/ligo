@@ -1,10 +1,8 @@
-import React, { useRef } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useRef, FC } from 'react';
+import { connect } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../../redux/app';
-import { ResultState } from '../../redux/result';
-import { OutputToolbarComponent } from './output-toolbar';
+import OutputToolbarComponent from './output-toolbar';
 import { copyOutput, downloadOutput } from './utils';
 
 const Container = styled.div<{ visible?: boolean }>`
@@ -23,20 +21,24 @@ const Output = styled.div`
 const Pre = styled.pre`
   margin: 0;
   width: -webkit-fill-available;
+  white-space: normal;
 `;
 
-export const GenerateDeployScriptOutputPane = () => {
-  const output = useSelector<AppState, ResultState['output']>(
-    state => state.result.output
-  );
+interface stateTypes {
+  output?: string;
+}
 
+const GenerateDeployScriptOutputPane: FC<stateTypes> = (props) => {
+  
+  const {output} = props
+  const downloadResult = output ? output : ''
   const preRef = useRef<HTMLPreElement>(null);
 
   return (
     <Container>
       <OutputToolbarComponent
         onCopy={() => copyOutput(preRef.current)}
-        onDownload={() => downloadOutput(output)}
+        onDownload={() => downloadOutput(downloadResult)}
       ></OutputToolbarComponent>
       <Output id="output">
         <Pre ref={preRef}>{output}</Pre>
@@ -44,3 +46,12 @@ export const GenerateDeployScriptOutputPane = () => {
     </Container>
   );
 };
+
+function mapStateToProps(state) {
+  const { result } = state
+  return { 
+    output: result.output,
+  }
+}
+
+export default connect(mapStateToProps, null)(GenerateDeployScriptOutputPane)

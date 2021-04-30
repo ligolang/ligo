@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled, { css } from 'styled-components';
 
 import { CompileAction } from '../../redux/actions/compile';
+import { CompileFunctionAction } from '../../redux/actions/compile-function';
 import { DeployAction } from '../../redux/actions/deploy';
 import { DryRunAction } from '../../redux/actions/dry-run';
 import { EvaluateFunctionAction } from '../../redux/actions/evaluate-function';
@@ -10,11 +11,12 @@ import { EvaluateValueAction } from '../../redux/actions/evaluate-value';
 import { GenerateDeployScriptAction } from '../../redux/actions/generate-deploy-script';
 import { AppState } from '../../redux/app';
 import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../../redux/command';
-import { Command } from '../../redux/types';
+import { CommandType } from '../../redux/types';
 import { Option, Select } from '../form/select';
 import { CompilePaneComponent } from './compile-pane';
-import { DeployPaneComponent } from './deploy-pane';
+import DeployPaneComponent from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
+import CompileFunctionPaneComponent from './compile-function-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
 import { EvaluateValuePaneComponent } from './evaluate-value-pane';
 import { GenerateDeployScriptPane } from './generate-deploy-script-pane';
@@ -74,19 +76,21 @@ const SelectCommand = styled(Select)`
   }
 `;
 
-function createAction(command: Command) {
+function createAction(command: CommandType) {
   switch (command) {
-    case Command.Compile:
+    case CommandType.Compile:
       return new CompileAction();
-    case Command.DryRun:
+    case CommandType.CompileFunction:
+      return new CompileFunctionAction();
+    case CommandType.DryRun:
       return new DryRunAction();
-    case Command.Deploy:
+    case CommandType.Deploy:
       return new DeployAction();
-    case Command.EvaluateValue:
+    case CommandType.EvaluateValue:
       return new EvaluateValueAction();
-    case Command.EvaluateFunction:
+    case CommandType.EvaluateFunction:
       return new EvaluateFunctionAction();
-    case Command.GenerateDeployScript:
+    case CommandType.GenerateDeployScript:
       return new GenerateDeployScriptAction();
     default:
       throw new Error('Unsupported command');
@@ -100,10 +104,10 @@ export const ConfigureTabComponent = (props: {
   const dispatchedAction = useSelector<
     AppState,
     CommandState['dispatchedAction']
-  >(state => state.command.dispatchedAction);
+  >(state => state.command && state.command.dispatchedAction);
 
   const command = useSelector<AppState, CommandState['selected']>(
-    state => state.command.selected
+    state => state.command && state.command.selected
   );
 
   const dispatch = useDispatch();
@@ -118,12 +122,13 @@ export const ConfigureTabComponent = (props: {
             dispatch({ ...new ChangeSelectedAction(command) });
           }}
         >
-          <Option value={Command.Compile}>Compile</Option>
-          <Option value={Command.Deploy}>Deploy</Option>
-          <Option value={Command.DryRun}>Dry Run</Option>
-          <Option value={Command.EvaluateFunction}>Evaluate Function</Option>
-          <Option value={Command.EvaluateValue}>Evaluate Value</Option>
-          <Option value={Command.GenerateDeployScript}>Generate Deploy Script</Option>
+          <Option value={CommandType.Compile}>Compile</Option>
+          <Option value={CommandType.CompileFunction}>Compile Function</Option>
+          <Option value={CommandType.Deploy}>Deploy</Option>
+          <Option value={CommandType.DryRun}>Dry Run</Option>
+          <Option value={CommandType.EvaluateFunction}>Evaluate Function</Option>
+          <Option value={CommandType.EvaluateValue}>Evaluate Value</Option>
+          <Option value={CommandType.GenerateDeployScript}>Generate Deploy Script</Option>
         </SelectCommand>
         <RunButton
           id="run"
@@ -142,22 +147,25 @@ export const ConfigureTabComponent = (props: {
           Run
         </RunButton>
       </CommonActionsGroup>
-      {(command === Command.Compile && (
+      {(command === CommandType.Compile && (
         <CompilePaneComponent></CompilePaneComponent>
-      )) ||
-        (command === Command.DryRun && (
+        )) ||
+        (command === CommandType.CompileFunction && (
+          <CompileFunctionPaneComponent></CompileFunctionPaneComponent>
+        )) ||
+        (command === CommandType.DryRun && (
           <DryRunPaneComponent></DryRunPaneComponent>
         )) ||
-        (command === Command.Deploy && (
+        (command === CommandType.Deploy && (
           <DeployPaneComponent></DeployPaneComponent>
         )) ||
-        (command === Command.EvaluateFunction && (
+        (command === CommandType.EvaluateFunction && (
           <EvaluateFunctionPaneComponent></EvaluateFunctionPaneComponent>
         )) ||
-        (command === Command.EvaluateValue && (
+        (command === CommandType.EvaluateValue && (
           <EvaluateValuePaneComponent></EvaluateValuePaneComponent>
         )) ||
-        (command === Command.GenerateDeployScript && (
+        (command === CommandType.GenerateDeployScript && (
           <GenerateDeployScriptPane></GenerateDeployScriptPane>
         ))}
     </Container>

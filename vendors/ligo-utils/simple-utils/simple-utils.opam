@@ -7,6 +7,7 @@ authors      : "Galfour, Christian Rinderknecht"
 license      : "MIT"
 homepage     : "https://gitlab.com/ligolang/ligo-utils"
 bug-reports  : "https://gitlab.com/ligolang/ligo-utils/issues"
+# If you change the dependencies, run `opam lock` in the root
 depends      : ["dune"
                 "base"
                 "yojson"

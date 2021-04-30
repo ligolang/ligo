@@ -12,7 +12,7 @@ export enum ActionType {
 
 export interface CompileState {
   entrypoint: string;
-  michelsonFormat: MichelsonFormat;
+  michelsonFormat?: MichelsonFormat;
 }
 
 export class ChangeEntrypointAction {
@@ -35,7 +35,7 @@ const DEFAULT_STATE: CompileState = {
   michelsonFormat: MichelsonFormat.Text
 };
 
-export default (state = DEFAULT_STATE, action: Action): CompileState => {
+const compile = (state = DEFAULT_STATE, action: Action): CompileState => {
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
@@ -56,3 +56,5 @@ export default (state = DEFAULT_STATE, action: Action): CompileState => {
       return state;
   }
 };
+
+export default compile

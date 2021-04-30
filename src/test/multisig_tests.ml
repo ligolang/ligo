@@ -12,18 +12,18 @@ let get_program f st =
     | Some s -> ok s
     | None -> (
       let options = Compiler_options.make () in
-      let%bind program = Ligo.Compile.Utils.type_file ~options f st (Contract "main") in
+      let%bind program = Ligo_compile.Utils.type_file ~options f st (Contract "main") in
       s := Some program ;
       ok program
     )
 
 let compile_main f s () =
-  let%bind typed_prg,_,_ = get_program f s () in
-  let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind typed_prg,_ = get_program f s () in
+  let%bind mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
-    Ligo.Compile.Of_michelson.build_contract michelson_prg in
+    Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
 open Ast_imperative
@@ -58,7 +58,7 @@ let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params counter msg keys is_validl f s =
-  let%bind program,_,_ = get_program f s () in
+  let%bind _,env = get_program f s () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in
@@ -67,7 +67,7 @@ let params counter msg keys is_validl f s =
         e_nat counter ;
         e_string (if is_valid then "MULTISIG" else "XX") ;
         chain_id_zero ] in
-    let%bind signature = sign_message program payload sk in
+    let%bind signature = sign_message env payload sk in
     ok @@ (e_pair (e_key_hash pkh) (e_signature signature))::acc in
   let%bind signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.combine keys is_validl) in
   ok @@ e_constructor
@@ -80,39 +80,39 @@ let params counter msg keys is_validl f s =
 
 (* Provide one valid signature when the threshold is two of two keys *)
 let not_enough_1_of_2 f s () =
-  let%bind (program, env, state) = get_program f s () in
+  let%bind (program,env) = get_program f s () in
   let exp_failwith = "Not enough signatures passed the check" in
   let keys = gen_keys () in
   let%bind test_params = params 0 empty_message [keys] [true] f s in
   let%bind () = expect_string_failwith
-    (program, env, state) "main" (e_pair test_params (init_storage 2 0 [keys;gen_keys()])) exp_failwith in
+    (program,env) "main" (e_pair test_params (init_storage 2 0 [keys;gen_keys()])) exp_failwith in
   ok ()
 
 let unmatching_counter f s () =
-  let%bind (program, env, state) = get_program f s () in
+  let%bind (program,env) = get_program f s () in
   let exp_failwith = "Counters does not match" in
   let keys = gen_keys () in
   let%bind test_params = params 1 empty_message [keys] [true] f s in
   let%bind () = expect_string_failwith
-    (program, env, state) "main" (e_pair test_params (init_storage 1 0 [keys])) exp_failwith in
+    (program,env) "main" (e_pair test_params (init_storage 1 0 [keys])) exp_failwith in
   ok ()
 
 (* Provide one invalid signature (correct key but incorrect signature)
    when the threshold is one of one key *)
 let invalid_1_of_1 f s () =
-  let%bind (program, env, state) = get_program f s () in
+  let%bind (program,env) = get_program f s () in
   let exp_failwith = "Invalid signature" in
   let keys = [gen_keys ()] in
   let%bind test_params = params 0 empty_message keys [false] f s in
   let%bind () = expect_string_failwith
-    (program, env, state) "main" (e_pair test_params (init_storage 1 0 keys)) exp_failwith in
+    (program,env) "main" (e_pair test_params (init_storage 1 0 keys)) exp_failwith in
   ok ()
 
 (* Provide one valid signature when the threshold is one of one key *)
 let valid_1_of_1 f s () =
-  let%bind (program, env, state) = get_program f s () in
+  let%bind (program,env) = get_program f s () in
   let keys = gen_keys () in
-  let%bind () = expect_eq_n_trace_aux [0;1;2] (program, env, state) "main"
+  let%bind () = expect_eq_n_trace_aux [0;1;2] (program,env) "main"
       (fun n ->
         let%bind params = params n empty_message [keys] [true] f s in
         ok @@ e_pair params (init_storage 1 n [keys])
@@ -124,10 +124,10 @@ let valid_1_of_1 f s () =
 
 (* Provive two valid signatures when the threshold is two of three keys *)
 let valid_2_of_3 f s () =
-  let%bind (program, env, state) = get_program f s () in
+  let%bind (program,env) = get_program f s () in
   let param_keys = [gen_keys (); gen_keys ()] in
   let st_keys = param_keys @ [gen_keys ()] in
-  let%bind () = expect_eq_n_trace_aux [0;1;2] (program, env, state) "main"
+  let%bind () = expect_eq_n_trace_aux [0;1;2] (program,env) "main"
       (fun n ->
         let%bind params = params n empty_message param_keys [true;true] f s in
         ok @@ e_pair params (init_storage 2 n st_keys)
@@ -139,7 +139,7 @@ let valid_2_of_3 f s () =
 
 (* Provide one invalid signature and two valid signatures when the threshold is two of three keys *)
 let invalid_3_of_3 f s () =
-  let%bind (program, env, state) = get_program f s () in
+  let%bind (program,env) = get_program f s () in
   let valid_keys = [gen_keys() ; gen_keys()] in
   let invalid_key = gen_keys () in
   let param_keys = valid_keys @ [invalid_key] in
@@ -147,18 +147,18 @@ let invalid_3_of_3 f s () =
   let%bind test_params = params 0 empty_message param_keys [false;true;true] f s in
   let exp_failwith = "Invalid signature" in
   let%bind () = expect_string_failwith
-    (program, env, state) "main" (e_pair test_params (init_storage 2 0 st_keys)) exp_failwith in
+    (program,env) "main" (e_pair test_params (init_storage 2 0 st_keys)) exp_failwith in
   ok ()
 
 (* Provide two valid signatures when the threshold is three of three keys *)
 let not_enough_2_of_3 f s () =
-  let%bind (program, env, state) = get_program f s() in
+  let%bind (program,env) = get_program f s() in
   let valid_keys = [gen_keys() ; gen_keys()] in
   let st_keys = gen_keys () :: valid_keys  in
   let%bind test_params = params 0 empty_message (valid_keys) [true;true] f s in
   let exp_failwith = "Not enough signatures passed the check" in
   let%bind () = expect_string_failwith
-    (program, env, state) "main" (e_pair test_params (init_storage 3 0 st_keys)) exp_failwith in
+    (program,env) "main" (e_pair test_params (init_storage 3 0 st_keys)) exp_failwith in
   ok ()
 
 let main = test_suite "Multisig" [

@@ -170,11 +170,38 @@ let declaration_type : ('a -> ('b, _) result) -> 'a declaration_type -> ('b decl
   ok @@ {type_binder; type_expr}
 
 let declaration_constant : ('a -> ('b,_) result) -> ('c -> ('d,_) result) -> ('a,'c) declaration_constant -> (('b,'d) declaration_constant, _) result
-= fun f g {binder=b; attr; expr} ->
+= fun f g {name; binder=b; attr; expr} ->
   let%bind binder = binder g b in
   let%bind expr   = f expr     in
-  ok @@ {binder;attr;expr}
+  ok @@ {name;binder;attr;expr}
 
-let program : ('a -> ('b,_) result) -> 'a list -> ('b list, _) result
-= fun d prg ->
-  bind_map_list d prg
+let rec declaration_module : ('a -> ('b,_) result) -> ('c -> ('d,_) result) -> ('a,'c) declaration_module -> (('b,'d) declaration_module, _) result
+= fun f g {module_binder; module_} ->
+  let%bind module_ = module' f g module_ in
+  ok @@ {module_binder;module_}
+
+and module_alias
+= fun ma ->
+  ok @@ ma
+
+and declaration
+= fun f g -> function
+  Declaration_type    ty -> let%bind ty = declaration_type      g ty in ok @@ Declaration_type ty
+| Declaration_constant c -> let%bind c  = declaration_constant f g c in ok @@ Declaration_constant c
+| Declaration_module   m -> let%bind m  = declaration_module   f g m in ok @@ Declaration_module   m
+| Module_alias        ma -> let%bind ma = module_alias            ma in ok @@ Module_alias        ma
+
+and module' : ('a -> ('b,_) result) -> ('c -> ('d,_) result) -> ('a,'c) module' -> (('b,'d) module', _) result
+= fun f g prg ->
+  bind_map_list (bind_map_location (declaration f g)) prg
+
+and mod_in :  ('a -> ('b, _) result) -> ('c -> ('d, _) result) -> ('a,'c) mod_in -> (('b,'d) mod_in, _) result
+= fun f g {module_binder; rhs; let_result} ->
+  let%bind rhs        = (module' f g) rhs in
+  let%bind let_result = f let_result in
+  ok @@ {module_binder; rhs; let_result}
+
+and mod_alias :  ('a -> ('b, _) result) -> 'a mod_alias -> ('b mod_alias, _) result
+= fun f {alias; binders; result} ->
+  let%bind result = f result in
+  ok @@ {alias; binders; result}

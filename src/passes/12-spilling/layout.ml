@@ -72,7 +72,7 @@ let record_tree ~layout compile_type m =
       let node = Append_tree.of_list lst in
       let aux (a_annot, a) (b_annot, b) =
         ok (None, { content = Pair (a, b) ;
-                    type_ = Expression.make_t (T_pair ((a_annot, a.type_), (b_annot, b.type_))) })
+                    type_ = Expression.make_t (T_tuple [(a_annot, a.type_); (b_annot, b.type_)]) })
       in
       let%bind m' = Append_tree.bind_fold_ne
           (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
@@ -87,27 +87,11 @@ let record_tree ~layout compile_type m =
           aux node in
       ok @@ snd m'
     )
-  | L_comb -> (
-      (* Right combs *)
-      let aux (Label l , (x : _ row_element_mini_c)) =
-        let%bind t = compile_type x.associated_type in
-        let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
-        ok (annot_opt, { content = Field (Label l) ;
-                         type_ = t })
-      in
-      let rec lst_fold_right = function
-        | [] -> fail (corner_case ~loc:__LOC__ "t_record empty")
-        | [ x ] -> aux x
-        | hd :: tl -> (
-          let%bind (hd_annot, hd) = aux hd in
-          let%bind (tl_annot, tl) = lst_fold_right tl in
-          let t = { content = Pair (hd, tl) ;
-                    type_ = Expression.make_t (T_pair ((hd_annot, hd.type_), (tl_annot, tl.type_))) } in
-          ok (None, t)
-          )
-      in
-      map snd @@ lst_fold_right lst
-    )
+  (* TODO this is unused now but still called... *)
+  | L_comb ->
+    ok {content = Field (Label "BOGUS");
+        type_ = { type_content = T_base TB_unit;
+                  location = Location.generated }}
 
 let t_record_to_pairs ~layout return compile_type m =
   let open AST.Helpers in
@@ -117,7 +101,7 @@ let t_record_to_pairs ~layout return compile_type m =
   | L_tree -> (
       let node = Append_tree.of_list lst in
       let aux a b : (type_expression annotated, spilling_error) result =
-        let%bind t = return @@ T_pair (a, b) in
+        let%bind t = return @@ T_tuple [a; b] in
         ok (None, t)
       in
       let%bind m' = Append_tree.bind_fold_ne
@@ -139,17 +123,8 @@ let t_record_to_pairs ~layout return compile_type m =
         let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
         ok (annot_opt,t)
       in
-      let rec lst_fold_right = function
-        | [] -> fail (corner_case ~loc:__LOC__ "t_record empty")
-        | [ x ] -> aux x
-        | hd :: tl -> (
-          let%bind hd = aux hd in
-          let%bind tl = lst_fold_right tl in
-          let%bind t = return @@ T_pair (hd, tl) in
-            ok (None, t)
-          )
-      in
-      map snd @@ lst_fold_right lst
+      let%bind ts = bind_map_list aux lst in
+      return (T_tuple ts)
     )
 
 let record_access_to_lr ~layout ty m_ty index =
@@ -202,32 +177,21 @@ let record_access_to_lr ~layout ty m_ty index =
       aux index ty last
     )
 
-let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Mini_c.expression spilling_result =
+let record_to_pairs compile_expression return record_t record : Mini_c.expression spilling_result =
   let open AST.Helpers in
   let lst = kv_list_of_record_or_tuple ~layout:record_t.layout record_t.content record in
   match record_t.layout with
   | L_tree -> (
     let node = Append_tree.of_list lst in
     let aux a b : (expression , spilling_error) result =
-      let a_ty = Combinators.Expression.get_type a in
-      let b_ty = Combinators.Expression.get_type b in
-      let tv   = Combinators.Expression.make_t @@ T_pair ((None, a_ty) , (None, b_ty)) in
-      return ~tv @@ ec_pair a b
+      return @@ ec_pair a b
     in
     trace_strong (corner_case ~loc:__LOC__ "record build") @@
     Append_tree.bind_fold_ne (compile_expression) aux node
   )
   | L_comb -> (
-      let rec aux = function
-        | [] -> fail (corner_case ~loc:__LOC__ "record build")
-        | [x] -> compile_expression x
-        | hd::tl -> (
-            let%bind hd' = compile_expression hd in
-            let%bind tl' = aux tl in
-            let tv = t_pair (None,hd'.type_expression) (None,tl'.type_expression) in
-            return ~tv (ec_pair hd' tl')
-          ) in
-      aux lst
+      let%bind exprs = bind_map_list compile_expression lst in
+      return (E_tuple exprs)
     )
 
 let constructor_to_lr ~(layout) ty m_ty index =

@@ -2,6 +2,8 @@
 [@@@coverage exclude_file]
 
 open CST
+
+module Directive = LexerLib.Directive
 module Region = Simple_utils.Region
 open! Region
 
@@ -160,6 +162,24 @@ and print_statement state = function
     print_var       state name;
     print_token     state eq "=";
     print_type_expr state type_expr
+| ModuleDecl {value={kwd_module; name; eq; lbrace; module_; rbrace}; _} ->
+    print_token  state kwd_module "module";
+    print_var    state name;
+    print_token  state eq "=";
+    print_token  state lbrace "{";
+    print_tokens state module_;
+    print_token  state rbrace "}";
+| ModuleAlias {value={kwd_module; alias; eq; binders}; _} ->
+    print_token   state kwd_module "module";
+    print_var     state alias;
+    print_token   state eq "=";
+    print_nsepseq state "." print_var binders;
+| Directive dir -> print_directive state dir
+
+and print_directive state dir =
+  let s =
+    Directive.to_string ~offsets:state#offsets state#mode dir
+  in Buffer.add_string state#buffer s
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -314,7 +334,6 @@ and print_pattern state = function
 | PBytes b -> print_bytes state b
 | PString s -> print_string state s
 | PVerbatim v -> print_verbatim state v
-| PWild wild -> print_token state wild "_"
 | PPar {value={lpar;inside=p;rpar}; _} ->
     print_token   state lpar "(";
     print_pattern state p;
@@ -377,29 +396,31 @@ and print_constr_app_pattern state node =
   | Some pattern -> print_pattern state pattern
 
 and print_expr state = function
-  ELetIn let_in -> print_let_in      state let_in
-| ETypeIn type_in -> print_type_in   state type_in
-| ECond cond    -> print_conditional state cond
-| ETuple tuple  -> print_csv         state print_expr tuple
-| ECase case    -> print_match_expr  state case
-| EFun e        -> print_fun_expr    state e
-| EAnnot e      -> print_annot_expr  state e
-| ELogic e      -> print_logic_expr  state e
-| EArith e      -> print_arith_expr  state e
-| EString e     -> print_string_expr state e
-| ECall e       -> print_fun_call state e
-| EVar v        -> print_var state v
-| EProj p       -> print_projection state p
-| EModA ma      -> print_module_access print_expr state ma
-| EUpdate u     -> print_update state u
-| EUnit e       -> print_unit state e
-| EBytes b      -> print_bytes state b
-| EPar e        -> print_expr_par state e
-| EList e       -> print_list_expr state e
-| ESeq seq      -> print_sequence state seq
-| ERecord e     -> print_record_expr state e
-| EConstr e     -> print_constr_expr state e
-| ECodeInj e    -> print_code_inj state e
+  ELetIn let_in       -> print_let_in      state let_in
+| ETypeIn type_in     -> print_type_in     state type_in
+| EModIn mod_in       -> print_mod_in      state mod_in
+| EModAlias mod_alias -> print_mod_alias   state mod_alias
+| ECond cond          -> print_conditional state cond
+| ETuple tuple        -> print_csv         state print_expr tuple
+| ECase case          -> print_match_expr  state case
+| EFun e              -> print_fun_expr    state e
+| EAnnot e            -> print_annot_expr  state e
+| ELogic e            -> print_logic_expr  state e
+| EArith e            -> print_arith_expr  state e
+| EString e           -> print_string_expr state e
+| ECall e             -> print_fun_call state e
+| EVar v              -> print_var state v
+| EProj p             -> print_projection state p
+| EModA ma            -> print_module_access print_expr state ma
+| EUpdate u           -> print_update state u
+| EUnit e             -> print_unit state e
+| EBytes b            -> print_bytes state b
+| EPar e              -> print_expr_par state e
+| EList e             -> print_list_expr state e
+| ESeq seq            -> print_sequence state seq
+| ERecord e           -> print_record_expr state e
+| EConstr e           -> print_constr_expr state e
+| ECodeInj e          -> print_code_inj state e
 
 and print_constr_expr state = function
   ENone e      -> print_none_expr       state e
@@ -620,6 +641,28 @@ and print_type_in state {value; _} =
   print_token       state semi ";";
   print_expr        state body
 
+and print_mod_in state {value; _} =
+  let {mod_decl; semi; body} = value in
+  let {kwd_module; name; eq; lbrace; module_; rbrace} = mod_decl in
+  print_token        state kwd_module "module";
+  print_var          state name;
+  print_token        state eq     "eq";
+  print_token        state lbrace "{";
+  print_tokens       state module_;
+  print_token        state rbrace "}";
+  print_token        state semi ";";
+  print_expr         state body
+
+and print_mod_alias state {value; _} =
+  let {mod_alias; semi; body} = value in
+  let {kwd_module; alias; eq; binders} = mod_alias in
+  print_token        state kwd_module "module";
+  print_var          state alias;
+  print_token        state eq     "eq";
+  print_nsepseq      state "." print_var binders;
+  print_token        state semi ";";
+  print_expr         state body
+
 and print_fun_expr state {value; _} =
   let {binders; lhs_type; arrow; body} = value in
   let () = print_pattern state binders in
@@ -664,10 +707,13 @@ let to_string ~offsets ~mode printer node =
 
 let tokens_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_tokens
+
 let pattern_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_pattern
+
 let expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_expr
+
 let type_expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_type_expr
 
@@ -704,16 +750,22 @@ let rec pp_cst state {decl; _} =
 
 and pp_declaration state = function
   ConstDecl {value = (_, kwd_rec, let_binding, attr); region} ->
-    pp_loc_node state "Let" region;
-    (match kwd_rec with
-    | None -> ()
-    | Some (_) -> pp_node (state#pad 0 0) "rec"
-    );
-    pp_let_binding state let_binding attr;
-
+    pp_loc_node state "ConstDecl" region;
+    (if kwd_rec <> None then pp_node (state#pad 0 0) "rec"); (* Hack *)
+    pp_let_binding state let_binding attr
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
     pp_type_decl state value
+| ModuleDecl {value; region} ->
+    pp_loc_node    state "ModuleDecl" region;
+    pp_module_decl state value
+| ModuleAlias {value; region} ->
+    pp_loc_node     state "ModuleAlias" region;
+    pp_module_alias state value
+| Directive dir ->
+    let region, string = Directive.project dir in
+    pp_loc_node state "Directive" region;
+    pp_node state string
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in
@@ -749,6 +801,18 @@ and pp_type_decl state decl =
   pp_ident     (state#pad 2 0) decl.name;
   pp_type_expr (state#pad 2 1) decl.type_expr
 
+and pp_module_decl state decl =
+  pp_ident     (state#pad 2 0) decl.name;
+  pp_cst       (state#pad 2 1) decl.module_
+
+and pp_module_alias state decl =
+  let binders     = Utils.nsepseq_to_list decl.binders in
+  let len            = List.length binders in
+  let apply len rank = pp_ident (state#pad len rank) in
+  pp_ident (state#pad (1+len) 0) decl.alias;
+  List.iteri (apply len) binders
+
+
 and pp_pattern state = function
   PConstr p ->
     pp_node state "PConstr";
@@ -756,8 +820,6 @@ and pp_pattern state = function
 | PVar v ->
     pp_node  state "PVar";
     pp_ident (state#pad 1 0) v
-| PWild region ->
-    pp_loc_node state "PWild" region
 | PInt i ->
     pp_node state "PInt";
     pp_int  state i
@@ -828,13 +890,14 @@ and pp_injection :
 and pp_ne_injection :
   'a.(state -> 'a -> unit) -> state -> 'a ne_injection -> unit =
   fun printer state inj ->
-    let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
-    let length         = List.length ne_elements in
-    let arity          = if inj.attributes = [] then length else length + 1
+    let ne_elements = Utils.nsepseq_to_list inj.ne_elements in
+    let length      = List.length ne_elements in
+    let arity       = if inj.attributes = [] then length else length + 1
     and apply len rank = printer (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
-       let state = state#pad arity (arity-1)
-       in pp_attributes state inj.attributes
+       if inj.attributes <> [] then
+         let state = state#pad arity (arity-1)
+         in pp_attributes state inj.attributes
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -924,6 +987,12 @@ and pp_expr state = function
 | ETypeIn {value; region} ->
     pp_loc_node state  "ELetIn" region;
     pp_type_in state value
+| EModIn {value; region} ->
+    pp_loc_node state  "EModIn" region;
+    pp_mod_in state value
+| EModAlias {value; region} ->
+    pp_loc_node  state  "EModAlias" region;
+    pp_mod_alias state value
 | EFun {value; region} ->
     pp_loc_node state "EFun" region;
     pp_fun_expr state value
@@ -945,9 +1014,9 @@ and pp_fun_expr state node =
     match lhs_type with
       None -> ()
     | Some (_, type_expr) ->
-       let state = state#pad fields 1 in
-       pp_node state "<lhs type>";
-       pp_type_expr (state#pad 1 0) type_expr in
+        let state = state#pad fields 1 in
+        pp_node state "<lhs type>";
+        pp_type_expr (state#pad 1 0) type_expr in
   let () =
     let state = state#pad fields (fields - 1) in
     pp_node state "<body>";
@@ -974,9 +1043,7 @@ and pp_let_in state node =
   let arity =
     match kwd_rec with
       None -> 0
-    | Some (_) ->
-      let state = state#pad fields 0 in
-      pp_node state "rec"; 0 in
+    | Some _ -> pp_node (state#pad fields 0) "rec"; 1 in
   let arity =
     let state = state#pad fields 0 in
     pp_node state "<binders>";
@@ -1025,6 +1092,43 @@ and pp_type_in state node =
     pp_expr (state#pad 1 0) body
   in ()
 
+and pp_mod_in state node =
+  let {mod_decl; body; _} = node in
+  let {name; module_; _} = mod_decl in
+  let () =
+    let state = state#pad 3 0 in
+    pp_node state "<name>";
+    pp_ident state name in
+  let () =
+    let state = state#pad 3 1 in
+    pp_node state "<module>";
+    pp_cst (state#pad 1 0) module_ in
+  let () =
+    let state = state#pad 3 2 in
+    pp_node state "<body>";
+    pp_expr (state#pad 1 0) body
+  in ()
+
+and pp_mod_alias state node =
+  let {mod_alias; body; _} = node in
+  let {alias; binders; _} = mod_alias in
+  let () =
+    let state = state#pad 3 0 in
+    pp_node state "<alias>";
+    pp_ident state alias in
+  let () =
+    let state = state#pad 3 1 in
+    let binders     = Utils.nsepseq_to_list binders in
+    let len            = List.length binders in
+    let apply len rank = pp_ident (state#pad len rank) in
+    pp_node state "<module>";
+    List.iteri (apply len) binders in
+  let () =
+    let state = state#pad 3 2 in
+    pp_node state "<body>";
+    pp_expr (state#pad 1 0) body
+  in ()
+
 and pp_tuple_expr state {value; _} =
   let exprs          = Utils.nsepseq_to_list value in
   let length         = List.length exprs in
@@ -1032,13 +1136,10 @@ and pp_tuple_expr state {value; _} =
   in List.iteri (apply length) exprs
 
 and pp_arguments state = function
-  | Multiple x ->
-     let {lpar;inside;rpar} = x.value in
-     print_token state lpar "(";
-     pp_tuple_expr state {value=inside; region = x.region};
-     print_token state rpar ")"
-  | Unit x ->
-     print_unit state x
+  Multiple {value; region} ->
+    pp_tuple_expr state {value=value.inside; region}
+| Unit u ->
+    pp_loc_node state "Unit" u.region
 
 and pp_fun_call state (fun_expr, args) =
   let arity = match args with
@@ -1303,14 +1404,11 @@ and pp_field_decl state {value; _} =
   if value.attributes <> [] then
     pp_attributes (state#pad arity 1) value.attributes
 
-and pp_cartesian state {lpar;inside;rpar} =
+and pp_cartesian state {inside; _} =
   let t_exprs        = Utils.nsepseq_to_list inside in
   let arity          = List.length t_exprs in
   let apply len rank = pp_type_expr (state#pad len rank)
-  in
-  print_token state lpar "(";
-  List.iteri (apply arity) t_exprs;
-  print_token state rpar "(";
+  in List.iteri (apply arity) t_exprs
 
 and pp_variant state {constr; arg; attributes=attr} =
   let arity = if attr = [] then 0 else 1 in
@@ -1320,7 +1418,8 @@ and pp_variant state {constr; arg; attributes=attr} =
   let rank =
     match arg with
       None -> rank
-    | Some (_,c) -> pp_type_expr (state#pad arity rank) c; rank+1 in
-  let _ = if attr <> [] then
+    | Some (_,c) ->
+        pp_type_expr (state#pad arity rank) c; rank+1 in
+  let () = if attr <> [] then
             pp_attributes (state#pad arity rank) attr
   in ()

@@ -5,7 +5,7 @@
     main_errors
     simple-utils
     tezos-utils
-    parser
+    parsing
     tree_abstraction
     ast_imperative
     self_ast_imperative
@@ -15,8 +15,8 @@
     desugaring
     ast_core
     self_ast_core
-    typer_new
-    typer
+    inference
+    checking
     ast_typed
     self_ast_typed
     interpreter

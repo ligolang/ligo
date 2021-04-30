@@ -17,6 +17,9 @@ let%expect_test _ =
 
   run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
   [%expect {|
+    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+    Warning: unused variable "ps".
+
     failwith("This contract always fails") |}];
 
   run_ligo_good [ "interpret" ; "assert(1=1)" ; "--syntax=pascaligo" ] ;

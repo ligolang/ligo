@@ -65,7 +65,7 @@ title: This Doc Needs To Be Edited
 Edit me...
 ```
 
-For more information about docs, click [here](https://docusaurus.io/docs/en/navigation)
+For more information about docs, click here
 
 ## Editing an existing blog post
 
@@ -81,7 +81,7 @@ title: This Blog Post Needs To Be Edited
 Edit me...
 ```
 
-For more information about blog posts, click [here](https://docusaurus.io/docs/en/adding-blog)
+For more information about blog posts, click here
 
 # Adding Content
 
@@ -114,7 +114,7 @@ My new content here..
 }
 ```
 
-For more information about adding new docs, click [here](https://docusaurus.io/docs/en/navigation)
+For more information about adding new docs, click here
 
 ## Adding a new blog post
 
@@ -144,7 +144,7 @@ title: New Blog Post
 Lorem Ipsum...
 ```
 
-For more information about blog posts, click [here](https://docusaurus.io/docs/en/adding-blog)
+For more information about blog posts, click here
 
 ## Adding items to your site's top navigation bar
 
@@ -167,7 +167,7 @@ For more information about blog posts, click [here](https://docusaurus.io/docs/e
 }
 ```
 
-For more information about the navigation bar, click [here](https://docusaurus.io/docs/en/navigation)
+For more information about the navigation bar, click here
 
 ## Adding custom pages
 
@@ -186,7 +186,7 @@ For more information about the navigation bar, click [here](https://docusaurus.i
 }
 ```
 
-For more information about custom pages, click [here](https://docusaurus.io/docs/en/custom-pages).
+For more information about custom pages, click here.
 
 # Full Documentation
 

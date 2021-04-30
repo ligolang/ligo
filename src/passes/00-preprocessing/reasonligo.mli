@@ -1,20 +1,29 @@
-(* This file provides an interface to the ReasonLIGO parser. *)
+(* Interfacing the preprocessor *)
 
 (* Vendor dependencies *)
 
 module Trace = Simple_utils.Trace
 
-(* Some parameters' types *)
+(* Directories and files *)
 
 type file_path = string
-type dirs      = file_path list (* For #include directives *)
+type dirs = file_path list (* #include and #import *)
 
-(* Results and errors *)
+(* Results *)
 
-type error  = Errors.preproc_error
-type c_unit = (Buffer.t * (string * string) list, error) Trace.result
+module Errors = Preprocessing_shared.Errors
 
-(* Preprocessing *)
+type success = Preprocessor.API.success
+type result  = (success, Errors.t) Trace.result
 
-val preprocess        : dirs -> file_path -> c_unit (* from a file *)
-val preprocess_string : dirs -> string -> c_unit (* from a string *)
+(* Preprocessing various sources *)
+
+val from_file    : dirs -> file_path  -> result
+val from_string  : dirs -> string     -> result
+val from_channel : dirs -> in_channel -> result
+
+(* Aliases *)
+
+val preprocess_file    : dirs -> file_path  -> result
+val preprocess_string  : dirs -> string     -> result
+val preprocess_channel : dirs -> in_channel -> result

@@ -7,7 +7,8 @@ let list_sep_d x = list_sep x (tag " ,@ ")
 
 let rec type_variable ppf : type_expression -> _ = fun te -> match te.type_content with
   | T_or(a, b) -> fprintf ppf "@[(%a) |@ (%a)@]" annotated a annotated b
-  | T_pair(a, b) -> fprintf ppf "@[(%a) &@ (%a)@]" annotated a annotated b
+  | T_tuple ts ->
+    fprintf ppf "@[(%a)@]" (list_sep annotated (tag " *@ ")) ts
   | T_base b -> type_constant ppf b
   | T_function(a, b) -> fprintf ppf "@[(%a) ->@ (%a)@]" type_variable a type_variable b
   | T_map(k, v) -> fprintf ppf "@[<4>map(%a -> %a)@]" type_variable k type_variable v
@@ -66,7 +67,7 @@ let rec value ppf : value -> unit = function
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->
-     fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
+    fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
@@ -76,12 +77,17 @@ let rec value ppf : value -> unit = function
   | D_big_map m -> fprintf ppf "Big_map[%a]" (list_sep_d value_assoc) m
   | D_list lst -> fprintf ppf "List[%a]" (list_sep_d value) lst
   | D_set lst -> fprintf ppf "Set[%a]" (list_sep_d value) lst
+  | D_ticket (a,b) -> fprintf ppf "ticket(%a,%a)" value a value b
 
 and type_expression_annotated ppf : type_expression annotated -> unit = fun (_, tv) ->
   type_expression ppf tv
 
-and type_expression ppf : type_expression -> unit = fun te -> match te.type_content with
-  | T_pair (a,b) -> fprintf ppf "pair %a %a" type_expression_annotated a type_expression_annotated b
+and type_expression ppf : type_expression -> unit = fun te ->
+  fprintf ppf "%a" type_content te.type_content
+  
+and type_content ppf : type_content -> unit = function
+  | T_tuple ts ->
+    fprintf ppf "@[(%a)@]" (list_sep annotated (tag " *@ ")) ts
   | T_or    (a,b) -> fprintf ppf "or %a %a" type_expression_annotated a type_expression_annotated b
   | T_function (a, b) -> fprintf ppf "lambda (%a) %a" type_expression a type_expression b
   | T_base tc -> fprintf ppf "%a" type_constant tc
@@ -125,23 +131,33 @@ and expression_content ppf (e:expression_content) = match e with
         expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
   | E_let_in (expr, inline , ((name , _) , body)) ->
       fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
-  | E_let_pair (expr , (((x, _), (y, _)), body)) ->
-      fprintf ppf "@[let (%a, %a) =@;<1 2>%a in@ %a@]"
-        Var.pp x.wrap_content
-        Var.pp y.wrap_content
+  | E_tuple exprs ->
+    fprintf ppf "@[(%a)@]"
+      Format.(pp_print_list ~pp_sep:(const ", ") expression)
+      exprs
+  | E_let_tuple (expr, (fields, body)) ->
+      fprintf ppf "@[let (%a) =@;<1 2>%a in@ %a@]"
+        Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") Var.pp)
+          (List.map (fun (x, _) -> x.Location.wrap_content) fields)
         expression expr
         expression body
+  | E_proj (expr, i, _n) ->
+      fprintf ppf "(%a).(%d)" expression expr i
+  | E_update (expr, i, update, _n) ->
+      fprintf ppf "{ %a with (%d) = %a }"
+        expression expr i expression update
   | E_iterator (b , ((name , _) , body) , expr) ->
-      fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
+    fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-      fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
-
+    fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
+  | E_fold_right (((name , _) , body) , (collection,_) , initial) ->
+    fprintf ppf "@[fold_right %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
   | E_raw_michelson code ->
-      let open Tezos_micheline in
-      let code = Micheline.Seq (Location.generated, code) in
-      let code = Micheline.strip_locations code in
-      let code = Micheline_printer.printable (fun prim -> prim) code in
-      fprintf ppf "%a" Micheline_printer.print_expr code
+    let open Tezos_micheline in
+    let code = Micheline.Seq (Location.generated, code) in
+    let code = Micheline.strip_locations code in
+    let code = Micheline_printer.printable (fun prim -> prim) code in
+    fprintf ppf "%a" Micheline_printer.print_expr code
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"

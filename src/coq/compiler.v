@@ -1,6 +1,6 @@
 Local Set Warnings "-implicit-core-hint-db".
 Set Implicit Arguments.
-From Coq Require Import String List Arith ZArith.
+From Coq Require Import String List Arith ZArith Lia.
 Import ListNotations.
 Open Scope string_scope.
 
@@ -61,29 +61,49 @@ Fixpoint compile_splitting_aux (n : nat) (ss : splitting) : list (node A string)
 Definition compile_splitting (ss : splitting) : list (node A string) :=
   compile_splitting_aux O (rev ss).
 
-Fixpoint comb' (az : list (node A string)) : (node A string) :=
+Fixpoint comb (az : list (node A string)) : (node A string) :=
   match az with
   | [] => Prim nil "unit" [] []
   | [a] => a
-  | a :: az => Prim nil "pair" [comb' az; a] []
+  | a :: az => Prim nil "pair" [a; comb az] []
   end.
 
-Definition comb (az : list (node A string)) : (node A string) := comb' (List.rev az).
-
-Definition COMB (n : nat) : list (node A string) :=
+Definition PAIR (n : nat) : list (node A string) :=
   match n with
-  | O => [Prim nil "UNIT" [] []]
-  | S n => repeat (Prim nil "PAIR" [] []) n
+  | 0 => [Prim nil "UNIT" [] []]
+  | 1 => []
+  | _ => [Prim nil "PAIR" [Int nil (Z.of_nat n)] []]
   end.
 
-Definition UNCOMB (n : nat) : list (node A string) :=
+(* Unfortunately there is a bug in the typechecking of `PAIR k` which
+   makes it difficult to use in general. This is a workaround.
+
+   Note that it takes its arguments in reverse order. *)
+Definition REV_PAIR (n : nat) : list (node A string) :=
   match n with
-  | O => [Prim nil "DROP" [] []]
-  | S n => repeat (Seq nil [Prim nil "DUP" [] [];
-                            Prim nil "CDR" [] [];
-                            Prim nil "SWAP" [] [];
-                            Prim nil "CAR" [] []]) n
+  | 0 => [Prim nil "UNIT" [] []]
+  | 1 => []
+  | _ => List.concat (repeat [Prim nil "SWAP" [] []; Prim nil "PAIR" [] []] (n - 1))
   end.
+
+Definition UNPAIR (n : nat) : list (node A string) :=
+  match n with
+  | 0 => [Prim nil "DROP" [] []]
+  | 1 => []
+  | _ => [Prim nil "UNPAIR" [Int nil (Z.of_nat n)] []]
+  end.
+
+Definition GET (i n : nat) : list (node A string) :=
+  let i := if beq_nat (S i) n
+           then 2 * i
+           else 2 * i + 1 in
+  [Prim nil "GET" [Int nil (Z.of_nat i)] []].
+
+Definition UPDATE (i n : nat) : list (node A string) :=
+  let i := if beq_nat (S i) n
+           then 2 * i
+           else 2 * i + 1 in
+  [Prim nil "UPDATE" [Int nil (Z.of_nat i)] []].
 
 Fixpoint compile_expr
   (env : list (node A string)) (outer : splitting)
@@ -95,12 +115,22 @@ Fixpoint compile_expr
     let (outer, inner) := assoc_splitting outer inner in
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (compile_binds env2 inner (filter_keeps (right_usages outer)) e2)]
-  | E_let_pair _ inner e1 e2 =>
+  (* TODO use PAIR instead of REV_PAIR when possible *)
+  | E_tuple _ args =>
+    [Seq nil (compile_args env outer args);
+     Seq nil (REV_PAIR (args_length args))]
+  | E_let_tuple _ inner e1 e2 =>
     let (env1, env2) := split inner env in
     let (outer, inner) := assoc_splitting outer inner in
     [Seq nil (compile_expr env1 outer e1);
-     Prim nil "UNPAIR" [] [];
+     Seq nil (UNPAIR (binds_length e2));
      Seq nil (compile_binds env2 inner (filter_keeps (right_usages outer)) e2)]
+  | E_proj _ e i n =>
+    [Seq nil (compile_expr env outer e);
+     Seq nil (GET i n)]
+  | E_update _ args i n =>
+    [Seq nil (compile_args env outer args);
+     Seq nil (UPDATE i n)]
   | E_app _ e => [Seq nil (compile_args env outer e);
                   Prim nil "SWAP" [] [];
                   Prim nil "EXEC" [] []]
@@ -119,19 +149,20 @@ Fixpoint compile_expr
         match e with
         | Binds [Drop] [a] e =>
           [Prim nil "CAR" [] [];
-           Seq nil (UNCOMB (length env));
+           Seq nil (UNPAIR (length env));
            Seq nil (compile_expr env (repeat Left (length env)) e)]
         | _ =>
+          (* TODO can we rearrange things so this is just UNPAIR (S (length env)) ? *)
           [Seq nil [Prim nil "DUP" [] [];
                     Prim nil "CDR" [] [];
                     Prim nil "SWAP" [] [];
                     Prim nil "CAR" [] []];
-           Seq nil (UNCOMB (length env));
+           Seq nil (UNPAIR (length env));
            Prim nil "DIG" [Int nil (Z.of_nat (length env))] [];
            Seq nil (compile_binds env (repeat Left (length env)) (repeat Keep (length env)) e)]
         end in
       [Seq nil (compile_splitting outer);
-       Seq nil (COMB (length env));
+       Seq nil (PAIR (length env));
        Prim nil "LAMBDA" [Prim nil "pair" [comb env; a] []; b;
                           Seq nil body]
                          [];
@@ -189,6 +220,21 @@ Fixpoint compile_expr
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (compile_expr env2 (Right :: inner1) e2);
      Prim nil "ITER" [Seq nil [Prim nil "SWAP" [] []; Prim nil "PAIR" [] [];
+                               Seq nil (compile_binds env3 (keep_rights (left_usages inner2)) (filter_keeps (right_usages inner1)) e3)]] [];
+     Seq nil (compile_usages (Keep :: right_usages inner2))]
+  | E_fold_right _ elem inner1 e1 inner2 e2 e3 =>
+    let (env1, env') := split inner1 env in
+    let (env2, env3) := split inner2 env' in
+    let (outer, inner1) := assoc_splitting outer inner1 in
+    let (inner1, inner2) := assoc_splitting inner1 inner2 in
+    [Seq nil (compile_expr env1 outer e1);
+     Seq nil (compile_expr env2 (Right :: inner1) e2);
+     (* build reversed list: *)
+     Seq nil [Prim nil "NIL" [elem] [];
+              Prim nil "SWAP" [] [];
+              Prim nil "ITER" [Seq nil [Prim nil "CONS" [] []]] []];
+     (* fold over reversed list: *)
+     Prim nil "ITER" [Seq nil [Prim nil "PAIR" [] [];
                                Seq nil (compile_binds env3 (keep_rights (left_usages inner2)) (filter_keeps (right_usages inner1)) e3)]] [];
      Seq nil (compile_usages (Keep :: right_usages inner2))]
   | E_failwith x e => [Seq nil (compile_expr env outer e); Prim x "FAILWITH" [] []]
@@ -356,67 +402,49 @@ Proof. apply compile_splitting_typed. Qed.
 Hint Resolve compile_splitting_typed.
 Hint Resolve compile_splitting_typed_cons.
 
-Lemma comb'_snoc_lemma :
-  forall a b g,
-    comb' (g ++ [a; b]) = comb' (g ++ [Prim nil "pair" [b; a] []]).
+Lemma comb_comb_ty :
+  forall g t1 t2,
+    comb_ty (comb (t1 :: t2 :: g)) (t1 :: t2 :: g).
 Proof.
-  intros; induction g; try reflexivity.
-  simpl.
-  destruct g; try reflexivity.
-  simpl; simpl in IHg; rewrite IHg; reflexivity.
+  intros g;
+  induction g;
+  intros t1 t2.
+  - simpl; eauto.
+  - simpl; simpl in IHg; eauto.
 Qed.
 
-Lemma comb_cons_lemma :
-  forall a b g,
-    comb (a :: b :: g) = comb (Prim nil "pair" [a; b] [] :: g).
-Proof.
-  intros a b g.
-  unfold comb.
-  simpl.
-  rewrite <- app_assoc; simpl.
-  rewrite comb'_snoc_lemma.
-  reflexivity.
-Qed.
-
-Lemma comb_typed' :
+Lemma PAIR_typed' :
   forall g g',
-    @prog_typed A (COMB (length g)) (g ++ g') (comb g :: g').
+    @prog_typed A (PAIR (length g)) (g ++ g') (comb g :: g').
 Proof.
-  intros g; destruct g; intros g';
-    simpl; eauto.
-  - unfold comb, comb'; simpl; eauto.
-  - generalize dependent n;
-    generalize dependent g';
-    induction g; intros g' t; eauto;
-    simpl; econstructor; eauto;
-      rewrite comb_cons_lemma;
-      apply IHg.
+  intros g g';
+  destruct g as [|t1 g]; simpl; eauto;
+  destruct g as [|t2 g]; simpl; eauto;
+  econstructor; eauto;
+  match goal with
+  | [|- instr_typed (Prim ?l1 "PAIR" [Int ?l2 _] []) (?t1 :: ?t2 :: ?g ++ ?g') ?s'] =>
+    change (instr_typed (Prim l1 "PAIR" [Int l2 (Z.of_nat (2 + length g))] []) ((t1 :: t2 :: g) ++ g') s')
+  end;
+  eapply Typed_pairN; eauto; try lia; eapply comb_comb_ty.
 Qed.
 
-Definition uncomb_typed' {g g'} : prog_typed (UNCOMB (length g)) (comb g :: g') (g ++ g').
+Lemma UNPAIR_typed' :
+  forall g g',
+    @prog_typed A (UNPAIR (length g)) (comb g :: g') (g ++ g').
 Proof.
-  destruct g; simpl; eauto;
-    generalize dependent n;
-    generalize dependent g';
-    induction g using snoc_list_ind; intros g' t; simpl; eauto.
-  unfold comb.
-  rewrite app_comm_cons, rev_unit; simpl.
-  rewrite length_snoc.
-  simpl.
-  econstructor.
-  2: { specialize (IHg (x :: g') t).
-       rewrite <- app_assoc.
-       simpl.
-       eapply IHg. }
-  eenough (instr_typed _
-                       (Prim _ "pair" [comb' (rev g ++ [t]); x] _ :: g')
-                       (comb (t :: g) :: x :: g'))
-    by (destruct (rev g) eqn:Hr; simpl; apply H).
-  eauto 10.
+  intros g g';
+  destruct g as [|t1 g]; simpl; eauto;
+  destruct g as [|t2 g]; simpl; eauto;
+  econstructor; eauto.
+  match goal with
+  | [|- instr_typed (Prim ?l1 "UNPAIR" [Int ?l2 _] []) ?s (?t1 :: ?t2 :: ?g ++ ?g')] =>
+    change (instr_typed (Prim l1 "UNPAIR" [Int l2 (Z.of_nat (2 + length g))] []) s ((t1 :: t2 :: g) ++ g'))
+  end;
+  eapply Typed_unpairN; eauto; try lia; eapply comb_comb_ty.
 Qed.
 
-Hint Resolve comb_typed'.
-Hint Resolve uncomb_typed'.
+Hint Resolve PAIR_typed'.
+Hint Resolve UNPAIR_typed'.
 
 Definition expr_type_preservation (e : expr) : Prop :=
   forall (g : list (node A string)) (a : (node A string))
@@ -555,7 +583,13 @@ Proof.
       specialize (H0 _ _ _ H9); eapply H0; eauto.
       eapply used_filter_keeps_right_usages; eauto.
       eauto.
-  (* E_let_pair *)
+  (* E_tuple *)
+  - admit. (* TODO *)
+  (* E_let_tuple *)
+  - admit. (* TODO *)
+  (* E_proj *)
+  - admit. (* TODO *)
+  (* E_update *)
   - admit. (* TODO *)
   (* E_app *)
   - eapply H in H4; eauto; simpl in *; eauto.
@@ -682,6 +716,8 @@ Proof.
     eapply used_filter_keeps_right_usages; eauto.
     eauto.
     eauto 10.
+  (* E_fold_right *)
+  - admit. (* TODO *)
   (* E_raw_michelson *)
   - apply splits_right in Hsplits; subst; simpl; eauto.
   (* Args_nil *)

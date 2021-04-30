@@ -7,6 +7,7 @@ open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
+(*module Directive = LexerLib.Directive*)
 
 let pp_par : ('a -> document) -> 'a par reg -> document =
   fun printer {value; _} ->
@@ -23,18 +24,35 @@ let pp_braces : ('a -> document) -> 'a braces reg -> document =
  *)
 
 let rec print ast =
-  let app decl = group (pp_declaration decl) in
   let decl = Utils.nseq_to_list ast.decl in
-  separate_map (hardline ^^ hardline) app decl
+  let decl = List.filter_map pp_declaration decl
+  in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
-  TypeDecl  d -> pp_type_decl  d
-| ConstDecl d -> pp_const_decl d
-| FunDecl   d -> pp_fun_decl   d
+  TypeDecl    decl -> Some (pp_type_decl  decl)
+| ConstDecl   decl -> Some (pp_const_decl decl)
+| FunDecl     decl -> Some (pp_fun_decl   decl)
+| ModuleDecl  decl -> Some (pp_module_decl  decl)
+| ModuleAlias decl -> Some (pp_module_alias decl)
+| Directive      _ -> None
+
+(*
+and pp_dir_decl = function
+  Directive.Linemarker {value; _} ->
+    let open Directive in
+    let linenum, file_path, flag_opt = value in
+    let flag =
+      match flag_opt with
+        Some Push -> " 1"
+      | Some Pop  -> " 2"
+      | None      -> "" in
+    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
+    in string lexeme
+*)
 
 and pp_const_decl {value; _} =
-  let {name; const_type; init; attributes; _} = value in
-  let start = string ("const " ^ name.value) in
+  let {pattern; const_type; init; attributes; _} = value in
+  let start = string "const " ^^ pp_pattern pattern in
   let start = if attributes = [] then start
               else pp_attributes attributes ^/^ start in
   let start =
@@ -49,8 +67,19 @@ and pp_const_decl {value; _} =
 
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
-  string "type " ^^ string name.value ^^ string " is"
+  string "type " ^^ pp_ident name ^^ string " is"
   ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
+
+and pp_module_decl decl =
+  let {name; module_; enclosing; _} = decl.value in
+  string "module " ^^ pp_ident name ^^ string " is {"
+  ^^ group (nest 2 (break 1 ^^ print module_))
+  ^^ string "}"
+
+and pp_module_alias decl =
+  let {alias; binders; _} = decl.value in
+  string "module " ^^ string alias.value
+  ^^ group (nest 2 (break 1 ^^ pp_nsepseq "." pp_ident binders))
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
@@ -214,16 +243,18 @@ and pp_statements s = pp_nsepseq ";" pp_statement s
 and pp_statement = function
   Instr s -> pp_instruction s
 | Data  s -> pp_data_decl   s
-| Type  s -> pp_type_decl   s
 
 and pp_data_decl = function
-  LocalConst d -> pp_const_decl d
-| LocalVar   d -> pp_var_decl   d
-| LocalFun   d -> pp_fun_decl   d
+  LocalConst       d -> pp_const_decl   d
+| LocalVar         d -> pp_var_decl     d
+| LocalFun         d -> pp_fun_decl     d
+| LocalType        d -> pp_type_decl    d
+| LocalModule      d -> pp_module_decl  d
+| LocalModuleAlias d -> pp_module_alias d
 
 and pp_var_decl {value; _} =
-  let {name; var_type; init; _} = value in
-  let start = string ("var " ^ name.value) in
+  let {pattern; var_type; init; _} = value in
+  let start = string "var " ^^ pp_pattern pattern in
   let start =
     match var_type with
       None -> start
@@ -545,7 +576,7 @@ and pp_update {value; _} =
 
 and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = pp_string language.value
+  let language = string language.value.value
   and code     = pp_expr code in
   string "[%" ^^ language ^/^ code ^^ string "]"
 
@@ -596,6 +627,7 @@ and pp_injection_kwd = function
 | InjMap    _ -> "map"
 | InjBigMap _ -> "big_map"
 | InjList   _ -> "list"
+| InjRecord _ -> "record"
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
@@ -627,13 +659,20 @@ and pp_nsepseq :
 and pp_pattern = function
   PConstr p -> pp_constr_pattern p
 | PVar    v -> pp_ident v
-| PWild   _ -> string "_"
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
 | PBytes  b -> pp_bytes b
 | PString s -> pp_string s
 | PList   l -> pp_list_pattern l
 | PTuple  t -> pp_tuple_pattern t
+| PRecord r -> pp_record_pattern r
+
+and pp_record_pattern fields = pp_injection pp_field_pattern fields
+
+and pp_field_pattern {value; _} =
+  let {field_name; pattern; _} = value in
+  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_pattern pattern)
+
 
 and pp_int {value; _} =
   string (Z.to_string (snd value))
@@ -653,7 +692,9 @@ and pp_constr_pattern = function
 | PConstrApp a -> pp_pconstr_app a
 
 and pp_psome {value=_, p; _} =
-  prefix 4 1 (string "Some") (pp_par pp_pattern p)
+  prefix 4 1 
+    (string "Some") 
+    (match p with PTuple _ -> pp_pattern p | _ -> (string "(" ^^ pp_pattern p ^^ string ")" ))
 
 and pp_pconstr_app {value; _} =
   match value with

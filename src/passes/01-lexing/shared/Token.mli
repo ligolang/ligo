@@ -49,11 +49,14 @@ module type S =
        The difference between extracting the lexeme and a string from
        a token is that the latter is the textual representation of the
        OCaml value denoting the token (its abstract syntax), rather
-       than its lexeme (concrete syntax). *)
+       than its lexeme (concrete syntax). Note that [concrete] is used
+       by the modukle [UnlexerGen] to transform the textual
+       representation of a token (not a lexeme) into a lexeme. *)
 
     val to_lexeme : token -> lexeme
     val to_string : offsets:bool -> [`Byte | `Point] -> token -> string
     val to_region : token -> Region.t
+    val concrete  : string -> lexeme
 
     (* Injections *)
 
@@ -61,7 +64,7 @@ module type S =
     type ident_err = Reserved_name
     type   nat_err = Invalid_natural
                    | Non_canonical_zero_nat
-    type   sym_err = Invalid_symbol
+    type   sym_err = Invalid_symbol of string
     type   kwd_err = Invalid_keyword
 
     val mk_int      : lexeme -> Region.t -> (token,   int_err) result
@@ -80,17 +83,9 @@ module type S =
 
     (* Predicates *)
 
-    val is_string   : token -> bool
-    val is_verbatim : token -> bool
-    val is_bytes    : token -> bool
-    val is_int      : token -> bool
-    val is_nat      : token -> bool
-    val is_mutez    : token -> bool
-    val is_ident    : token -> bool
-    val is_constr   : token -> bool
-    val is_lang     : token -> bool
-    val is_minus    : token -> bool
     val is_eof      : token -> bool
-    val is_hexa     : token -> bool
-    val is_sym      : token -> bool
+
+    val support_string_delimiter : char -> bool
+    val verbatim_delimiters : string * string
+
   end

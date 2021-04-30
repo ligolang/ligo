@@ -1,11 +1,11 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, {FC} from 'react';
+import { useDispatch, connect } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../../redux/app';
-import { ChangeEntrypointAction, ChangeStorageAction, DeployState, UseTezBridgeAction } from '../../redux/deploy';
+import { ChangeEntrypointAction, ChangeStorageAction, UseNetworkAction, UseSignerAction, networkType, signerType } from '../../redux/deploy';
 import { CheckboxComponent } from '../form/checkbox';
 import { AccessFunctionLabel, Group, HGroup, Input, Label, Textarea } from '../form/inputs';
+import { Option, Select } from '../form/select';
 
 const Container = styled.div``;
 
@@ -18,21 +18,56 @@ const Hint = styled.span`
   font-size: 0.8em;
 `;
 
-export const DeployPaneComponent = () => {
+const SelectCommand = styled(Select)`
+  flex: 2;
+
+  &:hover {
+    box-shadow: var(--box-shadow);
+  }
+`;
+
+interface stateTypes {
+  entrypoint?: string;
+  storage?: string;
+  useNetwork?: string
+}
+
+const DeployPaneComponent:FC<stateTypes> = (props) => {
+
+  const {entrypoint, storage} = props
+  let {useNetwork} = props
+
   const dispatch = useDispatch();
-  const entrypoint = useSelector<AppState, DeployState['entrypoint']>(
-    state => state.deploy.entrypoint
-  );
-  const storage = useSelector<AppState, DeployState['storage']>(
-    state => state.deploy.storage
-  );
-  const useTezBridge = useSelector<AppState, DeployState['useTezBridge']>(
-    state => state.deploy.useTezBridge
-  );
+
+  const setSigner = (isSelected) => {
+    if(isSelected && useNetwork !== networkType.Mainnet){
+      dispatch({ ...new UseSignerAction(signerType.Sign) })
+    } else {
+      dispatch({ ...new UseSignerAction(signerType.Beacon) })
+    }
+  }
 
   return (
     <Container>
       <Group>
+      <Label htmlFor="storage">Choose a Network</Label>
+      <SelectCommand
+          id="command-select"
+          value={useNetwork}
+          onChange={network => {
+            useNetwork = network
+              dispatch({ ...new UseNetworkAction(network) })
+              if (useNetwork !== networkType.Mainnet) {
+                setSigner(true)
+              } else {
+                setSigner(false)
+              }
+          }}
+        >
+          <Option value={networkType.Edonet}>Edonet</Option>
+          <Option value={networkType.Florencenet}>Florencenet</Option>
+          <Option value={networkType.Mainnet}>Mainnet</Option>
+        </SelectCommand>
         <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
         <Input
           id="entrypoint"
@@ -53,17 +88,31 @@ export const DeployPaneComponent = () => {
           }
         ></Textarea>
       </Group>
+      {useNetwork && (useNetwork === networkType.Edonet || useNetwork === networkType.Florencenet) &&
       <HGroup>
         <Checkbox
-          checked={!useTezBridge}
-          onChanged={value => dispatch({ ...new UseTezBridgeAction(!value) })}
+          checked={true}
+          onChanged={(value) => setSigner(value)}
         ></Checkbox>
         <Label htmlFor="tezbridge">
           We'll sign for you
           <br />
-          <Hint>Got your own key? Deselect to sign with TezBridge</Hint>
+          <Hint>Got your own key? Deselect to sign with Beacon</Hint>
         </Label>
       </HGroup>
+      }
     </Container>
   );
 };
+
+function mapStateToProps(state) {
+  const { deploy } = state
+  return { 
+    entrypoint: deploy.entrypoint,
+    storage: deploy.storage,
+    useNetwork: deploy.network,
+    useSigner: deploy.signer
+   }
+}
+
+export default connect(mapStateToProps, null)(DeployPaneComponent)

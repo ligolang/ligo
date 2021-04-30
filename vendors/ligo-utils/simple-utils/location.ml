@@ -53,7 +53,7 @@ type 'a wrap = {
   location : t ;
 }
 
-let wrap_to_yojson f {wrap_content;location} = 
+let wrap_to_yojson f {wrap_content;location} =
   `Assoc [("wrap_content", f wrap_content); ("location",to_yojson location)]
 let wrap_of_yojson f = function
   | `Assoc [("wrap_content", wrap_content); ("location",location)] ->
@@ -65,7 +65,7 @@ let wrap_of_yojson f = function
     | _ ->
      Utils.error_yojson_format "{wrap_content: 'a; location: location}"
      )
-  | _ -> 
+  | _ ->
      Utils.error_yojson_format "{wrap_content: 'a; location: location}"
 
 
@@ -93,3 +93,8 @@ let pp_lift = fun ppf r -> pp ppf @@ lift r
 
 let r_extract : 'a Region.reg -> t = fun x -> File x.region
 let r_split : 'a Region.reg -> ('a * t) = fun x -> x.value , File x.region
+let cover : t -> t -> t = fun a b ->
+  match a , b with
+  | File _ , Virtual _ -> a
+  | Virtual _ , _ -> b
+  | File rega , File regb -> File (Region.cover rega regb)

@@ -3,16 +3,19 @@ import { combineReducers } from 'redux';
 import command, { CommandState } from './command';
 import compile, { CompileState } from './compile';
 import deploy, { DeployState } from './deploy';
-import dryRun, { DryRunState } from './dry-run';
+import { DryRunState, dryRun } from './dry-run';
 import editor, { EditorState } from './editor';
 import evaluateFunction, { EvaluateFunctionState } from './evaluate-function';
 import evaluateValue, { EvaluateValueState } from './evaluate-value';
 import examples, { ExamplesState } from './examples';
-import generateDeployScript, { GenerateDeployScriptState } from './generate-deploy-script';
+import generateDeployScript, {
+  GenerateDeployScriptState,
+} from './generate-deploy-script';
 import loading, { LoadingState } from './loading';
 import result, { ResultState } from './result';
 import share, { ShareState } from './share';
 import version, { VersionState } from './version';
+import compileFunction, { CompileFunctionState } from './compile-function';
 
 export interface AppState {
   version: VersionState;
@@ -28,9 +31,10 @@ export interface AppState {
   command: CommandState;
   examples: ExamplesState;
   loading: LoadingState;
+  compileFunction: CompileFunctionState;
 }
 
-export default combineReducers({
+const reducer = combineReducers({
   editor,
   share,
   compile,
@@ -43,5 +47,8 @@ export default combineReducers({
   command,
   examples,
   loading,
-  version
+  version,
+  compileFunction,
 });
+
+export default reducer;

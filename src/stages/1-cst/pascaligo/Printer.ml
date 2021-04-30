@@ -3,6 +3,7 @@
 
 open CST
 
+module Directive = LexerLib.Directive
 module Region = Simple_utils.Region
 open! Region
 
@@ -128,16 +129,24 @@ let rec print_tokens state ast =
   print_token state eof "EOF"
 
 and print_decl state = function
-  TypeDecl  decl -> print_type_decl  state decl
-| ConstDecl decl -> print_const_decl state decl
-| FunDecl   decl -> print_fun_decl   state decl
+  TypeDecl    decl -> print_type_decl    state decl
+| ConstDecl   decl -> print_const_decl   state decl
+| FunDecl     decl -> print_fun_decl     state decl
+| ModuleDecl  decl -> print_module_decl  state decl
+| ModuleAlias decl -> print_module_alias state decl
+| Directive   dir  -> print_directive    state dir
+
+and print_directive state dir =
+  let s =
+    Directive.to_string ~offsets:state#offsets state#mode dir
+  in Buffer.add_string state#buffer s
 
 and print_const_decl state {value; _} =
-  let {kwd_const; name; const_type;
+  let {kwd_const; pattern; const_type;
        equal; init; terminator; attributes; _} = value in
   print_attributes state attributes;
   print_token      state kwd_const "const";
-  print_var        state name;
+  print_pattern    state pattern;
   print_option     state print_type_annot const_type;
   print_token      state equal "=";
   print_expr       state init;
@@ -151,6 +160,35 @@ and print_type_decl state {value; _} =
   print_token      state kwd_is "is";
   print_type_expr  state type_expr;
   print_terminator state terminator
+
+and print_module_decl state {value; _} =
+  let {kwd_module; name; kwd_is;enclosing;
+       module_; terminator} = value in
+  match enclosing with
+    Brace (lbrace, rbrace) ->
+    print_token      state kwd_module "module";
+    print_var        state name;
+    print_token      state kwd_is "is";
+    print_token      state lbrace "{";
+    print_tokens     state module_;
+    print_token      state rbrace "}";
+    print_terminator state terminator
+  | BeginEnd (kwd_begin, kwd_end) ->
+    print_token      state kwd_module "module";
+    print_var        state name;
+    print_token      state kwd_is "is";
+    print_token      state kwd_begin "begin";
+    print_tokens     state module_;
+    print_token      state kwd_end "end";
+    print_terminator state terminator
+
+and print_module_alias state {value; _} =
+  let {kwd_module; alias; kwd_is; binders;terminator} = value in
+    print_token      state kwd_module "module";
+    print_var        state alias;
+    print_token      state kwd_is "is";
+    print_nsepseq    state "." print_var binders;
+    print_terminator state terminator
 
 and print_type_expr state = function
   TProd   cartesian   -> print_cartesian   state cartesian
@@ -297,15 +335,18 @@ and print_block state block =
       print_token      state kwd_end "end"
 
 and print_data_decl state = function
-  LocalConst decl -> print_const_decl state decl
-| LocalVar   decl -> print_var_decl   state decl
-| LocalFun  decl -> print_fun_decl  state decl
+  LocalConst       decl -> print_const_decl   state decl
+| LocalVar         decl -> print_var_decl     state decl
+| LocalFun         decl -> print_fun_decl     state decl
+| LocalType        decl -> print_type_decl    state decl
+| LocalModule      decl -> print_module_decl  state decl
+| LocalModuleAlias decl -> print_module_alias state decl
 
 and print_var_decl state {value; _} =
-  let {kwd_var; name; var_type;
+  let {kwd_var; pattern; var_type;
        assign; init; terminator} = value in
   print_token      state kwd_var "var";
-  print_var        state name;
+  print_pattern    state pattern;
   print_option     state print_type_annot var_type;
   print_token      state assign ":=";
   print_expr       state init;
@@ -323,7 +364,6 @@ and print_statements state sequence =
 and print_statement state = function
   Instr instr -> print_instruction state instr
 | Data  data  -> print_data_decl   state data
-| Type  type_ -> print_type_decl   state type_
 
 and print_instruction state = function
   Cond        {value; _} -> print_conditional state value
@@ -745,6 +785,7 @@ and print_injection_kwd state = function
 | InjMap    kwd_map     -> print_token state kwd_map "map"
 | InjBigMap kwd_big_map -> print_token state kwd_big_map "big_map"
 | InjList   kwd_list    -> print_token state kwd_list "list"
+| InjRecord   kwd_list    -> print_token state kwd_list "record"
 
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
@@ -755,11 +796,11 @@ and print_ne_injection :
     match enclosing with
       Brackets (lbracket, rbracket) ->
         print_token      state lbracket "[";
-        print_nsepseq     state ";" print ne_elements;
+        print_nsepseq    state ";" print ne_elements;
         print_terminator state terminator;
         print_token      state rbracket "]"
     | End kwd_end ->
-        print_nsepseq     state ";" print ne_elements;
+        print_nsepseq    state ";" print ne_elements;
         print_terminator state terminator;
         print_token      state kwd_end "end"
 
@@ -809,7 +850,6 @@ and print_par_expr state {value; _} =
 
 and print_pattern state = function
   PVar var         -> print_var state var
-| PWild wild       -> print_token state wild "_"
 | PInt i           -> print_int state i
 | PNat n           -> print_nat state n
 | PBytes b         -> print_bytes state b
@@ -817,7 +857,17 @@ and print_pattern state = function
 | PList pattern    -> print_list_pattern state pattern
 | PTuple ptuple    -> print_ptuple state ptuple
 | PConstr pattern  -> print_constr_pattern state pattern
+| PRecord record   -> print_record_pattern state record
 
+
+and print_record_pattern state record_pattern =
+  print_injection state print_field_pattern record_pattern
+
+and print_field_pattern state {value; _} =
+  let {field_name; eq; pattern} = value in
+  print_var     state field_name;
+  print_token   state eq "=";
+  print_pattern state pattern
 and print_constr_pattern state = function
   PUnit region     -> print_token state region "Unit"
 | PFalse region    -> print_token state region "False"
@@ -832,15 +882,9 @@ and print_constr_pattern state = function
     | Some tuple -> print_ptuple state tuple
 
 and print_psome state {value; _} =
-  let c_Some, patterns = value in
+  let c_Some, pattern = value in
   print_token    state c_Some "Some";
-  print_patterns state patterns
-
-and print_patterns state {value; _} =
-  let {lpar; inside; rpar} = value in
-  print_token   state lpar "(";
-  print_pattern state inside;
-  print_token   state rpar ")"
+  print_pattern state pattern
 
 and print_list_pattern state = function
   PListComp comp ->
@@ -881,12 +925,16 @@ let to_string ~offsets ~mode printer node =
 
 let tokens_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_tokens
+
 let path_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_path
+
 let pattern_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_pattern
+
 let instruction_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_instruction
+
 let type_expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_type_expr
 
@@ -931,6 +979,16 @@ and pp_declaration state = function
 | FunDecl {value; region} ->
     pp_loc_node state "FunDecl" region;
     pp_fun_decl state value
+| ModuleDecl {value; region} ->
+    pp_loc_node state "ModuleDecl" region;
+    pp_mod_decl state value
+| ModuleAlias {value; region} ->
+    pp_loc_node  state "ModuleAlias" region;
+    pp_mod_alias state value
+| Directive dir ->
+    let region, string = Directive.project dir in
+    pp_loc_node state "Directive" region;
+    pp_node state string
 
 and pp_type_decl state (decl : type_decl) =
   let () =
@@ -941,6 +999,31 @@ and pp_type_decl state (decl : type_decl) =
     let state = state#pad 2 1 in
     pp_node  state "<type_expr>";
     pp_type_expr (state#pad 1 0) decl.type_expr
+  in ()
+
+and pp_mod_decl state (decl : module_decl) =
+  let () =
+    let state = state#pad 2 0 in
+    pp_node  state "<name>";
+    pp_ident (state#pad 1 0) decl.name in
+  let () =
+    let state = state#pad 2 1 in
+    pp_node  state "<module>";
+    pp_cst (state#pad 1 0) decl.module_
+  in ()
+
+and pp_mod_alias state (decl : module_alias) =
+  let () =
+    let state = state#pad 2 0 in
+    pp_node  state "<alias>";
+    pp_ident (state#pad 1 0) decl.alias in
+  let () =
+    let state = state#pad 2 1 in
+    let binders     = Utils.nsepseq_to_list decl.binders in
+    let len            = List.length binders in
+    let apply len rank = pp_ident (state#pad len rank) in
+    pp_node  state "<module>";
+    List.iteri (apply len) binders
   in ()
 
 and pp_fun_decl state decl =
@@ -993,7 +1076,7 @@ and pp_const_decl state decl =
   let arity = arity + 2 in
   let rank = 0 in
   let rank =
-    pp_ident (state#pad arity 0) decl.name; rank+1 in
+    pp_pattern (state#pad arity 0) decl.pattern; rank+1 in
   let rank =
     pp_type_annot (state#pad arity rank) rank decl.const_type in
   let rank =
@@ -1173,10 +1256,6 @@ and pp_statement state = function
 | Data data_decl ->
     pp_node state "Data";
     pp_data_decl (state#pad 1 0) data_decl
-| Type type_decl ->
-    pp_node state "Type";
-    pp_type_decl (state#pad 1 0) type_decl.value
-
 and pp_instruction state = function
   Cond {value; region} ->
     pp_loc_node state "Cond" region;
@@ -1277,9 +1356,7 @@ and pp_case_clause :
     printer (state#pad 2 1) clause.rhs
 
 and pp_pattern state = function
-  PWild region ->
-    pp_loc_node state "PWild" region
-| PConstr pattern ->
+  PConstr pattern ->
     pp_node state "PConstr";
     pp_constr_pattern (state#pad 1 0) pattern
 | PVar v ->
@@ -1303,6 +1380,13 @@ and pp_pattern state = function
 | PTuple {value; region} ->
     pp_loc_node state "PTuple" region;
     pp_tuple_pattern (state#pad 1 0) value
+| PRecord {value; _} ->
+    pp_node state "PRecord";
+    pp_injection pp_field_pattern state value
+
+and pp_field_pattern state {value; _} =
+  pp_node    state value.field_name.value;
+  pp_pattern (state#pad 1 0) value.pattern
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -1315,9 +1399,9 @@ and pp_int state {value=lexeme,z; region} =
 and pp_constr_pattern state = function
   PNone region ->
     pp_loc_node state "PNone" region
-| PSomeApp {value=_,{value=par; _}; region} ->
+| PSomeApp {value=_,pattern; region} ->
     pp_loc_node state "PSomeApp" region;
-    pp_pattern (state#pad 1 0) par.inside
+    pp_pattern (state#pad 1 0) pattern
 | PUnit region ->
     pp_loc_node state "PUnit" region
 | PFalse region ->
@@ -1371,8 +1455,9 @@ and pp_ne_injection :
     let arity          = if inj.attributes = [] then length else length + 1
     and apply len rank = printer (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
-       let state = state#pad arity (arity-1)
-       in pp_attributes state inj.attributes
+       if inj.attributes <> [] then
+         let state = state#pad arity (arity-1)
+         in pp_attributes state inj.attributes
 
 and pp_tuple_pattern state tuple =
   let patterns       = Utils.nsepseq_to_list tuple.inside in
@@ -1407,10 +1492,11 @@ and pp_projection state proj =
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
 
-and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
-= fun f state ma ->
-  pp_ident (state#pad 2 0) ma.module_name;
-  f (state#pad 2 1) ma.field
+and pp_module_access
+    : type a. (state -> a -> unit ) -> state -> a module_access -> unit
+  = fun printer state access ->
+      pp_ident (state#pad 2 0) access.module_name;
+      printer  (state#pad 2 1) access.field
 
 and pp_update state update =
   pp_path (state#pad 2 0) update.record;
@@ -1565,11 +1651,21 @@ and pp_data_decl state = function
 | LocalFun {value; region} ->
     pp_loc_node state "LocalFun" region;
     pp_fun_decl state value
+| LocalType type_decl ->
+    pp_node state "Type";
+    pp_type_decl (state#pad 1 0) type_decl.value
+| LocalModule module_decl ->
+    pp_node state "Module";
+    pp_mod_decl (state#pad 1 0) module_decl.value
+| LocalModuleAlias module_alias ->
+    pp_node state "Module";
+    pp_mod_alias (state#pad 1 0) module_alias.value
+
 
 and pp_var_decl state decl =
   let arity = if decl.var_type = None then 2 else 3 in
   let rank = 0 in
-  let rank = pp_ident (state#pad arity rank) decl.name; rank+1 in
+  let rank = pp_pattern (state#pad arity rank) decl.pattern; rank+1 in
   let rank = pp_type_annot (state#pad arity rank) rank decl.var_type
   in pp_expr (state#pad arity rank) decl.init
 

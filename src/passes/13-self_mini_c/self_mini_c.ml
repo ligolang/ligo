@@ -35,7 +35,7 @@ let is_pure_constant : constant' -> bool =
   | C_UPDATE | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
   | C_INT | C_ABS | C_IS_NAT
   | C_ADDRESS
-  | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SLICE
+  | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SLICE | C_SET_UPDATE
   | C_SHA256 | C_SHA512 | C_BLAKE2b | C_CHECK_SIGNATURE
   | C_SHA3 | C_KECCAK
   | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
@@ -64,7 +64,7 @@ let is_pure_constant : constant' -> bool =
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER
+  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER | C_POLYMORPHIC_ADD
   (* impure: *)
   | C_ASSERTION
   | C_ASSERT_SOME
@@ -76,11 +76,16 @@ let is_pure_constant : constant' -> bool =
   | C_ITER
   | C_LOOP_LEFT
   | C_FOLD
+  | C_FOLD_LEFT
+  | C_FOLD_RIGHT
   | C_SET_ITER
   | C_SET_FOLD
+  | C_SET_FOLD_DESC
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
+  | C_LIST_FOLD_LEFT
+  | C_LIST_FOLD_RIGHT
   | C_MAP_GET_FORCE
   | C_MAP_ITER
   | C_MAP_MAP
@@ -100,16 +105,23 @@ let is_pure_constant : constant' -> bool =
   | C_SELF
   | C_SELF_ADDRESS
   | C_IMPLICIT_ACCOUNT
-  (* Test - ligo interpreter *)
+  (* Test - ligo interpreter, should never end up here *)
   | C_TEST_ORIGINATE
   | C_TEST_GET_STORAGE
   | C_TEST_GET_BALANCE
   | C_TEST_SET_NOW
   | C_TEST_SET_SOURCE
-  | C_TEST_SET_BALANCE
+  | C_TEST_SET_BAKER
   | C_TEST_EXTERNAL_CALL
-  | C_TEST_ASSERT_FAILURE
+  | C_TEST_EXTERNAL_CALL_EXN
+  | C_TEST_MICHELSON_EQUAL
+  | C_TEST_GET_NTH_BS
   | C_TEST_LOG
+  | C_TEST_COMPILE_EXPRESSION
+  | C_TEST_COMPILE_EXPRESSION_SUBST
+  | C_TEST_STATE_RESET
+  | C_TEST_LAST_ORIGINATIONS
+  | C_TEST_COMPILE_META_VALUE
     -> false
 
 let rec is_pure : expression -> bool = fun e ->
@@ -128,8 +140,15 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_let_in (e1, _, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
-  | E_let_pair (e1, (_, e2))
+
+  | E_tuple exprs
+    -> List.for_all is_pure exprs
+  | E_let_tuple (e1, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
+  | E_proj (e, _i, _n)
+    -> is_pure e
+  | E_update (expr, _i, update, _n)
+    -> List.for_all is_pure [ expr ; update ]
 
   | E_constant (c)
     -> is_pure_constant c.cons_name && List.for_all is_pure c.arguments
@@ -138,6 +157,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_application _
   | E_iterator _
   | E_fold _
+  | E_fold_right _
     -> false
 
 let occurs_in : expression_variable -> expression -> bool =
@@ -224,6 +244,24 @@ let beta : bool ref -> expression -> expression =
           | C_CDR -> e2
           | _ -> assert false)
     else e
+
+  (* (e0, e1, ...).(i) ↦ ei  (only if all ei are pure) *)
+  | E_proj ({ content = E_tuple es; _ }, i, _n) ->
+    if List.for_all is_pure es
+    then List.nth es i
+    else e
+
+  (* let (x0, x1, ...) = (e0, e1, ...) in body ↦
+     let ... in let x1 = e1 in let x0 = e0 in body
+     (here, purity of the ei does not matter)
+     *)
+  | E_let_tuple ({ content = E_tuple es; _ }, (vars, body)) ->
+    List.fold_left
+      (fun body (e, (v, t)) ->
+         { content = E_let_in (e, false, ((v, t), body));
+           location = Location.generated;
+           type_expression = body.type_expression })
+      body (List.combine es vars)
   | _ -> e
 
 let betas : bool ref -> expression -> expression =
@@ -243,6 +281,31 @@ let eta : bool ref -> expression -> expression =
           { e with content = e1.content })
        else e
      | _ -> e)
+  (* (x.(0), x.(1), ...) ↦ x *)
+  | E_tuple es ->
+    let count = List.length es in
+    let projs =
+      List.mapi
+        (fun i e ->
+           match e.content with
+           | E_proj (e', j, n) ->
+             if i = j && n = count
+             then
+               match e'.content with
+               | E_variable x -> Some (Location.unwrap x)
+               | _ -> None
+             else None
+           | _ -> None)
+        es in
+    (match Option.bind_list projs with
+     | None -> e
+     | Some vars ->
+       match vars with
+       | var :: _ ->
+         if List.for_all (Var.equal var) vars
+         then { e with content = E_variable (Location.wrap var) }
+         else e
+       | _ -> e)
   | _ -> e
 
 let etas : bool ref -> expression -> expression =
@@ -263,3 +326,8 @@ let rec all_expression : expression -> expression =
   if !changed
   then all_expression e
   else e
+
+let all_expression e =
+  let e = Uncurry.uncurry_expression e in
+  let e = all_expression e in
+  e

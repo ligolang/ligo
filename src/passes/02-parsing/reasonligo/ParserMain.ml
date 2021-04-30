@@ -6,12 +6,13 @@ module Region = Simple_utils.Region
 
 (* Internal dependencies *)
 
-module Comments    = Lexer_reasonligo.Comments
-module File        = Lexer_reasonligo.File
-module Token       = Lexer_reasonligo.Token
-module Self_lexing = Lexer_reasonligo.Self_lexing
-module CST         = Cst.Reasonligo
-module ParErr      = Parser_msg
+module Comments      = Preprocessing_reasonligo.Comments
+module File          = Preprocessing_reasonligo.File
+module Token         = Lexing_reasonligo.Token
+module Self_tokens   = Lexing_reasonligo.Self_tokens
+module CST           = Cst.Reasonligo
+module ParErr        = Parser_msg
+module ParserMainGen = Parsing_shared.ParserMainGen
 
 (* CLIs *)
 
@@ -23,7 +24,7 @@ module  Parser_CLI =    ParserLib.CLI.Make (Lexer_CLI)
 
 module Parser =
   struct
-    include Parser_reasonligo.Parser
+    include Parsing_reasonligo.Parser
     type tree = CST.t
 
     let main = contract
@@ -36,7 +37,7 @@ module Parser =
 
 module Pretty =
   struct
-    include Parser_reasonligo.Pretty
+    include Parsing_reasonligo.Pretty
     type tree = CST.t
   end
 
@@ -48,17 +49,17 @@ module Printer =
 
 (* Finally... *)
 
-module Main = Shared_parser.ParserMainGen.Make
-                (Comments)
+module Main = ParserMainGen.Make
                 (File)
+                (Comments)
                 (Token)
+                (ParErr)
+                (Self_tokens)
                 (CST)
                 (Parser)
-                (ParErr)
                 (Printer)
                 (Pretty)
                 (Parser_CLI)
-                (Self_lexing)
 
 let () = Main.check_cli ()
 let () = Main.parse ()

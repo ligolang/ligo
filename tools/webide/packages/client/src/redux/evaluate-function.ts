@@ -30,7 +30,7 @@ const DEFAULT_STATE: EvaluateFunctionState = {
   parameters: ''
 };
 
-export default (
+const evaluateFunction = (
   state = DEFAULT_STATE,
   action: Action
 ): EvaluateFunctionState => {
@@ -50,6 +50,9 @@ export default (
         ...state,
         parameters: action.payload
       };
+    default:
+      return state;
   }
-  return state;
 };
+
+export default evaluateFunction

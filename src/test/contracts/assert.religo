@@ -1,8 +1,8 @@
-let main = (p, s : bool, unit) => {
+let main = (p: bool,s: unit) => {
   let u : unit = assert (p);
   ([]: list (operation), s);
 };
 
-let some = (o : unit option) => {
-  assert_some o
+let some = (o : option(unit)) => {
+  assert_some(o)
 };

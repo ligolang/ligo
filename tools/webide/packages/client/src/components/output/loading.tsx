@@ -40,7 +40,7 @@ export const Loading = (props: { onCancel?: () => void }) => {
   const dispatchedAction = useSelector<
     AppState,
     CommandState['dispatchedAction']
-  >(state => state.command.dispatchedAction);
+  >(state => state.command && state.command.dispatchedAction);
 
   const dispatch = useDispatch();
 

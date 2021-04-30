@@ -1,13 +1,13 @@
 import { CancellableAction } from './actions/cancellable';
-import { Command } from './types';
+import { CommandType } from './types';
 
 export enum ActionType {
   ChangeSelected = 'command-change-selected',
-  ChangeDispatchedAction = 'command-change-dispatched-action'
+  ChangeDispatchedAction = 'command-change-dispatched-action',
 }
 
 export interface CommandState {
-  selected: Command;
+  selected: CommandType;
   dispatchedAction: CancellableAction | null;
 }
 
@@ -24,22 +24,25 @@ export class ChangeDispatchedAction {
 type Action = ChangeSelectedAction | ChangeDispatchedAction;
 
 const DEFAULT_STATE: CommandState = {
-  selected: Command.Compile,
-  dispatchedAction: null
+  selected: CommandType.Compile,
+  dispatchedAction: null,
 };
 
-export default (state = DEFAULT_STATE, action: Action): CommandState => {
+const command = (state = DEFAULT_STATE, action: Action): CommandState => {
   switch (action.type) {
     case ActionType.ChangeSelected:
       return {
         ...state,
-        selected: action.payload
+        selected: action.payload,
       };
     case ActionType.ChangeDispatchedAction:
       return {
         ...state,
-        dispatchedAction: action.payload
+        dispatchedAction: action.payload,
       };
+    default:
+      return state;
   }
-  return state;
 };
+
+export default command;

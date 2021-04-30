@@ -12,6 +12,8 @@
       "language-basics/unit-option-pattern-matching",
       "language-basics/maps-records",
       "language-basics/sets-lists-tuples",
+      "language-basics/exceptions",
+      "language-basics/modules",
       "language-basics/tezos-specific"
     ],
     "Advanced": [
@@ -19,7 +21,9 @@
       "advanced/entrypoints-contracts",
       "advanced/include",
       "advanced/first-contract",
-      "advanced/michelson-and-ligo",      
+      "advanced/michelson-and-ligo",
+      "advanced/testing",
+      "advanced/michelson_testing",
       "advanced/inline",
       "advanced/interop",
       "advanced/embedded-michelson"
@@ -27,6 +31,34 @@
     "Reference": [
       "api/cli-commands",
       "api/cheat-sheet"
+    ],
+    "Command Line Options": [
+      "manpages/ligo",
+      "manpages/changelog",
+      "manpages/compile-contract",
+      "manpages/compile-expression",
+      "manpages/compile-parameter",
+      "manpages/compile-storage",
+      "manpages/dry-run",
+      "manpages/evaluate-value",
+      "manpages/get-scope",
+      "manpages/interpret",
+      "manpages/list-declarations",
+      "manpages/measure-contract",
+      "manpages/preprocess",
+      "manpages/pretty-print",
+      "manpages/print-ast",
+      "manpages/print-ast-combined",
+      "manpages/print-ast-core",
+      "manpages/print-ast-sugar",
+      "manpages/print-ast-typed",
+      "manpages/print-cst",
+      "manpages/print-graph",
+      "manpages/print-mini-c",
+      "manpages/run-function",
+      "manpages/test",
+      "manpages/transpile-contract",
+      "manpages/transpile-expression"
     ],
     "API":[
       "reference/toplevel",
@@ -38,7 +70,8 @@
       "reference/map-reference",
       "reference/set-reference",
       "reference/string-reference",
-      "reference/current-reference"
+      "reference/current-reference",
+      "reference/test"
     ]
   },
   "contributors-docs": {

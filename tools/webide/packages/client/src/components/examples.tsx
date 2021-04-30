@@ -1,12 +1,12 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, {FC, useEffect, useState} from 'react';
+import { useDispatch, connect } from 'react-redux';
 import styled from 'styled-components';
 import 'bootstrap/dist/css/bootstrap.min.css'
 
-import { AppState } from '../redux/app';
-import { ChangeDirtyAction, EditorState } from '../redux/editor';
-import { ChangeSelectedAction, ExamplesState } from '../redux/examples';
+import { ChangeDirtyAction } from '../redux/editor';
+import { ChangeSelectedAction, ExampleItem } from '../redux/examples';
 import { getExample } from '../services/api';
+import { ExampleAction, ExampleListAction } from '../redux/actions/examples'
 
 const Container = styled.div`
   flex: 0.5;  
@@ -41,21 +41,32 @@ const MenuItem = styled.span`
   }
 `;
 
-export const Examples = () => {
-  const examples = useSelector<AppState, ExamplesState['list']>(
-    (state: AppState) => state.examples.list
-  );
-  const editorDirty = useSelector<AppState, EditorState['dirty']>(
-    (state: AppState) => state.editor.dirty
-  );
+interface stateTypes {
+  isEditorDirty?: boolean;
+}
 
+interface dispatchTypes {
+  defaultExampleList: () => any;
+  getExample: (id) => any
+}
+
+const Examples:FC<stateTypes&dispatchTypes> = (props) => {
+  
+  const { isEditorDirty } = props
+  const [exampleList, setExampleList] = useState<ExampleItem[]>([]);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    props.defaultExampleList().then((list) => {
+      setExampleList(list)
+    })
+  },[props]);
 
   return (
     <Container>
       <Header>Contract Examples</Header>
       <MenuContainer>
-        {examples.map(example => {
+        {exampleList && exampleList.map(example => {
           return (
             <MenuItem
               id={example.id}
@@ -63,11 +74,11 @@ export const Examples = () => {
               onClick={async () => {
                 const response = await getExample(example.id);
                 if (
-                  !editorDirty ||
+                  !isEditorDirty ||
                   window.confirm(
                     'Are you sure you want to navigate away? Data you have entered will be lost.\n\nPress OK to continue or Cancel to stay on the current page.\n\n'
                   )
-                ) {
+                 ) {
                   dispatch({ ...new ChangeSelectedAction(response) });
                   dispatch({ ...new ChangeDirtyAction(false) });
                 }
@@ -81,3 +92,19 @@ export const Examples = () => {
     </Container>
   );
 };
+
+const mapStateToProps = state => {
+  const { editor } = state
+  return { 
+    isEditorDirty : editor.dirty
+   }
+}
+
+const mapDispatchToProps = dispatch => {
+  return({
+    defaultExampleList: ()  => dispatch(ExampleListAction()),
+    getExample: (id)  => dispatch(ExampleAction(id))
+  })
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Examples)

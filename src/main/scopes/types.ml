@@ -21,26 +21,53 @@ module Definitions = struct
     content : Ast_core.type_expression ;
   }
   
-  type def = Variable of vdef | Type of tdef
-  type def_map = def Def_map.t
+  type mdef = {
+    name : string ;
+    range : Location.t ;
+    body_range : Location.t ;
+    content : def_map ;
+  }
+
+  and adef = {
+    name : string ;
+    range : Location.t ;
+    body_range : Location.t ;
+    content : Ast_core.module_variable List.Ne.t;
+  }
+
+  and def = Variable of vdef | Type of tdef | Module of mdef | ModuleAlias of adef
+  and def_map = def Def_map.t
 
   let merge_defs a b = Def_map.union (fun _ a _  -> Some a) a b
 
   let get_def_name = function
-    | Variable d -> d.name
-    | Type d -> d.name
+    | Variable    d -> d.name
+    | Type        d -> d.name
+    | Module      d -> d.name
+    | ModuleAlias d -> d.name
   
   let get_range = function
-    | Type t -> t.range
-    | Variable v -> v.range
+    | Type        t -> t.range
+    | Variable    v -> v.range
+    | Module      m -> m.range
+    | ModuleAlias a -> a.range
 
   let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
     fun name t range body_range ->
       Variable { name ; range ; body_range ; t ; references = None }
 
-  let make_t_def : string -> Ast_core.declaration Location.wrap -> Ast_core.type_expression -> def =
-    fun name decl te ->
-      Type { name ; range = decl.location ; body_range = te.location ; content = te }
+  let make_t_def : string -> Location.t -> Ast_core.type_expression -> def =
+    fun name loc te ->
+      Type { name ; range = loc ; body_range = te.location ; content = te }
+
+  let make_m_def : string -> Location.t -> _ Def_map.t -> def =
+    fun name loc m ->
+      Module { name ; range = loc ; body_range = Location.dummy ; content = m }
+
+  let make_a_def : string -> Ast_core.declaration Location.wrap -> Ast_core.module_variable List.Ne.t -> def =
+    fun name decl a ->
+      ModuleAlias { name ; range = decl.location ; body_range = Location.dummy ; content = a }
+
 
 end
 

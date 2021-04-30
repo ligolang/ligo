@@ -7,11 +7,11 @@ authors: "Galfour <contact@ligolang.org>"
 license: "MIT"
 homepage: "https://gitlab.com/ligolang/tezos"
 bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+# If you change the dependencies, run `opam lock` in the root
 depends: [
   "dune"
   "tezos-protocol-environment"
-  "tezos-protocol-006-PsCARTHA"
-  "tezos-protocol-007-PsDELPH1"
+  "tezos-protocol-008-PtEdo2Zk"
 ]
 build: [
   ["dune" "build" "-p" name]

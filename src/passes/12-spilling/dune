@@ -8,6 +8,7 @@
     mini_c
     self_mini_c
     predefined
+    self_ast_typed
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

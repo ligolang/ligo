@@ -40,8 +40,10 @@ val get_t_map : type_expression -> ( type_expression * type_expression ) option
 val get_t_big_map : type_expression -> ( type_expression * type_expression ) option
 val get_t_list : type_expression -> type_expression option
 val get_t_set : type_expression -> type_expression option
+val get_t_collection : type_expression -> type_expression option
 val get_left : value -> value option
 val get_right : value -> value option
+val get_ticket : value -> (value*value) option
 val get_or : value -> ( bool * value ) option
 (*
 val wrong_type : string -> type_expression -> unit -> error
@@ -59,6 +61,7 @@ val t_nat      : ?loc:Location.t -> unit -> type_expression
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_pair     : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
 val t_union    : ?loc:Location.t -> type_expression annotated -> type_expression annotated -> type_expression
+val t_tuple : ?loc:Location.t -> type_expression annotated list -> type_expression
 (*
 val quote : string -> type_expression -> type_expression -> Expression.t -> anon_function
 

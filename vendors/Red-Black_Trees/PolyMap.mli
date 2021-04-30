@@ -38,12 +38,12 @@ val is_empty : ('key, 'value) t -> bool
    [value]. If there is a binding for [key] in [map], its value is
    lost (and replaced by [value]). *)
 
-val add : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
+val add : ?debug:(Format.formatter -> 'key * 'value -> unit) -> 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
 
 (* The value of the call [remove key map] is a map containing all
    the bindings of the map [map], except for the binding of [key]. *)
 
-val remove : 'key -> ('key, 'value) t -> ('key, 'value) t
+val remove : ?debug:(Format.formatter -> 'key * 'value -> unit) -> 'key -> ('key, 'value) t -> ('key, 'value) t
 
 (* The value of the call [find key map] is the value associated to the
    [key] in the map [map]. If [key] is not bound in [map], the
@@ -99,6 +99,12 @@ type ('key, 'value) added = {map : ('key, 'value) t; duplicates : ('key * 'value
 val add_list : ('key * 'value) list -> ('key, 'value) t -> ('key, 'value) added
 
 val bindings : ('key, 'value) t -> ('key * 'value) list
+val keys : ('key, 'value) t -> 'key list
+val values : ('key, 'value) t -> 'value list
+
+(* The value of the call [get_compare map] is the comparison function
+   used by the given map *)
+val get_compare : ('key, 'value) t -> ('key -> 'key -> int)
 
 (* The side-effect of evaluating the call [iter f map] is the
    successive side-effects of the calls [f key value], for all
@@ -114,3 +120,5 @@ val iter : ('key -> 'value -> unit) -> ('key, 'value) t -> unit
    [v_n] are the associated values. *)
 
 val fold_inc : ('key -> 'value -> acc:'a -> 'a) -> ('key, 'value) t -> init:'a -> 'a
+
+val pp : (Format.formatter -> 'a -> unit) -> (Format.formatter -> 'b -> unit) -> Format.formatter -> ('a,'b) t -> unit

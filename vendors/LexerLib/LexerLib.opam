@@ -1,6 +1,6 @@
 opam-version : "2.0"
 name         : "LexerLib"
-version      : "1.0"
+version      : "1.1"
 synopsis     : "A library for UTF-8 aware lexers"
 description  : "Provides lexing of comments and strings and a rich state for use by other tools"
 maintainer   : "rinderknecht@free.fr"
@@ -8,6 +8,7 @@ authors      : "Christian Rinderknecht"
 license      : "MIT"
 homepage     : "https://gitlab.com/ligolang/LexerLib"
 bug-reports  : "https://gitlab.com/ligolang/LexerLib/issues"
+# If you change the dependencies, run `opam lock` in the root
 depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx" "getopt" "uutf"]
 build        : [
                 [ "dune" "build" "-p" name "-j" jobs ]

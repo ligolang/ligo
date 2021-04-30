@@ -2,8 +2,8 @@ open Errors
 open Ast_typed
 open Trace
 
-let to_sorted_kv_list_l lmap =
-  List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;}) -> Int.compare a b) @@
+let to_sorted_kv_list_l (lmap : row_element label_map) =
+  List.sort (fun (_,({decl_pos=a;_}:row_element)) (_,({decl_pos=b;}:row_element)) -> Int.compare a b) @@
   LMap.to_kv_list_rev lmap
 
 let accessor (record:expression) (path:label) (t:type_expression) =

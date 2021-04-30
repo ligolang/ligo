@@ -14,7 +14,11 @@ Context {raw_typed : node A string -> list (node A string) -> (node A string) ->
 Inductive expr : Set :=
 | E_var : A -> expr
 | E_let_in : A -> splitting -> expr -> binds -> expr
-| E_let_pair : A -> splitting -> expr -> binds -> expr
+
+| E_tuple : A -> args -> expr
+| E_let_tuple : A -> splitting -> expr -> binds -> expr
+| E_proj : A -> expr -> nat -> nat -> expr
+| E_update : A -> args -> nat -> nat -> expr
 
 | E_app : A -> args -> expr
 | E_lam : A -> binds -> node A string -> expr
@@ -40,6 +44,7 @@ Inductive expr : Set :=
 | E_map : A -> splitting -> binds -> expr -> expr
 | E_loop_left : A -> splitting -> binds -> node A string -> expr -> expr
 | E_fold : A -> splitting -> expr -> splitting -> expr -> binds -> expr
+| E_fold_right : A -> node A string -> splitting -> expr -> splitting -> expr -> binds -> expr
 
 | E_failwith : A -> expr -> expr
 
@@ -83,6 +88,20 @@ Local Open Scope Z_scope.
 
 Local Generalizable Variable l n.
 
+(* inductive characterization of "comb" tuples generalized to 0-tuples
+   (unit) and 1-tuples (arbitrary types). TODO should instead just use
+   a tuple type, making the type translation to Michelson no longer
+   the identity? *)
+Inductive tuple : list (node A string) -> node A string -> Prop :=
+| Tuple_nil :
+    `{tuple [] (Prim l "unit" [] n)}
+| Tuple_one {a} :
+    `{tuple [a] a}
+| Tuple_cons {a1 a2 az a2z'} :
+    tuple (a2 :: az) a2z' ->
+    `{tuple (a1 :: a2 :: az) (Prim l "pair" [a1; a2z'] n)}
+.
+
 Inductive expr_typed : list (node A string) -> expr -> node A string -> Prop :=
 | E_var_typed {a} :
     `{expr_typed [a] (E_var l) a}
@@ -91,11 +110,28 @@ Inductive expr_typed : list (node A string) -> expr -> node A string -> Prop :=
       expr_typed g1 e1 a ->
       binds_typed g2 e2 [a] b ->
       expr_typed g (E_let_in l ss e1 e2) b}
-| E_let_pair_typed {ss g g1 g2 a b c e1 e2} :
+| E_tuple_typed {g args az t} :
+    `{tuple az t ->
+      args_typed g args az ->
+      expr_typed g (E_tuple l1 args) t}
+| E_let_tuple_typed {ss g g1 g2 az azt c e1 e2} :
     `{splits ss g g1 g2 ->
-      expr_typed g1 e1 (Prim l1 "pair" [a; b] n1) ->
-      binds_typed g2 e2 [a; b] c -> (* TODO is this backwards? *)
-      expr_typed g (E_let_pair l3 ss e1 e2) c}
+      tuple az azt ->
+      expr_typed g1 e1 azt ->
+      binds_typed g2 e2 az c ->
+      expr_typed g (E_let_tuple l3 ss e1 e2) c}
+| E_proj_typed {g az azt a e i n} :
+    `{tuple az azt ->
+      List.nth_error az i = Some a ->
+      List.length az = n ->
+      expr_typed g e azt ->
+      expr_typed g (E_proj l1 e i n) a}
+| E_update_typed {g a az azt args i n} :
+    `{tuple az azt ->
+      List.nth_error az i = Some a ->
+      List.length az = n ->
+      args_typed g args [azt; a] ->
+      expr_typed g (E_update l1 args i n) azt}
 | E_app_typed {g args a b} :
     `{args_typed g args [Prim l1 "lambda" [a; b] n1; a] ->
       expr_typed g (E_app l2 args) b}
@@ -164,6 +200,15 @@ Inductive expr_typed : list (node A string) -> expr -> node A string -> Prop :=
       expr_typed g2 e2 coll ->
       binds_typed g3 e3 [Prim l1 "pair" [ret; elem] n1] ret ->
       expr_typed g (E_fold l2 ss1 e1 ss2 e2 e3) ret}
+(* same as E_fold but bound pair is flipped: *)
+| E_fold_right_typed {ss1 ss2 g g1 g' g2 g3 elem coll ret e1 e2 e3} :
+    `{splits ss1 g g1 g' ->
+      splits ss2 g' g2 g3 ->
+      iter_class elem coll ->
+      expr_typed g1 e1 ret ->
+      expr_typed g2 e2 coll ->
+      binds_typed g3 e3 [Prim l1 "pair" [elem; ret] n1] ret ->
+      expr_typed g (E_fold_right l2 elem ss1 e1 ss2 e2 e3) ret}
 | E_failwith_typed {g a b e} :
     `{expr_typed g e a ->
       expr_typed g (E_failwith l1 e) b}
@@ -203,6 +248,17 @@ with script_typed : script -> Prop :=
     `{binds_typed [] e [Prim l1 "pair" [p; s] n1] (Prim l2 "pair" [Prim l3 "list" [Prim l4 "operation" [] n4] n3; s] n2) ->
       script_typed (Script p s e)}
 .
+
+Definition binds_length (e : binds) : nat :=
+  match e with
+  | Binds _ az _ => List.length az
+  end.
+
+Fixpoint args_length (e : args) : nat :=
+  match e with
+  | Args_nil => O
+  | Args_cons _ _ e => S (args_length e)
+  end.
 
 End expr.
 

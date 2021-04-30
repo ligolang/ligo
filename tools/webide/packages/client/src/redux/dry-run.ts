@@ -39,7 +39,7 @@ const DEFAULT_STATE: DryRunState = {
   storage: ''
 };
 
-export default (state = DEFAULT_STATE, action: Action): DryRunState => {
+export const dryRun = (state = DEFAULT_STATE, action: Action): DryRunState => {
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {
@@ -61,6 +61,9 @@ export default (state = DEFAULT_STATE, action: Action): DryRunState => {
         ...state,
         storage: action.payload
       };
+    default:
+      return state;
   }
-  return state;
 };
+
+// export default DryRun

@@ -1,21 +1,22 @@
 %{
-module Token = Lexer_reasonligo.Token
+module Token = Lexing_reasonligo.Token
 %}
 
 (* Tokens (mirroring those defined in module Token) *)
 
   (* Literals *)
 
-%token                  <string Region.reg> String   "<string>"
-%token                  <string Region.reg> Verbatim "<verbatim>"
-%token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
-%token          <(string * Z.t) Region.reg> Int      "<int>"
-%token          <(string * Z.t) Region.reg> Nat      "<nat>"
-%token          <(string * Z.t) Region.reg> Mutez    "<mutez>"
-%token                  <string Region.reg> Ident    "<ident>"
-%token                  <string Region.reg> Constr   "<constr>"
-%token                  <string Region.reg> Attr     "[@attr]"
-%token <Token.lexeme Region.reg Region.reg> Lang     "<lang>"
+%token               <LexerLib.Directive.t> Directive "<directive>"
+%token                  <string Region.reg> String    "<string>"
+%token                  <string Region.reg> Verbatim  "<verbatim>"
+%token  <(Token.lexeme * Hex.t) Region.reg> Bytes     "<bytes>"
+%token          <(string * Z.t) Region.reg> Int       "<int>"
+%token          <(string * Z.t) Region.reg> Nat       "<nat>"
+%token          <(string * Z.t) Region.reg> Mutez     "<mutez>"
+%token                  <string Region.reg> Ident     "<ident>"
+%token                  <string Region.reg> Constr    "<constr>"
+%token                  <string Region.reg> Attr      "[@attr]"
+%token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
 
   (* Symbols *)
 
@@ -31,7 +32,7 @@ module Token = Lexer_reasonligo.Token
 %token <Region.t> LBRACE   "{"
 %token <Region.t> RBRACE   "}"
 
-%token <Region.t> CAT       "++"
+%token <Region.t> PLUS2     "++"
 %token <Region.t> DOT       "."
 %token <Region.t> ELLIPSIS  "..."
 
@@ -43,7 +44,7 @@ module Token = Lexer_reasonligo.Token
 %token <Region.t> WILD "_"
 
 %token <Region.t> EQ    "="
-%token <Region.t> EQEQ  "=="
+%token <Region.t> EQ2   "=="
 %token <Region.t> NE    "!="
 %token <Region.t> LT    "<"
 %token <Region.t> GT    ">"
@@ -68,6 +69,7 @@ module Token = Lexer_reasonligo.Token
 %token <Region.t> Or     "or"
 %token <Region.t> True   "true"
 %token <Region.t> Type   "type"
+%token <Region.t> Module "module"
 
   (* Data constructors *)
 

@@ -895,6 +895,8 @@ let is_ident = function
 let is_annot    = function Annot _  -> true | _ -> false
 let is_eof      = function EOF _    -> true | _ -> false
 
+let support_string_delimiter c = c = '"'
+
 let is_sym = function
   SEMI _ | LPAREN _ | RPAREN _ | LBRACE _ | RBRACE _ -> true
 | _ -> false

@@ -4,19 +4,19 @@
   (libraries
     simple-utils
     tezos-utils
-    parser
+    parsing
     tree_abstraction
     self_ast_imperative
     desugaring
     ast_core
-    typer_new
-    typer
+    inference
+    checking
     ast_typed
     spilling
     mini_c
     predefined
     stacking
-    compile
+    ligo_compile
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

@@ -45,7 +45,7 @@ module Make (CLI : CLI.S) =
         method dirs    = CLI.dirs
       end
 
-    let preprocess () : API.preprocessed =
+    let preprocess () : API.result =
       let preprocessed =
         match CLI.input with
                None -> API.from_channel config stdin

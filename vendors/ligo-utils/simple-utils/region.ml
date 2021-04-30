@@ -29,22 +29,33 @@ type t = <
   (* Conversions to [string] *)
 
   to_string : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
-  compact   : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string
+  compact   : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
+
+  markup     : markup list;
 >
+
+and markup = 
+  BlockCom of string reg * comment_position
+| LineCom of string reg * comment_position
+
+and comment_position = 
+  Before
+| After
+| Inline
 
 (* A synonym *)
 
-type region = t
+and region = t
 
 (* A convenience *)
 
-type 'a reg = {region: t; value: 'a}
+and 'a reg = {region: t; value: 'a}
 
 (* Injections *)
 
 exception Invalid
 
-let make ~(start: Pos.t) ~(stop: Pos.t) =
+let make ~markup ~(start: Pos.t) ~(stop: Pos.t) =
   if start#file <> stop#file || start#byte_offset > stop#byte_offset
   then raise Invalid
   else
@@ -71,9 +82,9 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
 
       (* Getters *)
 
-      method file      = start#file
-      method pos       = start, stop
-      method byte_pos  = start#byte, stop#byte
+      method file     = start#file
+      method pos      = start, stop
+      method byte_pos = start#byte, stop#byte
 
       (* Predicates *)
 
@@ -88,14 +99,18 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
         and stop_offset =
           if offsets then stop#offset mode else stop#column mode in
         let info =
-          if   file
-          then sprintf "in file %S, line %i, %s"
+          if file
+          then sprintf "File %S, line %i, %s"
                  (String.escaped start#file) start#line horizontal
-          else sprintf "at line %i, %s" start#line horizontal
-        in if   stop#line = start#line
-          then sprintf "%ss %i-%i" info start_offset stop_offset
-          else sprintf "%s %i to line %i, %s %i"
-                  info start_offset stop#line horizontal stop_offset
+          else sprintf "Line %i, %s" start#line horizontal
+        in if stop#line = start#line
+           then
+             if start_offset = stop_offset
+             then sprintf "%s %i" info start_offset
+             else sprintf "%ss %i-%i" info start_offset stop_offset
+           else sprintf "%s %i to line %i, %s %i"
+                        info start_offset stop#line horizontal
+                        stop_offset
 
       method compact ?(file=true) ?(offsets=true) mode =
         if start#is_ghost || stop#is_ghost then "ghost"
@@ -114,9 +129,17 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
               sprintf "%s%s-%s" prefix start_str stop_str
           else sprintf "%s:%s-%s:%s"
                        start#file start_str stop#file stop_str
+
+        val    markup = markup
+        method markup = markup
     end
 
 (* Special regions *)
+
+let set_markup region markup =
+  make ~markup:markup ~start:region#start ~stop:region#stop
+
+let make = make ~markup:[]
 
 let ghost = make ~start:Pos.ghost ~stop:Pos.ghost
 

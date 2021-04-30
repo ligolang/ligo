@@ -1,27 +1,16 @@
-(* Abstract Syntax Tree (AST) for LIGO *)
+(* Concrete Syntax Tree (CST) for LIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 
 [@@@warning "-30-40-42"]
 
-(* Utilities *)
+(* Vendor dependencies *)
 
-module Utils = Simple_utils.Utils
+module Directive = LexerLib.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
+
 open Utils
-
-(* Regions
-
-   The AST carries all the regions where tokens have been found by the
-   lexer, plus additional regions corresponding to whole subtrees
-   (like entire expressions, patterns etc.). These regions are needed
-   for error reporting and source-to-source transformations. To make
-   these pervasive regions more legible, we define singleton types for
-   the symbols, keywords etc. with suggestive names like "kwd_and"
-   denoting the _region_ of the occurrence of the keyword "and".
-*)
-
-module Region = Simple_utils.Region
-
 type 'a reg = 'a Region.reg
 
 (* Lexemes *)
@@ -67,6 +56,7 @@ type kwd_type       = Region.t
 type kwd_var        = Region.t
 type kwd_while      = Region.t
 type kwd_with       = Region.t
+type kwd_module    = Region.t
 
 (* Data constructors *)
 
@@ -158,13 +148,16 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  TypeDecl  of type_decl  reg
-| ConstDecl of const_decl reg
-| FunDecl   of fun_decl   reg
+  TypeDecl    of type_decl    reg
+| ConstDecl   of const_decl   reg
+| FunDecl     of fun_decl     reg
+| ModuleDecl  of module_decl  reg
+| ModuleAlias of module_alias reg
+| Directive   of Directive.t
 
 and const_decl = {
   kwd_const  : kwd_const;
-  name       : variable;
+  pattern    : pattern;
   const_type : (colon * type_expr) option;
   equal      : equal;
   init       : expr;
@@ -180,6 +173,23 @@ and type_decl = {
   kwd_is     : kwd_is;
   type_expr  : type_expr;
   terminator : semi option
+}
+
+and module_decl = {
+  kwd_module : kwd_module;
+  name       : module_name;
+  kwd_is     : kwd_is;
+  enclosing  : module_enclosing;
+  module_    : t;
+  terminator : semi option;
+}
+
+and module_alias = {
+  kwd_module : kwd_module;
+  alias      : module_name;
+  kwd_is     : kwd_is;
+  binders    : (module_name, dot) nsepseq;
+  terminator : semi option;
 }
 
 and type_expr =
@@ -274,21 +284,27 @@ and block_enclosing =
   Block    of kwd_block * lbrace * rbrace
 | BeginEnd of kwd_begin * kwd_end
 
+and module_enclosing =
+  Brace    of lbrace * rbrace
+| BeginEnd of kwd_begin * kwd_end
+
 and statements = (statement, semi) nsepseq
 
 and statement =
   Instr of instruction
 | Data  of data_decl
-| Type  of type_decl reg
 
 and data_decl =
-  LocalConst of const_decl reg
-| LocalVar   of var_decl   reg
-| LocalFun   of fun_decl   reg
+  LocalConst       of const_decl   reg
+| LocalVar         of var_decl     reg
+| LocalFun         of fun_decl     reg
+| LocalType        of type_decl    reg
+| LocalModule      of module_decl  reg
+| LocalModuleAlias of module_alias reg
 
 and var_decl = {
   kwd_var    : kwd_var;
-  name       : variable;
+  pattern    : pattern;
   var_type   : (colon * type_expr) option;
   assign     : assign;
   init       : expr;
@@ -619,6 +635,7 @@ and injection_kwd =
 | InjMap    of keyword
 | InjBigMap of keyword
 | InjList   of keyword
+| InjRecord of keyword
 
 and enclosing =
   Brackets of lbracket * rbracket
@@ -642,20 +659,26 @@ and ne_injection_kwd =
 and pattern =
   PConstr of constr_pattern
 | PVar    of lexeme reg
-| PWild   of wild
 | PInt    of (lexeme * Z.t) reg
 | PNat    of (lexeme * Z.t) reg
 | PBytes  of (lexeme * Hex.t) reg
 | PString of lexeme reg
 | PList   of list_pattern
 | PTuple  of tuple_pattern
+| PRecord of field_pattern reg injection reg
+  
+and field_pattern = {
+  field_name : field_name;
+  eq         : equal;
+  pattern    : pattern
+}
 
 and constr_pattern =
   PUnit      of c_Unit
 | PFalse     of c_False
 | PTrue      of c_True
 | PNone      of c_None
-| PSomeApp   of (c_Some * pattern par reg) reg
+| PSomeApp   of (c_Some * pattern) reg
 | PConstrApp of (constr * tuple_pattern option) reg
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
@@ -813,7 +836,6 @@ let if_clause_to_region = function
 
 let pattern_to_region = function
   PVar        {region; _}
-| PWild        region
 | PInt        {region; _}
 | PNat        {region; _}
 | PBytes      {region; _}
@@ -828,12 +850,16 @@ let pattern_to_region = function
 | PList PNil  region
 | PList PParCons {region; _}
 | PList PCons {region; _}
-| PTuple      {region; _} -> region
+| PTuple      {region; _}
+| PRecord     {region; _} -> region
 
 let declaration_to_region = function
-  TypeDecl {region;_}
-| ConstDecl {region;_}
-| FunDecl {region;_} -> region
+  TypeDecl    {region;_}
+| ConstDecl   {region;_}
+| FunDecl     {region;_}
+| ModuleDecl  {region;_}
+| ModuleAlias {region;_} -> region
+| Directive d -> Directive.to_region d
 
 let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path

@@ -11,10 +11,10 @@ const Container = styled.div``;
 export const EvaluateFunctionPaneComponent = () => {
   const dispatch = useDispatch();
   const entrypoint = useSelector<AppState, EvaluateFunctionState['entrypoint']>(
-    state => state.evaluateFunction.entrypoint
+    state => state.evaluateFunction && state.evaluateFunction.entrypoint
   );
   const parameters = useSelector<AppState, EvaluateFunctionState['parameters']>(
-    state => state.evaluateFunction.parameters
+    state => state.evaluateFunction && state.evaluateFunction.parameters
   );
 
   return (

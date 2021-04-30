@@ -31,14 +31,14 @@ val is_empty : 'elt t -> bool
    comparison function of the set [set] (see [create]), then [y] is
    replaced by [elt]. *)
 
-val add : 'elt -> 'elt t -> 'elt t
+val add : ?debug:(Format.formatter -> 'elt -> unit) -> 'elt -> 'elt t -> 'elt t
 
 val union : 'elt t -> 'elt t -> 'elt t
 
 (* The value of the call [remove elt set] is a set containing all the
    elements of the set [set] without the element [elt]. *)
 
-val remove : 'elt -> 'elt t -> 'elt t
+val remove : ?debug:(Format.formatter -> 'elt -> unit)  -> 'elt -> 'elt t -> 'elt t
 
 (* The value of the call [find elt set] is the element [y] of set
    [set] such that [cmp y elt = true], where [cmp] is the comparison
@@ -76,6 +76,9 @@ val add_list : 'a list -> 'a t -> 'a added
    function used to create the set). *)
 val elements : 'elt t -> 'elt list
 
+(* map_elements f s is a shorthand for List.map f (elements s) *)
+val map_elements : ('elt -> 'b) -> 'elt t -> 'b list
+
 (* The value of the call [get_compare set] is the comparison function
    used by the given set *)
 val get_compare : 'elt t -> ('elt -> 'elt -> int)
@@ -94,3 +97,5 @@ val iter : ('elt -> unit) -> 'elt t -> unit
    initial value [init]. *)
 
 val fold_inc : ('elt -> acc:'a -> 'a) -> 'elt t -> init:'a -> 'a
+
+val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit

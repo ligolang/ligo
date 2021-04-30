@@ -1,15 +1,19 @@
+;; Build of the LIGO preprocessors
+
 (library
-  (name preproc)
-  (public_name ligo.preproc)
+  (name preprocessing)
+  (public_name ligo.preprocessing)
   (libraries
     ;; Vendors
+    Preprocessor
     simple-utils
-    tezos-utils
     ;; LIGO
-    lexer_pascaligo
-    lexer_cameligo
-    lexer_reasonligo)
-  (modules_without_implementation
-    Comments File)
+    preprocessing_shared
+    preprocessing_pascaligo
+    preprocessing_cameligo
+    preprocessing_reasonligo
+    preprocessing_jsligo)
+  (modules
+     Preprocessing Errors Pascaligo Cameligo Reasonligo Jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))

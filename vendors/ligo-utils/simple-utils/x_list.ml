@@ -10,7 +10,26 @@ let rec take n = function
   | _ when n = 0 -> []
   | hd :: tl -> hd :: take (n - 1) tl
 
-let split3 l = List.fold_left (fun (la, lb, lc) (a, b, c) -> (a :: la , b :: lb, c :: lc)) ([],[],[]) l
+(* this is the same as `take`, but ported from and named like Coq's
+   List.firstn *)
+let rec firstn n l =
+  if n = 0
+  then []
+  else
+    match l with
+    | [] -> []
+    | a :: l -> a :: firstn (n - 1) l
+
+(* Coq's List.skipn *)
+let rec skipn n l =
+  if n = 0
+  then l
+  else
+    match l with
+    | [] -> []
+    | _ :: l -> skipn (n - 1) l
+
+let split3 l = List.fold_left (fun (la, lb, lc) (a, b, c) -> (a :: la , b :: lb, c :: lc)) ([],[],[]) (List.rev l)
 
 let map f lst =
   (* Use a tail-recursive function and `List.rev` to avoid a stack overflow with long lists. *)
@@ -19,6 +38,10 @@ let map f lst =
     | hd :: tl -> aux (f hd :: acc) f tl
   in
   List.rev (aux [] f lst)
+
+let is_empty = function [] -> true | _ -> false
+
+let set_nth new_i l new_v = mapi (fun old_i old_v -> if old_i = new_i then new_v else old_v) l
 
 let map2 f lst_a lst_b ~ok ~fail =
   let rec aux acc f lst_a lst_b =
@@ -204,6 +227,13 @@ let rec compare ?compare:cmp a b =
         0 -> compare ~compare:cmp ta tb
       | c -> c)
 
+let pp ?(sep = ", ") ?pp_sep l =
+  let pp_sep = match pp_sep with
+      None -> (fun ppf () -> Format.fprintf ppf "%s" sep)
+    | Some pp -> (pp sep)
+  in
+  Format.pp_print_list ~pp_sep l
+
 module Ne = struct
 
   type 'a t = 'a * 'a list
@@ -233,5 +263,11 @@ module Ne = struct
     | Some x -> Some x
     | None -> find_map f tl
   let append : 'a t -> 'a t -> 'a t = fun (hd, tl) (hd', tl') -> hd, List.append tl @@ hd' :: tl'
+  let compare = fun ?compare:cmp (hd,tl) (hd',tl') -> 
+    let cmp = unopt ~default:Stdlib.compare cmp in
+    match cmp hd hd' with 
+      0 -> compare ~compare:cmp tl tl'
+    | c -> c
+
 
 end

@@ -7,6 +7,7 @@ authors: "Galfour <contact@ligolang.org>"
 license: "MIT"
 homepage: "https://gitlab.com/ligolang/ligo-utils"
 bug-reports: "https://gitlab.com/ligolang/ligo-utils/issues"
+# If you change the dependencies, run `opam lock` in the root
 depends: [
   "dune"
   "base"
@@ -33,17 +34,15 @@ depends: [
   "uri"
   "uutf"
   # tezos does not constrain their required version
-  "zarith" {= "1.7"}
+  "zarith" {= "1.11"}
   "ocplib-json-typed"
   "ocplib-json-typed-bson"
   "tezos-crypto"
   "tezos-error-monad"
   "tezos-stdlib-unix"
   "tezos-protocol-environment"
-  "tezos-protocol-006-PsCARTHA"
-  "tezos-client-006-PsCARTHA"
-  "tezos-protocol-007-PsDELPH1"
-  "tezos-client-007-PsDELPH1"
+  "tezos-protocol-008-PtEdo2Zk"
+  "tezos-client-008-PtEdo2Zk"
   "tezos-memory-proto-alpha"
   "simple-utils"
   "tezos-utils"

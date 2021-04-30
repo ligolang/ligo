@@ -4,14 +4,14 @@ import { dryRun, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
-import { Command } from '../types';
+import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class DryRunAction extends CancellableAction {
   getAction() {
     return async (dispatch: Dispatch, getState: () => AppState) => {
       dispatch({
-        ...new UpdateLoadingAction('Waiting for dry run results...')
+        ...new UpdateLoadingAction('Waiting for dry run results...'),
       });
 
       try {
@@ -26,7 +26,9 @@ export class DryRunAction extends CancellableAction {
         if (this.isCancelled()) {
           return;
         }
-        dispatch({ ...new ChangeOutputAction(result.output, Command.DryRun, false) });
+        dispatch({
+          ...new ChangeOutputAction(result.output, CommandType.DryRun, false),
+        });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
@@ -34,9 +36,9 @@ export class DryRunAction extends CancellableAction {
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,
-            Command.DryRun,
+            CommandType.DryRun,
             true
-          )
+          ),
         });
       }
 

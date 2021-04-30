@@ -7,7 +7,9 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 synopsis: "A high-level language which compiles to Michelson"
 dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 license: "MIT"
+# If you change the dependencies, run `opam lock` in the root
 depends: [
+  "odoc" { build }
   "ocamlfind" { build }
   "dune" { build & >= "2.7.1" & < "2.9" }
   "menhir" { = "20200624" }
@@ -20,6 +22,7 @@ depends: [
   "ppx_expect"
   "tezos-utils"
   "proto-alpha-utils"
+  "ligo-008-PtEdo2Zk-test-helpers"
   "yojson"
   "alcotest" { with-test & >= "1.0" & < "1.1" }
   "getopt"
@@ -29,8 +32,11 @@ depends: [
   "LexerLib"
   "UnionFind"
   "RedBlackTrees"
+  "linenoise"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "1.4.0" }
+  # work around tezos' failure to constrain
+  "lwt" { = "5.3.0" }
 ]
 pin-depends: [
   ["bisect_ppx.git" "git+https://github.com/aantron/bisect_ppx.git#02dfb10188033a26d07d23480c2bc44a3a670357"]

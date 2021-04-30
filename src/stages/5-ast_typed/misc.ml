@@ -1,4 +1,4 @@
-open Ast
+open Types
 
 module Free_variables = struct
 
@@ -9,7 +9,6 @@ module Free_variables = struct
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : expression_variable list -> bindings = fun x -> x
 
   let rec expression_content : bindings -> expression_content -> bindings = fun b ec ->
     let self = expression b in
@@ -34,6 +33,8 @@ module Free_variables = struct
         (expression b' let_result)
         (self rhs)
     | E_type_in { type_binder=_; rhs=_; let_result} -> self let_result
+    | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
+    | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
@@ -47,18 +48,16 @@ module Free_variables = struct
   and expression : bindings -> expression -> bindings = fun b e ->
     expression_content b e.expression_content
 
-  and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
-    f (union (singleton pattern) b) body
+    and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
+      f (union (singleton pattern) b) body
+  
+    and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
+      match m with
+      | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
+      | Match_record {fields; body; tv = _} ->
+        f (union (List.map fst (LMap.to_list fields)) b) body
 
-  and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
-    match m with
-    | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
-    | Match_option { match_none = n ; match_some = {opt; body; tv=_} } -> union (f b n) (f (union (singleton opt) b) body)
-    | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
-    | Match_record {fields; body; record_type = _} ->
-      f (union (List.map fst (LMap.to_list fields)) b) body
-
-  and matching_expression = fun x -> matching expression x
+    and matching_expression = fun x -> matching expression x
 
 end
 
@@ -217,7 +216,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   | E_record _, _
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
-  | (E_type_in _, _)
+  | (E_type_in _, _)| (E_mod_in _, _) | (E_mod_alias _,_)
   | (E_record_accessor _, _) | (E_record_update _,_)
   | (E_matching _, _)
   | E_module_accessor _, _
@@ -235,59 +234,21 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (Program_Fully_Typed lst : program_fully_typed) (name : string) : expression option =
+let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { binder ; expr ; inline=_ } -> (
-      if Var.equal binder.wrap_content (Var.of_name name)
+    | Declaration_constant { name = name' ; binder = _ ; expr ; inline=_ } -> (
+      if match name' with None -> false | Some name' -> String.equal name name'
       then Some expr
       else None
     )
-    | Declaration_type _ -> None
+    | Declaration_type   _
+    | Declaration_module _
+    | Module_alias       _ -> None
   in
-  List.find_map aux lst
+  List.find_map aux (List.rev lst)
 
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
   | E_variable a, E_variable b -> Var.equal a.wrap_content b.wrap_content
   |  _, _ -> false
-
-let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
-  Reasons.wrap Builtin_type @@
-    P_constant {
-      p_ctor_tag : constant_tag ;
-      p_ctor_args : p_ctor_args ;
-    }
-
-let p_row (p_row_tag : row_tag) (p_row_args : tv_lmap ) =
-  Reasons.wrap Builtin_type @@
-    P_row {
-      p_row_tag ;
-      p_row_args ;
-    }
-
-let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
-  let p_row_args = LMap.of_list @@ List.map (fun (x,y) -> Label x,y) p_row_args in
-  p_row p_row_tag p_row_args
-
-let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
-
-let reason_simpl_ : type_constraint_simpl -> string = function
-  | SC_Constructor { reason_constr_simpl=reason; _ }
-  | SC_Row { reason_row_simpl=reason; _ }
-  | SC_Alias { reason_alias_simpl=reason; _ }
-  | SC_Poly { reason_poly_simpl=reason; _ }
-  | SC_Typeclass { reason_typeclass_simpl=reason; _ }
-  -> reason
-
-let reason_simpl : type_constraint_simpl -> string = fun c -> reason_simpl_ c
-
-let is_mandatory_constraint_ : type_constraint_simpl -> bool = function
-  | SC_Constructor { is_mandatory_constraint; _ }
-  | SC_Row { is_mandatory_constraint; _ }
-  | SC_Alias { is_mandatory_constraint; _ }
-  | SC_Poly { is_mandatory_constraint; _ }
-  | SC_Typeclass { is_mandatory_constraint; _ }
-  -> is_mandatory_constraint
-
-let is_mandatory_constraint : type_constraint_simpl -> bool = fun c -> is_mandatory_constraint_ c

@@ -124,6 +124,13 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
     | I.E_type_in ti ->
       let%bind ti = type_in self self_type ti in
       return @@ O.E_type_in ti
+    | I.E_mod_in {module_binder;rhs;let_result} ->
+      let%bind rhs = compile_module rhs in
+      let%bind let_result = self let_result in
+      return @@ O.E_mod_in {module_binder;rhs;let_result}
+    | I.E_mod_alias ma ->
+      let%bind ma = mod_alias self ma in
+      return @@ O.E_mod_alias ma
     | I.E_raw_code rc ->
       let%bind rc = raw_code self rc in
       return @@ O.E_raw_code rc
@@ -131,8 +138,17 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind const = constructor self const in
       return @@ O.E_constructor const
     | I.E_matching {matchee; cases} ->
-      let%bind matchee = self matchee in
-      compile_matching sugar matchee cases
+      let%bind matchee = compile_expression matchee in
+      let%bind cases =
+        bind_map_list
+          (fun ({pattern ; body} : (I.expression, I.type_expression) I.match_case) -> 
+            let%bind pattern = Stage_common.Helpers.map_pattern_t (binder compile_type_expression) pattern in
+            let%bind body = compile_expression body in
+            ok ({pattern ; body} : (O.expression, O.type_expression) I.match_case)
+          )
+          cases
+      in
+      return @@ O.E_matching {matchee ; cases}
     | I.E_record recd ->
       let%bind recd = record self recd in
       return @@ O.E_record recd
@@ -219,13 +235,13 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind matchee = self condition in
       let%bind match_true = self then_clause in
       let%bind match_false = self else_clause in
-      let muted = Location.wrap @@ Var.of_name "_" in
       return @@ O.E_matching {
-        matchee ;
-        cases = Match_variant ([
-          {constructor=Label "true"; proj=muted; body=match_true} ;
-          {constructor=Label "false"; proj=muted; body=match_false} ;
-        ])}
+          matchee ;
+          cases = [
+            { pattern = Location.wrap @@ O.P_variant (Label "true" , None) ; body = match_true  } ;
+            { pattern = Location.wrap @@ O.P_variant (Label "false", None) ; body = match_false } ;
+          ]
+        }
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = self expr1 in
       let%bind expr2 = self expr2 in
@@ -240,58 +256,25 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let m = O.LMap.of_list lst in
       return @@ O.E_record m
 
-and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.expression, desugaring_error) result =
-  fun sugar e m ->
-  let loc = sugar.location in
-  match m with
-    | I.Match_list {match_nil;match_cons} ->
-      let%bind match_nil = compile_expression match_nil in
-      let (hd,tl,expr) = match_cons in
-      let hd = cast_var hd in
-      let tl = cast_var tl in
-      let%bind body = compile_expression expr in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_list {match_nil; match_cons={hd;tl;body}}
-    | I.Match_option {match_none;match_some} ->
-      let%bind match_none = compile_expression match_none in
-      let (opt,body) = match_some in
-      let opt = cast_var opt in
-      let%bind body = compile_expression body in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_option {match_none; match_some={opt;body}}
-    | I.Match_variant lst ->
-      let%bind lst = bind_map_list (
-        fun ((c,proj),expr) ->
-          let%bind body = compile_expression expr in
-          ok @@ ({constructor=c;proj=cast_var proj;body} : O.match_variant)
-      ) lst
-      in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_variant lst
-    | I.Match_record (fields, expr) ->
-      let fields = O.LMap.of_list @@ fields in
-      let%bind fields = Stage_common.Helpers.bind_map_lmap compile_binder fields in
-      let%bind body = compile_expression expr in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_record { fields ; body }
-    | I.Match_tuple (fields, expr) ->
-      let fields' = O.LMap.of_list @@ List.mapi (fun i binder -> (O.Label (string_of_int i), binder)) fields in
-      let%bind fields = Stage_common.Helpers.bind_map_lmap compile_binder fields' in
-      let%bind body = compile_expression expr in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_record { fields ; body }
-    | I.Match_variable (a, expr) ->
-      let%bind a = compile_binder a in
-      let%bind expr = compile_expression expr in
-      ok @@ O.e_let_in ~sugar a false e expr
-
-let compile_declaration : I.declaration Location.wrap -> _ =
-  fun {wrap_content=declaration;location} ->
-  let return decl = ok @@ Location.wrap ~loc:location decl in
+and compile_declaration : I.declaration -> (O.declaration , desugaring_error) result =
+  fun declaration ->
+  let return (decl: O.declaration) = ok @@ decl in
   match declaration with
   | I.Declaration_type dt ->
     let%bind dt = declaration_type compile_type_expression dt in
     return @@ O.Declaration_type dt
-  | I.Declaration_constant {binder;attr;expr} ->
+  | I.Declaration_constant {name; binder;attr;expr} ->
     let%bind binder = compile_binder binder in
     let%bind expr = compile_expression expr in
     let inline = get_inline attr in
-    return @@ O.Declaration_constant {binder; attr={inline}; expr}
+    return @@ O.Declaration_constant {name; binder; attr={inline}; expr}
+  | I.Declaration_module {module_binder;module_} ->
+    let%bind module_ = compile_module module_ in
+    return @@ O.Declaration_module {module_binder;module_}
+  | I.Module_alias ma ->
+    let%bind ma = module_alias ma in
+    return @@ O.Module_alias ma
 
-let compile_program : I.program -> (O.program , desugaring_error) result = fun p ->
-  program compile_declaration p
+
+and compile_module : I.module_ -> (O.module_ , desugaring_error) result = fun m ->
+  bind_map_list (bind_map_location compile_declaration) m

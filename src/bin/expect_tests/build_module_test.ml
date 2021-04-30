@@ -68,9 +68,11 @@ let%expect_test _ =
       code { PUSH int 42 ;
              PUSH int 1 ;
              ADD ;
+             SWAP ;
+             CDR ;
+             SWAP ;
              PUSH int 1 ;
              DIG 2 ;
-             CDR ;
              ADD ;
              ADD ;
              NIL operation ;
@@ -82,9 +84,10 @@ let%expect_test _ =
     const toto = ADD(E.toto ,
     C.B.titi)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
-    const main = lambda (#3) return let s = #3.1 in let p = #3.0 in let s = ADD(ADD(p ,
-    s) ,
-    toto) in ( LIST_EMPTY() , s ) |}]
+    const main = lambda (#6) return let #8 = #6 in  match #8 with
+                                                     | ( p , s ) ->
+                                                     let s = ADD(ADD(p , s) ,
+                                                     toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print-mini-c" ; contract "D.mligo" ] ;
@@ -95,10 +98,11 @@ let%expect_test _ =
       let toto = L(32) in
       let titi = ADD(A , L(42)) in
       let f =
-        fun #2 ->
-        (let x = CDR(#2) in
-         let #1 = CAR(#2) in
-         let x = ADD(ADD(x , A) , titi) in PAIR(LIST_EMPTY() , x)) in
+        fun #1 ->
+        (let #4 = #1 in
+         let (#10, #11) = #4 in
+         let #2 = #10 in
+         let x = #11 in let x = ADD(ADD(x , A) , titi) in PAIR(LIST_EMPTY() , x)) in
       PAIR(PAIR(A , f) , PAIR(titi , toto))
     let ../../test/contracts/build/C.mligo =
       let A = ../../test/contracts/build/A.mligo[@inline] in
@@ -116,12 +120,13 @@ let%expect_test _ =
     let C = ../../test/contracts/build/C.mligo[@inline]
     let E = ../../test/contracts/build/E.mligo[@inline]
     let toto = ADD(CDR(CDR(E)) , CAR(CDR(CDR(CAR(C)))))
-    let fb = PAIR(L(1) , PAIR(toto , PAIR(L(2) , L(3))))
+    let fb = (L(1), toto, L(2), L(3))
     let main =
-      fun #3 ->
-      (let s = CDR(#3) in
-       let p = CAR(#3) in
-       let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) |}]
+      fun #6 ->
+      (let #8 = #6 in
+       let (#12, #13) = #8 in
+       let p = #12 in
+       let s = #13 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "D.mligo"; "main" ] ;
@@ -139,50 +144,36 @@ let%expect_test _ =
              DUP ;
              DUG 2 ;
              PAIR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              DIG 2 ;
              PAIR ;
              LAMBDA
                (pair (pair int int) (pair unit int))
                (pair (list operation) int)
-               { DUP ;
-                 CDR ;
-                 SWAP ;
-                 CAR ;
-                 DUP ;
-                 CDR ;
-                 SWAP ;
-                 CAR ;
+               { UNPAIR ;
+                 UNPAIR ;
                  DIG 2 ;
+                 CDR ;
                  SWAP ;
                  DUG 2 ;
-                 CDR ;
                  ADD ;
                  ADD ;
                  NIL operation ;
                  PAIR } ;
              SWAP ;
              APPLY ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              PAIR ;
              PAIR ;
              DUP ;
              CDR ;
              CAR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              ADD ;
              PUSH int 3 ;
              PUSH unit Unit ;
              PAIR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CAR ;
              CDR ;
              SWAP ;
@@ -199,11 +190,7 @@ let%expect_test _ =
              PUSH int 10 ;
              ADD ;
              SWAP ;
-             DUP ;
-             DUG 2 ;
-             CDR ;
-             DIG 2 ;
-             CAR ;
+             UNPAIR ;
              ADD ;
              ADD ;
              NIL operation ;
@@ -221,6 +208,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "type_B.mligo"; "main" ] ;
   [%expect {|
+    File "../../test/contracts/build/type_B.mligo", line 6, characters 5-6:
+    Warning: unused variable "p".
+
     { parameter string ;
       storage int ;
-      code { PUSH int 1 ; SWAP ; CDR ; ADD ; NIL operation ; PAIR } } |}]
+      code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ = 
+  run_ligo_good [ "compile-expression" ; "--init-file" ; contract "C.mligo" ; "cameligo" ; "tata" ] ;
+  [%expect {| 44 |}]

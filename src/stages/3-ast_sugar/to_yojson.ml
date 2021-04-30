@@ -44,10 +44,12 @@ and expression_content = function
   | E_recursive   e -> `List [ `String "E_recursive";   recursive   expression type_expression e ]
   | E_let_in      e -> `List [ `String "E_let_in";      let_in      e ]
   | E_type_in     e -> `List [ `String "E_type_in";     type_in   expression type_expression e ]
+  | E_mod_in      e -> `List [ `String "E_mod_in";      mod_in    expression type_expression e ]
+  | E_mod_alias   e -> `List [ `String "E_mod_alias";   mod_alias expression                 e ]
   | E_raw_code    e -> `List [ `String "E_raw_code";    raw_code    expression e ]
   (* Variant *)
   | E_constructor e -> `List [ `String "E_constructor"; constructor expression e ]
-  | E_matching    e -> `List [ `String "E_matching";    matching e ]
+  | E_matching    e -> `List [ `String "E_matching";    match_exp expression type_expression e ]
   (* Record *)
   | E_record          e -> `List [ `String "E_record";      record      expression e ]
   | E_accessor        e -> `List [ `String "E_record_accessor"; accessor expression e ]
@@ -73,62 +75,6 @@ and let_in {let_binder;rhs;let_result;attributes=attr;mut} =
     ("mut", `Bool mut);
   ]
 
-and matching {matchee; cases} =
-  `Assoc [
-    ("matchee", expression matchee);
-    ("cases", matching_expr cases);
-  ]
+let declaration = declaration expression type_expression
 
-and matching_expr = function
-  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";
-    `Assoc [
-      ("match_nil", expression match_nil);
-      ("match_cons", matching_content_cons match_cons);
-    ]]
-  | Match_option  {match_none;match_some} -> `List [ `String "Match_option";
-    `Assoc [
-      ("match_none", expression match_none);
-      ("match_some", matching_content_some match_some);
-    ]]
-  | Match_variant m -> `List [ `String "Match_variant"; list matching_content_case m ]
-  | Match_tuple   (lst,e) -> `List [ `String "Match_tuple";
-  (*TODO*)
-    `List [
-      list (fun (b) -> `List [expression_variable_to_yojson b.var]) lst;
-      expression e;
-    ]]
-  | Match_record (lst, e) -> `List [`String "Match_record";
-  (*TODO*)
-    `List [
-      list (fun (l,b) -> `List [label l; expression_variable_to_yojson b.var]) lst;
-      expression e;
-    ]]
-  | Match_variable (b,e) -> `List [`String "Match_varible";
-    `List [expression_variable_to_yojson b.var; expression e];
-    ]
-
-and matching_content_cons (hd, tl, body) =
-  `Assoc [
-    ("hd", expression_variable_to_yojson hd);
-    ("tl", expression_variable_to_yojson tl);
-    ("body", expression body);
-  ]
-
-and matching_content_some (opt, body ) =
-  `Assoc [
-    ("opt", expression_variable_to_yojson opt);
-    ("body", expression body);
-  ]
-
-and matching_content_case ((constructor, pattern), body) =
-  `Assoc [
-    ("constructor", label constructor);
-    ("pattern", expression_variable_to_yojson pattern);
-    ("body", expression body);
-  ]
-
-let declaration = function
-  | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type type_expression dt]
-  | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant expression type_expression dc]
-
-let program = program declaration
+let module_ = module' expression type_expression

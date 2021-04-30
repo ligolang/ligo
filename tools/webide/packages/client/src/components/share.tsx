@@ -98,7 +98,7 @@ export const ShareComponent = () => {
   const inputEl = useRef<HTMLInputElement>(null);
   const dispatch = useDispatch();
   const shareLink = useSelector<AppState, ShareState['link']>(
-    state => state.share.link
+    state => state.share && state.share.link
   );
 
   const SHARE_TOOLTIP = 'Share code';

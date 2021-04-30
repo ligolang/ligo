@@ -101,6 +101,8 @@ module type TOKEN =
     val is_annot  : token -> bool
     val is_sym    : token -> bool
     val is_eof    : token -> bool
+
+    val support_string_delimiter : char -> bool
   end
 
 (* The signature of the lexer *)

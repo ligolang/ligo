@@ -35,12 +35,13 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _}
+        | E_constant {cons_name=C_FOLD;arguments= _}
         | E_cond _
         | E_matching _ -> ok @@ (false, (decl_var,free_var),ass_exp)
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_type_in _
+      | E_type_in _ | E_mod_in _ |  E_mod_alias _
       | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _|E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
@@ -83,12 +84,13 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _}
+        | E_constant {cons_name=C_FOLD;arguments= _}
         | E_cond _
         | E_matching _ -> ok @@ (false,(decl_var,free_var),ass_exp)
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_type_in _
+      | E_type_in _ | E_mod_in _ | E_mod_alias _
       | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _| E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
@@ -150,7 +152,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * _ O.row_element) list = [
         (O.Label "0", {associated_type = l ; attributes = [ "annot:"^l_ann ] ; decl_pos = 0});
-        (O.Label "1", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 0}); ]
+        (O.Label "1", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
       return @@ O.T_record { fields = (O.LMap.of_list sum) ; attributes = [] }
     | I.T_app c ->
@@ -200,6 +202,12 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
     | I.E_type_in ti ->
       let%bind ti = type_in self self_type ti in
       return @@ O.E_type_in ti
+    | I.E_mod_in mi ->
+      let%bind mi = mod_in self self_type mi in
+      return @@ O.E_mod_in mi
+    | I.E_mod_alias ma ->
+      let%bind ma = mod_alias self ma in
+      return @@ O.E_mod_alias ma
     | I.E_raw_code rc ->
       let%bind rc = raw_code self rc in
       return @@ O.E_raw_code rc
@@ -299,85 +307,38 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
     | Some e -> O.e_sequence expr e
   in
   let%bind matchee = compile_expression matchee in
-  match cases with
-    | I.Match_option {match_none;match_some} ->
-      let%bind match_none' = compile_expression match_none in
-      let (n,expr) = match_some in
-      let%bind expr' = compile_expression expr in
-      let env = Location.wrap (Var.fresh ~name:"env" ()) in
-      let%bind ((_,free_vars_none), match_none) = repair_mutable_variable_in_matching match_none' [] env in
-      let%bind ((_,free_vars_some), expr) = repair_mutable_variable_in_matching expr' [n] env in
-      let match_none = add_to_end match_none (O.e_variable env) in
-      let expr       = add_to_end expr (O.e_variable env) in
-      let free_vars = List.sort_uniq compare_var @@ free_vars_none @ free_vars_some in
-      if (List.length free_vars != 0) then
-        let match_expr  = O.e_matching matchee (O.Match_option {match_none; match_some=(n,expr)}) in
-        let return_expr = fun expr ->
-          O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
-          O.e_let_in_ez env false [] match_expr @@
-          expr
-        in
-        ok @@ restore_mutable_variable return_expr free_vars env
-      else
-        return @@ O.e_matching ~loc matchee @@ O.Match_option {match_none=match_none'; match_some=(n,expr')}
-    | I.Match_list {match_nil;match_cons} ->
-      let%bind match_nil' = compile_expression match_nil in
-      let (hd,tl,expr) = match_cons in
-      let%bind expr' = compile_expression expr in
-      let env = Location.wrap (Var.fresh ~name:"name" ()) in
-      let%bind ((_,free_vars_nil), match_nil) = repair_mutable_variable_in_matching match_nil' [] env in
-      let%bind ((_,free_vars_cons), expr) = repair_mutable_variable_in_matching expr' [hd;tl] env in
-      let match_nil = add_to_end match_nil (O.e_variable env) in
-      let expr      = add_to_end expr (O.e_variable env) in
-      let free_vars = List.sort_uniq compare_var @@ free_vars_nil @ free_vars_cons in
-      if (List.length free_vars != 0) then
-        let match_expr  = O.e_matching matchee (O.Match_list {match_nil; match_cons=(hd,tl,expr)}) in
-        let return_expr = fun expr ->
-          O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
-          O.e_let_in_ez env false [] match_expr @@
-          expr
-        in
-        ok @@ restore_mutable_variable return_expr free_vars env
-      else
-        return @@ O.e_matching ~loc matchee @@ O.Match_list {match_nil=match_nil'; match_cons=(hd,tl,expr')}
-    | I.Match_variant lst ->
-      let env = Location.wrap (Var.fresh ~name:"env" ()) in
-      let aux fv ((c,n),expr) =
-        let%bind expr = compile_expression expr in
-        let%bind ((_,free_vars), case_clause) = repair_mutable_variable_in_matching expr [n] env in
-        let case_clause'= expr in
-        let case_clause = add_to_end case_clause (O.e_variable env) in
-        ok (free_vars::fv,((c,n), case_clause, case_clause')) in
-      let%bind (fv,cases) = bind_fold_map_list aux [] lst in
-      let free_vars = List.sort_uniq compare_var @@ List.concat fv in
-      if (List.length free_vars == 0) then (
-        let cases = List.map (fun case -> let (a,_,b) = case in (a,b)) cases in
-        return @@ O.e_matching ~loc matchee @@ O.Match_variant cases
-      ) else (
-        let cases = List.map (fun case -> let (a,b,_) = case in (a,b)) cases in
-        let match_expr = O.e_matching matchee @@ O.Match_variant cases in
-        let return_expr = fun expr ->
-          O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
-          O.e_let_in_ez env false [] match_expr @@
-          expr
-        in
-        ok @@ restore_mutable_variable return_expr free_vars env
-      )
-    | I.Match_record (lst,expr) ->
-      let%bind expr = compile_expression expr in
-      let aux (a,b) =
-        let%bind b = binder compile_type_expression b in
-        ok @@ (a,b) in
-      let%bind binders = bind_map_list aux lst in
-      return @@ O.e_matching ~loc matchee @@ O.Match_record (binders,expr)
-    | I.Match_tuple (binders,expr) ->
-      let%bind expr = compile_expression expr in
-      let%bind binders = bind_map_list (binder compile_type_expression) binders in
-      return @@ O.e_matching ~loc matchee @@ O.Match_tuple (binders,expr)
-    | I.Match_variable (b,expr) ->
-      let%bind expr   = compile_expression expr in
-      let%bind binder = binder compile_type_expression b in
-      return @@ O.e_matching ~loc matchee @@ O.Match_variable (binder,expr)
+  let env = Location.wrap (Var.fresh ~name:"env" ()) in
+  let aux :
+    _ I.match_case -> ((_ O.match_case * _ O.match_case)  * (I.expression_variable list), Errors.purification_error) result =
+    fun {pattern ; body} ->
+      let%bind body = compile_expression body in
+      let get_pattern_vars : I.expression_variable list -> I.type_expression I.pattern -> I.expression_variable list =
+        fun acc p->
+          match p.wrap_content with
+          | P_var b -> b.var::acc
+          | _ -> acc
+      in
+      let n = Stage_common.Helpers.fold_pattern get_pattern_vars [] pattern in
+      let%bind pattern = Stage_common.Helpers.map_pattern_t (binder compile_type_expression) pattern in
+      let%bind ((_,free_vars), body') = repair_mutable_variable_in_matching body n env in
+      let body' = add_to_end body' (O.e_variable env) in
+      let cases_no_fv : (O.expression, O.type_expression) O.match_case = { pattern ; body } in
+      let cases_fv : (O.expression, O.type_expression) O.match_case = { pattern ; body = body' } in
+      ok ((cases_no_fv,cases_fv),free_vars)
+  in
+  let%bind l = bind_map_list aux cases in
+  let (cases_no_fv,cases_fv) = List.split @@ List.map fst l in
+  let free_vars = List.sort_uniq compare_var (List.flatten @@ List.map snd l) in
+  match free_vars with
+  | [] -> return (O.e_matching ~loc matchee cases_no_fv) 
+  | _ ->
+    let match_expr  = O.e_matching matchee cases_fv in
+    let return_expr = fun expr ->
+      O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
+      O.e_let_in_ez env false [] match_expr @@
+      expr
+    in
+    ok @@ restore_mutable_variable return_expr free_vars env
 
 and compile_while I.{cond;body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
@@ -415,32 +376,33 @@ and compile_while I.{cond;body} =
 
 and compile_for I.{binder;start;final;incr;f_body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
+  let loop_binder = Location.wrap @@ Var.fresh ~name:"loop_binder" () in
   (*Make the cond and the step *)
   let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
   let%bind cond = compile_expression cond in
   let%bind step = compile_expression incr in
-  let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
+  let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable loop_binder)] in
   let ctrl =
     O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
-    O.e_let_in_ez env_rec false [] (O.e_update (O.e_variable env_rec) [Access_tuple Z.one] @@ O.e_variable binder)@@
+    O.e_let_in_ez loop_binder false [] (O.e_update (O.e_variable loop_binder) [Access_tuple Z.one] @@ O.e_variable binder)@@
     continue_expr
   in
   (* Modify the body loop*)
   let%bind body = compile_expression f_body in
-  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] env_rec in
+  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] loop_binder in
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
   in
 
   (* restores the initial value of the free_var*)
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
 
   (*Prep the lambda for the fold*)
-  let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable env_rec] in
-  let aux_func = O.e_lambda_ez env_rec None @@
-                 O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.one]) @@
+  let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable loop_binder] in
+  let aux_func = O.e_lambda_ez loop_binder None @@
+                 O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.one]) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
@@ -484,16 +446,16 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
     )
     | _ -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
-  let lambda = O.e_lambda_ez args  None (restore for_body) in
+  let lambda = O.e_lambda_ez args None (restore for_body) in
   let%bind op_name = match collection_type with
-   | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD
+   | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD | Any -> ok @@ O.C_FOLD
   in
   let fold = fun expr ->
     O.e_let_in_ez env_rec false [] (O.e_constant op_name [lambda; collect ; init_record]) expr
   in
   ok @@ restore_mutable_variable fold free_vars env_rec
 
-let compile_declaration : I.declaration Location.wrap -> _ =
+and compile_declaration : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with
@@ -503,6 +465,12 @@ let compile_declaration : I.declaration Location.wrap -> _ =
   | I.Declaration_constant dc ->
     let%bind dc = declaration_constant compile_expression compile_type_expression dc in
     return @@ O.Declaration_constant dc
+  | I.Declaration_module dm ->
+    let%bind dm = declaration_module compile_expression compile_type_expression dm in
+    return @@ O.Declaration_module dm
+  | I.Module_alias ma ->
+    let%bind ma = module_alias ma in
+    return @@ O.Module_alias ma
 
-let compile_program : I.program -> (O.program , Errors.purification_error) result = fun p ->
-  program compile_declaration p
+and compile_module : I.module_ -> (O.module_ , Errors.purification_error) result = fun m ->
+  module' compile_expression compile_type_expression m

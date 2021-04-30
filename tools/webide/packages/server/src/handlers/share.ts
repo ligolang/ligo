@@ -50,45 +50,43 @@ const validateRequest = (body: any): { value: ShareBody; error?: any } => {
           language: joi.string().required(),
           code: joi.string().required(),
           dirty: joi.boolean().optional(),
-          title: joi.string().allow('')
+          title: joi.string().allow(''),
         })
         .required(),
       compile: joi.object({
-        entrypoint: joi.string().allow('')
+        entrypoint: joi.string().allow(''),
       }),
       dryRun: joi.object({
         entrypoint: joi.string().allow(''),
         parameters: joi.any().allow(''),
-        storage: joi.any().allow('')
+        storage: joi.any().allow(''),
       }),
       deploy: joi.object({
         entrypoint: joi.string().allow(''),
         storage: joi.any().allow(''),
-        useTezBridge: joi.boolean().optional()
+        network: joi.string().allow(''),
+        signer: joi.string().allow(''),
       }),
       evaluateValue: joi.object({
-        entrypoint: joi.string().allow('')
+        entrypoint: joi.string().allow(''),
       }),
       evaluateFunction: joi.object({
         entrypoint: joi.string().allow(''),
-        parameters: joi.any().allow('')
+        parameters: joi.any().allow(''),
       }),
       generateDeployScript: joi.object({
         tool: joi.string().allow(''),
         entrypoint: joi.string().allow(''),
         storage: joi.any().allow(''),
         originationAccount: joi.string().allow(''),
-        burnCap: joi.number().allow('')
-      })
+        burnCap: joi.number().allow(''),
+      }),
     })
     .validate(body);
 };
 
 function escapeUrl(str: string) {
-  return str
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 export async function shareHandler(req: Request, res: Response) {
@@ -100,7 +98,7 @@ export async function shareHandler(req: Request, res: Response) {
     try {
       const versionedShareState = {
         version: latestSchema.VERSION,
-        state: value
+        state: value,
       };
 
       const { error } = latestSchema.validate(versionedShareState);

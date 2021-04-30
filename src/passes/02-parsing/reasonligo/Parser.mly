@@ -44,6 +44,9 @@ let first_region = function
 %on_error_reduce nsepseq(fun_arg,COMMA)
 %on_error_reduce fun_type
 %on_error_reduce core_type
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
+%on_error_reduce nsepseq(module_name,DOT)
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -144,15 +147,17 @@ list__(item):
 (* Main *)
 
 contract:
-  declarations EOF { {decl=$1; eof=$2} }
-
-declarations:
-  declaration              { $1,[] : CST.declaration Utils.nseq }
-| declaration declarations { Utils.nseq_cons $1 $2              }
+  nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl ";"?           { TypeDecl  $1 }
-| let_declaration ";"?     { ConstDecl $1 }
+  type_decl ";"?        { TypeDecl    $1 }
+| let_declaration ";"?  { ConstDecl   $1 }
+| module_decl ";"?      { ModuleDecl  $1 }
+| module_alias ";"?     { ModuleAlias $1 }
+| "<directive>"         { Directive   $1 }
+
+module_:
+  nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 (* Type declarations *)
 
@@ -163,6 +168,27 @@ type_decl:
                   name      = $2;
                   eq        = $3;
                   type_expr = $4}
+    in {region; value} }
+
+module_decl:
+  "module" module_name "=" "{" module_ "}" {
+    let region = cover $1 $6 in
+    let value  = {kwd_module = $1;
+                  name       = $2;
+                  eq         = $3;
+                  lbrace     = $4;
+                  module_    = $5;
+                  rbrace     = $6}
+    in {region; value} }
+
+module_alias:
+  "module" module_name "=" nsepseq (module_name,".") {
+    let stop   = nsepseq_to_region (fun x -> x.region) $4 in
+    let region = cover $1 stop in
+    let value  = {kwd_module = $1;
+                  alias      = $2;
+                  eq         = $3;
+                  binders    = $4}
     in {region; value} }
 
 type_expr:
@@ -302,11 +328,11 @@ irrefutable:
     in PTuple {region; value=$1} }
 
 sub_irrefutable:
-  "<ident>"                                              {    PVar $1 }
-| "_"                                                    {   PWild $1 }
-| unit                                                   {   PUnit $1 }
-| record_pattern                                         { PRecord $1 }
-| par(closed_irrefutable)                                {    PPar $1 }
+  "<ident>"                       {                           PVar $1 }
+| "_"                             { PVar { value = "_"; region = $1 } }
+| unit                            {                          PUnit $1 }
+| record_pattern                  {                        PRecord $1 }
+| par(closed_irrefutable)         {                           PPar $1 }
 
 closed_irrefutable:
   irrefutable                                            {         $1 }
@@ -345,18 +371,18 @@ sub_pattern:
 | core_pattern     {      $1 }
 
 core_pattern:
-  "<ident>"                                    {              PVar $1 }
-| "_"                                          {             PWild $1 }
-| "<int>"                                      {              PInt $1 }
-| "<nat>"                                      {              PNat $1 }
-| "<bytes>"                                    {            PBytes $1 }
-| "<string>"                                   {           PString $1 }
-| "<verbatim>"                                 {         PVerbatim $1 }
-| unit                                         {             PUnit $1 }
-| par(ptuple)                                  {              PPar $1 }
-| list__(sub_pattern)                          { PList (PListComp $1) }
-| constr_pattern                               {           PConstr $1 }
-| record_pattern                               {           PRecord $1 }
+  "<ident>"                       {                           PVar $1 }
+| "_"                             { PVar { value = "_"; region = $1 } }
+| "<int>"                         {                           PInt $1 }
+| "<nat>"                         {                           PNat $1 }
+| "<bytes>"                       {                         PBytes $1 }
+| "<string>"                      {                        PString $1 }
+| "<verbatim>"                    {                      PVerbatim $1 }
+| unit                            {                          PUnit $1 }
+| par(ptuple)                     {                           PPar $1 }
+| list__(sub_pattern)             {              PList (PListComp $1) }
+| constr_pattern                  {                        PConstr $1 }
+| record_pattern                  {                        PRecord $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,",") "}" {
@@ -370,7 +396,12 @@ record_pattern:
     in {region; value} }
 
 field_pattern:
-  field_name "=" sub_pattern {
+  field_name {
+    let region  = $1.region
+    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
+    in {region; value} 
+  }
+| field_name ":" sub_pattern {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop
@@ -436,6 +467,8 @@ base_expr(right_expr):
   let_expr(right_expr)
 | fun_expr(right_expr)
 | local_type_decl(right_expr)
+| local_module_decl(right_expr)
+| local_module_alias(right_expr)
 | disj_expr_level { $1 }
 
 conditional(right_expr):
@@ -461,7 +494,7 @@ if_then(right_expr):
     in ECond {region; value} }
 
 base_if_then_else__open(x):
-  base_expr(x) | if_then_else(x) { $1 }
+  base_expr(x) | conditional(x) { $1 }
 
 base_if_then_else:
   base_if_then_else__open(base_if_then_else) { $1 }
@@ -529,6 +562,26 @@ local_type_decl(right_expr):
     and value     = {type_decl; semi; body}
     in ETypeIn {region; value} }
 
+local_module_decl(right_expr):
+  module_decl ";" right_expr {
+    let mod_decl  = $1.value in
+    let semi      = $2 in
+    let body      = $3 in
+    let stop      = expr_to_region $3 in
+    let region    = cover $1.region stop
+    and value     = {mod_decl; semi; body}
+    in EModIn {region; value} }
+
+local_module_alias(right_expr):
+  module_alias ";" right_expr {
+    let mod_alias = $1.value in
+    let semi      = $2 in
+    let body      = $3 in
+    let stop      = expr_to_region $3 in
+    let region    = cover $1.region stop
+    and value     = {mod_alias; semi; body}
+    in EModAlias {region; value} }
+
 fun_arg:
   sub_irrefutable type_annotation? {
     match $2 with
@@ -553,15 +606,18 @@ fun_expr(right_expr):
 | ES6FUN "(" nsepseq(fun_arg, ",") ")" type_annotation? "=>" right_expr {
     let region = cover $1 (expr_to_region $7) in
     let ptuple_region = nsepseq_to_region pattern_to_region $3 in
+    let (hd, tl) = $3 in
     let value = {
       binders = PPar {
         region = cover $2 $4;
         value = {
           lpar = $2;
-          inside = PTuple {
+          inside = (match tl with 
+          | [] -> hd
+          | _ -> PTuple {
             value = $3;
             region = ptuple_region;
-          };
+          });
           rpar = $4;
         }
       };
@@ -635,27 +691,33 @@ unary_expr_level:
     let stop = expr_to_region $2 in
     let region = cover start stop
     and value  = {op=$1; arg=$2} in
-    ELogic (BoolExpr (Not ({region; value})))
+    ELogic (BoolExpr (Not {region; value}))
   }
 | call_expr_level { $1 }
 
 call_expr_level:
-  call_expr | constr_expr | core_expr { $1 }
+  call_expr
+| core_expr   { $1 }
+| constr_expr { EConstr $1 }
 
 constr_expr:
-  "None" {
-    EConstr (ENone $1)
-  }
-| "Some" core_expr {
+  "Some" argument {
     let region = cover $1 (expr_to_region $2)
-    in EConstr (ESomeApp {region; value=$1,$2})
+    in ESomeApp {region; value=$1,$2}
   }
-| "<constr>" core_expr {
+| "<constr>" argument {
     let region = cover $1.region (expr_to_region $2) in
-    EConstr (EConstrApp {region; value=$1, Some $2})
-   }
-| "<constr>" {
-    EConstr (EConstrApp {$1 with value=$1, None}) }
+    EConstrApp {region; value = ($1, Some $2)}
+  }
+| constant_constr { $1 }
+
+argument:
+  constant_constr { EConstr $1 }
+| core_expr       {         $1 }
+
+constant_constr:
+  "None"     { ENone $1                             }
+| "<constr>" { EConstrApp {$1 with value=($1,None)} }
 
 call_expr:
   core_expr par(nsepseq(annot_expr, ",")) {
@@ -678,7 +740,7 @@ core_expr:
 | "<bytes>"                           {                     EBytes $1 }
 | "<ident>"                           {                       EVar $1 }
 | projection                          {                      EProj $1 }
-| module_access_e                     {                        EModA $1 }
+| module_access_e                     {                      EModA $1 }
 | "<string>"                          {           EString (String $1) }
 | "<verbatim>"                        {         EString (Verbatim $1) }
 | unit                                {                      EUnit $1 }
@@ -698,7 +760,7 @@ core_expr:
  }
 
 code_inj:
-  "<lang>" expr "]" {
+  "[%lang" expr "]" {
     let region = cover $1.region $3
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
@@ -875,7 +937,7 @@ let_in_sequence:
     in ELetIn {region; value} }
 
 seq_expr:
-  disj_expr_level | if_then_else (closed_if) { $1 }
+  disj_expr_level | conditional (closed_if) { $1 }
 
 field_assignment_punning:
   (* This can only happen with multiple fields -

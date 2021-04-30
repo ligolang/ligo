@@ -3,14 +3,49 @@ open Mini_c.Types
 open Tezos_micheline.Micheline
 open Trace
 
+let rec comb prim loc xs =
+  match xs with
+  | [] | [_] -> assert false
+  | [x1; x2] -> Prim (loc, prim, [x1; x2], [])
+  | x1 :: x2 :: xs ->
+    let xs = comb prim loc (x2 :: xs) in
+    Prim (loc, prim, [x1; xs], [])
+
+let normalize_edo_comb_type =
+  function
+  | Prim (loc, "pair", xs, _) ->
+    comb "pair" loc xs
+  | t -> t
+
+let normalize_edo_comb_value =
+  function
+  (* only do it for type is "pair", because Seq case is ambiguous *)
+  | Prim (_, "pair", _, _) ->
+    (function
+      | Prim (loc, "Pair", xs, _) ->
+        comb "Pair" loc xs
+      | Seq (loc, xs) ->
+        comb "Pair" loc xs
+      | x -> x)
+  | _ -> fun x -> x
+
 let rec decompile_value :
   ('l, string) node -> ('l, string) node -> (value , stacking_error) result =
   fun ty value ->
+  let ty = normalize_edo_comb_type ty in
+  let value = normalize_edo_comb_value ty value in
   match (ty, value) with
-  | Prim (_, "pair", [a_ty; b_ty], _), Prim (_, "Pair", [a; b], _) -> (
-      let%bind a = decompile_value a_ty a in
-      let%bind b = decompile_value b_ty b in
-      ok @@ D_pair(a, b)
+  | Prim (_, "pair", ts, _), Prim (_, "Pair", vs, _) -> (
+      let%bind els = bind_map_list (fun (t,v) -> decompile_value t v) (List.combine ts vs) in
+      let rec aux l =
+        match l with
+        | [] -> fail (untranspilable ty value)
+        | [x] -> ok x
+        | hd::tl -> (
+            let%bind tl' = aux tl in
+            ok @@ D_pair (hd, tl')
+          ) in
+      aux els
     )
   | Prim (_, "or", [a_ty; _], _), Prim (_, "Left", [a], _) -> (
       let%bind a = decompile_value a_ty a in
@@ -24,12 +59,14 @@ let rec decompile_value :
       ok @@ D_int n
   | Prim (_, "nat", [], _), Int (_, n) ->
       ok @@ D_nat n
-  | Prim (_, "chain_id", [], _), Bytes (_, id) ->
-    let id = Tezos_base.TzPervasives.Chain_id.of_bytes_exn id in
-    let str = Tezos_crypto.Base58.simple_encode
+  | Prim (_, "chain_id", _, _), String (_, id) ->
+    (* Before EDO :
+      let id = Tezos_base.TzPervasives.Chain_id.of_bytes_exn id in
+      let str = Tezos_crypto.Base58.simple_encode
       (Tezos_base__TzPervasives.Chain_id.b58check_encoding)
       id in
-    ok @@ D_string str
+    *)
+    ok @@ D_string id
   | Prim (_, "key_hash", [], _), String (_, n) ->
     ok @@ D_string n
   | Prim (_, "key", [], _), String (_, n) ->
@@ -116,5 +153,11 @@ let rec decompile_value :
       let pp_lambda =
         Format.asprintf "[lambda of type: %a ]" Michelson.pp ty in
         ok @@ D_string pp_lambda
-  | ty, v ->
+  | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
+    ignore addr;
+    let ty_nat = Prim (xx, "nat", [], []) in
+    let%bind v' = decompile_value ty v in
+    let%bind amt' = decompile_value ty_nat amt in
+    ok @@ D_ticket (v', amt')
+ | ty, v ->
       fail (untranspilable ty v)

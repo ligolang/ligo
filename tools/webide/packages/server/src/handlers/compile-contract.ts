@@ -17,7 +17,7 @@ const validateRequest = (body: any): { value: CompileBody; error?: any } => {
       syntax: joi.string().required(),
       code: joi.string().required(),
       entrypoint: joi.string().required(),
-      format: joi.string().optional()
+      format: joi.string().optional(),
     })
     .validate(body);
 };

@@ -4,9 +4,27 @@
     simple-utils
     cmdliner
     ligo
+    ligo_compile
     build
+    repl
   )
   (modules cli cli_helpers formatter version changelog)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)
+  )
+  (flags (:standard -open Simple_utils -open Ligo))
+)
+
+(library
+  (name repl)
+  (libraries
+    simple-utils
+    cmdliner
+    ligo
+    build
+    linenoise
+  )
+  (modules repl)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
   )
@@ -26,6 +44,10 @@
  (action (with-stdout-to
           changelog.ml
           (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ${CHANGELOG_PATH:-../../gitlab-pages/docs/intro/changelog.md})\""))))
+
+; build static executable with --profile static
+(env
+ (static (flags (:standard -ccopt -static -cclib "-lgmp"))))
 
 (executable
   (name runligo)

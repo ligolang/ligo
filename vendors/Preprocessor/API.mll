@@ -60,7 +60,7 @@ type trace = cond list
        (#include);
      * the field [incl] is the file system's path to the the
        current input file;
-     * the field [imp] is a list of (filename,module)
+     * the field [import] is a list of (filename, module) imports
        (#import);
      *)
 
@@ -86,7 +86,7 @@ type state = {
   out    : Buffer.t;
   chans  : in_channel list;
   incl   : file_path list;
-  imp    : (file_path * module_name) list;
+  import : (file_path * module_name) list;
 }
 
 (* Directories *)
@@ -115,12 +115,13 @@ type error =
 | Dangling_elif
 | Reserved_symbol of string
 | Multiply_defined_symbol of string
-| Error_directive of string
+| Error_directive of string           (* #error ONLY *)
 | Parse_error
 | Invalid_symbol
 | File_not_found of string
 | Unterminated_comment of string
-| Unterminated_inclusion
+| Missing_filename                    (* #include *)
+| Unexpected_argument                 (* #include and #import *)
 
 let error_to_string = function
   Directive_inside_line ->
@@ -162,7 +163,7 @@ let error_to_string = function
     sprintf "Multiply-defined symbol %S.\n\
              Hint: Change the name or remove one definition." sym
 | Error_directive msg ->
-    msg
+    if msg = "" then sprintf "Directive #error reached." else msg
 | Parse_error ->
     "Parse error in expression."
 | Invalid_symbol ->
@@ -172,9 +173,10 @@ let error_to_string = function
 | Unterminated_comment ending ->
     sprintf "Unterminated comment.\n\
              Hint: Close with %S." ending
-| Unterminated_inclusion ->
-    sprintf "Unterminated #include directive.\n\
-             Hint: Add as a string the name of the file to be included."
+| Missing_filename ->
+    sprintf "Filename expected in a string literal."
+| Unexpected_argument ->
+    sprintf "Unexpected argument."
 
 let format_error config ~msg (region: Region.t) =
   let file  = config#input <> None in
@@ -182,8 +184,11 @@ let format_error config ~msg (region: Region.t) =
                 ~file
                 ~offsets:config#offsets
                 `Byte in
-  let value = sprintf "Preprocessing error %s:\n%s\n" reg msg
+  let value = sprintf "%s:\n%s\n" reg msg
   in Region.{value; region}
+
+(* IMPORTANT : Make sure the functions [fail] and [expr] remain the
+   only ones raising [Error]. *)
 
 exception Error of (Buffer.t * string Region.reg)
 
@@ -197,9 +202,6 @@ let mk_reg buffer =
   let start = Lexing.lexeme_start_p buffer |> Pos.from_byte
   and stop  = Lexing.lexeme_end_p buffer |> Pos.from_byte
   in Region.make ~start ~stop
-
-(* IMPORTANT : Make sure the functions [fail] and [expr] remain the
-   only ones raising [Error]. *)
 
 let stop state buffer = fail state (mk_reg buffer)
 
@@ -247,14 +249,14 @@ let rec last_mode = function
 
 (* Finding a file to #include *)
 
-let rec find base = function
+let rec find file_path = function
          [] -> None
 | dir::dirs ->
     let path =
-      if dir = "." || dir = "" then base
-      else dir ^ Filename.dir_sep ^ base in
+      if dir = "." || dir = "" then file_path
+      else dir ^ Filename.dir_sep ^ file_path in
     try Some (path, open_in path) with
-      Sys_error _ -> find base dirs
+      Sys_error _ -> find file_path dirs
 
 let find dir file dirs =
   let path =
@@ -272,7 +274,7 @@ let find dir file dirs =
 let copy state buffer =
   Buffer.add_string state.out (Lexing.lexeme buffer)
 
-(* End of lines are always copied *)
+(* End of lines are always copied. ALWAYS AND ONLY USE AFTER SCANNING nl. *)
 
 let proc_nl state buffer =
   Lexing.new_line buffer; copy state buffer
@@ -310,8 +312,8 @@ let directives = [
   "endregion";
   "error";
   "if";
-  "include";
   "import";
+  "include";
   "region";
   "undef"
 ]
@@ -505,14 +507,14 @@ rule scan state = parse
         let line = Lexing.(lexbuf.lex_curr_p.pos_lnum)
         and file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
         let base = Filename.basename file
-        and reg, incl_file = scan_inclusion state lexbuf in
+        and reg, incl_file = scan_include state lexbuf in
         if state.mode = Copy then
           let incl_dir = Filename.dirname incl_file in
           let path = mk_path state in
           let incl_path, incl_chan =
             match find path incl_file state.config#dirs with
               Some p -> p
-            | None -> fail state reg (File_not_found incl_file) in
+            |   None -> fail state reg (File_not_found incl_file) in
           let () = print state (sprintf "\n# 1 %S 1\n" incl_path) in
           let incl_buf = Lexing.from_channel incl_chan in
           let () =
@@ -523,22 +525,22 @@ rule scan state = parse
           let state' = {state with mode=Copy; trace=[]} in
           let state' = scan (push_dir incl_dir state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans} in
-          let path   = if path = "" then base
+          let path   = if path = "" || path = "." then base
                        else path ^ Filename.dir_sep ^ base in
-          let ()     = print state (sprintf "\n# %i %S 2" (line+1) path)
+          let ()     = print state (sprintf "\n# %i %S 2\n" (line+1) path)
           in scan state lexbuf
         else scan state lexbuf
     | "import" ->
-        let reg, imp_file, imp_name = scan_import state lexbuf in
+        let reg, import_file, imported_module = scan_import state lexbuf in
         if state.mode = Copy then
           let path = mk_path state in
-          let imp_path =
-            match find path imp_file state.config#dirs with
+          let import_path =
+            match find path import_file state.config#dirs with
               Some p -> fst p
-            | None -> fail state reg (File_not_found imp_file) in
-          let state  = {state with imp = (imp_path,imp_name)::state.imp}
-          in scan state lexbuf
-        else scan state lexbuf
+            | None -> fail state reg (File_not_found import_file) in
+          let state  = {state with import = (import_path, imported_module)::state.import}
+          in (proc_nl state lexbuf; scan state lexbuf)
+        else (proc_nl state lexbuf; scan state lexbuf)
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
@@ -662,19 +664,21 @@ and symbol state = parse
   ident as id { id, mk_reg lexbuf                }
 | _           { stop state lexbuf Invalid_symbol }
 
-(* New lines and verbatim sequence of characters *)
+(* Skipping all characters until the end of line or end of file. *)
 
 and skip_line state = parse
-  nl     { proc_nl state lexbuf     }
-| eof    { rollback lexbuf }
-| blank+
+  nl     { proc_nl state lexbuf   }
+| eof    { rollback lexbuf        }
 | _      { skip_line state lexbuf }
+
+(* For #error, #region and #endregion *)
 
 and message acc = parse
   nl     { Lexing.new_line lexbuf;
            mk_str (List.length acc) acc }
 | eof    { rollback lexbuf;
            mk_str (List.length acc) acc }
+| blank* { message acc lexbuf           }
 | _ as c { message (c::acc) lexbuf      }
 
 (* Comments *)
@@ -716,26 +720,32 @@ and in_block block opening state = parse
          in fail state opening err                                 }
 | _    { copy state lexbuf; in_block block opening state lexbuf    }
 
-(* Included filename *)
+(* #include *)
 
-and scan_inclusion state = parse
-  blank+   { scan_inclusion state lexbuf                    }
-| '"'      { in_inclusion (mk_reg lexbuf) [] 0 state lexbuf }
-| nl | eof { stop state lexbuf       Unterminated_inclusion }
+and scan_include state = parse
+  blank+ { scan_include state lexbuf                    }
+| '"'    { in_include (mk_reg lexbuf) [] 0 state lexbuf }
+| _      { stop state lexbuf Missing_filename           }
 
-and in_inclusion opening acc len state = parse
-  '"'    { let closing = mk_reg lexbuf
-           in Region.cover opening closing, mk_str len acc    }
-| nl     { stop state lexbuf Newline_in_string                }
-| eof    { fail state opening Unterminated_string             }
-| _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
+and in_include opening acc len state = parse
+  '"'    { let region = Region.cover opening (mk_reg lexbuf)
+           in region, end_include acc len state lexbuf       }
+| nl     { stop state lexbuf Newline_in_string               }
+| eof    { fail state opening Unterminated_string            }
+| _ as c { in_include opening (c::acc) (len+1) state lexbuf  }
 
-(* Imported filaname with module *)
+and end_include acc len state = parse
+  nl     { Lexing.new_line lexbuf; mk_str len acc         }
+| eof    { mk_str len acc                                 }
+| blank+ { end_include acc len state lexbuf               }
+| _      { fail state (mk_reg lexbuf) Unexpected_argument }
+
+(* #import *)
 
 and scan_import state = parse
-  blank+   { scan_import state lexbuf                       }
-| '"'      { in_import (mk_reg lexbuf) [] 0 state lexbuf    }
-| nl | eof { stop state lexbuf       Unterminated_inclusion }
+  blank+ { scan_import state lexbuf                    }
+| '"'    { in_import (mk_reg lexbuf) [] 0 state lexbuf }
+| _      { stop state lexbuf Missing_filename          }
 
 and in_import opening acc len state = parse
   '"'    { let imp_path = mk_str len acc
@@ -745,16 +755,23 @@ and in_import opening acc len state = parse
 | _ as c { in_import opening (c::acc) (len+1) state lexbuf }
 
 and scan_module opening imp_path state = parse
-  blank+   { scan_module opening imp_path state lexbuf      }
-| '"'      { in_module opening imp_path [] 0 state lexbuf   }
-| nl | eof { stop state lexbuf       Unterminated_inclusion }
+  blank+ { scan_module opening imp_path state lexbuf    }
+| '"'    { in_module opening imp_path [] 0 state lexbuf }
+| _      { stop state lexbuf Missing_filename           }
 
 and in_module opening imp_path acc len state = parse
-  '"'    { let closing = mk_reg lexbuf
-           in Region.cover opening closing, imp_path, mk_str len acc }
-| nl     { stop state lexbuf Newline_in_string                       }
-| eof    { fail state opening Unterminated_string                    }
-| _ as c { in_module opening imp_path (c::acc) (len+1) state lexbuf  }
+  '"'    { end_module opening (mk_reg lexbuf) imp_path acc len state lexbuf }
+| nl     { stop state lexbuf Newline_in_string                              }
+| eof    { fail state opening Unterminated_string                           }
+| _ as c { in_module opening imp_path (c::acc) (len+1) state lexbuf         }
+
+
+and end_module opening closing imp_path acc len state = parse
+  nl     { proc_nl state lexbuf;
+           Region.cover opening closing, imp_path, mk_str len acc   }
+| eof    { Region.cover opening closing, imp_path, mk_str len acc   }
+| blank+ { end_module opening closing imp_path acc len state lexbuf }
+| _      { fail state (mk_reg lexbuf) Unexpected_argument           }
 
 (* Strings *)
 
@@ -780,29 +797,32 @@ and preproc state = parse
    that the trace is empty at the end.  Note that we discard the state
    at the end. *)
 
-type message = string Region.reg
+type module_deps = (file_path * module_name) list
+type success     = Buffer.t * module_deps
+type message     = string Region.reg
 
-type preprocessed =
-  (Buffer.t * (file_path * module_name) list, Buffer.t option * message) Stdlib.result
+type result = (success, Buffer.t option * message) Stdlib.result
 
-type 'src preprocessor = config -> 'src -> preprocessed
+type 'src preprocessor = config -> 'src -> result
+
+(* Preprocessing from various sources *)
 
 let from_lexbuf config buffer =
   let path = Lexing.(buffer.lex_curr_p.pos_fname) in
   let state = {
     config;
-    env   = E_AST.Env.empty;
-    mode  = Copy;
-    trace = [];
-    out   = Buffer.create 80;
-    chans = [];
-    incl  = [Filename.dirname path];
-    imp    = [];
+    env    = E_AST.Env.empty;
+    mode   = Copy;
+    trace  = [];
+    out    = Buffer.create 80;
+    chans  = [];
+    incl   = [Filename.dirname path];
+    import = []
   } in
   match preproc state buffer with
     state ->
       List.iter close_in state.chans;
-      Stdlib.Ok (state.out,state.imp)
+      Stdlib.Ok (state.out, state.import)
   | exception Error (buffer, msg) ->
       Stdlib.Error (Some buffer, msg)
 

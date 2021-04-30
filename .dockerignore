@@ -1,5 +1,3 @@
+.git
 _opam
 _build
-docker
-gitlab-pages
-Makefile

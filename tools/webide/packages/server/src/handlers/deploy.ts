@@ -1,6 +1,6 @@
 import joi from '@hapi/joi';
 import { TezosToolkit } from '@taquito/taquito';
-import { importKey } from "@taquito/signer";
+import { importKey } from '@taquito/signer';
 import { Request, Response } from 'express';
 
 import { CompilerError, LigoCompiler } from '../ligo-compiler';
@@ -12,9 +12,11 @@ interface DeployBody {
   code: string;
   entrypoint: string;
   storage: string;
+  network: string;
 }
 
-const Tezos = new TezosToolkit('https://api.tez.ie/rpc/delphinet');
+const Tezos = (network: string) =>
+  new TezosToolkit(`https://api.tez.ie/rpc/${network}`);
 
 const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi
@@ -22,14 +24,14 @@ const validateRequest = (body: any): { value: DeployBody; error?: any } => {
       syntax: joi.string().required(),
       code: joi.string().required(),
       entrypoint: joi.string().required(),
-      storage: joi.string().required()
+      storage: joi.string().required(),
+      network: joi.string().required(),
     })
     .validate(body);
 };
 
 export async function deployHandler(req: Request, res: Response) {
   const { error, value: body } = validateRequest(req.body);
-
   if (error) {
     res.status(400).json({ error: error.message });
   } else {
@@ -49,11 +51,13 @@ export async function deployHandler(req: Request, res: Response) {
         body.storage
       );
 
-      await importKey(Tezos, await fetchRandomPrivateKey());
+      const TezosNetwork = Tezos(body.network);
 
-      const op = await Tezos.contract.originate({
+      await importKey(TezosNetwork, await fetchRandomPrivateKey(body.network));
+
+      const op = await TezosNetwork.contract.originate({
         code: JSON.parse(michelsonCode),
-        init: JSON.parse(michelsonStorage)
+        init: JSON.parse(michelsonStorage),
       });
 
       const contract = await op.contract();

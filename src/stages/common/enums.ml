@@ -4,11 +4,11 @@ type ligo_string = Simple_utils.Ligo_string.t
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
   try match x with
-      | `String s -> Ok (Z.of_string s)
-      | _ -> Utils.error_yojson_format "JSON string"
+    | `String s -> Ok (Z.of_string s)
+    | _ -> Utils.error_yojson_format "JSON string"
   with
   | Invalid_argument _ ->
-     Error "Invalid formatting.
+    Error "Invalid formatting.
             The Zarith library does not know how to handle this formatting."
 
 let bytes_to_yojson b = `String (Bytes.to_string b)
@@ -31,6 +31,7 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_operation of bytes
+[@@deriving ord]
 
 type constant' =
   | C_INT
@@ -54,6 +55,8 @@ type constant' =
   | C_LOOP_CONTINUE
   | C_LOOP_STOP
   | C_FOLD
+  | C_FOLD_LEFT
+  | C_FOLD_RIGHT
   (* MATH *)
   | C_NEG
   | C_ABS
@@ -99,13 +102,17 @@ type constant' =
   | C_SET_REMOVE
   | C_SET_ITER
   | C_SET_FOLD
+  | C_SET_FOLD_DESC
   | C_SET_MEM
+  | C_SET_UPDATE
   (* List *)
   | C_LIST_EMPTY
   | C_LIST_LITERAL
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
+  | C_LIST_FOLD_LEFT
+  | C_LIST_FOLD_RIGHT
   | C_LIST_HEAD_OPT
   | C_LIST_TAIL_OPT
   (* Maps *)
@@ -163,10 +170,17 @@ type constant' =
   | C_TEST_GET_BALANCE
   | C_TEST_SET_NOW
   | C_TEST_SET_SOURCE
-  | C_TEST_SET_BALANCE
+  | C_TEST_SET_BAKER
   | C_TEST_EXTERNAL_CALL
-  | C_TEST_ASSERT_FAILURE
+  | C_TEST_EXTERNAL_CALL_EXN
+  | C_TEST_MICHELSON_EQUAL
+  | C_TEST_GET_NTH_BS
   | C_TEST_LOG
+  | C_TEST_COMPILE_EXPRESSION
+  | C_TEST_COMPILE_EXPRESSION_SUBST
+  | C_TEST_STATE_RESET
+  | C_TEST_LAST_ORIGINATIONS
+  | C_TEST_COMPILE_META_VALUE
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
@@ -180,11 +194,13 @@ type constant' =
   | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD
 
 type deprecated = {
-    name : string ;
-    const : constant' ;
-  }
+  name : string ;
+  const : constant' ;
+}
 
 type rich_constant =
   | Deprecated of deprecated

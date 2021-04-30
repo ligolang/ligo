@@ -1,6 +1,7 @@
 module Tree_abstraction : sig
   open Ast_imperative
 
+  val pseudo_module_to_string : constant' -> string
   module type Constant = sig
     val constants      : string -> rich_constant option
     val constant_to_string      : rich_constant -> string
@@ -11,6 +12,8 @@ module Tree_abstraction : sig
   module Cameligo : Constant
 
   module Reasonligo : Constant
+
+  module Jsligo : Constant
 
 end
 

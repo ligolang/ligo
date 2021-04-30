@@ -10,6 +10,14 @@ let of_tz_error (err:X_error_monad.error) : tezos_alpha_error =
 
 let of_alpha_tz_error err = of_tz_error (AE.Ecoproto_error err)
 
+
+let trace_decoding_error :
+  (Data_encoding.Binary.read_error -> 'err) -> ('a, Data_encoding.Binary.read_error) Stdlib.result -> ('a,'err) result =
+  fun f err ->
+    match err with
+    | Ok x -> ok x
+    | Error err -> fail (f err)
+
 let trace_alpha_tzresult :
   (tezos_alpha_error list -> 'b) -> 'a AE.Error_monad.tzresult -> ('a, 'b) result =
   fun tracer err -> match err with
