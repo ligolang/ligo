@@ -118,16 +118,14 @@ let resolve_if :
 let make_v_def_from_core :
   with_types:bool -> bindings_map -> Ast_core.expression_variable -> Location.t -> Location.t -> def =
   fun ~with_types bindings var range body_range ->
-    let name' = get_binder_name var.wrap_content in
     let type_case = resolve_if ~with_types bindings var in
-    make_v_def name' type_case range body_range
+    make_v_def var.wrap_content type_case range body_range
 
 let make_v_def_option_type :
   with_types:bool -> bindings_map -> Ast_core.expression_variable -> Ast_core.type_expression option -> Location.t -> Location.t -> def =
   fun ~with_types bindings var core_t_opt range body_range ->
-    let name' = get_binder_name var.wrap_content in
     let type_case = match core_t_opt with
       | Some t -> Core t
       | None -> resolve_if ~with_types bindings var
     in
-    make_v_def name' type_case range body_range
+    make_v_def var.wrap_content type_case range body_range

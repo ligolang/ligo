@@ -34,17 +34,17 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
     | E_mod_alias { alias; binders ; result } -> (
-        let env_opt = Def_map.find_opt (fst binders) env in
-        let aux def_opt binder =
-          match def_opt with
-          | Some Module m -> Def_map.find_opt binder m.content
-          | _ -> None
-        in
-        let def = List.fold_left aux env_opt (snd binders) in
-        let env = match def with 
-          Some def -> Def_map.add alias def env
+      let env_opt = Def_map.find_opt (fst binders) env in
+      let aux def_opt binder =
+        match def_opt with
+        | Some Module m -> Def_map.find_opt binder m.content
+        | _ -> None
+      in
+      let def = List.fold_left aux env_opt (snd binders) in
+      let env = match def with 
+        | Some def -> Def_map.add alias def env
         | None -> env
-        in
+      in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
@@ -108,13 +108,18 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     | E_module_accessor { module_name; element=e} ->
       let env_opt = Def_map.find_opt module_name env in
       let env = match env_opt with 
-        Some Module def ->
-          def.content
-      | _ -> env
+        | Some Module def -> def.content
+        | _ -> env
       in
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,e.location) bindings e  in
       (i,all_defs,env,scopes)
-    | E_literal _ | E_raw_code _ | E_variable _ -> (
+    | E_variable x -> (
+      let env = add_reference x env in
+      let all_defs = merge_defs env all_defs in
+      let scopes = add_scope (lastloc, env) scopes in
+      (i,all_defs,env,scopes)
+    )
+    | E_literal _ | E_raw_code _ -> (
       let scopes = add_scope (lastloc, env) scopes in
       (i,all_defs,env,scopes)
     )
@@ -152,15 +157,14 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       )
       | Module_alias {alias; binders} -> (
         let env_opt = Def_map.find_opt (fst binders) top_def_map in
-        let aux def_opt binder =
-          match def_opt with
+        let aux def_opt binder = match def_opt with
           | Some Module m -> Def_map.find_opt binder m.content
           | _ -> None
         in
         let def = List.fold_left aux env_opt (snd binders) in
         let top_def_map = match def with 
-          Some def -> Def_map.add alias def top_def_map
-        | None -> top_def_map
+          | Some def -> Def_map.add alias def top_def_map
+          | None -> top_def_map
         in
         ( i, top_def_map, inner_def_map, scopes, sub_prg' )
       )
@@ -169,7 +173,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     let init = { m = [] ; bindings = Bindings_map.empty } in
     List.fold_left aux (i, Def_map.empty, Def_map.empty, [], init) core_prg 
   in
-  let (_,top_d,inner_d,s,_) = declaration 0 core_prg in 
-  let d = Def_map.union (fun _ outter _ -> Some outter) top_d inner_d in
+  let (_,top_d,inner_d,s,_) = declaration 0 core_prg in
+  let d = Def_map.union merge_refs top_d inner_d in
   ok @@ (d,s)
 
