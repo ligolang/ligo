@@ -296,6 +296,25 @@ module Tree_abstraction = struct
     | C_SOME -> "Some"
     | C_NONE -> "None"
 
+    (* Testing module *)
+
+    | C_TEST_ORIGINATE -> "Test.originate"
+    | C_TEST_SET_NOW -> "Test.set_now"
+    | C_TEST_SET_SOURCE -> "Test.set_source"
+    | C_TEST_SET_BAKER -> "Test.set_baker"
+    | C_TEST_EXTERNAL_CALL -> "Test.transfer"
+    | C_TEST_EXTERNAL_CALL_EXN -> "Test.transfer_exn"
+    | C_TEST_GET_STORAGE -> "Test.get_storage"
+    | C_TEST_GET_BALANCE -> "Test.get_balance"
+    | C_TEST_MICHELSON_EQUAL -> "Test.michelson_equal"
+    | C_TEST_LOG -> "Test.log"
+    | C_TEST_STATE_RESET -> "Test.reset_state"
+    | C_TEST_COMPILE_EXPRESSION -> "Test.compile_expression"
+    | C_TEST_COMPILE_EXPRESSION_SUBST -> "Test.compile_expression_subst"
+    | C_TEST_GET_NTH_BS -> "Test.nth_bootstrap_account"
+    | C_TEST_LAST_ORIGINATIONS -> "Test.last_originations"
+    | C_TEST_COMPILE_META_VALUE -> "Test.compile_value"
+    
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
 

@@ -270,6 +270,7 @@ let reset_state: (nat, list(nat)) => unit
 let reset_state = (no_of_accounts: nat, amount: list&lt;nat&gt;) => unit
 </SyntaxTitle>
 Generate a number of random bootstrapped accounts with a default amount of 4000000 tez. The passed list can be used to overwrite the amount.
+By default, the state only has two bootstrapped accounts.
 
 <SyntaxTitle syntax="pascaligo">
 function nth_bootstrap_account : int -> address
