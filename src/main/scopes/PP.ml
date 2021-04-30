@@ -11,12 +11,20 @@ let scopes : Format.formatter -> scopes -> unit = fun f s ->
 
 let rec definitions : Format.formatter -> def_map -> unit = fun f dm ->
   let kvl = Def_map.to_kv_list dm in
-  let pp_types ppf d = match d with
+  let pp_content ppf d = match d with
     | Variable v -> (
-        match v.t with
-        | Core t -> Format.fprintf ppf "|core: %a |" Ast_core.PP.type_expression t
-        | Resolved t -> Format.fprintf ppf "|resolved: %a |" Ast_typed.PP.type_expression t
-        | Unresolved -> Format.fprintf ppf "|unresolved|"
+        let tys ppf t = match t with
+          | Core t -> Format.fprintf ppf "core: %a" Ast_core.PP.type_expression t
+          | Resolved t -> Format.fprintf ppf "resolved: %a" Ast_typed.PP.type_expression t
+          | Unresolved -> Format.fprintf ppf "unresolved"
+        in
+        let refs ppf loclst =
+          match loclst with
+          | [] -> Format.fprintf ppf "references: []"
+          | _ ->
+            Format.fprintf ppf "@[<hv 2>references:@ %a@]" PP_helpers.(list_sep Location.pp (tag " ,@ ")) loclst
+        in
+        Format.fprintf ppf "|%a|@ %a" tys v.t refs v.references
     )
     | Type t -> Format.fprintf ppf ": %a" Ast_core.PP.type_expression t.content
     | Module m -> Format.fprintf ppf ": %a" definitions m.content
@@ -24,22 +32,22 @@ let rec definitions : Format.formatter -> def_map -> unit = fun f dm ->
   in
   let (variables,types) = List.partition (fun (_,def) -> match def with Type _ | Module _ | ModuleAlias _ -> false | Variable _ -> true) kvl in
   let (types,modules) = List.partition (fun (_,def) -> match def with |Type _ -> true | _ -> false) types in
-  let pp_def f = List.iter (fun (k,v) -> Format.fprintf f "(%s -> %s) %a %a@ " k (get_def_name v) pp_types v Location.pp (get_range v)) in
+  let pp_def f = List.iter (fun (k,v) -> Format.fprintf f "(%s -> %s) %a %a@ " k (get_def_name v) Location.pp (get_range v) pp_content v) in
   Format.fprintf f "@[<v>Variable definitions:@ %aType definitions:@ %aModule definitions:@ %a@]" pp_def variables pp_def types pp_def modules
 
 let rec def_to_yojson : def -> Yojson.Safe.t = function
-  | Variable { name ; range ; body_range ; t ; references=_ } ->
+  | Variable { name ; range ; body_range ; t ; references } ->
     let type_case_to_yojson t = match t with
       | Core t -> `Assoc [ "core" , Ast_core.Yojson.type_expression t ]
       | Resolved t -> `Assoc [ "resolved" , Ast_typed.Yojson.type_expression t ]
       | Unresolved -> `Assoc [ "unresolved" , `Null ]
     in
     `Assoc [
-      ("name", `String name);
+      ("name", `String (Misc.get_binder_name name));
       ("range", Location.to_yojson range);
       ("body_range", Location.to_yojson body_range);
       ("t", type_case_to_yojson t );
-      ("references", `Null);
+      ("references", `List (List.map Location.to_yojson references) );
     ]
   | Type { name ; range ; body_range ; content } ->
     `Assoc [
