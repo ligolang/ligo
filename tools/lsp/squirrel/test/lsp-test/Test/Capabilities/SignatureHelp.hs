@@ -11,7 +11,7 @@ import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 
-import AST (Fallback)
+import AST (Fallback, Standard)
 import AST.Capabilities.SignatureHelp
   (SignatureInformation (..), findSignature, makeSignatureLabel, toLspParameter)
 import AST.Scope.Common (HasScopeForest)
@@ -110,9 +110,10 @@ caseInfos =
 test_simpleFunctionCall :: TestTree
 test_simpleFunctionCall
   = testGroup "Signature Help on a simple function call"
-    [fallbackGroup] -- TODO maybe add FromCompiler scopes testing
+    [fallbackGroup, standardGroup]
   where
     fallbackGroup = testGroup "Fallback scopes" (testCases @Fallback)
+    standardGroup = testGroup "Standard scopes" (testCases @Standard)
 
     testCases :: forall parser. HasScopeForest parser IO => [TestTree]
     testCases = map (makeTestCase @parser) caseInfos

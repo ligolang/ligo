@@ -17,14 +17,13 @@ module Test.Capabilities.Find
   ) where
 
 import Data.Foldable (for_)
-import System.FilePath (takeFileName, (</>))
+import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
-import AST (Fallback)
+import AST (Fallback, HasScopeForest, Standard)
 import AST.Capabilities.Find (definitionOf, referencesOf, typeDefinitionAt)
-import AST.Scope.Common (HasScopeForest)
 import Range (Range (..), interval, point)
 
 import qualified Test.Capabilities.Util as Common (contractsDir)
@@ -62,7 +61,7 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
 checkDefinitionReferenceInvariant
   :: HasCallStack => DefinitionReferenceInvariant -> Assertion
 checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..}
-  = test @Fallback -- *> test @FromCompiler -- TODO uncomment when compiler scopes are fixed
+  = test @Fallback *> test @Standard
   where
     test :: forall parser. HasScopeForest parser IO => Assertion
     test = do
@@ -84,15 +83,13 @@ checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..}
     driRefs' = map (label driFile) driRefs
 
 label :: FilePath -> Range -> Range
-label filepath r = r{ rFile = filename }
-  where
-    filename = takeFileName filepath
+label filepath r = r{ rFile = filepath }
 
 -- | Check if the given range corresponds to a definition of the given
 -- entity in the given file.
 checkIfDefinition :: FilePath -> Range -> Range -> Assertion
 checkIfDefinition filepath (label filepath -> expectedDef) mention
-  = test @Fallback -- *> test @FromCompiler -- TODO uncomment when compiler scopes are fixed
+  = test @Fallback *> test @Standard
   where
     test :: forall parser. HasScopeForest parser IO => Assertion
     test = do
@@ -103,7 +100,7 @@ checkIfDefinition filepath (label filepath -> expectedDef) mention
 -- entity in the given file.
 checkIfReference :: FilePath -> Range -> Range -> Assertion
 checkIfReference filepath (label filepath -> expectedRef) mention
-  = test @Fallback -- *> test @FromCompiler -- TODO uncomment when compiler scopes are fixed
+  = test @Fallback *> test @Standard
   where
     test :: forall parser. HasScopeForest parser IO => Assertion
     test = do
@@ -339,45 +336,38 @@ unit_referenceOfXInWildcard = checkIfReference
   (interval 2 13 14)
   (interval 1 5 6)
 
+typeOfImpl
+  :: forall impl. HasScopeForest impl IO
+  => FilePath
+  -> Range
+  -> Range
+  -> Assertion
+typeOfImpl filepath mention definition = do
+  tree <- readContractWithScopes @impl filepath
+  case typeDefinitionAt mention tree of
+    Nothing -> expectationFailure "Should find type definition"
+    Just range -> range{rFile=rFile mention} `shouldBe` definition
+
+typeOf :: FilePath -> Range -> Range -> Assertion
+typeOf filepath mention definition = do
+  typeOfImpl @Fallback filepath mention definition
+  typeOfImpl @Standard filepath mention definition
+
 unit_type_of_heap_const :: Assertion
-unit_type_of_heap_const = do
-    tree <- readContractWithScopes @Fallback (contractsDir </> "heap.ligo")
-    case typeDefinitionAt (point 106 8) tree of
-      Nothing -> expectationFailure "Should find type definition"
-      Just range -> range{rFile=""} `shouldBe` interval 4 6 10
+unit_type_of_heap_const = typeOf (contractsDir </> "heap.ligo") (point 106 8) (interval 4 6 10)
 
 unit_type_of_heap_arg :: Assertion
-unit_type_of_heap_arg = do
-    tree <- readContractWithScopes @Fallback (contractsDir </> "heap.ligo")
-    case typeDefinitionAt (point 8 25) tree of
-      Nothing -> expectationFailure "Should find type definition"
-      Just range -> range{rFile=""} `shouldBe` interval 4 6 10
+unit_type_of_heap_arg = typeOf (contractsDir </> "heap.ligo") (point 8 25) (interval 4 6 10)
 
 unit_type_of_let :: Assertion
-unit_type_of_let = do
-    tree <- readContractWithScopes @Fallback (contractsDir </> "type-attributes.mligo")
-    case typeDefinitionAt (point 7 10) tree of
-      Nothing -> expectationFailure "Should find type definition"
-      Just range -> range{rFile=""} `shouldBe` interval 1 6 20
+unit_type_of_let = typeOf (contractsDir </> "type-attributes.mligo") (point 7 10) (interval 1 6 20)
 
 unit_type_of_pascaligo_lambda_arg :: Assertion
-unit_type_of_pascaligo_lambda_arg = do
-  tree <- readContractWithScopes @Fallback (contractsDir </> "lambda.ligo")
-  case typeDefinitionAt (point 4 21) tree of
-    Nothing -> expectationFailure "Should find type definition"
-    Just range -> range{rFile=""} `shouldBe` interval 1 6 12
+unit_type_of_pascaligo_lambda_arg = typeOf (contractsDir </> "lambda.ligo") (point 4 21) (interval 1 6 12)
 
 unit_pascaligo_local_type :: Assertion
-unit_pascaligo_local_type = do
-  tree <- readContractWithScopes @Fallback (contractsDir </> "local_type.ligo")
-  case typeDefinitionAt (point 3 23) tree of
-    Nothing -> expectationFailure "Should find type definition"
-    Just range -> range{rFile=""} `shouldBe` interval 2 8 12
+unit_pascaligo_local_type = typeOf (contractsDir </> "local_type.ligo") (point 3 23) (interval 2 8 12)
 
 -- See LIGO-110
 -- unit_type_of_camligo_lambda_arg :: Assertion
--- unit_type_of_camligo_lambda_arg = do
---     tree <- readContractWithScopes @Fallback (contractsDir </> "type-attributes.mligo")
---     case typeDefinitionAt (point 8 52) tree of
---       Nothing -> expectationFailure "Should find type definition"
---       Just range -> range{rFile=""} `shouldBe` interval 1 6 20
+-- unit_type_of_camligo_lambda_arg = typeOf (contractsDir </> "type-attributes.mligo") (point 8 52) (interval 1 6 20)

@@ -14,7 +14,7 @@ import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
 import AST.Capabilities.DocumentSymbol (extractDocumentSymbols)
-import AST.Scope (Fallback)
+import AST.Scope (Fallback, HasScopeForest, Standard)
 
 import qualified Test.Capabilities.Util as Common (contractsDir)
 import Test.FixedExpectations (shouldBe)
@@ -35,7 +35,12 @@ simplify SymbolInformation{_name, _kind, _location = Location{_range}} =
 
 unit_document_symbols_example_heap :: Assertion
 unit_document_symbols_example_heap = do
-  tree <- readContractWithScopes @Fallback (contractsDir </> "heap.ligo")
+  document_symbols_example_heap @Fallback
+  document_symbols_example_heap @Standard
+
+document_symbols_example_heap :: forall impl. HasScopeForest impl IO => Assertion
+document_symbols_example_heap = do
+  tree <- readContractWithScopes @impl (contractsDir </> "heap.ligo")
   symbols <- extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
     [ ("heap", SkTypeParameter, (3, 5), (3, 9))
@@ -50,7 +55,12 @@ unit_document_symbols_example_heap = do
 
 unit_document_symbols_example_access :: Assertion
 unit_document_symbols_example_access = do
-  tree <- readContractWithScopes @Fallback (contractsDir </> "access.ligo")
+  document_symbols_example_access @Fallback
+  document_symbols_example_access @Standard
+
+document_symbols_example_access :: forall impl. HasScopeForest impl IO => Assertion
+document_symbols_example_access = do
+  tree <- readContractWithScopes @impl (contractsDir </> "access.ligo")
   symbols <- extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
     [ ("const owner", SkConstant , (2, 6), (2, 11))

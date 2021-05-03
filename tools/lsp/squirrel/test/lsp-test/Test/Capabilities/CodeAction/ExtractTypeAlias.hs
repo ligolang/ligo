@@ -49,16 +49,19 @@ constructExpectedWorkspaceEdit = map constructCodeAction
     constructCodeAction (r, s) = J.TextEdit { _range = toLspRange r , _newText = T.pack s }
 
 test_extractTypeAlias :: TestTree
-test_extractTypeAlias = testGroup "Extract type extractedTypeNameAlias code action" [fallbackGroup]
+test_extractTypeAlias = testGroup "Extract type extractedTypeNameAlias code action" [fallbackGroup, standardGroup]
   where
     fallbackGroup :: TestTree
-    fallbackGroup = testGroup "Fallback extraction" testCases
+    fallbackGroup = testGroup "Fallback extraction" (testCases @Fallback)
 
-    testCases :: [TestTree]
-    testCases = map makeTestCase testInfos
+    standardGroup :: TestTree
+    standardGroup = testGroup "Standard extraction" (testCases @Standard)
 
-    makeTestCase :: TestInfo -> TestTree
-    makeTestCase testInfo = testCase (tiContract testInfo) (makeTest testInfo)
+    testCases :: forall parser. HasScopeForest parser IO => [TestTree]
+    testCases = map (makeTestCase @parser) testInfos
+
+    makeTestCase :: forall parser. HasScopeForest parser IO => TestInfo -> TestTree
+    makeTestCase testInfo = testCase (tiContract testInfo) (makeTest @parser testInfo)
 
     extractTextEdits :: J.CodeAction -> [J.TextEdit]
     extractTextEdits action = unwrapEdits edits
@@ -72,10 +75,10 @@ test_extractTypeAlias = testGroup "Extract type extractedTypeNameAlias code acti
           [(_, J.List e)] -> e
           _ -> error "unwrapEdits: malformed list"
 
-    makeTest :: TestInfo -> Assertion
+    makeTest :: forall parser. HasScopeForest parser IO => TestInfo -> Assertion
     makeTest TestInfo{tiContract, tiCursor, tiExpectedEdits} = do
       let contractPath = contractsDir </> "code-action" </> "extract-type-definition" </> tiContract
-      tree <- readContractWithScopes @Fallback contractPath
+      tree <- readContractWithScopes @parser contractPath
       [action] <- typeExtractionCodeAction tiCursor (J.filePathToUri contractPath) tree
       let resultingEdits = extractTextEdits action
       resultingEdits `shouldBe` constructExpectedWorkspaceEdit tiExpectedEdits
