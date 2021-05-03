@@ -15,7 +15,6 @@ import Range (point)
 import qualified Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
-import Test.Util.LigoEnv ()
 
 contractsDir :: FilePath
 contractsDir = Test.Capabilities.Util.contractsDir </> "completion"

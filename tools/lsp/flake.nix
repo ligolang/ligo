@@ -69,6 +69,11 @@
 
         squirrel = pkgs.callPackage ./squirrel { };
 
+        ligo-bin = pkgs.linkFarm "ligo-bin" [ {
+          name = "bin/ligo";
+          path = "${../../ligo}";
+        } ];
+
         squirrel-sexp-test = pkgs.stdenv.mkDerivation {
           name = "squirrel-sexp-test";
           src = ./squirrel;
@@ -98,6 +103,10 @@
              in pkgs.lib.strings.concatStrings (map testDialect dialects)
                 + "touch $out";
         };
+
+        integration-test = squirrel.checks.integration-test.overrideAttrs (oldAttrs: {
+          buildInputs = [ ligo-bin ] ++ oldAttrs.buildInputs;
+        });
 
         lint = pkgs.stdenv.mkDerivation {
           name = "lint";
@@ -176,6 +185,7 @@
           inherit squirrel-grammar-test;
           inherit (squirrel.checks) lsp-test;
           inherit (squirrel.checks) ligo-contracts-test;
+          inherit integration-test;
           inherit lint;
         };
         defaultPackage = self.packages.${system}.vscode-extension-native;

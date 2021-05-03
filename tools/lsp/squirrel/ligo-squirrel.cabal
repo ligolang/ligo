@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d5dbe62c017b10ba85e5631c8f1fd81165a2354c6a0df79788f4f6e5abe2b865
+-- hash: bc61baa793925f1d62aca7dca417d1a8c692471657bbe71dd773c633d4230cd6
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -94,6 +94,7 @@ library
     , regex-tdfa
     , safe-exceptions
     , sorted-list
+    , template-haskell
     , text
     , transformers
     , tree-sitter
@@ -190,7 +191,6 @@ test-suite integration-test
       Test.Cli
       Test.FixedExpectations
       Test.Util
-      Test.Util.LigoEnv
       Test.Util.Parsers
       Paths_ligo_squirrel
   hs-source-dirs:
@@ -243,7 +243,6 @@ test-suite ligo-contracts-test
       Test.Parsers
       Test.FixedExpectations
       Test.Util
-      Test.Util.LigoEnv
       Test.Util.Parsers
       Paths_ligo_squirrel
   hs-source-dirs:
@@ -305,7 +304,6 @@ test-suite lsp-test
       Test.Scope.ScopedDecl
       Test.FixedExpectations
       Test.Util
-      Test.Util.LigoEnv
       Test.Util.Parsers
       Paths_ligo_squirrel
   hs-source-dirs:

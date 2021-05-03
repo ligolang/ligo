@@ -18,7 +18,6 @@ import Range
 import Test.Capabilities.Util (contractsDir)
 import Test.FixedExpectations (shouldBe)
 import Test.Util (readContractWithScopes)
-import Test.Util.LigoEnv ()
 
 data TestInfo = TestInfo
   { tiContract :: String

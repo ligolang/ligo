@@ -14,10 +14,6 @@ import Test.FixedExpectations (HasCallStack, expectationFailure, shouldBe)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
--- We assume the ligo executable is on PATH
-instance HasLigoClient IO where
-  getLigoClientEnv = pure $ LigoClientEnv "ligo"
-
 checkFile :: HasCallStack => Maybe LigoBinaryCallError -> FilePath -> TestTree
 checkFile expectedError path = testCase path $
   try @_ @LigoBinaryCallError (getLigoDefinitions $ Path path) >>= \case
