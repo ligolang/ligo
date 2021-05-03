@@ -472,7 +472,7 @@ let compile_parameter =
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
-      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender;  source } in
+      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty
     in
   let term =
@@ -500,7 +500,7 @@ let interpret =
       let%bind typed_exp,_    = Compile.Utils.type_expression ~options init_file syntax expression env in
       let%bind mini_c_exp     = Compile.Of_typed.compile_expression ~module_env:mods typed_exp in
       let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~options decl_list mini_c_exp in
-      let%bind options        = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      let%bind options        = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
       let%bind runres         = Run.run_expression ~options compiled_exp.expr compiled_exp.expr_ty in
       Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres
   in
@@ -531,7 +531,7 @@ let compile_storage =
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
-      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2  $ syntax $ infer $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file $ warn $ werror) in
@@ -552,14 +552,18 @@ let dry_run =
       let options = Compiler_options.make ~infer ~init_env () in
       let%bind mini_c_prg,_,typed_prg,env = Build.build_contract_use  ~options syntax source_file in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg entry_point in
-      let%bind _contract =
+      let%bind parameter_ty =
         (* fails if the given entry point is not a valid contract *)
-        Compile.Of_michelson.build_contract michelson_prg in
+        let%bind _contract = Compile.Of_michelson.build_contract michelson_prg in
+        match Self_michelson.fetch_contract_inputs michelson_prg.expr_ty with
+        | Some (parameter_ty,_storage_ty) -> ok (Some parameter_ty)
+        | None -> ok None
+      in
 
       let%bind compiled_params   = Compile.Utils.compile_storage ~options input storage source_file syntax env mini_c_prg in
       let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
-      let%bind options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      let%bind options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty } in
       let%bind runres  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
@@ -591,7 +595,7 @@ let run_function =
       let%bind compiled_applied = Compile.Of_typed.compile_expression ~module_env:mods typed_app in
 
       let%bind michelson        = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg compiled_applied in
-      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None} in
       let%bind runres           = Run.run_expression ~options michelson.expr michelson.expr_ty in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
@@ -615,7 +619,7 @@ let evaluate_value =
       let%bind (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
       let exp = Mini_c.e_var ~loc:exp.location (Location.wrap @@ Var.of_name entry_point) exp.type_expression in
       let%bind compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in
-      let%bind options       = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      let%bind options       = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None} in
       let%bind runres        = Run.run_expression ~options compiled.expr compiled.expr_ty in
       Decompile.Of_michelson.decompile_typed_program_entry_expression_result typed_prg entry_point runres
     in
@@ -808,7 +812,7 @@ let repl =
     amount balance sender source now display_format init_file : unit Term.ret =
     (let protocol = Environment.Protocols.protocols_to_variant protocol_version in
     let syntax = Helpers.syntax_to_variant (Syntax_name syntax_name) None in
-    let dry_run_opts = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+    let dry_run_opts = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
     match protocol, Trace.to_option syntax, Trace.to_option dry_run_opts with
     | _, None, _ -> `Error (false, "Please check syntax name.")
     | None, _, _ -> `Error (false, "Please check protocol name.")

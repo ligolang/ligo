@@ -69,7 +69,7 @@ let compile_expression ~loc syntax exp_as_string source_file subst_lst =
   in
   let%bind mini_c_exp     = Of_typed.compile_expression typed_exp in
   let%bind compiled_exp   = Of_mini_c.aggregate_and_compile_expression ~options decl_list mini_c_exp in
-  let%bind options        = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None } in
+  let%bind options        = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = None } in
   let%bind runres         = Run.Of_michelson.run_expression ~options compiled_exp.expr compiled_exp.expr_ty in
   let%bind (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "evaluation of storage failed" in
   let expr = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr) in

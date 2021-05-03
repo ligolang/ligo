@@ -9,7 +9,8 @@ module Errors = Main_errors
 type options = Memory_proto_alpha.options
 
 type dry_run_options =
-  { amount : string ;
+  { parameter_ty : (Location.t, string) Tezos_micheline.Micheline.node option ; (* added to allow dry-running contract using `Tezos.self` *)
+    amount : string ;
     balance : string ;
     now : string option ;
     sender : string option ;
@@ -50,7 +51,15 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
       match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
         | Some t -> ok (Some t)
         | None -> fail @@ Errors.invalid_timestamp st in
-  ok @@ make_options ?now:now ~amount ~balance ?sender ?source ()
+  let%bind parameter_ty =
+    match opts.parameter_ty with
+    | Some x ->
+      let%bind x = Trace.trace_tzresult_lwt Errors.parsing_payload_tracer @@ Memory_proto_alpha.prims_of_strings x in
+      let x = Tezos_micheline.Micheline.strip_locations x in
+      ok (Some x)
+    | None -> ok None
+  in
+  ok @@ make_options ?now:now ~amount ~balance ?sender ?source ?parameter_ty ()
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : (_ Michelson.t * _ Michelson.t , _) result =
   let (Ex_typed_value (ty , value)) = v in
