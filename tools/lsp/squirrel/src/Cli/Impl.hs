@@ -216,7 +216,7 @@ getLigoDefinitions contract = do
     -- TODO: Use --typer=new, but currently it displays a lot of logging
     -- information together with the JSON which makes it difficult to reason
     -- about. It displays more errors than --typer=old (default).
-    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, "/dev/stdin"] contract
+    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, srcPath contract] contract
   case mbOut of
     Right (output, errs) -> do
       Log.debug "LIGO.PARSE" [i|Successfully called ligo with #{output}|]
