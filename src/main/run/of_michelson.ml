@@ -100,9 +100,19 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
   let%bind input_ty =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings input_ty in
+  let (param_type, storage_type) =
+    match input_ty with
+    | Prim (_, T_pair, [x; y], _) -> (x, y)
+    | _ -> failwith ("Internal error: input_ty was not a pair " ^ __LOC__) in
   let%bind (Ex_ty input_ty) =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_ty input_ty in
+  let%bind (Ex_ty param_type) =
+    Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
+    Memory_proto_alpha.parse_michelson_ty param_type in
+  let%bind (Ex_ty storage_type) =
+    Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
+    Memory_proto_alpha.parse_michelson_ty storage_type in
   let%bind output_ty =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings output_ty in
@@ -117,7 +127,7 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
   in
   let top_level = Script_ir_translator.Toplevel
-    { storage_type = output_ty ; param_type = input_ty ;
+    { storage_type ; param_type ;
       root_name = None ; legacy_create_contract_literal = false } in
   let ty_stack_before = Script_typed_ir.Item_t (input_ty, Empty_t, None) in
   let ty_stack_after = Script_typed_ir.Item_t (output_ty, Empty_t, None) in
