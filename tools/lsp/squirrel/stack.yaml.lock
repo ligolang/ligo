@@ -12,10 +12,10 @@ packages:
   original:
     hackage: dependent-map-0.4.0.0
 - completed:
-    hackage: dependent-sum-0.7.1.0@sha256:5599aa89637db434431b1dd3fa7c34bc3d565ee44f0519bfbc877be1927c2531,2068
+    hackage: dependent-sum-0.7.1.0@sha256:0e419237f5b86da3659772afff9cab355c0f8d5b3fdb15a5b30e673d8dc83941,2147
     pantry-tree:
       size: 290
-      sha256: 9cbfb32b5a8a782b7a1c941803fd517633cb699159b851c1d82267a9e9391b50
+      sha256: 009601e5d33e835c7a384e240c5c6ad12643bce9c54b2a0b07201daee3380e51
   original:
     hackage: dependent-sum-0.7.1.0
 - completed:

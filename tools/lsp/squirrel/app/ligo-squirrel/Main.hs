@@ -114,7 +114,7 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentDocumentSymbol handleDocumentSymbolsRequest
   , S.requestHandler J.STextDocumentHover handleHoverRequest
   , S.requestHandler J.STextDocumentRename handleRenameRequest
-  -- , S.requestHandler J.STextDocumentPrepareRename handlePrepareRenameRequest
+  , S.requestHandler J.STextDocumentPrepareRename handlePrepareRenameRequest
   , S.requestHandler J.STextDocumentFormatting handleDocumentFormattingRequest
   , S.requestHandler J.STextDocumentRangeFormatting handleDocumentRangeFormattingRequest
   , S.requestHandler J.STextDocumentCodeAction handleTextDocumentCodeAction
@@ -305,6 +305,14 @@ handleRenameRequest req respond = do
               , _documentChanges = Nothing
               }
         in respond . Right $ response
+
+handlePrepareRenameRequest :: S.Handler RIO 'J.TextDocumentPrepareRename
+handlePrepareRenameRequest req respond = do
+    let (_, nuri, pos) = getUriPos req
+
+    (tree, _) <- RIO.fetch nuri
+
+    respond . Right . fmap (J.InL . toLspRange) $ prepareRenameDeclarationAt pos tree
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position
