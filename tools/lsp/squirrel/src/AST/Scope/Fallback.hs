@@ -82,9 +82,9 @@ addReferences ligo = execState $ loopM_ addRef ligo
 getEnv :: LIGO Info -> ScopeM ScopeForest
 getEnv tree
   = addReferences tree
-  <$> extractScopeForest
-  <$> compressScopeTree
-  <$> extractScopeTree
+  . extractScopeForest
+  . compressScopeTree
+  . extractScopeTree
   <$> prepareTree tree
 
 prepareTree

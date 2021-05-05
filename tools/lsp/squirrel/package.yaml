@@ -21,7 +21,7 @@ dependencies:
   - transformers
   - tree-sitter
   - unliftio
-  - generic-deriving 
+  - generic-deriving
 
 default-extensions:
   - AllowAmbiguousTypes

@@ -70,10 +70,10 @@ checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..}
     test = do
       tree <- readContractWithScopes @parser driFile
       case driDef of
-        Nothing -> do
-          for_ driRefs' $ \mention -> do
+        Nothing ->
+          for_ driRefs' $ \mention ->
             definitionOf mention tree `shouldBe` Nothing
-        Just (label driFile -> expectedDef) -> do
+        Just (label driFile -> expectedDef) ->
           for_ (expectedDef : driRefs') $ \mention -> do
             definitionOf mention tree `shouldBe` Just expectedDef
             case referencesOf mention tree of
@@ -294,28 +294,28 @@ test_findDefinitionAndGoToReferencesCorrespondence =
       where name = driFile inv <> ": " <> driDesc inv
 
 unit_definitionOfId :: Assertion
-unit_definitionOfId = (checkIfDefinition
+unit_definitionOfId = checkIfDefinition
                         (contractsDir </> "id.ligo")
                         (interval 1 20 21)
-                        (interval 1 38 39))
+                        (interval 1 38 39)
 
 unit_referenceOfId :: Assertion
-unit_referenceOfId = (checkIfReference
+unit_referenceOfId = checkIfReference
                        (contractsDir </> "id.ligo")
                        (interval 1 38 39)
-                       (interval 1 20 21))
+                       (interval 1 20 21)
 
 unit_definitionOfLeft :: Assertion
-unit_definitionOfLeft = (checkIfDefinition
+unit_definitionOfLeft = checkIfDefinition
                           (contractsDir </> "heap.ligo")
                           (interval 77 9 13)
-                          (interval 86 36 40))
+                          (interval 86 36 40)
 
 unit_referenceOfLeft :: Assertion
-unit_referenceOfLeft = (checkIfReference
+unit_referenceOfLeft = checkIfReference
                          (contractsDir </> "heap.ligo")
                          (interval 89 30 34)
-                         (interval 77 9 13))
+                         (interval 77 9 13)
 
 unit_definitionOfXInWildcard :: Assertion
 unit_definitionOfXInWildcard = checkIfDefinition

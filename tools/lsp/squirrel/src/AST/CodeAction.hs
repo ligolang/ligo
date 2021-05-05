@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module AST.CodeAction where
 
 import Control.Exception.Safe (MonadCatch)

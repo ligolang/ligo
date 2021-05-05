@@ -16,7 +16,7 @@ import {
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-    let serverOptions: ServerOptions = {
+    const serverOptions: ServerOptions = {
        command: `${context.extensionPath}/bin/ligo-squirrel`,
        options: {
          cwd: `${context.extensionPath}`,
@@ -24,7 +24,7 @@ export function activate(context: ExtensionContext) {
     };
 
     // Options to control the language client
-    let clientOptions: LanguageClientOptions = {
+    const clientOptions: LanguageClientOptions = {
         // Register the server for plain text documents
         documentSelector: [
             { scheme: 'file', language: 'ligo' },
@@ -45,7 +45,6 @@ export function activate(context: ExtensionContext) {
         clientOptions
     );
 
-    console.log('Starting the client...')
     // Start the client. This will also launch the server
     client.start();
 }

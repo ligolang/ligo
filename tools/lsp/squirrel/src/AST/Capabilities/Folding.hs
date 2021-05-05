@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 -- | Code folding utilities
 
 module AST.Capabilities.Folding where

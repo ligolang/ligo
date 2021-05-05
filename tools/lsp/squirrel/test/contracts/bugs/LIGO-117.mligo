@@ -1,4 +1,4 @@
-let create_counter ( 
+let create_counter (
 
 ) = [
 

@@ -86,7 +86,7 @@ data TypeField = TypeField
   }
   deriving stock (Eq, Show)
 
-data TypeConstructor = TypeConstructor
+newtype TypeConstructor = TypeConstructor
   { _tcName :: Text
   }
   deriving stock (Eq, Show)
@@ -105,10 +105,9 @@ newtype Parameter = Parameter
   deriving newtype Pretty
 
 instance Eq ScopedDecl where
-  sd1 == sd2 = and
-    [ pp (_sdName sd1) == pp (_sdName sd2)
-    , _sdOrigin sd1 == _sdOrigin sd2
-    ]
+  sd1 == sd2 =
+    pp (_sdName sd1) == pp (_sdName sd2) &&
+    _sdOrigin sd1 == _sdOrigin sd2
 
 instance Pretty ScopedDecl where
   pp (ScopedDecl n o refs doc _ _) =

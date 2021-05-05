@@ -71,7 +71,7 @@ instance Eq (Product '[]) where
   _ == _ = True
 
 instance (Eq x, Eq (Product xs)) => Eq (Product (x : xs)) where
-  x :> xs == y :> ys = and [x == y, xs == ys]
+  x :> xs == y :> ys = x == y && xs == ys
 
 class PrettyProd xs where
   ppProd :: Product xs -> Doc

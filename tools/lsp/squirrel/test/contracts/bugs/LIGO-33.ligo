@@ -1,2 +1,2 @@
-const f : (nat -> int) = 
+const f : (nat -> int) =
   [%Michelson ({| { UNPAIR; ADD } |} : nat * nat -> nat)];

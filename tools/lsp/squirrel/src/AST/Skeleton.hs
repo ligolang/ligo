@@ -24,7 +24,7 @@ nestedLIGO :: Lens (SomeLIGO xs) (SomeLIGO xs') (LIGO xs) (LIGO xs')
 nestedLIGO = lens getLIGO setLIGO
   where
     getLIGO (SomeLIGO _ ligo) = ligo
-    setLIGO (SomeLIGO d _) ligo = SomeLIGO d ligo
+    setLIGO (SomeLIGO d _) = SomeLIGO d
 
 withNestedLIGO
   :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
