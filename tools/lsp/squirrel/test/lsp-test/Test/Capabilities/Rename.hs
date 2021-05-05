@@ -69,29 +69,29 @@ testRenameFail fp pos = do
 
 unit_rename_fail :: Assertion
 unit_rename_fail = do
-  rename_fail @Fallback
-  rename_fail @Standard
+  renameFail @Fallback
+  renameFail @Standard
 
-rename_fail :: forall impl. HasScopeForest impl IO => Assertion
-rename_fail =
+renameFail :: forall impl. HasScopeForest impl IO => Assertion
+renameFail =
   testRenameFail @impl (contractsDir </> "id.ligo") (1, 16)
 
 unit_rename_id :: Assertion
 unit_rename_id = do
-  rename_id @Fallback
-  rename_id @Standard
+  renameId @Fallback
+  renameId @Standard
 
-rename_id :: forall impl. HasScopeForest impl IO => Assertion
-rename_id =
+renameId :: forall impl. HasScopeForest impl IO => Assertion
+renameId =
   testRenameOk @impl (contractsDir </> "id.ligo") (1, 11) "id" (0, 9) "very_id"
     [(0, 9)]
 
 unit_rename_param :: Assertion
 unit_rename_param = do
-  rename_param @Fallback
-  rename_param @Standard
+  renameParam @Fallback
+  renameParam @Standard
 
-rename_param :: forall impl. HasScopeForest impl IO => Assertion
-rename_param =
+renameParam :: forall impl. HasScopeForest impl IO => Assertion
+renameParam =
   testRenameOk @impl (contractsDir </> "params.mligo") (3, 11) "a" (2, 10) "aa"
     [(2, 35), (2, 10)]

@@ -35,11 +35,11 @@ simplify SymbolInformation{_name, _kind, _location = Location{_range}} =
 
 unit_document_symbols_example_heap :: Assertion
 unit_document_symbols_example_heap = do
-  document_symbols_example_heap @Fallback
-  document_symbols_example_heap @Standard
+  documentSymbolsExampleHeap @Fallback
+  documentSymbolsExampleHeap @Standard
 
-document_symbols_example_heap :: forall impl. HasScopeForest impl IO => Assertion
-document_symbols_example_heap = do
+documentSymbolsExampleHeap :: forall impl. HasScopeForest impl IO => Assertion
+documentSymbolsExampleHeap = do
   tree <- readContractWithScopes @impl (contractsDir </> "heap.ligo")
   symbols <- extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
@@ -55,11 +55,11 @@ document_symbols_example_heap = do
 
 unit_document_symbols_example_access :: Assertion
 unit_document_symbols_example_access = do
-  document_symbols_example_access @Fallback
-  document_symbols_example_access @Standard
+  documentSymbolsExampleAccess @Fallback
+  documentSymbolsExampleAccess @Standard
 
-document_symbols_example_access :: forall impl. HasScopeForest impl IO => Assertion
-document_symbols_example_access = do
+documentSymbolsExampleAccess :: forall impl. HasScopeForest impl IO => Assertion
+documentSymbolsExampleAccess = do
   tree <- readContractWithScopes @impl (contractsDir </> "access.ligo")
   symbols <- extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
