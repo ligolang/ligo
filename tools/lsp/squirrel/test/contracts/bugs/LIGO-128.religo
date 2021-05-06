@@ -1,4 +1,4 @@
-let f = () : int => {
-  let { manager = manager , tickets = tickets } = test;
+let f = (_) : int => {
+  let { manager: manager , tickets: tickets } = test;
   2
 }

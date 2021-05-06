@@ -56,7 +56,7 @@ module.exports = grammar({
       , [$.annot_pattern, $.let_declaration]
       , [$.lambda, $.tuple_pattern]
       , [$._expr_term, $.nullary_constr_pattern]
-      , [$._expr_term, $.capture]
+      , [$._expr_term, $.FieldName]
       , [$.type_string, $._literal]
       , [$.Name, $.NameDecl]
       , [$.NameDecl, $.TypeName]
@@ -181,9 +181,16 @@ module.exports = grammar({
     _record_expr: $ => choice(
       $.record,
       $.record_update,
+      $.record_punning,
     ),
 
-    record: $ => block(sepEndBy(',', field("assignment", $._record_field))),
+    record: $ => block(seq(
+      field("assignment", $.record_field),
+      optional(seq(
+        ',',
+        sepEndBy(',', field("assignment", $._record_field)),
+      )),
+    )),
 
     record_update: $ => block(seq(
       // TODO: possible multiple spreads
@@ -192,12 +199,19 @@ module.exports = grammar({
       sepEndBy1(',', field("field", $.record_field_path)),
     )),
 
+    // ReasonLIGO disallows a record which consists of only one capture.
+    record_punning: $ => block(seq(
+      field("assignment", $.capture),
+      ',',
+      sepEndBy1(',', field("assignment", $._record_field)),
+    )),
+
     _record_field: $ => choice(
       $.record_field,
       $.capture,
     ),
 
-    capture: $ => field("name", $.Name),
+    capture: $ => field("accessor", $.FieldName),
 
     record_field: $ => seq(
       field("accessor", $.FieldName),
@@ -454,18 +468,22 @@ module.exports = grammar({
       )),
     ),
 
-    record_pattern: $ => withAttrs($, seq(
-      "{",
-      sepBy(",", field("field", $.record_field_pattern)),
-      optional(","),
-      "}"
+    record_pattern: $ => withAttrs($, block(
+      sepEndBy1(",", field("field", $._record_field_pattern)),
     )),
+
+    _record_field_pattern: $ => choice(
+      $.record_field_pattern,
+      $.record_capture_pattern,
+    ),
 
     record_field_pattern: $ => withAttrs($, prec(9, seq(
       field("name", $.FieldName),
-      "=",
+      ":",
       field("body", $._pattern),
     ))),
+
+    record_capture_pattern: $ => withAttrs($, prec(9, field("name", $.NameDecl))),
 
     annot_pattern: $ => seq(
       field("subject", $._pattern),

@@ -386,6 +386,8 @@ getImmediateDecls = \case
     case pat of
       IsRecordField label body ->
         singleton <$> valueScopedDecl (getElem r) label Nothing (Just body)
+      IsRecordCapture label ->
+        singleton <$> valueScopedDecl (getElem r) label Nothing Nothing
 
   (match -> Just (r, pat)) -> do
     case pat of

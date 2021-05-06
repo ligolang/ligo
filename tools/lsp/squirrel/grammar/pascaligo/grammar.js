@@ -702,7 +702,23 @@ module.exports = grammar({
         $._list_pattern,
         $.tuple_pattern,
         $._constr_pattern,
+        $.record_pattern,
       ),
+
+    record_pattern: $ => injection("record", field("field", $._record_field_pattern)),
+
+    _record_field_pattern: $ => choice(
+      $.record_field_pattern,
+      $.record_capture_pattern,
+    ),
+
+    record_field_pattern: $ => seq(
+      field("name", $.FieldName),
+      '=',
+      field("body", $._core_pattern),
+    ),
+
+    record_capture_pattern: $ => field("name", $.NameDecl),
 
     var_pattern: $ => field("name", $.NameDecl),
 
