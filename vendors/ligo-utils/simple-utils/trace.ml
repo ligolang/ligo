@@ -229,6 +229,10 @@ let update_annotation w = function
 
 let to_stdlib_result : ('value, 'error) result -> ('value * 'error list, 'error * 'error list) Stdlib.result = fun x -> x
 
+let warnings : ('value, 'error) result -> 'error list = function
+    Error (_, a) -> a
+  | Ok (_, a) -> a
+
 (* Monadic operators *)
 
 let bind f = function

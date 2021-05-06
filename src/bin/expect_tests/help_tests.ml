@@ -662,7 +662,15 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "evaluate-value" ; "--help" ] ;
   [%expect {|
@@ -733,7 +741,15 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|
