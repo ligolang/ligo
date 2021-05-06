@@ -17,6 +17,7 @@ type self_ast_typed_error = [
   | `Self_ast_typed_pair_in of Location.t
   | `Self_ast_typed_pair_out of Location.t
   | `Self_ast_typed_warning_unused of Location.t * string
+  | `Self_ast_typed_warning_muchused of Location.t * string
   | `Self_ast_typed_match_anomaly of Location.t
 ]
 
@@ -113,6 +114,10 @@ One of the following patterns is expected:
     | `Self_ast_typed_warning_unused (loc, s) ->
          Format.fprintf f
            "@[<hv>%a:@.Warning: unused variable \"%s\".\n@]"
+           Location.pp loc s
+    | `Self_ast_typed_warning_muchused (loc, s) ->
+         Format.fprintf f
+           "@[<hv>%a:@.Warning: variable \"%s\" cannot be used more than once.\n@]"
            Location.pp loc s
   )
 
@@ -272,6 +277,16 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Self_ast_typed_warning_unused (loc, s) ->
      let message = `String "unused variable" in
+     let description = `String s in
+     let loc = `String (Format.asprintf "%a" Location.pp loc) in
+     let content = `Assoc [
+                       ("message", message);
+                       ("location", loc);
+                       ("variable", description)
+                     ] in
+     json_warning ~stage ~content
+  | `Self_ast_typed_warning_muchused (loc, s) ->
+     let message = `String "much used variable" in
      let description = `String s in
      let loc = `String (Format.asprintf "%a" Location.pp loc) in
      let content = `Assoc [

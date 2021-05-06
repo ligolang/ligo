@@ -1083,6 +1083,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
+    File "../../test/contracts/bad_address_format.religo", line 1, characters 29-46:
+    Warning: unused variable "storage".
+    File "../../test/contracts/bad_address_format.religo", line 1, characters 12-27:
+    Warning: unused variable "parameter".
+
     Error(s) occurred while type checking the contract:
     Ill typed contract:
       1: { parameter int ;
@@ -1150,6 +1155,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
   [%expect {|
+    File "../../test/contracts/negative/self_in_lambda.mligo", line 1, characters 8-18:
+    Warning: unused variable "u".
+    File "../../test/contracts/negative/self_in_lambda.mligo", line 3, characters 9-29:
+    Warning: unused variable "ps".
+    File "../../test/contracts/negative/self_in_lambda.mligo", line 4, characters 6-11:
+    Warning: unused variable "dummy".
+
     "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
@@ -1291,6 +1303,11 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
+    File "../../test/contracts/negative/self_type_annotation.ligo", line 6, characters 21-22:
+    Warning: unused variable "p".
+    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 10-23:
+    Warning: unused variable "self_contract".
+
     File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
       7 |   block {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
@@ -1315,33 +1332,44 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
   [%expect {|
-    File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46:
-      3 |
-      4 | let main (action, store : parameter * storage) : storage =
-      5 |   store + 1
+File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-16:
+Warning: unused variable "action".
 
-    Invalid type for entrypoint "main".
-    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46:
+  3 |
+  4 | let main (action, store : parameter * storage) : storage =
+  5 |   store + 1
+
+Invalid type for entrypoint "main".
+An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46:
-      4 |
-      5 | let main (action, store : parameter * storage) : return =
-      6 |   ("bad",store + 1)
+File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-16:
+Warning: unused variable "action".
 
-    Invalid type for entrypoint "main".
-    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46:
+  4 |
+  5 | let main (action, store : parameter * storage) : return =
+  6 |   ("bad",store + 1)
+
+Invalid type for entrypoint "main".
+An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46:
-      4 |
-      5 | let main (action, store : parameter * storage) : return =
-      6 |   (([]: operation list),"bad")
+File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 18-23:
+Warning: unused variable "store".
+File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 10-16:
+Warning: unused variable "action".
 
-    Invalid type for entrypoint "main".
-    The storage type "int" of the function parameter must be the same as the storage type "string" of the return value. |}]
+File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46:
+  4 |
+  5 | let main (action, store : parameter * storage) : return =
+  6 |   (([]: operation list),"bad")
+
+Invalid type for entrypoint "main".
+The storage type "int" of the function parameter must be the same as the storage type "string" of the return value. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "self_with_entrypoint.ligo" ; "main" ] ;
@@ -1382,15 +1410,18 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
   [%expect {|
-    File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
-      7 |   block {
-      8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
-      9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
+File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, characters 21-22:
+Warning: unused variable "p".
 
-    Invalid entrypoint "Toto".
-    One of the following patterns is expected:
-      * "%bar" is expected for entrypoint "Bar"
-      * "%default" when no entrypoint is used. |}];
+File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
+  7 |   block {
+  8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
+  9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
+
+Invalid entrypoint "Toto".
+One of the following patterns is expected:
+  * "%bar" is expected for entrypoint "Bar"
+  * "%default" when no entrypoint is used. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
   [%expect {|
@@ -1598,3 +1629,27 @@ let%expect_test _ =
              PAIR ;
              NIL operation ;
              PAIR } } |}]
+
+(* warning non-duplicable variable used examples *)
+let%expect_test _ =
+  run_ligo_bad [ "compile-expression" ; "--init-file" ; contract "warning_duplicate.mligo" ; "cameligo" ; "x" ] ;
+  [%expect {|
+    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-50:
+    Warning: variable "Foo.x" cannot be used more than once.
+
+    Error(s) occurred while checking the contract:
+    At (unshown) location 8, DUP used on the non-dupable type ticket nat.
+    At (unshown) location 8, Ticket in unauthorized position (type error).
+  |}]
+
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-expression" ; "--init-file" ; contract "warning_duplicate2.mligo" ; "cameligo" ; "x" ] ;
+  [%expect {|
+    File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
+    Warning: variable "x" cannot be used more than once.
+
+    Error(s) occurred while checking the contract:
+    At (unshown) location 8, DUP used on the non-dupable type ticket nat.
+    At (unshown) location 8, Ticket in unauthorized position (type error).
+  |}]

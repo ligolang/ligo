@@ -576,8 +576,8 @@ let dry_run =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let run_function =
-  let f source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format =
-    return_result ~display_format (Decompile.Formatter.expression_format) @@
+  let f source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format warn werror =
+    return_result ~werror ~warn ~display_format (Decompile.Formatter.expression_format) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
       let%bind mini_c_prg,mods,typed_prg,env = Build.build_contract_use ~options syntax source_file in
@@ -596,7 +596,7 @@ let run_function =
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
   let cmdname = "run-function" in
   let doc = "Subcommand: Run a function with the given parameter." in
   let man = [`S Manpage.s_description;
@@ -607,8 +607,8 @@ let run_function =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let evaluate_value =
-  let f source_file entry_point amount balance sender source now syntax infer protocol_version display_format =
-    return_result ~display_format Decompile.Formatter.expression_format @@
+  let f source_file entry_point amount balance sender source now syntax infer protocol_version display_format warn werror =
+    return_result ~werror ~warn ~display_format Decompile.Formatter.expression_format @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
       let%bind mini_c,_,typed_prg,_ = Build.build_contract_use ~options syntax source_file in
@@ -620,7 +620,7 @@ let evaluate_value =
       Decompile.Of_michelson.decompile_typed_program_entry_expression_result typed_prg entry_point runres
     in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
   let cmdname = "evaluate-value" in
   let doc = "Subcommand: Evaluate a given definition." in
   let man = [`S Manpage.s_description;

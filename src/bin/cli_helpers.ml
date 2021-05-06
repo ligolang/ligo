@@ -29,25 +29,28 @@ let toplevel : ?werror:bool -> ?warn:bool -> ?output_file:string option -> displ
       | Dev -> convert ~display_format:t disp ;
       | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp
     in
+    let warns = Trace.warnings value in
+    let warns_str = warn_str display_format warns in
+    let return_with_warn f =
+      if not (List.is_empty warns) && werror then
+        return_bad warns_str
+      else begin
+          if not (List.is_empty warns) && warn then
+            begin
+              Format.eprintf "%s" warns_str;
+              Format.pp_print_flush Format.err_formatter ()
+            end;
+          f ()
+        end in
     match Trace.to_stdlib_result value with
-    | Ok (_, a) ->
+    | Ok _ ->
       let fmt : Format.formatter = match output_file with
         | Some file_path -> Format.formatter_of_out_channel @@ open_out file_path
         | None -> Format.std_formatter in
-      if not (List.is_empty a) && werror then
-        let err_str = warn_str display_format a in
-        return_bad err_str
-      else begin
-          if not (List.is_empty a) && warn then
-            begin
-              let warn_str = warn_str display_format a in
-              Format.eprintf "%s" warn_str;
-              Format.pp_print_flush Format.err_formatter ()
-            end;
-          return_good @@ (Format.fprintf fmt "%s\n" as_str;
-                          Format.pp_print_flush fmt ())
-        end
-    | Error _ -> return_bad as_str
+      return_with_warn (fun () -> return_good @@ (Format.fprintf fmt "%s\n" as_str;
+                                                  Format.pp_print_flush fmt ()))
+    | Error _ ->
+       return_with_warn (fun () -> return_bad as_str)
 
 let return_result : ?werror:bool -> ?warn:bool -> ?output_file:string option -> display_format:ex_display_format -> 'value format -> ('value, Main_errors.all) Trace.result -> unit Term.ret =
   fun ?(werror=false) ?(warn=false) ?(output_file=None) ~display_format value_format value ->
