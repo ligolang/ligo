@@ -85,7 +85,6 @@
 
 (rule
  (targets errors.msg)
- (mode (promote (until-clean) (only *)))
  (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}
@@ -101,7 +100,6 @@
 
 (rule
   (target errors.msg.new)
-  (mode (promote (until-clean) (only *)))
   (action
     (with-stdout-to %{target}
       (run menhir
@@ -131,7 +129,6 @@
 
 (rule
  (targets ParErr.ml)
- (mode (promote (until-clean) (only *)))
  (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}
