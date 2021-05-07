@@ -255,6 +255,28 @@ let opt_drop2 : _ peep2 = function
     Some [Prim (l1, p, [Seq (l2, bt @ [drop]); bf], annot1)]
   | _ -> None
 
+(* "depth" is the length of the prefix of the stack which an
+   instruction affects. *)
+let digdug_depth : _ michelson -> int option = function
+  | Prim (_, "SWAP", [], _) -> Some 2
+  | Prim (_, ("DIG"|"DUG"), [Int (_, k)], _) -> Some (Z.to_int (Z.succ k))
+  | _ -> None
+
+(* elide SWAP/DIG/DUG when followed by sufficiently many DROP *)
+let opt_digdug_drop () : _ peep =
+  let%bind x = peep in
+  match digdug_depth x with
+  | None -> No_change
+  | Some depth ->
+    let rec aux acc depth =
+      if depth = 0
+      then Changed (List.rev acc)
+      else
+        match%bind peep with
+        | Prim (_, "DROP", [], _) as drop -> aux (drop :: acc) (depth - 1)
+        | _ -> No_change in
+    aux [] depth
+
 let opt_drop3 : _ peep3 = function
   (* SWAP ; DROP ; DROP  ↦  DROP ; DROP *)
   | Prim (_, "SWAP", [], _), (Prim (_, "DROP", [], _) as drop1), (Prim (_, "DROP", [], _) as drop2) ->
@@ -611,6 +633,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep3 opt_dupn_edo ;
                      peephole @@ opt_pair2 () ;
                      peephole @@ opt_unpair2 () ;
+                     peephole @@ opt_digdug_drop () ;
                      peephole @@ opt_get () ;
                    ] in
   let optimizers = List.map on_seqs optimizers in
