@@ -15,14 +15,14 @@ let%expect_test _ =
     File "../../test/contracts/multisig.ligo", line 49, characters 10-20:
     Warning: unused variable "keys".
 
-    567 bytes |}] ;
+    569 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
   [%expect {|
     File "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25:
     Warning: unused variable "p".
 
-    1539 bytes |}] ;
+    1541 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {|
@@ -379,7 +379,7 @@ Warning: unused variable "keys".
                               CHECK_SIGNATURE ;
                               IF { PUSH nat 1 ; DIG 2 ; ADD }
                                  { PUSH string "Invalid signature" ; FAILWITH } }
-                            { DROP ; SWAP ; DROP ; SWAP } ;
+                            { DIG 2 ; DROP 2 ; SWAP } ;
                          SWAP ;
                          PAIR }
                        { DROP ; PAIR } } ;
@@ -658,7 +658,7 @@ Warning: unused variable "p".
                                   SWAP ;
                                   CAR ;
                                   PAIR }
-                                { DROP ; SWAP ; DROP } } ;
+                                { DIG 2 ; DROP 2 } } ;
                       DIG 2 ;
                       DROP ;
                       SWAP ;
