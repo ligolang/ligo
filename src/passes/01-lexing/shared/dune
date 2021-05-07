@@ -7,6 +7,7 @@
 (library
   (name lexing_shared)
   (public_name ligo.lexing.shared)
+  (instrumentation (backend bisect_ppx))
   (libraries
      ;; Vendors
      simple-utils
@@ -22,5 +23,4 @@
      Lexer Self_tokens LexerMainGen UnlexerGen)
   (modules_without_implementation
      Token Self_tokens)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)

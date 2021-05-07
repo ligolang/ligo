@@ -1,6 +1,7 @@
 (library
   (name ligo_interpreter)
   (public_name ligo.ligo_interpreter)
+  (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
     proto-alpha-utils
@@ -9,7 +10,7 @@
     stage_common
   )
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils))
 )

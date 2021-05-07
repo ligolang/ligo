@@ -1,12 +1,13 @@
 (library
   (name ast_imperative)
   (public_name ligo.ast_impretative)
+  (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
     stage_common
   )
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils ))
 )

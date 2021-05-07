@@ -1,5 +1,6 @@
 (library
   (name cli)
+  (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
     cmdliner
@@ -10,13 +11,14 @@
   )
   (modules cli cli_helpers formatter version changelog)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils -open Ligo))
 )
 
 (library
   (name repl)
+  (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
     cmdliner
@@ -26,7 +28,7 @@
   )
   (modules repl)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils))
 )
@@ -52,6 +54,7 @@
 (executable
   (name runligo)
   (public_name ligo)
+  (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
     cmdliner
@@ -61,7 +64,7 @@
   (modules runligo)
   (package ligo)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils))
 )
