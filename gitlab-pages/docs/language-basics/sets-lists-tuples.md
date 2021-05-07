@@ -369,6 +369,9 @@ let tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
 
 </Syntax>
 
+However, the canonical way to destructure lists is using [pattern
+matching](unit-option-pattern-matching.md#match-on-lists).
+
 ### Functional Iteration over Lists
 
 A *functional iterator* is a function that traverses a data structure
