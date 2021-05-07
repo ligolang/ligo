@@ -8,6 +8,7 @@ let stage = "abstracter"
 type abs_error = [
   | `Concrete_jsligo_unknown_predefined_type of Raw.type_constr
   | `Concrete_jsligo_unknown_constant of string * Location.t
+  | `Concrete_jsligo_unknown_constructor of string * Location.t
   | `Concrete_jsligo_recursive_fun of Region.t
   | `Concrete_jsligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_jsligo_unsupported_string_singleton of Raw.type_expr
@@ -43,6 +44,7 @@ type abs_error = [
 
 let unknown_predefined_type name = `Concrete_jsligo_unknown_predefined_type name
 let unknown_constant s loc = `Concrete_jsligo_unknown_constant (s,loc)
+let unknown_constructor s loc = `Concrete_jsligo_unknown_constructor (s,loc)
 let untyped_recursive_fun reg = `Concrete_jsligo_recursive_fun reg
 let unsupported_pattern_type pl = `Concrete_jsligo_unsupported_pattern_type pl
 let unsupported_deep_list_patterns cons = `Concrete_jsligo_unsupported_deep_list_pattern cons
@@ -93,6 +95,10 @@ let error_ppformat : display_format:string display_format ->
     | `Concrete_jsligo_unknown_constant (s,loc) ->
       Format.fprintf f
       "@[<hv>%a@.Unknown constant: %s"
+        Snippet.pp loc s
+    | `Concrete_jsligo_unknown_constructor (s,loc) ->
+      Format.fprintf f
+      "@[<hv>%a@.Unknown constructor in module: %s"
         Snippet.pp loc s
     | `Concrete_jsligo_recursive_fun reg ->
       Format.fprintf f
@@ -258,6 +264,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_jsligo_unknown_constant (s,loc) ->
     let message = `String ("Unknow constant: " ^ s) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+    ] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_unknown_constructor (s,loc) ->
+    let message = `String ("Unknow constructor in module: " ^ s) in
     let content = `Assoc [
       ("message", message);
       ("location", Location.to_yojson loc);
