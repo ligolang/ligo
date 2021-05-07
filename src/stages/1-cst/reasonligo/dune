@@ -1,6 +1,7 @@
 (library
   (name cst_reasonligo)
   (public_name ligo.cst.reasonligo)
+  (instrumentation (backend bisect_ppx))
   (libraries
     ;; Vendors
     LexerLib
@@ -10,4 +11,4 @@
     zarith)
   (modules CST Printer)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)))
+    (pps ppx_let)))

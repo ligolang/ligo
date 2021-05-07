@@ -3,12 +3,12 @@
 (library
   (name preprocessing_jsligo)
   (public_name ligo.preprocessing.jsligo)
+  (instrumentation (backend bisect_ppx))
   (libraries
      ;; Vendors
      Preprocessor)
   (modules Comments File)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)
 
 ;; Build of a standalone preprocessor for JsLIGO
 
@@ -19,5 +19,4 @@
     preprocessing_jsligo
     preprocessing_shared)
   (modules PreprocMain)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)

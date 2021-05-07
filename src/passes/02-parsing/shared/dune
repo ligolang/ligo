@@ -3,6 +3,7 @@
 (library
   (name parsing_shared)
   (public_name ligo.parsing.shared)
+  (instrumentation (backend bisect_ppx))
   (libraries
      ;; Vendors
      simple-utils
@@ -20,5 +21,4 @@
      pprint)
   (modules
      Errors Formatter Common ParserMainGen)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)

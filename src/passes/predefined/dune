@@ -1,6 +1,7 @@
 (library
   (name predefined)
   (public_name ligo.predefined)
+  (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
     tezos-utils
@@ -13,7 +14,7 @@
     environment
   )
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils ))
 )

@@ -1,3 +1,4 @@
+# last refactor: 2021-05-05
 .ONESHELL:
 
 all: test
@@ -34,22 +35,9 @@ clean:
 	dune clean
 	rm -fr _coverage_all _coverage_cli _coverage_ligo
 
-coverage: clean
-	BISECT_ENABLE=yes dune runtest --force
+coverage:
+	eval $$(opam config env)
+	find . -name '*.coverage' | xargs rm -f
+	dune runtest --instrument-with bisect_ppx --force
 	bisect-ppx-report html -o ./_coverage_all --title="LIGO overall test coverage"
-	bisect-ppx-report summary --per-file
-
-coverage-ligo: clean
-	BISECT_ENABLE=yes dune runtest src/test --force
-	bisect-ppx-report html -o ./_coverage_ligo --title="LIGO test coverage"
-	bisect-ppx-report summary --per-file
-
-coverage-doc: clean
-	BISECT_ENABLE=yes dune build @doc-test --force
-	bisect-ppx-report html -o ./_coverage_doc --title="LIGO doc coverage"
-	bisect-ppx-report summary --per-file
-
-coverage-cli: clean
-	BISECT_ENABLE=yes dune runtest src/bin/expect_tests
-	bisect-ppx-report html -o ./_coverage_cli --title="CLI test coverage"
 	bisect-ppx-report summary --per-file

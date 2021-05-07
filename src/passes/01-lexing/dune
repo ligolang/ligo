@@ -3,6 +3,7 @@
 (library
   (name lexing)
   (public_name ligo.lexing)
+  (instrumentation (backend bisect_ppx))
   (libraries
      ;; Vendors
      simple-utils
@@ -18,5 +19,4 @@
      lexing_jsligo)
   (modules
      Lexing Errors Pascaligo Cameligo Reasonligo jsligo)
-  (preprocess
-    (pps ppx_let bisect_ppx --conditional)))
+)

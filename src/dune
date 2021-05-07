@@ -3,6 +3,7 @@
 (library
   (name ligo)
   (public_name ligo)
+  (instrumentation (backend bisect_ppx))
   (libraries
      Preprocessor
      simple-utils
@@ -10,4 +11,4 @@
      tezos-micheline
      ligo_main)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)))
+    (pps ppx_let)))

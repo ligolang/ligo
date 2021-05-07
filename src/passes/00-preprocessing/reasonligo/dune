@@ -3,12 +3,12 @@
 (library
   (name preprocessing_reasonligo)
   (public_name ligo.preprocessing.reasonligo)
+  (instrumentation (backend bisect_ppx))
   (libraries
      ;; Vendors
      Preprocessor)
   (modules Comments File)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)
 
 ;; Build of a standalone preprocessor for ReasonLIGO
 
@@ -19,5 +19,4 @@
     preprocessing_reasonligo
     preprocessing_shared)
   (modules PreprocMain)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)
