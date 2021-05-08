@@ -1,0 +1,20 @@
+(contract
+  (const
+    (? sum)
+    (lam
+      (type? (tuple? (? n) (? acc)) (PROD int int))
+      :
+      int
+      =>
+      (if
+        ((n < 1)) (seq acc) (seq (apply sum (tuple (n - 1) (acc + n)))))))
+  (const
+    (? fibo)
+    (lam
+      (type? (tuple? (? n) (? n_1) (? n_0)) (PROD int int int))
+      :
+      int
+      =>
+      (if
+        ((n < 2))
+        (seq n_1) (seq (apply fibo (tuple (n - 1) (n_1 + n_0) n_1)))))))

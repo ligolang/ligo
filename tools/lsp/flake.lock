@@ -1,0 +1,109 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "locked": {
+        "lastModified": 1601282935,
+        "narHash": "sha256-WQAFV6sGGQxrRs3a+/Yj9xUYvhTpukQJIcMbIi7LCJ4=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "588973065fce51f4763287f0fda87a174d78bf48",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "hackage-nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1604884352,
+        "narHash": "sha256-rTST0WEbizxBau/BuxWoCZl+P3TCoHI1FuT9kMW+N3Q=",
+        "owner": "input-output-hk",
+        "repo": "hackage.nix",
+        "rev": "d16c8c53806e340deff1dff3fa72a0afac01d1d1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "repo": "hackage.nix",
+        "type": "github"
+      }
+    },
+    "haskell-nix": {
+      "locked": {
+        "lastModified": 1599710583,
+        "narHash": "sha256-KX4laWv4X0Cu3EOsdaeGDickyyNwlJHwktGiJrfDtDE=",
+        "owner": "input-output-hk",
+        "repo": "haskell.nix",
+        "rev": "bd45da822d2dccdbb3f65d0b52dd2a91fd65ca4e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "repo": "haskell.nix",
+        "rev": "bd45da822d2dccdbb3f65d0b52dd2a91fd65ca4e",
+        "type": "github"
+      }
+    },
+    "nix-npm-buildpackage": {
+      "locked": {
+        "lastModified": 1599122181,
+        "narHash": "sha256-apHZDERTGe+kdAPVnFltIZvtoMvuqjpm5lqpII+ZfHc=",
+        "owner": "serokell",
+        "repo": "nix-npm-buildpackage",
+        "rev": "abde678d1584af0ad00477486bca26c880963a70",
+        "type": "github"
+      },
+      "original": {
+        "owner": "serokell",
+        "repo": "nix-npm-buildpackage",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1613641638,
+        "narHash": "sha256-dZM2usljlkGNU1krgBXRsQ2tHWZExFPnvecullGe504=",
+        "owner": "serokell",
+        "repo": "nixpkgs",
+        "rev": "8a1d9e6a3596d340636eccbbc2cdf7429d4af632",
+        "type": "github"
+      },
+      "original": {
+        "owner": "serokell",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "hackage-nix": "hackage-nix",
+        "haskell-nix": "haskell-nix",
+        "nix-npm-buildpackage": "nix-npm-buildpackage",
+        "nixpkgs": "nixpkgs",
+        "stackage-nix": "stackage-nix"
+      }
+    },
+    "stackage-nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1604883771,
+        "narHash": "sha256-jxz2s/Hbzcn3nuvWFiwmDhzPHx1v0O5QpWjQClQR4Uk=",
+        "owner": "input-output-hk",
+        "repo": "stackage.nix",
+        "rev": "127bd29d3386e52b8ddd2e4b1c56ffc6036c0305",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "repo": "stackage.nix",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

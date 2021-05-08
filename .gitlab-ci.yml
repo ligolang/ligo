@@ -13,6 +13,9 @@ stages:
   - ide-deploy                      # deploy web IDE
   - ide-feature-container-removal   # remove feature branch containers of the webide
 
+# jobs for building and testing LSP
+include: '/tools/lsp/.gitlab-ci.yml'
+
 .nix:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
