@@ -132,11 +132,12 @@ let get_e_variable : AST.expression -> _ result = fun expr ->
 
 let get_e_tuple : AST.expression -> _ result = fun expr ->
   match expr.expression_content with
-    E_tuple tuple -> ok @@ tuple
+    E_tuple tuple -> ok @@ (tuple, false)
   | E_variable _
   | E_literal _
   | E_constant _
-  | E_lambda _ -> ok @@ [expr]
+  | E_lambda _ -> ok @@ ([expr], false)
+  | E_application _ -> ok @@ ([expr], true)
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
     AST.PP.expression expr
@@ -207,9 +208,13 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
         failwith "chain_id, operation are not created currently ?"
     )
   | E_application {lamb;args} ->
+    let f (expr, b) = if b then CST.EPar (wrap @@ par @@ expr) else expr in
     let%bind lamb = decompile_expression lamb in
     let%bind args = map List.Ne.of_list @@
-      bind (bind_map_list decompile_expression) @@
+      map (List.map f) @@
+        bind (fun (e, b) -> bind_map_list (fun e ->
+                                let%bind de = decompile_expression e in
+                                ok @@ (de, b)) e) @@
       get_e_tuple args
     in
     return_expr @@ CST.ECall (wrap (lamb,args))
