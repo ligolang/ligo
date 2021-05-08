@@ -2,17 +2,7 @@ open Trace
 open Test_helpers
 open Main_errors
 
-
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let options = Compiler_options.make () in
-      let%bind program = Ligo_compile.Utils.type_file ~options "./contracts/vote.mligo" "cameligo" (Contract "main") in
-      s := Some program ;
-      ok program
-    )
+let get_program = get_program "./contracts/vote.mligo" (Contract "main")
 
 open Ast_imperative
 

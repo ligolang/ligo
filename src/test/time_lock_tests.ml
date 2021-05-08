@@ -2,23 +2,12 @@ open Trace
 open Main_errors
 open Test_helpers
 
-let type_file f =
-  Ligo_compile.Utils.type_file ~options f "pascaligo" (Contract "main")
-
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-        let%bind program = type_file "./contracts/time-lock.ligo" in
-        s := Some program ;
-        ok program
-      )
+let get_program = get_program "./contracts/time-lock.ligo" (Contract "main")
 
 let compile_main () =
-  let%bind typed_prg,_     =  type_file "./contracts/time-lock.ligo" in
-  let%bind mini_c_prg      = Ligo_compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind typed_prg,_   = type_file "./contracts/time-lock.ligo" (Contract "main") options in
+  let%bind mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract michelson_prg in

@@ -4,16 +4,7 @@ open Ast_imperative
 
 
 
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let options = Compiler_options.make () in
-      let%bind program = Ligo_compile.Utils.type_file ~options "./contracts/id.ligo" "pascaligo" (Contract "main") in
-      s := Some program ;
-      ok program
-    )
+let get_program = get_program "./contracts/id.ligo" (Contract "main")
 
 let compile_main () =
   let%bind typed_prg,_   = get_program () in

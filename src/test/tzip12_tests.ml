@@ -3,17 +3,7 @@ open Test_helpers
 
 let mfile_FA12  = "./contracts/FA1.2.mligo"
 
-let type_file ~options f s = Ligo_compile.Utils.type_file ~options f s (Contract "main")
-
-let get_program f st =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let%bind program = type_file ~options f st in
-      s := Some program ;
-      ok program
-    )
+let get_program f st = get_program ~st f (Contract "main")
 
 let compile_main f s () =
   let%bind typed_prg,_   = get_program f s () in
