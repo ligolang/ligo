@@ -5,16 +5,7 @@ open Test_helpers
 open Main_errors
 
 
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let options = Compiler_options.make () in
-      let%bind program  = Ligo_compile.Utils.type_file ~options "./contracts/coase.ligo" "pascaligo" (Contract "main") in
-      s := Some program;
-      ok program
-    )
+let get_program = get_program "./contracts/coase.ligo" (Contract "main")
 
 let compile_main () = 
   let%bind typed_prg, _env = get_program () in
