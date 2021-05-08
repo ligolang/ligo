@@ -1,0 +1,69 @@
+=========
+Includes
+=========
+
+#include "foo.bar"
+#include "qux.ligo"
+
+---
+
+(source_file
+  (preprocessor
+    (include
+      (String)))
+  (preprocessor
+    (include
+      (String)))
+)
+
+
+=========
+Function add
+=========
+
+function add (const a : int ; const b : int) : int is
+  block { skip } with 1
+
+---
+
+(source_file
+  (fun_decl
+    (NameDecl)
+    (param_decl (NameDecl) (TypeName))
+    (param_decl (NameDecl) (TypeName))
+    (TypeName)
+    (let_expr
+      (block (skip))
+      (Int)
+    )
+  )
+)
+
+
+=========
+Blocks
+=========
+
+function main() : int is
+  block {
+    var j : int := 1;
+    j := j + 1;
+    j := j - 1
+  } with j
+
+---
+
+(source_file
+  (fun_decl
+    (NameDecl)
+    (TypeName)
+    (let_expr
+      (block
+        (var_decl (NameDecl) (TypeName) (Int))
+        (assignment (Name) (binop (Name) (adder) (Int)))
+        (assignment (Name) (binop (Name) (adder) (Int)))
+      )
+      (Name)
+    )
+  )
+)

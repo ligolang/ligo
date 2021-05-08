@@ -1,0 +1,84 @@
+# This file contains pipeline configuration used by Serokell at https://gitlab.com/serokell/ligo/ligo
+
+stages:
+  - lsp
+  - tooling
+  - push
+
+default:
+  tags: [nix]
+
+# jobs for building and testing LSP
+include: '/tools/lsp/.gitlab-ci.yml'
+
+lsp-lint:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.lint
+    # Nix has some trouble with git so we run it directly from the CI
+    - cd tools/lsp
+    - bash squirrel/scripts/check-trailing-whitespace.sh
+
+vscode-extension-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.lsp-test
+
+vscode-extension-sexp-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
+
+vscode-extension-grammar-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-grammar-test
+
+vscode-extension-linux:
+  stage: lsp
+  only: [merge_requests]
+  script:
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
+
+vscode-extension:
+  stage: lsp
+  only: [tooling, vscode-production]
+  script:
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
+    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
+  artifacts:
+    paths:
+      - ligo-extension.vsix
+
+lsp-docker-image:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A lsp-docker-image
+
+# publish vscode extension to the extension marketplace
+vscode-extension-publish:
+  stage: push
+  dependencies: [vscode-extension]
+  only: [vscode-production]
+  when: manual
+  script:
+    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix -p "$MICROSOFT_MARKETPLACE_TOKEN"
+
+# publish docker image for lsp to the gitlab registry
+lsp-docker-image-publish:
+  stage: push
+  only: [tooling]
+  script:
+    # set creation date to current date
+    - CURRENT_DATE=$(date --iso-8601=seconds)
+    - nix-build tools/lsp -A lsp-docker-image --argstr creationDate "$CURRENT_DATE"
+    # docker registry credentials provided by gitlab
+    - DEST_CREDS="$CI_REGISTRY_USER":"$CI_REGISTRY_PASSWORD"
+    # use '--insecury-policy' to disable container signature checking, because we only upload the image
+    - nix run -f tools/lsp skopeo -c
+        skopeo --insecure-policy copy --dest-creds "$DEST_CREDS" docker-archive:./result docker://"$CI_REGISTRY_IMAGE"/ligo-lsp:latest

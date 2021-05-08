@@ -1,0 +1,199 @@
+name: ligo-squirrel
+
+dependencies:
+  - async
+  - base
+  - bytestring
+  - containers
+  - data-default
+  - duplo
+  - exceptions
+  - fastsum
+  - filepath
+  - ghc-prim
+  - hashable
+  - interpolate
+  - mtl
+  - pretty
+  - safe-exceptions
+  - sorted-list
+  - text
+  - transformers
+  - tree-sitter
+  - unliftio
+  - generic-deriving
+
+default-extensions:
+  - AllowAmbiguousTypes
+  - ApplicativeDo
+  - BangPatterns
+  - BlockArguments
+  - ConstraintKinds
+  - DataKinds
+  - DeriveAnyClass
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveTraversable
+  - DerivingStrategies
+  - DerivingVia
+  - DuplicateRecordFields
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralisedNewtypeDeriving
+  - LambdaCase
+  - MagicHash
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NamedFieldPuns
+  - OverloadedStrings
+  - QuantifiedConstraints
+  - QuasiQuotes
+  - RankNTypes
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - TemplateHaskell
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+  - TypeOperators
+  - UndecidableInstances
+  - ViewPatterns
+
+ghc-options:
+  - -Weverything
+  - -Wno-missing-exported-signatures
+  - -Wno-missing-import-lists
+  - -Wno-missed-specialisations
+  - -Wno-all-missed-specialisations
+  - -Wno-unsafe
+  - -Wno-safe
+  - -Wno-missing-local-signatures
+  - -Wno-monomorphism-restriction
+  - -Wno-implicit-prelude
+  - -Wno-partial-fields
+  - -Wno-missing-export-lists  # FIXME
+
+library:
+  source-dirs:
+    - src/
+
+  include-dirs:
+    - grammar/pascaligo/src
+    - grammar/reasonligo/src
+    - grammar/camligo/src
+
+  c-sources:
+    - grammar/pascaligo/src/parser.c
+    - grammar/pascaligo/src/scanner.c
+    - grammar/reasonligo/src/parser.c
+    - grammar/reasonligo/src/scanner.c
+    - grammar/camligo/src/parser.c
+    - grammar/camligo/src/scanner.c
+
+  dependencies:
+    - lsp-types
+    - aeson
+    - process
+    - lens
+    - lens-aeson
+    - bytestring
+    - unliftio-core
+    - unordered-containers
+
+executables:
+  ligo-squirrel:
+    main: Main.hs
+
+    dependencies:
+      - clock
+      - focus
+      - lsp
+      - hslogger
+      - interpolate
+      - lens
+      - lens-aeson
+      - ligo-squirrel
+      - directory
+      - unix
+      - stm
+      - stm-containers
+      - unliftio-core
+      - unordered-containers
+      - generic-deriving
+
+    source-dirs:
+      - app/ligo-squirrel
+
+    ghc-options: -threaded
+
+  ligo-vet:
+    main: Main.hs
+
+    other-modules: []
+
+    source-dirs:
+      - app/ligo-vet
+
+    dependencies:
+      - ligo-squirrel
+      - optparse-applicative
+      - with-utf8
+
+tests:
+  lsp-test:
+    main: Driver.hs
+
+    source-dirs:
+      - test/lsp-test/
+      - test/test-common/
+
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+
+    dependencies:
+      - template-haskell
+      - HUnit
+      - directory
+      - filepath
+      - hspec-expectations
+      - lens
+      - ligo-squirrel
+      - lsp-types
+      - tasty
+      - tasty-discover
+      - tasty-hspec
+      - tasty-hunit
+      - unordered-containers
+
+    build-tools:
+      - tasty-discover:tasty-discover
+
+  ligo-contracts-test:
+    main: Driver.hs
+
+    source-dirs:
+      - test/ligo-contracts-test/
+      - test/test-common/
+
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+
+    dependencies:
+      - template-haskell
+      - HUnit
+      - directory
+      - filepath
+      - hspec-expectations
+      - lens
+      - ligo-squirrel
+      - lsp-types
+      - tasty
+      - tasty-discover
+      - tasty-hspec
+      - tasty-hunit
+      - unordered-containers
+
+    build-tools:
+      - tasty-discover:tasty-discover
