@@ -1318,3 +1318,11 @@ let%expect_test _ =
                fibo((SUB((n), (1))), (ADD((n_1), (n_0))), n_1)
              }
          }); |}]
+
+let%expect_test _ =
+  run_ligo_good [ "transpile-contract" ; "../../test/contracts/transpiler_nested.ligo" ; "cameligo" ] ;
+  [%expect {|
+    let f : nat -> nat = (fun x : nat -> x)
+
+    let bar : nat -> nat = (fun x : nat -> f (f x))
+  |}]
