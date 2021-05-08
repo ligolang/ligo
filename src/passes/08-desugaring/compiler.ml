@@ -154,33 +154,33 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       return @@ O.E_record recd
     | I.E_accessor {record;path} ->
       let%bind record = self record in
-      let accessor ?loc expr a =
+      let accessor ~loc expr a =
         match a with
-          I.Access_tuple  i -> ok @@ O.e_record_accessor ?loc expr (Label (Z.to_string i))
-        | I.Access_record a -> ok @@ O.e_record_accessor ?loc expr (Label a)
+          I.Access_tuple  i -> ok @@ O.e_record_accessor ~loc expr (Label (Z.to_string i))
+        | I.Access_record a -> ok @@ O.e_record_accessor ~loc expr (Label a)
         | I.Access_map k ->
           let%bind k = self k in
-          ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;expr]
+          ok @@ O.e_constant ~loc C_MAP_FIND_OPT [k;expr]
       in
-      bind_fold_list accessor record path
+      bind_fold_list (accessor ~loc:sugar.location) record path
     | I.E_update {record;path;update} ->
       let%bind record = self record in
       let%bind update = self update in
-      let accessor ?loc expr a =
+      let accessor ~loc expr a =
         match a with
-          I.Access_tuple  i -> ok @@ O.e_record_accessor ?loc expr (Label (Z.to_string i))
-        | I.Access_record a -> ok @@ O.e_record_accessor ?loc expr (Label a)
+          I.Access_tuple  i -> ok @@ O.e_record_accessor ~loc expr (Label (Z.to_string i))
+        | I.Access_record a -> ok @@ O.e_record_accessor ~loc expr (Label a)
         | I.Access_map k ->
           let%bind k = self k in
-          ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;expr]
+          ok @@ O.e_constant ~loc C_MAP_FIND_OPT [k;expr]
       in
-      let updator ?loc (s:O.expression) a expr =
+      let updator ~loc (s:O.expression) a expr =
         match a with
-          I.Access_tuple  i -> ok @@ O.e_record_update ?loc s (Label (Z.to_string i)) expr
-        | I.Access_record a -> ok @@ O.e_record_update ?loc s (Label a) expr
+          I.Access_tuple  i -> ok @@ O.e_record_update ~loc s (Label (Z.to_string i)) expr
+        | I.Access_record a -> ok @@ O.e_record_update ~loc s (Label a) expr
         | I.Access_map k ->
           let%bind k = self k in
-          ok @@ O.e_constant ?loc C_MAP_ADD [k;expr;s]
+          ok @@ O.e_constant ~loc C_MAP_ADD [k;expr;s]
       in
       let aux (s, e : O.expression * _) lst =
         let%bind s' = accessor ~loc:s.location s lst in
