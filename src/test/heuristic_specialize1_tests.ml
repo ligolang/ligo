@@ -54,7 +54,7 @@ let propagator_test : _ -> unit -> (unit,Main_errors.all) result =
       (constraint 1L m = poly ∀ v, v -> record { x = int ; y = v } -> map(v,int))
       (constraint 6L n = o -> n')
    *)
-  let%bind result = trace Main_errors.inference_tracer @@
+  let* result = trace Main_errors.inference_tracer @@
     propagator { a_k_var = !.. c6; poly = !.. c1 } @@ fun x -> x in
   (* check that the propagator returns exactly this constraint
      (left/right in the equality is not important, variable "fresh" is not important):

@@ -468,8 +468,8 @@ let eval : Ast_typed.module_fully_typed -> (env , Errors.interpreter_error) resu
           ok (top_env',state)
         | Ast_typed.Module_alias _ -> failwith "Module are not handled in interpreter yet"
     in
-    let%bind initial_state = Tezos_state.init_ctxt () in
-    let%bind (env,_) = bind_fold_list aux (Env.empty_env, initial_state) prg in
+    let* initial_state = Tezos_state.init_ctxt () in
+    let* (env,_) = bind_fold_list aux (Env.empty_env, initial_state) prg in
     ok env
 
 let eval_test : Ast_typed.module_fully_typed -> string -> (value , Errors.interpreter_error) result =

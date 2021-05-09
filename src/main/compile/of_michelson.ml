@@ -6,7 +6,7 @@ open Trace
 (* should preserve locations, currently wipes them *)
 let build_contract : ?disable_typecheck:bool -> Stacking.compiled_expression -> (_ Michelson.michelson , _) result =
   fun ?(disable_typecheck= false) compiled ->
-  let%bind (param_ty, storage_ty) = trace_option (entrypoint_not_a_function) @@
+  let* (param_ty, storage_ty) = trace_option (entrypoint_not_a_function) @@
     Self_michelson.fetch_contract_inputs compiled.expr_ty in
   let open Tezos_micheline.Micheline in
   let param_ty = inject_locations (fun _ -> ()) (strip_locations param_ty) in
@@ -16,10 +16,10 @@ let build_contract : ?disable_typecheck:bool -> Stacking.compiled_expression -> 
   if disable_typecheck then
     ok contract
   else
-    let%bind contract' =
+    let* contract' =
       Trace.trace_tzresult_lwt (typecheck_contract_tracer contract)
         (Memory_proto_alpha.prims_of_strings contract) in
-    let%bind _ = Trace.trace_tzresult_lwt (typecheck_contract_tracer contract) @@
+    let* _ = Trace.trace_tzresult_lwt (typecheck_contract_tracer contract) @@
       Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract' in
     ok contract
 

@@ -36,23 +36,23 @@ let rec decompile_value :
   let value = normalize_edo_comb_value ty value in
   match (ty, value) with
   | Prim (_, "pair", ts, _), Prim (_, "Pair", vs, _) -> (
-      let%bind els = bind_map_list (fun (t,v) -> decompile_value t v) (List.combine ts vs) in
+      let* els = bind_map_list (fun (t,v) -> decompile_value t v) (List.combine ts vs) in
       let rec aux l =
         match l with
         | [] -> fail (untranspilable ty value)
         | [x] -> ok x
         | hd::tl -> (
-            let%bind tl' = aux tl in
+            let* tl' = aux tl in
             ok @@ D_pair (hd, tl')
           ) in
       aux els
     )
   | Prim (_, "or", [a_ty; _], _), Prim (_, "Left", [a], _) -> (
-      let%bind a = decompile_value a_ty a in
+      let* a = decompile_value a_ty a in
       ok @@ D_left a
     )
   | Prim (_, "or", [_; b_ty], _), Prim (_, "Right", [b], _) -> (
-      let%bind b = decompile_value b_ty b in
+      let* b = decompile_value b_ty b in
       ok @@ D_right b
     )
   | Prim (_, "int", [], _), Int (_, n) ->
@@ -96,15 +96,15 @@ let rec decompile_value :
   | Prim (_, "option", [_], _), Prim (_, "None", [], _) ->
       ok @@ D_none
   | Prim (_, "option", [o_ty], _), Prim (_, "Some", [s], _) ->
-      let%bind s' = decompile_value o_ty s in
+      let* s' = decompile_value o_ty s in
       ok @@ D_some s'
   | Prim (_, "map", [k_ty; v_ty], _), Seq (_, lst) ->
-      let%bind lst' =
+      let* lst' =
         let aux elt =
           match elt with
           | Prim (_, "Elt", [k; v], _) ->
-            let%bind k' = decompile_value k_ty k in
-            let%bind v' = decompile_value v_ty v in
+            let* k' = decompile_value k_ty k in
+            let* v' = decompile_value v_ty v in
             ok (k', v')
           | _ ->
             let ty = root (strip_locations ty) in
@@ -115,12 +115,12 @@ let rec decompile_value :
       in
       ok @@ D_map lst'
   | Prim (_, "big_map", [k_ty; v_ty], _), Seq (_, lst) ->
-      let%bind lst' =
+      let* lst' =
         let aux elt =
           match elt with
           | Prim (_, "Elt", [k; v], _) ->
-            let%bind k' = decompile_value k_ty k in
-            let%bind v' = decompile_value v_ty v in
+            let* k' = decompile_value k_ty k in
+            let* v' = decompile_value v_ty v in
             ok (k', v')
           | _ ->
             let ty = root (strip_locations ty) in
@@ -131,7 +131,7 @@ let rec decompile_value :
       in
       ok @@ D_big_map lst'
   | Prim (_, "list", [ty], _), Seq (_, lst) ->
-      let%bind lst' =
+      let* lst' =
         bind_map_list (decompile_value ty) lst
       in
       ok @@ D_list lst'
@@ -140,7 +140,7 @@ let rec decompile_value :
         let aux acc cur = cur :: acc in
         let lst = List.fold_left aux lst [] in
         List.rev lst in
-      let%bind lst'' =
+      let* lst'' =
         let aux = fun t -> decompile_value ty t in
         bind_map_list aux lst'
       in
@@ -156,8 +156,8 @@ let rec decompile_value :
   | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
     ignore addr;
     let ty_nat = Prim (xx, "nat", [], []) in
-    let%bind v' = decompile_value ty v in
-    let%bind amt' = decompile_value ty_nat amt in
+    let* v' = decompile_value ty v in
+    let* amt' = decompile_value ty_nat amt in
     ok @@ D_ticket (v', amt')
  | ty, v ->
       fail (untranspilable ty v)

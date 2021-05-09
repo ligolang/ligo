@@ -61,7 +61,7 @@ let is_generated_partial_match : expression -> bool =
 
 let rec do_while : (expression -> (bool * expression) self_res) -> expression -> expression self_res =
   fun f exp ->
-    let%bind (has_been_simpl, exp) = f exp in
+    let* (has_been_simpl, exp) = f exp in
     if has_been_simpl then do_while f exp
     else ok exp
 
@@ -77,7 +77,7 @@ let substitute_var_in_body : expression_variable -> expression_variable -> expre
         | E_variable var when Var.equal var.wrap_content to_subst.wrap_content -> ret true { exp with expression_content = E_variable new_var }
         | _ -> ret true exp
     in
-    let%bind ((), res) = fold_map_expression aux () body in
+    let* ((), res) = fold_map_expression aux () body in
     ok res
 
 let compress_matching : expression -> expression self_res =
@@ -99,7 +99,7 @@ let compress_matching : expression -> expression self_res =
                 match no_fw, fw with
                 | [{constructor= Label constructor;pattern;body}] , lst when List.length lst >= 1 ->
                   let (_,proj) = List.find (fun (Label constructor',_) -> String.equal constructor' constructor) le in
-                  let%bind body' = substitute_var_in_body pattern proj body in
+                  let* body' = substitute_var_in_body pattern proj body in
                   stop body'
                 | _ , [] -> continue smap
                 | _ , _ -> fail (corner_case __LOC__)
@@ -113,7 +113,7 @@ let compress_matching : expression -> expression self_res =
         | _ -> continue smap
     in
     let simplify = fun exp ->
-      let%bind ((has_been_simpl,_),exp) = fold_map_expression aux (false,SimplMap.empty) exp in
+      let* ((has_been_simpl,_),exp) = fold_map_expression aux (false,SimplMap.empty) exp in
       ok (has_been_simpl,exp)
     in
     do_while simplify exp
@@ -129,13 +129,13 @@ let anomaly_check : expression -> unit self_res =
               if is_generated_partial_match exp' then fail (pattern_matching_anomaly exp.location)
               else ok exp'
           in
-          let%bind _ = map_expression contains_partial_match exp in
+          let* _ = map_expression contains_partial_match exp in
           ok ()
         | _ -> ok ()
     in
     fold_expression aux () exp
 
 let peephole_expression exp =
-  let%bind exp' = compress_matching exp in
-  let%bind () = anomaly_check exp' in
+  let* exp' = compress_matching exp in
+  let* () = anomaly_check exp' in
   ok exp'

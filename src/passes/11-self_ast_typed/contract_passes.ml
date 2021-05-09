@@ -31,22 +31,22 @@ let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data
   in
   match e.expression_content , e.type_expression with
   | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection;parameters=[t]} ; _}) when String.equal (Ligo_string.extract injection) Stage_common.Constant.contract_name ->
-    let%bind entrypoint =
+    let* entrypoint =
       match entrypoint_exp.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format (Ligo_string.extract ep) entrypoint_exp
       | _ -> fail @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
     in
-    let%bind entrypoint_t =
+    let* entrypoint_t =
       match dat.contract_type.parameter.type_content with
       | (T_sum _ as t) when String.equal "Default" entrypoint -> ok {dat.contract_type.parameter with type_content = t}
       | T_sum cmap ->
-        let%bind {associated_type;_} = trace_option (Errors.unmatched_entrypoint entrypoint_exp.location) @@
+        let* {associated_type;_} = trace_option (Errors.unmatched_entrypoint entrypoint_exp.location) @@
           LMap.find_opt (Label entrypoint) cmap.content
         in
         ok associated_type
       | t -> ok {dat.contract_type.parameter with type_content = t}
     in
-    let%bind () =
+    let* () =
       trace_option (bad_self_err ()) @@
       Ast_typed.assert_type_expression_eq (entrypoint_t , t) in
     ok (true, dat, e)

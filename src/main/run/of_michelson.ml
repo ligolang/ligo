@@ -20,41 +20,41 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
   let open Proto_alpha_utils.Trace in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let open Protocol.Alpha_context in
-  let%bind balance = match Tez.of_string opts.balance with
+  let* balance = match Tez.of_string opts.balance with
     | None -> fail @@ Errors.invalid_balance opts.balance
     | Some balance -> ok balance in
-  let%bind amount = match Tez.of_string opts.amount with
+  let* amount = match Tez.of_string opts.amount with
     | None -> fail @@ Errors.invalid_amount opts.amount
     | Some amount -> ok amount in
-  let%bind sender =
+  let* sender =
     match opts.sender with
     | None -> ok None
     | Some sender ->
-      let%bind sender =
+      let* sender =
         trace_alpha_tzresult
           (fun _ -> Errors.invalid_sender sender)
           (Contract.of_b58check sender) in
       ok (Some sender) in
-  let%bind source =
+  let* source =
     match opts.source with
     | None -> ok None
     | Some source ->
-      let%bind source =
+      let* source =
         trace_alpha_tzresult
           (fun _ -> Errors.invalid_source source)
           (Contract.of_b58check source) in
       ok (Some source) in
-  let%bind now =
+  let* now =
     match opts.now with
     | None -> ok None
     | Some st ->
       match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
         | Some t -> ok (Some t)
         | None -> fail @@ Errors.invalid_timestamp st in
-  let%bind parameter_ty =
+  let* parameter_ty =
     match opts.parameter_ty with
     | Some x ->
-      let%bind x = Trace.trace_tzresult_lwt Errors.parsing_payload_tracer @@ Memory_proto_alpha.prims_of_strings x in
+      let* x = Trace.trace_tzresult_lwt Errors.parsing_payload_tracer @@ Memory_proto_alpha.prims_of_strings x in
       let x = Tezos_micheline.Micheline.strip_locations x in
       ok (Some x)
     | None -> ok None
@@ -63,28 +63,28 @@ let make_dry_run_options (opts : dry_run_options) : (options , _) result =
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : (_ Michelson.t * _ Michelson.t , _) result =
   let (Ex_typed_value (ty , value)) = v in
-  let%bind ty' =
+  let* ty' =
     Trace.trace_tzresult_lwt Errors.unparsing_michelson_tracer @@
     Memory_proto_alpha.unparse_michelson_ty ty in
-  let%bind value' =
+  let* value' =
     Trace.trace_tzresult_lwt Errors.unparsing_michelson_tracer @@
     Memory_proto_alpha.unparse_michelson_data ty value in
   ok (ty', value')
 
 let pack_payload (payload : _ Michelson.t) ty =
-  let%bind ty =
+  let* ty =
     Trace.trace_tzresult_lwt Errors.parsing_payload_tracer @@
     Memory_proto_alpha.prims_of_strings ty in
-  let%bind (Ex_ty ty) =
+  let* (Ex_ty ty) =
     Trace.trace_tzresult_lwt Errors.parsing_payload_tracer @@
     Memory_proto_alpha.parse_michelson_ty ty in
-  let%bind payload =
+  let* payload =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings payload in
-  let%bind payload =
+  let* payload =
     Trace.trace_tzresult_lwt Errors.parsing_payload_tracer @@
     Memory_proto_alpha.parse_michelson_data payload ty in
-  let%bind data =
+  let* data =
     Trace.trace_tzresult_lwt Errors.packing_payload_tracer @@
     Memory_proto_alpha.pack ty payload in
   ok @@ data
@@ -96,33 +96,33 @@ let fetch_lambda_types (contract_ty : _ Michelson.t) =
 
 let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
   let open! Tezos_raw_protocol_008_PtEdo2Zk in
-  let%bind (input_ty, output_ty) = fetch_lambda_types exp_type in
-  let%bind input_ty =
+  let* (input_ty, output_ty) = fetch_lambda_types exp_type in
+  let* input_ty =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings input_ty in
   let (param_type, storage_type) =
     match input_ty with
     | Prim (_, T_pair, [x; y], _) -> (x, y)
     | _ -> failwith ("Internal error: input_ty was not a pair " ^ __LOC__) in
-  let%bind (Ex_ty input_ty) =
+  let* (Ex_ty input_ty) =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_ty input_ty in
-  let%bind (Ex_ty param_type) =
+  let* (Ex_ty param_type) =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_ty param_type in
-  let%bind (Ex_ty storage_type) =
+  let* (Ex_ty storage_type) =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_ty storage_type in
-  let%bind output_ty =
+  let* output_ty =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings output_ty in
-  let%bind (Ex_ty output_ty) =
+  let* (Ex_ty output_ty) =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_ty output_ty in
-  let%bind input_michelson =
+  let* input_michelson =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings input_michelson in
-  let%bind input =
+  let* input =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
   in
@@ -131,17 +131,17 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
       root_name = None ; legacy_create_contract_literal = false } in
   let ty_stack_before = Script_typed_ir.Item_t (input_ty, Empty_t, None) in
   let ty_stack_after = Script_typed_ir.Item_t (output_ty, Empty_t, None) in
-  let%bind (descr : (_*unit,_*unit) Script_typed_ir.descr) =
+  let* (descr : (_*unit,_*unit) Script_typed_ir.descr) =
     Trace.trace_tzresult_lwt Errors.parsing_code_tracer @@
     Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
-  let%bind res =
+  let* res =
     Trace.trace_tzresult_lwt Errors.error_of_execution_tracer @@
     Memory_proto_alpha.failure_interpret ?options descr (input, ()) in
   match res with
   | Memory_proto_alpha.Succeed stack ->
     let (output, ()) = stack in
-    let%bind (ty, value) = ex_value_ty_to_michelson (Ex_typed_value (output_ty, output)) in
+    let* (ty, value) = ex_value_ty_to_michelson (Ex_typed_value (output_ty, output)) in
     ok @@ Success (ty, value)
   | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
     | Int (_ , i)    -> ok @@ Fail (Failwith_int (Z.to_int i))
@@ -151,26 +151,26 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
 
 let run_expression ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
   let open! Tezos_raw_protocol_008_PtEdo2Zk in
-  let%bind exp_type =
+  let* exp_type =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings exp_type in
-  let%bind (Ex_ty exp_type') =
+  let* (Ex_ty exp_type') =
     Trace.trace_tzresult_lwt Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_ty exp_type in
   let top_level = Script_ir_translator.Lambda
   and ty_stack_before = Script_typed_ir.Empty_t
   and ty_stack_after = Script_typed_ir.Item_t (exp_type', Empty_t, None) in
-  let%bind descr =
+  let* descr =
     Trace.trace_tzresult_lwt Errors.parsing_code_tracer @@
     Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
-  let%bind res =
+  let* res =
     Trace.trace_tzresult_lwt Errors.error_of_execution_tracer @@
     Memory_proto_alpha.failure_interpret ?options descr () in
   match res with
   | Memory_proto_alpha.Succeed stack ->
     let (output, ()) = stack in
-    let%bind (ty, value) = ex_value_ty_to_michelson (Ex_typed_value (exp_type', output)) in
+    let* (ty, value) = ex_value_ty_to_michelson (Ex_typed_value (exp_type', output)) in
     ok @@ Success (ty, value)
   | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
     | Int (_ , i)    -> ok @@ Fail (Failwith_int (Z.to_int i))
@@ -179,19 +179,19 @@ let run_expression ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
     | _              -> fail @@ Errors.unknown_failwith_type )
 
 let run_failwith ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) : (failwith , _) result =
-  let%bind expr = run_expression ?options exp exp_type in
+  let* expr = run_expression ?options exp exp_type in
   match expr with
   | Success _  -> fail Errors.unknown (* TODO : simple_fail "an error of execution was expected" *)
   | Fail res -> ok res
 
 let run_no_failwith ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
-  let%bind expr = run_expression ?options exp exp_type in
+  let* expr = run_expression ?options exp exp_type in
   match expr with
   | Success tval  -> ok tval
   | Fail _ -> fail Errors.unknown (* TODO : simple_fail "unexpected error of execution" *)
 
 let evaluate_expression ?options exp exp_type =
-  let%bind etv = run_expression ?options exp exp_type in
+  let* etv = run_expression ?options exp exp_type in
   match etv with
     | Success (_, value) -> ok value
     | Fail res -> fail @@ Errors.main_failwith res

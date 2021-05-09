@@ -56,10 +56,10 @@ let check_list_of_equalities (la : update list) (_lb : (type_variable * type_var
     | Ast_core.Types.C_apply _ ->
       fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_apply.") in
   let aux ({ remove_constraints; add_constraints; proof_trace } : update) =
-    let%bind () = tst_assert "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in
+    let* () = tst_assert "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in
     ignore proof_trace;
     bind_map_list aux' add_constraints in
-  let%bind assignments = bind_map_list aux la in
+  let* assignments = bind_map_list aux la in
   let assignments' = List.flatten assignments in
   let assignments'' = List.filter (function [] -> false | _ -> true) assignments' in
   let assignments''' = List.map (List.sort Var.compare) assignments'' in

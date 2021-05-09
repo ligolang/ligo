@@ -28,7 +28,7 @@ let all_expression =
   bind_chain all_expression_passes
 
 let all_contract main_name prg =
-  let%bind contract_type = Helpers.fetch_contract_type main_name prg in
+  let* contract_type = Helpers.fetch_contract_type main_name prg in
   let data : Contract_passes.contract_pass_data = {
     contract_type = contract_type ;
     main_name = main_name ;

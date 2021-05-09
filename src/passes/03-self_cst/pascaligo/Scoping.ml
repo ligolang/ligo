@@ -13,7 +13,7 @@ open Trace
 
 (* TODO don't *)
 let ignore x =
-  let%bind _ = x in
+  let* _ = x in
   ok ()
 
 (* Useful modules *)
@@ -155,7 +155,7 @@ and vars_of_plist env = function
     ok env
 | PParCons {value={inside; _}; _} ->
     let head, _, tail = inside in
-    let%bind env = vars_of_pattern env head in
+    let* env = vars_of_pattern env head in
     vars_of_pattern env tail
 | PCons {value; _} ->
     Helpers.bind_fold_npseq vars_of_pattern env value
@@ -189,14 +189,14 @@ let check_variants variants =
 let check_parameters params =
   let add acc = function
     ParamConst {value; _} ->
-      let%bind () = check_reserved_name value.var in
+      let* () = check_reserved_name value.var in
       if is_wildcard value.var then
         ok @@ acc
       else if VarSet.mem value.var acc then
         fail @@ duplicate_parameter value.var
       else ok @@ VarSet.add value.var acc
   | ParamVar {value; _} ->
-      let%bind () = check_reserved_name value.var in
+      let* () = check_reserved_name value.var in
       if is_wildcard value.var then
         ok @@ acc
       else if VarSet.mem value.var acc then
@@ -223,10 +223,10 @@ let peephole_type : unit -> type_expr -> (unit, 'err) result =
   match t with
     TProd   {value=_;region=_} -> ok ()
   | TSum    {value;region=_} ->
-    let%bind () = Utils.nsepseq_to_list value.variants |> check_variants in
+    let* () = Utils.nsepseq_to_list value.variants |> check_variants in
     ok ()
   | TRecord {value;region=_} ->
-    let%bind () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
+    let* () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
     ok ()
   | TApp    {value=_;region=_} -> ok ()
   | TFun    {value=_;region=_} -> ok ()
@@ -240,7 +240,7 @@ let peephole_type : unit -> type_expr -> (unit, 'err) result =
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
   match e with
     ECase    {value;region=_}   ->
-    let%bind () =
+    let* () =
       Trace.bind_iter_list
         (fun ({value;region=_}: _ case_clause reg) ->
            check_pattern value.pattern)
@@ -272,59 +272,59 @@ let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
 let peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
   match s with
     Instr Loop For ForCollect  {value;region=_} ->
-    let%bind () = check_reserved_name value.var in
-    let%bind _ = bind_map_option (Function.compose check_reserved_name snd) value.bind_to in
+    let* () = check_reserved_name value.var in
+    let* _ = bind_map_option (Function.compose check_reserved_name snd) value.bind_to in
     ok ()
   | Instr Loop For ForInt {value;region=_} ->
-    let%bind () = check_reserved_name value.binder in
+    let* () = check_reserved_name value.binder in
     ok ()
   | Instr _ -> ok ()
   | Data LocalConst {value;region=_} ->
     let {kwd_const=_;pattern;const_type=_;equal=_;init=_;terminator=_;attributes=_} = value in
-    let%bind () = check_pattern pattern in
+    let* () = check_pattern pattern in
     ok @@ ()
   | Data LocalVar {value;region=_} ->
     let {kwd_var=_;pattern;var_type=_;assign=_;init=_;terminator=_} = value in
-    let%bind () = check_pattern pattern in
+    let* () = check_pattern pattern in
     ok @@ ()
   | Data LocalFun {value;region=_}  ->
     let {kwd_recursive=_;kwd_function=_;fun_name;param;ret_type=_;kwd_is=_;return=_;terminator=_;attributes=_} = value in
-    let%bind () = check_parameters @@ Utils.nsepseq_to_list param.value.inside in
-    let%bind () = check_reserved_name fun_name in
+    let* () = check_parameters @@ Utils.nsepseq_to_list param.value.inside in
+    let* () = check_reserved_name fun_name in
     ok ()
   | Data LocalType  {value;region=_} ->
     let {kwd_type=_;name;kwd_is=_;type_expr=_;terminator=_} = value in
-    let%bind () = check_reserved_name name in
+    let* () = check_reserved_name name in
     ok ()
   | Data LocalModule {value;region=_} ->
     let {kwd_module=_;name;kwd_is=_;enclosing=_;module_=_;terminator=_} = value in
-    let%bind () = check_reserved_name name in
+    let* () = check_reserved_name name in
     ok ()
   | Data LocalModuleAlias {value;region=_} ->
     let {kwd_module=_;alias;kwd_is=_;binders=_;terminator=_} = value in
-    let%bind () = check_reserved_name alias in
+    let* () = check_reserved_name alias in
     ok ()
 
 let peephole_declaration : unit -> declaration -> (unit, 'err) result = fun _ d ->
   match d with
   | TypeDecl  {value;region=_} ->
-    let%bind () = check_reserved_name value.name in
+    let* () = check_reserved_name value.name in
     ok ()
   | ConstDecl {value;region=_} ->
     let {kwd_const=_;pattern;const_type=_;equal=_;init=_;terminator=_;attributes=_} = value in
-    let%bind () = check_pattern pattern in
+    let* () = check_pattern pattern in
     ok @@ ()
   | FunDecl {value;region=_} ->
      let {kwd_recursive=_; kwd_function=_; fun_name; param; ret_type=_;
           kwd_is=_; return=_; terminator=_; attributes=_} = value in
-    let%bind () = check_parameters @@ Utils.nsepseq_to_list param.value.inside in
-    let%bind () = check_reserved_name fun_name in
+    let* () = check_parameters @@ Utils.nsepseq_to_list param.value.inside in
+    let* () = check_reserved_name fun_name in
     ok ()
   | ModuleDecl  {value;region=_} ->
-    let%bind () = check_reserved_name value.name in
+    let* () = check_reserved_name value.name in
     ok ()
   | ModuleAlias {value;region=_} ->
-    let%bind () = check_reserved_name value.alias in
+    let* () = check_reserved_name value.alias in
     ok ()
   | Directive _ -> ok ()
 

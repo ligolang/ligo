@@ -11,6 +11,9 @@ val map : ('a -> 'b) -> ('a, 'd) result -> ('b, 'd) result
 val ( >>? ) :
   ('a, 'c) result ->
   ('a -> ('d, 'c) result) -> ('d, 'c) result
+val ( let* ) :
+  ('a, 'c) result ->
+  ('a -> ('d, 'c) result) -> ('d, 'c) result
 val ( >>|? ) : ('a, 'c) result -> ('a -> 'd) -> ('d, 'c) result
 module Let_syntax :
 sig

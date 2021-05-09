@@ -147,9 +147,9 @@ let rec unused_map_module : module_fully_typed -> (module_fully_typed, self_ast_
     )
     | Declaration_type _ -> ok @@ ()
     | Declaration_module {module_} ->
-      let%bind _ = self module_ in
+      let* _ = self module_ in
       ok @@ ()
     | Module_alias _ -> ok @@ ()
   in
-  let%bind _ = bind_map_list (bind_map_location aux) p in
+  let* _ = bind_map_list (bind_map_location aux) p in
   ok @@ (Module_Fully_Typed p)

@@ -84,36 +84,36 @@ let compile_groups filename grp_list =
     fun ((syntax , grp) , (lang , contents)) ->
       trace (test_md_file filename syntax grp contents) @@
       let options         = Compiler_options.make () in
-      let%bind meta       = Ligo_compile.Of_source.make_meta syntax None in
-      let%bind c_unit,_   = Ligo_compile.Of_source.compile_string ~options ~meta contents in
-      let%bind imperative = Ligo_compile.Of_c_unit.compile ~meta c_unit filename in
-      let%bind sugar      = Ligo_compile.Of_imperative.compile imperative in
-      let%bind core       = Ligo_compile.Of_sugar.compile sugar in
-      let%bind inferred   = Ligo_compile.Of_core.infer ~options core in
+      let* meta       = Ligo_compile.Of_source.make_meta syntax None in
+      let* c_unit,_   = Ligo_compile.Of_source.compile_string ~options ~meta contents in
+      let* imperative = Ligo_compile.Of_c_unit.compile ~meta c_unit filename in
+      let* sugar      = Ligo_compile.Of_imperative.compile imperative in
+      let* core       = Ligo_compile.Of_sugar.compile sugar in
+      let* inferred   = Ligo_compile.Of_core.infer ~options core in
       match lang with
       | Meta ->
         let init_env = Environment.default_with_test options.protocol_version in
         let options = { options with init_env } in
-        let%bind typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
-        let%bind _ = Interpreter.eval_test typed "test" in
+        let* typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
+        let* _ = Interpreter.eval_test typed "test" in
         ok ()
       | Object ->
-        let%bind typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
-        let%bind mini_c     = Ligo_compile.Of_typed.compile typed in
-        let%bind (_michelsons : Stacking.compiled_expression list) =
+        let* typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
+        let* mini_c     = Ligo_compile.Of_typed.compile typed in
+        let* (_michelsons : Stacking.compiled_expression list) =
           bind_map_list
             (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
             mini_c
         in
         ok ()
   in
-  let%bind () = bind_iter_list aux grp_list in
+  let* () = bind_iter_list aux grp_list in
   ok ()
 
 let compile filename () =
   let groups = get_groups filename in
   let groups_map = SnippetsGroup.bindings groups in
-  let%bind () = compile_groups filename groups_map in
+  let* () = compile_groups filename groups_map in
   ok ()
 
 let get_all_md_files () =

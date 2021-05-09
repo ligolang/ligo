@@ -9,7 +9,7 @@ let compile_with_modules ?(module_env = SMap.empty) : Ast_typed.module_fully_typ
   trace spilling_tracer @@ compile_module ~module_env:module_env p
 
 let compile ?(module_env = SMap.empty) : Ast_typed.module_fully_typed -> (Mini_c.program, _) result = fun p ->
-  let%bind mini_c,_ = compile_with_modules ~module_env:module_env p in
+  let* mini_c,_ = compile_with_modules ~module_env:module_env p in
   ok mini_c
 
 let compile_expression ?(module_env = SMap.empty) : expression -> (Mini_c.expression, _) result = fun e ->
@@ -17,7 +17,7 @@ let compile_expression ?(module_env = SMap.empty) : expression -> (Mini_c.expres
 
 let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string -> Ast_typed.module_fully_typed -> Ast_typed.expression -> (unit , _) result =
     fun c entry contract param ->
-  let%bind entry_point = trace_option entrypoint_not_found (Ast_typed.get_entry contract entry) in
+  let* entry_point = trace_option entrypoint_not_found (Ast_typed.get_entry contract entry) in
   trace (arguments_check_tracer c) (
     match entry_point.type_expression.type_content with
     | T_arrow {type1=args} -> (

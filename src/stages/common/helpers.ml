@@ -32,7 +32,7 @@ let bind_fold_map_lmap f init lmap =
   let open LMap  in
   let aux k v acc =
     acc >>? fun (acc',prev') ->
-    let%bind (acc',v') = f acc' k v in
+    let* (acc',v') = f acc' k v in
     let prev' = add k v' prev' in
     ok @@ (acc', prev') in
   ok (init, empty) |> fold aux lmap
@@ -101,28 +101,28 @@ let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern ->
     match p.wrap_content with
     | P_unit -> ret P_unit
     | P_var b ->
-      let%bind b' = f b in
+      let* b' = f b in
       ret (P_var b')
     | P_list lp -> (
-      let%bind lp =
+      let* lp =
         match lp with
         | Cons (pa,pb) ->
-          let%bind pa = self pa in
-          let%bind pb = self pb in
+          let* pa = self pa in
+          let* pb = self pb in
           ok @@ (Cons (pa, pb) : 'b list_pattern)
         | List lp ->
-          let%bind lp = bind_map_list self lp in
+          let* lp = bind_map_list self lp in
           ok @@ (List lp : 'b list_pattern)
       in
       ret @@ P_list lp
     )
     | P_variant (l,p_opt) -> (
-      let%bind p_opt = bind_map_option self p_opt in
+      let* p_opt = bind_map_option self p_opt in
       ret @@ P_variant (l,p_opt)
     )
     | P_tuple lp ->
-      let%bind lp = bind_map_list self lp in
+      let* lp = bind_map_list self lp in
       ret @@ P_tuple lp
     | P_record (x,lp) ->
-      let%bind lp = bind_map_list self lp in
+      let* lp = bind_map_list self lp in
       ret @@ P_record (x,lp)
