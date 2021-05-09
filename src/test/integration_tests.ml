@@ -370,6 +370,7 @@ let arithmetic_mligo () : (unit, _) result =
   let* () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
   let* () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
   let* () = expect_eq_n_pos program "ediv_op" e_int (fun n -> e_some (e_pair (e_int (n/2)) (e_nat (n mod 2)))) in
+  let* _ = expect_eq_evaluate program "mul_woo" (e_unit ()) in
   ok ()
 
 let arithmetic_religo () : (unit, _) result =

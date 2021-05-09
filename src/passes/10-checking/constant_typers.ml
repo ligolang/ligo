@@ -388,6 +388,8 @@ let times loc = typer_2 loc "TIMES" @@ fun a b ->
   then ok @@ t_int () else
   if (eq_1 a (t_nat ()) && eq_1 b (t_mutez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_mutez ()))
   then ok @@ t_mutez () else
+  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
+  then ok @@ t_int () else
     fail @@ typeclass_error loc
               [
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
@@ -401,6 +403,8 @@ let times loc = typer_2 loc "TIMES" @@ fun a b ->
                 [t_int();t_int()] ;
                 [t_nat();t_mutez()] ;
                 [t_mutez();t_nat()] ;
+                [t_nat();t_int()] ;
+                [t_int();t_nat()] ;
               ]
               [a; b]
 
