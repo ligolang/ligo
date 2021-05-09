@@ -9,63 +9,63 @@ type ('a ,'err) folder = 'a -> expression -> ('a , 'err) result
 let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> ('a , 'err) result = fun f init e ->
   let self = fold_expression f in
   let idle = fun acc _ -> ok @@ acc in
-  let%bind init' = f init e in
+  let* init' = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
   | E_constant {arguments=lst} -> (
-    let%bind res = bind_fold_list self init' lst in
+    let* res = bind_fold_list self init' lst in
     ok res
   )
   | E_application {lamb; args} -> (
     let ab = (lamb, args) in
-    let%bind res = bind_fold_pair self init' ab in
+    let* res = bind_fold_pair self init' ab in
     ok res
   )
   | E_lambda { binder = _ ; result = e }
   | E_recursive {lambda= {result=e}}
   | E_constructor {element=e} -> (
-    let%bind res = self init' e in
+    let* res = self init' e in
     ok res
   )
   | E_matching {matchee=e; cases} -> (
-    let%bind res = self init' e in
-    let%bind res = fold_cases f res cases in
+    let* res = self init' e in
+    let* res = fold_cases f res cases in
     ok res
   )
   | E_record m -> (
     let aux init'' _ expr =
-      let%bind res = fold_expression self init'' expr in
+      let* res = fold_expression self init'' expr in
       ok res
     in
-    let%bind res = bind_fold_lmap aux (ok init') m in
+    let* res = bind_fold_lmap aux (ok init') m in
     ok res
   )
   | E_record_update {record;update} -> (
-    let%bind res = self init' record in
-    let%bind res = fold_expression self res update in
+    let* res = self init' record in
+    let* res = fold_expression self res update in
     ok res
   )
   | E_record_accessor {record} -> (
-    let%bind res = self init' record in
+    let* res = self init' record in
     ok res
   )
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
-      let%bind res = self init' rhs in
-      let%bind res = self res let_result in
+      let* res = self init' rhs in
+      let* res = self res let_result in
       ok res
     )
   | E_type_in ti -> Folds.type_in self idle init' ti
   | E_mod_in { module_binder = _ ; rhs ; let_result } -> (
-      let%bind res = fold_module f init' rhs in
-      let%bind res = self res let_result in
+      let* res = fold_module f init' rhs in
+      let* res = self res let_result in
       ok res
     )
   | E_mod_alias { alias = _ ; binders = _ ; result } -> (
-      let%bind res = self init' result in
+      let* res = self init' result in
       ok res
     )
   | E_module_accessor { module_name = _ ; element } -> (
-    let%bind res = self init' element in
+    let* res = self init' element in
     ok res
   )
 
@@ -73,9 +73,9 @@ and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result
   match m with
   | Match_variant {cases;tv=_} -> (
       let aux init' {constructor=_; pattern=_ ; body} =
-        let%bind res' = fold_expression f init' body in
+        let* res' = fold_expression f init' body in
         ok res' in
-      let%bind res = bind_fold_list aux init cases in
+      let* res = bind_fold_list aux init cases in
       ok res
     )
   | Match_record {fields = _; body; tv = _} ->
@@ -86,83 +86,83 @@ and fold_module : ('a,'err) folder -> 'a -> module_fully_typed -> ('a, 'err) res
     let return (d : 'a) = ok @@ d in
     match x with
     | Declaration_constant {binder=_; expr ; inline=_} -> (
-        let%bind res = fold_expression f acc expr in
+        let* res = fold_expression f acc expr in
         return @@ res
     )
     | Declaration_type _t -> return @@ acc
     | Declaration_module {module_binder=_;module_} ->
-      let%bind res = fold_module f acc module_ in
+      let* res = fold_module f acc module_ in
       return @@ res
     | Module_alias _ -> return @@ acc
   in
-  let%bind res = bind_fold_list (bind_fold_location aux) init p in
+  let* res = bind_fold_list (bind_fold_location aux) init p in
   ok @@ res
 
 type 'err mapper = expression -> (expression , 'err) result
 let rec map_expression : 'err mapper -> expression -> (expression , 'err) result = fun f e ->
   let self = map_expression f in
-  let%bind e' = f e in
+  let* e' = f e in
   let return expression_content = ok { e' with expression_content } in
   match e'.expression_content with
   | E_matching {matchee=e;cases} -> (
-    let%bind e' = self e in
-    let%bind cases' = map_cases f cases in
+    let* e' = self e in
+    let* cases' = map_cases f cases in
     return @@ E_matching {matchee=e';cases=cases'}
   )
   | E_record_accessor {record; path} -> (
-    let%bind record = self record in
+    let* record = self record in
     return @@ E_record_accessor {record; path}
   )
   | E_record m -> (
-    let%bind m' = bind_map_lmap self m in
+    let* m' = bind_map_lmap self m in
     return @@ E_record m'
   )
   | E_record_update {record; path; update} -> (
-    let%bind record = self record in
-    let%bind update = self update in
+    let* record = self record in
+    let* update = self update in
     return @@ E_record_update {record;path;update}
   )
   | E_constructor c -> (
-    let%bind e' = self c.element in
+    let* e' = self c.element in
     return @@ E_constructor {c with element = e'}
   )
   | E_application {lamb; args} -> (
     let ab = (lamb, args) in
-    let%bind (a,b) = bind_map_pair self ab in
+    let* (a,b) = bind_map_pair self ab in
     return @@ E_application {lamb=a;args=b}
   )
   | E_let_in { let_binder ; rhs ; let_result; inline } -> (
-    let%bind rhs = self rhs in
-    let%bind let_result = self let_result in
+    let* rhs = self rhs in
+    let* let_result = self let_result in
     return @@ E_let_in { let_binder ; rhs ; let_result; inline }
   )
   | E_type_in ti -> (
-    let%bind ti = Maps.type_in self ok ti in
+    let* ti = Maps.type_in self ok ti in
     return @@ E_type_in ti
   )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
-    let%bind rhs = map_module f rhs in
-    let%bind let_result = self let_result in
+    let* rhs = map_module f rhs in
+    let* let_result = self let_result in
     return @@ E_mod_in { module_binder ; rhs ; let_result }
   )
   | E_mod_alias { alias ; binders ; result } -> (
-    let%bind result = self result in
+    let* result = self result in
     return @@ E_mod_alias { alias ; binders ; result }
   )
   | E_lambda { binder ; result } -> (
-    let%bind result = self result in
+    let* result = self result in
     return @@ E_lambda { binder ; result }
   )
   | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
-    let%bind result = self result in
+    let* result = self result in
     return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}
   )
   | E_constant c -> (
-    let%bind args = bind_map_list self c.arguments in
+    let* args = bind_map_list self c.arguments in
     return @@ E_constant {c with arguments=args}
   )
   | E_module_accessor { module_name; element } -> (
-    let%bind element = self element in
+    let* element = self element in
     return @@ E_module_accessor { module_name; element }
   )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
@@ -172,14 +172,14 @@ and map_cases : 'err mapper -> matching_expr -> (matching_expr , 'err) result = 
   match m with
   | Match_variant {cases;tv} -> (
       let aux { constructor ; pattern ; body } =
-        let%bind body = map_expression f body in
+        let* body = map_expression f body in
         ok {constructor;pattern;body}
       in
-      let%bind cases = bind_map_list aux cases in
+      let* cases = bind_map_list aux cases in
       ok @@ Match_variant {cases ; tv}
     )
   | Match_record {fields; body; tv} ->
-    let%bind body = map_expression f body in
+    let* body = map_expression f body in
     ok @@ Match_record {fields; body; tv}
 
 and map_module : 'err mapper -> module_fully_typed -> (module_fully_typed, 'err) result = fun m (Module_Fully_Typed p) ->
@@ -187,85 +187,85 @@ and map_module : 'err mapper -> module_fully_typed -> (module_fully_typed, 'err)
     let return (d : declaration) = ok @@ d in
     match x with
     | Declaration_constant {name; binder; expr ; inline} -> (
-        let%bind expr = map_expression m expr in
+        let* expr = map_expression m expr in
         return @@ Declaration_constant {name; binder; expr ; inline}
     )
     | Declaration_type t -> return @@ Declaration_type t
     | Declaration_module {module_binder;module_} ->
-      let%bind module_ = map_module m module_ in
+      let* module_ = map_module m module_ in
       return @@ Declaration_module {module_binder; module_}
     | Module_alias _ -> return x
   in
-  let%bind p = bind_map_list (bind_map_location aux) p in
+  let* p = bind_map_list (bind_map_location aux) p in
   ok @@ Module_Fully_Typed p
 
 type ('a , 'err) fold_mapper = 'a -> expression -> (bool * 'a * expression , 'err) result
 let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a * expression , 'err) result = fun f a e ->
   let self = fold_map_expression f in
-  let%bind (continue, init',e') = f a e in
+  let* (continue, init',e') = f a e in
   if (not continue) then ok(init',e')
   else
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
   | E_matching {matchee=e;cases} -> (
-      let%bind (res, e') = self init' e in
-      let%bind (res,cases') = fold_map_cases f res cases in
+      let* (res, e') = self init' e in
+      let* (res,cases') = fold_map_cases f res cases in
       ok (res, return @@ E_matching {matchee=e';cases=cases'})
     )
   | E_record_accessor {record; path} -> (
-      let%bind (res, record) = self init' record in
+      let* (res, record) = self init' record in
       ok (res, return @@ E_record_accessor {record; path})
     )
   | E_record m -> (
-    let%bind (res, lst') = bind_fold_map_list (fun res (k,e) -> let%bind (res,e) = self res e in ok (res,(k,e))) init' (LMap.to_kv_list_rev m) in
+    let* (res, lst') = bind_fold_map_list (fun res (k,e) -> let* (res,e) = self res e in ok (res,(k,e))) init' (LMap.to_kv_list_rev m) in
     let m' = LMap.of_list lst' in
     ok (res, return @@ E_record m')
   )
   | E_record_update {record; path; update} -> (
-    let%bind (res, record) = self init' record in
-    let%bind (res, update) = self res update in
+    let* (res, record) = self init' record in
+    let* (res, update) = self res update in
     ok (res, return @@ E_record_update {record;path;update})
   )
   | E_constructor c -> (
-      let%bind (res,e') = self init' c.element in
+      let* (res,e') = self init' c.element in
       ok (res, return @@ E_constructor {c with element = e'})
   )
   | E_application {lamb;args} -> (
       let ab = (lamb, args) in
-      let%bind (res,(a,b)) = bind_fold_map_pair self init' ab in
+      let* (res,(a,b)) = bind_fold_map_pair self init' ab in
       ok (res, return @@ E_application {lamb=a;args=b})
     )
   | E_let_in { let_binder ; rhs ; let_result; inline } -> (
-      let%bind (res,rhs) = self init' rhs in
-      let%bind (res,let_result) = self res let_result in
+      let* (res,rhs) = self init' rhs in
+      let* (res,let_result) = self res let_result in
       ok (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
     )
   | E_type_in { type_binder ; rhs ; let_result } -> (
-      let%bind (res,let_result) = self init' let_result in
+      let* (res,let_result) = self init' let_result in
       ok (res, return @@ E_type_in { type_binder ; rhs ; let_result })
     )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
-      let%bind (res,let_result) = self init' let_result in
+      let* (res,let_result) = self init' let_result in
       ok (res, return @@ E_mod_in { module_binder ; rhs ; let_result })
     )
   | E_mod_alias { alias ; binders ; result } -> (
-      let%bind (res,result) = self init' result in
+      let* (res,result) = self init' result in
       ok (res, return @@ E_mod_alias { alias ; binders ; result })
     )
   | E_lambda { binder ; result } -> (
-      let%bind (res,result) = self init' result in
+      let* (res,result) = self init' result in
       ok ( res, return @@ E_lambda { binder ; result })
     )
   | E_recursive { fun_name; fun_type; lambda={binder;result}} -> (
-      let%bind (res,result) = self init' result in
+      let* (res,result) = self init' result in
       ok (res, return @@ E_recursive {fun_name; fun_type; lambda={binder;result}})
     )
   | E_constant c -> (
-      let%bind (res,args) = bind_fold_map_list self init' c.arguments in
+      let* (res,args) = bind_fold_map_list self init' c.arguments in
       ok (res, return @@ E_constant {c with arguments=args})
     )
   | E_module_accessor { module_name; element } -> (
-    let%bind (res,element) = self init' element in
+    let* (res,element) = self init' element in
     ok (res, return @@ E_module_accessor { module_name; element })
   )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
@@ -274,21 +274,21 @@ and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * mat
   match m with
   | Match_variant {cases ; tv} -> (
       let aux init {constructor ; pattern ; body} =
-        let%bind (init, body) = fold_map_expression f init body in
+        let* (init, body) = fold_map_expression f init body in
         ok (init, {constructor; pattern ; body})
       in
-      let%bind (init,cases) = bind_fold_map_list aux init cases in
+      let* (init,cases) = bind_fold_map_list aux init cases in
       ok @@ (init, Match_variant {cases ; tv})
     )
   | Match_record { fields; body; tv } ->
-      let%bind (init, body) = fold_map_expression f init body in
+      let* (init, body) = fold_map_expression f init body in
       ok @@ (init, Match_record { fields ; body ; tv })
 
 and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> ('a * module_fully_typed , 'err) result = fun m init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant {name; binder ; expr ; inline} -> (
-      let%bind (acc', expr) = fold_map_expression m acc expr in
+      let* (acc', expr) = fold_map_expression m acc expr in
       let wrap_content : declaration = Declaration_constant {name; binder ; expr ; inline} in
       ok (acc', {x with wrap_content})
     )
@@ -302,14 +302,14 @@ and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> ('a 
     )
     | Module_alias _ -> ok (acc,x)
   in
-  let%bind (a,p) = bind_fold_map_list aux init p in
+  let* (a,p) = bind_fold_map_list aux init p in
   ok (a, Module_Fully_Typed p)
 
 and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> module_fully_typed -> ('a, 'err) result = fun m m_decl init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
       match Location.unwrap x with
       | Declaration_constant {binder=_ ; expr ; inline=_} as d ->
-        let%bind acc = m_decl acc d in
+        let* acc = m_decl acc d in
         fold_expression m acc expr
       | Declaration_type _t -> ok acc
       | Declaration_module _m -> ok acc
@@ -333,7 +333,7 @@ let fetch_contract_type : string -> module_fully_typed -> (contract_type, 'err) 
     | Module_alias _ -> None
   in
   let main_decl_opt = List.find_map aux @@ List.rev m in
-  let%bind main_decl =
+  let* main_decl =
     trace_option (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
     in
@@ -342,11 +342,11 @@ let fetch_contract_type : string -> module_fully_typed -> (contract_type, 'err) 
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
     | T_record tin , T_record tout when (is_tuple_lmap tin.content) && (is_tuple_lmap tout.content) ->
-       let%bind (parameter,storage) = trace_option (expected_pair_in expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
-       let%bind (listop,storage') = trace_option (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
-       let%bind () = trace_option (expected_list_operation main_fname listop expr) @@
+       let* (parameter,storage) = trace_option (expected_pair_in expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
+       let* (listop,storage') = trace_option (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
+       let* () = trace_option (expected_list_operation main_fname listop expr) @@
                        Ast_typed.assert_t_list_operation listop in
-       let%bind () = trace_option (expected_same main_fname storage storage' expr) @@
+       let* () = trace_option (expected_same main_fname storage storage' expr) @@
                        Ast_typed.assert_type_expression_eq (storage,storage') in
        (* TODO: on storage/parameter : a| Some (typed_prg,_,_) ->
         let b = extract_variable_types typed_prg in

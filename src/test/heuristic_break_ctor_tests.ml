@@ -42,7 +42,7 @@ let propagator_test : (selector_output, typer_error) propagator -> unit -> (unit
       (constraint 3L c = map(m, n))
       (constraint 5L c = map(y, z)) *)
   let repr = fun x -> x in
-  let%bind result = trace Main_errors.inference_tracer @@
+  let* result = trace Main_errors.inference_tracer @@
     propagator { a_k_var = `Constructor !.. c3; a_k'_var' = `Constructor !.. c5 } repr in
   (* check that the propagator returns these constraints
      (order is not important, order left/right in the equality is not
@@ -72,7 +72,7 @@ let propagator_test2 : _ -> unit -> (unit,Main_errors.all) result =
   (* call the propagator with the pair of constraints
       (constraint 3L c = map(m, n))
       (constraint 6L c = map(y, n)) THIS was changed to y,n instead of y,z in the other test *)
-  let%bind result = trace Main_errors.inference_tracer @@
+  let* result = trace Main_errors.inference_tracer @@
     propagator { a_k_var = `Constructor !.. c3; a_k'_var' = `Constructor !.. c5 } repr in
   (* check that the propagator returns these constraints
      (order is not important, order left/right in the equality is not

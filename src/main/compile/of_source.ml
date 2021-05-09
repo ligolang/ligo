@@ -8,11 +8,11 @@ type c_unit = Buffer.t * (file_path * module_name) list
 
 (* we should have on for filename with syntax_opt and one in case of no file *)
 let extract_meta syntax file_name =
-  let%bind syntax   = syntax_to_variant (Syntax_name syntax) (Some file_name) in
+  let* syntax   = syntax_to_variant (Syntax_name syntax) (Some file_name) in
   ok @@ {syntax}
 
 let make_meta syntax file_name_opt =
-  let%bind syntax   = syntax_to_variant (Syntax_name syntax) file_name_opt in
+  let* syntax   = syntax_to_variant (Syntax_name syntax) file_name_opt in
   ok @@ {syntax}
 
 let make_meta_from_syntax syntax =

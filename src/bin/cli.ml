@@ -223,12 +223,12 @@ module Run = Run.Of_michelson
 let compile_file =
   let f source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format output_file warn werror =
     return_result ~werror ~warn ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let%bind options =
-        let%bind init_env = Helpers.get_initial_env protocol_version in
-        let%bind protocol_version = Helpers.protocol_to_variant protocol_version in
+      let* options =
+        let* init_env = Helpers.get_initial_env protocol_version in
+        let* protocol_version = Helpers.protocol_to_variant protocol_version in
         ok @@ Compiler_options.make  ~init_env ~infer ~protocol_version ()
       in
-      let%bind michelson =  Build.build_contract ~options syntax entry_point source_file in
+      let* michelson =  Build.build_contract ~options syntax entry_point source_file in
       Compile.Of_michelson.build_contract ~disable_typecheck michelson
   in
   let term =
@@ -247,7 +247,7 @@ let preprocess =
     return_result ~display_format (Parsing.Formatter.ppx_format) @@
       map fst @@
         let options   = Compiler_options.make () in
-        let%bind meta = Compile.Of_source.extract_meta syntax source_file in
+        let* meta = Compile.Of_source.extract_meta syntax source_file in
         Compile.Of_source.compile ~options ~meta source_file
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -267,7 +267,7 @@ let pretty_print =
   let f source_file syntax display_format =
     return_result ~display_format (Parsing.Formatter.ppx_format) @@
         let options = Compiler_options.make () in
-        let%bind meta = Compile.Of_source.extract_meta syntax source_file in
+        let* meta = Compile.Of_source.extract_meta syntax source_file in
         Compile.Utils.pretty_print ~options ~meta source_file
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -284,7 +284,7 @@ let print_graph =
   let f source_file syntax display_format =
     return_result ~display_format (Build.Formatter.graph_format) @@
       let options = Compiler_options.make () in
-      let%bind g,_ = Build.dependency_graph ~options syntax Env source_file in
+      let* g,_ = Build.dependency_graph ~options syntax Env source_file in
       ok @@ (g,source_file)
   in
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
@@ -300,7 +300,7 @@ let print_cst =
   let f source_file syntax display_format =
     return_result ~display_format (Parsing.Formatter.ppx_format) @@
       let options = Compiler_options.make () in
-      let%bind meta = Compile.Of_source.extract_meta syntax source_file in
+      let* meta = Compile.Of_source.extract_meta syntax source_file in
       Compile.Utils.pretty_print_cst ~options ~meta source_file
   in
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
@@ -315,8 +315,8 @@ let print_ast =
   let f source_file syntax display_format =
     return_result ~display_format (Ast_imperative.Formatter.module_format) @@
       let options       = Compiler_options.make () in
-      let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+      let* meta     = Compile.Of_source.extract_meta syntax source_file in
+      let* c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
       Compile.Utils.to_imperative ~options ~meta c_unit source_file
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -332,8 +332,8 @@ let print_ast_sugar =
   let f source_file syntax display_format =
     return_result ~display_format (Ast_sugar.Formatter.module_format) @@
       let options = Compiler_options.make () in
-      let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+      let* meta     = Compile.Of_source.extract_meta syntax source_file in
+      let* c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
       Compile.Utils.to_sugar ~options ~meta c_unit source_file
   in
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
@@ -350,18 +350,18 @@ let print_ast_core =
       (* Do the same thing as for print_ast_typed, but only infer the main module
          (it still needs to infer+typecheck the dependencies) *)
       return_result ~display_format (Ast_core.Formatter.module_format) @@
-        let%bind options =
-          let%bind init_env = Helpers.get_initial_env protocol_version in
+        let* options =
+          let* init_env = Helpers.get_initial_env protocol_version in
           ok @@ Compiler_options.make ~infer ~init_env ()
         in
-        let%bind _,inferred_core,_,_ = Build.infer_contract ~options syntax Env source_file in
+        let* _,inferred_core,_,_ = Build.infer_contract ~options syntax Env source_file in
         ok @@ inferred_core
     else
       (* Print the ast as-is without inferring and typechecking dependencies *)
       return_result ~display_format (Ast_core.Formatter.module_format) @@
         let options = Compiler_options.make ~infer () in
-        let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
-        let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+        let* meta     = Compile.Of_source.extract_meta syntax source_file in
+        let* c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
         Compile.Utils.to_core ~options ~meta c_unit source_file
   in
   let term = Term.(const f $ source_file 0  $ syntax $ infer $ protocol_version $ display_format) in
@@ -375,11 +375,11 @@ let print_ast_core =
 let print_ast_typed =
   let f source_file syntax infer protocol_version display_format =
     return_result ~display_format (Ast_typed.Formatter.module_format_fully_typed) @@
-      let%bind options =
-        let%bind init_env = Helpers.get_initial_env protocol_version in
+      let* options =
+        let* init_env = Helpers.get_initial_env protocol_version in
         ok @@ Compiler_options.make ~infer ~init_env ()
       in
-      let%bind typed,_ = Build.type_contract ~options syntax Env source_file in
+      let* typed,_ = Build.type_contract ~options syntax Env source_file in
       ok @@ typed
   in
   let term = Term.(const f $ source_file 0  $ syntax $ infer $ protocol_version $ display_format) in
@@ -395,12 +395,12 @@ let print_ast_typed =
 let print_ast_combined =
   let f source_file syntax infer protocol_version display_format =
     return_result ~display_format (Ast_typed.Formatter.module_format_fully_typed) @@
-      let%bind options =
-        let%bind init_env = Helpers.get_initial_env protocol_version in
-        let%bind protocol_version = Helpers.protocol_to_variant protocol_version in
+      let* options =
+        let* init_env = Helpers.get_initial_env protocol_version in
+        let* protocol_version = Helpers.protocol_to_variant protocol_version in
         ok @@ Compiler_options.make ~infer ~init_env ~protocol_version ()
       in
-      let%bind typed,_ = Build.combined_contract ~options syntax Env source_file in
+      let* typed,_ = Build.combined_contract ~options syntax Env source_file in
       ok @@ typed
   in
   let term = Term.(const f $ source_file 0  $ syntax $ infer $ protocol_version $ display_format) in
@@ -416,16 +416,16 @@ let print_ast_combined =
 let print_mini_c =
   let f source_file syntax infer protocol_version display_format optimize =
     return_result ~display_format (Mini_c.Formatter.program_format) @@
-      let%bind options =
-        let%bind init_env   = Helpers.get_initial_env protocol_version in
-        let%bind protocol_version = Helpers.protocol_to_variant protocol_version in
+      let* options =
+        let* init_env   = Helpers.get_initial_env protocol_version in
+        let* protocol_version = Helpers.protocol_to_variant protocol_version in
         ok @@ Compiler_options.make ~infer ~init_env ~protocol_version ()
       in
-      let%bind mini_c,_ = Build.build_mini_c ~options syntax Env source_file in
+      let* mini_c,_ = Build.build_mini_c ~options syntax Env source_file in
       match optimize with
         | None -> ok @@ Mini_c.Formatter.Raw mini_c
         | Some entry_point ->
-          let%bind o = Compile.Of_mini_c.aggregate_contract mini_c entry_point in
+          let* o = Compile.Of_mini_c.aggregate_contract mini_c entry_point in
           ok @@ Mini_c.Formatter.Optimized o
   in
   let term = Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ display_format $ optimize) in
@@ -441,10 +441,10 @@ let print_mini_c =
 let measure_contract =
   let f source_file entry_point syntax infer protocol_version display_format warn werror =
     return_result ~werror ~warn ~display_format Formatter.contract_size_format @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind michelson =  Build.build_contract ~options syntax entry_point source_file in
-      let%bind contract = Compile.Of_michelson.build_contract michelson in
+      let* michelson =  Build.build_contract ~options syntax entry_point source_file in
+      let* contract = Compile.Of_michelson.build_contract michelson in
       Compile.Of_michelson.measure contract
   in
   let term =
@@ -459,20 +459,20 @@ let measure_contract =
 let compile_parameter =
   let f source_file entry_point expression syntax infer protocol_version amount balance sender source now display_format michelson_format output_file warn werror =
     return_result ~werror ~warn ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let%bind init_env = Helpers.get_initial_env protocol_version in
+      let* init_env = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind typed_prg,env   = Build.combined_contract ~options syntax (Contract entry_point) source_file in
-      let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-      let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg entry_point in
-      let%bind _contract =
+      let* typed_prg,env   = Build.combined_contract ~options syntax (Contract entry_point) source_file in
+      let* mini_c_prg      = Compile.Of_typed.compile typed_prg in
+      let* michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg entry_point in
+      let* _contract =
        (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind typed_param,_    = Compile.Utils.type_expression ~options (Some source_file) syntax expression env in
-      let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
-      let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
-      let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
-      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
+      let* typed_param,_    = Compile.Utils.type_expression ~options (Some source_file) syntax expression env in
+      let* mini_c_param     = Compile.Of_typed.compile_expression typed_param in
+      let* compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
+      let* ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
+      let* options          = Run.make_dry_run_options {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty
     in
   let term =
@@ -489,19 +489,19 @@ let compile_parameter =
 let interpret =
   let f expression init_file syntax infer protocol_version amount balance sender source now display_format =
     return_result ~display_format (Decompile.Formatter.expression_format) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
-      let%bind protocol_version = Helpers.protocol_to_variant protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
+      let* protocol_version = Helpers.protocol_to_variant protocol_version in
       let options = Compiler_options.make ~infer ~init_env ~protocol_version () in
-      let%bind (decl_list,mods,env) = match init_file with
+      let* (decl_list,mods,env) = match init_file with
         | Some init_file ->
-           let%bind mini_c_prg,mods,_,env = Build.build_contract_use ~options syntax init_file in
+           let* mini_c_prg,mods,_,env = Build.build_contract_use ~options syntax init_file in
            ok (mini_c_prg,mods,env)
         | None -> ok ([],Ast_core.SMap.empty,init_env) in
-      let%bind typed_exp,_    = Compile.Utils.type_expression ~options init_file syntax expression env in
-      let%bind mini_c_exp     = Compile.Of_typed.compile_expression ~module_env:mods typed_exp in
-      let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~options decl_list mini_c_exp in
-      let%bind options        = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
-      let%bind runres         = Run.run_expression ~options compiled_exp.expr compiled_exp.expr_ty in
+      let* typed_exp,_    = Compile.Utils.type_expression ~options init_file syntax expression env in
+      let* mini_c_exp     = Compile.Of_typed.compile_expression ~module_env:mods typed_exp in
+      let* compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~options decl_list mini_c_exp in
+      let* options        = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
+      let* runres         = Run.run_expression ~options compiled_exp.expr compiled_exp.expr_ty in
       Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres
   in
   let term =
@@ -518,20 +518,20 @@ let interpret =
 let compile_storage =
   let f source_file entry_point expression syntax infer protocol_version amount balance sender source now display_format michelson_format output_file warn werror =
     return_result ~werror ~warn ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind typed_prg,env       = Build.combined_contract ~options syntax (Contract entry_point) source_file in
-      let%bind mini_c_prg          = Compile.Of_typed.compile typed_prg in
-      let%bind michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract ~options  mini_c_prg entry_point in
-      let%bind _contract =
+      let* typed_prg,env       = Build.combined_contract ~options syntax (Contract entry_point) source_file in
+      let* mini_c_prg          = Compile.Of_typed.compile typed_prg in
+      let* michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract ~options  mini_c_prg entry_point in
+      let* _contract =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind typed_param,_    = Compile.Utils.type_expression ~options (Some source_file) syntax expression env in
-      let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
-      let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
-      let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
-      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
+      let* typed_param,_    = Compile.Utils.type_expression ~options (Some source_file) syntax expression env in
+      let* mini_c_param     = Compile.Of_typed.compile_expression typed_param in
+      let* compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg mini_c_param in
+      let* ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
+      let* options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2  $ syntax $ infer $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format $ michelson_code_format $ output_file $ warn $ werror) in
@@ -548,23 +548,23 @@ let compile_storage =
 let dry_run =
   let f source_file entry_point input storage amount balance sender source now syntax infer protocol_version display_format warn werror =
     return_result ~werror ~warn ~display_format (Decompile.Formatter.expression_format) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind mini_c_prg,_,typed_prg,env = Build.build_contract_use  ~options syntax source_file in
-      let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg entry_point in
-      let%bind parameter_ty =
+      let* mini_c_prg,_,typed_prg,env = Build.build_contract_use  ~options syntax source_file in
+      let* michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg entry_point in
+      let* parameter_ty =
         (* fails if the given entry point is not a valid contract *)
-        let%bind _contract = Compile.Of_michelson.build_contract michelson_prg in
+        let* _contract = Compile.Of_michelson.build_contract michelson_prg in
         match Self_michelson.fetch_contract_inputs michelson_prg.expr_ty with
         | Some (parameter_ty,_storage_ty) -> ok (Some parameter_ty)
         | None -> ok None
       in
 
-      let%bind compiled_params   = Compile.Utils.compile_storage ~options input storage source_file syntax env mini_c_prg in
-      let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
+      let* compiled_params   = Compile.Utils.compile_storage ~options input storage source_file syntax env mini_c_prg in
+      let* args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
-      let%bind options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty } in
-      let%bind runres  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
+      let* options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty } in
+      let* runres  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
   let term =
@@ -582,21 +582,21 @@ let dry_run =
 let run_function =
   let f source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format warn werror =
     return_result ~werror ~warn ~display_format (Decompile.Formatter.expression_format) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind mini_c_prg,mods,typed_prg,env = Build.build_contract_use ~options syntax source_file in
-      let%bind meta             = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit_param,_   = Compile.Of_source.compile_string ~options ~meta parameter in
-      let%bind imperative_param = Compile.Of_c_unit.compile_expression ~meta c_unit_param in
-      let%bind sugar_param      = Compile.Of_imperative.compile_expression imperative_param in
-      let%bind core_param       = Compile.Of_sugar.compile_expression sugar_param in
-      let%bind app              = Compile.Of_core.apply entry_point core_param in
-      let%bind typed_app,_      = Compile.Of_core.compile_expression ~infer ~env app in
-      let%bind compiled_applied = Compile.Of_typed.compile_expression ~module_env:mods typed_app in
+      let* mini_c_prg,mods,typed_prg,env = Build.build_contract_use ~options syntax source_file in
+      let* meta             = Compile.Of_source.extract_meta syntax source_file in
+      let* c_unit_param,_   = Compile.Of_source.compile_string ~options ~meta parameter in
+      let* imperative_param = Compile.Of_c_unit.compile_expression ~meta c_unit_param in
+      let* sugar_param      = Compile.Of_imperative.compile_expression imperative_param in
+      let* core_param       = Compile.Of_sugar.compile_expression sugar_param in
+      let* app              = Compile.Of_core.apply entry_point core_param in
+      let* typed_app,_      = Compile.Of_core.compile_expression ~infer ~env app in
+      let* compiled_applied = Compile.Of_typed.compile_expression ~module_env:mods typed_app in
 
-      let%bind michelson        = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg compiled_applied in
-      let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None} in
-      let%bind runres           = Run.run_expression ~options michelson.expr michelson.expr_ty in
+      let* michelson        = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c_prg compiled_applied in
+      let* options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None} in
+      let* runres           = Run.run_expression ~options michelson.expr michelson.expr_ty in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
   let term =
@@ -613,14 +613,14 @@ let run_function =
 let evaluate_value =
   let f source_file entry_point amount balance sender source now syntax infer protocol_version display_format warn werror =
     return_result ~werror ~warn ~display_format Decompile.Formatter.expression_format @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind mini_c,_,typed_prg,_ = Build.build_contract_use ~options syntax source_file in
-      let%bind (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
+      let* mini_c,_,typed_prg,_ = Build.build_contract_use ~options syntax source_file in
+      let* (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
       let exp = Mini_c.e_var ~loc:exp.location (Location.wrap @@ Var.of_name entry_point) exp.type_expression in
-      let%bind compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in
-      let%bind options       = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None} in
-      let%bind runres        = Run.run_expression ~options compiled.expr compiled.expr_ty in
+      let* compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in
+      let* options       = Run.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None} in
+      let* runres        = Run.run_expression ~options compiled.expr compiled.expr_ty in
       Decompile.Of_michelson.decompile_typed_program_entry_expression_result typed_prg entry_point runres
     in
   let term =
@@ -637,17 +637,17 @@ let evaluate_value =
 let compile_expression =
   let f expression syntax infer protocol_version init_file display_format michelson_format warn werror =
     return_result ~werror ~warn ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind (decl_list,env) = match init_file with
+      let* (decl_list,env) = match init_file with
         | Some init_file ->
-           let%bind mini_c_prg,env  = Build.build_mini_c ~options syntax Env init_file  in
+           let* mini_c_prg,env  = Build.build_mini_c ~options syntax Env init_file  in
            ok (mini_c_prg,env)
         | None -> ok ([],init_env) in
 
-      let%bind typed_exp,_    = Compile.Utils.type_expression ~options init_file syntax expression env in
-      let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
-      let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~options decl_list mini_c_exp in
+      let* typed_exp,_    = Compile.Utils.type_expression ~options init_file syntax expression env in
+      let* mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
+      let* compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~options decl_list mini_c_exp in
       Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty
     in
   let term =
@@ -678,9 +678,9 @@ let list_declarations =
   let f source_file syntax display_format =
     return_result ~display_format Formatter.declarations_format @@
       let options       = Compiler_options.make () in
-      let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
-      let%bind core_prg = Compile.Utils.to_core ~options ~meta c_unit source_file in
+      let* meta     = Compile.Of_source.extract_meta syntax source_file in
+      let* c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+      let* core_prg = Compile.Utils.to_core ~options ~meta c_unit source_file in
       let declarations  = Compile.Of_core.list_declarations core_prg in
       ok (source_file, declarations)
   in
@@ -697,13 +697,13 @@ let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format output_file =
     return_result ~output_file ~display_format (Parsing.Formatter.ppx_format) @@
       let options         = Compiler_options.make () in
-      let%bind meta       = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit,_   = Compile.Utils.to_c_unit ~options ~meta source_file in
-      let%bind core       = Compile.Utils.to_core ~options ~meta c_unit source_file in
-      let%bind sugar      = Decompile.Of_core.decompile core in
-      let%bind imperative = Decompile.Of_sugar.decompile sugar in
+      let* meta       = Compile.Of_source.extract_meta syntax source_file in
+      let* c_unit,_   = Compile.Utils.to_c_unit ~options ~meta source_file in
+      let* core       = Compile.Utils.to_core ~options ~meta c_unit source_file in
+      let* sugar      = Decompile.Of_core.decompile core in
+      let* imperative = Decompile.Of_sugar.decompile sugar in
       let dialect         = Decompile.Helpers.Dialect_name new_dialect in
-      let%bind buffer     =
+      let* buffer     =
         Decompile.Of_imperative.decompile ~dialect imperative (Syntax_name new_syntax) in
       ok @@ buffer
   in
@@ -723,17 +723,17 @@ let transpile_expression =
     return_result ~display_format (Parsing.Formatter.ppx_format) @@
       (* Compiling chain *)
       let options            = Compiler_options.make () in
-      let%bind meta          = Compile.Of_source.make_meta syntax None in
-      let%bind c_unit_expr,_ = Compile.Of_source.compile_string ~options ~meta expression in
-      let%bind imperative    = Compile.Of_c_unit.compile_expression ~meta c_unit_expr in
-      let%bind sugar         = Compile.Of_imperative.compile_expression imperative in
-      let%bind core          = Compile.Of_sugar.compile_expression sugar in
+      let* meta          = Compile.Of_source.make_meta syntax None in
+      let* c_unit_expr,_ = Compile.Of_source.compile_string ~options ~meta expression in
+      let* imperative    = Compile.Of_c_unit.compile_expression ~meta c_unit_expr in
+      let* sugar         = Compile.Of_imperative.compile_expression imperative in
+      let* core          = Compile.Of_sugar.compile_expression sugar in
       (* Decompiling chain *)
       let      dialect       = Decompile.Helpers.Dialect_name new_dialect in
-      let%bind n_syntax      = Decompile.Helpers.syntax_to_variant ~dialect (Syntax_name new_syntax) None in
-      let%bind sugar         = Decompile.Of_core.decompile_expression core in
-      let%bind imperative    = Decompile.Of_sugar.decompile_expression sugar in
-      let%bind buffer        = Decompile.Of_imperative.decompile_expression imperative n_syntax in
+      let* n_syntax      = Decompile.Helpers.syntax_to_variant ~dialect (Syntax_name new_syntax) None in
+      let* sugar         = Decompile.Of_core.decompile_expression core in
+      let* imperative    = Decompile.Of_sugar.decompile_expression sugar in
+      let* buffer        = Decompile.Of_imperative.decompile_expression imperative n_syntax in
       ok @@ buffer
   in
   let term =
@@ -750,11 +750,11 @@ let transpile_expression =
 let get_scope =
   let f source_file syntax infer protocol_version libs display_format with_types =
     return_result ~display_format Scopes.Formatter.scope_format @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let* init_env   = Helpers.get_initial_env protocol_version in
       let options       = Compiler_options.make ~infer ~init_env ~libs () in
-      let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
-      let%bind core_prg = Compile.Utils.to_core ~options ~meta c_unit source_file in
+      let* meta     = Compile.Of_source.extract_meta syntax source_file in
+      let* c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+      let* core_prg = Compile.Utils.to_core ~options ~meta c_unit source_file in
       Scopes.scopes ~with_types ~options core_prg
   in
   let term =
@@ -769,9 +769,9 @@ let get_scope =
 let test =
   let f source_file test_entry syntax infer protocol_version display_format =
     return_result ~display_format (Ligo_interpreter.Formatter.test_format) @@
-      let%bind init_env   = Helpers.get_initial_env ~test_env:true protocol_version in
+      let* init_env   = Helpers.get_initial_env ~test_env:true protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let%bind typed,_    = Compile.Utils.type_file ~options source_file syntax Env in
+      let* typed,_    = Compile.Utils.type_file ~options source_file syntax Env in
       Interpreter.eval_test typed test_entry
   in
   let term =

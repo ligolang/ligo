@@ -7,14 +7,14 @@ type ('l, 'error) mapper = 'l michelson -> ('l michelson, 'error) result
 
 let rec map_expression : ('l, 'error) mapper -> 'l michelson -> ('l michelson, 'error) result = fun f e ->
   let self = map_expression f in
-  let%bind e' = f e in
+  let* e' = f e in
   match e' with
   | Prim (l , p , lst , a) -> (
-      let%bind lst' = bind_map_list self lst in
+      let* lst' = bind_map_list self lst in
       ok @@ Prim (l , p , lst' , a)
     )
   | Seq (l , lst) -> (
-      let%bind lst' = bind_map_list self lst in
+      let* lst' = bind_map_list self lst in
       ok @@ Seq (l , lst')
     )
   | x -> ok x

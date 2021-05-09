@@ -252,6 +252,7 @@ let map f = function
    combination of both is [>>=?]. *)
 
 let (>>?)  x f = bind f x
+let (let*)  x f = bind f x
 let (>>|?) x f = map f x
 
 (* Used by PPX_let, an OCaml preprocessor.

@@ -3,7 +3,7 @@ open Ast_imperative
 open Helpers
 
 let decompile ?dialect (m : module_) syntax : (_ , _) result =
-  let%bind syntax = syntax_to_variant ?dialect syntax None in
+  let* syntax = syntax_to_variant ?dialect syntax None in
   specialise_and_print syntax m
 
 let decompile_expression (e : expression) syntax : (_ , _) result =

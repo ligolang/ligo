@@ -14,11 +14,11 @@ let int () : (unit, _) result =
   let open Inference in
   let e = Inferred.Environment.empty in
   let state = Solver.initial_state in
-  let%bind (_, _post,t,new_state) = trace inference_tracer @@ type_expression_subst e state pre in
+  let* (_, _post,t,new_state) = trace inference_tracer @@ type_expression_subst e state pre in
   let () = Solver.discard_state new_state in
   let open! Inferred in
   let open Combinators in
-  let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, t_int ()) in
+  let* () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, t_int ()) in
   ok ()
 
 let init_env = Option.unopt_exn @@ Trace.to_option @@ Checking.decompile_env @@ 
@@ -34,10 +34,10 @@ module TestExpressions = struct
     let pre = expr in
     let open Inference in
     let open! Inferred in
-    let%bind (_ , _post ,t,new_state) = trace inference_tracer @@ type_expression_subst env state pre in
+    let* (_ , _post ,t,new_state) = trace inference_tracer @@ type_expression_subst env state pre in
     let () = Solver.discard_state new_state in
     Format.printf "Test, t = %a and t_init = %a" Inferred.PP.type_expression t Inferred.PP.type_expression @@ test_expected_ty;
-    let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, test_expected_ty) in
+    let* () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, test_expected_ty) in
     ok ()
 
   module I = Simplified.Combinators

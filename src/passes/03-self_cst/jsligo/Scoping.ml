@@ -11,7 +11,7 @@ open Trace
 
 (* TODO don't *)
 let ignore x =
-  let%bind _ = x in
+  let* _ = x in
   ok ()
 
 (* Useful modules *)
@@ -111,12 +111,12 @@ let rec vars_of_pattern env = function
     if VarSet.mem property env then
       fail @@ non_linear_pattern property
     else (
-      let%bind env = vars_of_pattern env binders in
+      let* env = vars_of_pattern env binders in
       ok @@ VarSet.add property env
     )
 | PObject   {value = {inside; _}; _}
 | PArray    {value = {inside; _}; _} -> 
-    let%bind env = Utils.nsepseq_to_list inside |> check_patterns in
+    let* env = Utils.nsepseq_to_list inside |> check_patterns in
     ok @@ env
 | PAssign {value = {property; _}; _} -> 
     if VarSet.mem property env then
@@ -135,7 +135,7 @@ and check_pattern p =
 
 and check_patterns patterns =
   let add _acc p =
-    let%bind env = check_pattern p in
+    let* env = check_pattern p in
     ok @@ env
   in bind_fold_list add VarSet.empty patterns
 
@@ -178,10 +178,10 @@ let check_fields fields =
 let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   match t with
     TSum {value; _} ->
-      let%bind () = Utils.nsepseq_to_list value.variants |> check_variants in
+      let* () = Utils.nsepseq_to_list value.variants |> check_variants in
     ok @@ ()
   | TObject {value; _} ->
-      let%bind () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
+      let* () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
       ok @@ ()
   | TProd _
   | TApp _
@@ -197,36 +197,36 @@ let peephole_expression : unit -> expr -> (unit,'err) result = fun () _ ->
   ok @@ ()
 
 let check_binding ({value = {binders; _}; _}: CST.let_binding Region.reg) = 
-  let%bind () = ignore(check_pattern binders) in
+  let* () = ignore(check_pattern binders) in
   ok @@ ()
 
 let check_bindings bindings =
   let add _acc b =
-    let%bind () = check_binding b in
+    let* () = check_binding b in
     ok @@ ()
   in bind_fold_list add () bindings
 
 let rec peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
   match s with
     SExpr e -> 
-    let%bind () = peephole_expression () e in
+    let* () = peephole_expression () e in
     ok @@ ()
   | SNamespace {value = (_, name, _); _} ->
-    let%bind () = check_reserved_name name in 
+    let* () = check_reserved_name name in 
     ok @@ ()
   | SExport {value = (_, e); _} -> 
     peephole_statement () e
   | SLet   {value = {bindings; _}; _}
   | SConst {value = {bindings; _}; _} ->
-    let%bind () = Utils.nsepseq_to_list bindings |> check_bindings in 
+    let* () = Utils.nsepseq_to_list bindings |> check_bindings in 
     ok @@ ()
   | SType  {value = {name; _}; _} ->
-    let%bind () = check_reserved_name name in 
+    let* () = check_reserved_name name in 
     ok @@ ()
   | SWhile {value = {expr; statement; _}; _}
   | SForOf {value = {expr; statement; _}; _} ->
-    let%bind () = peephole_expression () expr in
-    let%bind () = peephole_statement () statement in
+    let* () = peephole_expression () expr in
+    let* () = peephole_statement () statement in
     ok @@ ()
   | SBlock  _
   | SCond   _

@@ -40,7 +40,7 @@ module X (M : sig module Plugin_under_test : INDEXER_PLUGIN_TYPE(Solver_types.Ty
     let state_b = List.fold_left aux istate
         [ Add_cstr tva ; Add_cstr tvb ; Merge (merge_keys tva tvb) ; Add_cstr tvc ; ]
     in
-    let%bind () = M.same_state state_a state_b in
+    let* () = M.same_state state_a state_b in
     ok ()
 end
 

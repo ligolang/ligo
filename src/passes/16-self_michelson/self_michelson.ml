@@ -264,7 +264,8 @@ let digdug_depth : _ michelson -> int option = function
 
 (* elide SWAP/DIG/DUG when followed by sufficiently many DROP *)
 let opt_digdug_drop () : _ peep =
-  let%bind x = peep in
+  let open Peephole.Let_syntax in
+  let* x = peep in
   match digdug_depth x with
   | None -> No_change
   | Some depth ->
