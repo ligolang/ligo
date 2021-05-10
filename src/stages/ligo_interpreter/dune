@@ -9,8 +9,5 @@
     ast_typed
     stage_common
   )
-  (preprocess
-    (pps ppx_let)
-  )
   (flags (:standard -open Simple_utils))
 )

@@ -899,7 +899,8 @@ and compile_declaration module_env env (d:AST.declaration) : ((toplevel_statemen
 and compile_module ?(module_env = SMap.empty) ((AST.Module_Fully_Typed lst) : AST.module_fully_typed) : (program * AST.type_expression SMap.t , spilling_error) result =
   let aux (prev:(toplevel_statement list * _ SMap.t * Environment.t , spilling_error) result) cur =
     let* (hds, module_env, env) = prev in
-    match%bind compile_declaration module_env env cur with
+    let* x = compile_declaration module_env env cur in
+    match x with
     | Some (((_ , env') as cur', module_env)) -> ok (hds @ [ cur' ] , module_env, env'.post_environment)
     | None -> prev
   in

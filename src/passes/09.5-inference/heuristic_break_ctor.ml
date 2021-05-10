@@ -157,17 +157,17 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
     | _ -> failwith "type error : break_ctor propagator"
   );
   (* Produce constraint a.tv_list = b.tv_list *)
-  let%bind eqs3 =
+  let* eqs3 =
     match a , b with
     | `Row a , `Row b ->
       let aux = fun ((la,{associated_variable=aa;_}),(lb,{associated_variable=bb;})) ->
-        let%bind () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
+        let* () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
         ok @@ c_equation
           (wrap (Propagator_break_ctor "a") @@ P_variable (repr aa))
           (wrap (Propagator_break_ctor "b") @@ P_variable (repr bb))
           "propagator: break_ctor: row"
       in
-      let%bind bindings =  List.map2 (fun x y -> (x,y)) (LMap.bindings a.tv_map) (LMap.bindings b.tv_map)
+      let* bindings =  List.map2 (fun x y -> (x,y)) (LMap.bindings a.tv_map) (LMap.bindings b.tv_map)
         ~ok ~fail:(fun _ _-> fail @@ (corner_case "TODO: different number of labels (List.length a.tv_map) (List.length b.tv_map)"))
       in
       bind_map_list aux bindings

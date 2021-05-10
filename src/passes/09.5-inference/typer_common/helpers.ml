@@ -11,7 +11,7 @@ type typer = type_expression list -> type_expression option -> (type_expression,
 let typer_0 : Location.t -> string -> (type_expression option -> (type_expression, typer_error) result) -> typer = fun l s f lst tv_opt ->
   match lst with
   | [] -> (
-    let%bind tv' = f tv_opt in
+    let* tv' = f tv_opt in
     ok (tv')
   )
   | _ -> fail @@ wrong_param_number l s 0 lst
@@ -19,7 +19,7 @@ let typer_0 : Location.t -> string -> (type_expression option -> (type_expressio
 let typer_1 : Location.t -> string -> (type_expression -> (type_expression, typer_error) result) -> typer = fun l s f lst _ ->
   match lst with
   | [ a ] -> (
-      let%bind tv' = f a in
+      let* tv' = f a in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 1 lst
@@ -27,7 +27,7 @@ let typer_1 : Location.t -> string -> (type_expression -> (type_expression, type
 let typer_1_opt : Location.t -> string -> (type_expression -> type_expression option -> (type_expression , typer_error) result) -> typer = fun l s f lst tv_opt ->
   match lst with
   | [ a ] -> (
-      let%bind tv' = f a tv_opt in
+      let* tv' = f a tv_opt in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 1 lst
@@ -35,7 +35,7 @@ let typer_1_opt : Location.t -> string -> (type_expression -> type_expression op
 let typer_2 : Location.t -> string -> (type_expression -> type_expression -> (type_expression, typer_error) result) -> typer = fun l s f lst _ ->
   match lst with
   | [ a ; b ] -> (
-      let%bind tv' = f a b in
+      let* tv' = f a b in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 2 lst
@@ -43,7 +43,7 @@ let typer_2 : Location.t -> string -> (type_expression -> type_expression -> (ty
 let typer_2_opt : Location.t -> string -> (type_expression -> type_expression -> type_expression option -> (type_expression, typer_error) result) -> typer = fun l s f lst tv_opt ->
   match lst with
   | [ a ; b ] -> (
-      let%bind tv' = f a b tv_opt in
+      let* tv' = f a b tv_opt in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 2 lst
@@ -51,7 +51,7 @@ let typer_2_opt : Location.t -> string -> (type_expression -> type_expression ->
 let typer_3 : Location.t -> string -> (type_expression -> type_expression -> type_expression -> (type_expression, typer_error) result) -> typer = fun l s f lst _ ->
   match lst with
   | [ a ; b ; c ] -> (
-      let%bind tv' = f a b c in
+      let* tv' = f a b c in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 3 lst
@@ -59,7 +59,7 @@ let typer_3 : Location.t -> string -> (type_expression -> type_expression -> typ
 let typer_4 : Location.t -> string -> (type_expression -> type_expression -> type_expression -> type_expression -> (type_expression , typer_error) result) -> typer = fun l s f lst _ ->
   match lst with
   | [ a ; b ; c ; d ] -> (
-      let%bind tv' = f a b c d in
+      let* tv' = f a b c d in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 4 lst
@@ -67,7 +67,7 @@ let typer_4 : Location.t -> string -> (type_expression -> type_expression -> typ
 let typer_5 : Location.t -> string -> (type_expression -> type_expression -> type_expression -> type_expression -> type_expression -> (type_expression, typer_error) result) -> typer = fun l s f lst _ ->
   match lst with
   | [ a ; b ; c ; d ; e ] -> (
-      let%bind tv' = f a b c d e in
+      let* tv' = f a b c d e in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 5 lst
@@ -76,7 +76,7 @@ let typer_6 : Location.t -> string
   -> (type_expression -> type_expression -> type_expression -> type_expression -> type_expression -> type_expression -> (type_expression, typer_error) result) -> typer = fun l s f lst _ ->
   match lst with
   | [ a ; b ; c ; d ; e ; f_ ] -> (
-      let%bind tv' = f a b c d e f_ in
+      let* tv' = f a b c d e f_ in
       ok (tv')
     )
   | _ -> fail @@ wrong_param_number l s 6 lst

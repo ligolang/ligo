@@ -10,7 +10,7 @@
   )
   (inline_tests)
   (preprocess
-    (pps ppx_let ppx_expect)
+    (pps ppx_expect)
   )
   (flags (:standard -open Simple_utils))
 )

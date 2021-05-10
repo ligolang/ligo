@@ -10,5 +10,4 @@
     hex
     zarith)
   (modules CST Printer)
-  (preprocess
-    (pps ppx_let)))
+)

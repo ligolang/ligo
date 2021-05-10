@@ -93,7 +93,8 @@ module Compile_type = struct
     match compilers with
     | [] -> ok None
     | hd :: tl -> (
-      match%bind hd te with
+      let* x = hd te in
+      match x with
       | Some x -> ok (Some x)
       | None -> type_compiler_opt_list tl te
     )
@@ -107,9 +108,10 @@ module Compile_type = struct
     (unit -> (AST.type_expression, _) result) ->
     (AST.type_expression, _) result =
   fun compilers te other ->
-  match%bind type_compiler_opt_list compilers te with
-  | Some x -> ok x
-  | None -> other ()
+    let* x = type_compiler_opt_list compilers te in
+    match x with
+    | Some x -> ok x
+    | None -> other ()
 
   and compile_type_function_args : CST.fun_type_args -> (type_expression, _) result = fun args ->
     let unpar = args.inside in

@@ -53,9 +53,6 @@ val bind_map_smap :
   ('a -> ('b, 'd) result) ->
   'a X_map.String.t ->
   ('b X_map.String.t, 'd) result
-val bind_concat :
-  ('a list, 'c) result ->
-  ('a list, 'c) result -> ('a list, 'c) result
 val bind_map_list :
   ('a -> ('b, 'd) result) ->
   'a list -> ('b list, 'd) result

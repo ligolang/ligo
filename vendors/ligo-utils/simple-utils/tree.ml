@@ -108,8 +108,8 @@ module Append = struct
     | Leaf x -> leaf x
     | Node {a;b} ->
       let open Trace in
-      let%bind a = bind_fold' leaf node a in
-      let%bind b = bind_fold' leaf node b in
+      let* a = bind_fold' leaf node a in
+      let* b = bind_fold' leaf node b in
       node a b
 
   let bind_fold_ne leaf node = function

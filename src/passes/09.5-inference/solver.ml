@@ -85,12 +85,12 @@ end = struct
     (* let () = Formatt.eprintf "Remove constraint :\n  %a\n\n%!" Ast_core.PP.type_constraint_simpl_short to_remove in *)
     (* let () = Formatt.eprintf "and state:%a\n" pp_typer_state state in *)
     let module MapRemoveConstraint = Plugins.Indexers.Map_indexer_plugins(RemoveConstraint) in
-    let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
+    let* plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
     ok ({state with plugin_states ; deleted_constraints = PolySet.add to_remove state.deleted_constraints}, Worklist.empty)
 
   and aux_update (state, { remove_constraints; add_constraints; add_constraints_simpl; proof_trace=_ }) =
     let open Ast_core.PP in
-    let%bind () = check_proof_trace proof_trace in
+    let* () = check_proof_trace proof_trace in
     let add_constraints_simpl = List.map (function
         SC_Apply c -> SC_Apply { c with id_apply_simpl = ConstraintIdentifier.fresh () }
       | SC_Abs c -> SC_Abs { c with id_abs_simpl = ConstraintIdentifier.fresh () }
@@ -124,7 +124,7 @@ end = struct
       ok (state, Worklist.empty))
     else(
       (* Format.eprintf "reuning propagator : %s ..." heuristic_plugin.heuristic_name; *)
-      let%bind updates = heuristic_plugin.propagator selector_output (mk_repr state) in
+      let* updates = heuristic_plugin.propagator selector_output (mk_repr state) in
       ok (state, { Worklist.empty with pending_updates = Pending.of_list @@ updates })
     )
 
@@ -258,7 +258,7 @@ end = struct
   let main : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
     let () = Formatt.eprintf "In solver main\n%!" in
-    let%bind (state : typer_state) = select_and_propagate_all state {Worklist.empty with pending_type_constraint = Pending.of_list initial_constraints} in
+    let* (state : typer_state) = select_and_propagate_all state {Worklist.empty with pending_type_constraint = Pending.of_list initial_constraints} in
     let () = Formatt.eprintf "Starting typechecking with assignment :\n  %a\n%!"
       pp_typer_state state in
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
@@ -266,7 +266,7 @@ end = struct
       (fun v -> UnionFind.Poly2.repr v state.aliases)
       (fun v -> Indexers_plugins_states.Assignments.find_opt v (Indexers_plugins_states.assignments state.plugin_states)#assignments) in
     let () = if not @@ Trace.to_bool failure then Pretty_print_variables.flush_pending_print state in
-    let%bind () = failure in
+    let* () = failure in
     ok state
   
   (* This function is called when a program is fully compiled, and the

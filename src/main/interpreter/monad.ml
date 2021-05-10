@@ -89,7 +89,8 @@ module Command = struct
     | External_call (loc, addr, param, amt) -> (
       match addr, param , amt with
       | V_Ct ( C_address dst) , V_Michelson (Ty_code (param,_,_)), V_Ct ( C_nat amt ) -> (
-        match%bind Tezos_state.transfer ~loc ctxt dst param amt with
+        let* x = Tezos_state.transfer ~loc ctxt dst param amt in 
+        match x with
         | Success ctxt -> ok (None, ctxt)
         | Fail errs -> ok (Some errs, ctxt)
       )

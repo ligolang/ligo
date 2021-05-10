@@ -227,7 +227,7 @@ let compare_and_check_vars = fun ~(compare : 'a cmp) ~print_whole whole_expected
             print_whole whole_expected
             print_whole whole_actual)
   | Some t ->
-    let%bind _seen = bind_fold_list aux
+    let* _seen = bind_fold_list aux
         (RedBlackTrees.PolyMap.create ~cmp:Ast_core.Compare.type_variable)
         (flatten_tree t)
     in ok ()

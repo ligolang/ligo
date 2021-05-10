@@ -80,7 +80,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   let open Type_variable_abstraction.Misc in
   let open Type_variable_abstraction.Reasons in
   let open Type_variable_abstraction in
-  let%bind ( deduced , cleaned , changed ) = wrapped_deduce_and_clean repr selected.tc ~original:selected.tc in
+  let* ( deduced , cleaned , changed ) = wrapped_deduce_and_clean repr selected.tc ~original:selected.tc in
   let deduced_single_line = (match cleaned with
    SC_Typeclass {tc=[line];args;tc_bound} -> List.filter_map (function Location.{wrap_content = P_variable v},a when not @@ List.mem ~compare:Compare.type_variable v tc_bound  -> Some (c_equation
           (wrap (Propagator_break_ctor "v") @@ P_variable (repr v))

@@ -15,7 +15,6 @@ depends: [
   "menhir" { = "20200624" }
   "ocamlgraph"
   "coq" { build & >= "8.12" & < "8.13" }
-  "ppx_let"
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_expect"

@@ -8,7 +8,7 @@ module M = functor (Solver_instance : sig type indexers_plugins_states end) -> s
 
 module SRope = Rope.SimpleRope
 
-let rec until predicate f state = if predicate state then ok state else let%bind state = f state in until predicate f state
+let rec until predicate f state = if predicate state then ok state else let* state = f state in until predicate f state
 
 (* TODO: replace this with a more efficient SRope.t (needs a "pop" function) *)
 module Pending = struct
@@ -110,7 +110,7 @@ module Worklist = struct
       (* set this field of the worklist to the rest of this Pending.t *)
       let worklist = lens.set worklist rest in
       (* Process the element *)
-      let%bind (state, new_worklist) = f (state, element) in
+      let* (state, new_worklist) = f (state, element) in
       (* While processing, f can queue new tasks in a fresh worklist, we're merging the worklists here *)
       let merged_worklists = {
         pending_type_constraint                        = Pending.union new_worklist.pending_type_constraint                        worklist.pending_type_constraint                        ;
@@ -131,10 +131,10 @@ module Worklist = struct
     if decrement_has_timeout_expired time_to_live
     then ok (state, Unchanged worklist)
     else
-      let%bind (state, worklist) = process lens f (state, worklist) in
+      let* (state, worklist) = process lens f (state, worklist) in
       match worklist with
         Some_processing_done worklist ->
-        let%bind (state, worklist) = process_all ~time_to_live lens f (state, worklist) in
+        let* (state, worklist) = process_all ~time_to_live lens f (state, worklist) in
         (match worklist with
            Some_processing_done worklist ->
            ok (state, Some_processing_done worklist)
@@ -177,7 +177,7 @@ let rec until' :
     if predicate (state, worklist) then
       ok (state, worklist)
     else
-      let%bind (state, worklist_monad) = f (state, worklist) in
+      let* (state, worklist_monad) = f (state, worklist) in
       match worklist_monad with
         Worklist.Unchanged w ->
         (if predicate (state, w) then
@@ -195,7 +195,7 @@ let rec choose_processor' : 'typer_state 'typer_error . ('typer_state * Worklist
       Worklist.Some_processing_done worklist ->
       ok @@ (state, Worklist.Some_processing_done worklist)
     | Worklist.Unchanged worklist ->
-      let%bind (state, worklist) =
+      let* (state, worklist) =
         hd (state, worklist)
       in choose_processor' tl (state, worklist)
 
@@ -206,7 +206,7 @@ let choose_processor : 'typer_state 'typer_error . ('typer_state * Worklist.t ->
 
   module Let_syntax = struct
     let bind some_result ~f =
-      let%bind (state, (worklist_monad : Worklist.monad)) = some_result in
+      let* (state, (worklist_monad : Worklist.monad)) = some_result in
       match worklist_monad with
         Worklist.Some_processing_done w -> ok (state, Worklist.Some_processing_done w)
       | Worklist.Unchanged w -> f (state, w)

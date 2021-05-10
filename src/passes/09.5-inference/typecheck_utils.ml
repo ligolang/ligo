@@ -60,7 +60,7 @@ let other_check all_constraints assignments =
         match find_assignment repr_unification_var with
         | Some c_or_r ->
           let args : type_variable list = match c_or_r with `Constructor k -> k.tv_list | `Row r -> List.map (fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map in
-          let%bind (already_seen, tree) = bind_fold_map_list (fun already_seen tvar -> toposort already_seen tvar repr find_assignment) already_seen args in
+          let* (already_seen, tree) = bind_fold_map_list (fun already_seen tvar -> toposort already_seen tvar repr find_assignment) already_seen args in
           if Set.mem repr_unification_var already_seen then
             ok (already_seen, Compare_renaming.List tree)
           else 
@@ -75,7 +75,7 @@ let other_check all_constraints assignments =
   let toposort :
     type_variable list -> (type_variable -> type_variable) -> (type_variable -> constructor_or_row option) -> (type_variable list) result =
     fun unification_vars repr find_assignment ->
-      let%bind _, trees =
+      let* _, trees =
         bind_fold_map_list
           (fun already_seen one_var -> toposort already_seen one_var repr find_assignment)
           (PolySet.create ~cmp:Var.compare)
@@ -103,7 +103,7 @@ let other_check all_constraints assignments =
           1) find_assignment(solver_repr(γ)) gives map(χ,β)                     else error "unassigned variable"
         *)
       let unification_var = (repr unification_var) in
-      let%bind assigment =
+      let* assigment =
         match find_assignment unification_var with
         | Some cor -> ok cor
         | None -> fail (corner_case "TODO ERROR 78906: unassigned variable")
@@ -165,6 +165,6 @@ let other_check all_constraints assignments =
       let initial_canon = PolyMap.create ~cmp:compare_canon_constructor_or_row in
       let initial_first = PolyMap.create ~cmp:Var.compare in
       (* result = the "first" mapping *)
-      let%bind toposorted_unification_vars = toposort unification_vars repr find_assignment in
-      let%bind (_canon, first) = bind_fold_list (hashcons repr find_assignment) (initial_canon, initial_first) toposorted_unification_vars in
+      let* toposorted_unification_vars = toposort unification_vars repr find_assignment in
+      let* (_canon, first) = bind_fold_list (hashcons repr find_assignment) (initial_canon, initial_first) toposorted_unification_vars in
       ok first
