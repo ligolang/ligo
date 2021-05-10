@@ -88,7 +88,8 @@ let try_eval state s =
   let* compiled_exp = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options:options state.decl_list mini_c_exp in
   let options = state.dry_run_opts in
   let* runres = Run.run_expression ~options:options compiled_exp.expr compiled_exp.expr_ty in
-  match%bind (Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres) with
+  let* x = Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres in
+  match x with
   | Success expr ->
      let state = { state with env = env; decl_list = state.decl_list } in
      ok (state, Expression_value expr)

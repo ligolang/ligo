@@ -150,7 +150,7 @@ let rec restrict_recur repr c_or_r (tc_c  : type_constraint_simpl) =
      | `Constructor _     -> ok None)
   | SC_Alias        _     -> fail @@ corner_case "alias constraints not yet supported in typeclass constraints"
   | SC_Poly         _     -> fail @@ corner_case "forall in the nested constraints of a typeclass is unsupported"
-  | SC_Typeclass    tc_tc -> let%bind restricted_nested = (restrict repr c_or_r tc_tc) in
+  | SC_Typeclass    tc_tc -> let* restricted_nested = (restrict repr c_or_r tc_tc) in
                              if typeclass_is_empty restricted_nested
                              then ok None
                              else ok @@ Some (SC_Typeclass restricted_nested)
@@ -175,7 +175,7 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
     | P_variable v
       (* TODO: this should be a set, not a list *)
       when List.mem ~compare:Compare.type_variable v tc.tc_bound ->
-      let%bind updated_tc_constraints = bind_map_list (restrict_recur repr c) tc.tc_constraints in
+      let* updated_tc_constraints = bind_map_list (restrict_recur repr c) tc.tc_constraints in
       let all_accept = List.for_all (function None -> false | Some _ -> true) updated_tc_constraints in
       let restricted_constraints = List.filter_map (fun x -> x) updated_tc_constraints in
       let tc = { tc with tc_constraints = restricted_constraints ; original_id = Some (tc.id_typeclass_simpl); id_typeclass_simpl = ConstraintIdentifier.fresh () } in
@@ -188,7 +188,7 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
     return true
 
 and restrict_line repr c tc (`headers, headers, `line, line) : (bool * _, _) result =
-  let%bind tc,results = bind_fold_map2_list (restrict_cell repr c) tc headers line in
+  let* tc,results = bind_fold_map2_list (restrict_cell repr c) tc headers line in
   ok @@ (List.for_all (fun x -> x) results,tc)
 
 and restrict repr c tc =
@@ -197,7 +197,7 @@ and restrict repr c tc =
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
     (* Format.eprintf "In propagator for tc_fundep for :%a\n" pp_selector_output selected;  *)
-  let%bind restricted = restrict repr selected.c selected.tc in
+  let* restricted = restrict repr selected.c selected.tc in
   let not_changed =
     Compare.(cmp2
       (List.compare ~compare:type_variable) restricted.args selected.tc.args
@@ -351,7 +351,7 @@ simplified constraint
  *   let () = Format.eprintf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d PP.type_variable) selected.tc.args (PP_helpers.list_sep_d PP.type_variable) @@ List.map repr selected.tc.args in
  *   let restricted = restrict repr selected.c selected.tc in
  *   let () = Format.eprintf "restricted: %a\n!" PP.c_typeclass_simpl_short restricted in
- *   let%bind (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
+ *   let* (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
  *   let ret = [
  *       {
  *         remove_constraints = [SC_Typeclass selected.tc];
@@ -374,9 +374,9 @@ let printer ppd (t : selector_output) =
 let pp_deduce_and_clean_result_short ppf {deduced;cleaned} =
   let open Format in
   let open Type_variable_abstraction.PP in
-  fprintf ppf "{@[<hv 2>@
-              deduced : %a;@
-              cleaned : %a;@
+  fprintf ppf "{@[<hv 2>@ \
+              deduced : %a;@ \
+              cleaned : %a;@ \
               @]}"
     (PP_helpers.list_sep_d constructor_or_row_short) deduced
     c_typeclass_simpl_short cleaned

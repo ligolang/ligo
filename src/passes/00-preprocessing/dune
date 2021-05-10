@@ -16,5 +16,4 @@
     preprocessing_jsligo)
   (modules
      Preprocessing Errors Pascaligo Cameligo Reasonligo Jsligo)
-  (preprocess
-    (pps ppx_let)))
+)

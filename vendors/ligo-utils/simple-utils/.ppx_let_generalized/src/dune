@@ -1,7 +1,0 @@
-(library
- (name ppx_let)
- (public_name simple-utils.ppx_let_generalized)
- (kind ppx_rewriter)
- (libraries ppxlib ppx_let_expander)
- (preprocess no_preprocessing)
-)

@@ -9,6 +9,5 @@
     stage_common
     typesystem
   )
-  (preprocess (pps ppx_let))
   (flags (:standard -open Simple_utils))
 )

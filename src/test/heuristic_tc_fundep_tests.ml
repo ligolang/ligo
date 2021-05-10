@@ -52,7 +52,7 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y;z] "∈" [[int ; unit ; unit] ; [nat ; int ; int] ; [nat ; int ; string] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [ false              ;  true             ;  true                ; ]
+    (* *)        [ false              ;  true             ;  true                ; ]
     (* Expected restricted typeclass: *)
     [x;y;z] "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 );
@@ -63,7 +63,7 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y]   "∈" [[int  ; unit] ; [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [ false        ;  true                  ; true                      ; ]
+    (* *)        [ false        ;  true                  ; true                      ; ]
     (* Expected restricted typeclass constraint: *)
     [x;y]   "∈" [                [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
 )  ;
@@ -74,7 +74,7 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y;z] "∈" [[int ; unit ; unit] ; [nat ; int ; int] ; [nat ; int ; string] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [false               ; true              ; true                 ; ]
+    (* *)        [false               ; true              ; true                 ; ]
     (* Expected restricted typeclass: *)
     [x;y;z] "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 )  ;    

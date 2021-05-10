@@ -9,5 +9,4 @@
    result
    unix
    str)
-  (preprocess
-    (pps ppx_let)))
+)

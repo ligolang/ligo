@@ -117,7 +117,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   assert (Compare.type_variable row_tv record_type = 0);
   (* produce constraints: *)
 
-  let%bind field_type =
+  let* field_type =
     match LMap.find_opt a_var_l.label a_r_map.tv_map with
     | None -> fail @@ corner_case "Type error: label {a_var_l.label} does not exist in record {a_r_map.tv_map}"
     | Some field_type -> ok @@ repr field_type.associated_variable

@@ -10,5 +10,4 @@
      tezos-utils
      tezos-micheline
      ligo_main)
-  (preprocess
-    (pps ppx_let)))
+)

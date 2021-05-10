@@ -8,8 +8,5 @@
     ast_sugar
     UnionFind
   )
-  (preprocess
-    (pps ppx_let)
-  )
   (flags (:standard -open Simple_utils ))
 )

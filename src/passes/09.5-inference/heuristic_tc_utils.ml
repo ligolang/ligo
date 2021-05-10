@@ -25,7 +25,7 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
   type columns = column list
   let loop3 : 'e 'x 'a 'b 'c . ('x -> ('a * 'b * 'c, 'e) result) -> ('a * 'b * 'c) -> (('a -> 'a -> 'a) * ('b -> 'b -> 'b) * ('c -> 'c -> 'c)) -> 'x list -> (('a * 'b * 'c), 'e) result =
     fun f (a0, b0, c0) (a,b,c) xs ->
-    let%bind r = bind_map_list f xs in
+    let* r = bind_map_list f xs in
     let (as_, bs, cs) = List.split3 r in
     ok (List.fold_left a a0 as_, List.fold_left b b0 bs, List.fold_left c c0 cs)
 
@@ -53,15 +53,15 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
   let update_columns3 : (columns -> (column Rope.SimpleRope.t * 'b * 'c, _) result) -> c_typeclass_simpl -> (c_typeclass_simpl * 'b * 'c, _) result =
     fun f tc ->
     (*let transpose_back cs = let (hs, m) = transpose_back cs in (hs, List.rev m) in*)
-    let%bind updated, b, c = f @@ get_columns tc.args tc.tc in
+    let* updated, b, c = f @@ get_columns tc.args tc.tc in
     let headers', matrix' = columns_to_lines @@ Rope.SimpleRope.list_of_rope updated in
     ok ({ tc with args = headers'; tc = matrix' }, b, c)
     
 
   let filter_lines (f : _ -> ([`headers] * type_variable list * [`line] * type_value list) -> (bool * c_typeclass_simpl, _) result) (tc_org : c_typeclass_simpl) =
-    let%bind (updated,tc_for_nested) =
+    let* (updated,tc_for_nested) =
       bind_fold_list (fun (acc,tc) line ->
-          let%bind b,tc = f tc (`headers, tc_org.args, `line, line) in
+          let* b,tc = f tc (`headers, tc_org.args, `line, line) in
           if b then ok (line :: acc,tc) else ok (acc,tc)) ([],tc_org) tc_org.tc
     in
     ok { tc_org with tc = List.rev updated; tc_constraints = tc_for_nested.tc_constraints }
@@ -235,7 +235,7 @@ let rec replace_var_and_possibilities_1
     ((x : type_variable), (possibilities_for_x : type_value list))
     : (column Rope.SimpleRope.t * _ * bool, _) result =
   let open Rope.SimpleRope in
-  (*let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
+  (*let* tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
   let tags_of_constructors, arguments_of_constructors = List.split tags_and_args in*)
   match all_equal' tc_constraints repr x possibilities_for_x  with
   | Different ->
@@ -254,7 +254,7 @@ let rec replace_var_and_possibilities_1
   | All_equal_to (deduced, fresh_vars, arguments_of_constructors) ->
       (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
 
-      let%bind (rec_cleaned, rec_deduced, _rec_changed) =
+      let* (rec_cleaned, rec_deduced, _rec_changed) =
         replace_var_and_possibilities_rec tc_constraints repr (List.combine fresh_vars (transpose_list_of_lists arguments_of_constructors))
       in
       (* The "changed" boolean return indicates whether any update was done.
@@ -279,7 +279,7 @@ type deduce_and_clean_result = {
 let rec deduce_and_clean_constraints repr (c : type_constraint_simpl) =
   match c with
   | SC_Typeclass tc ->
-   let%bind {cleaned;deduced;changed} = deduce_and_clean repr tc in
+   let* {cleaned;deduced;changed} = deduce_and_clean repr tc in
       ok @@ ((SC_Typeclass cleaned) :: (List.map (function `Constructor c -> SC_Constructor c | `Row r -> SC_Row r) deduced), changed)
   | other -> ok ([other], false)
 
@@ -290,11 +290,11 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
        ∈ [ [ map3( nat   , unit  , float ) ; int    ] ;
            [ map3( bytes , mutez , float ) ; string ] ] *)
 
-  let%bind deduced_and_cleaned_nested_constraints = bind_map_list (deduce_and_clean_constraints repr) tcs.tc_constraints in
+  let* deduced_and_cleaned_nested_constraints = bind_map_list (deduce_and_clean_constraints repr) tcs.tc_constraints in
   let deduced_and_cleaned_nested_constraints', changed' = List.split deduced_and_cleaned_nested_constraints in
   let tcs' = { tcs with tc_constraints = List.flatten deduced_and_cleaned_nested_constraints' } in
 
-  let%bind (cleaned, deduced, changed) = update_columns3 (replace_var_and_possibilities_rec tcs.tc_constraints repr) tcs' in
+  let* (cleaned, deduced, changed) = update_columns3 (replace_var_and_possibilities_rec tcs.tc_constraints repr) tcs' in
   let changed'' = changed || List.exists (fun x -> x) changed' in
   (* ex. cleaned:
            [ fresh_x_1 ; fresh_x_2 ; y      ]
@@ -307,7 +307,7 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
   ok { deduced = list_of_rope deduced ; cleaned ; changed = changed'' }
 
  let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
-  let%bind {deduced; cleaned; changed} = deduce_and_clean repr tc in
+  let* {deduced; cleaned; changed} = deduce_and_clean repr tc in
   (* Format.eprintf "retourning with deduce: %a; cleaned: %a; changed: %b\n" 
     (PP_helpers.list_sep_d PP.constructor_or_row_short) deduced
     PP.c_typeclass_simpl_short cleaned

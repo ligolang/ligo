@@ -8,9 +8,6 @@
     stage_common
     UnionFind
   )
-  (preprocess
-    (pps ppx_let)
-  )
 ;;  (modules_without_implementation generated_fold_x)
   (flags (:standard -open Simple_utils))
 )
