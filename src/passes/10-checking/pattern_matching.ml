@@ -47,6 +47,10 @@ let is_product : equations -> typed_pattern option = fun eqs ->
     )
     eqs
 
+let assert_unit_pattern (loc:Location.t) (tv: O.type_expression) : (unit,typer_error) result = 
+  trace_option (wrong_type_for_unit_pattern loc tv) @@
+    O.assert_type_expression_eq (O.t_unit () , tv)
+
 let corner_case loc = fail (corner_case ("broken invariant at "^loc))
 
 let assert_body_t : body_t:O.type_expression option -> Location.t -> O.type_expression -> unit pm_result =
@@ -196,20 +200,14 @@ let group_equations : equations -> equations O.label_map pm_result =
       fun m (pl , (body , env)) ->
         let (phd,t) = List.hd pl in
         let ptl = List.tl pl in
-        let dummy_p : unit -> typed_pattern = fun () ->
-          let var =  Location.wrap @@ Var.fresh ~name:"_" () in
-          (make_var_pattern var, O.t_unit ())
-        in
-        let upd : O.type_expression -> pattern option -> equations option -> equations option =
-          fun proj_t p_opt kopt ->
-            match kopt, p_opt with
-            | Some eqs , None   -> Some ( (dummy_p ()::ptl , (body,env))::eqs )
-            | None     , None   -> Some [ (dummy_p ()::ptl , (body,env)) ]
-            | Some eqs , Some p ->
-              let p = (p,proj_t) in
+        let upd : O.type_expression -> pattern -> equations option -> equations option =
+          fun proj_t pattern kopt ->
+            match kopt with
+            | Some eqs ->
+              let p = (pattern,proj_t) in
               Some (( p::ptl , (body,env))::eqs)
-            | None     , Some p ->
-              let p = (p,proj_t) in
+            | None ->
+              let p = (pattern,proj_t) in
               Some [ (p::ptl          , (body,env)) ]
         in
         match phd.wrap_content with
@@ -219,12 +217,12 @@ let group_equations : equations -> equations O.label_map pm_result =
         | P_list (List []) ->
           let label = O.Label "Nil" in
           let* proj_t = extract_variant_type phd label t in
-          ok @@ O.LMap.update label (upd proj_t None) m
+          ok @@ O.LMap.update label (upd proj_t (Location.wrap O.P_unit)) m
         | P_list (Cons (p_hd,p_tl)) ->
           let label = O.Label "Cons" in
           let pattern = Location.wrap ~loc:(phd.location) @@ I.P_tuple [p_hd;p_tl] in
           let* proj_t = extract_variant_type phd label t in
-          ok @@ O.LMap.update label (upd proj_t (Some pattern)) m
+          ok @@ O.LMap.update label (upd proj_t pattern) m
         | _ -> corner_case __LOC__
     in
     bind_fold_right_list aux O.LMap.empty eqs
@@ -298,16 +296,19 @@ and ctor_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expressio
     let* eq_map = group_equations eqs in
       let aux_p : O.label * equations -> O.matching_content_case pm_result =
         fun (constructor,eq) ->
-          let proj =
+          let* proj =
             match eq with
             | [(tp,_)] -> (
-              let (pattern,_t) = List.hd tp in
+              let (pattern,t) = List.hd tp in
               match pattern.wrap_content with
-              | P_var x -> x.var
-              | _ -> Location.wrap @@ Var.fresh ~name:"ctor_proj" ()
+              | P_var x -> ok x.var
+              | P_unit ->
+                let* () = assert_unit_pattern pattern.location t in
+                ok @@ Location.wrap @@ Var.fresh ~name:"unit_proj" ()
+              | _ -> ok @@ Location.wrap @@ Var.fresh ~name:"ctor_proj" ()
             )
             | _ ->
-              Location.wrap @@ Var.fresh ~name:"ctor_proj" ()
+              ok @@ Location.wrap @@ Var.fresh ~name:"ctor_proj" ()
           in
           let new_ms = proj::mtl in
           let* nested = match_ ~err_loc ~type_f ~body_t new_ms eq def in

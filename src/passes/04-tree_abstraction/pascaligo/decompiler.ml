@@ -238,26 +238,20 @@ and decompile_pattern : dialect -> AST.type_expression AST.pattern -> (CST.patte
         let inj = inject dialect (CST.InjList ghost) elements in
         ret (CST.PListComp (wrap inj))
     )
-    | AST.P_variant (constructor,popt) -> (
+    | AST.P_variant (constructor,p) -> (
       match constructor with
       | Label "Some" ->
-        let p = Option.unopt_exn popt in
         let* p = decompile_pattern dialect p in
         ok @@ CST.PConstr (PSomeApp (wrap (ghost, p)))
       | Label "None" -> ok @@ CST.PConstr (PNone ghost)
       | Label "true" -> ok @@ CST.PConstr (PTrue ghost)
       | Label "false" -> ok @@ CST.PConstr (PFalse ghost)
       | Label constructor -> (
-        match popt with
-        | Some p ->
-          let* p = decompile_pattern dialect p in
-          let* p = list_to_nsepseq [p] in
-          let p = wrap (par p) in
-          let constr = wrap (wrap constructor, Some p) in
-          ok @@ CST.PConstr (PConstrApp constr)
-        | None ->
-          let constr = wrap (wrap constructor, None) in
-          ok @@ CST.PConstr (PConstrApp constr)
+        let* p = decompile_pattern dialect p in
+        let* p = list_to_nsepseq [p] in
+        let p = wrap (par p) in
+        let constr = wrap (wrap constructor, Some p) in
+        ok @@ CST.PConstr (PConstrApp constr)
       )
     )
     | AST.P_tuple lst ->

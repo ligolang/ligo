@@ -474,8 +474,8 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
         let pvar = match p_opt with
           | Some p ->
             let parameters = Location.wrap ~loc:param_loc p in
-            Some (Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None}:_ AST.binder))
-          | None -> None
+            Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None}:_ AST.binder)
+          | None -> Location.wrap ~loc:param_loc P_unit
         in 
         let pattern = Location.wrap ~loc:whole_pattern_loc @@ P_variant (constructor, pvar) in
         ({body ; pattern} : _ AST.match_case)

@@ -356,7 +356,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
             let x = { x with wrap_content = O.P_list (Cons (hd_p,tl_p)) } in
             ok (x, constraints', tl_t)
           )
-          | P_variant (constructor, arg_opt) -> (
+          | P_variant (constructor, arg) -> (
             let fresh = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_variant" ()) in
             let* (arg_t_env , variant_t_env) =
               (* TODO For row polymorphism or variant inference:
@@ -378,13 +378,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
                 in
                 ok (Wrap.type_expression_to_type_value x , Wrap.type_expression_to_type_value y)
             in
-            let* (arg_p,arg_cs,arg_t) = match arg_opt with
-              | Some arg ->
-                let* (arg_p,arg_cs,arg_t) = gather_constraints_from_pattern arg in
-                ok (Some arg_p,arg_cs,arg_t)
-              | None ->
-                ok (None,[],O.t_unit ())
-            in
+            let* (arg_p,arg_cs,arg_t) = gather_constraints_from_pattern arg in
             let variant_constraints = Wrap.match_variant constructor ~case:arg_t arg_t_env fresh variant_t_env in
             let x = { x with wrap_content = O.P_variant (constructor, arg_p)} in
             let constraints = variant_constraints @ arg_cs in
