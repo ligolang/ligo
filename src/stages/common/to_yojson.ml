@@ -386,9 +386,9 @@ and pattern type_expression p =
   | P_unit -> `List [`String "Unit" ; `Null]
   | P_var b -> `List [`String "Var"; binder type_expression b]
   | P_list lp -> `List [`String "List" ; list_pattern type_expression lp]
-  | P_variant (l,popt) -> `List [`String "Variant" ; label l ; option (pattern type_expression) popt ]
-  | P_tuple lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
-  | P_record (ll,lp) -> `List [`String "Record" ; list label ll ; list (pattern type_expression) lp ]
+  | P_variant (l,p) -> `List [`String "Variant" ; label l ; (pattern type_expression) p]
+  | P_tuple lp -> `List [`String "Tuple" ; list (pattern type_expression) lp]
+  | P_record (ll,lp) -> `List [`String "Record" ; list label ll ; list (pattern type_expression) lp]
 
 and match_case expression type_expression {pattern=p ; body } =
   `Assoc [

@@ -117,9 +117,9 @@ module TestExpressions = struct
       ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
       I.(e_matching (e_constructor (Label "Foo") (e_int (Z.of_int 32)))
         [
-          {pattern = Location.wrap @@ P_variant (Label "Foo", Some (Location.wrap @@ P_var binder_x )); body = e_var "x"};
-          {pattern= Location.wrap @@ P_variant (Label "Bar", Some (Location.wrap @@ P_var binder_y)); body=e_int Z.zero};
-          {pattern= Location.wrap @@ P_variant (Label "Baz", None); body=e_int Z.zero};
+          {pattern = Location.wrap @@ P_variant (Label "Foo", Location.wrap @@ P_var binder_x); body = e_var "x"};
+          {pattern= Location.wrap @@ P_variant (Label "Bar", Location.wrap @@ P_var binder_y); body=e_int Z.zero};
+          {pattern= Location.wrap @@ P_variant (Label "Baz", Location.wrap @@ P_unit); body=e_int Z.zero};
           {pattern= Location.wrap @@ P_var binder_wild; body=e_int Z.zero}
         ]
       ) O.(t_int ())

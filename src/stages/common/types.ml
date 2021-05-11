@@ -182,7 +182,7 @@ and 'ty_exp pattern_repr =
   | P_unit
   | P_var of 'ty_exp binder
   | P_list of 'ty_exp list_pattern
-  | P_variant of label * 'ty_exp pattern option
+  | P_variant of label * 'ty_exp pattern
   | P_tuple of 'ty_exp pattern list
   | P_record of label list * 'ty_exp pattern list
 

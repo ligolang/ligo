@@ -535,10 +535,9 @@ and decompile_pattern : AST.type_expression AST.pattern -> (CST.pattern,_) resul
         let injection = wrap @@ inject (brackets) plst in
         ret (PListComp injection)
     )
-    | AST.P_variant (constructor,popt) -> (
+    | AST.P_variant (constructor,p) -> (
       match constructor with
       | Label "Some" ->
-        let p = Option.unopt_exn popt in
         let* p = decompile_pattern p in
         let proj = wrap (ghost, p) in
         ok @@ CST.PConstr (PSomeApp proj)
@@ -546,14 +545,9 @@ and decompile_pattern : AST.type_expression AST.pattern -> (CST.pattern,_) resul
       | Label "true" -> ok @@ CST.PConstr (PTrue ghost)
       | Label "false" -> ok @@ CST.PConstr (PFalse ghost)
       | Label constructor -> (
-        match popt with
-        | Some p ->
-          let* p = decompile_pattern p in
-          let constr = wrap (wrap constructor, Some p) in
-          ok @@ CST.PConstr (PConstrApp constr)
-        | None ->
-          let constr = wrap (wrap constructor, None) in
-          ok @@ CST.PConstr (PConstrApp constr)
+        let* p = decompile_pattern p in
+        let constr = wrap (wrap constructor, Some p) in
+        ok @@ CST.PConstr (PConstrApp constr)
       )
     )
     | AST.P_tuple lst ->

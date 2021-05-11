@@ -662,7 +662,7 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
             match tv with
             | _ ->
               let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var pattern) } in
-              Location.wrap @@ P_variant (constructor, Some proj)
+              Location.wrap @@ P_variant (constructor, proj)
           in
           let* body = untype_expression body in
           ok @@ ({pattern ; body } : (Ast_core.expression, Ast_core.type_expression) match_case)

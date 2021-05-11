@@ -537,24 +537,24 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
       ok @@ Location.wrap ~loc @@ P_unit
     | PFalse p ->
       let loc = Location.lift p in
-      ok @@ Location.wrap ~loc @@ P_variant (Label "false" , None)
+      ok @@ Location.wrap ~loc @@ P_variant (Label "false" , Location.wrap ~loc P_unit)
     | PTrue p ->
       let loc = Location.lift p in
-      ok @@ Location.wrap ~loc @@ P_variant (Label "true" , None)
+      ok @@ Location.wrap ~loc @@ P_variant (Label "true" , Location.wrap ~loc P_unit)
     | PNone p ->
       let loc = Location.lift p in
-      ok @@ Location.wrap ~loc @@ P_variant (Label "None" , None)
+      ok @@ Location.wrap ~loc @@ P_variant (Label "None" , Location.wrap ~loc P_unit)
     | PSomeApp some ->
       let ((_,p), loc) = r_split some in
       let* pattern' = conv p in
-      ok @@ Location.wrap ~loc @@ P_variant (Label "Some", Some pattern')
+      ok @@ Location.wrap ~loc @@ P_variant (Label "Some", pattern')
     | PConstrApp constr_app ->
       let ((constr,p_opt), loc) = r_split constr_app in
       let (l , _loc) = r_split constr in
-      let aux : CST.tuple_pattern -> (AST.ty_expr AST.pattern , _) result =
-        fun p -> conv (CST.PTuple p)
+      let* pv_opt = match p_opt with
+        | Some p -> conv (CST.PTuple p)
+        | None -> ok @@ Location.wrap ~loc P_unit
       in
-      let* pv_opt = bind_map_option aux p_opt in
       ok @@ Location.wrap ~loc @@ P_variant (Label l, pv_opt)
   )
   | CST.PList list_pattern -> (

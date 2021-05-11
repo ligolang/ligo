@@ -238,8 +238,8 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       return @@ O.E_matching {
           matchee ;
           cases = [
-            { pattern = Location.wrap @@ O.P_variant (Label "true" , None) ; body = match_true  } ;
-            { pattern = Location.wrap @@ O.P_variant (Label "false", None) ; body = match_false } ;
+            { pattern = Location.wrap @@ O.P_variant (Label "true" , Location.wrap O.P_unit) ; body = match_true  } ;
+            { pattern = Location.wrap @@ O.P_variant (Label "false", Location.wrap O.P_unit) ; body = match_false } ;
           ]
         }
     | I.E_sequence {expr1; expr2} ->

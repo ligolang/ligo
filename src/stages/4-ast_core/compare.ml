@@ -288,7 +288,7 @@ and pattern_repr : type_expression pattern ->type_expression pattern -> int =
     | P_variant (la,xa) , P_variant (lb,xb) ->
       cmp2
         label la lb
-        (option pattern_repr) xa xb
+        (pattern_repr) xa xb
     | P_record (la,xa), P_record (lb,xb) ->
       cmp2
         (List.compare ~compare:label) la lb

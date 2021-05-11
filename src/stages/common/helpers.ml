@@ -83,11 +83,7 @@ let rec fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
       | Cons (pa,pb) -> fold_pattern f (fold_pattern f acc' pb) pa
       | List lp -> List.fold_left (fold_pattern f) acc' lp 
     )
-    | P_variant (_,p_opt) -> (
-      match p_opt with
-      | Some p -> fold_pattern f acc' p
-      | None -> acc'
-    )
+    | P_variant (_,p) -> fold_pattern f acc' p
     | P_tuple lp -> List.fold_left (fold_pattern f) acc' lp
     | P_record (_,lp) -> List.fold_left (fold_pattern f) acc' lp
 
@@ -116,9 +112,9 @@ let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern ->
       in
       ret @@ P_list lp
     )
-    | P_variant (l,p_opt) -> (
-      let* p_opt = bind_map_option self p_opt in
-      ret @@ P_variant (l,p_opt)
+    | P_variant (l,p) -> (
+      let* p = self p in
+      ret @@ P_variant (l,p)
     )
     | P_tuple lp ->
       let* lp = bind_map_list self lp in

@@ -254,11 +254,7 @@ and match_pattern type_expression ppf = fun p ->
   | P_unit -> fprintf ppf "()"
   | P_var b -> fprintf ppf "%a" (binder type_expression) b
   | P_list l -> list_pattern type_expression ppf l
-  | P_variant (l , p_opt) -> (
-    match p_opt with
-    | Some p -> fprintf ppf "%a %a" label l (match_pattern type_expression) p
-    | None -> fprintf ppf "%a" label l
-  )
+  | P_variant (l , p) -> fprintf ppf "%a %a" label l (match_pattern type_expression) p
   | P_tuple pl ->
     fprintf ppf "(%a)" (list_sep (match_pattern type_expression) (tag ",")) pl
   | P_record (ll , pl) ->
