@@ -108,13 +108,18 @@ module.exports = grammar({
       $.wildcard_pattern,
     ),
 
-    // { field1 = pat_a ; field2 = pat_b }
+    // { field1 = pat_a ; field2 = pat_b; field3 }
     rec_pattern: $ => withAttrs($, seq(
       "{",
-      sepBy(";", field("field", $.rec_field_pattern)),
+      sepBy(";", field("field", $._rec_field_pattern)),
       optional(";"),
       "}"
     )),
+
+    _rec_field_pattern: $ => choice(
+      $.rec_field_pattern,
+      $.rec_capture_pattern,
+    ),
 
     // field = _pattern
     rec_field_pattern: $ => withAttrs($, prec(9, seq(
@@ -122,6 +127,9 @@ module.exports = grammar({
       "=",
       field("body", $._pattern),
     ))),
+
+    // field
+    rec_capture_pattern: $ => withAttrs($, prec(9, field("name", $.NameDecl))),
 
     _irrefutable: $ => choice(
       $._sub_irrefutable,

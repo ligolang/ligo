@@ -346,9 +346,10 @@ instance FromJSON LigoTypeFull where
     asum
       [ o .: "core" >>= parseAsCoreType
       , o .: "resolved" >>= parseAsResolvedType
-      , o .: "unresolved" -- TODO
+      , o .: "unresolved" >>= parseAsUnresolvedType
       ]
     where
+      parseAsCoreType :: Value -> Parser LigoTypeFull
       parseAsCoreType = do
         withObject "type_full_core" $ \o' -> do
           _ltfcLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
@@ -357,6 +358,7 @@ instance FromJSON LigoTypeFull where
             withArray "type_content" (mapM parseLigoTypeContent . group 2 . toList) type_content
           return $ LigoTypeFullCore {..}
 
+      parseAsResolvedType :: Value -> Parser LigoTypeFull
       parseAsResolvedType = do
         withObject "type_full_resolved" $ \o' -> do
           _ltfrLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
@@ -366,6 +368,11 @@ instance FromJSON LigoTypeFull where
           _ltfrTypeMeta <- o' .: "type_meta"
           _ltfrOrigVar <- o' .: "orig_var" >>= parseOrigVar
           return $ LigoTypeFullResolved {..}
+
+      -- TODO: For now we don't know what 'Value's may go into this type,
+      -- but we assume it is 'Null' for now.
+      parseAsUnresolvedType :: Value -> Parser LigoTypeFull
+      parseAsUnresolvedType = pure . LigoTypeFullUnresolved
 
 instance ToJSON LigoTypeFull where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}

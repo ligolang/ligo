@@ -87,6 +87,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "rec_field_pattern" -> IsRecordField <$> field "name" <*> field "body"
+        "rec_capture_pattern" -> IsRecordCapture <$> field "name"
         _                   -> fallthrough
 
     -- Alt
