@@ -9,7 +9,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import AST.Capabilities.Completion (Completion (..), complete)
-import AST.Scope (Standard)
+import AST.Scope (Fallback, Standard)
 import Range (point)
 
 import qualified Test.Capabilities.Util (contractsDir)
@@ -105,8 +105,18 @@ test_completion = testGroup "Completion" testCases
     testCases = map makeTestCase caseInfos
     makeTestCase info = testCase (tiContract info) (makeTest info)
 
-    makeTest TestInfo{..} = do
+    makeTestFallback TestInfo{..} = do
+      tree <- readContractWithScopes @Fallback (contractsDir </> tiContract)
+      let position = uncurry point tiPosition
+          results = complete position tree
+      results `shouldBe` Just tiExpected
+
+    makeTestStandard TestInfo{..} = do
       tree <- readContractWithScopes @Standard (contractsDir </> tiContract)
       let position = uncurry point tiPosition
           results = complete position tree
       results `shouldBe` Just tiExpected
+
+    makeTest testInfo = do
+      makeTestFallback testInfo
+      makeTestStandard testInfo
