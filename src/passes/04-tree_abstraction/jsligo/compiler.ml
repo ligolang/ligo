@@ -1019,7 +1019,7 @@ and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t *
 
 and compile_statements : CST.statements -> (statement_result, _) result = fun statements ->
   let rec aux result = function
-    (_, (CST.SExpr _ as hd)) :: tl ->       
+    (_, hd) :: tl ->
       let wrapper = CST.SBlock {
         value = {
           inside = (hd, tl); 
@@ -1029,9 +1029,6 @@ and compile_statements : CST.statements -> (statement_result, _) result = fun st
       } in
       let* block = compile_statement wrapper in
       aux (merge_statement_results result block) []
-  | (_, hd) :: tl -> 
-      let* a = compile_statement hd in
-      aux (merge_statement_results result a) tl
   | [] -> ok result
   in
   let hd  = fst statements in
