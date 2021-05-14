@@ -113,8 +113,8 @@ One of the following patterns is expected:
         Snippet.pp loc
     | `Self_ast_typed_warning_unused (loc, s) ->
          Format.fprintf f
-           "@[<hv>%a:@.Warning: unused variable \"%s\".\n@]"
-           Location.pp loc s
+           "@[<hv>%a:@.Warning: unused variable \"%s\".@.Hint: replace it by \"_%s\" to prevent this warning.\n@]"
+           Location.pp loc s s
     | `Self_ast_typed_warning_muchused (loc, s) ->
          Format.fprintf f
            "@[<hv>%a:@.Warning: variable \"%s\" cannot be used more than once.\n@]"

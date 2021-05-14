@@ -331,8 +331,10 @@ let%expect_test _ =
   [%expect{|
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 18-19:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
     Warning: unused variable "myt".
+    Hint: replace it by "_myt" to prevent this warning.
 
     { parameter (pair (pair (nat %mynat) (ticket %myt int)) (option nat)) ;
       storage nat ;
