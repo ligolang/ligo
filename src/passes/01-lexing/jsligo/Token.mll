@@ -641,7 +641,8 @@ and scan_constr region lexicon = parse
     let value = lexeme, `Hex norm
     in Bytes Region.{region; value}
 
-  type int_err = Non_canonical_zero
+  type int_err = 
+    Non_canonical_zero 
 
   let mk_int lexeme region =
     let z =
@@ -652,29 +653,18 @@ and scan_constr region lexicon = parse
 
   type nat_err =
     Invalid_natural
+  | Unsupported_nat_syntax
   | Non_canonical_zero_nat
 
   let mk_nat _lexeme _region =
-    failwith "Not supported"
-    (* match String.index_opt lexeme 'n' with
-      None -> Error Invalid_natural
-    | Some _ ->
-        let z =
-          Str.(global_replace (regexp "_") "" lexeme) |>
-            Str.(global_replace (regexp "n") "") |>
-            Z.of_string in
-        if   Z.equal z Z.zero && lexeme <> "0n"
-        then Error Non_canonical_zero_nat
-        else Ok (Nat Region.{region; value = lexeme,z}) *)
+    Error Unsupported_nat_syntax
+
+  type mutez_err = 
+    Unsupported_mutez_syntax
+  | Non_canonical_zero_tez
 
   let mk_mutez _lexeme _region =
-    failwith "Not supported"
-    (* let z = Str.(global_replace (regexp "_") "" lexeme) |>
-              Str.(global_replace (regexp "mutez") "") |>
-              Z.of_string in
-    if   Z.equal z Z.zero && lexeme <> "0mutez"
-    then Error Non_canonical_zero
-    else Ok (Mutez Region.{region; value = lexeme, z}) *)
+    Error Unsupported_mutez_syntax
 
   let eof region = EOF region
 
@@ -763,9 +753,11 @@ and scan_constr region lexicon = parse
 
     (* Code injection *)
 
+    type lang_err = 
+      Unsupported_lang_syntax
+
     let mk_lang _lang _region =
-      failwith "Not supported"
-    (* Lang Region.{value=lang; region} *)
+      Error Unsupported_lang_syntax
 
     (* Predicates *)
 

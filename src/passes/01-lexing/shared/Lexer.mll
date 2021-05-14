@@ -25,6 +25,9 @@ module Make (Token : Token.S) =
     | Non_canonical_zero
     | Reserved_name of string
     | Invalid_symbol of string
+    | Unsupported_nat_syntax
+    | Unsupported_mutez_syntax
+    | Unsupported_lang_syntax
     | Invalid_natural
     | Unterminated_verbatim
     | Invalid_linemarker_argument
@@ -45,6 +48,12 @@ module Make (Token : Token.S) =
                  Hint: Check the LIGO syntax you use." s
     | Invalid_natural ->
         "Invalid natural number."
+    | Unsupported_nat_syntax ->
+        "Unsupported nat syntax. Please use annotations instead."
+    | Unsupported_mutez_syntax ->
+        "Unsupported (mu)tez syntax. Please use annotations instead."
+    | Unsupported_lang_syntax -> 
+        "Unsupported code injection syntax."
     | Unterminated_verbatim ->
        "Unterminated verbatim.\n\
         Hint: Close with \"|}\"."
@@ -104,14 +113,18 @@ module Make (Token : Token.S) =
           fail region Non_canonical_zero
       | Error Token.Invalid_natural ->
           fail region Invalid_natural
+      | Error Token.Unsupported_nat_syntax ->
+          fail region Unsupported_nat_syntax
 
     let mk_mutez state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_mutez lexeme region with
         Ok token ->
           Core.Token token, state
-      | Error Token.Non_canonical_zero ->
+      | Error Token.Non_canonical_zero_tez ->
           fail region Non_canonical_zero
+      | Error Token.Unsupported_mutez_syntax ->
+          fail region Unsupported_mutez_syntax
 
     let mk_tez state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
@@ -120,8 +133,10 @@ module Make (Token : Token.S) =
       match Token.mk_mutez (Z.to_string lexeme ^ "mutez") region with
         Ok token ->
           Core.Token token, state
-      | Error Token.Non_canonical_zero ->
+      | Error Token.Non_canonical_zero_tez ->
           fail region Non_canonical_zero
+      | Error Token.Unsupported_mutez_syntax ->
+          fail region Unsupported_mutez_syntax
 
     let format_tez s =
       match String.index s '.' with
@@ -147,8 +162,10 @@ module Make (Token : Token.S) =
           match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
             Ok token ->
               Core.Token token, state
-          | Error Token.Non_canonical_zero ->
+          | Error Token.Non_canonical_zero_tez ->
               fail region Non_canonical_zero
+          | Error Token.Unsupported_mutez_syntax ->
+              fail region Unsupported_mutez_syntax
 
     let mk_ident state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
@@ -174,8 +191,11 @@ module Make (Token : Token.S) =
       let stop               = region#stop in
       let lang_reg           = Region.make ~start ~stop in
       let lang               = Region.{value=lang; region=lang_reg} in
-      let token              = Token.mk_lang lang region
-      in Core.Token token, state
+      match Token.mk_lang lang region with 
+        Ok token -> 
+          Core.Token token, state
+      | Error Token.Unsupported_lang_syntax ->
+          fail region Unsupported_lang_syntax
 
     let mk_sym state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
