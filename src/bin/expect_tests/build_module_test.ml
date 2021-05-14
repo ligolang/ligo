@@ -210,6 +210,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/build/type_B.mligo", line 6, characters 5-6:
     Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
 
     { parameter string ;
       storage int ;

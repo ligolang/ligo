@@ -49,16 +49,20 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , "eqeq" ) |}] ;
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_r" ] ;
   [%expect {|
     File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter (pair (int %one) (pair (nat %two) (pair (string %three) (bool %four)))) ;
       storage string ;
@@ -78,16 +82,20 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , "eqeq" ) |}] ;
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_l" ] ;
   [%expect {|
     File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter (pair (pair (pair (int %one) (nat %two)) (string %three)) (bool %four)) ;
       storage string ;
@@ -96,16 +104,20 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_r" ] ;
   [%expect {|
     File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter (or (int %foo4) (or (nat %bar4) (or (string %baz4) (bool %boz4)))) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
@@ -123,16 +135,20 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_l" ] ;
   [%expect {|
     File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter (or (or (or (int %foo4) (nat %bar4)) (string %baz4)) (bool %boz4)) ;
       storage (or (or (nat %bar4) (string %baz4)) (or (bool %boz4) (int %foo4))) ;
@@ -153,12 +169,16 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 12-18:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
 
     { parameter (pair (int %foo) (pair (nat %bar) (string %baz))) ;
       storage unit ;
@@ -168,12 +188,16 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 12-18:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
 
     { parameter (pair (pair (int %foo) (nat %bar)) (string %baz)) ;
       storage unit ;
@@ -184,6 +208,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_converter_mixed_pair_or.mligo", line 29, characters 15-16:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter
         (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
@@ -198,6 +223,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/double_fold_converter.religo", line 33, characters 8-18:
     Warning: unused variable "tokenOwner".
+    Hint: replace it by "_tokenOwner" to prevent this warning.
 
     { parameter
         (list (pair (address %from_)

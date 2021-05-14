@@ -8,6 +8,7 @@ let%expect_test _ =
   [%expect{|
     File "../../test/contracts/protocol_dalphanet.mligo", line 12, characters 13-14:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter (list (pair bls12_381_g1 bls12_381_g2)) ;
       storage bool ;
@@ -31,6 +32,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/sapling.mligo", line 8, characters 14-19:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
 
     { parameter (sapling_transaction 8) ;
       storage (pair int (sapling_state 8)) ;

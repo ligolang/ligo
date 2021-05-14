@@ -19,6 +19,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
     Warning: unused variable "ps".
+    Hint: replace it by "_ps" to prevent this warning.
 
     failwith("This contract always fails") |}];
 

@@ -9,26 +9,37 @@ let%expect_test _ =
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              { parameter unit ;
                storage (or (int %anbfoo) (string %anabar)) ;
@@ -42,26 +53,37 @@ let%expect_test _ =
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              { parameter unit ;
                storage (or (int %ana) (or (string %anb) (nat %anc))) ;
@@ -70,26 +92,37 @@ let%expect_test _ =
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              { parameter unit ;
                storage
@@ -113,78 +146,111 @@ let%expect_test _ =
   [%expect{|
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 19-25:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 24, characters 10-11:
     Warning: unused variable "j".
+    Hint: replace it by "_j" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 23, characters 10-11:
     Warning: unused variable "i".
+    Hint: replace it by "_i" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 29-34:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 21-27:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 20-26:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 38, characters 11-12:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 37, characters 11-12:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 34, characters 10-11:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 36, characters 12-13:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
 
     ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_three" ; "()" ; "A(1)" ] ;
   [%expect{|
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 19-25:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 24, characters 10-11:
     Warning: unused variable "j".
+    Hint: replace it by "_j" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 23, characters 10-11:
     Warning: unused variable "i".
+    Hint: replace it by "_i" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 29-34:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 21-27:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 20-26:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 38, characters 11-12:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 37, characters 11-12:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 34, characters 10-11:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 36, characters 12-13:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
 
     ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_five" ; "()" ; "One(1)"] ;
   [%expect{|
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 19-25:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 24, characters 10-11:
     Warning: unused variable "j".
+    Hint: replace it by "_j" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 23, characters 10-11:
     Warning: unused variable "i".
+    Hint: replace it by "_i" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 29-34:
     Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 21-27:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 20-26:
     Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 38, characters 11-12:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 37, characters 11-12:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 34, characters 10-11:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 36, characters 12-13:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
     Warning: unused variable "a".
+    Hint: replace it by "_a" to prevent this warning.
 
     ( LIST_EMPTY() , Five(1) ) |}]
 
@@ -194,26 +260,37 @@ let%expect_test _ =
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              { parameter unit ;
                storage (or (string %anabar) (int %anbfoo)) ;
@@ -227,26 +304,37 @@ let%expect_test _ =
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              { parameter unit ;
                storage (or (or (int %ana) (string %anb)) (nat %anc)) ;
@@ -255,26 +343,37 @@ let%expect_test _ =
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              { parameter unit ;
                storage
@@ -298,77 +397,110 @@ let%expect_test _ =
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_three" ; "()" ; "A(2)" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_five" ; "()" ; "One(1)"] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 19-25:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 24, characters 10-11:
              Warning: unused variable "j".
+             Hint: replace it by "_j" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 23, characters 10-11:
              Warning: unused variable "i".
+             Hint: replace it by "_i" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 29-34:
              Warning: unused variable "store".
+             Hint: replace it by "_store" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 21-27:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 20-26:
              Warning: unused variable "action".
+             Hint: replace it by "_action" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 38, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 37, characters 11-12:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 34, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 36, characters 12-13:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
              Warning: unused variable "a".
+             Hint: replace it by "_a" to prevent this warning.
 
              ( LIST_EMPTY() , Five(1) ) |}]
