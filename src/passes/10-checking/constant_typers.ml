@@ -437,6 +437,10 @@ let div loc = typer_2 loc "DIV" @@ fun a b ->
   then ok @@ t_nat () else
   if eq_2 (a , b) (t_int ())
   then ok @@ t_int () else
+  if eq_1 a (t_int ()) && eq_1 b (t_nat ())
+  then ok @@ t_int () else
+  if eq_1 a (t_nat ()) && eq_1 b (t_int ())
+  then ok @@ t_int () else
   if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
   then ok @@ t_mutez () else
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
@@ -445,6 +449,8 @@ let div loc = typer_2 loc "DIV" @@ fun a b ->
       [
         [t_nat();t_nat()] ;
         [t_int();t_int()] ;
+        [t_nat();t_int()] ;
+        [t_int();t_nat()] ;
         [t_mutez();t_nat()] ;
         [t_mutez();t_mutez()] ;
       ]
@@ -455,12 +461,15 @@ let mod_ loc = typer_2 loc "MOD" @@ fun a b ->
   then ok @@ t_nat () else
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
   then ok @@ t_mutez () else
+  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
+  then ok @@ t_mutez () else
     fail @@ typeclass_error loc
       [
         [t_nat();t_nat()] ;
         [t_nat();t_int()] ;
         [t_int();t_nat()] ;
         [t_int();t_int()] ;
+        [t_mutez();t_nat()] ;
         [t_mutez();t_mutez()] ;
       ]
       [a; b]
