@@ -270,7 +270,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     ( match t.type_content with
       | T_sum c ->
         let {associated_type ; _} : O.row_element = O.LMap.find (Label s) c.content in
-        let* () = assert_type_expression_eq expr'.location (expr'.type_expression, associated_type) in
+        let* () = assert_type_expression_eq expr'.location (associated_type, expr'.type_expression) in
         return (E_constructor {constructor = Label s; element=expr'}) t
       | _ -> fail (michelson_or (Label s) ae.location)
     )
@@ -280,7 +280,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let* (c_tv, sum_tv) = trace_option (unbound_constructor e constructor ae.location) @@
         Environment.get_constructor constructor e in
       let* expr' = type_expression' e element in
-      let* _assert = assert_type_expression_eq expr'.location (expr'.type_expression, c_tv) in
+      let* _assert = assert_type_expression_eq expr'.location (c_tv, expr'.type_expression) in
       return (E_constructor {constructor; element=expr'}) sum_tv
   (* Record *)
   | E_record m ->
