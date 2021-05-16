@@ -84,7 +84,8 @@ let insert_es6fun_token tokens =
       (* When the arrow '=>' is not part of a function: *)
     | (RBRACKET _ as hd) :: rest
     | (C_Some _ as hd) :: rest
-    | (C_None _ as hd) :: rest ->
+    | (C_None _ as hd) :: rest 
+    | (VBAR _ as hd) :: rest ->
         List.rev_append (hd :: result) rest
 
       (* let foo : int => int = (i: int) => ...  *)
