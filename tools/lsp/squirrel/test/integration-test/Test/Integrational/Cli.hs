@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Test.Cli
+module Test.Integrational.Cli
   ( test_ligo_159
   ) where
 
@@ -11,7 +11,7 @@ import System.FilePath ((</>))
 import Cli
 import ParseTree (Source (..))
 
-import Test.FixedExpectations (HasCallStack, expectationFailure)
+import Test.Common.FixedExpectations (HasCallStack, expectationFailure)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 

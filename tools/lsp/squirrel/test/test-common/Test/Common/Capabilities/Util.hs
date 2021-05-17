@@ -1,4 +1,4 @@
-module Test.Capabilities.Util
+module Test.Common.Capabilities.Util
   ( contractsDir
   ) where
 

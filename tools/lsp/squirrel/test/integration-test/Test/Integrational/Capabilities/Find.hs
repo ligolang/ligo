@@ -1,4 +1,4 @@
-module Test.Capabilities.Find
+module Test.Integrational.Capabilities.Find
   ( test_findDefinitionAndGoToReferencesCorrespondence
   , unit_definitionOfId
   , unit_definitionOfLeft
@@ -14,7 +14,7 @@ module Test.Capabilities.Find
   , unit_pascaligo_local_type
   ) where
 
-import AST.Scope (Fallback)
+import AST.Scope (Standard)
 
 import Test.Common.Capabilities.Find
 import Test.Common.FixedExpectations (HasCallStack)
@@ -22,41 +22,41 @@ import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (Assertion)
 
 test_findDefinitionAndGoToReferencesCorrespondence :: HasCallStack => TestTree
-test_findDefinitionAndGoToReferencesCorrespondence = findDefinitionAndGoToReferencesCorrespondence @Fallback
+test_findDefinitionAndGoToReferencesCorrespondence = findDefinitionAndGoToReferencesCorrespondence @Standard
 
 unit_definitionOfId :: Assertion
-unit_definitionOfId = definitionOfId @Fallback
+unit_definitionOfId = definitionOfId @Standard
 
 unit_referenceOfId :: Assertion
-unit_referenceOfId = referenceOfId @Fallback
+unit_referenceOfId = referenceOfId @Standard
 
 unit_definitionOfLeft :: Assertion
-unit_definitionOfLeft = definitionOfLeft @Fallback
+unit_definitionOfLeft = definitionOfLeft @Standard
 
 unit_referenceOfLeft :: Assertion
-unit_referenceOfLeft = referenceOfLeft @Fallback
+unit_referenceOfLeft = referenceOfLeft @Standard
 
 unit_definitionOfXInWildcard :: Assertion
-unit_definitionOfXInWildcard = definitionOfXInWildcard @Fallback
+unit_definitionOfXInWildcard = definitionOfXInWildcard @Standard
 
 unit_referenceOfXInWildcard :: Assertion
-unit_referenceOfXInWildcard = referenceOfXInWildcard @Fallback
+unit_referenceOfXInWildcard = referenceOfXInWildcard @Standard
 
 unit_type_of_heap_const :: Assertion
-unit_type_of_heap_const = typeOfHeapConst @Fallback
+unit_type_of_heap_const = typeOfHeapConst @Standard
 
 unit_type_of_heap_arg :: Assertion
-unit_type_of_heap_arg = typeOfHeapArg @Fallback
+unit_type_of_heap_arg = typeOfHeapArg @Standard
 
 unit_type_of_let :: Assertion
-unit_type_of_let = typeOfLet @Fallback
+unit_type_of_let = typeOfLet @Standard
 
 unit_type_of_pascaligo_lambda_arg :: Assertion
-unit_type_of_pascaligo_lambda_arg = typeOfPascaligoLambdaArg @Fallback
+unit_type_of_pascaligo_lambda_arg = typeOfPascaligoLambdaArg @Standard
 
 unit_pascaligo_local_type :: Assertion
-unit_pascaligo_local_type = pascaligoLocalType @Fallback
+unit_pascaligo_local_type = pascaligoLocalType @Standard
 
 -- See LIGO-110
 -- unit_type_of_camligo_lambda_arg :: Assertion
--- unit_type_of_camligo_lambda_arg = typeOfCamligoLambdaArg @Fallback
+-- unit_type_of_camligo_lambda_arg = typeOfCamligoLambdaArg @Standard

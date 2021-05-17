@@ -11,9 +11,9 @@ import AST.Capabilities.SelectionRange (findCoveringRanges)
 import AST.Skeleton (nestedLIGO)
 import Range (Range (..), point)
 
-import qualified Test.Capabilities.Util as Common (contractsDir)
-import Test.FixedExpectations (shouldBe)
-import Test.Util (readContract)
+import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.Util (readContract)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "selection-range"

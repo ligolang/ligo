@@ -219,6 +219,13 @@ tests:
 
     ghc-options:
       - -Wno-incomplete-uni-patterns
+      - -threaded
+      - -eventlog
+      - -rtsopts
+        # Weird quoting is required for cabal to correctly pass this as _one_ option,
+        # otherwise it splits by spaces.
+        # :facepalm:
+      - '"-with-rtsopts=-N -A64m -AL256m"'
 
     source-dirs:
       - test/integration-test/
