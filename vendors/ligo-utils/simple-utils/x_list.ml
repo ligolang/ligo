@@ -1,3 +1,5 @@
+(* code quality: good 2021-05-12 *)
+
 include List
 
 let rec remove n = function
@@ -29,48 +31,51 @@ let rec skipn n l =
     | [] -> []
     | _ :: l -> skipn (n - 1) l
 
-let split3 l = List.fold_left (fun (la, lb, lc) (a, b, c) -> (a :: la , b :: lb, c :: lc)) ([],[],[]) (List.rev l)
+let split3 l = List.fold_left (fun (la, lb, lc) (a, b, c) ->
+                   (a :: la, b :: lb, c :: lc)) ([], [], []) (List.rev l)
 
 let map f lst =
-  (* Use a tail-recursive function and `List.rev` to avoid a stack overflow with long lists. *)
-  let rec aux acc f = function
+  (* Use a tail-recursive function and `List.rev` to avoid a stack
+     overflow with long lists. *)
+  let rec aux acc = function
     | [] -> acc
-    | hd :: tl -> aux (f hd :: acc) f tl
+    | hd :: tl -> aux (f hd :: acc) tl
   in
-  List.rev (aux [] f lst)
+  List.rev (aux [] lst)
 
 let is_empty = function [] -> true | _ -> false
 
-let set_nth new_i l new_v = mapi (fun old_i old_v -> if old_i = new_i then new_v else old_v) l
+let set_nth new_i l new_v =
+  mapi (fun old_i old_v -> if old_i = new_i then new_v else old_v) l
 
 let map2 f lst_a lst_b ~ok ~fail =
-  let rec aux acc f lst_a lst_b =
+  let rec aux acc lst_a lst_b =
     match lst_a, lst_b with
-    | ([] , []) -> ok @@ List.rev @@ acc
-    | (hd_a :: tl_a , hd_b :: tl_b) -> aux (f hd_a hd_b :: acc) f tl_a tl_b
-    | (la , lb) -> fail la lb
+    | ([], []) -> ok @@ List.rev @@ acc
+    | (hd_a :: tl_a, hd_b :: tl_b) -> aux (f hd_a hd_b :: acc) tl_a tl_b
+    | (la, lb) -> fail la lb
   in
-  aux [] f lst_a lst_b
+  aux [] lst_a lst_b
 
 let fold_map_right : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
   fun f acc lst ->
-  let rec aux (acc , prev) f = function
-    | [] -> (acc , prev)
+  let rec aux (acc, prev) = function
+    | [] -> (acc, prev)
     | hd :: tl ->
-        let (acc' , hd') = f acc hd in
-        aux (acc' , hd' :: prev) f tl
+        let (acc', hd') = f acc hd in
+        aux (acc', hd' :: prev) tl
   in
-  snd @@ aux (acc , []) f (List.rev lst)
+  snd @@ aux (acc, []) (List.rev lst)
 
 let fold_map_acc : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> acc * ret list =
   fun f acc lst ->
-  let rec aux (acc , prev) f = function
+  let rec aux (acc, prev) = function
     | [] -> (acc , prev)
     | hd :: tl ->
-        let (acc' , hd') = f acc hd in
-        aux (acc' , hd' :: prev) f tl
+        let (acc', hd') = f acc hd in
+        aux (acc', hd' :: prev) tl
   in
-  let (acc, lst) = aux (acc , []) f lst in
+  let (acc, lst) = aux (acc, []) lst in
   (acc, List.rev lst)
 
 let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
@@ -87,7 +92,7 @@ let unopt ~default x = match x with
 let rec remove_element ?compare:cmp x lst =
   let compare = unopt ~default:compare cmp in
   match lst with
-  | [] -> raise (Failure "X_list.remove_element")
+  | [] -> raise (Failure "List.remove_element")
   | hd :: tl when compare x hd = 0 -> tl
   | hd :: tl -> hd :: remove_element ~compare x tl
 
@@ -121,7 +126,7 @@ let repeat n x =
 let find_map f lst =
   let rec aux = function
     | [] -> None
-    | hd::tl -> (
+    | hd :: tl -> (
       match f hd with
       | Some _ as s -> s
       | None -> aux tl
@@ -131,21 +136,21 @@ let find_map f lst =
 
 let find_index f lst =
   let rec aux n = function
-  | [] -> raise (Failure "find_index")
+  | [] -> raise (Failure "List.find_index")
   | hd :: _ when f hd -> n
   | _ :: tl -> aux (n + 1) tl in
   aux 0 lst
 
 let find_full f lst =
   let rec aux n = function
-  | [] -> raise (Failure "find_index")
+  | [] -> raise (Failure "List.find_index")
   | hd :: _ when f hd -> (hd, n)
   | _ :: tl -> aux (n + 1) tl in
   aux 0 lst
 
 let assoc_i ~compare x lst =
   let rec aux n = function
-    | [] -> raise (Failure "List:assoc_i")
+    | [] -> raise (Failure "List.assoc_i")
     | (x', y) :: _ when compare x x' = 0 -> (y, n)
     | _ :: tl -> aux (n + 1) tl
   in
@@ -174,20 +179,19 @@ let rev_uncons_opt = function
       let r = rev lst in
       let last = hd r in
       let hds = rev @@ tl r in
-      Some (hds , last)
+      Some (hds, last)
 
 let hds lst = match rev_uncons_opt lst with
-  | None -> failwith "toto"
-  | Some (hds , _) -> hds
+  | None -> raise (Failure "List.hds")
+  | Some (hds, _) -> hds
 
 let to_pair = function
-  | [a ; b] -> Some (a , b)
+  | [a ; b] -> Some (a, b)
   | _ -> None
 
 let to_singleton = function
   | [a] -> Some a
   | _ -> None
-
 
 (** overriding stdlib List functions with optional compare/eq
    arguments *)
@@ -196,33 +200,33 @@ let rec mem ?compare:cmp x =
   let compare = unopt ~default:compare cmp in
   function
   | [] -> false
-  | a::l -> compare a x = 0 || mem ~compare x l
+  | a :: l -> compare a x = 0 || mem ~compare x l
 
 let rec memq ?eq:eq x =
   let eq = unopt ~default:(=) eq in
   function
   | [] -> false
-  | a::l -> eq a x || memq ~eq x l
+  | a :: l -> eq a x || memq ~eq x l
 
 let rec assoc ?compare:cmp x =
   let compare = unopt ~default:compare cmp in
   function
     [] -> raise Not_found
-  | (a,b)::l -> if compare a x = 0 then b else assoc ~compare x l
+  | (a, b) :: l -> if compare a x = 0 then b else assoc ~compare x l
 
 let rec assoc_opt ?compare:cmp x =
   let compare = unopt ~default:compare cmp in
   function
     [] -> None
-  | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
+  | (a, b) :: l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
 
 let rec compare ?compare:cmp a b =
   let cmp = unopt ~default:Stdlib.compare cmp in
   match a,b with
     [], [] -> 0
-  | [], _::_ -> -1
-  | _::_, [] -> 1
-  | ha::ta, hb::tb ->
+  | [], _ :: _ -> -1
+  | _ :: _, [] -> 1
+  | ha :: ta, hb :: tb ->
      (match cmp ha hb with
         0 -> compare ~compare:cmp ta tb
       | c -> c)
@@ -238,7 +242,9 @@ module Ne = struct
 
   type 'a t = 'a * 'a list
 
-  let split ((hd,tl): _ t) = let (a,b) = hd and (la,lb) = List.split tl in (a,la),(b,lb)
+  let split ((hd, tl): _ t) =
+    let (a, b) = hd and (la, lb) = List.split tl in
+    (a, la), (b, lb)
   let of_list lst = List.hd lst, List.tl lst
   let to_list (hd, tl : _ t) = hd :: tl
   let singleton hd : 'a t = hd , []
@@ -252,22 +258,17 @@ module Ne = struct
     let lst = List.mapi f (hd::tl) in
     of_list lst
   let concat (hd, tl : _ t) = hd @ List.concat tl
-  let rev (hd, tl : _ t) =
-    match tl with
-    | [] -> (hd, [])
-    | lst ->
-        let r = List.rev lst in
-        (List.hd r, List.tl r @ [hd])
-  let find_map = fun f (hd , tl : _ t) ->
+  let rev (lst : _ t) = of_list @@ List.rev @@ to_list lst
+  let find_map = fun f (hd, tl : _ t) ->
     match f hd with
     | Some x -> Some x
     | None -> find_map f tl
-  let append : 'a t -> 'a t -> 'a t = fun (hd, tl) (hd', tl') -> hd, List.append tl @@ hd' :: tl'
-  let compare = fun ?compare:cmp (hd,tl) (hd',tl') -> 
+  let append : 'a t -> 'a t -> 'a t = fun (hd, tl) (hd', tl') ->
+    hd, List.append tl @@ hd' :: tl'
+  let compare = fun ?compare:cmp (hd, tl) (hd', tl') ->
     let cmp = unopt ~default:Stdlib.compare cmp in
-    match cmp hd hd' with 
+    match cmp hd hd' with
       0 -> compare ~compare:cmp tl tl'
     | c -> c
-
 
 end
