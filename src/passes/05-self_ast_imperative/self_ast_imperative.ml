@@ -8,6 +8,7 @@ let all_expression_mapper = [
 ]
 let all_type_expression_mapper = [
   Entrypoints_length_limit.peephole_type_expression ;
+  Layout_check.layout_type_expression ;
 ]
 
 let all_exp = List.map (fun el -> Helpers.Expression el) all_expression_mapper

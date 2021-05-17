@@ -12,6 +12,7 @@ type self_ast_imperative_error = [
   | `Self_ast_imperative_bad_map_param_type of (constant' * expression)
   | `Self_ast_imperative_bad_set_param_type of (constant' * expression)
   | `Self_ast_imperative_bad_convertion_bytes of expression
+  | `Self_ast_imperative_warning_layout of (location * label)
 ]
 
 let too_long_constructor c e = `Self_ast_imperative_long_constructor (c,e)
@@ -22,6 +23,7 @@ let bad_single_arity c e = `Self_ast_imperative_bad_single_arity (c,e)
 let bad_map_param_type c e = `Self_ast_imperative_bad_map_param_type (c,e)
 let bad_set_param_type c e = `Self_ast_imperative_bad_set_param_type (c,e)
 let bad_conversion_bytes e = `Self_ast_imperative_bad_convertion_bytes e
+let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> self_ast_imperative_error -> unit =
@@ -64,6 +66,10 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]"
         Snippet.pp e.location
+    | `Self_ast_imperative_warning_layout (loc,Label s) ->
+      Format.fprintf f
+        "@[<hv>%a@ Warning: layout attribute only applying to %s, probably ignored.@.@]"
+        Snippet.pp loc s
   )
 
 let error_jsonformat : self_ast_imperative_error -> json = fun a ->
@@ -143,6 +149,14 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_convertion_bytes e ->
     let message = `String "Bad bytes literal (conversion went wrong)" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_imperative_warning_layout (loc, Label s) ->
+    let message = `String (Format.sprintf "Layout attribute on constructor %s" s) in
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);

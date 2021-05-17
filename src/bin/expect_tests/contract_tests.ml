@@ -1702,3 +1702,21 @@ let%expect_test _ =
     At (unshown) location 8, DUP used on the non-dupable type ticket nat.
     At (unshown) location 8, Ticket in unauthorized position (type error).
   |}]
+
+(* warning layout attribute on constructor *)
+let%expect_test _ =
+  run_ligo_good [ "compile-expression" ; "--init-file" ; contract "warning_layout.mligo" ; "cameligo" ; "B 42n" ] ;
+  [%expect {|
+    File "../../test/contracts/warning_layout.mligo", line 2, character 2 to line 6, character 13:
+      1 | type parameter_warns =
+      2 |   [@layout:comb]
+      3 |     B of nat
+      4 |   | C of int
+      5 |   | D of string
+      6 |   | A of unit
+      7 |
+
+    Warning: layout attribute only applying to B, probably ignored.
+
+    (Left (Right 42))
+  |}]
