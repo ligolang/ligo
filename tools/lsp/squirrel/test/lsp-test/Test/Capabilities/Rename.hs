@@ -18,8 +18,6 @@ import Range (toLspRange, point)
 import qualified Test.Capabilities.Util as Common (contractsDir)
 import Test.FixedExpectations (expectationFailure, shouldBe)
 import Test.Util (readContractWithScopes)
-import Test.Util.LigoEnv ()
---  Test.Util.LigoEnv for "instance HasLigoClient IO"
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "rename"

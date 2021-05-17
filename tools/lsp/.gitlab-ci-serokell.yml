@@ -60,6 +60,12 @@ vscode-extension-tests:
   script:
     - nix-build tools/lsp -A checks.x86_64-linux.lsp-test
 
+vscode-extension-integration-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.integration-test
+
 vscode-extension-sexp-tests:
   stage: lsp
   only: [merge_requests, tooling]

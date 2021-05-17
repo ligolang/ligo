@@ -93,12 +93,14 @@ library:
     - grammar/camligo/src/scanner.c
 
   dependencies:
-    - lsp-types
     - aeson
-    - process
+    - bytestring
     - lens
     - lens-aeson
-    - bytestring
+    - lsp-types
+    - process
+    - regex-tdfa
+    - template-haskell
     - unliftio-core
     - unordered-containers
 
@@ -179,6 +181,34 @@ tests:
 
     ghc-options:
       - -Wno-incomplete-uni-patterns
+
+    dependencies:
+      - template-haskell
+      - HUnit
+      - directory
+      - filepath
+      - hspec-expectations
+      - lens
+      - ligo-squirrel
+      - lsp-types
+      - tasty
+      - tasty-discover
+      - tasty-hspec
+      - tasty-hunit
+      - unordered-containers
+
+    build-tools:
+      - tasty-discover:tasty-discover
+
+  integration-test:
+    main: Driver.hs
+
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+
+    source-dirs:
+      - test/integration-test/
+      - test/test-common/
 
     dependencies:
       - template-haskell

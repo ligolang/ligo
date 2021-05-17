@@ -13,6 +13,7 @@ let
             rm -rf grammar
             cp -r ${grammars} grammar
           '';
+
           # Thanks, I Hate It.
           components.tests.ligo-contracts-test = {
             preBuild = "export CONTRACTS_DIR=${../../../src/test/contracts}";
