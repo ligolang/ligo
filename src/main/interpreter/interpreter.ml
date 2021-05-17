@@ -264,7 +264,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_TEST_EXTERNAL_CALL , [ addr ; param ; amt ] ) -> (
       let>> err_opt = External_call (loc,addr,param,amt) in
       match err_opt with
-      | None -> return_ct C_unit
+      | None -> return (LC.v_ctor "Success" @@ LC.v_unit ())
       | Some e ->
         let>> a = State_error_to_value e in
         return a
@@ -428,7 +428,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         in
         let env' = LMap.fold aux fields env in
         eval_ligo body env'
-      | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v)
+      | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" Ast_typed.PP.expression term)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       return @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
