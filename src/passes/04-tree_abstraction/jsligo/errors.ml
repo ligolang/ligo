@@ -19,7 +19,6 @@ type abs_error = [
   | `Concrete_jsligo_recursion_on_non_function of Location.t
   | `Concrete_jsligo_missing_funarg_annotation of Raw.variable
   | `Concrete_jsligo_funarg_tuple_type_mismatch of Region.t * Raw.pattern * Raw.type_expr
-  | `Concrete_jsligo_unsupported_deep_pattern_matching of Region.t
   | `Concrete_jsligo_not_in_switch_or_loop of Region.t
   | `Concrete_jsligo_statement_not_supported_at_toplevel of Raw.statement
   | `Concrete_jsligo_not_a_valid_parameter of Raw.expr
@@ -55,7 +54,6 @@ let michelson_type_wrong texpr name = `Concrete_jsligo_michelson_type_wrong (tex
 let michelson_type_wrong_arity loc name = `Concrete_jsligo_michelson_type_wrong_arity (loc,name)
 let missing_funarg_annotation v = `Concrete_jsligo_missing_funarg_annotation v
 let funarg_tuple_type_mismatch r p t = `Concrete_jsligo_funarg_tuple_type_mismatch (r, p, t)
-let unsupported_deep_pattern_matching l = `Concrete_jsligo_unsupported_deep_pattern_matching l
 let not_in_switch_or_loop b = `Concrete_jsligo_not_in_switch_or_loop b
 let statement_not_supported_at_toplevel s = `Concrete_jsligo_statement_not_supported_at_toplevel s
 let not_a_valid_parameter p = `Concrete_jsligo_not_a_valid_parameter p
@@ -83,10 +81,6 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Concrete_jsligo_unsupported_deep_pattern_matching l ->
-      Format.fprintf f
-      "@[<hv>%a@.Deep pattern matching is unsupported. @]"
-        Snippet.pp_lift l
     | `Concrete_jsligo_unknown_predefined_type type_name ->
       Format.fprintf f
         "@[<hv>%a@.Unknown type \"%s\". @]"
@@ -247,12 +241,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Concrete_jsligo_unsupported_deep_pattern_matching l ->
-    let message = `String "Deep pattern matching is unsupported" in
-    let content = `Assoc [
-      ("message", message );
-      ("location", Location.to_yojson (Snippet.lift l));] in
-    json_error ~stage ~content
   | `Concrete_jsligo_unknown_predefined_type type_name ->
     let message = `String "Unknown predefined type" in
     let t = `String type_name.Region.value in
