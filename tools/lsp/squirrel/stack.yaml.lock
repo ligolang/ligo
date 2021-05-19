@@ -40,12 +40,18 @@ packages:
   original:
     hackage: unliftio-core-0.2.0.1
 - completed:
-    hackage: tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
+    subdir: tree-sitter
+    name: tree-sitter
+    version: 0.9.0.2
+    git: https://github.com/serokell/haskell-tree-sitter.git
     pantry-tree:
-      size: 3765
-      sha256: 6d8711529e12512dadb78eb9ea6854edea9a6e4d87e205d5213df221baf733ad
+      size: 33762
+      sha256: ee9c77be055d293a56b754d5b6848d974e1eaa4269c99c001f3bb47a4be95d21
+    commit: 27c33c98b00f8961c8619de2e3771a1932501ada
   original:
-    hackage: tree-sitter-0.9.0.0@sha256:4fd054b0a9651df9335c5fa0ffed723924dc4dcf7f2521c031323088ca719b05,3411
+    subdir: tree-sitter
+    git: https://github.com/serokell/haskell-tree-sitter.git
+    commit: 27c33c98b00f8961c8619de2e3771a1932501ada
 - completed:
     hackage: semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
     pantry-tree:
