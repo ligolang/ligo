@@ -160,7 +160,7 @@ let transfer ~loc (ctxt:context) dst parameter amt : (add_operation_outcome, _) 
   let open Tezos_alpha_test_helpers in
   let* parameters = ligo_to_canonical ~loc parameter in
   let* operation = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
-    (*REMITODO, fee? *)
+    (* TODO: fee? *)
     Op.transaction ~fee:(Test_tez.Tez.of_int 23) ~parameters (B ctxt.threaded_context) ctxt.source dst (Test_tez.Tez.of_int (Z.to_int amt))
   in
   bake_op ~loc ctxt operation
@@ -169,7 +169,7 @@ let originate_contract ~loc (ctxt :context) (contract : unit Tezos_utils.Michels
   let open Tezos_alpha_test_helpers in
   let* script = script_of_compiled_code ~loc contract storage in
   let* (operation, dst) = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
-    (* REMITODO , fee ? *)
+    (* TODO : fee ? *)
     Op.origination (B ctxt.threaded_context) ctxt.source ~fee:(Test_tez.Tez.of_int 10) ~script
   in
   let* res = bake_op ~loc ctxt operation in

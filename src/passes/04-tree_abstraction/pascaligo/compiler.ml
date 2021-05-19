@@ -1007,7 +1007,7 @@ and compile_declaration : CST.declaration -> _ result =
       let binder = {var;ascr} in
       return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr}
     | _ ->
-      failwith "REMITODO : destructuring at top level is not supported"
+      fail (unsupported_top_level_destructuring region)
   )
   | FunDecl {value;region} ->
     let* (name,var,ascr,attr,expr) = compile_fun_decl value in
