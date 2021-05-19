@@ -45,7 +45,9 @@ let first_region = function
 %on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
 %on_error_reduce seq(Attr)
 %on_error_reduce constr_pattern
-%on_error_reduce tail
+%on_error_reduce cons_pattern_level
+%on_error_reduce nsepseq(cons_pattern_level,COMMA)
+%on_error_reduce pattern
 %on_error_reduce nsepseq(sub_irrefutable,COMMA)
 %on_error_reduce irrefutable
 %on_error_reduce variant
@@ -354,7 +356,7 @@ sub_irrefutable:
 closed_irrefutable:
   irrefutable
 | typed_pattern { $1 }
-| "<constr>" sub_pattern {
+| "<constr>" core_pattern {
     let stop   = pattern_to_region $2 in
     let region = cover $1.region stop
     and value  = $1, Some $2 in
@@ -369,20 +371,18 @@ typed_pattern:
     in PTyped {region; value} }
 
 pattern:
-  core_pattern { $1 }
-| sub_pattern "::" tail {
+  tuple(cons_pattern_level) {
+    let region = nsepseq_to_region pattern_to_region $1
+    in PTuple {region; value=$1} }
+| cons_pattern_level { $1 }
+
+cons_pattern_level:
+  core_pattern "::" cons_pattern_level {
     let start  = pattern_to_region $1 in
     let stop   = pattern_to_region $3 in
     let region = cover start stop in
-    PList (PCons {region; value=$1,$2,$3})
-  }
-| tuple(sub_pattern) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
-
-sub_pattern:
-  par(tail)    { PPar $1 }
-| core_pattern {      $1 }
+    PList (PCons {region; value=$1,$2,$3}) }
+| core_pattern { $1 }
 
 core_pattern:
   "<ident>"                       {                           PVar $1 }
@@ -393,10 +393,10 @@ core_pattern:
 | "<string>"                      {                        PString $1 }
 | "<verbatim>"                    {                      PVerbatim $1 }
 | unit                            {                          PUnit $1 }
-| par(ptuple)                     {                           PPar $1 }
-| list__(tail)                    {              PList (PListComp $1) }
+| list__(cons_pattern_level)      {              PList (PListComp $1) }
 | constr_pattern                  {                        PConstr $1 }
 | record_pattern                  {                        PRecord $1 }
+| par(pattern)                    {                           PPar $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,";") "}" {
@@ -415,7 +415,7 @@ field_pattern:
     and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
     in {region; value}
   }
-| field_name "=" sub_pattern {
+| field_name "=" core_pattern {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop
@@ -424,7 +424,7 @@ field_pattern:
 
 constr_pattern:
   "None" { PNone $1 }
-| "Some" sub_pattern {
+| "Some" core_pattern {
     let stop   = pattern_to_region $2 in
     let region = cover $1 stop
     and value  = $1,$2
@@ -435,25 +435,19 @@ constr_pattern:
 | "<constr>" {
     PConstrApp {$1 with value=$1,None}
   }
-| "<constr>" sub_pattern {
+| "<constr>" core_pattern {
     let region = cover $1.region (pattern_to_region $2)
     in PConstrApp {region; value = $1, Some $2} }
 
+(*
 ptuple:
   tuple(tail) {
     let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
+ *)
 
 unit:
   "(" ")" { {region = cover $1 $2; value = $1,$2} }
-
-tail:
-  sub_pattern { $1 }
-| sub_pattern "::" tail {
-    let start  = pattern_to_region $1 in
-    let stop   = pattern_to_region $3 in
-    let region = cover start stop in
-    PList (PCons {region; value=$1,$2,$3}) }
 
 (* Expressions *)
 
