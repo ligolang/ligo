@@ -1,12 +1,12 @@
-module Test.Util.Parsers
+module Test.Common.Util.Parsers
   ( checkFile
   ) where
 
 import Control.Exception.Safe (try)
 import Duplo (HandlerFailed (..))
 
-import Test.FixedExpectations (Expectation, HasCallStack, expectationFailure)
-import Test.Util (readContractWithMessages)
+import Test.Common.FixedExpectations (Expectation, HasCallStack, expectationFailure)
+import Test.Common.Util (readContractWithMessages)
 
 checkFile :: HasCallStack => Bool -> FilePath -> Expectation
 checkFile True path = do

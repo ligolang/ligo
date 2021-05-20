@@ -7,7 +7,7 @@ import Test.Tasty.HUnit (Assertion)
 import AST.Scope.ScopedDecl (Type (..), TypeDeclSpecifics (..), TypeField (..), accessField)
 import Range (Range, point)
 
-import Test.FixedExpectations (shouldBe)
+import Test.Common.FixedExpectations (shouldBe)
 
 stubRange :: Range
 stubRange = point (-1) (-1)

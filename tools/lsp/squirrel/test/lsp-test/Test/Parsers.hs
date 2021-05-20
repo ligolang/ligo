@@ -6,8 +6,8 @@ module Test.Parsers
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
-import Test.Util (getContractsWithExtension, supportedExtensions)
-import Test.Util.Parsers (checkFile)
+import Test.Common.Util (getContractsWithExtension, supportedExtensions)
+import Test.Common.Util.Parsers (checkFile)
 
 okayIgnoreContracts :: [FilePath]
 okayIgnoreContracts = []

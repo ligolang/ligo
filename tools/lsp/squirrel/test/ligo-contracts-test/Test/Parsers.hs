@@ -7,8 +7,8 @@ import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
-import Test.Util (contractsDir, getContractsWithExtension, supportedExtensions)
-import Test.Util.Parsers (checkFile)
+import Test.Common.Util (contractsDir, getContractsWithExtension, supportedExtensions)
+import Test.Common.Util.Parsers (checkFile)
 
 okayIgnoreContracts :: [FilePath]
 okayIgnoreContracts = (contractsDir </>) <$> ignore

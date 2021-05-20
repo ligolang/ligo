@@ -1,4 +1,4 @@
-module Test.FixedExpectations
+module Test.Common.FixedExpectations
   ( Expectation
   , HasCallStack
   , expectationFailure
