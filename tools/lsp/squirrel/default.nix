@@ -5,7 +5,13 @@
 { haskell-nix, grammars }:
 let
   project = haskell-nix.stackProject {
-    src = haskell-nix.haskellLib.cleanGit { src = ./.; };
+    src = haskell-nix.haskellLib.cleanGit {
+      name = "squirrel";
+      # location relative to git root
+      src = ../../..;
+      subDir = "tools/lsp/squirrel";
+    };
+
     modules = [
       ({ config, ... }: {
         packages.ligo-squirrel = {
