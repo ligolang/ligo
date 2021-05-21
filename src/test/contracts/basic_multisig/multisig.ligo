@@ -29,7 +29,7 @@ type parameter is
 type return is list (operation) * storage
 
 
-function main (const p : parameter; const s : storage) : return is 
+function main (const p : parameter; var s : storage) : return is
 block {
 
   var payload: payload := p.payload;

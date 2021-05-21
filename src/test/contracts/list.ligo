@@ -27,7 +27,7 @@ function iter_op (const s : list (int)) : int is
   block {
     var r : int := 0;
     function aggregate (const i : int) : unit is
-      block { r := r + i } with unit;
+      block { skip (* r := r + 1 *) } with unit;
     List.iter (aggregate, s)
   } with r
 

@@ -11,7 +11,7 @@ type return is list (operation) * taco_shop_storage
 function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
   block {
     // Retrieve the taco_kind from the contract's storage or fail
-    const taco_kind : taco_supply =
+    var taco_kind : taco_supply :=
       case taco_shop_storage[taco_kind_index] of
         Some (kind) -> kind
       | None -> (failwith ("Unknown kind of taco") : taco_supply)

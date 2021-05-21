@@ -327,3 +327,51 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
     ok (res, return @@ E_module_accessor { module_name; element })
   )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> ok (init', return e')
+
+let compare_vars e e' =
+  Location.compare_content ~compare:Var.compare e e'
+
+let in_vars var vars =
+  List.mem ~compare:compare_vars var vars
+
+let remove_from var vars =
+  let f v vars = if compare_vars var v = 0 then vars else v :: vars in
+  List.fold_right f vars []
+
+let get_pattern ?(pred = fun _ -> true) pattern =
+  Stage_common.Helpers.fold_pattern (fun vars p ->
+      match p.wrap_content with
+      | P_var {var;attributes} when pred attributes ->
+         var :: vars
+      | _ -> vars) [] pattern
+
+let rec get_fv ?(exclude = []) (expr : expression) =
+  let self = get_fv ~exclude in
+  let* (fv, _) = fold_map_expression
+    (fun (fv : expression_variable list) (expr : expression) ->
+      match expr.expression_content with
+      | E_variable v when not (in_vars v exclude) && not (in_vars v fv) ->
+         ok (false, v :: fv, expr)
+      | E_let_in {let_binder={var};rhs;let_result} ->
+         let* rhs_vars = self rhs in
+         let* result_vars = self let_result in
+         let result_vars = remove_from var result_vars in
+         ok (false, rhs_vars @ result_vars, expr)
+      | E_lambda {binder={var};result} ->
+         let* result_vars = self result in
+         ok (false, remove_from var result_vars, expr)
+      | E_matching {matchee=e;cases} ->
+         let* res = self e in
+         let aux acc ({ pattern ; body } : (expression, type_expression) match_case) =
+           let* cur = self body in
+           let cur = List.fold_right remove_from (get_pattern pattern) cur in
+           ok (acc @ cur)
+         in
+         let* res = bind_fold_list aux res cases in
+         ok @@ (false, res, expr)
+      | E_recursive {lambda={binder={var};result};fun_name} ->
+         let* result_vars = self result in
+         ok (false, remove_from fun_name @@ remove_from var @@ result_vars, expr)
+      | _ -> ok (true,fv, expr)
+    ) [] expr in
+  ok @@ fv

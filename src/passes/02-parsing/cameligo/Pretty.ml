@@ -126,7 +126,7 @@ and pp_let_binding (binding : let_binding) =
 and pp_pattern = function
   PConstr   p -> pp_pconstr p
 | PUnit     t -> pp_region_reg (fun _ -> string "()") t
-| PVar      v -> pp_region_reg pp_ident v
+| PVar      v -> pp_pvar v
 | PInt      i -> pp_region_reg pp_int i
 | PNat      n -> pp_region_reg pp_nat n
 | PBytes    b -> pp_region_reg pp_bytes b
@@ -137,6 +137,8 @@ and pp_pattern = function
 | PPar      p -> pp_region_reg pp_ppar p
 | PRecord   r -> pp_region_reg pp_precord r
 | PTyped    t -> pp_region_reg pp_ptyped t
+
+and pp_pvar {var; attributes} = pp_region_reg pp_ident var ^^ pp_attributes attributes
 
 and pp_pconstr = function
   PNone      t -> pp_region_t (string "None") t

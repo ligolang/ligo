@@ -2,6 +2,8 @@ open Trace
 module Errors = Errors
 
 let all_expression_mapper = [
+  Vars.capture_expression ;
+  Consts.assign_expression ;
   Tezos_type_annotation.peephole_expression ;
   None_variant.peephole_expression ;
   Literals.peephole_expression ;

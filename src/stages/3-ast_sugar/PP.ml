@@ -117,7 +117,7 @@ and accessor ppf a =
     | Access_record s -> fprintf ppf "%s" s
     | Access_map e    -> fprintf ppf "%a" expression e
 
-and option_type_name ppf {var;ascr}=
+and option_type_name ppf {var;ascr;attributes=_}=
   match ascr with
   | None ->
       fprintf ppf "%a" expression_variable var

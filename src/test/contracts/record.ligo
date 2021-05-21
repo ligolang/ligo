@@ -19,7 +19,7 @@ function modify (var r : foobar) : foobar is
     r.foo := 256
   } with r
 
-function modify_abc (const r : abc) : abc is
+function modify_abc (var r : abc) : abc is
   block {
     const c : int = 42;
     r := r with record [b=2048; c=c]
@@ -32,7 +32,7 @@ const br : big_record =
 
 type double_record is record [inner : abc]
 
-function modify_inner (const r : double_record) : double_record is
+function modify_inner (var r : double_record) : double_record is
   block {
     r := r with record [inner.b = 2048]
   } with r
@@ -53,7 +53,7 @@ type account is record [
 
 const acc : account = record [ id = 1 ; preferences = record [ color = Blue ; other = 1]]
 
-function change_color_preference (const account : account; const color : color ) : account is
+function change_color_preference (var account : account; const color : color ) : account is
   block {
       account := account with record [preferences.color = color]
   } with account

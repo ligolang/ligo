@@ -245,7 +245,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
     | I.E_sequence {expr1; expr2} ->
       let* expr1 = self expr1 in
       let* expr2 = self expr2 in
-      let let_binder : _ O.binder = {var = Location.wrap @@ Var.of_name "_" ; ascr = Some (O.t_unit ())} in
+      let let_binder : _ O.binder = {var = Location.wrap @@ Var.of_name "_" ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
       return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; inline=false}
     | I.E_skip -> ok @@ O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->

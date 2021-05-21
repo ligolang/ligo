@@ -77,7 +77,7 @@ and pp_let_binding let_ (binding : let_binding) =
 and pp_pattern = function
   PConstr p -> pp_pconstr p
 | PUnit   _ -> string "()"
-| PVar    v -> pp_ident v
+| PVar    v -> pp_pvar v
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
 | PBytes  b -> pp_bytes b
@@ -88,6 +88,8 @@ and pp_pattern = function
 | PPar    p -> pp_ppar p
 | PRecord r -> pp_precord r
 | PTyped  t -> pp_ptyped t
+
+and pp_pvar {var; attributes} = pp_ident var ^^ pp_attributes attributes
 
 and pp_pconstr = function
   PNone      _ -> string "None"

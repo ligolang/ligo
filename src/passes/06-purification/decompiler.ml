@@ -55,11 +55,11 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     let* recs = recursive self self_type recs in
     return @@ I.E_recursive recs
   | O.E_let_in {let_binder;attributes;rhs;let_result} ->
-    let {var;ascr} : _ O.binder = let_binder in
+    let {var;ascr;attributes=var_attributes} : _ O.binder = let_binder in
     let* ascr = bind_map_option decompile_type_expression ascr in
     let* rhs = decompile_expression rhs in
     let* let_result = decompile_expression let_result in
-    return @@ I.E_let_in {let_binder={var;ascr};attributes;rhs;let_result}
+    return @@ I.E_let_in {let_binder={var;ascr;attributes=var_attributes};attributes;rhs;let_result}
   | O.E_type_in ti ->
     let* ti = type_in self self_type ti in
     return @@ I.E_type_in ti

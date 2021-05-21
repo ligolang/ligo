@@ -33,7 +33,7 @@ type parameter is
 | Withdraw of withdraw_pt
 | Default  of default_pt
 
-function send (const param : send_pt; const s : storage) : return is
+function send (const param : send_pt; var s : storage) : return is
   block {
     // check sender against the authorized addresses
 
@@ -102,7 +102,7 @@ function send (const param : send_pt; const s : storage) : return is
     } else s.message_store[packed_msg] := new_store
   } with (ret_ops, s)
 
-function withdraw (const param : withdraw_pt; const s : storage) : return is
+function withdraw (const param : withdraw_pt; var s : storage) : return is
   block {
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);

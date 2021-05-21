@@ -175,7 +175,7 @@ let rec substitute_var_in_body : I.expression_variable -> O.expression_variable 
     ok res
 
 let make_var_pattern : O.expression_variable -> pattern =
-  fun var -> Location.wrap @@ O.P_var { var ; ascr = None }
+  fun var -> Location.wrap @@ O.P_var { var ; ascr = None ; attributes = Stage_common.Helpers.empty_attribute }
 
 let rec partition : ('a -> bool) -> 'a list -> 'a list list =
   fun f lst ->

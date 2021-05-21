@@ -73,7 +73,7 @@ module TestExpressions = struct
   let recursive () : (unit,_) result =
     let fun_name = Location.wrap @@ Var.of_name "sum" in
     let var      = Location.wrap @@ Var.of_name "n" in
-    let lambda = I.{binder={var;ascr=Some(t_nat ())};
+    let lambda = I.{binder={var;ascr=Some(t_nat ());attributes=Stage_common.Helpers.empty_attribute};
                     output_type = Some (t_nat ());
                     result=e_application (e_variable fun_name) (e_variable var)
                    } in
@@ -110,9 +110,9 @@ module TestExpressions = struct
         ("Quux", Inferred.t_unit ());
       ]
     in
-    let binder_wild : type_expression binder = {var=Location.wrap (Var.of_name "_");ascr=None} in
-    let binder_x : type_expression binder = {var=Location.wrap (Var.of_name "x");ascr=None} in
-    let binder_y : type_expression binder = {var=Location.wrap (Var.of_name "y");ascr=None} in
+    let binder_wild : type_expression binder = {var=Location.wrap (Var.of_name "_");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+    let binder_x : type_expression binder = {var=Location.wrap (Var.of_name "x");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+    let binder_y : type_expression binder = {var=Location.wrap (Var.of_name "y");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
     test_expression
       ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
       I.(e_matching (e_constructor (Label "Foo") (e_int (Z.of_int 32)))

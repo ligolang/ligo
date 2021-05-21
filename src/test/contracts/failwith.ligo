@@ -15,7 +15,7 @@ function main (const p : parameter; const s : storage) : return is
   }
   with ((nil : list (operation)), s)
 
-function foobar (const i : int) : int is
+function foobar (var i : int) : int is
   block {
     var p : parameter := Zero (42n);
     if i > 0 then {

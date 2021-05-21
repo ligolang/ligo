@@ -43,7 +43,7 @@ let application : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a application -> (
 let option f acc = map (Option.unopt ~default:acc) <@ bind_map_option (f acc)
 
 let binder : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a binder -> ('acc, _) result
-= fun f acc {var=_; ascr} ->
+= fun f acc {var=_; ascr; attributes=_} ->
   let* acc = option f acc ascr in
   ok @@ acc
 

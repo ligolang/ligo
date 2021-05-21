@@ -103,12 +103,18 @@ let wildcard ppf = fun () ->
 
 (* Expressions *)
 
-let binder type_expression ppf {var;ascr} =
+let option_const_or_var ppf is_var =
+  match is_var with
+  | None -> fprintf ppf ""
+  | Some `Var -> fprintf ppf "[@var]"
+  | Some `Const -> fprintf ppf ""
+
+let binder type_expression ppf {var;ascr;attributes={const_or_var}} =
   match ascr with
   | None ->
-      fprintf ppf "%a" expression_variable var
+      fprintf ppf "%a%a" expression_variable var option_const_or_var const_or_var 
   | Some ty ->
-      fprintf ppf "%a : %a" expression_variable var type_expression ty
+      fprintf ppf "%a%a : %a" expression_variable var option_const_or_var const_or_var type_expression ty
 
 let application expression ppf = fun {lamb;args} ->
   fprintf ppf "@[<hv>(%a)@@(%a)@]" expression lamb expression args
