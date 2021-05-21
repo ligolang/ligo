@@ -23,6 +23,19 @@ let all_expression =
   let all_p = List.map Helpers.map_expression all_expression_mapper in
   bind_chain all_p
 
+let decompile_imperative =
+  let all_p = List.map Helpers.map_module @@
+    List.map (fun el -> Helpers.Expression el) [
+    Assign_heuristic.peephole_expression ;
+  ] in
+  bind_chain all_p
+
+let decompile_imperative_expression =
+  let all_p = List.map Helpers.map_expression @@ [
+    Assign_heuristic.peephole_expression ;
+  ] in
+  bind_chain all_p
+
 let map_expression = Helpers.map_expression
 
 let fold_expression = Helpers.fold_expression

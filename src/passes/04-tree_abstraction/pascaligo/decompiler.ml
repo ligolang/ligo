@@ -357,29 +357,6 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder={var;_};rhs={expression_content=E_update {record={expression_content=E_variable v;_};path;update};_};let_result;attributes=_}
-      when Var.equal var.wrap_content v.wrap_content ->
-    let* lhs = (match List.rev path with
-      Access_map e :: path ->
-      let* path  = decompile_to_path var @@ List.rev path in
-      let* index = map (wrap <@ brackets) @@ decompile_expression ~dialect e in
-      let mlu : CST.map_lookup = {path; index} in
-      ok @@ CST.MapPath (wrap @@ mlu)
-    | _ ->
-      let* path  = decompile_to_path var @@ path in
-      ok @@ (CST.Path (path) : CST.lhs)
-    )
-    in
-    let* rhs = decompile_expression ~dialect update in
-    let assign : CST.assignment = {lhs;assign=ghost;rhs} in
-    let assign = CST.Instr (CST.Assign (wrap @@ assign)) in
-    let* (stat,expr) = decompile_eos dialect output let_result in
-    let stat = (match stat with
-      Some (stat) -> Some (List.Ne.cons assign stat)
-    | None -> Some (assign,[])
-    )
-    in
-    return @@ (stat,expr)
   | E_let_in {let_binder;rhs;let_result;attributes} ->
     let* lin = decompile_to_data_decl dialect let_binder rhs attributes in
     let* (lst, expr) = decompile_eos dialect Expression let_result in
@@ -589,7 +566,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     )
   | E_sequence {expr1;expr2} ->
     let* expr1 = decompile_statements dialect expr1 in
-    let* (expr2,next) = decompile_eos dialect Statements expr2 in
+    let* (expr2,next) = decompile_eos dialect output expr2 in
     let expr1 = Option.unopt ~default:expr1 @@ Option.map (List.Ne.append expr1) expr2 in
     return @@ (Some expr1, next)
   | E_skip -> return_inst @@ CST.Skip ghost
