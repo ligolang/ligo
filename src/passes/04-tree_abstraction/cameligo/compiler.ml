@@ -507,11 +507,13 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
 and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
   fun p ->
   match unepar p with
-  | CST.PVar var ->
+  | CST.PVar {var;attributes} ->
     let (var,loc) = r_split var in
+    let attributes = attributes |> List.map (fun x -> x.Region.value) |>
+                       Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b =
       let var = Location.wrap ~loc @@ Var.of_name var in
-      { var ; ascr = None }
+      { var ; ascr = None ; attributes }
     in
     ok @@ Location.wrap ~loc @@ P_var b
   | CST.PTuple tuple ->
@@ -611,7 +613,7 @@ and untpar = function
 | _ as v -> v
 
 and check_annotation = function
-| CST.PVar v -> fail (missing_funarg_annotation v)
+| CST.PVar {var} -> fail (missing_funarg_annotation var)
 | CST.PPar { value = { inside ; _ }; _ } -> check_annotation inside
 | CST.PTuple { value ; _ } ->
   let l = Utils.nsepseq_to_list value in
@@ -642,7 +644,9 @@ and compile_let_binding ?kwd_rec attributes binding =
   | CST.PPar par, [] ->
     let par, _ = r_split par in
     aux (par.inside, [])
-  | PVar name, args -> (*function *)
+  | PVar {var=name;attributes=var_attributes}, args -> (*function *)
+    let var_attributes = var_attributes |> List.map (fun x -> x.Region.value) |>
+                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let* () = bind_list_iter check_annotation args in
     let* args = bind_map_list compile_parameter args in
     let fun_binder = compile_variable name in
@@ -666,23 +670,25 @@ and compile_let_binding ?kwd_rec attributes binding =
     | None   ->
         ok @@ expr
     in
-    return_1 @@ (Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)
+    return_1 @@ (Some name.value, {var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)
   | _ -> fail @@ unsupported_pattern_type @@ nseq_to_list binders
   in aux binders
 
 and compile_parameter : CST.pattern -> (_ binder * (_ -> _),_) result =
   fun pattern ->
-  let return ?ascr loc fun_ var =
-    ok ({var=Location.wrap ~loc var; ascr}, fun_) in
-  let return_1 ?ascr loc var = return ?ascr loc (fun e -> e) var in
+  let return ?ascr ?(attributes = Stage_common.Helpers.const_attribute) loc fun_ var =
+    ok ({var=Location.wrap ~loc var; ascr; attributes }, fun_) in
+  let return_1 ?ascr ?(attributes = Stage_common.Helpers.const_attribute) loc var = return ?ascr ~attributes loc (fun e -> e) var in
   match pattern with
     PConstr _ -> fail @@ unsupported_pattern_type [pattern]
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) loc @@ Var.fresh ()
-  | PVar var ->
+  | PVar {var;attributes} ->
     let (var,loc) = r_split var in
-    return_1 loc @@ mk_var var
+    let attributes = attributes |> List.map (fun x -> x.Region.value) |>
+                       Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
+    return_1 ~attributes loc @@ mk_var var
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
     let var = Var.fresh () in
@@ -697,15 +703,15 @@ and compile_parameter : CST.pattern -> (_ binder * (_ -> _),_) result =
     return ?ascr loc expr var
   | PPar par ->
     let (par,loc) = r_split par in
-    let* ({var;ascr}, expr) = compile_parameter par.inside in
-    return ?ascr loc expr @@ Location.unwrap var
+    let* ({var;ascr;attributes}, expr) = compile_parameter par.inside in
+    return ?ascr ~attributes loc expr @@ Location.unwrap var
   | PRecord _ -> fail @@ unsupported_pattern_type [pattern]
   | PTyped tp ->
     let (tp, loc) = r_split tp in
     let {pattern; type_expr} : CST.typed_pattern = tp in
     let* ascr = compile_type_expression type_expr in
-    let* ({var; _}, exprs) = compile_parameter pattern in
-    return ~ascr loc exprs @@ Location.unwrap var
+    let* ({var;attributes;  _}, exprs) = compile_parameter pattern in
+    return ~ascr ~attributes loc exprs @@ Location.unwrap var
   | _ -> fail @@ unsupported_pattern_type [pattern]
 
 and compile_declaration : CST.declaration -> _ = fun decl ->

@@ -83,8 +83,8 @@ let rec vars_of_pattern env = function
 | PUnit _
 | PInt _ | PNat _ | PBytes _
 | PString _ | PVerbatim _ -> ok @@ env
-| PVar var when is_wildcard var -> ok @@ env
-| PVar var ->
+| PVar {var} when is_wildcard var -> ok @@ env
+| PVar {var} ->
     let* () = check_reserved_name var in
     if VarSet.mem var env then
       fail @@ non_linear_pattern var

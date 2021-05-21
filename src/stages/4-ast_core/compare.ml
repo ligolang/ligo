@@ -136,7 +136,7 @@ let option f oa ob =
   | None, Some _ -> -1
   | Some a, Some b -> f a b
 
-let binder ty_expr {var=va;ascr=aa} {var=vb;ascr=ab} =
+let binder ty_expr {var=va;ascr=aa;_} {var=vb;ascr=ab;_} =
   cmp2
     expression_variable va vb
     (option ty_expr) aa ab

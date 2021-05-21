@@ -37,8 +37,8 @@ let higher3 = (i : int, f : ((a:int) => int), g : ((a: int) => int)) : int => {
 };
 
 let foobar5 = (i : int) : int => {
-  let a : int = 0;
-  let foo : (a: int) => int = (i : int) => a + i;
+  const a : int = 0;
+  const foo : (a: int) => int = (i : int) => a + i;
   let goo : (a: int) => int = (i : int) => foo (i);
   return higher3 (i, foo, goo);
 };

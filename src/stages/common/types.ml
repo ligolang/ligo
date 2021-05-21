@@ -70,9 +70,14 @@ type 'ty_exp arrow = {
   }
 
 (* Expression level types *)
+type binder_attributes = {
+    const_or_var : [`Const | `Var] option;
+  }
+
 type 'ty_exp binder = {
   var  : expression_variable ;
   ascr : 'ty_exp option;
+  attributes : binder_attributes ;
   }
 
 

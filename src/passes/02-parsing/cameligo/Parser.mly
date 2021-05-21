@@ -328,7 +328,7 @@ let_declaration:
 
 let_binding:
   "<ident>" nseq(sub_irrefutable) type_annotation? "=" expr {
-    let binders = Utils.nseq_cons (PVar $1) $2 in
+    let binders = Utils.nseq_cons (PVar {var = $1; attributes = [] }) $2 in
     {binders; lhs_type=$3; eq=$4; let_rhs=$5}
   }
 | irrefutable type_annotation? "=" expr {
@@ -346,8 +346,8 @@ irrefutable:
     in PTuple {region; value=$1} }
 
 sub_irrefutable:
-  "<ident>"                                              {    PVar $1 }
-| "_"                             { PVar { value = "_"; region = $1 } }
+  var_pattern                                            { PVar $1    }
+| "_"                             { PVar { var = { value = "_"; region = $1 }; attributes = [] } }
 | unit                                                   {   PUnit $1 }
 | record_pattern                                         { PRecord $1 }
 | par(closed_irrefutable)                                {    PPar $1 }
@@ -385,8 +385,8 @@ cons_pattern_level:
 | core_pattern { $1 }
 
 core_pattern:
-  "<ident>"                       {                           PVar $1 }
-| "_"                             { PVar { value = "_"; region = $1 } }
+  var_pattern                     {                           PVar $1 }
+| "_"                             { PVar { var = { value = "_"; region = $1 }; attributes = [] } }
 | "<int>"                         {                           PInt $1 }
 | "<nat>"                         {                           PNat $1 }
 | "<bytes>"                       {                         PBytes $1 }
@@ -397,6 +397,9 @@ core_pattern:
 | constr_pattern                  {                        PConstr $1 }
 | record_pattern                  {                        PRecord $1 }
 | par(pattern)                    {                           PPar $1 }
+
+var_pattern:
+  "<ident>" seq("[@attr]")        {  {var=$1; attributes=$2} }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,";") "}" {
@@ -412,7 +415,7 @@ record_pattern:
 field_pattern:
   field_name {
     let region  = $1.region
-    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
+    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar { var = $1; attributes = [] }}
     in {region; value}
   }
 | field_name "=" core_pattern {

@@ -5,7 +5,7 @@ function iter_op (const s : set (int)) : int is
     var r : int := 0;
     function aggregate (const i : int) : unit is
       block {
-        r := r + i
+        skip (* r := r + 1 *)
       } with unit;
     set_iter (aggregate, s)
   } with r // ALWAYS RETURNS 0

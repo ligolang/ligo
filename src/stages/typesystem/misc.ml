@@ -51,7 +51,7 @@ module Substitution = struct
     and s_binder : (_ T.binder,_) w = fun ~substs {var;ascr} ->
       let* var = s_variable ~substs var in
       let* ascr = bind_map_option (s_type_expression ~substs) ascr in
-      ok @@ T.{var;ascr}
+      ok @@ T.{var;ascr;attributes=Stage_common.Helpers.empty_attribute}
 
     and s_label : (T.label,_) w = fun ~substs l ->
       let () = ignore @@ substs in

@@ -48,9 +48,9 @@ let option f acc = function
 | None -> ok @@ (acc, None)
 
 let binder : ('acc -> 'a -> ('acc * 'b, _) result) -> 'acc -> 'a binder -> ('acc * 'b binder, _) result
-= fun f acc {var; ascr} ->
+= fun f acc {var; ascr; attributes} ->
   let* acc,ascr = option f acc ascr in
-  ok @@ (acc,{var; ascr})
+  ok @@ (acc,{var; ascr; attributes})
 
 let let_in :  ('acc -> 'a -> ('acc * 'b, _) result) -> ('acc -> 'c -> ('acc * 'd, _) result) -> 'acc -> ('a,'c) let_in -> ('acc * ('b,'d) let_in, _) result
 = fun f g acc {let_binder; rhs; let_result; attributes} ->

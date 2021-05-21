@@ -632,7 +632,7 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
       let* (input_type , output_type) =
         bind_map_pair Untyper.untype_type_expression io in
       let* result = untype_expression result in
-      return (e_lambda {var=binder;ascr=Some input_type} (Some output_type) result)
+      return (e_lambda {var=binder;ascr=Some input_type;attributes=Stage_common.Helpers.empty_attribute} (Some output_type) result)
     )
   | E_constructor {constructor; element} ->
       let* p' = untype_expression element in
@@ -661,7 +661,7 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
           let pattern =
             match tv with
             | _ ->
-              let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var pattern) } in
+              let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var pattern) ; attributes = Stage_common.Helpers.empty_attribute } in
               Location.wrap @@ P_variant (constructor, proj)
           in
           let* body = untype_expression body in
@@ -673,7 +673,7 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
     | Match_record {fields ; body ; tv=_} -> (
       let aux : (Ast_typed.label * (Ast_typed.expression_variable * _)) -> label * Ast_core.type_expression pattern =
         fun (Ast_typed.Label label, (proj,_)) -> (
-          let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var proj) } in
+          let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var proj) ; attributes = Stage_common.Helpers.empty_attribute } in
           (Label label, proj)
         )
       in
@@ -695,7 +695,7 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
       let* tv = Untyper.untype_type_expression rhs.type_expression in
       let* rhs = untype_expression rhs in
       let* result = untype_expression let_result in
-      return (e_let_in {var=let_binder ; ascr=(Some tv)} rhs result inline)
+      return (e_let_in {var=let_binder ; ascr=(Some tv) ; attributes = Stage_common.Helpers.empty_attribute} rhs result inline)
   | E_type_in ti ->
     let* ti = Stage_common.Maps.type_in untype_expression Untyper.untype_type_expression ti in
     return @@ make_e @@ E_type_in ti
@@ -729,7 +729,7 @@ function
   let* ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let* expr = untype_expression expr in
-  return @@ Declaration_constant {name; binder={var;ascr=Some ty};expr;attr={inline}}
+  return @@ Declaration_constant {name; binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline}}
 | Declaration_module {module_binder;module_} ->
   let* module_ = untype_module_fully_typed module_ in
   return @@ Declaration_module {module_binder;module_}

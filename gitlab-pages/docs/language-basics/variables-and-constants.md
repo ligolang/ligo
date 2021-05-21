@@ -60,11 +60,13 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 </Syntax>
 <Syntax syntax="jsligo">
 
-> In the experimental version of JsLIGO, constants are not enforced but will 
-> be in the future, to match JavaScript's behaviour.
+> Constants in JsLIGO are enforced:
 
-```jsligo group=a
-const age: int = 25;
+```jsligo skip
+let x = (a: int): int => {
+  const age : int = 25;
+  age = 3; // gives an error
+};
 ```
 
 Unlike the other syntaxes, JsLIGO doesn't allow variable names to be reused in the same block scope:

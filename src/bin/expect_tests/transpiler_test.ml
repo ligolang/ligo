@@ -201,9 +201,9 @@ let%expect_test _ =
       action_transfer_single * storage -> return =
       (fun gen__parameters1 : action_transfer_single * storage ->
         match gen__parameters1 with
-          action, s ->
-            let cards : cards = s.cards in
-            let card : card =
+          action, s[@var] ->
+            let cards[@var] : cards = s.cards in
+            let card[@var] : card =
               match Map.find_opt action.card_to_transfer cards
               with
                 Some card -> card
@@ -225,7 +225,7 @@ let%expect_test _ =
     let sell_single : action_sell_single * storage -> return =
       (fun gen__parameters2 : action_sell_single * storage ->
         match gen__parameters2 with
-          action, s ->
+          action, s[@var] ->
             let card : card =
               match Map.find_opt action.card_to_sell s.cards
               with
@@ -236,7 +236,7 @@ let%expect_test _ =
               if (NEQ (card.card_owner) (Tezos.sender)) then
                 (failwith ("This card doesn't belong to you"))
               else ();
-              let card_pattern : card_pattern =
+              let card_pattern[@var] : card_pattern =
                 match Map.find_opt
                         card.card_pattern
                         s.card_patterns
@@ -251,7 +251,7 @@ let%expect_test _ =
                     quantity =
                       (abs ((SUB (card_pattern.quantity) (1n))))
                   }} in
-              let card_patterns : card_patterns =
+              let card_patterns[@var] : card_patterns =
                 s.card_patterns in
               let card_patterns =
                 Map.add
@@ -259,7 +259,7 @@ let%expect_test _ =
                   card.card_pattern
                   card_patterns in
               let s = {s with { card_patterns = card_patterns }} in
-              let cards : cards = s.cards in
+              let cards[@var] : cards = s.cards in
               let cards =
                 (Map.remove (action.card_to_sell) (cards)) in
               let s = {s with { cards = cards }} in
@@ -284,8 +284,8 @@ let%expect_test _ =
     let buy_single : action_buy_single * storage -> return =
       (fun gen__parameters3 : action_buy_single * storage ->
         match gen__parameters3 with
-          action, s ->
-            let card_pattern : card_pattern =
+          action, s[@var] ->
+            let card_pattern[@var] : card_pattern =
               match Map.find_opt
                       action.card_to_buy
                       s.card_patterns
@@ -308,7 +308,7 @@ let%expect_test _ =
                     quantity =
                       (ADD (card_pattern.quantity) (1n))
                   }} in
-              let card_patterns : card_patterns =
+              let card_patterns[@var] : card_patterns =
                 s.card_patterns in
               let card_patterns =
                 Map.add
@@ -316,7 +316,7 @@ let%expect_test _ =
                   action.card_to_buy
                   card_patterns in
               let s = {s with { card_patterns = card_patterns }} in
-              let cards : cards = s.cards in
+              let cards[@var] : cards = s.cards in
               let cards =
                 Map.add
                   {
@@ -379,9 +379,9 @@ let transfer_single
   ((gen__parameters1: (action_transfer_single, storage))
    : return =>
      switch gen__parameters1{
-     | action, s =>
-         let cards: cards = s.cards;
-         let card: card =
+     | action, s[@var] =>
+         let cards[@var]: cards = s.cards;
+         let card[@var]: card =
            switch
            Map.find_opt(action.card_to_transfer, cards){
            | Some card => card
@@ -408,7 +408,7 @@ let transfer_single
 let sell_single: (action_sell_single, storage) => return =
   ((gen__parameters2: (action_sell_single, storage)): return =>
      switch gen__parameters2{
-     | action, s =>
+     | action, s[@var] =>
          let card: card =
            switchMap.find_opt(action.card_to_sell, s.cards){
            | Some card => card
@@ -421,7 +421,7 @@ let sell_single: (action_sell_single, storage) => return =
            } else {
              ()
            };
-           let card_pattern: card_pattern =
+           let card_pattern[@var]: card_pattern =
              switch
              Map.find_opt(card.card_pattern, s.card_patterns){
              | Some pattern => pattern
@@ -437,7 +437,7 @@ let sell_single: (action_sell_single, storage) => return =
                    (
                     abs(((SUB((card_pattern.quantity), (1n))))))
                }};
-           let card_patterns: card_patterns =
+           let card_patterns[@var]: card_patterns =
              s.card_patterns;
            let card_patterns =
 
@@ -445,7 +445,7 @@ let sell_single: (action_sell_single, storage) => return =
                 card.card_pattern,
                 card_patterns);
            let s = {...s, {card_patterns: card_patterns }};
-           let cards: cards = s.cards;
+           let cards[@var]: cards = s.cards;
            let cards =
              (Map.remove((action.card_to_sell), (cards)));
            let s = {...s, {cards: cards }};
@@ -471,8 +471,8 @@ let sell_single: (action_sell_single, storage) => return =
 let buy_single: (action_buy_single, storage) => return =
   ((gen__parameters3: (action_buy_single, storage)): return =>
      switch gen__parameters3{
-     | action, s =>
-         let card_pattern: card_pattern =
+     | action, s[@var] =>
+         let card_pattern[@var]: card_pattern =
            switch
            Map.find_opt(action.card_to_buy, s.card_patterns){
            | Some pattern => pattern
@@ -496,7 +496,7 @@ let buy_single: (action_buy_single, storage) => return =
                  quantity:
                    (ADD((card_pattern.quantity), (1n)))
                }};
-           let card_patterns: card_patterns =
+           let card_patterns[@var]: card_patterns =
              s.card_patterns;
            let card_patterns =
 
@@ -504,7 +504,7 @@ let buy_single: (action_buy_single, storage) => return =
                 action.card_to_buy,
                 card_patterns);
            let s = {...s, {card_patterns: card_patterns }};
-           let cards: cards = s.cards;
+           let cards[@var]: cards = s.cards;
            let cards =
 
              Map.add({
@@ -578,7 +578,7 @@ let%expect_test _ =
 
     let main : unit -> int =
       (fun toto : unit ->
-        let a : ppp =
+        let a[@var] : ppp =
           { x = 0, 1; y = 10, 11 },
           { x = 100, 101; y = 110, 111 } in
         let a = {a with { 0.x.0 = 2 }} in
@@ -586,7 +586,7 @@ let%expect_test _ =
 
     let asymetric_tuple_access : unit -> int =
       (fun foo : unit ->
-        let tuple : int * int * int * int = 0, 1, 2, 3 in
+        let tuple[@var] : int * int * int * int = 0, 1, 2, 3 in
         (ADD
           ((ADD ((ADD (tuple.0) (tuple.1.0))) (tuple.1.1.0)))
           (tuple.1.1.1)))
@@ -596,7 +596,7 @@ let%expect_test _ =
     }
 
     let nested_record : nested_record_t -> string =
-      (fun nee : nested_record_t ->
+      (fun nee[@var] : nested_record_t ->
         let nee = Map.add "one" 1 nesty.mymap in
         match Map.find_opt 1 nee.nesty.mymap with
           Some s -> s
@@ -611,7 +611,7 @@ type ppp = (ppi, ppi);
 
 let main: unit => int =
   ((toto: unit): int =>
-     let a: ppp =
+     let a[@var]: ppp =
        {
           x: 0, 1,
           y: 10, 11
@@ -621,7 +621,7 @@ let main: unit => int =
 
 let asymetric_tuple_access: unit => int =
   ((foo: unit): int =>
-     let tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
+     let tuple[@var]: (int, (int, (int, int))) = 0, 1, 2, 3;
      (
       ADD(((
           ADD(((ADD((tuple[0]), (tuple[1][0])))),
@@ -631,7 +631,7 @@ let asymetric_tuple_access: unit => int =
 type nested_record_t = {nesty: {mymap: map(int, string) } };
 
 let nested_record: nested_record_t => string =
-  ((nee: nested_record_t): string =>
+  ((nee[@var]: nested_record_t): string =>
      let nee = Map.add("one", 1, nesty.mymap);
      switchMap.find_opt(1, nee.nesty.mymap){
      | Some s => s
@@ -1113,8 +1113,8 @@ let%expect_test _ =
             end)
 
     let foobar : int -> int =
-      (fun i : int ->
-        let p : parameter = (Zero 42n) in
+      (fun i[@var] : int ->
+        let p[@var] : parameter = (Zero 42n) in
         let gen__env8 = { i = i } in
         let gen__env8 =
           if (GT (i) (0)) then
@@ -1195,8 +1195,8 @@ let main: (parameter, storage) => return =
      });
 
 let foobar: int => int =
-  ((i: int): int =>
-     let p: parameter = (Zero 42n);
+  ((i[@var]: int): int =>
+     let p[@var]: parameter = (Zero 42n);
      let gen__env8 = {
        i: i
      };

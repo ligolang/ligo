@@ -142,8 +142,9 @@ let get_e_tuple : AST.expression -> _ result = fun expr ->
     Format.asprintf "%a should be a tuple expression"
     AST.PP.expression expr
 
-let pattern_type ({var;ascr}: _ AST.binder) =
-  let var = CST.PVar (decompile_variable var.wrap_content) in
+let pattern_type ({var;ascr;attributes}: _ AST.binder) =
+  let attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
+  let var = CST.PVar {var = decompile_variable var.wrap_content; attributes = attributes} in
   match ascr with
     Some s ->
       let* type_expr = decompile_type_expr s in
@@ -224,8 +225,9 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
-    let var = CST.PVar (decompile_variable @@ var.wrap_content) in
+  | E_let_in {let_binder={var;ascr;attributes=var_attributes};rhs;let_result;attributes} ->
+    let var_attributes = var_attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
+    let var = CST.PVar { var = decompile_variable @@ var.wrap_content; attributes = var_attributes } in
     let binders = (var,[]) in
     let* lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) @@ ascr in
     let* let_rhs = decompile_expression rhs in
@@ -479,7 +481,8 @@ and decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
   | Declaration_constant {binder;attr;expr}-> (
     let attributes : CST.attributes = decompile_attributes attr in
-    let var = CST.PVar (decompile_variable binder.var.wrap_content) in
+    let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
+    let var = CST.PVar {var = decompile_variable binder.var.wrap_content; attributes = var_attributes } in
     let binders = (var,[]) in
     let* lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) binder.ascr in
     match expr.expression_content with
@@ -516,7 +519,8 @@ and decompile_pattern : AST.type_expression AST.pattern -> (CST.pattern,_) resul
     | AST.P_unit -> ok @@ CST.PUnit (wrap (ghost, ghost))
     | AST.P_var v ->
       let name = (decompile_variable v.var.wrap_content).value in
-      ok @@ CST.PVar (wrap name)
+      let attributes = v.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
+      ok @@ CST.PVar {var = wrap name; attributes }
     | AST.P_list pl -> (
       let ret x = ok (CST.PList x) in
       match pl with

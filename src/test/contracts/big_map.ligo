@@ -2,7 +2,7 @@ type parameter is unit
 type storage is big_map (int, int) * unit
 type return is list (operation) * storage
 
-function main (const p : parameter; const s : storage) : return is
+function main (const p : parameter; var s : storage) : return is
   block {
     var toto : option (int) := Some (0);
     toto := s.0[23];
@@ -28,7 +28,7 @@ const empty_big_map : big_map (int,int) = big_map []
 
 const big_map1 : big_map (int,int) = big_map [23 -> 0; 42 -> 0]
 
-function mutimaps (const m : foo; const n : foo) : foo is block {
+function mutimaps (const m : foo; var n : foo) : foo is block {
   var bar : foo := m;
   bar[42] := 0;
   n[42] := get_force (42, bar)

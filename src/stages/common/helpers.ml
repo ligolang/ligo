@@ -122,3 +122,7 @@ let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern ->
     | P_record (x,lp) ->
       let* lp = bind_map_list self lp in
       ret @@ P_record (x,lp)
+
+let var_attribute = { const_or_var = Some `Var }
+let const_attribute = { const_or_var = Some `Const }
+let empty_attribute = { const_or_var = None }

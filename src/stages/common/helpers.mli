@@ -34,3 +34,7 @@ val bind_map_lmapi :
 val fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a
 val fold_pattern_list : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern list -> 'a
 val map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern -> ('b pattern, 'err) result
+
+val var_attribute : binder_attributes
+val const_attribute : binder_attributes
+val empty_attribute : binder_attributes

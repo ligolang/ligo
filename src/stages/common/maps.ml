@@ -47,9 +47,9 @@ let application : ('a -> ('b,_) result) -> 'a application -> ('b application,_) 
   ok @@ {lamb; args}
 
 and binder : ('a -> ('b, _) result) -> 'a binder -> ('b binder, _) result
-= fun f {var; ascr} ->
+= fun f {var; ascr; attributes} ->
   let* ascr = bind_map_option f ascr in
-  ok @@ {var; ascr}
+  ok @@ {var; ascr; attributes}
 
 let let_in :  ('a -> ('b, _) result) -> ('c -> ('d, _) result) -> ('a,'c) let_in -> (('b,'d) let_in, _) result
 = fun f g {let_binder; rhs; let_result; attributes} ->

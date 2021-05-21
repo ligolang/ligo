@@ -207,11 +207,15 @@ let attributes attr =
   let list = List.map (fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
-let binder type_expression {var;ascr} =
-  `Assoc [
+let binder type_expression {var;ascr;attributes} =
+  let attributes = match attributes.const_or_var with
+        | None -> []
+        | Some `Var -> [("const_or_var", `String "var")]
+        | Some `Const -> [("const_or_var", `String "const")] in
+  `Assoc ([
     ("var", expression_variable_to_yojson var);
-    ("ty", yojson_opt type_expression ascr);
-  ]
+    ("ty", yojson_opt type_expression ascr)
+    ] @ attributes)
 
 let row_element g {associated_type; michelson_annotation; decl_pos} =
   `Assoc [

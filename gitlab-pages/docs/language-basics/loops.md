@@ -120,6 +120,7 @@ numbers by means of Euclid's algorithm with using a while loop:
 
 ```jsligo group=a
 let gcd = (x: nat, y: nat): nat => {
+  let [x,y] = [x,y]; // we will modify x and y
   if (x < y) {
     const z: nat = x;
     x = y; y = z;

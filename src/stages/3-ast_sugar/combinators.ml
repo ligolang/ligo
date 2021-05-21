@@ -91,10 +91,10 @@ let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; argum
 let e_variable ?loc v = make_e ?loc @@ E_variable v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
-let e_lambda_ez ?loc var ?ascr output_type result : expression = e_lambda ?loc {var;ascr} output_type result
+let e_lambda_ez ?loc var ?ascr ?const_or_var output_type result : expression = e_lambda ?loc {var;ascr;attributes={const_or_var}} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 let e_let_in    ?loc let_binder mut attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder ; rhs ; let_result; attributes; mut }
-let e_let_in_ez ?loc var ?ascr mut attributes rhs let_result = e_let_in ?loc {var;ascr} mut attributes rhs let_result
+let e_let_in_ez ?loc var ?ascr ?const_or_var mut attributes rhs let_result = e_let_in ?loc {var;ascr;attributes={const_or_var}} mut attributes rhs let_result
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = s; element = a}
