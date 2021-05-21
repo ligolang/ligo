@@ -39,15 +39,19 @@ let syntax_to_variant ?dialect (Syntax_name syntax) source =
   | _ -> fail (invalid_syntax syntax)
 
 let specialise_and_print_pascaligo dialect m =
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative m in
   let* cst = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.decompile_module ?dialect m in
+    Tree_abstraction.Pascaligo.decompile_module ?dialect ast in
   let* source = trace pretty_tracer @@
     ok (Parsing.Pascaligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_pascaligo dialect expression =
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative_expression expression in
   let* cst = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.decompile_expression ?dialect expression in
+    Tree_abstraction.Pascaligo.decompile_expression ?dialect ast in
   let* source = trace pretty_tracer @@
     ok (Parsing.Pascaligo.pretty_print_expression cst)
   in ok source
@@ -81,15 +85,19 @@ let specialise_and_print_expression_reasonligo expression =
   in ok source
 
 let specialise_and_print_jsligo m =
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative m in
   let* cst = trace cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.decompile_module m in
+    Tree_abstraction.Jsligo.decompile_module ast in
   let* source = trace pretty_tracer @@
     ok (Parsing.Jsligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_jsligo expression =
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative_expression expression in
   let* cst = trace cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.decompile_expression expression in
+    Tree_abstraction.Jsligo.decompile_expression ast in
   let b = Buffer.create 100 in
   bind_fold_list (fun all x -> 
     let* source = trace pretty_tracer @@

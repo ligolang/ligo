@@ -284,13 +284,13 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
       bindings  = (wrap let_binding, []);
     }) in
     let* body = decompile_expression_in let_result in
-    return_expr @@ [Statement const] @ body
+    return_expr @@ Statement const :: body
   | E_type_in {type_binder;rhs;let_result} ->
     let name = wrap @@ Var.to_name type_binder in
     let* type_expr = decompile_type_expr rhs in
     let type_decl : CST.type_decl = {kwd_type=ghost;name;eq=ghost;type_expr} in
     let* body = decompile_expression_in let_result in
-    return_expr @@ [Statement (CST.SType (wrap type_decl))] @ body
+    return_expr @@ Statement (CST.SType (wrap type_decl)) :: body
   | E_mod_in {module_binder;rhs;let_result} ->
     let name = wrap module_binder in
     let* module_ = decompile_module rhs in
