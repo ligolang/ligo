@@ -14,7 +14,7 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
     const taco_kind : taco_supply =
       case taco_shop_storage[taco_kind_index] of
         Some (kind) -> kind
-      | None -> (failwith ("Unknown kind of taco.") : taco_supply)
+      | None -> (failwith ("Unknown kind of taco") : taco_supply)
       end;
 
      const current_purchase_price : tez =
