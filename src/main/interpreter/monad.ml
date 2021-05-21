@@ -114,6 +114,8 @@ module Command = struct
         |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
       in
+      (* TODO : find a way to get the type instead of t_unit:
+       - current implem restrict michelson expression gotten from a Test.get_storage to be used in Test.compile_expr_subst*)
       let ret = LT.V_Michelson (Ty_code (storage,ty,Ast_typed.t_unit ())) in
       ok (ret, ctxt)
     | Get_balance (loc,addr) ->
