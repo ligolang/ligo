@@ -33,4 +33,4 @@ type lex_unit = token Core.lex_unit
 
 (* Exported *)
 
-let filter = Utils.(Comments.attach <@ Style.check)
+let filter = Utils.(AttachComments.attach <@ Style.check)
