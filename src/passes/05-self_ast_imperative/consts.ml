@@ -20,8 +20,12 @@ let rec assign_expression : ?vars:expression_variable list -> expression -> (exp
   let* _ = fold_map_expression
                  (fun (vars : expression_variable list) expr ->
                    match expr.expression_content with
-                   | E_assign {variable} when in_vars variable vars ->
-                      fail @@ const_rebound variable
+                   | E_assign {variable} ->
+                      begin
+                        match List.find_opt (fun v -> compare_vars variable v = 0) vars with
+                        | Some v -> fail @@ const_rebound v.location variable
+                        | None -> ok (true, vars, expr)
+                      end
                    | E_lambda {binder={var;attributes}} ->
                       let vars = add_binder (is_const attributes) var vars in
                       ok (true, vars, expr)
