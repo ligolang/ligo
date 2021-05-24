@@ -123,8 +123,8 @@ Multiplication & Division
 <div className="example">
 
 ```pascaligo
-const mul_int: int = 3 + 4;
-const mul_nat: nat = 3n + 4n;
+const mul_int: int = 3 * 4;
+const mul_nat: nat = 3n * 4n;
 
 const div_int: int = 10 / 5;
 const div_nat: nat = 10n / 5n;
@@ -501,8 +501,8 @@ Multiplication & Division
 <div className="example">
 
 ```cameligo
-let mul_int: int = 3 + 4
-let mul_nat: nat = 3n + 4n
+let mul_int: int = 3 * 4
+let mul_nat: nat = 3n * 4n
 
 let div_int: int = 10 / 5
 let div_nat: nat = 10n / 5n
@@ -837,8 +837,8 @@ Multiplication & Division
 <div className="example">
 
 ```reasonligo
-let mul_int: int = 3 + 4
-let mul_nat: nat = 3n + 4n
+let mul_int: int = 3 * 4
+let mul_nat: nat = 3n * 4n
 
 let div_int: int = 10 / 5
 let div_nat: nat = 10n / 5n
@@ -1190,8 +1190,8 @@ Multiplication & Division
 <div className="example">
 
 ```jsligo
-let mul_int: int = 3 + 4;
-let mul_nat: nat = (3 as nat) + (4 as nat);
+let mul_int: int = 3 * 4;
+let mul_nat: nat = (3 as nat) * (4 as nat);
 
 let div_int: int = 10 / 5;
 let div_nat: nat = (10 as nat) / (5 as nat);
