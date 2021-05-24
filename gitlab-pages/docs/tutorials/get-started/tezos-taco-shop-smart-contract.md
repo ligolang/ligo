@@ -982,7 +982,7 @@ if (Tezos.amount != current_purchase_price)
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
-if Tezos.amount >= current_purchase_price then
+if Tezos.amount < current_purchase_price then
 ```
 
 </Syntax>
