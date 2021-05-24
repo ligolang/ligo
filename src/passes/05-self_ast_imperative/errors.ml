@@ -12,8 +12,8 @@ type self_ast_imperative_error = [
   | `Self_ast_imperative_bad_map_param_type of (constant' * expression)
   | `Self_ast_imperative_bad_set_param_type of (constant' * expression)
   | `Self_ast_imperative_bad_convertion_bytes of expression
-  | `Self_ast_imperative_vars_captured of expression_variable list
-  | `Self_ast_imperative_const_assigned of expression_variable
+  | `Self_ast_imperative_vars_captured of (location * expression_variable) list
+  | `Self_ast_imperative_const_assigned of (location * expression_variable)
   | `Self_ast_imperative_warning_layout of (location * label)
 ]
 
@@ -26,7 +26,7 @@ let bad_map_param_type c e = `Self_ast_imperative_bad_map_param_type (c,e)
 let bad_set_param_type c e = `Self_ast_imperative_bad_set_param_type (c,e)
 let bad_conversion_bytes e = `Self_ast_imperative_bad_convertion_bytes e
 let vars_captured vars = `Self_ast_imperative_vars_captured vars
-let const_rebound vars = `Self_ast_imperative_const_assigned vars
+let const_rebound decl_loc var = `Self_ast_imperative_const_assigned (decl_loc, var)
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
 
 let error_ppformat : display_format:string display_format ->
@@ -71,14 +71,15 @@ let error_ppformat : display_format:string display_format ->
         "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]"
         Snippet.pp e.location
     | `Self_ast_imperative_vars_captured vars ->
-       let l = List.map (fun (v : expression_variable) -> v.location) vars in
+       let pp_var ppf ((decl_loc, var) : location * expression_variable) =
+         Format.fprintf ppf
+           "@[<hv>%a@ Invalid capture of non-constant variable \"%a\", declared at@.%a@]"
+           Snippet.pp var.location PP.expression_variable var Snippet.pp decl_loc in
+       Format.fprintf f "%a" (PP_helpers.list_sep pp_var (PP_helpers.tag "@.")) vars
+    | `Self_ast_imperative_const_assigned (decl_loc, var) ->
        Format.fprintf f
-         "@[<hv>%a@ Cannot be captured. @]"
-         (PP_helpers.list_sep_d Snippet.pp) l
-    | `Self_ast_imperative_const_assigned var ->
-       Format.fprintf f
-         "@[<hv>%a@ Cannot be assigned. @]"
-         Snippet.pp var.location
+         "@[<hv>%a@ Invalid assignment to constant variable \"%a\", declared at@.%a@]"
+         Snippet.pp var.location PP.expression_variable var Snippet.pp decl_loc
     | `Self_ast_imperative_warning_layout (loc,Label s) ->
       Format.fprintf f
         "@[<hv>%a@ Warning: layout attribute only applying to %s, probably ignored.@.@]"
@@ -168,8 +169,8 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
     ] in
     json_error ~stage ~content
   | `Self_ast_imperative_vars_captured vars ->
-     let message = `String "Cannot be captured" in
-     let loc (v : expression_variable) =
+     let message = `String "Invalid capture: declared as a non-constant variable" in
+     let loc ((_, v) : location * expression_variable) =
        `String (Format.asprintf "%a" Location.pp v.location) in
      let locs = `List (List.map loc vars) in
      let content = `Assoc [
@@ -177,8 +178,8 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
                        ("locations", locs);
                      ] in
      json_error ~stage ~content
-  | `Self_ast_imperative_const_assigned var ->
-     let message = `String "Cannot be assigned" in
+  | `Self_ast_imperative_const_assigned (_, var) ->
+     let message = `String "Invalid assignment: declared as a constant variable" in
      let loc = `String (Format.asprintf "%a" Location.pp var.location) in
      let content = `Assoc [
                        ("message", message);

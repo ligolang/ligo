@@ -443,7 +443,7 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
     let fields' = Utils.nsepseq_to_list fields in
     let compile_simple_pattern p =
       let rec aux = function
-        CST.EVar v -> ok @@ Some (Var.of_name v.value)
+        CST.EVar v -> ok @@ Some (Var.of_name v.value, Location.lift v.region)
       | EPar par -> aux par.value.inside
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
@@ -472,7 +472,7 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
         let param_loc = Location.generated in
         let whole_pattern_loc = Location.generated in
         let pvar = match p_opt with
-          | Some p ->
+          | Some (p, param_loc) ->
             let parameters = Location.wrap ~loc:param_loc p in
             Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None ; attributes = Stage_common.Helpers.const_attribute}:_ AST.binder)
           | None -> Location.wrap ~loc:param_loc P_unit

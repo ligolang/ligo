@@ -3,8 +3,11 @@ open Errors
 open Ast_imperative
 open Trace
 
-let are_any_of m l =
-  List.exists (fun v -> List.mem ~compare:compare_vars v l) m
+let get_of m l =
+  List.filter_map (fun v ->
+      match List.find_opt (fun d -> compare_vars v d = 0) l with
+      | Some d -> Some (d.location, v)
+      | None -> None) m
 
 let is_var = fun x -> match x with
                       | { const_or_var = Some `Var } -> true
@@ -21,8 +24,9 @@ let rec capture_expression : ?vars:expression_variable list -> expression -> (ex
                    match expr.expression_content with
                    | E_lambda {binder={var;attributes}} ->
                       let* fv_expr = get_fv expr in
-                      if are_any_of fv_expr vars then
-                        fail @@ vars_captured vars
+                      let fv_expr = get_of fv_expr vars in
+                      if not (List.is_empty fv_expr) then
+                        fail @@ vars_captured fv_expr
                       else
                         let vars = add_binder (is_var attributes) var vars in
                         ok (true, vars, expr)
@@ -44,8 +48,9 @@ let rec capture_expression : ?vars:expression_variable list -> expression -> (ex
                       ok (false, vars, expr)
                    | E_recursive {fun_name;lambda={binder={var;attributes}}} ->
                       let* fv_expr = get_fv ~exclude:[fun_name] expr in
-                      if are_any_of fv_expr vars then
-                        fail @@ vars_captured vars
+                      let fv_expr = get_of fv_expr vars in
+                      if not (List.is_empty fv_expr) then
+                        fail @@ vars_captured fv_expr
                       else
                         let vars = add_binder (is_var attributes) var vars in
                         ok (true, vars, expr)
