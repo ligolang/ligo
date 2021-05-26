@@ -59,7 +59,7 @@ function main() : int is
     (TypeName)
     (let_expr
       (block
-        (var_decl (NameDecl) (TypeName) (Int))
+        (var_decl (var_pattern (NameDecl)) (TypeName) (Int))
         (assignment (Name) (binop (Name) (adder) (Int)))
         (assignment (Name) (binop (Name) (adder) (Int)))
       )

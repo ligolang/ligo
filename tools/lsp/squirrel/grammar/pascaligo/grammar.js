@@ -276,7 +276,7 @@ module.exports = grammar({
     var_decl: $ =>
       seq(
         'var',
-        field("name", $.NameDecl),
+        field("name", $._pattern),
         optional(seq(':', field("type", $._type_expr))),
         ':=',
         field("value", $._expr),
