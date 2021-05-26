@@ -27,12 +27,13 @@ module.exports = grammar({
   rules: {
     source_file: $ => repeat(field("declaration", $._declaration)),
 
-    _declaration: $ => choice(
-      $.let_decl,
-      $.fun_decl,
-      $.type_decl,
-      $.preprocessor,
-    ),
+    _declaration: $ =>
+      choice(
+        $.type_decl,
+        $.let_decl,
+        $.fun_decl,
+        $.preprocessor,
+      ),
 
     fun_decl: $ => withAttrs($, seq(
       "let",
