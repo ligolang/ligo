@@ -148,7 +148,7 @@ let foo (a : int): int =
     (annot_pattern (var_pattern (NameDecl)) (TypeName))
     (TypeName)
     (paren_expr
-      (let_expr1
+      (let_in
         (let_decl (attr) (var_pattern (NameDecl)) (Int))
         (Name)
       )

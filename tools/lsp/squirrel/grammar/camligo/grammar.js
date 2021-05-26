@@ -27,12 +27,13 @@ module.exports = grammar({
   rules: {
     source_file: $ => repeat(field("declaration", $._declaration)),
 
-    _declaration: $ => choice(
-      $.let_decl,
-      $.fun_decl,
-      $.type_decl,
-      $.preprocessor,
-    ),
+    _declaration: $ =>
+      choice(
+        $.type_decl,
+        $.let_decl,
+        $.fun_decl,
+        $.preprocessor,
+      ),
 
     fun_decl: $ => withAttrs($, seq(
       "let",
@@ -64,12 +65,12 @@ module.exports = grammar({
     //========== EXPR ============
 
     _program: $ => choice(
-      $.let_expr1,
+      $.let_in,
       $.type_decl,
       $._expr
     ),
 
-    let_expr1: $ => seq(
+    let_in: $ => seq(
       field("decl", choice($.let_decl, $.fun_decl)),
       "in",
       field("body", $._program)
@@ -500,11 +501,6 @@ module.exports = grammar({
       $.p_define,
     )),
 
-    p_error: $ => seq('#error', field("message", $._till_newline)),
-    p_warning: $ => seq('#warning', field("message", $._till_newline)),
-
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
-
     include: $ => seq(
       '#include',
       field("filename", $.String)
@@ -517,6 +513,12 @@ module.exports = grammar({
       ),
       '#endif',
     ),
+
+    p_error: $ => seq('#error', field("message", $._till_newline)),
+    p_warning: $ => seq('#warning', field("message", $._till_newline)),
+    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
+
+    /// Literals
 
     _literal: $ => choice(
       $.String,
