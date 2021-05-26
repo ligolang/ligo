@@ -215,6 +215,11 @@ let%expect_test _ =
   [%expect {|
   Test passed with 111 |}]
 
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_subst_with_storage.mligo" ; "test" ] ;
+  [%expect {|
+  Test passed with () |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 

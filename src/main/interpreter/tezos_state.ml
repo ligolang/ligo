@@ -5,10 +5,12 @@ open Ligo_interpreter_exc
 
 type block = Tezos_alpha_test_helpers.Block.t
 type last_originations = (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * Memory_proto_alpha.Protocol.Alpha_context.Contract.t list) list
+type storage_tys = (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression) list
 
 type context = {
   threaded_context : block ;
   last_originations : last_originations ;
+  storage_tys : storage_tys ;
   baker : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ;
   source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ;
   bootstrapped : Memory_proto_alpha.Protocol.Alpha_context.Contract.t list ;
@@ -19,8 +21,8 @@ type add_operation_outcome =
   | Success of context
   | Fail of state_error
 
-
-let compare_account a b = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare a b = 0
+let compare_account_ = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare
+let compare_account a b = (compare_account_ a b) = 0
 let ligo_to_canonical ~loc (x: unit Tezos_utils.Michelson.michelson) =
   let open Tezos_micheline.Micheline in
   let x = inject_locations (fun _ -> 0) (strip_locations x) in
@@ -181,6 +183,6 @@ let init_ctxt ?(loc=Location.generated) ?(initial_balances=[]) ?(n=2) ()  =
   in
   match acclst with
   | baker::source::_ ->
-    ok { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] }
+    ok { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] ; storage_tys = [] }
   | _ ->
     fail (Errors.bootstrap_not_enough loc)

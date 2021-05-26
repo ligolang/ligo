@@ -114,9 +114,11 @@ module Command = struct
         |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
       in
-      (* TODO : find a way to get the type instead of t_unit:
-       - current implem restrict michelson expression gotten from a Test.get_storage to be used in Test.compile_expr_subst*)
-      let ret = LT.V_Michelson (Ty_code (storage,ty,Ast_typed.t_unit ())) in
+      let* ligo_ty =
+        trace_option (Errors.generic_error loc "Not supported (yet) when the provided account has been fetched from Test.get_last_originations" ) @@
+          List.assoc_opt ~compare:(Tezos_state.compare_account_) addr ctxt.storage_tys
+      in
+      let ret = LT.V_Michelson (Ty_code (storage,ty,ligo_ty)) in
       ok (ret, ctxt)
     | Get_balance (loc,addr) ->
       let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
@@ -159,12 +161,13 @@ module Command = struct
       ok ((contract,size), ctxt)
     | Inject_script (loc, code, storage) -> (
       let* contract_code = trace_option (corner_case ()) @@ LC.get_michelson_contract code in
-      let* (storage,_,_) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
+      let* (storage,_,ligo_ty) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
       let* (contract, res) = Tezos_state.originate_contract ~loc ctxt contract_code storage in
       match res with
       | Tezos_state.Success ctxt ->
         let addr = LT.V_Ct ( C_address contract ) in
-        ok (addr, ctxt)
+        let storage_tys = (contract, ligo_ty) :: (ctxt.storage_tys) in
+        ok (addr, {ctxt with storage_tys})
       | Tezos_state.Fail errs -> raise (Exc.Object_lang_ex (loc,errs))
     )
     | Set_now (loc, now) ->
