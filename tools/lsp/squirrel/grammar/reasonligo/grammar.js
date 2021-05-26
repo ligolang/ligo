@@ -53,7 +53,7 @@ module.exports = grammar({
   conflicts: $ =>
     [[$._expr_term, $._pattern]
       , [$.Name, $.TypeName]
-      , [$.annot_pattern, $.let_declaration]
+      , [$.annot_pattern, $.let_decl]
       , [$.lambda, $.tuple_pattern]
       , [$._expr_term, $.nullary_constr_pattern]
       , [$._expr_term, $.FieldName]
@@ -75,7 +75,7 @@ module.exports = grammar({
       field("declaration",
         choice(
           $.type_decl,
-          $.let_declaration,
+          $.let_decl,
           $.preprocessor,
         )
       ),
@@ -87,7 +87,7 @@ module.exports = grammar({
 
     //// EXPRESSIONS ///////////////////////////////////////////////////////////
 
-    let_declaration: $ => prec.left(PREC.LET, withAttrs($, seq(
+    let_decl: $ => prec.left(PREC.LET, withAttrs($, seq(
       'let',
       optional(field("rec", $.rec)),
       sepBy1(',', field("binding", $._pattern)),
@@ -312,7 +312,7 @@ module.exports = grammar({
     )),
 
     _statement: $ => prec(1, choice(
-      $.let_declaration,
+      $.let_decl,
       $.type_decl,
       $._expr,
     )),

@@ -148,7 +148,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         -- TODO: We forget "rec" field in let
-        "let_declaration" -> BConst <$> field "binding" <*> fieldOpt "type" <*> fieldOpt "value"
+        "let_decl"  -> BConst <$> field "binding" <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl" -> BTypeDecl <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
         "include"   -> BInclude  <$>                      field "filename"
