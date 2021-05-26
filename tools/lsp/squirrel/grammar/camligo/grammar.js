@@ -65,12 +65,12 @@ module.exports = grammar({
     //========== EXPR ============
 
     _program: $ => choice(
-      $.let_expr1,
+      $.let_in,
       $.type_decl,
       $._expr
     ),
 
-    let_expr1: $ => seq(
+    let_in: $ => seq(
       field("decl", choice($.let_decl, $.fun_decl)),
       "in",
       field("body", $._program)

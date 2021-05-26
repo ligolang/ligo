@@ -32,7 +32,7 @@ recognise (SomeRawTree dialect rawTree)
 
   , Descent do
       boilerplate $ \case
-        "let_expr1" -> Let <$> field "decl" <*> field "body"
+        "let_in" -> Let <$> field "decl" <*> field "body"
         _ -> fallthrough
 
   --   -- Expr
