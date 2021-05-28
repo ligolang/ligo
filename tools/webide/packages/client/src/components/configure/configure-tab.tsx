@@ -122,8 +122,8 @@ export const ConfigureTabComponent = (props: {
             dispatch({ ...new ChangeSelectedAction(command) });
           }}
         >
-          <Option value={CommandType.Compile}>Compile</Option>
-          <Option value={CommandType.CompileFunction}>Compile Function</Option>
+          <Option value={CommandType.Compile}>Compile Contract</Option>
+          <Option value={CommandType.CompileFunction}>Compile Expression</Option>
           <Option value={CommandType.Deploy}>Deploy</Option>
           <Option value={CommandType.DryRun}>Dry Run</Option>
           <Option value={CommandType.EvaluateFunction}>Evaluate Function</Option>

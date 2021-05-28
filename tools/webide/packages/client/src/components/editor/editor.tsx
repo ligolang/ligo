@@ -1,3 +1,4 @@
+import { languages } from 'monaco-editor';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -8,7 +9,7 @@ import { Language } from '../../redux/types';
 import { Option, Select } from '../form/select';
 import { ShareComponent } from '../share';
 import { EditableTitleComponent } from './editable-title';
-import { MonacoComponent } from './monaco';
+import MonacoComponent from './monaco';
 
 const Container = styled.div`
   flex: 2;
@@ -67,7 +68,6 @@ export const EditorComponent = ({editorHeight}) => {
       return `Line ${cursorPosition.lineNumber}, Column ${cursorPosition.column}`
     }
   }
-  
 
   return (
     <Container>

@@ -5,7 +5,8 @@ import { ChangeSelectedAction } from '../redux/examples';
 import { ExampleAction } from '../redux/actions/examples'
 
 interface stateTypes {
-  exampleId: any
+  exampleId: any,
+  isEditorDirty: boolean
 }
 
 interface dispatchTypes {
@@ -14,15 +15,15 @@ interface dispatchTypes {
 }
 
 const ViewExampleFile:FC<stateTypes&dispatchTypes> = (props) => {
-  const { getExample, exampleId, setFile } = props
+  const { getExample, exampleId, setFile, isEditorDirty } = props
 
   useEffect(() => {
-    if(exampleId) {
+    if(exampleId && !isEditorDirty) {
     getExample(exampleId).then((list) => {
       setFile(list)
     })
    }
-  },[exampleId, getExample, setFile])
+  },[exampleId, getExample, setFile, isEditorDirty])
 
   return (
     <></>
@@ -30,9 +31,10 @@ const ViewExampleFile:FC<stateTypes&dispatchTypes> = (props) => {
 };
 
 const mapStateToProps = state => {
-  const { examples } = state
+  const { examples, editor } = state
   return { 
-    exampleId: examples && examples.list.length > 0 && examples.list[0].id
+    exampleId: examples && examples.list.length > 0 && examples.list[0].id,
+    isEditorDirty : editor.dirty
    }
 }
 
