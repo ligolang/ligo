@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prestart": "cd ../client && npm run build",
+    "prestart": "mkdir -p src/tmp && cd ../client && npm run build",
     "start": "nodemon -r @ts-tools/node/r -r tsconfig-paths/register ./src/index.ts",
     "build": "tsc",
     "test": "export DATA_DIR=/tmp && jest"

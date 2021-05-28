@@ -4,6 +4,7 @@ const join = require('path').join;
 const fs = require('fs');
 const YAML = require('yamljs');
 
+
 function urlFriendlyHash(content) {
   const hash = createHash('md5');
   hash.update(content);
@@ -102,16 +103,19 @@ async function main() {
 
   // const EXAMPLES_GLOB = '**/*.ligo';
   // const files = await findFiles(EXAMPLES_GLOB, EXAMPLES_DIR);
-
+ 
   const CURATED_EXAMPLES = [
     'pascaligo/arithmetic-contract.ligo',
     'cameligo/arithmetic-contract.ligo',
-    'reasonligo/arithmetic-contract.ligo'
+    'reasonligo/arithmetic-contract.ligo',
+    'cameligo/id.mligo',
+    'pascaligo/id.ligo',
+    'reasonligo/id.religo',
+    'cameligo/hashlock.mligo',
+    'pascaligo/hashlock.ligo',
+    'reasonligo/hashlock.religo'
   ];
-    // Disable ID examples pending https://ligo.atlassian.net/browse/LIGO-676
-    //'pascaligo/id.ligo',
-    //'cameligo/id.mligo',
-    //'reasonligo/id.religo',
+
 
   const EXAMPLES_DEST_DIR = join(process.cwd(), 'build', 'static', 'examples');
   fs.mkdirSync(EXAMPLES_DEST_DIR, { recursive: true });

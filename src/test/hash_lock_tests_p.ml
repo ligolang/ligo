@@ -4,7 +4,7 @@ open Ast_imperative
 open Main_errors
 
 
-let get_program = get_program "./contracts/hashlock.mligo" (Contract "main")
+let get_program = get_program "./contracts/hashlock.ligo" (Contract "main")
 
 let compile_main () =
   let* typed_prg,_   = get_program () in
@@ -244,7 +244,7 @@ let reveal () =
   expect_eq ~options (program,env) "reveal"
     (e_pair reveal init_storage) (e_pair empty_op_list post_storage)
 
-let main = test_suite "Hashlock (CameLIGO)" [
+let main = test_suite "Hashlock (PascaLIGO)" [
     test "compile" compile_main ;
     test "commit" commit ;
     test "reveal (fail if no commitment)" reveal_no_commit ;
