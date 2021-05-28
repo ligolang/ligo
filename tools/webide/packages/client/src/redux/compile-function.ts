@@ -24,7 +24,7 @@ const compileFunction = (
     case ActionType.ChangeSelected:
       return {
         ...state,
-        functionName: action.payload,
+        functionName: action.payload ? action.payload : '',
       };
     case ActionType.SetDefaultList:
       return { ...state, functionName: action.value };
