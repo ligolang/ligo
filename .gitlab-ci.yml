@@ -349,9 +349,4 @@ downstream-webide-removal-handoff:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide/**/*
-      when: manual
-    # After a MR merges and is committed to the default branch, the removal job will be triggered
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo" && $CI_MERGE_REQUEST_IID != null'
-      changes:
-        - tools/webide/**/*
       when: always
