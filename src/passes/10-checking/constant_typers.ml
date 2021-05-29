@@ -810,19 +810,15 @@ let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc
   let* () =
     Assert.assert_true (uncomparable_types loc a b) @@
     List.exists (eq_2 (a , b)) [
-      t_address () ;
-      t_bool () ;
-      t_bytes () ;
-      t_chain_id ();
       t_int () ;
-      t_key () ;
-      t_key_hash () ;
-      t_mutez () ;
       t_nat () ;
-      t_signature ();
+      t_bool () ;
+      t_mutez () ;
       t_string () ;
+      t_bytes () ;
+      t_address () ;
       t_timestamp () ;
-      t_unit ();
+      t_key_hash () ;
     ] in
   ok @@ t_bool ()
 
@@ -867,8 +863,8 @@ and option_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc
 and comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
 
   bind_or (
-    bind_or (simple_comparator loc s [a;b] None, option_comparator loc s [a;b] None),
-    bind_or (record_comparator loc s [a;b] None, sum_comparator loc s [a;b] None)
+    bind_or (record_comparator loc s [a;b] None, option_comparator loc s [a;b] None),
+    bind_or (sum_comparator  loc s [a;b] None, simple_comparator loc s [a;b] None)
   )
 
 let ticket loc = typer_2 loc "TICKET" @@ fun dat amt ->
