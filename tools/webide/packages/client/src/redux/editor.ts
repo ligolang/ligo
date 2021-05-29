@@ -25,7 +25,7 @@ export interface EditorState {
   title: string;
   dirty: boolean;
   cursorPosition?: CursorPosition | null;
-  lastEditedTime: Date | null;
+  lastEditedTime?: Date | null;
 }
 
 export class ChangeLanguageAction {

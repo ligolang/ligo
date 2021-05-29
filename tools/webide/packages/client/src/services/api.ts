@@ -114,6 +114,9 @@ export async function share({
   };
 
   // We don't want to store the following configuration
+  if (params.editor) {
+    delete params.editor.lastEditedTime;
+  }
   if (params.compile) {
     delete params.compile.michelsonFormat;
   }
