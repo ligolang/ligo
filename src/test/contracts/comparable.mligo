@@ -1,24 +1,29 @@
 (* This test check that the type are comparable *)
 
-let int_ (a: int) = a < a
-let nat_ (a: nat) = a < a
-let bool_ (a: bool) = a < a
-let mutez_ (a: tez) = a < a
-let string_ (a: string) = a < a
-let bytes_ (a: bytes) = a < a
 let address_ (a: address) = a < a
-let timestamp_ (a: timestamp) = a < a
+let bool_ (a: bool) = a < a
+let bytes_ (a: bytes) = a < a
+let chain_id_ (a: chain_id) = a < a
+let int_ (a: int) = a < a
+let key_ (a: key) = a < a
 let key_hash_ (a: key_hash) = a < a
+let mutez_ (a: tez) = a < a
+let nat_ (a: nat) = a < a
 let option_ (a: int option) = a < a
-type toto = A of int
+
 (*
-let sum     (a : toto) = a < a
+type toto = A of int
+let sum_ (a : toto) = a < a
 *)
 
 type comp_pair = int * int
 
 let comp_pair (a: comp_pair) = a < a
 
+let signature_ (a: signature) = a < a
+let string_ (a: string) = a < a
+let timestamp_ (a: timestamp) = a < a
+let unit_ (a: unit) = a < a
 (*
 type uncomp_pair_1 = int * int * int
 
