@@ -534,35 +534,22 @@ let bytes_arithmetic () : (unit, _) result =
 
 let comparable_mligo () : (unit, _) result =
   let* program = type_file "./contracts/comparable.mligo" in
-  let* () = expect_eq program "address_" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx") (e_bool false) in
-  let* () = expect_eq program "bool_" (e_bool true) (e_bool false) in
-  let* () = expect_eq program "bytes_" (e_bytes_string "deadbeaf") (e_bool false) in
   let* () = expect_eq program "int_" (e_int 1) (e_bool false) in
-  let* () = expect_eq program "mutez_" (e_mutez 1) (e_bool false) in
   let* () = expect_eq program "nat_" (e_nat 1) (e_bool false) in
-  let* () = expect_eq program "option_" (e_some (e_int 1)) (e_bool false) in
-  (*
-  let* () = expect_eq program "sum_" (e_constructor "A" (e_int 1)) (e_bool false) in
-  *)
+  let* () = expect_eq program "bool_" (e_bool true) (e_bool false) in
+  let* () = expect_eq program "mutez_" (e_mutez 1) (e_bool false) in
   let* () = expect_eq program "string_" (e_string "foo") (e_bool false) in
+  let* () = expect_eq program "bytes_" (e_bytes_string "deadbeaf") (e_bool false) in
+  let* () = expect_eq program "address_" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx") (e_bool false) in
   let* () = expect_eq program "timestamp_" (e_timestamp 101112) (e_bool false) in
-  let* () = expect_eq program "unit_" (e_unit ()) (e_bool false) in
+  let* () = expect_eq program "option_" (e_some (e_int 1)) (e_bool false) in
   (*
   let* () = expect_eq program "sum" (e_constructor "A" (e_int 1)) (e_bool false) in
   *)
   let open Tezos_crypto in
-  let pkh, pk, sk = Signature.generate_key () in
+  let pkh, _, _ = Signature.generate_key () in
   let key_hash = Signature.Public_key_hash.to_b58check @@ pkh in
   let* () = expect_eq program "key_hash_" (e_key_hash key_hash) (e_bool false) in
-  let key = Signature.Public_key.to_b58check @@ pk in
-  let* () = expect_eq program "key_" (e_key key) (e_bool false) in
-  let signed = Signature.to_b58check @@ Signature.sign sk (Bytes.of_string "hello world") in
-  let* () = expect_eq program "signature_" (e_signature signed) (e_bool false) in
-  let chain_id = Tezos_crypto.Base58.simple_encode
-    Tezos_base__TzPervasives.Chain_id.b58check_encoding
-    Tezos_base__TzPervasives.Chain_id.zero in
-  let* () = expect_eq program "chain_id_" (e_chain_id chain_id) (e_bool false) in
-
   let pair = e_pair (e_int 1) (e_int 2) in
   let* () = expect_eq program "comp_pair" pair (e_bool false) in
   (* let tuple = e_tuple [e_int 1; e_int 2; e_int 3] in
