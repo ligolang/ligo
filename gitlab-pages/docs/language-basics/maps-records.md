@@ -185,7 +185,7 @@ function xy_translate (var p : point; const vec : vector) : point is
 You can call the function `xy_translate` defined above by running the
 following command of the shell:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_update.ligo
 xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
 # Outputs: {z = 1 , y = 7 , x = 5}
@@ -215,7 +215,7 @@ You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo
 xy_translate "({x=2;y=3;z=1}, {dx=3;dy=4})"
 # Outputs: {z = 1 , y = 7 , x = 5}
@@ -263,7 +263,7 @@ You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_update.religo
 xy_translate "({x:2,y:3,z:1}, {dx:3,dy:4})"
 # Outputs: {z = 1 , y = 7 , x = 5}
@@ -415,7 +415,7 @@ You can call the function `change_color_preference` defined above by running the
 following command:
 
 ```shell
-ligo run-function gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo 
+ligo evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo 
 change_color_preference "(record [id=1001; preferences=record [color=Blue; other=1]], Green)"
 # Outputs: record[id -> 1001 , preferences -> record[color -> Green(unit) , other -> 1]]
 ```
@@ -451,7 +451,7 @@ You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_patch.ligo
 xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
 # Outputs: {z = 1 , y = 7 , x = 5}
@@ -475,7 +475,7 @@ You can call the new function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_patch2.ligo
 xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
 # Outputs: {z = 1 , y = 7 , x = 5}
@@ -499,7 +499,7 @@ You can call the new function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_simu.ligo
 xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
 # Outputs: {z = 1 , y = 7 , x = 5}

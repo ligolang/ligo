@@ -232,7 +232,7 @@ export class LigoCompiler {
     const { name, remove } = await this.createTemporaryFile(code);
     try {
       const result = await this.execPromise(this.ligoCmd, [
-        'evaluate-value',
+        'evaluate-expr',
         '-s',
         syntax,
         name,
@@ -253,7 +253,7 @@ export class LigoCompiler {
     const { name, remove } = await this.createTemporaryFile(code);
     try {
       const result = await this.execPromise(this.ligoCmd, [
-        'run-function',
+        'evaluate-call',
         '-s',
         syntax,
         name,

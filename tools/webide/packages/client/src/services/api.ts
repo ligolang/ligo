@@ -153,7 +153,7 @@ export async function evaluateValue(
   code: string,
   entrypoint: string
 ) {
-  const response = await axios.post('/api/evaluate-value', {
+  const response = await axios.post('/api/evaluate-expr', {
     syntax,
     code,
     entrypoint,
@@ -167,7 +167,7 @@ export async function runFunction(
   entrypoint: string,
   parameters: string
 ) {
-  const response = await axios.post('/api/run-function', {
+  const response = await axios.post('/api/evaluate-call', {
     syntax,
     code,
     entrypoint,

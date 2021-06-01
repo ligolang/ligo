@@ -1,7 +1,7 @@
 import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
 
 export enum ActionType {
-  ChangeEntrypoint = 'evaluate-value-change-entrypoint'
+  ChangeEntrypoint = 'evaluate-expr-change-entrypoint'
 }
 
 export interface EvaluateValueState {

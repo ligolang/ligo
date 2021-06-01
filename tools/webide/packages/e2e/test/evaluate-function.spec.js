@@ -10,7 +10,7 @@ const verifyParametersBlank = commonUtils.verifyParametersBlank;
 const verifyWithCompilationError = commonUtils.verifyWithCompilationError;
 
 const COMMAND = 'evaluate-function';
-const COMMAND_ENDPOINT = 'run-function';
+const COMMAND_ENDPOINT = 'evaluate-call';
 
 async function action() {
   return await runCommandAndGetOutputFor(COMMAND, COMMAND_ENDPOINT);

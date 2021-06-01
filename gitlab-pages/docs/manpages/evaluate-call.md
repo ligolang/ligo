@@ -1,22 +1,27 @@
 ### NAME
 
-ligo-evaluate-value - Subcommand: Evaluate a given definition.
+ligo-evaluate-call - Subcommand: Run a function with the given parameter.
 
 ### SYNOPSIS
 
-**ligo evaluate-value** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
+**ligo evaluate-call** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
+*PARAMETER_EXPRESSION*
 
 ### DESCRIPTION
 
-This sub-command evaluates a LIGO definition. The context is initialized
-from a source file where the definition is written. The interpretation
-is done using Michelson\`s interpreter.
+This sub-command runs a LIGO function on a given argument. The context
+is initialized from a source file where the function is implemented. The
+interpretation is done using Michelson\`s interpreter.
 
 ### ARGUMENTS
 
 *ENTRY_POINT* (required)
 
 :   *ENTRY_POINT* is entry-point that will be compiled.
+
+*PARAMETER_EXPRESSION* (required)
+
+:   *PARAMETER_EXPRESSION* is the expression that will be compiled.
 
 *SOURCE_FILE* (required)
 

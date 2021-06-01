@@ -579,7 +579,7 @@ let dry_run =
                  Michelson's interpreter."]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
-let run_function =
+let evaluate_call ~cmdname_deprecation =
   let f source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format warn werror =
     return_result ~werror ~warn ~display_format (Decompile.Formatter.expression_format) @@
       let* init_env   = Helpers.get_initial_env protocol_version in
@@ -601,16 +601,23 @@ let run_function =
     in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
-  let cmdname = "run-function" in
-  let doc = "Subcommand: Run a function with the given parameter." in
+  (* "run-function" was renamed to "evaluate-call", keeping both for a few versions for backward-compatibility. *)
+  let cmdname = match cmdname_deprecation with
+  | `deprecated_run_function -> "run-function"
+  | `evaluate_call -> "evaluate-call" in
+  let deprecation = match cmdname_deprecation with
+  | `deprecated_run_function -> "Deprecated, renamed to evaluate-call. Use evaluate-call instead. "
+  | `evaluate_call -> "" in
+  let doc = deprecation ^ "Subcommand: Run a function with the given parameter." in
   let man = [`S Manpage.s_description;
-             `P "This sub-command runs a LIGO function on a given \
-                 argument. The context is initialized from a source \
-                 file where the function is implemented. The \
-                 interpretation is done using Michelson's interpreter."]
+             `P (deprecation ^
+                 "This sub-command runs a LIGO function on a given \
+                  argument. The context is initialized from a source \
+                  file where the function is implemented. The \
+                  interpretation is done using Michelson's interpreter.")]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
-let evaluate_value =
+let evaluate_expr ~cmdname_deprecation =
   let f source_file entry_point amount balance sender source now syntax infer protocol_version display_format warn werror =
     return_result ~werror ~warn ~display_format Decompile.Formatter.expression_format @@
       let* init_env   = Helpers.get_initial_env protocol_version in
@@ -625,13 +632,20 @@ let evaluate_value =
     in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
-  let cmdname = "evaluate-value" in
-  let doc = "Subcommand: Evaluate a given definition." in
+  (* "run-function" was renamed to "evaluate-call", keeping both for a few versions for backward-compatibility. *)
+  let cmdname = match cmdname_deprecation with
+  | `deprecated_evaluate_value -> "evaluate-value"
+  | `evaluate_expr -> "evaluate-expr" in
+  let deprecation = match cmdname_deprecation with
+  | `deprecated_evaluate_value -> "Deprecated, renamed to evaluate-expr. Use evaluate-expr instead. "
+  | `evaluate_expr -> "" in
+  let doc = deprecation ^ "Subcommand: Evaluate a given definition." in
   let man = [`S Manpage.s_description;
-             `P "This sub-command evaluates a LIGO definition. The \
-                 context is initialized from a source file where the \
-                 definition is written. The interpretation is done \
-                 using Michelson's interpreter."]
+             `P (deprecation ^
+                 "This sub-command evaluates a LIGO definition. The \
+                  context is initialized from a source file where the \
+                  definition is written. The interpretation is done \
+                  using a Michelson interpreter.")]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_expression =
@@ -842,8 +856,10 @@ let run ?argv () =
     transpile_expression ;
     interpret ;
     dry_run ;
-    run_function ;
-    evaluate_value ;
+    evaluate_call ~cmdname_deprecation:`deprecated_run_function ;
+    evaluate_call ~cmdname_deprecation:`evaluate_call ;
+    evaluate_expr ~cmdname_deprecation:`deprecated_evaluate_value ;
+    evaluate_expr ~cmdname_deprecation:`evaluate_expr ;
     dump_changelog ;
     print_graph ;
     print_cst ;

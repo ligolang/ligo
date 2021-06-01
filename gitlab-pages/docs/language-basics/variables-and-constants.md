@@ -25,7 +25,7 @@ const age : int = 25
 You can evaluate the constant definition above using the following CLI
 command:
 ```shell
-ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
+ligo evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
 # Outputs: 25
 ```
 
@@ -39,7 +39,7 @@ let age : int = 25
 You can evaluate the constant definition above using the following CLI
 command:
 ```shell
-ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constants/const.mligo age
+ligo evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.mligo age
 # Outputs: 25
 ```
 
@@ -53,7 +53,7 @@ let age : int = 25;
 You can evaluate the constant definition above using the following CLI
 command:
 ```shell
-ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constants/const.religo age
+ligo evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.religo age
 # Outputs: 25
 ```
 
@@ -95,7 +95,7 @@ let x = (a: int): int => {
 You can evaluate the constant definition above using the following CLI
 command:
 ```shell
-ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constants/const.jsligo age
+ligo evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.jsligo age
 # Outputs: 25
 ```
 
@@ -136,7 +136,7 @@ You can run the `add` function defined above using the LIGO compiler
 like this:
 
 ```shell
-ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.ligo add '(1,1)'
+ligo evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.ligo add '(1,1)'
 # Outputs: 2
 ```
 
@@ -155,7 +155,7 @@ let add (a : int) (b : int) : int =
 You can run the `add` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.mligo add '(1,1)'
+ligo evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.mligo add '(1,1)'
 # Outputs: 2
 ```
 
@@ -176,7 +176,7 @@ let add = ((a, b): (int, int)): int => {
 You can run the `add` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.religo add '(1,1)'
+ligo evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.religo add '(1,1)'
 # Outputs: 2
 ```
 
@@ -204,7 +204,7 @@ You can run the `add` function defined above using the LIGO compiler
 like this:
 
 ```shell
-ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.jsligo add '(1,1)'
+ligo evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.jsligo add '(1,1)'
 # Outputs: 2
 ```
 

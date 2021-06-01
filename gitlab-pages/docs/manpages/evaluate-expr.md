@@ -1,27 +1,22 @@
 ### NAME
 
-ligo-run-function - Subcommand: Run a function with the given parameter.
+ligo-evaluate-expr - Subcommand: Evaluate a given definition.
 
 ### SYNOPSIS
 
-**ligo run-function** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
-*PARAMETER_EXPRESSION*
+**ligo evaluate-expr** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
 
 ### DESCRIPTION
 
-This sub-command runs a LIGO function on a given argument. The context
-is initialized from a source file where the function is implemented. The
-interpretation is done using Michelson\`s interpreter.
+This sub-command evaluates a LIGO definition. The context is initialized
+from a source file where the definition is written. The interpretation
+is done using Michelson\`s interpreter.
 
 ### ARGUMENTS
 
 *ENTRY_POINT* (required)
 
 :   *ENTRY_POINT* is entry-point that will be compiled.
-
-*PARAMETER_EXPRESSION* (required)
-
-:   *PARAMETER_EXPRESSION* is the expression that will be compiled.
 
 *SOURCE_FILE* (required)
 

@@ -7,7 +7,7 @@ import { CompileFunctionAction } from '../../redux/actions/compile-function';
 import { DeployAction } from '../../redux/actions/deploy';
 import { DryRunAction } from '../../redux/actions/dry-run';
 import { EvaluateFunctionAction } from '../../redux/actions/evaluate-function';
-import { EvaluateValueAction } from '../../redux/actions/evaluate-value';
+import { EvaluateValueAction } from '../../redux/actions/evaluate-expr';
 import { GenerateDeployScriptAction } from '../../redux/actions/generate-deploy-script';
 import { AppState } from '../../redux/app';
 import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../../redux/command';
@@ -18,7 +18,7 @@ import DeployPaneComponent from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
 import CompileFunctionPaneComponent from './compile-function-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
-import { EvaluateValuePaneComponent } from './evaluate-value-pane';
+import { EvaluateValuePaneComponent } from './evaluate-expr-pane';
 import { GenerateDeployScriptPane } from './generate-deploy-script-pane';
 
 const Container = styled.div<{ visible?: boolean }>`
