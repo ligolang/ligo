@@ -178,17 +178,6 @@ let%expect_test _ =
     Expected an argument of type (string) or (nat) or (int), but got an argument of type list (int). |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/compare_sum_types.ligo" ; "main" ] ;
-  [%expect {|
-    File "../../test/contracts/negative/compare_sum_types.ligo", line 4, characters 29-36:
-      3 | function main (const p : foo; const s : bool) : list(operation) * bool is
-      4 |   ((nil : list (operation)), p = Foo)
-
-    Invalid arguments.
-    These types cannot be compared: "sum[Bar -> unit , Foo -> unit]" and "
-    sum[Bar -> unit , Foo -> unit]". |}]
-
-let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/invalid_field_record_update.mligo" ; "main" ] ;
   [%expect {|
     File "../../test/contracts/negative/invalid_field_record_update.mligo", line 4, characters 50-54:

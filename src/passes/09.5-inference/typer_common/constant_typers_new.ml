@@ -131,7 +131,6 @@ tc "arguments for (+)"
                 [option (var x)] ;
                 [sum (var x) (var y)] ;
                 [pair (var x) (var y)] ;
-                [set (var x)] ;
                 [signature] ;
                 [string] ;
                 [timestamp] ;
