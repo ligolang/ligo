@@ -99,7 +99,7 @@ describe('Share', () => {
 
     // Check evaluate value configuration
     await page.click('#command-select');
-    await page.click('#evaluate-value');
+    await page.click('#evaluate-expr');
 
     expect(await page.evaluate(getInputValue, 'entrypoint')).toEqual(
       v0State.entrypoint
@@ -199,7 +199,7 @@ describe('Share', () => {
 
     // Check evaluate value configuration
     await page.click('#command-select');
-    await page.click('#evaluate-value');
+    await page.click('#evaluate-expr');
 
     expect(await page.evaluate(getInputValue, 'entrypoint')).toEqual(
       v1State.state.evaluateValue.entrypoint
@@ -301,7 +301,7 @@ describe('Share', () => {
 
     // Check evaluate value configuration
     await page.click('#command-select');
-    await page.click('#evaluate-value');
+    await page.click('#evaluate-expr');
 
     expect(await page.evaluate(getInputValue, 'entrypoint')).toEqual(
       v2State.state.evaluateValue.entrypoint
@@ -410,7 +410,7 @@ describe('Share', () => {
 
     // Check evaluate value configuration
     await page.click('#command-select');
-    await page.click('#evaluate-value');
+    await page.click('#evaluate-expr');
 
     expect(await page.evaluate(getInputValue, 'entrypoint')).toEqual(
       v3State.state.evaluateValue.entrypoint

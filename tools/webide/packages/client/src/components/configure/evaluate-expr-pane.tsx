@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
-import { ChangeEntrypointAction, EvaluateValueState } from '../../redux/evaluate-value';
+import { ChangeEntrypointAction, EvaluateValueState } from '../../redux/evaluate-expr';
 import { Group, Input, Label } from '../form/inputs';
 
 const Container = styled.div``;

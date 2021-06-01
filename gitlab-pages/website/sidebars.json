@@ -40,7 +40,7 @@
       "manpages/compile-parameter",
       "manpages/compile-storage",
       "manpages/dry-run",
-      "manpages/evaluate-value",
+      "manpages/evaluate-expr",
       "manpages/get-scope",
       "manpages/interpret",
       "manpages/list-declarations",
@@ -55,7 +55,7 @@
       "manpages/print-cst",
       "manpages/print-graph",
       "manpages/print-mini-c",
-      "manpages/run-function",
+      "manpages/evaluate-call",
       "manpages/test",
       "manpages/transpile-contract",
       "manpages/transpile-expression"

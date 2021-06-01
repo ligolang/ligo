@@ -711,7 +711,7 @@ function compare (const n : nat) : magnitude is
 You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/boolean-if-else/cond.ligo compare '21n'
 # Outputs: Large(Unit)
 ```
@@ -752,7 +752,7 @@ let compare (n : nat) : magnitude =
 You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo compare '21n'
 # Outputs: Large
 ```
@@ -775,7 +775,7 @@ let compare = (n : nat) : magnitude =>
 You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo compare '21n'
 # Outputs: Large
 ```
@@ -794,7 +794,7 @@ let compare = (n : nat) : magnitude => {
 You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo compare '21n'
 # Outputs: Large
 ```

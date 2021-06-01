@@ -6,11 +6,11 @@ let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--warn=false"] ;
+  run_ligo_good [ "evaluate-call" ; contract "failwith.ligo" ; "failer" ; "1" ; "--warn=false"] ;
   [%expect {|
     failwith(42) |}];
 
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ; "--warn=false" ] ;
+  run_ligo_good [ "evaluate-call" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ; "--warn=false" ] ;
   [%expect {|
     { "value": null, "failure": "failwith(42)" } |}];
 

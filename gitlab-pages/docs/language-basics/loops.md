@@ -44,7 +44,7 @@ function gcd (var x : nat; var y : nat) : nat is
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/gcd.ligo gcd '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
 # Outputs: +12
 ```
@@ -77,7 +77,7 @@ let gcd (x,y : nat * nat) : nat =
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/gcd.mligo gcd (2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
 # Outputs: +12
 ```
@@ -159,7 +159,7 @@ let gcd2 = ([x,y] : [nat, nat]) : nat => {
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/gcd.jsligo gcd '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
 # Outputs: +12
 ```
@@ -167,7 +167,7 @@ gitlab-pages/docs/language-basics/src/loops/gcd.jsligo gcd '(2n*2n*3n*11n, 2n*2n
 and can call the function `gcd2` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/gcd.jsligo gcd2 '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
 # Outputs: +12
 ```
@@ -199,7 +199,7 @@ function sum (var n : nat) : int is block {
 You can call the function `sum` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/sum.ligo sum 7n
 # Outputs: 28
 ```
@@ -224,7 +224,7 @@ function sum_list (var l : list (int)) : int is block {
 You can call the function `sum_list` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_list
 'list [1;2;3]'
 # Outputs: 6
@@ -244,7 +244,7 @@ function sum_set (var s : set (int)) : int is block {
 You can call the function `sum_set` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_set
 'set [1;2;3]'
 # Outputs: 6
@@ -272,7 +272,7 @@ function sum_map (var m : map (string, int)) : string * int is block {
 You can call the function `sum_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_map
 'map ["1"->1; "2"->2; "3"->3]'
 # Outputs: ( "123", 6 )
@@ -303,7 +303,7 @@ let sum_list = (l: list<int>): int => {
 You can call the function `sum_list` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/collection.jsligo sum_list
 'list [1;2;3]'
 # Outputs: 6
@@ -324,7 +324,7 @@ let sum_set = (s: set<int>): int => {
 You can call the function `sum_set` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/collection.jsligo sum_set
 'set [1;2;3]'
 # Outputs: 6
@@ -354,7 +354,7 @@ let sum_map = (m: map<string, int>): [string, int] => {
 You can call the function `sum_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run-function
+ligo evaluate-call
 gitlab-pages/docs/language-basics/src/loops/collection.jsligo sum_map
 'map ["1"->1; "2"->2; "3"->3]'
 # Outputs: ( "123", 6 )
