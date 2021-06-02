@@ -15,10 +15,10 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
   (* open All_plugins *)
 
   let get_cells (tc : c_typeclass_simpl) =
-    List.flatten tc.tc
+    List.concat tc.tc
 
   let fold_map_cells (f : 'acc -> type_value -> ('acc * type_value)) (acc : 'acc) (tc : c_typeclass_simpl) =
-    let acc, tc_tc = List.fold_map_acc (fun acc l -> List.fold_map_acc f acc l) acc tc.tc in
+    let acc, tc_tc = List.fold_map ~f:(fun init l -> List.fold_map ~f ~init l) ~init:acc tc.tc in
     acc, { tc with tc = tc_tc }
 
   type column = (type_variable * type_value list)
@@ -26,29 +26,29 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
   let loop3 : 'e 'x 'a 'b 'c . ('x -> ('a * 'b * 'c, 'e) result) -> ('a * 'b * 'c) -> (('a -> 'a -> 'a) * ('b -> 'b -> 'b) * ('c -> 'c -> 'c)) -> 'x list -> (('a * 'b * 'c), 'e) result =
     fun f (a0, b0, c0) (a,b,c) xs ->
     let* r = bind_map_list f xs in
-    let (as_, bs, cs) = List.split3 r in
-    ok (List.fold_left a a0 as_, List.fold_left b b0 bs, List.fold_left c c0 cs)
+    let (as_, bs, cs) = List.unzip3 r in
+    ok (List.fold_left ~f:a ~init:a0 as_, List.fold_left ~f:b ~init:b0 bs, List.fold_left ~f:c ~init:c0 cs)
 
    let rec transpose_list_of_lists (matrix : type_value list list) =
       match matrix with
         [] -> []
-      | (_::_)::_ -> (List.map List.hd matrix) :: transpose_list_of_lists (List.map List.tl matrix)
-      | []::_ -> assert (List.for_all List.is_empty matrix); []
+      | (_::_)::_ -> (List.map ~f:List.hd_exn matrix) :: transpose_list_of_lists (List.map ~f:List.tl_exn matrix)
+      | []::_ -> assert (List.for_all ~f:List.is_empty matrix); []
 
   type 'a all_equal = Empty | All_equal_to of 'a | Different
 
   let rec get_columns (headers : type_variable list) (matrix : type_value list list) =
     match headers with
       [] -> []
-    | hd::tl -> (hd, (List.map List.hd matrix)) :: get_columns tl (List.map List.tl matrix)
+    | hd::tl -> (hd, (List.map ~f:List.hd_exn matrix)) :: get_columns tl (List.map ~f:List.tl_exn matrix)
 
   let rec columns_to_lines (columns : columns) : (type_variable list * type_value list list) =
     match columns with
       [] -> [], []
     | (_header, _::_)::_ ->
-      let (headers, matrix) = columns_to_lines @@ List.map (fun (header, cells) -> header, List.tl cells) columns in
-      headers, (List.map (fun (_header,cells) -> List.hd cells) columns :: matrix)
-    | _ -> assert (List.for_all List.is_empty @@ List.map snd columns); (List.map fst columns), []
+      let (headers, matrix) = columns_to_lines @@ List.map ~f:(fun (header, cells) -> header, List.tl_exn cells) columns in
+      headers, (List.map ~f:(fun (_header,cells) -> List.hd_exn cells) columns :: matrix)
+    | _ -> assert (List.for_all ~f:List.is_empty @@ List.map ~f:snd columns); (List.map ~f:fst columns), []
 
   let update_columns3 : (columns -> (column Rope.SimpleRope.t * 'b * 'c, _) result) -> c_typeclass_simpl -> (c_typeclass_simpl * 'b * 'c, _) result =
     fun f tc ->
@@ -70,7 +70,7 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
     per argument. *)
   let check_typeclass_rectangular ({ reason_typeclass_simpl=_; tc; args } as tcs : c_typeclass_simpl) =
     let nargs = List.length args in
-    if (List.for_all (fun allowed -> List.length allowed = nargs) tc)
+    if (List.for_all ~f:(fun allowed -> List.length allowed = nargs) tc)
     then ok tcs
     else fail typeclass_not_a_rectangular_matrix
 
@@ -81,7 +81,7 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
       [] -> ok tc
     | (_, hd) :: tl ->
       let hdlen = List.length hd in
-      if List.for_all (fun (_, l) -> List.length l = hdlen) tl
+      if List.for_all ~f:(fun (_, l) -> List.length l = hdlen) tl
       then ok tc
       else fail typeclass_not_a_rectangular_matrix
 
@@ -114,33 +114,33 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
       (PP_helpers.list_sep_d PP.type_value_short) type_values
      ; *)
     let rec simplify type_values : [> `Constructor of constant_tag * int * type_value_ Location.wrap list | `Row of row_tag * label list * row_value list | `TODO ] list =
-      let res = List.map (
+      let res = List.map ~f:(
         function
         | P_forall _ -> failwith "forall in typeclass cells is not supported"
         | P_variable v ->
           (* This is a very ad-hoc way to handle nested constraints.
               Instead we should extract the constraints to the outer solver
               (beware: recursion, propagating deductions made under assumptions, other stuff) *)
-          let nested_allowed = List.flatten @@ List.map
-          (function
+          let nested_allowed = List.concat @@ List.map
+          ~f:(function
               SC_Apply _ -> []
             | SC_Abs   _ -> []
             | SC_Constructor {tv;c_tag;tv_list;_} ->
               if Compare.type_variable (repr tv) (repr v) = 0 then
-                [(`Constructor (c_tag, List.length tv_list, List.map (fun arg -> Location.wrap @@ P_variable arg) tv_list))]
+                [(`Constructor (c_tag, List.length tv_list, List.map ~f:(fun arg -> Location.wrap @@ P_variable arg) tv_list))]
               else
                 []
             | SC_Row         {tv;r_tag;tv_map} ->
               if Compare.type_variable (repr tv) (repr v) = 0 then
-                [(`Row (r_tag, LMap.keys tv_map, List.map (fun {associated_variable;michelson_annotation;decl_pos} -> { associated_value = Location.wrap @@ P_variable associated_variable;michelson_annotation;decl_pos}) @@ LMap.values tv_map))]
+                [(`Row (r_tag, LMap.keys tv_map, List.map ~f:(fun {associated_variable;michelson_annotation;decl_pos} -> { associated_value = Location.wrap @@ P_variable associated_variable;michelson_annotation;decl_pos}) @@ LMap.values tv_map))]
               else
                 []
             | SC_Alias       _ -> failwith "impossible, sc_alias should be removed"
             | SC_Poly        _ -> failwith "polymorphic types cannot be used in typeclass nested constraints"
             | SC_Typeclass nested ->
               (* Get the columns of the nested typeclass constraint which talk about variable v *)
-              List.flatten @@ List.map
-                  (fun (nested_arg, nested_column) ->
+              List.concat @@ List.map
+                  ~f:(fun (nested_arg, nested_column) ->
                     if Compare.type_variable (repr nested_arg) (repr v) = 0 then
                       (simplify nested_column)
                     else
@@ -154,17 +154,17 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
         | P_constraint _ -> failwith "kinding error: constraints have kind Constraint, but the cells of a typeclass can only contain types (i.e. kind *)"
         | P_constant { p_ctor_tag; p_ctor_args } -> [`Constructor (p_ctor_tag, List.length p_ctor_args, p_ctor_args)]
         | P_row      { p_row_tag;  p_row_args  } -> [`Row         (p_row_tag, LMap.keys p_row_args, LMap.values p_row_args)]
-      ) @@ List.map (fun x -> x.Location.wrap_content) type_values
-      in List.flatten res
+      ) @@ List.map ~f:(fun x -> x.Location.wrap_content) type_values
+      in List.concat res
     in
     let type_values' = simplify type_values in
     (* Format.eprintf "Testing for any\n%!"; *)
-    if (List.exists (function `Any -> true | _ -> false) type_values')
+    if (List.exists ~f:(function `Any -> true | _ -> false) type_values')
     then Different
     else
     let type_values'' =
       List.filter_map
-        (function `Any -> failwith "impossible, already checked above" | (`TODO | `Constructor _ | `Row _) as x -> Some x)
+        ~f:(function `Any -> failwith "impossible, already checked above" | (`TODO | `Constructor _ | `Row _) as x -> Some x)
         type_values' in
     match type_values'' with
       [] -> Empty
@@ -172,10 +172,10 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
       match hd with
         `TODO -> Different
       | `Constructor (hd_ctor_tag, hd_ctor_length, hd_ctor_args) ->
-        if List.for_all (function `Constructor (p_ctor_tag, p_ctor_length, _p_ctor_args)
+        if List.for_all ~f:(function `Constructor (p_ctor_tag, p_ctor_length, _p_ctor_args)
               -> Compare.constant_tag p_ctor_tag hd_ctor_tag = 0 && Int.compare p_ctor_length hd_ctor_length == 0 | _ -> false) tl
         then
-          let fresh_vars = List.map (fun _arg -> Core.fresh_type_variable ()) hd_ctor_args in
+          let fresh_vars = List.map ~f:(fun _arg -> Core.fresh_type_variable ()) hd_ctor_args in
           let deduced : c_constructor_simpl = {
             id_constructor_simpl = ConstraintIdentifier.fresh ();
             original_id = None;
@@ -185,12 +185,12 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
             tv_list = fresh_vars
           } in
           All_equal_to (`Constructor deduced, fresh_vars,
-             List.map (function `Constructor (_p_ctor_tag, _p_ctor_length, p_ctor_args) -> p_ctor_args | _ -> failwith "impossible") (hd :: tl))
+             List.map ~f:(function `Constructor (_p_ctor_tag, _p_ctor_length, p_ctor_args) -> p_ctor_args | _ -> failwith "impossible") (hd :: tl))
         else Different
       | (`Row (hd_row_tag, hd_row_keys, hd_row_values)) as hd ->
-        if List.for_all (function `Row (p_row_tag, p_row_keys, _p_row_values) ->
+        if List.for_all ~f:(function `Row (p_row_tag, p_row_keys, _p_row_values) ->
                            Compare.row_tag p_row_tag hd_row_tag = 0
-                           && List.compare ~compare:Compare.label hd_row_keys p_row_keys = 0
+                           && List.compare Compare.label hd_row_keys p_row_keys = 0
                          | _ -> false)
                         tl
         then
@@ -201,15 +201,15 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
             tv = (repr x);
             r_tag = hd_row_tag;
             tv_map = LMap.of_list @@ List.map
-              (fun (k,({ associated_value=_; michelson_annotation; decl_pos } : row_value)) ->
+              ~f:(fun (k,({ associated_value=_; michelson_annotation; decl_pos } : row_value)) ->
                 (k, ({ associated_variable=Core.fresh_type_variable (); michelson_annotation; decl_pos} : row_variable)))
-              (List.combine hd_row_keys hd_row_values)
+              (List.zip_exn hd_row_keys hd_row_values)
           } in
-          let fresh_vars = List.map (fun x -> x.associated_variable) @@ LMap.values deduced.tv_map in
+          let fresh_vars = List.map ~f:(fun x -> x.associated_variable) @@ LMap.values deduced.tv_map in
           All_equal_to (`Row deduced, fresh_vars,
              List.map
-               (function `Row (_p_row_tag, _p_row_keys, p_row_values) ->
-                  List.map (fun x -> x.associated_value) @@ p_row_values
+               ~f:(function `Row (_p_row_tag, _p_row_keys, p_row_values) ->
+                  List.map ~f:(fun x -> x.associated_value) @@ p_row_values
                 | _ -> failwith "impossible")
              (hd :: tl))
         else Different
@@ -236,7 +236,7 @@ let rec replace_var_and_possibilities_1
     : (column Rope.SimpleRope.t * _ * bool, _) result =
   let open Rope.SimpleRope in
   (*let* tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
-  let tags_of_constructors, arguments_of_constructors = List.split tags_and_args in*)
+  let tags_of_constructors, arguments_of_constructors = List.unzip tags_and_args in*)
   match all_equal' tc_constraints repr x possibilities_for_x  with
   | Different ->
     (* The "changed" boolean return indicates whether any update was done.
@@ -255,7 +255,7 @@ let rec replace_var_and_possibilities_1
       (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
 
       let* (rec_cleaned, rec_deduced, _rec_changed) =
-        replace_var_and_possibilities_rec tc_constraints repr (List.combine fresh_vars (transpose_list_of_lists arguments_of_constructors))
+        replace_var_and_possibilities_rec tc_constraints repr (List.zip_exn fresh_vars (transpose_list_of_lists arguments_of_constructors))
       in
       (* The "changed" boolean return indicates whether any update was done.
          It is used to prevent removal + update of the typeclass if it wasn't modified. *)
@@ -280,7 +280,7 @@ let rec deduce_and_clean_constraints repr (c : type_constraint_simpl) =
   match c with
   | SC_Typeclass tc ->
    let* {cleaned;deduced;changed} = deduce_and_clean repr tc in
-      ok @@ ((SC_Typeclass cleaned) :: (List.map (function `Constructor c -> SC_Constructor c | `Row r -> SC_Row r) deduced), changed)
+      ok @@ ((SC_Typeclass cleaned) :: (List.map ~f:(function `Constructor c -> SC_Constructor c | `Row r -> SC_Row r) deduced), changed)
   | other -> ok ([other], false)
 
 and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
@@ -291,11 +291,11 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
            [ map3( bytes , mutez , float ) ; string ] ] *)
 
   let* deduced_and_cleaned_nested_constraints = bind_map_list (deduce_and_clean_constraints repr) tcs.tc_constraints in
-  let deduced_and_cleaned_nested_constraints', changed' = List.split deduced_and_cleaned_nested_constraints in
-  let tcs' = { tcs with tc_constraints = List.flatten deduced_and_cleaned_nested_constraints' } in
+  let deduced_and_cleaned_nested_constraints', changed' = List.unzip deduced_and_cleaned_nested_constraints in
+  let tcs' = { tcs with tc_constraints = List.concat deduced_and_cleaned_nested_constraints' } in
 
   let* (cleaned, deduced, changed) = update_columns3 (replace_var_and_possibilities_rec tcs.tc_constraints repr) tcs' in
-  let changed'' = changed || List.exists (fun x -> x) changed' in
+  let changed'' = changed || List.exists ~f:(fun x -> x) changed' in
   (* ex. cleaned:
            [ fresh_x_1 ; fresh_x_2 ; y      ]
        ∈ [ [ nat       ; unit      ; int    ]
@@ -317,7 +317,7 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
   let aux : constructor_or_row -> type_constraint_simpl = function
       `Constructor x -> SC_Constructor x
     | `Row x -> SC_Row x in
-  let deduced = List.map aux deduced in
+  let deduced = List.map ~f:aux deduced in
   ok (deduced, cleaned, changed)
 
 end

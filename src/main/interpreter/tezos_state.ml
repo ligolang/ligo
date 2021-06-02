@@ -112,7 +112,7 @@ let extract_origination_from_result :
       | Internal_operation_result ({source ; _},Applied (Origination_result x)) -> [(source, x.originated_contracts)]
       | _ -> []
     in
-    List.flatten @@ List.map aux internal_operation_results
+    List.concat @@ List.map ~f:aux internal_operation_results
   | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ } ->
     [(src, x.originated_contracts)]
   | _ -> []

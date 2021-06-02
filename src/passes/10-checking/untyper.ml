@@ -31,7 +31,7 @@ let rec untype_type_expression_nofail (t:O.type_expression) : I.type_expression 
     return @@ T_arrow arr
   | O.T_constant {language;injection;parameters} ->
     ignore language ;
-    let arguments = List.map untype_type_expression_nofail parameters in
+    let arguments = List.map ~f:untype_type_expression_nofail parameters in
     let type_operator = Var.of_name (Ligo_string.extract injection) in
     return @@ I.T_app {type_operator;arguments}
   | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)

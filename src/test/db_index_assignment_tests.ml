@@ -27,7 +27,7 @@ module Assignments_tests = struct
          let* () = tst_assert "" (Ast_core.Compare.constructor_or_row cora corb = 0) in
          ok ()
       )
-      (List.combine sa sb)
+      (List.zip_exn sa sb)
 end
 
 open Assignments_tests
@@ -179,10 +179,10 @@ let invariant () =
       add_constraint ~debug:Ast_core.PP.type_variable repr state tc
     | Merge merge_keys -> merge_aliases merge_keys state
   in
-  let state_a = List.fold_left aux istate
+  let state_a = List.fold_left ~f:aux ~init:istate
     [ Add_cstr tva ; Add_cstr tvb ; Add_cstr tvc ; Merge (merge_keys tva tvb) ; ]
   in
-  let state_b = List.fold_left aux istate
+  let state_b = List.fold_left ~f:aux ~init:istate
     [ Add_cstr tva ; Add_cstr tvb ; Merge (merge_keys tva tvb) ; Add_cstr tvc ; ]
   in
   let* () = same_state state_a state_b in

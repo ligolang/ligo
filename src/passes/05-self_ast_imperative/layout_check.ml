@@ -14,7 +14,7 @@ let layout_type_expression : type_expression -> (type_expression , self_ast_impe
   | T_sum cmap ->
      let* _ = bind_map_lmapi
        (fun k ({attributes;_} : _ Ast_imperative.row_element) ->
-         if attributes |> List.map is_layout |> List.exists Option.is_some then
+         if attributes |> List.map ~f:is_layout |> List.exists ~f:Option.is_some then
            update_annotation (warn_layout e.location k) @@
              ok ()
          else ok ()

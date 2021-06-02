@@ -30,10 +30,10 @@ let range i j =
   aux i j []
 
 let label_range i j =
-  List.map (fun i -> Label (string_of_int i)) @@ range i j
+  List.map ~f:(fun i -> Label (string_of_int i)) @@ range i j
 
 let is_tuple_lmap m =
-  List.for_all (fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
+  List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
 let get_pair m =
   match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
@@ -44,6 +44,6 @@ let tuple_of_record (m: _ LMap.t) =
   let aux i = 
     let label = Label (string_of_int i) in
     let opt = LMap.find_opt (label) m in
-    Option.bind (fun opt -> Some ((label,opt),i+1)) opt
+    Option.bind ~f: (fun opt -> Some ((label,opt),i+1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux

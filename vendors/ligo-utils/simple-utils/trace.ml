@@ -235,7 +235,7 @@ let bind f = function
        Error (e, a') -> Error (e, a @ a')
      | Ok (y, a') -> Ok  (y, a @ a')
 
-let map f = function
+let map ~f = function
   Ok (x, annotations) -> Ok (f x, annotations)
 | Error _ as e -> e
 
@@ -246,7 +246,7 @@ let map f = function
 
 let (>>?)  x f = bind f x
 let (let*)  x f = bind f x
-let (>>|?) x f = map f x
+let (>>|?) x f = map ~f x
 
 (* Used by PPX_let, an OCaml preprocessor.
 
@@ -327,7 +327,7 @@ let trace_assert_fail_option error = function
    error out of the type.  The most common context is when mapping a
    given type. For instance, if you use a function that can fail in
    [List.map], you need to manage a whole list of results. Instead,
-   you do [let* lst' = bind_list @@ List.map f lst], which will
+   you do [let* lst' = bind_list @@ List.map ~f:f lst], which will
    yield an ['a list].  [bind_map_t] is roughly syntactic sugar for
    [bind_t @@ T.map]. So that you can rewrite the previous example as
    [let* lst' = bind_map_list f lst].  Same thing with folds.
@@ -454,8 +454,8 @@ let bind_fold_map_right_list = fun f acc lst ->
   ok lst'
 
 let bind_fold_right_list f init lst =
-  let aux x y = x >>? fun x -> f x y
-  in X_list.fold_right' aux (ok init) lst
+  let aux x y = y >>? fun y -> f y x
+  in X_list.fold_right ~f:aux ~init:(ok init) lst
 
 let bind_find_map_list error f lst =
   let rec aux lst =

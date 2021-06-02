@@ -24,9 +24,9 @@ let label_map ~compare lma lmb =
   let rb = LMap.to_kv_list_rev lmb in
   let aux (la,a) (lb,b) =
     cmp2 label la lb compare a b in
-  List.compare ~compare:aux ra rb
+  List.compare aux ra rb
 
-let typeVariableMap compare a b = List.compare ~compare:(compare_tvmap_entry compare) a b
+let typeVariableMap compare a b = List.compare (compare_tvmap_entry compare) a b
 
 let expression_variable = Location.compare_wrap ~compare:Var.compare
 let type_variable       = Var.compare
@@ -100,7 +100,7 @@ and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; inject
   cmp3
     String.compare la lb
     Ligo_string.compare ia ib
-    (List.compare ~compare:type_expression) pa pb
+    (List.compare type_expression) pa pb
 
 and rows {content=ca; layout=la} {content=cb; layout=lb} =
   cmp2
@@ -110,7 +110,7 @@ and rows {content=ca; layout=la} {content=cb; layout=lb} =
 and constraint_identifier (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) =
   cmp2
     Int64.compare a b
-    (List.compare ~compare:type_expression) [] []
+    (List.compare type_expression) [] []
 
 and row_element {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
@@ -190,7 +190,7 @@ let rec expression a b =
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
-  cmp2 constant' ca cb (List.compare ~compare:expression) a b
+  cmp2 constant' ca cb (List.compare expression) a b
 
 and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
@@ -266,7 +266,7 @@ and matching_content_case {constructor=ca;pattern=pa;body=ba} {constructor=cb;pa
 
 and matching_content_variant {cases=ca;tv=ta} {cases=cb;tv=tb} =
   cmp2
-    (List.compare ~compare:matching_content_case) ca cb
+    (List.compare matching_content_case) ca cb
     type_expression ta tb
 
 and matching_content_record
@@ -327,17 +327,17 @@ and declaration a b =
     (Declaration_constant _| Declaration_type _| Declaration_module _| Module_alias _) ->
     Int.compare (declaration_tag a) (declaration_tag b)
 
-and module_ m = List.compare ~compare:(Location.compare_wrap ~compare:declaration) m
+and module_ m = List.compare (Location.compare_wrap ~compare:declaration) m
 
 (* Environment *)
-let free_variables = List.compare ~compare:expression_variable
+let free_variables = List.compare expression_variable
 
 let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_=tb} =
   cmp2
     type_variable va vb
     type_expression ta tb
 
-let type_environment = List.compare ~compare:type_environment_binding
+let type_environment = List.compare type_environment_binding
 
 let environment_element_definition_declaration {expression=ea;free_variables=fa} {expression=eb;free_variables=fb} =
   cmp2
@@ -360,7 +360,7 @@ and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
     expression_variable eva evb
     environment_element eea eeb
 
-and expression_environment a b = List.compare ~compare:environment_binding a b
+and expression_environment a b = List.compare environment_binding a b
 
 and module_environment_binding {module_variable=mva;module_=ma}
                                {module_variable=mvb;module_=mb} =
@@ -368,7 +368,7 @@ and module_environment_binding {module_variable=mva;module_=ma}
     module_variable mva mvb
     environment    ma  mb
 
-and module_environment a b = List.compare ~compare:module_environment_binding a b
+and module_environment a b = List.compare module_environment_binding a b
 
 and environment {expression_environment=eea;type_environment=tea; module_environment=mea}
                 {expression_environment=eeb;type_environment=teb; module_environment=meb} =

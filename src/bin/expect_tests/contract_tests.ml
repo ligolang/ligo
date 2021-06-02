@@ -1598,7 +1598,7 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "uncurry_contract.mligo" ; "main" ] ;
   let output = [%expect.output] in
   let lines = String.split_on_char '\n' output in
-  let lines = List.take 8 lines in
+  let lines = List.take lines 8 in
   let output = String.concat "\n" lines in
   print_string output;
   [%expect {|

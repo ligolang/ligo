@@ -912,10 +912,10 @@ let modules_jsligo () : (unit, _) result =
   
 
 let record_ez_int names n =
-  e_record_ez @@ List.map (fun x -> x, e_int n) names
+  e_record_ez @@ List.map ~f:(fun x -> x, e_int n) names
 
 let tuple_ez_int names n =
-  e_tuple @@ List.map (fun _ -> e_int n) names
+  e_tuple @@ List.map ~f:(fun _ -> e_int n) names
 
 let multiple_parameters () : (unit, _) result  =
   let* program = type_file "./contracts/multiple-parameters.ligo" in
@@ -923,7 +923,7 @@ let multiple_parameters () : (unit, _) result  =
     let make_output' = fun n -> e_int @@ make_output n in
     expect_eq_n program name make_input make_output'
   in
-  let* _ = bind_list @@ List.map aux [
+  let* _ = bind_list @@ List.map ~f:aux [
       ("ab", tuple_ez_int ["a";"b"], fun n -> 2 * n) ;
       ("abcd", tuple_ez_int ["a";"b";"c";"d"], fun n -> 4 * n + 2) ;
       ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
@@ -936,7 +936,7 @@ let multiple_parameters_mligo () : (unit, _) result  =
     let make_output' = fun n -> e_int @@ make_output n in
     expect_eq_n program name make_input make_output'
   in
-  let* _ = bind_list @@ List.map aux [
+  let* _ = bind_list @@ List.map ~f:aux [
       (* Didn't include the other tests because they're probably not necessary *)
       ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
     ] in
@@ -948,7 +948,7 @@ let multiple_parameters_religo () : (unit, _) result  =
     let make_output' = fun n -> e_int @@ make_output n in
     expect_eq_n program name make_input make_output'
   in
-  let* _ = bind_list @@ List.map aux [
+  let* _ = bind_list @@ List.map ~f:aux [
       (* Didn't include the other tests because they're probably not necessary *)
       ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
     ] in
@@ -960,7 +960,7 @@ let multiple_parameters_jsligo () : (unit, _) result  =
     let make_output' = fun n -> e_int @@ make_output n in
     expect_eq_n program name make_input make_output'
   in
-  let* _ = bind_list @@ List.map aux [
+  let* _ = bind_list @@ List.map ~f:aux [
       (* Didn't include the other tests because they're probably not necessary *)
       ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
     ] in
@@ -1153,7 +1153,7 @@ let record_jsligo () : (unit, _) result  =
 let tuple () : (unit, _) result  =
   let* program = type_file "./contracts/tuple.ligo" in
   let ez n =
-    e_tuple (List.map e_int n) in
+    e_tuple (List.map ~f:e_int n) in
   let* () =
     let expected = ez [0 ; 0] in
     expect_eq_evaluate program "fb" expected
@@ -1192,7 +1192,7 @@ let tuple () : (unit, _) result  =
 let tuple_mligo () : (unit, _) result  =
   let* program = type_file "./contracts/tuple.mligo" in
   let ez n =
-    e_tuple (List.map e_int n) in
+    e_tuple (List.map ~f:e_int n) in
   let* () =
     let expected = ez [0 ; 0] in
     expect_eq_evaluate program "fb" expected
@@ -1217,7 +1217,7 @@ let tuple_mligo () : (unit, _) result  =
 let tuple_religo () : (unit, _) result  =
   let* program = type_file "./contracts/tuple.religo" in
   let ez n =
-    e_tuple (List.map e_int n) in
+    e_tuple (List.map ~f:e_int n) in
   let* () =
     let expected = ez [0 ; 0] in
     expect_eq_evaluate program "fb" expected
@@ -1241,7 +1241,7 @@ let tuple_religo () : (unit, _) result  =
 let tuple_jsligo () : (unit, _) result  =
   let* program = type_file "./contracts/tuple.jsligo" in
   let ez n =
-    e_tuple (List.map e_int n) in
+    e_tuple (List.map ~f:e_int n) in
   let* () =
     let expected = ez [0 ; 0] in
     expect_eq_evaluate program "fb" expected
@@ -1318,7 +1318,7 @@ let jsoption () : (unit, _) result =
 let map_ type_f path : (unit, _) result =
   let* program = type_f path in
   let ez lst =
-    let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
+    let lst' = List.map ~f:(fun (x, y) -> e_int x, e_int y) lst in
     e_typed_map lst' (t_int ()) (t_int ())
   in
    let* () =
@@ -1354,7 +1354,7 @@ let map_ type_f path : (unit, _) result =
     expect_eq program "patch_deep" input expected
   in
   let* () =
-    let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
+    let make_input = fun n -> ez List.(map ~f:(fun x -> (x, x)) @@ range 0 n) in
     let make_expected = e_nat in
     expect_eq_n_strict_pos_small program "size_" make_input make_expected
   in
@@ -1374,7 +1374,7 @@ let map_ type_f path : (unit, _) result =
   let* () = expect_eq_evaluate program "empty_map"
     (e_annotation (e_map []) (t_map (t_int()) (t_int()))) in
   let* () =
-    let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
+    let expected = ez @@ List.map ~f:(fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
     expect_eq_evaluate program "map1" expected
   in
   let* () =
@@ -1406,7 +1406,7 @@ let map_ type_f path : (unit, _) result =
 let big_map_ type_f path : (unit, _) result =
   let* program = type_f path in
   let ez lst =
-    let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
+    let lst' = List.map ~f:(fun (x, y) -> e_int x, e_int y) lst in
     (e_typed_big_map lst' (t_int ()) (t_int()))
   in
   let* () =
@@ -1450,7 +1450,7 @@ let list () : (unit, _) result =
   Format.printf "Pre_type \n%!";
   let* program = type_file "./contracts/list.ligo" in
   let ez lst =
-    let lst' = List.map e_int lst in
+    let lst' = List.map ~f:e_int lst in
     e_typed_list lst' (t_int ())
   in
   Format.printf "Post_type \n%!";
@@ -1475,7 +1475,7 @@ let list () : (unit, _) result =
     expect_eq_evaluate program "fb_tail" expected
   in
   let* () =
-    let make_input = fun n -> (ez @@ List.range n) in
+    let make_input = fun n -> (ez @@ List.range 0 n) in
     let make_expected = e_nat in
     expect_eq_n_strict_pos_small program "size_" make_input make_expected
   in
@@ -1735,7 +1735,7 @@ let loop18 () : (unit, _) result =
   let input = e_unit () in
   let* () =
     let ez lst =
-      let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
+      let lst' = List.map ~f:(fun (x, y) -> e_string x, e_int y) lst in
         e_typed_map lst' (t_string ()) (t_int ())
     in
     let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
@@ -1802,7 +1802,7 @@ let loop () : (unit, _) result =
     expect_eq program "inner_capture_in_conditional_block"  input expected in
   let* () =
     let ez lst =
-      let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
+      let lst' = List.map ~f:(fun (x, y) -> e_string x, e_int y) lst in
         e_typed_map lst' (t_string ()) (t_int ())
     in
     let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
@@ -1929,7 +1929,7 @@ let loop2_jsligo () : (unit, _) result =
     expect_eq program "inner_capture_in_conditional_block"  input expected in
   let* () =
     let ez lst =
-      let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
+      let lst' = List.map ~f:(fun (x, y) -> e_string x, e_int y) lst in
         e_typed_map lst' (t_string ()) (t_int ())
     in
     let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
@@ -1976,7 +1976,7 @@ let matching () : (unit, _) result =
       [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None]
   in
   let* () =
-    let aux lst = e_annotation (e_list @@ List.map e_int lst) (t_list (t_int ())) in
+    let aux lst = e_annotation (e_list @@ List.map ~f:e_int lst) (t_list (t_int ())) in
     let* () = expect_eq program "match_expr_list" (aux [ 14 ; 2 ; 3 ]) (e_int 14) in
     let* () = expect_eq program "match_expr_list" (aux [ 13 ; 2 ; 3 ]) (e_int 13) in
     let* () = expect_eq program "match_expr_list" (aux []) (e_int (-1)) in
@@ -2356,7 +2356,7 @@ let match_matej_js () : (unit, _) result =
 let mligo_list () : (unit, _) result =
   let* program = type_file "./contracts/list.mligo" in
   let* () = expect_eq program "size_" (e_list [e_int 0; e_int 1; e_int 2]) (e_nat 3) in
-  let aux lst = e_list @@ List.map e_int lst in
+  let aux lst = e_list @@ List.map ~f:e_int lst in
   let* () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
   let* () = expect_eq program "fold_left"  (aux [ 1 ; 2 ; 3 ]) (aux [ 3 ; 2 ; 1 ]) in
   let* () = expect_eq program "fold_right" (aux [ 1 ; 2 ; 3 ]) (aux [ 1 ; 2 ; 3 ]) in
@@ -2371,8 +2371,8 @@ let mligo_list () : (unit, _) result =
     expect_eq_n program "main" make_input make_expected
   in
   let* () = expect_eq_evaluate program "x" (e_list []) in
-  let* () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
-  let* () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let* () = expect_eq_evaluate program "y" (e_list @@ List.map ~f:e_int [3 ; 4 ; 5]) in
+  let* () = expect_eq_evaluate program "z" (e_list @@ List.map ~f:e_int [2 ; 3 ; 4 ; 5]) in
   let* () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let* () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ok ()
@@ -2380,7 +2380,7 @@ let mligo_list () : (unit, _) result =
 let religo_list () : (unit, _) result =
   let* program = type_file "./contracts/list.religo" in
   let* () = expect_eq program "size_" (e_list [e_int 0; e_int 1; e_int 2]) (e_nat 3) in
-  let aux lst = e_list @@ List.map e_int lst in
+  let aux lst = e_list @@ List.map ~f:e_int lst in
   let* () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
   let* () =
     let make_input n =
@@ -2393,8 +2393,8 @@ let religo_list () : (unit, _) result =
     expect_eq_n program "main" make_input make_expected
   in
   let* () = expect_eq_evaluate program "x" (e_list []) in
-  let* () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
-  let* () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let* () = expect_eq_evaluate program "y" (e_list @@ List.map ~f:e_int [3 ; 4 ; 5]) in
+  let* () = expect_eq_evaluate program "z" (e_list @@ List.map ~f:e_int [2 ; 3 ; 4 ; 5]) in
   let* () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let* () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ok ()
@@ -2402,7 +2402,7 @@ let religo_list () : (unit, _) result =
 let jsligo_list () : (unit, _) result =
   let* program = type_file "./contracts/list.jsligo" in
   let* () = expect_eq program "size_" (e_list [e_int 0; e_int 1; e_int 2]) (e_nat 3) in
-  let aux lst = e_list @@ List.map e_int lst in
+  let aux lst = e_list @@ List.map ~f:e_int lst in
   let* () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
   let* () =
     let make_input n =
@@ -2415,8 +2415,8 @@ let jsligo_list () : (unit, _) result =
     expect_eq_n program "main" make_input make_expected
   in
   let* () = expect_eq_evaluate program "x" (e_list []) in
-  let* () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
-  let* () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let* () = expect_eq_evaluate program "y" (e_list @@ List.map ~f:e_int [3 ; 4 ; 5]) in
+  let* () = expect_eq_evaluate program "z" (e_list @@ List.map ~f:e_int [2 ; 3 ; 4 ; 5]) in
   let* () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let* () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ok ()
@@ -2718,10 +2718,10 @@ let amount_jsligo () : (unit, _) result =
 let addr_test program =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let addr = Protocol.Alpha_context.Contract.to_b58check @@
-      (List.nth dummy_environment.identities 0).implicit_contract in
+      (List.nth_exn dummy_environment.identities 0).implicit_contract in
   let open Tezos_crypto in
   let key_hash = Signature.Public_key_hash.to_b58check @@
-      (List.nth dummy_environment.identities 0).public_key_hash in
+      (List.nth_exn dummy_environment.identities 0).public_key_hash in
   expect_eq program "main" (e_key_hash key_hash) (e_address addr)
 
 let address () : (unit, _) result =
@@ -3126,7 +3126,7 @@ let bytes_unpack () : (unit, _) result =
   let* () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let addr = Protocol.Alpha_context.Contract.to_b58check @@
-      (List.nth dummy_environment.identities 0).implicit_contract in
+      (List.nth_exn dummy_environment.identities 0).implicit_contract in
   let* () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
@@ -3136,7 +3136,7 @@ let bytes_unpack_mligo () : (unit, _) result =
   let* () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let addr = Protocol.Alpha_context.Contract.to_b58check @@
-      (List.nth dummy_environment.identities 0).implicit_contract in
+      (List.nth_exn dummy_environment.identities 0).implicit_contract in
   let* () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
@@ -3146,7 +3146,7 @@ let bytes_unpack_religo () : (unit, _) result =
   let* () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let addr = Protocol.Alpha_context.Contract.to_b58check @@
-      (List.nth dummy_environment.identities 0).implicit_contract in
+      (List.nth_exn dummy_environment.identities 0).implicit_contract in
   let* () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
@@ -3156,7 +3156,7 @@ let bytes_unpack_jsligo () : (unit, _) result =
   let* () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let addr = Protocol.Alpha_context.Contract.to_b58check @@
-      (List.nth dummy_environment.identities 0).implicit_contract in
+      (List.nth_exn dummy_environment.identities 0).implicit_contract in
   let* () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 

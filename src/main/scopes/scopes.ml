@@ -40,7 +40,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         | Some Module m -> Def_map.find_opt binder m.content
         | _ -> None
       in
-      let def = List.fold_left aux env_opt (snd binders) in
+      let def = List.fold_left ~f:aux ~init:env_opt (snd binders) in
       let env = match def with 
         | Some def -> Def_map.add alias def env
         | None -> env
@@ -74,7 +74,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         let all_defs = merge_defs env all_defs in
         (i,all_defs,scopes)
       in
-      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) cases in
+      let (i,all_defs,scopes) = List.fold_left ~f:aux ~init:(i,all_defs,scopes) cases in
       (i,all_defs,env,scopes)
     )
     | E_record emap -> (
@@ -82,7 +82,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) bindings exp in
         (i,all_defs,scopes)
       in
-      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) (Ast_core.LMap.to_list emap) in
+      let (i,all_defs,scopes) = List.fold_left ~f:aux ~init:(i,all_defs,scopes) (Ast_core.LMap.to_list emap) in
       (i,all_defs,env,scopes)
     )
     | E_record_update { record ; update ; _ } -> (
@@ -95,7 +95,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) bindings exp in
         (i,all_defs,scopes)
       in
-      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) arguments in
+      let (i,all_defs,scopes) = List.fold_left ~f:aux ~init:(i,all_defs,scopes) arguments in
       (i,all_defs,env,scopes)
     )
     | E_application { lamb ; args } -> (
@@ -161,7 +161,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
           | Some Module m -> Def_map.find_opt binder m.content
           | _ -> None
         in
-        let def = List.fold_left aux env_opt (snd binders) in
+        let def = List.fold_left ~f:aux ~init:env_opt (snd binders) in
         let top_def_map = match def with 
           | Some def -> Def_map.add alias def top_def_map
           | None -> top_def_map
@@ -171,7 +171,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     in
 
     let init = { m = [] ; bindings = Bindings_map.empty } in
-    List.fold_left aux (i, Def_map.empty, Def_map.empty, [], init) core_prg 
+    List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg 
   in
   let (_,top_d,inner_d,s,_) = declaration 0 core_prg in
   let d = Def_map.union merge_refs top_d inner_d in

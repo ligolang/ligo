@@ -16,7 +16,7 @@ let warn_str (display_format:ex_display_format) a : string =
   match t with
   | Human_readable | Dev as t ->
      Format.asprintf "%a\n" (Simple_utils.PP_helpers.list_sep (Main_errors.Formatter.error_format.pp ~display_format:t) (Simple_utils.PP_helpers.tag "")) a
-  | Json -> let _json = a |> List.map Main_errors.Formatter.error_format.to_json in
+  | Json -> let _json = a |> List.map ~f:Main_errors.Formatter.error_format.to_json in
             let s = Yojson.Safe.pretty_to_string @@ `List _json in
             Format.asprintf "%s\n" s
 

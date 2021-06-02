@@ -6,8 +6,8 @@ open Db_index_tests_common
 
 (* can't be defined easily in MultiSet.ml because it doesn't have access to List.compare ~cmp  *)
 let multiset_compare a b =
-  let ab = List.compare ~compare:(MultiSet.get_compare a) (MultiSet.elements a) (MultiSet.elements b) in
-  let ba = List.compare ~compare:(MultiSet.get_compare b) (MultiSet.elements a) (MultiSet.elements b) in
+  let ab = List.compare (MultiSet.get_compare a) (MultiSet.elements a) (MultiSet.elements b) in
+  let ba = List.compare (MultiSet.get_compare b) (MultiSet.elements a) (MultiSet.elements b) in
   if ab != ba
   then failwith "Internal error: bad test: sets being compared have different comparison functions!"
   else ab
@@ -23,9 +23,9 @@ module Grouped_by_variable_tests = struct
     | _ -> tv
 
   let cmp x y =
-    List.compare ~compare:(Pair.compare Var.compare multiset_compare)
-      (List.filter (fun (_,s) -> not (MultiSet.is_empty s)) x)
-      (List.filter (fun (_,s) -> not (MultiSet.is_empty s)) y)
+    List.compare (Pair.compare Var.compare multiset_compare)
+      (List.filter ~f:(fun (_,s) -> not (MultiSet.is_empty s)) x)
+      (List.filter ~f:(fun (_,s) -> not (MultiSet.is_empty s)) y)
   let same_state' loc (expected : _ t_for_tests) (actual : _ t_for_tests) =
     let expected_actual_str =
       let open PP_helpers in
@@ -81,14 +81,14 @@ let merge ~demoted_repr ~new_repr repr state =
 
 type nonrec t_for_tests = type_variable Grouped_by_variable.t_for_tests
 
-let filter_only_ctors  = List.filter_map (function Ast_core.Types.SC_Constructor c -> Some c | _ -> None)
-let filter_only_rows   = List.filter_map (function Ast_core.Types.SC_Row         c -> Some c | _ -> None)
-let filter_only_polys  = List.filter_map (function Ast_core.Types.SC_Poly        c -> Some c | _ -> None)
-let filter_only_access_labels = List.filter_map (function Ast_core.Types.SC_Access_label c -> Some c | _ -> None)
-let to_ctor_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_constructor_simpl (filter_only_ctors cs))))
-let to_row_sets  = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_row_simpl         (filter_only_rows  cs))))
-let to_poly_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_poly_simpl        (filter_only_polys cs))))
-let to_access_label_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_access_label_simpl (filter_only_access_labels cs))))
+let filter_only_ctors  = List.filter_map ~f:(function Ast_core.Types.SC_Constructor c -> Some c | _ -> None)
+let filter_only_rows   = List.filter_map ~f:(function Ast_core.Types.SC_Row         c -> Some c | _ -> None)
+let filter_only_polys  = List.filter_map ~f:(function Ast_core.Types.SC_Poly        c -> Some c | _ -> None)
+let filter_only_access_labels = List.filter_map ~f:(function Ast_core.Types.SC_Access_label c -> Some c | _ -> None)
+let to_ctor_sets = List.map ~f:(fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_constructor_simpl (filter_only_ctors cs))))
+let to_row_sets  = List.map ~f:(fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_row_simpl         (filter_only_rows  cs))))
+let to_poly_sets = List.map ~f:(fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_poly_simpl        (filter_only_polys cs))))
+let to_access_label_sets = List.map ~f:(fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_core.Compare.c_access_label_simpl (filter_only_access_labels cs))))
 
 let assert_states_equal
     loc

@@ -9,7 +9,7 @@ let unwrap : type a . a Location.wrap -> a = Location.unwrap
 open Operators.Simplify.Cameligo
 
 let type_variable : string -> O.type_expression result = fun str ->
-  match List.assoc_opt str type_constants with
+  match List.Assoc.find str type_constants with
   | Some s -> ok @@ O.T_constant (s , [])
   | None -> ok @@ O.T_variable str
 
@@ -122,7 +122,7 @@ let rec type_expression : I.type_expression -> O.type_expression result = fun te
       ok @@ unwrap tv'
   | T_tuple lst ->
       let%bind lst' = bind_map_list (bind_map_location type_expression) lst in
-      ok @@ O.T_tuple (List.map unwrap lst')
+      ok @@ O.T_tuple (List.map ~f:unwrap lst')
   | T_paren p ->
       let%bind p' = bind_map_location type_expression p in
       ok @@ unwrap p'
@@ -133,7 +133,7 @@ let rec type_expression : I.type_expression -> O.type_expression result = fun te
       in
       let%bind r' = bind_map_list (bind_map_location aux) r in
       let te_map =
-        let lst = List.map ((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
+        let lst = List.map ~f:((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
         let open Map.String in
         List.fold_left (fun prec (k , v) -> add k v prec) empty lst
       in
@@ -142,7 +142,7 @@ let rec type_expression : I.type_expression -> O.type_expression result = fun te
       let%bind arg' = bind_map_location type_expression arg in
       match unwrap f with
         | I.T_variable v -> (
-            match List.assoc_opt v.wrap_content type_constants with
+            match List.Assoc.find v.wrap_content type_constants with
             | Some s -> (
                 match arg'.wrap_content with
                 | T_tuple lst -> ok @@ O.T_constant (s , lst)
@@ -172,7 +172,7 @@ let restricted_type_expression : I.restricted_type_expression -> O.type_expressi
 let rec expression : I.expression -> O.expression result = fun e ->
   match e with
   | I.E_sequence lst -> (
-      let%bind lst' = bind_map_list expression @@ List.map unwrap lst in
+      let%bind lst' = bind_map_list expression @@ List.map ~f:unwrap lst in
       match lst' with
       | [] -> simple_fail "empty sequence"
       | hd :: tl -> ok @@ List.fold_right' (fun prec cur -> e_sequence prec cur) hd tl
@@ -224,7 +224,7 @@ and match_
     let%bind clauses' =
       let%bind clauses =
         bind_map_list get_e_match_clause
-        @@ List.map unwrap clauses in
+        @@ List.map ~f:unwrap clauses in
       let aux (x , y) =
         let x' = unwrap x in
         let%bind y' = expression @@ of_no_match @@ unwrap y in
@@ -243,7 +243,7 @@ and record
         ok (s, e')
   in
   let%bind r' = bind_map_list (bind_map_location aux) r in
-  let lst = List.map ((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
+  let lst = List.map ~f:((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
   ok @@ O.(e_ez_record lst)
 
 and expression_main : I.expression_main Location.wrap -> O.expression result = fun em ->
@@ -327,13 +327,13 @@ and expression_main : I.expression_main Location.wrap -> O.expression result = f
   | Eh_assign x ->
       simple_binop "ASSIGN" x
   | Eh_accessor (src , path) ->
-      ok @@ O.(e_accessor_props (e_variable (unwrap src)) (List.map unwrap path))
+      ok @@ O.(e_accessor_props (e_variable (unwrap src)) (List.map ~f:unwrap path))
   | Eh_bottom e ->
       expression (unwrap e)
 
 and identifier_application : (string Location.wrap) list * string Location.wrap -> O.expression option -> _ result = fun (lst , v) param_opt ->
-  let constant_name = String.concat "." ((List.map unwrap lst) @ [unwrap v]) in
-  match List.assoc_opt constant_name constants , param_opt with
+  let constant_name = String.concat "." ((List.map ~f:unwrap lst) @ [unwrap v]) in
+  match List.Assoc.find constant_name constants , param_opt with
   | Some s , None -> ok O.(e_constant s [])
   | Some s , Some param -> (
       let params =
@@ -405,7 +405,7 @@ let let_entry : _ -> _ result = fun l ->
         (e_accessor (e_variable arguments_name) [ Access_tuple i ])
         expr
     in
-    let lst = List.mapi aux [ (param_name , param_ty) ; ((unwrap storage_name) , storage_ty)] in
+    let lst = List.mapi ~f:aux [ (param_name , param_ty) ; ((unwrap storage_name) , storage_ty)] in
     fun expr -> List.fold_right' (fun prec cur -> cur prec) expr lst
   in
   let%bind result = expression (unwrap e) in

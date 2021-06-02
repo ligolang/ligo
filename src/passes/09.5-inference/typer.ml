@@ -289,7 +289,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
         ok ((e,state, c @ constraints),(l,t))
       ) (e,state,[]) lst
     in
-    let lst,lst_annot = List.split lst in
+    let lst,lst_annot = List.unzip lst in
     let wrapped = Wrap.constant cons_name t lst_annot in
     return_wrapped (e_constant cons_name lst) e state constraints wrapped
 
@@ -340,8 +340,8 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
           | P_list (List pl) -> (
             let element_type = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_element_type" ()) in
             let list_type = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_list_type" ()) in
-            let* (ps,constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.split3 in
-            let nested_pattern_constraints = List.flatten constraints in
+            let* (ps,constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.unzip3 in
+            let nested_pattern_constraints = List.concat constraints in
             let whole_list_constraints = Wrap.match_lst element_type list_type in
             let all_els_same_type_constraints = Wrap.pattern_match_list element_type ts in
             let constraints' = all_els_same_type_constraints @ whole_list_constraints @ nested_pattern_constraints in
@@ -386,20 +386,20 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
           )
           | P_record (labels,pl) -> (
             let fresh = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_record" ()) in
-            let* (pl,all_fields_constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.split3 in
-            let lm = O.LMap.of_list (List.combine labels ts) in
+            let* (pl,all_fields_constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.unzip3 in
+            let lm = O.LMap.of_list (List.zip_exn labels ts) in
             let record_contraints = Wrap.match_record lm fresh in
-            let constraints = record_contraints @ (List.flatten all_fields_constraints) in
+            let constraints = record_contraints @ (List.concat all_fields_constraints) in
             let x = {x with wrap_content = O.P_record (labels,pl)} in
             ok (x, constraints, fresh)
           )
           | P_tuple pl -> (
-            let labels = List.mapi (fun i _ -> O.Label (string_of_int i)) pl in
+            let labels = List.mapi ~f:(fun i _ -> O.Label (string_of_int i)) pl in
             let fresh = t_variable (Typesystem.Core.fresh_type_variable ~name:"match_record" ()) in
-            let* (pl,all_fields_constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.split3 in
-            let lm = O.LMap.of_list (List.combine labels ts) in
+            let* (pl,all_fields_constraints,ts) = bind_map_list gather_constraints_from_pattern pl >>|? List.unzip3 in
+            let lm = O.LMap.of_list (List.zip_exn labels ts) in
             let record_contraints = Wrap.match_record lm fresh in
-            let constraints = record_contraints @ (List.flatten all_fields_constraints) in
+            let constraints = record_contraints @ (List.concat all_fields_constraints) in
             let x = {x with wrap_content = O.P_tuple pl} in
             ok (x, constraints, fresh)
           )
@@ -425,9 +425,9 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
 
     let* (e,state,matchee,matchee_t),constraints_matchee = self e state matchee in
     let* ((state,env),x) = bind_fold_map_list type_match_case (state,e) cases in
-    let (cases,cases_constraints,ts) = List.split3 x in
-    let (pattern_ts,body_ts) = List.split ts in
-    let constraints_cases = List.flatten cases_constraints in
+    let (cases,cases_constraints,ts) = List.unzip3 x in
+    let (pattern_ts,body_ts) = List.unzip ts in
+    let constraints_cases = List.concat cases_constraints in
     let (cs,wrapped) = Wrap.match_cases body_ts pattern_ts matchee_t in
     let constraints = constraints_matchee @ constraints_cases in
     return_wrapped (e_matching matchee cases) env state constraints (cs,wrapped)
@@ -615,7 +615,7 @@ and type_and_subst : type a b.
         (* let () = Format.eprintf "\ncstr : %a(was %a) %a(was %a)\n" Ast_core.PP.type_variable tv_root Ast_core.PP.type_variable tv Ast_core.PP.type_variable root Ast_core.PP.type_variable variable in *)
         let () = assert (Var.equal tv_root root) in
         let* (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
-        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map O.t_variable tv_list)) in
+        Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map ~f:O.t_variable tv_list)) in
         let () = (if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_core.PP.type_content expr) in
         ok @@ expr
       | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_ } ->

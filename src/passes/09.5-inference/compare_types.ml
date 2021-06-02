@@ -9,7 +9,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       fail @@ different_types a b
     else
       trace (fun _ -> different_types a b)
-      @@ bind_list_iter assert_type_expression_eq (List.combine lsta lstb)
+      @@ bind_list_iter assert_type_expression_eq (List.zip_exn lsta lstb)
   )
   | T_app _, _ -> fail @@ different_types a b
   | T_sum sa, T_sum sb -> (
@@ -26,7 +26,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
         sa' sb'
       in
       trace (fun _ -> different_types a b) @@
-      bind_list_iter aux (List.combine sa' sb')
+      bind_list_iter aux (List.zip_exn sa' sb')
     )
   | T_sum _, _ -> fail @@ different_types a b
   | T_record ra, T_record rb
@@ -34,7 +34,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     fail @@ different_types a b
   )
   | T_record ra, T_record rb -> (
-      let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
+      let sort_lmap r' = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) r' in
       let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.fields in
       let rb' = sort_lmap @@ LMap.to_kv_list_rev rb.fields in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
@@ -51,7 +51,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let* _ =
         Assert.assert_list_same_size (different_types a b) ra' rb' in
       trace (fun _ -> different_types a b)
-      @@ bind_list_iter aux (List.combine ra' rb')
+      @@ bind_list_iter aux (List.zip_exn ra' rb')
 
     )
   | T_record _, _ -> fail @@ different_types a b

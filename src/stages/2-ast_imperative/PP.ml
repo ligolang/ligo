@@ -8,22 +8,22 @@ include Stage_common.PP
 (* TODO: move to common *)
 let lmap_sep value sep ppf m =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 
 let attributes_2 (attr: string list) : string =
-  List.map (fun s -> "[@@" ^ s ^ "]") attr |> String.concat ""
+  List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat ""
 
 let attributes_1 (attr: string list) : string =
-  List.map (fun s -> "[@" ^ s ^ "]") attr |> String.concat ""
+  List.map ~f:(fun s -> "[@" ^ s ^ "]") attr |> String.concat ""
 
 
 let record_sep_t value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type; attributes; _}) =
     let attr = attributes_2 attributes in
     fprintf ppf "@[<h>%a -> %a %s@]" label k value associated_type attr
@@ -98,7 +98,7 @@ and expression_content ppf (ec : expression_content) =
 
 and attributes ppf attributes =
   let attr =
-    List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
+    List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
   in fprintf ppf "%s" attr
 
 let declaration ppf (d : declaration) = declaration expression type_expression ppf d

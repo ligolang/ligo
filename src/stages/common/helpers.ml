@@ -42,10 +42,10 @@ let range i j =
   aux i j []
 
 let label_range i j =
-  List.map (fun i -> Label (string_of_int i)) @@ range i j
+  List.map ~f:(fun i -> Label (string_of_int i)) @@ range i j
 
 let is_tuple_lmap m =
-  List.for_all (fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
+  List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
 let get_pair m =
   match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
@@ -56,13 +56,13 @@ let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let label = Label (string_of_int i) in
     let opt = LMap.find_opt (label) m in
-    Option.bind (fun opt -> Some ((label,opt),i+1)) opt
+    Option.bind ~f:(fun opt -> Some ((label,opt),i+1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
 let list_of_record_or_tuple (m: _ LMap.t) =
   if (is_tuple_lmap m) then
-    List.map snd @@ tuple_of_record m
+    List.map ~f:snd @@ tuple_of_record m
   else
     LMap.to_list m
 
@@ -81,14 +81,14 @@ let rec fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
     | P_list lp -> (
       match lp with
       | Cons (pa,pb) -> fold_pattern f (fold_pattern f acc' pb) pa
-      | List lp -> List.fold_left (fold_pattern f) acc' lp 
+      | List lp -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp 
     )
     | P_variant (_,p) -> fold_pattern f acc' p
-    | P_tuple lp -> List.fold_left (fold_pattern f) acc' lp
-    | P_record (_,lp) -> List.fold_left (fold_pattern f) acc' lp
+    | P_tuple lp -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp
+    | P_record (_,lp) -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp
 
 open Trace
-let fold_pattern_list f acc l = List.fold_left (fold_pattern f) acc l
+let fold_pattern_list f acc l = List.fold_left ~f:(fold_pattern f) ~init:acc l
 
 let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern -> ('b pattern, 'err) result =
   fun f p ->

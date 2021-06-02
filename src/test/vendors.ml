@@ -8,7 +8,7 @@ let uniq lst =
     if Set.mem e s then (s,lst)
     else (Set.add e s, e::lst)
   in
-  let _,lst = List.fold_left aux (s,[]) lst in
+  let _,lst = List.fold_left ~f:aux ~init:(s,[]) lst in
   lst
 let redblack () =
   let open RedBlackTrees in
@@ -24,19 +24,19 @@ let redblack () =
   in
   let lst = uniq @@ aux [] 1 in
   (*Add test*)
-  let tree = List.fold_left (
+  let tree = List.fold_left ~f:(
     fun tree e ->
       let tree = RedBlack.add ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) RedBlack.New e tree in
       if not @@ RedBlack.is_legal tree then failwith "Unbalanced tree";
       tree
-  ) tree lst in
+  ) ~init:tree lst in
   (* Removal test *)
-  let _ = List.fold_left (
+  let _ = List.fold_left ~f:(
     fun tree e ->
       let tree = RedBlack.delete ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) e tree in
       if not @@ RedBlack.is_legal tree then failwith "Unbalanced tree";
       tree
-  ) tree lst in
+  ) ~init:tree lst in
   ok ()
 
 

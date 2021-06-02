@@ -40,7 +40,7 @@ let application : ('acc -> 'a -> ('acc,_) result) -> 'acc -> 'a application -> (
   let* acc = f acc args in
   ok @@ acc
 
-let option f acc = map (Option.unopt ~default:acc) <@ bind_map_option (f acc)
+let option f acc = Trace.map ~f:(Option.value ~default:acc) <@ bind_map_option (f acc)
 
 let binder : ('acc -> 'a -> ('acc, _) result) -> 'acc -> 'a binder -> ('acc, _) result
 = fun f acc {var=_; ascr; attributes=_} ->

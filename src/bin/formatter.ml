@@ -4,10 +4,10 @@ let declarations_ppformat ~display_format f (source_file,decls) =
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file ;
-    List.iter (fun decl -> Format.fprintf f "%s\n" decl) decls
+    List.iter ~f: (fun decl -> Format.fprintf f "%s\n" decl) decls
 
 let declarations_jsonformat (source_file,decls) : json =
-  let json_decl = List.map (fun decl -> `String decl) decls in
+  let json_decl = List.map ~f:(fun decl -> `String decl) decls in
   `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
 
 let declarations_format : 'a format = {

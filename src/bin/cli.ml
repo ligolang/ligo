@@ -245,7 +245,7 @@ let compile_file =
 let preprocess =
   let f source_file syntax display_format =
     return_result ~display_format (Parsing.Formatter.ppx_format) @@
-      map fst @@
+      Trace.map ~f:fst @@
         let options   = Compiler_options.make () in
         let* meta = Compile.Of_source.extract_meta syntax source_file in
         Compile.Of_source.compile ~options ~meta source_file

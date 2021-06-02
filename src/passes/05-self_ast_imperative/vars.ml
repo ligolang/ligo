@@ -4,8 +4,8 @@ open Ast_imperative
 open Trace
 
 let get_of m l =
-  List.filter_map (fun v ->
-      match List.find_opt (fun d -> compare_vars v d = 0) l with
+  List.filter_map ~f:(fun v ->
+      match List.find ~f:(fun d -> compare_vars v d = 0) l with
       | Some d -> Some (d.location, v)
       | None -> None) m
 
@@ -38,10 +38,10 @@ let rec capture_expression : ?vars:expression_variable list -> expression -> (ex
                    | E_matching {matchee;cases} ->
                       let f {pattern;body} =
                         let all_pattern_vars = get_pattern pattern in
-                        let vars = List.fold_right remove_from all_pattern_vars vars in
+                        let vars = List.fold_right ~f:remove_from all_pattern_vars ~init:vars in
                         let const_pattern_vars = get_pattern ~pred:is_var pattern in
                         let vars =
-                          List.fold_right (add_binder true) const_pattern_vars vars in
+                          List.fold_right ~f:(add_binder true) const_pattern_vars ~init:vars in
                         self ~vars body in
                       let* _ = self ~vars matchee in
                       let* _ = bind_map_list f cases in

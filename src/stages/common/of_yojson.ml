@@ -17,7 +17,7 @@ let err_bad_format =
 
 let bindings f g = function
   | `List xs ->
-     begin match Option.bind_map_list (binding f g) xs with
+     begin match Option.all @@ List.map ~f:(binding f g) xs with
      | None -> err_bad_format
      | Some xs -> Ok xs end
   | _ -> err_bad_format

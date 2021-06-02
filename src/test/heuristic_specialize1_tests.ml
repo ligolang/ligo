@@ -44,7 +44,7 @@ let selector_test : _ -> _ -> unit -> (unit,Main_errors.all) result =
   let repr = fun x -> x in
   let result = selector repr (!. c6) (grouped_by_variable state) in
   (* check that the selector returns a list containing the pair of constraints (1L, 6L) *)
-  let comparator = List.compare ~compare:comparator in
+  let comparator = List.compare comparator in
   tst_assert "expected the selector to return a list containg the pair of constraints (1L,6L) or (6L,1L)"
     (comparator result [{ a_k_var = !.. c6; poly = !.. c1 }] = 1)
 

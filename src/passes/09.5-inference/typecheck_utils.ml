@@ -9,13 +9,13 @@ open Solver_types
 module All_vars(Plugins : Plugins) = struct
   module Plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
   let all_vars (state : 'plugin_states typer_state) =
-    let from_aliases = List.flatten @@ UnionFind.Poly2.partitions state.aliases in
+    let from_aliases = List.concat @@ UnionFind.Poly2.partitions state.aliases in
     let aux1 : type_variable * constructor_or_row  -> type_variable list = fun (tv, cor) ->
       match cor with
       | `Constructor k -> tv :: k.tv :: k.tv_list
-      | `Row r -> tv :: r.tv :: List.map (fun {associated_variable} -> associated_variable) (LMap.to_list r.tv_map) in
-    let from_assignments = List.flatten @@ List.map
-      aux1
+      | `Row r -> tv :: r.tv :: List.map ~f:(fun {associated_variable} -> associated_variable) (LMap.to_list r.tv_map) in
+    let from_assignments = List.concat @@ List.map
+      ~f:aux1
       (Plugin_states.Assignments.bindings (Plugin_states.assignments state.plugin_states)#assignments)
     in
     let type_constraint_simpl_all_vars = function
@@ -31,9 +31,9 @@ module All_vars(Plugins : Plugins) = struct
           so only the args are returned *)
     | SC_Typeclass   tc -> tc.args                            (* TC(α, …) *)
     | SC_Access_label l  -> [l.tv; l.record_type]                   (* TC(α, …) *)
-    | SC_Row         r  -> r.tv :: List.map (fun {associated_variable} -> associated_variable) (LMap.to_list r.tv_map)      (* α = row(l -> β, …) *)
+    | SC_Row         r  -> r.tv :: List.map ~f:(fun {associated_variable} -> associated_variable) (LMap.to_list r.tv_map)      (* α = row(l -> β, …) *)
     in
-    let from_constraints = List.flatten @@ List.map type_constraint_simpl_all_vars @@ PolySet.elements state.all_constraints in
+    let from_constraints = List.concat @@ List.map ~f:type_constraint_simpl_all_vars @@ PolySet.elements state.all_constraints in
     let uniq lst = PolySet.elements (PolySet.add_list lst (PolySet.create ~cmp:Var.compare)).set in
     uniq (from_aliases @ from_assignments @ from_constraints)
 end
@@ -59,7 +59,7 @@ let other_check all_constraints assignments =
       else (*add the dependencies first, then our newfound variable if it is still new*) (
         match find_assignment repr_unification_var with
         | Some c_or_r ->
-          let args : type_variable list = match c_or_r with `Constructor k -> k.tv_list | `Row r -> List.map (fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map in
+          let args : type_variable list = match c_or_r with `Constructor k -> k.tv_list | `Row r -> List.map ~f:(fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map in
           let* (already_seen, tree) = bind_fold_map_list (fun already_seen tvar -> toposort already_seen tvar repr find_assignment) already_seen args in
           if Set.mem repr_unification_var already_seen then
             ok (already_seen, Compare_renaming.List tree)
@@ -120,7 +120,7 @@ let other_check all_constraints assignments =
 
       (*  3) reconstruct canonical form of map(χ,β), this gives us map(α,β)     (* just copy the k.ctor_tag and replace the k.ctor_args, can't fail by itself *) *)
       let map_args f cor : canon_constructor_or_row = match cor with
-        | `Constructor k -> `Constructor (object method c_tag = k.c_tag method tv_list = List.map f k.tv_list end)
+        | `Constructor k -> `Constructor (object method c_tag = k.c_tag method tv_list = List.map ~f:f k.tv_list end)
         | `Row r -> `Row (object method r_tag = r.r_tag method tv_map = LMap.map (fun {associated_variable=v} -> f v) r.tv_map end)
       in
       let canon_repr : canon_constructor_or_row = map_args lookup assigment in
@@ -151,7 +151,7 @@ let other_check all_constraints assignments =
         (* We know that variables are unique for their content here,
            so a simple Var.compare ensures equality of the whole
           type expression pointed to by that var *)
-        List.compare ~compare:Var.compare k1#tv_list k2#tv_list
+        List.compare Var.compare k1#tv_list k2#tv_list
       | (`Row         r1, `Row         r2) ->
         Ast_core.Compare.row_tag r1#r_tag r2#r_tag
         <? fun () ->

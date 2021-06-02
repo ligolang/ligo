@@ -20,7 +20,7 @@ open Ast_imperative
 
 let init_storage threshold counter pkeys =
   let keys = List.map
-    (fun el ->
+    ~f:(fun el ->
       let (_,pk_str,_) = str_keys el in
       e_key @@ pk_str)
     pkeys in
@@ -33,7 +33,7 @@ let init_storage threshold counter pkeys =
 
 let (first_owner , first_contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth dummy_environment.identities 0 in
+  let id = List.nth_exn dummy_environment.identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
@@ -75,7 +75,7 @@ let params counter payload keys is_validl f =
         chain_id_zero ] in
     let* signature = sign_message env msg sk in
     ok @@ (e_pair (e_key_hash pkh) (e_signature signature))::acc in
-  let* signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.combine keys is_validl) in
+  let* signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.zip_exn keys is_validl) in
   ok @@ e_record_ez [
       ("counter" , e_nat counter ) ;
       ("payload" , payload) ;

@@ -332,7 +332,7 @@ let fetch_contract_type : string -> module_fully_typed -> (contract_type, 'err) 
     | Declaration_module _
     | Module_alias _ -> None
   in
-  let main_decl_opt = List.find_map aux @@ List.rev m in
+  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let* main_decl =
     trace_option (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
@@ -351,7 +351,7 @@ let fetch_contract_type : string -> module_fully_typed -> (contract_type, 'err) 
        (* TODO: on storage/parameter : a| Some (typed_prg,_,_) ->
         let b = extract_variable_types typed_prg in
         let () = Format.printf "\n EXTRACT \n" in
-        let () = List.iter (fun (v,te) -> Format.printf "%a  --  %a\n" Ast_typed.PP.expression_variable v Ast_typed.PP.type_expression te) b in
+        let () = List.iter ~f: (fun (v,te) -> Format.printf "%a  --  %a\n" Ast_typed.PP.expression_variable v Ast_typed.PP.type_expression te) b in
         let () = Format.printf "length : %d\n" (List.length b) in
       ssert_storable, assert_passable ? *)
        ok { parameter ; storage }

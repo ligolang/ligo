@@ -9,7 +9,7 @@ let make_t ?(loc = Location.generated) type_content = {type_content; location=lo
 
 let tuple_to_record lst =
   let aux (i,acc) el = (i+1,(string_of_int i, el)::acc) in
-  let (_, lst ) = List.fold_left aux (0,[]) lst in
+  let (_, lst ) = List.fold_left ~f:aux ~init:(0,[]) lst in
   lst
 
 let t_variable ?loc variable : type_expression = make_t ?loc @@ T_variable variable
@@ -31,7 +31,7 @@ let t_timestamp ?loc ()   : type_expression = t_variable ?loc v_timestamp
 let t_option ?loc o       : type_expression = t_app ?loc v_option [o]
 let t_list ?loc t         : type_expression = t_app ?loc v_list [t]
 let t_record_ez ?loc lst =
-  let lst = List.map (fun (k, v) -> (Label k, v)) lst in
+  let lst = List.map ~f:(fun (k, v) -> (Label k, v)) lst in
   let fields = LMap.of_list lst in
   make_t ?loc @@ T_record {fields ; attributes=[]}
 let t_record ?loc m  : type_expression =
@@ -45,7 +45,7 @@ let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record ls
 
 let t_sum_ez ?loc (lst:((string * ty_expr row_element) list)) : type_expression =
   let aux prev (k, v) = LMap.add (Label k) v prev in
-  let fields = List.fold_left aux LMap.empty lst in
+  let fields = List.fold_left ~f:aux ~init:LMap.empty lst in
   make_t ?loc @@ T_sum {fields ; attributes=[]}
 let t_sum ?loc m : type_expression =
   let lst = SMap.to_kv_list_rev m in

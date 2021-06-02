@@ -3,9 +3,9 @@ open Stage_common.Helpers
 open Stage_common.Types
 
 let binder_attributes_of_strings (ss : string list) : binder_attributes =
-  if List.mem ~compare:String.compare "var" ss then
+  if List.mem ~equal:String.equal ss "var" then
       var_attribute
-  else if List.mem ~compare:String.compare "const" ss then
+  else if List.mem ~equal:String.equal ss "const" then
     const_attribute
   else
     empty_attribute

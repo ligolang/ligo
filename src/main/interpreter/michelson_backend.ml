@@ -56,7 +56,7 @@ let compile_expression ~loc syntax exp_as_string source_file subst_lst =
         (* let (_,t) = get_t_function_exn t in *)
         Ast_typed.Environment.add_ez_binder v t env
       in
-      let env' = List.fold_left aux env lst in
+      let env' = List.fold_left ~f:aux ~init:env lst in
       let* (typed_exp,_) = Utils.type_expression ~options source_file syntax exp_as_string env' in
       let aux exp (s,(mv,mt,t)) : (expression,_) result =
         let s = subst_vname s in

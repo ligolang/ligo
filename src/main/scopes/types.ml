@@ -41,7 +41,7 @@ module Definitions = struct
   let merge_refs : string -> def -> def -> def option = fun _ a b ->
     match a,b with
     | Variable a , Variable b ->
-      let references = List.sort_uniq Location.compare (a.references @ b.references) in
+      let references = List.dedup_and_sort ~compare:Location.compare (a.references @ b.references) in
       Some (Variable { a with references })
     | (Variable _ |Type _ | Module _ | ModuleAlias _) , (Variable _ |Type _ | Module _ | ModuleAlias _) -> Some a
 
@@ -82,7 +82,7 @@ module Definitions = struct
       | Variable v -> Var.equal v.name x.wrap_content
       | (Type _ | Module _ | ModuleAlias _) -> false
     in
-    match List.find_opt aux (Def_map.bindings env) with
+    match List.find ~f:aux (Def_map.bindings env) with
     | Some (k,_) ->
       let aux : def option -> def option = fun d_opt ->
         match d_opt with

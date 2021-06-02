@@ -6,7 +6,7 @@ let rec fold_type_value : ('a -> type_expression -> ('a,_) result) -> 'a -> type
   let* init' = f init t in
   match t.type_content with
   | T_tuple ts ->
-    bind_fold_list self init' (List.map snd ts)
+    bind_fold_list self init' (List.map ~f:snd ts)
   | T_or ((_, a), (_, b))
   | T_function (a, b)
   | T_map (a, b)

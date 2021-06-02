@@ -150,4 +150,4 @@ let rec par2 (f : 'a peep) (g : 'a peep) : 'a peep =
 
 (* Run list of peeps in parallel *)
 let par (fs : 'a peep list) : 'a peep =
-  List.fold_left par2 No_change fs
+  List.fold_left ~f:par2 ~init:No_change fs

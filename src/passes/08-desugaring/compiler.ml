@@ -41,7 +41,7 @@ let get_layout : (string list) -> O.layout option = fun attributes ->
   in
   aux attributes
 
-let get_inline : (string list) -> bool = List.exists is_inline
+let get_inline : (string list) -> bool = List.exists ~f:is_inline
 
 
 let rec compile_type_expression : I.type_expression -> (O.type_expression , desugaring_error) result =
@@ -193,7 +193,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let* (_,rhs) = bind_fold_list aux (record, fun e -> ok @@ e) path in
       rhs @@ update
     | I.E_map map -> (
-      let map = List.sort_uniq compare map in
+      let map = List.dedup_and_sort ~compare map in
       let aux = fun prev (k, v) ->
         let* (k', v') = bind_map_pair (self) (k, v) in
         return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
@@ -202,7 +202,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       bind_fold_right_list aux init map
     )
     | I.E_big_map big_map -> (
-      let big_map = List.sort_uniq compare big_map in
+      let big_map = List.dedup_and_sort ~compare big_map in
       let aux = fun prev (k, v) ->
         let* (k', v') = bind_map_pair (self) (k, v) in
         return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
@@ -218,7 +218,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       bind_fold_right_list aux init lst'
     | I.E_set set -> (
       let* lst' = bind_map_list (self) set in
-      let lst' = List.sort_uniq compare lst' in
+      let lst' = List.dedup_and_sort ~compare lst' in
       let aux = fun prev cur ->
         return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
       let* init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in

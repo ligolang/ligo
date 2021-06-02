@@ -200,10 +200,10 @@ let fake_bake tezos_context chain_id now =
 let make_options
     ?(tezos_context = dummy_environment.tezos_context)
     ?(now = Alpha_context.Script_timestamp.now dummy_environment.tezos_context)
-    ?(sender = (List.nth dummy_environment.identities 0).implicit_contract)
+    ?(sender = (List.nth_exn dummy_environment.identities 0).implicit_contract)
     ?(self = default_self)
     ?(parameter_ty = t_unit)
-    ?(source = (List.nth dummy_environment.identities 1).implicit_contract)
+    ?(source = (List.nth_exn dummy_environment.identities 1).implicit_contract)
     ?(amount = Alpha_context.Tez.one)
     ?(balance = Alpha_context.Tez.zero)
     ?(chain_id = Environment.Chain_id.zero)
@@ -302,7 +302,7 @@ let typecheck_contract contract =
   Script_ir_translator.typecheck_code ~legacy dummy_environment.tezos_context contract' >>= fun x ->
   match x with
   | Ok _ -> return @@ contract
-  | Error errs -> Lwt.return @@ Error (List.map (alpha_error_wrap) errs)
+  | Error errs -> Lwt.return @@ Error (List.map ~f:(alpha_error_wrap) errs)
 
 type 'a interpret_res =
   | Succeed of 'a
@@ -327,7 +327,7 @@ let failure_interpret
   match x with
   | Ok (s , _ctxt) -> return @@ Succeed s
   | Error ((Reject (_, expr, _))::_t) -> return @@ Fail expr (* This catches failwith errors *)
-  | Error errs -> Lwt.return @@ Error (List.map (alpha_error_wrap) errs)
+  | Error errs -> Lwt.return @@ Error (List.map ~f:(alpha_error_wrap) errs)
 
 let pack (data_ty: 'a ty) (data: 'a) : bytes tzresult Lwt.t =
   pack_data dummy_environment.tezos_context data_ty data >>=?? fun (packed,_) -> return packed

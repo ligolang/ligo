@@ -36,7 +36,7 @@ let rec decompile_value :
   let value = normalize_edo_comb_value ty value in
   match (ty, value) with
   | Prim (_, "pair", ts, _), Prim (_, "Pair", vs, _) -> (
-      let* els = bind_map_list (fun (t,v) -> decompile_value t v) (List.combine ts vs) in
+      let* els = bind_map_list (fun (t,v) -> decompile_value t v) (List.zip_exn ts vs) in
       let rec aux l =
         match l with
         | [] -> fail (untranspilable ty value)
@@ -138,7 +138,7 @@ let rec decompile_value :
   | Prim (_, "set", [ty], _), Seq (_, lst) -> (
       let lst' =
         let aux acc cur = cur :: acc in
-        let lst = List.fold_left aux lst [] in
+        let lst = List.fold_left ~f:aux ~init:lst [] in
         List.rev lst in
       let* lst'' =
         let aux = fun t -> decompile_value ty t in

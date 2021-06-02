@@ -247,7 +247,7 @@ module Substitution = struct
       | P_variable v' when Var.equal v' v -> expr
       | P_variable _ -> tv
       | P_constant {p_ctor_tag=x ; p_ctor_args=lst} -> (
-          let lst' = List.map self lst in
+          let lst' = List.map ~f:self lst in
           wrap (Todo "1") @@ T.P_constant {p_ctor_tag=x ; p_ctor_args=lst'}
         )
       | P_apply { tf; targ } -> (
@@ -258,7 +258,7 @@ module Substitution = struct
         wrap (Todo "3") @@ T.P_row {p_row_tag ; p_row_args}
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
-          let constraints = List.map aux p.constraints in
+          let constraints = List.map ~f:aux p.constraints in
           if (Var.equal p.binder v) then (
             (* The variable v is shadowed by the forall's binder, so
                we don't substitute inside the body. This should be
@@ -285,8 +285,8 @@ module Substitution = struct
           C_equation { aval = aux aval ; bval = aux bval }
         )
       | C_typeclass { tc_bound; tc_constraints; tc_args; original_id; typeclass=tc } -> (
-          let tc_args = List.map (fun tv -> type_value ~tv ~substs) tc_args in
-          let tc_constraints = List.map (fun c -> constraint_ ~c ~substs) tc_constraints in
+          let tc_args = List.map ~f:(fun tv -> type_value ~tv ~substs) tc_args in
+          let tc_constraints = List.map ~f:(fun c -> constraint_ ~c ~substs) tc_constraints in
           let tc = typeclass ~tc ~substs in
           C_typeclass {tc_bound; tc_constraints; tc_args ; original_id; typeclass=tc}
         )
@@ -297,7 +297,7 @@ module Substitution = struct
       | c -> c
 
     and typeclass ~tc ~substs =
-      List.map (List.map (fun tv -> type_value ~tv ~substs)) tc
+      List.map ~f:(List.map ~f:(fun tv -> type_value ~tv ~substs)) tc
 
     (* let module = s_module *)
 
@@ -305,7 +305,7 @@ module Substitution = struct
     let eval_beta_root ~(tv : type_value) =
       match tv.wrap_content with
       | P_apply {tf = { location = _ ; wrap_content = P_forall { binder; constraints; body } }; targ} ->
-        let constraints = List.map (fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
+        let constraints = List.map ~f:(fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
         (* TODO: indicate in the result's tsrc that it was obtained via beta-reduction of the original type *)
         (type_value ~tv:body ~substs:(mk_substs ~v:binder ~expr:targ) , constraints)
       | _ -> (tv , [])

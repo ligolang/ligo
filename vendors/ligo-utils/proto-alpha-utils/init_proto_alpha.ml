@@ -17,11 +17,11 @@ module Context_init = struct
 
   let generate_accounts n : (account * Tez_repr.t) list =
     let amount = Tez_repr.of_mutez_exn 4_000_000_000_000L in
-    List.map (fun _ ->
+    List.map ~f:(fun _ ->
         let (pkh, pk, sk) = Signature.generate_key () in
         let account = { pkh ; pk ; sk } in
         account, amount)
-      (List.range n)
+      (List.range 0 n)
 
   let make_shell
         ~level ~predecessor ~timestamp ~fitness ~operations_hash =
@@ -66,7 +66,7 @@ module Context_init = struct
     =
     let open Tezos_base.TzPervasives.Error_monad in
     let bootstrap_accounts =
-      List.map (fun ({ pk ; pkh ; _ }, amount) ->
+      List.map ~f:(fun ({ pk ; pkh ; _ }, amount) ->
           Parameters_repr.{ public_key_hash = pkh ; public_key = Some pk ; amount }
         ) initial_accounts
     in
@@ -133,7 +133,7 @@ module Context_init = struct
         n =
     let open Error_monad in
     let accounts = generate_accounts n in
-    let contracts = List.map (fun (a, _) ->
+    let contracts = List.map ~f:(fun (a, _) ->
                         Alpha_context.Contract.implicit_contract (a.pkh)) accounts in
     begin
       if slow then
@@ -199,17 +199,17 @@ type environment = {
 
 let init_environment () =
   Context_init.main 10 >>=? fun (tezos_context, accounts, contracts) ->
-  let accounts = List.map fst accounts in
+  let accounts = List.map ~f:fst accounts in
   let x = Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.(integral_of_int 800000) in
   let tezos_context = Alpha_context.Gas.set_limit tezos_context x in
   let identities =
-    List.map (fun ((a:Context_init.account), c) -> {
+    List.map ~f:(fun ((a:Context_init.account), c) -> {
                   public_key = a.pk ;
                   public_key_hash = a.pkh ;
                   secret_key = a.sk ;
                   implicit_contract = c ;
       }) @@
-      List.combine accounts contracts in
+      List.zip_exn accounts contracts in
   return {tezos_context ; identities}
 
 let contextualize ~msg ?environment f =

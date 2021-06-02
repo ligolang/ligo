@@ -36,28 +36,28 @@ let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string
 let decompile_env e = trace checking_tracer @@ Checking.decompile_env e
 let list_declarations (m : Ast_typed.module') : string list =
   List.fold_left
-    (fun prev el ->
+    ~f:(fun prev el ->
       let open Location in
       match (el.wrap_content : Ast_typed.declaration) with
       | Declaration_constant {binder;_} -> (Var.to_name binder.wrap_content)::prev
       | _ -> prev)
-    [] m
+    ~init:[] m
 
 let list_type_declarations (m : Ast_typed.module') : string list =
   List.fold_left
-    (fun prev el ->
+    ~f:(fun prev el ->
       let open Location in
       match (el.wrap_content : Ast_typed.declaration) with
       | Declaration_type {type_binder;_} -> (Var.to_name type_binder)::prev
       | _ -> prev)
-    [] m
+    ~init:[] m
 
 let list_mod_declarations (m : Ast_typed.module') : string list =
   List.fold_left
-    (fun prev el ->
+    ~f:(fun prev el ->
       let open Location in
       match (el.wrap_content : Ast_typed.declaration) with
       | Declaration_module {module_binder;_} -> (module_binder)::prev
       | Module_alias {alias;_} -> (alias)::prev
       | _ -> prev)
-    [] m
+    ~init:[] m

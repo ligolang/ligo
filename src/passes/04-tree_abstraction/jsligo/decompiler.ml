@@ -15,21 +15,21 @@ let ghost = Region.ghost
 
 let wrap = Region.wrap_ghost
 
-let decompile_attributes = List.map wrap
+let decompile_attributes = List.map ~f:wrap
 
 let list_to_sepseq lst =
   match lst with
     [] -> None
   |  hd :: lst ->
       let aux e = (ghost, e) in
-      Some (hd, List.map aux lst)
+      Some (hd, List.map ~f:aux lst)
 
 let list_to_nsepseq lst =
   match list_to_sepseq lst with
     Some s -> ok @@ s
   | None   -> failwith "List is empty"
 
-let nelist_to_npseq (hd, lst) = (hd, List.map (fun e -> (ghost, e)) lst)
+let nelist_to_npseq (hd, lst) = (hd, List.map ~f:(fun e -> (ghost, e)) lst)
                                 
 let npseq_cons hd lst = hd,(ghost, fst lst)::(snd lst)
 
@@ -103,7 +103,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
        ok @@ wrap field in
      let* record = bind_map_list aux record in
      let* record = list_to_nsepseq record in
-     let attributes = List.map (fun el -> wrap el) attributes in
+     let attributes = List.map ~f:(fun el -> wrap el) attributes in
      return @@ CST.TObject (wrap @@ ne_inject braces record ~attr:attributes)
   | T_tuple tuple ->
     let* tuple = bind_map_list decompile_type_expr tuple in
@@ -189,10 +189,10 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
       [] -> return_expr @@ [Expr expr]
     | _ ->
       let* arguments =
-        map (fun xs -> CST.Multiple (wrap (par xs))) @@
-        map (fun (hd,tl) -> hd,List.map (fun x -> ghost,x) tl) @@
-        map List.Ne.of_list @@
-        map (List.map (fun x -> CST.EPar (wrap @@ par @@ x))) @@
+        Trace.map ~f:(fun xs -> CST.Multiple (wrap (par xs))) @@
+        Trace.map ~f:(fun (hd,tl) -> hd,List.map ~f:(fun x -> ghost,x) tl) @@
+        Trace.map ~f:List.Ne.of_list @@
+        Trace.map ~f:(List.map ~f:(fun x -> CST.EPar (wrap @@ par @@ x))) @@
         bind_map_list (fun e -> 
           let* e = decompile_expression_in e in 
           match e with 
@@ -248,9 +248,9 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     |  _ -> failwith "should not happen"
     in
     let* args =
-      map (fun xs -> CST.Multiple (wrap (par xs))) @@
-      map (fun (hd,tl) -> hd,List.map (fun x -> ghost,x) tl) @@
-      map List.Ne.of_list @@
+      Trace.map ~f:(fun xs -> CST.Multiple (wrap (par xs))) @@
+      Trace.map ~f:(fun (hd,tl) -> hd,List.map ~f:(fun x -> ghost,x) tl) @@
+      Trace.map ~f:List.Ne.of_list @@
       bind (bind_map_list (fun e -> 
         let* x = decompile_expression_in e in 
         match x with 
@@ -299,7 +299,7 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
       | _ -> failwith "not implemented"
       in
     let a = (fst module_.statements) in
-    let statements: CST.statements = (toplevel_to_statement a, List.map (fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
+    let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
     let statements: CST.statements CST.braced Region.reg = wrap @@ braced statements in
     let* body = decompile_expression_in let_result in
     ok @@ [Statement (CST.SNamespace (wrap (ghost, name, statements)))] @ body
@@ -408,12 +408,12 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     )) map in
     let* tuple = list_to_nsepseq map in
     let aux (k,v) = CST.EArray (wrap @@ brackets (k,[(ghost,v)])) in
-    let map = List.map aux map in
+    let map = List.map ~f:aux map in
     (match map with
       [] -> return_expr @@ [Expr (CST.EVar (wrap "Big_map.empty"))]
     | hd::tl  ->
         let var = CST.EVar (wrap "Map.literal") in
-        let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
+        let args = CST.Multiple (wrap (par (hd,List.map ~f:(fun x -> ghost,x) tl))) in
       return_expr @@ [Expr (CST.ECall (wrap @@ (var, args)))]
     )
     | E_big_map big_map ->
@@ -422,12 +422,12 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
         ok @@ (CST.Expr_entry (e_hd e))
       )) big_map in
       let aux (k,v) = CST.EArray (wrap @@ brackets (k,[(ghost,v)])) in
-      let big_map = List.map aux big_map in
+      let big_map = List.map ~f:aux big_map in
       (match big_map with
         [] -> return_expr @@ [Expr (CST.EVar (wrap "Big_map.empty"))]
       | hd::tl  ->
         let var = CST.EVar (wrap "Big_map.literal") in
-        let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
+        let args = CST.Multiple (wrap (par (hd,List.map ~f:(fun x -> ghost,x) tl))) in
         return_expr @@ [Expr (CST.ECall (wrap @@ (var, args)))]
       )
   | E_list lst ->
@@ -444,10 +444,10 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
       return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets lst), [] )))))])
   | E_set set ->
     let* set = bind_map_list decompile_expression_in set in
-    let set = List.map e_hd set in
+    let set = List.map ~f:e_hd set in
     let hd,tl = List.Ne.of_list @@ set in
     let var = CST.EVar (wrap "Set.literal") in
-    let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
+    let args = CST.Multiple (wrap (par (hd,List.map ~f:(fun x -> ghost,x) tl))) in
     return_expr @@ [Expr (CST.ECall (wrap @@ (var,args)))]
   (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ [Expr (CST.EUnit (wrap (ghost,ghost)))]
@@ -460,7 +460,7 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     return_expr @@ [Expr (CST.EAssign (evar, ghost, e_hd rhs))]
   | E_for_each {fe_binder;collection;fe_body; _} ->
     let var = decompile_variable @@ (fst fe_binder).wrap_content in
-    let bind_to = Option.map (fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
+    let bind_to = Option.map ~f:(fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
     let* expr = decompile_expression_in collection in
     let expr = e_hd expr in
     let* block = decompile_expression_in fe_body in
@@ -497,7 +497,7 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     return_expr @@ [Expr (CST.EObject (wrap @@ braced (CST.Property_rest (wrap ({expr; ellipsis = ghost}: CST.property_rest)), [(ghost, p)])))]
 
 and statements_to_block (statements: statement_or_expr list) = 
-  let statements = List.map (fun f ->
+  let statements = List.map ~f:(fun f ->
     match f with 
       Statement s -> s
     | Expr e -> SExpr e
@@ -557,7 +557,7 @@ and function_body body =
 and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
     let* type_expr = bind_map_option decompile_type_expr binder.ascr in
-    let type_expr = Option.unopt ~default:(CST.TWild ghost) type_expr in
+    let type_expr = Option.value ~default:(CST.TWild ghost) type_expr in
     let v = decompile_variable binder.var.wrap_content in
     let seq = CST.ESeq (wrap (CST.EAnnot (wrap (CST.EVar v,ghost,type_expr)), [])) in
     let parameters = CST.EPar (wrap @@ par seq ) in
@@ -662,7 +662,7 @@ and decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) 
       | _ -> failwith "not implemented"
       in
     let a = (fst module_.statements) in
-    let statements: CST.statements = (toplevel_to_statement a, List.map (fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
+    let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
     let statements: CST.statements CST.braced Region.reg = wrap @@ braced statements in
     ok @@ CST.SNamespace (wrap (ghost, name, statements))
   | Module_alias {alias; binders} ->
@@ -674,5 +674,5 @@ and decompile_module : AST.module_ -> (CST.ast, _) result = fun prg ->
   let* decl = bind_map_list decompile_declaration prg in
   let statements = List.Ne.of_list decl in
   let statements = Utils.nseq_map (fun s -> CST.TopLevel (s, None)) statements in
-  (* let statements = ((fst statements, None), List.map (fun e -> (e, None)) (snd statements)) in *)
+  (* let statements = ((fst statements, None), List.map ~f:(fun e -> (e, None)) (snd statements)) in *)
   ok @@ ({statements;eof=ghost}: CST.ast)

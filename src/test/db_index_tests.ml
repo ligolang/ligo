@@ -34,10 +34,10 @@ module X (M : sig module Plugin_under_test : INDEXER_PLUGIN_TYPE(Solver_types.Ty
         add_constraint repr state tc
       | Merge merge_keys -> merge_aliases merge_keys state
     in
-    let state_a = List.fold_left aux istate
+    let state_a = List.fold_left ~f:aux ~init:istate
         [ Add_cstr tva ; Add_cstr tvb ; Add_cstr tvc ; Merge (merge_keys tva tvb) ; ]
     in
-    let state_b = List.fold_left aux istate
+    let state_b = List.fold_left ~f:aux ~init:istate
         [ Add_cstr tva ; Add_cstr tvb ; Merge (merge_keys tva tvb) ; Add_cstr tvc ; ]
     in
     let* () = M.same_state state_a state_b in

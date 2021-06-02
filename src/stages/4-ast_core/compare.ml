@@ -24,9 +24,9 @@ let label_map ~compare lma lmb =
   let rb = LMap.to_kv_list_rev lmb in
   let aux (la,a) (lb,b) =
     cmp2 label la lb compare a b in
-  List.compare ~compare:aux ra rb
+  List.compare aux ra rb
 
-let typeVariableMap compare a b = List.compare ~compare:(compare_tvmap_entry compare) a b
+let typeVariableMap compare a b = List.compare (compare_tvmap_entry compare) a b
 
 let expression_variable = Location.compare_wrap ~compare:Var.compare
 let type_variable       = Var.compare
@@ -105,10 +105,10 @@ and rows {fields=ca; layout=la} {fields=cb; layout=lb} =
 and constraint_identifier (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) =
   cmp2
     Int64.compare a b
-    (List.compare ~compare:type_expression) [] []
+    (List.compare type_expression) [] []
 
 and constraint_identifier_set (a : constraint_identifier PolySet.t) (b : constraint_identifier PolySet.t) : int =
-  List.compare ~compare:constraint_identifier (PolySet.elements a)  (PolySet.elements b)
+  List.compare constraint_identifier (PolySet.elements a)  (PolySet.elements b)
 
 and row_element {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
@@ -124,7 +124,7 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
 and app {type_operator=ta;arguments=aa} {type_operator=tb;arguments=ab} =
   cmp2
     type_variable ta tb
-    (List.compare ~compare:type_expression) aa ab
+    (List.compare type_expression) aa ab
 
 let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
   Int.compare (constant_tag ct ) (constant_tag ct2 )
@@ -203,7 +203,7 @@ let rec expression a b =
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: _ constant) ({cons_name=cb;arguments=b}: _ constant) =
-  cmp2 constant' ca cb (List.compare ~compare:expression) a b
+  cmp2 constant' ca cb (List.compare expression) a b
 
 and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
@@ -258,7 +258,7 @@ and constructor {constructor=ca;element=ea} {constructor=cb;element=eb} =
 and matching {matchee=ma;cases=ca} {matchee=mb;cases=cb} =
   cmp2
     expression ma mb
-    (List.compare ~compare:match_case) ca cb
+    (List.compare match_case) ca cb
 
 and record ra rb = label_map ~compare:expression ra rb
 
@@ -284,15 +284,15 @@ and pattern_repr : type_expression pattern ->type_expression pattern -> int =
         pattern_repr ya yb
     | P_list (List x) , P_list (List y)
     | P_tuple x , P_tuple y ->
-      (List.compare ~compare:pattern_repr) x y
+      (List.compare pattern_repr) x y
     | P_variant (la,xa) , P_variant (lb,xb) ->
       cmp2
         label la lb
         (pattern_repr) xa xb
     | P_record (la,xa), P_record (lb,xb) ->
       cmp2
-        (List.compare ~compare:label) la lb
-        (List.compare ~compare:pattern_repr) xa xb
+        (List.compare label) la lb
+        (List.compare pattern_repr) xa xb
     | (P_unit | P_var _| P_list (Cons _ | List _)| P_tuple _ | P_variant _ | P_record _ ) ,
       (P_unit | P_var _| P_list (Cons _ | List _)| P_tuple _ | P_variant _ | P_record _ ) ->
       Int.compare (pattern_tag a.wrap_content) (pattern_tag b.wrap_content)
@@ -341,17 +341,17 @@ and declaration a b =
     (Declaration_constant _| Declaration_type _| Declaration_module _| Module_alias _) ->
     Int.compare (declaration_tag a) (declaration_tag b)
 
-and module_ m = List.compare ~compare:(Location.compare_wrap ~compare:declaration) m
+and module_ m = List.compare (Location.compare_wrap ~compare:declaration) m
 
 (* Environment *)
-let free_variables = List.compare ~compare:expression_variable
+let free_variables = List.compare expression_variable
 
 let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_=tb} =
   cmp2
     type_variable va vb
     type_expression ta tb
 
-let type_environment = List.compare ~compare:type_environment_binding
+let type_environment = List.compare type_environment_binding
 
 let environment_element_definition_declaration {expression=ea;free_variables=fa} {expression=eb;free_variables=fb} =
   cmp2
@@ -374,7 +374,7 @@ and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
     expression_variable eva evb
     environment_element eea eeb
 
-and expression_environment a b = List.compare ~compare:environment_binding a b
+and expression_environment a b = List.compare environment_binding a b
 
 and module_environment_binding {module_variable=mva;module_=ma}
                                {module_variable=mvb;module_=mb} =
@@ -382,7 +382,7 @@ and module_environment_binding {module_variable=mva;module_=ma}
     module_variable mva mvb
     environment    ma  mb
 
-and module_environment a b = List.compare ~compare:module_environment_binding a b
+and module_environment a b = List.compare module_environment_binding a b
 
 and environment {expression_environment=eea;type_environment=tea; module_environment=mea}
                 {expression_environment=eeb;type_environment=teb; module_environment=meb} =
@@ -396,7 +396,7 @@ and environment {expression_environment=eea;type_environment=tea; module_environ
 let unionfind a b =
   let a = UnionFind.Poly2.partitions a in
   let b = UnionFind.Poly2.partitions b in
-  List.compare ~compare:(List.compare ~compare:type_variable) a b
+  List.compare (List.compare type_variable) a b
 
 let type_constraint_tag = function
   | C_equation     _ -> 1
@@ -431,7 +431,7 @@ let rec type_value_ a b = match (a,b) with
 and type_value : type_value_ location_wrap -> type_value_ location_wrap -> int = fun ta tb ->
     type_value_ ta.wrap_content tb.wrap_content
 
-and p_constraints c = List.compare ~compare:type_constraint c
+and p_constraints c = List.compare type_constraint c
 
 and p_forall {binder=ba;constraints=ca;body=a} {binder=bb;constraints=cb;body=b} =
   cmp3
@@ -442,7 +442,7 @@ and p_forall {binder=ba;constraints=ca;body=a} {binder=bb;constraints=cb;body=b}
 and p_constant {p_ctor_tag=ca;p_ctor_args=la} {p_ctor_tag=cb;p_ctor_args=lb} =
   cmp2
     constant_tag ca cb
-    (List.compare ~compare:type_value) la lb
+    (List.compare type_value) la lb
 
 and p_apply {tf=ta;targ=la} {tf=tb;targ=lb} =
   cmp2
@@ -476,12 +476,12 @@ and c_equation {aval=a1;bval=b1} {aval=a2;bval=b2} =
     type_value a1 a2
     type_value b1 b2
 
-and tc_args a = List.compare ~compare:type_value a
+and tc_args a = List.compare type_value a
 
 and c_typeclass {tc_bound=wa; tc_constraints=za; tc_args=ta;typeclass=ca; original_id=x} {tc_bound=wb; tc_constraints=zb; tc_args=tb;typeclass=cb; original_id =y} =
   cmp5
-    (List.compare ~compare:type_variable) wa wb
-    (List.compare ~compare:type_constraint) za zb
+    (List.compare type_variable) wa wb
+    (List.compare type_constraint) za zb
     tc_args ta tb
     typeclass ca cb
     (Option.compare (constraint_identifier ))x y
@@ -494,8 +494,8 @@ and c_access_label
     label a1 a2
     type_variable var1 var2
 
-and tc_allowed t = List.compare ~compare:type_value t
-and typeclass  t = List.compare ~compare:tc_allowed t
+and tc_allowed t = List.compare type_value t
+and typeclass  t = List.compare tc_allowed t
 
 let c_abs_simpl {id_abs_simpl = ConstraintIdentifier.T ca;_} {id_abs_simpl = ConstraintIdentifier.T cb;_} =
   Int64.compare ca cb
@@ -516,13 +516,13 @@ let c_poly_simpl {id_poly_simpl = ConstraintIdentifier.T ca;_} {id_poly_simpl = 
 
 let rec c_typeclass_simpl_compare_all_fields {tc_bound=ba;tc_constraints=ca;reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {tc_bound=bb;tc_constraints=cb;reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
   cmp7
-    (List.compare ~compare:type_variable) ba bb
-    (List.compare ~compare:type_constraint_simpl) ca cb
+    (List.compare type_variable) ba bb
+    (List.compare type_constraint_simpl) ca cb
     String.compare ra rb
     constraint_identifier ida idb
     (Option.compare constraint_identifier) oia oib
-    (List.compare ~compare:tc_allowed) ta tb
-    (List.compare ~compare:type_variable) la lb
+    (List.compare tc_allowed) ta tb
+    (List.compare type_variable) la lb
 
 and c_typeclass_simpl a b =
   constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
