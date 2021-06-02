@@ -12,12 +12,12 @@ let option f o =
     | Some v -> `List [ `String "Some" ; f v ]
 
 let pair f g (x, y) = `Tuple [ f x ; g y ]
-let list f lst = `List (List.map f lst)
+let list f lst = `List (List.map ~f:f lst)
 let label_map f lmap =
-  let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
+  let lst = List.sort ~compare:(fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-    (fun acc (Label k, v) -> (k , f v)::acc)
-    [] lst
+    ~f:(fun acc (Label k, v) -> (k , f v)::acc)
+    ~init:[] lst
   in
   `Assoc lst'
 
@@ -467,42 +467,42 @@ and type_constraint_simpl = function
 let poly_unionfind f p =
   let lst = (UnionFind.Poly2.partitions p) in
   let lst' = List.map
-      (fun l ->
-         let repr = f (UnionFind.Poly2.repr (List.hd l) p ) in
-         `List (repr :: List.map f l)) lst in
+      ~f:(fun l ->
+         let repr = f (UnionFind.Poly2.repr (List.hd_exn l) p ) in
+         `List (repr :: List.map ~f:f l)) lst in
   `Assoc ["UnionFind", `List lst']
 
 let unionfind : type_variable UnionFind.Poly2.t -> _ = poly_unionfind type_variable_to_yojson
 
 let typeVariableMap f tvmap =
-  let lst = List.sort (fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
+  let lst = List.sort ~compare:(fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
   let aux (k, v) =
     `Assoc [ Format.asprintf "%a" Var.pp k , f v ] in
-  let lst' = List.map aux lst in
+  let lst' = List.map ~f:aux lst in
   `Assoc ["typeVariableMap",  `List lst']
 let ciMap f tvmap =
-  let lst = List.sort (fun (ConstraintIdentifier.T a, _) (ConstraintIdentifier.T b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
+  let lst = List.sort ~compare:(fun (ConstraintIdentifier.T a, _) (ConstraintIdentifier.T b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
   let aux (ConstraintIdentifier.T k, v) =
     `Assoc [ Format.asprintf "%Li" k , f v ] in
-  let lst' = List.map aux lst in
+  let lst' = List.map ~f:aux lst in
   `Assoc ["typeVariableMap",  `List lst']
 let jmap (fk : _ -> json) (fv : _ -> json)  tvmap : json =
   let lst = RedBlackTrees.PolyMap.bindings tvmap in
   let aux (k, v) =
     `List [ fk k ; fv v ] in
-  let lst' = List.map aux lst in
+  let lst' = List.map ~f:aux lst in
   `Assoc ["typeVariableMap",  `List lst']
 let constraint_identifier_set s =
-  let lst = List.sort (fun (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
+  let lst = List.sort ~compare:(fun (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
   let aux (ConstraintIdentifier.T ci) =
     `String (Format.asprintf "ConstraintIdentifier %Li" ci) in
-  let lst' = List.map aux lst in
+  let lst' = List.map ~f:aux lst in
   `Assoc ["constraintIdentifierSet",  `List lst']
 let type_variable_set s =
-  let lst = List.sort Var.compare (RedBlackTrees.PolySet.elements s) in
+  let lst = List.sort ~compare:Var.compare (RedBlackTrees.PolySet.elements s) in
   let aux v =
     `String (Format.asprintf "%a" Var.pp v) in
-  let lst' = List.map aux lst in
+  let lst' = List.map ~f:aux lst in
   `Assoc ["typeVariableSet",  `List lst']
 
 let constraint_identifier (ConstraintIdentifier.T ci : constraint_identifier) : json =

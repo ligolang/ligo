@@ -45,7 +45,7 @@ let t_map_or_big_map ?loc ?sugar k v : type_expression = t_constant ?loc ?sugar 
 let t_record ?loc ?sugar ?layout fields  : type_expression = make_t ?loc ?sugar @@ T_record {fields;layout}
 let default_layout = L_tree
 let make_t_ez_record ?loc ?sugar ?layout (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
+  let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = LMap.of_list lst in
   t_record ?loc ?sugar ?layout map
 
@@ -59,7 +59,7 @@ let t_pair ?loc ?sugar a b : type_expression =
 
 let t_sum ?loc ?sugar ?layout fields : type_expression = make_t ?loc ?sugar @@ T_sum {fields;layout}
 let t_sum_ez ?loc ?sugar ?layout (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
+  let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
   let map = LMap.of_list lst in
   t_sum ?loc ?sugar ?layout map
 
@@ -84,10 +84,10 @@ let get_t_bool (t:type_expression) : unit option = match t.type_content with
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let opt = LMap.find_opt (Label (string_of_int i)) m in
-    Option.bind (fun opt -> Some (opt,i+1)) opt
+    Option.bind ~f: (fun opt -> Some (opt,i+1)) opt
   in
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
-  List.map (fun {associated_type;_} -> associated_type) l
+  List.map ~f:(fun {associated_type;_} -> associated_type) l
 
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
@@ -98,7 +98,7 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
   | T_record m ->
       let lst = tuple_of_record m.fields in
       ( match List.(length lst = 2) with
-        | true -> Some (List.(nth lst 0 , nth lst 1))
+        | true -> Some (List.(nth_exn lst 0 , nth_exn lst 1))
         | false -> None
       )
   | _ -> None
@@ -128,7 +128,7 @@ let get_t_record (t:type_expression) : rows option = match t.type_content with
 let e_record map : expression = make_e @@ E_record map
 let ez_e_record (lst : (label * expression) list) : expression =
   let aux prev (k, v) = LMap.add k v prev in
-  let map = List.fold_left aux LMap.empty lst in
+  let map = List.fold_left ~f:aux ~init:LMap.empty lst in
   e_record map
 
 let e_var       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_variable (Location.wrap ?loc (Var.of_name n))
@@ -238,13 +238,11 @@ let get_e_list = fun t ->
         []
     | _ -> [None]
   in
-  let opts = aux t in
-  if List.exists (Option.is_none) opts then None
-  else Some (List.map Option.unopt_exn opts)
+  Option.all @@ aux t
 
 let get_e_tuple = fun t ->
   match t with
-  | E_record r -> Some (List.map snd @@ Helpers.tuple_of_record r)
+  | E_record r -> Some (List.map ~f:snd @@ Helpers.tuple_of_record r)
   | _ -> None
 
 let get_e_record = fun t ->
@@ -268,7 +266,7 @@ let get_declaration_by_name : module_ -> string -> declaration option = fun (p) 
     | Declaration_module _
     | Module_alias       _ -> false
   in
-  List.find_opt aux @@ List.map Location.unwrap p
+  List.find ~f:aux @@ List.map ~f:Location.unwrap p
 
 let get_record_field_type (t : type_expression) (label : label) : type_expression option =
   match get_t_record t with
@@ -310,14 +308,12 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
     | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> []
     | _ -> [None]
   in
-  let opts = aux e in
-  if List.exists (Option.is_none) opts then None
-  else Some (List.map Option.unopt_exn opts)
+  Option.all @@ aux e
 
 let make_c_constructor_simpl ?(reason_constr_simpl="") id_constructor_simpl original_id tv c_tag tv_list = {
   reason_constr_simpl ;
   id_constructor_simpl = ConstraintIdentifier.T (Int64.of_int id_constructor_simpl) ;
-  original_id = Option.map (fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
+  original_id = Option.map ~f:(fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
   tv ;
   c_tag;
   tv_list
@@ -326,10 +322,10 @@ let make_c_constructor_simpl ?(reason_constr_simpl="") id_constructor_simpl orig
 let make_c_row_simpl ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : c_row_simpl = { 
   reason_row_simpl ;
   id_row_simpl = ConstraintIdentifier.T (Int64.of_int id_row_simpl) ;
-  original_id = Option.map (fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
+  original_id = Option.map ~f:(fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
   tv;
   r_tag;
-  tv_map = LMap.of_list @@ List.mapi (fun i (k,v) -> (k,{associated_variable=v;michelson_annotation=None;decl_pos=i})) tv_map_as_lst ;
+  tv_map = LMap.of_list @@ List.mapi ~f:(fun i (k,v) -> (k,{associated_variable=v;michelson_annotation=None;decl_pos=i})) tv_map_as_lst ;
 }
 
 
@@ -343,7 +339,7 @@ let make_c_typeclass_simpl ?(reason_typeclass_simpl="") ~bound ~constraints () i
     tc_constraints = constraints;
     reason_typeclass_simpl ;
     id_typeclass_simpl = ConstraintIdentifier.T (Int64.of_int id_typeclass_simpl) ;
-    original_id = Option.map (fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
+    original_id = Option.map ~f:(fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;
     tc ;
     args ;
   }

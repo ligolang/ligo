@@ -1,5 +1,4 @@
 open Types
-open Yojson_helpers
 
 type json = Yojson.Safe.t
 
@@ -193,18 +192,18 @@ let option' f o =
 
 let string s = `String s
 
-let list f lst = `List (List.map f lst)
+let list f lst = `List (List.map ~f:f lst)
 
 let label_map f lmap =
-  let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
+  let lst = List.sort ~compare:(fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-      (fun acc (Label k, v) -> (k , f v)::acc)
-      [] lst
+      ~f:(fun acc (Label k, v) -> (k , f v)::acc)
+      ~init:[] lst
   in
   `Assoc lst'
 
 let attributes attr =
-  let list = List.map (fun string -> `String string) attr
+  let list = List.map ~f:(fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
 let binder type_expression {var;ascr;attributes} =
@@ -214,7 +213,7 @@ let binder type_expression {var;ascr;attributes} =
         | Some `Const -> [("const_or_var", `String "const")] in
   `Assoc ([
     ("var", expression_variable_to_yojson var);
-    ("ty", yojson_opt type_expression ascr)
+    ("ty", option' type_expression ascr);
     ] @ attributes)
 
 let row_element g {associated_type; michelson_annotation; decl_pos} =
@@ -256,7 +255,7 @@ let application expression {lamb;args} =
 let lambda expression type_expression {binder=b;output_type;result} : json =
   `Assoc [
     ("binder", binder type_expression b);
-    ("output_type", yojson_opt type_expression output_type);
+    ("output_type", option' type_expression output_type);
     ("result", expression result);
   ]
 

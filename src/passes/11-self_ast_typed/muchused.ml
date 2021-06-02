@@ -66,8 +66,8 @@ let rec is_dup (t : type_expression) =
   | T_record rows
   | T_sum rows ->
      let row_types = LMap.to_list rows.content
-                     |> List.map (fun v -> v.associated_type)
-                     |> List.filter (fun v -> not (is_dup v)) in
+                     |> List.map ~f:(fun v -> v.associated_type)
+                     |> List.filter ~f:(fun v -> not (is_dup v)) in
      List.is_empty row_types
   | T_arrow _ -> true
   | _ -> false
@@ -79,10 +79,10 @@ let muchuse_max (x,a) (y,b) =
   M.union (fun _ x y -> if x > y then Some x else Some y) x y, a@b
 
 let muchuse_unions =
-  List.fold_left muchuse_union muchuse_neutral
+  List.fold_left ~f:muchuse_union ~init:muchuse_neutral
 
 let muchuse_maxs =
-  List.fold_left muchuse_max muchuse_neutral
+  List.fold_left ~f:muchuse_max ~init:muchuse_neutral
 
 let add_if_not_dup xs b v t =
   if not (is_dup t) && b then
@@ -107,7 +107,7 @@ let rec muchuse_of_expr expr : muchuse =
   | E_constructor {element;_} ->
      muchuse_of_expr element
   | E_constant {arguments;_} ->
-     muchuse_unions (List.map muchuse_of_expr arguments)
+     muchuse_unions (List.map ~f:muchuse_of_expr arguments)
   | E_variable v ->
      M.add v 1 M.empty,[]
   | E_application {lamb;args} ->
@@ -165,7 +165,7 @@ and muchuse_of_variant {cases;tv} =
               muchuse_neutral (* not an option? *)
           | Some tv' ->
              let get_c_body (case : Ast_typed.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
-             let c_body_lst = Ast_typed.LMap.of_list (List.map get_c_body cases) in
+             let c_body_lst = Ast_typed.LMap.of_list (List.map ~f:get_c_body cases) in
              let get_case c =  Ast_typed.LMap.find (Label c) c_body_lst in
              let match_none,_ = get_case "None" in
              let match_some,v = get_case "Some" in
@@ -173,7 +173,7 @@ and muchuse_of_variant {cases;tv} =
         end
       | Some tv' ->
          let get_c_body (case : Ast_typed.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
-         let c_body_lst = Ast_typed.LMap.of_list (List.map get_c_body cases) in
+         let c_body_lst = Ast_typed.LMap.of_list (List.map ~f:get_c_body cases) in
          let get_case c =  Ast_typed.LMap.find (Label c) c_body_lst in
          let match_nil,_ = get_case "Nil" in
          let match_cons,v = get_case "Cons" in
@@ -183,7 +183,7 @@ and muchuse_of_variant {cases;tv} =
      let case_ts ({constructor;_} : matching_content_case) =
        let row_element = LMap.find constructor ts.content in
        row_element.associated_type in
-     let cases_ts = List.map case_ts cases in
+     let cases_ts = List.map ~f:case_ts cases in
      muchuse_maxs @@
        Stdlib.List.map2
          (fun t ({pattern;body;_} : Ast_typed.matching_content_case) ->
@@ -192,8 +192,8 @@ and muchuse_of_variant {cases;tv} =
 
 and muchuse_of_record {body;fields;_} =
   let typed_vars = LMap.to_list fields in
-  List.fold_left (fun (c,m) (v,t) -> muchuse_of_binder v t (c,m))
-    (muchuse_of_expr body) typed_vars
+  List.fold_left ~f:(fun (c,m) (v,t) -> muchuse_of_binder v t (c,m))
+    ~init:(muchuse_of_expr body) typed_vars
 
 let rec get_all_declarations (module_name : module_variable) : module_fully_typed ->
                                (expression_variable * type_expression) list =
@@ -208,9 +208,9 @@ let rec get_all_declarations (module_name : module_variable) : module_fully_type
          let add_module_name (v, t) =
            let name = module_name ^ "." ^ Var.to_name (Location.unwrap v) in
            (Location.wrap ~loc:v.location (Var.of_name name), t) in
-         recs |> List.map add_module_name
+         recs |> List.map ~f:add_module_name
       | _ -> [] in
-    p |> List.map Location.unwrap |> List.map aux |> List.concat
+    p |> List.map ~f:Location.unwrap |> List.map ~f:aux |> List.concat
 
 let rec muchused_helper (muchuse : muchuse) : module_fully_typed -> muchuse =
   function (Module_Fully_Typed p) ->
@@ -221,18 +221,18 @@ let rec muchused_helper (muchuse : muchuse) : module_fully_typed -> muchuse =
          (muchuse_of_binder binder expr.type_expression s)
     | Declaration_module {module_;module_binder} ->
        let decls = get_all_declarations module_binder module_ in
-       List.fold_right (fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
-         decls (muchused_helper s module_)
+       List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
+         decls ~init:(muchused_helper s module_)
     | _ -> s
   in
-  List.fold_right aux (List.map Location.unwrap p) muchuse
+  List.fold_right ~f:aux (List.map ~f:Location.unwrap p) ~init:muchuse
 
 let muchused_map_module : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function module' ->
   let update_annotations annots c =
-    List.fold_right (fun a r -> update_annotation a r) annots c in
+    List.fold_right ~f:(fun a r -> update_annotation a r) annots ~init:c in
   let _,muchused = muchused_helper muchuse_neutral module' in
   let warn_var v =
     `Self_ast_typed_warning_muchused
       (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
-  update_annotations (List.map warn_var muchused) @@
+  update_annotations (List.map ~f:warn_var muchused) @@
     ok @@ module'

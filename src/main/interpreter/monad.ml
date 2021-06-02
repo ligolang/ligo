@@ -116,7 +116,7 @@ module Command = struct
       in
       let* ligo_ty =
         trace_option (Errors.generic_error loc "Not supported (yet) when the provided account has been fetched from Test.get_last_originations" ) @@
-          List.assoc_opt ~compare:(Tezos_state.compare_account_) addr ctxt.storage_tys
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.storage_tys addr
       in
       let ret = LT.V_Michelson (Ty_code (storage,ty,ligo_ty)) in
       ok (ret, ctxt)
@@ -145,7 +145,7 @@ module Command = struct
       let aux = fun exp_str (s,_) -> (* TODO: a bit naive .. *)
         Str.substitute_first (Str.regexp ("\\$"^s)) (fun _ -> Michelson_backend.subst_vname s) exp_str
       in
-      let exp_as_string' = List.fold_left aux exp_as_string substs in
+      let exp_as_string' = List.fold_left ~f:aux ~init:exp_as_string substs in
       let* (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~loc syntax exp_as_string' file_opt substs in
       ok (LT.V_Michelson (LT.Ty_code (mich_v, mich_ty, object_ty)), ctxt)
     | Compile_meta_value (loc,x) ->
@@ -181,7 +181,7 @@ module Command = struct
       ok ((), {ctxt with baker })
     | Get_bootstrap (loc,x) -> (
       let* x = trace_option (corner_case ()) @@ LC.get_int x in
-      match List.nth_opt ctxt.bootstrapped (Z.to_int x) with
+      match List.nth ctxt.bootstrapped (Z.to_int x) with
       | Some x -> ok (LT.V_Ct (C_address x), ctxt)
       | None -> fail (Errors.generic_error loc "This bootstrap account do not exist")
     )
@@ -194,10 +194,10 @@ module Command = struct
     | Get_last_originations () ->
       let aux (src, lst) =
         let src = LC.v_address src in
-        let lst = LT.V_List (List.map LC.v_address lst) in
+        let lst = LT.V_List (List.map ~f:LC.v_address lst) in
         (src, lst)
       in
-      let v = LT.V_Map (List.map aux ctxt.last_originations) in
+      let v = LT.V_Map (List.map ~f:aux ctxt.last_originations) in
       ok (v,ctxt)
     | Int_compare_wrapped (x, y) ->
       ok (wrap_compare Int_repr.compare x y, ctxt)
@@ -260,11 +260,11 @@ let rec bind_list = function
     let* tl = bind_list tl in
     return @@ hd :: tl
 
-let bind_map_list f lst = bind_list (List.map f lst)
+let bind_map_list f lst = bind_list (List.map ~f:f lst)
 
 let bind_fold_list f init lst =
   let aux x y =
     let* x = x in
     f x y
   in
-  List.fold_left aux (return init) lst
+  List.fold_left ~f:aux ~init:(return init) lst

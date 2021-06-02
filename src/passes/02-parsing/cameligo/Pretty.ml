@@ -341,7 +341,7 @@ and pp_injection :
     | Some elements -> printer (fst elements) ^^ inner empty (snd elements) 
     | None -> empty
     in
-    match Option.map pp_compound compound with
+    match Option.map ~f:pp_compound compound with
       None -> elements
     | Some ((opening, a), (closing, b)) ->
         (pp_region_t (string opening) a) ^^ nest 1 elements ^^ (pp_region_t (string closing) b)
@@ -378,7 +378,7 @@ and pp_ne_injection :
     let {compound; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq ";" printer ne_elements in
     let inj =
-      match Option.map pp_compound compound with
+      match Option.map ~f:pp_compound compound with
         None -> elements
       | Some ((opening, a), (closing, b)) ->
         surround 2 1 (pp_region_t (string opening) a) elements (pp_region_t (string closing) b) 
@@ -514,7 +514,7 @@ and pp_seq {value; _} =
   | Some elements -> pp_expr (fst elements) ^^ inner empty (snd elements) 
   | None -> empty
   in
-  match Option.map pp_compound compound with
+  match Option.map ~f:pp_compound compound with
     None -> elements
   | Some ((opening, a), (closing, b)) ->
      (pp_region_t (string opening) a)

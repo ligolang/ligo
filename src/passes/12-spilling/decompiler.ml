@@ -121,7 +121,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
             let* value = decompile v v_ty in
             ok ({key; value} : AST.map_kv) in
           bind_map_list aux map in
-        let map' = List.sort_uniq compare map' in
+        let map' = List.dedup_and_sort ~compare map' in
         let aux = fun prev ({ key ; value } : AST.map_kv) ->
           return @@ E_constant {cons_name=C_MAP_ADD;arguments=[key ; value ; prev]}
         in
@@ -138,7 +138,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
             let* value = decompile v v_ty in
             ok ({key; value} : AST.map_kv) in
           bind_map_list aux big_map in
-        let big_map' = List.sort_uniq compare big_map' in
+        let big_map' = List.dedup_and_sort ~compare big_map' in
         let aux = fun prev ({ key ; value } : AST.map_kv) ->
           return @@ E_constant {cons_name=C_MAP_ADD;arguments=[key ; value ; prev]}
         in
@@ -165,7 +165,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let* lst' =
           let aux = fun e -> decompile e ty in
           bind_map_list aux lst in
-        let lst' = List.sort_uniq compare lst' in
+        let lst' = List.dedup_and_sort ~compare lst' in
         let aux = fun prev cur ->
           return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
         let* init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
@@ -182,7 +182,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
     )
     | (i, _) when String.equal i contract_name ->
       fail @@ bad_decompile v
-    | (i,_) when List.exists (fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name; michelson_pair_left_comb_name ; michelson_pair_right_comb_name ; michelson_or_left_comb_name ; michelson_or_right_comb_name ] ->
+    | (i,_) when List.exists ~f:(fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name; michelson_pair_left_comb_name ; michelson_pair_right_comb_name ; michelson_or_left_comb_name ; michelson_or_right_comb_name ] ->
       fail @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | _ ->
       (* let () = Format.printf "%a" Mini_c.PP.value v in *)
@@ -190,15 +190,15 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
   | T_sum {layout ; content} ->
-      let lst = List.map (fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
+      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
       let* (constructor, v, tv) = Layout.extract_constructor ~layout v lst in
       let* sub = decompile v tv in
       return (E_constructor {constructor;element=sub})
   | T_record {layout ; content } ->
-      let lst = List.map (fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
+      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
       let* lst = Layout.extract_record ~layout v lst in
       let* lst = bind_list
-        @@ List.map (fun (x, (y, z)) -> let* yz = decompile y z in ok (x, yz)) lst in
+        @@ List.map ~f:(fun (x, (y, z)) -> let* yz = decompile y z in ok (x, yz)) lst in
       let m' = AST.LMap.of_list lst in
       return (E_record m')
   | T_arrow _ ->

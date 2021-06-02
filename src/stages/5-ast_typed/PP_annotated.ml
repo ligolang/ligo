@@ -5,13 +5,13 @@ open PP_helpers
 include Stage_common.PP
 
 let lmap_sep value sep ppf m =
-  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) m in
+  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
@@ -23,7 +23,7 @@ let tuple_sep value sep ppf m =
 
 let record_sep_t value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
@@ -179,4 +179,4 @@ and declaration ppf (d : declaration) =
 and module_fully_typed ppf (Module_Fully_Typed p : module_fully_typed) =
   fprintf ppf "@[<v>%a@]"
     (list_sep declaration (tag "@;"))
-    (List.map Location.unwrap p)
+    (List.map ~f:Location.unwrap p)

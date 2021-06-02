@@ -359,7 +359,7 @@ and pp_ne_injection :
     let {compound; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq "," printer ne_elements in
     let inj =
-      match Option.map pp_compound compound with
+      match Option.map ~f:pp_compound compound with
         None -> elements
       | Some (opening, closing) ->
           string opening ^^ nest 2 (break 0 ^^ elements)

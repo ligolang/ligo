@@ -3,10 +3,10 @@ open Trace
 
 let nseq_to_list (hd, tl) = hd :: tl
 
-let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
+let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
 
-let npseq_to_ne_list (hd, tl) = hd, (List.map snd tl)
-let map_npseq f (hd,tl) = f hd, List.map (fun (a,b) -> (a, f b)) tl
+let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
+let map_npseq f (hd,tl) = f hd, List.map ~f:(fun (a,b) -> (a, f b)) tl
 let bind_map_npseq f (hd,tl) =
   let* hd = f hd in
   let* tl = bind_map_list (fun (a,b) -> let* b = f b in ok @@ (a,b)) tl in
@@ -22,7 +22,7 @@ let pseq_to_list = function
 let bind_map_pseq f = bind_map_option @@ bind_map_npseq f
 let bind_fold_pseq f init seq =
   let* res = bind_map_option (bind_fold_npseq f init) seq in
-  ok @@ Option.unopt ~default:(init) res
+  ok @@ Option.value ~default:(init) res
 
 type ('a, 'err) folder = {
   e : 'a -> expr -> ('a, 'err) result;
@@ -546,7 +546,7 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
 and map_module : ('err) mapper -> t -> (t, 'err) result =
   fun f {decl;eof} ->
   let self = map_declaration f in
-  map (fun decl -> {decl;eof}) @@
+  Trace.map ~f:(fun decl -> {decl;eof}) @@
   bind_map_ne_list self @@ decl
 
 (* TODO this is stupid *)

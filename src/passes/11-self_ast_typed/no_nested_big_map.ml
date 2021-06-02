@@ -19,7 +19,7 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let* _ = bind_map_list (check_no_nested_bigmap is_in_bigmap) parameters in
     ok ()
   | T_sum s ->
-    let es = List.map (fun {associated_type;_} -> associated_type) (LMap.to_list s.content) in
+    let es = List.map ~f:(fun {associated_type;_} -> associated_type) (LMap.to_list s.content) in
     let* _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in
     ok ()
   | T_record {content=elm;_} ->

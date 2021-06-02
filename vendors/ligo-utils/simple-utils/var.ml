@@ -71,8 +71,8 @@ let pp ppf v =
   | _, None -> Format.fprintf ppf "%s" v.name
   | _, Some i -> Format.fprintf ppf "%s#%d" v.name i
 
-module Int = X_int
-module Option = X_option
+module Int = Base.Int
+module Option = Base.Option
 
 let equal v1 v2 =
   String.equal v1.name v2.name
@@ -104,7 +104,7 @@ let to_name var =
   | Some _ -> raise Tried_to_unfreshen_variable
 
 let fresh ?name () =
-  let name = Option.unopt ~default:"" name in
+  let name = Option.value ~default:"" name in
   let counter = incr global_counter ; Some !global_counter in
   { name ; counter }
 

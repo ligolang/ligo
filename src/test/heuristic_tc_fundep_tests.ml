@@ -92,7 +92,7 @@ let test_deduce_and_clean
       let input_tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None args tc in
       let expected_tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None expected_args expected_tc in
       let expected_inferred = List.map
-          (fun (tv , c_tag , tv_list) -> `Constructor {reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier.T 42L ; tv ; c_tag ; tv_list})
+          ~f:(fun (tv , c_tag , tv_list) -> `Constructor {reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier.T 42L ; tv ; c_tag ; tv_list})
           expected_inferred in
       let* actual = deduce_and_clean repr input_tc in
       Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc ; changed = true } actual
@@ -175,7 +175,7 @@ let tests2 deduce_and_clean =
 ]
 
 let main = test_suite "Typer: fundep heuriscic"
-  @@ List.flatten
+  @@ List.concat
     [
       tests1 Inference.Heuristic_tc_fundep.restrict ;
       tests2 Inference.Heuristic_tc_fundep.deduce_and_clean ;

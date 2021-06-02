@@ -14,7 +14,7 @@ let extract_variable_types :
         let t' = match t.orig_var with Some t' -> { t with type_content = T_variable t'} | None -> (* let () = Format.printf "\nYAA\n NONE : %a" Ast_typed.PP.type_expression t in *) t in
         (v,t')
       in
-      let b' = List.map aux b in
+      let b' = List.map ~f:aux b in
       ok @@ Bindings_map.add_bindings b' env
     in
     let aux : bindings_map -> Ast_typed.expression -> (bindings_map, _) result = fun env exp ->
@@ -49,16 +49,16 @@ let extract_variable_types :
                   let proj_t = (Ast_core.LMap.find constructor variant_t.content).associated_type in
                   (pattern,proj_t)
               in
-              return (List.map aux cases)
+              return (List.map ~f:aux cases)
             | None -> (
               match Ast_typed.get_t_option matchee.type_expression with
                 | Some proj_t ->
-                  let x = List.find (fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Some") cases in
+                  let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Some") cases in
                   return [(x.pattern,proj_t)]
                 | None -> (
                   match Ast_typed.get_t_list matchee.type_expression with
                   | Some list_proj ->
-                    let x = List.find (fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
+                    let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
                     let t = Ast_typed.t_pair list_proj matchee.type_expression in
                     return [(x.pattern,t)]
                   | None -> failwith "matched value in the Match_variant: wrong type"

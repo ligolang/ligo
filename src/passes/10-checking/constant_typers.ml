@@ -202,7 +202,7 @@ let failwith_ loc = typer_1_opt loc "FAILWITH" @@ fun t opt ->
         ]
         [t] in
   let default = t_unit () in
-  ok @@ Simple_utils.Option.unopt ~default opt
+  ok @@ Simple_utils.Option.value ~default opt
 
 let int loc : typer = typer_1 loc "INT" @@ fun t ->
   if (eq_1 t (t_nat ()) || eq_1 t (t_bls12_381_fr ()))
@@ -809,7 +809,7 @@ let convert_from_left_comb loc = typer_1_opt loc "CONVERT_FROM_LEFT_COMB" @@ fun
 let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
   let* () =
     Assert.assert_true (uncomparable_types loc a b) @@
-    List.exists (eq_2 (a , b)) [
+    List.exists ~f:(eq_2 (a , b)) [
       t_address () ;
       t_bool () ;
       t_bytes () ;
@@ -837,7 +837,7 @@ let rec record_comparator : Location.t -> string -> typer = fun loc s -> typer_2
   let aux (a,b) : (type_expression, typer_error) result =
     comparator loc s [a.associated_type;b.associated_type] None
   in
-  let* _ = bind_map_list aux @@ List.combine (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let* _ = bind_map_list aux @@ List.zip_exn (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   ok @@ t_bool ()
 
 and sum_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
@@ -851,7 +851,7 @@ and sum_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s 
   let aux (a,b) : (type_expression, typer_error) result =
     comparator loc s [a.associated_type;b.associated_type] None
   in
-  let* _ = bind_map_list aux @@ List.combine (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let* _ = bind_map_list aux @@ List.zip_exn (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   ok @@ t_bool ()
 
 and option_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a_opt b_opt ->

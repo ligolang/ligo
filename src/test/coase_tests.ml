@@ -52,7 +52,7 @@ let card_pattern_ez (coeff , qtt) =
 
 let make_card_patterns lst =
   let card_pattern_id_ty = t_nat () in
-  let assoc_lst = List.mapi (fun i x -> (e_nat i , x)) lst in
+  let assoc_lst = List.mapi ~f:(fun i x -> (e_nat i , x)) lst in
   e_typed_map assoc_lst card_pattern_id_ty card_pattern_ty
 
 let storage cards_patterns cards next_id =
@@ -66,25 +66,25 @@ let storage_ez cps cs next_id =
   storage (make_card_patterns cps) (make_cards cs) (e_nat next_id)
 
 let cards_ez owner n =
-  List.mapi (fun i x -> (e_nat i , x))
-  @@ List.map card_ez
-  @@ List.map (Function.constant owner)
-  @@ List.range n
+  List.mapi ~f:(fun i x -> (e_nat i , x))
+  @@ List.map ~f:card_ez
+  @@ List.map ~f:(Function.constant owner)
+  @@ List.range 0 n
 
 let (first_owner , first_contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth dummy_environment.identities 0 in
+  let id = List.nth_exn dummy_environment.identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let (second_owner , second_contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth dummy_environment.identities 1 in
+  let id = List.nth_exn dummy_environment.identities 1 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let basic a b cards next_id =
-  let card_patterns = List.map card_pattern_ez [
+  let card_patterns = List.map ~f:card_pattern_ez [
     (100 , a) ;
     (20 , b) ;
   ] in
@@ -182,7 +182,7 @@ let transfer () =
         let cards =
           let new_card = card_ez second_owner in
           let old_cards = cards_ez first_owner n in
-          (e_nat 0 , new_card) :: (List.tl old_cards)
+          (e_nat 0 , new_card) :: (List.tl_exn old_cards)
         in
         basic 100 1000 cards (2 * n) in
       e_pair ops storage
@@ -215,7 +215,7 @@ let sell () =
           Ast_core.get_e_list ops.expression_content in
           Assert.assert_list_size (test_internal __LOC__) lst 1 in
       let expected_storage =
-        let cards = List.hds @@ cards_ez first_owner n in
+        let cards = List.drop_last_exn @@ cards_ez first_owner n in
         basic 99 1000 cards (2 * n) in
       let* expected_storage = Test_helpers.expression_to_core expected_storage in
       trace_option (test_internal __LOC__) @@

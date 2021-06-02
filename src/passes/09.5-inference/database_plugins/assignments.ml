@@ -30,9 +30,9 @@ let add_constraint ?debug repr state new_constraint =
   | None -> None in
   match new_constraint with
   | SC_Constructor c ->
-    Option.unopt ~default:state @@ ReprMap.add_opt ?debug (repr c.tv) (`Constructor c) state
+    Option.value ~default:state @@ ReprMap.add_opt ?debug (repr c.tv) (`Constructor c) state
   | SC_Row r ->
-    Option.unopt ~default:state @@ ReprMap.add_opt ?debug (repr r.tv) (`Row r) state
+    Option.value ~default:state @@ ReprMap.add_opt ?debug (repr r.tv) (`Row r) state
   | _ -> state
 
 let remove_constraint _ _repr state _constraint_to_remove =

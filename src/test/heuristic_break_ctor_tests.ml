@@ -32,7 +32,7 @@ let selector_test : _ -> _ -> unit -> (unit,Main_errors.all) result =
       (constraint 5L o = map(y, z)) *)
   let result = selector repr (!. c5) (grouped_by_variable state) in
   (* Check against expected *)
-  let comparator = List.compare ~compare:comparator in
+  let comparator = List.compare comparator in
   tst_assert "expected the selector to return a list containg the pair of constraints (3L,5L) or (5L,3L)"
     (comparator result [{ a_k_var = `Constructor !.. c3; a_k'_var' = `Constructor !.. c5 }] = 1 ||
      comparator result [{ a_k_var = `Constructor !.. c5; a_k'_var' = `Constructor !.. c3 }] = 1)
@@ -61,7 +61,7 @@ let selector_test2 : _ -> _ -> unit -> (unit,Main_errors.all) result =
      (constraint 6L o = map(y, n)) *)
   let result = selector repr (!. c6) (grouped_by_variable state) in
   (* Check against expected *)
-  let comparator = List.compare ~compare:comparator in
+  let comparator = List.compare comparator in
   tst_assert "expected the selector to return a list containg the pair of constraints (3L,6L) or (6L,3L)"
     (comparator result [{ a_k_var = `Constructor !.. c3; a_k'_var' = `Constructor !.. c6 }] = 1 ||
      comparator result [{ a_k_var = `Constructor !.. c6; a_k'_var' = `Constructor !.. c3 }] = 1)

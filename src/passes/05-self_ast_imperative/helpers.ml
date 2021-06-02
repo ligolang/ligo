@@ -331,12 +331,15 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
 let compare_vars e e' =
   Location.compare_content ~compare:Var.compare e e'
 
+let equal_vars e e' =
+  Location.equal_content ~equal:Var.equal e e'
+
 let in_vars var vars =
-  List.mem ~compare:compare_vars var vars
+  List.mem ~equal:equal_vars vars var
 
 let remove_from var vars =
   let f v vars = if compare_vars var v = 0 then vars else v :: vars in
-  List.fold_right f vars []
+  List.fold_right ~f vars ~init:[]
 
 let get_pattern ?(pred = fun _ -> true) pattern =
   Stage_common.Helpers.fold_pattern (fun vars p ->
@@ -364,7 +367,7 @@ let rec get_fv ?(exclude = []) (expr : expression) =
          let* res = self e in
          let aux acc ({ pattern ; body } : (expression, type_expression) match_case) =
            let* cur = self body in
-           let cur = List.fold_right remove_from (get_pattern pattern) cur in
+           let cur = List.fold_right ~f:remove_from (get_pattern pattern) ~init:cur in
            ok (acc @ cur)
          in
          let* res = bind_fold_list aux res cases in

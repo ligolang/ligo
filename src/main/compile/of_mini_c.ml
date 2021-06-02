@@ -40,7 +40,7 @@ let aggregate_and_compile : options:Compiler_options.t -> program -> form_t -> (
 let aggregate_and_compile_contract : options:Compiler_options.t ->  program -> string -> (Stacking.compiled_expression, _) result =
     fun ~options program name ->
   let* (exp, idx) = trace_option entrypoint_not_found @@ Mini_c.get_entry program name in
-  let program' = List.take idx program in
+  let program' = List.take program idx in
   aggregate_and_compile ~options program' (ContractForm exp)
 
 let aggregate_and_compile_expression = fun ~options program exp ->
@@ -59,5 +59,5 @@ let aggregate = fun program form ->
 
 let aggregate_contract = fun (program : Types.program) name ->
   let* (exp, idx) = trace_option entrypoint_not_found @@ get_entry program name in
-  let program' = List.take idx program in
+  let program' = List.take program idx in
   aggregate program' (ContractForm exp)

@@ -3,7 +3,7 @@ open Ast_typed
 open Trace
 
 let to_sorted_kv_list_l (lmap : row_element label_map) =
-  List.sort (fun (_,({decl_pos=a;_}:row_element)) (_,({decl_pos=b;}:row_element)) -> Int.compare a b) @@
+  List.sort ~compare:(fun (_,({decl_pos=a;_}:row_element)) (_,({decl_pos=b;}:row_element)) -> Int.compare a b) @@
   LMap.to_kv_list_rev lmap
 
 let accessor (record:expression) (path:label) (t:type_expression) =
@@ -218,7 +218,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
           {constructor ; pattern ; body }
         in
         let cases = Match_variant {
-          cases = List.map to_cases @@ (List.combine src_kvl bodies) ;
+          cases = List.map ~f:to_cases @@ (List.zip_exn src_kvl bodies) ;
           tv = to_convert.type_expression }
         in
         return @@ E_matching {matchee = to_convert ; cases}
@@ -238,7 +238,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
           {constructor ; pattern ; body }
         in
         let cases = Match_variant {
-          cases = List.map to_cases @@ (List.combine src_kvl bodies) ;
+          cases = List.map ~f:to_cases @@ (List.zip_exn src_kvl bodies) ;
           tv = to_convert.type_expression }
         in
         return @@ E_matching {matchee = to_convert ; cases}
@@ -254,9 +254,9 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
         let* dst_lmap = trace_option (corner_case "from_right_comb conversion") @@ get_t_sum e.type_expression in
         let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         let intermediary_types i = descend_types "M_right" src_lmap.content i in
-        let matchee = to_convert :: (List.map (fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
+        let matchee = to_convert :: (List.map ~f:(fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
         let bodies = List.map
-          (fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
+          ~f:(fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
           dst_kvl in
         let* match_expr = from_right_comb_or to_convert e (matchee,bodies) in
         return match_expr.expression_content
@@ -272,9 +272,9 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
         let* dst_lmap = trace_option (corner_case "from_left_comb conversion") @@  get_t_sum e.type_expression in
         let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         let intermediary_types i = descend_types "M_left" src_lmap.content i in
-        let matchee = to_convert :: (List.map (fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
+        let matchee = to_convert :: (List.map ~f:(fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
         let bodies = List.map
-          (fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
+          ~f:(fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
           (List.rev dst_kvl) in
         let* match_expr = from_left_comb_or to_convert e (matchee,bodies) in
         return match_expr.expression_content

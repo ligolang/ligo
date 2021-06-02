@@ -4,6 +4,7 @@ module O = Ast_sugar
 open Trace
 open Stage_common.Maps
 
+let equal_var = Location.equal_content ~equal:Var.equal
 let compare_var = Location.compare_content ~compare:Var.compare
 
 let rec add_to_end (expression: O.expression) to_add =
@@ -25,10 +26,10 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
           ok (true,(let_binder.var::decl_var, free_var),O.e_let_in let_binder false [] rhs let_result)
         | E_let_in {let_binder;mut=true; rhs;let_result} ->
           let name = let_binder.var in
-          if List.mem ~compare:compare_var name decl_var then
+          if List.mem ~equal:equal_var decl_var name then
             ok (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
           else(
-            let free_var = if (List.mem ~compare:compare_var name free_var) then free_var else name::free_var in
+            let free_var = if (List.mem ~equal:equal_var free_var name) then free_var else name::free_var in
             let expr = O.e_let_in_ez env false [] (O.e_update (O.e_variable env) [O.Access_record (Var.to_name name.wrap_content)] (O.e_variable name)) let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs expr)
           )
@@ -68,11 +69,11 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
           ok (true,(var::decl_var, free_var),ass_exp)
         | E_let_in {let_binder;mut=true; rhs;let_result} ->
           let name = let_binder.var in
-          if List.mem ~compare:compare_var name decl_var then
+          if List.mem ~equal:equal_var decl_var name then
             ok (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
           else(
             let free_var =
-              if (List.mem ~compare:compare_var name free_var)
+              if (List.mem ~equal:equal_var free_var name)
               then free_var
               else name::free_var in
             let expr = O.e_let_in_ez env false [] (
@@ -107,13 +108,13 @@ and store_mutable_variable (free_vars : I.expression_variable list) =
     O.e_unit ()
   else
     let aux (var:I.expression_variable) = (O.Label (Var.to_name var.wrap_content), O.e_variable var) in
-    O.e_record @@ O.LMap.of_list (List.map aux free_vars)
+    O.e_record @@ O.LMap.of_list (List.map ~f:aux free_vars)
 
 and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.expression_variable list) (env : O.expression_variable) =
   let aux (f: O.expression -> O.expression) (ev: O.expression_variable) =
     fun expr -> f (O.e_let_in_ez ev true [] (O.e_accessor (O.e_variable env) [O.Access_record (Var.to_name ev.wrap_content)]) expr)
   in
-  let ef = List.fold_left aux (fun e -> e) free_vars in
+  let ef = List.fold_left ~f:aux ~init:(fun e -> e) free_vars in
   fun e -> match e with
     | None -> expr (ef (O.e_skip ()))
     | Some e -> expr (ef e)
@@ -260,7 +261,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
       let then_clause  = add_to_end then_clause (O.e_variable env) in
       let else_clause = add_to_end else_clause (O.e_variable env) in
 
-      let free_vars = List.sort_uniq compare_var @@ free_vars_true @ free_vars_false in
+      let free_vars = List.dedup_and_sort ~compare:compare_var @@ free_vars_true @ free_vars_false in
       if (List.length free_vars != 0) then
         let cond_expr  = O.e_cond condition then_clause else_clause in
         let return_expr = fun expr ->
@@ -289,7 +290,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
       | _  -> O.e_update ~loc (O.e_variable ~loc variable) access_path expression in
       ok @@ fun expr ->
         O.e_let_in_ez ~loc variable true [] rhs
-        @@ Option.unopt ~default:(O.e_skip ()) expr
+        @@ Option.value ~default:(O.e_skip ()) expr
     | I.E_for f ->
       let* f = compile_for f in
       ok @@ f
@@ -327,8 +328,8 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       ok ((cases_no_fv,cases_fv),free_vars)
   in
   let* l = bind_map_list aux cases in
-  let (cases_no_fv,cases_fv) = List.split @@ List.map fst l in
-  let free_vars = List.sort_uniq compare_var (List.flatten @@ List.map snd l) in
+  let (cases_no_fv,cases_fv) = List.unzip @@ List.map ~f:fst l in
+  let free_vars = List.dedup_and_sort ~compare:compare_var (List.concat @@ List.map ~f:snd l) in
   match free_vars with
   | [] -> return (O.e_matching ~loc matchee cases_no_fv) 
   | _ ->
@@ -357,7 +358,7 @@ and compile_while I.{cond;body} =
     O.e_let_in_ez name false [] (O.e_accessor (O.e_variable binder) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
   in
   let init_rec = O.e_tuple [store_mutable_variable @@ captured_name_list] in
-  let restore = fun expr -> List.fold_right aux captured_name_list expr in
+  let restore = fun expr -> List.fold_right ~f:aux captured_name_list ~init:expr in
   let continue_expr = O.e_constant C_FOLD_CONTINUE [for_body] in
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable binder] in
   let aux_func =
@@ -397,7 +398,7 @@ and compile_for I.{binder;start;final;incr;f_body} =
   in
 
   (* restores the initial value of the free_var*)
-  let restore = fun expr -> List.fold_right aux captured_name_list expr in
+  let restore = fun expr -> List.fold_right ~f:aux captured_name_list ~init:expr in
 
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable loop_binder] in
@@ -437,7 +438,7 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
   let aux name expr=
     O.e_let_in_ez name false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
   in
-  let restore = fun expr -> List.fold_right aux free_vars expr in
+  let restore = fun expr -> List.fold_right ~f:aux free_vars ~init:expr in
   let restore = match collection_type with
     | Map -> (match snd fe_binder with
       | Some v -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero])

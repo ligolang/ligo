@@ -2,11 +2,11 @@ open Types
 
 let scopes : Format.formatter -> scopes -> unit = fun f s ->
   let pp_scope f (s:scope) =
-    let pp_list f = List.iter (fun (k,_) -> Format.fprintf f "%s " k ) in
+    let pp_list f = List.iter ~f: (fun (k,_) -> Format.fprintf f "%s " k ) in
     let a = Def_map.to_kv_list s.env in
     Format.fprintf f "[ %a] %a" pp_list a Location.pp s.range
   in
-  let pp_scopes f = List.iter (Format.fprintf f "@[<v>%a@ @]" pp_scope) in
+  let pp_scopes f = List.iter ~f: (Format.fprintf f "@[<v>%a@ @]" pp_scope) in
   Format.fprintf f "@[<v>Scopes:@ %a@]" pp_scopes s
 
 let rec definitions : Format.formatter -> def_map -> unit = fun f dm ->
@@ -30,9 +30,9 @@ let rec definitions : Format.formatter -> def_map -> unit = fun f dm ->
     | Module m -> Format.fprintf ppf ": %a" definitions m.content
     | ModuleAlias a -> Format.fprintf ppf ": %a" (PP_helpers.list_sep_d Ast_core.PP.module_variable) @@ List.Ne.to_list a.content
   in
-  let (variables,types) = List.partition (fun (_,def) -> match def with Type _ | Module _ | ModuleAlias _ -> false | Variable _ -> true) kvl in
-  let (types,modules) = List.partition (fun (_,def) -> match def with |Type _ -> true | _ -> false) types in
-  let pp_def f = List.iter (fun (k,v) -> Format.fprintf f "(%s -> %s) %a %a@ " k (get_def_name v) Location.pp (get_range v) pp_content v) in
+  let (variables,types) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ | ModuleAlias _ -> false | Variable _ -> true) kvl in
+  let (types,modules) = List.partition_tf ~f:(fun (_,def) -> match def with |Type _ -> true | _ -> false) types in
+  let pp_def f = List.iter ~f: (fun (k,v) -> Format.fprintf f "(%s -> %s) %a %a@ " k (get_def_name v) Location.pp (get_range v) pp_content v) in
   Format.fprintf f "@[<v>Variable definitions:@ %aType definitions:@ %aModule definitions:@ %a@]" pp_def variables pp_def types pp_def modules
 
 let rec def_to_yojson : def -> Yojson.Safe.t = function
@@ -47,7 +47,7 @@ let rec def_to_yojson : def -> Yojson.Safe.t = function
       ("range", Location.to_yojson range);
       ("body_range", Location.to_yojson body_range);
       ("t", type_case_to_yojson t );
-      ("references", `List (List.map Location.to_yojson references) );
+      ("references", `List (List.map ~f:Location.to_yojson references) );
     ]
   | Type { name ; range ; body_range ; content } ->
     `Assoc [
@@ -73,21 +73,21 @@ let rec def_to_yojson : def -> Yojson.Safe.t = function
 
 and defs_json d : Yojson.Safe.t =
   let get_defs d =
-    let (v,tv) = List.partition (fun (_,def) -> match def with Variable _ -> true | Type _ | Module _ | ModuleAlias _ -> false) (Def_map.to_kv_list d) in
+    let (v,tv) = List.partition_tf ~f:(fun (_,def) -> match def with Variable _ -> true | Type _ | Module _ | ModuleAlias _ -> false) (Def_map.to_kv_list d) in
     [
-      ("variables", `Assoc (List.map (fun (def_id,def) -> (def_id,def_to_yojson def)) v));
-      ("types", `Assoc (List.map (fun (def_id,def) -> (def_id,def_to_yojson def)) tv))
+      ("variables", `Assoc (List.map ~f:(fun (def_id,def) -> (def_id,def_to_yojson def)) v));
+      ("types", `Assoc (List.map ~f:(fun (def_id,def) -> (def_id,def_to_yojson def)) tv))
     ]
   in
   `Assoc (get_defs d)
 
 let scopes_json s : Yojson.Safe.t = `List (
   List.map
-    (fun scope ->
+    ~f:(fun scope ->
       let sd = Def_map.to_kv_list scope.env in
-      let (variables,types) = List.partition (fun (_,def) -> match def with Type _ | Module _ | ModuleAlias _ -> false | Variable _ -> true) sd in
-      let v = List.map (fun (k,_) -> `String k) variables in
-      let t = List.map (fun (k,_) -> `String k) types in
+      let (variables,types) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ | ModuleAlias _ -> false | Variable _ -> true) sd in
+      let v = List.map ~f:(fun (k,_) -> `String k) variables in
+      let t = List.map ~f:(fun (k,_) -> `String k) types in
       (`Assoc [("range", Location.to_yojson scope.range) ; ("expression_environment", `List v) ; ("type_environment", `List t)])
     )
     s

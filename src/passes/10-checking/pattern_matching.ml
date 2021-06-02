@@ -40,7 +40,7 @@ let is_product' : _ I.pattern -> bool = fun p ->
 
 let is_product : equations -> typed_pattern option = fun eqs ->
   List.find_map
-    (fun (pl,_) ->
+    ~f:(fun (pl,_) ->
       match pl with
       | (p,t)::_ -> if is_product' p then Some(p,t) else None 
       | [] -> None
@@ -107,7 +107,7 @@ e.g.
 **)
 let type_matchee : equations -> O.type_expression pm_result =
   fun eqs ->
-    let pt1s = List.map (fun el -> List.hd @@ fst el) eqs in
+    let pt1s = List.map ~f:(fun el -> List.hd_exn @@ fst el) eqs in
     let conforms : typed_pattern -> unit pm_result = fun (p,t) ->
       match p.wrap_content , t.type_content with
       | I.P_var _ , _ -> ok ()
@@ -130,7 +130,7 @@ let type_matchee : equations -> O.type_expression pm_result =
         ok t_opt
     in
     let* t = bind_fold_list aux None pt1s in
-    ok @@ Option.unopt_exn t
+    ok @@ Option.value_exn t
 
 (**
   `substitute_var_in_body to_subst new_var body` replaces variables equal to `to_subst` with variable `new_var` in expression `body`.
@@ -198,8 +198,8 @@ let group_equations : equations -> equations O.label_map pm_result =
   fun eqs ->
     let aux : equations O.label_map -> typed_pattern list * (I.expression * O.environment) -> equations O.label_map pm_result =
       fun m (pl , (body , env)) ->
-        let (phd,t) = List.hd pl in
-        let ptl = List.tl pl in
+        let (phd,t) = List.hd_exn pl in
+        let ptl = List.tl_exn pl in
         let upd : O.type_expression -> pattern -> equations option -> equations option =
           fun proj_t pattern kopt ->
             match kopt with
@@ -234,10 +234,10 @@ let rec match_ : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expressi
       let* body = type_f ?tv_opt:body_t env body in
       let* () = assert_body_t ~body_t body.location body.type_expression in
       ok body
-  | [] , eqs when List.for_all (fun (ps,_) -> List.length ps = 0) eqs ->
+  | [] , eqs when List.for_all ~f:(fun (ps,_) -> List.length ps = 0) eqs ->
     fail @@ redundant_pattern err_loc
   | _ ->
-    let leq = partition (fun (pl,_) -> is_var (fst @@ List.hd pl)) eqs in
+    let leq = partition (fun (pl,_) -> is_var (fst @@ List.hd_exn pl)) eqs in
     let aux = fun (prev_opt:O.expression option) part_eq ->
       let* r =
         match prev_opt with
@@ -247,12 +247,12 @@ let rec match_ : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expressi
       ok (Some r)
     in
     let* r = bind_fold_right_list aux None leq in
-    ok @@ Option.unopt_exn r
+    ok @@ Option.value_exn r
 
 and consvar : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> rest -> O.expression pm_result =
   fun ~err_loc ~type_f ~body_t ms eqs def ->
-  let p1s = List.map (fun el -> fst @@ List.hd @@ fst el) eqs in
-    if List.for_all is_var p1s then
+  let p1s = List.map ~f:(fun el -> fst @@ List.hd_exn @@ fst el) eqs in
+    if List.for_all ~f:is_var p1s then
       let product_opt = is_product eqs in
       var_rule ~err_loc ~type_f ~body_t product_opt ms eqs def
     else
@@ -299,7 +299,7 @@ and ctor_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expressio
           let* proj =
             match eq with
             | [(tp,_)] -> (
-              let (pattern,t) = List.hd tp in
+              let (pattern,t) = List.hd_exn tp in
               match pattern.wrap_content with
               | P_var x -> ok x.var
               | P_unit ->
@@ -327,15 +327,15 @@ and ctor_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expressio
           ok @@ O.LMap.to_kv_list @@ eq_opt_map
         | None -> (
           match O.get_t_option matchee_t with
-          | Some _ -> ok @@ List.map (fun label -> (label, O.LMap.find_opt label eq_map)) [Label "Some"; Label "None"]
+          | Some _ -> ok @@ List.map ~f:(fun label -> (label, O.LMap.find_opt label eq_map)) O.[Label "Some"; Label "None"]
           | None -> (
             match O.get_t_list matchee_t with
-            | Some _ -> ok @@ List.map (fun label -> (label, O.LMap.find_opt label eq_map)) [Label "Cons"; Label "Nil"]
+            | Some _ -> ok @@ List.map ~f:(fun label -> (label, O.LMap.find_opt label eq_map)) O.[Label "Cons"; Label "Nil"]
             | None -> corner_case __LOC__ (* should be caught when typing the matchee *)
           )
         )
       in
-      let present = List.filter_map (fun (c,eq_opt) -> match eq_opt with Some eq -> Some (c,eq) | None -> None) grouped_eqs in
+      let present = List.filter_map ~f:(fun (c,eq_opt) -> match eq_opt with Some eq -> Some (c,eq) | None -> None) grouped_eqs in
       let* present_cases = bind_map_list aux_p present in
       let* body_t =
         let aux t_opt (c:O.matching_content_case) =
@@ -345,11 +345,11 @@ and ctor_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expressio
           | Some _ -> ok t_opt
         in
         let* t = bind_fold_list aux body_t present_cases in
-        let t = Option.unopt_exn t in
+        let t = Option.value_exn t in
         ok t
       in
-      let missing = List.filter_map (fun (c,eq_opt) -> match eq_opt with Some _ -> None | None -> Some (c,body_t)) grouped_eqs in
-      let missing_cases = List.map aux_m missing in
+      let missing = List.filter_map ~f:(fun (c,eq_opt) -> match eq_opt with Some _ -> None | None -> Some (c,body_t)) grouped_eqs in
+      let missing_cases = List.map ~f:aux_m missing in
       let cases = O.Match_variant { cases = missing_cases @ present_cases ; tv = matchee_t } in
       ok @@ O.make_e (O.E_matching { matchee ; cases }) body_t
   | [] -> corner_case __LOC__
@@ -383,7 +383,7 @@ and product_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expres
             let* field_t = extract_record_type p l t in
             ok @@ (l , (v,field_t))
         in
-        bind_map_list aux (List.combine labels patterns)
+        bind_map_list aux (List.zip_exn labels patterns)
       | _ -> corner_case __LOC__
     in
     let aux : typed_pattern list * (I.expression * O.environment) -> (typed_pattern list * (I.expression * O.environment)) pm_result =
@@ -404,7 +404,7 @@ and product_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expres
             let* field_t = extract_record_type p label t in
             ok (p,field_t)
           in
-          let* tps = bind_map_list aux (List.combine labels ps) in
+          let* tps = bind_map_list aux (List.zip_exn labels ps) in
           ok (tps @ var_filler::ptl , (body,env))
         | P_var _ ->
           let* filler =
@@ -429,7 +429,7 @@ and product_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expres
                 in
                 ok (v,field_t)
               in
-              bind_map_list aux (List.combine labels patterns)
+              bind_map_list aux (List.zip_exn labels patterns)
             | _ -> corner_case __LOC__
           in
           ok (filler @ pl , (body,env))
@@ -440,7 +440,7 @@ and product_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expres
     let* matchee_t = type_matchee eqs in
     let* eqs' = bind_map_list aux eqs in
     let fields = O.LMap.of_list lb in
-    let new_matchees = List.map (fun (_,((x:O.expression_variable),_)) -> x) lb in
+    let new_matchees = List.map ~f:(fun (_,((x:O.expression_variable),_)) -> x) lb in
     let* body = match_ ~err_loc ~type_f ~body_t (new_matchees @ ms) eqs' def in
     let cases = O.Match_record { fields; body ; tv = snd product_shape } in
     let matchee = O.make_e (O.e_variable mhd) matchee_t in

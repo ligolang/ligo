@@ -21,12 +21,12 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
        {associated_value = type_expression_to_type_value associated_type;michelson_annotation;decl_pos} in
     p_row C_record @@ T.LMap.map aux fields
   | T_arrow {type1;type2} ->
-    p_constant C_arrow @@ List.map type_expression_to_type_value [ type1 ; type2 ]
+    p_constant C_arrow @@ List.map ~f:type_expression_to_type_value [ type1 ; type2 ]
   | T_module_accessor {module_name=_; element} ->
     type_expression_to_type_value element
   | T_app {type_operator;arguments} -> (
     let open Stage_common.Constant in
-    let (csttag, args) = Option.unopt_exn @@ (* This will be removed later *)
+    let (csttag, args) = Option.value_exn (* This will be removed later *)
     T.(match (Var.to_name type_operator , arguments) with
       | ( s , [] ) when String.equal s unit_name -> Some (C_unit , [])
       | ( s , [] ) when String.equal s string_name-> Some (C_string , [])
@@ -51,7 +51,7 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
       | ( _ , _ ) -> None
       )
     in
-    p_constant csttag @@ List.map type_expression_to_type_value args
+    p_constant csttag @@ List.map ~f:type_expression_to_type_value args
   )
 
 let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun name expr ->
@@ -69,14 +69,14 @@ let literal : string -> T.type_expression -> (constraints * T.type_variable) = f
 (* TODO : move to common *)
 let lmap_of_tuple lst =
   let aux i e = (i+1,(T.Label (string_of_int i),e)) in
-  T.LMap.of_list @@ List.fold_map aux 0 lst
+  T.LMap.of_list @@ snd @@ List.fold_map ~f:aux ~init:0 lst
 
 (* This is pretty much a wrapper for an n-ary function. *)
 (* TODO: change working of constant in ligo *)
 let constant : I.constant' -> O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
   fun name f args ->
   let whole_expr = Core.fresh_type_variable ~name:(Format.asprintf "capp_%a" I.PP.constant' name) () in
-  let args'     = lmap_of_tuple @@ List.mapi (fun i arg -> ({associated_value = type_expression_to_type_value arg ; michelson_annotation = None; decl_pos = i}: T.row_value)) args in
+  let args'     = lmap_of_tuple @@ List.mapi ~f:(fun i arg -> ({associated_value = type_expression_to_type_value arg ; michelson_annotation = None; decl_pos = i}: T.row_value)) args in
   let args_tuple = p_row C_record args' in
   [
       c_equation f (p_constant C_arrow ([args_tuple ; (T.Reasons.wrap (Todo "wrap: constant: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
@@ -220,8 +220,8 @@ let pattern_match_unit : T.type_expression -> constraints = fun fresh ->
   ]
 let pattern_match_list : T.type_expression -> T.type_expression list -> constraints = fun el_t ts ->
   let el_t = type_expression_to_type_value el_t in
-  let ts = List.map type_expression_to_type_value ts in
-  List.map (fun x -> c_equation el_t x "wrap: match_exp: element types must be identical") ts
+  let ts = List.map ~f:type_expression_to_type_value ts in
+  List.map ~f:(fun x -> c_equation el_t x "wrap: match_exp: element types must be identical") ts
 let raw_code : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
   fun type_anno verbatim_string ->
   let type_anno = type_expression_to_type_value type_anno in
@@ -311,10 +311,10 @@ let match_cases : T.type_expression list -> T.type_expression list -> T.type_exp
   fun body_ts pattern_ts matchee_t ->
     let match_whole = Core.fresh_type_variable ~name:("match_whole") () in
     let match_whole_expr = (T.Reasons.wrap (Todo "wrap: match_whole") @@ T.P_variable match_whole) in
-    let body_ts = List.map type_expression_to_type_value body_ts in
-    let body_cs = List.map (fun tbody -> c_equation tbody match_whole_expr "wrap: match_whole body") body_ts in
+    let body_ts = List.map ~f:type_expression_to_type_value body_ts in
+    let body_cs = List.map ~f:(fun tbody -> c_equation tbody match_whole_expr "wrap: match_whole body") body_ts in
 
-    let pattern_ts = List.map type_expression_to_type_value pattern_ts in
+    let pattern_ts = List.map ~f:type_expression_to_type_value pattern_ts in
     let matchee_t = type_expression_to_type_value matchee_t in
-    let pattern_cs = List.map (fun tpat -> c_equation tpat matchee_t  "wrap: matchee") pattern_ts in
+    let pattern_cs = List.map ~f:(fun tpat -> c_equation tpat matchee_t  "wrap: matchee") pattern_ts in
     body_cs @ pattern_cs , match_whole

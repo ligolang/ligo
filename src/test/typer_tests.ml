@@ -21,8 +21,8 @@ let int () : (unit, _) result =
   let* () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, t_int ()) in
   ok ()
 
-let init_env = Option.unopt_exn @@ Trace.to_option @@ Checking.decompile_env @@ 
-  Environment.default Environment.Protocols.current
+let init_env = Option.value_exn (Trace.to_option @@ Checking.decompile_env @@ 
+  Environment.default Environment.Protocols.current)
 
 open Ast_core
 

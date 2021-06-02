@@ -33,7 +33,7 @@ let all_contract main_name prg =
     contract_type = contract_type ;
     main_name = main_name ;
     } in
-  let all_p = List.map (fun pass -> Helpers.fold_map_module pass data) contract_passes in
+  let all_p = List.map ~f:(fun pass -> Helpers.fold_map_module pass data) contract_passes in
   bind_chain_ignore_acc all_p prg
 let all = [
   Tail_recursion.peephole_expression

@@ -53,12 +53,12 @@ let combine_usage (u1 : usage) (u2 : usage) : usage =
   | (Unused, u2) -> u2
   | (u1, Unused) -> u1
 
-let usages = List.fold_left combine_usage Unused
+let usages = List.fold_left ~f:combine_usage ~init:Unused
 
 let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
   let self = usage_in_expr f in
   let self_binder vars e =
-    if List.mem ~compare:(Location.compare_content ~compare:Var.compare) f vars
+    if List.mem ~equal:(Location.compare_content ~compare:Var.equal) vars f
     then Unused
     else usage_in_expr f e in
   match expr.content with
@@ -77,7 +77,7 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
       (* else g might be something weird which contains a usage of f,
          e.g. if expr is ((if b then f else h) arg) *)
       else self g in
-    usages (g :: List.map self args)
+    usages (g :: List.map ~f:self args)
 
   (* everything else is boilerplate... *)
   | E_literal _ ->
@@ -85,7 +85,7 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
   | E_closure { binder; body } ->
     self_binder [binder] body
   | E_constant { cons_name = _; arguments } ->
-    usages (List.map self arguments)
+    usages (List.map ~f:self arguments)
   | E_iterator (_, ((v1, _), e1), e2) ->
     usages [self_binder [v1] e1; self e2]
   | E_fold (((v1, _), e1), e2, e3) ->
@@ -103,9 +103,9 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
   | E_let_in (e1, _, ((v2, _), e2)) ->
     usages [self e1; self_binder [v2] e2]
   | E_tuple exprs ->
-    usages (List.map self exprs)
+    usages (List.map ~f:self exprs)
   | E_let_tuple (e1, (vars, e2)) ->
-    usages [self e1; self_binder (List.map fst vars) e2]
+    usages [self e1; self_binder (List.map ~f:fst vars) e2]
   | E_proj (e, _i, _n) ->
     self e
   | E_update (expr, _i, update, _n) ->
@@ -114,13 +114,13 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     Unused
 
 let comb_type (ts : type_expression list) : type_expression =
-  { type_content = T_tuple (List.map (fun t -> (None, t)) ts);
+  { type_content = T_tuple (List.map ~f:(fun t -> (None, t)) ts);
     location = Location.generated }
 
 let comb_expr (es : expression list) : expression =
   { content = E_tuple es;
     location = Location.generated;
-    type_expression = comb_type (List.map (fun e -> e.type_expression) es) }
+    type_expression = comb_type (List.map ~f:(fun e -> e.type_expression) es) }
 
 let uncurry_rhs (depth : int) (expr : expression) : expression =
   let (arg_types, ret_type) = uncurry_arrow depth expr.type_expression in
@@ -130,15 +130,15 @@ let uncurry_rhs (depth : int) (expr : expression) : expression =
 
   (* generate fresh vars in order to specify binding precedence for
      duplicate vars *)
-  let fresh_vars = List.map (Location.map Var.fresh_like) vars in
+  let fresh_vars = List.map ~f:(Location.map Var.fresh_like) vars in
   let binder_expr = { content = E_variable binder;
                       type_expression = comb_type arg_types;
                       location = Location.generated } in
-  let tuple_vars = List.combine fresh_vars arg_types in
+  let tuple_vars = List.zip_exn fresh_vars arg_types in
   (* generate lets in the correct order to bind the original variables *)
   let body =
     List.fold_right
-      (fun ((var, fresh_var), arg_type) body ->
+      ~f:(fun ((var, fresh_var), arg_type) body ->
          let fresh_var_expr =
            { content = E_variable fresh_var;
              type_expression = arg_type;
@@ -146,8 +146,8 @@ let uncurry_rhs (depth : int) (expr : expression) : expression =
          { content = E_let_in (fresh_var_expr, true, ((var, arg_type), body));
            type_expression = body.type_expression;
            location = Location.generated })
-      (List.combine (List.combine vars fresh_vars) arg_types)
-      body in
+      (List.zip_exn (List.zip_exn vars fresh_vars) arg_types)
+      ~init:body in
   let body = { body with content = E_let_tuple (binder_expr, (tuple_vars, body)) } in
   { expr with
     content = E_closure { binder; body };
@@ -157,9 +157,9 @@ let uncurry_rhs (depth : int) (expr : expression) : expression =
 let rec uncurry_in_expression
     (f : expression_variable) (depth : int) (expr : expression) : expression =
   let self = uncurry_in_expression f depth in
-  let self_list = List.map self in
+  let self_list = List.map ~f:self in
   let self_binder vars e =
-    if List.mem ~compare:(Location.compare_content ~compare:Var.compare) f vars
+    if List.mem ~equal:(Location.compare_content ~compare:Var.equal) vars f
     then e
     else uncurry_in_expression f depth e in
   let return e' = { expr with content = e' } in
@@ -229,11 +229,11 @@ let rec uncurry_in_expression
     let e3 = self_binder [v3] e3 in
     return (E_if_left (e1, ((v2, t2), e2), ((v3, t3), e3)))
   | E_tuple exprs ->
-    let exprs = List.map self exprs in
+    let exprs = List.map ~f:self exprs in
     return (E_tuple exprs)
   | E_let_tuple (e1, (vts, e2)) ->
     let e1 = self e1 in
-    let vs = List.map fst vts in
+    let vs = List.map ~f:fst vts in
     let e2 = self_binder vs e2 in
     return (E_let_tuple (e1, (vts, e2)))
   | E_proj (e, i, n) ->

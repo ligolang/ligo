@@ -49,7 +49,7 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid pattern.
         Can't match on values. @]"
-        Snippet.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
+        Snippet.pp_lift (List.fold_left ~f:(fun a p -> Region.cover a (Raw.pattern_to_region p)) ~init:Region.ghost pl)
     | `Concrete_cameligo_unsupported_string_singleton te ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
@@ -119,7 +119,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_pattern_type pl ->
     let loc = Format.asprintf "%a"
-      Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
+      Location.pp_lift (List.fold_left ~f:(fun a p -> Region.cover a (Raw.pattern_to_region p)) ~init:Region.ghost pl) in
     let message = `String "Currently, only booleans, lists, options, and constructors are supported in patterns" in
     let content = `Assoc [
       ("message", message );

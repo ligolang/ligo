@@ -11,7 +11,7 @@ let force_ok ?(msg = "") = function
   | Ok x -> x
   | Error errs ->
     Format.printf "Errors :\n";
-    List.iter print errs ;
+    List.iter ~f:print errs ;
     raise @@ Failure ("force_ok : " ^ msg)
 
 let is_ok = function

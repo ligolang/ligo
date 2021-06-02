@@ -7,7 +7,7 @@ val warnings : ('value, 'error) result -> 'error list
 val bind :
   ('a -> ('b, 'd) result) ->
   ('a, 'd) result -> ('b, 'd) result
-val map : ('a -> 'b) -> ('a, 'd) result -> ('b, 'd) result
+val map : f:('a -> 'b) -> ('a, 'd) result -> ('b, 'd) result
 val ( >>? ) :
   ('a, 'c) result ->
   ('a -> ('d, 'c) result) -> ('d, 'c) result

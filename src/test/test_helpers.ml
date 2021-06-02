@@ -40,7 +40,7 @@ let test_suite name lst = Test_suite (name , lst)
 let rec test_height : test -> int = fun t ->
   match t with
   | Test _ -> 1
-  | Test_suite (_ , lst) -> (List.fold_left max 1 @@ List.map test_height lst) + 1
+  | Test_suite (_ , lst) -> (List.fold_left ~f:max ~init:1 @@ List.map ~f:test_height lst) + 1
 
 let extract_test : test -> test_case = fun t ->
   match t with
@@ -52,11 +52,11 @@ let extract_param : test -> (string * (string * test_case list) list) =
   let extract_group : test -> (string * test_case list) = fun t ->
     match t with
     | Test tc -> ("isolated" , [ tc ])
-    | Test_suite (name , lst) -> (name , List.map extract_element lst) in
+    | Test_suite (name , lst) -> (name , List.map ~f:extract_element lst) in
   fun t ->
       match t with
       | Test tc -> ("" , [ ("isolated" , [ tc ] ) ])
-      | Test_suite (name , lst) -> (name , List.map extract_group lst)
+      | Test_suite (name , lst) -> (name , List.map ~f:extract_group lst)
 
 let rec run_test ?(prefix = "") : test -> unit = fun t ->
   match t with
@@ -66,7 +66,7 @@ let rec run_test ?(prefix = "") : test -> unit = fun t ->
         let (name , tests) = extract_param t in
         Alcotest.run (prefix ^ name) tests
       ) else (
-        List.iter (run_test ~prefix:(prefix ^ name ^ "_")) lst
+        List.iter ~f: (run_test ~prefix:(prefix ^ name ^ "_")) lst
       )
     )
 
@@ -115,7 +115,7 @@ let sign_message (env:Ast_typed.environment) (payload : Ast_imperative.expressio
 
 let contract id =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth dummy_environment.identities id in
+  let id = List.nth_exn dummy_environment.identities id in
   id.implicit_contract
 
 let addr id =

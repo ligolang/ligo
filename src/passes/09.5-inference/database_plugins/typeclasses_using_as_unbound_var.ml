@@ -23,13 +23,13 @@ struct
     ReprMap.monotonic_update repr_tv add_to_set state
 
   let p_variable_cells c = List.filter_map
-      (function { Location.wrap_content = P_variable v } -> Some v | _ -> None)
-      (List.flatten c.tc)
+      ~f:(function { Location.wrap_content = P_variable v } -> Some v | _ -> None)
+      (List.concat c.tc)
 
   let register_typeclasses_using_as_unbound_var : _ -> c_typeclass_simpl -> _ t -> _ t = fun repr c state ->
     List.fold_left
-      (fun state tv -> repr_map_add_to_set ~cmp:Compare.c_typeclass_simpl (repr tv) c state)
-      state
+      ~f:(fun state tv -> repr_map_add_to_set ~cmp:Compare.c_typeclass_simpl (repr tv) c state)
+      ~init:state
       (p_variable_cells c)
 
   let add_constraint ?debug repr state new_constraint =
@@ -52,8 +52,8 @@ struct
         ReprMap.monotonic_update (repr tv) aux' typeclasses_constrained_by in
       let state =
         List.fold_left
-          aux
-          state
+          ~f:aux
+          ~init:state
           (p_variable_cells constraint_to_remove) in
       Format.eprintf "  ok\n%!";
       ok state
@@ -81,7 +81,7 @@ struct
 
   module type STATE = sig val typeclasses_using_as_unbound_var : Type_variable.t t end
   let get tv (module State : STATE) =
-    Option.unopt ~default:(MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl)
+    Option.value ~default:(MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl)
     @@ ReprMap.find_opt tv State.typeclasses_using_as_unbound_var
 
   let get_list tv state =

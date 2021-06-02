@@ -221,37 +221,37 @@ and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in
   let (body, usages) = translate_expression body env' in
   let (_, binder_type) = binder in
-  (O.Binds ([List.hd usages], [translate_type binder_type], body), List.tl usages)
+  (O.Binds ([List.hd_exn usages], [translate_type binder_type], body), List.tl_exn usages)
 
 and translate_binder2 ((binder1, binder2), body) env =
   let env' = I.Environment.add binder1 (I.Environment.add binder2 env) in
   let (body, usages) = translate_expression body env' in
   let (_, binder1_type) = binder1 in
   let (_, binder2_type) = binder2 in
-  (O.Binds ([List.hd usages; List.hd (List.tl usages)],
+  (O.Binds ([List.hd_exn usages; List.hd_exn (List.tl_exn usages)],
             [translate_type binder1_type; translate_type binder2_type],
             body),
-   List.tl (List.tl usages))
+   List.tl_exn (List.tl_exn usages))
 
 and translate_binderN (vars, body) env =
-  let env' = List.fold_right I.Environment.add vars env in
+  let env' = List.fold_right ~f:I.Environment.add vars ~init:env in
   let (body, usages) = translate_expression body env' in
-  let var_types = List.map snd vars in
+  let var_types = List.map ~f:snd vars in
   let n = List.length vars in
-  (O.Binds (List.firstn n usages,
-            List.map translate_type var_types,
+  (O.Binds (List.take usages n,
+            List.map ~f:translate_type var_types,
             body),
-   List.skipn n usages)
+   List.drop usages n)
 
 and translate_args (arguments : I.expression list) env : _ O.args * usage list =
   let arguments = List.rev arguments in
-  let arguments = List.map (fun argument -> translate_expression argument env) arguments in
+  let arguments = List.map ~f:(fun argument -> translate_expression argument env) arguments in
   List.fold_right
-    (fun (arg, arg_usages) (args, args_usages) ->
+    ~f:(fun (arg, arg_usages) (args, args_usages) ->
        let (ss, us) = union arg_usages args_usages in
        (O.Args_cons (ss, arg, args), us))
     arguments
-    (O.Args_nil, use_nothing env)
+    ~init:(O.Args_nil, use_nothing env)
 
 and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   (Stage_common.Types.constant' * _ O.static_args * _ O.args) * usage list =

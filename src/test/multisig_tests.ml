@@ -20,7 +20,7 @@ open Ast_imperative
 
 let init_storage threshold counter pkeys =
   let keys = List.map
-    (fun el ->
+    ~f:(fun el ->
       let (_,pk_str,_) = str_keys el in
       e_key @@ pk_str)
     pkeys in
@@ -59,7 +59,7 @@ let params counter msg keys is_validl f =
         chain_id_zero ] in
     let* signature = sign_message env payload sk in
     ok @@ (e_pair (e_key_hash pkh) (e_signature signature))::acc in
-  let* signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.combine keys is_validl) in
+  let* signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.zip_exn keys is_validl) in
   ok @@ e_constructor
     "CheckMessage"
     (e_record_ez [

@@ -11,12 +11,12 @@ let apply_repl_sequence commands =
   let f state command =
     let _,state,out = Repl.parse_and_eval (Ex_display_format Dev) state command in
     (state, out) in
-  let _, trace = List.fold_map_acc f init_state commands in
+  let _, trace = List.fold_map ~f ~init:init_state commands in
   trace
 
 let test_seq cmds res () =
   let r = apply_repl_sequence cmds in
-  if (List.compare ~compare:String.compare res r = 0)
+  if (List.compare String.compare res r = 0)
   then ok @@ ()
   else fail @@ `Test_repl (res, r)
 

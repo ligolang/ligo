@@ -36,10 +36,10 @@ type st_type = {
 }
 let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_list ; msg_store_list} =
   let auth_set,counter_store = List.fold_left
-    (fun (auth_set,counter_st) (id,ctr) ->
+    ~f:(fun (auth_set,counter_st) (id,ctr) ->
       let addr_exp = e_address @@ addr id in
       addr_exp::auth_set , (addr_exp, e_nat ctr)::counter_st)
-    ([],[])
+    ~init:([],[])
     id_counter_list in
   e_record_ez [
     ("state_hash"          , e_bytes_raw state_hash                                         ) ;

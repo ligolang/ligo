@@ -172,7 +172,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
      let message = `String "Invalid capture: declared as a non-constant variable" in
      let loc ((_, v) : location * expression_variable) =
        `String (Format.asprintf "%a" Location.pp v.location) in
-     let locs = `List (List.map loc vars) in
+     let locs = `List (List.map ~f:loc vars) in
      let content = `Assoc [
                        ("message", message);
                        ("locations", locs);

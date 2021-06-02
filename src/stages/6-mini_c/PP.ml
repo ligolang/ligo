@@ -138,7 +138,7 @@ and expression_content ppf (e:expression_content) = match e with
   | E_let_tuple (expr, (fields, body)) ->
       fprintf ppf "@[let (%a) =@;<1 2>%a in@ %a@]"
         Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") Var.pp)
-          (List.map (fun (x, _) -> x.Location.wrap_content) fields)
+          (List.map ~f:(fun (x, _) -> x.Location.wrap_content) fields)
         expression expr
         expression body
   | E_proj (expr, i, _n) ->

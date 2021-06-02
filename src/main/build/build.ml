@@ -29,7 +29,7 @@ let dependency_graph : options:Compiler_options.t -> string -> Ligo_compile.Of_c
         if String.equal acc file_name then dep_g
         else G.add_edge dep_g acc file_name
       in
-      let files = List.map (fun (a,_) -> (a,Ligo_compile.Of_core.Env)) deps in
+      let files = List.map ~f:(fun (a,_) -> (a,Ligo_compile.Of_core.Env)) deps in
       let* dep_g,vertices = bind_fold_list (dfs file_name) (dep_g,vertices) files in
       ok @@ (dep_g,vertices)
     else
@@ -59,7 +59,7 @@ let add_modules_in_env env deps =
     env
   )
   in
-  List.fold_left aux env deps
+  List.fold_left ~f:aux ~init:env deps
 
 let aggregate_contract order_deps asts_typed =
   (* Add the module at the beginning of the file *)
@@ -71,7 +71,7 @@ let aggregate_contract order_deps asts_typed =
       ((Location.wrap @@ (Ast_typed.Module_alias {alias=module_name;binders=file_name,[]}: Ast_typed.declaration))
       :: ast_typed)
     in
-    let ast_typed = List.fold_left aux contract deps_lst in
+    let ast_typed = List.fold_left ~f:aux ~init:contract deps_lst in
     let map = SMap.add file_name ast_typed map in
     ok @@ map
   in
@@ -93,8 +93,8 @@ let aggregate_contract order_deps asts_typed =
     ok @@ (dep_types,Some (Location.wrap @@ (Ast_typed.Declaration_module {module_binder;module_=Ast_typed.Module_Fully_Typed ast_typed}: Ast_typed.declaration)))
   in
   let* header_list = bind_fold_map_right_list add_modules (SMap.empty) @@ order_deps in
-  let contract = List.fold_left (fun c a -> match a with Some a -> a::c | None -> c)
-    contract header_list in
+  let contract = List.fold_left ~f:(fun c a -> match a with Some a -> a::c | None -> c)
+    ~init:contract header_list in
   ok @@ Ast_typed.Module_Fully_Typed contract
 
 let add_deps_to_env ~(options:Compiler_options.t) asts_typed (_file_name, (_meta,_form,_c_unit,deps)) =
@@ -133,8 +133,8 @@ let infer_contract : options:Compiler_options.t -> string -> Ligo_compile.Of_cor
     let* ordered_deps = solve_graph deps main_file_name in
     (* This assumes that there are no dependency cycles involving the main file.
        Dependency cycles are not supported anyway. *)
-    let mains, ordered_deps_only = List.partition (fun (this_file_name, _) -> String.equal this_file_name main_file_name) ordered_deps in
-    let main = assert (List.length mains == 1); List.hd mains in
+    let mains, ordered_deps_only = List.partition_tf ~f:(fun (this_file_name, _) -> String.equal this_file_name main_file_name) ordered_deps in
+    let main = assert (List.length mains == 1); List.hd_exn mains in
     let* asts_typed = bind_fold_list (infer_and_typecheck_file_with_deps ~options) (SMap.empty) ordered_deps_only in
     let* (inferred_main, env_with_deps_of_main) = infer_file_with_deps ~options asts_typed main in
     ok @@ (main, inferred_main, env_with_deps_of_main, asts_typed)

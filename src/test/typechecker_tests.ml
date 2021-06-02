@@ -61,13 +61,13 @@ module Random_type_generator = struct
     in
     let map = List.rev map in
     let find_assignment_mock : type_variable -> constructor_or_row option  = fun tv ->
-      let t_opt = List.find_opt (fun ({var ;_}:m) -> Var.equal var tv) map in
+      let t_opt = List.find ~f:(fun ({var ;_}:m) -> Var.equal var tv) map in
       match t_opt with
       | None -> failwith "internal: variable should always been known"
       | Some m -> m.cor_opt
     in
     let repr_mock : type_variable -> type_variable = fun tv -> tv in (*no aliases*)
-    let all_vars : type_variable list = List.map (fun ({var ;_}:m) -> var) map in
+    let all_vars : type_variable list = List.map ~f:(fun ({var ;_}:m) -> var) map in
     let test_checker constraints_list =
       trace (Main_errors.test_tracer "typechecker tests") @@
       trace (Main_errors.inference_tracer) @@
@@ -78,7 +78,7 @@ module Random_type_generator = struct
     in
     (map,test_checker,test_checker_neg)
   let build_constraint : m list -> type_constraint_simpl list = fun m ->
-    List.filter_map (fun { var=_ ; cor_opt } -> match cor_opt with
+    List.filter_map ~f:(fun { var=_ ; cor_opt } -> match cor_opt with
       | Some (`Constructor c) -> Some (SC_Constructor c)
       | Some (`Row r) -> Some (SC_Row r)
       | None -> None) m
@@ -88,7 +88,7 @@ module Small_env_manual_test = struct
 
   let all_vars = 
     let v name = Var.fresh ~name () in
-    List.map (fun n -> v n) ["a" ; "b" ; "c" ; "d" ; "e" ; "f" ; "g" ; "h" ; "i" ; "j" ; "k"]
+    List.map ~f:(fun n -> v n) ["a" ; "b" ; "c" ; "d" ; "e" ; "f" ; "g" ; "h" ; "i" ; "j" ; "k"]
   let (a,b,c,d,e,f,g,h,i,j,k) =
     match all_vars with
     | [a;b;c;d;e;f;g;h;i;j;k] -> (a,b,c,d,e,f,g,h,i,j,k)

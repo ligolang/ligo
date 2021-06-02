@@ -6,7 +6,7 @@ open! Mini_c
 open Trace
 open Function
 
-let annotation_or_label annot label = Option.unopt ~default:label (Helpers.remove_empty_annotation annot)
+let annotation_or_label annot label = Option.value ~default:label (Helpers.remove_empty_annotation annot)
 
 let t_sum ~layout return compile_type m =
   let open AST.Helpers in
@@ -45,7 +45,7 @@ let t_sum ~layout return compile_type m =
           ok (None,t)
         )
     in
-      map snd @@ lst_fold_right lst
+      Trace.map ~f:snd @@ lst_fold_right lst
   )
 
 (* abstract description of final physical record layout, with
@@ -137,7 +137,7 @@ let record_access_to_lr ~layout ty m_ty index =
         trace_option (corner_case ~loc:__LOC__ "record access leaf") @@
         Append_tree.exists_path_to index node_tv
       in
-      let lr_path = List.map (fun b -> if b then `Right else `Left) path in
+      let lr_path = List.map ~f:(fun b -> if b then `Right else `Left) path in
         let aux = fun (ty , acc) cur ->
           let* (a , b) =
             trace_option (corner_case ~loc:__LOC__ "record access pair") @@
@@ -147,7 +147,7 @@ let record_access_to_lr ~layout ty m_ty index =
           | `Left  -> ok (a , (a , `Left)  :: acc)
           | `Right -> ok (b , (b , `Right) :: acc )
         in
-        map (List.rev <@ snd) @@ bind_fold_list aux (ty , []) lr_path
+        Trace.map ~f:(List.rev <@ snd) @@ bind_fold_list aux (ty , []) lr_path
     )
   | L_comb -> (
       let rec aux n ty last =
@@ -170,8 +170,9 @@ let record_access_to_lr ~layout ty m_ty index =
           )
       in
       let* index =
-        Trace.generic_try (corner_case ~loc:__LOC__ "record access index") @@
-        fun () -> List.find_index (fun (label , _) -> label = index) lst
+        Trace.map ~f:fst @@
+        Trace.trace_option (corner_case ~loc:__LOC__ "constructor access") @@
+        (List.findi ~f:(fun _ (label , _) -> label = index) lst)
       in
       let last = (index + 1 = List.length lst) in
       aux index ty last
@@ -204,7 +205,7 @@ let constructor_to_lr ~(layout) ty m_ty index =
         trace_option (corner_case ~loc:__LOC__ "constructor leaf") @@
         Append_tree.exists_path_to index node_tv
       in
-      let lr_path = List.map (fun b -> if b then `Right else `Left) path in
+      let lr_path = List.map ~f:(fun b -> if b then `Right else `Left) path in
       let* (_ , lst) =
         let aux = fun (ty , acc) cur ->
           let* (a , b) =
@@ -221,8 +222,9 @@ let constructor_to_lr ~(layout) ty m_ty index =
     )
   | L_comb -> (
     let* index =
-      Trace.generic_try (corner_case ~loc:__LOC__ "constructor access") @@
-      fun () -> List.find_index (fun (label , _) -> label = index) lst
+      Trace.map ~f:fst @@
+      Trace.trace_option (corner_case ~loc:__LOC__ "constructor access") @@
+      (List.findi ~f:(fun _ (label , _) -> label = index) lst)
     in
     let last = (index + 1 = List.length lst) in
     let rec aux n ty =
@@ -238,7 +240,7 @@ let constructor_to_lr ~(layout) ty m_ty index =
           ok ((ty , `Right)::prec)
         )
     in
-    map List.rev @@ aux index ty
+    Trace.map ~f:List.rev @@ aux index ty
     )
 
 type variant_tree = [
@@ -252,7 +254,7 @@ let match_variant_to_tree ~layout ~compile_type content : variant_pair spilling_
   match layout with
   | L_tree -> (
       let kt_tree =
-        let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (LMap.to_kv_list content) in
+        let kt_list = List.map ~f:(fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (LMap.to_kv_list content) in
         Append_tree.of_list kt_list
       in
       let* ne_tree = match kt_tree with
@@ -288,7 +290,7 @@ let match_variant_to_tree ~layout ~compile_type content : variant_pair spilling_
             let left = `Leaf khd , thd' in
             ok (`Node (left , (tl' , ttl)) , tv')
           ) in
-      let lst = List.map (fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
+      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
       let* vp = aux lst in
       ok vp
     )

@@ -31,17 +31,17 @@ rule text = parse
         let header = if h = "" then None else Some h in
         let contents = block lexbuf in
         let arguments = String.split_on_char ' ' l in
-        let arguments = List.map (fun a -> 
+        let arguments = List.map ~f:(fun a -> 
           if (String.contains a '=') then
             ( let a = String.split_on_char '=' a in
-            NameValue (List.nth a 0, List.nth a 1))
+            NameValue (List.nth_exn a 0, List.nth_exn a 1))
           else 
             Field a
         ) arguments in
         let file = lexbuf.Lexing.lex_start_p.Lexing.pos_fname in
         newline lexbuf;
         let line = !line_ref in
-        List.iter (fun _ -> newline lexbuf) contents;
+        List.iter ~f: (fun _ -> newline lexbuf) contents;
         newline lexbuf;
         { file; line; header; arguments; contents; }
         :: text lexbuf }

@@ -83,11 +83,11 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_ASSERTION , [ v ] ) ->
       if (is_true v) then return_ct @@ C_unit
       else raise (Meta_lang_ex {location = loc ; reason = Reason "Failed assertion"})
-    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
+    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
       | Some v -> return @@ v_some v
       | None -> return @@ v_none ()
     )
-    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
+    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
       | Some v -> return @@ v
       | None -> raise (Meta_lang_ex {location = loc ; reason = Reason (Predefined.Tree_abstraction.pseudo_module_to_string c)})
     )
@@ -177,7 +177,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
       let rec aux b el =
         let env' = Env.extend env (arg_binder, el) in
         let* res = eval_ligo body env' in
-        let (b',el') = Option.unopt_failwith "bad pair" (extract_fold_while_result res) in
+        let (b',el') = try Option.value_exn (extract_fold_while_result res) with _ -> (failwith "bad pair") in
         if b then aux b' el' else return el' in
       aux true init
     )
@@ -202,16 +202,16 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
           eval_ligo body env'
         )
         init kvs
-    | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> return @@ v_bool (List.mem_assoc k kvs)
-    | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.remove_assoc k kvs))
-    | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.remove_assoc k kvs)
+    | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> return @@ v_bool (List.Assoc.mem ~equal:Caml.(=) kvs k)
+    | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.Assoc.remove ~equal:Caml.(=) kvs k))
+    | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k)
     | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
-      | "Some" -> return @@ V_Map ((k,v)::(List.remove_assoc k kvs))
-      | "None" -> return @@ V_Map (List.remove_assoc k kvs)
+      | "Some" -> return @@ V_Map ((k,v)::(List.Assoc.remove ~equal:Caml.(=) kvs k))
+      | "None" -> return @@ V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k)
       | _ -> assert false
     )
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
-    | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.sort_uniq compare (v::l))
+    | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.dedup_and_sort ~compare (v::l))
     | ( C_SET_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Set elts ; init ] ) ->
       Monad.bind_fold_list
         (fun prev elt ->
@@ -227,8 +227,8 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
           eval_ligo body env'
         )
         (V_Ct C_unit) elts
-    | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem v elts)
-    | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> return @@ V_Set (List.filter (fun el -> not (el = v)) elts)
+    | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem ~equal:Caml.(=) elts v)
+    | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> return @@ V_Set (List.filter ~f:(fun el -> not (el = v)) elts)
     | ( C_ADDRESS , [ addr ] ) ->
       return addr
     (*
@@ -339,7 +339,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_literal l ->
       eval_literal l
     | E_variable var ->
-      let v = Option.unopt_failwith "unbound variable" (Env.lookup env var) in
+      let v = try Option.value_exn (Env.lookup env var) with _ -> (failwith "unbound variable") in
       return v
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
@@ -384,25 +384,25 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
       match cases, e' with
       | Match_variant {cases;_}, V_List [] ->
         let {constructor=_ ; pattern=_ ; body} =
-          List.find
-            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
+          List.find_exn
+            ~f:(fun {constructor = (Label c) ; pattern=_ ; body=_} ->
               String.equal "Nil" c)
             cases in
         eval_ligo body env
       | Match_variant {cases;_}, V_List lst ->
         let {constructor=_ ; pattern ; body} =
-          List.find
-            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
+          List.find_exn
+            ~f:(fun {constructor = (Label c) ; pattern=_ ; body=_} ->
               String.equal "Cons" c)
             cases in
-        let hd = List.hd lst in
-        let tl = V_List (List.tl lst) in
+        let hd = List.hd_exn lst in
+        let tl = V_List (List.tl_exn lst) in
         let proj = v_pair (hd,tl) in
         let env' = Env.extend env (pattern, proj) in
         eval_ligo body env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
-        let cases = LMap.of_list (List.map ctor_body cases) in
+        let cases = LMap.of_list (List.map ~f:ctor_body cases) in
         let get_case c =
             (LMap.find (Label c) cases) in
         let match_true  = get_case "true" in
@@ -411,8 +411,8 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         else eval_ligo match_false env
       | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
         let {constructor=_ ; pattern ; body} =
-          List.find
-            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
+          List.find_exn
+            ~f:(fun {constructor = (Label c) ; pattern=_ ; body=_} ->
               String.equal matched_c c)
             cases in
         let env' = Env.extend env (pattern, proj) in
@@ -480,7 +480,7 @@ let eval_test : Ast_typed.module_fully_typed -> string -> (value , Errors.interp
       let name = Var.to_name @@ Location.unwrap ev in
       String.equal name test_entry
     in
-    match List.find_opt aux v with
+    match List.find ~f:aux v with
     | Some (_,v) -> ok v
     | None -> fail @@ Errors.test_entry_not_found test_entry
 

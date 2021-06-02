@@ -50,12 +50,12 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
   | SC_Constructor c                ->
     (* vice versa *)
     let other_cs = MultiSet.elements @@ Grouped_by_variable.get_polys_by_lhs (repr c.tv) Indexes.grouped_by_variable in
-    let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
+    let cs_pairs = List.map ~f:(fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
   | SC_Alias       _                -> failwith "alias should not be visible here"
   | SC_Poly        p                ->
     let other_cs = MultiSet.elements @@ Grouped_by_variable.get_constructors_by_lhs (repr p.tv) Indexes.grouped_by_variable in
-    let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
+    let cs_pairs = List.map ~f:(fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
   | SC_Typeclass   _                -> []
   | SC_Access_label _               -> []
@@ -71,11 +71,11 @@ let alias_selector : type_variable -> type_variable -> flds -> selector_output l
   let a_ctors = MultiSet.elements @@ Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
   let b_polys = MultiSet.elements @@ Grouped_by_variable.get_polys_by_lhs b Indexes.grouped_by_variable in
   let b_ctors = MultiSet.elements @@ Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
-  List.flatten @@
+  List.concat @@
   List.map
-    (fun poly ->
+    ~f:(fun poly ->
        List.map
-         (fun ctor ->
+         ~f:(fun ctor ->
             { poly ; a_k_var = ctor })
          (a_ctors @ b_ctors))
     (a_polys @ b_polys)

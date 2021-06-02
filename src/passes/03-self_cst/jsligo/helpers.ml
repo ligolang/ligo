@@ -3,7 +3,7 @@
 open Cst.Jsligo
 open Trace
 
-let npseq_to_ne_list (hd, tl) = hd, (List.map snd tl)
+let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
 
 let bind_map_npseq f (hd, tl) =
   let* hd = f hd in
@@ -252,7 +252,7 @@ fun (first, rest) ->
     match top with
       TopLevel (stmt, _) -> stmt::acc
     | Directive _ -> acc in
-  List.fold_right app (first::rest) []
+  List.fold_right ~f:app (first::rest) ~init:[]
 
 and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {statements; _} ->
@@ -633,13 +633,13 @@ and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
 and map_toplevel_statement f = function
   TopLevel (statement, terminator) ->
     let stmt = map_statement f statement
-    in Trace.map (fun stmt -> TopLevel (stmt, terminator)) stmt
+    in Trace.map ~f:(fun stmt -> TopLevel (stmt, terminator)) stmt
   | Directive _ as d -> ok d
 
 and map_module : 'err mapper -> t -> (t, 'err) result =
   fun f {statements; eof} ->
     let self = map_toplevel_statement f in
-    map (fun statements -> {statements; eof})
+    Trace.map ~f:(fun statements -> {statements; eof})
     @@ bind_map_nseq self statements
 
 (* TODO this is stupid *)

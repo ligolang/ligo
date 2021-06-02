@@ -55,13 +55,13 @@ let repl_result_jsonformat = function
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
      let name n = `Assoc [("name", `String n)] in
-     let defs = List.map name (func_declarations @ type_declarations) in
+     let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
      let name n = `Assoc [("name", `String n)] in
-     let defs = List.map name (func_declarations @ type_declarations) in
+     let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Just_ok -> `Assoc []
 
@@ -197,11 +197,11 @@ let rec read_input prompt delim =
       let bind m ~f = Option.(>>=) m f
       module Open_on_rhs_bind = struct end
     end in
-  let open Option in
   let (let*) x f = Let_syntax.bind ~f x in
+  let open Option in
   let s = LNoise.linenoise prompt in
   match s with
-  | None -> none
+  | None -> None
   | Some s -> LNoise.history_add s |> ignore;
               let result = Str.split_delim (Str.regexp delim) s in
               match result with

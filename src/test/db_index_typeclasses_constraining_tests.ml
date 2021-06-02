@@ -22,10 +22,10 @@ module Typeclasses_constraining_tests = struct
     bind_list_iter
       (fun (a , b) ->
         let* () = tst_assert ("type variable =" ^ Var.to_name (fst a) ^ " " ^ Var.to_name (fst b)) (Ast_core.Compare.type_variable (fst a) (fst b) = 0) in
-        let* () = tst_assert "c_typeclass_simpl set =" (List.compare ~compare:Ast_core.Compare.c_typeclass_simpl (MultiSet.elements (snd a)) (MultiSet.elements (snd b)) = 0) in
+        let* () = tst_assert "c_typeclass_simpl set =" (List.compare Ast_core.Compare.c_typeclass_simpl (MultiSet.elements (snd a)) (MultiSet.elements (snd b)) = 0) in
         ok ()
       )
-      (List.combine sa (List.sort (fun (x,_) (y,_) -> Var.compare x y) sb))
+      (List.zip_exn sa (List.sort ~compare:(fun (x,_) (y,_) -> Var.compare x y) sb))
   let same_state sa sb =
     let sb = UnionFind.ReprMap.bindings @@ (get_state_for_tests sb) in
     same_state2 sa sb

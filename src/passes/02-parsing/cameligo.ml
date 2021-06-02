@@ -33,7 +33,7 @@ include Parsing_shared.Common.MakeTwoParsers
 include Parsing_shared.Common.MakePretty (CST) (Pretty)
 
 let pretty_print_file buffer file_path =
-  ContractParser.parse_file buffer file_path |> Trace.map pretty_print
+  ContractParser.parse_file buffer file_path |> Trace.map ~f:pretty_print
 
 let pretty_print_cst buffer file_path =
   let cst = parse_file buffer file_path in
@@ -45,4 +45,4 @@ let pretty_print_cst buffer file_path =
       ~buffer in
   let apply tree =
     Cst_cameligo.Printer.pp_cst state tree; buffer
-  in Trace.map apply cst
+  in Trace.map ~f:apply cst

@@ -11,21 +11,21 @@ let ghost = Region.ghost
 
 let wrap = Region.wrap_ghost
 
-let decompile_attributes = List.map wrap
+let decompile_attributes = List.map ~f:wrap
 
 let list_to_sepseq lst =
   match lst with
     [] -> None
   |  hd :: lst ->
       let aux e = (ghost, e) in
-      Some (hd, List.map aux lst)
+      Some (hd, List.map ~f:aux lst)
 
 let list_to_nsepseq lst =
   match list_to_sepseq lst with
     Some s -> ok @@ s
   | None   -> failwith "List is empty"
 
-let nelist_to_npseq (hd, lst) = (hd, List.map (fun e -> (ghost, e)) lst)
+let nelist_to_npseq (hd, lst) = (hd, List.map ~f:(fun e -> (ghost, e)) lst)
 
 let npseq_cons hd lst = hd,(ghost, fst lst)::(snd lst)
 
@@ -163,8 +163,8 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     (match arguments with
       [] -> return_expr @@ expr
     | _ ->
-      let* arguments = map List.Ne.of_list @@
-        map (List.map (fun x -> CST.EPar (wrap @@ par @@ x))) @@
+      let* arguments = Trace.map ~f:List.Ne.of_list @@
+        Trace.map ~f:(List.map ~f:(fun x -> CST.EPar (wrap @@ par @@ x))) @@
         bind_map_list decompile_expression arguments in
       let const = wrap (expr, arguments) in
       return_expr_with_par @@ CST.ECall const
@@ -211,8 +211,8 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_application {lamb;args} ->
     let f (expr, b) = if b then CST.EPar (wrap @@ par @@ expr) else expr in
     let* lamb = decompile_expression lamb in
-    let* args = map List.Ne.of_list @@
-      map (List.map f) @@
+    let* args = Trace.map ~f:List.Ne.of_list @@
+      Trace.map ~f:(List.map ~f:f) @@
         bind (fun (e, b) -> bind_map_list (fun e ->
                                 let* de = decompile_expression e in
                                 ok @@ (de, b)) e) @@
@@ -303,14 +303,14 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     | Access_map e :: lst ->
       let path = List.rev lst in
       let* field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection path in
-      let* struct_name = map (decompile_variable) @@ get_e_variable record in
+      let* struct_name = Trace.map ~f:decompile_variable @@ get_e_variable record in
       let proj : CST.projection = {struct_name;selector=ghost;field_path} in
       let* e = decompile_expression e in
       let arg = e,[CST.EProj (wrap proj)] in
       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
     | _ ->
       let* field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection path in
-       let* struct_name = map (decompile_variable) @@ get_e_variable record in
+       let* struct_name = Trace.map ~f:decompile_variable @@ get_e_variable record in
       let proj : CST.projection = {struct_name;selector=ghost;field_path} in
       return_expr @@ CST.EProj (wrap proj)
     )
@@ -333,7 +333,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let update : CST.update = {lbrace=ghost;record;kwd_with=ghost;updates;rbrace=ghost} in
     return_expr @@ CST.EUpdate (wrap @@ update)
   | E_update {record; path; update} ->
-    let* record = map (decompile_variable) @@ get_e_variable record in
+    let* record = Trace.map ~f:decompile_variable @@ get_e_variable record in
     let* field_expr = decompile_expression update in
     let (struct_name,field_path) = List.Ne.of_list path in
     (match field_path with
@@ -412,7 +412,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_map map ->
     let* map = bind_map_list (bind_map_pair decompile_expression) map in
     let aux (k,v) = CST.ETuple (wrap (k,[(ghost,v)])) in
-    let map = List.map aux map in
+    let map = List.map ~f:aux map in
     (match map with
       [] -> return_expr @@ CST.EVar (wrap "Big_map.empty")
     | _  ->
@@ -422,7 +422,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_big_map big_map ->
     let* big_map = bind_map_list (bind_map_pair decompile_expression) big_map in
     let aux (k,v) = CST.ETuple (wrap (k,[(ghost,v)])) in
-    let big_map = List.map aux big_map in
+    let big_map = List.map ~f:aux big_map in
     (match big_map with
       [] -> return_expr @@ CST.EVar (wrap "Big_map.empty")
     | _  ->
@@ -560,11 +560,11 @@ and decompile_pattern : AST.type_expression AST.pattern -> (CST.pattern,_) resul
       ok @@ CST.PTuple (wrap pl)
     | AST.P_record (llst,lst) ->
       let* pl = bind_map_list decompile_pattern lst in
-      let fields_name = List.map (fun (AST.Label x) -> wrap x) llst in
+      let fields_name = List.map ~f:(fun (AST.Label x) -> wrap x) llst in
       let field_patterns =
         List.map
-          (fun (field_name,pattern) -> wrap ({ field_name ; eq = ghost ; pattern }:CST.field_pattern))
-          (List.combine fields_name pl)
+          ~f:(fun (field_name,pattern) -> wrap ({ field_name ; eq = ghost ; pattern }:CST.field_pattern))
+          (List.zip_exn fields_name pl)
       in
       let* field_patterns = list_to_nsepseq field_patterns in
       let inj = ne_inject braces field_patterns ~attr:[] in

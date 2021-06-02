@@ -25,7 +25,7 @@ module By_constraint_identifier_tests = struct
         let* () = tst_assert "c_typeclass_simpl =" (Ast_core.Compare.c_typeclass_simpl tca tcb = 0) in
         ok ()
       )
-      (List.combine sa sb)
+      (List.zip_exn sa sb)
   let same_state sa sb =
     let sb = PolyMap.bindings @@ get_state_for_tests sb in
     same_state2 sa sb
