@@ -75,7 +75,7 @@ let rec assert_list_eq f = fun a b -> match (a,b) with
   | [], _  -> None
   | _ , [] -> None
   | hda::tla, hdb::tlb -> Option.(
-    f hda hdb >>= fun () ->
+    let* () = f hda hdb in
     assert_list_eq f tla tlb
   )
 
@@ -91,10 +91,10 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sa' = LMap.to_kv_list_rev sa.fields in
       let sb' = LMap.to_kv_list_rev sb.fields in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
-        assert_eq ka kb >>= fun _ ->
-          assert_type_expression_eq (va, vb)
+        let* _ = assert_eq ka kb in
+        assert_type_expression_eq (va, vb)
       in
-      assert_same_size sa' sb' >>= fun _ ->
+      let* _ = assert_same_size sa' sb' in
       List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> aux p) ~init:(Some ()) (List.zip_exn sa' sb')
     )
   | T_sum _, _ -> None
@@ -107,7 +107,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let aux (ka, {associated_type=va;_}) (kb, {associated_type=vb;_}) =
         let Label ka = ka in
         let Label kb = kb in
-        assert_eq ka kb >>= fun _ ->
+        let* _ = assert_eq ka kb in
         assert_type_expression_eq (va, vb)
       in
       assert_list_eq aux ra' rb'
@@ -115,7 +115,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_record _, _ -> None
   | T_arrow {type1;type2}, T_arrow {type1=type1';type2=type2'} ->
-    assert_type_expression_eq (type1, type1') >>= fun _ ->
+    let* _ = assert_type_expression_eq (type1, type1') in
     assert_type_expression_eq (type2, type2')
   | T_arrow _, _ -> None
   | T_app {type_operator=ta;arguments=aa}, T_app {type_operator=tb;arguments=ab} when Var.equal ta tb ->
@@ -243,7 +243,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
   | Some a, None -> Some a
   | None, Some b -> Some b
   | Some a, Some b ->
-      assert_eq_fun (a, b) >>= fun _ ->
+      let* _ = assert_eq_fun (a, b) in
       match a.sugar, b.sugar with
       | _, None -> Some a
       | _, Some _ -> Some b

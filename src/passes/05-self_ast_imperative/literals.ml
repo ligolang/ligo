@@ -43,7 +43,7 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
        in
        let aux = fun (e : expression) ->
          trace_option (bad_map_param_type cst e) @@
-           Option.(get_e_tuple e.expression_content >>= fun t ->
+           Option.(let* t = get_e_tuple e.expression_content in
                    List.to_pair t)
        in
        let* pairs = bind_map_list aux lst in
@@ -60,7 +60,7 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
        in
        let aux = fun (e : expression) ->
          trace_option (bad_map_param_type cst e) @@
-           Option.(get_e_tuple e.expression_content >>= fun t ->
+           Option.(let* t = get_e_tuple e.expression_content in
                    List.to_pair t)
        in
        let* pairs = bind_map_list aux lst in

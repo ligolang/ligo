@@ -1,6 +1,9 @@
 open Base
 include Option
 
+(* Syntax *)
+let (let*) x f = bind ~f x
+
 (* Combinators *)
 let bind_eager_or = fun a b -> match (a , b) with
   | Some a , _ -> Some a
@@ -15,8 +18,8 @@ let bind_union (a , b) = match (a , b) with
   | None , Some x -> Some (`Right x)
   | _ -> None
 let bind_pair = fun (a , b) ->
-  a >>= fun a' ->
-  b >>= fun b' ->
+  let* a' = a in 
+  let* b' = b in
   Some (a' , b')
 
 

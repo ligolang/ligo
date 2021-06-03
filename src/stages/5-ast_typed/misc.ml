@@ -69,7 +69,7 @@ let rec assert_list_eq f = fun a b -> match (a,b) with
   | [], _  -> None
   | _ , [] -> None
   | hda::tla, hdb::tlb -> Option.(
-    f hda hdb >>= fun () ->
+    let* () = f hda hdb in
     assert_list_eq f tla tlb
   )
 
@@ -92,8 +92,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   match (a.type_content, b.type_content) with
   | T_constant {language=la;injection=ia;parameters=lsta}, T_constant {language=lb;injection=ib;parameters=lstb} -> (
     if (String.equal la lb) && (constant_compare ia ib = 0) then (
-      assert_same_size lsta lstb >>= fun _ ->
-        List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq p) ~init:(Some ()) (List.zip_exn lsta lstb)
+      let* _ = assert_same_size lsta lstb in
+      List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq p) ~init:(Some ()) (List.zip_exn lsta lstb)
     ) else
       None
   )
@@ -102,10 +102,10 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sa' = LMap.to_kv_list_rev sa.content in
       let sb' = LMap.to_kv_list_rev sb.content in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
-        assert_eq ka kb >>= fun _ ->
-          assert_type_expression_eq (va, vb)
+        let* _ = assert_eq ka kb in
+        assert_type_expression_eq (va, vb)
       in
-      assert_same_size sa' sb' >>= fun _ ->
+      let* _ = assert_same_size sa' sb' in
       List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> aux p) ~init:(Some ()) (List.zip_exn sa' sb')
     )
   | T_sum _, _ -> None
@@ -118,17 +118,17 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let Label ka = ka in
         let Label kb = kb in
-        assert_eq ka kb >>= fun _ ->
+        let* _ = assert_eq ka kb in
         assert_type_expression_eq (va, vb)
       in
-      assert_eq ra.layout rb.layout >>= fun _ ->
-      assert_same_size ra' rb' >>= fun _ ->
+      let* _ = assert_eq ra.layout rb.layout in
+      let* _ = assert_same_size ra' rb' in
       List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> aux p) ~init:(Some ()) (List.zip_exn ra' rb')
 
     )
   | T_record _, _ -> None
   | T_arrow {type1;type2}, T_arrow {type1=type1';type2=type2'} ->
-    assert_type_expression_eq (type1, type1') >>= fun _ ->
+    let* _ = assert_type_expression_eq (type1, type1') in
     assert_type_expression_eq (type2, type2')
   | T_arrow _, _ -> None
   | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
@@ -188,7 +188,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   | E_literal a, E_literal b ->
       assert_literal_eq (a, b)
   | E_constant {cons_name=ca;arguments=lsta}, E_constant {cons_name=cb;arguments=lstb} when ca = cb -> (
-    assert_same_size lsta lstb >>= fun _ ->
+    let* _ = assert_same_size lsta lstb in
     List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_value_eq p) ~init:(Some ()) (List.zip_exn lsta lstb)
   )
   | E_constant _, E_constant _ -> None
@@ -229,7 +229,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
   | Some a, None -> Some a
   | None, Some b -> Some b
   | Some a, Some b ->
-      assert_eq_fun (a, b) >>= fun _ ->
+      let* _ = assert_eq_fun (a, b) in
       match a.type_meta, b.type_meta with
       | _, None -> Some a
       | _, Some _ -> Some b
