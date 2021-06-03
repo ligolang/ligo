@@ -77,7 +77,7 @@ let get_record : _ label_map -> t -> (rows) option = fun lmap e ->
           ( fun (ka,va) (kb,vb) ->
             let Label ka = ka in
             let Label kb = kb in
-            Misc.assert_eq ka kb >>= fun () ->
+            let* () = Misc.assert_eq ka kb in
             Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
           ) lst_kv lst_kv' in
         m
@@ -105,7 +105,7 @@ let get_sum : _ label_map -> t -> rows option = fun lmap e ->
           fun (ka,va) (kb,vb) ->
             let Label ka = ka in
             let Label kb = kb in
-            Misc.assert_eq ka kb >>= fun () ->
+            let* () = Misc.assert_eq ka kb in
             Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
         ) lst_kv lst_kv'
       )

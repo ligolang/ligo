@@ -193,11 +193,6 @@ let make_initial_state syntax protocol infer dry_run_opts =
     mod_types = Ast_core.SMap.empty }
 
 let rec read_input prompt delim =
-  let module Let_syntax = struct
-      let bind m ~f = Option.(>>=) m f
-      module Open_on_rhs_bind = struct end
-    end in
-  let (let*) x f = Let_syntax.bind ~f x in
   let open Option in
   let s = LNoise.linenoise prompt in
   match s with
