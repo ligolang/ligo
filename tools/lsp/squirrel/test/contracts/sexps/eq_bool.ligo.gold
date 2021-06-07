@@ -8,5 +8,5 @@
     =
     (let
       (seq
-        (var result int 27) (if (a = b) (result := 999) (result := 1)))
+        (var (? result) int 27) (if (a = b) (result := 999) (result := 1)))
     result)))

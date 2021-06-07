@@ -27,12 +27,13 @@ module.exports = grammar({
   rules: {
     source_file: $ => repeat(field("declaration", $._declaration)),
 
-    _declaration: $ => choice(
-      $.let_decl,
-      $.fun_decl,
-      $.type_decl,
-      $.preprocessor,
-    ),
+    _declaration: $ =>
+      choice(
+        $.type_decl,
+        $.let_decl,
+        $.fun_decl,
+        $.preprocessor,
+      ),
 
     fun_decl: $ => withAttrs($, seq(
       "let",
@@ -64,12 +65,12 @@ module.exports = grammar({
     //========== EXPR ============
 
     _program: $ => choice(
-      $.let_expr1,
+      $.let_in,
       $.type_decl,
       $._expr
     ),
 
-    let_expr1: $ => seq(
+    let_in: $ => seq(
       field("decl", choice($.let_decl, $.fun_decl)),
       "in",
       field("body", $._program)
@@ -108,13 +109,18 @@ module.exports = grammar({
       $.wildcard_pattern,
     ),
 
-    // { field1 = pat_a ; field2 = pat_b }
+    // { field1 = pat_a ; field2 = pat_b; field3 }
     rec_pattern: $ => withAttrs($, seq(
       "{",
-      sepBy(";", field("field", $.rec_field_pattern)),
+      sepBy(";", field("field", $._rec_field_pattern)),
       optional(";"),
       "}"
     )),
+
+    _rec_field_pattern: $ => choice(
+      $.rec_field_pattern,
+      $.rec_capture_pattern,
+    ),
 
     // field = _pattern
     rec_field_pattern: $ => withAttrs($, prec(9, seq(
@@ -122,6 +128,9 @@ module.exports = grammar({
       "=",
       field("body", $._pattern),
     ))),
+
+    // field
+    rec_capture_pattern: $ => withAttrs($, prec(9, field("name", $.NameDecl))),
 
     _irrefutable: $ => choice(
       $._sub_irrefutable,
@@ -492,11 +501,6 @@ module.exports = grammar({
       $.p_define,
     )),
 
-    p_error: $ => seq('#error', field("message", $._till_newline)),
-    p_warning: $ => seq('#warning', field("message", $._till_newline)),
-
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
-
     include: $ => seq(
       '#include',
       field("filename", $.String)
@@ -509,6 +513,12 @@ module.exports = grammar({
       ),
       '#endif',
     ),
+
+    p_error: $ => seq('#error', field("message", $._till_newline)),
+    p_warning: $ => seq('#warning', field("message", $._till_newline)),
+    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
+
+    /// Literals
 
     _literal: $ => choice(
       $.String,

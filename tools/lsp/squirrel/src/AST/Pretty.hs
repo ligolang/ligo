@@ -250,6 +250,7 @@ instance Pretty1 FieldAssignment where
   pp1 = \case
     FieldAssignment accessors e -> sexpr ".=" (accessors <> [e])
     Spread n -> sexpr "..." [n]
+    Capture accessors -> sexpr ".=" accessors
 
 instance Pretty1 Constant where
   pp1 = \case
@@ -284,6 +285,7 @@ instance Pretty1 Pattern where
 instance Pretty1 RecordFieldPattern where
   pp1 = \case
     IsRecordField l b -> sexpr "rec_field?" [l, b]
+    IsRecordCapture l -> sexpr "rec_capture?" [l]
 
 instance Pretty1 Preprocessor where
   pp1 = \case
@@ -483,6 +485,7 @@ instance LPP1 'Pascal FieldAssignment where
   lpp1 = \case
     FieldAssignment n e -> lpp n <+> "=" <+> lpp e
     Spread n -> "..." <+> n
+    Capture n -> lpp n
 
 instance LPP1 'Pascal Constant where
   lpp1 = \case
@@ -506,7 +509,8 @@ instance LPP1 'Pascal Pattern where
 
 instance LPP1 'Pascal RecordFieldPattern where
   lpp1 = \case
-    IsRecordField _ _ -> error "unexpected `RecordFieldPattern` node in pascaligo dialect"
+    IsRecordField name body -> name <+> "=" <+> body
+    IsRecordCapture name -> name
 
 instance LPP1 'Pascal TField where
   lpp1 = \case
@@ -581,6 +585,7 @@ instance LPP1 'Reason FieldAssignment where
   lpp1 = \case
     FieldAssignment n e -> lpp n <+> "=" <+> lpp e
     Spread n -> "..." <.> n
+    Capture n -> lpp n
 
 instance LPP1 'Reason Constant where
   lpp1 = \case
@@ -606,6 +611,7 @@ instance LPP1 'Reason Pattern where
 instance LPP1 'Reason RecordFieldPattern where
   lpp1 = \case
     IsRecordField name body -> name <+> "=" <+> body
+    IsRecordCapture name -> name
 
 instance LPP1 'Reason TField where
   lpp1 = \case
@@ -688,6 +694,7 @@ instance LPP1 'Caml FieldAssignment where
   lpp1 = \case
     FieldAssignment n e -> lpp n <+> "=" <+> lpp e
     Spread n -> "..." <.> n
+    Capture n -> lpp n
 
 instance LPP1 'Caml Constant where
   lpp1 = \case
@@ -714,6 +721,7 @@ instance LPP1 'Caml Pattern where
 instance LPP1 'Caml RecordFieldPattern where
   lpp1 = \case
     IsRecordField name body -> name <+> "=" <+> body
+    IsRecordCapture name -> name
 
 instance LPP1 'Caml TField where
   lpp1 = \case

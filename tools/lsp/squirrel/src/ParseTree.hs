@@ -45,8 +45,6 @@ import TreeSitter.Node
 import TreeSitter.Parser
 import TreeSitter.Tree hiding (Tree)
 
-import System.FilePath (takeFileName)
-
 import Duplo.Pretty as PP
 import Duplo.Tree
 
@@ -189,7 +187,7 @@ toParseTree input = do
                   , i $ pointColumn finish2D + 1
                   , i $ nodeEndByte node
                   )
-              , rFile = takeFileName $ srcPath fin
+              , rFile = srcPath fin
               }
 
           return $ make

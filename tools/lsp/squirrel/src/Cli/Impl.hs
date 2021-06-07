@@ -2,7 +2,10 @@
 
 -- | Module that handles ligo binary execution.
 module Cli.Impl
-  ( LigoBinaryCallError(..)
+  ( SomeLigoException (..)
+  , LigoExpectedClientFailureException (..)
+  , LigoDecodedExpectedClientFailureException (..)
+  , LigoUnexpectedCrashException (..)
   , callLigo
   , getLigoDefinitions
   , parseLigoDefinitions
@@ -17,11 +20,13 @@ import Control.Monad.Reader
 import Data.Aeson (eitherDecodeStrict')
 import Data.Aeson.Types (FromJSON)
 import qualified Data.ByteString.Lazy.Char8 as S8L
+import Data.Foldable (asum)
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
 import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
 import System.Exit (ExitCode (..))
 import System.Process
+import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
 import Cli.Json
 import Cli.Types
@@ -34,53 +39,107 @@ import ParseTree (Source (..), srcToText)
 -- Errors
 ----------------------------------------------------------------------------
 
-data LigoBinaryCallError
-  = -- | ligo call unexpectedly failed (returned non-zero exit code).
-    -- The error contains the error code, stdout and stderr contents.
-    UnexpectedClientFailure
-      Int -- ^ Exit code
-      Text -- ^ stdout
-      Text -- ^ stderr
+class Exception a => LigoException a where
 
-  | -- | Catch expected ligo failure to be able to restore from it.
-    ExpectedClientFailure
-      Text -- ^ stdout
-      Text -- ^ stderr
+-- | ligo call unexpectedly failed (returned non-zero exit code)
+data LigoUnexpectedClientFailureException
+  = LigoUnexpectedClientFailureException
+  { ucfeExitCode :: Int  -- ^ Exit code
+  , ucfeStdout   :: Text -- ^ stdout
+  , ucfeStderr   :: Text -- ^ stderr
+  } deriving anyclass (Exception, LigoException)
+    deriving Show via (PP LigoUnexpectedClientFailureException)
 
-  | -- | Expected ligo failure decoded from its JSON output.
-    DecodedExpectedClientFailure
-      LigoError -- ^ decoded JSON stderr
+-- | Catch expected ligo failure to be able to restore from it
+data LigoExpectedClientFailureException
+  = LigoExpectedClientFailureException
+  { ecfeStdout :: Text -- ^ stdout
+  , ecfeStderr :: Text -- ^ stderr
+  } deriving anyclass (Exception, LigoException)
+    deriving Show via (PP LigoExpectedClientFailureException)
 
-  -- Below are the errors which may fail due to some changes in ligo compiller.
+-- | Expected ligo failure decoded from its JSON output
+newtype LigoDecodedExpectedClientFailureException
+  = LigoDecodedExpectedClientFailureException
+  { decfeErrorDecoded :: LigoError -- ^ Successfully decoded ligo error
+  } deriving anyclass (Exception, LigoException)
+    deriving Show via (PP LigoDecodedExpectedClientFailureException)
 
-  --   -- | Ligo compiller produced a type which we consider is malformed
-  --   MalformedType
-  --     Text
-  | -- | Parse error occured during ligo output JSON decoding.
-    DefinitionParseError
-      Text
-  | -- | Parse error occured during ligo stderr JSON decoding.
-    LigoErrorNodeParseError
-      Text
-  deriving (Show) via PP LigoBinaryCallError
+-- | Ligo has unexpectedly crashed.
+newtype LigoUnexpectedCrashException
+  = LigoUnexpectedCrashException
+    { uceMessage :: Text -- ^ extracted failure message
+  } deriving anyclass (Exception, LigoException)
+    deriving Show via (PP LigoUnexpectedCrashException)
 
-instance Exception LigoBinaryCallError where
+----------------------------------------------------------------------------
+-- Errors that may fail due to changes in ligo compiler
+
+-- | Parse error occured during ligo output JSON decoding.
+newtype LigoErrorNodeParseErrorException
+  = LigoErrorNodeParseErrorException
+  { lnpeError :: Text -- ^ Error description
+  } deriving anyclass (Exception, LigoException)
+    deriving Show via (PP LigoErrorNodeParseErrorException)
+
+-- | Parse error occured during ligo stderr JSON decoding.
+newtype LigoDefinitionParseErrorException
+  = LigoDefinitionParseErrorException
+  { ldpeError :: Text -- ^ Error description
+  } deriving anyclass (Exception, LigoException)
+    deriving Show via (PP LigoDefinitionParseErrorException)
+
+data SomeLigoException
+  = forall a . (LigoException a, Pretty a) => SomeLigoException a
+  deriving Show via (PP SomeLigoException)
+
+instance Exception SomeLigoException where
   displayException = show . pp
+  fromException e =
+    asum
+      [ SomeLigoException <$> fromException @LigoUnexpectedClientFailureException      e
+      , SomeLigoException <$> fromException @LigoExpectedClientFailureException        e
+      , SomeLigoException <$> fromException @LigoDecodedExpectedClientFailureException e
+      , SomeLigoException <$> fromException @LigoErrorNodeParseErrorException          e
+      , SomeLigoException <$> fromException @LigoDefinitionParseErrorException         e
+      ]
 
-instance Pretty LigoBinaryCallError where
-  pp = \case
-    UnexpectedClientFailure errCode output errOutput ->
-      "ligo binary unexpectedly failed with error code" <+> pp errCode
-        <+> ".\nStdout:\n" <.> pp output <.> "\nStderr:\n" <.> pp errOutput
-    ExpectedClientFailure output errOutput ->
-      "ligo binary failed as expected with\nStdout:\n" <.> pp output
-      <.> "\nStderr:\n" <.> pp errOutput
-    DecodedExpectedClientFailure err ->
-      "ligo binary produced expected error which we successfully decoded as:\n" <.> text (show err)
-    LigoErrorNodeParseError err ->
-      "ligo binary produced error JSON which we consider malformed:\n" <.> pp err <.> "[end]"
-    DefinitionParseError err ->
-      "ligo binary produced output which we consider malformed:\n" <.> pp err
+----------------------------------------------------------------------------
+-- Pretty
+----------------------------------------------------------------------------
+
+instance Pretty LigoUnexpectedClientFailureException where
+  pp LigoUnexpectedClientFailureException {ucfeExitCode, ucfeStdout, ucfeStderr} =
+      "ligo binary unexpectedly failed with error code" <+> pp ucfeExitCode
+        <+> ".\nStdout:\n" <.> pp ucfeStdout <.> "\nStderr:\n" <.> pp ucfeStderr
+
+instance Pretty LigoExpectedClientFailureException where
+  pp LigoExpectedClientFailureException {ecfeStdout, ecfeStderr} =
+      "ligo binary failed as expected with\nStdout:\n" <.> pp ecfeStdout
+      <.> "\nStderr:\n" <.> pp ecfeStderr
+
+instance Pretty LigoDecodedExpectedClientFailureException where
+  pp LigoDecodedExpectedClientFailureException {decfeErrorDecoded} =
+      "ligo binary produced expected error which we successfully decoded as:\n"
+      <.> text (show decfeErrorDecoded)
+
+instance Pretty LigoErrorNodeParseErrorException where
+  pp LigoErrorNodeParseErrorException {lnpeError} =
+      "ligo binary produced error JSON which we consider malformed:\n"
+      <.> pp lnpeError <.> "[end]"
+
+instance Pretty LigoDefinitionParseErrorException where
+  pp LigoDefinitionParseErrorException {ldpeError} =
+      "ligo binary produced output which we consider malformed:\n"
+      <.> pp ldpeError
+
+instance Pretty LigoUnexpectedCrashException where
+  pp LigoUnexpectedCrashException {uceMessage} =
+      "ligo binary crashed with error: " <+> pp uceMessage
+
+instance Pretty SomeLigoException where
+  pp (SomeLigoException a) =
+    "Error (ligo):" <+> pp a
 
 ----------------------------------------------------------------------------
 -- Execution
@@ -95,15 +154,11 @@ callLigo args con = do
     raw <- srcToText con
     (ec, lo, le) <- readProcessWithExitCode _lceClientPath args (unpack raw)
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
-      throwM $ ExpectedClientFailure (pack lo) (pack le)
+      throwM $ LigoExpectedClientFailureException (pack lo) (pack le)
     unless (le == mempty) $
-      throwM $ UnexpectedClientFailure 0 (pack lo) (pack le)
+      throwM $ LigoUnexpectedClientFailureException 0 (pack lo) (pack le)
     Log.debug "LIGO" [i|Successfully exited with stdout:\n#{lo}\nand stderr:\n#{le}|]
     return (pack lo, pack le)
-
-----------------------------------------------------------------------------
--- Execution
-----------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- Parse from output file
@@ -120,7 +175,7 @@ parseLigoDefinitions
 parseLigoDefinitions contractPath = do
   output <- liftIO $ S8L.readFile contractPath
   case eitherDecodeStrict' . encodeUtf8 . pack . S8L.unpack $ output of
-    Left err -> throwM $ DefinitionParseError (pack err)
+    Left err -> throwM $ LigoDefinitionParseErrorException (pack err)
     Right definitions -> return definitions
 
 -- | Helper function used for parsing parts of ligo JSON output.
@@ -129,7 +184,7 @@ parseLigoOutput
 parseLigoOutput contractPath = do
   output <- S8L.readFile contractPath
   case eitherDecodeStrict' @a . encodeUtf8 . pack . S8L.unpack $ output of
-    Left err -> throwM $ DefinitionParseError (pack err)
+    Left err -> throwM $ LigoDefinitionParseErrorException (pack err)
     Right definitions -> return definitions
 
 ----------------------------------------------------------------------------
@@ -158,28 +213,52 @@ getLigoDefinitions contract = do
       Pascal -> "pascaligo"
       Caml   -> "cameligo"
   mbOut <- try $
-    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, "/dev/stdin"] contract
+    -- TODO: Use --typer=new, but currently it displays a lot of logging
+    -- information together with the JSON which makes it difficult to reason
+    -- about. It displays more errors than --typer=old (default).
+    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, srcPath contract] contract
   case mbOut of
     Right (output, errs) -> do
       Log.debug "LIGO.PARSE" [i|Successfully called ligo with #{output}|]
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
           Log.debug "LIGO.PARSE" [i|Unable to parse ligo definitions with: #{err}|]
-          throwM $ DefinitionParseError (pack err)
+          throwM $ LigoDefinitionParseErrorException (pack err)
         Right definitions -> return (definitions, errs)
 
     -- A middleware for processing `ExpectedClientFailure` error needed to pass it multiple levels up
     -- allowing us from restoring from expected ligo errors.
-    Left (ExpectedClientFailure _ ligoStdErr) -> do
+    Left LigoExpectedClientFailureException {ecfeStdout, ecfeStderr} -> do
       -- otherwise call ligo with `compile-contract` to extract more readable error message
       Log.debug "LIGO.PARSE" [i|decoding ligo error|]
-      case eitherDecodeStrict' @LigoError . encodeUtf8 $ ligoStdErr of
+      case eitherDecodeStrict' @LigoError . encodeUtf8 $ ecfeStderr of
         Left err -> do
-          Log.debug "LIGO.PARSE" [i|ligo error decoding failure #{err}|]
-          throwM $ LigoErrorNodeParseError (pack err)
+          -- LIGO dumps its crash information on StdOut rather than StdErr.
+          let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack ecfeStdout
+          case failureRecovery of
+            Left failure -> do
+              Log.debug "LIGO.PARSE" [i|ligo error decoding failure: #{failure}|]
+              throwM $ LigoErrorNodeParseErrorException $ pack failure
+            Right recovered -> do
+              -- LIGO doesn't dump any information we can extract to figure out
+              -- where this error occurred, so we just log it for now. E.g.: a
+              -- type-checker error just crashes with "Update an expression which is not a record"
+              -- in the old typer. In the new typer, the error is the less
+              -- intuitive "type error : break_ctor propagator".
+              Log.debug "LIGO.PARSE" [i|ligo crashed with: #{recovered}|]
+              throwM $ LigoUnexpectedCrashException $ pack recovered
         Right decodedError -> do
-          Log.debug "LIGO.PARSE" [i|ligo error decoding successfull with:\n#{decodedError}|]
-          throwM $ DecodedExpectedClientFailure decodedError
+          Log.debug "LIGO.PARSE" [i|ligo error decoding successful with:\n#{decodedError}|]
+          throwM $ LigoDecodedExpectedClientFailureException decodedError
 
-    -- All other errors remain untouched
-    Left err -> throwM err
+-- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to
+-- extract the error message that was included with the crash.
+-- Returns 'Left' if we failed to decode with the first parameter, otherwise
+-- returns 'Right' with the recovered crash message.
+attemptToRecoverFromPossibleLigoCrash :: String -> String -> Either String String
+attemptToRecoverFromPossibleLigoCrash errDecoded stdErr = case getAllTextSubmatches (stdErr =~ regex) of
+  [_, err] -> Right err
+  _        -> Left errDecoded
+  where
+    regex :: String
+    regex = "ligo: internal error, uncaught exception:\n      \\(Failure \"(.*)\"\\)"

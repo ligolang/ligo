@@ -1,6 +1,7 @@
 # This file contains pipeline configuration used by Serokell at https://gitlab.com/serokell/ligo/ligo
 
 stages:
+  - ligo
   - lsp
   - tooling
   - push
@@ -10,6 +11,39 @@ default:
 
 # jobs for building and testing LSP
 include: '/tools/lsp/.gitlab-ci.yml'
+
+ligo-build:
+  stage: ligo
+  only: [merge_requests, tooling]
+  tags: [nix-with-docker]
+  script:
+    # generate changelog, it's required for building ligo
+    - nix-build nix -A ligo-changelog
+    - cp ./result/changelog.txt .
+    - chmod u+w ./changelog.txt
+    # build intermediate image (Dockerfile declares some build arguments, but we don't need to set any of them)
+    - docker build . --target ligo-builder --tag ligo-builder:$CI_JOB_ID
+    # build final image
+    - docker build . --tag ligo:$CI_JOB_ID
+    # extract ligo binary from the image
+    - docker create --name ligo-$CI_JOB_ID ligo:$CI_JOB_ID
+    - docker cp ligo-$CI_JOB_ID:/root/ligo ./ligo
+    - chmod u+w ./ligo
+    # pin built images to cache them for future builds; use a distinct tag for
+    # "tooling" branch so it won't be overriden by an image from an MR
+    - if [[ $CI_COMMIT_REF_NAME == "tooling" ]]; then PINNED_TAG=latest;
+      else PINNED_TAG=temp;
+      fi
+    - docker tag ligo:$CI_JOB_ID ligo:$PINNED_TAG
+    - docker tag ligo-builder:$CI_JOB_ID ligo-builder:$PINNED_TAG
+  after_script:
+    # delete the container and image tags if they were created
+    - docker container rm ligo-$CI_JOB_ID || true
+    - docker image rm ligo-builder:$CI_JOB_ID || true
+    - docker image rm ligo:$CI_JOB_ID || true
+  artifacts:
+    paths:
+      - ligo
 
 lsp-lint:
   stage: lsp
@@ -25,6 +59,12 @@ vscode-extension-tests:
   only: [merge_requests, tooling]
   script:
     - nix-build tools/lsp -A checks.x86_64-linux.lsp-test
+
+vscode-extension-integration-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.integration-test
 
 vscode-extension-sexp-tests:
   stage: lsp

@@ -49,9 +49,9 @@ On top of all that is an event loop for handling messages from some lsp-client.
 
 To compile and run, the following tools are needed:
 
-1) tree-sitter-cli@0.16.9 (the Node.js one was usied during development)
+1) tree-sitter-cli@0.19.5 (the Node.js one was used during development)
 2) optionally, nix package manager
-3) haskell-stack (preferably of `2.5.1` version)
+3) haskell-stack (preferably version `2.5.1`)
 
 First, you need to generate the `parser.c` for all dialects.
 For that, do

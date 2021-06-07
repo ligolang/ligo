@@ -38,7 +38,10 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.List as List
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import qualified Data.Text as Text (unpack)
 import GHC.Generics
+import Text.Read (readEither)
+import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
@@ -65,18 +68,18 @@ data LigoError = LigoError
     -- `"content"`
   , _leContent :: LigoErrorContent
   }
-  deriving stock (Generic, Show)
+  deriving stock (Eq, Generic, Show)
 
 -- | An actual ligo error
 data LigoErrorContent = LigoErrorContent
   { -- | Error message
     -- `"message"`
     _lecMessage :: Text
-  -- Waiting for https://gitlab.com/ligolang/ligo/-/merge_requests/840/
-  -- to be rebased.
+    -- | Location of the error
+    -- `"location"`
   , _lecLocation :: LigoRange
   }
-  deriving stock (Generic, Show)
+  deriving stock (Eq, Generic, Show)
 
 -- | Whole successfull ligo `get-scope` output
 data LigoDefinitions = LigoDefinitions
@@ -257,7 +260,7 @@ data LigoRange
       { _lrStart :: LigoRangeInner
       , _lrStop :: LigoRangeInner
       }
-  deriving stock (Generic, Show)
+  deriving stock (Eq, Generic, Show)
 
 -- | Insides of ligo location.
 -- ```
@@ -268,7 +271,7 @@ data LigoRangeInner = LigoRangeInner
   , _lriPointNum :: Int
   , _lriPointBol :: Int
   }
-  deriving stock (Generic, Show)
+  deriving stock (Eq, Generic, Show)
 
 -- | Byte representation of ligo location.
 -- ```
@@ -280,7 +283,7 @@ data LigoByte = LigoByte
   , _lbPosBol :: Int
   , _lbPosCnum :: Int
   }
-  deriving stock (Generic, Show)
+  deriving stock (Eq, Generic, Show)
 
 ----------------------------------------------------------------------------
 -- Instances
@@ -299,7 +302,7 @@ instance FromJSON LigoErrorContent where
   parseJSON = withObject "error_content" $ \o -> do
     _lecMessage <- o .: "message"
     _lecLocation <- parseLigoRange "location_error_inner_range" =<< o .: "location"
-    return $ LigoErrorContent {..}
+    return LigoErrorContent {..}
 
 instance ToJSON LigoErrorContent where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
@@ -346,9 +349,10 @@ instance FromJSON LigoTypeFull where
     asum
       [ o .: "core" >>= parseAsCoreType
       , o .: "resolved" >>= parseAsResolvedType
-      , o .: "unresolved" -- TODO
+      , o .: "unresolved" >>= parseAsUnresolvedType
       ]
     where
+      parseAsCoreType :: Value -> Parser LigoTypeFull
       parseAsCoreType = do
         withObject "type_full_core" $ \o' -> do
           _ltfcLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
@@ -357,6 +361,7 @@ instance FromJSON LigoTypeFull where
             withArray "type_content" (mapM parseLigoTypeContent . group 2 . toList) type_content
           return $ LigoTypeFullCore {..}
 
+      parseAsResolvedType :: Value -> Parser LigoTypeFull
       parseAsResolvedType = do
         withObject "type_full_resolved" $ \o' -> do
           _ltfrLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
@@ -366,6 +371,11 @@ instance FromJSON LigoTypeFull where
           _ltfrTypeMeta <- o' .: "type_meta"
           _ltfrOrigVar <- o' .: "orig_var" >>= parseOrigVar
           return $ LigoTypeFullResolved {..}
+
+      -- TODO: For now we don't know what 'Value's may go into this type,
+      -- but we assume it is 'Null' for now.
+      parseAsUnresolvedType :: Value -> Parser LigoTypeFull
+      parseAsUnresolvedType = pure . LigoTypeFullUnresolved
 
 instance ToJSON LigoTypeFull where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
@@ -485,11 +495,59 @@ parseTypeInner = withObject "type_inner" $ \o -> do
 -- [ "name", <LigoRange> ]
 -- ```
 parseLigoRange :: String -> Value -> Parser LigoRange
-parseLigoRange = flip withArray (safeExtract . group 2 . toList)
+parseLigoRange str val = parseLigoRangeArray str val <|> parseLigoRangeString str val
+
+parseLigoRangeArray :: String -> Value -> Parser LigoRange
+parseLigoRangeArray = flip withArray (safeExtract . group 2 . toList)
   where
     safeExtract :: [[Value]] -> Parser LigoRange
     safeExtract ([_, value]:_) = parseJSON @LigoRange value
     safeExtract _ = error "number of range elements in array is not even and cannot be grouped"
+
+-- LIGO sometimes returns the ranges as a human-readable string (wtf), so parse
+-- this string for relevant points.
+parseLigoRangeString :: String -> Value -> Parser LigoRange
+parseLigoRangeString = flip withText safeExtract
+  where
+    safeExtract :: Text -> Parser LigoRange
+    safeExtract str = case parseRange $ matchRange $ Text.unpack str of
+      Left err -> fail err
+      Right (file, line, colStart, colStop) -> pure LigoRange
+        { _lrStart = LigoRangeInner
+          { _lriByte = LigoByte
+            { _lbPosFname = file
+            , _lbPosLnum = line
+            , _lbPosBol = 0  -- not used in mbFromLigoRange
+            , _lbPosCnum = 0  -- not used in mbFromLigoRange
+            }
+          , _lriPointNum = colStart
+          , _lriPointBol = 0  -- need abs (_lriPointNum - _lriPointBol) == _lriPointNum
+          }
+        , _lrStop = LigoRangeInner
+          { _lriByte = LigoByte
+            { _lbPosFname = file
+            , _lbPosLnum = line
+            , _lbPosBol = 0  -- not used in mbFromLigoRange
+            , _lbPosCnum = 0  -- not used in mbFromLigoRange
+            }
+          , _lriPointNum = colStop
+          , _lriPointBol = 0  -- need abs (_lriPointNum - _lriPointBol) == _lriPointNum
+          }
+        }
+
+    parseRange :: [String] -> Either String (FilePath, Int, Int, Int)
+    parseRange = \case
+        [_, file, line, colStart, colStop] -> do
+          let fp = file
+          l <- readEither line
+          cStart <- readEither colStart
+          cStop <- readEither colStop
+          pure (fp, l, cStart, cStop)
+        matches -> Left $ "Could not match range with expected format: " <> show matches
+
+    matchRange :: String -> [String]
+    matchRange str =
+      getAllTextSubmatches (str =~ ("in file \"(.*)\", line ([0-9]+), characters ([0-9]+)-([0-9]+)" :: Text))
 
 -- | Construct a parser of ligo type content that is represented in pairs
 -- ```
@@ -507,7 +565,6 @@ parseLigoTypeContent _ = error "number of type content elements is not even and 
 ----------------------------------------------------------------------------
 
 instance Pretty LigoError where
-  -- pp (LigoError _ stage (LigoErrorContent msg loc)) = mconcat
   pp (LigoError _ stage (LigoErrorContent msg at)) = mconcat
     [ text "Error in ", text $ show stage
     , text "\n\nat: ", pp $ fromLigoRangeOrDef at
@@ -570,8 +627,8 @@ mbFromLigoRange
     (LigoRangeInner LigoByte { _lbPosLnum = startLine , _lbPosFname = startFilePath } startCNum startBol)
     (LigoRangeInner LigoByte { _lbPosLnum = endLine   , _lbPosFname = endFilePath   } endCNum   endBol)
   )
-  | startFilePath /= endFilePath = error "start file of a range does not equal to it's end file"
-  | otherwise = Just $ Range
+  | startFilePath /= endFilePath = error "start file of a range does not equal to its end file"
+  | otherwise = Just Range
       { rStart = (startLine, abs (startCNum - startBol) + 1, 0)
       , rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
       , rFile = startFilePath

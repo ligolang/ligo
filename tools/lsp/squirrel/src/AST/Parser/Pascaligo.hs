@@ -71,6 +71,7 @@ recognise (SomeRawTree dialect rawTree)
         "list_pattern"        -> IsList   <$> fields "element"
         "cons_pattern"        -> IsCons   <$> field  "head"   <*> field "tail"
         "var_pattern"         -> IsVar    <$> field  "name"
+        "record_pattern"      -> IsRecord <$> fields "field"
         _                     -> fallthrough
 
     -- Irrefutable tuple
@@ -78,6 +79,13 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate $ \case
         "irrefutable_tuple" -> IsTuple <$> fields "item"
         _                   -> fallthrough
+
+    -- RecordFieldPattern
+  , Descent do
+      boilerplate $ \case
+        "record_field_pattern"   -> IsRecordField <$> field "name" <*> field "body"
+        "record_capture_pattern" -> IsRecordCapture <$> field "name"
+        _                        -> fallthrough
 
     -- Alt
   , Descent do

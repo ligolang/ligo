@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ae83eb4a0d695014be2c097546268704755b468fc3af0f1834d734cef8b98657
+-- hash: 47d631ef4f3543b153bbc7bd2e302bb73a154b59ecddd5049b566061ffb613f8
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -91,8 +91,10 @@ library
     , mtl
     , pretty
     , process
+    , regex-tdfa
     , safe-exceptions
     , sorted-list
+    , template-haskell
     , text
     , transformers
     , tree-sitter
@@ -182,21 +184,92 @@ executable ligo-vet
     , with-utf8
   default-language: Haskell2010
 
+test-suite integration-test
+  type: exitcode-stdio-1.0
+  main-is: Driver.hs
+  other-modules:
+      Test.Integrational.Capabilities.CodeAction.ExtractTypeAlias
+      Test.Integrational.Capabilities.Completion
+      Test.Integrational.Capabilities.DocumentSymbol
+      Test.Integrational.Capabilities.Find
+      Test.Integrational.Capabilities.Rename
+      Test.Integrational.Capabilities.SignatureHelp
+      Test.Integrational.Cli
+      Test.Common.Capabilities.CodeAction.ExtractTypeAlias
+      Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentSymbol
+      Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Rename
+      Test.Common.Capabilities.SignatureHelp
+      Test.Common.Capabilities.Util
+      Test.Common.FixedExpectations
+      Test.Common.Util
+      Test.Common.Util.Parsers
+      Paths_ligo_squirrel
+  hs-source-dirs:
+      test/integration-test/
+      test/test-common/
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  build-tool-depends:
+      tasty-discover:tasty-discover
+  build-depends:
+      HUnit
+    , async
+    , base
+    , bytestring
+    , containers
+    , data-default
+    , directory
+    , duplo
+    , exceptions
+    , fastsum
+    , filepath
+    , generic-deriving
+    , ghc-prim
+    , hashable
+    , hspec-expectations
+    , interpolate
+    , lens
+    , ligo-squirrel
+    , lsp-types
+    , mtl
+    , pretty
+    , safe-exceptions
+    , sorted-list
+    , tasty
+    , tasty-discover
+    , tasty-hspec
+    , tasty-hunit
+    , template-haskell
+    , text
+    , transformers
+    , tree-sitter
+    , unliftio
+    , unordered-containers
+  default-language: Haskell2010
+
 test-suite ligo-contracts-test
   type: exitcode-stdio-1.0
   main-is: Driver.hs
   other-modules:
       Test.Parsers
-      Test.FixedExpectations
-      Test.Util
-      Test.Util.LigoEnv
-      Test.Util.Parsers
+      Test.Common.Capabilities.CodeAction.ExtractTypeAlias
+      Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentSymbol
+      Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Rename
+      Test.Common.Capabilities.SignatureHelp
+      Test.Common.Capabilities.Util
+      Test.Common.FixedExpectations
+      Test.Common.Util
+      Test.Common.Util.Parsers
       Paths_ligo_squirrel
   hs-source-dirs:
       test/ligo-contracts-test/
       test/test-common/
   default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
@@ -246,19 +319,24 @@ test-suite lsp-test
       Test.Capabilities.Rename
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
-      Test.Capabilities.Util
       Test.Parsers
       Test.Scope.ScopedDecl
-      Test.FixedExpectations
-      Test.Util
-      Test.Util.LigoEnv
-      Test.Util.Parsers
+      Test.Common.Capabilities.CodeAction.ExtractTypeAlias
+      Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentSymbol
+      Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Rename
+      Test.Common.Capabilities.SignatureHelp
+      Test.Common.Capabilities.Util
+      Test.Common.FixedExpectations
+      Test.Common.Util
+      Test.Common.Util.Parsers
       Paths_ligo_squirrel
   hs-source-dirs:
       test/lsp-test/
       test/test-common/
   default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
