@@ -23,6 +23,7 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "heap.ligo"
       , "modules.ligo"
       , "assert.religo"
+      , "warning_duplicate.mligo"
       ]
 
 okayContractsDirs :: [FilePath]
