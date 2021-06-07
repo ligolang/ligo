@@ -276,7 +276,7 @@ module.exports = grammar({
     var_decl: $ =>
       seq(
         'var',
-        field("name", $.NameDecl),
+        field("name", $._pattern),
         optional(seq(':', field("type", $._type_expr))),
         ':=',
         field("value", $._expr),
@@ -702,7 +702,23 @@ module.exports = grammar({
         $._list_pattern,
         $.tuple_pattern,
         $._constr_pattern,
+        $.record_pattern,
       ),
+
+    record_pattern: $ => injection("record", field("field", $._record_field_pattern)),
+
+    _record_field_pattern: $ => choice(
+      $.record_field_pattern,
+      $.record_capture_pattern,
+    ),
+
+    record_field_pattern: $ => seq(
+      field("name", $.FieldName),
+      '=',
+      field("body", $._core_pattern),
+    ),
+
+    record_capture_pattern: $ => field("name", $.NameDecl),
 
     var_pattern: $ => field("name", $.NameDecl),
 
@@ -748,11 +764,6 @@ module.exports = grammar({
       $.p_define,
     )),
 
-    p_error: $ => seq('#error', field("message", $._till_newline)),
-    p_warning: $ => seq('#warning', field("message", $._till_newline)),
-
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
-
     include: $ => seq(
       '#include',
       field("filename", $.String)
@@ -766,7 +777,11 @@ module.exports = grammar({
       '#endif',
     ),
 
-    ///////////////////////////////////////////
+    p_error: $ => seq('#error', field("message", $._till_newline)),
+    p_warning: $ => seq('#warning', field("message", $._till_newline)),
+    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
+
+    /// Literals
 
     _till_newline: $ => /[^\n]*\n/,
 

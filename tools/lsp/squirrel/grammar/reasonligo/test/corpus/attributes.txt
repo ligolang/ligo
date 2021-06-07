@@ -106,7 +106,7 @@ let decl
 ---
 
 (source_file
-  (let_declaration
+  (let_decl
     (attr)
     (var_pattern (NameDecl))
     (TypeName)
@@ -124,7 +124,7 @@ let decl twice
 ---
 
 (source_file
-  (let_declaration
+  (let_decl
     (attr) (attr)
     (var_pattern (NameDecl))
     (TypeName)
@@ -147,13 +147,13 @@ let bar = (b : int) : int => {
 ---
 
 (source_file
-  (let_declaration
+  (let_decl
     (var_pattern (NameDecl))
     (lambda
       (annot_pattern (var_pattern (NameDecl)) (TypeName))
       (TypeName)
       (block
-        (let_declaration
+        (let_decl
           (attr) (attr)
           (var_pattern (NameDecl)) (Int)
         )

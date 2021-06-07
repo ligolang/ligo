@@ -38,6 +38,7 @@ recognise (SomeRawTree dialect rawTree)
         "if"          -> If         <$> field  "selector"  <*> field "then"      <*> fieldOpt "else"
         "record"      -> Record     <$> fields "assignment"
         "record_update" -> RecordUpd <$> field  "subject" <*> fields "field"
+        "record_punning" -> Record  <$> fields "assignment"
         "tuple"       -> Tuple      <$> fields "item"
         "switch"      -> Case       <$> field  "subject"   <*> fields   "alt"
         "lambda"      -> Lambda     <$> fields "argument"  <*> fieldOpt "type"   <*> field "body"
@@ -70,6 +71,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "record_field_pattern"  -> IsRecordField <$> field "name" <*> field "body"
+        "record_capture_pattern" -> IsRecordCapture <$> field "name"
         _                       -> fallthrough
 
     -- Alt
@@ -79,9 +81,10 @@ recognise (SomeRawTree dialect rawTree)
         _                   -> fallthrough
 
     -- Record fields
-    -- TODO: capture and record
+    -- TODO: record
   , Descent do
       boilerplate $ \case
+        "capture" -> Capture <$> fields "accessor"
         "record_field" -> FieldAssignment <$> fields "accessor" <*> field "value"
         "record_field_path" -> FieldAssignment <$> fields "accessor" <*> field "value"
         "spread" -> Spread <$> field "name"
@@ -145,7 +148,7 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         -- TODO: We forget "rec" field in let
-        "let_declaration" -> BConst <$> field "binding" <*> fieldOpt "type" <*> fieldOpt "value"
+        "let_decl"  -> BConst <$> field "binding" <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl" -> BTypeDecl <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
         "include"   -> BInclude  <$>                      field "filename"

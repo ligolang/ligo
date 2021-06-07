@@ -65,13 +65,38 @@ extractDocumentSymbols uri tree =
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
+          (BConst p _ _) -> collectDecl p
+
           (BVar (match @NameDecl -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
-              J.SkVariable
-              (\ScopedDecl {_sdName} -> Just ("var " <> _sdName))
+              J.SkConstant
+              (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
 
           _ -> pure ()
+
+    collectDecl (match @Pattern -> Just (_, pattern)) = case pattern of
+          (IsAnnot p _) -> collectDecl p
+          (IsRecord xs) -> mapM_ collectDecl xs
+          (IsTuple xs) -> mapM_ collectDecl xs
+          (IsVar (match @NameDecl -> Just (getElem @Range -> r, _))) ->
+            tellScopedDecl
+              r
+              J.SkConstant
+              (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
+
+          _ -> pure ()
+
+    collectDecl (match @RecordFieldPattern -> Just (_, rfpattern)) = case rfpattern of
+          (IsRecordField _ pattern) -> collectDecl pattern
+          (IsRecordCapture (match @NameDecl -> Just (getElem @Range -> r, _))) ->
+            tellScopedDecl
+              r
+              J.SkConstant
+              (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
+
+          _ -> pure ()
+
     collectDecl _ = pure ()
 
     -- | Tries to find scoped declaration and apply continuation to it or

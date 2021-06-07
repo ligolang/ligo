@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"

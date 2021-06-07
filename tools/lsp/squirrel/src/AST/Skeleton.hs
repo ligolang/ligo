@@ -159,6 +159,7 @@ data MapBinding it
 data FieldAssignment it
   = FieldAssignment [it] it -- [Accessor] (Expr)
   | Spread it -- (Name)
+  | Capture [it] -- [Accessor]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Constant it
@@ -180,12 +181,13 @@ data Pattern it
   | IsSpread     it   -- (Name)
   | IsList       [it] -- [Pattern]
   | IsTuple      [it] -- [Pattern]
-  | IsRecord     [it] -- [FieldPattern]
+  | IsRecord     [it] -- [RecordFieldPattern]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 -- Used specifically in record destructuring
 data RecordFieldPattern it
   = IsRecordField it it
+  | IsRecordCapture it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data ModuleAccess it = ModuleAccess
@@ -300,6 +302,8 @@ instance Eq1 MapBinding where
 
 instance Eq1 RecordFieldPattern where
   liftEq f (IsRecordField la ba) (IsRecordField lb bb) = f la lb && f ba bb
+  liftEq f (IsRecordCapture la) (IsRecordCapture lb) = f la lb
+  liftEq _ _ _ = False
 
 instance Eq1 FieldAssignment where
   liftEq f (FieldAssignment as a) (FieldAssignment bs b) =

@@ -30,7 +30,6 @@ import Data.List (nubBy)
 import qualified Data.Map as Map
 import qualified Data.SortedList as List
 import Data.String.Interpolate (i)
-import qualified Data.Text as Text
 
 import qualified Language.LSP.Diagnostics as D
 import qualified Language.LSP.Server as J
@@ -135,7 +134,7 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Error what _) =
     (Just J.DsError)
     Nothing
     (Just "ligo-lsp")
-    (Text.pack [i|Parse error: Unexpected #{what}|])
+    what
     (Just $ J.List[])
     Nothing
   where

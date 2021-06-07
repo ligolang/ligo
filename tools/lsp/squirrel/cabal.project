@@ -7,6 +7,13 @@ packages:
 
 source-repository-package
     type: git
+    location: https://github.com/serokell/haskell-tree-sitter.git
+    tag: 27c33c98b00f8961c8619de2e3771a1932501ada
+    subdir: tree-sitter
+    --sha256: 18axg1qnwgyljczq5chw7m2rsbplq3ny3pl770xi0102l1x1gj8a
+
+source-repository-package
+    type: git
     location: git@github.com:alanz/lsp.git
     tag: 0556d22fc66f24bb526f671666183a86b485837e
     subdir: lsp-types

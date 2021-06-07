@@ -1,4 +1,4 @@
-FROM alpine:3.12
+FROM alpine:3.12 as ligo-builder
 
 # Install native deps needed for Tezos (etc?)
 # Adapted from https://github.com/asbjornenge/tezos-docker

@@ -33,15 +33,15 @@
                 tree-sitter-prebuilt-tarballs = {
                   x86_64-linux = final.fetchurl {
                     url =
-                      "https://github.com/tree-sitter/tree-sitter/releases/download/0.16.9/tree-sitter-linux-x64.gz";
+                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.19.5/tree-sitter-linux-x64.gz";
                     sha256 =
-                      "0apcs1gg1p3b3psbk36ssvrfzvqrmhfqz7ajca1w6mdqn66ri9nc";
+                      "018b2inqf14gmmpfvh3g732ayvdj0bily5i5mnmibhrjpypxx1p2";
                   };
                   x86_64-darwin = final.fetchurl {
                     url =
-                      "https://github.com/tree-sitter/tree-sitter/releases/download/0.16.9/tree-sitter-osx-x64.gz";
+                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.19.5/tree-sitter-macos-x64.gz";
                     sha256 =
-                      "19zpl9lzqyqgsbsfk16y4sigpp46g3i3xpz3k5hmzfdr2ryvb4wr";
+                      "0cmrvnlkjvia9c0aj0janqndc17yzw6qlhs35kbh3rrg6nc8sksj";
                   };
                 };
                 tree-sitter-prebuilt = builtins.mapAttrs (system: tarball:
@@ -68,6 +68,11 @@
         grammars = import ./squirrel/grammar { inherit pkgs; };
 
         squirrel = pkgs.callPackage ./squirrel { };
+
+        ligo-bin = pkgs.linkFarm "ligo-bin" [ {
+          name = "bin/ligo";
+          path = "${../../ligo}";
+        } ];
 
         squirrel-sexp-test = pkgs.stdenv.mkDerivation {
           name = "squirrel-sexp-test";
@@ -98,6 +103,10 @@
              in pkgs.lib.strings.concatStrings (map testDialect dialects)
                 + "touch $out";
         };
+
+        integration-test = squirrel.checks.integration-test.overrideAttrs (oldAttrs: {
+          buildInputs = [ ligo-bin ] ++ oldAttrs.buildInputs;
+        });
 
         lint = pkgs.stdenv.mkDerivation {
           name = "lint";
@@ -176,6 +185,7 @@
           inherit squirrel-grammar-test;
           inherit (squirrel.checks) lsp-test;
           inherit (squirrel.checks) ligo-contracts-test;
+          inherit integration-test;
           inherit lint;
         };
         defaultPackage = self.packages.${system}.vscode-extension-native;

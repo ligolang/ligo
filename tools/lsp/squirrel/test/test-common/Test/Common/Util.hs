@@ -1,4 +1,4 @@
-module Test.Util
+module Test.Common.Util
   ( contractsDir
   , getContractsWithExtension
   , readContract
