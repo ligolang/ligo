@@ -11,7 +11,7 @@ open Trace
 
 (* TODO don't *)
 let ignore x =
-  let%bind _ = x in
+  let* _ = x in
   ok ()
 
 (* Useful modules *)
@@ -83,8 +83,8 @@ let rec vars_of_pattern env = function
 | PUnit _
 | PInt _ | PNat _ | PBytes _
 | PString _ | PVerbatim _ -> ok @@ env
-| PVar var when is_wildcard var -> ok @@ env
-| PVar var ->
+| PVar {var} when is_wildcard var -> ok @@ env
+| PVar {var} ->
     if VarSet.mem var env then
       fail @@ non_linear_pattern var
     else ok @@ VarSet.add var env
@@ -154,10 +154,10 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   match t with
     TProd   {value=_;region=_} -> ok ()
   | TSum    {value;region=_} ->
-    let%bind () = Utils.nsepseq_to_list value.variants |> check_variants in
+    let* () = Utils.nsepseq_to_list value.variants |> check_variants in
     ok ()
   | TRecord {value;region=_} ->
-    let%bind () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
+    let* () = Utils.nsepseq_to_list value.ne_elements |> check_fields in
     ok ()
   | TApp    {value=_;region=_} -> ok ()
   | TFun    {value=_;region=_} -> ok ()
@@ -172,7 +172,7 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
   match e with
     ECase    {value;region=_}   ->
-    let%bind () =
+    let* () =
       Trace.bind_iter_list
         (fun ({value;region=_}: _ case_clause reg) ->
            check_pattern value.pattern)
@@ -196,16 +196,16 @@ let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
   | ETuple   {value=_;region=_} -> ok ()
   | EPar     {value=_;region=_} -> ok ()
   | ELetIn   {value;region=_}   ->
-    let%bind () = check_pattern value.binding.binders in
+    let* () = check_pattern value.binding.binders in
     ok ()
   | ETypeIn   {value;region=_}   ->
-    let%bind () = check_reserved_name value.type_decl.name in
+    let* () = check_reserved_name value.type_decl.name in
     ok @@ ()
   | EModIn   {value;region=_}   ->
-    let%bind () = check_reserved_name value.mod_decl.name in
+    let* () = check_reserved_name value.mod_decl.name in
     ok @@ ()
   | EModAlias {value;region=_}   ->
-    let%bind () = check_reserved_name value.mod_alias.alias in
+    let* () = check_reserved_name value.mod_alias.alias in
     ok @@ ()
   | EFun     {value=_;region=_} -> ok @@ ()
   | ESeq     {value=_;region=_} -> ok @@ ()
@@ -216,16 +216,16 @@ let peephole_declaration : unit -> declaration -> (unit, 'err) result =
   match d with
     ConstDecl  {value;region=_} ->
     let (_,_,binding,_) = value in
-    let%bind () = check_pattern binding.binders in
+    let* () = check_pattern binding.binders in
     ok ()
   | TypeDecl {value;region=_} ->
-    let%bind () = check_reserved_name value.name in
+    let* () = check_reserved_name value.name in
     ok @@ ()
   | ModuleDecl {value;region=_} ->
-    let%bind () = check_reserved_name value.name in
+    let* () = check_reserved_name value.name in
     ok @@ ()
   | ModuleAlias {value;region=_} ->
-    let%bind () = check_reserved_name value.alias in
+    let* () = check_reserved_name value.alias in
     ok @@ ()
   | Directive _ -> ok ()
 

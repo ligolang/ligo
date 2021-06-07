@@ -6,11 +6,11 @@ let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
+  run_ligo_good [ "evaluate-call" ; contract "failwith.ligo" ; "failer" ; "1" ; "--warn=false"] ;
   [%expect {|
     failwith(42) |}];
 
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ] ;
+  run_ligo_good [ "evaluate-call" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ; "--warn=false" ] ;
   [%expect {|
     { "value": null, "failure": "failwith(42)" } |}];
 
@@ -19,6 +19,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
     Warning: unused variable "ps".
+    Hint: replace it by "_ps" to prevent this warning.
 
     failwith("This contract always fails") |}];
 

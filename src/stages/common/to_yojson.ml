@@ -1,5 +1,4 @@
 open Types
-open Yojson_helpers
 
 type json = Yojson.Safe.t
 
@@ -193,25 +192,29 @@ let option' f o =
 
 let string s = `String s
 
-let list f lst = `List (List.map f lst)
+let list f lst = `List (List.map ~f:f lst)
 
 let label_map f lmap =
-  let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
+  let lst = List.sort ~compare:(fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-      (fun acc (Label k, v) -> (k , f v)::acc)
-      [] lst
+      ~f:(fun acc (Label k, v) -> (k , f v)::acc)
+      ~init:[] lst
   in
   `Assoc lst'
 
 let attributes attr =
-  let list = List.map (fun string -> `String string) attr
+  let list = List.map ~f:(fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
-let binder type_expression {var;ascr} =
-  `Assoc [
+let binder type_expression {var;ascr;attributes} =
+  let attributes = match attributes.const_or_var with
+        | None -> []
+        | Some `Var -> [("const_or_var", `String "var")]
+        | Some `Const -> [("const_or_var", `String "const")] in
+  `Assoc ([
     ("var", expression_variable_to_yojson var);
-    ("ty", yojson_opt type_expression ascr);
-  ]
+    ("ty", option' type_expression ascr);
+    ] @ attributes)
 
 let row_element g {associated_type; michelson_annotation; decl_pos} =
   `Assoc [
@@ -252,7 +255,7 @@ let application expression {lamb;args} =
 let lambda expression type_expression {binder=b;output_type;result} : json =
   `Assoc [
     ("binder", binder type_expression b);
-    ("output_type", yojson_opt type_expression output_type);
+    ("output_type", option' type_expression output_type);
     ("result", expression result);
   ]
 
@@ -386,9 +389,9 @@ and pattern type_expression p =
   | P_unit -> `List [`String "Unit" ; `Null]
   | P_var b -> `List [`String "Var"; binder type_expression b]
   | P_list lp -> `List [`String "List" ; list_pattern type_expression lp]
-  | P_variant (l,popt) -> `List [`String "Variant" ; label l ; option (pattern type_expression) popt ]
-  | P_tuple lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
-  | P_record (ll,lp) -> `List [`String "Record" ; list label ll ; list (pattern type_expression) lp ]
+  | P_variant (l,p) -> `List [`String "Variant" ; label l ; (pattern type_expression) p]
+  | P_tuple lp -> `List [`String "Tuple" ; list (pattern type_expression) lp]
+  | P_record (ll,lp) -> `List [`String "Record" ; list label ll ; list (pattern type_expression) lp]
 
 and match_case expression type_expression {pattern=p ; body } =
   `Assoc [

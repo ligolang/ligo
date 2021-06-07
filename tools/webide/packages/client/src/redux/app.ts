@@ -6,7 +6,7 @@ import deploy, { DeployState } from './deploy';
 import { DryRunState, dryRun } from './dry-run';
 import editor, { EditorState } from './editor';
 import evaluateFunction, { EvaluateFunctionState } from './evaluate-function';
-import evaluateValue, { EvaluateValueState } from './evaluate-value';
+import evaluateValue, { EvaluateValueState } from './evaluate-expr';
 import examples, { ExamplesState } from './examples';
 import generateDeployScript, {
   GenerateDeployScriptState,

@@ -3,6 +3,7 @@
 (library
   (name parsing)
   (public_name ligo.parsing)
+  (instrumentation (backend bisect_ppx))
   (libraries
      ;; Vendors
      simple-utils
@@ -15,5 +16,4 @@
      )
   (modules
      Parsing Errors Pascaligo Cameligo Reasonligo Jsligo)
-  (preprocess
-    (pps ppx_let bisect_ppx --conditional)))
+)

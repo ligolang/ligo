@@ -61,13 +61,13 @@ module Random_type_generator = struct
     in
     let map = List.rev map in
     let find_assignment_mock : type_variable -> constructor_or_row option  = fun tv ->
-      let t_opt = List.find_opt (fun ({var ;_}:m) -> Var.equal var tv) map in
+      let t_opt = List.find ~f:(fun ({var ;_}:m) -> Var.equal var tv) map in
       match t_opt with
       | None -> failwith "internal: variable should always been known"
       | Some m -> m.cor_opt
     in
     let repr_mock : type_variable -> type_variable = fun tv -> tv in (*no aliases*)
-    let all_vars : type_variable list = List.map (fun ({var ;_}:m) -> var) map in
+    let all_vars : type_variable list = List.map ~f:(fun ({var ;_}:m) -> var) map in
     let test_checker constraints_list =
       trace (Main_errors.test_tracer "typechecker tests") @@
       trace (Main_errors.inference_tracer) @@
@@ -78,7 +78,7 @@ module Random_type_generator = struct
     in
     (map,test_checker,test_checker_neg)
   let build_constraint : m list -> type_constraint_simpl list = fun m ->
-    List.filter_map (fun { var=_ ; cor_opt } -> match cor_opt with
+    List.filter_map ~f:(fun { var=_ ; cor_opt } -> match cor_opt with
       | Some (`Constructor c) -> Some (SC_Constructor c)
       | Some (`Row r) -> Some (SC_Row r)
       | None -> None) m
@@ -88,7 +88,7 @@ module Small_env_manual_test = struct
 
   let all_vars = 
     let v name = Var.fresh ~name () in
-    List.map (fun n -> v n) ["a" ; "b" ; "c" ; "d" ; "e" ; "f" ; "g" ; "h" ; "i" ; "j" ; "k"]
+    List.map ~f:(fun n -> v n) ["a" ; "b" ; "c" ; "d" ; "e" ; "f" ; "g" ; "h" ; "i" ; "j" ; "k"]
   let (a,b,c,d,e,f,g,h,i,j,k) =
     match all_vars with
     | [a;b;c;d;e;f;g;h;i;j;k] -> (a,b,c,d,e,f,g,h,i,j,k)
@@ -131,34 +131,34 @@ let alias () =
   let open Small_env_manual_test in
   let al_ok = make_alias a b in
   let al_nok = make_alias a c in
-  let%bind () = test_checker [al_ok] in
-  let%bind () = test_checker_neg [al_nok] in
+  let* () = test_checker [al_ok] in
+  let* () = test_checker_neg [al_nok] in
   ok ()
   
 let constructor () =
   let open Small_env_manual_test in
   let ctor_ok = make_sc_constructor 1 None a C_map [c ; d] in
-  let%bind () = test_checker [ctor_ok] in
+  let* () = test_checker [ctor_ok] in
   let ctor_ok2 = make_sc_constructor 2 None b C_map [c ; d] in
-  let%bind () = test_checker [ctor_ok2] in
+  let* () = test_checker [ctor_ok2] in
   let ctor_ok3 = make_sc_constructor 3 None k C_arrow [ g ; c] in
-  let%bind () = test_checker [ctor_ok3] in
+  let* () = test_checker [ctor_ok3] in
   let ctor_nok = make_sc_constructor 4 None a C_list [c] in
-  let%bind () = test_checker_neg [ctor_nok] in
+  let* () = test_checker_neg [ctor_nok] in
   ok ()
 
 let row () =
   let open Small_env_manual_test in
   let row_ok  = make_sc_row 1 None h C_variant [(Label "foo", c) ; (Label "bar", d)] in
-  let%bind () = test_checker [row_ok] in
+  let* () = test_checker [row_ok] in
   let row_ok2 = make_sc_row 2 None j C_record [(Label "baz", b) ; (Label "goo", e)] in
-  let%bind () = test_checker [row_ok2] in
+  let* () = test_checker [row_ok2] in
   let row_ok3 = make_sc_row 3 None g C_variant [(Label "foo", c) ; (Label "bar", d)] in
-  let%bind () = test_checker [row_ok3] in
+  let* () = test_checker [row_ok3] in
   let row_ok3 = make_sc_row 4 None i C_record [(Label "baz", b) ; (Label "goo", e)] in
-  let%bind () = test_checker [row_ok3] in
+  let* () = test_checker [row_ok3] in
   let row_nok = make_sc_row 5 None h C_record [(Label "foo", c) ; (Label "bar", d)] in
-  let%bind () = test_checker_neg [row_nok] in
+  let* () = test_checker_neg [row_nok] in
   ok ()
 
 let typeclass () =
@@ -168,10 +168,10 @@ let typeclass () =
   let args = [c ; d] in
   let tc_ok : typeclass = [[nat ; mutez]; [mutez ; nat]] in
   let tcc_ok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_ok args in
-  let%bind () = test_checker [tcc_ok] in
+  let* () = test_checker [tcc_ok] in
   let tc_nok : typeclass = [[nat ; nat]; [mutez ; nat]] in
   let tcc_nok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_nok args in
-  let%bind () = test_checker_neg [tcc_nok] in
+  let* () = test_checker_neg [tcc_nok] in
   ok ()
 
 let forall () =
@@ -184,7 +184,7 @@ let forall () =
   let map_lhs x = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_map ; p_ctor_args = [ x ; mutez ] } in
   let forall = forall_tc "x" @@ fun x -> [tc x] => map_lhs x in
   let forall_sc = make_sc_poly a (unwrap forall) in
-  let%bind () = test_checker [forall_sc] in
+  let* () = test_checker [forall_sc] in
   ok ()
 
 let test_generator () =
@@ -200,7 +200,7 @@ let test_generator () =
     Format.printf "XXXXXX length:%d \n @[<v>%a@ @]" (List.length res) (list_sep_return pp) res
   in *)
   let remove_base_type i = i -2 in
-  let%bind () = Assert.assert_true (Main_errors.test_internal "failing to test the type generator") @@ (
+  let* () = Assert.assert_true (Main_errors.test_internal "failing to test the type generator") @@ (
     (remove_base_type @@ List.length res1 = 7) &&
     (remove_base_type @@ List.length res2 = 100) &&
     (remove_base_type @@ List.length res3 = 200) &&
@@ -211,7 +211,7 @@ let random_ctors () =
   let open! Random_type_generator in
   let (map,test_checker,test_checker_neg) = generate 200 40 in
   ignore test_checker_neg ;
-  let%bind () = test_checker (build_constraint map) in
+  let* () = test_checker (build_constraint map) in
   ok ()
 
 let main =

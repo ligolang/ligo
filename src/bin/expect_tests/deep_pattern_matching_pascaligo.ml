@@ -136,6 +136,16 @@ let%expect_test _ =
 
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail13.ligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail13.ligo", line 10, characters 8-17:
+      9 |         Increment (n) -> s + 1
+     10 |       | Decrement -> s - 1
+     11 |     ]
+
+    Variant pattern argument is expected of type nat but is of type unit. |}]
+
 (* Positives *)
 
 let%expect_test _ =

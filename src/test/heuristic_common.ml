@@ -38,7 +38,7 @@ let grouped_by_variable state =
   let open Database_plugins.GroupedByVariable in
   object
     method grouped_by_variable =
-      List.fold_left (add_constraint (fun v -> v)) (create_state ~cmp:Var.compare) state
+      List.fold_left ~f:(add_constraint (fun v -> v)) ~init:(create_state ~cmp:Var.compare) state
   end
 
 let check_list_of_equalities (la : update list) (_lb : (type_variable * type_variable) list) =
@@ -56,20 +56,20 @@ let check_list_of_equalities (la : update list) (_lb : (type_variable * type_var
     | Ast_core.Types.C_apply _ ->
       fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_apply.") in
   let aux ({ remove_constraints; add_constraints; proof_trace } : update) =
-    let%bind () = tst_assert "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in
+    let* () = tst_assert "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in
     ignore proof_trace;
     bind_map_list aux' add_constraints in
-  let%bind assignments = bind_map_list aux la in
-  let assignments' = List.flatten assignments in
-  let assignments'' = List.filter (function [] -> false | _ -> true) assignments' in
-  let assignments''' = List.map (List.sort Var.compare) assignments'' in
-  let assignments'''' = List.sort (List.compare ~compare:Var.compare) assignments''' in
-  let expected' = List.map (fun (a, b) -> [a;b]) _lb in
-  let expected'' = List.map (List.sort Var.compare) expected' in
-  let expected''' = List.sort (List.compare ~compare:Var.compare) expected'' in
+  let* assignments = bind_map_list aux la in
+  let assignments' = List.concat assignments in
+  let assignments'' = List.filter ~f:(function [] -> false | _ -> true) assignments' in
+  let assignments''' = List.map ~f:(List.sort ~compare:Var.compare) assignments'' in
+  let assignments'''' = List.sort ~compare:(List.compare Var.compare) assignments''' in
+  let expected' = List.map ~f:(fun (a, b) -> [a;b]) _lb in
+  let expected'' = List.map ~f:(List.sort ~compare:Var.compare) expected' in
+  let expected''' = List.sort ~compare:(List.compare Var.compare) expected'' in
   let msg : string = "expected a list of constraints: [(m = y); (n = z)] (order is not important, order lhs/rhs in the equality is not important) but got"
                      ^ (Format.asprintf "%a" (PP_helpers.list_sep_d_par (PP_helpers.list_sep_d_par Var.pp)) assignments'''')
                      ^ " expected: "
                      ^ (Format.asprintf "%a" (PP_helpers.list_sep_d_par (PP_helpers.list_sep_d_par Var.pp)) expected''')
   in
-  tst_assert msg @@ (List.compare ~compare:(List.compare ~compare:Var.compare) expected''' assignments'''' = 0)
+  tst_assert msg @@ (List.compare (List.compare Var.compare) expected''' assignments'''' = 0)

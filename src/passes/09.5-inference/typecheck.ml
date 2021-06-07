@@ -12,12 +12,12 @@ let err_TODO loc = corner_case ("TODO ERROR : check errors have not been written
 
 let fast_types_are_equal : db_access:db_access -> type_variable -> type_variable -> bool result =
   fun ~db_access a b ->
-  let%bind a = trace_option (corner_case (Format.asprintf "internal error: attempted fast type equality on types which are not part of the hash cons raised at %s" __LOC__)) (PolyMap.find_opt (db_access.repr a) db_access.hashconsed_assignments) in
-  let%bind b = trace_option (corner_case (Format.asprintf "internal error: attempted fast type equality on types which are not part of the hash cons raised at %s" __LOC__)) (PolyMap.find_opt (db_access.repr b) db_access.hashconsed_assignments) in
+  let* a = trace_option (corner_case (Format.asprintf "internal error: attempted fast type equality on types which are not part of the hash cons raised at %s" __LOC__)) (PolyMap.find_opt (db_access.repr a) db_access.hashconsed_assignments) in
+  let* b = trace_option (corner_case (Format.asprintf "internal error: attempted fast type equality on types which are not part of the hash cons raised at %s" __LOC__)) (PolyMap.find_opt (db_access.repr b) db_access.hashconsed_assignments) in
   ok @@ Var.equal a b
 
 let fast_assert_types_are_equal ~db_access err a b =
-  let%bind eq = fast_types_are_equal ~db_access a b in
+  let* eq = fast_types_are_equal ~db_access a b in
   Assert.assert_true err eq
 
 let compare_and_check_vars_type_value_list expected actual =
@@ -32,16 +32,16 @@ let rec recursive_find_assignnment : db_access:db_access -> type_variable -> typ
   let {repr ; find_assignment} = db_access in
   match find_assignment arg with
   | Some `Constructor k ->
-    let%bind () = Assert.assert_true (corner_case (Format.asprintf "internal error: invalid assignment: the variable constrained by the rhs is not the same as the lhs being assigned (modulo aliasing) raised at %s" __LOC__)) (Var.equal (repr k.tv) (repr arg)) in
-    let%bind p_ctor_args = bind_map_list (recursive_find_assignnment ~db_access) k.tv_list in
+    let* () = Assert.assert_true (corner_case (Format.asprintf "internal error: invalid assignment: the variable constrained by the rhs is not the same as the lhs being assigned (modulo aliasing) raised at %s" __LOC__)) (Var.equal (repr k.tv) (repr arg)) in
+    let* p_ctor_args = bind_map_list (recursive_find_assignnment ~db_access) k.tv_list in
     ok @@ Ast_core.Reasons.wrap (Todo k.reason_constr_simpl) @@ P_constant { p_ctor_tag = k.c_tag ; p_ctor_args }
   | Some `Row r ->
-    let%bind () = Assert.assert_true (corner_case (Format.asprintf "internal error: invalid assignment: the variable constrained by the rhs is not the same as the lhs being assigned (modulo aliasing) raised at %s" __LOC__)) (Var.equal (repr r.tv) (repr arg)) in
+    let* () = Assert.assert_true (corner_case (Format.asprintf "internal error: invalid assignment: the variable constrained by the rhs is not the same as the lhs being assigned (modulo aliasing) raised at %s" __LOC__)) (Var.equal (repr r.tv) (repr arg)) in
     let aux {associated_variable;michelson_annotation;decl_pos} : (Ast_core.row_value,_) Trace.result =
-      let%bind associated_value =  recursive_find_assignnment ~db_access associated_variable in
+      let* associated_value =  recursive_find_assignnment ~db_access associated_variable in
       ok @@ {associated_value;michelson_annotation;decl_pos}
     in
-    let%bind p_row_args = Stage_common.Helpers.bind_map_lmap aux r.tv_map in
+    let* p_row_args = Stage_common.Helpers.bind_map_lmap aux r.tv_map in
     ok @@ Ast_core.Reasons.wrap (Todo r.reason_row_simpl) @@ P_row { p_row_tag = r.r_tag ; p_row_args }
   | None -> fail (corner_case (Format.asprintf "error  raised at %s" __LOC__))
 
@@ -52,14 +52,14 @@ let check_constructor : db_access:db_access -> c_constructor_simpl -> unit resul
     match find_assignment (repr c.tv) with
     | Some `Constructor k ->
       (* assert k.tv === c.tv; *)
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.constant_tag k.c_tag c.c_tag = 0) in
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (List.length k.tv_list = List.length c.tv_list) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.constant_tag k.c_tag c.c_tag = 0) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (List.length k.tv_list = List.length c.tv_list) in
       (* ??? Not sure if this is the right thing to do,
         should we allow non-aliases and recursively check
         the equality of the assignments ? That would be slow. *)
-      let%bind () = bind_iter_list (fun (left,right) ->
+      let* () = bind_iter_list (fun (left,right) ->
           fast_assert_types_are_equal ~db_access (err_TODO __LOC__) left right) @@
-          List.combine k.tv_list c.tv_list
+          List.zip_exn k.tv_list c.tv_list
       in
       ok ()
     | Some `Row _ -> fail (err_TODO __LOC__)
@@ -79,12 +79,12 @@ let check_typeclass : db_access:db_access -> c_typeclass_simpl -> unit result =
   fun ~db_access tc ->
     (* (α, …) ∈ [ (type_value…) ; … ] *)
     (* recursively get the assignments of each α in tc.args to obtain a type_value *)
-    let%bind () = match tc.tc with
+    let* () = match tc.tc with
       | [] -> ok ()
       | hd :: _ -> Assert.assert_true (err_TODO __LOC__)(* invalid typeclass constraint: number of variables in the constraint don't match the numer of arguments of the typeclass *)
         ((List.length hd) = (List.length tc.args))
     in
-    let%bind args = bind_map_list (recursive_find_assignnment ~db_access) tc.args in
+    let* args = bind_map_list (recursive_find_assignnment ~db_access) tc.args in
     (*
         tc.args = [ α β χ ]
         tc.tc = [ [a1 b1 c1] [ a2 b2 c2] [a3 b3 c3] [a4 b4 c4] … ]
@@ -96,26 +96,26 @@ let check_typeclass : db_access:db_access -> c_typeclass_simpl -> unit result =
       assert (List.length allowed = List.length tc.args) ;
       Trace.to_bool @@ compare_and_check_vars_type_value_list allowed args
     in
-    Assert.assert_true (err_TODO __LOC__) @@ List.exists aux tc.tc
+    Assert.assert_true (err_TODO __LOC__) @@ List.exists ~f:aux tc.tc
     
   let check_row : db_access:db_access -> c_row_simpl -> unit result =
     fun ~db_access r ->
     let {repr ; find_assignment} = db_access in
     match find_assignment (repr r.tv) with
     | Some `Row rw -> (
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.row_tag rw.r_tag r.r_tag = 0) in
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (LMap.cardinal rw.tv_map = LMap.cardinal r.tv_map) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.row_tag rw.r_tag r.r_tag = 0) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (LMap.cardinal rw.tv_map = LMap.cardinal r.tv_map) in
       (* ??? Not sure if this is the right thing to do,
         should we allow non-aliases and recursively check
       the equality of the assignments ? That would be slow. *)
       let aux : (label * row_variable) * (label * row_variable) -> unit result =
         (* TODO : write better row comparisons *)
         fun ( (label_left, {associated_variable=var_left}) , (label_right, {associated_variable=var_right}) ) ->
-          let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.label label_left label_right = 0) in
-          let%bind () = fast_assert_types_are_equal ~db_access (err_TODO __LOC__) var_left var_right in
+          let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.label label_left label_right = 0) in
+          let* () = fast_assert_types_are_equal ~db_access (err_TODO __LOC__) var_left var_right in
           ok ()
       in
-      bind_iter_list aux (List.combine (LMap.bindings rw.tv_map) (LMap.bindings r.tv_map))
+      bind_iter_list aux (List.zip_exn (LMap.bindings rw.tv_map) (LMap.bindings r.tv_map))
     )
     | Some `Constructor _ -> fail (err_TODO __LOC__)
     | None -> fail (err_TODO __LOC__)(* unassigned unification variable *)
@@ -138,7 +138,7 @@ let rec compare_and_stop_at_bound_vars
 
     (* κ₁(ε, …), κ₂(φ, …) *)
     | Some `Constructor k, P_constant { p_ctor_tag ; p_ctor_args } ->
-      let%bind () = Assert.assert_true
+      let* () = Assert.assert_true
         (corner_case (Format.asprintf "wrong number of args: %d vs. %d (%a vs. %a)"
            (List.length k.tv_list)
            (List.length p_ctor_args)
@@ -146,25 +146,25 @@ let rec compare_and_stop_at_bound_vars
            (PP_helpers.list_sep_d_par Ast_core.PP.type_value_short) p_ctor_args))
         (List.length k.tv_list = List.length p_ctor_args) in
       (* not a check for equality, just a sanity check: *)
-      let%bind () = Assert.assert_true (err_TODO __LOC__)(*internal error*) (Var.equal (db_access.repr k.tv) (db_access.repr lhs)) in
-      let%bind () = Assert.assert_true (err_TODO (__LOC__^Format.asprintf "%a %a" Ast_core.PP.constant_tag k.c_tag Ast_core.PP.constant_tag p_ctor_tag))(*wrong tag k.c_tag != p_ctor_tag*) (Ast_core.Compare.constant_tag k.c_tag p_ctor_tag = 0) in
-      let%bind l = bind_map_list
+      let* () = Assert.assert_true (err_TODO __LOC__)(*internal error*) (Var.equal (db_access.repr k.tv) (db_access.repr lhs)) in
+      let* () = Assert.assert_true (err_TODO (__LOC__^Format.asprintf "%a %a" Ast_core.PP.constant_tag k.c_tag Ast_core.PP.constant_tag p_ctor_tag))(*wrong tag k.c_tag != p_ctor_tag*) (Ast_core.Compare.constant_tag k.c_tag p_ctor_tag = 0) in
+      let* l = bind_map_list
         (fun (lhs, (rhs:type_value)) -> compare_and_stop_at_bound_vars ~db_access lhs rhs.wrap_content bound_by_foralls)
         (*instantiated_binder*)
-        (List.combine k.tv_list p_ctor_args)
+        (List.zip_exn k.tv_list p_ctor_args)
       in
       ok @@ Compare_renaming.List l
 
     (* Π(ε, …), Γ(φ, …) or Σ(ε, …), Σ(φ, …) or another incompatible combination of Π and Σ *)
     | Some `Row r, P_row { p_row_tag ; p_row_args } ->
-      let%bind () = Assert.assert_true (err_TODO __LOC__)(*wrong number of args*) (LMap.cardinal r.tv_map = LMap.cardinal p_row_args) in
+      let* () = Assert.assert_true (err_TODO __LOC__)(*wrong number of args*) (LMap.cardinal r.tv_map = LMap.cardinal p_row_args) in
       (* not a check for equality, just a sanity check: *)
-      let%bind () = Assert.assert_true (err_TODO __LOC__)(*internal error*) (Var.equal (db_access.repr r.tv) (db_access.repr lhs)) in
-      let%bind () = Assert.assert_true (err_TODO __LOC__)(*wrong tag k.c_tag != p_ctor_tag*) (Ast_core.Compare.row_tag r.r_tag p_row_tag = 0) in
-      let%bind l = bind_map_list
+      let* () = Assert.assert_true (err_TODO __LOC__)(*internal error*) (Var.equal (db_access.repr r.tv) (db_access.repr lhs)) in
+      let* () = Assert.assert_true (err_TODO __LOC__)(*wrong tag k.c_tag != p_ctor_tag*) (Ast_core.Compare.row_tag r.r_tag p_row_tag = 0) in
+      let* l = bind_map_list
         (fun ({associated_variable=lhs}, ({associated_value=rhs;_}:row_value)) -> compare_and_stop_at_bound_vars ~db_access lhs rhs.wrap_content bound_by_foralls)
         (*instantiated_binder*)
-        (List.combine (LMap.to_list r.tv_map) (LMap.to_list p_row_args))
+        (List.zip_exn (LMap.to_list r.tv_map) (LMap.to_list p_row_args))
       in
       ok @@ Compare_renaming.List l
 
@@ -172,8 +172,8 @@ let rec compare_and_stop_at_bound_vars
     | _, P_forall pf ->
       (* TODO: I'm not 100% sure about this *)
       (* continue recursively after adding the new bound variable to bound_by_foralls *)
-      let constraints = List.map (fun c -> Compare_renaming.Leaf (`Constraint c)) pf.constraints in
-      let%bind tree = compare_and_stop_at_bound_vars ~db_access lhs pf.body.wrap_content (PolySet.add pf.binder bound_by_foralls) in
+      let constraints = List.map ~f:(fun c -> Compare_renaming.Leaf (`Constraint c)) pf.constraints in
+      let* tree = compare_and_stop_at_bound_vars ~db_access lhs pf.body.wrap_content (PolySet.add pf.binder bound_by_foralls) in
       ok @@ Compare_renaming.List (tree :: constraints)
 
     (* _, α *)
@@ -212,7 +212,7 @@ let check_forall_instantiations_are_unifiable : db_access:db_access ->  bound_in
          ok (PolyMap.add bound_by_forall new_instantiation acc)
        (* If yes, run fast_assert_types_are_equal existing_instantiation new_instantiation *)
        | Some existing_instantiation ->
-         let%bind () =
+         let* () =
            fast_assert_types_are_equal
              (corner_case "TODO err : incompatible types unif and existing_unif for the same bound variable")
              ~db_access
@@ -224,7 +224,7 @@ let check_forall_instantiations_are_unifiable : db_access:db_access ->  bound_in
   (* finally, return the map built that way. *)
   let instantiations =
     List.filter_map
-      (function `Constraint _ -> None | `Instantiation i -> Some i)
+      ~f:(function `Constraint _ -> None | `Instantiation i -> Some i)
       (Compare_renaming.flatten_tree binder_instantiations) in
   bind_fold_list aux (PolyMap.create ~cmp:Ast_core.Compare.type_variable) instantiations
 
@@ -237,17 +237,17 @@ let rec check_type_variable_and_type_value : db_access:db_access -> bound_var_as
     | (None, _) ->
       fail @@ corner_case "unassigned unification variable, please annotate or make sure this variable gets generalized (generalization not supported as of 02020-11-20"
     | (Some (`Constructor ka), P_constant kb) ->
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.constant_tag ka.c_tag kb.p_ctor_tag = 0) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.constant_tag ka.c_tag kb.p_ctor_tag = 0) in
       bind_iter_list (fun (a,b) -> check_type_variable_and_type_value ~db_access ~bound_var_assignments a b)
-        (List.combine ka.tv_list kb.p_ctor_args)
+        (List.zip_exn ka.tv_list kb.p_ctor_args)
     | (Some (`Row ra), P_row rb) ->
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.row_tag ra.r_tag rb.p_row_tag = 0) in
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (LMap.cardinal ra.tv_map = LMap.cardinal rb.p_row_args) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.row_tag ra.r_tag rb.p_row_tag = 0) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (LMap.cardinal ra.tv_map = LMap.cardinal rb.p_row_args) in
       bind_iter_list
         (fun ((la,a),(lb,b)) ->
-          let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.label la lb = 0) in
+          let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.label la lb = 0) in
           check_type_variable_and_type_value ~db_access ~bound_var_assignments a b)
-        (List.combine (LMap.bindings @@ LMap.map (fun {associated_variable} -> associated_variable) ra.tv_map) (LMap.bindings @@ LMap.map (fun {associated_value;} -> associated_value) rb.p_row_args))
+        (List.zip_exn (LMap.bindings @@ LMap.map (fun {associated_variable} -> associated_variable) ra.tv_map) (LMap.bindings @@ LMap.map (fun {associated_value;} -> associated_value) rb.p_row_args))
     | (Some _, P_variable vb) -> (
       match PolyMap.find_opt vb bound_var_assignments with
       | None -> fail (corner_case "unbound type variable")
@@ -260,18 +260,18 @@ let rec compare_type_values_using_bound_vars : db_access:db_access -> bound_var_
   = fun ~db_access ~bound_var_assignments (a : type_value) (b : type_value) ->
     match a.wrap_content , b.wrap_content with
     | P_constant ka , P_constant kb ->
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.constant_tag ka.p_ctor_tag kb.p_ctor_tag = 0) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.constant_tag ka.p_ctor_tag kb.p_ctor_tag = 0) in
       bind_list_iter
         (fun (a,b) -> compare_type_values_using_bound_vars ~db_access ~bound_var_assignments a b)
-        (List.combine ka.p_ctor_args kb.p_ctor_args)
+        (List.zip_exn ka.p_ctor_args kb.p_ctor_args)
     | P_row      ra , P_row      rb ->
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.row_tag ra.p_row_tag rb.p_row_tag = 0) in
-      let%bind () = Assert.assert_true (err_TODO __LOC__) (LMap.cardinal ra.p_row_args = LMap.cardinal rb.p_row_args) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.row_tag ra.p_row_tag rb.p_row_tag = 0) in
+      let* () = Assert.assert_true (err_TODO __LOC__) (LMap.cardinal ra.p_row_args = LMap.cardinal rb.p_row_args) in
       bind_list_iter
         (fun ((la,a),(lb,b)) ->
-           let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.label la lb = 0) in
+           let* () = Assert.assert_true (err_TODO __LOC__) (Ast_core.Compare.label la lb = 0) in
            compare_type_values_using_bound_vars ~db_access ~bound_var_assignments a b)
-        (List.combine (LMap.bindings @@ LMap.map (fun {associated_value} -> associated_value) ra.p_row_args) (LMap.bindings @@ LMap.map (fun {associated_value} -> associated_value) rb.p_row_args))
+        (List.zip_exn (LMap.bindings @@ LMap.map (fun {associated_value} -> associated_value) ra.p_row_args) (LMap.bindings @@ LMap.map (fun {associated_value} -> associated_value) rb.p_row_args))
     | P_forall (*{ binder; constraints; body }*)_ , P_forall (*{ binder; constraints; body }*)_     ->
       failwith "comparison of foralls is not implemented yet."
     | (P_variable tv , _other)  ->
@@ -289,7 +289,7 @@ let rec compare_type_values_using_bound_vars : db_access:db_access -> bound_var_
 let check_access_label : _ = fun ~db_access ~bound_var_assignments accessor c_access_label_tvar { p_row_tag; p_row_args } ->
   (match p_row_tag with
      Ast_core.Types.C_record ->
-     let%bind field_type = trace_option
+     let* field_type = trace_option
          (corner_case
             (Format.asprintf "Type error: field %a is not in record %a"
                Ast_core.PP.label accessor
@@ -302,13 +302,13 @@ let check_access_label_simpl : db_access:db_access -> bound_var_assignments:(typ
   let () = ignore bound_var_assignments in
   match r_tag with
     Ast_core.Types.C_record ->
-    let%bind field_type = trace_option
+    let* field_type = trace_option
         (corner_case
            (Format.asprintf "Type error: field %a is not in record %a"
               Ast_core.PP.label accessor
               (fun ppf lm -> Ast_core.PP.(lmap_sep_d row_variable) ppf @@ LMap.to_kv_list lm) tv_map)) @@ LMap.find_opt accessor tv_map in
-    let%bind field_type_value = recursive_find_assignnment ~db_access field_type.associated_variable in
-    let%bind c_access_label_tvar_value = recursive_find_assignnment ~db_access c_access_label_tvar in
+    let* field_type_value = recursive_find_assignnment ~db_access field_type.associated_variable in
+    let* c_access_label_tvar_value = recursive_find_assignnment ~db_access c_access_label_tvar in
     Compare_renaming.compare_and_check_vars
       ~compare:Compare_renaming.type_value
       ~print_whole:(Ast_core.PP.type_value)
@@ -328,8 +328,8 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_as
         compare_type_values_using_bound_vars ~db_access ~bound_var_assignments aval bval
       | C_typeclass c_tc ->
         let aux'' (arg, possible) = match Trace.to_option @@ compare_type_values_using_bound_vars ~db_access ~bound_var_assignments arg possible with None -> false | Some () -> true in
-        let aux' args allowed_tuple = List.for_all aux'' (List.combine args allowed_tuple) in
-        Assert.assert_true (err_TODO __LOC__) @@ List.exists (aux' c_tc.tc_args) c_tc.typeclass
+        let aux' args allowed_tuple = List.for_all ~f:aux'' (List.zip_exn args allowed_tuple) in
+        Assert.assert_true (err_TODO __LOC__) @@ List.exists ~f:(aux' c_tc.tc_args) c_tc.typeclass
       | C_access_label { c_access_label_record_type ; accessor ; c_access_label_tvar } ->
         (* ....................................................................................................................................... *)
         (
@@ -356,7 +356,7 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_as
   (* finally, return the map built that way. *)
   let constraints =
     List.filter_map
-      (function `Constraint c -> Some c | `Instantiation _ -> None)
+      ~f:(function `Constraint c -> Some c | `Instantiation _ -> None)
       (Compare_renaming.flatten_tree tree) in
   bind_list_iter aux constraints
 
@@ -403,13 +403,13 @@ let check_forall ~(db_access:db_access) (p : c_poly_simpl) : unit result =
     (* p.tv = forall p.forall.binder , p.forall.constraints => p.forall.body *)
 
     (* -> check 3a that (recursive find_assignment α) = τ, stopping at occurrences of one of the 'x (store those in a multi mapping 'x ↦ part_of_α) *)
-    let%bind (binder_intantiations : bound_info Compare_renaming.tree) =
+    let* (binder_intantiations : bound_info Compare_renaming.tree) =
       Trace.trace (fun err -> Typer_common.Errors.trace_debug "info: calling compare_and_stop_at_bound_vars on binder_intantiations" err) @@
       compare_and_stop_at_bound_vars ~db_access p.tv (P_forall p.forall)
     in
     (* -> check 3b that (recursive find_assignment part_of_α_1) = (recursive find_assignment part_of_α_2) if they were corresponding to the same 'x in the check 3a *)
     (* bound_var_assignments is a mapping from an 'x variable in a type_value to an α variable which can be looked up in the assignments *)
-    let%bind bound_var_assignments = check_forall_instantiations_are_unifiable ~db_access binder_intantiations
+    let* bound_var_assignments = check_forall_instantiations_are_unifiable ~db_access binder_intantiations
     in
     (* -> check 3c that each constraint is satisfied given the 'x -> part_of_α which was found by the check 3a and "checked all =" by 3b *)
     (* α = forall β, p.forall.constraints… => δ
@@ -419,7 +419,7 @@ let check_forall ~(db_access:db_access) (p : c_poly_simpl) : unit result =
         α = forall β₁, (no constraints here) => (forall β₂, (some_typeclass(β1,β2)) => δ)
         at this point we should know the instantiated_binder for β₁ and β₂, and these are
         stored in bound_var_assignments *)
-    let%bind () =  check_forall_constraints_are_satisfied ~db_access ~bound_var_assignments binder_intantiations in
+    let* () =  check_forall_constraints_are_satisfied ~db_access ~bound_var_assignments binder_intantiations in
     ok ()
 
 let check_access_label_simpl' : db_access:db_access -> c_access_label_simpl -> unit result =
@@ -440,7 +440,7 @@ let check_apply : db_access:db_access -> c_apply_simpl -> unit result =
 let check : type_constraint_simpl list -> type_variable list -> (type_variable -> type_variable) -> (type_variable -> constructor_or_row option) -> unit result =
   fun all_constraints all_vars repr find_assignment ->
     (* Format.eprintf "Typechecking"; *)
-    let%bind hashconsed_assignments = hashcons all_vars repr find_assignment in
+    let* hashconsed_assignments = hashcons all_vars repr find_assignment in
     let db_access : db_access = { repr ; find_assignment ; hashconsed_assignments } in
     let aux : type_constraint_simpl -> unit result = fun c ->
       match c with
@@ -453,5 +453,5 @@ let check : type_constraint_simpl list -> type_variable list -> (type_variable -
       | SC_Row         r  -> check_row ~db_access r
       | SC_Poly        p  -> check_forall ~db_access p
     in
-    let%bind () = bind_list_iter aux all_constraints in
+    let* () = bind_list_iter aux all_constraints in
     ok ()

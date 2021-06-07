@@ -1,12 +1,12 @@
 open Cli_expect
 
-(* evaluate-value *)
+(* evaluate-expr *)
 let%expect_test _ =
-  run_ligo_good [ "evaluate-value" ; "../../test/contracts/evaluation_tests.ligo" ; "a" ] ;
+  run_ligo_good [ "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "a" ] ;
   [%expect {|
     record[bar -> "bar" , foo -> +0] |} ];
 
-  run_ligo_good [ "evaluate-value" ; "../../test/contracts/evaluation_tests.ligo" ; "b" ] ;
+  run_ligo_good [ "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "b" ] ;
   [%expect {|
     2 |} ]
 

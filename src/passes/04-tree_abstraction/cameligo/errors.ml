@@ -17,7 +17,6 @@ type abs_error = [
   | `Concrete_cameligo_recursion_on_non_function of Location.t
   | `Concrete_cameligo_missing_funarg_annotation of Raw.variable
   | `Concrete_cameligo_funarg_tuple_type_mismatch of Region.t * Raw.pattern * Raw.type_expr
-  | `Concrete_cameligo_unsupported_deep_pattern_matching of Region.t
   ]
 
 let untyped_recursive_fun reg = `Concrete_cameligo_recursive_fun reg
@@ -31,7 +30,6 @@ let michelson_type_wrong texpr name = `Concrete_cameligo_michelson_type_wrong (t
 let michelson_type_wrong_arity loc name = `Concrete_cameligo_michelson_type_wrong_arity (loc,name)
 let missing_funarg_annotation v = `Concrete_cameligo_missing_funarg_annotation v
 let funarg_tuple_type_mismatch r p t = `Concrete_cameligo_funarg_tuple_type_mismatch (r, p, t)
-let unsupported_deep_pattern_matching l = `Concrete_cameligo_unsupported_deep_pattern_matching l
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -39,10 +37,6 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Concrete_cameligo_unsupported_deep_pattern_matching l ->
-      Format.fprintf f
-      "@[<hv>%a@.Deep pattern matching is unsupported. @]"
-        Snippet.pp_lift l
     | `Concrete_cameligo_recursive_fun reg ->
       Format.fprintf f
       "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
@@ -55,7 +49,7 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid pattern.
         Can't match on values. @]"
-        Snippet.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
+        Snippet.pp_lift (List.fold_left ~f:(fun a p -> Region.cover a (Raw.pattern_to_region p)) ~init:Region.ghost pl)
     | `Concrete_cameligo_unsupported_string_singleton te ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
@@ -109,12 +103,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Concrete_cameligo_unsupported_deep_pattern_matching l ->
-    let message = `String "Deep pattern matching is unsupported" in
-    let content = `Assoc [
-      ("message", message );
-      ("location", Location.to_yojson (Snippet.lift l));] in
-    json_error ~stage ~content
   | `Concrete_cameligo_recursive_fun reg ->
     let message = `String "Untyped recursive functions are not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift reg in
@@ -131,7 +119,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_pattern_type pl ->
     let loc = Format.asprintf "%a"
-      Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
+      Location.pp_lift (List.fold_left ~f:(fun a p -> Region.cover a (Raw.pattern_to_region p)) ~init:Region.ghost pl) in
     let message = `String "Currently, only booleans, lists, options, and constructors are supported in patterns" in
     let content = `Assoc [
       ("message", message );

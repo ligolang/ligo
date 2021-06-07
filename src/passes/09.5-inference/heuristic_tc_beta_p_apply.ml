@@ -57,7 +57,7 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
 let selector_by_abs : (type_variable -> type_variable) -> flds -> c_abs_simpl -> selector_output list =
   fun repr (module Indexes) f ->
   let typeclasses = Typeclasses_using_as_function_on_root.get_list (repr f.tv) (module Indexes) in
-  List.map (fun tc -> { tc ; f }) typeclasses
+  List.map ~f:(fun tc -> { tc ; f }) typeclasses
 
 (* Find all abs constraints φ = λα.τ where φ(β) occurs in
    the root of one of the nested constraints of tc, and
@@ -66,7 +66,7 @@ let selector_by_abs : (type_variable -> type_variable) -> flds -> c_abs_simpl ->
 let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_simpl -> selector_output list =
   fun repr (module Indexes) tc ->
   let tvlist = Typeclasses_using_as_function_on_root.functions_on_roots repr tc in
-  List.flatten @@ List.map (fun f ->
+  List.concat @@ List.map ~f:(fun f ->
     (* TODO: Inefficient: a single Assignment should be enough instead of an entire list. *)
     MultiSet.map_elements (fun ff -> { tc; f=ff})
     (Grouped_by_variable.get_abs_by_lhs (repr f) Indexes.grouped_by_variable))
@@ -91,7 +91,7 @@ let alias_selector_half : type_variable -> type_variable -> flds -> selector_out
   fun a b (module Indexes) ->
   let a_tcs = Typeclasses_using_as_function_on_root.get a (module Indexes) in
   let b_lhs_abs = Grouped_by_variable.get_abs_by_lhs b Indexes.grouped_by_variable in
-  List.flatten @@
+  List.concat @@
   MultiSet.map_elements
     (fun tc ->
        MultiSet.map_elements (fun f -> { tc ; f }) b_lhs_abs)
@@ -129,7 +129,7 @@ let susbt_in_body ~old ~update (tv : type_value) =
     | P_abs _ -> failwith "ll"
     | P_constraint _ -> failwith "ll"
   and subst_in_constraints (constraints : p_constraints) =
-    List.map subst_in_type_constraint constraints
+    List.map ~f:subst_in_type_constraint constraints
   and subst_in_type_constraint (tc : type_constraint) =
     { reason = tc.reason; c = subst_in_type_constraint_ tc.c}
   and subst_in_type_constraint_ = function
@@ -153,14 +153,14 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
         |  _ -> failwith "kind error: expected a value of kind Constraint but got another kind")
     | other -> changed, [other]
   in
-  let changed, updated_tc_constraints = List.fold_map_acc beta false tc.tc_constraints in
+  let changed, updated_tc_constraints = List.fold_map ~f:beta ~init:false tc.tc_constraints in
   if not changed then
     ok []
   else
     ok [{
       remove_constraints = [SC_Typeclass selected.tc];
       add_constraints = [];
-      add_constraints_simpl = [SC_Typeclass { tc with tc_constraints = List.flatten updated_tc_constraints }];
+      add_constraints_simpl = [SC_Typeclass { tc with tc_constraints = List.concat updated_tc_constraints }];
       proof_trace = Axiom (HandWaved "unfold")
     }]
 

@@ -85,8 +85,8 @@ let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 let i_loop_left body = prim ~children:[seq [body]] "LOOP_LEFT"
 
 let rec strip_annots = function
-  | Seq(l, s) -> Seq(l, List.map strip_annots s)
-  | Prim (l, p, lst, _) -> Prim (l, p, List.map strip_annots lst, [])
+  | Seq(l, s) -> Seq(l, List.map ~f:strip_annots s)
+  | Prim (l, p, lst, _) -> Prim (l, p, List.map ~f:strip_annots lst, [])
   | x -> x
 
 let pp ppf michelson =

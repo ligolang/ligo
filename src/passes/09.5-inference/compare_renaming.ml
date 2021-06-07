@@ -37,12 +37,12 @@ let list : compare:('a cmp) -> ('a list) cmp = fun ~compare  expected actual ->
       | Some tree2 -> Some ((List [tree1; tree2]) : _ tree)
     )
   in
-  if List.compare_lengths expected actual != 0
+  if Int.compare (List.length expected) (List.length actual) != 0
   then None
-  else List.fold_left aux (Some (List [])) (List.combine expected actual)
+  else List.fold_left ~f:aux ~init:(Some (List [])) (List.zip_exn expected actual)
 
 let lmap : compare:('a cmp) -> ('a LMap.t) cmp = fun ~compare expected actual ->
-  if List.compare ~compare:Ast_core.Compare.label (LMap.keys expected) (LMap.keys actual) != 0 then
+  if List.compare Ast_core.Compare.label (LMap.keys expected) (LMap.keys actual) != 0 then
     None
   else
     list ~compare (LMap.values expected) (LMap.values actual)
@@ -227,7 +227,7 @@ let compare_and_check_vars = fun ~(compare : 'a cmp) ~print_whole whole_expected
             print_whole whole_expected
             print_whole whole_actual)
   | Some t ->
-    let%bind _seen = bind_fold_list aux
+    let* _seen = bind_fold_list aux
         (RedBlackTrees.PolyMap.create ~cmp:Ast_core.Compare.type_variable)
         (flatten_tree t)
     in ok ()

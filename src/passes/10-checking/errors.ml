@@ -81,8 +81,10 @@ type typer_error = [
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression
   | `Typer_redundant_pattern of Location.t
+  | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
 ]
 
+let wrong_type_for_unit_pattern l t = `Typer_wrong_type_for_unit_pattern (l,t)
 let pattern_do_not_conform_type p t = `Typer_pattern_do_not_conform_type (p,t)
 let pattern_do_not_match loc = `Typer_pattern_do_not_match loc
 let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
@@ -187,6 +189,11 @@ let rec error_ppformat : display_format:string display_format ->
       (match display_format with
       | Human_readable -> Format.fprintf f "%a" (error_ppformat ~display_format) err
       | _ -> Format.fprintf f "%s\n%a" msg (error_ppformat ~display_format) err)
+    | `Typer_wrong_type_for_unit_pattern (l,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Variant pattern argument is expected of type %a but is of type unit.@]"
+          Snippet.pp l
+          Ast_typed.PP.type_expression t
     | `Typer_pattern_do_not_match loc ->
       Format.fprintf f
         "@[<hv>%a@.Pattern do not match returned expression.@]"
@@ -220,13 +227,13 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         Ast_typed.PP.expression_variable v
     | `Typer_match_missing_case (m, v, loc) ->
-      let missing = List.fold_left (fun all o ->
-        match List.find_opt (fun f -> f = o) v with
+      let missing = List.fold_left ~f:(fun all o ->
+        match List.find ~f:(fun f -> f = o) v with
         | Some _ -> all
         | None ->
           let (Label o) = o in
           o :: all
-      ) [] m in
+      ) ~init:[] m in
       let missing = String.concat ", " missing in
       Format.fprintf f
         "@[<hv>%a@.Pattern matching is not exhaustive.@.Cases that are missing: %s. @]"
@@ -236,9 +243,9 @@ let rec error_ppformat : display_format:string display_format ->
       let open Ast_core in
       let rec extra (processed: string list) (redundant: string list) (unknown: string list) = function
       | Label l :: remaining -> (
-        match (List.find_opt (fun f -> f = Label l) m)  with
+        match (List.find ~f:(fun f -> f = Label l) m)  with
         | Some _ -> (
-          match (List.find_opt (fun f -> f = l) processed) with
+          match (List.find ~f:(fun f -> f = l) processed) with
           | Some _ -> extra processed (l :: redundant) unknown remaining
           | None -> extra (l :: processed) redundant unknown remaining
         )
@@ -606,6 +613,14 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", `String msg );
       ("children", error_jsonformat err); ] in
     json_error ~stage ~content
+  | `Typer_wrong_type_for_unit_pattern (l,t) ->
+    let message = "Variant pattern argument is unit" in
+    let content = `Assoc [
+      ("message", `String message );
+      ("expected", Ast_typed.Yojson.type_expression t);
+      ("location", Location.to_yojson l);
+    ] in
+    json_error ~stage ~content
   | `Typer_redundant_pattern loc ->
     let message = "Redundant pattern matching" in
     let content = `Assoc [
@@ -679,13 +694,13 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_match_missing_case (m, v, loc) ->
-    let missing = List.fold_left (fun all o ->
-      match List.find_opt (fun f -> f = o) v with
+    let missing = List.fold_left ~f:(fun all o ->
+      match List.find ~f:(fun f -> f = o) v with
       | Some _ -> all
       | None ->
         let (Label o) = o in
         `String o :: all
-    ) [] m in
+    ) ~init:[] m in
     let message = `String "Missing match case" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
@@ -698,9 +713,9 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let open Ast_core in
     let rec extra processed redundant unknown = function
     | Label l :: remaining -> (
-      match (List.find_opt (fun f -> f = Label l) m)  with
+      match (List.find ~f:(fun f -> f = Label l) m)  with
       | Some _ -> (
-        match (List.find_opt (fun f -> f = l) processed) with
+        match (List.find ~f:(fun f -> f = l) processed) with
         | Some _ -> extra processed (`String l :: redundant) unknown remaining
         | None -> extra (l :: processed) redundant unknown remaining
       )
@@ -775,7 +790,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_module_tracer (p,err) ->
     let message = `String "Typing module" in
-    let over = List.fold_left (fun a (p:Ast_core.declaration Location.wrap) -> match p.location with File reg -> Region.cover a reg | Virtual _ -> a) Region.ghost p in
+    let over = List.fold_left ~f:(fun a (p:Ast_core.declaration Location.wrap) -> match p.location with File reg -> Region.cover a reg | Virtual _ -> a) ~init:Region.ghost p in
     let loc = `String (Format.asprintf "%a" Location.pp_lift over) in
     let content = `Assoc [
       ("message", message);

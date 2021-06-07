@@ -1,12 +1,13 @@
 (library
   (name self_mini_c)
   (public_name ligo.self_mini_c)
+  (instrumentation (backend bisect_ppx))
   (libraries
     mini_c
   )
   (inline_tests)
   (preprocess
-    (pps ppx_let ppx_expect bisect_ppx --conditional)
+    (pps ppx_expect)
   )
   (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils ))
 )

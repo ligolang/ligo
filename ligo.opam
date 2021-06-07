@@ -13,10 +13,8 @@ depends: [
   "ocamlfind" { build }
   "dune" { build & >= "2.7.1" & < "2.9" }
   "menhir" { = "20200624" }
-  "bisect_ppx" {dev & >= "2.0.0"}
   "ocamlgraph"
   "coq" { build & >= "8.12" & < "8.13" }
-  "ppx_let"
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_expect"
@@ -34,12 +32,10 @@ depends: [
   "RedBlackTrees"
   "linenoise"
   # work around upstream in-place update
-  "ocaml-migrate-parsetree" { = "1.4.0" }
+  "ocaml-migrate-parsetree" { = "2.1.0" }
   # work around tezos' failure to constrain
   "lwt" { = "5.3.0" }
-]
-pin-depends: [
-  ["bisect_ppx.git" "git+https://github.com/aantron/bisect_ppx.git#02dfb10188033a26d07d23480c2bc44a3a670357"]
+  "bisect_ppx" {dev & >= "2.5.0"}
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

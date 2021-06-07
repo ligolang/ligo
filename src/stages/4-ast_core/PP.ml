@@ -7,13 +7,13 @@ include Stage_common.PP
 type 'a pretty_printer = Format.formatter -> 'a -> unit
 
 let lmap_sep value sep ppf m =
-  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) m in
+  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
@@ -35,7 +35,7 @@ let list_sep_d_short x = list_sep x (tag " , ")
 let list_sep_d x = list_sep x (tag " ,@ ")
 let kv_short value_pp ~assoc ppf (k, v) = fprintf ppf "%a%s%a" label k assoc value_pp v
 let lmap_sep_short x ~sep ~assoc ppf m =
-  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) m in
+  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
   list_sep (kv_short x ~assoc) (tag sep) ppf lst
 let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 
@@ -133,32 +133,32 @@ and declaration ppf (d : declaration) =
     fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
 
 
-and module_ ppf (p : module_) = list_sep_d (declaration) ppf (List.map Location.unwrap p)
+and module_ ppf (p : module_) = list_sep_d (declaration) ppf (List.map ~f:Location.unwrap p)
 
 let module_with_unification_vars ppf (Module_With_Unification_Vars p : module_with_unification_vars) =
   fprintf ppf "@[<v>%a@]"
     (list_sep declaration (tag "@;"))
-    (List.map Location.unwrap p)
+    (List.map ~f:Location.unwrap p)
 
 let typeVariableMap = fun f ppf tvmap   ->
-      let lst = List.sort (fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
+      let lst = List.sort ~compare:(fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
       let aux ppf (k, v) =
         fprintf ppf "(Var %a, %a)" Var.pp k f v in
       fprintf ppf "typeVariableMap [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
 let typeVariableSet = fun ppf s   ->
-      let lst = List.sort (fun (a) (b) -> Var.compare a b) (RedBlackTrees.PolySet.elements s) in
+      let lst = List.sort ~compare:(fun (a) (b) -> Var.compare a b) (RedBlackTrees.PolySet.elements s) in
       let aux ppf (k) =
         fprintf ppf "(Var %a)" Var.pp k in
       fprintf ppf "typeVariableSet [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 let constraint_identifier_set = fun ppf s   ->
-      let lst = List.sort (fun (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
+      let lst = List.sort ~compare:(fun (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
       let aux ppf (ConstraintIdentifier.T k) =
         fprintf ppf "(ConstraintIdentifier %Li)" k in
       fprintf ppf "constraint_identifier_set [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
 let identifierMap = fun f ppf idmap ->
-      let lst = List.sort (fun (ConstraintIdentifier.T a, _) (ConstraintIdentifier.T b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
+      let lst = List.sort ~compare:(fun (ConstraintIdentifier.T a, _) (ConstraintIdentifier.T b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
       let aux ppf (ConstraintIdentifier.T k, v) =
         fprintf ppf "(ConstraintIdentifier %Li, %a)" k f v in
       fprintf ppf "typeVariableMap [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
@@ -171,7 +171,7 @@ let biMap = fun fk fv ppf idmap ->
 let poly_unionfind = (fun f ppf p   ->
   let lst = (UnionFind.Poly2.partitions p) in
   let aux1 ppf l = fprintf ppf "[@[<hv 2> (*%a*) %a @]@ ]"
-                  f (UnionFind.Poly2.repr (List.hd l) p)
+                  f (UnionFind.Poly2.repr (List.hd_exn l) p)
                   (list_sep (f) (fun ppf () -> fprintf ppf " ;@ ")) l in
   let aux2 = list_sep aux1 (fun ppf () -> fprintf ppf " ;@ ") in
   fprintf ppf "UnionFind [@[<hv 2>@ %a @]@ ]" aux2 lst)

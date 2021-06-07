@@ -14,15 +14,15 @@ let int () : (unit, _) result =
   let open Inference in
   let e = Inferred.Environment.empty in
   let state = Solver.initial_state in
-  let%bind (_, _post,t,new_state) = trace inference_tracer @@ type_expression_subst e state pre in
+  let* (_, _post,t,new_state) = trace inference_tracer @@ type_expression_subst e state pre in
   let () = Solver.discard_state new_state in
   let open! Inferred in
   let open Combinators in
-  let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, t_int ()) in
+  let* () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, t_int ()) in
   ok ()
 
-let init_env = Option.unopt_exn @@ Trace.to_option @@ Checking.decompile_env @@ 
-  Environment.default Environment.Protocols.current
+let init_env = Option.value_exn (Trace.to_option @@ Checking.decompile_env @@ 
+  Environment.default Environment.Protocols.current)
 
 open Ast_core
 
@@ -34,10 +34,10 @@ module TestExpressions = struct
     let pre = expr in
     let open Inference in
     let open! Inferred in
-    let%bind (_ , _post ,t,new_state) = trace inference_tracer @@ type_expression_subst env state pre in
+    let* (_ , _post ,t,new_state) = trace inference_tracer @@ type_expression_subst env state pre in
     let () = Solver.discard_state new_state in
     Format.printf "Test, t = %a and t_init = %a" Inferred.PP.type_expression t Inferred.PP.type_expression @@ test_expected_ty;
-    let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, test_expected_ty) in
+    let* () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (t, test_expected_ty) in
     ok ()
 
   module I = Simplified.Combinators
@@ -73,7 +73,7 @@ module TestExpressions = struct
   let recursive () : (unit,_) result =
     let fun_name = Location.wrap @@ Var.of_name "sum" in
     let var      = Location.wrap @@ Var.of_name "n" in
-    let lambda = I.{binder={var;ascr=Some(t_nat ())};
+    let lambda = I.{binder={var;ascr=Some(t_nat ());attributes=Stage_common.Helpers.empty_attribute};
                     output_type = Some (t_nat ());
                     result=e_application (e_variable fun_name) (e_variable var)
                    } in
@@ -110,16 +110,16 @@ module TestExpressions = struct
         ("Quux", Inferred.t_unit ());
       ]
     in
-    let binder_wild : type_expression binder = {var=Location.wrap (Var.of_name "_");ascr=None} in
-    let binder_x : type_expression binder = {var=Location.wrap (Var.of_name "x");ascr=None} in
-    let binder_y : type_expression binder = {var=Location.wrap (Var.of_name "y");ascr=None} in
+    let binder_wild : type_expression binder = {var=Location.wrap (Var.of_name "_");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+    let binder_x : type_expression binder = {var=Location.wrap (Var.of_name "x");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+    let binder_y : type_expression binder = {var=Location.wrap (Var.of_name "y");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
     test_expression
       ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
       I.(e_matching (e_constructor (Label "Foo") (e_int (Z.of_int 32)))
         [
-          {pattern = Location.wrap @@ P_variant (Label "Foo", Some (Location.wrap @@ P_var binder_x )); body = e_var "x"};
-          {pattern= Location.wrap @@ P_variant (Label "Bar", Some (Location.wrap @@ P_var binder_y)); body=e_int Z.zero};
-          {pattern= Location.wrap @@ P_variant (Label "Baz", None); body=e_int Z.zero};
+          {pattern = Location.wrap @@ P_variant (Label "Foo", Location.wrap @@ P_var binder_x); body = e_var "x"};
+          {pattern= Location.wrap @@ P_variant (Label "Bar", Location.wrap @@ P_var binder_y); body=e_int Z.zero};
+          {pattern= Location.wrap @@ P_variant (Label "Baz", Location.wrap @@ P_unit); body=e_int Z.zero};
           {pattern= Location.wrap @@ P_var binder_wild; body=e_int Z.zero}
         ]
       ) O.(t_int ())

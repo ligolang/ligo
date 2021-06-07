@@ -79,14 +79,13 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   fun selected repr ->
   let open Type_variable_abstraction.Misc in
   let open Type_variable_abstraction.Reasons in
-  let open Type_variable_abstraction in
-  let%bind ( deduced , cleaned , changed ) = wrapped_deduce_and_clean repr selected.tc ~original:selected.tc in
+  let* ( deduced , cleaned , changed ) = wrapped_deduce_and_clean repr selected.tc ~original:selected.tc in
   let deduced_single_line = (match cleaned with
-   SC_Typeclass {tc=[line];args;tc_bound} -> List.filter_map (function Location.{wrap_content = P_variable v},a when not @@ List.mem ~compare:Compare.type_variable v tc_bound  -> Some (c_equation
+   SC_Typeclass {tc=[line];args;tc_bound} -> List.filter_map ~f:(function Location.{wrap_content = P_variable v},a when not @@ List.mem ~equal:Caml.(=) tc_bound v -> Some (c_equation
           (wrap (Propagator_break_ctor "v") @@ P_variable (repr v))
           (wrap (Propagator_break_ctor "a") @@ P_variable (repr a))
           "deduce_and_cleaned:single_line"
-) | _ -> None) @@ List.combine line args
+) | _ -> None) @@ List.zip_exn line args
          | _ -> []) in
   if not changed then
     ok []

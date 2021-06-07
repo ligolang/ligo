@@ -24,7 +24,7 @@ and access f ppf a =
 
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 let variant_sep_d x = record_sep x (tag " ,@ ")
@@ -47,7 +47,7 @@ let layout_option = option layout
 
 let record_sep_expr value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
@@ -76,7 +76,7 @@ let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record
 
 let attributes ppf attributes =
   let attr =
-    List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
+    List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
   in fprintf ppf "%s" attr
 
 let module_access f ppf = fun {module_name;element} ->
@@ -103,12 +103,18 @@ let wildcard ppf = fun () ->
 
 (* Expressions *)
 
-let binder type_expression ppf {var;ascr} =
+let option_const_or_var ppf is_var =
+  match is_var with
+  | None -> fprintf ppf ""
+  | Some `Var -> fprintf ppf "[@var]"
+  | Some `Const -> fprintf ppf ""
+
+let binder type_expression ppf {var;ascr;attributes={const_or_var}} =
   match ascr with
   | None ->
-      fprintf ppf "%a" expression_variable var
+      fprintf ppf "%a%a" expression_variable var option_const_or_var const_or_var 
   | Some ty ->
-      fprintf ppf "%a : %a" expression_variable var type_expression ty
+      fprintf ppf "%a%a : %a" expression_variable var option_const_or_var const_or_var type_expression ty
 
 let application expression ppf = fun {lamb;args} ->
   fprintf ppf "@[<hv>(%a)@@(%a)@]" expression lamb expression args
@@ -254,15 +260,11 @@ and match_pattern type_expression ppf = fun p ->
   | P_unit -> fprintf ppf "()"
   | P_var b -> fprintf ppf "%a" (binder type_expression) b
   | P_list l -> list_pattern type_expression ppf l
-  | P_variant (l , p_opt) -> (
-    match p_opt with
-    | Some p -> fprintf ppf "%a %a" label l (match_pattern type_expression) p
-    | None -> fprintf ppf "%a" label l
-  )
+  | P_variant (l , p) -> fprintf ppf "%a %a" label l (match_pattern type_expression) p
   | P_tuple pl ->
     fprintf ppf "(%a)" (list_sep (match_pattern type_expression) (tag ",")) pl
   | P_record (ll , pl) ->
-    let x = List.combine ll pl in
+    let x = List.zip_exn ll pl in
     let aux ppf (l,p) =
       fprintf ppf "%a = %a" label l (match_pattern type_expression) p
     in
@@ -299,7 +301,7 @@ and declaration expression type_expression ppf = function
 and module' expression type_expression ppf = fun p ->
   fprintf ppf "@[<v>%a@]"
     (list_sep (declaration expression type_expression) (tag "@;"))
-    (List.map Location.unwrap p)
+    (List.map ~f:Location.unwrap p)
 
 and mod_in expression type_expression ppf = fun {module_binder; rhs; let_result;} ->
   fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"

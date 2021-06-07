@@ -328,16 +328,20 @@ irrefutable:
     in PTuple {region; value=$1} }
 
 sub_irrefutable:
-  "<ident>"                       {                           PVar $1 }
-| "_"                             { PVar { value = "_"; region = $1 } }
-| unit                            {                          PUnit $1 }
-| record_pattern                  {                        PRecord $1 }
-| par(closed_irrefutable)         {                           PPar $1 }
+  var_pattern                   {                                     PVar $1 }
+| "_"                           { PVar { var = { value = "_"; region = $1 } ;
+                                         attributes = [] }                    }
+| unit                          {                                    PUnit $1 }
+| record_pattern                {                                  PRecord $1 }
+| par(closed_irrefutable)       {                                     PPar $1 }
 
 closed_irrefutable:
   irrefutable                                            {         $1 }
 | constr_pattern                                         { PConstr $1 }
 | typed_pattern                                          {  PTyped $1 }
+
+var_pattern:
+  "<ident>" seq("[@attr]")        {  {var=$1; attributes=$2} }
 
 typed_pattern:
   irrefutable ":" type_expr  {
@@ -371,18 +375,19 @@ sub_pattern:
 | core_pattern     {      $1 }
 
 core_pattern:
-  "<ident>"                       {                           PVar $1 }
-| "_"                             { PVar { value = "_"; region = $1 } }
-| "<int>"                         {                           PInt $1 }
-| "<nat>"                         {                           PNat $1 }
-| "<bytes>"                       {                         PBytes $1 }
-| "<string>"                      {                        PString $1 }
-| "<verbatim>"                    {                      PVerbatim $1 }
-| unit                            {                          PUnit $1 }
-| par(ptuple)                     {                           PPar $1 }
-| list__(sub_pattern)             {              PList (PListComp $1) }
-| constr_pattern                  {                        PConstr $1 }
-| record_pattern                  {                        PRecord $1 }
+  var_pattern                     {                                     PVar $1 }
+| "_"                             { PVar { var = { value = "_"; region = $1 } ;
+                                             attributes = [] }                  }
+| "<int>"                         {                                     PInt $1 }
+| "<nat>"                         {                                     PNat $1 }
+| "<bytes>"                       {                                   PBytes $1 }
+| "<string>"                      {                                  PString $1 }
+| "<verbatim>"                    {                                PVerbatim $1 }
+| unit                            {                                    PUnit $1 }
+| par(ptuple)                     {                                     PPar $1 }
+| list__(sub_pattern)             {                        PList (PListComp $1) }
+| constr_pattern                  {                                  PConstr $1 }
+| record_pattern                  {                                  PRecord $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,",") "}" {
@@ -398,7 +403,8 @@ record_pattern:
 field_pattern:
   field_name {
     let region  = $1.region
-    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
+    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar { var = $1 ;
+							         attributes = [] } }
     in {region; value} 
   }
 | field_name ":" sub_pattern {
@@ -453,15 +459,15 @@ base_cond:
   base_cond__open(base_cond) { $1 }
 
 %inline fun_args2:
-  "<ident>" ":" type_expr {
-    let start  = $1.region in
+  var_pattern ":" type_expr {
+    let start  = $1.var.region in
     let stop   = type_expr_to_region $3 in
     let region = cover start stop in
     let value  = {pattern=PVar $1; colon=$2; type_expr=$3}
     in
     PTyped {region; value}
   }
-| "<ident>" { PVar $1 }
+| var_pattern { PVar $1 }
 
 base_expr(right_expr):
   let_expr(right_expr)

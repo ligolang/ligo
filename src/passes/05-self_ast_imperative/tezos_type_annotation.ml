@@ -15,7 +15,7 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
       | (E_literal (Literal_string str) , T_variable tv) when Var.equal tv v_timestamp ->
         let open Tezos_base.TzPervasives.Time.Protocol in
         let str = Ligo_string.extract str in
-        let%bind time =
+        let* time =
           trace_option (bad_timestamp str e')
           @@ of_notation str in
         let itime = Z.of_int64 @@ to_seconds time in
@@ -24,7 +24,7 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
       | (E_literal (Literal_string str) , T_variable tv) when Var.equal tv v_address -> return @@ E_literal (Literal_address (Ligo_string.extract str))
       | (E_literal (Literal_string str) , T_variable tv) when Var.equal tv v_bytes -> (
           let str = Ligo_string.extract str in
-          let%bind e' = trace_option (bad_conversion_bytes e) @@ e'_bytes str in
+          let* e' = trace_option (bad_conversion_bytes e) @@ e'_bytes str in
           return e'
         )
       | _ -> return ec

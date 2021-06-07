@@ -33,20 +33,20 @@ let none loc = typer_0 loc "NONE" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
   | Some t ->
-    let%bind () = trace_option (expected_option loc t) @@ assert_t_option t in
+    let* () = trace_option (expected_option loc t) @@ assert_t_option t in
     ok t
 
 let set_empty loc = typer_0 loc "SET_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
   | Some t ->
-    let%bind () = trace_option (expected_set loc t) @@ assert_t_set t in
+    let* () = trace_option (expected_set loc t) @@ assert_t_set t in
     ok t
 
 let set_update loc = typer_3 loc "SET_UPDATE" @@ fun elt flag set ->
-  let%bind elt' = trace_option (expected_set loc set) @@ get_t_set set in
-  let%bind () = trace_option (expected_bool loc flag) @@ assert_t_bool flag in
-  let%bind () = assert_eq loc elt elt' in
+  let* elt' = trace_option (expected_set loc set) @@ get_t_set set in
+  let* () = trace_option (expected_bool loc flag) @@ assert_t_bool flag in
+  let* () = assert_eq loc elt elt' in
   ok set
 
 let sub loc = typer_2 loc "SUB" @@ fun a b ->
@@ -70,110 +70,110 @@ let sub loc = typer_2 loc "SUB" @@ fun a b ->
 let some loc = typer_1 loc "SOME" @@ fun a -> ok @@ t_option a
 
 let map_remove loc : typer = typer_2 loc "MAP_REMOVE" @@ fun k m ->
-  let%bind (src , _) = bind_map_or (
+  let* (src , _) = bind_map_or (
       (fun m -> trace_option (expected_map loc m) @@ get_t_map m) ,
       (fun m -> trace_option (expected_big_map loc m) @@ get_t_big_map m)
     ) m in
-  let%bind () = assert_eq loc src k in
+  let* () = assert_eq loc src k in
   ok m
 
 let map_empty loc = typer_0 loc "MAP_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
   | Some t ->
-    let%bind (src, dst) = trace_option (expected_map loc t) @@ get_t_map t in
+    let* (src, dst) = trace_option (expected_map loc t) @@ get_t_map t in
     ok @@ t_map src dst
 
 let big_map_empty loc = typer_0 loc "BIG_MAP_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
   | Some t ->
-    let%bind (src, dst) = trace_option (expected_big_map loc t) @@ get_t_big_map t in
+    let* (src, dst) = trace_option (expected_big_map loc t) @@ get_t_big_map t in
     ok @@ t_big_map src dst
 
 let map_add loc : typer = typer_3 loc "MAP_ADD" @@ fun k v m ->
-  let%bind (src , dst) = bind_map_or (
+  let* (src , dst) = bind_map_or (
       (fun m -> trace_option (expected_map loc m) @@ get_t_map m) ,
       (fun m -> trace_option (expected_big_map loc m) @@ get_t_big_map m)
     ) m in
-  let%bind () = assert_eq loc src k in
-  let%bind () = assert_eq loc dst v in
+  let* () = assert_eq loc src k in
+  let* () = assert_eq loc dst v in
   ok m
 
 let map_update loc : typer = typer_3 loc "MAP_UPDATE" @@ fun k v m ->
-  let%bind (src , dst) = bind_map_or (
+  let* (src , dst) = bind_map_or (
       (fun m -> trace_option (expected_map loc m) @@ get_t_map m) ,
       (fun m -> trace_option (expected_big_map loc m) @@ get_t_big_map m)
     ) m in
-  let%bind () = assert_eq loc src k in
-  let%bind v' = trace_option (expected_option loc v) @@ get_t_option v in
-  let%bind () = assert_eq loc dst v' in
+  let* () = assert_eq loc src k in
+  let* v' = trace_option (expected_option loc v) @@ get_t_option v in
+  let* () = assert_eq loc dst v' in
   ok m
 
 let map_mem loc : typer = typer_2 loc "MAP_MEM" @@ fun k m ->
-  let%bind (src , _dst) = bind_map_or (
+  let* (src , _dst) = bind_map_or (
       (fun m -> trace_option (expected_map loc m) @@ get_t_map m) ,
       (fun m -> trace_option (expected_big_map loc m) @@ get_t_big_map m)
     ) m in
-  let%bind () = assert_eq loc src k in
+  let* () = assert_eq loc src k in
   ok @@ t_bool ()
 
 let map_find loc : typer = typer_2 loc "MAP_FIND" @@ fun k m ->
-  let%bind (src , dst) = bind_map_or (
+  let* (src , dst) = bind_map_or (
       (fun m -> trace_option (expected_map loc m) @@ get_t_map m) ,
       (fun m -> trace_option (expected_big_map loc m) @@ get_t_big_map m)
     ) m in
-  let%bind () = assert_eq loc src k in
+  let* () = assert_eq loc src k in
   ok @@ dst
 
 let map_find_opt loc : typer = typer_2 loc "MAP_FIND_OPT" @@ fun k m ->
-  let%bind (src , dst) = bind_map_or (
+  let* (src , dst) = bind_map_or (
       (fun m -> trace_option (expected_map loc m) @@ get_t_map m) ,
       (fun m -> trace_option (expected_big_map loc m) @@ get_t_big_map m)
     ) m in
-  let%bind () = assert_eq loc src k in
+  let* () = assert_eq loc src k in
   ok @@ t_option dst
 
 let map_iter loc : typer = typer_2 loc "MAP_ITER" @@ fun f m ->
-  let%bind (k, v) = trace_option (expected_map loc m) @@ get_t_map m in
-  let%bind (arg , res) = trace_option (expected_function loc f) @@ get_t_function f in
+  let* (k, v) = trace_option (expected_map loc m) @@ get_t_map m in
+  let* (arg , res) = trace_option (expected_function loc f) @@ get_t_function f in
   let kv = t_pair k v in
   let unit = t_unit () in
-  let%bind () = assert_eq loc arg kv in
-  let%bind () = assert_eq loc res unit in
+  let* () = assert_eq loc arg kv in
+  let* () = assert_eq loc res unit in
   ok @@ t_unit ()
 
 let map_map loc : typer = typer_2 loc "MAP_MAP" @@ fun f m ->
-  let%bind (k, v) = trace_option (expected_map loc m) @@ get_t_map m in
-  let%bind (arg , res) = trace_option (expected_function loc f) @@ get_t_function f in
+  let* (k, v) = trace_option (expected_map loc m) @@ get_t_map m in
+  let* (arg , res) = trace_option (expected_function loc f) @@ get_t_function f in
   let kv = t_pair k v in
-  let%bind () = assert_eq loc arg kv in
+  let* () = assert_eq loc arg kv in
   ok @@ t_map k res
 
 let map_get_and_update loc : typer = typer_3 loc "MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
-  let%bind v = trace_option (expected_option loc opt_v) @@ get_t_option opt_v in
-  let%bind (src , dst) = trace_option (expected_map loc m) @@ get_t_map m in
-  let%bind () = assert_eq loc src k in
-  let%bind () = assert_eq loc dst v in
+  let* v = trace_option (expected_option loc opt_v) @@ get_t_option opt_v in
+  let* (src , dst) = trace_option (expected_map loc m) @@ get_t_map m in
+  let* () = assert_eq loc src k in
+  let* () = assert_eq loc dst v in
   ok @@ t_pair opt_v m
 
 let big_map_get_and_update loc : typer = typer_3 loc "BIG_MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
-  let%bind v = trace_option (expected_option loc opt_v) @@ get_t_option opt_v in
-  let%bind (src , dst) = trace_option (expected_map loc m) @@ get_t_big_map m in
-  let%bind () = assert_eq loc src k in
-  let%bind () = assert_eq loc dst v in
+  let* v = trace_option (expected_option loc opt_v) @@ get_t_option opt_v in
+  let* (src , dst) = trace_option (expected_map loc m) @@ get_t_big_map m in
+  let* () = assert_eq loc src k in
+  let* () = assert_eq loc dst v in
   ok @@ t_pair opt_v m
 
 let size loc = typer_1 loc "SIZE" @@ fun t ->
-  let%bind () =
+  let* () =
     Assert.assert_true (wrong_size loc t) @@
     (is_t_map t || is_t_list t || is_t_string t || is_t_bytes t || is_t_set t ) in
   ok @@ t_nat ()
 
 let slice loc = typer_3 loc "SLICE" @@ fun i j s ->
   let t_nat = t_nat () in
-  let%bind () = assert_eq loc i t_nat in
-  let%bind () = assert_eq loc j t_nat in
+  let* () = assert_eq loc i t_nat in
+  let* () = assert_eq loc j t_nat in
   if eq_1 s (t_string ())
   then ok @@ t_string ()
   else if eq_1 s (t_bytes ())
@@ -186,7 +186,7 @@ let slice loc = typer_3 loc "SLICE" @@ fun i j s ->
       [i ; j ; s]
 
 let failwith_ loc = typer_1_opt loc "FAILWITH" @@ fun t opt ->
-  let%bind _ =
+  let* _ =
     if eq_1 t (t_string ())
     then ok ()
     else if eq_1 t (t_nat ())
@@ -202,7 +202,7 @@ let failwith_ loc = typer_1_opt loc "FAILWITH" @@ fun t opt ->
         ]
         [t] in
   let default = t_unit () in
-  ok @@ Simple_utils.Option.unopt ~default opt
+  ok @@ Simple_utils.Option.value ~default opt
 
 let int loc : typer = typer_1 loc "INT" @@ fun t ->
   if (eq_1 t (t_nat ()) || eq_1 t (t_bls12_381_fr ()))
@@ -218,37 +218,37 @@ let bytes_pack loc : typer = typer_1 loc "PACK" @@ fun _t ->
   ok @@ t_bytes ()
 
 let bytes_unpack loc = typer_1_opt loc "UNPACK" @@ fun input output_opt ->
-  let%bind () = trace_option (expected_bytes loc input) @@ assert_t_bytes input in
+  let* () = trace_option (expected_bytes loc input) @@ assert_t_bytes input in
   trace_option (not_annotated loc) @@ output_opt
 
 let hash256 loc = typer_1 loc "SHA256" @@ fun t ->
-  let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
+  let* () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
   ok @@ t_bytes ()
 
 let hash512 loc = typer_1 loc "SHA512" @@ fun t ->
-  let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
+  let* () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
   ok @@ t_bytes ()
 
 let blake2b loc = typer_1 loc "BLAKE2b" @@ fun t ->
-  let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
+  let* () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
   ok @@ t_bytes ()
 
 let sha3 loc = typer_1 loc "SHA3" @@ fun t ->
-  let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
+  let* () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
   ok @@ t_bytes ()
 
 let keccak loc = typer_1 loc "KECCAK" @@ fun t ->
-  let%bind () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
+  let* () = trace_option (expected_bytes loc t) @@ assert_t_bytes t in
   ok @@ t_bytes ()
 
 let hash_key loc = typer_1 loc "HASH_KEY" @@ fun t ->
-  let%bind () = trace_option (expected_key loc t) @@ assert_t_key t in
+  let* () = trace_option (expected_key loc t) @@ assert_t_key t in
   ok @@ t_key_hash ()
 
 let check_signature loc = typer_3 loc "CHECK_SIGNATURE" @@ fun k s b ->
-  let%bind () = trace_option (expected_key loc k) @@ assert_t_key k in
-  let%bind () = trace_option (expected_signature loc s) @@ assert_t_signature s in
-  let%bind () = trace_option (expected_bytes loc b) @@ assert_t_bytes b in
+  let* () = trace_option (expected_key loc k) @@ assert_t_key k in
+  let* () = trace_option (expected_signature loc s) @@ assert_t_signature s in
+  let* () = trace_option (expected_bytes loc b) @@ assert_t_bytes b in
   ok @@ t_bool ()
 
 let sender loc = constant' loc "SENDER" @@ t_address ()
@@ -268,103 +268,103 @@ let level loc = constant' loc "LEVEL" @@ t_nat ()
 let total_voting_power loc = constant' loc "TOTAL_VOTING_POWER" @@ t_nat ()
 
 let voting_power loc = typer_1 loc "VOTING_POWER" @@ fun t ->
-  let%bind () = trace_option (expected_key_hash loc t) @@ assert_t_key_hash t in
+  let* () = trace_option (expected_key_hash loc t) @@ assert_t_key_hash t in
   ok @@ t_nat ()
 
 let address loc = typer_1 loc "ADDRESS" @@ fun c ->
-  let%bind () = trace_option (expected_contract loc c) @@ assert_t_contract c in
+  let* () = trace_option (expected_contract loc c) @@ assert_t_contract c in
   ok @@ t_address ()
 
 let self_address loc = typer_0 loc "SELF_ADDRESS" @@ fun _ ->
   ok @@ t_address ()
 
 let self loc = typer_1_opt loc "SELF" @@ fun entrypoint_as_string tv_opt ->
-  let%bind () = trace_option (expected_string loc entrypoint_as_string) @@ assert_t_string entrypoint_as_string in
+  let* () = trace_option (expected_string loc entrypoint_as_string) @@ assert_t_string entrypoint_as_string in
   match tv_opt with
   | None -> fail (not_annotated loc)
   | Some t -> ok @@ t
 
 let implicit_account loc = typer_1 loc "IMPLICIT_ACCOUNT" @@ fun key_hash ->
-  let%bind () = trace_option (expected_key_hash loc key_hash) @@ assert_t_key_hash key_hash in
+  let* () = trace_option (expected_key_hash loc key_hash) @@ assert_t_key_hash key_hash in
   ok @@ t_contract (t_unit () )
 
 let now loc = constant' loc "NOW" @@ t_timestamp ()
 
 let transaction loc = typer_3 loc "CALL" @@ fun param amount contract ->
-  let%bind () = trace_option (expected_mutez loc amount) @@ assert_t_mutez amount in
-  let%bind contract_param = trace_option (expected_contract loc contract) @@ get_t_contract contract in
-  let%bind () = assert_eq loc param contract_param in
+  let* () = trace_option (expected_mutez loc amount) @@ assert_t_mutez amount in
+  let* contract_param = trace_option (expected_contract loc contract) @@ get_t_contract contract in
+  let* () = assert_eq loc param contract_param in
   ok @@ t_operation ()
 
 let create_contract loc = typer_4 loc "CREATE_CONTRACT" @@ fun f kh_opt amount init_storage  ->
-  let%bind (args , ret) = trace_option (expected_function loc f) @@ get_t_function f in
-  let%bind (_,s) = trace_option (expected_pair loc args) @@ get_t_pair args in
-  let%bind (oplist,s') = trace_option (expected_pair loc ret) @@ get_t_pair ret in
-  let%bind () = trace_option (expected_mutez loc amount) @@ assert_t_mutez amount in
-  let%bind (delegate) = trace_option (expected_option loc kh_opt) @@ get_t_option kh_opt in
-  let%bind () = assert_eq loc s s' in
-  let%bind () = assert_eq loc s init_storage in
-  let%bind () = trace_option (expected_op_list loc oplist) @@ assert_t_list_operation oplist in
-  let%bind () = trace_option (expected_key_hash loc delegate) @@ assert_t_key_hash delegate in
+  let* (args , ret) = trace_option (expected_function loc f) @@ get_t_function f in
+  let* (_,s) = trace_option (expected_pair loc args) @@ get_t_pair args in
+  let* (oplist,s') = trace_option (expected_pair loc ret) @@ get_t_pair ret in
+  let* () = trace_option (expected_mutez loc amount) @@ assert_t_mutez amount in
+  let* (delegate) = trace_option (expected_option loc kh_opt) @@ get_t_option kh_opt in
+  let* () = assert_eq loc s s' in
+  let* () = assert_eq loc s init_storage in
+  let* () = trace_option (expected_op_list loc oplist) @@ assert_t_list_operation oplist in
+  let* () = trace_option (expected_key_hash loc delegate) @@ assert_t_key_hash delegate in
   ok @@ t_pair (t_operation ()) (t_address ())
 
 let get_contract loc = typer_1_opt loc "CONTRACT" @@ fun addr_tv tv_opt ->
   let t_addr = t_address () in
-  let%bind () = assert_eq loc addr_tv t_addr in
-  let%bind tv = trace_option (not_annotated loc) tv_opt in
-  let%bind tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
+  let* () = assert_eq loc addr_tv t_addr in
+  let* tv = trace_option (not_annotated loc) tv_opt in
+  let* tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
   ok @@ t_contract tv'
 
 let get_contract_opt loc = typer_1_opt loc "CONTRACT OPT" @@ fun addr_tv tv_opt ->
   let t_addr = t_address () in
-  let%bind () = assert_eq loc addr_tv t_addr in
-  let%bind tv = trace_option (not_annotated loc) tv_opt in
-  let%bind tv = trace_option (expected_option loc tv) @@ get_t_option tv in
-  let%bind tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
+  let* () = assert_eq loc addr_tv t_addr in
+  let* tv = trace_option (not_annotated loc) tv_opt in
+  let* tv = trace_option (expected_option loc tv) @@ get_t_option tv in
+  let* tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
   ok @@ t_option (t_contract tv')
 
 let get_entrypoint loc = typer_2_opt loc "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
   let t_string = t_string () in
   let t_addr = t_address () in
-  let%bind () = assert_eq loc entry_tv t_string in
-  let%bind () = assert_eq loc addr_tv t_addr in
-  let%bind tv = trace_option (not_annotated loc) tv_opt in
-  let%bind tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
+  let* () = assert_eq loc entry_tv t_string in
+  let* () = assert_eq loc addr_tv t_addr in
+  let* tv = trace_option (not_annotated loc) tv_opt in
+  let* tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
   ok @@ t_contract tv'
 
 let get_entrypoint_opt loc = typer_2_opt loc "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
   let t_string = t_string () in
   let t_addr = t_address () in
-  let%bind () = assert_eq loc entry_tv t_string in
-  let%bind () = assert_eq loc addr_tv t_addr in
-  let%bind tv = trace_option (not_annotated loc) tv_opt in
-  let%bind tv = trace_option (expected_option loc tv) @@ get_t_option tv in
-  let%bind tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
+  let* () = assert_eq loc entry_tv t_string in
+  let* () = assert_eq loc addr_tv t_addr in
+  let* tv = trace_option (not_annotated loc) tv_opt in
+  let* tv = trace_option (expected_option loc tv) @@ get_t_option tv in
+  let* tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
   ok @@ t_option (t_contract tv' )
 
 let set_delegate loc = typer_1 loc "SET_DELEGATE" @@ fun delegate_opt ->
   let kh_opt = (t_option (t_key_hash ()) ) in
-  let%bind () = assert_eq loc delegate_opt kh_opt in
+  let* () = assert_eq loc delegate_opt kh_opt in
   ok @@ t_operation ()
 
 let abs loc = typer_1 loc "ABS" @@ fun t ->
-  let%bind () = trace_option (expected_int loc t) @@ assert_t_int t in
+  let* () = trace_option (expected_int loc t) @@ assert_t_int t in
   ok @@ t_nat ()
 
 let is_nat loc = typer_1 loc "ISNAT" @@ fun t ->
-  let%bind () = trace_option (expected_int loc t) @@ assert_t_int t in
+  let* () = trace_option (expected_int loc t) @@ assert_t_int t in
   ok @@ t_option (t_nat ())
 
 let neg loc = typer_1 loc "NEG" @@ fun t ->
-  let%bind () = Assert.assert_true (wrong_neg loc t) @@ (eq_1 t (t_nat ()) || eq_1 t (t_int ())) in
+  let* () = Assert.assert_true (wrong_neg loc t) @@ (eq_1 t (t_nat ()) || eq_1 t (t_int ())) in
   ok @@ t_int ()
 
 let assertion loc = typer_1 loc "ASSERT" @@ fun a ->
-  let%bind () = trace_option (expected_bool loc a) @@ assert_t_bool a in
+  let* () = trace_option (expected_bool loc a) @@ assert_t_bool a in
   ok @@ t_unit ()
 
 let assert_some loc = typer_1 loc "ASSERT_SOME" @@ fun a ->
-  let%bind () = trace_option (expected_option loc a) @@ assert_t_option a in
+  let* () = trace_option (expected_option loc a) @@ assert_t_option a in
   ok @@ t_unit ()
 
 let times loc = typer_2 loc "TIMES" @@ fun a b ->
@@ -388,6 +388,8 @@ let times loc = typer_2 loc "TIMES" @@ fun a b ->
   then ok @@ t_int () else
   if (eq_1 a (t_nat ()) && eq_1 b (t_mutez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_mutez ()))
   then ok @@ t_mutez () else
+  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
+  then ok @@ t_int () else
     fail @@ typeclass_error loc
               [
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
@@ -401,6 +403,8 @@ let times loc = typer_2 loc "TIMES" @@ fun a b ->
                 [t_int();t_int()] ;
                 [t_nat();t_mutez()] ;
                 [t_mutez();t_nat()] ;
+                [t_nat();t_int()] ;
+                [t_int();t_nat()] ;
               ]
               [a; b]
 
@@ -433,6 +437,10 @@ let div loc = typer_2 loc "DIV" @@ fun a b ->
   then ok @@ t_nat () else
   if eq_2 (a , b) (t_int ())
   then ok @@ t_int () else
+  if eq_1 a (t_int ()) && eq_1 b (t_nat ())
+  then ok @@ t_int () else
+  if eq_1 a (t_nat ()) && eq_1 b (t_int ())
+  then ok @@ t_int () else
   if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
   then ok @@ t_mutez () else
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
@@ -441,6 +449,8 @@ let div loc = typer_2 loc "DIV" @@ fun a b ->
       [
         [t_nat();t_nat()] ;
         [t_int();t_int()] ;
+        [t_nat();t_int()] ;
+        [t_int();t_nat()] ;
         [t_mutez();t_nat()] ;
         [t_mutez();t_mutez()] ;
       ]
@@ -451,12 +461,15 @@ let mod_ loc = typer_2 loc "MOD" @@ fun a b ->
   then ok @@ t_nat () else
   if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
   then ok @@ t_mutez () else
+  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
+  then ok @@ t_mutez () else
     fail @@ typeclass_error loc
       [
         [t_nat();t_nat()] ;
         [t_nat();t_int()] ;
         [t_int();t_nat()] ;
         [t_int();t_int()] ;
+        [t_mutez();t_nat()] ;
         [t_mutez();t_mutez()] ;
       ]
       [a; b]
@@ -529,116 +542,116 @@ let polymorphic_add loc = typer_2 loc "POLYMORPHIC_ADD" @@ fun a b ->
               [a; b]
 
 let set_mem loc = typer_2 loc "SET_MEM" @@ fun elt set ->
-  let%bind key = trace_option (expected_set loc set) @@ get_t_set set in
-  let%bind () = assert_eq loc elt key in
+  let* key = trace_option (expected_set loc set) @@ get_t_set set in
+  let* () = assert_eq loc elt key in
   ok @@ t_bool ()
 
 let set_add loc = typer_2 loc "SET_ADD" @@ fun elt set ->
-  let%bind key = trace_option (expected_set loc set) @@ get_t_set set in
-  let%bind () = assert_eq loc elt key in
+  let* key = trace_option (expected_set loc set) @@ get_t_set set in
+  let* () = assert_eq loc elt key in
   ok set
 
 let set_remove loc = typer_2 loc "SET_REMOVE" @@ fun elt set ->
-  let%bind key = trace_option (expected_set loc set) @@ get_t_set set in
-  let%bind () = assert_eq loc elt key in
+  let* key = trace_option (expected_set loc set) @@ get_t_set set in
+  let* () = assert_eq loc elt key in
   ok set
 
 let set_iter loc = typer_2 loc "SET_ITER" @@ fun body set ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind () = assert_eq loc res (t_unit ()) in
-  let%bind key = trace_option (expected_set loc set) @@ get_t_set set in
-  let%bind () = assert_eq loc key arg in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* () = assert_eq loc res (t_unit ()) in
+  let* key = trace_option (expected_set loc set) @@ get_t_set set in
+  let* () = assert_eq loc key arg in
   ok (t_unit ())
 
 let list_empty loc = typer_0 loc "LIST_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> fail (not_annotated loc)
   | Some t ->
-    let%bind () = trace_option (expected_list loc t) @@ assert_t_list t in
+    let* () = trace_option (expected_list loc t) @@ assert_t_list t in
     ok t
 
 let list_iter loc = typer_2 loc "LIST_ITER" @@ fun body lst ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind () = assert_eq loc res (t_unit ()) in
-  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
-  let%bind () = assert_eq loc key arg in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* () = assert_eq loc res (t_unit ()) in
+  let* key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* () = assert_eq loc key arg in
   ok (t_unit ())
 
 let list_map loc = typer_2 loc "LIST_MAP" @@ fun body lst ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
-  let%bind () = assert_eq loc key arg in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* () = assert_eq loc key arg in
   ok (t_list res )
 
 let fold loc = typer_3 loc "FOLD" @@ fun body container init ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
-  let%bind key = trace_option (expected_list loc container) @@ Option.map_pair_or (get_t_list,get_t_set) container in
-  let%bind () = assert_eq loc key cur in
-  let%bind () = assert_eq loc prec res in
-  let%bind () = assert_eq loc res init in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let* key = trace_option (expected_list loc container) @@ Option.map_pair_or (get_t_list,get_t_set) container in
+  let* () = assert_eq loc key cur in
+  let* () = assert_eq loc prec res in
+  let* () = assert_eq loc res init in
   ok res
 let list_fold loc = typer_3 loc "LIST_FOLD" @@ fun body lst init ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
-  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
-  let%bind () = assert_eq loc key cur in
-  let%bind () = assert_eq loc prec res in
-  let%bind () = assert_eq loc res init in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let* key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* () = assert_eq loc key cur in
+  let* () = assert_eq loc prec res in
+  let* () = assert_eq loc res init in
   ok res
 
 let list_fold_left loc = typer_3 loc "LIST_FOLD_LEFT" @@ fun body init lst ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
-  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
-  let%bind () = assert_eq loc key cur in
-  let%bind () = assert_eq loc prec res in
-  let%bind () = assert_eq loc res init in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let* key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* () = assert_eq loc key cur in
+  let* () = assert_eq loc prec res in
+  let* () = assert_eq loc res init in
   ok res
 
 let list_fold_right loc = typer_3 loc "LIST_FOLD_RIGHT" @@ fun body lst init ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind (cur , prec) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
-  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
-  let%bind () = assert_eq loc key cur in
-  let%bind () = assert_eq loc prec res in
-  let%bind () = assert_eq loc res init in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* (cur , prec) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let* key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* () = assert_eq loc key cur in
+  let* () = assert_eq loc prec res in
+  let* () = assert_eq loc res init in
   ok res
 
 let list_head_opt loc = typer_1 loc "LIST_HEAD_OPT" @@ fun lst ->
-  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* key = trace_option (expected_list loc lst) @@ get_t_list lst in
   ok @@ t_option ~loc key
 
 let list_tail_opt loc = typer_1 loc "LIST_TAIL_OPT" @@ fun lst ->
-  let%bind key = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* key = trace_option (expected_list loc lst) @@ get_t_list lst in
   ok @@ t_option ~loc @@ t_list ~loc key
 
 let set_fold loc = typer_3 loc "SET_FOLD" @@ fun body lst init ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
-  let%bind key = trace_option (expected_set loc lst) @@ get_t_set lst in
-  let%bind () = assert_eq loc key cur in
-  let%bind () = assert_eq loc prec res in
-  let%bind () = assert_eq loc res init in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let* key = trace_option (expected_set loc lst) @@ get_t_set lst in
+  let* () = assert_eq loc key cur in
+  let* () = assert_eq loc prec res in
+  let* () = assert_eq loc res init in
   ok res
 
 let set_fold_desc loc = typer_3 loc "SET_FOLD_DESC" @@ fun body lst init ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind (cur , prec) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
-  let%bind key = trace_option (expected_set loc lst) @@ get_t_set lst in
-  let%bind () = assert_eq loc key cur in
-  let%bind () = assert_eq loc prec res in
-  let%bind () = assert_eq loc res init in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* (cur , prec) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let* key = trace_option (expected_set loc lst) @@ get_t_set lst in
+  let* () = assert_eq loc key cur in
+  let* () = assert_eq loc prec res in
+  let* () = assert_eq loc res init in
   ok res
 
 let map_fold loc = typer_3 loc "MAP_FOLD" @@ fun body map init ->
-  let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
-  let%bind (key , value) = trace_option (expected_map loc map) @@ get_t_map map in
+  let* (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* (prec , cur) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
+  let* (key , value) = trace_option (expected_map loc map) @@ get_t_map map in
   let kv = t_pair key value in
-  let%bind () = assert_eq loc kv cur in
-  let%bind () = assert_eq loc prec res in
-  let%bind () = assert_eq loc res init in
+  let* () = assert_eq loc kv cur in
+  let* () = assert_eq loc prec res in
+  let* () = assert_eq loc res init in
   ok res
 
 (** FOLD_WHILE is a fold operation that takes an initial value of a certain type
@@ -648,9 +661,9 @@ let map_fold loc = typer_3 loc "MAP_FOLD" @@ fun body map init ->
     must match the input parameter of the auxillary function, and the auxillary
     should return type (bool * input) *)
 let fold_while loc = typer_2 loc "FOLD_WHILE" @@ fun body init ->
-  let%bind (arg, result) = trace_option (expected_function loc body) @@ get_t_function body in
-  let%bind () = assert_eq loc arg init in
-  let%bind () = assert_eq loc (t_pair (t_bool ()) init) result
+  let* (arg, result) = trace_option (expected_function loc body) @@ get_t_function body in
+  let* () = assert_eq loc arg init in
+  let* () = assert_eq loc (t_pair (t_bool ()) init) result
   in ok init
 
 (* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
@@ -735,20 +748,20 @@ let concat loc = typer_2 loc "CONCAT" @@ fun a b ->
       [a; b]
 
 let cons loc = typer_2 loc "CONS" @@ fun hd tl ->
-  let%bind elt = trace_option (expected_list loc tl) @@ get_t_list tl in
-  let%bind () = assert_eq loc hd elt in
+  let* elt = trace_option (expected_list loc tl) @@ get_t_list tl in
+  let* () = assert_eq loc hd elt in
   ok tl
 
 let convert_to_right_comb loc = typer_1 loc "CONVERT_TO_RIGHT_COMB" @@ fun t ->
   match t.type_content with
   | T_record lmap ->
     let kvl = LMap.to_kv_list_rev lmap.content in
-    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let* () = Michelson_type_converter.field_checks kvl loc in
     let pair = Michelson_type_converter.convert_pair_to_right_comb kvl in
     ok {t with type_content = pair}
   | T_sum cmap ->
     let kvl = LMap.to_kv_list_rev cmap.content in
-    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let* () = Michelson_type_converter.field_checks kvl loc in
     let michelson_or = Michelson_type_converter.convert_variant_to_right_comb kvl in
     ok {t with type_content = michelson_or}
   | _ -> fail @@ wrong_converter t
@@ -757,211 +770,215 @@ let convert_to_left_comb loc = typer_1 loc "CONVERT_TO_LEFT_COMB" @@ fun t ->
   match t.type_content with
   | T_record lmap ->
     let kvl =  LMap.to_kv_list_rev lmap.content in
-    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let* () = Michelson_type_converter.field_checks kvl loc in
     let pair = Michelson_type_converter.convert_pair_to_left_comb kvl in
     ok {t with type_content = pair}
   | T_sum cmap ->
     let kvl = LMap.to_kv_list_rev cmap.content in
-    let%bind () = Michelson_type_converter.field_checks kvl loc in
+    let* () = Michelson_type_converter.field_checks kvl loc in
     let michelson_or = Michelson_type_converter.convert_variant_to_left_comb kvl in
     ok {t with type_content = michelson_or}
   | _ -> fail @@ wrong_converter t
 
 let convert_from_right_comb loc = typer_1_opt loc "CONVERT_FROM_RIGHT_COMB" @@ fun t opt ->
-  let%bind dst_t = trace_option (not_annotated loc) opt in
+  let* dst_t = trace_option (not_annotated loc) opt in
   match t.type_content with
   | T_record {content=src_lmap;_} ->
-    let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-    let%bind record = Michelson_type_converter.convert_pair_from_right_comb src_lmap dst_lmap.content in
+    let* dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
+    let* record = Michelson_type_converter.convert_pair_from_right_comb src_lmap dst_lmap.content in
     ok {t with type_content = record}
   | T_sum src_cmap ->
-    let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-    let%bind variant = Michelson_type_converter.convert_variant_from_right_comb src_cmap.content dst_cmap.content in
+    let* dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
+    let* variant = Michelson_type_converter.convert_variant_from_right_comb src_cmap.content dst_cmap.content in
     ok {t with type_content = variant}
   | _ -> fail @@ wrong_converter t
 
 let convert_from_left_comb loc = typer_1_opt loc "CONVERT_FROM_LEFT_COMB" @@ fun t opt ->
-  let%bind dst_t = trace_option (not_annotated loc) opt in
+  let* dst_t = trace_option (not_annotated loc) opt in
   match t.type_content with
   | T_record {content=src_lmap;_} ->
-    let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-    let%bind record = Michelson_type_converter.convert_pair_from_left_comb src_lmap dst_lmap.content in
+    let* dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
+    let* record = Michelson_type_converter.convert_pair_from_left_comb src_lmap dst_lmap.content in
     ok {t with type_content = record}
   | T_sum src_cmap ->
-    let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-    let%bind variant = Michelson_type_converter.convert_variant_from_left_comb src_cmap.content dst_cmap.content in
+    let* dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
+    let* variant = Michelson_type_converter.convert_variant_from_left_comb src_cmap.content dst_cmap.content in
     ok {t with type_content = variant}
   | _ -> fail @@ wrong_converter t
 
 let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
-  let%bind () =
+  let* () =
     Assert.assert_true (uncomparable_types loc a b) @@
-    List.exists (eq_2 (a , b)) [
-      t_int () ;
-      t_nat () ;
-      t_bool () ;
-      t_mutez () ;
-      t_string () ;
-      t_bytes () ;
+    List.exists ~f:(eq_2 (a , b)) [
       t_address () ;
-      t_timestamp () ;
+      t_bool () ;
+      t_bytes () ;
+      t_chain_id ();
+      t_int () ;
+      t_key () ;
       t_key_hash () ;
+      t_mutez () ;
+      t_nat () ;
+      t_signature ();
+      t_string () ;
+      t_timestamp () ;
+      t_unit ();
     ] in
   ok @@ t_bool ()
 
 let rec record_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
-  let%bind () =
+  let* () =
     Assert.assert_true (uncomparable_types loc a b) @@ eq_1 a b
   in
-  let%bind a_r =
+  let* a_r =
     trace_option (comparator_composed loc a) @@
     get_t_record a in
-  let%bind b_r = trace_option (expected_variant loc b) @@ get_t_record b in
+  let* b_r = trace_option (expected_variant loc b) @@ get_t_record b in
   let aux (a,b) : (type_expression, typer_error) result =
     comparator loc s [a.associated_type;b.associated_type] None
   in
-  let%bind _ = bind_map_list aux @@ List.combine (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let* _ = bind_map_list aux @@ List.zip_exn (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   ok @@ t_bool ()
 
 and sum_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
-  let%bind () =
+  let* () =
     Assert.assert_true (uncomparable_types loc a b) @@ eq_1 a b
   in
-  let%bind a_r =
+  let* a_r =
     trace_option (comparator_composed loc a) @@
     get_t_sum a in
-  let%bind b_r = trace_option (expected_variant loc b) @@ get_t_sum b in
+  let* b_r = trace_option (expected_variant loc b) @@ get_t_sum b in
   let aux (a,b) : (type_expression, typer_error) result =
     comparator loc s [a.associated_type;b.associated_type] None
   in
-  let%bind _ = bind_map_list aux @@ List.combine (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let* _ = bind_map_list aux @@ List.zip_exn (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   ok @@ t_bool ()
 
 and option_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a_opt b_opt ->
-  let%bind () =
+  let* () =
     Assert.assert_true (uncomparable_types loc a_opt b_opt) @@ eq_1 a_opt b_opt
   in
-  let%bind a =
+  let* a =
     trace_option (comparator_composed loc a_opt) @@
     get_t_option a_opt in
-  let%bind b = trace_option (expected_option loc b_opt) @@ get_t_option b_opt in
+  let* b = trace_option (expected_option loc b_opt) @@ get_t_option b_opt in
   comparator loc s [a;b] None
 
 and comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
 
   bind_or (
-    bind_or (record_comparator loc s [a;b] None, option_comparator loc s [a;b] None),
-    bind_or (sum_comparator  loc s [a;b] None, simple_comparator loc s [a;b] None)
+    bind_or (simple_comparator loc s [a;b] None, option_comparator loc s [a;b] None),
+    bind_or (record_comparator loc s [a;b] None, sum_comparator loc s [a;b] None)
   )
 
 let ticket loc = typer_2 loc "TICKET" @@ fun dat amt ->
-  let%bind () = assert_eq loc amt (t_nat ()) in
+  let* () = assert_eq loc amt (t_nat ()) in
   ok @@ t_ticket dat
 
 let read_ticket loc = typer_1 loc "READ_TICKET" @@ fun ticket ->
-  let%bind payload = trace_option (expected_ticket loc ticket) @@ get_t_ticket ticket in
+  let* payload = trace_option (expected_ticket loc ticket) @@ get_t_ticket ticket in
   ok @@ t_pair (t_pair (t_address ()) (t_pair payload (t_nat ()))) ticket
 
 let split_ticket loc = typer_2 loc "SPLIT_TICKET" @@ fun ticket amts ->
   let t_nat = t_nat () in
-  let%bind (a,b) = trace_option (expected_pair loc amts) @@ get_t_pair amts in
-  let%bind () = assert_eq loc a t_nat in
-  let%bind () = assert_eq loc b t_nat in
-  let%bind _ = trace_option (expected_ticket loc ticket) @@ get_t_ticket ticket in
+  let* (a,b) = trace_option (expected_pair loc amts) @@ get_t_pair amts in
+  let* () = assert_eq loc a t_nat in
+  let* () = assert_eq loc b t_nat in
+  let* _ = trace_option (expected_ticket loc ticket) @@ get_t_ticket ticket in
   ok @@ t_option (t_pair ticket ticket)
 
 let join_ticket loc = typer_1 loc "JOIN_TICKET" @@ fun ticks ->
-  let%bind (ticka,tickb) = trace_option (expected_pair loc ticks) @@ get_t_pair ticks in
-  let%bind data = trace_option (expected_ticket loc ticka) @@ get_t_ticket ticka in
-  let%bind datb = trace_option (expected_ticket loc tickb) @@ get_t_ticket tickb in
-  let%bind () = assert_eq loc data datb in
+  let* (ticka,tickb) = trace_option (expected_pair loc ticks) @@ get_t_pair ticks in
+  let* data = trace_option (expected_ticket loc ticka) @@ get_t_ticket ticka in
+  let* datb = trace_option (expected_ticket loc tickb) @@ get_t_ticket tickb in
+  let* () = assert_eq loc data datb in
   ok @@ t_option ticka
 
 let pairing_check loc = typer_1 loc "PAIRING_CHECK" @@ fun lst ->
-  let%bind p = trace_option (expected_list loc lst) @@ get_t_list lst in
-  let%bind (g1,g2) = trace_option (expected_list loc p) @@ get_t_pair p in
-  let%bind () = assert_eq loc g1 (t_bls12_381_g1 ()) in (*TODO expected_tbls .. ? *)
-  let%bind () = assert_eq loc g2 (t_bls12_381_g2 ()) in
+  let* p = trace_option (expected_list loc lst) @@ get_t_list lst in
+  let* (g1,g2) = trace_option (expected_list loc p) @@ get_t_pair p in
+  let* () = assert_eq loc g1 (t_bls12_381_g1 ()) in (*TODO expected_tbls .. ? *)
+  let* () = assert_eq loc g2 (t_bls12_381_g2 ()) in
   ok (t_bool ())
 
 let sapling_verify_update loc = typer_2 loc "SAPLING_VERIFY_UPDATE" @@ fun tr state ->
-  let%bind singleton_tr = trace_option (expected_sapling_transaction loc tr) @@ get_t_sapling_transaction tr in
-  let%bind singleton_state = trace_option (expected_sapling_state loc state) @@ get_t_sapling_state state in
-  let%bind () = assert_eq loc singleton_tr singleton_state in
+  let* singleton_tr = trace_option (expected_sapling_transaction loc tr) @@ get_t_sapling_transaction tr in
+  let* singleton_state = trace_option (expected_sapling_state loc state) @@ get_t_sapling_state state in
+  let* () = assert_eq loc singleton_tr singleton_state in
   ok (t_option (t_pair (t_int ()) state))
 
 let sapling_empty_state loc = typer_0 loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
   trace_option (not_annotated loc) @@ tv_opt
 
 let test_originate loc = typer_3 loc "TEST_ORIGINATE" @@ fun source_file entrypoint storage ->
-  let%bind () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
-  let%bind () = trace_option (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-  let%bind () = trace_option (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
+  let* () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
+  let* () = trace_option (expected_string loc entrypoint) @@ assert_t_string entrypoint in
+  let* () = trace_option (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
   ok (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
 let test_compile_expression_subst loc = typer_3 loc "TEST_COMPILE_EXPRESSION_SUBST" @@ fun source_file_opt ligo_insertion subst_list ->
-  let%bind subst_pair = trace_option (expected_list loc subst_list) @@ get_t_list subst_list in
-  let%bind (str,code) = trace_option (expected_pair loc subst_pair) @@ get_t_pair subst_pair in
-  let%bind source_file = trace_option (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
-  let%bind () = trace_option (expected_michelson_code loc code) @@ get_t_michelson_code code in
-  let%bind () = trace_option (expected_string loc str) @@ get_t_string str in
-  let%bind () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
-  let%bind () = trace_option (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
+  let* subst_pair = trace_option (expected_list loc subst_list) @@ get_t_list subst_list in
+  let* (str,code) = trace_option (expected_pair loc subst_pair) @@ get_t_pair subst_pair in
+  let* source_file = trace_option (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
+  let* () = trace_option (expected_michelson_code loc code) @@ get_t_michelson_code code in
+  let* () = trace_option (expected_string loc str) @@ get_t_string str in
+  let* () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
+  let* () = trace_option (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
   ok (t_michelson_code ())
 
 let test_compile_expression loc = typer_2 loc "TEST_COMPILE_EXPRESSION" @@ fun source_file_opt ligo_insertion ->
-  let%bind source_file = trace_option (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
-  let%bind () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
-  let%bind () = trace_option (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
+  let* source_file = trace_option (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
+  let* () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
+  let* () = trace_option (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
   ok (t_michelson_code ())
 
 let test_state_reset loc = typer_2 loc "TEST_STATE_RESET" @@ fun n amts ->
-  let%bind amt = trace_option (expected_list loc amts) @@ get_t_list amts in
-  let%bind () = trace_option (expected_nat loc amt) @@ get_t_nat amt in
-  let%bind () = trace_option (expected_nat loc n) @@ get_t_nat n in
+  let* amt = trace_option (expected_list loc amts) @@ get_t_list amts in
+  let* () = trace_option (expected_nat loc amt) @@ get_t_nat amt in
+  let* () = trace_option (expected_nat loc n) @@ get_t_nat n in
   ok (t_unit ())
 
 let test_set_now loc = typer_1 loc "TEST_SET_NOW" @@ fun time ->
-  let%bind () = assert_eq loc time (t_timestamp ()) in
+  let* () = assert_eq loc time (t_timestamp ()) in
   ok (t_unit ())
 
 let test_set_source loc = typer_1 loc "TEST_SET" @@ fun s ->
-  let%bind () = assert_eq loc s (t_address ()) in
+  let* () = assert_eq loc s (t_address ()) in
   ok (t_unit ())
 
 let test_get_nth loc = typer_1 loc "TEST_GET_NTH" @@ fun n ->
-  let%bind () = trace_option (expected_int loc n) @@ assert_t_int n in
+  let* () = trace_option (expected_int loc n) @@ assert_t_int n in
   ok (t_address ())
 
 let test_external_call_exn loc = typer_3 loc "TEST_EXTERNAL_CALL_EXN" @@ fun addr p amt  ->
-  let%bind () = assert_eq loc addr (t_address ()) in
-  let%bind () = assert_eq loc amt (t_nat ()) in
-  let%bind () = assert_eq loc p (t_michelson_code ()) in
+  let* () = assert_eq loc addr (t_address ()) in
+  let* () = assert_eq loc amt (t_nat ()) in
+  let* () = assert_eq loc p (t_michelson_code ()) in
   ok (t_unit ())
 
 let test_external_call loc = typer_3 loc "TEST_EXTERNAL_CALL" @@ fun addr p amt  ->
-  let%bind () = assert_eq loc addr (t_address ()) in
-  let%bind () = assert_eq loc amt (t_nat ()) in
-  let%bind () = assert_eq loc p (t_michelson_code ()) in
+  let* () = assert_eq loc addr (t_address ()) in
+  let* () = assert_eq loc amt (t_nat ()) in
+  let* () = assert_eq loc p (t_michelson_code ()) in
   ok (t_test_exec_result ())
 
 let test_get_storage loc = typer_1 loc "TEST_GET_STORAGE" @@ fun addr ->
-  let%bind () = assert_eq loc addr (t_address ()) in
+  let* () = assert_eq loc addr (t_address ()) in
   ok (t_michelson_code ())
 
 let test_get_balance loc = typer_1 loc "TEST_GET_BALANCE" @@ fun addr ->
-  let%bind () = assert_eq loc addr (t_address ()) in
+  let* () = assert_eq loc addr (t_address ()) in
   ok (t_michelson_code ())
 
 let test_michelson_equal loc = typer_2 loc "TEST_ASSERT_EQUAL" @@ fun x y ->
-  let%bind () = trace_option (expected_michelson_code loc x) @@ assert_t_michelson_code x in
-  let%bind () = trace_option (expected_michelson_code loc y) @@ assert_t_michelson_code y in
+  let* () = trace_option (expected_michelson_code loc x) @@ assert_t_michelson_code x in
+  let* () = trace_option (expected_michelson_code loc y) @@ assert_t_michelson_code y in
   ok (t_bool ())
 
 let test_log loc = typer_1 loc "TEST_LOG" @@ fun _ -> ok @@ t_unit ()
 
 let test_last_originations loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun u ->
-  let%bind () = trace_option (expected_unit loc u) @@ assert_t_unit u in
+  let* () = trace_option (expected_unit loc u) @@ assert_t_unit u in
   ok (t_map (t_address ()) (t_list (t_address ())))
 
 let test_compile_meta_value loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->

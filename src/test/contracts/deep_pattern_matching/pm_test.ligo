@@ -103,12 +103,12 @@ function t4 (const x: myd ; const y: myd) is
 
 function t5 (const x: int) is
   case (x, unit) of
-  | (a , _) -> a (*REMITODO : unit pattern was missing before *)
+  | (a , _) -> a
   end
 
 function t6 (const x: int) is
   case (x, unit) of
-  | (_ , _) -> 2 (*REMITODO : unit pattern was missing before *)
+  | (_ , _) -> 2
   end
 
 function t7 (const x: option(int)) is

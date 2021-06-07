@@ -2,6 +2,7 @@
   ; ligo_compile instead of compile because of a dune bug
   (name ligo_compile)
   (public_name ligo.ligo_compile)
+  (instrumentation (backend bisect_ppx))
   (libraries
     main_errors
     simple-utils
@@ -31,9 +32,6 @@
     stacking
     self_michelson
     compiler_options
-  )
-  (preprocess
-    (pps ppx_let bisect_ppx --conditional)
   )
   (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils -open Tezos_utils ))
 )

@@ -39,7 +39,7 @@ let defuse_neutral =
   (M.empty,[])
 
 let defuse_unions defuse =
-  List.fold_left defuse_union (defuse,[])
+  List.fold_left ~f:defuse_union ~init:(defuse,[])
 
 let replace_opt k x m =
   Stdlib.Option.fold ~none:(M.remove k m) ~some:(fun x -> M.add k x m) x
@@ -72,7 +72,7 @@ let rec defuse_of_expr defuse expr : defuse =
   | E_constructor {element;_} ->
      defuse_of_expr defuse element
   | E_constant {arguments;_} ->
-     defuse_unions defuse (List.map (defuse_of_expr defuse) arguments)
+     defuse_unions defuse (List.map ~f:(defuse_of_expr defuse) arguments)
   | E_variable v ->
      M.add v true defuse,[]
   | E_application {lamb;args} ->
@@ -117,23 +117,23 @@ and defuse_of_cases defuse = function
 and defuse_of_variant defuse {cases;_} =
   defuse_unions defuse @@
     List.map
-      (fun ({pattern;body;_}: matching_content_case) ->
+      ~f:(fun ({pattern;body;_}: matching_content_case) ->
         remove_defined_var_after defuse pattern defuse_of_expr body)
       cases
 
 and defuse_of_record defuse {body;fields;_} =
-  let vars = LMap.to_list fields |> List.map fst in
-  let map = List.fold_left (fun m v -> M.add v false m) defuse vars in
-  let vars' = List.map (fun v -> (v, M.find_opt v defuse)) vars in
+  let vars = LMap.to_list fields |> List.map ~f:fst in
+  let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
+  let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
   let defuse,unused = defuse_of_expr map body in
-  let unused = List.fold_left (fun m v -> add_if_not_generated v m (M.find v defuse)) unused vars in
-  let defuse = List.fold_left (fun m (v, v') -> replace_opt v v' m) defuse vars' in
+  let unused = List.fold_left ~f:(fun m v -> add_if_not_generated v m (M.find v defuse)) ~init:unused vars in
+  let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse vars' in
   (defuse, unused)
 
 let rec unused_map_module : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function (Module_Fully_Typed p) ->
   let self = unused_map_module in
   let update_annotations annots c =
-    List.fold_right (fun a r -> update_annotation a r) annots c in
+    List.fold_right ~f:(fun a r -> update_annotation a r) annots ~init:c in
   let aux = fun (x : declaration) ->
     match x with
     | Declaration_constant {expr ; _} -> (
@@ -142,14 +142,14 @@ let rec unused_map_module : module_fully_typed -> (module_fully_typed, self_ast_
       let warn_var v =
         `Self_ast_typed_warning_unused
           (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
-      update_annotations (List.map warn_var unused) @@
+      update_annotations (List.map ~f:warn_var unused) @@
         ok @@ ()
     )
     | Declaration_type _ -> ok @@ ()
     | Declaration_module {module_} ->
-      let%bind _ = self module_ in
+      let* _ = self module_ in
       ok @@ ()
     | Module_alias _ -> ok @@ ()
   in
-  let%bind _ = bind_map_list (bind_map_location aux) p in
+  let* _ = bind_map_list (bind_map_location aux) p in
   ok @@ (Module_Fully_Typed p)

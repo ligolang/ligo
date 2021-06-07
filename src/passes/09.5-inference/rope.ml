@@ -23,8 +23,8 @@ module Rope = struct
   let list_of_rope r = List.rev @@ list_of_rope [] r
   let rope_of_list ~merge ~default ~info l =
     List.fold_left
-      (fun r x -> pair ~merge ~default r (rope ~info x))
-      empty
+      ~f:(fun r x -> pair ~merge ~default r (rope ~info x))
+      ~init:empty
       l
 end
 

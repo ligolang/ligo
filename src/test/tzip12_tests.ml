@@ -3,23 +3,13 @@ open Test_helpers
 
 let mfile_FA12  = "./contracts/FA1.2.mligo"
 
-let type_file ~options f s = Ligo_compile.Utils.type_file ~options f s (Contract "main")
-
-let get_program f st =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let%bind program = type_file ~options f st in
-      s := Some program ;
-      ok program
-    )
+let get_program f st = get_program ~st f (Contract "main")
 
 let compile_main f s () =
-  let%bind typed_prg,_   = get_program f s () in
-  let%bind mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
-  let%bind _contract =
+  let* typed_prg,_   = get_program f s () in
+  let* mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
+  let* michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let* _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
@@ -29,13 +19,13 @@ open Ast_imperative
 
 let (sender , contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth dummy_environment.identities 0 in
+  let id = List.nth_exn dummy_environment.identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let external_contract =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth dummy_environment.identities 4 in
+  let id = List.nth_exn dummy_environment.identities 4 in
   let kh = id.public_key_hash in
   Tezos_utils.Signature.Public_key_hash.to_string kh
 
@@ -45,7 +35,7 @@ let sender = e_address @@ sender
 let external_contract = e_annotation (e_constant (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract (t_nat ()))
 
 let transfer f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", from_); ("spender", sender)], e_nat 100)]);
@@ -63,7 +53,7 @@ let transfer f s () =
   expect_eq (program, env) ~options "transfer" input expected
 
 let transfer_not_e_allowance f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", from_); ("spender", sender)], e_nat 0)]);
@@ -76,7 +66,7 @@ let transfer_not_e_allowance f s () =
   "NotEnoughAllowance"
 
 let transfer_not_e_balance f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 0); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", from_); ("spender", sender)], e_nat 100)]);
@@ -89,7 +79,7 @@ let transfer_not_e_balance f s () =
   "NotEnoughBalance"
 
 let approve f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 0)]);
@@ -107,7 +97,7 @@ let approve f s () =
   expect_eq (program, env) ~options "approve" input expected
 
 let approve_unsafe f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
@@ -120,7 +110,7 @@ let approve_unsafe f s () =
   "UnsafeAllowanceChange"
 
 let get_allowance f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
@@ -133,7 +123,7 @@ let get_allowance f s () =
   expect_eq (program, env) ~options "getAllowance" input expected
 
 let get_balance f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
@@ -146,7 +136,7 @@ let get_balance f s () =
   expect_eq (program, env) ~options "getBalance" input expected
 
 let get_total_supply f s () =
-  let%bind (program, env) = get_program f s () in
+  let* (program, env) = get_program f s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);

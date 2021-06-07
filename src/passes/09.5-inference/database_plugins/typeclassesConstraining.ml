@@ -23,8 +23,8 @@ let register_typeclasses_constraining : _ -> c_typeclass_simpl -> _ t -> _ t =
   let aux state tv =
     ReprMap.monotonic_update (repr tv) aux' state in
   List.fold_left
-    aux
-    state
+    ~f:aux
+    ~init:state
     (List.rev c.args)
 
 let add_constraint ?debug repr state new_constraint =
@@ -47,8 +47,8 @@ let remove_constraint printer repr state constraint_to_remove =
       ReprMap.monotonic_update (repr tv) aux' typeclasses_constrained_by in
     let state =
       List.fold_left
-        aux
-        state
+        ~f:aux
+        ~init:state
         (List.rev constraint_to_remove.args) in
     Format.eprintf "  ok\n%!";
     ok state
@@ -77,7 +77,7 @@ let get_state_for_tests state = state
 module type STATE = sig val typeclasses_constraining : Type_variable.t t end
 
 let get tv (module State : STATE) =
-  Option.unopt ~default:(MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl)
+  Option.value ~default:(MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl)
   @@ ReprMap.find_opt tv State.typeclasses_constraining
 
 let get_list tv state =

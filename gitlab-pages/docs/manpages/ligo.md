@@ -49,7 +49,7 @@ https://gitlab.com/ligolang/ligo/issues/new
 
 :   Subcommand: Run a smart-contract with the given storage and input.
 
-**evaluate-value**
+**evaluate-expr**
 
 :   Subcommand: Evaluate a given definition.
 
@@ -124,7 +124,7 @@ https://gitlab.com/ligolang/ligo/issues/new
 
 :   Subcommand: REPL
 
-**run-function**
+**evaluate-call**
 
 :   Subcommand: Run a function with the given parameter.
 

@@ -18,26 +18,26 @@ module Substitution = struct
     and s_environment_element_definition ~substs = function
       | T.ED_binder -> ok @@ T.ED_binder
       | T.ED_declaration T.{expression ; free_variables} ->
-        let%bind expression = s_expression ~substs expression in
-        let%bind free_variables = bind_map_list (s_variable ~substs) free_variables in
+        let* expression = s_expression ~substs expression in
+        let* free_variables = bind_map_list (s_variable ~substs) free_variables in
         ok @@ T.ED_declaration {expression ; free_variables}
     and s_expr_environment : (T.expression_environment,_) w = fun ~substs env ->
       bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; definition }} ->
-          let%bind type_value = s_type_expression ~substs type_value in
-          let%bind definition = s_environment_element_definition ~substs definition in
+          let* type_value = s_type_expression ~substs type_value in
+          let* definition = s_environment_element_definition ~substs definition in
           ok @@ T.{expr_var=variable ; env_elt={ type_value; definition }}) env
     and s_type_environment : (T.type_environment,_) w = fun ~substs tenv ->
       bind_map_list (fun T.{type_variable ; type_} ->
-        let%bind type_ = s_type_expression ~substs type_ in
+        let* type_ = s_type_expression ~substs type_ in
         ok @@ T.{type_variable ; type_}) tenv
     and s_module_environment: (T.module_environment,_) w = fun ~substs menv ->
       bind_map_list (fun T.{module_variable ; module_} ->
-        let%bind module_ = s_environment ~substs module_ in
+        let* module_ = s_environment ~substs module_ in
         ok @@ T.{module_variable;module_}) menv
     and s_environment : (T.environment,_) w = fun ~substs T.{expression_environment ; type_environment ; module_environment} ->
-      let%bind expression_environment = s_expr_environment ~substs expression_environment in
-      let%bind type_environment = s_type_environment ~substs type_environment in
-      let%bind module_environment = s_module_environment ~substs module_environment in
+      let* expression_environment = s_expr_environment ~substs expression_environment in
+      let* type_environment = s_type_environment ~substs type_environment in
+      let* module_environment = s_module_environment ~substs module_environment in
       ok @@ T.{ expression_environment ; type_environment ; module_environment}
 
     and s_variable : (T.expression_variable,_) w = fun ~substs var ->
@@ -49,9 +49,9 @@ module Substitution = struct
       ok var
 
     and s_binder : (_ T.binder,_) w = fun ~substs {var;ascr} ->
-      let%bind var = s_variable ~substs var in
-      let%bind ascr = bind_map_option (s_type_expression ~substs) ascr in
-      ok @@ T.{var;ascr}
+      let* var = s_variable ~substs var in
+      let* ascr = bind_map_option (s_type_expression ~substs) ascr in
+      ok @@ T.{var;ascr;attributes=Stage_common.Helpers.empty_attribute}
 
     and s_label : (T.label,_) w = fun ~substs l ->
       let () = ignore @@ substs in
@@ -67,17 +67,17 @@ module Substitution = struct
 
     and s_rows : (T.rows,_) w = fun ~substs rows ->
       let aux T.{ associated_type; michelson_annotation ; decl_pos } =
-        let%bind associated_type = s_type_expression ~substs associated_type in
+        let* associated_type = s_type_expression ~substs associated_type in
         ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
-      let%bind fields = Ast_typed.Helpers.bind_map_lmap aux rows.fields in
+      let* fields = Ast_typed.Helpers.bind_map_lmap aux rows.fields in
       ok @@ { rows with fields }
 
     and s_type_content : (T.type_content,_) w = fun ~substs -> function
         | T.T_sum rows ->
-          let%bind rows = s_rows ~substs rows in
+          let* rows = s_rows ~substs rows in
           ok @@ T.T_sum rows
         | T.T_record rows ->
-          let%bind rows = s_rows ~substs rows in
+          let* rows = s_rows ~substs rows in
           ok @@ T.T_record rows
         | T.T_variable variable ->
            begin
@@ -86,19 +86,19 @@ module Substitution = struct
              | None -> ok @@ T.T_variable variable
            end
         | T.T_arrow { type1; type2 } ->
-          let%bind type1 = s_type_expression ~substs type1 in
-          let%bind type2 = s_type_expression ~substs type2 in
+          let* type1 = s_type_expression ~substs type1 in
+          let* type2 = s_type_expression ~substs type2 in
           ok @@ T.T_arrow { type1; type2 }
         | T.T_app {type_operator;arguments} ->
-          let%bind arguments = bind_map_list (s_type_expression ~substs) arguments in
+          let* arguments = bind_map_list (s_type_expression ~substs) arguments in
           ok @@ T.T_app {type_operator;arguments}
         | T.T_module_accessor { module_name; element } ->
-          let%bind element = s_type_expression ~substs element in
+          let* element = s_type_expression ~substs element in
           ok @@ T.T_module_accessor { module_name; element }
         | T.T_singleton x -> ok @@ T.T_singleton x
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
-      let%bind type_content = s_type_content ~substs type_content in
+      let* type_content = s_type_content ~substs type_content in
       ok @@ T.{ type_content; location; sugar}
     and s_literal : (T.literal,_) w = fun ~substs -> function
       | T.Literal_unit ->
@@ -120,91 +120,91 @@ module Substitution = struct
     and s_matching_expr : (_ T.match_case list,_) w = fun ~(substs : substs) -> 
       fun x ->
         bind_map_list
-          (fun (x: _ T.match_case) -> let%bind body = s_expression ~substs x.body in ok { x with body })
+          (fun (x: _ T.match_case) -> let* body = s_expression ~substs x.body in ok { x with body })
           x
     and s_accessor  : (_ T.record_accessor,_) w = fun ~substs {record;path} ->
-      let%bind record = s_expression ~substs record in
+      let* record = s_expression ~substs record in
       ok @@ ({record;path} : _ T.record_accessor)
 
 
     and s_expression_content : (T.expression_content,_) w = fun ~(substs : substs) -> function
       | T.E_literal         x ->
-        let%bind x = s_literal ~substs x in
+        let* x = s_literal ~substs x in
         ok @@ T.E_literal x
       | T.E_constant   {cons_name;arguments} ->
-        let%bind cons_name = s_build_in ~substs cons_name in
-        let%bind arguments = bind_map_list (s_expression ~substs) arguments in
+        let* cons_name = s_build_in ~substs cons_name in
+        let* arguments = bind_map_list (s_expression ~substs) arguments in
         ok @@ T.E_constant {cons_name;arguments}
       | T.E_variable        tv ->
-        let%bind tv = s_variable ~substs tv in
+        let* tv = s_variable ~substs tv in
         ok @@ T.E_variable tv
       | T.E_application {lamb;args} ->
-        let%bind lamb = s_expression ~substs lamb in
-        let%bind args = s_expression ~substs args in
+        let* lamb = s_expression ~substs lamb in
+        let* args = s_expression ~substs args in
         ok @@ T.E_application {lamb;args}
       | T.E_lambda          { binder; output_type; result } ->
-        let%bind binder = s_binder ~substs binder in
-        let%bind output_type = bind_map_option (s_type_expression ~substs) output_type in
-        let%bind result = s_expression ~substs result in
+        let* binder = s_binder ~substs binder in
+        let* output_type = bind_map_option (s_type_expression ~substs) output_type in
+        let* result = s_expression ~substs result in
         ok @@ T.E_lambda { binder; output_type; result }
       | T.E_let_in          { let_binder; rhs; let_result; inline} ->
-        let%bind let_binder = s_binder ~substs let_binder in
-        let%bind rhs = s_expression ~substs rhs in
-        let%bind let_result = s_expression ~substs let_result in
+        let* let_binder = s_binder ~substs let_binder in
+        let* rhs = s_expression ~substs rhs in
+        let* let_result = s_expression ~substs let_result in
         ok @@ T.E_let_in { let_binder; rhs; let_result; inline}
       | T.E_type_in          { type_binder; rhs; let_result} ->
-        let%bind type_binder = s_type_variable ~substs type_binder in
-        let%bind rhs = s_type_expression ~substs rhs in
-        let%bind let_result = s_expression ~substs let_result in
+        let* type_binder = s_type_variable ~substs type_binder in
+        let* rhs = s_type_expression ~substs rhs in
+        let* let_result = s_expression ~substs let_result in
         ok @@ T.E_type_in { type_binder; rhs; let_result}
       | T.E_mod_in          { module_binder; rhs; let_result} ->
-        let%bind rhs = s_module' ~substs rhs in
-        let%bind let_result = s_expression ~substs let_result in
+        let* rhs = s_module' ~substs rhs in
+        let* let_result = s_expression ~substs let_result in
         ok @@ T.E_mod_in { module_binder; rhs; let_result}
       | T.E_mod_alias          { alias; binders; result} ->
-        let%bind result  = s_expression ~substs result in
+        let* result  = s_expression ~substs result in
         ok @@ T.E_mod_alias { alias; binders; result}
       | T.E_raw_code {language; code} ->
-        let%bind code = s_expression ~substs code in
+        let* code = s_expression ~substs code in
         ok @@ T.E_raw_code {language; code}
       | T.E_recursive { fun_name; fun_type; lambda} ->
-        let%bind fun_name = s_variable ~substs fun_name in
-        let%bind fun_type = s_type_expression ~substs fun_type in
-        let%bind sec = s_expression_content ~substs (T.E_lambda lambda) in
+        let* fun_name = s_variable ~substs fun_name in
+        let* fun_type = s_type_expression ~substs fun_type in
+        let* sec = s_expression_content ~substs (T.E_lambda lambda) in
         let lambda = match sec with E_lambda l -> l | _ -> failwith "impossible case" in
         ok @@ T.E_recursive { fun_name; fun_type; lambda}
       | T.E_constructor  {constructor;element} ->
-        let%bind constructor = s_constructor ~substs constructor in
-        let%bind element = s_expression ~substs element in
+        let* constructor = s_constructor ~substs constructor in
+        let* element = s_expression ~substs element in
         ok @@ T.E_constructor {constructor;element}
       | T.E_record          aemap ->
-        let%bind aemap = bind_map_list (fun (key,val_) ->
-          let%bind val_ = s_expression ~substs val_ in
+        let* aemap = bind_map_list (fun (key,val_) ->
+          let* val_ = s_expression ~substs val_ in
           ok @@ (key , val_)) @@ T.LMap.to_kv_list aemap in
         let aemap = T.LMap.of_list aemap in
         ok @@ T.E_record aemap
       | T.E_record_accessor {record=e;path} ->
-        let%bind record = s_expression ~substs e in
-        let%bind path = s_label ~substs path in
+        let* record = s_expression ~substs e in
+        let* path = s_label ~substs path in
         ok @@ T.E_record_accessor {record;path}
       | T.E_record_update {record;path;update}->
-        let%bind record = s_expression ~substs record in
-        let%bind update = s_expression ~substs update in
+        let* record = s_expression ~substs record in
+        let* update = s_expression ~substs update in
         ok @@ T.E_record_update {record;path;update}
       | T.E_matching   {matchee;cases} ->
-        let%bind matchee = s_expression ~substs matchee in
-        let%bind cases = s_matching_expr ~substs cases in
+        let* matchee = s_expression ~substs matchee in
+        let* cases = s_matching_expr ~substs cases in
         ok @@ T.E_matching {matchee;cases}
       | T.E_module_accessor { module_name; element } ->
-        let%bind element = s_expression ~substs element in
+        let* element = s_expression ~substs element in
         ok @@ T.E_module_accessor { module_name; element }
       | T.E_ascription {anno_expr; type_annotation} ->
-        let%bind anno_expr = s_expression ~substs anno_expr in
-        let%bind type_annotation = s_type_expression ~substs type_annotation in
+        let* anno_expr = s_expression ~substs anno_expr in
+        let* type_annotation = s_type_expression ~substs type_annotation in
         ok @@ T.E_ascription {anno_expr; type_annotation}
 
     and s_expression : (T.expression,_) w = fun ~(substs:substs) { expression_content; sugar; location } ->
-      let%bind expression_content = s_expression_content ~substs expression_content in
+      let* expression_content = s_expression_content ~substs expression_content in
       let location = location in
       ok T.{ expression_content;sugar; location }
 
@@ -213,12 +213,12 @@ module Substitution = struct
     fun ~substs ->
       function
       | T.Declaration_constant {name ; binder ; expr ; attr={inline}} ->
-        let%bind binder = s_binder ~substs binder in
-        let%bind expr = s_expression ~substs expr in
+        let* binder = s_binder ~substs binder in
+        let* expr = s_expression ~substs expr in
         return @@ Declaration_constant {name; binder; expr; attr={inline}}
       | T.Declaration_type t -> return @@ Declaration_type t
       | T.Declaration_module {module_binder;module_} ->
-        let%bind module_       = s_module' ~substs module_ in
+        let* module_       = s_module' ~substs module_ in
         return @@ Declaration_module {module_binder;module_}
       | T.Module_alias {alias;binders} ->
         return @@ Module_alias {alias; binders}
@@ -229,11 +229,11 @@ module Substitution = struct
     (* Replace the type variable ~v with ~expr everywhere within the
        module ~p. TODO: issues with scoping/shadowing. *)
     and s_module : (T.module_with_unification_vars,_) w = fun ~substs (T.Module_With_Unification_Vars p) ->
-      let%bind p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
+      let* p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
       ok @@ T.Module_With_Unification_Vars p
 
     and s_module' : (T.module_,_) w = fun ~substs (p) ->
-      let%bind p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
+      let* p = Trace.bind_map_list (s_declaration_wrap ~substs) p in
       ok @@ p
 
     (*
@@ -247,7 +247,7 @@ module Substitution = struct
       | P_variable v' when Var.equal v' v -> expr
       | P_variable _ -> tv
       | P_constant {p_ctor_tag=x ; p_ctor_args=lst} -> (
-          let lst' = List.map self lst in
+          let lst' = List.map ~f:self lst in
           wrap (Todo "1") @@ T.P_constant {p_ctor_tag=x ; p_ctor_args=lst'}
         )
       | P_apply { tf; targ } -> (
@@ -258,7 +258,7 @@ module Substitution = struct
         wrap (Todo "3") @@ T.P_row {p_row_tag ; p_row_args}
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in
-          let constraints = List.map aux p.constraints in
+          let constraints = List.map ~f:aux p.constraints in
           if (Var.equal p.binder v) then (
             (* The variable v is shadowed by the forall's binder, so
                we don't substitute inside the body. This should be
@@ -285,8 +285,8 @@ module Substitution = struct
           C_equation { aval = aux aval ; bval = aux bval }
         )
       | C_typeclass { tc_bound; tc_constraints; tc_args; original_id; typeclass=tc } -> (
-          let tc_args = List.map (fun tv -> type_value ~tv ~substs) tc_args in
-          let tc_constraints = List.map (fun c -> constraint_ ~c ~substs) tc_constraints in
+          let tc_args = List.map ~f:(fun tv -> type_value ~tv ~substs) tc_args in
+          let tc_constraints = List.map ~f:(fun c -> constraint_ ~c ~substs) tc_constraints in
           let tc = typeclass ~tc ~substs in
           C_typeclass {tc_bound; tc_constraints; tc_args ; original_id; typeclass=tc}
         )
@@ -297,7 +297,7 @@ module Substitution = struct
       | c -> c
 
     and typeclass ~tc ~substs =
-      List.map (List.map (fun tv -> type_value ~tv ~substs)) tc
+      List.map ~f:(List.map ~f:(fun tv -> type_value ~tv ~substs)) tc
 
     (* let module = s_module *)
 
@@ -305,7 +305,7 @@ module Substitution = struct
     let eval_beta_root ~(tv : type_value) =
       match tv.wrap_content with
       | P_apply {tf = { location = _ ; wrap_content = P_forall { binder; constraints; body } }; targ} ->
-        let constraints = List.map (fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
+        let constraints = List.map ~f:(fun c -> constraint_ ~c ~substs:(mk_substs ~v:binder ~expr:targ)) constraints in
         (* TODO: indicate in the result's tsrc that it was obtained via beta-reduction of the original type *)
         (type_value ~tv:body ~substs:(mk_substs ~v:binder ~expr:targ) , constraints)
       | _ -> (tv , [])

@@ -56,7 +56,7 @@ let get_exp_as_string filename =
 let assert_syntax_error sdata () =
   let aux entry =
     Format.printf "Entry : <%s>%!\n" entry ;
-    let%bind c_unit,_ = sdata.preproc entry in
+    let* c_unit,_ = sdata.preproc entry in
     let result   = sdata.parser c_unit in
     Format.printf "Parsed%!\n" ;
     Assert.assert_fail (test_internal __LOC__) result

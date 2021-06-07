@@ -22,20 +22,24 @@
 *_*)
 type storage = int
 
-(* variant defining pseudo multi-entrypoint actions *)
-
-type action =
-| Increment of int
+type parameter =
+  Increment of int
 | Decrement of int
+| Reset
 
-let add (a,b: int * int) : int = a + b
-let sub (a,b: int * int) : int = a - b
+type return = operation list * storage
 
-(* real entrypoint that re-routes the flow based on the action provided *)
+// Two entrypoints
 
-let main (p,s: action * storage) =
- let storage =
-   match p with
-   | Increment n -> add (s, n)
-   | Decrement n -> sub (s, n)
- in ([] : operation list), storage
+let add (store, delta : storage * int) : storage = store + delta
+let sub (store, delta : storage * int) : storage = store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+   
+let main (action, store : parameter * storage) : return =
+ ([] : operation list),    // No operations
+ (match action with
+   Increment (n) -> add (store, n)
+ | Decrement (n) -> sub (store, n)
+ | Reset         -> 0)

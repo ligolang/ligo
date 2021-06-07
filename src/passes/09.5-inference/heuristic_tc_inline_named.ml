@@ -80,7 +80,7 @@ let comparator { tc=a1; c=a2 } { tc=b1; c=b2 } =
 let selector_by_variable : (type_variable -> type_variable) -> flds -> constructor_or_row -> type_variable -> selector_output list =
   fun repr (module Indexes) c_or_r tv ->
   let typeclasses = Typeclasses_using_as_unbound_var.get_list (repr tv) (module Indexes) in
-  List.map (fun tc -> { tc ; c = c_or_r }) typeclasses
+  List.map ~f:(fun tc -> { tc ; c = c_or_r }) typeclasses
 
 (* Find all constructor constraints γᵢ = κ(β …) and and row
    constraints γᵢ = Ξ(ℓ:β …) where γᵢ is one of the variables
@@ -99,7 +99,7 @@ let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_sim
        | Some cr -> [{ tc ; c = cr }]
        | None   -> [])
     | _ -> [] in
-  List.flatten @@ List.map aux (get_cells tc)
+  List.concat @@ List.map ~f:aux (get_cells tc)
 
 let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
   fun repr type_constraint_simpl indexes ->
@@ -127,10 +127,10 @@ let alias_selector_half : type_variable -> type_variable -> flds -> selector_out
   let b_lhs_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
   let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
   let b_rows  = MultiSet.map_elements (fun a -> `Row a        ) b_lhs_rows         in
-  List.flatten @@
+  List.concat @@
   List.map
-    (fun tc ->
-       List.map (fun c -> { tc ; c })
+    ~f:(fun tc ->
+       List.map ~f:(fun c -> { tc ; c })
          (b_ctors @ b_rows ))
     a_tcs  
 
@@ -166,7 +166,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
       (match c with
          `Constructor { reason_constr_simpl; id_constructor_simpl=_; original_id=_; tv=_; c_tag; tv_list } ->
          let _ = reason_constr_simpl in (* TODO: use it *)
-         P_constant { p_ctor_tag = c_tag ; p_ctor_args = (List.map p_variable tv_list) }
+         P_constant { p_ctor_tag = c_tag ; p_ctor_args = (List.map ~f:p_variable tv_list) }
        | `Row { reason_row_simpl; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map } ->
          let _ = reason_row_simpl in (* TODO: use it *)
          P_row { p_row_tag = r_tag ; p_row_args = (LMap.map row_value tv_map) }

@@ -77,7 +77,7 @@ and pp_let_binding let_ (binding : let_binding) =
 and pp_pattern = function
   PConstr p -> pp_pconstr p
 | PUnit   _ -> string "()"
-| PVar    v -> pp_ident v
+| PVar    v -> pp_pvar v
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
 | PBytes  b -> pp_bytes b
@@ -88,6 +88,8 @@ and pp_pattern = function
 | PPar    p -> pp_ppar p
 | PRecord r -> pp_precord r
 | PTyped  t -> pp_ptyped t
+
+and pp_pvar {var; attributes} = pp_ident var ^^ pp_attributes attributes
 
 and pp_pconstr = function
   PNone      _ -> string "None"
@@ -286,7 +288,7 @@ and pp_injection :
     let sep = (string ",") ^^ break 1 in
     let elements = Utils.sepseq_to_list elements in
     let elements = separate_map sep printer elements in
-    match Option.map pp_compound compound with
+    match Option.map ~f:pp_compound compound with
       None -> elements
     | Some (opening, closing) ->
         string opening ^^ nest 1 elements ^^ string closing
@@ -322,7 +324,7 @@ and pp_ne_injection :
     let {compound; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq "," printer ne_elements in
     let inj =
-      match Option.map pp_compound compound with
+      match Option.map ~f:pp_compound compound with
         None -> elements
       | Some (opening, closing) ->
           string opening ^^ nest 2 (break 0 ^^ elements)
@@ -454,7 +456,7 @@ and pp_seq {value; _} =
   let sep = string ";" ^^ hardline in
   let elements = Utils.sepseq_to_list elements in
   let elements = separate_map sep pp_expr elements in
-  match Option.map pp_compound compound with
+  match Option.map ~f:pp_compound compound with
     None -> elements
   | Some (opening, closing) ->
      string opening

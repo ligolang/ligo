@@ -33,7 +33,7 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let binder = replace_var binder in
     return @@ E_closure { binder ; body }
   | E_constant (c) ->
-    let args = List.map replace c.arguments in
+    let args = List.map ~f:replace c.arguments in
     return @@ E_constant {cons_name = c.cons_name; arguments = args}
   | E_application (f, x) ->
     let (f, x) = Tuple.map2 replace (f, x) in
@@ -89,11 +89,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e2 = replace e2 in
     return @@ E_let_in (e1, inline, ((v, tv), e2))
   | E_tuple exprs ->
-    let exprs = List.map replace exprs in
+    let exprs = List.map ~f:replace exprs in
     return @@ E_tuple exprs
   | E_let_tuple (expr, (vtvs, body)) ->
     let expr = replace expr in
-    let vtvs = List.map (fun (v, tv) -> (replace_var v, tv)) vtvs in
+    let vtvs = List.map ~f:(fun (v, tv) -> (replace_var v, tv)) vtvs in
     let body = replace body in
     return @@ E_let_tuple (expr, (vtvs, body))
   | E_proj (expr, i, n) ->
@@ -117,7 +117,7 @@ let subst_binder : type body.
     if Var.equal x.wrap_content y.wrap_content
     then (y, body)
     (* else, if no capture, subst in binder *)
-    else if not (Free_variables.mem y (Free_variables.expression [] expr))
+    else if not (Free_variables.mem (Free_variables.expression [] expr) y)
     then (y, subst ~body ~x ~expr)
     (* else, avoid capture and subst in binder *)
     else
@@ -132,7 +132,7 @@ let replace_binds : type body.
   (body -> var_name -> var_name -> body) ->
   (body binds -> var_name -> var_name -> body binds) =
   fun replace (vars, body) x y ->
-  (List.map (fun v -> replace_var v x y) vars,
+  (List.map ~f:(fun v -> replace_var v x y) vars,
    replace body x y)
 
 let rec subst_binds : type body.
@@ -183,13 +183,13 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     return @@ E_let_in (expr, inline, ((v , tv) , body))
   )
   | E_tuple exprs ->
-    let exprs = List.map self exprs in
+    let exprs = List.map ~f:self exprs in
     return @@ E_tuple exprs
   | E_let_tuple (expr, (vtvs, body)) -> (
     let expr = self expr in
-    let (vs, tvs) = List.split vtvs in
+    let (vs, tvs) = List.unzip vtvs in
     let (vs, body) = self_binds ~body:(vs, body) in
-    let vtvs = List.combine vs tvs in
+    let vtvs = List.zip_exn vs tvs in
     return @@ E_let_tuple (expr, (vtvs, body))
   )
   | E_proj (expr, i, n) ->
@@ -237,7 +237,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_literal _ | E_raw_michelson _ ->
     return_id
   | E_constant {cons_name; arguments} -> (
-      let arguments = List.map self arguments in
+      let arguments = List.map ~f:self arguments in
       return @@ E_constant {cons_name; arguments}
   )
   | E_application farg -> (

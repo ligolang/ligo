@@ -44,7 +44,7 @@ let selector_test : _ -> _ -> unit -> (unit,Main_errors.all) result =
   let repr = fun x -> x in
   let result = selector repr (!. c6) (grouped_by_variable state) in
   (* check that the selector returns a list containing the pair of constraints (1L, 6L) *)
-  let comparator = List.compare ~compare:comparator in
+  let comparator = List.compare comparator in
   tst_assert "expected the selector to return a list containg the pair of constraints (1L,6L) or (6L,1L)"
     (comparator result [{ a_k_var = !.. c6; poly = !.. c1 }] = 1)
 
@@ -54,7 +54,7 @@ let propagator_test : _ -> unit -> (unit,Main_errors.all) result =
       (constraint 1L m = poly ∀ v, v -> record { x = int ; y = v } -> map(v,int))
       (constraint 6L n = o -> n')
    *)
-  let%bind result = trace Main_errors.inference_tracer @@
+  let* result = trace Main_errors.inference_tracer @@
     propagator { a_k_var = !.. c6; poly = !.. c1 } @@ fun x -> x in
   (* check that the propagator returns exactly this constraint
      (left/right in the equality is not important, variable "fresh" is not important):

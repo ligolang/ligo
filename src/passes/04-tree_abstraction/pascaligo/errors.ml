@@ -16,9 +16,10 @@ type abs_error = [
   | `Concrete_pascaligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_pascaligo_recursive_fun of Location.t
   | `Concrete_pascaligo_block_attribute of Raw.block Region.reg
-  | `Concrete_cameligo_unsupported_deep_pattern_matching of Region.t
+  | `Concrete_pascaligo_unsupported_top_level_destructuring of Region.t
   ]
 
+let unsupported_top_level_destructuring loc = `Concrete_pascaligo_unsupported_top_level_destructuring loc
 let unknown_predefined_type name = `Concrete_pascaligo_unknown_predefined_type name
 let unknown_constant s loc = `Concrete_pascaligo_unknown_constant (s,loc)
 let untyped_recursive_fun loc = `Concrete_pascaligo_recursive_fun loc
@@ -30,7 +31,6 @@ let unsupported_deep_tuple_patterns t = `Concrete_pascaligo_unsupported_deep_tup
 let michelson_type_wrong texpr name = `Concrete_pascaligo_michelson_type_wrong (texpr,name)
 let michelson_type_wrong_arity loc name = `Concrete_pascaligo_michelson_type_wrong_arity (loc,name)
 let block_start_with_attribute block = `Concrete_pascaligo_block_attribute block
-let unsupported_deep_pattern_matching l = `Concrete_cameligo_unsupported_deep_pattern_matching l
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -38,10 +38,6 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Concrete_cameligo_unsupported_deep_pattern_matching l ->
-      Format.fprintf f
-      "@[<hv>%a@.Deep pattern matching is unsupported. @]"
-        Snippet.pp_lift l
     | `Concrete_pascaligo_unknown_predefined_type type_name ->
       Format.fprintf f
         "@[<hv>%a@.Unknown type \"%s\". @]"
@@ -92,6 +88,10 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid attribute declaration.@.Attributes have to follow the declaration it is attached to. @]"
         Snippet.pp_lift @@ block.region
+    | `Concrete_pascaligo_unsupported_top_level_destructuring loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Unsupported destructuring at top-level. @]"
+        Snippet.pp_lift @@ loc
   )
 
 
@@ -103,11 +103,11 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Concrete_cameligo_unsupported_deep_pattern_matching l ->
-    let message = `String "Deep pattern matching is unsupported" in
+  | `Concrete_pascaligo_unsupported_top_level_destructuring loc ->
+    let message = `String "Unsupported destructuring at top-level" in
     let content = `Assoc [
       ("message", message );
-      ("location", Location.to_yojson (Snippet.lift l));] in
+      ("location", Location.to_yojson (Snippet.lift loc));] in
     json_error ~stage ~content
   | `Concrete_pascaligo_unknown_predefined_type type_name ->
     let message = `String "Unknown predefined type" in

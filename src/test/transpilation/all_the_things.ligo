@@ -149,7 +149,7 @@ function div_op   (const n : int) : int is n / 2
 function int_op   (const n : nat) : int is int (n)
 function neg_op   (const n : int) : int is -n
 function ediv_op  (const n : int) : option (int * nat) is ediv (n,2)
-function main (const i : int) : int is block {i := i + 1} with i
+function main (var i : int) : int is block {i := i + 1} with i
 [@annot] const x : int = 1;
 
 [@inline] function foo (const a : int) : int is
@@ -193,7 +193,7 @@ type parameter is unit
 type storage is big_map (int, int) * unit
 type return is list (operation) * storage
 
-function main (const p : parameter; const s : storage) : return is
+function main (const p : parameter; var s : storage) : return is
   block {
     var toto : option (int) := Some (0);
     toto := s.0[23];
@@ -219,7 +219,7 @@ const empty_big_map : big_map (int,int) = big_map []
 
 const big_map1 : big_map (int,int) = big_map [23 -> 0; 42 -> 0]
 
-function mutimaps (const m : foo; const n : foo) : foo is block {
+function mutimaps (const m : foo; var n : foo) : foo is block {
   var bar : foo := m;
   bar[42] := 0;
   n[42] := get_force (42, bar)
@@ -327,10 +327,10 @@ type parameter is
 | Transfer_single of action_transfer_single
 
 function transfer_single (const action : action_transfer_single;
-                          const s : storage) : return is
+                          var s : storage) : return is
   block {
-    const cards : cards = s.cards;
-    const card : card =
+    var cards : cards := s.cards;
+    var card : card :=
       case cards[action.card_to_transfer] of
         Some (card) -> card
       | None -> (failwith ("transfer_single: No card.") : card)
@@ -344,7 +344,7 @@ function transfer_single (const action : action_transfer_single;
   } with ((nil : list (operation)), s)
 
 function sell_single (const action : action_sell_single;
-                      const s : storage) : return is
+                      var s : storage) : return is
   block {
     const card : card =
       case s.cards[action.card_to_sell] of
@@ -354,16 +354,16 @@ function sell_single (const action : action_sell_single;
     if card.card_owner =/= sender
     then failwith ("This card doesn't belong to you")
     else skip;
-    const card_pattern : card_pattern =
+    var card_pattern : card_pattern :=
       case s.card_patterns[card.card_pattern] of
         Some (pattern) -> pattern
       | None -> (failwith ("sell_single: No card pattern.") : card_pattern)
       end;
     card_pattern.quantity := abs (card_pattern.quantity - 1n);
-    const card_patterns : card_patterns = s.card_patterns;
+    var card_patterns : card_patterns := s.card_patterns;
     card_patterns[card.card_pattern] := card_pattern;
     s.card_patterns := card_patterns;
-    const cards : cards = s.cards;
+    var cards : cards := s.cards;
     remove action.card_to_sell from map cards;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
@@ -377,10 +377,10 @@ function sell_single (const action : action_sell_single;
   } with (operations, s)
 
 function buy_single (const action : action_buy_single;
-                     const s : storage) : return is
+                     var s : storage) : return is
   block {
     // Check funds
-    const card_pattern : card_pattern =
+    var card_pattern : card_pattern :=
       case s.card_patterns[action.card_to_buy] of
         Some (pattern) -> pattern
       | None -> (failwith ("buy_single: No card pattern.") : card_pattern)
@@ -390,11 +390,11 @@ function buy_single (const action : action_buy_single;
     if price > amount then failwith ("Not enough money") else skip;
     // Increase quantity
     card_pattern.quantity := card_pattern.quantity + 1n;
-    const card_patterns : card_patterns = s.card_patterns;
+    var card_patterns : card_patterns := s.card_patterns;
     card_patterns[action.card_to_buy] := card_pattern;
     s.card_patterns := card_patterns;
     // Add card
-    const cards : cards = s.cards;
+    var cards : cards := s.cards;
     cards[s.next_id] := record [
       card_owner   = sender;
       card_pattern = action.card_to_buy
@@ -562,7 +562,7 @@ function main (const p : parameter; const s : storage) : return is
   }
   with ((nil : list (operation)), s)
 
-function foobar (const i : int) : int is
+function foobar (var i : int) : int is
   block {
     var p : parameter := Zero (42n);
     if i > 0 then {
@@ -640,7 +640,7 @@ function is_empty (const h : heap) : bool is size (h) = 0n
 
 function get_top (const h : heap) : heap_elt is get_force (1n, h)
 
-function pop_switch (const h : heap) : heap is
+function pop_switch (var h : heap) : heap is
   block {
    const result : heap_elt = get_top (h);
    const s : nat = Map.size (h);
@@ -653,7 +653,7 @@ function pop_switch (const h : heap) : heap is
    h[1n] := last
   } with h
 
-function pop_ (const h : heap) : nat is
+function pop_ (var h : heap) : nat is
   block {
     const result : heap_elt = get_top (h);
     const s : nat = Map.size (h);
@@ -677,7 +677,7 @@ function pop_ (const h : heap) : nat is
       else skip
   } with largest
 
-function insert (const h : heap ; const e : heap_elt) : heap is
+function insert (var h : heap ; const e : heap_elt) : heap is
   block {
     var i : nat := size (h) + 1n;
     h[i] := e;
@@ -697,7 +697,7 @@ function insert (const h : heap ; const e : heap_elt) : heap is
     }
   } with h
 
-function pop (const h : heap) : heap * heap_elt * nat is
+function pop (var h : heap) : heap * heap_elt * nat is
   block {
     const result : heap_elt = get_top (h);
     var s : nat := size (h);
@@ -874,7 +874,7 @@ function update_owner (const parameter : update_owner; const storage : storage) 
     const id : int = parameter.id;
     const new_owner : address = parameter.new_owner;
     var identities : big_map (id, id_details) := storage.identities;
-    const id_details : id_details =
+    var id_details : id_details :=
       case identities[id] of
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
@@ -895,8 +895,8 @@ function update_details (const parameter : update_details; const storage : stora
     const id : int = parameter.id;
     const new_profile : option(bytes) = parameter.new_profile;
     const new_controller : option(address) = parameter.new_controller;
-    const identities : big_map (id, id_details) = storage.identities;
-    const id_details: id_details =
+    var identities : big_map (id, id_details) := storage.identities;
+    var id_details: id_details :=
       case identities[id] of
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
@@ -992,7 +992,7 @@ function iter_op (const s : list (int)) : int is
   block {
     var r : int := 0;
     function aggregate (const i : int) : unit is
-      block { r := r + i } with unit;
+      block { skip (* r := r + 1 *) } with unit;
     List.iter (aggregate, s)
   } with r
 
@@ -1396,7 +1396,7 @@ type parameter is
 | Withdraw of withdraw_pt
 | Default  of default_pt
 
-function send (const param : send_pt; const s : storage) : return is
+function send (const param : send_pt; var s : storage) : return is
   block {
     // check sender against the authorized addresses
 
@@ -1465,7 +1465,7 @@ function send (const param : send_pt; const s : storage) : return is
     } else s.message_store[packed_msg] := new_store
   } with (ret_ops, s)
 
-function withdraw (const param : withdraw_pt; const s : storage) : return is
+function withdraw (const param : withdraw_pt; var s : storage) : return is
   block {
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
@@ -1543,7 +1543,7 @@ type return is list (operation) * storage
 type parameter is CheckMessage of check_message_pt
 
 function check_message (const param : check_message_pt;
-                        const s : storage) : return is block {
+                        var s : storage) : return is block {
   var message : message := param.message;
 
   if param.counter =/= s.counter then
@@ -1618,7 +1618,7 @@ function modify (var r : foobar) : foobar is
     r.foo := 256
   } with r
 
-function modify_abc (const r : abc) : abc is
+function modify_abc (var r : abc) : abc is
   block {
     const c : int = 42;
     r := r with record [b=2048; c=c]
@@ -1631,7 +1631,7 @@ const br : big_record =
 
 type double_record is record [inner : abc]
 
-function modify_inner (const r : double_record) : double_record is
+function modify_inner (var r : double_record) : double_record is
   block {
     r := r with record [inner.b = 2048]
   } with r
@@ -1721,7 +1721,7 @@ function iter_op (const s : set (int)) : int is
     var r : int := 0;
     function aggregate (const i : int) : unit is
       block {
-        r := r + i
+        skip
       } with unit;
     set_iter (aggregate, s)
   } with r // ALWAYS RETURNS 0
@@ -1868,7 +1868,7 @@ type abc is int * int * int
 
 function projection_abc (const tpl : abc) : int is tpl.1
 
-function modify_abc (const tpl : abc) : abc is
+function modify_abc (var tpl : abc) : abc is
   block {
     tpl.1 := 2048
   } with tpl
@@ -1883,7 +1883,7 @@ type big_tuple is int * int * int * int * int * int * int * int * int * int * in
 
 const br : big_tuple = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
-function update (const tpl : big_tuple) : big_tuple is
+function update (var tpl : big_tuple) : big_tuple is
   block {
     tpl.11 := 2048
   } with tpl

@@ -55,13 +55,13 @@ let repl_result_jsonformat = function
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
      let name n = `Assoc [("name", `String n)] in
-     let defs = List.map name (func_declarations @ type_declarations) in
+     let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
      let name n = `Assoc [("name", `String n)] in
-     let defs = List.map name (func_declarations @ type_declarations) in
+     let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Just_ok -> `Assoc []
 
@@ -83,12 +83,13 @@ type state = { env : Ast_typed.environment;
 let try_eval state s =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
 
-  let%bind typed_exp,env = Ligo_compile.Utils.type_expression_string ~options:options state.syntax s state.env in
-  let%bind mini_c_exp = Ligo_compile.Of_typed.compile_expression ~module_env:state.mod_types typed_exp in
-  let%bind compiled_exp = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options:options state.decl_list mini_c_exp in
+  let* typed_exp,env = Ligo_compile.Utils.type_expression_string ~options:options state.syntax s state.env in
+  let* mini_c_exp = Ligo_compile.Of_typed.compile_expression ~module_env:state.mod_types typed_exp in
+  let* compiled_exp = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options:options state.decl_list mini_c_exp in
   let options = state.dry_run_opts in
-  let%bind runres = Run.run_expression ~options:options compiled_exp.expr compiled_exp.expr_ty in
-  match%bind (Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres) with
+  let* runres = Run.run_expression ~options:options compiled_exp.expr compiled_exp.expr_ty in
+  let* x = Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres in
+  match x with
   | Success expr ->
      let state = { state with env = env; decl_list = state.decl_list } in
      ok (state, Expression_value expr)
@@ -97,11 +98,11 @@ let try_eval state s =
 
 let try_contract state s =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
-  let%bind c =
+  let* c =
     generic_try (`Repl_unexpected : Main_errors.all) @@ fun _ ->
-      let%bind typed_prg,core_prg,env =
+      let* typed_prg,core_prg,env =
       Ligo_compile.Utils.type_contract_string ~options:options state.syntax s state.env in
-      let%bind mini_c,mods =
+      let* mini_c,mods =
         Ligo_compile.Of_typed.compile_with_modules ~module_env:state.mod_types typed_prg in
       let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mods in
       let state = { state with env = env;
@@ -114,7 +115,7 @@ let try_contract state s =
 
 let import_file state file_name module_name =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
-  let%bind mini_c,mod_types,_,env = Build.build_contract_module ~options (variant_to_syntax state.syntax) Ligo_compile.Of_core.Env file_name module_name in
+  let* mini_c,mod_types,_,env = Build.build_contract_module ~options (variant_to_syntax state.syntax) Ligo_compile.Of_core.Env file_name module_name in
   let env = Ast_typed.Environment.add_module module_name env state.env in
   let mod_env = Ast_core.SMap.find module_name mod_types in
   let mod_types = Ast_core.SMap.add module_name mod_env state.mod_types in
@@ -124,7 +125,7 @@ let import_file state file_name module_name =
 let use_file state s =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
   (* Missing typer environment? *)
-  let%bind mini_c,mod_types,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~options (variant_to_syntax state.syntax) s in
+  let* mini_c,mod_types,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~options (variant_to_syntax state.syntax) s in
   let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mod_types in
   let state = { state with env = env;
                            decl_list = state.decl_list @ mini_c;
@@ -192,19 +193,15 @@ let make_initial_state syntax protocol infer dry_run_opts =
     mod_types = Ast_core.SMap.empty }
 
 let rec read_input prompt delim =
-  let module Let_syntax = struct
-      let bind m ~f = Option.(>>=) m f
-      module Open_on_rhs_bind = struct end
-    end in
   let open Option in
   let s = LNoise.linenoise prompt in
   match s with
-  | None -> none
+  | None -> None
   | Some s -> LNoise.history_add s |> ignore;
               let result = Str.split_delim (Str.regexp delim) s in
               match result with
               | [] | [_] ->
-                 let%bind i = read_input "" delim in
+                 let* i = read_input "" delim in
                  some @@ s ^ "\n" ^ i
               | hd :: _ -> some @@ hd
 

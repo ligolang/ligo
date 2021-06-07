@@ -155,12 +155,14 @@ module type Monad = sig
   type 'a t
   val return : 'a -> 'a t
   val bind : 'a t -> f:('a -> 'b t) -> 'b t
+  val (let*) : 'a t -> ('a -> 'b t) -> 'b t
 end
 
 module NoMonad = struct
   type 'a t = 'a
   let return x = x
   let bind x ~f = f x
+  let (let*)  x f = bind x ~f
 end
 
 (* type MappedFunction (t :: 🞰) (Plugin :: 🞰→🞰) =
@@ -275,7 +277,7 @@ let pp_ex_propagator_state = fun ppf (Heuristic_state { plugin = { selector ; pr
 
 let json_already_selected = fun printer_json set : Yojson.Safe.t ->
   let lst = (RedBlackTrees.PolySet.elements set) in
-let list f lst = `List (List.map f lst) in
+let list f lst = `List (List.map ~f:f lst) in
     `List [`String "Set"; (list printer_json lst)]
 
 let json_ex_propagator_state = fun (Heuristic_state { plugin = { selector; propagator; printer=_ ; printer_json } ; already_selected }) : Yojson.Safe.t ->

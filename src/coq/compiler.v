@@ -39,8 +39,8 @@ Fixpoint compile_usages_aux (n : nat) (us : list usage) : list (node A string) :
   match us with
   | [] => []
   | Drop :: us => [Prim nil "DIG" [Int nil (Z.of_nat n)] [];
+                   Seq nil (compile_usages_aux (S n) us);
                    Prim nil "DROP" [] []]
-                  ++ compile_usages_aux n us
   | Keep :: us => compile_usages_aux (S n) us
   end.
 
@@ -293,9 +293,14 @@ Proof.
   intros us; induction us; intros n s1 s2 H1 H2; eauto;
     destruct s2; inversion H2 as [H3];
       simpl; eauto; destruct a; simpl; eauto.
-  eenough (prog_typed (compile_usages_aux (S n) us) ((s1 ++ [_]) ++ s2) ((s1 ++ [_]) ++ select us s2))
-    by (repeat rewrite <- app_assoc in H; eassumption);
-    apply IHus; auto; rewrite app_length, plus_comm; auto.
+  (* Drop *)
+  - enough (prog_typed (compile_usages_aux (S n) us) ((n0 :: s1) ++ s2) ((n0 :: s1) ++ select us s2))
+      by eauto 10;
+    eapply IHus; simpl; eauto.
+  (* Keep *)
+  - enough (H : prog_typed (compile_usages_aux (S n) us) ((s1 ++ [n0]) ++ s2) ((s1 ++ [n0]) ++ select us s2))
+      by (repeat rewrite <- app_assoc in H; apply H);
+    eapply IHus; eauto; rewrite length_snoc; eauto.
 Qed.
 
 Lemma compile_usages_typed :
@@ -638,6 +643,9 @@ Proof.
           apply invert_compile_usages_aux_keeps_typed in H; simpl in H
         end;
         repeat crush;
+        match goal with
+        | [H : _ :: _ = _ :: _ |- _] => invert H
+        end;
         eauto.
   (* E_operator *)
   - eapply H0 in H8; eauto;

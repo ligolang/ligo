@@ -3,24 +3,13 @@ open Test_helpers
 open Ast_imperative
 open Main_errors
 
-let type_file ~options f = Ligo_compile.Utils.type_file ~options f "cameligo" (Contract "main")
-let options = Compiler_options.make ()
-
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let%bind program = type_file ~options "./contracts/timelock_repeat.mligo" in
-      s := Some program ;
-      ok program
-    )
+let get_program = get_program "./contracts/timelock_repeat.mligo" (Contract "main")
 
 let compile_main () =
-  let%bind typed_prg,_   = type_file ~options "./contracts/timelock_repeat.mligo" in
-  let%bind mini_c_prg      = Ligo_compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
-  let%bind _contract =
+  let* typed_prg,_   = type_file "./contracts/timelock_repeat.mligo" (Contract "main") options in
+  let* mini_c_prg      = Ligo_compile.Of_typed.compile typed_prg in
+  let* michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let* _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
@@ -43,9 +32,9 @@ let storage st interval execute =
                ("execute", execute)]
 
 let early_call () =
-  let%bind (program, env) = get_program () in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
+  let* (program, env) = get_program () in
+  let* now = mk_time "2000-01-01T00:10:10Z" in
+  let* lock_time = mk_time "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in
@@ -57,11 +46,11 @@ let fake_decompiled_empty_message = e_string "[lambda of type: (lambda %execute 
 
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance () =
-  let%bind (program, env) = get_program () in
-  let%bind now = mk_time "2000-01-01T10:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
+  let* (program, env) = get_program () in
+  let* now = mk_time "2000-01-01T10:10:10Z" in
+  let* lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
-  let%bind new_timestamp = mk_time "2000-01-02T10:10:10Z" in
+  let* new_timestamp = mk_time "2000-01-02T10:10:10Z" in
   let new_storage_fake = storage new_timestamp 86400 fake_decompiled_empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~now () in

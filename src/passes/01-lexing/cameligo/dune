@@ -7,15 +7,14 @@
 (library
   (name lexing_cameligo)
   (public_name ligo.lexing.cameligo)
-  (modules Token Self_tokens Style Comments)
+  (modules Token Self_tokens Style AttachComments)
   (libraries
     ;; LIGO
     lexing_shared
     ;; Third party
     str
     hex)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)
 
 ;; Build of a standalone lexer for CameLIGO
 
@@ -29,8 +28,7 @@
     ;; Third party
     str)
   (modules Version LexerMain)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)
 
 
 ;; Build of the unlexer (for covering the
@@ -45,8 +43,7 @@
     ;; Third party
     str)
   (modules Unlexer)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)
 
 
 ;; --------------------------------------------------------------------

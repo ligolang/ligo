@@ -3,11 +3,11 @@ open Ast_core
 open Trace
 
 let field_checks kvl loc =
-  let%bind () = Assert.assert_true
+  let* () = Assert.assert_true
     (too_small_record loc)
     (List.length kvl >=2) in
-  let all_undefined = List.for_all (fun (_,({decl_pos;_}:row_element)) -> decl_pos = 0) kvl in
-  let%bind () = Assert.assert_true
+  let all_undefined = List.for_all ~f:(fun (_,({decl_pos;_}:row_element)) -> decl_pos = 0) kvl in
+  let* () = Assert.assert_true
     (declaration_order_record loc)
     (not all_undefined) in
   ok ()
@@ -88,8 +88,8 @@ let rec from_right_comb_pair (l:row_element label_map) (size:int) : (row_element
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,l) ; (_,{associated_type=tr;_}) ], _ ->
-    let%bind comb_lmap = trace_option (expected_record Location.generated tr) @@ get_t_record tr in
-    let%bind next = from_right_comb_pair comb_lmap.fields (size-1) in
+    let* comb_lmap = trace_option (expected_record Location.generated tr) @@ get_t_record tr in
+    let* next = from_right_comb_pair comb_lmap.fields (size-1) in
     ok (l :: next)
   | _ -> fail (corner_case "Could not convert michelson_pair_right_comb pair to a record")
 
@@ -98,8 +98,8 @@ let rec from_left_comb_pair (l:row_element label_map) (size:int) : (row_element 
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,{associated_type=tl;_}) ; (_,r) ], _ ->
-    let%bind comb_lmap = trace_option (expected_record Location.generated tl) @@ get_t_record tl in
-    let%bind next = from_left_comb_pair comb_lmap.fields (size-1) in
+    let* comb_lmap = trace_option (expected_record Location.generated tl) @@ get_t_record tl in
+    let* next = from_left_comb_pair comb_lmap.fields (size-1) in
     ok (List.append next [r])
   | _ -> fail (corner_case "Could not convert michelson_pair_left_comb pair to a record")
 
@@ -108,8 +108,8 @@ let rec from_right_comb_variant (l:row_element label_map) (size:int) : (row_elem
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,l) ; (_,{associated_type=tr;_}) ], _ ->
-    let%bind comb_cmap = trace_option (expected_variant Location.generated tr) @@ get_t_sum tr in
-    let%bind next = from_right_comb_variant comb_cmap.fields (size-1) in
+    let* comb_cmap = trace_option (expected_variant Location.generated tr) @@ get_t_sum tr in
+    let* next = from_right_comb_variant comb_cmap.fields (size-1) in
     ok (l :: next)
   | _ -> fail (corner_case "Could not convert michelson_or right comb to a variant")
 
@@ -118,51 +118,51 @@ let rec from_left_comb_variant (l:row_element label_map) (size:int) : (row_eleme
   match l' , size with
   | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
   | [ (_,{associated_type=tl;_}) ; (_,r) ], _ ->
-    let%bind comb_cmap = trace_option (expected_variant Location.generated tl) @@ get_t_sum tl in
-    let%bind next = from_left_comb_variant comb_cmap.fields (size-1) in
+    let* comb_cmap = trace_option (expected_variant Location.generated tl) @@ get_t_sum tl in
+    let* next = from_left_comb_variant comb_cmap.fields (size-1) in
     ok (List.append next [r])
   | _ -> fail (corner_case "Could not convert michelson_or left comb to a record")
 
 let convert_pair_to_right_comb l =
-  let l' = List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
+  let l' = List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
   T_record {fields=(to_right_comb_pair l' LMap.empty);layout=Some default_layout}
 
 let convert_pair_to_left_comb l =
-  let l' = List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
+  let l' = List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
   T_record {fields=(to_left_comb_pair l' LMap.empty);layout=Some default_layout}
 
 let convert_pair_from_right_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
-  let%bind fields = from_right_comb_pair src (LMap.cardinal dst) in
-  let labels = List.map (fun (l,_) -> l) @@
-    List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
+  let* fields = from_right_comb_pair src (LMap.cardinal dst) in
+  let labels = List.map ~f:(fun (l,_) -> l) @@
+    List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
-  ok @@ T_record {fields=(LMap.of_list @@ List.combine labels fields);layout=Some default_layout}
+  ok @@ T_record {fields=(LMap.of_list @@ List.zip_exn labels fields);layout=Some default_layout}
 
 let convert_pair_from_left_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
-  let%bind fields = from_left_comb_pair src (LMap.cardinal dst) in
-  let labels = List.map (fun (l,_) -> l) @@
-    List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
+  let* fields = from_left_comb_pair src (LMap.cardinal dst) in
+  let labels = List.map ~f:(fun (l,_) -> l) @@
+    List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
-  ok @@ T_record {fields=(LMap.of_list @@ List.combine labels fields);layout=Some default_layout}
+  ok @@ T_record {fields=(LMap.of_list @@ List.zip_exn labels fields);layout=Some default_layout}
 
 let convert_variant_to_right_comb l =
-  let l' = List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
+  let l' = List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
   T_sum {fields = to_right_comb_variant l' LMap.empty ; layout = Some default_layout }
 
 let convert_variant_to_left_comb l =
-  let l' = List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
+  let l' = List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b) l in
   T_sum { fields = to_left_comb_variant l' LMap.empty ; layout = Some default_layout }
 
 let convert_variant_from_right_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
-  let%bind ctors = from_right_comb_variant src (LMap.cardinal dst) in
-  let ctors_name = List.map (fun (l,_) -> l) @@
-    List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
+  let* ctors = from_right_comb_variant src (LMap.cardinal dst) in
+  let ctors_name = List.map ~f:(fun (l,_) -> l) @@
+    List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
-  ok @@ (T_sum { fields = LMap.of_list @@ List.combine ctors_name ctors ; layout = Some default_layout })
+  ok @@ (T_sum { fields = LMap.of_list @@ List.zip_exn ctors_name ctors ; layout = Some default_layout })
 
 let convert_variant_from_left_comb (src:ty_expr row_element_mini_c label_map) (dst:ty_expr row_element_mini_c label_map) : (type_content , typer_error) result =
-  let%bind ctors = from_left_comb_variant src (LMap.cardinal dst) in
-  let ctors_name = List.map (fun (l,_) -> l) @@
-    List.sort (fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
+  let* ctors = from_left_comb_variant src (LMap.cardinal dst) in
+  let ctors_name = List.map ~f:(fun (l,_) -> l) @@
+    List.sort ~compare:(fun (_,{associated_type=_;decl_pos=a;_}) (_,{associated_type=_;decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
-  ok @@ (T_sum { fields = LMap.of_list @@ List.combine ctors_name ctors ; layout = Some default_layout })
+  ok @@ (T_sum { fields = LMap.of_list @@ List.zip_exn ctors_name ctors ; layout = Some default_layout })

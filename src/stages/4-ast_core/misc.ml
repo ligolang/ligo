@@ -3,8 +3,8 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let var_compare = Location.compare_content ~compare:Var.compare
-  let mem : expression_variable -> bindings -> bool = List.mem ~compare:var_compare
+  let var_equal = Location.equal_content ~equal:Var.equal
+  let mem : bindings -> expression_variable -> bool = List.mem ~equal:var_equal
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
@@ -15,15 +15,15 @@ module Free_variables = struct
     match ec with
     | E_lambda l -> lambda b l
     | E_literal _ -> empty
-    | E_constant {arguments;_} -> unions @@ List.map self arguments
+    | E_constant {arguments;_} -> unions @@ List.map ~f:self arguments
     | E_variable name -> (
-        match mem name b with
+        match mem b name with
         | true -> empty
         | false -> singleton name
       )
-    | E_application {lamb;args} -> unions @@ List.map self [ lamb ; args ]
+    | E_application {lamb;args} -> unions @@ List.map ~f:self [ lamb ; args ]
     | E_constructor {element;_} -> self element
-    | E_record m -> unions @@ List.map self @@ LMap.to_list m
+    | E_record m -> unions @@ List.map ~f:self @@ LMap.to_list m
     | E_record_accessor {record;_} -> self record
     | E_record_update {record; update;_} -> union (self record) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
@@ -63,7 +63,7 @@ module Free_variables = struct
       in
       expression b' body
     in
-    List.fold_left aux b cases
+    List.fold_left ~f:aux ~init:b cases
 
 end
 
@@ -75,7 +75,7 @@ let rec assert_list_eq f = fun a b -> match (a,b) with
   | [], _  -> None
   | _ , [] -> None
   | hda::tla, hdb::tlb -> Option.(
-    f hda hdb >>= fun () ->
+    let* () = f hda hdb in
     assert_list_eq f tla tlb
   )
 
@@ -91,23 +91,23 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sa' = LMap.to_kv_list_rev sa.fields in
       let sb' = LMap.to_kv_list_rev sb.fields in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
-        assert_eq ka kb >>= fun _ ->
-          assert_type_expression_eq (va, vb)
+        let* _ = assert_eq ka kb in
+        assert_type_expression_eq (va, vb)
       in
-      assert_same_size sa' sb' >>= fun _ ->
-      List.fold_left (fun acc p -> match acc with | None -> None | Some () -> aux p) (Some ()) (List.combine sa' sb')
+      let* _ = assert_same_size sa' sb' in
+      List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> aux p) ~init:(Some ()) (List.zip_exn sa' sb')
     )
   | T_sum _, _ -> None
   | T_record ra, T_record rb
        when Helpers.is_tuple_lmap ra.fields <> Helpers.is_tuple_lmap rb.fields -> None
   | T_record ra, T_record rb -> (
-      let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
+      let sort_lmap r' = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) r' in
       let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.fields in
       let rb' = sort_lmap @@ LMap.to_kv_list_rev rb.fields in
       let aux (ka, {associated_type=va;_}) (kb, {associated_type=vb;_}) =
         let Label ka = ka in
         let Label kb = kb in
-        assert_eq ka kb >>= fun _ ->
+        let* _ = assert_eq ka kb in
         assert_type_expression_eq (va, vb)
       in
       assert_list_eq aux ra' rb'
@@ -115,7 +115,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_record _, _ -> None
   | T_arrow {type1;type2}, T_arrow {type1=type1';type2=type2'} ->
-    assert_type_expression_eq (type1, type1') >>= fun _ ->
+    let* _ = assert_type_expression_eq (type1, type1') in
     assert_type_expression_eq (type2, type2')
   | T_arrow _, _ -> None
   | T_app {type_operator=ta;arguments=aa}, T_app {type_operator=tb;arguments=ab} when Var.equal ta tb ->
@@ -178,9 +178,9 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | E_literal a , E_literal b ->
     assert_literal_eq (a, b)
   | E_constant (ca) , E_constant (cb) when ca.cons_name = cb.cons_name -> (
-      let lst = List.combine ca.arguments cb.arguments in
-      let all = List.map assert_value_eq lst in
-      if List.exists (Option.is_none) all then None else Some ()
+      let lst = List.zip_exn ca.arguments cb.arguments in
+      let all = List.map ~f:assert_value_eq lst in
+      if List.exists ~f:(Option.is_none) all then None else Some ()
     )
   | E_constructor (ca), E_constructor (cb) when ca.constructor = cb.constructor -> (
       assert_value_eq (ca.element, cb.element)
@@ -243,7 +243,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
   | Some a, None -> Some a
   | None, Some b -> Some b
   | Some a, Some b ->
-      assert_eq_fun (a, b) >>= fun _ ->
+      let* _ = assert_eq_fun (a, b) in
       match a.sugar, b.sugar with
       | _, None -> Some a
       | _, Some _ -> Some b
@@ -260,7 +260,7 @@ let get_entry (lst : module_) (name : string) : expression option =
     | Declaration_module _
     | Module_alias       _ -> None
   in
-  List.find_map aux lst
+  List.find_map ~f:aux lst
 
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
@@ -282,7 +282,7 @@ let p_row (p_row_tag : row_tag) (p_row_args : row_lmap ) =
     }
 
 let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
-  let p_row_args = LMap.of_list @@ List.mapi (fun i (x,y) -> Label x,{associated_value=y; michelson_annotation = None; decl_pos = i }) p_row_args in
+  let p_row_args = LMap.of_list @@ List.mapi ~f:(fun i (x,y) -> Label x,{associated_value=y; michelson_annotation = None; decl_pos = i }) p_row_args in
   p_row p_row_tag p_row_args
 
 let p_apply tf targ =

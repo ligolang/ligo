@@ -3,6 +3,7 @@ import {
   ChangeSelectedAction as ChangeSelectedExampleAction,
 } from './examples';
 import { Language } from './types';
+import {} from './actions/editor';
 
 export enum ActionType {
   ChangeLanguage = 'editor-change-language',
@@ -10,6 +11,7 @@ export enum ActionType {
   ChangeDirty = 'editor-change-dirty',
   ChangeTitle = 'editor-change-title',
   ChangeCursorPosition = 'editor-change-cursor-position',
+  ChangeLastEditedTime = 'editor-last-edited-time',
 }
 
 export interface CursorPosition {
@@ -23,6 +25,7 @@ export interface EditorState {
   title: string;
   dirty: boolean;
   cursorPosition?: CursorPosition | null;
+  lastEditedTime?: Date | null;
 }
 
 export class ChangeLanguageAction {
@@ -50,13 +53,19 @@ export class ChangeCursorPositionAction {
   constructor(public payload: EditorState['cursorPosition']) {}
 }
 
+export class ChangeLastEditedTimeAction {
+  public readonly type = ActionType.ChangeLastEditedTime;
+  constructor(public payload: EditorState['lastEditedTime']) {}
+}
+
 type Action =
   | ChangeCodeAction
   | ChangeLanguageAction
   | ChangeDirtyAction
   | ChangeTitleAction
   | ChangeSelectedExampleAction
-  | ChangeCursorPositionAction;
+  | ChangeCursorPositionAction
+  | ChangeLastEditedTimeAction;
 
 const DEFAULT_STATE: EditorState = {
   language: Language.CameLigo,
@@ -64,6 +73,7 @@ const DEFAULT_STATE: EditorState = {
   title: '',
   dirty: false,
   cursorPosition: null,
+  lastEditedTime: null,
 };
 
 const editor = (state, action: Action): EditorState => {
@@ -103,6 +113,11 @@ const editor = (state, action: Action): EditorState => {
       return {
         ...state,
         cursorPosition: action.payload,
+      };
+    case ActionType.ChangeLastEditedTime:
+      return {
+        ...state,
+        lastEditedTime: action.payload,
       };
     default:
       return { ...state };

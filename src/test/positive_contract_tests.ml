@@ -13,12 +13,12 @@ let ends_with suffix str =
    compiles (assuming entry point "main") *)
 let positive_contract_tests =
   String.split_on_char ' ' (match Sys.getenv_opt "POSITIVE_CONTRACTS" with Some e -> e | None -> "") |>
-  List.filter (fun path -> not (ends_with ".md" path)) |>
+  List.filter ~f:(fun path -> not (ends_with ".md" path)) |>
   List.map
-    (fun path ->
+    ~f:(fun path ->
       let run () =
-        let%bind prog = Ligo_compile.Utils.type_file ~options path "auto" Env in
-        let%bind _michelson = typed_program_to_michelson prog "main" in
+        let* prog = Ligo_compile.Utils.type_file ~options:{options with infer=false} path "auto" Env in
+        let* _michelson = typed_program_to_michelson prog "main" in
         ok () in
         test ("src/test/"^path) run)
 

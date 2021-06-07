@@ -66,20 +66,12 @@ RUN cp /ligo/_build/install/default/bin/ligo /tmp/ligo
 # Run tests
 COPY gitlab-pages /ligo/gitlab-pages
 RUN BISECT_ENABLE=yes opam exec -- dune runtest --profile static --no-buffer
-RUN LIGO_FORCE_NEW_TYPER=true opam exec -- dune runtest --force --profile static --no-buffer
 
 # Coverage (only the overall)
+RUN find . -name '*.coverage' | xargs rm -f
+RUN opam exec -- dune runtest --instrument-with bisect_ppx --force
 RUN opam exec -- bisect-ppx-report html -o coverage --title="LIGO test coverage"
 RUN opam exec -- bisect-ppx-report summary --per-file > coverage/coverage-summary
-# echo "Test coverage:"
-# BISECT_ENABLE=yes dune runtest src/test --force
-# bisect-ppx-report html -o $out/share/coverage/ligo --title="LIGO test coverage"
-# echo "Doc coverage:"
-# BISECT_ENABLE=yes dune build @doc-test --force
-# bisect-ppx-report html -o $out/share/coverage/docs --title="LIGO doc coverage"
-# echo "CLI test coverage:"
-# BISECT_ENABLE=yes dune runtest src/bin/expect_tests
-# bisect-ppx-report html -o $out/share/coverage/cli --title="CLI test coverage"
 
 # Run doc
 RUN opam exec -- dune build @doc

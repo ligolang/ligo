@@ -45,6 +45,7 @@ module Typer_error_trace_monad = struct
   type 'a t = ('a, typer_error) Trace.result
   let bind x ~f = Trace.bind f x
   let return x = Trace.ok x
+  let (let*) x f = bind x ~f
 end
 
 (* Function which merges all aliases withing a single plugin's state *)

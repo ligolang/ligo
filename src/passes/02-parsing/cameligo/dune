@@ -11,6 +11,7 @@
 (library
   (name parsing_cameligo)
   (public_name ligo.parsing.cameligo)
+  (instrumentation (backend bisect_ppx))
   (modules
     Parser ParErr Pretty)
   (libraries
@@ -25,8 +26,6 @@
     terminal_size
     menhirLib
     hex)
-  (preprocess
-    (pps bisect_ppx --conditional))
   (flags (:standard -open Cst_cameligo))) ;; For CST in Parser.mli
 
 ;; Local build of a standalone parser for CameLIGO
@@ -43,8 +42,7 @@
     ;; Third party
     hex)
   (modules ParserMain Parser_msg)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+)
 
 ;; Build of the covering of error states in the LR automaton
 
@@ -84,7 +82,6 @@
 
 (rule
  (targets errors.msg)
- (mode (promote (until-clean) (only *)))
  (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}
@@ -100,7 +97,6 @@
 
 (rule
   (target errors.msg.new)
-  (mode (promote (until-clean) (only *)))
   (action
     (with-stdout-to %{target}
       (run menhir
@@ -130,7 +126,6 @@
 
 (rule
  (targets ParErr.ml)
- (mode (promote (until-clean) (only *)))
  (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}

@@ -24,14 +24,14 @@ let syntax_to_variant ?dialect (Syntax_name syntax) source =
     "auto", Some sf ->
       (match Filename.extension sf with
          ".ligo" | ".pligo" ->
-                    let%bind dialect = dialect_to_variant dialect in
+                    let* dialect = dialect_to_variant dialect in
                     ok (PascaLIGO dialect)
        | ".mligo"           -> ok CameLIGO
        | ".religo"          -> ok ReasonLIGO
        | ".jsligo"          -> ok JsLIGO
        | ext                -> fail (syntax_auto_detection ext))
   | ("pascaligo" | "PascaLIGO"),   _ ->
-     let%bind dialect = dialect_to_variant dialect in
+     let* dialect = dialect_to_variant dialect in
      ok (PascaLIGO dialect)
   | ("cameligo" | "CameLIGO"),     _ -> ok CameLIGO
   | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
@@ -39,60 +39,68 @@ let syntax_to_variant ?dialect (Syntax_name syntax) source =
   | _ -> fail (invalid_syntax syntax)
 
 let specialise_and_print_pascaligo dialect m =
-  let%bind cst = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.decompile_module ?dialect m in
-  let%bind source = trace pretty_tracer @@
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative m in
+  let* cst = trace cit_pascaligo_tracer @@
+    Tree_abstraction.Pascaligo.decompile_module ?dialect ast in
+  let* source = trace pretty_tracer @@
     ok (Parsing.Pascaligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_pascaligo dialect expression =
-  let%bind cst = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.decompile_expression ?dialect expression in
-  let%bind source = trace pretty_tracer @@
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative_expression expression in
+  let* cst = trace cit_pascaligo_tracer @@
+    Tree_abstraction.Pascaligo.decompile_expression ?dialect ast in
+  let* source = trace pretty_tracer @@
     ok (Parsing.Pascaligo.pretty_print_expression cst)
   in ok source
 
 let specialise_and_print_cameligo m =
-  let%bind cst = trace cit_cameligo_tracer @@
+  let* cst = trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.decompile_module m in
-  let%bind source = trace pretty_tracer @@
+  let* source = trace pretty_tracer @@
     ok (Parsing.Cameligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_cameligo expression =
-  let%bind cst = trace cit_cameligo_tracer @@
+  let* cst = trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.decompile_expression expression in
-  let%bind source = trace pretty_tracer @@
+  let* source = trace pretty_tracer @@
     ok (Parsing.Cameligo.pretty_print_expression cst)
   in ok source
 
 let specialise_and_print_reasonligo m =
-  let%bind cst = trace cit_reasonligo_tracer @@
+  let* cst = trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.decompile_module m in
-  let%bind source = trace pretty_tracer @@
+  let* source = trace pretty_tracer @@
     ok (Parsing.Reasonligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_reasonligo expression =
-  let%bind cst = trace cit_reasonligo_tracer @@
+  let* cst = trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.decompile_expression expression in
-  let%bind source = trace pretty_tracer @@
+  let* source = trace pretty_tracer @@
     ok (Parsing.Reasonligo.pretty_print_expression cst)
   in ok source
 
 let specialise_and_print_jsligo m =
-  let%bind cst = trace cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.decompile_module m in
-  let%bind source = trace pretty_tracer @@
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative m in
+  let* cst = trace cit_jsligo_tracer @@
+    Tree_abstraction.Jsligo.decompile_module ast in
+  let* source = trace pretty_tracer @@
     ok (Parsing.Jsligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_jsligo expression =
-  let%bind cst = trace cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.decompile_expression expression in
+  let* ast = trace self_ast_imperative_tracer @@
+    Self_ast_imperative.decompile_imperative_expression expression in
+  let* cst = trace cit_jsligo_tracer @@
+    Tree_abstraction.Jsligo.decompile_expression ast in
   let b = Buffer.create 100 in
   bind_fold_list (fun all x -> 
-    let%bind source = trace pretty_tracer @@
+    let* source = trace pretty_tracer @@
     ok (Parsing.Jsligo.pretty_print_expression x) in
     Buffer.add_buffer all source; 
     ok @@ b

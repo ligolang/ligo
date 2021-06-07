@@ -32,12 +32,12 @@ let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
 let t_record_ez_attr ?loc ?(attr=[]) lst =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
-  let lst = List.mapi aux lst in
+  let lst = List.mapi ~f:aux lst in
   let fields : ty_expr row_element label_map = LMap.of_list lst
   in t_record ?loc {fields; attributes=attr}
 let t_record_ez ?loc ?attr lst =
   let aux (a,b) = a,b,[] in
-  let lst' = List.map aux lst in
+  let lst' = List.map ~f:aux lst in
   t_record_ez_attr ?loc ?attr lst'
 
 let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
@@ -47,7 +47,7 @@ let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
 let t_sum_ez_attr ?loc ?(attr=[]) lst =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
-  let lst = List.mapi aux lst in
+  let lst = List.mapi ~f:aux lst in
   let fields : ty_expr row_element label_map = LMap.of_list lst
   in t_sum ?loc {fields; attributes=attr}
 
@@ -117,12 +117,12 @@ let e_variable    ?loc v = make_e ?loc @@ E_variable v
 let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
-let e_lambda_ez ?loc var ?ascr output_type result : expression = e_lambda ?loc {var;ascr} output_type result
+let e_lambda_ez ?loc var ?ascr ?const_or_var output_type result : expression = e_lambda ?loc {var;ascr;attributes={const_or_var}} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
 (* let e_recursive_ez ?loc fun_name fun_type lambda = e_recursive ?loc (Var.of_name fun_name) fun_type lambda *)
 let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; attributes }
-let e_let_in_ez ?loc var ?ascr attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder={var;ascr}; rhs ; let_result; attributes }
+let e_let_in_ez ?loc var ?ascr ?const_or_var attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder={var;ascr;attributes={const_or_var}}; rhs ; let_result; attributes }
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
 let e_type_in   ?loc type_binder   rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result }
 let e_mod_in    ?loc module_binder rhs let_result = make_e ?loc @@ E_mod_in  { module_binder; rhs ; let_result }
@@ -135,7 +135,7 @@ let e_true  ?loc (): expression = e_constructor ?loc "true"  @@ e_unit ?loc ()
 let e_false ?loc (): expression = e_constructor ?loc "false" @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
-  let pv_lst = List.map (fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
+  let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
   let pattern = Location.wrap @@ P_tuple pv_lst in
   let cases = [ { pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
@@ -165,7 +165,7 @@ let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit
 
 let e_record ?loc map = make_e ?loc @@ E_record map
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
-  let map = List.fold_left (fun m (x, y) -> LMap.add (Label x) y m) LMap.empty lst in
+  let map = List.fold_left ~f:(fun m (x, y) -> LMap.add (Label x) y m) ~init:LMap.empty lst in
   e_record ?loc map
 
 let make_option_typed ?loc e t_opt =

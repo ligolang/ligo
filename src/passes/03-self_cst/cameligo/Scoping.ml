@@ -11,7 +11,7 @@ open Trace
 
 (* TODO don't *)
 let ignore x =
-  let%bind _ = x in
+  let* _ = x in
   ok ()
 
 (* Useful modules *)
@@ -83,9 +83,9 @@ let rec vars_of_pattern env = function
 | PUnit _
 | PInt _ | PNat _ | PBytes _
 | PString _ | PVerbatim _ -> ok @@ env
-| PVar var when is_wildcard var -> ok @@ env
-| PVar var ->
-    let%bind () = check_reserved_name var in
+| PVar {var} when is_wildcard var -> ok @@ env
+| PVar {var} ->
+    let* () = check_reserved_name var in
     if VarSet.mem var env then
       fail @@ non_linear_pattern var
     else ok @@ VarSet.add var env
@@ -157,11 +157,11 @@ let check_fields fields =
 let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   match t with
    TSum {value; _} ->
-     let%bind () =
+     let* () =
        Utils.nsepseq_to_list value.variants |> check_variants
      in ok @@ ()
   | TRecord {value; _} ->
-     let%bind () =
+     let* () =
        Utils.nsepseq_to_list value.ne_elements |> check_fields
      in ok @@ ()
   | TProd   _
@@ -180,25 +180,25 @@ let peephole_expression : unit -> expr -> (unit,'err) result =
     ECase {value; _}   ->
       let apply ({value; _}: _ case_clause reg)  =
         check_pattern value.pattern in
-      let%bind () =
+      let* () =
         Trace.bind_iter_list
           apply
           (Utils.nsepseq_to_list value.cases.value)
       in ok @@ ()
   | ELetIn {value; _}   ->
-      let%bind () =
+      let* () =
         Trace.bind_iter_list
           check_pattern
           (Utils.nseq_to_list value.binding.binders)
       in ok @@ ()
   | ETypeIn {value; _}   ->
-      let%bind () = check_reserved_name value.type_decl.name
+      let* () = check_reserved_name value.type_decl.name
       in ok @@ ()
   | EModIn {value; _}   ->
-      let%bind () = check_reserved_name value.mod_decl.name
+      let* () = check_reserved_name value.mod_decl.name
       in ok @@ ()
   | EModAlias {value; _}   ->
-      let%bind () = check_reserved_name value.mod_alias.alias
+      let* () = check_reserved_name value.mod_alias.alias
       in ok @@ ()
   | EFun     _
   | ESeq     _
@@ -226,19 +226,19 @@ let peephole_declaration : unit -> declaration -> (unit, 'err) result =
   function
     Let {value; _} ->
       let _, _, binding, _ = value in
-      let%bind () =
+      let* () =
         Trace.bind_iter_list
           check_pattern
           (Utils.nseq_to_list binding.binders)
       in ok @@ ()
   | TypeDecl {value; _} ->
-      let%bind () = check_reserved_name value.name
+      let* () = check_reserved_name value.name
       in ok @@ ()
   | ModuleDecl {value; _} ->
-      let%bind () = check_reserved_name value.name
+      let* () = check_reserved_name value.name
       in ok @@ ()
   | ModuleAlias {value; _} ->
-      let%bind () = check_reserved_name value.alias
+      let* () = check_reserved_name value.alias
       in ok @@ ()
   | Directive _ -> ok ()
 

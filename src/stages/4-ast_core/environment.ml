@@ -29,17 +29,17 @@ let add_type   : type_variable -> type_expression -> t -> t = fun type_variable 
 let add_module : module_variable -> environment -> t -> t = fun module_variable module_ -> map_module_environment (fun x -> { module_variable ; module_ } :: x)
 (* TODO: generate : these are now messy, clean them up. *)
 
-let of_list_type : (type_variable * type_expression) list -> t = fun tvlist -> List.fold_left (fun acc (t,v) -> add_type t v acc) empty tvlist
+let of_list_type : (type_variable * type_expression) list -> t = fun tvlist -> List.fold_left ~f:(fun acc (t,v) -> add_type t v acc) ~init:empty tvlist
 
 let get_opt : expression_variable -> t -> element option = fun k x ->
-  Option.bind (fun {expr_var=_ ; env_elt} -> Some env_elt) @@
-    List.find_opt (fun {expr_var ; env_elt=_} -> Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
+  Option.bind ~f: (fun {expr_var=_ ; env_elt} -> Some env_elt) @@
+    List.find ~f:(fun {expr_var ; env_elt=_} -> Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
 let get_type_opt : type_variable -> t -> type_expression option = fun k x ->
-  Option.bind (fun {type_variable=_ ; type_} -> Some type_) @@
-    List.find_opt (fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)
+  Option.bind ~f: (fun {type_variable=_ ; type_} -> Some type_) @@
+    List.find ~f:(fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)
 let get_module_opt : module_variable -> t -> environment option = fun k x ->
-  Option.bind (fun {module_variable=_ ; module_} -> Some module_) @@
-    List.find_opt (fun {module_variable; module_=_} -> String.equal module_variable k) (get_module_environment x)
+  Option.bind ~f: (fun {module_variable=_ ; module_} -> Some module_) @@
+    List.find ~f:(fun {module_variable; module_=_} -> String.equal module_variable k) (get_module_environment x)
 
 let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e ->
   add_expr k (make_element_binder v) e
@@ -57,13 +57,13 @@ let get_constructor : label -> t -> (type_expression * type_expression) option =
           | None -> None)
       | _ -> None
     in
-    match List.find_map aux (get_type_environment e) with
+    match List.find_map ~f:aux (get_type_environment e) with
       Some _ as s -> s
     | None ->
       let modules = get_module_environment e in
-      List.fold_left (fun res {module_variable=_;module_} ->
+      List.fold_left ~f:(fun res {module_variable=_;module_} ->
         match res with Some _ as s -> s | None -> rec_aux module_
-      ) None modules
+      ) ~init:None modules
   in rec_aux x
 
 let get_record : _ label_map -> t -> (rows) option = fun lmap e ->
@@ -73,24 +73,24 @@ let get_record : _ label_map -> t -> (rows) option = fun lmap e ->
       | T_record m -> Option.(
         let lst_kv  = LMap.to_kv_list_rev lmap in
         let lst_kv' = LMap.to_kv_list_rev m.fields in
-        let m = map (fun () -> m) @@ Misc.assert_list_eq
+        let m = map ~f:(fun () -> m) @@ Misc.assert_list_eq
           ( fun (ka,va) (kb,vb) ->
             let Label ka = ka in
             let Label kb = kb in
-            Misc.assert_eq ka kb >>= fun () ->
+            let* () = Misc.assert_eq ka kb in
             Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
           ) lst_kv lst_kv' in
         m
       )
       | _ -> None
     in
-    match List.find_map aux (get_type_environment e) with
+    match List.find_map ~f:aux (get_type_environment e) with
       Some _ as s -> s
     | None ->
       let modules = get_module_environment e in
-      List.fold_left (fun res {module_variable=_;module_} ->
+      List.fold_left ~f:(fun res {module_variable=_;module_} ->
         match res with Some _ as s -> s | None -> rec_aux module_
-      ) None modules
+      ) ~init:None modules
   in rec_aux e
 
 
@@ -101,23 +101,23 @@ let get_sum : _ label_map -> t -> rows option = fun lmap e ->
       | T_sum m -> Option.(
         let lst_kv  = LMap.to_kv_list_rev lmap in
         let lst_kv' = LMap.to_kv_list_rev m.fields in
-        map (fun () -> m) @@ Misc.assert_list_eq (
+        map ~f:(fun () -> m) @@ Misc.assert_list_eq (
           fun (ka,va) (kb,vb) ->
             let Label ka = ka in
             let Label kb = kb in
-            Misc.assert_eq ka kb >>= fun () ->
+            let* () = Misc.assert_eq ka kb in
             Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
         ) lst_kv lst_kv'
       )
       | _ -> None
     in
-    match List.find_map aux (get_type_environment e) with
+    match List.find_map ~f:aux (get_type_environment e) with
       Some _ as s -> s
     | None ->
       let modules = get_module_environment e in
-      List.fold_left (fun res {module_variable=_;module_} ->
+      List.fold_left ~f:(fun res {module_variable=_;module_} ->
         match res with Some _ as s -> s | None -> rec_aux module_
-      ) None modules
+      ) ~init:None modules
   in rec_aux e
 
 module PP = struct

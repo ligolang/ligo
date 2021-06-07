@@ -120,6 +120,16 @@ let%expect_test _ =
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail13.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail13.mligo", line 7, characters 5-14:
+      6 |    | Increment n -> s +1
+      7 |    | Decrement -> s -1
+      8 |  in ([] : operation list), stor
+
+    Variant pattern argument is expected of type nat but is of type unit. |}]
+
+let%expect_test _ =
   run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail4.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail4.mligo", line 4, character 2 to line 6, character 18:
@@ -321,8 +331,10 @@ let%expect_test _ =
   [%expect{|
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 18-19:
     Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
     Warning: unused variable "myt".
+    Hint: replace it by "_myt" to prevent this warning.
 
     { parameter (pair (pair (nat %mynat) (ticket %myt int)) (option nat)) ;
       storage nat ;
@@ -361,21 +373,22 @@ let%expect_test _ =
                  match ctor_proj#20 with
                   | ( c , d ) ->
                   ADD(ADD(ADD(a , b) , c) , d)
-            | Nil _#19 ->
+            | Nil unit_proj#19 ->
               (fl)@(tuple_proj#9)
-        | Nil _#21 ->
+        | Nil unit_proj#21 ->
           (fr)@(ys)
     const t7 = lambda (x) return let #23 = x in  match #23 with
                                                   | Some x ->
-                                                    x | None _#24 ->
-                                                        1
+                                                    x
+                                                  | None unit_proj#24 ->
+                                                    1
     const t8 = lambda (x) return lambda (y) return let #25 = ( x , y ) in
      match #25 with
       | ( tuple_proj#26 , x ) ->
        match tuple_proj#26 with
         | Some x ->
           ADD(x ,
-          x) | None _#29 ->
+          x) | None unit_proj#29 ->
                x
     const t9 = lambda (x) return lambda (y) return let #30 = ( x , y ) in
      match #30 with
@@ -386,9 +399,9 @@ let%expect_test _ =
             | Some ctor_proj#38 ->
               ADD(ctor_proj#40 ,
               ctor_proj#38)
-            | None _#37 ->
+            | None unit_proj#37 ->
               2
-        | None _#39 ->
+        | None unit_proj#39 ->
           1
     type optioni = option (int)
     type myti = sum[Consi -> option (int) , Nili -> unit]
@@ -405,7 +418,7 @@ let%expect_test _ =
                 | Some ctor_proj#53 ->
                   ADD((fo)@(ctor_proj#58) ,
                   (fo)@(ctor_proj#56))
-                | None _#49 ->
+                | None unit_proj#49 ->
                    match ys with
                     | Nili ctor_proj#52 ->
                       ADD((fo)@(ctor_proj#58) ,
@@ -417,9 +430,9 @@ let%expect_test _ =
                           (fo)@(ctor_proj#56))
                         | Some b ->
                           let b = 1 in b
-            | Nili _#55 ->
+            | Nili unit_proj#55 ->
               (fl)@(tuple_proj#42)
-        | Nili _#57 ->
+        | Nili unit_proj#57 ->
           (fl)@(ys)
     const t11 = lambda (x) return lambda (y) return let #59 = ( x , y ) in
      match #59 with
@@ -433,7 +446,7 @@ let%expect_test _ =
                   let #66 = ctor_proj#77 in  match #66 with
                                               | Some a ->
                                                 a
-                                              | None _#67 ->
+                                              | None unit_proj#67 ->
                                                 ADD((fo)@(ctor_proj#77) ,
                                                 (fo)@(ctor_proj#75))
                 | Some a ->
@@ -442,7 +455,7 @@ let%expect_test _ =
                       let #66 = ctor_proj#77 in  match #66 with
                                                   | Some a ->
                                                     a
-                                                  | None _#67 ->
+                                                  | None unit_proj#67 ->
                                                     ADD((fo)@(ctor_proj#77) ,
                                                     (fo)@(ctor_proj#75))
                     | Consi ctor_proj#69 ->
@@ -451,15 +464,15 @@ let%expect_test _ =
                           let #66 = ctor_proj#77 in  match #66 with
                                                       | Some a ->
                                                         a
-                                                      | None _#67 ->
+                                                      | None unit_proj#67 ->
                                                         ADD((fo)@(ctor_proj#77) ,
                                                         (fo)@(ctor_proj#75))
                         | Some b ->
                           let a = 1 in ADD(a ,
                           b)
-            | Nili _#74 ->
+            | Nili unit_proj#74 ->
               (fl)@(tuple_proj#60)
-        | Nili _#76 ->
+        | Nili unit_proj#76 ->
           (fl)@(ys)
     type recordi = record[a -> option (list (int)) , b -> list (int)]
     const none_a = record[a -> NONE() , b -> CONS(42 , LIST_EMPTY())]

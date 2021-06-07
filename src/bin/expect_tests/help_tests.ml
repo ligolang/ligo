@@ -42,7 +42,14 @@ let%expect_test _ =
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
 
+           evaluate-call
+               Subcommand: Run a function with the given parameter.
+
+           evaluate-expr
+               Subcommand: Evaluate a given definition.
+
            evaluate-value
+               Deprecated, renamed to evaluate-expr. Use evaluate-expr instead.
                Subcommand: Evaluate a given definition.
 
            get-scope
@@ -102,6 +109,7 @@ let%expect_test _ =
                Subcommand: REPL
 
            run-function
+               Deprecated, renamed to evaluate-call. Use evaluate-call instead.
                Subcommand: Run a function with the given parameter.
 
            test
@@ -162,7 +170,14 @@ let%expect_test _ =
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
 
+           evaluate-call
+               Subcommand: Run a function with the given parameter.
+
+           evaluate-expr
+               Subcommand: Evaluate a given definition.
+
            evaluate-value
+               Deprecated, renamed to evaluate-expr. Use evaluate-expr instead.
                Subcommand: Evaluate a given definition.
 
            get-scope
@@ -222,6 +237,7 @@ let%expect_test _ =
                Subcommand: REPL
 
            run-function
+               Deprecated, renamed to evaluate-call. Use evaluate-call instead.
                Subcommand: Run a function with the given parameter.
 
            test
@@ -588,14 +604,14 @@ let%expect_test _ =
                BOOL indicates whether warning messages should be treated as
                errors or not |} ] ;
 
-  run_ligo_good [ "run-function" ; "--help" ] ;
+  run_ligo_good [ "evaluate-call" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-run-function - Subcommand: Run a function with the given
+           ligo-evaluate-call - Subcommand: Run a function with the given
            parameter.
 
     SYNOPSIS
-           ligo run-function [OPTION]... SOURCE_FILE ENTRY_POINT
+           ligo evaluate-call [OPTION]... SOURCE_FILE ENTRY_POINT
            PARAMETER_EXPRESSION
 
     DESCRIPTION
@@ -662,20 +678,28 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
+               Show version information.
 
-  run_ligo_good [ "evaluate-value" ; "--help" ] ;
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
+
+  run_ligo_good [ "evaluate-expr" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-evaluate-value - Subcommand: Evaluate a given definition.
+           ligo-evaluate-expr - Subcommand: Evaluate a given definition.
 
     SYNOPSIS
-           ligo evaluate-value [OPTION]... SOURCE_FILE ENTRY_POINT
+           ligo evaluate-expr [OPTION]... SOURCE_FILE ENTRY_POINT
 
     DESCRIPTION
            This sub-command evaluates a LIGO definition. The context is
            initialized from a source file where the definition is written. The
-           interpretation is done using Michelson's interpreter.
+           interpretation is done using a Michelson interpreter.
 
     ARGUMENTS
            ENTRY_POINT (required)
@@ -733,7 +757,15 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|

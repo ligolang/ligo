@@ -334,8 +334,9 @@ and print_pattern state = function
     print_csv state print_pattern ptuple
 | PList p ->
     print_list_pattern state p
-| PVar v ->
-    print_pvar state v
+| PVar {var; attributes} ->
+    print_pvar state var;
+    print_attributes state attributes
 | PInt i -> print_int state i
 | PNat i -> print_nat state i
 | PBytes b -> print_bytes state b
@@ -825,9 +826,12 @@ and pp_pattern state = function
   PConstr p ->
     pp_node state "PConstr";
     pp_constr_pattern (state#pad 1 0) p
-| PVar v ->
-    pp_node  state "PVar";
-    pp_ident (state#pad 1 0) v
+| PVar {var;attributes} ->
+   pp_node state "PVar";
+   let arity = if attributes = [] then 1 else 2 in
+   pp_ident (state#pad 1 0) var;
+   if attributes <> [] then
+     pp_attributes (state#pad arity 1) attributes
 | PInt i ->
     pp_node state "PInt";
     pp_int  state i

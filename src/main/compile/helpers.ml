@@ -14,7 +14,7 @@ let protocol_to_variant : string -> (Environment.Protocols.t, all) result =
   @@ Environment.Protocols.protocols_to_variant s
 
 let get_initial_env  : ?test_env:bool -> string -> (Ast_typed.environment, all) result = fun ?(test_env=false) protocol_as_str ->
-  let%bind protocol = protocol_to_variant protocol_as_str in
+  let* protocol = protocol_to_variant protocol_as_str in
   ok @@ (if test_env then Environment.default_with_test else Environment.default) protocol
 
 (*TODO : move this function to src/helpers so that src/build/.. can use it *)
@@ -70,118 +70,118 @@ let preprocess_string ~(options:options) ~meta file_path =
 type file_path = string
 
 let parse_and_abstract_pascaligo buffer file_path =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Pascaligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_pascaligo_tracer @@
     Self_cst.Pascaligo.all_module raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_pascaligo_tracer @@
     Tree_abstraction.Pascaligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_pascaligo buffer =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Pascaligo.parse_expression buffer in
-  let%bind applied =
+  let* applied =
     trace self_cst_pascaligo_tracer @@
     Self_cst.Pascaligo.all_expression raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_pascaligo_tracer @@
     Tree_abstraction.Pascaligo.compile_expression applied
   in ok imperative
 
 let parse_and_abstract_cameligo buffer file_path =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Cameligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_cameligo_tracer @@
     Self_cst.Cameligo.all_module raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_cameligo buffer =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Cameligo.parse_expression buffer in
-  let%bind applied =
+  let* applied =
     trace self_cst_cameligo_tracer @@
     Self_cst.Cameligo.all_expression raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.compile_expression applied
   in ok imperative
 
 let parse_and_abstract_reasonligo buffer file_path =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Reasonligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_reasonligo_tracer @@
     Self_cst.Reasonligo.all_module raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_reasonligo buffer =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Reasonligo.parse_expression buffer in
-  let%bind applied =
+  let* applied =
     trace self_cst_reasonligo_tracer @@
     Self_cst.Reasonligo.all_expression raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.compile_expression applied
   in ok imperative
 
 let parse_and_abstract_jsligo buffer file_path =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_jsligo_tracer @@
     Self_cst.Jsligo.all_module raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_jsligo buffer =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_expression buffer in
-  let%bind applied =
+  let* applied =
     trace self_cst_jsligo_tracer @@
     Self_cst.Jsligo.all_expression raw in
-  let%bind imperative =
+  let* imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_expression applied
   in ok imperative
 
 let parse_and_abstract ~meta buffer file_path
     : (Ast_imperative.module_, _) Trace.result =
-  let%bind parse_and_abstract =
+  let* parse_and_abstract =
     match meta.syntax with
       PascaLIGO  -> ok parse_and_abstract_pascaligo
     | CameLIGO   -> ok parse_and_abstract_cameligo
     | ReasonLIGO -> ok parse_and_abstract_reasonligo
     | JsLIGO     -> ok parse_and_abstract_jsligo in
-  let%bind abstracted =
+  let* abstracted =
     parse_and_abstract buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_ast_imperative_tracer @@
     Self_ast_imperative.all_module abstracted in
   ok applied
 
 let parse_and_abstract_expression ~meta buffer =
-  let%bind parse_and_abstract =
+  let* parse_and_abstract =
     match meta.syntax with
       PascaLIGO ->
         ok parse_and_abstract_expression_pascaligo
@@ -192,49 +192,49 @@ let parse_and_abstract_expression ~meta buffer =
     | JsLIGO ->
         ok parse_and_abstract_expression_jsligo
       in
-  let%bind abstracted =
+  let* abstracted =
     parse_and_abstract buffer in
-  let%bind applied =
+  let* applied =
     trace self_ast_imperative_tracer @@
     Self_ast_imperative.all_expression abstracted
   in ok applied
 
 let parse_and_abstract_string_reasonligo buffer =
-  let%bind raw = trace parser_tracer @@
+  let* raw = trace parser_tracer @@
     Parsing.Reasonligo.parse_string buffer in
-  let%bind imperative = trace cit_reasonligo_tracer @@
+  let* imperative = trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_pascaligo buffer =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Pascaligo.parse_string buffer in
-  let%bind imperative =
+  let* imperative =
     trace cit_pascaligo_tracer @@
     Tree_abstraction.Pascaligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_cameligo buffer =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Cameligo.parse_string buffer in
-  let%bind imperative =
+  let* imperative =
     trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_jsligo buffer =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_string buffer in
-  let%bind imperative =
+  let* imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string syntax buffer =
-  let%bind parse_and_abstract =
+  let* parse_and_abstract =
     match syntax with
       PascaLIGO ->
         ok parse_and_abstract_string_pascaligo
@@ -244,9 +244,9 @@ let parse_and_abstract_string syntax buffer =
         ok parse_and_abstract_string_reasonligo
     | JsLIGO ->
       ok parse_and_abstract_string_jsligo in
-  let%bind abstracted =
+  let* abstracted =
     parse_and_abstract buffer in
-  let%bind applied =
+  let* applied =
     trace self_ast_imperative_tracer @@
     Self_ast_imperative.all_module abstracted
   in ok applied

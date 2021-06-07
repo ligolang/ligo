@@ -45,14 +45,14 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
       let other_rows_lhs = Grouped_by_variable.get_rows_by_lhs (repr c.tv) Indexes.grouped_by_variable in
       let tmp = Grouped_by_variable.get_constructors_by_lhs (repr c.tv) Indexes.grouped_by_variable in
       let other_constructors_lhs = 
-        List.filter (fun x -> not @@  (Type_variable_abstraction.Compare.c_constructor_simpl c x = 0)) @@ MultiSet.elements @@
+        List.filter ~f:(fun x -> not @@  (Type_variable_abstraction.Compare.c_constructor_simpl c x = 0)) @@ MultiSet.elements @@
         tmp in
       (* Format.eprintf "Other constructor : (%a)\n%!" Type_variable_abstraction.PP.(list_sep_d c_constructor_simpl_short) other_constructors_lhs; *)
       let () = ( if MultiSet.is_empty other_rows_lhs
                  then ()
                  else failwith (Format.asprintf "TODO: type error with %a ; %a" Type_variable_abstraction.PP.c_constructor_simpl c (MultiSet.pp Type_variable_abstraction.PP.c_row_simpl) other_rows_lhs))
       in    
-      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) other_constructors_lhs in
+      let cs_pairs = List.map ~f:(fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) other_constructors_lhs in
       cs_pairs
     )
     | SC_Alias       _                -> []
@@ -62,13 +62,13 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
     | SC_Row         r                -> (
       (* Format.eprintf "In break_ctor.selector_ for %a\n%!" Type_variable_abstraction.PP.type_constraint_simpl_short type_constraint_simpl; *)
       let other_rows_lhs = 
-        List.filter (fun x -> not @@  (Type_variable_abstraction.Compare.c_row_simpl r x = 0)) @@ MultiSet.elements @@
+        List.filter ~f:(fun x -> not @@  (Type_variable_abstraction.Compare.c_row_simpl r x = 0)) @@ MultiSet.elements @@
         Grouped_by_variable.get_rows_by_lhs (repr r.tv) Indexes.grouped_by_variable in
       let constructors_lhs = Grouped_by_variable.get_constructors_by_lhs (repr r.tv) Indexes.grouped_by_variable in
       let () = ( if MultiSet.is_empty constructors_lhs
                  then ()
                  else failwith (Format.asprintf "TODO: type error with %a ; %a" Type_variable_abstraction.PP.c_row_simpl r (MultiSet.pp Type_variable_abstraction.PP.c_constructor_simpl) constructors_lhs)) in
-      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) other_rows_lhs in
+      let cs_pairs = List.map ~f:(fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) other_rows_lhs in
       cs_pairs
     )
 
@@ -87,8 +87,8 @@ let alias_selector : type_variable -> type_variable -> flds -> selector_output l
   let b_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
   let a_ctor = MultiSet.map_elements (fun a -> `Constructor a) a_constructors in
   let b_ctor = MultiSet.map_elements (fun a -> `Constructor a) b_constructors in
-  let a_row = List.map (fun a -> `Row a) (MultiSet.elements a_rows) in
-  let b_row = List.map (fun a -> `Row a) (MultiSet.elements b_rows) in
+  let a_row = List.map ~f:(fun a -> `Row a) (MultiSet.elements a_rows) in
+  let b_row = List.map ~f:(fun a -> `Row a) (MultiSet.elements b_rows) in
   match a_ctor @ a_row with
   | [] -> []
   | old_ctors_hd :: _ ->
@@ -157,24 +157,25 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
     | _ -> failwith "type error : break_ctor propagator"
   );
   (* Produce constraint a.tv_list = b.tv_list *)
-  let%bind eqs3 =
+  let* eqs3 =
     match a , b with
     | `Row a , `Row b ->
       let aux = fun ((la,{associated_variable=aa;_}),(lb,{associated_variable=bb;})) ->
-        let%bind () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
+        let* () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
         ok @@ c_equation
           (wrap (Propagator_break_ctor "a") @@ P_variable (repr aa))
           (wrap (Propagator_break_ctor "b") @@ P_variable (repr bb))
           "propagator: break_ctor: row"
       in
-      let%bind bindings =  List.map2 (fun x y -> (x,y)) (LMap.bindings a.tv_map) (LMap.bindings b.tv_map)
-        ~ok ~fail:(fun _ _-> fail @@ (corner_case "TODO: different number of labels (List.length a.tv_map) (List.length b.tv_map)"))
+      let* bindings =  
+        match List.map2 ~f:(fun x y -> (x,y)) (LMap.bindings a.tv_map) (LMap.bindings b.tv_map)
+        with Ok a -> ok @@ a | List.Or_unequal_lengths.Unequal_lengths -> fail @@ (corner_case "TODO: different number of labels (List.length a.tv_map) (List.length b.tv_map)")
       in
       bind_map_list aux bindings
     | `Constructor a , `Constructor b -> (
       let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable (repr aa)) (wrap (Propagator_break_ctor "b") @@ P_variable (repr bb)) "propagator: break_ctor: ctor" in
-      List.map2 aux a.tv_list b.tv_list
-        ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list))
+        match List.map2 ~f:aux a.tv_list b.tv_list
+        with Ok a -> ok @@ a | List.Or_unequal_lengths.Unequal_lengths -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list)
     )
     | _ -> failwith "type error in eqs3"
   in

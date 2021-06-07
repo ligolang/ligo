@@ -16,14 +16,16 @@ let peep_of_option : 'a list option -> 'a peep = function
   | None -> No_change
   | Some xs -> Changed xs
 
-(* A let%bind syntax for Peep, see example usage in peepN below *)
+(* A let* syntax for Peep, see example usage in peepN below *)
 type peep_dummy = Peep_dummy | Peek_dummy
 let peep = Peep_dummy
 let peek = Peek_dummy
 module Let_syntax = struct
   let bind : peep_dummy -> f:('a -> 'a peep) -> 'a peep =
     fun _ ~f -> Peep f
+  let (let*) x f = bind ~f x
 end
+open Let_syntax
 
 (* These are used for backwards compatibility with the legacy
    definitions in self_michelson.ml. They can be less efficient than
@@ -37,33 +39,33 @@ type 'a peep4 = 'a * 'a * 'a * 'a -> 'a list option
 type 'a peep5 = 'a * 'a * 'a * 'a * 'a -> 'a list option
 
 let peep1 (f : _ peep1) : _ peep =
-  let%bind x1 = peep in
+  let* x1 = peep in
   peep_of_option (f x1)
 
 let peep2 (f : _ peep2) : _ peep =
-  let%bind x1 = peep in
-  let%bind x2 = peep in
+  let* x1 = peep in
+  let* x2 = peep in
   peep_of_option (f (x1, x2))
 
 let peep3 (f : _ peep3) : _ peep =
-  let%bind x1 = peep in
-  let%bind x2 = peep in
-  let%bind x3 = peep in
+  let* x1 = peep in
+  let* x2 = peep in
+  let* x3 = peep in
   peep_of_option (f (x1, x2, x3))
 
 let peep4 (f : _ peep4) : _ peep =
-  let%bind x1 = peep in
-  let%bind x2 = peep in
-  let%bind x3 = peep in
-  let%bind x4 = peep in
+  let* x1 = peep in
+  let* x2 = peep in
+  let* x3 = peep in
+  let* x4 = peep in
   peep_of_option (f (x1, x2, x3, x4))
 
 let peep5 (f : _ peep5) : _ peep =
-  let%bind x1 = peep in
-  let%bind x2 = peep in
-  let%bind x3 = peep in
-  let%bind x4 = peep in
-  let%bind x5 = peep in
+  let* x1 = peep in
+  let* x2 = peep in
+  let* x3 = peep in
+  let* x4 = peep in
+  let* x5 = peep in
   peep_of_option (f (x1, x2, x3, x4, x5))
 
 (* Unused "left to right" peep interpreter, left here for a moment so
@@ -148,4 +150,4 @@ let rec par2 (f : 'a peep) (g : 'a peep) : 'a peep =
 
 (* Run list of peeps in parallel *)
 let par (fs : 'a peep list) : 'a peep =
-  List.fold_left par2 No_change fs
+  List.fold_left ~f:par2 ~init:No_change fs

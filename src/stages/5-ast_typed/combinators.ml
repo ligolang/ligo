@@ -46,7 +46,7 @@ let t_map_or_big_map ?loc ?core k v : type_expression = t_constant ?loc ?core ma
 let t_record ?loc ?core ~layout content  : type_expression = make_t ?loc (T_record {content;layout}) core
 let default_layout = L_tree
 let make_t_ez_record ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
+  let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i} : row_element)) ) lst in
   let map = LMap.of_list lst in
   t_record ?loc ?core ~layout map
 
@@ -66,7 +66,7 @@ let t_triplet ?loc ?core a b c : type_expression =
     
 let t_sum ?loc ?core ~layout content : type_expression = make_t ?loc (T_sum {content;layout}) core
 let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
+  let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
   let map = LMap.of_list lst in
   t_sum ?loc ?core ~layout map
 let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
@@ -147,10 +147,10 @@ let get_t_sapling_transaction (t:type_expression) : type_expression option = get
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let opt = LMap.find_opt (Label (string_of_int i)) m in
-    Option.bind (fun opt -> Some (opt,i+1)) opt
+    Option.bind ~f: (fun opt -> Some (opt,i+1)) opt
   in
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
-  List.map (fun {associated_type;_} -> associated_type) l
+  List.map ~f:(fun {associated_type;_} -> associated_type) l
 
 
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
@@ -161,7 +161,7 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
   | T_record m ->
       let lst = tuple_of_record m.content in
       ( match List.(length lst = 2) with
-        | true -> Some (List.(nth lst 0 , nth lst 1))
+        | true -> Some (List.(nth_exn lst 0 , nth_exn lst 1))
         | false -> None
       )
   | _ -> None
@@ -249,15 +249,15 @@ let assert_t_list_operation (t : type_expression) : unit option =
 let assert_t_int : type_expression -> unit option = fun t -> get_t_base_inj t int_name
 let assert_t_nat : type_expression -> unit option = fun t -> get_t_base_inj t nat_name
 let assert_t_bool : type_expression -> unit option = fun v -> get_t_bool v
-let assert_t_option : type_expression -> unit option = fun v -> Option.map (fun _ -> ()) @@ get_t_option v
-let assert_t_set : type_expression -> unit option = fun v -> Option.map (fun _ -> ()) @@ get_t_set v
-let assert_t_list : type_expression -> unit option = fun v -> Option.map (fun _ -> ()) @@ get_t_list v
+let assert_t_option : type_expression -> unit option = fun v -> Option.map ~f:(fun _ -> ()) @@ get_t_option v
+let assert_t_set : type_expression -> unit option = fun v -> Option.map ~f:(fun _ -> ()) @@ get_t_set v
+let assert_t_list : type_expression -> unit option = fun v -> Option.map ~f:(fun _ -> ()) @@ get_t_list v
 let assert_t_unit : type_expression -> unit option = fun v -> get_t_unit v
 
 let e_record map : expression_content = E_record map
 let ez_e_record (lst : (label * expression) list) : expression_content =
   let aux prev (k, v) = LMap.add k v prev in
-  let map = List.fold_left aux LMap.empty lst in
+  let map = List.fold_left ~f:aux ~init:LMap.empty lst in
   e_record map
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
@@ -308,7 +308,7 @@ let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layou
     r ))
 let e_a_application a b t = make_e (e_application a b) t
 let e_a_variable v ty = make_e (e_variable v) ty
-let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
+let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi ~f:(fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 let e_a_raw_code l c t = make_e (e_raw_code l c) t
 
@@ -363,7 +363,7 @@ let get_declaration_by_name : module_fully_typed -> string -> declaration option
     | Declaration_module _
     | Module_alias       _ -> false
   in
-  List.find_opt aux @@ List.map Location.unwrap p
+  List.find ~f:aux @@ List.map ~f:Location.unwrap p
 
 let get_record_field_type (t : type_expression) (label : label) : type_expression option =
   match get_t_record t with

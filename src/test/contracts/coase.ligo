@@ -45,10 +45,10 @@ type parameter is
 | Transfer_single of action_transfer_single
 
 function transfer_single (const action : action_transfer_single;
-                          const s : storage) : return is
+                          var s : storage) : return is
   block {
-    const cards : cards = s.cards;
-    const card : card =
+    var cards : cards := s.cards;
+    var card : card :=
       case cards[action.card_to_transfer] of
         Some (card) -> card
       | None -> (failwith ("transfer_single: No card.") : card)
@@ -62,7 +62,7 @@ function transfer_single (const action : action_transfer_single;
   } with ((nil : list (operation)), s)
 
 function sell_single (const action : action_sell_single;
-                      const s : storage) : return is
+                      var s : storage) : return is
   block {
     const card : card =
       case s.cards[action.card_to_sell] of
@@ -72,16 +72,16 @@ function sell_single (const action : action_sell_single;
     if card.card_owner =/= sender
     then failwith ("This card doesn't belong to you")
     else skip;
-    const card_pattern : card_pattern =
+    var card_pattern : card_pattern :=
       case s.card_patterns[card.card_pattern] of
         Some (pattern) -> pattern
       | None -> (failwith ("sell_single: No card pattern.") : card_pattern)
       end;
     card_pattern.quantity := abs (card_pattern.quantity - 1n);
-    const card_patterns : card_patterns = s.card_patterns;
+    var card_patterns : card_patterns := s.card_patterns;
     card_patterns[card.card_pattern] := card_pattern;
     s.card_patterns := card_patterns;
-    const cards : cards = s.cards;
+    var cards : cards := s.cards;
     remove action.card_to_sell from map cards;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
@@ -95,10 +95,10 @@ function sell_single (const action : action_sell_single;
   } with (operations, s)
 
 function buy_single (const action : action_buy_single;
-                     const s : storage) : return is
+                     var s : storage) : return is
   block {
     // Check funds
-    const card_pattern : card_pattern =
+    var card_pattern : card_pattern :=
       case s.card_patterns[action.card_to_buy] of
         Some (pattern) -> pattern
       | None -> (failwith ("buy_single: No card pattern.") : card_pattern)
@@ -108,11 +108,11 @@ function buy_single (const action : action_buy_single;
     if price > amount then failwith ("Not enough money") else skip;
     // Increase quantity
     card_pattern.quantity := card_pattern.quantity + 1n;
-    const card_patterns : card_patterns = s.card_patterns;
+    var card_patterns : card_patterns := s.card_patterns;
     card_patterns[action.card_to_buy] := card_pattern;
     s.card_patterns := card_patterns;
     // Add card
-    const cards : cards = s.cards;
+    var cards : cards := s.cards;
     cards[s.next_id] := record [
       card_owner   = sender;
       card_pattern = action.card_to_buy

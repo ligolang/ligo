@@ -14,9 +14,9 @@ let pretty_print formatter (m : module_) =
 
 let list_declarations (m : module_) : string list =
   List.fold_left
-    (fun prev el ->
+    ~f:(fun prev el ->
       let open Location in
       match el.wrap_content with
       | Declaration_constant {binder;_} -> (Var.to_name binder.var.wrap_content)::prev
       | _ -> prev)
-    [] m
+    ~init:[] m

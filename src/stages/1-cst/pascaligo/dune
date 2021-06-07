@@ -1,6 +1,7 @@
 (library
   (name cst_pascaligo)
   (public_name ligo.cst.pascaligo)
+  (instrumentation (backend bisect_ppx))
   (libraries
     ;; Vendors
     LexerLib
@@ -9,5 +10,4 @@
     hex
     zarith)
   (modules CST Printer)
-  (preprocess
-    (pps ppx_let bisect_ppx --conditional)))
+)

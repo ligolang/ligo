@@ -1,15 +1,13 @@
 (library
   (name environment)
   (public_name ligo.environment)
+  (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
     tezos-utils
     ast_typed
     stage_common
     typesystem
-  )
-  (preprocess
-    (pps ppx_let bisect_ppx --conditional)
   )
   (flags (:standard -open Simple_utils))
 )

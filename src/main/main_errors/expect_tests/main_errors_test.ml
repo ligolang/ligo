@@ -324,7 +324,7 @@ let%expect_test "main_cit_cameligo" =
   let open Location in
   let error e = human_readable_error (`Main_cit_cameligo e) in
   let variable = {value= "dog"; region= default_region1} in
-  let pvar = PVar variable in
+  let pvar = PVar { var = variable; attributes = []} in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
   error (`Concrete_cameligo_recursive_fun default_region1) ;
@@ -381,7 +381,7 @@ let%expect_test "main_cit_reasonligo" =
   let open Location in
   let error e = human_readable_error (`Main_cit_reasonligo e) in
   let variable = {value= "dog"; region= default_region1} in
-  let pvar = PVar variable in
+  let pvar = PVar {var = variable; attributes = []} in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
   error (`Concrete_reasonligo_unknown_predefined_type variable) ;

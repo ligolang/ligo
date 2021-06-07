@@ -76,20 +76,21 @@ module Command = struct
     = fun command ctxt _log ->
     match command with
     | Reset_state (loc,n,amts) ->
-      let%bind amts = trace_option (corner_case ()) @@ LC.get_list amts in
-      let%bind amts = bind_map_list
+      let* amts = trace_option (corner_case ()) @@ LC.get_list amts in
+      let* amts = bind_map_list
         (fun x ->
-          let%bind x = trace_option (corner_case ()) @@ LC.get_nat x in
+          let* x = trace_option (corner_case ()) @@ LC.get_nat x in
           ok (Z.to_int64 x) )
         amts
       in
-      let%bind n = trace_option (corner_case ()) @@ LC.get_nat n in
-      let%bind ctxt = Tezos_state.init_ctxt ~loc ~initial_balances:amts ~n:(Z.to_int n) () in
+      let* n = trace_option (corner_case ()) @@ LC.get_nat n in
+      let* ctxt = Tezos_state.init_ctxt ~loc ~initial_balances:amts ~n:(Z.to_int n) () in
       ok ((),ctxt)
     | External_call (loc, addr, param, amt) -> (
       match addr, param , amt with
       | V_Ct ( C_address dst) , V_Michelson (Ty_code (param,_,_)), V_Ct ( C_nat amt ) -> (
-        match%bind Tezos_state.transfer ~loc ctxt dst param amt with
+        let* x = Tezos_state.transfer ~loc ctxt dst param amt in 
+        match x with
         | Success ctxt -> ok (None, ctxt)
         | Fail errs -> ok (Some errs, ctxt)
       )
@@ -107,32 +108,36 @@ module Command = struct
         ok (LC.v_ctor "Fail" (LC.v_ctor "Other" (LC.v_unit ())), ctxt)
     )
     | Get_storage (loc, addr) ->
-      let%bind addr = trace_option (corner_case ()) @@ LC.get_address addr in
-      let%bind (storage',ty) = Tezos_state.get_storage ~loc ctxt addr in
+      let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
+      let* (storage',ty) = Tezos_state.get_storage ~loc ctxt addr in
       let storage = storage'
         |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
       in
-      let ret = LT.V_Michelson (Ty_code (storage,ty,Ast_typed.t_unit ())) in
+      let* ligo_ty =
+        trace_option (Errors.generic_error loc "Not supported (yet) when the provided account has been fetched from Test.get_last_originations" ) @@
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.storage_tys addr
+      in
+      let ret = LT.V_Michelson (Ty_code (storage,ty,ligo_ty)) in
       ok (ret, ctxt)
     | Get_balance (loc,addr) ->
-      let%bind addr = trace_option (corner_case ()) @@ LC.get_address addr in
-      let%bind balance = Tezos_state.get_balance ~loc ctxt addr in
+      let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
+      let* balance = Tezos_state.get_balance ~loc ctxt addr in
       let mutez = Michelson_backend.int_of_mutez balance in
       let mich_data = let open Tezos_utils.Michelson in (int mutez, prim "mutez" , Ast_typed.t_mutez ()) in
       let balance = LT.V_Michelson (Ty_code mich_data) in
       ok (balance, ctxt)
     | Compile_expression (loc, source_file, syntax, exp_as_string, subst_opt) ->
-      let%bind file_opt = trace_option (corner_case ()) @@ LC.get_string_option source_file in
-      let%bind substs =
+      let* file_opt = trace_option (corner_case ()) @@ LC.get_string_option source_file in
+      let* substs =
         match subst_opt with
         | None -> ok []
         | Some substs ->
-          let%bind lst = trace_option (corner_case ()) @@ LC.get_list substs in
+          let* lst = trace_option (corner_case ()) @@ LC.get_list substs in
           let aux = fun el ->
-            let%bind (s,c) = trace_option (corner_case ()) @@ LC.get_pair el in
-            let%bind s = trace_option (corner_case ()) @@ LC.get_string s in
-            let%bind i = trace_option (corner_case ()) @@ LC.get_michelson_expr c in
+            let* (s,c) = trace_option (corner_case ()) @@ LC.get_pair el in
+            let* s = trace_option (corner_case ()) @@ LC.get_string s in
+            let* i = trace_option (corner_case ()) @@ LC.get_michelson_expr c in
             ok (s, i)
           in
           bind_map_list aux lst
@@ -140,58 +145,59 @@ module Command = struct
       let aux = fun exp_str (s,_) -> (* TODO: a bit naive .. *)
         Str.substitute_first (Str.regexp ("\\$"^s)) (fun _ -> Michelson_backend.subst_vname s) exp_str
       in
-      let exp_as_string' = List.fold_left aux exp_as_string substs in
-      let%bind (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~loc syntax exp_as_string' file_opt substs in
+      let exp_as_string' = List.fold_left ~f:aux ~init:exp_as_string substs in
+      let* (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~loc syntax exp_as_string' file_opt substs in
       ok (LT.V_Michelson (LT.Ty_code (mich_v, mich_ty, object_ty)), ctxt)
     | Compile_meta_value (loc,x) ->
-      let%bind x = Michelson_backend.compile_simple_val ~loc x in
+      let* x = Michelson_backend.compile_simple_val ~loc x in
       ok (LT.V_Michelson (LT.Ty_code x), ctxt)
     | Compile_contract (source_file, entrypoint) ->
-      let%bind contract_code = Michelson_backend.compile_contract source_file entrypoint in
-      let%bind size =
-        let%bind s = Ligo_compile.Of_michelson.measure contract_code in
+      let* contract_code = Michelson_backend.compile_contract source_file entrypoint in
+      let* size =
+        let* s = Ligo_compile.Of_michelson.measure contract_code in
         ok @@ LT.V_Ct (C_int (Z.of_int s))
       in
       let contract = LT.V_Michelson (LT.Contract contract_code) in
       ok ((contract,size), ctxt)
     | Inject_script (loc, code, storage) -> (
-      let%bind contract_code = trace_option (corner_case ()) @@ LC.get_michelson_contract code in
-      let%bind (storage,_,_) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
-      let%bind (contract, res) = Tezos_state.originate_contract ~loc ctxt contract_code storage in
+      let* contract_code = trace_option (corner_case ()) @@ LC.get_michelson_contract code in
+      let* (storage,_,ligo_ty) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
+      let* (contract, res) = Tezos_state.originate_contract ~loc ctxt contract_code storage in
       match res with
       | Tezos_state.Success ctxt ->
         let addr = LT.V_Ct ( C_address contract ) in
-        ok (addr, ctxt)
+        let storage_tys = (contract, ligo_ty) :: (ctxt.storage_tys) in
+        ok (addr, {ctxt with storage_tys})
       | Tezos_state.Fail errs -> raise (Exc.Object_lang_ex (loc,errs))
     )
     | Set_now (loc, now) ->
-      let%bind ctxt = Tezos_state.set_timestamp ~loc ctxt now in
+      let* ctxt = Tezos_state.set_timestamp ~loc ctxt now in
       ok ((), ctxt) 
     | Set_source source ->
-      let%bind source = trace_option (corner_case ()) @@ LC.get_address source in
+      let* source = trace_option (corner_case ()) @@ LC.get_address source in
       ok ((), {ctxt with source })
     | Set_baker baker ->
-      let%bind baker = trace_option (corner_case ()) @@ LC.get_address baker in
+      let* baker = trace_option (corner_case ()) @@ LC.get_address baker in
       ok ((), {ctxt with baker })
     | Get_bootstrap (loc,x) -> (
-      let%bind x = trace_option (corner_case ()) @@ LC.get_int x in
-      match List.nth_opt ctxt.bootstrapped (Z.to_int x) with
+      let* x = trace_option (corner_case ()) @@ LC.get_int x in
+      match List.nth ctxt.bootstrapped (Z.to_int x) with
       | Some x -> ok (LT.V_Ct (C_address x), ctxt)
       | None -> fail (Errors.generic_error loc "This bootstrap account do not exist")
     )
     | Michelson_equal (loc,a,b) ->
-      let%bind (a,_,_) = trace_option (Errors.generic_error loc "Can't compare contracts") @@
+      let* (a,_,_) = trace_option (Errors.generic_error loc "Can't compare contracts") @@
         LC.get_michelson_expr a in
-      let%bind (b,_,_) = trace_option (Errors.generic_error loc "Can't compare contracts") @@
+      let* (b,_,_) = trace_option (Errors.generic_error loc "Can't compare contracts") @@
         LC.get_michelson_expr b in
       ok ((a=b), ctxt)
     | Get_last_originations () ->
       let aux (src, lst) =
         let src = LC.v_address src in
-        let lst = LT.V_List (List.map LC.v_address lst) in
+        let lst = LT.V_List (List.map ~f:LC.v_address lst) in
         (src, lst)
       in
-      let v = LT.V_Map (List.map aux ctxt.last_originations) in
+      let v = LT.V_Map (List.map ~f:aux ctxt.last_originations) in
       ok (v,ctxt)
     | Int_compare_wrapped (x, y) ->
       ok (wrap_compare Int_repr.compare x y, ctxt)
@@ -254,11 +260,11 @@ let rec bind_list = function
     let* tl = bind_list tl in
     return @@ hd :: tl
 
-let bind_map_list f lst = bind_list (List.map f lst)
+let bind_map_list f lst = bind_list (List.map ~f:f lst)
 
 let bind_fold_list f init lst =
   let aux x y =
     let* x = x in
     f x y
   in
-  List.fold_left aux (return init) lst
+  List.fold_left ~f:aux ~init:(return init) lst

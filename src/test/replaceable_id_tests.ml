@@ -1,24 +1,13 @@
 open Trace
 open Test_helpers
 
-let type_file ~options f = Ligo_compile.Utils.type_file ~options f "pascaligo" (Contract "main")
-
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let options = Compiler_options.make () in
-      let%bind program = type_file ~options "./contracts/replaceable_id.ligo" in
-      s := Some program ;
-      ok program
-    )
+let get_program = get_program "./contracts/replaceable_id.ligo" (Contract "main")
       
 let compile_main () =
-  let%bind typed_prg,_     = get_program () in
-  let%bind mini_c_prg      = Ligo_compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
-  let%bind _contract =
+  let* typed_prg,_     = get_program () in
+  let* mini_c_prg      = Ligo_compile.Of_typed.compile typed_prg in
+  let* michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let* _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
@@ -38,7 +27,7 @@ let entry_pass_message = e_constructor "Pass_message"
   @@ empty_message
 
 let change_addr_success () =
-  let%bind (program, env) = get_program () in
+  let* (program, env) = get_program () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
@@ -48,7 +37,7 @@ let change_addr_success () =
     (e_pair param init_storage) (e_pair empty_op_list (storage 2))
 
 let change_addr_fail () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
@@ -59,7 +48,7 @@ let change_addr_fail () =
     (e_pair param init_storage) exp_failwith
 
 let pass_message_success () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
@@ -69,7 +58,7 @@ let pass_message_success () =
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
 let pass_message_fail () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =

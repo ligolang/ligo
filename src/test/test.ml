@@ -28,6 +28,8 @@ let () =
     Replaceable_id_tests.main ;
     Time_lock_tests.main ;
     Hash_lock_tests.main ;
+    Hash_lock_tests_p.main ;
+    Hash_lock_tests_re.main ;
     Time_lock_repeat_tests.main ;
     Pledge_tests.main ;
     Tzip12_tests.main ;

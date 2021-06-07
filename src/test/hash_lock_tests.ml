@@ -4,22 +4,13 @@ open Ast_imperative
 open Main_errors
 
 
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let options = Compiler_options.make () in
-      let%bind program = Ligo_compile.Utils.type_file ~options "./contracts/hashlock.mligo" "cameligo" (Contract "main") in
-      s := Some program ;
-      ok program
-    )
+let get_program = get_program "./contracts/hashlock.mligo" (Contract "main")
 
 let compile_main () =
-  let%bind typed_prg,_   = get_program () in
-  let%bind mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
-  let%bind _contract =
+  let* typed_prg,_   = get_program () in
+  let* mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
+  let* michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let* _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
@@ -37,7 +28,7 @@ let storage hashed used commits =
 
 let (first_committer , first_contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth dummy_environment.identities 0 in
+  let id = List.nth_exn dummy_environment.identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
@@ -49,12 +40,12 @@ let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
 
 
 let commit () =
-  let%bind (program,env) = get_program () in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-02T00:10:10Z" in
+  let* (program,env) = get_program () in
+  let* now = mk_time "2000-01-01T00:10:10Z" in
+  let* lock_time = mk_time "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload env (e_address first_committer) in
+  let* packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender]))
@@ -82,7 +73,7 @@ let commit () =
 
 (* Test that the contract fails if we haven't committed before revealing the answer *)
 let reveal_no_commit () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -99,16 +90,16 @@ let reveal_no_commit () =
 
 (* Test that the contract fails if our commit isn't 24 hours old yet *)
 let reveal_young_commit () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-02T00:10:10Z" in
+  let* now = mk_time "2000-01-01T00:10:10Z" in
+  let* lock_time = mk_time "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload env (e_address first_committer) in
+  let* packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender])) in
@@ -131,15 +122,15 @@ let reveal_young_commit () =
 
 (* Test that the contract fails if our reveal doesn't meet our commitment *)
 let reveal_breaks_commit () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
+  let* now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload env (e_address first_committer) in
+  let* packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
@@ -162,15 +153,15 @@ let reveal_breaks_commit () =
 
 (* Test that the contract fails if we reveal the wrong bytes for the stored hash *)
 let reveal_wrong_commit () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
   in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
+  let* now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload env (e_address first_committer) in
+  let* packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
@@ -193,15 +184,15 @@ let reveal_wrong_commit () =
 
 (* Test that the contract fails if we try to reuse it after unused flag changed *)
 let reveal_no_reuse () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
   in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
+  let* now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload env (e_address first_committer) in
+  let* packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
@@ -224,15 +215,15 @@ let reveal_no_reuse () =
 
 (* Test that the contract executes successfully with valid commit-reveal *)
 let reveal () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
+  let* now = mk_time "2000-01-01T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload env (e_address first_committer) in
+  let* packed_sender = pack_payload env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello world";
                                                               packed_sender])) in
@@ -253,7 +244,7 @@ let reveal () =
   expect_eq ~options (program,env) "reveal"
     (e_pair reveal init_storage) (e_pair empty_op_list post_storage)
 
-let main = test_suite "Hashlock" [
+let main = test_suite "Hashlock (CameLIGO)" [
     test "compile" compile_main ;
     test "commit" commit ;
     test "reveal (fail if no commitment)" reveal_no_commit ;

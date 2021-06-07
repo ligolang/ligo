@@ -5,9 +5,9 @@
   (public_name simple-utils)
   (libraries
     ;; Third party
+   base
    yojson
    result
    unix
    str)
-  (preprocess
-    (pps ppx_let)))
+)

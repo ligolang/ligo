@@ -20,23 +20,30 @@
     entrypoint: main
     storage: 0
 *_*)
-// variant defining pseudo multi-entrypoint actions
-type action is
-| Increment of int
+type storage is int
+
+type parameter is
+  Increment of int
 | Decrement of int
+| Reset
 
-function add (const a : int ; const b : int) : int is
-  block { skip } with a + b
+type return is list (operation) * storage
 
-function subtract (const a : int ; const b : int) : int is
-  block { skip } with a - b
+// Two entrypoints
 
-// real entrypoint that re-routes the flow based
-// on the action provided
-function main (const p : action ; const s : int) :
-  (list(operation) * int) is
-  block { skip } with ((nil : list(operation)),
-  case p of
-  | Increment(n) -> add(s, n)
-  | Decrement(n) -> subtract(s, n)
+function add (const store : storage; const delta : int) : storage is 
+  store + delta
+
+function sub (const store : storage; const delta : int) : storage is 
+  store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+   
+function main (const action : parameter; const store : storage) : return is
+ ((nil : list (operation)),    // No operations
+  case action of
+    Increment (n) -> add (store, n)
+  | Decrement (n) -> sub (store, n)
+  | Reset         -> 0
   end)

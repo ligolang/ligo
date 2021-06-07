@@ -91,7 +91,7 @@ let alias_selector_half : type_variable -> type_variable -> flds -> selector_out
   match MultiSet.elements b_rows with
   | [] -> []
   | old_rows_hd :: _ ->
-    List.map (fun al -> {a_r_map = old_rows_hd; a_var_l = al}) (MultiSet.elements a_access_labels)
+    List.map ~f:(fun al -> {a_r_map = old_rows_hd; a_var_l = al}) (MultiSet.elements a_access_labels)
 
 let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
   fun a b indexes ->
@@ -117,7 +117,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   assert (Compare.type_variable row_tv record_type = 0);
   (* produce constraints: *)
 
-  let%bind field_type =
+  let* field_type =
     match LMap.find_opt a_var_l.label a_r_map.tv_map with
     | None -> fail @@ corner_case "Type error: label {a_var_l.label} does not exist in record {a_r_map.tv_map}"
     | Some field_type -> ok @@ repr field_type.associated_variable

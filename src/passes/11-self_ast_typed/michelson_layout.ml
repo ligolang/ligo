@@ -3,7 +3,7 @@ open Ast_typed
 open Trace
 
 let to_sorted_kv_list_l (lmap : row_element label_map) =
-  List.sort (fun (_,({decl_pos=a;_}:row_element)) (_,({decl_pos=b;}:row_element)) -> Int.compare a b) @@
+  List.sort ~compare:(fun (_,({decl_pos=a;_}:row_element)) (_,({decl_pos=b;}:row_element)) -> Int.compare a b) @@
   LMap.to_kv_list_rev lmap
 
 let accessor (record:expression) (path:label) (t:type_expression) =
@@ -162,7 +162,7 @@ let rec from_right_comb_or (to_convert:expression) (e:expression) (matchee_t,bod
         body = br } ] in
     ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
   | m::mtl , b::btl ->
-    let%bind body = from_right_comb_or to_convert e (mtl,btl) in
+    let* body = from_right_comb_or to_convert e (mtl,btl) in
     let cases = [
       { constructor = Label "M_left" ;
         pattern = Location.wrap @@ Var.of_name "x";
@@ -185,7 +185,7 @@ let rec from_left_comb_or (to_convert:expression) (e:expression) (matchee_t,bodi
         body = br } ] in
     ok @@ matching e m (Match_variant { cases ; tv = to_convert.type_expression })
   | m::mtl , b::btl ->
-    let%bind body = from_left_comb_or to_convert e (mtl,btl) in
+    let* body = from_left_comb_or to_convert e (mtl,btl) in
     let cases = [
       { constructor = Label "M_right" ;
         pattern = Location.wrap @@ Var.of_name "x";
@@ -210,7 +210,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
         let src_kvl = to_sorted_kv_list_l src_lmap in
         return @@ E_record (to_left_comb_record to_convert src_kvl LMap.empty)
       | T_sum {content ; _ } ->
-        let%bind dst_cmap = trace_option (corner_case "to_left_comb conversion") @@ get_t_sum e.type_expression in
+        let* dst_cmap = trace_option (corner_case "to_left_comb conversion") @@ get_t_sum e.type_expression in
         let src_kvl = to_sorted_kv_list_l content in
         let bodies = left_comb_variant_combination e dst_cmap.content src_kvl in
         let to_cases ((constructor,{associated_type=_;_}),body) =
@@ -218,7 +218,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
           {constructor ; pattern ; body }
         in
         let cases = Match_variant {
-          cases = List.map to_cases @@ (List.combine src_kvl bodies) ;
+          cases = List.map ~f:to_cases @@ (List.zip_exn src_kvl bodies) ;
           tv = to_convert.type_expression }
         in
         return @@ E_matching {matchee = to_convert ; cases}
@@ -230,7 +230,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
         let src_kvl = to_sorted_kv_list_l src_lmap in
         return @@ E_record ( fst @@ to_right_comb_record to_convert src_kvl LMap.empty)
       | T_sum {content ; _ } ->
-        let%bind dst_cmap = trace_option (corner_case "to_right_comb conversion") @@ get_t_sum e.type_expression in
+        let* dst_cmap = trace_option (corner_case "to_right_comb conversion") @@ get_t_sum e.type_expression in
         let src_kvl = to_sorted_kv_list_l content in
         let bodies = right_comb_variant_combination e dst_cmap.content src_kvl in
         let to_cases ((constructor,{associated_type=_;_}),body) =
@@ -238,7 +238,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
           {constructor ; pattern ; body }
         in
         let cases = Match_variant {
-          cases = List.map to_cases @@ (List.combine src_kvl bodies) ;
+          cases = List.map ~f:to_cases @@ (List.zip_exn src_kvl bodies) ;
           tv = to_convert.type_expression }
         in
         return @@ E_matching {matchee = to_convert ; cases}
@@ -247,36 +247,36 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
   | E_constant {cons_name= (C_CONVERT_FROM_RIGHT_COMB); arguments= [ to_convert ] } -> (
     match to_convert.type_expression.type_content with
       | T_record {content=src_lmap;_} ->
-        let%bind dst_lmap = trace_option (corner_case "from_right_comb conversion") @@ get_t_record e.type_expression in
+        let* dst_lmap = trace_option (corner_case "from_right_comb conversion") @@ get_t_record e.type_expression in
         let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         return @@ E_record (from_right_comb_record to_convert src_lmap dst_kvl LMap.empty)
       | T_sum src_lmap ->
-        let%bind dst_lmap = trace_option (corner_case "from_right_comb conversion") @@ get_t_sum e.type_expression in
+        let* dst_lmap = trace_option (corner_case "from_right_comb conversion") @@ get_t_sum e.type_expression in
         let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         let intermediary_types i = descend_types "M_right" src_lmap.content i in
-        let matchee = to_convert :: (List.map (fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
+        let matchee = to_convert :: (List.map ~f:(fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
         let bodies = List.map
-          (fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
+          ~f:(fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
           dst_kvl in
-        let%bind match_expr = from_right_comb_or to_convert e (matchee,bodies) in
+        let* match_expr = from_right_comb_or to_convert e (matchee,bodies) in
         return match_expr.expression_content
       | _ -> return e.expression_content
   )
   | E_constant {cons_name= (C_CONVERT_FROM_LEFT_COMB); arguments= [ to_convert ] } -> (
     match to_convert.type_expression.type_content with
       | T_record {content=src_lmap;_} ->
-        let%bind dst_lmap = trace_option (corner_case "from_left_comb conversion") @@ get_t_record e.type_expression in
+        let* dst_lmap = trace_option (corner_case "from_left_comb conversion") @@ get_t_record e.type_expression in
         let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         return @@ E_record (from_left_comb to_convert src_lmap dst_kvl LMap.empty)
       | T_sum src_lmap ->
-        let%bind dst_lmap = trace_option (corner_case "from_left_comb conversion") @@  get_t_sum e.type_expression in
+        let* dst_lmap = trace_option (corner_case "from_left_comb conversion") @@  get_t_sum e.type_expression in
         let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         let intermediary_types i = descend_types "M_left" src_lmap.content i in
-        let matchee = to_convert :: (List.map (fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
+        let matchee = to_convert :: (List.map ~f:(fun t -> match_var t) @@ intermediary_types ((List.length dst_kvl)-2)) in
         let bodies = List.map
-          (fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
+          ~f:(fun (ctor , {associated_type;_}) -> constructor ctor (match_var associated_type) e.type_expression)
           (List.rev dst_kvl) in
-        let%bind match_expr = from_left_comb_or to_convert e (matchee,bodies) in
+        let* match_expr = from_left_comb_or to_convert e (matchee,bodies) in
         return match_expr.expression_content
       | _ -> return e.expression_content
   )

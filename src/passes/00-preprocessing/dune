@@ -3,6 +3,7 @@
 (library
   (name preprocessing)
   (public_name ligo.preprocessing)
+  (instrumentation (backend bisect_ppx))
   (libraries
     ;; Vendors
     Preprocessor
@@ -15,5 +16,4 @@
     preprocessing_jsligo)
   (modules
      Preprocessing Errors Pascaligo Cameligo Reasonligo Jsligo)
-  (preprocess
-    (pps ppx_let bisect_ppx --conditional)))
+)

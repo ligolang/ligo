@@ -73,7 +73,7 @@ end = struct
   let make_pending_propagators =
     (fun (type a) (heuristic_plugin : (a, indexers_plugins_states) heuristic_plugin) (selector_outputs : a list) : (module PENDING_PROPAGATOR) list ->
       List.map
-      (fun (selector_output : a) ->
+      ~f:(fun (selector_output : a) ->
         (module struct
           type nonrec a = a
           let heuristic_plugin = heuristic_plugin
@@ -85,13 +85,13 @@ end = struct
     (* let () = Formatt.eprintf "Remove constraint :\n  %a\n\n%!" Ast_core.PP.type_constraint_simpl_short to_remove in *)
     (* let () = Formatt.eprintf "and state:%a\n" pp_typer_state state in *)
     let module MapRemoveConstraint = Plugins.Indexers.Map_indexer_plugins(RemoveConstraint) in
-    let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
+    let* plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
     ok ({state with plugin_states ; deleted_constraints = PolySet.add to_remove state.deleted_constraints}, Worklist.empty)
 
   and aux_update (state, { remove_constraints; add_constraints; add_constraints_simpl; proof_trace=_ }) =
     let open Ast_core.PP in
-    let%bind () = check_proof_trace proof_trace in
-    let add_constraints_simpl = List.map (function
+    let* () = check_proof_trace proof_trace in
+    let add_constraints_simpl = List.map ~f:(function
         SC_Apply c -> SC_Apply { c with id_apply_simpl = ConstraintIdentifier.fresh () }
       | SC_Abs c -> SC_Abs { c with id_abs_simpl = ConstraintIdentifier.fresh () }
       | SC_Constructor c -> SC_Constructor { c with id_constructor_simpl = ConstraintIdentifier.fresh () }
@@ -118,13 +118,13 @@ end = struct
        not depend on constraints which were removed by the
        previous propagator *)
     let referenced_constraints = heuristic_plugin.get_referenced_constraints selector_output in
-    let uses_deleted_constraints = List.exists (fun c -> (PolySet.mem c state.deleted_constraints)) referenced_constraints in
+    let uses_deleted_constraints = List.exists ~f:(fun c -> (PolySet.mem c state.deleted_constraints)) referenced_constraints in
     if uses_deleted_constraints then ( 
       (*Format.eprintf "contraint deleted; not runing propagator \n"; *)
       ok (state, Worklist.empty))
     else(
       (* Format.eprintf "reuning propagator : %s ..." heuristic_plugin.heuristic_name; *)
-      let%bind updates = heuristic_plugin.propagator selector_output (mk_repr state) in
+      let* updates = heuristic_plugin.propagator selector_output (mk_repr state) in
       ok (state, { Worklist.empty with pending_updates = Pending.of_list @@ updates })
     )
 
@@ -136,7 +136,7 @@ end = struct
         if PolySet.mem el already_selected then (l,already_selected)
         else (el::l, PolySet.add el already_selected)
       in
-      let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
+      let selector_outputs,already_selected = List.fold_left ~f:aux ~init:([], heuristic.already_selected) selector_outputs in
       let heuristic = { heuristic with already_selected } in
       Heuristic_selector (heuristic, selector_outputs)
     in
@@ -154,7 +154,7 @@ end = struct
       (* let () = Format.eprintf "New_aliases :%a\n%!" (UnionFind.Poly2.pp Ast_core.PP.type_variable) aliases in *)
 
       (*apply heuristics' selector*)
-      let selected = List.map (aux_selector_alias UnionFind.Poly2.(changed_reprs.demoted_repr) UnionFind.Poly2.(changed_reprs.new_repr) state) already_selected_and_propagators in
+      let selected = List.map ~f:(aux_selector_alias UnionFind.Poly2.(changed_reprs.demoted_repr) UnionFind.Poly2.(changed_reprs.new_repr) state) already_selected_and_propagators in
 
       (* Add alias constraint to the set of all constraints *)
       let all_constraints = PolySet.add (SC_Alias new_constraint) all_constraints in
@@ -168,9 +168,9 @@ end = struct
       (* apply all the alias_selectors and propagators given the new alias *)
       (* This must be called before aliasing the variables in the database *)
       let pending_propagators = List.map
-        (fun (Heuristic_selector (heuristic, selector_outputs)) -> make_pending_propagators heuristic.plugin selector_outputs)
+        ~f:(fun (Heuristic_selector (heuristic, selector_outputs)) -> make_pending_propagators heuristic.plugin selector_outputs)
         selected in
-      ok (state, { Worklist.empty with pending_propagators = Pending.of_list @@ List.flatten pending_propagators })
+      ok (state, { Worklist.empty with pending_propagators = Pending.of_list @@ List.concat pending_propagators })
     
 
   and get_alias variable aliases =
@@ -187,7 +187,7 @@ end = struct
       if PolySet.mem el already_selected then (l,already_selected)
       else (el::l, PolySet.add el already_selected)
     in
-    let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
+    let selector_outputs,already_selected = List.fold_left ~f:aux ~init:([], heuristic.already_selected) selector_outputs in
     (* Format.eprintf "Selected : %a, alredy_selected : %a\n%!" (PP_helpers.list_sep_d heuristic.plugin.printer) selector_outputs (PP_helpers.list_sep_d heuristic.plugin.printer) selector_outputs; *)
     let heuristic = { heuristic with already_selected } in
     let pending_propagators = make_pending_propagators heuristic.plugin selector_outputs in
@@ -205,7 +205,7 @@ end = struct
       let state =
         { state with plugin_states = MapAddConstraint.f (repr, constraint_) state.plugin_states }
       in
-      let hc = List.mapi (fun i asap -> constraint_, asap, List.set_nth i) state.already_selected_and_propagators in
+      let hc = List.mapi ~f:(fun i asap -> constraint_, asap, List.set_nth i) state.already_selected_and_propagators in
       ok (state, { Worklist.empty with pending_hc = Pending.of_list hc })
 
   let pp_indented_constraint_list =
@@ -258,7 +258,7 @@ end = struct
   let main : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
     let () = Formatt.eprintf "In solver main\n%!" in
-    let%bind (state : typer_state) = select_and_propagate_all state {Worklist.empty with pending_type_constraint = Pending.of_list initial_constraints} in
+    let* (state : typer_state) = select_and_propagate_all state {Worklist.empty with pending_type_constraint = Pending.of_list initial_constraints} in
     let () = Formatt.eprintf "Starting typechecking with assignment :\n  %a\n%!"
       pp_typer_state state in
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
@@ -266,7 +266,7 @@ end = struct
       (fun v -> UnionFind.Poly2.repr v state.aliases)
       (fun v -> Indexers_plugins_states.Assignments.find_opt v (Indexers_plugins_states.assignments state.plugin_states)#assignments) in
     let () = if not @@ Trace.to_bool failure then Pretty_print_variables.flush_pending_print state in
-    let%bind () = failure in
+    let* () = failure in
     ok state
   
   (* This function is called when a program is fully compiled, and the
@@ -287,7 +287,7 @@ end = struct
       deleted_constraints              = PolySet.create ~cmp:Ast_core.Compare.type_constraint_simpl ;
       aliases                          = UnionFind.Poly2.empty Var.pp Var.compare ;
       plugin_states                    = plugin_states ;
-      already_selected_and_propagators = List.map init_propagator_heuristic Plugins.heuristics ;
+      already_selected_and_propagators = List.map ~f:init_propagator_heuristic Plugins.heuristics ;
     }
 
 
@@ -308,5 +308,5 @@ let json_typer_state = fun ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; 
           ("plugin_states", (* (Ast_core.Yojson.structured_dbs structured_dbs) *) `String "TODO");
           ("aliases", `String "TODO");
           ("already_selected_and_propagators",
-           let list f lst = `List (List.map f lst) in
+           let list f lst = `List (List.map ~f:f lst) in
            (list json_ex_propagator_state already_selected_and_propagators))]

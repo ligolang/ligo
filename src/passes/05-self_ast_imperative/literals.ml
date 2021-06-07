@@ -33,65 +33,65 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
      let cst = const_name cst in
      begin match cst with
      | C_BIG_MAP_LITERAL -> (
-       let%bind elt =
+       let* elt =
          trace_option (bad_single_arity cst e) @@
            List.to_singleton lst
        in
-       let%bind lst =
+       let* lst =
          trace_option (bad_map_param_type cst e) @@
            get_e_list elt.expression_content
        in
        let aux = fun (e : expression) ->
          trace_option (bad_map_param_type cst e) @@
-           Option.(get_e_tuple e.expression_content >>= fun t ->
+           Option.(let* t = get_e_tuple e.expression_content in
                    List.to_pair t)
        in
-       let%bind pairs = bind_map_list aux lst in
+       let* pairs = bind_map_list aux lst in
        return @@ E_big_map pairs
      )
      | C_MAP_LITERAL -> (
-       let%bind elt =
+       let* elt =
          trace_option (bad_single_arity cst e) @@
            List.to_singleton lst
        in
-       let%bind lst =
+       let* lst =
          trace_option (bad_map_param_type cst e) @@
            get_e_list elt.expression_content
        in
        let aux = fun (e : expression) ->
          trace_option (bad_map_param_type cst e) @@
-           Option.(get_e_tuple e.expression_content >>= fun t ->
+           Option.(let* t = get_e_tuple e.expression_content in
                    List.to_pair t)
        in
-       let%bind pairs = bind_map_list aux lst in
+       let* pairs = bind_map_list aux lst in
        return @@ E_map pairs
      )
      | C_BIG_MAP_EMPTY -> (
-       let%bind () =
+       let* () =
          Assert.assert_list_empty (bad_empty_arity cst e) lst
        in
        return @@ E_big_map []
      )
      | C_MAP_EMPTY -> (
-       let%bind () =
+       let* () =
          Assert.assert_list_empty (bad_empty_arity cst e) lst
        in
        return @@ E_map []
      )
 
      | C_SET_LITERAL -> (
-       let%bind elt =
+       let* elt =
          trace_option (bad_single_arity cst e) @@
            List.to_singleton lst
        in
-       let%bind lst =
+       let* lst =
          trace_option (bad_set_param_type cst e) @@
            get_e_list elt.expression_content
        in
        return @@ E_set lst
      )
      | C_SET_EMPTY -> (
-       let%bind () =
+       let* () =
          Assert.assert_list_empty (bad_empty_arity cst e) lst
        in
        return @@ E_set []

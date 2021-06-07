@@ -10,9 +10,9 @@ let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (Location.t, 'p) Micheli
   Micheline.(inject_locations (fun _ -> Location.dummy) (strip_locations e))
 
 let compile_contract : options:Compiler_options.t -> expression -> (Stacking.compiled_expression , _) result = fun ~options e ->
-  let%bind e = trace self_mini_c_tracer @@ Self_mini_c.contract_check e in
-  let%bind (input_ty , _) = trace self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression in
-  let%bind body = trace self_mini_c_tracer @@ Self_mini_c. get_function e in
+  let* e = trace self_mini_c_tracer @@ Self_mini_c.contract_check e in
+  let* (input_ty , _) = trace self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression in
+  let* body = trace self_mini_c_tracer @@ Self_mini_c. get_function e in
   let body = Scoping.translate_closed_function body input_ty in
   let body = Stacking.Program.compile_function_body options.protocol_version body in
   let expr = Self_michelson.optimize options.protocol_version body in
@@ -31,7 +31,7 @@ let compile_expression : options:Compiler_options.t -> expression -> (compiled_e
 
 let aggregate_and_compile : options:Compiler_options.t -> program -> form_t -> (Stacking.compiled_expression, _) result =
     fun ~options program form ->
-  let%bind aggregated = trace self_mini_c_tracer @@ Self_mini_c.aggregate_entry program form in
+  let* aggregated = trace self_mini_c_tracer @@ Self_mini_c.aggregate_entry program form in
   let aggregated' = Self_mini_c.all_expression aggregated in
   match form with
   | ContractForm _ -> compile_contract ~options aggregated'
@@ -39,8 +39,8 @@ let aggregate_and_compile : options:Compiler_options.t -> program -> form_t -> (
 
 let aggregate_and_compile_contract : options:Compiler_options.t ->  program -> string -> (Stacking.compiled_expression, _) result =
     fun ~options program name ->
-  let%bind (exp, idx) = trace_option entrypoint_not_found @@ Mini_c.get_entry program name in
-  let program' = List.take idx program in
+  let* (exp, idx) = trace_option entrypoint_not_found @@ Mini_c.get_entry program name in
+  let program' = List.take program idx in
   aggregate_and_compile ~options program' (ContractForm exp)
 
 let aggregate_and_compile_expression = fun ~options program exp ->
@@ -54,10 +54,10 @@ let pretty_print program =
 
 let aggregate = fun program form ->
   trace self_mini_c_tracer @@
-  let%bind aggregated = Self_mini_c.aggregate_entry program form in
+  let* aggregated = Self_mini_c.aggregate_entry program form in
   ok @@ Self_mini_c.all_expression aggregated
 
 let aggregate_contract = fun (program : Types.program) name ->
-  let%bind (exp, idx) = trace_option entrypoint_not_found @@ get_entry program name in
-  let program' = List.take idx program in
+  let* (exp, idx) = trace_option entrypoint_not_found @@ get_entry program name in
+  let program' = List.take program idx in
   aggregate program' (ContractForm exp)

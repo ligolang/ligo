@@ -2,17 +2,7 @@ open Trace
 open Test_helpers
 open Main_errors
 
-
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let options = Compiler_options.make () in
-      let%bind program = Ligo_compile.Utils.type_file ~options "./contracts/vote.mligo" "cameligo" (Contract "main") in
-      s := Some program ;
-      ok program
-    )
+let get_program = get_program "./contracts/vote.mligo" (Contract "main")
 
 open Ast_imperative
 
@@ -35,17 +25,17 @@ let reset title start_time finish_time =
 let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 
 let init_vote () =
-  let%bind (program, env) = get_program () in
-  let%bind result =
+  let* (program, env) = get_program () in
+  let* result =
     Test_helpers.run_typed_program_with_imperative_input
       (program, env) "main" (e_pair yea (init_storage "basic")) in
-  let%bind (_, storage) = trace_option (test_internal __LOC__) @@ Ast_core.extract_pair result in
-  let%bind storage' = trace_option (test_internal __LOC__) @@ Ast_core.extract_record storage in
-  let storage' =  List.map (fun (Ast_core.Label l,v) -> (Label l, v)) storage' in
+  let* (_, storage) = trace_option (test_internal __LOC__) @@ Ast_core.extract_pair result in
+  let* storage' = trace_option (test_internal __LOC__) @@ Ast_core.extract_record storage in
+  let storage' =  List.map ~f:(fun (Ast_core.Label l,v) -> (Label l, v)) storage' in
 (*  let votes = List.assoc (Label "voters") storage' in
-  let%bind votes' = extract_map votes in *)
-  let yea = List.assoc (Label "yea") storage' in
-  let%bind () = trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
+  let* votes' = extract_map votes in *)
+  let yea = List.Assoc.find_exn ~equal:Caml.(=) storage' (Label "yea") in
+  let* () = trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
   ok ()
 
 let main = test_suite "Vote" [

@@ -221,37 +221,37 @@ and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in
   let (body, usages) = translate_expression body env' in
   let (_, binder_type) = binder in
-  (O.Binds ([List.hd usages], [translate_type binder_type], body), List.tl usages)
+  (O.Binds ([List.hd_exn usages], [translate_type binder_type], body), List.tl_exn usages)
 
 and translate_binder2 ((binder1, binder2), body) env =
   let env' = I.Environment.add binder1 (I.Environment.add binder2 env) in
   let (body, usages) = translate_expression body env' in
   let (_, binder1_type) = binder1 in
   let (_, binder2_type) = binder2 in
-  (O.Binds ([List.hd usages; List.hd (List.tl usages)],
+  (O.Binds ([List.hd_exn usages; List.hd_exn (List.tl_exn usages)],
             [translate_type binder1_type; translate_type binder2_type],
             body),
-   List.tl (List.tl usages))
+   List.tl_exn (List.tl_exn usages))
 
 and translate_binderN (vars, body) env =
-  let env' = List.fold_right I.Environment.add vars env in
+  let env' = List.fold_right ~f:I.Environment.add vars ~init:env in
   let (body, usages) = translate_expression body env' in
-  let var_types = List.map snd vars in
+  let var_types = List.map ~f:snd vars in
   let n = List.length vars in
-  (O.Binds (List.firstn n usages,
-            List.map translate_type var_types,
+  (O.Binds (List.take usages n,
+            List.map ~f:translate_type var_types,
             body),
-   List.skipn n usages)
+   List.drop usages n)
 
 and translate_args (arguments : I.expression list) env : _ O.args * usage list =
   let arguments = List.rev arguments in
-  let arguments = List.map (fun argument -> translate_expression argument env) arguments in
+  let arguments = List.map ~f:(fun argument -> translate_expression argument env) arguments in
   List.fold_right
-    (fun (arg, arg_usages) (args, args_usages) ->
+    ~f:(fun (arg, arg_usages) (args, args_usages) ->
        let (ss, us) = union arg_usages args_usages in
        (O.Args_cons (ss, arg, args), us))
     arguments
-    (O.Args_nil, use_nothing env)
+    ~init:(O.Args_nil, use_nothing env)
 
 and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   (Stage_common.Types.constant' * _ O.static_args * _ O.args) * usage list =
@@ -261,7 +261,8 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
         match x with
         | Some x -> f x
         | None -> None
-  end in
+    end in
+  let (let*) x f = Let_syntax.bind ~f x in
   (* Here we will handle some special predefined operators which take
      some "static args". These are mostly types from the typing
      judgment, but also annotations (for SELF, CONTRACT) or scripts
@@ -279,48 +280,48 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
          return (Type_args (Some annot, []), arguments)
        | _ -> None)
     | C_NONE | C_BYTES_UNPACK ->
-      let%bind a = Mini_c.get_t_option ty in
+      let* a = Mini_c.get_t_option ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_NIL | C_LIST_EMPTY ->
-      let%bind a = Mini_c.get_t_list ty in
+      let* a = Mini_c.get_t_list ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_LOOP_CONTINUE | C_LEFT ->
-      let%bind (_, b) = Mini_c.get_t_or ty in
+      let* (_, b) = Mini_c.get_t_or ty in
       return (Type_args (None, [translate_type b]), expr.arguments)
     | C_LOOP_STOP | C_RIGHT ->
-      let%bind (a, _) = Mini_c.get_t_or ty in
+      let* (a, _) = Mini_c.get_t_or ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_SET_EMPTY ->
-      let%bind a = Mini_c.get_t_set ty in
+      let* a = Mini_c.get_t_set ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_MAP_EMPTY | C_BIG_MAP_EMPTY ->
-      let%bind (a, b) =
+      let* (a, b) =
         Option.(map_pair_or (Mini_c.get_t_map , Mini_c.get_t_big_map) ty) in
       return (Type_args (None, [translate_type a; translate_type b]), expr.arguments)
     | C_MAP_REMOVE ->
-      let%bind (_, b) =
+      let* (_, b) =
         Option.(map_pair_or (Mini_c.get_t_map , Mini_c.get_t_big_map) ty) in
       return (Type_args (None, [translate_type b]), expr.arguments)
     | C_LIST_HEAD_OPT | C_LIST_TAIL_OPT ->
-      let%bind a = Mini_c.get_t_option ty in
+      let* a = Mini_c.get_t_option ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_CONTRACT ->
-      let%bind a = Mini_c.get_t_contract ty in
+      let* a = Mini_c.get_t_contract ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_CONTRACT_OPT ->
-      let%bind a = Mini_c.get_t_option ty in
-      let%bind a = Mini_c.get_t_contract a in
+      let* a = Mini_c.get_t_option ty in
+      let* a = Mini_c.get_t_contract a in
       Some (O.Type_args (None, [translate_type a]), expr.arguments)
     | C_CONTRACT_ENTRYPOINT ->
-      let%bind a = Mini_c.get_t_contract ty in
+      let* a = Mini_c.get_t_contract ty in
       (match expr.arguments with
        | { content = E_literal (Literal_string annot); type_expression = _ } :: arguments ->
          let annot = Ligo_string.extract annot in
          return (O.Type_args (Some annot, [translate_type a]), arguments)
        | _ -> None)
     | C_CONTRACT_ENTRYPOINT_OPT ->
-      let%bind a = Mini_c.get_t_option ty in
-      let%bind a = Mini_c.get_t_contract a in
+      let* a = Mini_c.get_t_option ty in
+      let* a = Mini_c.get_t_contract a in
       (match expr.arguments with
        | { content = E_literal (Literal_string annot); type_expression = _ } :: arguments ->
          let annot = Ligo_string.extract annot in
@@ -329,13 +330,13 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
     | C_CREATE_CONTRACT ->
       (match expr.arguments with
        | { content= E_closure body ; type_expression = closure_ty } :: arguments ->
-         let%bind (input_ty, _) = Mini_c.get_t_function closure_ty in
-         let%bind (p, s) = Mini_c.get_t_pair input_ty in
+         let* (input_ty, _) = Mini_c.get_t_function closure_ty in
+         let* (p, s) = Mini_c.get_t_pair input_ty in
          let body = translate_closed_function body input_ty in
          return (O.Script_arg (O.Script (translate_type p, translate_type s, body)), arguments)
        | _ -> None)
     | C_SAPLING_EMPTY_STATE ->
-      let%bind memo_size = Mini_c.get_t_sapling_state ty in
+      let* memo_size = Mini_c.get_t_sapling_state ty in
       return (Type_args (None, [Int (nil, memo_size)]), expr.arguments)
     | _ -> None in
   (* Either we got static args, or none: *)
