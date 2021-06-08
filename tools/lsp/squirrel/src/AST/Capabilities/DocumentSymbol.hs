@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module AST.Capabilities.DocumentSymbol where
 
 import Control.Lens ((^.))
@@ -75,7 +73,7 @@ extractDocumentSymbols uri tree =
 
           _ -> pure ()
 
-    collectDecl (match @Pattern -> Just (_, pattern)) = case pattern of
+    collectDecl (match @Pattern -> Just (_, pat)) = case pat of
           (IsAnnot p _) -> collectDecl p
           (IsRecord xs) -> mapM_ collectDecl xs
           (IsTuple xs) -> mapM_ collectDecl xs
@@ -88,7 +86,7 @@ extractDocumentSymbols uri tree =
           _ -> pure ()
 
     collectDecl (match @RecordFieldPattern -> Just (_, rfpattern)) = case rfpattern of
-          (IsRecordField _ pattern) -> collectDecl pattern
+          (IsRecordField _ pat) -> collectDecl pat
           (IsRecordCapture (match @NameDecl -> Just (getElem @Range -> r, _))) ->
             tellScopedDecl
               r
