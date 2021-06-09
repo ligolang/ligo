@@ -68,8 +68,11 @@ let (-->) arg ret = p_constant C_arrow     [arg; ret]
 let option t      = p_constant C_option    [t]
 let pair a b      = p_row_ez   C_record    [("0",a);("1",b)]
 let sum  a b      = p_row_ez   C_variant   [("0",a);("1",b)]
+(* TODO: this is a placeholder, we need some row variables to allow constraints on all the fields of a record https://gitlab.com/ligolang/ligo/-/merge_requests/1189 *)
+let record        = p_row_ez   C_record    []
+let variant       = p_row_ez   C_variant   []
 let map  k v      = p_constant C_map       [k; v]
-let big_map k v = p_constant C_big_map [k; v]
+let big_map k v   = p_constant C_big_map   [k; v]
 let unit          = p_constant C_unit      []
 let list   t      = p_constant C_list      [t]
 let set    t      = p_constant C_set       [t]
@@ -117,8 +120,8 @@ let tc_comparable =
                 [nat] ; 
                 (* [never] ; *)
                 [option (p_var x)] ;
-                [sum (p_var x) (p_var y)] ;
-                [pair (p_var x) (p_var y)] ;
+                [variant] ;
+                [record] ;
                 [set (p_var x)] ;
                 [signature] ;
                 [string] ;
@@ -166,8 +169,8 @@ let tc_storable =
                 [nat] ; 
                 (* [never] ; *)
                 [option (p_var x)] ;
-                [sum (p_var x) (p_var y)] ;
-                [pair (p_var x) (p_var y)] ;
+                [variant] ;
+                [record] ;
                 (* [sapling_state (var x)] ;
                 [sapling_transaction (var x)] ; *)
                 [set (p_var c)] ;
@@ -218,8 +221,8 @@ let tc_packable =
                 [nat] ; 
                 (* [never] ; *)
                 [option (p_var x)] ;
-                [sum (p_var x) (p_var y)] ;
-                [pair (p_var x) (p_var y)] ;
+                [variant] ;
+                [record] ;
                 [set (p_var c)] ;
                 [signature] ;
                 [string] ;

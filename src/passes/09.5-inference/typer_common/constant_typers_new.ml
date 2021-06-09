@@ -113,10 +113,8 @@ tc "arguments for (+)"
   (* Typeclasses for typegroups *)
   let tc_comparable a = 
     let x = Var.fresh () in
-    let y = Var.fresh () in
     tc "comparable"
-      ~bound:[x;y] ~constraints:[c_apply comparable x "tc_comparable:bound"; 
-                                 c_apply comparable y "tc_comparable:bound"] ()
+      ~bound:[x] ~constraints:[c_apply comparable x "tc_comparable:bound"] ()
       [a]     [ 
                 [address] ;
                 [bool] ;
@@ -129,8 +127,9 @@ tc "arguments for (+)"
                 [nat] ; 
                 (* [never] ; *)
                 [option (var x)] ;
-                [sum (var x) (var y)] ;
-                [pair (var x) (var y)] ;
+                (* TODO: this is a placeholder, we need some row variables to allow constraints on all the fields of a record https://gitlab.com/ligolang/ligo/-/merge_requests/1189 *)
+                [variant] ;
+                [record] ;
                 [signature] ;
                 [string] ;
                 [timestamp] ;
@@ -166,8 +165,8 @@ tc "arguments for (+)"
                 [nat] ; 
                 (* [never] ; *)
                 [option (var x)] ;
-                [sum (var x) (var y)] ;
-                [pair (var x) (var y)] ;
+                [variant] ;
+                [record] ;
                 (* [sapling_state (var x)] ;
                 [sapling_transaction (var x)] ; *)
                 [set (var c)] ;
@@ -206,8 +205,8 @@ tc "arguments for (+)"
                 [nat] ; 
                 (* [never] ; *)
                 [option (var x)] ;
-                [sum (var x) (var y)] ;
-                [pair (var x) (var y)] ;
+                [variant] ;
+                [record] ;
                 [set (var c)] ;
                 [signature] ;
                 [string] ;
