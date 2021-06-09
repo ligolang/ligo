@@ -171,7 +171,8 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
     | P_row      p                 ->
       (match c with
          `Constructor _ -> return false
-       | `Row         r -> return (Compare.row_tag r.r_tag p.p_row_tag = 0 && List.compare Compare.label (LMap.keys r.tv_map) (LMap.keys p.p_row_args) = 0))
+       | `Row         r -> return (Compare.row_tag r.r_tag p.p_row_tag = 0 && 
+                                    (LMap.is_empty p.p_row_args || List.compare Compare.label (LMap.keys r.tv_map) (LMap.keys p.p_row_args) = 0)))
     | P_variable v
       (* TODO: this should be a set, not a list *)
       when List.mem ~equal:Caml.(=) tc.tc_bound v ->
