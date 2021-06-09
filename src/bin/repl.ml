@@ -110,7 +110,12 @@ let try_contract state s =
                                mod_types = mod_types; } in
       ok @@ (state, Defined_values_core core_prg) in
   try_catch (function
-        (`Main_parser _ : Main_errors.all) -> try_eval state s
+        (`Main_parser _ : Main_errors.all)
+      | (`Main_cit_jsligo _ : Main_errors.all)
+      | (`Main_cit_pascaligo _ : Main_errors.all)
+      | (`Main_cit_cameligo _ : Main_errors.all)
+      | (`Main_cit_reasonligo _ : Main_errors.all) ->
+         try_eval state s
       | e -> fail e) c
 
 let import_file state file_name module_name =
