@@ -97,6 +97,9 @@
     "Get Started": [
       "tutorials/get-started/tezos-taco-shop-smart-contract",
       "tutorials/get-started/tezos-taco-shop-payout"
+    ],
+    "Inter-contract invocations": [
+      "tutorials/inter-contract-calls/inter-contract-calls"
     ]
   }
 }
