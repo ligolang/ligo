@@ -61,6 +61,7 @@ data Source
   = Path       { srcPath :: FilePath }
   | Text       { srcPath :: FilePath, srcText :: Text }
   | ByteString { srcPath :: FilePath, srcBS   :: ByteString }
+  deriving stock (Eq, Ord)
 
 instance IsString Source where
   fromString = Path
@@ -124,14 +125,13 @@ instance Pretty1 ParseTree where
       )
 
 -- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: Source -> IO SomeRawTree
-toParseTree input = do
+toParseTree :: Lang -> Source -> IO SomeRawTree
+toParseTree dialect input = do
   Log.debug "TS" [Log.i|Reading #{input}|]
-  (language, dialect) <- onExt ElimExt
-    { eePascal = (tree_sitter_PascaLigo, Pascal)
-    , eeCaml   = (tree_sitter_CameLigo, Caml)
-    , eeReason = (tree_sitter_ReasonLigo, Reason)
-    } (srcPath input)
+  let language = case dialect of
+        Pascal -> tree_sitter_PascaLigo
+        Caml   -> tree_sitter_CameLigo
+        Reason -> tree_sitter_ReasonLigo
 
   SomeRawTree dialect <$> withParser language \parser -> do
     src <- srcToBytestring input

@@ -2,6 +2,7 @@ module Test.Integrational.Capabilities.Rename
   ( unit_rename_id
   , unit_rename_param
   , unit_rename_fail
+  , unit_rename_in_included_file
   ) where
 
 import AST.Scope (Standard)
@@ -17,3 +18,6 @@ unit_rename_id = renameId @Standard
 
 unit_rename_param :: Assertion
 unit_rename_param = renameParam @Standard
+
+unit_rename_in_included_file :: Assertion
+unit_rename_in_included_file = renameInIncludedFile @Standard

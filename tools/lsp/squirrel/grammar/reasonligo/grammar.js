@@ -69,7 +69,7 @@ module.exports = grammar({
     ],
 
   rules: {
-    source_file: $ => sepEndBy1(optional(';'), field("declaration", $._declaration)),
+    source_file: $ => sepEndBy(optional(';'), field("declaration", $._declaration)),
 
     _declaration: $ =>
       field("declaration",

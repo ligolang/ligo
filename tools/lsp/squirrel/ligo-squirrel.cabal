@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 47d631ef4f3543b153bbc7bd2e302bb73a154b59ecddd5049b566061ffb613f8
+-- hash: 268191077549c4fcc9a65f9895ea9324ae464555b4ddd9cbc6a4497900c4447e
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -57,7 +57,7 @@ library
       Paths_ligo_squirrel
   hs-source-dirs:
       src/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes PatternSynonyms RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists
   include-dirs:
       grammar/pascaligo/src
@@ -72,11 +72,13 @@ library
       grammar/camligo/src/scanner.c
   build-depends:
       aeson
+    , algebraic-graphs
     , async
     , base
     , bytestring
     , containers
     , data-default
+    , directory
     , duplo
     , exceptions
     , fastsum
@@ -112,10 +114,11 @@ executable ligo-squirrel
       Paths_ligo_squirrel
   hs-source-dirs:
       app/ligo-squirrel
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes PatternSynonyms RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -threaded
   build-depends:
-      async
+      algebraic-graphs
+    , async
     , base
     , bytestring
     , clock
@@ -155,14 +158,16 @@ executable ligo-vet
   main-is: Main.hs
   hs-source-dirs:
       app/ligo-vet
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes PatternSynonyms RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists
   build-depends:
-      async
+      algebraic-graphs
+    , async
     , base
     , bytestring
     , containers
     , data-default
+    , directory
     , duplo
     , exceptions
     , fastsum
@@ -209,12 +214,13 @@ test-suite integration-test
   hs-source-dirs:
       test/integration-test/
       test/test-common/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes PatternSynonyms RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , async
     , base
     , bytestring
@@ -268,12 +274,13 @@ test-suite ligo-contracts-test
   hs-source-dirs:
       test/ligo-contracts-test/
       test/test-common/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes PatternSynonyms RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , async
     , base
     , bytestring
@@ -335,12 +342,13 @@ test-suite lsp-test
   hs-source-dirs:
       test/lsp-test/
       test/test-common/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
+  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes PatternSynonyms RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , async
     , base
     , bytestring
