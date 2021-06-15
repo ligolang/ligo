@@ -129,6 +129,11 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         bind_fold_right_list aux init map'
       )
     | (i, [k_ty; v_ty]) when String.equal i big_map_name -> (
+        match get_nat v with
+        | Some id ->
+           return @@
+             Ast_typed.e_big_map_identifier (Ast_typed.e_a_nat id)
+        | None ->
         let* big_map =
           trace_option (wrong_mini_c_value t v) @@
           get_big_map v in

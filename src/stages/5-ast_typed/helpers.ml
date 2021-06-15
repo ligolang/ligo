@@ -111,3 +111,15 @@ let is_michelson_pair (t: row_element label_map) : (row_element * row_element) o
       else None
     )
   | _ -> None
+
+let get_entrypoint (entrypoint : string) (t : type_expression) : type_expression option =
+  match t.type_content with
+  | T_sum {content;_} ->
+     let f (Label n, (v, t)) = match v with
+         | None -> (String.lowercase_ascii n, t)
+         | Some n -> (String.lowercase_ascii n, t) in
+     let annots = content
+                  |> LMap.map (fun x -> (x.michelson_annotation, x.associated_type))
+                  |> LMap.to_kv_list |> List.map ~f in
+     List.Assoc.find annots ~equal:String.equal entrypoint
+  | _ -> None

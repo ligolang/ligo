@@ -13,8 +13,8 @@ let basic_types : (type_variable * type_expression) list = [
     (v_unit , t_constant unit_name []) ;
     (v_option , t_constant option_name [star]) ;
   ]
-    
-  let michelson_base : (type_variable * type_expression) list = [
+
+let michelson_base : (type_variable * type_expression) list = [
     (v_operation , t_constant operation_name []) ;
     (v_tez , t_constant tez_name []) ;
     (v_address , t_constant address_name []) ;
@@ -47,23 +47,19 @@ let basic_types : (type_variable * type_expression) list = [
     (v_ticket , t_constant ticket_name [star]);
 ]
 
+let edo_types = basic_types @ michelson_base
+
 let meta_ligo_types : (type_variable * type_expression) list = 
-  basic_types @ [
+  edo_types @ [
     (v_test_michelson, t_constant test_michelson_name []) ;
     (v_test_ligo , t_constant test_ligo_name []) ;
     (v_test_exec_error, t_test_exec_error () ) ;
     (v_test_exec_result , t_test_exec_result () ) ;
-    (* common with object ligo *)
-    (v_address , t_constant address_name []) ;
-    (v_timestamp , t_constant timestamp_name []) ;
-    (v_list , t_constant list_name [star]) ;
-    (v_big_map , t_constant big_map_name [star;star]);
-    (v_map , t_constant map_name [star;star]) ;
-    (v_set , t_constant set_name [star]);
-    (v_map_or_big_map , t_constant map_or_big_map_name [star;star]);
+    (v_account , t_constant account_name []) ;
+    (v_typed_address , t_constant typed_address_name [star;star]) ;
+    (v_time , t_constant time_name []) ;
   ]
 
-let edo_types = basic_types @ michelson_base
 let default : Protocols.t -> environment = function
   | Protocols.Edo -> Environment.of_list_type edo_types
 

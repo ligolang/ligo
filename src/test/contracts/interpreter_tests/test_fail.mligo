@@ -1,11 +1,12 @@
-let under_test = "./contract_under_test/fail_contract.mligo"
+#include "./contract_under_test/fail_contract.mligo"
 
 let test =
-  let vunit = Test.compile_expression (None: string option) [%cameligo ({| () |} : ligo_program) ] in
-  let vfail = Test.compile_expression (Some under_test) [%cameligo ({| fail_data |} : ligo_program) ] in
-  let (addr,code,_) = Test.originate under_test "main" vunit in
-  
-  match Test.transfer addr vunit 10n with
+  let vfail = fail_data in
+  let (typed_addr,code,_) = Test.originate main () 0tez in
+  let contr = Test.to_contract typed_addr in
+  let addr = Tezos.address contr in
+
+  match Test.transfer_to_contract contr () 10tez with
   | Success -> (failwith "Should fail !" : michelson_program )
   | Fail e -> (
     match e with

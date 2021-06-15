@@ -358,3 +358,68 @@ let fetch_contract_type : string -> module_fully_typed -> (contract_type, 'err) 
     |  _ -> fail @@ bad_contract_io main_fname expr
   )
   | _ -> fail @@ bad_contract_io main_fname expr
+
+let compare_vars e e' =
+  Location.compare_content ~compare:Var.compare e e'
+
+let eq_vars e e' =
+  compare_vars e e' = 0
+
+let in_vars var vars =
+  List.mem ~equal:eq_vars vars var
+
+let remove_from var vars =
+  let f v vars = if compare_vars var v = 0 then vars else v :: vars in
+  List.fold_right ~f ~init:vars []
+
+let get_pattern ?(pred = fun _ -> true) pattern =
+  Stage_common.Helpers.fold_pattern (fun vars p ->
+      match p.wrap_content with
+      | P_var {var;attributes} when pred attributes ->
+         var :: vars
+      | _ -> vars) [] pattern
+
+let rec get_fv ?(exclude = []) (expr : expression) =
+  let self = get_fv ~exclude in
+  let* (fv, _) = fold_map_expression
+    (fun (fv : expression_variable list) (expr : expression) ->
+      match expr.expression_content with
+      | E_variable v when not (in_vars v exclude) && not (in_vars v fv) ->
+         ok (false, v :: fv, expr)
+      | E_let_in {let_binder=var;rhs;let_result} ->
+         let* rhs_vars = self rhs in
+         let* result_vars = self let_result in
+         let result_vars = remove_from var result_vars in
+         ok (false, rhs_vars @ result_vars, expr)
+      | E_lambda {binder=var;result} ->
+         let* result_vars = self result in
+         ok (false, remove_from var result_vars, expr)
+      | E_matching {matchee=e;cases=Match_variant {cases}} ->
+         let* res = self e in
+         let aux acc ({ pattern ; body } : matching_content_case) =
+           let* cur = self body in
+           let cur = remove_from pattern cur in
+           ok (acc @ cur)
+         in
+         let* res = bind_fold_list aux res cases in
+         ok @@ (false, res, expr)
+      | E_matching {matchee=e;cases=Match_record {body; fields}} ->
+         let* res = self e in
+         let pattern = LMap.values fields |> List.map ~f:fst in
+         let* cur = self body in
+         let cur = List.fold_right pattern ~f:remove_from ~init:cur in
+         let res = List.fold_right cur ~f:(fun v r -> v :: r) ~init:res in
+         ok @@ (false, res, expr)
+      | E_recursive {lambda={binder=var;result};fun_name} ->
+         let* result_vars = self result in
+         ok (false, remove_from fun_name @@ remove_from var @@ result_vars, expr)
+      | E_record m -> (* TODO-er: check what's happening *)
+         let helper res e =
+           let* cur = self e in
+           ok (res @ cur, ()) in
+         let* (fv, _) = bind_fold_map_list helper fv (LMap.to_kv_list_rev m |> List.map ~f:snd) in
+         ok (false,fv, expr)
+      | _ ->
+         ok (true,fv, expr)
+    ) [] expr in
+  ok @@ fv

@@ -84,24 +84,75 @@ type test_exec_result =
 A test execution result.
 
 <SyntaxTitle syntax="pascaligo">
-function originate : string -> string -> michelson_program -> (address * michelson_program * int)
+type typed_address ('p, 's)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val originate : string -> string -> michelson_program -> (address * michelson_program * int)
+type ('p, 's) typed_address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let length: string => string => michelson_program => (address, michelson_program, int)
+type typed_address ('p, 's)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let originate = (filepath: string, entrypoint: string, init: michelson_program) => [address, michelson_program, int]
+type typed_address &lt;&apos;p, &apos;s&gt;
+</SyntaxTitle>
+A type for an address of a contract with parameter `'p` and storage
+`'s`.
+
+<SyntaxTitle syntax="pascaligo">
+function to_contract : typed_address ('p, 's) -> contract ('p)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val to_contract : ('p, 's) typed_address -> 'p contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let to_contract : (typed_address ('p, 's)) => contract ('p)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let to_contract = (account: typed_address &lt;&apos;p, &apos;s&gt;) => contract &lt;&apos;p&gt;
 </SyntaxTitle>
 
-Originate a contract with an entrypoint and initial storage.
+Get the contract corresponding to the default entrypoint of a typed
+address: the contract parameter in the result will be the type of the
+default entrypoint (generally `'p`, but this might differ if `'p`
+includes a "default" entrypoint).
+
+<SyntaxTitle syntax="pascaligo">
+function to_entrypoint : string -> typed_address ('p, 's) -> contract ('e)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val to_entrypoint : string -> ('p, 's) typed_address -> 'e contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let to_entrypoint : string => (typed_address ('p, 's)) => contract ('e)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let to_entrypoint = (entrypoint: string, account: typed_address &lt;&apos;p, &apos;s&gt;) => contract &lt;&apos;e&gt;
+</SyntaxTitle>
+
+Get the contract corresponding to an entrypoint of a typed address:
+the contract parameter in the result will be the type of the
+entrypoint, it needs to be annotated, entrypoint string should omit
+the prefix "%".
+
+<SyntaxTitle syntax="pascaligo">
+function originate_from_file : string -> string -> michelson_program -> tez -> (address * michelson_program * int)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate_from_file : string -> string -> michelson_program -> tez -> (address * michelson_program * int)
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let originate_from_file : string => string => michelson_program => tez => (address, michelson_program, int)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let originate_from_file = (filepath: string, entrypoint: string, init: michelson_program, balance: tez) => [address, michelson_program, int]
+</SyntaxTitle>
+
+Originate a contract with an entrypoint, initial storage and initial balance.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
-const originated = Test.originate(testme_test, "main", init_storage);
+const originated = Test.originate_from_file(testme_test, "main", init_storage, 0tez);
 const addr = originated.0;
 const program = originated.1;
 const size = originated.2;
@@ -111,7 +162,7 @@ const size = originated.2;
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-let (addr, program, size) = Test.originate testme_test "main" init_storage in
+let (addr, program, size) = Test.originate_from_file testme_test "main" init_storage 0tez in
 ...
 ```
 
@@ -119,17 +170,32 @@ let (addr, program, size) = Test.originate testme_test "main" init_storage in
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-let (addr, program, size) = Test.originate(testme_test,"main", init_storage);
+let (addr, program, size) = Test.originate_from_file(testme_test,"main", init_storage, 0tez);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [addr, program, size] = Test.originate(testme_test,"main", init_storage);
+let [addr, program, size] = Test.originate_from_file(testme_test,"main", init_storage, 0 as tez);
 ```
 
 </Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function originate : ('parameter * 'storage -> list (operation) * 'storage) -> 'storage -> tez -> (typed_address ('parameter, 'storage) * michelson_program * int)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate : ('parameter * 'storage -> operation list * 'storage) -> 'storage -> tez -> (('parameter, 'storage) typed_address * michelson_program * int)
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let originate : (('parameter, 'storage) -> (list(operation), 'storage)) => 'storage => tez => (typed_address ('parameter, 'storage), michelson_program, int)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let originate = (contract: ('parameter, 'storage) => (list &lt;operation&gt;, &apos;storage), init: 'storage, balance: tez) => [typed_address &lt;&apos;parameter, &apos;storage&gt;, michelson_program, int]
+</SyntaxTitle>
+
+Originate a contract with an entrypoint function, initial storage and initial balance.
 
 <SyntaxTitle syntax="pascaligo">
 function set_now : timestamp -> unit
@@ -171,63 +237,105 @@ let set_baker: address => unit
 <SyntaxTitle syntax="jsligo">
 let set_baker = (source: address) => unit
 </SyntaxTitle>
-Force the baker for `Test.transfer` and `Test.originate`. By default, the first bootstrapped account. 
+Force the baker for `Test.transfer` and `Test.originate`. By default, the first bootstrapped account.
 
 <SyntaxTitle syntax="pascaligo">
-function transfer : address -> michelson_program -> nat -> test_exec_result
+function transfer : address -> michelson_program -> tez -> test_exec_result
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val transfer : address -> michelson_program -> nat -> test_exec_result
+val transfer : address -> michelson_program -> tez -> test_exec_result
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let transfer: (address, michelson_program, nat) => test_exec_result
+let transfer: (address, michelson_program, tez) => test_exec_result
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let transfer = (addr: address, parameter: michelson_program, amount: nat) => test_exec_result
+let transfer = (addr: address, parameter: michelson_program, amount: tez) => test_exec_result
 </SyntaxTitle>
-Bake a transaction by sending an amount of tez with a parameter from the current source to another account. 
+Bake a transaction by sending an amount of tez with a parameter from the current source to another account.
 
 <SyntaxTitle syntax="pascaligo">
-function transfer_exn : address -> michelson_program -> nat -> unit
+function transfer_exn : address -> michelson_program -> tez -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val transfer_exn : address -> michelson_program -> nat -> unit
+val transfer_exn : address -> michelson_program -> tez -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let transfer_exn: (address, michelson_program, nat) => unit
+let transfer_exn: (address, michelson_program, tez) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let transfer_exn = (addr: address, parameter: michelson_program, amount: nat) => unit
+let transfer_exn = (addr: address, parameter: michelson_program, amount: tez) => unit
 </SyntaxTitle>
 Similar as `Test.transfer`, but fails when anything goes wrong.
 
 <SyntaxTitle syntax="pascaligo">
-function get_storage : address -> michelson_program
+function transfer_to_contract : contract ('p) -> 'p -> tez -> test_exec_result
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val get_storage : address -> michelson_program
+val transfer_to_contract : 'p contract -> 'p -> tez -> test_exec_result
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let get_storage: (address) => michelson_program
+let transfer_to_contract: (contract ('p), 'p, tez) => test_exec_result
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let get_storage = (account: address) => michelson_program
+let transfer_to_contract = (addr: contract&lt;&apos;p&gt;, parameter: &apos;p, amount: tez) => test_exec_result
 </SyntaxTitle>
-Get the storage of an account.
+Bake a transaction by sending an amount of tez with a parameter from the current source to a contract.
 
 <SyntaxTitle syntax="pascaligo">
-function get_balance : address -> michelson_program
+function transfer_to_contract_exn : contract ('p) -> 'p -> tez -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val get_balance : address -> michelson_program
+val transfer_to_contract_exn : 'p contract -> 'p -> tez -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let get_balance: (address) => michelson_program
+let transfer_to_contract_exn: (contract ('p), 'p, tez) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let get_balance = (account: address) => michelson_program
+let transfer_to_contract_exn = (addr: contract&lt;&apos;p&gt;, parameter: &apos;p, amount: tez) => unit
 </SyntaxTitle>
-Get the balance of an account.
+Similar as `Test.transfer_to_contract`, but fails when anything goes wrong.
+
+<SyntaxTitle syntax="pascaligo">
+function get_storage_of_address : address -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_storage_of_address : address -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_storage_of_address : (address) => michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_storage_of_address = (account: address) => michelson_program
+</SyntaxTitle>
+Get the storage of an account in `michelson_program`.
+
+<SyntaxTitle syntax="pascaligo">
+function get_storage : typed_address ('p, 's) -> 's
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_storage : ('p, 's) typed_address -> 's
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_storage: (typed_address ('p, 's)) => 's
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_storage = (account: typed_address &lt;&apos;p, &apos;s&gt;) => &apos;s
+</SyntaxTitle>
+Get the storage of a typed account.
+
+<SyntaxTitle syntax="pascaligo">
+function get_balance : address -> tez
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_balance : address -> tez
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_balance: (address) => tez
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_balance = (account: address) => tez
+</SyntaxTitle>
+Get the balance of an account in tez.
 
 <SyntaxTitle syntax="pascaligo">
 function michelson_equal : michelson_program -> michelson_program -> bool
@@ -435,5 +543,35 @@ let compile_value = (value: 'a) => michelson_program
 </SyntaxTitle>
 Compile a LIGO value to Michelson.
 
+<SyntaxTitle syntax="pascaligo">
+function eval : 'a -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val eval : 'a -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let eval: 'a => michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let eval = (value: 'a) => michelson_program
+</SyntaxTitle>
+Compile a LIGO value to Michelson. Currently it is a renaming of
+`compile_value`.
 
+<SyntaxTitle syntax="pascaligo">
+function run : ('a -> 'b) -> 'a -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val run : ('a -> 'b) -> 'a -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let run : ('a => 'b) => 'a => michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let run = (func: ('a => 'b), value: 'a) => michelson_program
+</SyntaxTitle>
 
+Run a function on an input, all in Michelson. More concretely:
+a) compiles the function argument to Michelson `f_mich`;
+b) compiles the value argument (which was evaluated already) to Michelson `v_mich`;
+c) runs the Michelson interpreter on the code `f_mich` with starting stack `[ v_mich ]`.

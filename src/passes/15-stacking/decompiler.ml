@@ -130,6 +130,8 @@ let rec decompile_value :
         bind_map_list aux lst
       in
       ok @@ D_big_map lst'
+  | Prim (_, "big_map", [_; _], _), Int (_, v) ->
+      ok @@ D_nat v
   | Prim (_, "list", [ty], _), Seq (_, lst) ->
       let* lst' =
         bind_map_list (decompile_value ty) lst
