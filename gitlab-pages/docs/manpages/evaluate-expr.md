@@ -10,7 +10,7 @@ ligo-evaluate-expr - Subcommand: Evaluate a given definition.
 
 This sub-command evaluates a LIGO definition. The context is initialized
 from a source file where the definition is written. The interpretation
-is done using Michelson\`s interpreter.
+is done using a Michelson interpreter.
 
 ### ARGUMENTS
 
@@ -83,3 +83,13 @@ is done using Michelson\`s interpreter.
 **\--version**
 
 :   Show version information.
+
+**\--warn**=*BOOL* (absent=true)
+
+:   *BOOL* indicates whether warning messages should be printed in
+    stderr or not
+
+**\--werror**=*BOOL* (absent=false)
+
+:   *BOOL* indicates whether warning messages should be treated as
+    errors or not

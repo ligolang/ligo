@@ -191,6 +191,13 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>%a@.%s@]"
         Snippet.pp loc
         desc
+    | `Main_interpret_literal (loc,l) ->
+      Format.fprintf f "@[<hv>%a@.Invalid interpretation of literal: %a@]"
+        Snippet.pp loc
+        Ast_typed.PP.literal l
+    | `Main_interpret_modules_not_supported loc ->
+      Format.fprintf f "@[<hv>%a@.Module are not handled in interpreter yet@]"
+      Snippet.pp loc
 
     | `Main_decompile_michelson e -> Stacking.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
@@ -366,11 +373,13 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_stacking e -> Stacking.Errors.error_jsonformat e
 
   | `Main_interpret_test_entry_not_found _
-  | `Main_interpret_target_lang_error _ 
-  | `Main_interpret_boostrap_not_enough _ 
+  | `Main_interpret_target_lang_error _
+  | `Main_interpret_boostrap_not_enough _
   | `Main_interpret_meta_lang_eval _
   | `Main_interpret_meta_lang_failwith _
   | `Main_interpret_generic _
+  | `Main_interpret_literal _
+  | `Main_interpret_modules_not_supported _
    -> `Null
 
   | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e

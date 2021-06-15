@@ -55,6 +55,8 @@ type all =
  | `Main_interpret_meta_lang_eval of Location.t * string
  | `Main_interpret_meta_lang_failwith of Location.t * Ligo_interpreter.Types.value
  | `Main_interpret_generic of Location.t * string
+ | `Main_interpret_literal of Location.t * Ast_typed.literal
+ | `Main_interpret_modules_not_supported of Location.t
 
  | `Main_decompile_michelson of Stacking.Errors.stacking_error
  | `Main_decompile_mini_c of Spilling.Errors.spilling_error

@@ -192,6 +192,8 @@ let rec expression a b =
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
   cmp2 constant' ca cb (List.compare expression) a b
 
+and constant' = Compare_enum.constant'
+
 and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
 

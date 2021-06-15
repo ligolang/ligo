@@ -5,7 +5,7 @@ ligo-test - Subcommand: Test a contract with the LIGO test framework
 
 ### SYNOPSIS
 
-**ligo test** \[*OPTION*\]\... *SOURCE_FILE* *TEST_ENTRY*
+**ligo test** \[*OPTION*\]\... *SOURCE_FILE*
 
 ### DESCRIPTION
 
@@ -14,40 +14,11 @@ Michelson code is evaluated. Still under development, there are features
 that are work in progress and are subject to change. No real test
 procedure should rely on this sub-command alone.
 
-<!-- 
-TODO: correct text below
-
-### EXTRA PRIMITIVES FOR TESTING
-
-Test.originate c st : binds contract c with the address addr which is
-returned, st as the initial storage.
-
-Test.set_now t : sets the current time to t.
-
-Test.set_balance addr b : sets the balance of contract bound to address
-addr (returns unit).
-
-Test.external_call addr p amt : performs a call to contract bound to
-addr with parameter p and amount amt (returns unit).
-
-Test.get_storage addr : returns current storage bound to address addr.
-
-Test.get_balance : returns current balance bound to address addr.
-
-Test.assert_failure (f : unit -\> \_) : returns true if f () fails.
-
-Test.log x : prints x into the console.
-
 ### ARGUMENTS
 
 *SOURCE_FILE* (required)
 
 :   *SOURCE_FILE* is the path to the smart contract file.
-
-*TEST_ENTRY* (required)
-
-:   *TEST_ENTRY* is top-level variable which will be evaluated as the
-    result of your test.
 
 ### OPTIONS
 
@@ -84,4 +55,4 @@ Test.log x : prints x into the console.
 
 **\--version**
 
-:   Show version information. -->
+:   Show version information.

@@ -77,7 +77,7 @@ let get_groups md_file : snippetsmap =
 
 (**
   if Meta : evaluate each expression in each programs from the snippets group map
-  if Object : run the ligo test framework for entrypoint "test"
+  if Object : run the ligo test framework
 **)
 let compile_groups filename grp_list =
   let aux : (syntax * group_name) * (lang * string) -> (unit, all) result =
@@ -95,7 +95,7 @@ let compile_groups filename grp_list =
         let init_env = Environment.default_with_test options.protocol_version in
         let options = { options with init_env } in
         let* typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
-        let* _ = Interpreter.eval_test typed "test" in
+        let* _ = Interpreter.eval_test typed in
         ok ()
       | Object ->
         let* typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in

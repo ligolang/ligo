@@ -5,220 +5,137 @@ let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "lambda_call" ] ;
+  run_ligo_good [ "test" ; test "interpret_test.mligo" ] ;
   [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "higher_order1" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "higher_order2" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "higher_order3" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "higher_order4" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-    run_ligo_good [ "test" ; test "interpret_test.mligo" ; "concats" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "record_concat" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "record_patch" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "record_lambda" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "variant_match" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "bool_match" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "list_match" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "tuple_proj" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "list_const" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "options_match_some" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "options_match_none" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "is_nat_yes" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "is_nat_no" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "abs_int" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "nat_int" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_list" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  (* run_ligo_good [ "test" ; test "interpret_test.mligo" ; "iter_list_fail" ] ;
-  [%expect {|
-    Test was successful |}] ; *)
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "fold_list" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "comparison_int" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "comparison_string" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "divs_int" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "divs_nat" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "var_neg" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "sizes" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "modi" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "fold_while" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "assertion_pass" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_finds" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_fold" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  (* run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_iter" ] ;
-  [%expect {|
-    Test was successful |}] ; *)
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_map" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_mem" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_remove" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "map_update" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "set_add" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  (* 
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "set_iter_fail" ] ;
-  [%expect {|
-    Test was successful |}] ;
-  *)
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "set_mem" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "recursion_let_rec_in" ] ;
-  [%expect {|
-    Test passed with true |}] ;
-
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ; "top_level_recursion" ] ;
-  [%expect {|
-    Test passed with true |}] 
+    Everything at the top-level was executed.
+    - test_lambda_call exited with value ().
+    - test_higher_order1 exited with value ().
+    - test_higher_order2 exited with value ().
+    - test_higher_order3 exited with value ().
+    - test_higher_order4 exited with value ().
+    - test_concats exited with value ().
+    - test_record_concat exited with value ().
+    - test_record_patch exited with value ().
+    - test_record_lambda exited with value ().
+    - test_variant_match exited with value ().
+    - test_bool_match exited with value ().
+    - test_list_match exited with value ().
+    - test_tuple_proj exited with value ().
+    - test_list_const exited with value ().
+    - test_options_match_some exited with value ().
+    - test_options_match_none exited with value ().
+    - test_is_nat_yes exited with value ().
+    - test_is_nat_no exited with value ().
+    - test_abs_int exited with value ().
+    - test_nat_int exited with value ().
+    - test_map_list exited with value ().
+    - test_fold_list exited with value ().
+    - test_comparison_int exited with value ().
+    - test_comparison_string exited with value ().
+    - test_divs_int exited with value ().
+    - test_divs_nat exited with value ().
+    - test_var_neg exited with value ().
+    - test_sizes exited with value ().
+    - test_modi exited with value ().
+    - test_fold_while exited with value ().
+    - test_assertion_pass exited with value ().
+    - test_map_finds exited with value ().
+    - test_map_fold exited with value ().
+    - test_map_map exited with value ().
+    - test_map_mem exited with value ().
+    - test_map_remove exited with value ().
+    - test_map_update exited with value ().
+    - test_set_add exited with value ().
+    - test_set_mem exited with value ().
+    - test_recursion_let_rec_in exited with value ().
+    - test_top_level_recursion exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "interpret_test_log.mligo" ; "log" ] ;
+  run_ligo_good [ "test" ; test "interpret_test_log.mligo" ] ;
   [%expect {|
     {a = 1 ; b = 2n ; c = "aaa"}
     One (())
-    Test passed with true |}]
+    Everything at the top-level was executed. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_now.mligo" ; "test" ] ;
+  run_ligo_good [ "test" ; test "test_now.mligo" ] ;
   [%expect {|
   "storage at origination"
   "2000-01-01T10:10:10Z"
   "setting now at:"
   "storage after calling"
   "2010-01-01T10:10:11Z"
-  Test passed with true |}]
+  Everything at the top-level was executed.
+  - test_ts exited with value timestamp(946721410).
+  - test exited with value true. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_fail.mligo" ; "test" ] ;
+  run_ligo_good [ "test" ; test "test_now_from_file.mligo" ] ;
   [%expect {|
-  Test passed with "my contract always fail" |}]
+  "storage at origination"
+  "2000-01-01T10:10:10Z"
+  "setting now at:"
+  "storage after calling"
+  "2010-01-01T10:10:11Z"
+  Everything at the top-level was executed.
+  - test exited with value true. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "compile_expr.mligo" ; "test1" ] ;
+  run_ligo_good [ "test" ; test "test_fail.mligo" ] ;
   [%expect {|
-  Test passed with () |}]
+  Everything at the top-level was executed.
+  - test exited with value "my contract always fail". |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_example.mligo" ; "test" ] ;
+  run_ligo_good [ "test" ; test "test_fail_from_file.mligo" ] ;
   [%expect {|
-  Test passed with 111 |}]
+  Everything at the top-level was executed.
+  - test exited with value "my contract always fail". |}]
+
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_subst_with_storage.mligo" ; "test" ] ;
+  run_ligo_good [ "test" ; test "compile_expr.mligo" ] ;
   [%expect {|
-  Test passed with () |}]
+  Everything at the top-level was executed.
+  - test1 exited with value ().
+  - test2 exited with value ().
+  - test3 exited with value ().
+  - test4 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "compile_expr_from_file.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test1 exited with value ().
+  - test2 exited with value ().
+  - test3 exited with value ().
+  - test4 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_example.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test exited with value 111.
+  - test2 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_example_from_file.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test exited with value 111.
+  - test2 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_subst_with_storage.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_subst_with_storage_from_file.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test exited with value (). |}]
 
 (* do not remove that :) *)
 let () = Sys.chdir pwd
@@ -226,7 +143,7 @@ let () = Sys.chdir pwd
 let bad_test n = bad_test ("/interpreter_tests/"^n)
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "test_failure1.mligo" ; "test" ] ;
+  run_ligo_bad [ "test" ; bad_test "test_failure1.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test =
@@ -235,7 +152,7 @@ let%expect_test _ =
     Test failed with "I am failing" |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "test_failure2.mligo" ; "test" ] ;
+  run_ligo_bad [ "test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
@@ -244,12 +161,12 @@ let%expect_test _ =
     Failed assertion |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "test_failure3.mligo" ; "test" ] ;
+  run_ligo_bad [ "test" ; bad_test "test_failure3.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 2, characters 11-38:
       1 | let test =
       2 |   let ut = Test.reset_state 2n [1n;1n] in
-      3 |   let x = Test.compile_value 1 in
+      3 |   let f = (fun (_ : (unit * unit)) -> ()) in
 
     An uncaught error occured in the object language:
     Insufficient tokens in initial accounts to create one roll |}]

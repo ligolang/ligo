@@ -34,14 +34,6 @@ let entry_point n =
     info ~docv ~doc [] in
   required @@ pos n (some string) (Some "main") info
 
-let test_entry n =
-  let open Arg in
-  let info =
-    let docv = "TEST_ENTRY" in
-    let doc = "$(docv) is top-level variable which will be evaluated as the result of your test." in
-    info ~docv ~doc [] in
-  required @@ pos n (some string) None info
-
 let expression purpose n =
   let open Arg in
   let docv = purpose ^ "_EXPRESSION" in
@@ -781,15 +773,15 @@ let get_scope =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let test =
-  let f source_file test_entry syntax infer protocol_version display_format =
-    return_result ~display_format (Ligo_interpreter.Formatter.test_format) @@
+  let f source_file syntax infer protocol_version display_format =
+    return_result ~display_format (Ligo_interpreter.Formatter.tests_format) @@
       let* init_env   = Helpers.get_initial_env ~test_env:true protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
       let* typed,_    = Compile.Utils.type_file ~options source_file syntax Env in
-      Interpreter.eval_test typed test_entry
+      Interpreter.eval_test typed
   in
   let term =
-    Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ infer $ protocol_version $ display_format) in
+    Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "test" in
   let doc = "Subcommand: Test a contract with the LIGO test framework (BETA)." in
   let man = [`S Manpage.s_description;

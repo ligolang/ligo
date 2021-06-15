@@ -676,7 +676,7 @@ For that, we will have another file in which will describe our test:
 <Syntax syntax="pascaligo">
 
 ```pascaligo test-ligo group=test
-const filename = "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.ligo"
+#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.ligo"
 
 function assert_string_failure (const res : test_exec_result ; const expected : string) : unit is
   block {
@@ -689,38 +689,42 @@ function assert_string_failure (const res : test_exec_result ; const expected : 
     end
   )
 
-const test = block {
+function test(const _ : unit) is block {
   // originate the contract with a initial storage
-  const init_storage = Test.compile_expression (Some (filename),
-    [%pascaligo ({| map [
+  const init_storage =
+    map [
       1n -> record [ current_stock = 50n ; max_price = 50tez ] ;
-      2n -> record [ current_stock = 20n ; max_price = 75tez ] ; ]
-    |} : ligo_program) ] ) ;
-  const (pedro_taco_shop, _code, _size) = Test.originate (filename, "buy_taco", init_storage) ;
-  // compile test inputs
-  const classico_kind = Test.compile_value (1n) ;
-  const unknown_kind = Test.compile_value (3n) ;
+      2n -> record [ current_stock = 20n ; max_price = 75tez ] ; ];
+  const (pedro_taco_shop_ta, _code, _size) = Test.originate(buy_taco, init_storage, 0tez) ;
+  const pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
+  const pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
+  // test inputs
+  const classico_kind = 1n ;
+  const unknown_kind = 3n ;
+
+  function eq_in_map (const r : taco_supply; const m : taco_shop_storage; const k : nat) is block {
+    var b := case Map.find_opt(k, m) of
+    | None -> False
+    | Some (v) -> (v.current_stock = r.current_stock) and (v.max_price = r.max_price)
+    end
+  } with b  ;
 
   // Purchasing a Taco with 1tez and checking that the stock has been updated
-  const ok_case : test_exec_result = Test.transfer (pedro_taco_shop, classico_kind, 1n) ;
+  const ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1tez) ;
   const _unit = case ok_case of
     | Success  -> block {
-      const storage = Test.get_storage (pedro_taco_shop) ;
-      const expected = Test.compile_expression (Some (filename),
-        [%pascaligo ({| map [
-          1n -> record [ current_stock = 49n ; max_price = 50tez ] ;
-          2n -> record [ current_stock = 20n ; max_price = 75tez ] ; ]
-        |} : ligo_program) ] ) ;
-    } with (assert (Test.michelson_equal (expected, storage)))
+      const storage = Test.get_storage (pedro_taco_shop_ta) ;
+    } with (assert (eq_in_map (record [ current_stock = 49n ; max_price = 50tez ], storage, 1n) and
+                    eq_in_map (record [ current_stock = 20n ; max_price = 75tez ], storage, 2n)))
     | Fail (x) -> failwith ("ok test case failed")
   end ;
 
   // Purchasing an unregistred Taco
-  const nok_unknown_kind = Test.transfer (pedro_taco_shop, unknown_kind, 1n) ;
+  const nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1tez) ;
   const _u = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
 
   // Attempting to Purchase a Taco with 2tez
-  const nok_wrong_price = Test.transfer (pedro_taco_shop, classico_kind, 2n) ;
+  const nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 2tez) ;
   const _u = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   } with unit
 ```
@@ -729,7 +733,7 @@ const test = block {
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test
-let filename = "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.mligo"
+#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.mligo"
 
 let assert_string_failure (res : test_exec_result) (expected : string) : unit =
   let expected = Test.compile_value expected in
@@ -738,40 +742,40 @@ let assert_string_failure (res : test_exec_result) (expected : string) : unit =
   | Fail (Other) -> failwith "contract failed for an unknown reason"
   | Success -> failwith "bad price check"
 
-let test =
+let test () =
   (* originate the contract with a initial storage *)
-  let init_storage = Test.compile_expression (Some filename)
-    [%cameligo ({| Map.literal [
+  let init_storage = Map.literal [
       (1n, { current_stock = 50n ; max_price = 50tez }) ;
       (2n, { current_stock = 20n ; max_price = 75tez }) ; ]
-    |} : ligo_program) ]
   in
-  let (pedro_taco_shop, _code, _size) = Test.originate filename "buy_taco" init_storage in
-  (* compile test inputs *)
-  let classico_kind = Test.compile_value 1n in
-  let unknown_kind = Test.compile_value 3n in
+  let (pedro_taco_shop_ta, _code, _size) = Test.originate buy_taco init_storage 0tez in
+  let pedro_taco_shop_ctr = Test.to_contract pedro_taco_shop_ta in
+  let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr) in
+  (* test inputs *)
+  let classico_kind = 1n in
+  let unknown_kind = 3n in
+
+  let eq_in_map (r : taco_supply) (m : taco_shop_storage) (k : nat) =
+    match Map.find_opt k m with
+    | None -> false
+    | Some v -> v.current_stock = r.current_stock && v.max_price = r.max_price in
 
   (* Purchasing a Taco with 1tez and checking that the stock has been updated *)
-  let ok_case : test_exec_result = Test.transfer pedro_taco_shop classico_kind 1n in
+  let ok_case : test_exec_result = Test.transfer_to_contract pedro_taco_shop_ctr classico_kind 1tez in
   let () = match ok_case with
     | Success  ->
-      let storage = Test.get_storage pedro_taco_shop in
-      let expected = Test.compile_expression (Some filename)
-        [%cameligo ({| Map.literal [
-          (1n, { current_stock = 49n ; max_price = 50tez }) ;
-          (2n, { current_stock = 20n ; max_price = 75tez }) ; ]
-        |} : ligo_program) ]
-      in
-      assert (Test.michelson_equal expected storage)
+      let storage = Test.get_storage pedro_taco_shop_ta in
+      assert ((eq_in_map { current_stock = 49n ; max_price = 50tez } storage 1n) &&
+              (eq_in_map { current_stock = 20n ; max_price = 75tez } storage 2n))
     | Fail x -> failwith ("ok test case failed")
   in
 
   (* Purchasing an unregistred Taco *)
-  let nok_unknown_kind = Test.transfer pedro_taco_shop unknown_kind 1n in
+  let nok_unknown_kind = Test.transfer_to_contract pedro_taco_shop_ctr unknown_kind 1tez in
   let () = assert_string_failure nok_unknown_kind "Unknown kind of taco" in
 
   (* Attempting to Purchase a Taco with 2tez *)
-  let nok_wrong_price = Test.transfer pedro_taco_shop classico_kind 2n in
+  let nok_wrong_price = Test.transfer_to_contract pedro_taco_shop_ctr classico_kind 2tez in
   let () = assert_string_failure nok_wrong_price "Sorry, the taco you are trying to purchase has a different price" in
   ()
 ```
@@ -780,7 +784,7 @@ let test =
 <Syntax syntax="reasonligo">
 
 ```reasonligo test-ligo group=test
-let filename = "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.religo" ;
+#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.religo"
 
 let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit => {
   let expected = Test.compile_value (expected) ;
@@ -791,38 +795,40 @@ let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit
   }
 } ;
 
-let test =
+let test = (_ : unit) =>
   /* originate the contract with a initial storage */
-  let init_storage = Test.compile_expression ((Some filename),
-    [%reasonligo ({| Map.literal ([
+  let init_storage = Map.literal ([
       (1n, { current_stock : 50n , max_price : 50tez }) ,
-      (2n, { current_stock : 20n , max_price : 75tez }) , ])
-    |} : ligo_program) ]) ;
-  let (pedro_taco_shop, _code, _size) = Test.originate (filename, "buy_taco", init_storage) ;
-  /* compile test inputs */
-  let classico_kind = Test.compile_value (1n) ;
-  let unknown_kind = Test.compile_value (3n) ;
+      (2n, { current_stock : 20n , max_price : 75tez }) , ]) ;
+  let (pedro_taco_shop_ta, _code, _size) = Test.originate (buy_taco, init_storage, 0tez) ;
+  let pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
+  let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
+  /* test inputs */
+  let classico_kind = 1n ;
+  let unknown_kind = 3n ;
+
+  let eq_in_map = ((r, m, k) : (taco_supply, taco_shop_storage, nat)) : bool =>
+    switch (Map.find_opt (k, m)) {
+    | None => false
+    | Some (v) => v.current_stock == r.current_stock && v.max_price == r.max_price
+    };
 
   /* Purchasing a Taco with 1tez and checking that the stock has been updated */
-  let ok_case : test_exec_result = Test.transfer (pedro_taco_shop, classico_kind, 1n) ;
+  let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1tez) ;
   let _u = switch (ok_case) {
     | Success  =>
-      let storage = Test.get_storage (pedro_taco_shop) ;
-      let expected = Test.compile_expression ((Some filename),
-        [%reasonligo ({| Map.literal ([
-          (1n, { current_stock : 49n , max_price : 50tez }) ,
-          (2n, { current_stock : 20n , max_price : 75tez }) , ])
-        |} : ligo_program) ]) ;
-      assert (Test.michelson_equal (expected, storage))
+      let storage = Test.get_storage (pedro_taco_shop_ta) ;
+      assert (eq_in_map({ current_stock : 49n , max_price : 50tez }, storage, 1n) &&
+              eq_in_map({ current_stock : 20n , max_price : 75tez }, storage, 2n))
     | Fail (x) => failwith ("ok test case failed")
   } ;
 
   /* Purchasing an unregistred Taco */
-  let nok_unknown_kind = Test.transfer (pedro_taco_shop, unknown_kind, 1n) ;
+  let nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1tez) ;
   let _u = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
 
   /* Attempting to Purchase a Taco with 2tez */
-  let nok_wrong_price = Test.transfer (pedro_taco_shop, classico_kind, 2n) ;
+  let nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 2tez) ;
   let _u = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   ()
 ```
@@ -831,7 +837,7 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test
-let filename = "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.jsligo" ;
+#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.jsligo"
 
 let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit => {
   let expected = Test.compile_value (expected) ;
@@ -845,49 +851,48 @@ let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit
   } );
 } ;
 
-let test_ = (_: unit): unit => {
+let test = (_: unit): unit => {
   /* originate the contract with a initial storage */
-  let init_storage = Test.compile_expression (Some (filename),
-    (jsligo` Map.literal (list([
+  let init_storage = Map.literal (list([
       [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
-      [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }] ]))` as ligo_program )
-    ) ;
-  let [pedro_taco_shop, _code, _size] = Test.originate (filename, "buy_taco", init_storage) ;
-  /* compile test inputs */
-  let classico_kind = Test.compile_value (1 as nat) ;
-  let unknown_kind = Test.compile_value (3 as nat) ;
+      [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }] ])) ;
+  let [pedro_taco_shop_ta, _code, _size] = Test.originate (buy_taco, init_storage, 0 as tez) ;
+  let pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
+  let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
+  /* test inputs */
+  let classico_kind = (1 as nat) ;
+  let unknown_kind = (3 as nat) ;
+
+  let eq_in_map = ([r, m, k] : [taco_supply, taco_shop_storage, nat]) : bool =>
+    match(Map.find_opt(k, m), {
+     None: () => false,
+     Some: (v : taco_supply) => v.current_stock == r.current_stock && v.max_price == r.max_price }) ;
 
   /* Purchasing a Taco with 1tez and checking that the stock has been updated */
-  let ok_case : test_exec_result = Test.transfer (pedro_taco_shop, classico_kind, 1 as nat) ;
+  let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1 as tez) ;
   let _u = match (ok_case, {
     Success: (_:unit) => {
-      let storage = Test.get_storage (pedro_taco_shop) ;
-      let expected = Test.compile_expression (Some (filename),
-        (jsligo` Map.literal (list([
-          [1 as nat, { current_stock : 49 as nat, max_price : 50 as tez }],
-          [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }] ]))` as ligo_program )
-        ) ;
-      assert (Test.michelson_equal (expected, storage)) },
+      let storage = Test.get_storage (pedro_taco_shop_ta) ;
+      assert (eq_in_map({ current_stock : 49 as nat, max_price : 50 as tez }, storage, 1 as nat) &&
+              eq_in_map({ current_stock : 20 as nat, max_price : 75 as tez }, storage, 2 as nat)); },
     Fail: (_: test_exec_error) => failwith ("ok test case failed")
   }) ;
 
   /* Purchasing an unregistred Taco */
-  let nok_unknown_kind = Test.transfer (pedro_taco_shop, unknown_kind, 1 as nat) ;
+  let nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1 as tez) ;
   let _u = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
 
   /* Attempting to Purchase a Taco with 2tez */
-  let nok_wrong_price = Test.transfer (pedro_taco_shop, classico_kind, 2 as nat) ;
+  let nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 2 as tez) ;
   let _u = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   return unit
 }
 
-let test = test_ (unit)
 ```
 
 </Syntax>
 
 Let's break it down a little bit:
-- we define `filename` at top-level, a string containing the path to our smart contract. That will come in handy later
 - we define `assert_string_failure`, a function reading a transfer result and testing against a failure. It also compares the failing data - here, a string - to what we expect it to be
 - `test` is actually performing the tests: Originates the taco-shop contract; purchasing a Taco with 1tez and checking that the stock has been updated ; attempting to purchase a Taco with 2tez and trying to purchase an unregistred Taco.
 

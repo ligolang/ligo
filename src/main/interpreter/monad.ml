@@ -15,24 +15,35 @@ type 'a result_monad = ('a,Errors.interpreter_error) result
 
 let ( let>>= ) o f = Trace.bind f o
 
-let corner_case ?(loc = Location.generated) () = Errors.generic_error loc "Corner case, please report to devs." 
+let corner_case ?(loc = Location.generated) () = Errors.generic_error loc "Corner case, please report to devs."
 
 let wrap_compare compare a b =
   let res = compare a b in
   if (res = 0) then 0 else if (res > 0) then 1 else -1
 
+let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations ty)
+
 module Command = struct
   type 'a t =
+    | Get_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> LT.expression t
+    | Mem_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> bool t
     | Reset_state : Location.t * LT.value * LT.value -> unit t
-    | External_call : Location.t * LT.value * LT.value * LT.value -> Tezos_state.state_error option t
+    | External_call : Location.t * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
-    | Get_storage : Location.t * LT.value -> LT.value t
+    | Get_storage : Location.t * LT.value * Ast_typed.type_expression -> Ast_typed.expression t
+    | Get_storage_of_address : Location.t * LT.value -> LT.value t
+    | Get_size : LT.value -> LT.value t
     | Get_balance : Location.t * LT.value -> LT.value t
     | Get_last_originations : unit -> LT.value t
+    | Check_obj_ligo : LT.expression -> unit t
     | Compile_expression : Location.t * LT.value * string * string * LT.value option -> LT.value t
-    | Compile_contract : string * string -> (LT.value * LT.value) t
-    | Compile_meta_value : Location.t * LT.value -> LT.value t
-    | Inject_script : Location.t * LT.value * LT.value -> LT.value t
+    | Compile_contract_from_file : string * string -> (LT.value * LT.value) t
+    | Compile_meta_value : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
+    | Run : Location.t * LT.func_val * LT.value -> LT.value t
+    | Eval : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
+    | Compile_contract : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
+    | To_contract : Location.t * LT.value * string option * Ast_typed.type_expression -> LT.value t
+    | Inject_script : Location.t * LT.value * LT.value * Z.t -> LT.value t
     | Set_now : Location.t * Z.t -> unit t
     | Set_source : LT.value -> unit t
     | Set_baker : LT.value -> unit t
@@ -75,6 +86,32 @@ module Command = struct
       (a * Tezos_state.context) result_monad
     = fun command ctxt _log ->
     match command with
+    | Get_big_map (loc, k_ty, v_ty, _k, _m) ->
+      (* TODO-er: hack to get the micheline type... *)
+      let* none_compiled = Michelson_backend.compile_value (Ast_typed.e_a_none v_ty) in
+      let val_ty = clean_locations none_compiled.expr_ty in
+      let inner_ty = match val_ty with
+        | Prim (_, "option", [l], _) ->
+           l
+        | _ -> failwith "None has a non-option type?" in
+      let* key,key_ty,_ = Michelson_backend.compile_simple_value ~ctxt ~loc _k k_ty in
+      let* storage' = Tezos_state.get_big_map ~loc ctxt _m key key_ty in
+      begin
+        match storage' with
+        | Some storage' ->
+           let code = storage'
+                      |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
+                      |> Tezos_micheline.Micheline.inject_locations (fun _ -> ()) in
+           let* mini_c = trace Main_errors.decompile_michelson @@ Stacking.Decompiler.decompile_value inner_ty code in
+           let* typed = trace Main_errors.decompile_mini_c @@ Spilling.decompile mini_c v_ty in
+           let typed = Ast_typed.e_a_some typed in
+           ok @@ (typed, ctxt)
+        | None -> ok @@ (Ast_typed.e_a_none v_ty, ctxt)
+      end
+    | Mem_big_map (loc, k_ty, _v_ty, _k, _m) ->
+      let* key,key_ty,_ = Michelson_backend.compile_simple_value ~ctxt ~loc _k k_ty in
+      let* storage' = Tezos_state.get_big_map ~loc ctxt _m key key_ty in
+      ok (Option.is_some storage', ctxt)
     | Reset_state (loc,n,amts) ->
       let* amts = trace_option (corner_case ()) @@ LC.get_list amts in
       let* amts = bind_map_list
@@ -86,28 +123,40 @@ module Command = struct
       let* n = trace_option (corner_case ()) @@ LC.get_nat n in
       let* ctxt = Tezos_state.init_ctxt ~loc ~initial_balances:amts ~n:(Z.to_int n) () in
       ok ((),ctxt)
-    | External_call (loc, addr, param, amt) -> (
-      match addr, param , amt with
-      | V_Ct ( C_address dst) , V_Michelson (Ty_code (param,_,_)), V_Ct ( C_nat amt ) -> (
-        let* x = Tezos_state.transfer ~loc ctxt dst param amt in 
-        match x with
-        | Success ctxt -> ok (None, ctxt)
-        | Fail errs -> ok (Some errs, ctxt)
-      )
-      | _ -> failwith "should have been caught by the typer" 
+    | External_call (loc, { address; entrypoint }, param, amt) -> (
+      let* x = Tezos_state.transfer ~loc ctxt address ?entrypoint param amt in
+      match x with
+      | Success ctxt -> ok (None, ctxt)
+      | Fail errs -> ok (Some errs, ctxt)
     )
     | State_error_to_value errs -> (
       match Tezos_state.get_contract_rejection_data errs with
       | Some (addr,v) ->
         let t = Michelson_backend.storage_retreival_dummy_ty in
-        let v = LT.V_Michelson (Ty_code (v, t, Ast_typed.t_unit ())) in
+        let v = LT.V_Michelson (Ty_code (v, t, Ast_typed.t_int ())) in
         let addr = LT.V_Ct (C_address addr) in
         let err = LC.v_ctor "Rejected" (LC.v_pair (v,addr)) in
         ok (LC.v_ctor "Fail" err, ctxt)
       | None ->
         ok (LC.v_ctor "Fail" (LC.v_ctor "Other" (LC.v_unit ())), ctxt)
     )
-    | Get_storage (loc, addr) ->
+    | Get_storage (loc, addr, ty_expr) ->
+      let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
+      let* (storage',ty) = Tezos_state.get_storage ~loc ctxt addr in
+      let storage = storage'
+        |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
+        |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
+      in
+      let ret = LT.V_Michelson (Ty_code (storage,ty,ty_expr)) in
+      let* ret = Michelson_backend.val_to_ast ~loc ret ty_expr in
+      ok (ret, ctxt)
+    | Get_balance (loc,addr) ->
+      let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
+      let* balance = Tezos_state.get_balance ~loc ctxt addr in
+      let mutez = Michelson_backend.int_of_mutez balance in
+      let balance = LT.V_Ct (C_mutez mutez) in
+      ok (balance, ctxt)
+    | Get_storage_of_address (loc, addr) ->
       let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
       let* (storage',ty) = Tezos_state.get_storage ~loc ctxt addr in
       let storage = storage'
@@ -120,13 +169,9 @@ module Command = struct
       in
       let ret = LT.V_Michelson (Ty_code (storage,ty,ligo_ty)) in
       ok (ret, ctxt)
-    | Get_balance (loc,addr) ->
-      let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
-      let* balance = Tezos_state.get_balance ~loc ctxt addr in
-      let mutez = Michelson_backend.int_of_mutez balance in
-      let mich_data = let open Tezos_utils.Michelson in (int mutez, prim "mutez" , Ast_typed.t_mutez ()) in
-      let balance = LT.V_Michelson (Ty_code mich_data) in
-      ok (balance, ctxt)
+    | Check_obj_ligo e ->
+      let* () = Check.check_obj_ligo e in
+      ok ((), ctxt)
     | Compile_expression (loc, source_file, syntax, exp_as_string, subst_opt) ->
       let* file_opt = trace_option (corner_case ()) @@ LC.get_string_option source_file in
       let* substs =
@@ -148,21 +193,88 @@ module Command = struct
       let exp_as_string' = List.fold_left ~f:aux ~init:exp_as_string substs in
       let* (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~loc syntax exp_as_string' file_opt substs in
       ok (LT.V_Michelson (LT.Ty_code (mich_v, mich_ty, object_ty)), ctxt)
-    | Compile_meta_value (loc,x) ->
-      let* x = Michelson_backend.compile_simple_val ~loc x in
+    | Compile_meta_value (loc,x,ty) ->
+      let* x = Michelson_backend.compile_simple_value ~ctxt ~loc x ty in
       ok (LT.V_Michelson (LT.Ty_code x), ctxt)
-    | Compile_contract (source_file, entrypoint) ->
-      let* contract_code = Michelson_backend.compile_contract source_file entrypoint in
+    | Get_size (contract_code) ->
+       begin
+         match contract_code with
+         | LT.V_Michelson (LT.Contract contract_code) ->
+            let* s = Ligo_compile.Of_michelson.measure contract_code in
+            ok @@ (LT.V_Ct (C_int (Z.of_int s)), ctxt)
+         | _ -> fail @@ Errors.generic_error Location.generated
+                          "Trying to measure a non-contract"
+       end
+    | Compile_contract_from_file (source_file, entrypoint) ->
+      let* contract_code =
+        Michelson_backend.compile_contract source_file entrypoint in
       let* size =
         let* s = Ligo_compile.Of_michelson.measure contract_code in
         ok @@ LT.V_Ct (C_int (Z.of_int s))
       in
       let contract = LT.V_Michelson (LT.Contract contract_code) in
       ok ((contract,size), ctxt)
-    | Inject_script (loc, code, storage) -> (
+    | Run (loc, f, v) ->
+      let open Ligo_interpreter.Types in
+      let* fv = Self_ast_typed.Helpers.get_fv f.orig_lambda in
+      let* subst_lst = Michelson_backend.make_subst_ast_env_exp ~toplevel:true f.env fv in
+      let* in_ty, out_ty = trace_option (Errors.generic_error loc "Trying to run a non-function?") @@ Ast_typed.get_t_function f.orig_lambda.type_expression in
+      let* func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
+      let* () = Check.check_obj_ligo func_typed_exp in
+      let* func_code = Michelson_backend.compile_value func_typed_exp in
+      let* arg_code,_,_ = Michelson_backend.compile_simple_value ~ctxt ~loc ~toplevel:true v in_ty in
+      let* input_ty,_ = Run.Of_michelson.fetch_lambda_types func_code.expr_ty in
+      let* options = Michelson_backend.make_options ~param:input_ty (Some ctxt) in
+      let* runres = Run.Of_michelson.run_function ~options func_code.expr func_code.expr_ty arg_code in
+      let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
+      let expr, expr_ty =
+        clean_locations expr, clean_locations expr_ty in
+      let ret = LT.V_Michelson (Ty_code (expr, expr_ty, f.body.type_expression)) in
+      ok (ret, ctxt)
+    | Eval (loc, v, expr_ty) ->
+      let* value = Michelson_backend.compile_simple_value ~ctxt ~loc v expr_ty in
+      ok (LT.V_Michelson (Ty_code value), ctxt)
+    | Compile_contract (loc, v, _ty_expr) ->
+       let* compiled_expr, compiled_expr_ty = match v with
+         | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env } ->
+            let* fv = Self_ast_typed.Helpers.get_fv orig_lambda in
+            let* subst_lst = Michelson_backend.make_subst_ast_env_exp ~toplevel:true env fv in
+            let* in_ty, out_ty =
+              trace_option (Errors.generic_error loc "Trying to run a non-function?") @@
+                Ast_typed.get_t_function orig_lambda.type_expression in
+            let* compiled_expr =
+              Michelson_backend.compile_contract_ subst_lst arg_binder in_ty out_ty body in
+            let expr = clean_locations compiled_expr.expr in
+            (* TODO-er: check the ignored second component: *)
+            let expr_ty = clean_locations compiled_expr.expr_ty in
+            ok (expr, expr_ty)
+         | _ ->
+            fail @@ Errors.generic_error loc "Contract does not reduce to a function value?" in
+        let* (param_ty, storage_ty) =
+        match Self_michelson.fetch_contract_inputs compiled_expr_ty with
+        | Some (param_ty, storage_ty) -> ok (param_ty, storage_ty)
+        | _ -> fail @@ Errors.generic_error loc "Compiled expression has not the correct input of contract" in
+      let open Tezos_utils in
+      let param_ty = clean_locations param_ty in
+      let storage_ty = clean_locations storage_ty in
+      let expr = clean_locations compiled_expr in
+      let contract = Michelson.contract param_ty storage_ty expr in
+      ok (LT.V_Michelson (Contract contract), ctxt)
+    | To_contract (loc, v, entrypoint, _ty_expr) ->
+      begin
+        match v with
+        | LT.V_Ct (LT.C_address address) ->
+           let contract : LT.constant_val =
+             LT.C_contract { address ; entrypoint } in
+           ok @@ (LT.V_Ct contract, ctxt)
+        | _ ->
+           fail @@ Errors.generic_error loc
+                     "Should be caught by the typer"
+      end
+    | Inject_script (loc, code, storage, amt) -> (
       let* contract_code = trace_option (corner_case ()) @@ LC.get_michelson_contract code in
       let* (storage,_,ligo_ty) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
-      let* (contract, res) = Tezos_state.originate_contract ~loc ctxt contract_code storage in
+      let* (contract, res) = Tezos_state.originate_contract ~loc ctxt contract_code storage amt in
       match res with
       | Tezos_state.Success ctxt ->
         let addr = LT.V_Ct ( C_address contract ) in
@@ -172,7 +284,7 @@ module Command = struct
     )
     | Set_now (loc, now) ->
       let* ctxt = Tezos_state.set_timestamp ~loc ctxt now in
-      ok ((), ctxt) 
+      ok ((), ctxt)
     | Set_source source ->
       let* source = trace_option (corner_case ()) @@ LC.get_address source in
       ok ((), {ctxt with source })
