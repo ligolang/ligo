@@ -8,7 +8,7 @@ module AST.Parser
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import qualified Algebra.Graph.AdjacencyMap as G
+import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))
 import Control.Exception.Safe (throwM)
 import Control.Lens ((%~))
@@ -16,10 +16,10 @@ import Control.Monad ((<=<))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Functor.Const (Const (..))
 import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.List.NonEmpty as NE
+import Data.List.NonEmpty qualified as NE
 import Data.Map (Map)
-import qualified Data.Map as Map
-import qualified Data.Set as Set
+import Data.Map qualified as Map
+import Data.Set qualified as Set
 import Data.Maybe (isJust)
 import Data.Text (pack, replace, unpack)
 import Data.Traversable (for)
@@ -29,9 +29,9 @@ import System.FilePath ((</>), takeDirectory)
 import Duplo.Pretty ((<.>), pp, ppToText)
 import Duplo.Tree (layer, match)
 
-import qualified AST.Parser.Camligo as Caml
-import qualified AST.Parser.Pascaligo as Pascal
-import qualified AST.Parser.Reasonligo as Reason
+import AST.Parser.Camligo qualified as Caml
+import AST.Parser.Pascaligo qualified as Pascal
+import AST.Parser.Reasonligo qualified as Reason
 import AST.Scope hiding (find)
 import AST.Skeleton
 

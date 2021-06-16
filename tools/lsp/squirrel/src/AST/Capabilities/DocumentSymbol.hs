@@ -7,7 +7,7 @@ import Data.Maybe (fromMaybe)
 import Data.Text
 import Duplo (match)
 import Language.LSP.Types (SymbolInformation (..))
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 
 import AST.Capabilities.Find
 import AST.Scope

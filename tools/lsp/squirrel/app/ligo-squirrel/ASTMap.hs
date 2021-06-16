@@ -25,9 +25,9 @@ import Data.Functor ((<&>), void)
 import Data.Hashable (Hashable)
 import Data.Maybe (fromMaybe)
 import Focus (Focus)
-import qualified Focus
+import Focus qualified
 import StmContainers.Map (Map)
-import qualified StmContainers.Map as Map
+import StmContainers.Map qualified as Map
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
 import UnliftIO (atomically)
 

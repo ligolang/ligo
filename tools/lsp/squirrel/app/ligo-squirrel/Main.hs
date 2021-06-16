@@ -10,24 +10,24 @@ import Control.Monad.Reader (asks)
 import Data.Default
 import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
-import qualified Data.Text as T
+import Data.Text qualified as T
 
-import qualified Language.LSP.Server as S
-import qualified Language.LSP.Types as J
-import qualified Language.LSP.Types.Lens as J
+import Language.LSP.Server qualified as S
+import Language.LSP.Types qualified as J
+import Language.LSP.Types.Lens qualified as J
 
 
 import AST
-import qualified ASTMap
-import qualified Config
+import ASTMap qualified
+import Config qualified
 import Language.LSP.Util (sendError)
-import qualified Log
+import Log qualified
 import Product
 import RIO (RIO, RioEnv)
-import qualified RIO
+import RIO qualified
 import Range
 import System.Exit
-import qualified System.Log as L
+import System.Log qualified as L
 import Util (toLocation)
 
 main :: IO ()

@@ -2,7 +2,7 @@ module AST.CodeAction where
 
 import Control.Exception.Safe (MonadCatch)
 
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 
 import AST.Scope
 import AST.Skeleton

@@ -9,9 +9,9 @@ module Test.Common.FixedExpectations
 
 import Control.Exception.Safe (catch, impureThrow)
 import Test.Hspec.Expectations (Expectation, HasCallStack)
-import qualified Test.Hspec.Expectations as H
+import Test.Hspec.Expectations qualified as H
   (expectationFailure, shouldBe, shouldContain, shouldMatchList)
-import qualified Test.HUnit.Lang as H (HUnitFailure (..), formatFailureReason)
+import Test.HUnit.Lang qualified as H (HUnitFailure (..), formatFailureReason)
 import Test.Tasty.HUnit (HUnitFailure (..))
 
 expectationFailure :: HasCallStack => String -> Expectation

@@ -5,7 +5,7 @@ module AST.Capabilities.Format where
 import Control.Exception.Safe (catchAny)
 import Data.Text (Text)
 
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 
 import AST.Scope
 import AST.Skeleton

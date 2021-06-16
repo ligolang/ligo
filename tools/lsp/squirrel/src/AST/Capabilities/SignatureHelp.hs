@@ -9,7 +9,7 @@ module AST.Capabilities.SignatureHelp
   , toLspParameter
   ) where
 
-import qualified Language.LSP.Types as LSP
+import Language.LSP.Types qualified as LSP
   (List (..), ParameterInformation (..), SignatureHelp (..), SignatureInformation (..))
 
 import Control.Lens (_1, _2, _Just, (^..), (^?))
@@ -18,7 +18,7 @@ import Data.Foldable (asum)
 import Data.List (findIndex)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import qualified Data.Text as Text (intercalate, unwords)
+import Data.Text qualified as Text (intercalate, unwords)
 import Duplo.Lattice (leq)
 import Duplo.Pretty (fsep, pp, ppToText)
 import Duplo.Tree (match, spineTo)

@@ -11,7 +11,7 @@ import Data.Aeson
   (FromJSON (parseJSON), Result (Error, Success), ToJSON (toJSON), Value, fromJSON, object,
   withObject, (.!=), (.:), (.:?), (.=))
 import Data.Default (Default (def))
-import qualified Data.Text as T
+import Data.Text qualified as T
 
 import Cli (LigoClientEnv (..))
 

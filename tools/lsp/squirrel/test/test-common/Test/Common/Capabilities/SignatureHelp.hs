@@ -6,7 +6,7 @@ module Test.Common.Capabilities.SignatureHelp
 
 import Control.Lens ((^.))
 import Data.Text (Text)
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)

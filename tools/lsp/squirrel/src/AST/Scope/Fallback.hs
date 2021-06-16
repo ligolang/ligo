@@ -3,7 +3,7 @@
 module AST.Scope.Fallback where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import qualified Algebra.Graph.AdjacencyMap as G
+import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
 import Control.Monad.Catch.Pure hiding (throwM)
@@ -14,9 +14,9 @@ import Data.Bifunctor (first)
 import Data.Foldable (for_, toList)
 import Data.Functor ((<&>))
 import Data.Map (Map)
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import Data.Maybe (listToMaybe)
-import qualified Data.Set as Set
+import Data.Set qualified as Set
 import Data.Text (Text)
 
 import Duplo.Lattice
@@ -363,8 +363,6 @@ compressScopeTree = go
          | not (null decls) || not (null rest')
          ]
 
-    go _ = error "compressScopeTree: impossible"
-
 extractScopeForest
   :: [Tree' '[[]] '[[ScopedDecl], Range]]
   -> ScopeForest
@@ -381,8 +379,6 @@ extractScopeForest = uncurry ScopeForest . runWriter . mapM go
       let r'      = refs :> r :> Nil
       ts' <- mapM go ts
       return $ make (r', ts')
-
-    go _ = error "extractScopeForest: impossible"
 
 getImmediateDecls
   :: ( PPableLIGO info

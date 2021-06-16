@@ -4,7 +4,7 @@
 
 module AST.Capabilities.Hover where
 
-import qualified Language.LSP.Types as LSP
+import Language.LSP.Types qualified as LSP
 
 import AST.Capabilities.Find
 import AST.Pretty (docToText)

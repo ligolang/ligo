@@ -36,10 +36,10 @@ module AST.Capabilities.CodeAction.ExtractTypeAlias where
 import Control.Exception.Safe (MonadCatch)
 
 import Control.Monad.Trans.Writer
-import qualified Data.Text as T
+import Data.Text qualified as T
 
-import qualified Data.HashMap.Strict as HM
-import qualified Language.LSP.Types as J
+import Data.HashMap.Strict qualified as HM
+import Language.LSP.Types qualified as J
 
 import AST.Pretty
 import AST.Scope

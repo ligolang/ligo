@@ -13,7 +13,7 @@ import AST.Pretty (PPableLIGO, ppToText)
 import AST.Scope.ScopedDecl
   (Type (..), TypeConstructor (..), TypeDeclSpecifics (..), TypeField (..))
 import AST.Skeleton (LIGO)
-import qualified AST.Skeleton as LIGO
+import AST.Skeleton qualified as LIGO
   (Ctor (..), FieldName (..), TField (..), Type (..), Variant (..))
 import Range (getRange)
 
