@@ -1,29 +1,9 @@
 name: ligo-squirrel
 
 dependencies:
-  - algebraic-graphs
-  - async
   - base
-  - bytestring
-  - containers
-  - data-default
-  - directory
   - duplo
-  - exceptions
-  - fastsum
-  - filepath
   - ghc-prim
-  - hashable
-  - interpolate
-  - mtl
-  - pretty
-  - safe-exceptions
-  - sorted-list
-  - text
-  - transformers
-  - tree-sitter
-  - unliftio
-  - generic-deriving
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -44,6 +24,7 @@ default-extensions:
   - FunctionalDependencies
   - GADTs
   - GeneralisedNewtypeDeriving
+  - ImportQualifiedPost
   - LambdaCase
   - MagicHash
   - MultiParamTypeClasses
@@ -78,6 +59,8 @@ ghc-options:
   - -Wno-implicit-prelude
   - -Wno-partial-fields
   - -Wno-missing-export-lists  # FIXME
+  - -Wno-missing-safe-haskell-mode
+  - -Wno-prepositive-qualified-module
 
 library:
   source-dirs:
@@ -100,13 +83,25 @@ library:
     - algebraic-graphs
     - aeson
     - bytestring
+    - containers
+    - bytestring
+    - data-default
+    - directory
+    - exceptions
+    - fastsum
+    - filepath
+    - interpolate
     - lens
-    - lens-aeson
     - lsp-types
+    - mtl
+    - pretty
     - process
     - regex-tdfa
+    - safe-exceptions
     - template-haskell
-    - unliftio-core
+    - text
+    - transformers
+    - tree-sitter
     - unordered-containers
 
 executables:
@@ -116,20 +111,23 @@ executables:
     dependencies:
       - algebraic-graphs
       - clock
+      - data-default
+      - exceptions
       - focus
-      - lsp
+      - hashable
       - hslogger
       - interpolate
       - lens
-      - lens-aeson
       - ligo-squirrel
-      - directory
-      - unix
+      - lsp
+      - mtl
+      - safe-exceptions
       - stm
       - stm-containers
+      - text
+      - transformers
+      - unliftio
       - unliftio-core
-      - unordered-containers
-      - generic-deriving
 
     source-dirs:
       - app/ligo-squirrel
@@ -168,7 +166,6 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
-      - template-haskell
       - HUnit
       - directory
       - filepath
@@ -176,10 +173,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
+      - safe-exceptions
       - tasty
-      - tasty-discover
-      - tasty-hspec
       - tasty-hunit
+      - template-haskell
+      - text
       - unordered-containers
 
     build-tools:
@@ -203,7 +201,6 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
-      - template-haskell
       - HUnit
       - directory
       - filepath
@@ -211,10 +208,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
+      - safe-exceptions
       - tasty
-      - tasty-discover
-      - tasty-hspec
       - tasty-hunit
+      - template-haskell
+      - text
       - unordered-containers
 
     build-tools:
@@ -238,7 +236,6 @@ tests:
       - test/test-common/
 
     dependencies:
-      - template-haskell
       - HUnit
       - directory
       - filepath
@@ -246,10 +243,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
+      - safe-exceptions
       - tasty
-      - tasty-discover
-      - tasty-hspec
       - tasty-hunit
+      - template-haskell
+      - text
       - unordered-containers
 
     build-tools:

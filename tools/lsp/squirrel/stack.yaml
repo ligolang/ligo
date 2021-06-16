@@ -3,7 +3,7 @@
 # Some commonly used options have been documented as comments in this file.
 # For advanced use and comprehensive documentation of the format, please see:
 # https://docs.haskellstack.org/en/stable/yaml_configuration/
-resolver: lts-16.5
+resolver: lts-18.0
 
 packages:
 - .
@@ -13,7 +13,6 @@ extra-deps:
 - dependent-map-0.4.0.0
 - dependent-sum-0.7.1.0
 - dependent-sum-template-0.1.0.3
-- constraints-extras-0.3.0.2
 - unliftio-core-0.2.0.1  # https://github.com/alanz/lsp/pull/262
 
 - git: https://github.com/serokell/haskell-tree-sitter.git
