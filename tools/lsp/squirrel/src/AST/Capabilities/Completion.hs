@@ -127,6 +127,7 @@ toCompletionItem c@Completion
   , _command = Nothing
   , _xdata = Nothing
   , _tags = Nothing
+  , _insertTextMode = Nothing
   }
 
 mkDoc :: Completion -> CompletionDoc

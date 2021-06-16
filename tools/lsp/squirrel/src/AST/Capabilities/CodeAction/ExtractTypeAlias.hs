@@ -169,9 +169,12 @@ mkCodeAction uri replaceRange typeEdits =
           -- these changes without any proper explanation why. Meaning that even though
           -- client received response of this code action, the text itself remains unchanged.
         , _documentChanges = Nothing
+        , _changeAnnotations = Nothing
         }
     , _command = Nothing
-    }]
+    , _xdata = Nothing
+    }
+  ]
 
 -- | Construct edits for replacing existing type that matches either
 -- the given constructed type or type alias.

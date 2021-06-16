@@ -308,6 +308,7 @@ handleRenameRequest req respond = do
             J.WorkspaceEdit
               { _changes = Just edits
               , _documentChanges = Nothing
+              , _changeAnnotations = Nothing
               }
         Log.debug "Rename" [i|Rename request returned #{response}|]
         respond . Right $ response

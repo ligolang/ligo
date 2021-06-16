@@ -9,12 +9,6 @@ packages:
 - .
 
 extra-deps:
-# For lsp:
-- dependent-map-0.4.0.0
-- dependent-sum-0.7.1.0
-- dependent-sum-template-0.1.0.3
-- unliftio-core-0.2.0.1  # https://github.com/alanz/lsp/pull/262
-
 - git: https://github.com/serokell/haskell-tree-sitter.git
   commit: 27c33c98b00f8961c8619de2e3771a1932501ada
   subdirs:
@@ -29,12 +23,6 @@ extra-deps:
 - stm-hamt-1.2.0.4@sha256:7957497c022554b7599e790696d1a3e56359ad99e5da36a251894c626ca1f60a,3970
 - primitive-extras-0.8@sha256:fca0310150496867f5b9421fe1541ecda87fae17eae44885a29f9c52dd00c8ff,2963
 - primitive-unlifted-0.1.3.0
-
-- git: https://github.com/alanz/lsp.git
-  commit: 1778cabf168f9c1e8235cb273bdba85eedba5813
-  subdirs:
-    - .
-    - lsp-types
 
 - git: https://github.com/serokell/duplo.git
   commit: b0ac4699c44a35ea178d7d117e48076408b0886f

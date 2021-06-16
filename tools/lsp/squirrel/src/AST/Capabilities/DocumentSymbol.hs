@@ -1,3 +1,10 @@
+-- We need this pragma because of the following situation:
+-- * If we remove this pragma, GHC will warn that `_deprecated` from the
+--   `SymbolInformation` type is deprecated and CI will fail.
+-- * If we remove `_deprecated`, it will complain that such strict field was not
+--   initialized and build will fail.
+{-# OPTIONS_GHC -Wno-deprecations #-}
+
 module AST.Capabilities.DocumentSymbol where
 
 import Control.Lens ((^.))
@@ -121,6 +128,7 @@ extractDocumentSymbols uri tree =
               , _kind = kind'
               , _containerName = matchContainerName kind'
               , _location = J.Location uri $ toLspRange range
+              , _tags = Nothing
               }
           ]
 
@@ -140,6 +148,7 @@ extractDocumentSymbols uri tree =
               , _kind = kind'
               , _containerName = matchContainerName kind'
               , _location = J.Location uri $ toLspRange range
+              , _tags = Nothing
               }
           ]
 
