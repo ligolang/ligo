@@ -48,7 +48,6 @@
       "original": {
         "owner": "input-output-hk",
         "repo": "haskell.nix",
-        "rev": "c3841b4208f4529827316e3c81af6142b9094a1f",
         "type": "github"
       }
     },
@@ -117,8 +116,8 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1622223326,
-        "narHash": "sha256-kVb9eGqc+JLENFcctmPyQml1y0xZqvBnykT5niwy/js=",
+        "lastModified": 1613641638,
+        "narHash": "sha256-dZM2usljlkGNU1krgBXRsQ2tHWZExFPnvecullGe504=",
         "owner": "serokell",
         "repo": "nixpkgs",
         "rev": "cf67659f17ba891def51bd718b2722a4065fcda3",
