@@ -34,6 +34,7 @@ let type_constraint_ : _ -> type_constraint_simpl -> unit = fun ppf ->
       | C_bls12_381_g1 -> "bls12_381_g1"
       | C_bls12_381_g2 -> "bls12_381_g2"
       | C_bls12_381_fr -> "bls12_381_fr"
+      | C_never        -> "never"
     in
     fprintf ppf "CTOR %a %s()" Var.pp tv ct
   |SC_Alias       { a; b } -> fprintf ppf "Alias %a %a" Var.pp a Var.pp b

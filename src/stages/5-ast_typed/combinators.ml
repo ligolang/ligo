@@ -31,6 +31,7 @@ let t_unit       ?loc ?core () : type_expression = t_constant ?loc ?core unit_na
 let t_bls12_381_g1 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g1_name []
 let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g2_name []
 let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
+let t_never       ?loc ?core () : type_expression = t_constant ?loc ?core never_name []
 
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core option_name [o]

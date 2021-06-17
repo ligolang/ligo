@@ -64,7 +64,8 @@ let type_expression'_of_simple_c_constant : constant_tag * type_expression list 
   | C_bls12_381_g1 , [] -> return (Ast_core.t_bls12_381_g1 ())
   | C_bls12_381_g2 , [] -> return (Ast_core.t_bls12_381_g1 ())
   | C_bls12_381_fr , [] -> return (Ast_core.t_bls12_381_g1 ())
-  | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp | C_bls12_381_g1 | C_bls12_381_g2 | C_bls12_381_fr), _::_ ->
+  | C_never        , [] -> return (Ast_core.t_never ())
+  | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp | C_bls12_381_g1 | C_bls12_381_g2 | C_bls12_381_fr | C_never), _::_ ->
       None
 
 let type_expression'_of_simple_c_row : Ast_core.row_tag * Ast_core.row_variable Ast_core.label_map -> Ast_core.type_content =

@@ -59,6 +59,7 @@ module Tree_abstraction = struct
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
     | "Tezos.level"              -> some_const C_LEVEL
     | "Tezos.pairing_check"      -> some_const C_PAIRING_CHECK
+    | "Tezos.never"              -> some_const C_NEVER
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -215,6 +216,7 @@ module Tree_abstraction = struct
     | C_CONTRACT_ENTRYPOINT_OPT -> "Tezos.get_entrypoint_opt"
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
+    | C_NEVER                   -> "Tezos.never"
 
     (* Crypto module *)
 
@@ -820,6 +822,7 @@ module Stacking = struct
     | C_FOLD_STOP          , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
     | C_SIZE               , _   -> Some ( simple_unary @@ prim "SIZE")
     | C_FAILWITH           , _   -> Some ( simple_unary @@ prim "FAILWITH")
+    | C_NEVER              , _   -> Some ( simple_unary @@ prim "NEVER")
     | C_ASSERT_SOME        , _   -> Some ( simple_unary @@ i_assert_some)
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
     | C_ASSERTION          , _   -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))

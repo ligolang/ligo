@@ -36,6 +36,7 @@ type literal =
 type constant' =
   | C_INT
   | C_UNIT
+  | C_NEVER
   | C_NIL
   | C_NOW
   | C_IS_NAT

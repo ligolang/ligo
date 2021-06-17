@@ -19,6 +19,7 @@ let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 let compile_constant' : AST.constant' -> constant' = function
   | C_INT -> C_INT
   | C_UNIT -> C_UNIT
+  | C_NEVER -> C_NEVER
   | C_NIL -> C_NIL
   | C_NOW -> C_NOW
   | C_IS_NAT -> C_IS_NAT

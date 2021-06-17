@@ -30,6 +30,7 @@ let t_unit       ?loc ?sugar () : type_expression = t_constant ?loc ?sugar unit_
 let t_bls12_381_g1 ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls12_381_g1_name []
 let t_bls12_381_g2 ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls12_381_g2_name []
 let t_bls12_381_fr ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls12_381_fr_name []
+let t_never      ?loc ?sugar () : type_expression = t_constant ?loc ?sugar never_name []
 
 
 let t_option         ?loc ?sugar o   : type_expression = t_constant ?loc ?sugar option_name [o]
