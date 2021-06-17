@@ -7,6 +7,7 @@ let operation ppf (o: bytes) : unit =
 let constant' ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
   | C_UNIT                  -> fprintf ppf "UNIT"
+  | C_NEVER                 -> fprintf ppf "NEVER"
   | C_NIL                   -> fprintf ppf "NIL"
   | C_NOW                   -> fprintf ppf "NOW"
   | C_IS_NAT                -> fprintf ppf "IS_NAT"

@@ -198,6 +198,7 @@ type constant_tag =
   | C_bls12_381_g1 (* * *)
   | C_bls12_381_g2 (* * *)
   | C_bls12_381_fr (* * *)
+  | C_never        (* * *)
 
 type row_tag =
   | C_record    (* ( label , * ) … -> * *)

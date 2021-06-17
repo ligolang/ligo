@@ -200,6 +200,7 @@ let constant_tag ppf c_tag = match c_tag with
   | C_bls12_381_g1 -> fprintf ppf "C_bls12_381_g1"
   | C_bls12_381_g2 -> fprintf ppf "C_bls12_381_g2"
   | C_bls12_381_fr -> fprintf ppf "C_bls12_381_fr"
+  | C_never -> fprintf ppf "C_never"
 
 let row_tag ppf = function
     C_record -> fprintf ppf "C_record"

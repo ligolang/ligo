@@ -125,7 +125,7 @@ tc "arguments for (+)"
                 [key_hash] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (var x)] ;
                 (* TODO: this is a placeholder, we need some row variables to allow constraints on all the fields of a record https://gitlab.com/ligolang/ligo/-/merge_requests/1189 *)
                 [variant] ;
@@ -163,7 +163,7 @@ tc "arguments for (+)"
                 [map (var c) (var y)] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (var x)] ;
                 [variant] ;
                 [record] ;
@@ -203,7 +203,7 @@ tc "arguments for (+)"
                 [map (var c) (var y)] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (var x)] ;
                 [variant] ;
                 [record] ;
@@ -214,11 +214,12 @@ tc "arguments for (+)"
                 [unit] ; 
               ]
 
-  (* Others typeclasses *)                                                      
+  (* Others typeclasses *)
   let tc_failwith a = tc "failwith" ~bound:[] ~constraints: [] () [a] [ [nat] ; [string] ; [int] ]
   let tc_map_or_big_map m src dst = tc "map or big_map" ~bound:[] ~constraints:[] () [m;src;dst] [ [map src dst;src;dst]; [big_map src dst;src;dst]]
 
 
+  let t_never        = forall "a" @@ fun a -> tuple1 never --> a
   let t_none         = forall "a" @@ fun a -> tuple0 --> option a
   let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_some         = forall "a" @@ fun a -> tuple1 a --> option a
@@ -291,7 +292,7 @@ tc "arguments for (+)"
   let t_lsl           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
   let t_lsr           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
   let t_comp          = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a a --> bool
-      let t_concat        = forall2_tc "a" "b" @@ fun a b -> [tc_concatable a b] => a --> b 
+  let t_concat        = forall2_tc "a" "b" @@ fun a b -> [tc_concatable a b] => a --> b
 
   let t_set_empty     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
   let t_set_iter      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
@@ -321,6 +322,7 @@ tc "arguments for (+)"
     | C_ASSERTION           -> ok @@ t_assertion ;
     | C_ASSERT_SOME         -> ok @@ t_assert_some ;
     | C_FAILWITH            -> ok @@ t_failwith ;
+    | C_NEVER               -> ok @@ t_never ;
     (* LOOPS *)
     | C_FOLD_WHILE          -> ok @@ t_fold_while ;
     | C_FOLD_CONTINUE       -> ok @@ t_continuation ;

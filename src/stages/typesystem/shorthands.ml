@@ -93,6 +93,7 @@ let contract t    = p_constant C_contract  [t]
 let bls12_381_g1  = p_constant C_bls12_381_g1 []
 let bls12_381_g2  = p_constant C_bls12_381_g2 []
 let bls12_381_fr  = p_constant C_bls12_381_fr []
+let never         = p_constant C_never      []
 let ( * ) a b = pair a b
 
 (* type value of recursive types *)
@@ -118,7 +119,7 @@ let tc_comparable =
                 [key_hash] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (p_var x)] ;
                 [variant] ;
                 [record] ;
@@ -167,7 +168,7 @@ let tc_storable =
                 [map (p_var c) (p_var y)] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (p_var x)] ;
                 [variant] ;
                 [record] ;
@@ -219,7 +220,7 @@ let tc_packable =
                 [map (p_var c) (p_var y)] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (p_var x)] ;
                 [variant] ;
                 [record] ;

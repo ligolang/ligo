@@ -24,7 +24,7 @@ let map_expression :
    assuming arguments are pure *)
 let is_pure_constant : constant' -> bool =
   function
-  | C_UNIT
+  | C_UNIT | C_NEVER
   | C_CAR | C_CDR | C_PAIR
   | C_NIL | C_CONS
   | C_NEG | C_OR | C_AND | C_XOR | C_NOT

@@ -265,6 +265,12 @@ let source loc = constant' loc "SOURCE" @@ t_address ()
 
 let unit loc = constant' loc "UNIT" @@ t_unit ()
 
+let never loc = typer_1_opt loc "NEVER" @@ fun nev tv_opt ->
+  let* () = assert_eq loc nev (t_never ()) in
+  match tv_opt with
+  | None -> fail (not_annotated loc)
+  | Some t -> ok @@ t
+
 let amount loc = constant' loc "AMOUNT" @@ t_mutez ()
 
 let balance loc = constant' loc "BALANCE" @@ t_mutez ()
@@ -831,6 +837,7 @@ let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc
       t_string () ;
       t_timestamp () ;
       t_unit ();
+      t_never ();
     ] in
   ok @@ t_bool ()
 
@@ -1043,6 +1050,7 @@ let test_compile_contract loc = typer_1 loc "TEST_COMPILE_CONTRACT" @@ fun _ ->
 let constant_typers loc c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int loc ;
   | C_UNIT                -> ok @@ unit loc ;
+  | C_NEVER               -> ok @@ never loc ;
   | C_NOW                 -> ok @@ now loc ;
   | C_IS_NAT              -> ok @@ is_nat loc ;
   | C_SOME                -> ok @@ some loc ;

@@ -5,6 +5,7 @@ type json = Yojson.Safe.t
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]
   | C_UNIT               -> `List [`String "C_UNIT"; `Null ]
+  | C_NEVER              -> `List [`String "C_NEVER"; `Null ]
   | C_NIL                -> `List [`String "C_NIL"; `Null ]
   | C_NOW                -> `List [`String "C_NOW"; `Null ]
   | C_IS_NAT             -> `List [`String "C_IS_NAT"; `Null ]

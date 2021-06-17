@@ -895,6 +895,21 @@ Verify that the product of pairings of the given list of points is equal to 1 in
 Can be used to verify if two pairings P1 and P2 are equal by verifying `P1 * P2^(-1) = 1`.
 (extracted from Tezos documentation)
 
+<SyntaxTitle syntax="pascaligo">
+function never : never -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val never : never -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let never: never => 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let never: (never: never) => &apos;a
+</SyntaxTitle>
+
+Eliminate a value of the type `never` using the instruction `NEVER`
+from Michelson.
 
 <h2>Sapling</h2>
 
