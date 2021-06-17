@@ -25,7 +25,7 @@ let
             preBuild = "export CONTRACTS_DIR=${../../../src/test/contracts}";
           };
 
-          package.ghcOptions = "-Werror";
+          ghcOptions = ["-Werror"];
 
           # strip library references from the executable to reduce closure size
           dontStrip = false;

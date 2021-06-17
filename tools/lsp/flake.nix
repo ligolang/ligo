@@ -1,7 +1,7 @@
 {
   inputs = {
     haskell-nix.url =
-      "github:input-output-hk/haskell.nix/bd45da822d2dccdbb3f65d0b52dd2a91fd65ca4e";
+      "github:input-output-hk/haskell.nix/c3841b4208f4529827316e3c81af6142b9094a1f";
     hackage-nix = {
       url = "github:input-output-hk/hackage.nix";
       flake = false;
@@ -20,7 +20,7 @@
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
         haskellNix = import haskell-nix {
-          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; } // haskell-nix.sources;
+          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; };
         };
 
         nixpkgsArgs = {
@@ -63,7 +63,7 @@
           localSystem = system;
         };
 
-        pkgs = import haskell-nix.sources.nixpkgs nixpkgsArgs;
+        pkgs = import haskellNix.sources.nixpkgs nixpkgsArgs;
 
         grammars = import ./squirrel/grammar { inherit pkgs; };
 
