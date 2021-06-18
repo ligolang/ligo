@@ -133,7 +133,7 @@ loopM
   => (Cofree f a -> m (Cofree f a)) -> (Cofree f a -> m (Cofree f a))
 loopM go = aux
   where
-    aux (r :< fs) = go =<< ((r :<) <$> traverse aux fs)
+    aux (r :< fs) = go . (r :<) =<< traverse aux fs
 
 -- | Replace a wildcard with a dummy "_" name so that the LSP doesn't trip up
 -- with 'TreeDoesNotContainName'. This is also necessary so that we are able to
