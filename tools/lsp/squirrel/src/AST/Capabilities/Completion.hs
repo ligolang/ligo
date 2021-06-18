@@ -9,7 +9,7 @@ import Data.Function (on)
 import Data.Functor ((<&>))
 import Data.List (isSubsequenceOf, nubBy)
 import Data.Text (Text)
-import qualified Data.Text as Text
+import Data.Text qualified as Text
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
@@ -127,6 +127,7 @@ toCompletionItem c@Completion
   , _command = Nothing
   , _xdata = Nothing
   , _tags = Nothing
+  , _insertTextMode = Nothing
   }
 
 mkDoc :: Completion -> CompletionDoc

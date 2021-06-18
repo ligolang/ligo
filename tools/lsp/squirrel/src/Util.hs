@@ -12,9 +12,9 @@ module Util
   ) where
 
 import Data.Foldable (foldlM)
-import qualified Data.Map.Internal as MI
-import qualified Data.Set as Set
-import qualified Language.LSP.Types as J
+import Data.Map.Internal qualified as MI
+import Data.Set qualified as Set
+import Language.LSP.Types qualified as J
 import System.FilePath (joinPath, splitDirectories)
 
 import Range

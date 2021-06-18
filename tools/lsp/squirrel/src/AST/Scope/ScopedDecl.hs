@@ -45,7 +45,7 @@ import Duplo.Tree (Cofree ((:<)), Element)
 
 import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr)
 import AST.Skeleton (LIGO, Lang, RawLigoList)
-import qualified AST.Skeleton as LIGO
+import AST.Skeleton qualified as LIGO
   (Ctor (..), FieldName (..), TField (..), Type (..), TypeName (..), Variant (..))
 import Parser (fillInfo)
 import Product (Product (Nil))

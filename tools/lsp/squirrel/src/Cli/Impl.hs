@@ -19,7 +19,7 @@ import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.Reader
 import Data.Aeson (eitherDecodeStrict')
 import Data.Aeson.Types (FromJSON)
-import qualified Data.ByteString.Lazy.Char8 as S8L
+import Data.ByteString.Lazy.Char8 qualified as S8L
 import Data.Foldable (asum)
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
@@ -32,7 +32,7 @@ import Cli.Json
 import Cli.Types
 import Extension (Lang (..), getExt)
 import Log (i)
-import qualified Log
+import Log qualified
 import ParseTree (Source (..), srcToText)
 
 ----------------------------------------------------------------------------

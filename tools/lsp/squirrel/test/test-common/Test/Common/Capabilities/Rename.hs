@@ -6,10 +6,10 @@ module Test.Common.Capabilities.Rename
   ) where
 
 import Control.Arrow ((***))
-import qualified Data.HashMap.Strict as HM
+import Data.HashMap.Strict qualified as HM
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Language.LSP.Types as J
+import Data.Text qualified as T
+import Language.LSP.Types qualified as J
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
@@ -18,7 +18,7 @@ import AST.Capabilities.Rename (RenameDeclarationResult (NotFound, Ok), prepareR
 import AST.Scope (HasScopeForest)
 import Range (Range (..), toLspRange, interval, point)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)
 import Test.Common.Util (readContractWithScopes)
 

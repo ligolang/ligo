@@ -5,41 +5,6 @@
 
 packages:
 - completed:
-    hackage: dependent-map-0.4.0.0@sha256:ca2b131046f4340a1c35d138c5a003fe4a5be96b14efc26291ed35fd08c62221,1657
-    pantry-tree:
-      size: 551
-      sha256: 5defa30010904d2ad05a036f3eaf83793506717c93cbeb599f40db1a3632cfc5
-  original:
-    hackage: dependent-map-0.4.0.0
-- completed:
-    hackage: dependent-sum-0.7.1.0@sha256:0e419237f5b86da3659772afff9cab355c0f8d5b3fdb15a5b30e673d8dc83941,2147
-    pantry-tree:
-      size: 290
-      sha256: 009601e5d33e835c7a384e240c5c6ad12643bce9c54b2a0b07201daee3380e51
-  original:
-    hackage: dependent-sum-0.7.1.0
-- completed:
-    hackage: dependent-sum-template-0.1.0.3@sha256:0bbbacdfbd3abf2a15aaf0cf2c27e5bdd159b519441fec39e1e6f2f54424adde,1682
-    pantry-tree:
-      size: 436
-      sha256: 32eeadeb991a290a1da41ce7e995dee7d38ebba3bd3e53ea8074c32c086701fd
-  original:
-    hackage: dependent-sum-template-0.1.0.3
-- completed:
-    hackage: constraints-extras-0.3.0.2@sha256:013b8d0392582c6ca068e226718a4fe8be8e22321cc0634f6115505bf377ad26,1853
-    pantry-tree:
-      size: 594
-      sha256: 3ce1012bfb02e4d7def9df19ce80b8cd2b472c691b25b181d9960638673fecd1
-  original:
-    hackage: constraints-extras-0.3.0.2
-- completed:
-    hackage: unliftio-core-0.2.0.1@sha256:9b3e44ea9aacacbfc35b3b54015af450091916ac3618a41868ebf6546977659a,1082
-    pantry-tree:
-      size: 328
-      sha256: e81c5a1e82ec2cd68cbbbec9cd60567363abe02257fa1370a906f6754b6818b8
-  original:
-    hackage: unliftio-core-0.2.0.1
-- completed:
     subdir: tree-sitter
     name: tree-sitter
     version: 0.9.0.2
@@ -53,27 +18,6 @@ packages:
     git: https://github.com/serokell/haskell-tree-sitter.git
     commit: 27c33c98b00f8961c8619de2e3771a1932501ada
 - completed:
-    hackage: semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
-    pantry-tree:
-      size: 727
-      sha256: f3483c0b1495201bf4067091bfcb6c234d4cdb2068a8fd2edde4b94b3272975d
-  original:
-    hackage: semantic-source-0.0.2.0@sha256:eac962ed1150d8647e703bc78369ecc4c1912db018e111f4ead8a62ae1a85542,2368
-- completed:
-    hackage: lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
-    pantry-tree:
-      size: 422
-      sha256: c76e9e74eaa576e33c6f02eb8e26b19cc5fe35c514cce888d851184f91e1c156
-  original:
-    hackage: lingo-0.3.2.0@sha256:80b9ded65f2ddc0272a2872d9c3fc43c37934accae076d3e547dfc6c6b6e16d3,1899
-- completed:
-    hackage: semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
-    pantry-tree:
-      size: 801
-      sha256: f3b6dd7ac1fa1b7a259334ff342405263da053af5c115bd86499227e2373d8ec
-  original:
-    hackage: semilattices-0.0.0.4@sha256:333707e460923711d1edbdd02ebe1c3957d4e0808eab9886747b52ee3e443639,1909
-- completed:
     hackage: fastsum-0.1.1.1@sha256:ddb41e30396cc091845596130fb441150118086c6f227c0bd5ce30dadf9dad56,2398
     pantry-tree:
       size: 431
@@ -81,26 +25,26 @@ packages:
   original:
     hackage: fastsum-0.1.1.1
 - completed:
-    hackage: stm-containers-1.1.0.3@sha256:c5107fe2ed07a1fb8a2d97831903cdf1937771390e7e430262ba6674be719c86,3248
+    hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
     pantry-tree:
       size: 761
-      sha256: 9d577314c120740ab74a75b56a6bb8d411b5dc5808dae4bf1ea541e8f4999ac0
+      sha256: 20b1076bdb121347ccc512a67df697eed34815a8e35279b6b9a0951963b1eba2
   original:
-    hackage: stm-containers-1.1.0.3
+    hackage: stm-containers-1.2
 - completed:
-    hackage: stm-hamt-1.2.0.4@sha256:7957497c022554b7599e790696d1a3e56359ad99e5da36a251894c626ca1f60a,3970
+    hackage: stm-hamt-1.2.0.6@sha256:fba86ccb4b45c5706c19b0e1315ba63dcac3b5d71de945ec001ba921fae80061,3972
     pantry-tree:
       size: 1009
-      sha256: d9a8be48da86bd4a2ba9d52ea29b9a74f1b686d439ba1bbfba04ab1a002391da
+      sha256: 1920790535af832b76e7583c33ecf51f8b0b0c3615ef1db1c8ed9be19622c1db
   original:
-    hackage: stm-hamt-1.2.0.4@sha256:7957497c022554b7599e790696d1a3e56359ad99e5da36a251894c626ca1f60a,3970
+    hackage: stm-hamt-1.2.0.6
 - completed:
-    hackage: primitive-extras-0.8@sha256:fca0310150496867f5b9421fe1541ecda87fae17eae44885a29f9c52dd00c8ff,2963
+    hackage: primitive-extras-0.10.1@sha256:be21c87b5ffce1cd6e3cc179ee8667fcc9323e323f21c78c99686773ededbf2f,2957
     pantry-tree:
-      size: 1105
-      sha256: e7c1d26202b80d1fca2ef780ec7fe76ede1275f4d9a996c6d44c08d8de1c45db
+      size: 1096
+      sha256: bff74e4dff12a92fdca90e5909d4d000051bc13753104ea11b0ab63805309fab
   original:
-    hackage: primitive-extras-0.8@sha256:fca0310150496867f5b9421fe1541ecda87fae17eae44885a29f9c52dd00c8ff,2963
+    hackage: primitive-extras-0.10.1
 - completed:
     hackage: primitive-unlifted-0.1.3.0@sha256:a98f827740f5dcf097d885b3a47c32f4462204449620abc9d51b8c4f8619f9e6,1427
     pantry-tree:
@@ -108,32 +52,6 @@ packages:
       sha256: c882dca2a96b98d02b0d21875b651edb11ac67d90e736c0de7a92c410a19eb7f
   original:
     hackage: primitive-unlifted-0.1.3.0
-- completed:
-    subdir: .
-    name: lsp
-    version: 1.1.1.0
-    git: https://github.com/alanz/lsp.git
-    pantry-tree:
-      size: 7225
-      sha256: 4cb7676da390de0a7c89b58c9dfe71ff2bcd071c79e5276d98285b6bdf31ff2b
-    commit: 1778cabf168f9c1e8235cb273bdba85eedba5813
-  original:
-    subdir: .
-    git: https://github.com/alanz/lsp.git
-    commit: 1778cabf168f9c1e8235cb273bdba85eedba5813
-- completed:
-    subdir: lsp-types
-    name: lsp-types
-    version: 1.1.0.0
-    git: https://github.com/alanz/lsp.git
-    pantry-tree:
-      size: 4005
-      sha256: 33bf5c9042d6f7745bf419b0c25fb053411f20cf59182c16398b46b6e608e2cf
-    commit: 1778cabf168f9c1e8235cb273bdba85eedba5813
-  original:
-    subdir: lsp-types
-    git: https://github.com/alanz/lsp.git
-    commit: 1778cabf168f9c1e8235cb273bdba85eedba5813
 - completed:
     name: duplo
     version: 0.0.0
@@ -147,7 +65,7 @@ packages:
     commit: b0ac4699c44a35ea178d7d117e48076408b0886f
 snapshots:
 - completed:
-    size: 531707
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/5.yaml
-    sha256: 9751e25e0af5713a53ddcfcc79564b082c71b1b357fadef0d85672a5b5ba3703
-  original: lts-16.5
+    size: 585393
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/0.yaml
+    sha256: c632012da648385b9fa3c29f4e0afd56ead299f1c5528ee789058be410e883c0
+  original: lts-18.0

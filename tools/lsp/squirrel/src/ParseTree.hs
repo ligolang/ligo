@@ -25,13 +25,13 @@ module ParseTree
   where
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as BS
+import Data.ByteString qualified as BS
 import Data.Map
 import Data.String (IsString (..))
 import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.Encoding as Text
-import qualified Data.Text.IO as Text
+import Data.Text qualified as Text
+import Data.Text.Encoding qualified as Text
+import Data.Text.IO qualified as Text
 import Data.Traversable (for)
 
 import Control.Monad ((>=>))
@@ -49,7 +49,7 @@ import Duplo.Pretty as PP
 import Duplo.Tree
 
 import Extension
-import qualified Log
+import Log qualified
 import Product
 import Range
 

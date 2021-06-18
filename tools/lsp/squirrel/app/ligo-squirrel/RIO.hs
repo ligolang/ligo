@@ -18,7 +18,7 @@ module RIO
 
 import Prelude hiding (log)
 
-import qualified Algebra.Graph.AdjacencyMap as G (vertex, vertexList)
+import Algebra.Graph.AdjacencyMap qualified as G (vertex, vertexList)
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow)
 import Control.Lens ((^.))
@@ -31,20 +31,20 @@ import Data.Function (on)
 import Data.List (groupBy, nubBy, sortOn)
 import Data.String.Interpolate (i)
 
-import qualified Language.LSP.Diagnostics as D
-import qualified Language.LSP.Server as J
-import qualified Language.LSP.Types as J
-import qualified Language.LSP.VFS as V
+import Language.LSP.Diagnostics qualified as D
+import Language.LSP.Server qualified as J
+import Language.LSP.Types qualified as J
+import Language.LSP.VFS qualified as V
 
 import Duplo.Tree (collect)
 
 import AST
 import ASTMap (ASTMap)
-import qualified ASTMap
+import ASTMap qualified
 import Cli
 import Config (Config (..))
 import Duplo.Lattice (Lattice (leq))
-import qualified Log
+import Log qualified
 import Product
 import Range
 

@@ -3,9 +3,9 @@
 module AST.Scope.Common where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import qualified Algebra.Graph.AdjacencyMap as G
+import Algebra.Graph.AdjacencyMap qualified as G
 import Algebra.Graph.AdjacencyMap.Algorithm (Cycle)
-import qualified Algebra.Graph.Export as G (export, literal, render)
+import Algebra.Graph.Export qualified as G (export, literal, render)
 import Control.Arrow ((&&&), second)
 import Control.Exception.Safe
 import Control.Lens (makeLenses)
@@ -17,12 +17,12 @@ import Data.Foldable (toList)
 import Data.Function (on)
 import Data.List (sortOn)
 import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.List.NonEmpty as NE
+import Data.List.NonEmpty qualified as NE
 import Data.Map (Map)
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import Data.Monoid (First (..))
 import Data.Set (Set)
-import qualified Data.Set as Set
+import Data.Set qualified as Set
 import Data.Text (Text, pack)
 import Data.Tuple (swap)
 
@@ -188,7 +188,6 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       -- The right scope is more local than the left hence try to find where the
       -- left subscope is more local or equal to the right one.
       | otherwise = [make (mergeDecls ldecls rdecls :> lr :> Nil, descend ldeepen [r])]
-    go _ _ = error "ScopeForest.mergeScopeForest.go: Impossible"
 
     zipWithMissing, zipWithMatched, zipWithStrategy :: Ord c => (a -> c) -> (a -> a -> b) -> (a -> b) -> [a] -> [a] -> [b]
     zipWithMissing _ _ g [] ys = g <$> ys
@@ -211,7 +210,6 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
 
     scopeRange :: ScopeTree -> Range
     scopeRange (only -> (_ :> r :> Nil, _)) = r
-    scopeRange _ = error "ScopeForest.mergeScopeForest.scopeRange: Impossible"
 
     descend :: [ScopeTree] -> [ScopeTree] -> [ScopeTree]
     descend xs ys = concat $ zipWithStrategy fst (go `on` snd) (pure . snd) (sortMap xs) (sortMap ys)
@@ -255,7 +253,6 @@ instance Pretty ScopeForest where
       go' :: ScopeTree -> Doc
       go' (only -> (decls :> r :> Nil, list')) =
         sexpr "scope" ([pp r] ++ map pp (Set.toList decls) ++ [go list' | not $ null list'])
-      go' _ = error "ScopeForest.pp: Impossible"
 
       decls' = sexpr "decls" . map pp . Map.toList
 

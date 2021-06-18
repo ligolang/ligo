@@ -1,6 +1,6 @@
 module AST.Scope.Standard where
 
-import qualified Algebra.Graph.AdjacencyMap as G
+import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Exception.Safe
 import Control.Lens ((%~))
 

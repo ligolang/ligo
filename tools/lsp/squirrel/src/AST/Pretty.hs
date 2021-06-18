@@ -18,7 +18,7 @@ import Data.Kind (Type)
 import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
-import qualified Data.Text as Text (pack)
+import Data.Text qualified as Text (pack)
 import Duplo (Cofree ((:<)), Layers)
 import Duplo.Pretty as Exports
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
@@ -26,7 +26,7 @@ import Duplo.Pretty as Exports
 import Duplo.Tree (Tree)
 
 import AST.Skeleton hiding (Type)
-import qualified AST.Skeleton as AST
+import AST.Skeleton qualified as AST
 import Parser (ShowRange)
 import Product (Contains)
 import Range (Range)

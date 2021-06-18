@@ -6,11 +6,11 @@ module AST.Capabilities.Rename
   ) where
 
 import Data.Function (on)
-import qualified Data.HashMap.Strict as HM
+import Data.HashMap.Strict qualified as HM
 import Data.List (groupBy, sortOn)
 import Data.Maybe (mapMaybe)
 import Data.Text (Text)
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 
 import AST.Capabilities.Find (CanSearch, findScopedDecl, rangeOf)
 import AST.Scope.ScopedDecl (ScopedDecl (ScopedDecl, _sdRefs))

@@ -27,7 +27,7 @@ import AST (HasScopeForest)
 import AST.Capabilities.Find (definitionOf, referencesOf, typeDefinitionAt)
 import Range (Range (..), interval, point)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations
   (expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Common.Util (readContractWithScopes)

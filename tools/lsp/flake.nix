@@ -1,7 +1,7 @@
 {
   inputs = {
     haskell-nix.url =
-      "github:input-output-hk/haskell.nix/bd45da822d2dccdbb3f65d0b52dd2a91fd65ca4e";
+      "github:input-output-hk/haskell.nix";
     hackage-nix = {
       url = "github:input-output-hk/hackage.nix";
       flake = false;
@@ -19,14 +19,14 @@
     { self, haskell-nix, hackage-nix, stackage-nix, nix-npm-buildpackage, flake-utils, nixpkgs }@inputs:
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
-        haskellNix = import haskell-nix {
-          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; } // haskell-nix.sources;
+        haskellNix = haskell-nix.internal.overlaysOverrideable {
+          sourcesOverride = { hackage = hackage-nix; stackage = stackage-nix; } // haskell-nix.internal.sources;
         };
 
         nixpkgsArgs = {
           overlays = [
             nix-npm-buildpackage.overlay
-            haskellNix.allOverlays.combined-eval-on-build
+            haskellNix.combined-eval-on-build
           ] ++ [
             (final: prev:
               let
@@ -63,7 +63,7 @@
           localSystem = system;
         };
 
-        pkgs = import haskell-nix.sources.nixpkgs nixpkgsArgs;
+        pkgs = import nixpkgs nixpkgsArgs;
 
         grammars = import ./squirrel/grammar { inherit pkgs; };
 

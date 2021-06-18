@@ -6,12 +6,12 @@ module Language.LSP.Util
 
 import Data.Functor (($>))
 import Data.Text (Text)
-import qualified Language.LSP.Types as J
-import qualified Language.LSP.Server as S
+import Language.LSP.Types qualified as J
+import Language.LSP.Server qualified as S
 
 import System.IO.Unsafe
 
-import qualified Log
+import Log qualified
 
 -- | Unsafely log some message to the output.
 -- This is made to mimic `Debug.Trace.traceShowId`'s behavior.

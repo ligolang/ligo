@@ -6,7 +6,7 @@ import Control.Category ((>>>))
 import Data.Function (on)
 import Data.HashMap.Strict ((!))
 import Data.Map (Map)
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import Data.Maybe
 import Duplo.Lattice
 import Duplo.Tree (make, only)

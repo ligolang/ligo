@@ -20,10 +20,10 @@ module Range
   )
   where
 
-import qualified Language.LSP.Types as LSP
+import Language.LSP.Types qualified as LSP
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as BS
+import Data.ByteString qualified as BS
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding

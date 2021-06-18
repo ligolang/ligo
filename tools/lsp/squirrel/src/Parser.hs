@@ -11,7 +11,7 @@ import Data.Maybe (isJust, mapMaybe)
 import Data.Functor
 import Data.String.Interpolate (i)
 import Data.Text (Text)
-import qualified Data.Text as Text
+import Data.Text qualified as Text
 
 import Duplo.Pretty
 import Duplo.Tree
