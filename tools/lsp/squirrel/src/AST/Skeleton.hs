@@ -49,7 +49,7 @@ type RawLigoList =
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, MichelsonCode
   , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
-  , NameModule, ModuleAccess
+  , ModuleName, ModuleAccess
   ]
 
 -- TODO (LIGO-169): Implement a parser for JsLIGO.
@@ -218,7 +218,7 @@ newtype NameDecl it = NameDecl
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
-newtype NameModule it = NameModule Text
+newtype ModuleName it = ModuleName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 

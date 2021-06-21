@@ -20,7 +20,7 @@ recognise (SomeRawTree dialect rawTree)
     Descent do
       boilerplate $ \case
         "source_file" -> RawContract <$> fields "declaration"
-        _ -> fallthrough
+        _             -> fallthrough
 
   , Descent do
       boilerplate $ \case
@@ -28,19 +28,19 @@ recognise (SomeRawTree dialect rawTree)
         "let_decl"  -> BConst    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
         "include"   -> BInclude  <$>                      field "filename"
         "type_decl" -> BTypeDecl <$> field "name" <*> field "type"
-        _ -> fallthrough
+        _           -> fallthrough
 
   , Descent do
       boilerplate $ \case
         "let_in" -> Let <$> field "decl" <*> field "body"
-        _ -> fallthrough
+        _        -> fallthrough
 
   --   -- Expr
   , Descent do
       boilerplate $ \case
         "fun_app"           -> Apply      <$> field  "f"         <*> fields "x"
-        "rec_expr"          -> RecordUpd  <$> field  "subject"   <*> fields "field"
-        "rec_literal"       -> Record     <$> fields "field"
+        "record_expr"       -> RecordUpd  <$> field  "subject"   <*> fields "field"
+        "record_literal"    -> Record     <$> fields "field"
         "if_expr"           -> If         <$> field  "condition" <*> field "then"  <*> fieldOpt "else"
         "match_expr"        -> Case       <$> field  "subject"   <*> fields "alt"
         "lambda_expr"       -> Lambda     <$> fields "arg"       <*> pure Nothing  <*> field "body"
@@ -51,29 +51,29 @@ recognise (SomeRawTree dialect rawTree)
         "annot_expr"        -> Annot      <$> field  "expr"      <*> field "type"
         "binary_op_app"     -> BinOp      <$> field  "left"      <*> field "op"    <*> field "right"
         "unary_op_app"      -> UnOp       <$> field  "negate"    <*> field "arg"
-        "michelson_interop" -> Michelson <$> field  "code"       <*> field "type"  <*> fields "argument"
+        "michelson_interop" -> Michelson  <$> field  "code"       <*> field "type"  <*> fields "argument"
         _                   -> fallthrough
 
     -- QualifiedName
   , Descent do
       boilerplate $ \case
         "data_projection" -> QualifiedName <$> field "box" <*> fields "accessor"
-        _ -> fallthrough
+        _                 -> fallthrough
 
 
     -- Pattern
   , Descent do
       boilerplate $ \case
-        "list_pattern"     -> IsList   <$> fields "item"
-        "list_con_pattern" -> IsCons   <$> field  "x"    <*> field "xs"
-        "tup_pattern"      -> IsTuple  <$> fields "item"
-        "con_pattern"      -> IsConstr <$> field  "ctor" <*> fieldOpt "args"
-        "par_annot_pattern"-> IsAnnot  <$> field  "pat"  <*> field "type"
-        "paren_pattern"    -> IsTuple  <$> fields "pat"
-        "var_pattern"      -> IsVar    <$> field  "var"
-        "rec_pattern"      -> IsRecord <$> fields "field"
-        "wildcard_pattern" -> pure IsWildcard
-        _                  -> fallthrough
+        "list_pattern"      -> IsList   <$> fields "item"
+        "list_con_pattern"  -> IsCons   <$> field  "x"    <*> field "xs"
+        "tuple_pattern"     -> IsTuple  <$> fields "item"
+        "constr_pattern"    -> IsConstr <$> field  "ctor" <*> fieldOpt "args"
+        "par_annot_pattern" -> IsAnnot  <$> field  "pat"  <*> field "type"
+        "paren_pattern"     -> IsTuple  <$> fields "pat"
+        "var_pattern"       -> IsVar    <$> field  "var"
+        "record_pattern"    -> IsRecord <$> fields "field"
+        "wildcard_pattern"  -> pure IsWildcard
+        _                   -> fallthrough
 
     -- Irrefutable
   , Descent do
@@ -86,22 +86,22 @@ recognise (SomeRawTree dialect rawTree)
    -- RecordFieldPattern
   , Descent do
       boilerplate $ \case
-        "rec_field_pattern" -> IsRecordField <$> field "name" <*> field "body"
-        "rec_capture_pattern" -> IsRecordCapture <$> field "name"
-        _                   -> fallthrough
+        "record_field_pattern"   -> IsRecordField <$> field "name" <*> field "body"
+        "record_capture_pattern" -> IsRecordCapture <$> field "name"
+        _                        -> fallthrough
 
     -- Alt
   , Descent do
       boilerplate $ \case
-        "matching"  -> Alt <$> field "pattern" <*> field  "body"
-        _           -> fallthrough
+        "matching" -> Alt <$> field "pattern" <*> field  "body"
+        _          -> fallthrough
 
     -- Record fields
   , Descent do
       boilerplate $ \case
-        "rec_assignment" -> FieldAssignment <$> (pure <$> field "accessor") <*> field "value"
-        "rec_path_assignment" -> FieldAssignment <$> fields "accessor" <*> field "value"
-        _ -> fallthrough
+        "record_assignment"      -> FieldAssignment <$> (pure <$> field "accessor") <*> field "value"
+        "record_path_assignment" -> FieldAssignment <$> fields "accessor" <*> field "value"
+        _                        -> fallthrough
 
   , Descent do
       boilerplate' $ \case
@@ -122,7 +122,7 @@ recognise (SomeRawTree dialect rawTree)
         ("||", _)     -> return $ Op "||"
         ("&&", _)     -> return $ Op "&&"
         ("negate", n) -> return $ Op n
-        _         -> fallthrough
+        _             -> fallthrough
 
     -- Literal
   , Descent do
@@ -152,10 +152,10 @@ recognise (SomeRawTree dialect rawTree)
         ("NameDecl", n) -> return $ NameDecl n
         _               -> fallthrough
 
-    -- NameModule
+    -- ModuleName
   , Descent do
       boilerplate' $ \case
-        ("NameModule", n) -> return $ NameModule n
+        ("ModuleName", n) -> return $ ModuleName n
         _                 -> fallthrough
 
     -- FieldName
@@ -167,14 +167,14 @@ recognise (SomeRawTree dialect rawTree)
     -- Type
   , Descent do
       boilerplate $ \case
-        "type_fun"           -> TArrow   <$> field  "domain" <*> field "codomain"
-        "type_app"           -> TApply   <$> field  "f"      <*> fields "x"
-        "type_product"       -> TProduct <$> fields "x"
-        "type_tuple"         -> TProduct <$> fields "x"
-        "type_rec"           -> TRecord  <$> fields "field"
-        "type_sum"           -> TSum     <$> fields "variant"
-        "TypeWildcard"       -> pure TWildcard
-        _                 -> fallthrough
+        "fun_type"     -> TArrow   <$> field  "domain" <*> field "codomain"
+        "prod_type"    -> TProduct <$> fields "x"
+        "app_type"     -> TApply   <$> field  "f"      <*> fields "x"
+        "record_type"  -> TRecord  <$> fields "field"
+        "tuple_type"   -> TProduct <$> fields "x"
+        "sum_type"     -> TSum     <$> fields "variant"
+        "TypeWildcard" -> pure TWildcard
+        _              -> fallthrough
 
     -- Module access:
   , Descent do
@@ -192,8 +192,8 @@ recognise (SomeRawTree dialect rawTree)
     -- TField
   , Descent do
       boilerplate $ \case
-        "type_rec_field" -> TField <$> field "field" <*> field "type"
-        _                -> fallthrough
+        "field_decl" -> TField <$> field "field" <*> field "type"
+        _            -> fallthrough
 
     -- TypeName
   , Descent do
@@ -219,11 +219,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Ctor
   , Descent do
       boilerplate' $ \case
-        ("ConstrName", name)   -> return $ Ctor name
-        ("False", _)           -> return $ Ctor "False"
-        ("True", _)            -> return $ Ctor "True"
-        ("Unit", _)            -> return $ Ctor "Unit"
-        _                      -> fallthrough
+        ("ConstrName", name) -> return $ Ctor name
+        ("False", _)         -> return $ Ctor "False"
+        ("True", _)          -> return $ Ctor "True"
+        ("Unit", _)          -> return $ Ctor "Unit"
+        _                    -> fallthrough
 
   -- Err
   , Descent do

@@ -11,8 +11,8 @@ type foo is [@boom] | True | False
     (TypeName)
     (sum_type
       (attr)
-      (variant (NameConstr))
-      (variant (NameConstr))
+      (variant (ConstrName))
+      (variant (ConstrName))
     )
   )
 )
@@ -30,8 +30,8 @@ type foo is [@boom] True | False
   (type_decl
     (TypeName)
     (sum_type
-      (variant (attr) (NameConstr))
-      (variant (NameConstr))
+      (variant (attr) (ConstrName))
+      (variant (ConstrName))
     )
   )
 )
@@ -49,8 +49,8 @@ type foo is | [@boom] True | False
   (type_decl
     (TypeName)
     (sum_type
-      (variant (attr) (NameConstr))
-      (variant (NameConstr))
+      (variant (attr) (ConstrName))
+      (variant (ConstrName))
     )
   )
 )

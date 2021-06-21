@@ -1,14 +1,4 @@
-let sepBy1 = (sep, p) => seq(p, repeat(seq(sep, p)))
-let sepBy = (sep, p) => optional(sepBy1(sep, p))
-
-let sepEndBy1 = (sep, rule) => seq(rule, repeat(seq(sep, rule)), optional(sep))
-let sepEndBy = (sep, rule) => optional(sepEndBy1(sep, rule))
-
-let some = x => seq(x, repeat(x))
-
-let par = x => seq('(', x, ')')
-
-let withAttrs = ($, x) => seq(field("attributes", repeat($.attr)), x)
+const common = require('../common.js')
 
 function mkOp($, opExpr) {
   return seq(
@@ -20,6 +10,7 @@ function mkOp($, opExpr) {
 
 module.exports = grammar({
   name: 'CameLigo',
+
   word: $ => $.Keyword,
   externals: $ => [$.ocaml_comment, $.comment],
   extras: $ => [$.ocaml_comment, $.comment, /\s/],
@@ -35,13 +26,108 @@ module.exports = grammar({
         $.preprocessor,
       ),
 
-    fun_decl: $ => withAttrs($, seq(
+    /// TYPE DECLARATION
+
+    type_decl: $ => seq(
+      "type",
+      field("name", $.TypeName),
+      "=",
+      field("type", $._type_def_body)
+    ),
+
+    _type_def_body: $ => choice(
+      $.sum_type,
+      $.record_type,
+      $._type_expr,
+    ),
+
+    sum_type: $ =>
+      prec.left(10,
+        seq(choice(
+          common.sepBy1('|', field("variant", $.variant)),
+          common.withAttrs($, seq('|', common.sepBy1('|', field("variant", $.variant)))),
+        ))
+      ),
+
+    // Cat of string, Person of string * string
+    variant: $ => common.withAttrs($, seq(
+      field("constructor", $.ConstrName),
+      optional(seq(
+        "of",
+        field("type", $._type_expr)
+      ))
+    )),
+
+    // { field1 : a; field2 : b }
+    record_type: $ => common.withAttrs($, seq(
+      "{",
+      common.sepBy(";", field("field", $.field_decl)),
+      optional(";"),
+      "}"
+    )),
+
+    // field : string * int
+    field_decl: $ => common.withAttrs($, seq(
+      field("field", $._label),
+      ":",
+      field("type", $._type_expr)
+    )),
+
+    _type_expr: $ => choice(
+      $.Int,
+      $.TypeWildcard,
+      $.TypeName,
+      $.fun_type,
+      $.prod_type,
+      $.app_type,
+      $.tuple_type,
+      $.module_TypeName,
+    ),
+
+    // int -> string
+    fun_type: $ => prec.right(8, seq(
+      field("domain", $._type_expr),
+      "->",
+      field("codomain", $._type_expr)
+    )),
+
+    // string * integer
+    prod_type: $ => prec.right(5, seq(
+      field("x", $._type_expr),
+      common.some(seq(
+        "*",
+        field("x", $._type_expr)
+      ))
+    )),
+
+    // a t, (a, b) t
+    app_type: $ => prec(10, seq(
+      field("x", $._type_expr),
+      field("f", $.TypeName)
+    )),
+
+    tuple_type: $ => seq(
+      "(",
+      common.sepBy1(",", field("x", choice($._type_expr, $.String))),
+      ")"
+    ),
+
+    module_TypeName: $ =>
+      seq(
+        common.sepBy1('.', field("path", $.ModuleName)),
+        '.',
+        field("type", $.TypeName),
+      ),
+
+    /// FUNCTION DECLARATION
+
+    fun_decl: $ => common.withAttrs($, seq(
       "let",
       optional(field("recursive", "rec")),
       field("name", $.NameDecl),
       // TODO: we treat arguments as an annotated pattern. Once we set up proper
       // argument and its type resolution, this must be changed.
-      some(field("arg", $._irrefutable)),
+      common.some(field("arg", $._irrefutable)),
       optional(seq(
         ":",
         field("type", $._type_expr)
@@ -50,7 +136,9 @@ module.exports = grammar({
       field("body", $._program),
     )),
 
-    let_decl: $ => withAttrs($, seq(
+    /// LET DECLARATION
+
+    let_decl: $ => common.withAttrs($, seq(
       "let",
       optional(field("recursive", "rec")),
       field("name", $._irrefutable),
@@ -62,7 +150,7 @@ module.exports = grammar({
       field("body", $._program),
     )),
 
-    //========== EXPR ============
+    /// PROGRAM
 
     _program: $ => choice(
       $.let_in,
@@ -76,10 +164,31 @@ module.exports = grammar({
       field("body", $._program)
     ),
 
+    /// PATTERNS
+
+    _pattern: $ => choice(
+      $._literal,
+      $.constr_pattern,
+      $.list_pattern,
+      $.list_con_pattern,
+      $._paren_pattern,
+      $.tuple_pattern,
+      $.record_pattern,
+      $.var_pattern,
+      $.wildcard_pattern,
+    ),
+
+    constr_pattern: $ => prec(10,
+      seq(
+        field("ctor", $.ConstrName),
+        optional(field("args", $._pattern))
+      )
+    ),
+
     // [1;2]
     list_pattern: $ => seq(
       "[",
-      sepBy(';', field("item", $._pattern)),
+      common.sepBy(';', field("item", $._pattern)),
       "]"
     ),
 
@@ -89,92 +198,6 @@ module.exports = grammar({
       "::",
       field("xs", $._pattern)
     )),
-
-    // a, b, c
-    tup_pattern: $ => prec.right(8, seq(
-      field("item", $._pattern),
-      ",",
-      sepBy1(",", field("item", $._pattern))
-    )),
-
-    _pattern: $ => choice(
-      $.var_pattern,
-      $._paren_pattern,
-      $.con_pattern,
-      $._literal,
-      $.list_pattern,
-      $.list_con_pattern,
-      $.tup_pattern,
-      $.rec_pattern,
-      $.wildcard_pattern,
-    ),
-
-    // { field1 = pat_a ; field2 = pat_b; field3 }
-    rec_pattern: $ => withAttrs($, seq(
-      "{",
-      sepBy(";", field("field", $._rec_field_pattern)),
-      optional(";"),
-      "}"
-    )),
-
-    _rec_field_pattern: $ => choice(
-      $.rec_field_pattern,
-      $.rec_capture_pattern,
-    ),
-
-    // field = _pattern
-    rec_field_pattern: $ => withAttrs($, prec(9, seq(
-      field("name", $._label),
-      "=",
-      field("body", $._pattern),
-    ))),
-
-    // field
-    rec_capture_pattern: $ => withAttrs($, prec(9, field("name", $.NameDecl))),
-
-    _irrefutable: $ => choice(
-      $._sub_irrefutable,
-      $.irrefutable_tuple,
-    ),
-
-    // a, b, c
-    irrefutable_tuple: $ => prec.right(8, seq(
-      field("item", $._sub_irrefutable),
-      ",",
-      sepBy1(",", field("item", $._sub_irrefutable)),
-    )),
-
-    _sub_irrefutable: $ => choice(
-      $.var_pattern,
-      $.wildcard_pattern,
-      $.Unit,
-      $.rec_pattern,
-      $.ConstrName,
-      $._closed_irrefutable,
-    ),
-
-    _closed_irrefutable: $ => choice(
-      $.annot_pattern,
-      $.closed_irrefutable,
-    ),
-
-    closed_irrefutable: $ => par(field("pat", choice(
-      $._irrefutable,
-      $.con_pattern,
-    ))),
-
-    wildcard_pattern: $ => "_",
-
-    var_pattern: $ => seq(
-      field("var", $.NameDecl)
-    ),
-
-    con_pattern: $ => prec(10,
-      seq(
-        field("ctor", $.ConstrName),
-        optional(field("args", $._pattern))
-      )
-    ),
 
     _paren_pattern: $ => choice(
       $.par_annot_pattern,
@@ -198,6 +221,70 @@ module.exports = grammar({
         ")"
       ),
 
+    // a, b, c
+    tuple_pattern: $ => prec.right(8, seq(
+      field("item", $._pattern),
+      ",",
+      common.sepBy1(",", field("item", $._pattern))
+    )),
+
+    // { field1 = pat_a ; field2 = pat_b; field3 }
+    record_pattern: $ => common.withAttrs($, seq(
+      "{",
+      common.sepBy(";", field("field", $._record_field_pattern)),
+      optional(";"),
+      "}"
+    )),
+
+    _record_field_pattern: $ => choice(
+      $.record_field_pattern,
+      $.record_capture_pattern,
+    ),
+
+    // field = _pattern
+    record_field_pattern: $ => common.withAttrs($, prec(9, seq(
+      field("name", $._label),
+      "=",
+      field("body", $._pattern),
+    ))),
+
+    // field
+    record_capture_pattern: $ => common.withAttrs($, prec(9, field("name", $.NameDecl))),
+
+    var_pattern: $ => seq(
+      field("var", $.NameDecl)
+    ),
+
+    wildcard_pattern: $ => "_",
+
+    /// IRREFUTABLES
+
+    _irrefutable: $ => choice(
+      $._sub_irrefutable,
+      $.irrefutable_tuple,
+    ),
+
+    _sub_irrefutable: $ => choice(
+      $.ConstrName,
+      $.Unit,
+      $._closed_irrefutable,
+      $.record_pattern,
+      $.var_pattern,
+      $.wildcard_pattern,
+    ),
+
+    // a, b, c
+    irrefutable_tuple: $ => prec.right(8, seq(
+      field("item", $._sub_irrefutable),
+      ",",
+      common.sepBy1(",", field("item", $._sub_irrefutable)),
+    )),
+
+    _closed_irrefutable: $ => choice(
+      $.annot_pattern,
+      $.closed_irrefutable,
+    ),
+
     annot_pattern: $ =>
       seq(
         "(",
@@ -207,10 +294,29 @@ module.exports = grammar({
         ")"
       ),
 
+    closed_irrefutable: $ => common.par(field("pat", choice(
+      $._irrefutable,
+      $.constr_pattern,
+    ))),
+
+    /// EXPRESSIONS
+
+    _expr: $ => choice(
+      $._call,
+      $.tup_expr,
+      $._sub_expr,
+    ),
+
     _call: $ => choice(
       $.unary_op_app,
       $.binary_op_app,
     ),
+
+    // - a
+    unary_op_app: $ => prec(19, seq(
+      field("negate", "-"),
+      field("arg", $._expr)
+    )),
 
     binary_op_app: $ => choice(
       prec.left(16, mkOp($, "mod")),
@@ -222,30 +328,32 @@ module.exports = grammar({
       prec.left(10, mkOp($, choice("=", "<>", "==", "<", "<=", ">", ">="))),
     ),
 
-    michelson_code: $ => seq(
-      '{|',
-      repeat(/([^\|]|\|[^}])/),
-      '|}'
-    ),
-
-    michelson_interop: $ => seq(
-      '[%Michelson',
-      par(
-        seq(
-          field("code", $.michelson_code),
-          ':',
-          field("type", $._type_expr),
-        )
-      ),
-      optional(par(sepBy(',', field("argument", $._sub_expr)))),
-      ']'
-    ),
-
-    // - a
-    unary_op_app: $ => prec(19, seq(
-      field("negate", "-"),
-      field("arg", $._expr)
+    tup_expr: $ => prec.right(9, seq(
+      field("x", $._expr),
+      common.some(seq(
+        ",",
+        field("x", $._expr),
+      )),
     )),
+
+    _sub_expr: $ => choice(
+      $.ConstrName,
+      $.Name,
+      $._literal,
+      $.fun_app,
+      $.paren_expr,
+      $.annot_expr,
+      $.record_expr,
+      $.record_literal,
+      $.if_expr,
+      $.lambda_expr,
+      $.match_expr,
+      $.list_expr,
+      $.data_projection,
+      $.module_access,
+      $.block_expr,
+      $.michelson_interop,
+    ),
 
     // f a
     fun_app: $ => prec.left(20, seq(
@@ -253,52 +361,48 @@ module.exports = grammar({
       field("x", $._sub_expr)
     )),
 
-    _path: $ => choice($.Name, $.data_projection),
-
-    module_access: $ => seq(
-      sepBy1('.', field("path", $.NameModule)),
-      '.',
-      field("field", $.FieldName),
+    paren_expr: $ => seq(
+      "(",
+      field("expr", $._program),
+      ")"
     ),
 
-    _accessor: $ => choice($.FieldName, $.Int),
-
-    // field names (or indices) separated by a dot
-    _accessor_chain: $ => prec.right(sepBy1('.', field("accessor", $._accessor))),
-
-    // a.0 or a.attribute
-    data_projection: $ => prec.right(21, seq(
-      field("box", $.Name),
-      ".",
-      $._accessor_chain,
-    )),
-
-    // { a = b; c = d }
-    rec_literal: $ => seq(
-      "{",
-      sepEndBy1(";", field("field", $.rec_assignment)),
-      "}"
+    annot_expr: $ => seq(
+      "(",
+      field("expr", $._program),
+      ":",
+      field("type", $._type_expr),
+      ")",
     ),
 
     // { p with a.x = b; c = d }
-    rec_expr: $ => seq(
+    record_expr: $ => seq(
       "{",
       field("subject", $._path),
       "with",
-      sepEndBy1(";", field("field", $.rec_path_assignment)),
+      common.sepEndBy1(";", field("field", $.record_path_assignment)),
       "}"
     ),
 
     // a.x = b;
     // a = b;
-    rec_path_assignment: $ => seq(
+    record_path_assignment: $ => seq(
       $._path,
       "=",
       field("value", $._expr),
     ),
 
+    _path: $ => choice($.Name, $.data_projection),
+
+    // { a = b; c = d }
+    record_literal: $ => seq(
+      "{",
+      common.sepEndBy1(";", field("field", $.record_assignment)),
+      "}"
+    ),
+
     // a = b;
-    rec_assignment: $ => seq(
+    record_assignment: $ => seq(
       field("accessor", $.FieldName),
       "=",
       field("value", $._expr),
@@ -316,13 +420,20 @@ module.exports = grammar({
       ))
     )),
 
+    lambda_expr: $ => seq(
+      "fun",
+      repeat1(field("arg", $._irrefutable)),
+      "->",
+      field("body", $._program)
+    ),
+
     // match x with ...
     match_expr: $ => prec.right(1, seq(
       "match",
       field("subject", $._expr),
       "with",
       optional('|'),
-      sepBy('|', field("alt", $.matching))
+      common.sepBy('|', field("alt", $.matching))
     )),
 
     // Dog as x -> f x
@@ -332,166 +443,56 @@ module.exports = grammar({
       field("body", $._program)
     ),
 
-    lambda_expr: $ => seq(
-      "fun",
-      repeat1(field("arg", $._irrefutable)),
-      "->",
-      field("body", $._program)
-    ),
-
     list_expr: $ => seq(
       "[",
-      sepBy(";", field("item", $._expr)),
+      common.sepBy(";", field("item", $._expr)),
       "]"
     ),
 
-    tup_expr: $ => prec.right(9, seq(
-      field("x", $._expr),
-      some(seq(
-        ",",
-        field("x", $._expr),
-      )),
+    // a.0 or a.attribute
+    data_projection: $ => prec.right(21, seq(
+      field("box", $.Name),
+      ".",
+      $._accessor_chain,
     )),
 
-    _expr: $ => choice(
-      $._call,
-      $._sub_expr,
-      $.tup_expr,
-    ),
+    // field names (or indices) separated by a dot
+    _accessor_chain: $ => prec.right(common.sepBy1('.', field("accessor", $._accessor))),
 
-    _sub_expr: $ => choice(
-      $.fun_app,
-      $.paren_expr,
-      $.annot_expr,
-      $.Name,
-      $.ConstrName,
-      $._literal,
-      $.rec_expr,
-      $.rec_literal,
-      $.if_expr,
-      $.lambda_expr,
-      $.match_expr,
-      $.list_expr,
-      $.data_projection,
-      $.module_access,
-      $.block_expr,
-      $.michelson_interop,
+    _accessor: $ => choice($.FieldName, $.Int),
+
+    module_access: $ => seq(
+      common.sepBy1('.', field("path", $.ModuleName)),
+      '.',
+      field("field", $.FieldName),
     ),
 
     block_expr: $ => seq(
       "begin",
-      sepBy(";", field("item", $._program)),
+      common.sepBy(";", field("item", $._program)),
       "end",
     ),
 
-    paren_expr: $ => seq(
-      "(",
-      field("expr", $._program),
-      ")"
-    ),
-
-    annot_expr: $ => seq(
-      "(",
-      field("expr", $._program),
-      ":",
-      field("type", $._type_expr),
-      ")",
-    ),
-
-    // a t, (a, b) t
-    type_app: $ => prec(10, seq(
-      field("x", $._type_expr),
-      field("f", $.TypeName)
-    )),
-
-    type_tuple: $ => seq(
-      "(",
-      sepBy1(",", field("x", choice($._type_expr, $.String))),
-      ")"
-    ),
-
-    // string * integer
-    type_product: $ => prec.right(5, seq(
-      field("x", $._type_expr),
-      some(seq(
-        "*",
-        field("x", $._type_expr)
-      ))
-    )),
-
-    // int -> string
-    type_fun: $ => prec.right(8, seq(
-      field("domain", $._type_expr),
-      "->",
-      field("codomain", $._type_expr)
-    )),
-
-    module_TypeName: $ =>
-      seq(
-        sepBy1('.', field("path", $.NameModule)),
-        '.',
-        field("type", $.TypeName),
+    michelson_interop: $ => seq(
+      '[%Michelson',
+      common.par(
+        seq(
+          field("code", $.michelson_code),
+          ':',
+          field("type", $._type_expr),
+        )
       ),
-
-    _type_expr: $ => choice(
-      $.TypeWildcard,
-      $.type_fun,
-      $.type_product,
-      $.type_app,
-      $.TypeName,
-      $.type_tuple,
-      $.Int,
-      $.module_TypeName,
+      optional(common.par(common.sepBy(',', field("argument", $._sub_expr)))),
+      ']'
     ),
 
-    // Cat of string, Person of string * string
-    variant: $ => withAttrs($, seq(
-      field("constructor", $.ConstrName),
-      optional(seq(
-        "of",
-        field("type", $._type_expr)
-      ))
-    )),
-
-    type_sum: $ =>
-      prec.left(10,
-        seq(choice(
-          sepBy1('|', field("variant", $.variant)),
-          withAttrs($, seq('|', sepBy1('|', field("variant", $.variant)))),
-        ))
-      ),
-
-    _label: $ => $.FieldName,
-
-    // field : string * int
-    type_rec_field: $ => withAttrs($, seq(
-      field("field", $._label),
-      ":",
-      field("type", $._type_expr)
-    )),
-
-    // { field1 : a; field2 : b }
-    type_rec: $ => withAttrs($, seq(
-      "{",
-      sepBy(";", field("field", $.type_rec_field)),
-      optional(";"),
-      "}"
-    )),
-
-    _type_def_body: $ => choice(
-      $.type_sum,
-      $._type_expr,
-      $.type_rec
+    michelson_code: $ => seq(
+      '{|',
+      repeat(/([^\|]|\|[^}])/),
+      '|}'
     ),
 
-    type_decl: $ => seq(
-      "type",
-      field("name", $.TypeName),
-      "=",
-      field("type", $._type_def_body)
-    ),
-
-    /// Preprocessor
+    /// PREPROCESSOR
 
     preprocessor: $ => field("preprocessor_command", choice(
       $.include,
@@ -518,7 +519,9 @@ module.exports = grammar({
     p_warning: $ => seq('#warning', field("message", $._till_newline)),
     p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
 
-    /// Literals
+    /// MISCELLANEOUS UTILITIES
+
+    _label: $ => $.FieldName,
 
     _literal: $ => choice(
       $.String,
@@ -531,6 +534,17 @@ module.exports = grammar({
       $.Unit
     ),
 
+    /// REGULAR EXPRESSIONS
+
+    ConstrName: $ => $._NameCapital,
+    FieldName: $ => $._Name,
+    ModuleName: $ => $._NameCapital,
+    TypeName: $ => $._Name,
+    Name: $ => $._Name,
+    NameDecl: $ => $._Name,
+
+    _till_newline: $ => /[^\n]*\n/,
+
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
     String: $ => /\"(\\.|[^"])*\"/,
@@ -538,20 +552,14 @@ module.exports = grammar({
     Nat: $ => /([1-9][0-9_]*|0)n/,
     Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
     Bytes: $ => /0x[0-9a-fA-F]+/,
-    Name: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,
-    TypeName: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,
+
+    _Name: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,
+    _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,
     TypeWildcard: $ => '_',
-    NameDecl: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,
-    NameModule: $ => /[A-Z][a-zA-Z0-9_]*/,
-    NameWildcard: $ => '_',
-    FieldName: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,
-    ConstrName: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword: $ => /[A-Za-z][a-z]*/,
 
     False: $ => 'false',
     True: $ => 'true',
     Unit: $ => seq('(', ')'),
-
-    _till_newline: $ => /[^\n]*\n/,
   }
 });
