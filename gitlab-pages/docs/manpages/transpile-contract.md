@@ -48,6 +48,11 @@ currently not transpiled. Please use at your own risk.
     format is \`pager\` or \`plain\` whenever the **TERM** env var is
     \`dumb\` or undefined.
 
+**\--output-file**=*OUTPUT_FILE*, **\--output**=*OUTPUT_FILE*
+
+:   *OUTPUT_FILE* if used, prints the output into the specified file
+    instead of stdout
+
 **-s** *SYNTAX*, **\--syntax**=*SYNTAX* (absent=auto)
 
 :   *SYNTAX* is the syntax that will be used. Currently supported

@@ -79,6 +79,7 @@ let rec constant_tag (ct : constant_tag) =
   | C_bls12_381_g1 -> 21
   | C_bls12_381_g2 -> 22
   | C_bls12_381_fr -> 23
+  | C_never        -> 24
 
 and type_expression a b =
   type_content a.type_content b.type_content

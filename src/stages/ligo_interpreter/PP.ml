@@ -11,12 +11,14 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   | C_string s -> Format.fprintf ppf "\"%s\"" s
   | C_bytes b -> Format.fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | C_address c -> Format.fprintf ppf "%a" Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.pp c
+  | C_contract c -> Format.fprintf ppf "%a(%a)" Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.pp c.address (PP_helpers.option PP_helpers.string) c.entrypoint
+  | C_mutez n -> Format.fprintf ppf "%smutez" (Int.to_string n)
+  | C_key_hash c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key_hash.pp c
 
 let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
   match v with
   | V_Ct c -> Format.fprintf ppf "%a" pp_ct c
   | V_Func_val _ -> Format.fprintf ppf "<fun>"
-  | V_Func_rec _ -> Format.fprintf ppf "<rec fun>"
   | V_Construct (name,v) -> Format.fprintf ppf "%s (%a)" name pp_value v
   | V_List vl -> Format.fprintf ppf "[%a]" (list_sep pp_value (tag " ; ")) vl
   | V_Set sl -> Format.fprintf ppf "{%a}" (list_sep pp_value (tag " ; ")) sl
@@ -25,6 +27,8 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
       Format.fprintf ppf "%a -> %a" pp_value k pp_value v
     in
     Format.fprintf ppf "[%a]" (list_sep aux (tag " ; ")) vmap
+  | V_BigMap (id, _) ->
+     Format.fprintf ppf "%sn" (Int.to_string id)
   | V_Record recmap  ->
     if (Ast_typed.Helpers.is_tuple_lmap recmap) then
       let aux : Format.formatter -> value -> unit = fun ppf v ->
@@ -39,12 +43,15 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
   | V_Michelson (Ty_code (code,_,_) | Contract code (* | Subst_code (code,_) *) ) ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Ligo (_syntax , code) ->
-    Format.fprintf ppf "%s" code
+     Format.fprintf ppf "%s" code
+
+let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
+  Format.fprintf ppf "%a" pp_value v.eval_term
 
 let pp_env : Format.formatter -> env -> unit = fun ppf env ->
-  let aux : Format.formatter -> expression_variable * value -> unit = fun ppf (var,v) ->
-    Format.fprintf ppf "%a -> %a" Var.pp var.wrap_content pp_value v in
+  let aux : Format.formatter -> expression_variable * value_expr -> unit = fun ppf (var,v) ->
+    Format.fprintf ppf "%a -> %a" Var.pp var.wrap_content pp_value_expr v in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
-    (Env.cardinal env)
+    (List.length env)
     (list_sep aux (tag "@ "))
-    (Env.to_kv_list env)
+    env

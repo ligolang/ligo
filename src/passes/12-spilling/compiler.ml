@@ -19,6 +19,7 @@ let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 let compile_constant' : AST.constant' -> constant' = function
   | C_INT -> C_INT
   | C_UNIT -> C_UNIT
+  | C_NEVER -> C_NEVER
   | C_NIL -> C_NIL
   | C_NOW -> C_NOW
   | C_IS_NAT -> C_IS_NAT
@@ -164,17 +165,27 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
       | C_TEST_SET_BAKER
-      | C_TEST_EXTERNAL_CALL
-      | C_TEST_EXTERNAL_CALL_EXN
+      | C_TEST_EXTERNAL_CALL_TO_CONTRACT
+      | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN
+      | C_TEST_EXTERNAL_CALL_TO_ADDRESS
+      | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
       | C_TEST_GET_STORAGE
+      | C_TEST_GET_STORAGE_OF_ADDRESS
       | C_TEST_GET_BALANCE
       | C_TEST_MICHELSON_EQUAL
-      | C_TEST_LOG 
+      | C_TEST_LOG
       | C_TEST_COMPILE_EXPRESSION
       | C_TEST_COMPILE_EXPRESSION_SUBST
       | C_TEST_GET_NTH_BS
       | C_TEST_STATE_RESET
       | C_TEST_LAST_ORIGINATIONS
+      | C_TEST_RUN
+      | C_TEST_EVAL
+      | C_TEST_COMPILE_CONTRACT
+      | C_TEST_TO_CONTRACT
+      | C_TEST_TO_ENTRYPOINT
+      | C_TEST_ORIGINATE_FROM_FILE
+      | C_BIG_MAP_IDENTIFIER
       | C_TEST_COMPILE_META_VALUE ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 

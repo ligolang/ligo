@@ -1,6 +1,7 @@
 ### NAME
 
-ligo-evaluate-call - Subcommand: Run a function with the given parameter.
+ligo-evaluate-call - Subcommand: Run a function with the given
+parameter.
 
 ### SYNOPSIS
 
@@ -88,3 +89,13 @@ interpretation is done using Michelson\`s interpreter.
 **\--version**
 
 :   Show version information.
+
+**\--warn**=*BOOL* (absent=true)
+
+:   *BOOL* indicates whether warning messages should be printed in
+    stderr or not
+
+**\--werror**=*BOOL* (absent=false)
+
+:   *BOOL* indicates whether warning messages should be treated as
+    errors or not

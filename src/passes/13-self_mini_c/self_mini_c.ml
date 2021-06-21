@@ -24,7 +24,7 @@ let map_expression :
    assuming arguments are pure *)
 let is_pure_constant : constant' -> bool =
   function
-  | C_UNIT
+  | C_UNIT | C_NEVER
   | C_CAR | C_CDR | C_PAIR
   | C_NIL | C_CONS
   | C_NEG | C_OR | C_AND | C_XOR | C_NOT
@@ -108,12 +108,15 @@ let is_pure_constant : constant' -> bool =
   (* Test - ligo interpreter, should never end up here *)
   | C_TEST_ORIGINATE
   | C_TEST_GET_STORAGE
+  | C_TEST_GET_STORAGE_OF_ADDRESS
   | C_TEST_GET_BALANCE
   | C_TEST_SET_NOW
   | C_TEST_SET_SOURCE
   | C_TEST_SET_BAKER
-  | C_TEST_EXTERNAL_CALL
-  | C_TEST_EXTERNAL_CALL_EXN
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
   | C_TEST_MICHELSON_EQUAL
   | C_TEST_GET_NTH_BS
   | C_TEST_LOG
@@ -122,6 +125,13 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_STATE_RESET
   | C_TEST_LAST_ORIGINATIONS
   | C_TEST_COMPILE_META_VALUE
+  | C_TEST_RUN
+  | C_TEST_EVAL
+  | C_TEST_COMPILE_CONTRACT
+  | C_TEST_TO_CONTRACT
+  | C_TEST_TO_ENTRYPOINT
+  | C_TEST_ORIGINATE_FROM_FILE
+  | C_BIG_MAP_IDENTIFIER
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

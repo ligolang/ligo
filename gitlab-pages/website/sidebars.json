@@ -97,6 +97,12 @@
     "Get Started": [
       "tutorials/get-started/tezos-taco-shop-smart-contract",
       "tutorials/get-started/tezos-taco-shop-payout"
+    ],
+    "Migrating from Ethereum": [
+      "tutorials/tz-vs-eth/tz-vs-eth"
+    ],
+    "Inter-contract invocations": [
+      "tutorials/inter-contract-calls/inter-contract-calls"
     ]
   }
 }

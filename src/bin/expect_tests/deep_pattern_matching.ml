@@ -5,6 +5,18 @@ let good_test s = (test "")^"/deep_pattern_matching/"^s
 
 (* Negatives *)
 
+(* wrong unit pattern in a let destructuring *)
+let%expect_test _ =
+  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail14.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 6-8:
+      1 | let main (_ : unit * unit) : operation list * unit =
+      2 |   let () = 42n in
+      3 |   (([] : operation list), ())
+
+    Variant pattern argument is expected of type nat but is of type unit. |}]
+
+
 (* Trying to match on values *)
 let%expect_test _ =
   run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail10.mligo") ] ;

@@ -31,12 +31,14 @@ let t_unit       ?loc ?core () : type_expression = t_constant ?loc ?core unit_na
 let t_bls12_381_g1 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g1_name []
 let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g2_name []
 let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
+let t_never       ?loc ?core () : type_expression = t_constant ?loc ?core never_name []
 
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core option_name [o]
 let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core list_name [t]
 let t_set            ?loc ?core t   : type_expression = t_constant ?loc ?core set_name [t]
 let t_contract       ?loc ?core t   : type_expression = t_constant ?loc ?core contract_name [t]
+let t_typed_address       ?loc ?core p s   : type_expression = t_constant ?loc ?core typed_address_name [ p ; s ]
 let t_ticket         ?loc ?core t   : type_expression = t_constant ?loc ?core ticket_name [t]
 let t_map            ?loc ?core k v : type_expression = t_constant ?loc ?core map_name [ k ; v ]
 let t_big_map        ?loc ?core k v : type_expression = t_constant ?loc ?core big_map_name [ k ; v ]
@@ -63,7 +65,7 @@ let t_triplet ?loc ?core a b c : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ;
     (Label "2",{associated_type=c;michelson_annotation=None ; decl_pos = 2}) ]
-    
+
 let t_sum ?loc ?core ~layout content : type_expression = make_t ?loc (T_sum {content;layout}) core
 let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
@@ -129,6 +131,8 @@ let get_t_int (t:type_expression) : unit option = get_t_base_inj t int_name
 let get_t_nat (t:type_expression) : unit option = get_t_base_inj t nat_name
 let get_t_unit (t:type_expression) : unit option = get_t_base_inj t unit_name
 let get_t_mutez (t:type_expression) : unit option = get_t_base_inj t tez_name
+let get_t_timestamp (t:type_expression) : unit option = get_t_base_inj t timestamp_name
+let get_t_address (t:type_expression) : unit option = get_t_base_inj t address_name
 let get_t_bytes (t:type_expression) : unit option = get_t_base_inj t bytes_name
 let get_t_ligo_code (t:type_expression) : unit option = get_t_base_inj t test_ligo_name
 let get_t_michelson_code (t:type_expression) : unit option = get_t_base_inj t test_michelson_name
@@ -186,10 +190,29 @@ let get_t_record (t:type_expression) : rows option = match t.type_content with
   | T_record m -> Some m
   | _ -> None
 
+let get_t_record_exn (t:type_expression) : rows = match t.type_content with
+  | T_record m -> m
+  | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
+let get_t_list_exn (t:type_expression) : type_expression =
+  match get_t_list t with
+  | Some value -> value
+  | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
+let get_t_set_exn (t:type_expression) : type_expression =
+  match get_t_set t with
+  | Some value -> value
+  | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_name -> Some (k,v)
   | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
+  | _ -> None
+
+let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
+  match t.type_content with
+  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) typed_address_name -> Some (k,v)
   | _ -> None
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
@@ -220,6 +243,9 @@ let get_t_big_map_value : type_expression -> type_expression option = fun t ->
 
 let is_t_map t = Option.is_some (get_t_map t)
 let is_t_big_map t = Option.is_some (get_t_big_map t)
+let is_t_record t = Option.is_some (get_t_record t)
+let is_t_option t = Option.is_some (get_t_option t)
+let is_t_sum t = Option.is_some (get_t_sum t)
 
 let is_e_matching e = match e.expression_content with | E_matching _ -> true | _ -> false
 let assert_t_mutez : type_expression -> unit option = get_t_mutez
@@ -240,6 +266,11 @@ let is_t_nat t = Option.is_some (get_t_nat t)
 let is_t_string t = Option.is_some (get_t_string t)
 let is_t_bytes t = Option.is_some (get_t_bytes t)
 let is_t_int t = Option.is_some (get_t_int t)
+let is_t_bool t = Option.is_some (get_t_bool t)
+let is_t_unit t = Option.is_some (get_t_unit t)
+let is_t_address t = Option.is_some (get_t_address t)
+let is_t_mutez t = Option.is_some (get_t_mutez t)
+let is_t_contract t = Option.is_some (get_t_contract t)
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
@@ -261,9 +292,22 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
   e_record map
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
+let e_cons hd tl : expression_content = E_constant {cons_name=C_CONS;arguments=[hd;tl]}
+let e_nil (): expression_content = E_constant {cons_name=C_LIST_EMPTY; arguments=[]}
+let e_set_add hd tl : expression_content = E_constant {cons_name=C_SET_ADD;arguments=[hd;tl]}
+let e_set_empty (): expression_content = E_constant {cons_name=C_SET_EMPTY; arguments=[]}
+let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
+let e_map_empty (): expression_content = E_constant {cons_name=C_MAP_EMPTY; arguments=[]}
+let e_big_map_empty (): expression_content = E_constant {cons_name=C_BIG_MAP_EMPTY; arguments=[]}
+let e_big_map_identifier id : expression_content = E_constant {cons_name=C_BIG_MAP_IDENTIFIER; arguments=[id]}
+let e_map_remove k tl : expression_content = E_constant {cons_name=C_MAP_REMOVE; arguments=[k; tl]}
+let e_contract_opt v : expression_content = E_constant {cons_name=C_CONTRACT_OPT; arguments=[v]}
+let e_contract v : expression_content = E_constant {cons_name=C_CONTRACT; arguments=[v]}
+let e_contract_entrypoint e v : expression_content = E_constant {cons_name=C_CONTRACT_ENTRYPOINT; arguments=[e; v]}
 
 let e_failwith e : expression_content = E_constant {cons_name=C_FAILWITH ; arguments=[e]}
 
+let e_literal l : expression_content =     E_literal l
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
 let e_nat n : expression_content = E_literal (Literal_nat n)
@@ -278,6 +322,7 @@ let e_key_hash s : expression_content = E_literal (Literal_key_hash s)
 let e_chain_id s : expression_content = E_literal (Literal_chain_id s)
 let e_operation s : expression_content = E_literal (Literal_operation s)
 let e_lambda l : expression_content = E_lambda l
+let e_recursive l : expression_content = E_recursive l
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
 let e_raw_code language code : expression_content = E_raw_code { language ; code }
@@ -290,15 +335,21 @@ let e_bool b : expression_content = e_constructor (Label (string_of_bool b)) (ma
 
 let e_a_unit = make_e (e_unit ()) (t_unit ())
 let e_a_int n = make_e (e_int n) (t_int ())
+let e_a_literal l t = make_e (e_literal l) t
 let e_a_nat n = make_e (e_nat n) (t_nat ())
 let e_a_mutez n = make_e (e_mutez n) (t_mutez ())
+let e_a_timestamp n = make_e (e_timestamp n) (t_timestamp ())
+let e_a_key_hash n = make_e (e_key_hash n) (t_key_hash ())
 let e_a_bool b = make_e (e_bool b) (t_bool ())
 let e_a_string s = make_e (e_string s) (t_string ())
+let e_a_bytes b = make_e (e_bytes b) (t_bytes ())
 let e_a_address s = make_e (e_address s) (t_address ())
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
+let e_a_constructor c e t = make_e (e_constructor (Label c) e) t
 let e_a_some s = make_e (e_some s) (t_option s.type_expression)
 let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
+let e_a_recursive l= make_e (e_recursive l) l.fun_type
 let e_a_none t = make_e (e_none ()) (t_option t)
 let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layout
   (LMap.map
@@ -311,6 +362,19 @@ let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi ~f:(fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 let e_a_raw_code l c t = make_e (e_raw_code l c) t
+let e_a_nil t = make_e (e_nil ()) (t_list t)
+let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
+let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
+let e_a_set_add hd tl = make_e (e_set_add hd tl) (t_set hd.type_expression)
+let e_a_map_empty kt vt = make_e (e_map_empty ()) (t_map kt vt)
+let e_a_map_add k v tl = make_e (e_map_add k v tl) (t_map k.type_expression v.type_expression)
+let e_a_big_map_empty kt vt = make_e (e_big_map_empty ()) (t_big_map kt vt)
+let e_a_big_map_add k v tl = make_e (e_map_add k v tl) (t_big_map k.type_expression v.type_expression)
+let e_a_big_map_identifier kt vt id = make_e (e_big_map_identifier id) (t_big_map kt vt)
+let e_a_big_map_remove k tl = make_e (e_map_remove k tl) tl.type_expression
+let e_a_contract_opt a t = make_e (e_contract_opt a) (t_contract t)
+let e_a_contract a t = make_e (e_contract a) (t_contract t)
+let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
 
 
 let get_a_int (t:expression) =

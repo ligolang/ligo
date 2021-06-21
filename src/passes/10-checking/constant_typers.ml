@@ -91,6 +91,14 @@ let big_map_empty loc = typer_0 loc "BIG_MAP_EMPTY" @@ fun tv_opt ->
     let* (src, dst) = trace_option (expected_big_map loc t) @@ get_t_big_map t in
     ok @@ t_big_map src dst
 
+let big_map_identifier loc = typer_1_opt loc "BIG_MAP_IDENTIFIER" @@ fun id tv_opt  ->
+  match tv_opt with
+  | None -> fail (not_annotated loc)
+  | Some t ->
+    let* () = trace_option (expected_nat loc id) @@ get_t_nat id in
+    let* (src, dst) = trace_option (expected_big_map loc t) @@ get_t_big_map t in
+    ok @@ t_big_map src dst
+
 let map_add loc : typer = typer_3 loc "MAP_ADD" @@ fun k v m ->
   let* (src , dst) = bind_map_or (
       (fun m -> trace_option (expected_map loc m) @@ get_t_map m) ,
@@ -256,6 +264,12 @@ let sender loc = constant' loc "SENDER" @@ t_address ()
 let source loc = constant' loc "SOURCE" @@ t_address ()
 
 let unit loc = constant' loc "UNIT" @@ t_unit ()
+
+let never loc = typer_1_opt loc "NEVER" @@ fun nev tv_opt ->
+  let* () = assert_eq loc nev (t_never ()) in
+  match tv_opt with
+  | None -> fail (not_annotated loc)
+  | Some t -> ok @@ t
 
 let amount loc = constant' loc "AMOUNT" @@ t_mutez ()
 
@@ -823,6 +837,7 @@ let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc
       t_string () ;
       t_timestamp () ;
       t_unit ();
+      t_never ();
     ] in
   ok @@ t_bool ()
 
@@ -910,11 +925,12 @@ let sapling_verify_update loc = typer_2 loc "SAPLING_VERIFY_UPDATE" @@ fun tr st
 let sapling_empty_state loc = typer_0 loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
   trace_option (not_annotated loc) @@ tv_opt
 
-let test_originate loc = typer_3 loc "TEST_ORIGINATE" @@ fun source_file entrypoint storage ->
-  let* () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
-  let* () = trace_option (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-  let* () = trace_option (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-  ok (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+let test_originate loc = typer_3 loc "TEST_ORIGINATE" @@ fun main storage balance ->
+  let* in_ty,_ = trace_option (expected_function loc main) @@ get_t_function main in
+  let* param_ty,storage_ty = trace_option (expected_pair loc in_ty) @@ get_t_pair in_ty in
+  let* () = assert_eq loc balance (t_mutez ()) in
+  let* () = assert_eq loc storage storage_ty in
+  ok (t_triplet (t_typed_address param_ty storage_ty) (t_michelson_code ()) (t_int ()))
 
 let test_compile_expression_subst loc = typer_3 loc "TEST_COMPILE_EXPRESSION_SUBST" @@ fun source_file_opt ligo_insertion subst_list ->
   let* subst_pair = trace_option (expected_list loc subst_list) @@ get_t_list subst_list in
@@ -950,25 +966,41 @@ let test_get_nth loc = typer_1 loc "TEST_GET_NTH" @@ fun n ->
   let* () = trace_option (expected_int loc n) @@ assert_t_int n in
   ok (t_address ())
 
-let test_external_call_exn loc = typer_3 loc "TEST_EXTERNAL_CALL_EXN" @@ fun addr p amt  ->
+let test_external_call_to_contract_exn loc = typer_3 loc "TEST_EXTERNAL_CALL_TO_CONTRACT_EXN" @@ fun addr p amt  ->
+  let* contract_ty = trace_option (expected_contract loc addr) @@ get_t_contract addr in
+  let* () = assert_eq loc amt (t_mutez ()) in
+  let* () = assert_eq loc p contract_ty in
+  ok (t_unit ())
+
+let test_external_call_to_contract loc = typer_3 loc "TEST_EXTERNAL_CALL_TO_CONTRACT" @@ fun addr p amt  ->
+  let* contract_ty = trace_option (expected_contract loc addr) @@ get_t_contract addr in
+  let* () = assert_eq loc amt (t_mutez ()) in
+  let* () = assert_eq loc p contract_ty in
+  ok (t_test_exec_result ())
+
+let test_external_call_to_address_exn loc = typer_3 loc "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN" @@ fun addr p amt  ->
   let* () = assert_eq loc addr (t_address ()) in
-  let* () = assert_eq loc amt (t_nat ()) in
+  let* () = assert_eq loc amt (t_mutez ()) in
   let* () = assert_eq loc p (t_michelson_code ()) in
   ok (t_unit ())
 
-let test_external_call loc = typer_3 loc "TEST_EXTERNAL_CALL" @@ fun addr p amt  ->
+let test_external_call_to_address loc = typer_3 loc "TEST_EXTERNAL_CALL_TO_ADDRESS" @@ fun addr p amt  ->
   let* () = assert_eq loc addr (t_address ()) in
-  let* () = assert_eq loc amt (t_nat ()) in
+  let* () = assert_eq loc amt (t_mutez ()) in
   let* () = assert_eq loc p (t_michelson_code ()) in
   ok (t_test_exec_result ())
 
-let test_get_storage loc = typer_1 loc "TEST_GET_STORAGE" @@ fun addr ->
+let test_get_storage loc = typer_1 loc "TEST_GET_STORAGE" @@ fun c ->
+  let* (_, storage_ty) = trace_option (expected_contract loc (t_unit ())) @@ get_t_typed_address c in
+  ok storage_ty
+
+let test_get_storage_of_address loc = typer_1 loc "TEST_GET_STORAGE_OF_ADDRESS" @@ fun addr ->
   let* () = assert_eq loc addr (t_address ()) in
   ok (t_michelson_code ())
 
 let test_get_balance loc = typer_1 loc "TEST_GET_BALANCE" @@ fun addr ->
   let* () = assert_eq loc addr (t_address ()) in
-  ok (t_michelson_code ())
+  ok (t_mutez ())
 
 let test_michelson_equal loc = typer_2 loc "TEST_ASSERT_EQUAL" @@ fun x y ->
   let* () = trace_option (expected_michelson_code loc x) @@ assert_t_michelson_code x in
@@ -984,9 +1016,41 @@ let test_last_originations loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun u -
 let test_compile_meta_value loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->
   ok (t_michelson_code ())
 
+let test_run loc = typer_2 loc "TEST_RUN" @@ fun _ _ ->
+  ok (t_michelson_code ())
+
+let test_eval loc = typer_1 loc "TEST_EVAL" @@ fun _ ->
+  ok (t_michelson_code ())
+
+let test_to_contract loc = typer_1 loc "TEST_TO_CONTRACT" @@ fun t ->
+  let* param_ty, _ = trace_option (expected_michelson_code loc t) @@
+                       get_t_typed_address t in
+  let param_ty = Option.value (Ast_typed.Helpers.get_entrypoint "default" param_ty) ~default:param_ty in
+  ok (t_contract param_ty)
+
+let test_to_entrypoint loc = typer_2_opt loc "TEST_TO_ENTRYPOINT" @@ fun entry_tv contract_tv tv_opt ->
+  let t_string = t_string () in
+  let* () = assert_eq loc entry_tv t_string in
+  let* _ = trace_option (expected_contract loc contract_tv) @@
+             get_t_typed_address contract_tv in
+  let* tv = trace_option (not_annotated loc) tv_opt in
+  let* tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
+  ok @@ t_contract tv'
+
+let test_originate_from_file loc = typer_4 loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
+  let* () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
+  let* () = trace_option (expected_string loc entrypoint) @@ assert_t_string entrypoint in
+  let* () = trace_option (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
+  let* () = assert_eq loc balance (t_mutez ()) in
+  ok (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+
+let test_compile_contract loc = typer_1 loc "TEST_COMPILE_CONTRACT" @@ fun _ ->
+  ok (t_michelson_code ())
+
 let constant_typers loc c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int loc ;
   | C_UNIT                -> ok @@ unit loc ;
+  | C_NEVER               -> ok @@ never loc ;
   | C_NOW                 -> ok @@ now loc ;
   | C_IS_NAT              -> ok @@ is_nat loc ;
   | C_SOME                -> ok @@ some loc ;
@@ -1050,6 +1114,7 @@ let constant_typers loc c : (typer , typer_error) result = match c with
     (* MAP *)
   | C_MAP_EMPTY           -> ok @@ map_empty loc;
   | C_BIG_MAP_EMPTY       -> ok @@ big_map_empty loc;
+  | C_BIG_MAP_IDENTIFIER  -> ok @@ big_map_identifier loc;
   | C_MAP_ADD             -> ok @@ map_add loc ;
   | C_MAP_REMOVE          -> ok @@ map_remove loc ;
   | C_MAP_UPDATE          -> ok @@ map_update loc ;
@@ -1094,7 +1159,7 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_LEVEL             -> ok @@ level loc ;
   | C_VOTING_POWER      -> ok @@ voting_power loc ;
   | C_TOTAL_VOTING_POWER -> ok @@ total_voting_power loc ;
-  | C_TICKET -> ok @@ ticket loc ; 
+  | C_TICKET -> ok @@ ticket loc ;
   | C_READ_TICKET -> ok @@ read_ticket loc ;
   | C_SPLIT_TICKET -> ok @@ split_ticket loc ;
   | C_JOIN_TICKET -> ok @@ join_ticket loc ;
@@ -1105,9 +1170,12 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_TEST_SET_NOW -> ok @@ test_set_now loc ;
   | C_TEST_SET_SOURCE -> ok @@ test_set_source loc ;
   | C_TEST_SET_BAKER -> ok @@ test_set_source loc ;
-  | C_TEST_EXTERNAL_CALL -> ok @@ test_external_call loc ;
-  | C_TEST_EXTERNAL_CALL_EXN -> ok @@ test_external_call_exn loc ;
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> ok @@ test_external_call_to_contract loc ;
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> ok @@ test_external_call_to_contract_exn loc ;
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> ok @@ test_external_call_to_address loc ;
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> ok @@ test_external_call_to_address_exn loc ;
   | C_TEST_GET_STORAGE -> ok @@ test_get_storage loc ;
+  | C_TEST_GET_STORAGE_OF_ADDRESS -> ok @@ test_get_storage_of_address loc ;
   | C_TEST_GET_BALANCE -> ok @@ test_get_balance loc ;
   | C_TEST_MICHELSON_EQUAL -> ok @@ test_michelson_equal loc ;
   | C_TEST_GET_NTH_BS -> ok @@ test_get_nth loc ;
@@ -1117,6 +1185,12 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_TEST_STATE_RESET -> ok @@ test_state_reset loc ;
   | C_TEST_LAST_ORIGINATIONS -> ok @@ test_last_originations loc ;
   | C_TEST_COMPILE_META_VALUE -> ok @@ test_compile_meta_value loc ;
+  | C_TEST_RUN -> ok @@ test_run loc ;
+  | C_TEST_EVAL -> ok @@ test_eval loc ;
+  | C_TEST_COMPILE_CONTRACT -> ok @@ test_compile_contract loc ;
+  | C_TEST_TO_CONTRACT -> ok @@ test_to_contract loc ;
+  | C_TEST_TO_ENTRYPOINT -> ok @@ test_to_entrypoint loc ;
+  | C_TEST_ORIGINATE_FROM_FILE -> ok @@ test_originate_from_file loc ;
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> ok @@ polymorphic_add loc ;
   | _ as cst -> fail (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

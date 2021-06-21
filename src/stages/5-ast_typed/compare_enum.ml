@@ -133,7 +133,7 @@ let constant'_tag = function
   | C_TEST_SET_NOW            -> 118
   | C_TEST_SET_SOURCE         -> 119
   | C_TEST_SET_BAKER          -> 120
-  | C_TEST_EXTERNAL_CALL      -> 121
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> 121
   | C_TEST_GET_STORAGE        -> 122
   | C_TEST_GET_BALANCE        -> 123
   | C_TEST_MICHELSON_EQUAL    -> 124
@@ -154,12 +154,23 @@ let constant'_tag = function
   | C_SAPLING_VERIFY_UPDATE   -> 139
   | C_TEST_COMPILE_EXPRESSION -> 141
   | C_TEST_STATE_RESET        -> 142
-  | C_TEST_EXTERNAL_CALL_EXN  -> 143
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> 143
   | C_TEST_GET_NTH_BS         -> 144
   | C_TEST_LAST_ORIGINATIONS  -> 145
   | C_TEST_COMPILE_META_VALUE -> 146
   | C_TEST_COMPILE_EXPRESSION_SUBST -> 147
-  | C_POLYMORPHIC_ADD         -> 148
+  | C_TEST_RUN                -> 148
+  | C_TEST_EVAL               -> 149
+  | C_TEST_COMPILE_CONTRACT   -> 150
+  | C_TEST_TO_CONTRACT        -> 151
+  | C_TEST_ORIGINATE_FROM_FILE -> 152
+  | C_TEST_GET_STORAGE_OF_ADDRESS -> 153
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> 154
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> 155
+  | C_TEST_TO_ENTRYPOINT        -> 156
+  | C_POLYMORPHIC_ADD         -> 157
+  | C_BIG_MAP_IDENTIFIER -> 158
+  | C_NEVER                   -> 159
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

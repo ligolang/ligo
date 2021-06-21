@@ -10,6 +10,7 @@ let key_hash_ (a: key_hash) = a < a
 let mutez_ (a: tez) = a < a
 let nat_ (a: nat) = a < a
 let option_ (a: int option) = a < a
+let never_ (a: never) = a < a
 
 (*
 type toto = A of int

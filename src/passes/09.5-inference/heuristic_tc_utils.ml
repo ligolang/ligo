@@ -303,8 +303,12 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
            fresh_x_3 = float (                                   ) ; ] *)
+  let deduced = 
+    (* TODO: this is a placeholder, we need some row variables to allow constraints on all the fields of a record https://gitlab.com/ligolang/ligo/-/merge_requests/1189 *)
+    List.filter ~f:(function `Row {tv_map} when LMap.is_empty tv_map -> false | _ -> true) @@
+    list_of_rope deduced in
 
-  ok { deduced = list_of_rope deduced ; cleaned ; changed = changed'' }
+  ok { deduced ; cleaned ; changed = changed'' }
 
  let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
   let* {deduced; cleaned; changed} = deduce_and_clean repr tc in

@@ -276,7 +276,8 @@ and var_rule : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_expression
             (* Is substitution avoidable ? mhd here can be the result of a tuple/record destructuring *)
             let env' = O.Environment.add_ez_binder mhd t env in
             ok (ptl , (body',env'))
-          | (P_unit, _t) ->
+          | (P_unit, t) ->
+            let* () = assert_unit_pattern phd.location t in
             ok (ptl , (body,env))
           |  _ -> corner_case __LOC__
         )

@@ -270,6 +270,7 @@ let constant_tag : constant_tag -> json = function
   | C_bls12_381_g1 -> `List [`String "C_bls12_381_g1"; `Null]
   | C_bls12_381_g2 -> `List [`String "C_bls12_381_g2"; `Null]
   | C_bls12_381_fr -> `List [`String "C_bls12_381_fr"; `Null]
+  | C_never        -> `List [`String "C_never"; `Null]
 
 let row_tag = function
   | C_record  -> `List [`String "C_record"; `Null]

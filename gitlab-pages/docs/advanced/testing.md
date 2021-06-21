@@ -8,18 +8,18 @@ import Link from '@docusaurus/Link';
 
 ## Testing LIGO code
 
-The LIGO command-line interpreter provides sub-commands to test
-directly your LIGO code. The three main sub-commands we currently
+The LIGO command-line interpreter provides sub-commands to
+directly test your LIGO code. The three main sub-commands we currently
 support are:
 
-* `interpret`
-
 * `test`
+
+* `interpret`
 
 * `dry-run`
 
 We will show how to use the first two, while an example on how to use
-the third one was already explained in the
+the third one was already explained
 [here](first-contract.md#dry-running-a-contract).
 
 ### Testing with `test`
@@ -31,16 +31,354 @@ The sub-command `test` can be used to test a contract using LIGO.
 > change. No real test procedure should rely on this sub-command
 > alone.
 
-To test the contract we need to create a testing file. This file has
-access to an additional `Test` module. The test file is interpreted, 
-and implicitly updates a global state (the tezos context). To do that, 
-the LIGO interpreter uses the [same library that Tezos internally uses for 
-testing](https://gitlab.com/tezos/tezos/-/tree/master/src/proto_alpha/lib_protocol/test/helpers). 
-Here we will simulate that the contract is actually deployed to an address, and 
-check that the resulting storage is `42` after executing a call to `Increment`:
+#### Testing with `test`: internally
 
-> Note: the types present in the context of the testing file differ from the 
-> ones when writing a contract. 
+When running the `test` sub-command, LIGO code has access to an
+additional `Test` module. This module provides ways of originating
+contracts and executing transactions, as well as additional helper
+functions that allow to control different parameters of the Tezos
+testing library.
+
+> ⚠️ The testing framework has been recently updated, changing a few of
+> the basic functions in the module `Test`. Please check the next
+> section in case you need to test files using the previous
+> primitives.
+
+The function `Test.originate` allows to deploy a contract in the
+testing environment. It takes a contract, which is represented as a
+function of type `'parameter * 'storage -> operation list * 'storage`,
+an initial storage of type `'storage`, and an initial balance for the
+contract being deployed. This function deploys the contract, and
+returns the type
+`('parameter, 'storage) typed_address`, the compiled program in
+Michelson of type `michelson_program`, and the size of the program of
+type `int`.
+
+The storage of a deployed contract can be queried using the
+`Test.get_storage` function, that given a typed address `('parameter,
+'storage) typed_address`, returns the `'storage` value.
+
+As a concrete example, suppose we have the following contract:
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=frontpage
+// This is testnew.ligo
+type storage is int
+
+type parameter is
+  Increment of int
+| Decrement of int
+| Reset
+
+type return is list (operation) * storage
+
+// Two entrypoints
+function add (const store : storage; const delta : int) : storage is
+  store + delta
+function sub (const store : storage; const delta : int) : storage is
+  store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+function main (const action : parameter; const store : storage) : return is
+ ((nil : list (operation)),    // No operations
+  case action of
+    Increment (n) -> add (store, n)
+  | Decrement (n) -> sub (store, n)
+  | Reset         -> 0
+  end)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=frontpage
+// This is testnew.mligo
+type storage = int
+
+type parameter =
+  Increment of int
+| Decrement of int
+| Reset
+
+type return = operation list * storage
+
+// Two entrypoints
+let add (store, delta : storage * int) : storage = store + delta
+let sub (store, delta : storage * int) : storage = store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+let main (action, store : parameter * storage) : return =
+ ([] : operation list),    // No operations
+ (match action with
+   Increment (n) -> add (store, n)
+ | Decrement (n) -> sub (store, n)
+ | Reset         -> 0)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=frontpage
+// This is testme.religo
+type storage = int;
+
+type parameter =
+  Increment (int)
+| Decrement (int)
+| Reset;
+
+type return = (list (operation), storage);
+
+// Two entrypoints
+let add = ((store, delta) : (storage, int)) : storage => store + delta;
+let sub = ((store, delta) : (storage, int)) : storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+let main = ((action, store) : (parameter, storage)) : return => {
+ (([] : list (operation)),    // No operations
+ (switch (action) {
+  | Increment (n) => add ((store, n))
+  | Decrement (n) => sub ((store, n))
+  | Reset         => 0}))
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=frontpage
+// This is testnew.jsligo
+type storage = int;
+
+type parameter =
+  ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+
+type return_ = [list<operation>, storage];
+
+// Two entrypoints
+let add = ([store, delta]: [storage, int]): storage => store + delta;
+let sub = ([store, delta]: [storage, int]): storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+let main = ([action, store]: [parameter, storage]) : return_ => {
+  return [
+    list([]) as list<operation>,    // No operations
+    match(action, {
+      Increment:(n: int) => add ([store, n]),
+      Decrement:(n: int) => sub ([store, n]),
+      Reset: ()          => 0})
+  ]
+};
+```
+
+</Syntax>
+
+
+We can deploy it and query the storage right after, to check that the
+storage is in fact the one which we started with:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=frontpage
+// This continues testnew.ligo
+
+const test =
+  block {
+    const initial_storage = 42;
+    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const storage = Test.get_storage(taddr);
+  } with (storage = initial_storage);
+
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=frontpage
+// This continues testnew.mligo
+
+let test =
+  let initial_storage = 42 in
+  let (taddr, _, _) = Test.originate main initial_storage 0tez in
+  assert (Test.get_storage taddr = initial_storage)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=frontpage
+// This continues testnew.religo
+
+let test =
+  let initial_storage = 42;
+  let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+  assert (Test.get_storage(taddr) == initial_storage)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=frontpage
+// This continues testnew.jsligo
+
+let _test = () : bool => {
+  let initial_storage = 42 as int;
+  let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+  return (Test.get_storage(taddr) == initial_storage);
+};
+
+let test = _test();
+```
+
+</Syntax>
+
+The test subcommand will evaluate all top-level definitions and print any
+entries that begin with the prefix `test` as well as the value that these
+definitions evaluate to. If any of the definitions are found to have
+failed, a message will be issued with the line number where the problem
+occurred.
+
+<Syntax syntax="pascaligo">
+
+```shell
+ligo test gitlab-pages/docs/advanced/src/testnew.ligo
+// Outputs:
+// Everything at the top-level was executed.
+// - test exited with value true.
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```shell
+ligo test gitlab-pages/docs/advanced/src/testnew.mligo
+// Outputs:
+// Everything at the top-level was executed.
+// - test exited with value true.
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```shell
+ligo test gitlab-pages/docs/advanced/src/testnew.religo
+// Outputs:
+// Everything at the top-level was executed.
+// - test exited with value true.
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```shell
+ligo test gitlab-pages/docs/advanced/src/testnew.jsligo
+// Outputs:
+// Everything at the top-level was executed.
+// - test exited with value true.
+```
+
+</Syntax>
+
+
+The function `Test.transfer_to_contract` allows to bake a transaction.
+It takes a target account of type `'parameter contract`, the parameter
+of type `'parameter` and an amount of type `tez`. This function
+performs the transaction, and returns a `test_exec_result`, which
+tells whether the transaction was successful or not, and in case it
+was not, it contains a `test_exec_error` describing the error. There
+is an alternative version, called `Test.transfer_to_contract_exn`
+which performs the transaction and ignores the result, failing in case
+that there was an error.
+
+We can extend the previous example by executing a transaction that
+increments the storage after deployment:
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=frontpage
+// This continues testnew.ligo
+
+const test2 =
+  block {
+    const initial_storage = 42;
+    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const contr = Test.to_contract(taddr);
+    const _ = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
+    const storage = Test.get_storage(taddr);
+  } with (storage = initial_storage + 1);
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=frontpage
+// This continues testnew.mligo
+
+let test2 =
+  let initial_storage = 42 in
+  let (taddr, _, _) = Test.originate main initial_storage 0tez in
+  let contr = Test.to_contract taddr in
+  let () = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
+  assert (Test.get_storage taddr = initial_storage + 1)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=frontpage
+// This continues testnew.religo
+
+let test2 =
+  let initial_storage = 42;
+  let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+  let contr = Test.to_contract(taddr);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  assert (Test.get_storage(taddr) == initial_storage + 1)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=frontpage
+// This continues testnew.jsligo
+
+let _test2 = () : bool => {
+  let initial_storage = 42 as int;
+  let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+  let contr = Test.to_contract(taddr);
+  let r = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  return (Test.get_storage(taddr) == initial_storage + 1);
+}
+
+let test2 = _test2();
+```
+
+</Syntax>
+
+The environment assumes a source for the operations which can be set
+using the function `Test.set_source : address -> unit`.
+
+
+#### Testing with `test`: externally
+
+To test the contract externally, we need to create a testing file that
+is different from the file containing the contract we want to test.
+This testing file has access to the additional `Test` module, it will
+be interpreted, and implicitly update a global state (the tezos
+context). To do that, the LIGO interpreter uses the [same library that
+Tezos internally uses for
+testing](https://gitlab.com/tezos/tezos/-/tree/master/src/proto_alpha/lib_protocol/test/helpers).
+Here we will simulate that the contract is actually deployed to an
+address, and check that the resulting storage is `42` after executing
+a call to `Increment`:
+
+> Note: the types present in the context of the testing file differ
+> from the ones when writing a contract.
 
 Code insertion are used to write code to be compiled in the context of a contract. Holding all the default types you are used to
 and the ones you defined in your file (if specified).
@@ -52,11 +390,11 @@ const testme_test = "./gitlab-pages/docs/advanced/src/testme.ligo"
 
 const test = block {
   const init_storage = Test.compile_expression (Some(testme_test), [%pascaligo ({| (10 : int) |} : ligo_program) ]);
-  const originated_contract = Test.originate(testme_test, "main", init_storage);
+  const originated_contract = Test.originate_from_file(testme_test, "main", init_storage, 0tez);
   const addr = originated_contract.0;
   const param = Test.compile_expression (Some (testme_test), [%pascaligo ({| Increment(32) |} : ligo_program)]);
-  const transfer_result = Test.transfer(addr, param, 0n);
-  const result = Test.get_storage(addr);
+  const transfer_result = Test.transfer(addr, param, 0tez);
+  const result = Test.get_storage_of_address(addr);
   const check = Test.compile_expression ((None : option(string)), [%pascaligo ({| (42: int) |} : ligo_program)]);
   Test.log(result);
 } with (Test.michelson_equal(result, check))
@@ -72,10 +410,10 @@ let testme_test = "./gitlab-pages/docs/advanced/src/testme.mligo"
 
 let test =
   let init_storage = Test.compile_expression (Some testme_test) [%cameligo ({| (10 : int) |} : ligo_program) ] in
-  let (addr, _, _) = Test.originate testme_test "main" init_storage in
+  let (addr, _, _) = Test.originate_from_file testme_test "main" init_storage 0tez in
   let param = Test.compile_expression (Some testme_test) [%cameligo ({| Increment(32) |} : ligo_program)] in
-  let transfer_result = Test.transfer addr param 0n in
-  let result = Test.get_storage addr in
+  let transfer_result = Test.transfer addr param 0tez in
+  let result = Test.get_storage_of_address addr in
   let check_ = Test.compile_expression (None : string option) [%cameligo ({| (42: int) |} : ligo_program)] in
   let _ = Test.log result in
   Test.michelson_equal result check_
@@ -87,16 +425,15 @@ let test =
 ```reasonligo test-ligo group=ex1
 let testme_test = "./gitlab-pages/docs/advanced/src/testme.religo"
 
-let test = {
+let test =
   let init_storage = Test.compile_expression(Some(testme_test), [%reasonligo ({| (10 : int) |} : ligo_program) ]);
-  let (addr, _, _) = Test.originate(testme_test, "main", init_storage);
+  let (addr, _, _) = Test.originate_from_file(testme_test, "main", init_storage, 0tez);
   let param = Test.compile_expression((Some testme_test), [%reasonligo ({| Increment(32) |} : ligo_program)]);
-  let transfer_result = Test.transfer(addr, param, 0n);
-  let result = Test.get_storage(addr);
+  let transfer_result = Test.transfer(addr, param, 0tez);
+  let result = Test.get_storage_of_address(addr);
   let check_ = Test.compile_expression((None : option(string)), [%reasonligo ({| (42: int) |} : ligo_program)]);
   let _ = Test.log(result);
   Test.michelson_equal(result, check_)
-}
 ```
 
 </Syntax>
@@ -105,77 +442,35 @@ let test = {
 ```jsligo test-ligo group=ex1
 let testme_test = "./gitlab-pages/docs/advanced/src/testme.jsligo"
 
-let test_code = (): bool => {
+let _test = (): bool => {
   let init_storage = Test.compile_expression(Some(testme_test), jsligo`10 as int` as ligo_program);
-  let [addr, _, _] = Test.originate(testme_test, "main", init_storage);
+  let [addr, _, _] = Test.originate_from_file(testme_test, "main", init_storage, 0 as tez);
   let param = Test.compile_expression(Some(testme_test), jsligo`Increment(32)` as ligo_program);
-  let transfer_result = Test.transfer(addr, param, 0 as nat);
-  let result = Test.get_storage(addr);
+  let transfer_result = Test.transfer(addr, param, 0 as tez);
+  let result = Test.get_storage_of_address(addr);
   let check_ = Test.compile_expression((None() as option<string>), jsligo`42 as int` as ligo_program);
   Test.log("okay");
   return Test.michelson_equal(result, check_)
 }
 
-let test = test_code()
+let test = _test();
 ```
 
 </Syntax>
 
-Notice that now we wrote the test property *inside* LIGO, using:
+Notice that now we wrote the test property *inside* LIGO, but the contract being tested (written also in LIGO) is in an external file. We used the following functions:
 
 * `Test.compile_expression` to compile an expression.
 
-* `Test.originate` to deploy a contract.
+* `Test.originate_from_file` to deploy a contract from a file.
 
-* `Test.transfer` to simulate an external call.
+* `Test.transfer` to simulate an external call taking an address (instead of a contract).
 
-* `Test.get_storage` to check the storage from a contract.
+* `Test.get_storage_of_address` to check the storage from a contract (instead of a `typed_address`).
 
 * `Test.log` to log variables.
 
-* `Test.michelson_equal` to check if the Michelson results are equal.
-
-
-A property like `testme` is a definition of a boolean value. The
-sub-command `test` evaluates a test, and returns whether it was
-successful or not (i.e. returned `true` or `false`).
-
-<Syntax syntax="pascaligo">
-
-```shell
-ligo test gitlab-pages/docs/advanced/src/test.ligo "test"
-// Outputs:
-// Test passed with true
-```
-
-</Syntax>
-<Syntax syntax="cameligo">
-
-```shell
-ligo test gitlab-pages/docs/advanced/src/test.mligo "test"
-// Outputs:
-// Test passed with true
-```
-
-</Syntax>
-<Syntax syntax="reasonligo">
-
-```shell
-ligo test gitlab-pages/docs/advanced/src/test.religo "test"
-// Outputs:
-// Test passed with true
-```
-
-</Syntax>
-<Syntax syntax="jsligo">
-
-```shell
-ligo test gitlab-pages/docs/advanced/src/test.jsligo "test"
-// Outputs:
-// Test passed with true
-```
-
-</Syntax>
+* `Test.michelson_equal` to check if the Michelson results are equal, as now the storage is returned in its Michelson representation from `Test.get_storage_of_address`.
 
 [More info about the `Test` module available when using the sub-command `test`.](../reference/test.md)
 
@@ -444,7 +739,7 @@ let to_tez = (i:nat) : michelson_program => {
       list ([ ["i", Test.compile_value (i)] ])
   )) } ;
 
-let test =
+let _test = () : unit =>
   List.iter
     ( ([threshold , expected_size] : [nat , nat]) : unit => {
       let expected_size = Test.compile_value (expected_size) ;
@@ -458,6 +753,8 @@ let test =
       return (assert (Test.michelson_equal (size,expected_size)))
     },
     list ([ [15 as nat,2 as nat] , [130 as nat,1 as nat] , [1200 as nat,0 as nat]]) );
+
+let test = _test();
 ```
 
 </Syntax>

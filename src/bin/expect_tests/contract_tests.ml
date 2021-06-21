@@ -1720,3 +1720,51 @@ let%expect_test _ =
 
     (Left (Right 42))
   |}]
+
+(* never test for PascaLIGO *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "never.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter (or (never %extend) (int %increment)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { SWAP ; DROP ; NEVER } { ADD } ;
+             NIL operation ;
+             PAIR } } |}]
+
+(* never test for CameLIGO *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "never.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter (or (never %extend) (int %increment)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { SWAP ; DROP ; NEVER } { ADD } ;
+             NIL operation ;
+             PAIR } } |}]
+
+(* never test for ReasonLIGO *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "never.religo" ; "main" ] ;
+  [%expect {|
+    { parameter (or (never %extend) (int %increment)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { SWAP ; DROP ; NEVER } { ADD } ;
+             NIL operation ;
+             PAIR } } |}]
+
+(* never test for JsLIGO *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "never.jsligo" ; "main" ] ;
+  [%expect {|
+    { parameter (or (never %extend) (int %increment)) ;
+      storage int ;
+      code { LEFT (pair (list operation) int) ;
+             LOOP_LEFT
+               { DUP ;
+                 CAR ;
+                 IF_LEFT { SWAP ; DROP ; NEVER } { SWAP ; CDR ; ADD } ;
+                 NIL operation ;
+                 PAIR ;
+                 RIGHT (pair (or never int) int) } } } |}]

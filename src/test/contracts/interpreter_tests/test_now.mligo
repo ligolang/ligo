@@ -1,21 +1,23 @@
-let under_test = "./contract_under_test/now_contract.mligo"
+#include "./contract_under_test/now_contract.mligo"
 
 let test =
-  let init_storage = Test.compile_expression (Some under_test) [%cameligo ({| test_ts |} : ligo_program) ] in
-  let (addr,code,_) = Test.originate under_test "main" init_storage in
-  
+  let (typed_addr,code,_) = Test.originate main test_ts 0tez in
+
   let () = Test.log "storage at origination" in
-  let st = Test.get_storage addr in
+  let st : timestamp = Test.get_storage typed_addr in
+  let st : michelson_program = Test.eval st in
   let () = Test.log st in
 
   let () = Test.log "setting now at:" in
   let () = Test.set_now ("2010-01-01t10:10:10Z" : timestamp) in
 
-  let param = Test.compile_expression (None : string option) [%cameligo ({| () |} : ligo_program)] in
-  let () = Test.transfer_exn addr param 10n in
+  let contr = Test.to_contract typed_addr in
+  let addr = Tezos.address contr in
+  let () = Test.transfer_to_contract_exn contr () 10tez in
 
   let () = Test.log "storage after calling" in
-  let st = Test.get_storage addr in
+  let st : timestamp = Test.get_storage typed_addr in
+  let st : michelson_program = Test.eval st in
   let () = Test.log st in
 
   true

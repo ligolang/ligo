@@ -1,234 +1,234 @@
-let lambda_call =
+let test_lambda_call =
   let a = 3 in
   let foo = fun (i : int) -> i * i in
-  (foo (a + 1)) = 16
+  assert ((foo (a + 1)) = 16)
 
-let higher_order1 =
+let test_higher_order1 =
   let a = 2 in
   let foo = fun (i : int) (j : int) (k : int) -> a + i + j + 0 in
   let bar = (foo 1 2) in
-  (bar 3 = 5)
+  assert (bar 3 = 5)
 
-let higher_order2 =
+let test_higher_order2 =
   let a = 2 in
   let foo = fun (i : int) ->
               let b = 2 in
               let bar = fun (i : int) -> i + a + b
               in bar i
   in
-  (foo 1 = 5)
+  assert (foo 1 = 5)
 
-let higher_order3 =
+let test_higher_order3 =
   let foo = fun (i : int) -> i + 1 in
   let bar = fun (f : int -> int) (i : int) -> f i + 1 in
   let baz : int -> int = bar foo
   in
-  (baz 3 = 5)
+  assert (baz 3 = 5)
 
-let higher_order4 =
+let test_higher_order4 =
   let a = 3 in
   let foo = fun (i : int) -> a + i in
   let bar : int -> int = fun (i : int) -> foo i
   in
-  (bar 2 = 5)
+  assert (bar 2 = 5)
 
-let concats = (0x70 ^ 0x70  = 0x7070)
+let test_concats = assert (0x70 ^ 0x70  = 0x7070)
 
 type foo_record = {
   a : string;
   b : string
 }
 
-let record_concat =
+let test_record_concat =
   let ab : foo_record = {a="a"; b="b"}
-  in (ab.a ^ ab.b = "ab")
+  in assert (ab.a ^ ab.b = "ab")
 
-let record_patch =
+let test_record_patch =
   let ab : foo_record = {a="a"; b="b"} in
-  let res = {ab with b = "c"} in 
-  (res.b = "c")
+  let res = {ab with b = "c"} in
+  assert (res.b = "c")
 
 type bar_record = {
   f   : int -> int;
   arg : int
 }
 
-let record_lambda =
+let test_record_lambda =
   let a = 1 in
   let foo : int -> int = fun (i : int) -> a + i*2 in
   let farg : bar_record = {f = foo; arg = 2}
-  in (farg.f farg.arg = 5)
+  in assert (farg.f farg.arg = 5)
 
 type foo_variant =
 | Foo
 | Bar of int
 | Baz of string
 
-let variant_match =
+let test_variant_match =
   let a = Bar 1 in
-  match a with
+  assert (match a with
   | Foo   -> false
   | Bar i -> true
-  | Baz s -> false
+  | Baz s -> false)
 
-let bool_match =
+let test_bool_match =
   let b = true in
-  match b with
+  assert (match b with
   | true -> true
-  | false -> false
+  | false -> false)
 
-let list_match =
+let test_list_match =
   let a = [1; 2; 3; 4] in
-  match a with
+  assert (match a with
   | hd::tl -> true
-  | [] -> false
+  | [] -> false)
 
-let tuple_proj =
+let test_tuple_proj =
   let a, b = true, false
-  in a or b
+  in assert (a or b)
 
-let list_const =
+let test_list_const =
   let a = [1; 2; 3; 4] in
-  (List.length (0::a)) = 5n
+  assert ((List.length (0::a)) = 5n)
 
 type foobar = int option
 
-let options_match_some =
+let test_options_match_some =
   let a = Some 0 in
-  match a with
+  assert (match a with
   | Some i -> true
-  | None -> false
+  | None -> false)
 
-let options_match_none =
+let test_options_match_none =
   let a : foobar = None in
-  match a with
+  assert (match a with
   | Some i -> false
-  | None -> true
+  | None -> true)
 
-let is_nat_yes =
+let test_is_nat_yes =
   let i : int = 1 in
-  match (is_nat i) with
+  assert (match (is_nat i) with
   | Some i -> true
-  | None -> false
-  
-let is_nat_no =
+  | None -> false)
+
+let test_is_nat_no =
   let j : int = -1 in
-  match (is_nat j) with
+  assert (match (is_nat j) with
   | Some i -> false
-  | None -> true
+  | None -> true)
 
-let abs_int =
+let test_abs_int =
   let a : nat = abs (-5) in
-  a = 5n
+  assert (a = 5n)
 
-let nat_int = ((int 5n) = 5)
+let test_nat_int = assert ((int 5n) = 5)
 
-let map_list =
+let test_map_list =
   let a = [1; 1; 1; 1] in
   let add_one : (int -> int) = fun (i : int) -> i + 1 in
-  match (List.map add_one a) with
+  assert (match (List.map add_one a) with
   | hd::tl -> (hd = 2)
-  | [] -> false
+  | [] -> false)
 
-let fold_list =
+let test_fold_list =
   let a = [1; 2; 3; 4] in
   let acc : int * int -> int =
     fun (prev, el : int * int) -> prev + el
   in
-  (List.fold acc a 0) = 10
+  assert ((List.fold acc a 0) = 10)
 
-let comparison_int =
+let test_comparison_int =
   let a = 1 > 2 in
   let b = 2 > 1 in
   let c = 1 >= 2 in
   let d = 2 >= 1 in
-  ( not(a) && b && (not c) && d )
+  assert ( not(a) && b && (not c) && d )
 
-let comparison_string = not("foo"="bar") && ("baz"="baz")
+let test_comparison_string = assert (not("foo"="bar") && ("baz"="baz"))
 
-let divs_int =
+let test_divs_int =
   let a = 1/2 in
-  (a = 0)
+  assert (a = 0)
 
-let divs_nat =
+let test_divs_nat =
   let a = 1n/2n in
-  (a = 0n)
+  assert (a = 0n)
 
-let var_neg =
+let test_var_neg =
   let a = 2 in
-  (-a = -2)
+  assert (-a = -2)
 
-let sizes =
+let test_sizes =
   let a = [1; 2; 3; 4; 5] in
   let b = "12345" in
   let c = Set.literal [1; 2; 3; 4; 5] in
   let d = Map.literal [(1,1); (2,2); (3,3) ; (4,4) ; (5,5)] in
   let e = 0xFFFF in
-  (List.length a = 5n) &&
-  (String.length b = 5n) &&
-  (Set.cardinal c = 5n) &&
-  (Map.size d = 5n) &&
-  (Bytes.length e = 2n)
+  assert ((List.length a = 5n) &&
+          (String.length b = 5n) &&
+          (Set.cardinal c = 5n) &&
+          (Map.size d = 5n) &&
+          (Bytes.length e = 2n))
 
-let modi = (3 mod 2 = 1n)
+let test_modi = assert (3 mod 2 = 1n)
 
-let fold_while =
+let test_fold_while =
   let aux : int -> bool * int =
     fun (i : int) ->
     if i < 10 then Loop.resume (i + 1) else Loop.stop i
   in
-  (Loop.fold_while aux 20 = 20) &&  (Loop.fold_while aux 0 = 10)
+  assert ((Loop.fold_while aux 20 = 20) &&  (Loop.fold_while aux 0 = 10))
 
-let assertion_pass =
+let test_assertion_pass =
   let unitt = assert (1=1) in
-  true
+  assert true
 
-let map_finds =
+let test_map_finds =
   let m = Map.literal [("one", 1); ("two", 2); ("three", 3)]
   in
-  match (Map.find_opt "two" m) with
+  assert (match (Map.find_opt "two" m) with
   | Some v -> true
-  | None -> false
+  | None -> false)
 
 let m = Map.literal [("one", 1); ("two", 2); ("three", 3)]
 
-let map_fold =
+let test_map_fold =
   let aux = fun (i : int * (string * int)) -> i.0 + i.1.1
-  in (Map.fold aux m 0 = 6)
+  in assert (Map.fold aux m 0 = 6)
 
-let map_map =
+let test_map_map =
   let aux = fun (i : string * int) -> i.1 + String.length i.0 in
-  (Map.find "one" (Map.map aux m) = 4)
+  assert (Map.find "one" (Map.map aux m) = 4)
 
-let map_mem = (Map.mem "one" m) && (Map.mem "two" m) && (Map.mem "three" m)
+let test_map_mem = assert ((Map.mem "one" m) && (Map.mem "two" m) && (Map.mem "three" m))
 
-let map_remove =
+let test_map_remove =
   let m = Map.remove "one" m in
   let m = Map.remove "two" m in
   let m = Map.remove "three" m in
-  not (Map.mem "one" m) &&  not (Map.mem "two" m) && not (Map.mem "three" m)
+  assert (not (Map.mem "one" m) &&  not (Map.mem "two" m) && not (Map.mem "three" m))
 
-let map_update =
+let test_map_update =
   let m1 = Map.update "four" (Some 4) m in
   let m2 = Map.update "one" (None : int option) m in
-  (Map.mem "four" m1) && not (Map.mem "one" m2)
+  assert ((Map.mem "four" m1) && not (Map.mem "one" m2))
 
 let s = Set.literal [1; 2; 3]
 
-let set_add =
+let test_set_add =
   let s = Set.add 1 (Set.empty : int set) in
-  Set.mem 1 s
+  assert (Set.mem 1 s)
 
-let set_mem =
-  (Set.mem 1 s) && (Set.mem 2 s) && (Set.mem 3 s)
+let test_set_mem =
+  assert ((Set.mem 1 s) && (Set.mem 2 s) && (Set.mem 3 s))
 
-let recursion_let_rec_in =
+let test_recursion_let_rec_in =
   let rec sum : int*int -> int = fun ((n,res):int*int) ->
     if (n<1) then res else sum (n-1,res+n)
   in
-  sum (10,0) = 55
+  assert (sum (10,0) = 55)
 
 let rec sum_rec ((n,acc):int * int) : int =
     if (n < 1) then acc else sum_rec (n-1, acc+n)
 
-let top_level_recursion = (sum_rec (10,0) = 55)
+let test_top_level_recursion = assert (sum_rec (10,0) = 55)

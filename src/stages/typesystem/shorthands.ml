@@ -68,8 +68,11 @@ let (-->) arg ret = p_constant C_arrow     [arg; ret]
 let option t      = p_constant C_option    [t]
 let pair a b      = p_row_ez   C_record    [("0",a);("1",b)]
 let sum  a b      = p_row_ez   C_variant   [("0",a);("1",b)]
+(* TODO: this is a placeholder, we need some row variables to allow constraints on all the fields of a record https://gitlab.com/ligolang/ligo/-/merge_requests/1189 *)
+let record        = p_row_ez   C_record    []
+let variant       = p_row_ez   C_variant   []
 let map  k v      = p_constant C_map       [k; v]
-let big_map k v = p_constant C_big_map [k; v]
+let big_map k v   = p_constant C_big_map   [k; v]
 let unit          = p_constant C_unit      []
 let list   t      = p_constant C_list      [t]
 let set    t      = p_constant C_set       [t]
@@ -90,6 +93,7 @@ let contract t    = p_constant C_contract  [t]
 let bls12_381_g1  = p_constant C_bls12_381_g1 []
 let bls12_381_g2  = p_constant C_bls12_381_g2 []
 let bls12_381_fr  = p_constant C_bls12_381_fr []
+let never         = p_constant C_never      []
 let ( * ) a b = pair a b
 
 (* type value of recursive types *)
@@ -115,10 +119,10 @@ let tc_comparable =
                 [key_hash] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (p_var x)] ;
-                [sum (p_var x) (p_var y)] ;
-                [pair (p_var x) (p_var y)] ;
+                [variant] ;
+                [record] ;
                 [set (p_var x)] ;
                 [signature] ;
                 [string] ;
@@ -164,10 +168,10 @@ let tc_storable =
                 [map (p_var c) (p_var y)] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (p_var x)] ;
-                [sum (p_var x) (p_var y)] ;
-                [pair (p_var x) (p_var y)] ;
+                [variant] ;
+                [record] ;
                 (* [sapling_state (var x)] ;
                 [sapling_transaction (var x)] ; *)
                 [set (p_var c)] ;
@@ -216,10 +220,10 @@ let tc_packable =
                 [map (p_var c) (p_var y)] ;
                 [mutez] ; 
                 [nat] ; 
-                (* [never] ; *)
+                [never] ;
                 [option (p_var x)] ;
-                [sum (p_var x) (p_var y)] ;
-                [pair (p_var x) (p_var y)] ;
+                [variant] ;
+                [record] ;
                 [set (p_var c)] ;
                 [signature] ;
                 [string] ;

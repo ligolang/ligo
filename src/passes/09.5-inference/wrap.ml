@@ -29,6 +29,7 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
     let (csttag, args) = Option.value_exn (* This will be removed later *)
     T.(match (Var.to_name type_operator , arguments) with
       | ( s , [] ) when String.equal s unit_name -> Some (C_unit , [])
+      | ( s , [] ) when String.equal s never_name -> Some (C_never , [])
       | ( s , [] ) when String.equal s string_name-> Some (C_string , [])
       | ( s , [] ) when String.equal s nat_name-> Some (C_nat , [])
       | ( s , [] ) when String.equal s tez_name-> Some (C_mutez , [])

@@ -59,11 +59,12 @@ module Tree_abstraction = struct
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
     | "Tezos.level"              -> some_const C_LEVEL
     | "Tezos.pairing_check"      -> some_const C_PAIRING_CHECK
+    | "Tezos.never"              -> some_const C_NEVER
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
     | "Tezos.sapling_verify_update" -> some_const C_SAPLING_VERIFY_UPDATE
-    
+
     (* Tickets *)
     | "Tezos.create_ticket" -> some_const C_TICKET
     | "Tezos.join_tickets" -> some_const C_JOIN_TICKET
@@ -140,6 +141,7 @@ module Tree_abstraction = struct
     | "Big_map.add"      -> some_const C_MAP_ADD
     (* Edo linear operator *)
     | "Big_map.get_and_update" -> some_const C_BIG_MAP_GET_AND_UPDATE
+    | "Big_map.identifier" -> some_const C_BIG_MAP_IDENTIFIER
 
     (* Bitwise module *)
 
@@ -167,12 +169,16 @@ module Tree_abstraction = struct
     (* Testing module *)
 
     | "Test.originate" -> some_const C_TEST_ORIGINATE
+    | "Test.originate_from_file" -> some_const C_TEST_ORIGINATE_FROM_FILE
     | "Test.set_now" -> some_const C_TEST_SET_NOW
     | "Test.set_source" -> some_const C_TEST_SET_SOURCE
     | "Test.set_baker" -> some_const C_TEST_SET_BAKER
-    | "Test.transfer" -> some_const C_TEST_EXTERNAL_CALL
-    | "Test.transfer_exn" -> some_const C_TEST_EXTERNAL_CALL_EXN
+    | "Test.transfer_to_contract" -> some_const C_TEST_EXTERNAL_CALL_TO_CONTRACT
+    | "Test.transfer_to_contract_exn" -> some_const C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN
+    | "Test.transfer" -> some_const C_TEST_EXTERNAL_CALL_TO_ADDRESS
+    | "Test.transfer_exn" -> some_const C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
     | "Test.get_storage" -> some_const C_TEST_GET_STORAGE
+    | "Test.get_storage_of_address" -> some_const C_TEST_GET_STORAGE_OF_ADDRESS
     | "Test.get_balance" -> some_const C_TEST_GET_BALANCE
     | "Test.michelson_equal" -> some_const C_TEST_MICHELSON_EQUAL
     | "Test.log" -> some_const C_TEST_LOG
@@ -182,6 +188,11 @@ module Tree_abstraction = struct
     | "Test.nth_bootstrap_account" -> some_const C_TEST_GET_NTH_BS
     | "Test.last_originations" -> some_const C_TEST_LAST_ORIGINATIONS
     | "Test.compile_value" -> some_const C_TEST_COMPILE_META_VALUE
+    | "Test.run" -> some_const C_TEST_RUN
+    | "Test.eval" -> some_const C_TEST_EVAL
+    | "Test.compile_contract" -> some_const C_TEST_COMPILE_CONTRACT
+    | "Test.to_contract" -> some_const C_TEST_TO_CONTRACT
+    | "Test.to_entrypoint" -> some_const C_TEST_TO_ENTRYPOINT
 
     | _ -> None
 
@@ -205,6 +216,7 @@ module Tree_abstraction = struct
     | C_CONTRACT_ENTRYPOINT_OPT -> "Tezos.get_entrypoint_opt"
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
+    | C_NEVER                   -> "Tezos.never"
 
     (* Crypto module *)
 
@@ -267,6 +279,7 @@ module Tree_abstraction = struct
         | C_MAP_UPDATE      -> "Big_map.update" *)
     | C_BIG_MAP_LITERAL -> "Big_map.literal"
     | C_BIG_MAP_EMPTY   -> "Big_map.empty"
+    | C_BIG_MAP_IDENTIFIER -> "Big_map.identifier"
     (*  | C_MAP_MEM         -> "Big_map.mem"
         | C_MAP_REMOVE      -> "Big_map.remove"
         | C_MAP_ADD         -> "Big_map.add" *)
@@ -299,12 +312,16 @@ module Tree_abstraction = struct
     (* Testing module *)
 
     | C_TEST_ORIGINATE -> "Test.originate"
+    | C_TEST_ORIGINATE_FROM_FILE -> "Test.originate_from_file"
     | C_TEST_SET_NOW -> "Test.set_now"
     | C_TEST_SET_SOURCE -> "Test.set_source"
     | C_TEST_SET_BAKER -> "Test.set_baker"
-    | C_TEST_EXTERNAL_CALL -> "Test.transfer"
-    | C_TEST_EXTERNAL_CALL_EXN -> "Test.transfer_exn"
+    | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> "Test.transfer_to_contract"
+    | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> "Test.transfer_to_contract_exn"
+    | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> "Test.transfer"
+    | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> "Test.transfer_exn"
     | C_TEST_GET_STORAGE -> "Test.get_storage"
+    | C_TEST_GET_STORAGE_OF_ADDRESS -> "Test.get_storage_of_address"
     | C_TEST_GET_BALANCE -> "Test.get_balance"
     | C_TEST_MICHELSON_EQUAL -> "Test.michelson_equal"
     | C_TEST_LOG -> "Test.log"
@@ -314,7 +331,12 @@ module Tree_abstraction = struct
     | C_TEST_GET_NTH_BS -> "Test.nth_bootstrap_account"
     | C_TEST_LAST_ORIGINATIONS -> "Test.last_originations"
     | C_TEST_COMPILE_META_VALUE -> "Test.compile_value"
-    
+    | C_TEST_RUN -> "Test.run"
+    | C_TEST_EVAL -> "Test.eval"
+    | C_TEST_COMPILE_CONTRACT -> "Test.compile_contract"
+    | C_TEST_TO_CONTRACT -> "Test.to_contract"
+    | C_TEST_TO_ENTRYPOINT -> "Test.to_entrypoint"
+
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
 
@@ -800,6 +822,7 @@ module Stacking = struct
     | C_FOLD_STOP          , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
     | C_SIZE               , _   -> Some ( simple_unary @@ prim "SIZE")
     | C_FAILWITH           , _   -> Some ( simple_unary @@ prim "FAILWITH")
+    | C_NEVER              , _   -> Some ( simple_unary @@ prim "NEVER")
     | C_ASSERT_SOME        , _   -> Some ( simple_unary @@ i_assert_some)
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
     | C_ASSERTION          , _   -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
