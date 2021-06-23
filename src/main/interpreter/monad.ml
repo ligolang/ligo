@@ -223,9 +223,9 @@ module Command = struct
       let* () = Check.check_obj_ligo func_typed_exp in
       let* func_code = Michelson_backend.compile_value func_typed_exp in
       let* arg_code,_,_ = Michelson_backend.compile_simple_value ~ctxt ~loc ~toplevel:true v in_ty in
-      let* input_ty,_ = Run.Of_michelson.fetch_lambda_types func_code.expr_ty in
+      let* input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types func_code.expr_ty in
       let* options = Michelson_backend.make_options ~param:input_ty (Some ctxt) in
-      let* runres = Run.Of_michelson.run_function ~options func_code.expr func_code.expr_ty arg_code in
+      let* runres = Ligo_run.Of_michelson.run_function ~options func_code.expr func_code.expr_ty arg_code in
       let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
       let expr, expr_ty =
         clean_locations expr, clean_locations expr_ty in

@@ -70,7 +70,7 @@ let repl_result_format : 'a Display.format = {
     to_json = repl_result_jsonformat ;
 }
 
-module Run = Run.Of_michelson
+module Run = Ligo_run.Of_michelson
 
 type state = { env : Ast_typed.environment;
                syntax : Ligo_compile.Helpers.v_syntax;

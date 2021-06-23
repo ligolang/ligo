@@ -57,7 +57,7 @@ let add_ast_env ?(name = Location.wrap (Var.fresh ())) env binder body =
     ok typed_exp'
 
 let make_options ?param ctxt =
-  let open Run.Of_michelson in
+  let open Ligo_run.Of_michelson in
   let open Ligo_interpreter.Types in
   let default = { now = None ;
                   amount = "" ;
@@ -77,7 +77,7 @@ let make_options ?param ctxt =
 
 let run_expression_unwrap ?ctxt ?(loc = Location.generated) (c_expr : Stacking.compiled_expression) =
   let* options = make_options ctxt in
-  let* runres = Run.Of_michelson.run_expression ~options c_expr.expr c_expr.expr_ty in
+  let* runres = Ligo_run.Of_michelson.run_expression ~options c_expr.expr c_expr.expr_ty in
   match runres with
   | Success (expr_ty, expr) ->
      let expr, expr_ty = clean_locations expr expr_ty in

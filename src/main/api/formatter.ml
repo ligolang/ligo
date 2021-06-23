@@ -1,4 +1,5 @@
-open Display
+open Simple_utils.Display
+module List = Simple_utils.List
 
 let declarations_ppformat ~display_format f (source_file,decls) =
   match display_format with
@@ -60,12 +61,12 @@ module Michelson_formatter = struct
       | `Json -> pp_json
       | `Hex -> pp_hex in
     match display_format with
-    | Display.Human_readable | Dev -> (
+    | Human_readable | Dev -> (
        let m = Format.asprintf "%a\n" (mich_pp michelson_format) a in
        Format.pp_print_string f m
     )
 
-  let michelson_jsonformat michelson_format a : Display.json = match michelson_format with
+  let michelson_jsonformat michelson_format a : json = match michelson_format with
     | `Text ->
       let code_as_str = Format.asprintf "%a" pp a in
       `Assoc [("text_code" , `String code_as_str)]
@@ -78,7 +79,7 @@ module Michelson_formatter = struct
       let code_as_str = Format.asprintf "%a" pp_json a in
       `Assoc [("json_code" , `String code_as_str)]
 
-  let michelson_format : michelson_format -> 'a Display.format = fun mf -> {
+  let michelson_format : michelson_format -> 'a format = fun mf -> {
     pp = michelson_ppformat mf;
     to_json = michelson_jsonformat mf;
   }
