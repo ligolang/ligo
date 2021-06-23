@@ -7,7 +7,7 @@ function is_empty (const h : heap) : bool is size (h) = 0n
 
 function get_top (const h : heap) : heap_elt is get_force (1n, h)
 
-function pop_switch (const h : heap) : heap is
+function pop_switch (var h : heap) : heap is
   block {
    const result : heap_elt = get_top (h);
    const s : nat = Map.size (h);
@@ -20,7 +20,7 @@ function pop_switch (const h : heap) : heap is
    h[1n] := last
   } with h
 
-function pop_ (const h : heap) : nat is
+function pop_ (var h : heap) : nat is
   block {
     const result : heap_elt = get_top (h);
     const s : nat = Map.size (h);
@@ -44,7 +44,7 @@ function pop_ (const h : heap) : nat is
       else skip
   } with largest
 
-function insert (const h : heap ; const e : heap_elt) : heap is
+function insert (var h : heap ; const e : heap_elt) : heap is
   block {
     var i : nat := size (h) + 1n;
     h[i] := e;
@@ -64,7 +64,7 @@ function insert (const h : heap ; const e : heap_elt) : heap is
     }
   } with h
 
-function pop (const h : heap) : heap * heap_elt * nat is
+function pop (var h : heap) : heap * heap_elt * nat is
   block {
     const result : heap_elt = get_top (h);
     var s : nat := size (h);
