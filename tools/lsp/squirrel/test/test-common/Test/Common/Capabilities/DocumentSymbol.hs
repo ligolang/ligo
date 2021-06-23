@@ -18,7 +18,7 @@ import Test.HUnit (Assertion)
 import AST.Capabilities.DocumentSymbol (extractDocumentSymbols)
 import AST.Scope (HasScopeForest)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
 import Test.Common.Util (readContractWithScopes)
 

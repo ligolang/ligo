@@ -9,6 +9,8 @@ module ASTMap
   ( ASTMap
   , empty
 
+  , insert
+
   , fetchLatest
   , fetchCurrent
   , fetchBundled
@@ -23,9 +25,9 @@ import Data.Functor ((<&>), void)
 import Data.Hashable (Hashable)
 import Data.Maybe (fromMaybe)
 import Focus (Focus)
-import qualified Focus
+import Focus qualified
 import StmContainers.Map (Map)
-import qualified StmContainers.Map as Map
+import StmContainers.Map qualified as Map
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
 import UnliftIO (atomically)
 
@@ -73,6 +75,19 @@ empty :: (k -> m v) -> IO (ASTMap k v m)
 empty load = atomically $
     ASTMap <$> Map.new <*> Map.new <*> Map.new <*> pure load
 
+
+-- | Insert some value into an 'ASTMap'.
+insert
+  :: ( Eq k, Hashable k
+     , MonadIO m
+     )
+  => k  -- ^ Key
+  -> v  -- ^ Value
+  -> ASTMap k v m  -- Map
+  -> m ()
+insert k v ASTMap{amValues} = do
+  time <- liftIO $ getTime Monotonic
+  void $ atomically $ Map.focus (insertOrChooseNewer snd (v, time)) k amValues
 
 -- | Load the current value.
 --

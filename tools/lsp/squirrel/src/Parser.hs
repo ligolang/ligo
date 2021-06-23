@@ -11,7 +11,7 @@ import Data.Maybe (isJust, mapMaybe)
 import Data.Functor
 import Data.String.Interpolate (i)
 import Data.Text (Text)
-import qualified Data.Text as Text
+import Data.Text qualified as Text
 
 import Duplo.Pretty
 import Duplo.Tree
@@ -74,7 +74,7 @@ allErrors = mapMaybe extractUnnamedError
     extractUnnamedError :: RawTree -> Maybe (Range, Error ())
     extractUnnamedError tree = case only tree of
       (r :> "" :> _, ParseTree "ERROR" children _)
-        -> Just (r, void (Error (getBody tree) children))
+        -> Just (r, void (Error ("Unexpected: " <> getBody tree) children))
       _ -> Nothing
 
 getBody :: RawTree -> Text

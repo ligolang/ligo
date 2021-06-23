@@ -36,10 +36,10 @@ module AST.Capabilities.CodeAction.ExtractTypeAlias where
 import Control.Exception.Safe (MonadCatch)
 
 import Control.Monad.Trans.Writer
-import qualified Data.Text as T
+import Data.Text qualified as T
 
-import qualified Data.HashMap.Strict as HM
-import qualified Language.LSP.Types as J
+import Data.HashMap.Strict qualified as HM
+import Language.LSP.Types qualified as J
 
 import AST.Pretty
 import AST.Scope
@@ -169,9 +169,12 @@ mkCodeAction uri replaceRange typeEdits =
           -- these changes without any proper explanation why. Meaning that even though
           -- client received response of this code action, the text itself remains unchanged.
         , _documentChanges = Nothing
+        , _changeAnnotations = Nothing
         }
     , _command = Nothing
-    }]
+    , _xdata = Nothing
+    }
+  ]
 
 -- | Construct edits for replacing existing type that matches either
 -- the given constructed type or type alias.

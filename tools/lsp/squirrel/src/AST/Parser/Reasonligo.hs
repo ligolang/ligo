@@ -27,38 +27,38 @@ recognise (SomeRawTree dialect rawTree)
     -- Expr
   , Descent do
       boilerplate $ \case
-        "unary_call"  -> UnOp       <$> field  "negate"    <*> field "arg"
-        "binary_call" -> BinOp      <$> field  "left"      <*> field "op"        <*> field "right"
-        "Some_call"   -> Apply      <$> field  "some"      <*> fields "argument"
-        "apply"       -> Apply      <$> field  "function"  <*> fields "argument"
-        "block"       -> Seq        <$> fields "statement"
-        "list"        -> List       <$> fields "element"
-        "indexing"    -> ListAccess <$> field  "box"       <*> fields "index"
-        "annot_expr"  -> Annot      <$> field  "subject"   <*> field "type"
-        "if"          -> If         <$> field  "selector"  <*> field "then"      <*> fieldOpt "else"
-        "record"      -> Record     <$> fields "assignment"
-        "record_update" -> RecordUpd <$> field  "subject" <*> fields "field"
-        "record_punning" -> Record  <$> fields "assignment"
-        "tuple"       -> Tuple      <$> fields "item"
-        "switch"      -> Case       <$> field  "subject"   <*> fields   "alt"
-        "lambda"      -> Lambda     <$> fields "argument"  <*> fieldOpt "type"   <*> field "body"
-        "michelson_interop" -> Michelson  <$> field  "code"      <*> field "type"  <*> fields "argument"
-        "let_in"      -> Let        <$> field "declaration"      <*> field "body"
-        "paren_expr"  -> Paren      <$> field "expr"
-        _             -> fallthrough
+        "unary_call"        -> UnOp       <$> field  "negate"      <*> field    "arg"
+        "binary_call"       -> BinOp      <$> field  "left"        <*> field    "op"       <*> field "right"
+        "Some_call"         -> Apply      <$> field  "some"        <*> fields   "argument"
+        "apply"             -> Apply      <$> field  "function"    <*> fields   "argument"
+        "block"             -> Seq        <$> fields "statement"
+        "list"              -> List       <$> fields "element"
+        "indexing"          -> ListAccess <$> field  "box"         <*> fields   "index"
+        "annot_expr"        -> Annot      <$> field  "subject"     <*> field    "type"
+        "if"                -> If         <$> field  "selector"    <*> field    "then"     <*> fieldOpt "else"
+        "record"            -> Record     <$> fields "assignment"
+        "record_update"     -> RecordUpd  <$> field  "subject"     <*> fields   "field"
+        "record_punning"    -> Record     <$> fields "assignment"
+        "tuple"             -> Tuple      <$> fields "item"
+        "switch"            -> Case       <$> field  "subject"     <*> fields   "alt"
+        "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
+        "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> fields "argument"
+        "let_in"            -> Let        <$> field  "declaration" <*> field    "body"
+        "paren_expr"        -> Paren      <$> field  "expr"
+        _                   -> fallthrough
 
     -- Pattern
   , Descent do
       boilerplate $ \case
-        "tuple_pattern"          -> IsTuple <$> fields "pattern"
-        "annot_pattern"          -> IsAnnot <$> field "subject" <*> field "type"
-        "list_pattern"           -> IsList  <$> fields "pattern"
-        "var_pattern"            -> IsVar   <$> field "var"
-        "wildcard"               -> return IsWildcard
-        "nullary_constr_pattern" -> IsConstr <$> field "constructor" <*> return Nothing
-        "unary_constr_pattern"   -> IsConstr <$> field "constructor" <*> fieldOpt "arg"
-        "spread_pattern"         -> IsSpread <$> field "expr"
+        "tuple_pattern"          -> IsTuple  <$> fields "pattern"
+        "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field "type"
+        "list_pattern"           -> IsList   <$> fields "pattern"
+        "var_pattern"            -> IsVar    <$> field  "var"
+        "nullary_constr_pattern" -> IsConstr <$> field  "constructor" <*> return Nothing
+        "unary_constr_pattern"   -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
+        "spread_pattern"         -> IsSpread <$> field  "expr"
         "record_pattern"         -> IsRecord <$> fields "field"
+        "wildcard"               -> return IsWildcard
         _                        -> fallthrough
 
     -- Irrefutable tuple
@@ -70,25 +70,25 @@ recognise (SomeRawTree dialect rawTree)
     -- RecordFieldPattern
   , Descent do
       boilerplate $ \case
-        "record_field_pattern"  -> IsRecordField <$> field "name" <*> field "body"
+        "record_field_pattern"   -> IsRecordField   <$> field "name" <*> field "body"
         "record_capture_pattern" -> IsRecordCapture <$> field "name"
-        _                       -> fallthrough
+        _                        -> fallthrough
 
     -- Alt
   , Descent do
       boilerplate $ \case
         "alt"  -> Alt <$> field "pattern" <*> field "expr"
-        _                   -> fallthrough
+        _      -> fallthrough
 
     -- Record fields
     -- TODO: record
   , Descent do
       boilerplate $ \case
-        "capture" -> Capture <$> fields "accessor"
-        "record_field" -> FieldAssignment <$> fields "accessor" <*> field "value"
+        "capture"           -> Capture         <$> fields "accessor"
+        "record_field"      -> FieldAssignment <$> fields "accessor" <*> field "value"
         "record_field_path" -> FieldAssignment <$> fields "accessor" <*> field "value"
-        "spread" -> Spread <$> field "name"
-        _ -> fallthrough
+        "spread"            -> Spread          <$> field "name"
+        _                   -> fallthrough
 
     -- Preprocessor
   , Descent do
@@ -113,26 +113,26 @@ recognise (SomeRawTree dialect rawTree)
 
   , Descent do
       boilerplate' $ \case
-        ("+", _) -> return $ Op "+"
-        ("-", _) -> return $ Op "-"
-        ("mod", _) -> return $ Op "mod"
-        ("/", _) -> return $ Op "/"
-        ("*", _) -> return $ Op "*"
-        (">", _) -> return $ Op ">"
-        ("<", _) -> return $ Op "<"
-        (">=", _) -> return $ Op ">="
-        ("<=", _) -> return $ Op "<="
-        ("==", _) -> return $ Op "=="
-        ("!=", _) -> return $ Op "!="
-        ("||", _) -> return $ Op "||"
-        ("&&", _) -> return $ Op "&&"
+        ("+", _)      -> return $ Op "+"
+        ("-", _)      -> return $ Op "-"
+        ("mod", _)    -> return $ Op "mod"
+        ("/", _)      -> return $ Op "/"
+        ("*", _)      -> return $ Op "*"
+        (">", _)      -> return $ Op ">"
+        ("<", _)      -> return $ Op "<"
+        (">=", _)     -> return $ Op ">="
+        ("<=", _)     -> return $ Op "<="
+        ("==", _)     -> return $ Op "=="
+        ("!=", _)     -> return $ Op "!="
+        ("||", _)     -> return $ Op "||"
+        ("&&", _)     -> return $ Op "&&"
         ("negate", n) -> return $ Op n
-        _         -> fallthrough
+        _             -> fallthrough
 
   , Descent do
       boilerplate $ \case
         "data_projection" -> QualifiedName <$> field "expr" <*> fields "accessor"
-        _ -> fallthrough
+        _                 -> fallthrough
 
     -- Literal
   , Descent do
@@ -148,11 +148,11 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         -- TODO: We forget "rec" field in let
-        "let_decl"  -> BConst <$> field "binding" <*> fieldOpt "type" <*> fieldOpt "value"
-        "type_decl" -> BTypeDecl <$> field "type_name" <*> field "type_value"
+        "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
+        "type_decl" -> BTypeDecl  <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
-        "include"   -> BInclude  <$>                      field "filename"
-        _ -> fallthrough
+        "include"   -> BInclude   <$> field "filename"
+        _           -> fallthrough
 
     -- MichelsonCode
   , Descent do
@@ -174,19 +174,19 @@ recognise (SomeRawTree dialect rawTree)
         ("NameDecl", n) -> return $ NameDecl n
         _               -> fallthrough
 
-    -- NameModule
+    -- ModuleName
   , Descent do
       boilerplate' $ \case
-        ("NameModule", n) -> return $ NameModule n
+        ("ModuleName", n) -> return $ ModuleName n
         _                 -> fallthrough
 
     -- Type
   , Descent do
       boilerplate $ \case
-        "fun_type"         -> TArrow   <$> field  "domain"     <*> field "codomain"
-        "type_application" -> TApply   <$> field  "functor" <*> fields "argument"
-        "type_tuple"       -> TProduct <$> fields "element"
+        "fun_type"         -> TArrow   <$> field  "domain"  <*> field "codomain"
+        "app_type"         -> TApply   <$> field  "functor" <*> fields "argument"
         "record_type"      -> TRecord  <$> fields "field"
+        "tuple_type"       -> TProduct <$> fields "element"
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
         _                  -> fallthrough

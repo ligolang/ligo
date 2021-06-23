@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE RecordWildCards #-}
 
+module Main (main) where
+
 import Control.Arrow (first)
 import Control.Monad (unless)
 import Data.Foldable (for_)
@@ -10,7 +12,7 @@ import Options.Applicative
   (Parser, ParserInfo, command, execParser, help, helper, hsubparser, info, long, metavar, progDesc,
   short, strOption, switch)
 
-import AST (Fallback, parse, parseWithScopes)
+import AST (Fallback, FindFilepath, Msg, ParsedContract (..), _getContract, parse, parseWithScopes)
 import ParseTree (Source (Path))
 
 newtype Command = PrintSexp PrintSexpOptions
@@ -59,9 +61,12 @@ main :: IO ()
 main = withUtf8 $
   execParser programInfo >>= \case
     PrintSexp PrintSexpOptions{ .. } -> do
+      let treeMsgs (ParsedContract _ tree msgs) = (tree, msgs)
+      let toPretty :: Pretty info => IO (FindFilepath info) -> IO (SomePretty, [Msg])
+          toPretty = fmap (first SomePretty . treeMsgs . _getContract)
       let parser = if psoWithScopes
-            then fmap (first SomePretty) . parseWithScopes @Fallback
-            else fmap (first SomePretty) . parse
+            then toPretty . parseWithScopes @Fallback
+            else toPretty . parse
       (tree, messages) <- parser (Path psoContract)
       putStrLn (render (pp tree))
       unless (null messages) $ do

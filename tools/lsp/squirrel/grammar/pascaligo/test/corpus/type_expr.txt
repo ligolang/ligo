@@ -12,8 +12,8 @@ type test is
   (type_decl
     (TypeName)
     (sum_type
-      (variant (NameConstr) (TypeName))
-      (variant (NameConstr) (TypeName))
+      (variant (ConstrName) (TypeName))
+      (variant (ConstrName) (TypeName))
     )
   )
 )
@@ -33,15 +33,15 @@ type test is
   (type_decl
     (TypeName)
     (sum_type
-      (variant (NameConstr)
+      (variant (ConstrName)
         (type_group
           (sum_type
-            (variant (NameConstr))
-            (variant (NameConstr))
+            (variant (ConstrName))
+            (variant (ConstrName))
           )
         )
       )
-      (variant (NameConstr)
+      (variant (ConstrName)
         (TypeName)
       )
     )

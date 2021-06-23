@@ -45,7 +45,7 @@ import Duplo.Tree (Cofree ((:<)), Element)
 
 import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr)
 import AST.Skeleton (LIGO, Lang, RawLigoList)
-import qualified AST.Skeleton as LIGO
+import AST.Skeleton qualified as LIGO
   (Ctor (..), FieldName (..), TField (..), Type (..), TypeName (..), Variant (..))
 import Parser (fillInfo)
 import Product (Product (Nil))
@@ -106,8 +106,13 @@ newtype Parameter = Parameter
 
 instance Eq ScopedDecl where
   sd1 == sd2 =
-    pp (_sdName sd1) == pp (_sdName sd2) &&
+    _sdName sd1 == _sdName sd2 &&
     _sdOrigin sd1 == _sdOrigin sd2
+
+instance Ord ScopedDecl where
+  sd1 `compare` sd2 =
+    _sdName sd1 `compare` _sdName sd2 <>
+    _sdOrigin sd1 `compare` _sdOrigin sd2
 
 instance Pretty ScopedDecl where
   pp (ScopedDecl n o refs doc _ _) =

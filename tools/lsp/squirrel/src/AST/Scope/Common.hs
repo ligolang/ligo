@@ -2,15 +2,29 @@
 
 module AST.Scope.Common where
 
-import Control.Arrow ((&&&))
+import Algebra.Graph.AdjacencyMap (AdjacencyMap)
+import Algebra.Graph.AdjacencyMap qualified as G
+import Algebra.Graph.AdjacencyMap.Algorithm (Cycle)
+import Algebra.Graph.Export qualified as G (export, literal, render)
+import Control.Arrow ((&&&), second)
+import Control.Exception.Safe
+import Control.Lens (makeLenses)
+import Control.Lens.Operators ((&))
+import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Trans.Except
 import Data.Foldable (toList)
+import Data.Function (on)
+import Data.List (sortOn)
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty qualified as NE
 import Data.Map (Map)
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import Data.Monoid (First (..))
 import Data.Set (Set)
-import qualified Data.Set as Set
-import Data.Text (Text)
+import Data.Set qualified as Set
+import Data.Text (Text, pack)
+import Data.Tuple (swap)
 
 import Duplo.Lattice
 import Duplo.Pretty
@@ -22,18 +36,44 @@ import AST.Skeleton
   (Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..),
   withNestedLIGO)
 import Cli.Types
-import Control.Exception.Safe
-import Control.Lens.Operators ((&))
-import Control.Monad.Reader
-import Control.Monad.Trans.Except
 import ParseTree
 import Parser
 import Product
 import Range
-import Util (nubOrd, zipWithRepeat)
+import Util (findKey, nubOrd, unionOrd)
+
+data ParsedContract info = ParsedContract
+  { _cFile :: Source -- ^ The path to the contract.
+  , _cTree :: info -- ^ The payload of the contract.
+  , _cMsgs :: [Msg] -- ^ Messages produced by this contract.
+  } deriving stock (Show)
+
+-- | Wraps a 'ParsedContract', allowing it to be stored in a container where its
+-- comparison will always be on its source file.
+newtype FindFilepath info
+  = FindFilepath { _getContract :: ParsedContract info }
+  deriving newtype (Show)
+
+instance Eq (FindFilepath info) where
+  (==) = (==) `on` contractFile
+
+instance Ord (FindFilepath info) where
+  compare = compare `on` contractFile
+
+contractFile :: FindFilepath info -> FilePath
+contractFile (FindFilepath pc) = srcPath $ _cFile pc
+
+contractTree :: FindFilepath info -> info
+contractTree (FindFilepath pc) = _cTree pc
+
+contractMsgs :: FindFilepath info -> [Msg]
+contractMsgs (FindFilepath pc) = _cMsgs pc
+
+makeLenses ''ParsedContract
+makeLenses ''FindFilepath
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: Source -> SomeLIGO Info -> [Msg] -> m (ScopeForest, [Msg])
+  scopeForest :: AdjacencyMap ContractInfo -> m (AdjacencyMap (FindFilepath ScopeForest))
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -86,7 +126,7 @@ instance Pretty ScopeError where
 
 instance Exception ScopeError
 
-type ScopeM = ExceptT ScopeError (Reader Lang)
+type ScopeM = ExceptT ScopeError (Reader (Lang, [ScopeForest]))
 
 type Info' =
   [ [ScopedDecl]
@@ -101,7 +141,11 @@ data ScopeForest = ScopeForest
   { sfScopes :: [ScopeTree]
   , sfDecls  :: Map DeclRef ScopedDecl
   }
+  deriving stock (Eq, Ord)
   deriving Show via PP ScopeForest
+
+emptyScopeForest :: ScopeForest
+emptyScopeForest = ScopeForest [] Map.empty
 
 type ScopeInfo = [Set DeclRef, Range]
 type ScopeTree = Tree' '[[]] ScopeInfo
@@ -116,11 +160,20 @@ data DeclRef = DeclRef
 instance Pretty DeclRef where
   pp (DeclRef n r) = pp n <.> "@" <.> pp r
 
+data MergeStrategy
+  = OnUnion
+  | OnIntersection
+
 -- | Merge two scope forests into one.
-mergeScopeForest :: ScopeForest -> ScopeForest -> ScopeForest
-mergeScopeForest (ScopeForest sl dl) (ScopeForest sr dr) =
-  ScopeForest (descend sl sr) (Map.unionWith mergeRefs dl dr)
+mergeScopeForest :: MergeStrategy -> ScopeForest -> ScopeForest -> ScopeForest
+mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
+  ScopeForest (descend sl sr) (mapStrategy mergeRefs dl dr)
   where
+    mapStrategy :: Ord k => (v -> v -> v) -> Map k v -> Map k v -> Map k v
+    mapStrategy = case strategy of
+      OnUnion -> Map.unionWith
+      OnIntersection -> Map.intersectionWith
+
     go :: ScopeTree -> ScopeTree -> [ScopeTree]
     go
       l@(only -> (ldecls :> lr :> Nil, ldeepen))
@@ -135,25 +188,48 @@ mergeScopeForest (ScopeForest sl dl) (ScopeForest sr dr) =
       -- The right scope is more local than the left hence try to find where the
       -- left subscope is more local or equal to the right one.
       | otherwise = [make (mergeDecls ldecls rdecls :> lr :> Nil, descend ldeepen [r])]
-    go _ _ = error "ScopeForest.mergeScopeForest: Impossible"
+
+    zipWithMissing, zipWithMatched, zipWithStrategy :: Ord c => (a -> c) -> (a -> a -> b) -> (a -> b) -> [a] -> [a] -> [b]
+    zipWithMissing _ _ g [] ys = g <$> ys
+    zipWithMissing _ _ g xs [] = g <$> xs
+    zipWithMissing p f g xs'@(x : xs) ys'@(y : ys) = case compare (p x) (p y) of
+      LT -> g x   : zipWithMissing p f g xs  ys'
+      EQ -> f x y : zipWithMissing p f g xs  ys
+      GT -> g   y : zipWithMissing p f g xs' ys
+
+    zipWithMatched _ _ _ [] _ = []
+    zipWithMatched _ _ _ _ [] = []
+    zipWithMatched p f g xs'@(x : xs) ys'@(y : ys) = case compare (p x) (p y) of
+      LT ->         zipWithMatched p f g xs  ys'
+      EQ -> f x y : zipWithMatched p f g xs  ys
+      GT ->         zipWithMatched p f g xs' ys
+
+    zipWithStrategy = case strategy of
+      OnUnion -> zipWithMissing
+      OnIntersection -> zipWithMatched
+
+    scopeRange :: ScopeTree -> Range
+    scopeRange (only -> (_ :> r :> Nil, _)) = r
 
     descend :: [ScopeTree] -> [ScopeTree] -> [ScopeTree]
-    descend xs ys = concat $ zipWithRepeat go xs ys
+    descend xs ys = concat $ zipWithStrategy fst (go `on` snd) (pure . snd) (sortMap xs) (sortMap ys)
+      where
+        sortMap = sortOn fst . map (scopeRange &&& id)
 
-    -- Merges the references of two 'ScopedDecl's in a right-biased fashion.
-    -- In the current implementation, the compiler's scopes will be on the left
-    -- and the fallback ones will be on the right.
+    -- Merges the references of two 'ScopedDecl's in a left-biased fashion.
+    -- In the current implementation, the compiler's scopes will be on the right
+    -- and the fallback ones will be on the left.
     mergeRefs :: ScopedDecl -> ScopedDecl -> ScopedDecl
-    mergeRefs l r = r
-      { _sdRefs = nubOrd (_sdRefs l <> _sdRefs r)
-      , _sdDoc  = nubOrd (_sdDoc  l <> _sdDoc  r)
+    mergeRefs l r = l
+      { _sdRefs = unionOrd (_sdRefs l) (_sdRefs r)
+      , _sdDoc  = unionOrd (_sdDoc  l) (_sdDoc  r)
       }
 
     -- Merge two sets of DeclRefs preferring decls that have a smaller range
     -- (i.e., is more local than the other).
     mergeDecls :: Set DeclRef -> Set DeclRef -> Set DeclRef
     mergeDecls l r
-      = Map.unionWith
+      = mapStrategy
         (\(DeclRef n lr) (DeclRef _ rr) -> DeclRef n (if leq lr rr then lr else rr))
         (mapFromFoldable drName l)
         (mapFromFoldable drName r)
@@ -177,7 +253,6 @@ instance Pretty ScopeForest where
       go' :: ScopeTree -> Doc
       go' (only -> (decls :> r :> Nil, list')) =
         sexpr "scope" ([pp r] ++ map pp (Set.toList decls) ++ [go list' | not $ null list'])
-      go' _ = error "ScopeForest.pp: Impossible"
 
       decls' = sexpr "decls" . map pp . Map.toList
 
@@ -197,23 +272,15 @@ spine r (only -> (i, trees))
   | leq r (getRange i) = foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
   | otherwise = []
 
-addLocalScopes
-  :: forall impl m .
-    ( HasScopeForest impl m
-    )
-  => Source
-  -> SomeLIGO Info
-  -> [Msg]
-  -> m (SomeLIGO Info', [Msg])
-addLocalScopes src tree msg = do
-  (forest, msg') <- scopeForest @impl src tree msg
+addLocalScopes :: MonadCatch m => SomeLIGO Info -> ScopeForest -> m (SomeLIGO Info')
+addLocalScopes tree forest =
   let
     defaultHandler f (i :< fs) = do
       fs' <- traverse f fs
       let env = envAtPoint (getRange i) forest
       return ((env :> Nothing :> i) :< fs')
-
-  scopeTree <- withNestedLIGO tree $
+  in
+  withNestedLIGO tree $
     descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
         let env = envAtPoint (getRange i) forest
@@ -232,4 +299,93 @@ addLocalScopes src tree msg = do
         return (env :> Just TypeLevel :> i, TypeName t)
     ]
 
-  return (scopeTree, msg')
+addScopes
+  :: forall impl m. HasScopeForest impl m
+  => AdjacencyMap ContractInfo
+  -> m (AdjacencyMap ContractInfo')
+addScopes graph = do
+  -- Bottom-up: add children forests into their parents
+  forestGraph <- scopeForest @impl graph
+  let
+    universe = nubForest $ foldr (mergeScopeForest OnUnion . contractTree) emptyScopeForest $ G.vertexList forestGraph
+    -- Traverse the graph, uniting decls at each intersection, essentially
+    -- propagating scopes
+    addScope (_getContract -> sf) = do
+      let src = _cFile sf
+      let fp = srcPath src
+      pc <- maybe (throwM $ ContractNotFoundException fp graph) pure (lookupContract fp graph)
+      FindContract src
+        <$> addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe)
+        <*> pure (_cMsgs sf)
+  traverseAM addScope forestGraph
+  where
+    nubRef sd = sd
+      { _sdRefs = nubOrd (_sdRefs sd)
+      , _sdDoc  = nubOrd (_sdDoc  sd)
+      }
+    nubForest f = f
+      { sfScopes = nubOrd (sfScopes f)
+      , sfDecls  = Map.map nubRef (sfDecls f)
+      }
+
+-- | Traverse an adjacency map.
+traverseAM :: (Monad m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
+traverseAM f g = do
+  let adj = G.adjacencyMap g
+  keysList <- traverse (sequenceA . (id &&& f)) (G.vertexList g)
+  let keys = Map.fromList keysList
+  pure $ G.fromAdjacencySets $ map (second (Set.map (keys Map.!) . (adj Map.!)) . swap) keysList
+
+-- | Attempt to find a contract in some adjacency map. O(log n)
+lookupContract :: FilePath -> AdjacencyMap (FindFilepath a) -> Maybe (FindFilepath a)
+lookupContract fp g = fst <$> findKey contractFile fp (G.adjacencyMap g)
+
+pattern FindContract :: Source -> info -> [Msg] -> FindFilepath info
+pattern FindContract f t m = FindFilepath (ParsedContract f t m)
+{-# COMPLETE FindContract #-}
+
+type ContractInfo  = FindFilepath (SomeLIGO Info)
+type ContractInfo' = FindFilepath (SomeLIGO Info')
+
+data ContractNotFoundException where
+  ContractNotFoundException :: FilePath -> AdjacencyMap (FindFilepath info) -> ContractNotFoundException
+
+instance Pretty ContractNotFoundException where
+  pp (ContractNotFoundException cnfPath cnfGraph) =
+    "Could not find contract '" <.> pp (pack cnfPath) <.> "'.\n"
+    <.> "Searched graph:\n"
+    <.> pp (pack $ G.render $ G.export vDoc eDoc cnfGraph)
+    where
+      vDoc x   = G.literal (contractFile x) <> "\n"
+      eDoc x y = G.literal (contractFile x) <> " -> " <> G.literal (contractFile y) <> "\n"
+
+instance Exception ContractNotFoundException
+
+data Vis = Visiting | Visited
+
+-- | Find all cycles in some graph. This is an implementation of
+-- https://www.baeldung.com/cs/detecting-cycles-in-directed-graph#pseudocode
+-- which states to be O(|V|+|E|), but I (@h) believe it is O((|V|+|E|)²) in the
+-- worst case.
+findCycles :: forall a. Ord a => AdjacencyMap a -> [Cycle a]
+findCycles graph = concat $ flip evalState Map.empty $
+  forM (G.vertexList graph) \v -> do
+    visited <- get
+    if Map.member v visited
+      then pure []
+      else do
+        modify $ Map.insert v Visiting
+        proccessDfsTree (v :| [])
+  where
+    proccessDfsTree :: Cycle a -> State (Map a Vis) [Cycle a]
+    proccessDfsTree stack@(top :| _) = do
+      stacks <- forM (toList $ G.postSet top graph) \v -> do
+        visited <- get
+        case Map.lookup v visited of
+          Nothing       -> pure []
+          Just Visiting -> pure [NE.reverse stack]
+          Just Visited  -> do
+            put $ Map.insert v Visiting visited
+            proccessDfsTree (v NE.<| stack)
+      modify $ Map.insert top Visited
+      pure $ concat stacks

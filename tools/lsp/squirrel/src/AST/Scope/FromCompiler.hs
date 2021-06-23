@@ -6,7 +6,7 @@ import Control.Category ((>>>))
 import Data.Function (on)
 import Data.HashMap.Strict ((!))
 import Data.Map (Map)
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import Data.Maybe
 import Duplo.Lattice
 import Duplo.Tree (make, only)
@@ -18,13 +18,20 @@ import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import Product
 import Range
+import Util (removeDots)
 
 data FromCompiler
 
+-- FIXME: Two things need to be fixed here:
+-- 1. If one contract throws an exception, the entire thing will fail. Standard
+-- scopes will use Fallback.
+-- 2. Performance should be improved. This is O(n²) and ideally we should be
+-- able to do something smarter. Maybe unjoining scopes for decls in different
+-- files for children or simply calling each contract asynchronously.
 instance HasLigoClient m => HasScopeForest FromCompiler m where
-  scopeForest ast (SomeLIGO dialect _) msg = do
+  scopeForest = traverseAM \(FindContract ast (SomeLIGO dialect _) msg) -> do
     (defs, _) <- getLigoDefinitions ast
-    return (fromCompiler dialect defs, msg)
+    pure $ FindContract ast (fromCompiler dialect defs) msg
 
 -- | Extract `ScopeForest` from LIGO scope dump.
 --
@@ -39,14 +46,17 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
     buildTree (LigoDefinitionsInner decls') (LigoScope r es _) = do
       let ds = Map.fromList $ map (fromLigoDecl . (decls' !)) es
       let rs = Map.keysSet ds
-      let r' = fromLigoRangeOrDef r
+      let r' = normalizeRange $ fromLigoRangeOrDef r
       injectScope (make (rs :> r' :> Nil, []), ds)
+
+    normalizeRange :: Range -> Range
+    normalizeRange r = r { rFile = removeDots (rFile r) }
 
     -- LIGO compiler provides nor comment neither refs, so they left [].
     --
     fromLigoDecl :: LigoDefinitionScope -> (DeclRef, ScopedDecl)
     fromLigoDecl (LigoDefinitionScope n orig bodyR ty _) = do
-      let r = fromLigoRangeOrDef orig
+      let r = normalizeRange $ fromLigoRangeOrDef orig
       ( DeclRef n r
        , ScopedDecl n r [] [] dialect (ValueSpec vspec) -- TODO LIGO-90
        )

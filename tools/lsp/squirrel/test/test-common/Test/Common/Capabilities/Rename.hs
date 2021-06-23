@@ -2,19 +2,23 @@ module Test.Common.Capabilities.Rename
   ( renameFail
   , renameId
   , renameParam
+  , renameInIncludedFile
   ) where
 
+import Control.Arrow ((***))
+import Data.HashMap.Strict qualified as HM
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Language.LSP.Types as J
+import Data.Text qualified as T
+import Language.LSP.Types qualified as J
+import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
 import AST.Capabilities.Rename (RenameDeclarationResult (NotFound, Ok), prepareRenameDeclarationAt, renameDeclarationAt)
 import AST.Scope (HasScopeForest)
-import Range (toLspRange, point)
+import Range (Range (..), toLspRange, interval, point)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)
 import Test.Common.Util (readContractWithScopes)
 
@@ -23,30 +27,32 @@ contractsDir = Common.contractsDir </> "rename"
 
 testRenameOk
   :: forall impl. HasScopeForest impl IO
-  => FilePath  -- ^ Contract path
-  -> (Int, Int)  -- ^ Rename location
+  => Range  -- ^ Rename location
   -> Text  -- ^ Expected old name
-  -> (Int, Int)  -- ^ Expected declaration position
+  -> Range  -- ^ Expected declaration position
   -> Text  -- ^ New name
-  -> [(Int, Int)]  -- ^ Expected starts of rename edits
+  -> [(FilePath, [Range])]  -- ^ Expected map with edits
   -> Assertion
-testRenameOk fp pos name (declLine, declCol) newName expected = do
+testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected = do
+    let fp = rFile pos
     tree <- readContractWithScopes @impl fp
 
-    case prepareRenameDeclarationAt (uncurry point pos) tree of
-      Nothing -> expectationFailure "Should be able to rename"
-      Just decl -> toLspRange decl `shouldBe`
-        J.Range (J.Position declLine declCol) (J.Position declLine (declCol + len))
+    let expected' =
+          HM.fromList
+          $ map (J.filePathToUri *** J.List . map (flip J.TextEdit newName . toLspRange)) expected
 
-    case renameDeclarationAt (uncurry point pos) tree newName of
+    case prepareRenameDeclarationAt pos tree of
+      Nothing -> expectationFailure "Should be able to rename"
+      Just decl -> do
+        rFile decl `shouldBe` declFile
+        toLspRange decl `shouldBe`
+          J.Range
+            (J.Position (declLine - 1) (declCol - 1))
+            (J.Position (declLine - 1) (declCol + len - 1))
+
+    case renameDeclarationAt pos tree newName of
       NotFound -> expectationFailure "Should return edits"
-      Ok results -> results `shouldBe`
-        fmap
-          (\(line, col)-> J.TextEdit
-              (J.Range (J.Position line col) (J.Position line (col + len)))
-              newName
-          )
-          expected
+      Ok results -> results `shouldBe` expected'
   where
     len = T.length name
 
@@ -71,11 +77,20 @@ renameFail =
   testRenameFail @impl (contractsDir </> "id.ligo") (1, 16)
 
 renameId :: forall impl. HasScopeForest impl IO => Assertion
-renameId =
-  testRenameOk @impl (contractsDir </> "id.ligo") (1, 11) "id" (0, 9) "very_id"
-    [(0, 9)]
+renameId = do
+  fp <- makeAbsolute (contractsDir </> "id.ligo")
+  testRenameOk @impl (point 1 11){rFile = fp} "id" (point 1 10){rFile = fp} "very_id"
+    [(fp, [(interval 1 10 12){rFile = fp}])]
 
 renameParam :: forall impl. HasScopeForest impl IO => Assertion
-renameParam =
-  testRenameOk @impl (contractsDir </> "params.mligo") (3, 11) "a" (2, 10) "aa"
-    [(2, 35), (2, 10)]
+renameParam = do
+  fp <- makeAbsolute (contractsDir </> "params.mligo")
+  testRenameOk @impl (point 3 11){rFile = fp} "a" (point 3 11){rFile = fp} "aa"
+    [(fp, [(interval 3 36 37){rFile = fp}, (interval 3 11 12){rFile = fp}])]
+
+renameInIncludedFile :: forall impl. HasScopeForest impl IO => Assertion
+renameInIncludedFile = do
+  fp1 <- makeAbsolute (contractsDir </> "LIGO-104-A1.mligo")
+  fp2 <- makeAbsolute (contractsDir </> "LIGO-104-A2.mligo")
+  testRenameOk @impl (point 1 5){rFile = fp2} "rename_me" (point 1 5){rFile = fp2} "renamed"
+    [(fp1, [(interval 3 11 20){rFile = fp1}]), (fp2, [(interval 1 5 14){rFile = fp2}])]

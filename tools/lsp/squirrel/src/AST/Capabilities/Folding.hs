@@ -2,7 +2,7 @@
 
 module AST.Capabilities.Folding where
 
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 
 import Duplo.Tree
 
