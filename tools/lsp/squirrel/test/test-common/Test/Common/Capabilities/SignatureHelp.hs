@@ -6,7 +6,7 @@ module Test.Common.Capabilities.SignatureHelp
 
 import Control.Lens ((^.))
 import Data.Text (Text)
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
@@ -124,8 +124,9 @@ simpleFunctionCallDriver = testGroup "Signature Help on a simple function call" 
       result `shouldBe`
         Just ( SignatureInformation
                { _label = makeSignatureLabel dialect tiFunction tiParameters
-               , _documentation = Just ""
+               , _documentation = Just $ J.SignatureHelpDocString ""
                , _parameters = Just . J.List $ map toLspParameter tiParameters
+               , _activeParameter = Nothing
                }
              , tiActiveParamNo
              )

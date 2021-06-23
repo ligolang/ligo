@@ -19,7 +19,7 @@ import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.Reader
 import Data.Aeson (eitherDecodeStrict')
 import Data.Aeson.Types (FromJSON)
-import qualified Data.ByteString.Lazy.Char8 as S8L
+import Data.ByteString.Lazy.Char8 qualified as S8L
 import Data.Foldable (asum)
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
@@ -32,7 +32,7 @@ import Cli.Json
 import Cli.Types
 import Extension (Lang (..), getExt)
 import Log (i)
-import qualified Log
+import Log qualified
 import ParseTree (Source (..), srcToText)
 
 ----------------------------------------------------------------------------
@@ -157,7 +157,6 @@ callLigo args con = do
       throwM $ LigoExpectedClientFailureException (pack lo) (pack le)
     unless (le == mempty) $
       throwM $ LigoUnexpectedClientFailureException 0 (pack lo) (pack le)
-    Log.debug "LIGO" [i|Successfully exited with stdout:\n#{lo}\nand stderr:\n#{le}|]
     return (pack lo, pack le)
 
 ----------------------------------------------------------------------------
@@ -218,8 +217,8 @@ getLigoDefinitions contract = do
     -- about. It displays more errors than --typer=old (default).
     callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, srcPath contract] contract
   case mbOut of
-    Right (output, errs) -> do
-      Log.debug "LIGO.PARSE" [i|Successfully called ligo with #{output}|]
+    Right (output, errs) ->
+      --Log.debug "LIGO.PARSE" [i|Successfully called ligo with #{output}|]
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
           Log.debug "LIGO.PARSE" [i|Unable to parse ligo definitions with: #{err}|]

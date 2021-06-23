@@ -21,6 +21,7 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "protocol_dalphanet.mligo"
       , "modules.mligo"
       , "heap.ligo"
+      , "heap-instance.ligo"
       , "modules.ligo"
       , "assert.religo"
       , "warning_duplicate.mligo"

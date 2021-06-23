@@ -8,13 +8,13 @@
 module AST.Skeleton where
 
 import Control.Lens.Lens (Lens, lens)
+import Data.Functor.Classes
 import Data.Text (Text)
+import GHC.Generics (Generic)
 
 import Duplo.Pretty (Pretty (..))
 import Duplo.Tree
 
-import Data.Functor.Classes
-import GHC.Generics (Generic)
 import Product
 
 data SomeLIGO xs where
@@ -22,9 +22,12 @@ data SomeLIGO xs where
 
 nestedLIGO :: Lens (SomeLIGO xs) (SomeLIGO xs') (LIGO xs) (LIGO xs')
 nestedLIGO = lens getLIGO setLIGO
-  where
-    getLIGO (SomeLIGO _ ligo) = ligo
-    setLIGO (SomeLIGO d _) = SomeLIGO d
+
+getLIGO :: SomeLIGO xs -> LIGO xs
+getLIGO (SomeLIGO _ ligo) = ligo
+
+setLIGO :: SomeLIGO xs -> LIGO ys -> SomeLIGO ys
+setLIGO (SomeLIGO d _) = SomeLIGO d
 
 withNestedLIGO
   :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
@@ -32,7 +35,6 @@ withNestedLIGO = flip nestedLIGO
 
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
-
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
@@ -47,9 +49,10 @@ type RawLigoList =
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, MichelsonCode
   , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
-  , NameModule, ModuleAccess
+  , ModuleName, ModuleAccess
   ]
 
+-- TODO (LIGO-169): Implement a parser for JsLIGO.
 data Lang
   = Pascal
   | Caml
@@ -65,7 +68,7 @@ data Contract it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 newtype RawContract it
-  = RawContract [it] -- ^ Declaration
+  = RawContract [it] -- ^ [Declaration]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveFor1List
 
@@ -215,7 +218,7 @@ newtype NameDecl it = NameDecl
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
-newtype NameModule it = NameModule Text
+newtype ModuleName it = ModuleName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
@@ -244,7 +247,9 @@ data Error it = Error Text [it]
 -- of elements is unimportant (for instance sum types) so
 -- they may be mistreated as unequal.
 liftEqList :: (a -> b -> Bool) -> [a] -> [b] -> Bool
-liftEqList f a b = all (==True) $ uncurry f <$> zip a b
+liftEqList _ []       []       = True
+liftEqList f (x : xs) (y : ys) = f x y && liftEqList f xs ys
+liftEqList _ _        _        = False
 
 -- TODO
 -- class GEq1 f where
@@ -293,7 +298,6 @@ instance Eq1 DefaultEq1DeriveFor1List where
   liftEq f (DefaultEq1DeriveFor1List a) (DefaultEq1DeriveFor1List b) = liftEqList f a b
 
 --------------------------------------------------------------------------------
-
 instance Eq1 Alt where
   liftEq f (Alt pa ea) (Alt pb eb) = f pa pb && f ea eb
 

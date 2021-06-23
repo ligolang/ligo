@@ -9,7 +9,7 @@ type foo = [@boom] | True | False
 (source_file
   (type_decl
     (TypeName)
-    (type_sum
+    (sum_type
       (attr)
       (variant (ConstrName))
       (variant (ConstrName))
@@ -29,7 +29,7 @@ type foo = [@boom] True | False
 (source_file
   (type_decl
     (TypeName)
-    (type_sum
+    (sum_type
       (variant (attr) (ConstrName))
       (variant (ConstrName))
     )
@@ -48,7 +48,7 @@ type foo = | [@boom] True | False
 (source_file
   (type_decl
     (TypeName)
-    (type_sum
+    (sum_type
       (variant (attr) (ConstrName))
       (variant (ConstrName))
     )
@@ -69,9 +69,9 @@ type person = [@layout:comb] {
 (source_file
   (type_decl
     (TypeName)
-    (type_rec
+    (record_type
       (attr)
-      (type_rec_field (FieldName) (TypeName))
+      (field_decl (FieldName) (TypeName))
     )
   )
 )
@@ -90,8 +90,8 @@ type person = {
 (source_file
   (type_decl
     (TypeName)
-    (type_rec
-      (type_rec_field (attr) (attr) (FieldName) (TypeName))
+    (record_type
+      (field_decl (attr) (attr) (FieldName) (TypeName))
     )
   )
 )

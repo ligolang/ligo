@@ -5,32 +5,40 @@ module AST.Capabilities.Rename
   , prepareRenameDeclarationAt
   ) where
 
+import Data.Function (on)
+import Data.HashMap.Strict qualified as HM
+import Data.List (groupBy, sortOn)
+import Data.Maybe (mapMaybe)
 import Data.Text (Text)
-import qualified Language.LSP.Types as J
+import Language.LSP.Types qualified as J
 
-import AST.Capabilities.Find (CanSearch, findScopedDecl)
-import AST.Scope.ScopedDecl (ScopedDecl (ScopedDecl, _sdOrigin, _sdRefs))
+import AST.Capabilities.Find (CanSearch, findScopedDecl, rangeOf)
+import AST.Scope.ScopedDecl (ScopedDecl (ScopedDecl, _sdRefs))
 import AST.Skeleton (SomeLIGO)
-import Range (Range, toLspRange)
-
+import Range (Range, rFile, toLspRange)
+import Util (toUri)
 
 -- | Result of trying to rename declaration.
-data RenameDeclarationResult = Ok [J.TextEdit] | NotFound
+data RenameDeclarationResult = Ok J.WorkspaceEditMap | NotFound
   deriving stock (Eq, Show)
 
 
 -- | Rename the declaration at the given position.
--- The position is given as a range, becuase that is how we do it, haha :/.
+-- The position is given as a range, because that is how we do it, haha :/.
 renameDeclarationAt
   :: CanSearch xs
   => Range -> SomeLIGO xs -> Text -> RenameDeclarationResult
 renameDeclarationAt pos tree newName =
-    case findScopedDecl pos tree of
-      Nothing -> NotFound
-      Just ScopedDecl{_sdRefs} -> Ok $
-        -- XXX: _sdRefs includes the declaration itself too,
-        -- so we do not add _sdOrigin.
-        map (\r -> J.TextEdit (toLspRange r) newName) _sdRefs
+  case findScopedDecl pos tree of
+    Nothing -> NotFound
+    Just ScopedDecl{_sdRefs} -> Ok $
+      -- XXX: _sdRefs includes the declaration itself too,
+      -- so we do not add _sdOrigin.
+      HM.fromList $ mapMaybe extractGroup $ groupBy ((==) `on` rFile) $ sortOn rFile _sdRefs
+  where
+    extractGroup :: [Range] -> Maybe (J.Uri, J.List J.TextEdit)
+    extractGroup []         = Nothing
+    extractGroup xs@(x : _) = Just (toUri x, J.List $ flip J.TextEdit newName . toLspRange <$> xs)
 
 -- | Like 'renameDeclarationAt' but does not actually rename anything,
 -- only looks up the symbol being renamed and returns either @Nothing@
@@ -38,5 +46,4 @@ renameDeclarationAt pos tree newName =
 prepareRenameDeclarationAt
   :: CanSearch xs
   => Range -> SomeLIGO xs -> Maybe Range
-prepareRenameDeclarationAt pos tree =
-  _sdOrigin <$> findScopedDecl pos tree
+prepareRenameDeclarationAt = rangeOf

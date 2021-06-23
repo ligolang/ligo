@@ -18,6 +18,7 @@ module RIO
 
 import Prelude hiding (log)
 
+import Algebra.Graph.AdjacencyMap qualified as G (vertex, vertexList)
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow)
 import Control.Lens ((^.))
@@ -25,32 +26,31 @@ import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
 
+import Data.Foldable (traverse_)
 import Data.Function (on)
-import Data.List (nubBy)
-import qualified Data.Map as Map
-import qualified Data.SortedList as List
+import Data.List (groupBy, nubBy, sortOn)
 import Data.String.Interpolate (i)
 
-import qualified Language.LSP.Diagnostics as D
-import qualified Language.LSP.Server as J
-import qualified Language.LSP.Types as J
-import qualified Language.LSP.VFS as V
+import Language.LSP.Diagnostics qualified as D
+import Language.LSP.Server qualified as J
+import Language.LSP.Types qualified as J
+import Language.LSP.VFS qualified as V
 
 import Duplo.Tree (collect)
 
 import AST
 import ASTMap (ASTMap)
-import qualified ASTMap
+import ASTMap qualified
 import Cli
 import Config (Config (..))
 import Duplo.Lattice (Lattice (leq))
-import qualified Log
+import Log qualified
 import Product
 import Range
 
 type RioEnv =
   Product
-    '[ ASTMap J.NormalizedUri (SomeLIGO Info', [Msg]) RIO
+    '[ ASTMap J.NormalizedUri ContractInfo' RIO
      ]
 
 newtype RIO a = RIO
@@ -80,21 +80,18 @@ instance HasLigoClient RIO where
 run :: (J.LanguageContextEnv Config.Config, RioEnv) -> RIO a -> IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
-fetch, forceFetch :: J.NormalizedUri -> RIO (SomeLIGO Info', [Msg])
+fetch, forceFetch :: J.NormalizedUri -> RIO ContractInfo'
 fetch uri = asks getElem >>= ASTMap.fetchCurrent uri
 forceFetch uri = do
   tmap <- asks getElem
   ASTMap.invalidate uri tmap
   ASTMap.fetchCurrent uri tmap
 
-diagnostic :: Int -> J.NormalizedUri -> J.TextDocumentVersion -> [J.Diagnostic] -> RIO ()
-diagnostic n nuri ver diags = do
-  let diags' = D.partitionBySource diags <> emptyDiags
+diagnostic :: Int -> J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
+diagnostic n ver = traverse_ \(nuri, diags) -> do
+  let diags' = D.partitionBySource diags
   Log.debug "LOOP.DIAG" [i|Diags #{diags'}|]
   J.publishDiagnostics n nuri ver diags'
-
-emptyDiags :: D.DiagnosticsBySource
-emptyDiags = Map.fromList [(Just "ligo-lsp", List.toSortedList [])]
 
 preload
   :: J.Uri
@@ -106,67 +103,64 @@ preload uri = do
     Just vf -> Text fin (V.virtualFileText vf)
     Nothing -> Path fin
 
-load
+loadWithoutScopes
   :: J.Uri
-  -> RIO (SomeLIGO Info', [Msg])
-load uri = do
+  -> RIO ContractInfo
+loadWithoutScopes uri = do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
   Log.debug "LOAD" [i|running with env #{ligoEnv}|]
-  parseWithScopes @Standard src
+  parse src
+
+scopes :: ContractInfo -> RIO ContractInfo'
+scopes = fmap (head . G.vertexList) . addScopes @Standard . G.vertex
+
+load
+  :: J.Uri
+  -> RIO ContractInfo'
+load uri = J.getRootPath >>= \case
+  Nothing -> loadDefault
+  Just root -> do
+    graph <- parseContractsWithDependenciesScopes @Standard (loadWithoutScopes . J.filePathToUri . srcPath) root
+    tmap <- asks getElem
+    forM_ (G.vertexList graph) \contract ->
+      ASTMap.insert (J.toNormalizedUri $ J.filePathToUri $ contractFile contract) contract tmap
+    maybe loadDefault pure (flip lookupContract graph =<< J.uriToFilePath uri)
+  where
+    loadDefault = scopes =<< loadWithoutScopes uri
 
 collectErrors
-  :: (J.NormalizedUri -> RIO (SomeLIGO Info', [Msg]))
+  :: (J.NormalizedUri -> RIO ContractInfo')
   -> J.NormalizedUri
   -> Maybe Int
   -> RIO ()
-collectErrors fetcher uri version = do
-  (tree, errs) <- fetcher uri
-  diagnostic 100 uri version
-    $ map errorToDiag
-    $ nubBy (leq `on` fst)
-    $ errs <> collectTreeErrors tree
+collectErrors fetcher uri version = fetcher uri >>= \(FindContract _ tree errs) -> do
+  let errs' = nubBy (leq `on` fst) $ errs <> collectTreeErrors tree
+  let diags = errorToDiag <$> errs'
+  let extractGroup :: [[(J.NormalizedUri, J.Diagnostic)]] -> [(J.NormalizedUri, [J.Diagnostic])]
+      extractGroup [] = []
+      extractGroup ([] : xs) = extractGroup xs
+      extractGroup (ys@(y : _) : xs) = (fst y, snd <$> ys) : extractGroup xs
+  let grouped = extractGroup $ groupBy ((==) `on` fst) $ sortOn fst diags
+  let n = 100
+  J.flushDiagnosticsBySource n (Just "ligo-lsp")
+  diagnostic n version grouped
 
-errorToDiag :: (Range, Error a) -> J.Diagnostic
-errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) _), Error what _) =
-  J.Diagnostic
+errorToDiag :: (Range, Error a) -> (J.NormalizedUri, J.Diagnostic)
+errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =
+  ( J.toNormalizedUri $ J.filePathToUri f
+  , J.Diagnostic
     (J.Range begin end)
     (Just J.DsError)
     Nothing
     (Just "ligo-lsp")
     what
-    (Just $ J.List[])
+    (Just $ J.List [])
     Nothing
+  )
   where
     begin = J.Position (sl - 1) (sc - 1)
     end   = J.Position (el - 1) (ec - 1)
 
--- Parse whole directory for ligo contracts and collect the results.
--- This ignores every other file which is not a contract.
--- TODO: convert FilePath to URI
--- parseContracts :: FilePath -> RIO [ParsedContract]
--- parseContracts top = let
---   exclude p = p /= "." && p /= ".." in do
---   ds <- liftIO $ getDirectoryContents top
---   contracts <- forM (filter exclude ds) $ \d -> do
---     let p = top </> d
---     yes <- liftIO $ doesDirectoryExist p
---     if yes
---       then parseContracts p
---       else do
---         contract <- RIO.forceFetch (J.toNormalizedUri p)
---         case contract of
---           Right (tree, errs) ->
---             return $ [ParsedContract p tree $ errs <> collectTreeErrors tree]
---           Left _ -> return []
---   return (concat contracts)
-
 collectTreeErrors :: SomeLIGO Info' -> [Msg]
 collectTreeErrors = map (getElem *** void) . collect . (^. nestedLIGO)
-
--- TODO: uncomment when it will be used
--- data ParsedContract = ParsedContract
---   { cPath :: FilePath
---   , cTree :: LIGO Info'
---   , cErr  :: [Msg]
---   }

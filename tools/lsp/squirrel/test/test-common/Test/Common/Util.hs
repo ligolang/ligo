@@ -7,6 +7,7 @@ module Test.Common.Util
   , supportedExtensions
   ) where
 
+import Control.Arrow ((&&&))
 import Control.Exception.Safe (catch, throwIO)
 import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
@@ -19,7 +20,7 @@ import System.IO.Error (isDoesNotExistError)
 
 import AST (parse)
 import AST.Parser (Source (Path), parseWithScopes)
-import AST.Scope.Common (HasScopeForest, Info')
+import AST.Scope.Common (HasScopeForest, Info', contractTree, _cMsgs, _cTree, _getContract)
 import AST.Skeleton (SomeLIGO)
 import Parser (Info, Msg)
 
@@ -42,16 +43,16 @@ getContractsWithExtension ext ignore dir = listDirectory dir
                                 <&> filter (`notElem` ignore)
 
 readContract :: FilePath -> IO (SomeLIGO Info)
-readContract filepath = fst <$> parse (Path filepath)
+readContract filepath = contractTree <$> parse (Path filepath)
 
 readContractWithMessages :: FilePath -> IO (SomeLIGO Info, [Msg])
-readContractWithMessages filepath = parse (Path filepath)
+readContractWithMessages filepath = (_cTree &&& _cMsgs) . _getContract <$> parse (Path filepath)
 
 readContractWithScopes
   :: forall parser. HasScopeForest parser IO
   => FilePath -> IO (SomeLIGO Info')
 readContractWithScopes filepath
-  = fst <$> parseWithScopes @parser (Path filepath)
+  = contractTree <$> parseWithScopes @parser (Path filepath)
 
 supportedExtensions :: [FilePath]
 supportedExtensions = [".ligo", ".mligo", ".religo"]

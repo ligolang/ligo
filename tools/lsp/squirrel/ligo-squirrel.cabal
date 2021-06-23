@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 47d631ef4f3543b153bbc7bd2e302bb73a154b59ecddd5049b566061ffb613f8
+-- hash: ec56a9a20c7c868c19e197ca00e42ac0691bc34e3e88a9010ae837bbfed1d699
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -57,8 +57,47 @@ library
       Paths_ligo_squirrel
   hs-source-dirs:
       src/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   include-dirs:
       grammar/pascaligo/src
       grammar/reasonligo/src
@@ -72,34 +111,29 @@ library
       grammar/camligo/src/scanner.c
   build-depends:
       aeson
-    , async
+    , algebraic-graphs
     , base
     , bytestring
     , containers
     , data-default
+    , directory
     , duplo
     , exceptions
     , fastsum
     , filepath
-    , generic-deriving
     , ghc-prim
-    , hashable
     , interpolate
     , lens
-    , lens-aeson
     , lsp-types
     , mtl
     , pretty
     , process
     , regex-tdfa
     , safe-exceptions
-    , sorted-list
     , template-haskell
     , text
     , transformers
     , tree-sitter
-    , unliftio
-    , unliftio-core
     , unordered-containers
   default-language: Haskell2010
 
@@ -112,75 +146,123 @@ executable ligo-squirrel
       Paths_ligo_squirrel
   hs-source-dirs:
       app/ligo-squirrel
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -threaded
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded
   build-depends:
-      async
+      algebraic-graphs
     , base
-    , bytestring
     , clock
-    , containers
     , data-default
-    , directory
     , duplo
     , exceptions
-    , fastsum
-    , filepath
     , focus
-    , generic-deriving
     , ghc-prim
     , hashable
     , hslogger
     , interpolate
     , lens
-    , lens-aeson
     , ligo-squirrel
     , lsp
     , mtl
-    , pretty
     , safe-exceptions
-    , sorted-list
     , stm
     , stm-containers
     , text
     , transformers
-    , tree-sitter
-    , unix
     , unliftio
     , unliftio-core
-    , unordered-containers
   default-language: Haskell2010
 
 executable ligo-vet
   main-is: Main.hs
   hs-source-dirs:
       app/ligo-vet
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   build-depends:
-      async
-    , base
-    , bytestring
-    , containers
-    , data-default
+      base
     , duplo
-    , exceptions
-    , fastsum
-    , filepath
-    , generic-deriving
     , ghc-prim
-    , hashable
-    , interpolate
     , ligo-squirrel
-    , mtl
     , optparse-applicative
-    , pretty
-    , safe-exceptions
-    , sorted-list
-    , text
-    , transformers
-    , tree-sitter
-    , unliftio
     , with-utf8
   default-language: Haskell2010
 
@@ -209,43 +291,65 @@ test-suite integration-test
   hs-source-dirs:
       test/integration-test/
       test/test-common/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
       HUnit
-    , async
     , base
-    , bytestring
-    , containers
-    , data-default
     , directory
     , duplo
-    , exceptions
-    , fastsum
     , filepath
-    , generic-deriving
     , ghc-prim
-    , hashable
     , hspec-expectations
-    , interpolate
     , lens
     , ligo-squirrel
     , lsp-types
-    , mtl
-    , pretty
     , safe-exceptions
-    , sorted-list
     , tasty
-    , tasty-discover
-    , tasty-hspec
     , tasty-hunit
     , template-haskell
     , text
-    , transformers
-    , tree-sitter
-    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -268,43 +372,65 @@ test-suite ligo-contracts-test
   hs-source-dirs:
       test/ligo-contracts-test/
       test/test-common/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
       HUnit
-    , async
     , base
-    , bytestring
-    , containers
-    , data-default
     , directory
     , duplo
-    , exceptions
-    , fastsum
     , filepath
-    , generic-deriving
     , ghc-prim
-    , hashable
     , hspec-expectations
-    , interpolate
     , lens
     , ligo-squirrel
     , lsp-types
-    , mtl
-    , pretty
     , safe-exceptions
-    , sorted-list
     , tasty
-    , tasty-discover
-    , tasty-hspec
     , tasty-hunit
     , template-haskell
     , text
-    , transformers
-    , tree-sitter
-    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -335,42 +461,64 @@ test-suite lsp-test
   hs-source-dirs:
       test/lsp-test/
       test/test-common/
-  default-extensions: AllowAmbiguousTypes ApplicativeDo BangPatterns BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveFoldable DeriveFunctor DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralisedNewtypeDeriving LambdaCase MagicHash MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings QuantifiedConstraints QuasiQuotes RankNTypes ScopedTypeVariables StandaloneDeriving TemplateHaskell TupleSections TypeApplications TypeFamilies TypeOperators UndecidableInstances ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
       HUnit
-    , async
     , base
-    , bytestring
-    , containers
-    , data-default
     , directory
     , duplo
-    , exceptions
-    , fastsum
     , filepath
-    , generic-deriving
     , ghc-prim
-    , hashable
     , hspec-expectations
-    , interpolate
     , lens
     , ligo-squirrel
     , lsp-types
-    , mtl
-    , pretty
     , safe-exceptions
-    , sorted-list
     , tasty
-    , tasty-discover
-    , tasty-hspec
     , tasty-hunit
     , template-haskell
     , text
-    , transformers
-    , tree-sitter
-    , unliftio
     , unordered-containers
   default-language: Haskell2010

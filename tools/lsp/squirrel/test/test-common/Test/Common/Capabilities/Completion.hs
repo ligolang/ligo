@@ -13,7 +13,7 @@ import AST.Capabilities.Completion (Completion (..), complete)
 import AST.Scope (HasScopeForest)
 import Range (point)
 
-import qualified Test.Common.Capabilities.Util (contractsDir)
+import Test.Common.Capabilities.Util qualified (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
 import Test.Common.Util (readContractWithScopes)
 

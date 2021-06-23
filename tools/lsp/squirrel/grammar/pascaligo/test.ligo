@@ -1,1 +1,0 @@
-../../../../../src/test/examples/pascaligo/arithmetic-contract.ligo

@@ -9,7 +9,7 @@ module Cli.Types
 import Control.Exception.Safe (catch, throwIO)
 import Control.Monad.Catch (MonadCatch)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.ByteString.Lazy.Char8 as S8L
+import Data.ByteString.Lazy.Char8 qualified as S8L
 import Data.Default (Default (..))
 import Language.Haskell.TH.Syntax (liftString)
 import System.Environment (getEnv)
@@ -46,5 +46,6 @@ instance Default LigoClientEnv where
 class (Monad m, MonadIO m, MonadCatch m) => HasLigoClient m where
   getLigoClientEnv :: m LigoClientEnv
 
+-- Mostly for debugging purposes
 instance HasLigoClient IO where
   getLigoClientEnv = pure def

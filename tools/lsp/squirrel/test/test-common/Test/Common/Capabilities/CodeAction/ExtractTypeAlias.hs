@@ -4,10 +4,10 @@ module Test.Common.Capabilities.CodeAction.ExtractTypeAlias
   ) where
 
 import Control.Lens
-import qualified Data.HashMap.Strict as HM
-import qualified Data.Text as T
-import qualified Language.LSP.Types as J
-import qualified Language.LSP.Types.Lens as J
+import Data.HashMap.Strict qualified as HM
+import Data.Text qualified as T
+import Language.LSP.Types qualified as J
+import Language.LSP.Types.Lens qualified as J
 import System.FilePath ((</>))
 import Test.Tasty
 import Test.Tasty.HUnit

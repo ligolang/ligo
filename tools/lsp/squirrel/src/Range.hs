@@ -11,17 +11,20 @@ module Range
   , intersects
   , interval
   , fromLspPosition
+  , fromLspPositionUri
   , fromLspRange
+  , fromLspRangeUri
   , merged
   , point
   , toLspRange
   )
   where
 
-import qualified Language.LSP.Types as LSP (Position (..), Range (..))
+import Language.LSP.Types qualified as LSP
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as BS
+import Data.ByteString qualified as BS
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding
 
@@ -79,11 +82,20 @@ toLspRange Range
 fromLspPosition :: LSP.Position -> Range
 fromLspPosition (LSP.Position l c) = point (l + 1) (c + 1)
 
+fromLspPositionUri :: LSP.Position -> LSP.Uri -> Range
+fromLspPositionUri position uri = (fromLspPosition position) {rFile = fromMaybe "" $ LSP.uriToFilePath uri}
+
 fromLspRange :: LSP.Range -> Range
 fromLspRange
   (LSP.Range
     (fromLspPosition -> s)
     (fromLspPosition -> e)) = merged s e
+
+fromLspRangeUri :: LSP.Range -> LSP.Uri -> Range
+fromLspRangeUri
+  (LSP.Range
+    (fromLspPosition -> s)
+    (fromLspPosition -> e)) uri = (merged s e) {rFile = fromMaybe "" $ LSP.uriToFilePath uri}
 
 instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)) where
   getRange = getElem . extract

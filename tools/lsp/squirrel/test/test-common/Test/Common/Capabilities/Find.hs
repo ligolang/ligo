@@ -18,6 +18,7 @@ module Test.Common.Capabilities.Find
 
 import Data.Foldable (for_)
 import System.FilePath ((</>))
+import System.Directory (makeAbsolute)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
@@ -26,9 +27,9 @@ import AST (HasScopeForest)
 import AST.Capabilities.Find (definitionOf, referencesOf, typeDefinitionAt)
 import Range (Range (..), interval, point)
 
-import qualified Test.Common.Capabilities.Util as Common (contractsDir)
+import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations
-  (HasCallStack, expectationFailure, shouldBe, shouldContain, shouldMatchList)
+  (expectationFailure, shouldBe, shouldContain, shouldMatchList)
 import Test.Common.Util (readContractWithScopes)
 
 contractsDir :: FilePath
@@ -59,54 +60,62 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
 
 -- | Check that the given @DefinitionReferenceInvariant@ holds.
 checkDefinitionReferenceInvariant
-  :: forall parser. (HasCallStack, HasScopeForest parser IO) => DefinitionReferenceInvariant -> Assertion
+  :: forall parser. HasScopeForest parser IO => DefinitionReferenceInvariant -> Assertion
 checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = test
   where
     test :: Assertion
     test = do
-      tree <- readContractWithScopes @parser driFile
+      driFile' <- makeAbsolute driFile
+      -- a tree parser labels ranges with files, so we should too to preserve equality
+      driRefs' <- traverse (label driFile') driRefs
+
+      tree <- readContractWithScopes @parser driFile'
       case driDef of
         Nothing ->
-          for_ driRefs' $ \mention ->
+          for_ driRefs' \mention ->
             definitionOf mention tree `shouldBe` Nothing
-        Just (label driFile -> expectedDef) ->
-          for_ (expectedDef : driRefs') $ \mention -> do
-            definitionOf mention tree `shouldBe` Just expectedDef
-            case referencesOf mention tree of
-              Nothing -> expectationFailure $
-                printf "References of '%s' from '%s' are not found." driDesc driFile
-              Just actualRefs -> actualRefs `shouldMatchList` expectedDef : driRefs'
+        Just expectedDef -> do
+          expectedDef' <- label driFile' expectedDef
+          definitionOf expectedDef' tree `shouldBe` Just expectedDef'
+          case referencesOf expectedDef' tree of
+            Nothing -> expectationFailure $
+              printf "References of '%s' from '%s' are not found." driDesc driFile'
+            Just actualRefs -> actualRefs `shouldMatchList` expectedDef' : driRefs'
 
-    -- a tree parser labels ranges with files, so we should too to
-    -- preserve equality
-    driRefs' = map (label driFile) driRefs
-
-label :: FilePath -> Range -> Range
-label filepath r = r{ rFile = filepath }
+label :: FilePath -> Range -> IO Range
+label filepath r
+  | null (rFile r) = pure r{ rFile = filepath }
+  | otherwise      = fmap (\fp -> r{ rFile = fp }) (makeAbsolute $ rFile r)
 
 -- | Check if the given range corresponds to a definition of the given
 -- entity in the given file.
 checkIfDefinition :: forall parser. HasScopeForest parser IO => FilePath -> Range -> Range -> Assertion
-checkIfDefinition filepath (label filepath -> expectedDef) mention = test
+checkIfDefinition filepath expectedDef mention = test
   where
     test :: Assertion
     test = do
-      tree <- readContractWithScopes @parser filepath
-      definitionOf mention tree `shouldBe` Just expectedDef
+      filepath' <- makeAbsolute filepath
+      expectedDef' <- label filepath' expectedDef
+      mention' <- label filepath' mention
+      tree <- readContractWithScopes @parser filepath'
+      definitionOf mention' tree `shouldBe` Just expectedDef'
 
 -- | Check if the given range corresponds to a reference of the given
 -- entity in the given file.
 checkIfReference :: forall parser. HasScopeForest parser IO => FilePath -> Range -> Range -> Assertion
-checkIfReference filepath (label filepath -> expectedRef) mention = test
+checkIfReference filepath expectedRef mention = test
   where
     test :: Assertion
     test = do
-      tree <- readContractWithScopes @parser filepath
-      case referencesOf mention tree of
+      filepath' <- makeAbsolute filepath
+      expectedRef' <- label filepath' expectedRef
+      mention' <- label filepath' mention
+      tree <- readContractWithScopes @parser filepath'
+      case referencesOf mention' tree of
         Nothing -> expectationFailure $
           printf "References in range '%s' from '%s' are not found."
-            (show mention) filepath
-        Just references -> references `shouldContain` [expectedRef]
+            (show mention') filepath'
+        Just references -> references `shouldContain` [expectedRef']
 
 invariants :: [DefinitionReferenceInvariant]
 invariants =
@@ -287,9 +296,55 @@ invariants =
     , driDef = Just (interval 2 5 14)
     , driRefs = [interval 5 18 27]
     }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "A1.mligo"
+    , driDesc = "a1, find references in other files"
+    , driDef = Just (interval 1 5 7)
+    , driRefs =
+      [ (interval 3 10 12){rFile = contractsDir </> "includes" </> "A2.mligo"}
+      , (interval 3 10 12){rFile = contractsDir </> "includes" </> "A3.mligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "B3.ligo"
+    , driDesc = "b3, relative directories"
+    , driDef = Just (interval 1 7 9)
+    , driRefs =
+      [ (interval 3 21 23){rFile = contractsDir </> "includes" </> "B1.ligo"}
+      , (interval 3 12 14){rFile = contractsDir </> "includes" </> "B2" </> "B2.ligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "C2.religo"
+    , driDesc = "c2, find references in other files"
+    , driDef = Just (interval 1 5 7)
+    , driRefs =
+      [ (interval 4 15 17){rFile = contractsDir </> "includes" </> "C1.mligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "C3.mligo"
+    , driDesc = "c3, find references in other files"
+    , driDef = Just (interval 1 5 7)
+    , driRefs =
+      [ (interval 4 10 12){rFile = contractsDir </> "includes" </> "C1.mligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "D1.ligo"
+    , driDesc = "d, no references"
+    , driDef = Just (interval 1 7 8)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "D2.ligo"
+    , driDesc = "d, no references"
+    , driDef = Just (interval 1 7 8)
+    , driRefs = []
+    }
   ]
 
-findDefinitionAndGoToReferencesCorrespondence :: forall impl. (HasScopeForest impl IO, HasCallStack) => TestTree
+findDefinitionAndGoToReferencesCorrespondence :: forall impl. HasScopeForest impl IO => TestTree
 findDefinitionAndGoToReferencesCorrespondence =
   testGroup "Definition and References Correspondence" testCases
   where
@@ -340,10 +395,12 @@ typeOf
   -> Range
   -> Assertion
 typeOf filepath mention definition = do
+  mention' <- label filepath mention
+  definition' <- label filepath definition
   tree <- readContractWithScopes @impl filepath
-  case typeDefinitionAt mention tree of
+  case typeDefinitionAt mention' tree of
     Nothing -> expectationFailure "Should find type definition"
-    Just range -> range{rFile=rFile mention} `shouldBe` definition
+    Just range -> range{rFile=rFile mention'} `shouldBe` definition'
 
 typeOfHeapConst :: forall impl. HasScopeForest impl IO => Assertion
 typeOfHeapConst = typeOf @impl (contractsDir </> "heap.ligo") (point 106 8) (interval 4 6 10)

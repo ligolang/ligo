@@ -9,8 +9,9 @@ module AST.Capabilities.SignatureHelp
   , toLspParameter
   ) where
 
-import qualified Language.LSP.Types as LSP
-  (List (..), ParameterInformation (..), SignatureHelp (..), SignatureInformation (..))
+import Language.LSP.Types qualified as LSP
+  (List (..), ParameterInformation (..), ParameterLabel (..), SignatureHelp (..),
+   SignatureHelpDoc (..), SignatureInformation (..))
 
 import Control.Lens (_1, _2, _Just, (^..), (^?))
 import Control.Monad (void)
@@ -18,7 +19,7 @@ import Data.Foldable (asum)
 import Data.List (findIndex)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import qualified Data.Text as Text (intercalate, unwords)
+import Data.Text qualified as Text (intercalate, unwords)
 import Duplo.Lattice (leq)
 import Duplo.Pretty (fsep, pp, ppToText)
 import Duplo.Tree (match, spineTo)
@@ -67,8 +68,9 @@ findSignature tree position = do
       paramLabels = map parPresentation params
   let sigInfo = LSP.SignatureInformation
         { _label = label
-        , _documentation = Just (ppToText (fsep (map pp _sdDoc)))
+        , _documentation = Just (LSP.SignatureHelpDocString $ ppToText (fsep (map pp _sdDoc)))
         , _parameters = Just . LSP.List $ map toLspParameter paramLabels
+        , _activeParameter = Nothing
         }
   pure (sigInfo, activeNo)
 
@@ -84,7 +86,7 @@ makeSignatureLabel Reason name params
 -- | Make a 'ParameterInformation' by a parameter's name. For now, we don't
 -- support parameter docs.
 toLspParameter :: Text -> LSP.ParameterInformation
-toLspParameter name = LSP.ParameterInformation name Nothing
+toLspParameter name = LSP.ParameterInformation (LSP.ParameterLabelString name) Nothing
 
 -- | Find all function signatures at the given position and wrap them up in a
 -- 'SignatureHelp'.

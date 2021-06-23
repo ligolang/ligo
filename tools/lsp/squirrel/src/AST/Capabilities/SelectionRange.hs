@@ -3,7 +3,7 @@ module AST.Capabilities.SelectionRange
   , findCoveringRanges
   ) where
 
-import qualified Language.LSP.Types as J (Position, SelectionRange (..))
+import Language.LSP.Types qualified as J (Position, SelectionRange (..))
 
 import Data.Function ((&))
 import Data.Maybe (fromMaybe)

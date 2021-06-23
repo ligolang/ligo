@@ -1,33 +1,34 @@
 {-# LANGUAGE PolyKinds #-}
 
+module Main (main) where
+
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 
 import Data.Default
-import qualified Data.HashMap.Strict as HM
 import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
-import qualified Data.Text as T
+import Data.Text qualified as T
 
-import qualified Language.LSP.Server as S
-import qualified Language.LSP.Types as J
-import qualified Language.LSP.Types.Lens as J
+import Language.LSP.Server qualified as S
+import Language.LSP.Types qualified as J
+import Language.LSP.Types.Lens qualified as J
 
 
 import AST
-import qualified ASTMap
-import qualified Config
+import ASTMap qualified
+import Config qualified
 import Language.LSP.Util (sendError)
-import qualified Log
+import Log qualified
 import Product
 import RIO (RIO, RioEnv)
-import qualified RIO
+import RIO qualified
 import Range
 import System.Exit
-import qualified System.Log as L
-
+import System.Log qualified as L
+import Util (toLocation)
 
 main :: IO ()
 main = do
@@ -102,6 +103,7 @@ handlers = mconcat
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
   , S.notificationHandler J.STextDocumentDidSave (\_msg -> pure ())
+  --, S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
 
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
   , S.requestHandler J.STextDocumentTypeDefinition handleTypeDefinitionRequest
@@ -145,14 +147,17 @@ handleDefinitionRequest req respond = do
     let uri = req^.J.textDocument.J.uri
     let pos = fromLspPosition $ req^.J.position
     -}
+    Log.debug "Definition" [i|Got request: #{req}|]
     let
       J.DefinitionParams{_textDocument, _position} = req ^. J.params
       uri = _textDocument ^. J.uri
       pos = fromLspPosition _position
-    (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
-    case AST.definitionOf pos tree of
-      Just defPos -> respond . Right . J.InR . J.InL . J.List $ [J.Location uri $ toLspRange defPos]
-      Nothing     -> respond . Right . J.InR . J.InL . J.List $ []
+    tree <- contractTree <$> RIO.fetch (J.toNormalizedUri uri)
+    let location = case AST.definitionOf pos tree of
+          Just defPos -> [toLocation defPos]
+          Nothing     -> []
+    Log.debug "Definition" [i|Definition request returned #{location}|]
+    respond . Right . J.InR . J.InL . J.List $ location
 
 handleTypeDefinitionRequest :: S.Handler RIO 'J.TextDocumentTypeDefinition
 handleTypeDefinitionRequest req respond = do
@@ -160,17 +165,19 @@ handleTypeDefinitionRequest req respond = do
       J.TypeDefinitionParams{_textDocument, _position} = req ^. J.params
       uri = _textDocument ^. J.uri
       pos = _position ^. to fromLspPosition
-    (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
+    tree <- contractTree <$> RIO.fetch (J.toNormalizedUri uri)
     let wrapAndRespond = respond . Right . J.InR . J.InL . J.List
-    case AST.typeDefinitionAt pos tree of
-      Just defPos -> wrapAndRespond [J.Location uri $ toLspRange defPos]
-      Nothing     -> wrapAndRespond []
+    let definition = case AST.typeDefinitionAt pos tree of
+          Just defPos -> [J.Location uri $ toLspRange defPos]
+          Nothing     -> []
+    Log.debug "TypeDefinition" [i|Type definition request returned #{definition}|]
+    wrapAndRespond definition
 
 handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
 handleDocumentFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
-  (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
+  tree <- contractTree <$> RIO.fetch (J.toNormalizedUri uri)
   respond . Right =<< AST.formatDocument tree
 
 handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
@@ -178,27 +185,27 @@ handleDocumentRangeFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
     pos = fromLspRange $ req ^. J.params . J.range
-  (tree, _) <- RIO.fetch $ J.toNormalizedUri uri
+  tree <- contractTree <$> RIO.fetch (J.toNormalizedUri uri)
   respond . Right =<< AST.formatAt pos tree
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do
-    let (uri, nuri, pos) = getUriPos req
-    (tree, _) <- RIO.fetch nuri
-    case AST.referencesOf pos tree of
-      Just refs -> do
-        let locations = J.Location uri . toLspRange <$> refs
-        respond . Right . J.List $ locations
-      Nothing ->
-        respond . Right . J.List $ []
+    let (_, nuri, pos) = getUriPos req
+    tree <- contractTree <$> RIO.fetch nuri
+    let locations = case AST.referencesOf pos tree of
+          Just refs -> toLocation <$> refs
+          Nothing   -> []
+    Log.debug "FindReferences" [i|Find references request returned #{locations}|]
+    respond . Right . J.List $ locations
 
 handleCompletionRequest :: S.Handler RIO 'J.TextDocumentCompletion
 handleCompletionRequest req respond = do
     Log.debug "Completion" [i|Request: #{show req}|]
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let pos = fromLspPosition $ req ^. J.params . J.position
-    (tree, _) <- RIO.fetch uri
+    tree <- contractTree <$> RIO.fetch uri
     let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
+    Log.debug "Completion" [i|Completion request returned #{completions}|]
     respond . Right . J.InL . J.List $ completions
 
 {-
@@ -219,14 +226,14 @@ handleSignatureHelpRequest req respond = do
     J.SignatureHelpParams{_textDocument, _position} = req ^. J.params
     uri = _textDocument ^. J.uri
     position = fromLspPosition _position
-  (tree, _) <- RIO.fetch (J.toNormalizedUri uri)
+  tree <- contractTree <$> RIO.fetch (J.toNormalizedUri uri)
   let signatureHelp = getSignatureHelp (tree ^. nestedLIGO) position
   respond . Right $ signatureHelp
 
 handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
 handleFoldingRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    (tree, _) <- RIO.fetch uri
+    tree <- contractTree <$> RIO.fetch uri
     actions <- foldingAST (tree ^. nestedLIGO)
     respond . Right . J.List $ toFoldingRange <$> actions
 
@@ -236,7 +243,7 @@ handleTextDocumentCodeAction req respond = do
       uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
       r = req ^. J.params . J.range . to fromLspRange
       con = req ^. J.params . J.context
-    (tree, _) <- RIO.fetch uri
+    tree <- contractTree <$> RIO.fetch uri
     actions <- collectCodeActions r con (J.fromNormalizedUri uri) tree
     let response = Right . J.List . fmap J.InR $ actions
     respond response
@@ -245,14 +252,14 @@ handleSelectionRangeRequest :: S.Handler RIO 'J.TextDocumentSelectionRange
 handleSelectionRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let positions = req ^. J.params . J.positions ^.. folded
-    (tree, _) <- RIO.fetch uri
+    tree <- contractTree <$> RIO.fetch uri
     let results = map (findSelectionRange (tree ^. nestedLIGO)) positions
     respond . Right . J.List $ results
 
 handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol
 handleDocumentSymbolsRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    (tree, _) <- RIO.fetch uri
+    tree <- contractTree <$> RIO.fetch uri
     result <- extractDocumentSymbols (J.fromNormalizedUri uri) tree
     respond . Right . J.InR . J.List $ result
 
@@ -267,31 +274,29 @@ handleHoverRequest req respond = do
       J.HoverParams{_textDocument, _position} = req ^. J.params
       uri = _textDocument ^. J.uri . to J.toNormalizedUri
       pos = fromLspPosition _position
-    (tree, _) <- RIO.fetch uri
+    tree <- contractTree <$> RIO.fetch uri
     respond . Right $ hoverDecl pos tree
 
 handleRenameRequest :: S.Handler RIO 'J.TextDocumentRename
 handleRenameRequest req respond = do
-    let (uri, nuri, pos) = getUriPos req
+    Log.debug "Rename" [i|Request: #{show req}|]
+    let (_, nuri, pos) = getUriPos req
     let newName = req ^. J.params . J.newName
 
-    (tree, _) <- RIO.fetch nuri
+    tree <- contractTree <$> RIO.fetch nuri
 
     case renameDeclarationAt pos tree newName of
       NotFound -> do
         Log.debug "Rename" [i|Declaration not found for: #{show req}|]
         respond . Left $
           J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
-      Ok edits ->
+      Ok edits -> do
         let
-          -- TODO: Add support for renaming references in other files.
-          changes = HM.fromList [ (uri, J.List edits ) ]
-
           -- XXX: This interface has two benefits: it allows to refer to a specific
           -- document version and it allows the creation/deletion/renaming of files.
           -- In this case we do not care about the latter and the actual usefulness
           -- of the former is not clear either, but it might be worth switching
-          -- to it when we support verions.
+          -- to it when we support versions.
           --documentChanges = J.List
           --  [ J.TextDocumentEdit
           --      { _textDocument = J.VersionedTextDocumentIdentifier uri Nothing
@@ -301,16 +306,18 @@ handleRenameRequest req respond = do
 
           response =
             J.WorkspaceEdit
-              { _changes = Just changes
+              { _changes = Just edits
               , _documentChanges = Nothing
+              , _changeAnnotations = Nothing
               }
-        in respond . Right $ response
+        Log.debug "Rename" [i|Rename request returned #{response}|]
+        respond . Right $ response
 
 handlePrepareRenameRequest :: S.Handler RIO 'J.TextDocumentPrepareRename
 handlePrepareRenameRequest req respond = do
     let (_, nuri, pos) = getUriPos req
 
-    (tree, _) <- RIO.fetch nuri
+    tree <- contractTree <$> RIO.fetch nuri
 
     respond . Right . fmap (J.InL . toLspRange) $ prepareRenameDeclarationAt pos tree
 
@@ -325,7 +332,7 @@ getUriPos req =
   let
     uri  = req ^. J.params . J.textDocument . J.uri
     nuri = J.toNormalizedUri uri
-    pos  = fromLspPosition $ req ^. J.params . J.position
+    pos  = fromLspPositionUri (req ^. J.params . J.position) uri
   in (uri, nuri, pos)
 
 exit :: Int -> IO ()

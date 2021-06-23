@@ -34,11 +34,11 @@ import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
 import Data.Foldable (asum, toList)
 import Data.Function
-import qualified Data.HashMap.Strict as HM
-import qualified Data.List as List
+import Data.HashMap.Strict qualified as HM
+import Data.List qualified as List
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import qualified Data.Text as Text (unpack)
+import Data.Text qualified as Text (unpack)
 import GHC.Generics
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)

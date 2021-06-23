@@ -71,7 +71,7 @@ type person = [@layout:comb] {
     (TypeName)
     (record_type
       (attr)
-      (field_decl (FieldName (Name)) (TypeName))
+      (field_decl (FieldName) (TypeName))
     )
   )
 )
@@ -91,7 +91,7 @@ type person = {
   (type_decl
     (TypeName)
     (record_type
-      (field_decl (attr) (attr) (FieldName (Name)) (TypeName))
+      (field_decl (attr) (attr) (FieldName) (TypeName))
     )
   )
 )
