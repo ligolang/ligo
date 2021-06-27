@@ -5,8 +5,6 @@ title: Inter-contract invocations
 
 import Syntax from '@theme/Syntax';
 
-# Inter-contract invocations
-
 In this guide, we will look into contract interactions on Tezos. We will provide examples of how one contract can invoke and create other contracts on the same chain. We will also describe the execution model Tezos contracts live in and see how it is different from a more conventional "direct calls" model.
 
 ## Internal operations

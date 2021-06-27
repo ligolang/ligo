@@ -106,6 +106,9 @@
     ],
     "Security": [
       "tutorials/security/security"
+    ],
+    "Optimisation": [
+      "tutorials/optimisation/optimisation"
     ]
   }
 }
