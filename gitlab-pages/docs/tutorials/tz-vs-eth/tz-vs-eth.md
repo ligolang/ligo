@@ -6,8 +6,6 @@ title: Migrating from Ethereum
 import Syntax from '@theme/Syntax';
 
 
-# Migrating from Ethereum
-
 This article is aimed at those who have some experience with developing smart contracts for Ethereum in Solidity. We will cover the key differences between Solidity and LIGO, compare the execution model of Ethereum and Tezos blockchains, and list the features you should be aware of while developing smart contracts for Tezos.
 
 ## Languages and libraries
@@ -801,7 +799,7 @@ However, here you leave your contract in an _intermediate_ state before making a
 
 By making contract interactions harder, Tezos incentivises you to simplify your architecture. Think about whether you can use lambdas or merge your contracts to avoid complex inter-contract dependencies. If it is possible to _not_ split your logic into multiple contracts, then avoid the split.
 
-You can find more details on how Tezos contracts interact with each other in our [inter-contract calls](https://ligolang.org/docs/tutorials/inter-contract-calls) article.
+You can find more details on how Tezos contracts interact with each other in our [inter-contract calls](https://ligolang.org/docs/tutorials/inter-contract-calls/inter-contract-calls) article.
 
 ## Fees
 
@@ -810,7 +808,7 @@ Fee model in Tezos is more complicated than the Ethereum one. The most important
 2. When you call a contract, the transaction spends gas for reading, deserialising and typechecking the storage. Also, a certain amount of gas gets spent for serialising and writing the storage back to the context. In practice, it means that **the larger your code and storage are, the more expensive it is to call your contract,** regardless of the number of computations performed. If you have big or unbounded containers in storage, you should most probably use `big_map`.
 3. Emitting internal operations is very expensive in terms of gas: there is a fixed cost of 10000 gas for `Tezos.get_{contract, entrypoint}_opt` plus the cost of reading, deserialising, and typechecking the parameter of the callee.
 
-Always test for gas consumption and strive to minimise the size of the data stored on chain and the number of internal operations emitted. You can read more on fees in our [Optimisation guide](https://ligolang.org/docs/tutorials/optimisation) or in the [Serokell blog post](https://medium.com/tqtezos/how-to-minimize-transaction-costs-of-tezos-smart-contracts-9962347faf64).
+Always test for gas consumption and strive to minimise the size of the data stored on chain and the number of internal operations emitted. You can read more on fees in our [Optimisation guide](https://ligolang.org/docs/tutorials/optimisation/optimisation) or in the [Serokell blog post](https://medium.com/tqtezos/how-to-minimize-transaction-costs-of-tezos-smart-contracts-9962347faf64).
 
 ## Conclusion
 
@@ -821,7 +819,7 @@ In this article, we discussed some Solidity patterns and their LIGO counterparts
 | `public` field   | A field in the storage record, e.g. <Syntax syntax="pascaligo"></Syntax>`type storage is record [ x : int; y : nat ]`<Syntax syntax="cameligo">`type storage = { x : int; y : nat }`</Syntax><Syntax syntax="reasonligo">`type storage = { x : int, y : nat }`</Syntax> |
 | `private` field  | N/A: all fields are public |
 | `private` method | A regular function, e.g., <Syntax syntax="pascaligo">`function func (const a : int) is ...`</Syntax><Syntax syntax="cameligo">`let func (a : int) = ...`</Syntax><Syntax syntax="reasonligo">`let func = (a : int) => ...`</Syntax> |
-| `public` /  `external` method  | A separate entrypoint in the parameter: `type parameter = F of int | ...` <br/> `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
+| `public` /  `external` method  | A separate entrypoint in the parameter: `type parameter = F of int | ...`. `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
 | `internal` method | There is no concept of inheritance in Tezos |
 | Constructor      | Set the initial storage upon origination |
 | Method that returns a value | Inspect the contract storage directly |
