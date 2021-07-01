@@ -38,6 +38,7 @@ default-extensions:
   - RecordWildCards
   - ScopedTypeVariables
   - StandaloneDeriving
+  - StrictData
   - TemplateHaskell
   - TupleSections
   - TypeApplications

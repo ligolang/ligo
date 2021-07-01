@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 735661e166f02350c5d22275e3940fec2e6626654f5257fd2b7fccea24476a1b
+-- hash: 87827e454b45bc3f956dafc7c6898520da6a5c172115582a798b2312aef43916
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -91,6 +91,7 @@ library
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -181,6 +182,7 @@ executable ligo-squirrel
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -251,6 +253,7 @@ executable ligo-vet
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -326,6 +329,7 @@ test-suite integration-test
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -407,6 +411,7 @@ test-suite ligo-contracts-test
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -496,6 +501,7 @@ test-suite lsp-test
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
