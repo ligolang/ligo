@@ -7,7 +7,7 @@ import Control.Lens ((%~))
 import AST.Scope.Common
   ( pattern FindContract, FindFilepath (..), ContractNotFoundException (..)
   , HasScopeForest (..) , ParsedContract (..), MergeStrategy (..), cMsgs
-  , getContract, lookupContract, mergeScopeForest, traverseAM
+  , getContract, lookupContract, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
 import AST.Scope.FromCompiler (FromCompiler)
@@ -21,6 +21,7 @@ import Duplo.Lattice (Lattice (leq))
 import Parser (Msg)
 import ParseTree (srcPath)
 import Range (point)
+import Util.Graph (traverseAM)
 
 data Standard
 

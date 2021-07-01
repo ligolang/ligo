@@ -41,6 +41,7 @@ import Parser
 import Product (Contains)
 import Range (Range, getRange)
 import Util (removeDots)
+import Util.Graph (findCycles)
 
 parse :: MonadIO m => Source -> m ContractInfo
 parse src = liftIO do

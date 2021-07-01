@@ -37,6 +37,7 @@ import Parser
 import Product
 import Range
 import Util (foldMapM, unconsFromEnd)
+import Util.Graph (traverseAM)
 
 data Fallback
 

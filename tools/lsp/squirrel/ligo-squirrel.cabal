@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ec56a9a20c7c868c19e197ca00e42ac0691bc34e3e88a9010ae837bbfed1d699
+-- hash: 735661e166f02350c5d22275e3940fec2e6626654f5257fd2b7fccea24476a1b
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -53,6 +53,7 @@ library
       Product
       Range
       Util
+      Util.Graph
   other-modules:
       Paths_ligo_squirrel
   hs-source-dirs:
@@ -117,6 +118,7 @@ library
     , containers
     , data-default
     , directory
+    , dlist
     , duplo
     , exceptions
     , fastsum

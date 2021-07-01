@@ -4,27 +4,22 @@ module AST.Scope.Common where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
-import Algebra.Graph.AdjacencyMap.Algorithm (Cycle)
 import Algebra.Graph.Export qualified as G (export, literal, render)
-import Control.Arrow ((&&&), second)
+import Control.Arrow ((&&&))
 import Control.Exception.Safe
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
 import Control.Monad.Reader
-import Control.Monad.State
 import Control.Monad.Trans.Except
 import Data.Foldable (toList)
 import Data.Function (on)
 import Data.List (sortOn)
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.List.NonEmpty qualified as NE
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text, pack)
-import Data.Tuple (swap)
 
 import Duplo.Lattice
 import Duplo.Pretty
@@ -41,6 +36,7 @@ import Parser
 import Product
 import Range
 import Util (findKey, nubOrd, unionOrd)
+import Util.Graph (traverseAM)
 
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
@@ -328,14 +324,6 @@ addScopes graph = do
       , sfDecls  = Map.map nubRef (sfDecls f)
       }
 
--- | Traverse an adjacency map.
-traverseAM :: (Monad m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
-traverseAM f g = do
-  let adj = G.adjacencyMap g
-  keysList <- traverse (sequenceA . (id &&& f)) (G.vertexList g)
-  let keys = Map.fromList keysList
-  pure $ G.fromAdjacencySets $ map (second (Set.map (keys Map.!) . (adj Map.!)) . swap) keysList
-
 -- | Attempt to find a contract in some adjacency map. O(log n)
 lookupContract :: FilePath -> AdjacencyMap (FindFilepath a) -> Maybe (FindFilepath a)
 lookupContract fp g = fst <$> findKey contractFile fp (G.adjacencyMap g)
@@ -360,32 +348,3 @@ instance Pretty ContractNotFoundException where
       eDoc x y = G.literal (contractFile x) <> " -> " <> G.literal (contractFile y) <> "\n"
 
 instance Exception ContractNotFoundException
-
-data Vis = Visiting | Visited
-
--- | Find all cycles in some graph. This is an implementation of
--- https://www.baeldung.com/cs/detecting-cycles-in-directed-graph#pseudocode
--- which states to be O(|V|+|E|), but I (@h) believe it is O((|V|+|E|)²) in the
--- worst case.
-findCycles :: forall a. Ord a => AdjacencyMap a -> [Cycle a]
-findCycles graph = concat $ flip evalState Map.empty $
-  forM (G.vertexList graph) \v -> do
-    visited <- get
-    if Map.member v visited
-      then pure []
-      else do
-        modify $ Map.insert v Visiting
-        proccessDfsTree (v :| [])
-  where
-    proccessDfsTree :: Cycle a -> State (Map a Vis) [Cycle a]
-    proccessDfsTree stack@(top :| _) = do
-      stacks <- forM (toList $ G.postSet top graph) \v -> do
-        visited <- get
-        case Map.lookup v visited of
-          Nothing       -> pure []
-          Just Visiting -> pure [NE.reverse stack]
-          Just Visited  -> do
-            put $ Map.insert v Visiting visited
-            proccessDfsTree (v NE.<| stack)
-      modify $ Map.insert top Visited
-      pure $ concat stacks
