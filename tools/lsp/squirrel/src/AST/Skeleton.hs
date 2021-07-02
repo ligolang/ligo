@@ -48,7 +48,7 @@ type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, MichelsonCode
-  , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
+  , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand
   , ModuleName, ModuleAccess
   ]
 
@@ -61,11 +61,6 @@ data Lang
 
 -- Let 'Accessor' be either 'FieldName' or a 'Text'ual representation of an
 -- index (a number).
-
-data Contract it
-  = ContractEnd
-  | ContractCons it it -- ^ Declaration
-  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 newtype RawContract it
   = RawContract [it] -- ^ [Declaration]
@@ -333,11 +328,6 @@ instance Eq1 Expr where
   liftEq f (Set xs) (Set ys) = liftEqList f xs ys
   liftEq f (Map xs) (Map ys) = liftEqList f xs ys
   liftEq f (BigMap xs) (BigMap ys) = liftEqList f xs ys
-  liftEq _ _ _ = False
-
-instance Eq1 Contract where
-  liftEq f (ContractCons a as) (ContractCons b bs) = f a b && f as bs
-  liftEq _ ContractEnd ContractEnd = True
   liftEq _ _ _ = False
 
 instance Eq1 Error where

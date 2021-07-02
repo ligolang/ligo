@@ -23,7 +23,6 @@ import AST.Skeleton
 import Product
 import Range
 
-
 -- | Extract document symbols for some specific parsed ligo contract which
 -- is realisable by @haskell-lsp@ client.
 extractDocumentSymbols
@@ -38,8 +37,6 @@ extractDocumentSymbols uri tree =
     collectFromContract :: LIGO Info' -> WriterT [SymbolInformation] m ()
     collectFromContract (match @RawContract -> Just (_, RawContract decls))
       = mapM_ collectDecl decls
-    collectFromContract (match @Contract-> Just (_, ContractCons contr contrs))
-      = collectFromContract contr *> collectFromContract contrs
     collectFromContract _
       = pure ()
 

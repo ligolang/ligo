@@ -59,7 +59,6 @@ instance {-# OVERLAPPABLE #-}
   where
   lpp = lpp1 @d . fmap (lpp @d)
 
-deriving via PP (Contract it) instance Pretty it => Show (Contract it)
 deriving via PP (RawContract it) instance Pretty it => Show (RawContract it)
 deriving via PP (Binding it) instance Pretty it => Show (Binding it)
 deriving via PP (AST.Type it) instance Pretty it => Show (AST.Type it)
@@ -153,11 +152,6 @@ braces p = "{" <+> p <+> "}"
 ----------------------------------------------------------------------------
 -- Core sexpr
 ----------------------------------------------------------------------------
-
-instance Pretty1 Contract where
-  pp1 = \case
-    ContractEnd -> "(endtract)"
-    ContractCons x xs -> sexpr "contract" [x, xs]
 
 instance Pretty1 RawContract where
   pp1 = \case
@@ -338,11 +332,6 @@ instance LPP1 d ModuleAccess where
 instance LPP1 d QualifiedName where
   lpp1 = \case
     QualifiedName src path -> mconcat $ punctuate "." (src : path)
-
-instance LPP1 d Contract where
-  lpp1 = \case
-    ContractEnd -> ""
-    ContractCons x xs -> x <+> xs -- block' [x, xs]
 
 instance LPP1 d RawContract where
   lpp1 = \case
