@@ -129,6 +129,7 @@ executables:
       - transformers
       - unliftio
       - unliftio-core
+      - unordered-containers
 
     source-dirs:
       - app/ligo-squirrel

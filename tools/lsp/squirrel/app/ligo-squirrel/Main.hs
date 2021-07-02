@@ -2,20 +2,23 @@
 
 module Main (main) where
 
+import Control.Concurrent.MVar
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
+import Control.Monad.Reader (asks, unless)
 
 import Data.Default
+import Data.HashMap.Strict (HashMap)
+import Data.HashMap.Strict qualified as HashMap
 import Data.Maybe (fromMaybe)
+import Data.Monoid (Any (..))
 import Data.String.Interpolate (i)
 import Data.Text qualified as T
 
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
-
 
 import AST
 import ASTMap qualified
@@ -93,8 +96,9 @@ mainLoop = do
 
 initialize :: IO RioEnv
 initialize = do
-    astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
-    pure (astMap :> Nil)
+  astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
+  openDocs <- newMVar HashMap.empty
+  pure (astMap :> openDocs :> Nil)
 
 handlers :: S.Handlers RIO
 handlers = mconcat
@@ -103,7 +107,7 @@ handlers = mconcat
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
   , S.notificationHandler J.STextDocumentDidSave (\_msg -> pure ())
-  --, S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
+  , S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
 
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
   , S.requestHandler J.STextDocumentTypeDefinition handleTypeDefinitionRequest
@@ -129,16 +133,57 @@ handlers = mconcat
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
-  let doc = notif^.J.params.J.textDocument.J.uri
+  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   let ver = notif^.J.params.J.textDocument.J.version
-  RIO.collectErrors RIO.forceFetch (J.toNormalizedUri doc) (Just ver)
 
+  openDocsVar <- asks getElem
+  openDocs <- liftIO $ takeMVar openDocsVar
+  RIO.collectErrors RIO.forceFetch uri (Just ver)
+  liftIO $ putMVar openDocsVar $ HashMap.insert uri True openDocs
+
+-- FIXME: Suppose the following scenario:
+-- * VSCode has `squirrel/test/contracts/` open as folder;
+-- * You open `find/includes/A3.mligo`;
+-- * You quickly edit it to contain some mistake (e.g.: replace 40 with 4f0) so
+-- that `handleDidOpenTextDocument` might be still running when this function is
+-- called.
+-- Now there is something weird going on: VSCode might not put an error on `4f0`
+-- because we got an outdated version (from `fetchBundled`). Even more oddly, if
+-- we now delete the `f`, it might highlight `40` as incorrect from the previous
+-- error.
+-- This can be fixed by opening another contract in WCC or, sometimes, just
+-- closing and opening this document again.
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   tmap <- asks getElem
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+  let ver = notif^.J.params.J.textDocument.J.version
   ASTMap.invalidate uri tmap
-  RIO.collectErrors (`ASTMap.fetchBundled` tmap) uri (Just 0)
+  RIO.Contract doc nuris <- ASTMap.fetchBundled uri tmap
+  -- Clear diagnostics for all contracts in this WCC and then send diagnostics
+  -- collected from this uri.
+  -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
+  -- conditions.
+  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Bool)))
+  openDocs <- liftIO $ takeMVar openDocsVar
+  RIO.clearDiagnostics nuris
+  RIO.collectErrors (const (pure doc)) uri ver
+  liftIO $ putMVar openDocsVar openDocs
+
+handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
+handleDidCloseTextDocument notif = do
+  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+  tmap <- asks getElem
+  RIO.Contract _ nuris <- ASTMap.fetchCached uri tmap
+
+  openDocsVar <- asks getElem
+  openDocs <- liftIO $ takeMVar openDocsVar
+  let openDocs' = HashMap.insert uri False openDocs
+  -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
+  let nuriMap = HashMap.fromList ((, ()) <$> nuris)
+  unless (getAny $ foldMap Any $ HashMap.intersection openDocs' nuriMap) $
+    RIO.clearDiagnostics nuris
+  liftIO $ putMVar openDocsVar openDocs'
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
 handleDefinitionRequest req respond = do
