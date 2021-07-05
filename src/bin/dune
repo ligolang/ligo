@@ -8,8 +8,9 @@
     ligo_compile
     build
     repl
+    ligo_api
   )
-  (modules cli cli_helpers formatter version changelog)
+  (modules cli cli_helpers version)
   (flags (:standard -open Simple_utils -open Ligo))
 )
 
@@ -34,12 +35,6 @@
           (run "sh" "-c"
                "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))
 
-(rule
- (targets changelog.ml)
- (deps (env_var CHANGELOG_PATH))
- (action (with-stdout-to
-          changelog.ml
-          (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ${CHANGELOG_PATH:-../../gitlab-pages/docs/intro/changelog.md})\""))))
 
 ; build static executable with --profile static
 (env

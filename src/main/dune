@@ -3,7 +3,7 @@
   (public_name ligo.main)
   (instrumentation (backend bisect_ppx))
   (libraries
-    run
+    ligo_run
     ligo_compile
     decompile
     main_errors

@@ -103,8 +103,8 @@ let pack_payload (env:Ast_typed.environment) (payload:Ast_imperative.expression)
     Ligo_compile.Of_mini_c.compile_expression ~options mini_c in
   let payload_ty = code.expr_ty in
   let* (payload : _ Tezos_utils.Michelson.michelson) =
-    Run.Of_michelson.evaluate_expression code.expr code.expr_ty in
-  Run.Of_michelson.pack_payload payload payload_ty
+    Ligo_run.Of_michelson.evaluate_expression code.expr code.expr_ty in
+  Ligo_run.Of_michelson.pack_payload payload payload_ty
 
 let sign_message (env:Ast_typed.environment) (payload : Ast_imperative.expression) sk : (string,_) result =
   let open Tezos_crypto in
@@ -157,7 +157,7 @@ let typed_program_with_imperative_input_to_michelson ((program , env): Ast_typed
 
 let run_typed_program_with_imperative_input ?options ((program, env): Ast_typed.module_fully_typed * Ast_typed.environment ) (entry_point: string) (input: Ast_imperative.expression) : (Ast_core.expression, _) result =
   let* michelson_program = typed_program_with_imperative_input_to_michelson (program, env) entry_point input in
-  let* michelson_output  = Run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
+  let* michelson_output  = Ligo_run.Of_michelson.run_no_failwith ?options michelson_program.expr michelson_program.expr_ty in
   let* res =  Decompile.Of_michelson.decompile_typed_program_entry_function_result program entry_point (Runned_result.Success michelson_output) in
   match res with
   | Runned_result.Success exp -> ok exp
@@ -176,7 +176,7 @@ let expect_fail ?options program entry_point input =
 
 let expect_string_failwith ?options program entry_point input expected_failwith =
   let* michelson_program = typed_program_with_imperative_input_to_michelson program entry_point input in
-  let* err = Run.Of_michelson.run_failwith
+  let* err = Ligo_run.Of_michelson.run_failwith
     ?options michelson_program.expr michelson_program.expr_ty in
   match err with
     | Runned_result.Failwith_string s when String.equal s expected_failwith -> ok ()
@@ -200,7 +200,7 @@ let expect_evaluate (program, _env) entry_point expecter =
   let* mini_c          = Ligo_compile.Of_typed.compile program in
   let* (exp,_)         = trace_option unknown @@ Mini_c.get_entry mini_c entry_point in
   let* michelson_value = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in
-  let* res_michelson   = Run.Of_michelson.run_no_failwith michelson_value.expr michelson_value.expr_ty in
+  let* res_michelson   = Ligo_run.Of_michelson.run_no_failwith michelson_value.expr michelson_value.expr_ty in
   let* res             = Decompile.Of_michelson.decompile_typed_program_entry_expression_result program entry_point (Success res_michelson) in
   let* res' = match res with
   | Runned_result.Success exp -> ok exp
