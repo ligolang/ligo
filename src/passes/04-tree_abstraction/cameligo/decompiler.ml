@@ -138,6 +138,8 @@ let get_e_tuple : AST.expression -> _ result = fun expr ->
   | E_constant _
   | E_lambda _ -> ok @@ ([expr], false)
   | E_application _ -> ok @@ ([expr], true)
+  | E_accessor _
+  | E_module_accessor _ -> ok @@ ([expr], false)
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
     AST.PP.expression expr
