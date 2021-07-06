@@ -52,3 +52,15 @@ type double_record = {
 
 let modify_inner =
   (r: double_record) : double_record => ({...r, inner: {...r.inner, b: 2048}});
+
+let record_int_addition = abc.a + 5;
+
+type other = {
+  other_a: string
+}
+
+let other: other = {
+  other_a: "3"
+}
+
+let record_string_addition = other.other_a + "5";
