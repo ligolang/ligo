@@ -16,3 +16,6 @@ let bar = (b : int) : int => {
   let test = (z : int):int => 2 + b + z;
   return test (b);
 };
+
+// @ 
+let check = 4
