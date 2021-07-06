@@ -428,11 +428,17 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } :: _ -> C_ADD
         | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } :: _ -> C_CONCAT
         | {expression_content = E_literal (Literal_int _); _ } :: _ -> C_ADD
+        | {expression_content = E_record_accessor {record; path}; _ } :: _ -> 
+            (let x = get_record_field_type record.type_expression path in
+            match x with 
+            Some s when is_t_string s -> 
+              C_CONCAT
+            | _ -> C_ADD )
         | {expression_content = E_variable _; type_expression = texpr } :: _ ->
-                if is_t_string texpr then
-                  C_CONCAT
-                else
-                  C_ADD
+            if is_t_string texpr then
+              C_CONCAT
+            else
+              C_ADD
       | _ -> C_ADD
       ) in
       let* (name', tv) =
