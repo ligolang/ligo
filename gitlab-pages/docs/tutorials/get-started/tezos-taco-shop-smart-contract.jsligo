@@ -13,12 +13,13 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
   if (Tezos.amount != current_purchase_price) {
-    failwith ("Sorry, the taco you are trying to purchase has a different price")
-  } ;
-  /* Update the storage decreasing the stock by 1n */
-  let taco_shop_storage = Map.update (
-    taco_kind_index,
-    (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
-    taco_shop_storage );
-  return [(list([]) as list <operation>), taco_shop_storage]
+    failwith ("Sorry, the taco you are trying to purchase has a different price") as return_
+  } else {
+    /* Update the storage decreasing the stock by 1n */
+    let taco_shop_storage = Map.update (
+      taco_kind_index,
+      (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
+      taco_shop_storage );
+    return [(list([]) as list <operation>), taco_shop_storage]
+  }
 };

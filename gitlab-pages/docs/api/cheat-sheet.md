@@ -1275,7 +1275,7 @@ If Statement
 ```jsligo
 let if_statement = (age : int): int => {
   if (age < 16) { 
-    return (failwith ("Too young to drive") as int)
+    failwith ("Too young to drive") as int
   } else {
     return 1
   }

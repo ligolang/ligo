@@ -32,7 +32,7 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 let build_ins = ["Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout"]
   @ ["Michelson"]
 
-open Predefined.Tree_abstraction.Cameligo
+open Predefined.Tree_abstraction.Jsligo
 
 let r_split = Location.r_split
 
@@ -953,12 +953,20 @@ and merge_statement_results : statement_result -> statement_result -> statement_
   | Binding a, Expr    b -> Expr (a b)
   | Binding a, Break   b -> Break (a @@ e_unit ())
   | Binding a, Return  b -> Return (a b)
+  
   | Expr    a, Binding b -> Binding (e_sequence a <@ b )
   | Expr    a, Expr    b -> Expr (e_sequence a b)
   | Expr    a, Break   b -> Break a
   | Expr    a, Return  b -> Return (e_sequence a b)
   | Break   a, _ ->         Break a
   | Return  a, _ ->         Return a
+
+and is_failwith_call = function
+  {expression_content = E_constant {cons_name;_}; _} -> constant_to_string cons_name = "failwith"
+| {expression_content = E_ascription {anno_expr; _}; _} -> 
+  is_failwith_call anno_expr
+| _ -> 
+  false
 
 and compile_pattern : const:bool -> CST.pattern -> (type_expression binder * (_ -> _), _) result =
   fun ~const pattern ->
@@ -1083,7 +1091,8 @@ and compile_statement : CST.statement -> (statement_result, _) result = fun stat
     let* else_clause = bind_map_option (fun (_, s) -> self s) cond.ifnot in
     let compile_clause = function 
       Binding e -> expr, (e @@ e_unit ())
-    | Expr e -> expr, (e_sequence e (e_unit ()))
+    | Expr e when is_failwith_call e -> return, e
+    | Expr e -> expr, (e_sequence e (e_unit ()))    
     | Break b -> return, (e_sequence b (e_unit ()))
     | Return r -> return, r
     in
