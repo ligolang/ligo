@@ -84,8 +84,8 @@ checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = test
 
 label :: FilePath -> Range -> IO Range
 label filepath r
-  | null (rFile r) = pure r{ rFile = filepath }
-  | otherwise      = fmap (\fp -> r{ rFile = fp }) (makeAbsolute $ rFile r)
+  | null (_rFile r) = pure r{ _rFile = filepath }
+  | otherwise      = fmap (\fp -> r{ _rFile = fp }) (makeAbsolute $ _rFile r)
 
 -- | Check if the given range corresponds to a definition of the given
 -- entity in the given file.
@@ -298,8 +298,8 @@ invariants =
     , driDesc = "a1, find references in other files"
     , driDef = Just (interval 1 5 7)
     , driRefs =
-      [ (interval 3 10 12){rFile = contractsDir </> "includes" </> "A2.mligo"}
-      , (interval 3 10 12){rFile = contractsDir </> "includes" </> "A3.mligo"}
+      [ (interval 3 10 12){_rFile = contractsDir </> "includes" </> "A2.mligo"}
+      , (interval 3 10 12){_rFile = contractsDir </> "includes" </> "A3.mligo"}
       ]
     }
   , DefinitionReferenceInvariant
@@ -307,8 +307,8 @@ invariants =
     , driDesc = "b3, relative directories"
     , driDef = Just (interval 1 7 9)
     , driRefs =
-      [ (interval 3 21 23){rFile = contractsDir </> "includes" </> "B1.ligo"}
-      , (interval 3 12 14){rFile = contractsDir </> "includes" </> "B2" </> "B2.ligo"}
+      [ (interval 3 21 23){_rFile = contractsDir </> "includes" </> "B1.ligo"}
+      , (interval 3 12 14){_rFile = contractsDir </> "includes" </> "B2" </> "B2.ligo"}
       ]
     }
   , DefinitionReferenceInvariant
@@ -316,7 +316,7 @@ invariants =
     , driDesc = "c2, find references in other files"
     , driDef = Just (interval 1 5 7)
     , driRefs =
-      [ (interval 4 15 17){rFile = contractsDir </> "includes" </> "C1.mligo"}
+      [ (interval 4 15 17){_rFile = contractsDir </> "includes" </> "C1.mligo"}
       ]
     }
   , DefinitionReferenceInvariant
@@ -324,7 +324,7 @@ invariants =
     , driDesc = "c3, find references in other files"
     , driDef = Just (interval 1 5 7)
     , driRefs =
-      [ (interval 4 10 12){rFile = contractsDir </> "includes" </> "C1.mligo"}
+      [ (interval 4 10 12){_rFile = contractsDir </> "includes" </> "C1.mligo"}
       ]
     }
   , DefinitionReferenceInvariant
@@ -397,7 +397,7 @@ typeOf filepath mention definition = do
   tree <- readContractWithScopes @impl filepath
   case typeDefinitionAt mention' tree of
     Nothing -> expectationFailure "Should find type definition"
-    Just range -> range{rFile=rFile mention'} `shouldBe` definition'
+    Just range -> range{_rFile=_rFile mention'} `shouldBe` definition'
 
 typeOfHeapConst :: forall impl. HasScopeForest impl IO => Assertion
 typeOfHeapConst = typeOf @impl (contractsDir </> "heap.ligo") (point 106 8) (interval 4 6 10)

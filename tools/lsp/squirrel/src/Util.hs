@@ -38,7 +38,7 @@ safeIndex (x : _) 0 = Just x
 safeIndex (_ : xs) n = safeIndex xs (n - 1)
 
 toUri :: Range -> J.Uri
-toUri = J.filePathToUri . rFile
+toUri = J.filePathToUri . _rFile
 
 toLocation :: Range -> J.Location
 toLocation = J.Location <$> toUri <*> toLspRange

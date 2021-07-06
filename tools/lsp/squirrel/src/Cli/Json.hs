@@ -629,9 +629,9 @@ mbFromLigoRange
   )
   | startFilePath /= endFilePath = error "start file of a range does not equal to its end file"
   | otherwise = Just Range
-      { rStart = (startLine, abs (startCNum - startBol) + 1, 0)
-      , rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
-      , rFile = startFilePath
+      { _rStart = (startLine, abs (startCNum - startBol) + 1, 0)
+      , _rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
+      , _rFile = startFilePath
       }
 
 fromLigoRangeOrDef :: LigoRange -> Range

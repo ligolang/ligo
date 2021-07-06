@@ -3,6 +3,7 @@
 module AST.Scope.FromCompiler where
 
 import Control.Category ((>>>))
+import Control.Lens ((%~))
 import Data.Function (on)
 import Data.HashMap.Strict ((!))
 import Data.Map (Map)
@@ -51,7 +52,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
       injectScope (make (rs :> r' :> Nil, []), ds)
 
     normalizeRange :: Range -> Range
-    normalizeRange r = r { rFile = removeDots (rFile r) }
+    normalizeRange = rFile %~ removeDots
 
     -- LIGO compiler provides nor comment neither refs, so they left [].
     --

@@ -17,11 +17,17 @@ module Range
   , merged
   , point
   , toLspRange
+
+    -- * Lenses
+  , rStart
+  , rFinish
+  , rFile
   )
   where
 
 import Language.LSP.Types qualified as LSP
 
+import Control.Lens.TH (makeLenses)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Maybe (fromMaybe)
@@ -44,9 +50,9 @@ interval line colSt colFin = Range (line, colSt, 0) (line, colFin, 0) ""
 
 -- | A continuous location in text.
 data Range = Range
-  { rStart  :: (Int, Int, Int)  -- ^ [Start: line, col, byte-offset...
-  , rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
-  , rFile   :: FilePath
+  { _rStart  :: (Int, Int, Int)  -- ^ [Start: line, col, byte-offset...
+  , _rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
+  , _rFile   :: FilePath
   }
   deriving (Show) via PP Range
 
@@ -72,8 +78,8 @@ instance Contains Range xs => HasRange (Product xs) where
 -- Note that we consider the first line to be at position 1.
 toLspRange :: Range -> LSP.Range
 toLspRange Range
-  { rStart  = (rsl, rsc, _)
-  , rFinish = (rfl, rfc, _)
+  { _rStart  = (rsl, rsc, _)
+  , _rFinish = (rfl, rfc, _)
   } = LSP.Range
   { LSP._start = LSP.Position{ LSP._line = rsl - 1, LSP._character = rsc - 1 }
   , LSP._end   = LSP.Position{ LSP._line = rfl - 1, LSP._character = rfc - 1 }
@@ -83,7 +89,7 @@ fromLspPosition :: LSP.Position -> Range
 fromLspPosition (LSP.Position l c) = point (l + 1) (c + 1)
 
 fromLspPositionUri :: LSP.Position -> LSP.Uri -> Range
-fromLspPositionUri position uri = (fromLspPosition position) {rFile = fromMaybe "" $ LSP.uriToFilePath uri}
+fromLspPositionUri position uri = (fromLspPosition position) {_rFile = fromMaybe "" $ LSP.uriToFilePath uri}
 
 fromLspRange :: LSP.Range -> Range
 fromLspRange
@@ -95,7 +101,7 @@ fromLspRangeUri :: LSP.Range -> LSP.Uri -> Range
 fromLspRangeUri
   (LSP.Range
     (fromLspPosition -> s)
-    (fromLspPosition -> e)) uri = (merged s e) {rFile = fromMaybe "" $ LSP.uriToFilePath uri}
+    (fromLspPosition -> e)) uri = (merged s e) {_rFile = fromMaybe "" $ LSP.uriToFilePath uri}
 
 instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)) where
   getRange = getElem . extract
@@ -151,3 +157,5 @@ instance (Contains Range xs, Eq (Product xs)) => Ord (Product xs) where (<=) = l
 
 instance (Contains Range xs, Eq (Product xs)) => Lattice (Product xs) where
   a `leq` b = getElem @Range a `leq` getElem @Range b
+
+makeLenses ''Range

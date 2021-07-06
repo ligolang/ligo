@@ -33,8 +33,8 @@ callForFormat lang source =
 formatDocument :: HasLigoClient m => SomeLIGO Info' -> m (J.List J.TextEdit)
 formatDocument (SomeLIGO lang (extract -> info)) = do
   let CodeSource source = getElem info
-  let r@Range{rFile} = getElem info
-  out <- callForFormat lang (Text rFile source)
+  let r@Range{_rFile} = getElem info
+  out <- callForFormat lang (Text _rFile source)
   return . J.List $
     maybe [] (\out' -> [J.TextEdit (toLspRange r) out']) out
 
@@ -45,7 +45,7 @@ formatAt at (SomeLIGO lang tree) = case spineTo (leq at . getElem) tree of
     let
       info = extract node
       CodeSource source = getElem info
-      r@Range{rFile} = getElem info
-    out <- callForFormat lang (Text rFile source)
+      r@Range{_rFile} = getElem info
+    out <- callForFormat lang (Text _rFile source)
     return . J.List $
       maybe [] (\out' -> [J.TextEdit (toLspRange r) out']) out

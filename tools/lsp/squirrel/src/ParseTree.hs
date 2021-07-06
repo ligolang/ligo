@@ -176,18 +176,18 @@ toParseTree dialect input = do
 
           let
             range = Range
-              { rStart  =
+              { _rStart  =
                   ( i $ pointRow    start2D + 1
                   , i $ pointColumn start2D + 1
                   , i $ nodeStartByte node
                   )
 
-              , rFinish =
+              , _rFinish =
                   ( i $ pointRow    finish2D + 1
                   , i $ pointColumn finish2D + 1
                   , i $ nodeEndByte node
                   )
-              , rFile = srcPath fin
+              , _rFile = srcPath fin
               }
 
           return $ make
