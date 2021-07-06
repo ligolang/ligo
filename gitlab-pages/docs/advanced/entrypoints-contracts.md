@@ -328,7 +328,7 @@ type return_ = [list<operation>, storage];
 
 let deny = ([action, store]: [parameter, storage]): return_ => {
   if (Tezos.amount > (0 as tez)) {
-    return (failwith("This contract does not accept tokens.") as return_); 
+    failwith("This contract does not accept tokens.") as return_;
   }
   else { 
     return [list([]) as list<operation>, store]; 
@@ -348,7 +348,7 @@ type return_ = [list<operation>, storage];
 
 let deny = ([action, store]: [parameter, storage]): return_ => {
   if (Tezos.amount > (0 as tez)) {
-    return (failwith("This contract does not accept tokens.") as return_); 
+    failwith("This contract does not accept tokens.") as return_;
   }
   else { 
     return [(list([]) as list<operation>), store]; 
@@ -412,7 +412,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 let owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
 let main = ([action, store]: [parameter, storage]): return_ => {
-  if(Tezos.source != owner) { return (failwith("Access denied.") as return_); }
+  if(Tezos.source != owner) { failwith("Access denied.") as return_; }
   else { return [list([]) as list<operation>, store]; };
 };
 ```
