@@ -114,7 +114,7 @@ let main = ([action, store] : [parameter, storage]) : return_ => {
    (match (action, {
     Increment: (n: int) => add ([store, n]),
     Decrement: (n: int) => sub ([store, n]),
-    Reset:     ()  => 0})
+    Reset:     ()  => 0}))
   ]
 };
 `;
