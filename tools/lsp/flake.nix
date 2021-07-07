@@ -108,6 +108,10 @@
           buildInputs = [ ligo-bin ] ++ oldAttrs.buildInputs;
         });
 
+        lsp-handlers-test = squirrel.checks.lsp-handlers-test.overrideAttrs (oldAttrs: {
+          buildInputs = [ ligo-bin self.packages.x86_64-linux.squirrel-static ] ++ oldAttrs.buildInputs;
+        });
+
         lint = pkgs.stdenv.mkDerivation {
           name = "lint";
           src = ./squirrel;
@@ -185,6 +189,7 @@
           inherit squirrel-grammar-test;
           inherit (squirrel.checks) lsp-test;
           inherit (squirrel.checks) ligo-contracts-test;
+          inherit lsp-handlers-test;
           inherit integration-test;
           inherit lint;
         };

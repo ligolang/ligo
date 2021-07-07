@@ -150,6 +150,42 @@ executables:
       - with-utf8
 
 tests:
+  lsp-handlers-test:
+    main: Driver.hs
+
+    source-dirs:
+      - test/lsp-handlers-test/
+      - test/test-common/
+
+    dependencies:
+      - ligo-squirrel
+      - lsp-test
+      - tasty
+      - HUnit
+      - hspec-expectations
+      - tasty-hunit
+      - safe-exceptions
+      - filepath
+      - directory
+      - lsp-types
+      - text
+      - lens
+      - template-haskell
+      - unordered-containers
+
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+      - -threaded
+      - -eventlog
+      - -rtsopts
+        # Weird quoting is required for cabal to correctly pass this as _one_ option,
+        # otherwise it splits by spaces.
+        # :facepalm:
+      - '"-with-rtsopts=-N -A64m -AL256m"'
+
+    build-tools:
+      - tasty-discover:tasty-discover
+
   lsp-test:
     main: Driver.hs
 
@@ -174,6 +210,7 @@ tests:
       - hspec-expectations
       - lens
       - ligo-squirrel
+      - lsp-test
       - lsp-types
       - safe-exceptions
       - tasty
@@ -209,6 +246,7 @@ tests:
       - hspec-expectations
       - lens
       - ligo-squirrel
+      - lsp-test
       - lsp-types
       - safe-exceptions
       - tasty
@@ -244,6 +282,7 @@ tests:
       - hspec-expectations
       - lens
       - ligo-squirrel
+      - lsp-test
       - lsp-types
       - safe-exceptions
       - tasty

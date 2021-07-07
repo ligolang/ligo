@@ -78,6 +78,12 @@ vscode-extension-grammar-tests:
   script:
     - nix-build tools/lsp -A checks.x86_64-linux.squirrel-grammar-test
 
+vscode-extension-lsp-handler-tests:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix-build tools/lsp -A checks.x86_64-linux.lsp-handlers-test
+
 vscode-extension-linux:
   stage: lsp
   only: [merge_requests]

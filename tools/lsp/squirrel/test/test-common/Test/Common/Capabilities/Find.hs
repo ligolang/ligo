@@ -228,7 +228,6 @@ invariants =
     , driDef = Just (interval 6 9 16)
     , driRefs = []
     }
-
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-attributes.religo"
     , driDesc = "counter, type attribute"
@@ -253,14 +252,12 @@ invariants =
     , driDef = Just (interval 6 9 16)
     , driRefs = []
     }
-
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.ligo"
     , driDesc = "sum"
     , driDef = Just (interval 1 20 23)
     , driRefs = [interval 2 26 29]
     }
-
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.mligo"
     , driDesc = "sum"
