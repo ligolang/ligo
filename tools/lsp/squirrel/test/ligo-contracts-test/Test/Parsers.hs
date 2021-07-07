@@ -3,6 +3,9 @@ module Test.Parsers
   , test_badContracts
   ) where
 
+import AST (parseContracts, srcPath)
+
+import Data.List (isPrefixOf)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
@@ -25,32 +28,47 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "modules.ligo"
       , "assert.religo"
       , "warning_duplicate.mligo"
+      , "deep_pattern_matching/pm_test.religo"
+      , "vars_consts/multiple_vars.ligo"
+      , "tutorials/inter-contract-calls/PausableToken.ligo"
+      , "tutorials/inter-contract-calls/CreateAndCall.religo"
+      , "build/B.mligo"
+      , "build/C.mligo"
+      , "build/D.mligo"
+      , "build/E.mligo"
+      , "build/cycle_A.mligo"
+      , "build/cycle_B.mligo"
+      , "build/cycle_C.mligo"
+      , "build/type_B.mligo"
+      , "interpreter_tests/test_subst_with_storage_from_file.mligo"
+      , "interpreter_tests/test_now_from_file.mligo"
+      , "interpreter_tests/test_fail_from_file.mligo"
+      , "interpreter_tests/test_example_from_file.mligo"
+      , "interpreter_tests/compile_expr_from_file.mligo"
       ]
 
-okayContractsDirs :: [FilePath]
-okayContractsDirs = contractsDir : map (contractsDir </>) compilerTests
+okayIgnoreDirs :: [FilePath]
+okayIgnoreDirs = map (contractsDir </>) compilerTests
   where
     compilerTests =
-      [ "basic_multisig/"
-      , "get_scope_tests/"
-      , "positive"
-      -- TODO: Figure out which negative tests are for parsing and which are not
-      -- , "negative/"
+      [ -- TODO: Figure out which negative tests are for parsing and which are not
+        "negative"
+      , "tutorials"
       ]
 
 badContractsDirs :: [FilePath]
 badContractsDirs = []
-
-getOkayContractsWithExtension :: String -> IO [FilePath]
-getOkayContractsWithExtension ext =
-  foldMap (getContractsWithExtension ext okayIgnoreContracts) okayContractsDirs
 
 getBadContractsWithExtension :: String -> IO [FilePath]
 getBadContractsWithExtension ext
   = foldMap (getContractsWithExtension ext []) badContractsDirs
 
 getOkayContracts :: IO [FilePath]
-getOkayContracts = foldMap getOkayContractsWithExtension supportedExtensions
+getOkayContracts = do
+  allContracts <- parseContracts (pure . srcPath) contractsDir
+  pure $ filter (\x -> not $ any (`isPrefixOf` x) okayIgnoreDirs)
+       $ filter (`notElem` okayIgnoreContracts)
+         allContracts
 
 getBadContracts :: IO [FilePath]
 getBadContracts = foldMap getBadContractsWithExtension supportedExtensions
