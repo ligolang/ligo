@@ -39,7 +39,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> (cmpres <= 0)
         | C_GT -> (cmpres > 0)
         | C_GE -> (cmpres >= 0)
-        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
+        | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }))
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_bool b ) ; V_Ct (C_bool a ) ] ) ->
@@ -51,7 +51,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> (cmpres <= 0)
         | C_GT -> (cmpres > 0)
         | C_GE -> (cmpres >= 0)
-        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
+        | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }))
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_address b ) ; V_Ct (C_address a ) ] ) ->
@@ -63,7 +63,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> (cmpres <= 0)
         | C_GT -> (cmpres > 0)
         | C_GE -> (cmpres >= 0)
-        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
+        | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }))
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_key_hash b ) ; V_Ct (C_key_hash a ) ] ) ->
@@ -75,7 +75,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> (cmpres <= 0)
         | C_GT -> (cmpres > 0)
         | C_GE -> (cmpres >= 0)
-        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
+        | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }))
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_unit ) ; V_Ct (C_unit ) ] ) ->
@@ -86,7 +86,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> true
         | C_GT -> false
         | C_GE -> true
-        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
+        | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }))
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_string a'  ) ; V_Ct (C_string b'  ) ] ) ->
@@ -97,7 +97,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> fun a b -> (String.compare a b <= 0)
         | C_GT -> fun a b -> (String.compare a b > 0)
         | C_GE -> fun a b -> (String.compare a b >= 0)
-        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }) in
+        | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })) in
       Monad.return @@ v_bool (f_op a' b')
 
     | ( comp     , [ V_Ct (C_bytes a'  ) ; V_Ct (C_bytes b'  ) ] ) ->
@@ -108,7 +108,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> fun a b -> (Bytes.compare a b <= 0)
         | C_GT -> fun a b -> (Bytes.compare a b > 0)
         | C_GE -> fun a b -> (Bytes.compare a b >= 0)
-        | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }) in
+        | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })) in
       Monad.return @@ v_bool (f_op a' b')
     | ( comp , [ V_Construct (ctor_a, args_a) ; V_Construct (ctor_b, args_b ) ] ) -> (
        match comp with
@@ -124,11 +124,11 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
           else
             let* r = apply_comparison loc c [ args_a ;  args_b ] in
             Monad.return @@ v_bool @@ is_true r
-       | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparaddble" })
+       | _ -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparaddble" }))
     )
     | ( _ , l ) ->
        print_endline (Format.asprintf "%a" (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value) l);
-       raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
+       raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }))
 
 let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
   fun loc _env c operands ->
@@ -160,7 +160,7 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
     | ( C_FOLD_STOP      , [ v ] ) -> return @@ v_pair (v_bool false , v)
     | ( C_ASSERTION , [ v ] ) ->
       if (is_true v) then return_ct @@ C_unit
-      else raise (Meta_lang_ex {location = loc ; reason = Reason "Failed assertion"})
+      else raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Failed assertion"}))
     | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
       | Some v -> return @@ v_some v
       | None -> return @@ v_none ()
@@ -178,7 +178,7 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
        )
     | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
       | Some v -> return @@ v
-      | None -> raise (Meta_lang_ex {location = loc ; reason = Reason (Predefined.Tree_abstraction.pseudo_module_to_string c)})
+      | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason (Predefined.Tree_abstraction.pseudo_module_to_string c)}))
     )
     (* binary *)
     | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison loc c operands
@@ -199,14 +199,14 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_int res
-        | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
+        | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"}))
       end
     | ( C_DIV    , [ V_Ct (C_nat a')  ; V_Ct (C_nat b')  ] ) ->
       let>> a = Int_ediv_n (a',b') in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_nat res
-        | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
+        | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"}))
       end
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] )
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_nat b')    ] )
@@ -214,13 +214,13 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
       let>> a = Int_ediv (a',b') in
       match a with
       | Some (_,r) -> return_ct @@ C_nat r
-      | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
+      | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"}))
     )
     | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> (
       let>> a = Int_ediv_n (a',b') in
       match a with
       | Some (_,r) -> return_ct @@ C_nat r
-      | None -> raise (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"})
+      | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"}))
     )
     | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return_ct @@ C_string (a' ^ b')
     | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return_ct @@ C_bytes  (Bytes.cat a' b')
@@ -360,7 +360,7 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
       let>> err_opt = External_call (loc,contract,param,amt) in
       match err_opt with
       | None -> return_ct C_unit
-      | Some e -> raise (Object_lang_ex (loc,e))
+      | Some e -> raise (Exc (Object_lang_ex (loc,e)))
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code (param,_,_)) ; V_Ct ( C_mutez amt ) ] ) -> (
       let contract = { address; entrypoint = None } in
@@ -401,6 +401,62 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
     | ( C_TEST_LAST_ORIGINATIONS , [ _ ] ) ->
       let>> x = Get_last_originations () in
       return x
+    | ( C_TEST_MUTATE_EXPRESSION , [ V_Ct (C_nat n); V_Ligo (syntax,ligo_exp) ] ) ->
+      let>> x = Mutate_expression (loc,n,syntax,ligo_exp) in
+      return (V_Ligo x)
+    | ( C_TEST_MUTATE_COUNT , [ V_Ligo (syntax,ligo_exp) ] ) ->
+      let>> x = Mutate_count (loc,syntax,ligo_exp) in
+      return x
+    | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
+      let* () = check_value v in
+      let value_ty = List.nth_exn types 1 in
+      let>> v = Mutate_some_value (loc,n,v, value_ty) in
+      match v with
+      | None ->
+         return (v_none ())
+      | Some (e, m) ->
+         let* v = eval_ligo e _env in
+         return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
+    | ( C_TEST_MUTATION_TEST , [ v; tester ] ) ->
+      let* () = check_value v in
+      let value_ty = List.nth_exn types 0 in
+      let>> l = Mutate_all_value (loc,v,value_ty) in
+      let* r = iter_while (fun (e, m) ->
+        let* v = eval_ligo e _env in
+        let r =  match tester with
+          | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
+             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
+             let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
+             eval_ligo body f_env'
+          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
+             let f_env' = Env.extend env (arg_binder, v) in
+             let f_env'' = Env.extend f_env' (fun_name, tester) in
+             eval_ligo body f_env''
+          | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
+        Monad.try_catch (let* v = r in return (Some (v, m))) (fun (_err : exception_type) -> return None)) l in
+      (match r with
+       | None -> return (v_none ())
+       | Some (v, m) -> return (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
+    | ( C_TEST_MUTATION_TEST_ALL , [ v; tester ] ) ->
+      let* () = check_value v in
+      let value_ty = List.nth_exn types 0 in
+      let>> l = Mutate_all_value (loc,v,value_ty) in
+      let* r = bind_map_list (fun (e, m) ->
+        let* v = eval_ligo e _env in
+        let r =  match tester with
+          | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
+             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
+             let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
+             eval_ligo body f_env'
+          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
+             let f_env' = Env.extend env (arg_binder, v) in
+             let f_env'' = Env.extend f_env' (fun_name, tester) in
+             eval_ligo body f_env''
+          | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
+        Monad.try_catch (let* v = r in return (Some (v, m))) (fun (_err : exception_type) ->
+                     return None)) l in
+      let r = List.map ~f:(fun (v, m) -> V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])) @@ List.filter_opt r in
+      return (V_List r)
     | ( C_TEST_TO_CONTRACT , [ addr ] ) ->
        let contract_ty = List.nth_exn types 0 in
        let>> code = To_contract (loc, addr, None, contract_ty) in
@@ -444,7 +500,7 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
           let>> err_opt = External_call (loc,contract,param,amt) in
           return @@ (match err_opt with
                      | None -> V_Ct C_unit
-                     | Some e -> raise (Object_lang_ex (loc,e)))
+                     | Some e -> raise (Exc (Object_lang_ex (loc,e))))
        | _ -> fail @@ Errors.generic_error loc "Error typing param")
     | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , [ (V_Ct (C_contract contract)) ; param; V_Ct ( C_mutez amt ) ] ) ->
        let param_ty = List.nth_exn types 1 in
@@ -459,7 +515,7 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
               return a)
        | _ -> fail @@ Errors.generic_error loc "Error typing param")
     | ( C_FAILWITH , [ a ] ) ->
-      raise (Meta_lang_ex {location = loc ; reason = Val a})
+      raise (Exc (Meta_lang_ex {location = loc ; reason = Val a}))
     | _ -> Fail_ligo (Errors.generic_error loc "Unbound primitive.")
   )
 
@@ -649,9 +705,9 @@ let ( let>>= ) o f = Trace.bind f o
 let try_eval expr env state r =
   try Monad.eval (eval_ligo expr env) state r
   with
-  | Object_lang_ex (loc,e) -> fail @@ Errors.target_lang_error loc e
-  | Meta_lang_ex {location ; reason = Val x} -> fail @@ Errors.meta_lang_failwith location x
-  | Meta_lang_ex {location ; reason = Reason x} -> fail @@ Errors.meta_lang_eval location x
+  | Exc (Object_lang_ex (loc,e)) -> fail @@ Errors.target_lang_error loc e
+  | Exc (Meta_lang_ex {location ; reason = Val x}) -> fail @@ Errors.meta_lang_failwith location x
+  | Exc (Meta_lang_ex {location ; reason = Reason x}) -> fail @@ Errors.meta_lang_eval location x
 
 let eval : Ast_typed.module_fully_typed -> (env * Tezos_state.context , Errors.interpreter_error) result =
   fun (Module_Fully_Typed prg) ->

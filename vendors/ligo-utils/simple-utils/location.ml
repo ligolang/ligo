@@ -48,6 +48,10 @@ let virtual_location s = Virtual s
 let dummy = virtual_location "dummy"
 let generated = virtual_location "generated"
 
+let is_dummy_or_generated = function
+  | Virtual "dummy" | Virtual "generated" -> true
+  | _ -> false
+
 type 'a wrap = {
   wrap_content : 'a ;
   location : t ;

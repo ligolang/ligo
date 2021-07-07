@@ -39,6 +39,7 @@ let decompile_michelson : Stacking.Errors.stacking_error -> all = fun e -> `Main
 
 (* top-level glue (in between passes) *)
 
+let invalid_generator generator : all = `Main_invalid_generator_name generator
 let syntax_auto_detection extension : all = `Main_invalid_extension extension
 let invalid_syntax syntax : all = `Main_invalid_syntax_name syntax
 let invalid_protocol_version possible actual = `Main_invalid_protocol_version (possible,actual)

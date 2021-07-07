@@ -37,6 +37,10 @@ module Command = struct
     | Get_last_originations : unit -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
     | Compile_expression : Location.t * LT.value * string * string * LT.value option -> LT.value t
+    | Mutate_expression : Location.t * Z.t * string * string -> (string * string) t
+    | Mutate_count : Location.t * string * string -> LT.value t
+    | Mutate_some_value : Location.t * Z.t * LT.value * Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) option t
+    | Mutate_all_value : Location.t * LT.value * Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) list t
     | Compile_contract_from_file : string * string -> (LT.value * LT.value) t
     | Compile_meta_value : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
@@ -280,8 +284,107 @@ module Command = struct
         let addr = LT.V_Ct ( C_address contract ) in
         let storage_tys = (contract, ligo_ty) :: (ctxt.storage_tys) in
         ok (addr, {ctxt with storage_tys})
-      | Tezos_state.Fail errs -> raise (Exc.Object_lang_ex (loc,errs))
+      | Tezos_state.Fail errs -> raise (Exc.Exc (Object_lang_ex (loc,errs)))
     )
+    | Mutate_some_value (_loc, z, v, v_type) ->
+      let n = Z.to_int z in
+      let* expr = Michelson_backend.val_to_ast ~toplevel:true ~loc:Location.generated v v_type in
+      let module Fuzzer = Fuzz.Ast_typed.Mutator in
+      let ret = Fuzzer.some_mutate_expression ~n expr in
+      ok @@ (ret, ctxt)
+    | Mutate_all_value (_loc, v, v_type) ->
+      let* expr = Michelson_backend.val_to_ast ~toplevel:true ~loc:Location.generated v v_type in
+      let module Fuzzer = Fuzz.Ast_typed.Mutator in
+      let exprs = Fuzzer.all_mutate_expression expr in
+      ok @@ (exprs, ctxt)
+    | Mutate_expression (_loc, z, syntax, expr) ->
+      let open Ligo_compile in
+      let n = Z.to_int z in
+      let options = Compiler_options.make () in
+      let* meta  = Of_source.make_meta syntax None in
+      let* c_unit_exp, _ = Of_source.compile_string ~options ~meta expr in
+      let module Gen = Fuzz.Lst in
+      let* buffer = match meta.syntax with
+        | CameLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Cameligo.parse_expression c_unit_exp in
+             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Cameligo.pretty_print_expression mutated_prg)
+           end
+        | ReasonLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Reasonligo.parse_expression c_unit_exp in
+             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Reasonligo.pretty_print_expression mutated_prg)
+           end
+        | PascaLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Pascaligo.parse_expression c_unit_exp in
+             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Pascaligo.pretty_print_expression mutated_prg)
+           end
+        | JsLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Jsligo.parse_expression c_unit_exp in
+             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Jsligo.pretty_print_expression mutated_prg)
+           end in
+      let expr = Buffer.contents buffer in
+      ok ((syntax, expr), ctxt)
+    | Mutate_count (_loc, syntax, expr) ->
+      begin
+        let open Ligo_compile in
+        let options = Compiler_options.make () in
+        let* meta  = Of_source.make_meta syntax None in
+        let* c_unit_exp, _ = Of_source.compile_string ~options ~meta expr in
+        let module Gen = Fuzz.Lst in
+        let* count = match meta.syntax with
+          | CameLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Cameligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end
+          | ReasonLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Reasonligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end
+          | PascaLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Pascaligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end
+          | JsLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Jsligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end in
+        ok (LT.V_Ct (C_nat (Z.of_int count)) , ctxt)
+      end
     | Set_now (loc, now) ->
       let* ctxt = Tezos_state.set_timestamp ~loc ctxt now in
       ok ((), ctxt)
@@ -343,6 +446,7 @@ type 'a t =
   | Call : 'a Command.t -> 'a t
   | Return : 'a -> 'a t
   | Fail_ligo : Errors.interpreter_error -> 'a t
+  | Try_catch : 'a t * (Ligo_interpreter.Types.exception_type -> 'a t) -> 'a t
 
 let rec eval
   : type a.
@@ -358,10 +462,24 @@ let rec eval
   | Call command -> Command.eval command ctxt log
   | Return v -> ok (v, ctxt)
   | Fail_ligo err -> fail err
+  | Try_catch (e', handler) ->
+    match Trace.to_stdlib_result (eval e' ctxt log) with
+    | Ok (r, _) -> ok r
+    | Error (`Main_interpret_target_lang_error (loc, e), _) ->
+       eval (handler (LT.Object_lang_ex (loc, e))) ctxt log
+    | Error (`Main_interpret_meta_lang_eval (loc, s), _) ->
+       eval (handler (LT.Meta_lang_ex {location = loc; reason = Reason s})) ctxt log
+    | Error (`Main_interpret_meta_lang_failwith (loc, v), _) ->
+       eval (handler (LT.Meta_lang_ex {location = loc; reason = Val v})) ctxt log
+    | Error _ ->
+       failwith "Interpreter error not handled"
+    | exception Exc.Exc exc ->
+       eval (handler exc) ctxt log
 
 let fail err : 'a t = Fail_ligo err
 let return (x: 'a) : 'a t = Return x
 let call (command : 'a Command.t) : 'a t = Call command
+let try_catch (c : 'a t) (handler : Ligo_interpreter.Types.exception_type -> 'a t) : 'a t = Try_catch (c, handler)
 let ( let>> ) o f = Bind (call o, f)
 let ( let* ) o f = Bind (o, f)
 
@@ -380,3 +498,15 @@ let bind_fold_list f init lst =
     f x y
   in
   List.fold_left ~f:aux ~init:(return init) lst
+
+let rec iter_while f lst =
+  match lst with
+  | [] ->
+     return None
+  | (x :: xs) ->
+     let* b = f x in
+     match b with
+     | None ->
+        iter_while f xs
+     | Some x ->
+        return (Some x)

@@ -370,7 +370,7 @@ let in_vars var vars =
 
 let remove_from var vars =
   let f v vars = if compare_vars var v = 0 then vars else v :: vars in
-  List.fold_right ~f ~init:vars []
+  List.fold_right ~f ~init:[] vars
 
 let get_pattern ?(pred = fun _ -> true) pattern =
   Stage_common.Helpers.fold_pattern (fun vars p ->

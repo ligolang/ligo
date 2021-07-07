@@ -171,6 +171,11 @@ let constant'_tag = function
   | C_POLYMORPHIC_ADD         -> 157
   | C_BIG_MAP_IDENTIFIER -> 158
   | C_NEVER                   -> 159
+  | C_TEST_MUTATE_EXPRESSION  -> 160
+  | C_TEST_MUTATE_COUNT       -> 161
+  | C_TEST_MUTATE_VALUE       -> 162
+  | C_TEST_MUTATION_TEST      -> 163
+  | C_TEST_MUTATION_TEST_ALL  -> 164
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

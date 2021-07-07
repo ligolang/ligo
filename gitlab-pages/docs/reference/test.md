@@ -575,3 +575,88 @@ Run a function on an input, all in Michelson. More concretely:
 a) compiles the function argument to Michelson `f_mich`;
 b) compiles the value argument (which was evaluated already) to Michelson `v_mich`;
 c) runs the Michelson interpreter on the code `f_mich` with starting stack `[ v_mich ]`.
+
+<SyntaxTitle syntax="pascaligo">
+function mutate_count : ligo_program -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val mutate_count : ligo_program -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let mutate_count : ligo_program => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mutate_count = (prog: ligo_program) => nat
+</SyntaxTitle>
+
+Counts the number of available mutations for a `ligo_program` (CST).
+
+<SyntaxTitle syntax="pascaligo">
+function mutate_expression : nat -> ligo_program -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val mutate_expression : nat -> ligo_program -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let mutate_expression : (nat, ligo_program) => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mutate_expression = (index: nat, prog: ligo_program) => nat
+</SyntaxTitle>
+
+Mutates a `ligo_program` (CST) using a natural number as an index for the
+available mutations (see `mutate_count`).
+
+<SyntaxTitle syntax="pascaligo">
+function mutate_value : nat -> 'a -> option ('a * mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val mutate_value : nat -> 'a -> ('a * mutation) option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let mutate_value : (nat, 'a) => option ('a, mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mutate_value : (index: nat, value: 'a) => option &lt;[&apos;a, mutation]&gt;
+</SyntaxTitle>
+
+Mutates a value using a natural number as an index for the available
+mutations, returns an option for indicating whether mutation was
+successful or not.
+
+<SyntaxTitle syntax="pascaligo">
+function mutation_test : 'a -> ('a -> 'b) -> option ('b * mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val mutation_test : 'a -> ('a -> 'b) -> ('b * mutation) option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let mutation_test : ('a, ('a -> 'b)) => option ('b, mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mutation_test : (value: 'a, tester: ('a -> 'b)) => option &lt;[&apos;b, mutation]&gt;
+</SyntaxTitle>
+
+Given a value to mutate (first argument), it will try all the
+mutations available of it, passing each one to the function (second
+argument). On the first case of non failure when running the function
+on a mutation, the value and mutation involved will be returned.
+
+<SyntaxTitle syntax="pascaligo">
+function mutation_test_all : 'a -> ('a -> 'b) -> list ('b * mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val mutation_test_all : 'a -> ('a -> 'b) -> ('b * mutation) list
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let mutation_test_all : ('a, ('a -> 'b)) => list ('b, mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mutation_test_all : (value: 'a, tester: ('a -> 'b)) => list &lt;[&apos;b, mutation]&gt;
+</SyntaxTitle>
+
+Given a value to mutate (first argument), it will try all the
+mutations of it, passing each one to the function (second argument).
+In case no failure arises when running the function on a mutation, the
+failure and mutation involved will be added to the list to be
+returned.

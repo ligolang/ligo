@@ -33,7 +33,7 @@ let invalid_constants =
 
 let type_constants =
   let open Stage_common.Constant in
-[test_michelson_name; test_ligo_name; account_name; time_name ; typed_address_name]
+[test_michelson_name; test_ligo_name; account_name; time_name ; typed_address_name ; mutation_name ; failure_name]
 
 type 'err ty_exp_mapper = type_expression -> (unit, 'err) result
 
@@ -69,11 +69,11 @@ let check_obj_ligo (t : Ast_typed.expression) =
   let folder_constant () expr = match expr.expression_content with
     | E_constant {cons_name}
          when List.mem invalid_constants cons_name ~equal:equal_constant ->
-       fail @@ Errors.generic_error expr.location "Test functions cannot be used in code to be run by the Michelson interpreter."
+       fail @@ Errors.generic_error expr.location "Test functions cannot be used in code to be run/returned by the Michelson interpreter."
     | _ -> ok () in
   let traverser_types loc expr = match expr.type_content with
     | T_constant { injection ; _ } when List.mem type_constants (Ligo_string.extract injection) ~equal:String.equal ->
-       fail @@ Errors.generic_error loc "Test types cannot be used in code to be run by the Michelson interpreter"
+       fail @@ Errors.generic_error loc "Test types cannot be used in code to be run/returned by the Michelson interpreter"
     | _ -> ok () in
   let folder_types () (expr : expression) =
     traverse_type_expression (traverser_types expr.type_expression.location) expr.type_expression in

@@ -4,6 +4,7 @@ module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
 module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
 module Int = Int_repr_copied
 
+type mutation = Location.t * Ast_typed.expression
 type env = (expression_variable * value_expr) list
 
 and func_val = {
@@ -53,3 +54,11 @@ and value =
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
   | V_Ligo of (string * string)
+  | V_Mutation of mutation
+  | V_Failure of exception_type
+
+and fail_reason = Val of value | Reason of string
+
+and exception_type =
+  Object_lang_ex of Location.t * Tezos_error_monad.TzCore.error list
+| Meta_lang_ex of { location : Location.t ; reason : fail_reason }

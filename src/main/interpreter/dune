@@ -9,6 +9,7 @@
     main_errors
     ligo_compile
     build
+    fuzz
     ligo_run
     self_ast_typed
   )

@@ -255,11 +255,16 @@ let rec val_to_ast ~loc ?(toplevel = true) : Ligo_interpreter.Types.value ->
      fail @@ Errors.generic_error loc "Cannot be abstracted: ligo"
   | V_Michelson (Contract _) ->
      fail @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
+  | V_Mutation _ ->
+     fail @@ Errors.generic_error loc "Cannot be abstracted: mutation"
+  | V_Failure _ ->
+     fail @@ Errors.generic_error loc "Cannot be abstracted: failure"
 
 and make_ast_func ?(toplevel = true) ?name env arg body orig =
   let open Ast_typed in
   let* fv = Self_ast_typed.Helpers.get_fv body in
   let* env = make_subst_ast_env_exp ~toplevel env fv in
+  let env = List.rev env in
   let* typed_exp' = add_ast_env ?name:name env arg body in
   let lambda = { result=typed_exp' ; binder=arg} in
   let typed_exp' = match name with
