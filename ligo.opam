@@ -31,6 +31,7 @@ depends: [
   "UnionFind"
   "RedBlackTrees"
   "linenoise"
+  "qcheck"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # work around tezos' failure to constrain

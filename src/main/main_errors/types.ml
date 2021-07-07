@@ -6,6 +6,7 @@ type all =
  | `Build_dependency_cycle of string
  | `Build_corner_case of string * string (* TO REMOVE *)
 
+ | `Main_invalid_generator_name of string
  | `Main_invalid_syntax_name of string
  | `Main_invalid_dialect_name of string
  | `Main_invalid_extension of string

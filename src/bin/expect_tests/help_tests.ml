@@ -65,6 +65,12 @@ let%expect_test _ =
            measure-contract
                Subcommand: Measure a contract's compiled size in bytes.
 
+           mutate-ast
+               Subcommand: Return a mutated version for a given file.
+
+           mutate-cst
+               Subcommand: Return a mutated version for a given file.
+
            preprocess
                Subcommand: Preprocess the source file. Warning: Intended for
                development of LIGO and can break at any time.
@@ -192,6 +198,12 @@ let%expect_test _ =
 
            measure-contract
                Subcommand: Measure a contract's compiled size in bytes.
+
+           mutate-ast
+               Subcommand: Return a mutated version for a given file.
+
+           mutate-cst
+               Subcommand: Return a mutated version for a given file.
 
            preprocess
                Subcommand: Preprocess the source file. Warning: Intended for

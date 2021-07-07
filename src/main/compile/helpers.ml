@@ -38,6 +38,13 @@ let syntax_to_variant (Syntax_name syntax) source =
   | ("jsligo" | "JsLIGO"),         _ -> ok JsLIGO
   | _ -> fail (invalid_syntax syntax)
 
+let variant_to_syntax v =
+  match v with
+  | PascaLIGO -> "pascaligo"
+  | CameLIGO -> "cameligo"
+  | ReasonLIGO -> "reasonligo"
+  | JsLIGO -> "jsligo"
+
 (* Preprocessing *)
 
 type options = Compiler_options.t

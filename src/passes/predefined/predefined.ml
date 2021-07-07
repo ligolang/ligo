@@ -188,6 +188,11 @@ module Tree_abstraction = struct
     | "Test.nth_bootstrap_account" -> some_const C_TEST_GET_NTH_BS
     | "Test.last_originations" -> some_const C_TEST_LAST_ORIGINATIONS
     | "Test.compile_value" -> some_const C_TEST_COMPILE_META_VALUE
+    | "Test.mutate_expression" -> some_const C_TEST_MUTATE_EXPRESSION
+    | "Test.mutate_count" -> some_const C_TEST_MUTATE_COUNT
+    | "Test.mutate_value" -> some_const C_TEST_MUTATE_VALUE
+    | "Test.mutation_test" -> some_const C_TEST_MUTATION_TEST
+    | "Test.mutation_test_all" -> some_const C_TEST_MUTATION_TEST_ALL
     | "Test.run" -> some_const C_TEST_RUN
     | "Test.eval" -> some_const C_TEST_EVAL
     | "Test.compile_contract" -> some_const C_TEST_COMPILE_CONTRACT
@@ -331,6 +336,11 @@ module Tree_abstraction = struct
     | C_TEST_GET_NTH_BS -> "Test.nth_bootstrap_account"
     | C_TEST_LAST_ORIGINATIONS -> "Test.last_originations"
     | C_TEST_COMPILE_META_VALUE -> "Test.compile_value"
+    | C_TEST_MUTATE_EXPRESSION -> "Test.mutate_expression"
+    | C_TEST_MUTATE_COUNT -> "Test.mutate_count"
+    | C_TEST_MUTATE_VALUE -> "Test.mutate_value"
+    | C_TEST_MUTATION_TEST -> "Test.mutation_test"
+    | C_TEST_MUTATION_TEST_ALL -> "Test.mutation_test_all"
     | C_TEST_RUN -> "Test.run"
     | C_TEST_EVAL -> "Test.eval"
     | C_TEST_COMPILE_CONTRACT -> "Test.compile_contract"

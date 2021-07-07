@@ -58,6 +58,10 @@ let rec error_ppformat : display_format:string display_format ->
         (Simple_utils.PP_helpers.list_sep_d Simple_utils.PP_helpers.string)
         actual
 
+    | `Main_invalid_generator_name generator ->
+      Format.fprintf f
+        "@[<hv>Invalid generator option: '%s'. @.Use 'random' or 'list'. @]"
+          generator
     | `Main_invalid_syntax_name syntax ->
       Format.fprintf f
         "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', or 'reasonligo'. @]"
@@ -248,6 +252,8 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
       ("loc", `String loc) ]
     in
     json_error ~stage:"build system" ~content
+  | `Main_invalid_generator_name _ ->
+    json_error ~stage:"command line interpreter" ~content:(`String "bad generator name")
   | `Main_invalid_syntax_name _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad syntax name")
   | `Main_invalid_dialect_name _ ->

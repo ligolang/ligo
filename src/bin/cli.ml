@@ -205,7 +205,23 @@ let werror =
     let docv = "BOOL" in
     let doc = "$(docv) indicates whether warning messages should be treated as errors or not" in
     info ~docv ~doc ["werror"] in
-    value @@ opt bool false info
+  value @@ opt bool false info
+
+let seed =
+  let open Arg in
+  let info =
+    let docv = "SEED" in
+    let doc = "$(docv) is the seed or counter used for generation." in
+    info ~docv ~doc ["seed"] in
+  value @@ opt (some int) None info
+
+let generator =
+  let open Arg in
+  let info =
+    let docv = "GENERATOR" in
+    let doc = "$(docv) is the generator for mutation." in
+    info ~docv ~doc ["generator" ; "g"] in
+  value @@ opt string "random" info
 
 module Api = Ligo_api
 let compile_file =
@@ -634,6 +650,32 @@ let repl =
   let doc = "Subcommand: REPL" in
   (Term.ret term , Term.info ~doc cmdname)
 
+let mutate_ast =
+  let f source_file syntax infer protocol_version libs display_format seed generator =
+    return_result @@
+    Api.Mutate.mutate_ast source_file syntax infer protocol_version libs display_format seed generator
+  in
+  let term =
+    Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ libraries $ display_format $ seed $ generator) in
+  let cmdname = "mutate-ast" in
+  let doc = "Subcommand: Return a mutated version for a given file." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command returns a mutated version for a \
+                 given file. It does not use the build system."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
+
+let mutate_cst =
+  let f source_file syntax infer protocol_version libs display_format seed generator =
+    return_result @@
+    Api.Mutate.mutate_cst source_file syntax infer protocol_version libs display_format seed generator in
+  let term =
+    Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ libraries $ display_format $ seed $ generator) in
+  let cmdname = "mutate-cst" in
+  let doc = "Subcommand: Return a mutated version for a given file." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command returns a mutated version for a \
+                 given file. It does not use the build system."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let buffer = Buffer.create 100
 
@@ -669,4 +711,6 @@ let run ?argv () =
     pretty_print;
     get_scope;
     repl;
+    mutate_ast;
+    mutate_cst;
   ]
