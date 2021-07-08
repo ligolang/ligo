@@ -19,6 +19,7 @@ import Cli
 import Product
 import Range
 import Util (removeDots)
+import Util.Graph (traverseAM)
 
 data FromCompiler
 

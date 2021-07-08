@@ -38,6 +38,7 @@ default-extensions:
   - RecordWildCards
   - ScopedTypeVariables
   - StandaloneDeriving
+  - StrictData
   - TemplateHaskell
   - TupleSections
   - TypeApplications
@@ -84,9 +85,9 @@ library:
     - aeson
     - bytestring
     - containers
-    - bytestring
     - data-default
     - directory
+    - dlist
     - exceptions
     - fastsum
     - filepath
@@ -128,6 +129,7 @@ executables:
       - transformers
       - unliftio
       - unliftio-core
+      - unordered-containers
 
     source-dirs:
       - app/ligo-squirrel

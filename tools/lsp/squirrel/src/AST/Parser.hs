@@ -15,12 +15,13 @@ import Control.Lens ((%~))
 import Control.Monad ((<=<))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Functor.Const (Const (..))
+import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
-import Data.Maybe (isJust)
+import Data.Maybe (fromMaybe, isJust)
 import Data.Text (pack, replace, unpack)
 import Data.Traversable (for)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
@@ -41,6 +42,7 @@ import Parser
 import Product (Contains)
 import Range (Range, getRange)
 import Util (removeDots)
+import Util.Graph (findCycles, wcc)
 
 parse :: MonadIO m => Source -> m ContractInfo
 parse src = liftIO do
@@ -55,8 +57,9 @@ parseWithScopes
   :: forall impl m. HasScopeForest impl m => Source -> m ContractInfo'
 parseWithScopes src = do
   let fp = srcPath src
-  graph <- parseContractsWithDependenciesScopes @impl parse (takeDirectory fp)
-  maybe (throwM $ ContractNotFoundException fp graph) pure (lookupContract fp graph)
+  graph <- parseContractsWithDependencies parse (takeDirectory fp)
+  scoped <- addScopes @impl $ fromMaybe graph $ find (isJust . lookupContract fp) (wcc graph)
+  maybe (throwM $ ContractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.
 -- This ignores every other file which is not a contract.
