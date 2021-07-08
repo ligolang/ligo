@@ -5,6 +5,7 @@ module Util.Graph
   , traverseAM
   , findCycles
   , wcc
+  , subgraph
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
@@ -119,3 +120,7 @@ wcc graph = joinGraphs $ flip execState (WCC minBound mempty mempty mempty) $
       where
         vertices :: IntMap a
         vertices = IntMap.fromList $ map swap $ Map.toList components
+
+-- TODO: maybe use unsafeCoerce?
+subgraph :: Ord a => a -> AdjacencyMap a -> AdjacencyMap a
+subgraph v g = G.fromAdjacencySets $ Map.toList $ Map.restrictKeys (G.adjacencyMap g) (G.postSet v g)

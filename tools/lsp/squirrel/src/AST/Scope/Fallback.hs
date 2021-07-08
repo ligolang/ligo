@@ -2,7 +2,6 @@
 
 module AST.Scope.Fallback where
 
-import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
@@ -37,7 +36,7 @@ import Parser
 import Product
 import Range
 import Util (foldMapM, unconsFromEnd)
-import Util.Graph (traverseAM)
+import Util.Graph (subgraph, traverseAM)
 
 data Fallback
 
@@ -67,10 +66,6 @@ instance HasLigoClient m => HasScopeForest Fallback m where
             -- TODO: Visit nodes that don't form a cycle.
             Nothing -> mkForest pc G.empty
             Just sf -> pure sf
-
--- TODO: maybe use unsafeCoerce?
-subgraph :: Ord a => a -> AdjacencyMap a -> AdjacencyMap a
-subgraph v g = G.fromAdjacencySets $ Map.toList $ Map.restrictKeys (G.adjacencyMap g) (G.postSet v g)
 
 addReferences :: LIGO Info -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
