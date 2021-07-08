@@ -64,11 +64,14 @@ findCycles graph = concat $ flip evalState Map.empty $
       modify $ Map.insert top Visited
       pure $ concat stacks
 
+-- | Contains the state used internally by 'wcc'.
 data StateWCC a = WCC
-  { component  :: {-# UNPACK #-} !Int
-  , components :: Map a Int
-  , innerEdges :: IntMap (DList (a, a))
-  , mergedIn   :: IntMap Int
+  { component  :: {-# UNPACK #-} !Int  -- ^ A generator for labeling vertices based on their group.
+  , components :: Map a Int  -- ^ A map from the vertices to their current label.
+  , innerEdges :: IntMap (DList (a, a))  -- ^ Relates labels to their adjacency (difference) list.
+  , mergedIn   :: IntMap Int  -- ^ Allows fast lookup of which labels have been joined with other label.
+                              -- For instance, while performing the DFS, if we meet an older label,
+                              -- we set that the current label was "marged" with the previous one.
   }
 
 -- | Find all weakly connected components of a graph, that is, the disconnected subgraphs of a graph.
