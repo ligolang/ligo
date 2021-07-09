@@ -3,10 +3,10 @@ id: editor-support
 title: Editor Support
 ---
 
-Painters need a brush and a canvas. Developers need a good IDE experience. LIGO currently offers support for [VSCode](https://code.visualstudio.com), including syntax highlighting and on-the-fly compilation error reporting. 
+Painters need a brush and a canvas. Developers need a good IDE experience. LIGO currently offers support for syntax highlighting and on-the-fly compilation error reporting.
 
-Available extensions:
-- **[Syntax highlighting for PascaLIGO](https://marketplace.visualstudio.com/items?itemName=LigoLang.pascaligo-vscode)**
-- **[On-the-fly compilation error reporting](https://marketplace.visualstudio.com/items?itemName=Ligo.ligo-tools)**
+- **[Install the LIGO extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ligolang-publish.ligo-vscode)**
 
-![error reporting](/img/docs/intro/editor-support/error-reporting.png)
+- **[Install the LIGO extension for VIM](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vim/ligo/start/ligo/README.md)**
+
+- **[Install the LIGO extension for EMacs](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/emacs/README.md)**
