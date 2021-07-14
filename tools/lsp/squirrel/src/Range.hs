@@ -6,6 +6,7 @@
 module Range
   ( HasRange(..)
   , Range(..)
+  , PreprocessedRange(..)
   , cutOut
   , excluding
   , intersects
@@ -22,11 +23,13 @@ module Range
   , rStart
   , rFinish
   , rFile
+  , rangeLines
   )
   where
 
 import Language.LSP.Types qualified as LSP
 
+import Control.Lens (Traversal')
 import Control.Lens.TH (makeLenses)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
@@ -48,13 +51,21 @@ point l c = Range (l, c, 0) (l, c, 0) ""
 interval :: Int -> Int -> Int -> Range
 interval line colSt colFin = Range (line, colSt, 0) (line, colFin, 0) ""
 
--- | A continuous location in text.
+-- | A continuous location in text. This includes information to the file as
+-- seen by the user (i.e.: before preprocessing).
 data Range = Range
   { _rStart  :: (Int, Int, Int)  -- ^ [Start: line, col, byte-offset...
   , _rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
   , _rFile   :: FilePath
   }
   deriving (Show) via PP Range
+
+rangeLines :: Traversal' Range Int
+rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
+  Range
+    <$> ((,,) <$> f sl <*> pure sc <*> pure so)
+    <*> ((,,) <$> f fl <*> pure fc <*> pure fo)
+    <*> pure file
 
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
@@ -63,6 +74,12 @@ instance Pretty Range where
     <.> int lc <.> "-"
     <.> int rl <.> ":"
     <.> int rc
+
+-- | Like 'Range', but includes information on the preprocessed range of the
+-- file.
+newtype PreprocessedRange
+  = PreprocessedRange Range
+  deriving newtype (Eq, Lattice, Ord, Pretty, Show)
 
 -- | Ability to get range out of something.
 class HasRange a where

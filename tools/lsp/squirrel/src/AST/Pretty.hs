@@ -27,7 +27,7 @@ import Duplo.Tree (Tree)
 
 import AST.Skeleton hiding (Type)
 import AST.Skeleton qualified as AST
-import Parser (ShowRange)
+import Parser (LineMarker (..), LineMarkerType (..), ShowRange)
 import Product (Contains)
 import Range (Range)
 
@@ -321,6 +321,14 @@ instance Pretty1 Error where
   pp1 = \case
     Error _src children -> sexpr "ERROR" [pp children]
 
+instance Pretty LineMarker where
+  pp (LineMarker fp f l _) = sexpr "#" [pp l, pp $ Text.pack fp, pp f]
+
+instance Pretty LineMarkerType where
+  pp RootFile     = ""
+  pp IncludedFile = "1"
+  pp ReturnToFile = "2"
+
 ----------------------------------------------------------------------------
 -- Common
 ----------------------------------------------------------------------------
@@ -369,6 +377,9 @@ instance LPP1 d PreprocessorCommand where
 
 instance LPP1 d MichelsonCode where
   lpp1 = pp
+
+--instance LPP1 d LineMarker where
+--  lpp1 = pp1
 
 -- instances needed to pass instance resolution during compilation
 

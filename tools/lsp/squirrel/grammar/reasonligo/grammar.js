@@ -65,6 +65,7 @@ module.exports = grammar({
       choice(
         $.type_decl,
         $.let_decl,
+        $.preprocessor,
        ),
 
     /// TYPE DECLARATIONS

@@ -12,7 +12,7 @@ import Options.Applicative
   (Parser, ParserInfo, command, execParser, help, helper, hsubparser, info, long, metavar, progDesc,
   short, strOption, switch)
 
-import AST (Fallback, FindFilepath, Msg, ParsedContract (..), _getContract, parse, parseWithScopes)
+import AST (Fallback, FindFilepath, Msg, ParsedContract (..), _getContract, parsePreprocessed, parseWithScopes)
 import ParseTree (Source (Path))
 
 newtype Command = PrintSexp PrintSexpOptions
@@ -66,7 +66,7 @@ main = withUtf8 $
           toPretty = fmap (first SomePretty . treeMsgs . _getContract)
       let parser = if psoWithScopes
             then toPretty . parseWithScopes @Fallback
-            else toPretty . parse
+            else toPretty . parsePreprocessed
       (tree, messages) <- parser (Path psoContract)
       putStrLn (render (pp tree))
       unless (null messages) $ do

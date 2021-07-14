@@ -8,8 +8,6 @@ import Duplo.Tree
 
 import ParseTree
 import Parser
-  (CodeSource (CodeSource), Info, ParserM, ShowRange (N), boilerplate, boilerplate', fallthrough,
-  field, fieldOpt, fields, withComments)
 import Product
 
 
@@ -242,7 +240,7 @@ recognise (SomeRawTree dialect rawTree)
 
   -- Err
   , Descent do
-      \(r :> _, ParseTree _ children source) -> do
+      \(r :> _, ParseTree _ children source) ->
         withComments do
-          return (r :> N :> CodeSource source :> Nil, Error source children)
+          return ([] :> r :> N :> CodeSource source :> Nil, Error source children)
   ]

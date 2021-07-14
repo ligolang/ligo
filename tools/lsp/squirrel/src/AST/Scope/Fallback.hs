@@ -25,7 +25,7 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty (PPableLIGO, TotalLPP, docToText, lppDialect)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  (DeclarationSpecifics (..), Parameter (..), ScopedDecl (..), ValueDeclSpecifics (..),
+  (DeclarationSpecifics (..), Parameter (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..),
   fillTypeIntoCon)
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton hiding (Type)
@@ -67,18 +67,18 @@ instance HasLigoClient m => HasScopeForest Fallback m where
             Nothing -> mkForest pc G.empty
             Just sf -> pure sf
 
-addReferences :: LIGO Info -> ScopeForest -> ScopeForest
+addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
   where
-    addRef :: LIGO Info -> State ScopeForest ()
+    addRef :: LIGO ParsedInfo -> State ScopeForest ()
     addRef = \case
-      (match -> Just (r, Name     n)) -> addThisRef TermLevel (getRange r) n
-      (match -> Just (r, NameDecl n)) -> addThisRef TermLevel (getRange r) n
-      (match -> Just (r, Ctor     n)) -> addThisRef TermLevel (getRange r) n
-      (match -> Just (r, TypeName n)) -> addThisRef TypeLevel (getRange r) n
+      (match -> Just (r, Name     n)) -> addThisRef TermLevel (getElem r) n
+      (match -> Just (r, NameDecl n)) -> addThisRef TermLevel (getElem r) n
+      (match -> Just (r, Ctor     n)) -> addThisRef TermLevel (getElem r) n
+      (match -> Just (r, TypeName n)) -> addThisRef TypeLevel (getElem r) n
       _                               -> return ()
 
-    addThisRef cat' r n = do
+    addThisRef cat' (PreprocessedRange r) n = do
       modify
         $ withScopeForest \(sf, ds) ->
           flip runState ds do
@@ -86,7 +86,7 @@ addReferences ligo = execState $ loopM_ addRef ligo
             walkScope cat' r n frameSet
             return sf
 
-    walkScope _    _ _ [] = return ()
+    walkScope _     _ _ [] = return ()
     walkScope level r n (declref : rest) = do
       decl <- gets (Map.! declref)
       if ofLevel level decl && (n == _sdName decl || r == _sdOrigin decl)
@@ -97,7 +97,7 @@ addReferences ligo = execState $ loopM_ addRef ligo
 
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 
-getEnv :: LIGO Info -> ScopeM ScopeForest
+getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv tree
   = addReferences tree
   . extractScopeForest
@@ -106,8 +106,8 @@ getEnv tree
   <$> prepareTree tree
 
 prepareTree
-  :: LIGO Info
-  -> ScopeM (LIGO '[[ScopedDecl], Bool, Range, [Text], Range, ShowRange, CodeSource])
+  :: LIGO ParsedInfo
+  -> ScopeM (LIGO (Scope ': Bool ': Range ': ParsedInfo))
 prepareTree
   = assignDecls
   . wildcardToName
@@ -205,6 +205,7 @@ assignDecls
   :: ( Contains  Range     xs
      , Contains [Text]     xs
      , Contains  ShowRange xs
+     , Contains  PreprocessedRange xs
      , Eq (Product xs)
      )
   => LIGO xs
@@ -265,6 +266,7 @@ functionScopedDecl
   :: ( TotalLPP param
      , Eq (Product info)
      , PPableLIGO info
+     , Contains PreprocessedRange info
      )
   => [Text] -- ^ documentation comments
   -> LIGO info -- ^ name node
@@ -274,7 +276,7 @@ functionScopedDecl
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
   (dialect, _) <- lift ask
-  (origin, name) <- getName nameNode
+  (PreprocessedRange origin, name) <- getName nameNode
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure (params dialect)
       _vdsTspec = parseTypeDeclSpecifics <$> typ
@@ -292,6 +294,7 @@ functionScopedDecl docs nameNode paramNodes typ body = do
 valueScopedDecl
   :: ( Eq (Product info)
      , PPableLIGO info
+     , Contains PreprocessedRange info
      )
   => [Text] -- ^ documentation comments
   -> LIGO info -- ^ name node
@@ -300,7 +303,7 @@ valueScopedDecl
   -> ScopeM ScopedDecl
 valueScopedDecl docs nameNode typ body = do
   (dialect, _) <- lift ask
-  (origin, name) <- getName nameNode
+  (PreprocessedRange origin, name) <- getName nameNode
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
@@ -317,11 +320,12 @@ valueScopedDecl docs nameNode typ body = do
 typeScopedDecl
   :: ( Eq (Product info)
      , PPableLIGO info
+     , Contains PreprocessedRange info
      )
   => [Text] -> LIGO info -> LIGO info -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
   (dialect, _) <- lift ask
-  (origin, name) <- getTypeName nameNode
+  (PreprocessedRange origin, name) <- getTypeName nameNode
   pure $ ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
@@ -378,6 +382,7 @@ extractScopeForest = uncurry ScopeForest . runWriter . mapM go
 
 getImmediateDecls
   :: ( PPableLIGO info
+     , Contains PreprocessedRange info
      , Eq (Product info)
      )
   => LIGO info -> ScopeM [ScopedDecl]
@@ -458,28 +463,32 @@ getImmediateDecls = \case
 select
   :: ( PPableLIGO info
      , MonadError ScopeError m
+     , Contains PreprocessedRange info
      )
   => Text
   -> [Visit RawLigoList (Product info) (WriterT [LIGO info] Catch)]
   -> LIGO info
-  -> m (Range, Text)
+  -> m (PreprocessedRange, Text)
 select what handlers t
   = maybe
-      (throwError $ TreeDoesNotContainName (pp t) (getRange t) what)
+      (throwError $ TreeDoesNotContainName (pp t) (extractRange $ getElem @PreprocessedRange $ extract t) what)
       (return . (getElem . extract &&& ppToText))
   $ either (const Nothing) listToMaybe
   $ runCatch
   $ execWriterT
   $ visit handlers
     t
+  where
+    extractRange (PreprocessedRange r) = r
 
 getName
   :: ( Lattice  (Product info)
      , PPableLIGO info
      , MonadError ScopeError m
+     , Contains PreprocessedRange info
      )
   => LIGO info
-  -> m (Range, Text)
+  -> m (PreprocessedRange, Text)
 getName = select "name"
   [ Visit \(r, NameDecl t) -> do
       tell [make (r, Name t)]
@@ -491,9 +500,10 @@ getTypeName
   :: ( Lattice  (Product info)
      , PPableLIGO info
      , MonadError ScopeError m
+     , Contains PreprocessedRange info
      )
   => LIGO info
-  -> m (Range, Text)
+  -> m (PreprocessedRange, Text)
 getTypeName = select "type name"
   [ Visit \(r, TypeName t) -> do
       tell [make (r, TypeName t)]

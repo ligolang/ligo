@@ -36,7 +36,7 @@ import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO, liftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
 
-import Data.Foldable (find, traverse_)
+import Data.Foldable (find, toList, traverse_)
 import Data.Function (on)
 import Data.HashMap.Strict (HashMap)
 import Data.List (groupBy, nubBy, sortOn)
@@ -72,7 +72,7 @@ type RioEnv =
   Product
     '[ ASTMap J.NormalizedUri Contract RIO
      , MVar (HashMap J.NormalizedUri Bool)
-     , "includes" := MVar (AdjacencyMap ContractInfo)
+     , "includes" := MVar (AdjacencyMap ParsedContractInfo)
      ]
 
 newtype RIO a = RIO
@@ -141,14 +141,14 @@ loadWithoutScopes uri = do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
   Log.debug "LOAD" [i|running with env #{ligoEnv}|]
-  parse src
+  parsePreprocessed src
 
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
 -- return 'Nothing'.
-tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ContractInfo)
-tryLoadWithoutScopes uri = (Just <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
+tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
+tryLoadWithoutScopes uri = (Just . insertPreprocessorRanges <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
 
-scopes :: ContractInfo -> RIO ContractInfo'
+scopes :: ParsedContractInfo -> RIO ContractInfo'
 scopes = fmap (head . G.vertexList) . addScopes @Standard . G.vertex
 
 load
@@ -168,11 +168,12 @@ load uri = J.getRootPath >>= \case
       -- Possibly the graph hasn't be initialized yet or a new file was created.
       Nothing -> parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
       Just oldIncludes -> do
+        let (rootContract', includeEdges) = extractIncludedFiles True rootContract
         let lookupOrLoad fp = maybe
               (tryLoadWithoutScopes (normalizeFilePath fp))
               (pure . Just)
               (lookupContract fp oldIncludes)
-        newIncludes <- catMaybes <$> traverse lookupOrLoad (getIncludes rootContract)
+        newIncludes <- catMaybes <$> traverse (lookupOrLoad . snd) (toList includeEdges)
         let
           newSet = Set.fromList newIncludes
           oldSet = Map.keysSet $ G.adjacencyMap oldIncludes
@@ -182,9 +183,9 @@ load uri = J.getRootPath >>= \case
           -- Replacing a contract with itself looks unintuitive but it works
           -- because ordering is decided purely on the file name.
           newGroup =
-            G.overlay (G.fromAdjacencySets [(rootContract, newVertices)])
-            $ G.replaceVertex rootContract rootContract
-            $ foldr (G.removeEdge rootContract) oldIncludes removedVertices
+            G.overlay (G.fromAdjacencySets [(rootContract', newVertices)])
+            $ G.replaceVertex rootContract' rootContract'
+            $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
         pure $ G.overlays (newGroup : groups')
 
     fullGraph <- addScopes @Standard rawGraph
@@ -208,7 +209,8 @@ load uri = J.getRootPath >>= \case
   where
     sourceToUri = normalizeFilePath . srcPath
     normalizeFilePath = J.toNormalizedUri . J.filePathToUri
-    loadDefault = scopes =<< loadWithoutScopes uri
+    loadParsed = fmap insertPreprocessorRanges . loadWithoutScopes
+    loadDefault = scopes =<< loadParsed uri
 
 collectErrors
   :: (J.NormalizedUri -> RIO ContractInfo')

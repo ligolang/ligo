@@ -547,7 +547,7 @@ parseLigoRangeString = flip withText safeExtract
 
     matchRange :: String -> [String]
     matchRange str =
-      getAllTextSubmatches (str =~ ("in file \"(.*)\", line ([0-9]+), characters ([0-9]+)-([0-9]+)" :: Text))
+      getAllTextSubmatches (str =~ ("\"(.*)\", line ([0-9]+), characters ([0-9]+)-([0-9]+)" :: Text))
 
 -- | Construct a parser of ligo type content that is represented in pairs
 -- ```
@@ -741,7 +741,7 @@ fromLigoTypeFull = enclose . \case
     enclose = flip evalState defaultState
 
     defaultState :: Product Info
-    defaultState = [] :> point 1 1 :> N :> CodeSource "" :> Nil
+    defaultState = [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
 
 mkLigoError :: Product Info -> Text -> LIGO Info
 mkLigoError p msg = make' . (p,) $ Error msg [p :< inject (Name "ligo error")]

@@ -26,11 +26,10 @@ import System.Environment (getEnv)
 import System.FilePath ((</>))
 import System.IO.Error (isDoesNotExistError)
 
-import AST (parse)
-import AST.Parser (Source (Path), parseWithScopes)
+import AST.Parser (Source (Path), insertPreprocessorRanges, parsePreprocessed, parseWithScopes)
 import AST.Scope.Common (HasScopeForest, Info', contractTree, _cMsgs, _cTree, _getContract)
 import AST.Skeleton (SomeLIGO)
-import Parser (Info, Msg)
+import Parser (ParsedInfo, Msg)
 
 contractsDir :: FilePath
 contractsDir =
@@ -59,11 +58,13 @@ getResponseResult rsp =
 openLigoDoc :: FilePath -> Session TextDocumentIdentifier
 openLigoDoc fp = openDoc fp "ligo"
 
-readContract :: FilePath -> IO (SomeLIGO Info)
-readContract filepath = contractTree <$> parse (Path filepath)
+readContract :: FilePath -> IO (SomeLIGO ParsedInfo)
+readContract filepath =
+  contractTree . insertPreprocessorRanges <$> parsePreprocessed (Path filepath)
 
-readContractWithMessages :: FilePath -> IO (SomeLIGO Info, [Msg])
-readContractWithMessages filepath = (_cTree &&& _cMsgs) . _getContract <$> parse (Path filepath)
+readContractWithMessages :: FilePath -> IO (SomeLIGO ParsedInfo, [Msg])
+readContractWithMessages filepath =
+  (_cTree &&& _cMsgs) . _getContract . insertPreprocessorRanges <$> parsePreprocessed (Path filepath)
 
 readContractWithScopes
   :: forall parser. HasScopeForest parser IO
