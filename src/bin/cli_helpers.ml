@@ -14,7 +14,7 @@ let return_bad v = (
 let return_result : ?warn:bool -> ?output_file:string -> ('value, _) result -> unit Term.ret =
   fun ?(warn=false) ?output_file value ->
     let return_with_warn warns f =
-          if not (String.length warns = 0) && warn then
+          if not (String.length (String.trim warns) = 0) && warn then
             begin
               Format.eprintf "%s" warns;
               Format.pp_print_flush Format.err_formatter ()
