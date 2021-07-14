@@ -6,10 +6,23 @@
       "rligo"
     ],
     "patterns": [
+      { "include": "#macro" },
       { "include": "#structure-expression-block-item" },
       { "include": "#value-expression" }
     ],
     "repository": {
+      "macro": {
+        "begin": "^((#)\\s*\\w+)",
+        "beginCaptures": {
+          "1": { "name": "meta.preprocessor.religo" },
+          "2": { "name": "punctuation.definition.directive.religo" }
+        },
+        "end": "$",
+        "patterns": [
+          { "include": "#comment" }
+        ]
+      },
+
       "attribute": {
         "begin": "(?=\\[(@{1,3})[[:space:]]*[[:alpha:]])",
         "end": "\\]",
