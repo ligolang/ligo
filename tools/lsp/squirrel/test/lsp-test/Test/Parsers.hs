@@ -3,17 +3,30 @@ module Test.Parsers
   , test_badContracts
   ) where
 
+import System.FilePath ((</>))
+
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import Test.Common.Util (getContractsWithExtension, supportedExtensions)
 import Test.Common.Util.Parsers (checkFile)
 
+-- Since preprocessors are dealt by `ligo preprocess`, we ignore these contracts
+-- since we can't parse them here.
 okayIgnoreContracts :: [FilePath]
-okayIgnoreContracts = []
+okayIgnoreContracts = map ("test/contracts/bugs" </>) ignore
+  where
+    ignore = ["LIGO-185.ligo", "LIGO-185.mligo", "LIGO-185.religo"]
 
 okayContractsDirs :: [FilePath]
 okayContractsDirs = ["test/contracts/bugs"]
+
+-- Since preprocessors are dealt by `ligo preprocess`, we ignore these contracts
+-- since their errors would only be thrown by `ligo preprocess`.
+badIgnoreContracts :: [FilePath]
+badIgnoreContracts = map ("test/contracts/bad" </>) ignore
+  where
+    ignore = ["extra-line-marker.mligo", "LIGO-105.ligo", "LIGO-105.mligo", "LIGO-105.religo"]
 
 badContractsDirs :: [FilePath]
 badContractsDirs = ["test/contracts/bad"]
@@ -24,7 +37,7 @@ getOkayContractsWithExtension ext =
 
 getBadContractsWithExtension :: String -> IO [FilePath]
 getBadContractsWithExtension ext
-  = foldMap (getContractsWithExtension ext []) badContractsDirs
+  = foldMap (getContractsWithExtension ext badIgnoreContracts) badContractsDirs
 
 getOkayContracts :: IO [FilePath]
 getOkayContracts = foldMap getOkayContractsWithExtension supportedExtensions

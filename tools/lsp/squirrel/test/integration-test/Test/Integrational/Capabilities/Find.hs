@@ -1,5 +1,6 @@
 module Test.Integrational.Capabilities.Find
   ( test_findDefinitionAndGoToReferencesCorrespondence
+  , test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback
   , unit_definitionOfId
   , unit_definitionOfLeft
   , unit_referenceOfId
@@ -14,14 +15,75 @@ module Test.Integrational.Capabilities.Find
   , unit_pascaligo_local_type
   ) where
 
-import AST.Scope (Standard)
+import System.FilePath ((</>))
+
+import AST.Scope (Fallback, Standard)
 
 import Test.Common.Capabilities.Find
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (Assertion)
 
+import Range (_rFile, interval)
+
+includeInvariants :: [DefinitionReferenceInvariant]
+includeInvariants =
+  [ DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "A1.mligo"
+    , driDesc = "a1, find references in other files"
+    , driDef = Just (interval 1 5 7)
+    , driRefs =
+      [ (interval 3 10 12){_rFile = contractsDir </> "includes" </> "A2.mligo"}
+      , (interval 3 10 12){_rFile = contractsDir </> "includes" </> "A3.mligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "B3.ligo"
+    , driDesc = "b3, relative directories"
+    , driDef = Just (interval 1 7 9)
+    , driRefs =
+      [ (interval 3 21 23){_rFile = contractsDir </> "includes" </> "B1.ligo"}
+      , (interval 3 12 14){_rFile = contractsDir </> "includes" </> "B2" </> "B2.ligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "C2.religo"
+    , driDesc = "c2, find references in other files"
+    , driDef = Just (interval 1 5 7)
+    , driRefs =
+      [ (interval 4 15 17){_rFile = contractsDir </> "includes" </> "C1.mligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "C3.mligo"
+    , driDesc = "c3, find references in other files"
+    , driDef = Just (interval 1 5 7)
+    , driRefs =
+      [ (interval 4 10 12){_rFile = contractsDir </> "includes" </> "C1.mligo"}
+      ]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "D1.ligo"
+    , driDesc = "d, no references"
+    , driDef = Just (interval 1 7 8)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "includes" </> "D2.ligo"
+    , driDesc = "d, no references"
+    , driDef = Just (interval 1 7 8)
+    , driRefs = []
+    }
+  ]
+
 test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
-test_findDefinitionAndGoToReferencesCorrespondence = findDefinitionAndGoToReferencesCorrespondence @Standard
+test_findDefinitionAndGoToReferencesCorrespondence =
+  findDefinitionAndGoToReferencesCorrespondence @Standard (invariants <> includeInvariants)
+
+-- Since we require `ligo preprocess` for includes, we run `Fallback` tests for
+-- includes in integration tests.
+test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback :: TestTree
+test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback =
+  findDefinitionAndGoToReferencesCorrespondence @Fallback includeInvariants
 
 unit_definitionOfId :: Assertion
 unit_definitionOfId = definitionOfId @Standard

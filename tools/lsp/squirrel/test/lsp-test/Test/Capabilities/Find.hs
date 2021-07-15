@@ -21,7 +21,8 @@ import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (Assertion)
 
 test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
-test_findDefinitionAndGoToReferencesCorrespondence = findDefinitionAndGoToReferencesCorrespondence @Fallback
+test_findDefinitionAndGoToReferencesCorrespondence =
+  findDefinitionAndGoToReferencesCorrespondence @Fallback invariants
 
 unit_definitionOfId :: Assertion
 unit_definitionOfId = definitionOfId @Fallback

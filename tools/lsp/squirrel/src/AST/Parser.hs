@@ -18,7 +18,7 @@ module AST.Parser
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))
-import Control.Exception.Safe (catch, throwM)
+import Control.Exception.Safe (Handler (..), catches, throwM)
 import Control.Lens ((&), (.~), (%~), (+~), (-~), (^.), _1)
 import Control.Monad ((<=<), join, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -71,8 +71,12 @@ parse src = liftIO do
 parsePreprocessed :: HasLigoClient m => Source -> m ContractInfo
 parsePreprocessed src = do
   src' <- liftIO $ deleteExtraMarkers <$> srcToText src
-  (src'', err) <- (second (const Nothing) <$> preprocess src') `catch`
-    \(LigoDecodedExpectedClientFailureException err) -> pure (src', Just $ fromLigoErrorToMsg err)
+  (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
+    [ Handler \(LigoDecodedExpectedClientFailureException err) ->
+      pure (src', Just $ fromLigoErrorToMsg err)
+    , Handler \(_ :: IOError) ->
+      pure (src', Nothing)
+    ]
   maybe id addLigoErrToMsg err <$> parse src''
   where
     addLigoErrToMsg err = getContract . cMsgs %~ (`rewriteAt` err)
