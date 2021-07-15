@@ -506,16 +506,23 @@ module.exports = grammar({
     // I (@heitor.toledo) decided to keep the preprocessors here since we still
     // attempt to parse the contract even if `ligo preprocess` failed.
     preprocessor: $ => field("preprocessor_command", choice(
-      $.include,
+      $.p_include,
       $.p_if,
       $.p_error,
       $.p_define,
     )),
 
-    include: $ => seq(
+    p_include: $ => seq(
       '#',
       'include',
       field("filename", $.String)
+    ),
+
+    p_import: $ => seq(
+      '#',
+      'import',
+      field("filename", $.String),
+      field("alias", $.String),
     ),
 
     p_if: $ => choice(

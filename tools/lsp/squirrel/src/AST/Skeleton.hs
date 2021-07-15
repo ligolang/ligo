@@ -73,6 +73,7 @@ data Binding it
   | BTypeDecl     it it -- ^ (Name) (Type)
   | BAttribute    it -- ^ (Name)
   | BInclude      it
+  | BImport       it it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 type IsRec = Bool

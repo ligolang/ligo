@@ -155,7 +155,8 @@ recognise (SomeRawTree dialect rawTree)
         "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> field "typeValue"
-        "include"    -> BInclude  <$>             field    "filename"
+        "p_include"  -> BInclude  <$>             field    "filename"
+        "p_import"   -> BImport   <$>             field    "filename" <*> field "alias"
         _            -> fallthrough
 
     -- VarDecl

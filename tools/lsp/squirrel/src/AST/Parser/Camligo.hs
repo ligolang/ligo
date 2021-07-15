@@ -26,7 +26,8 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate $ \case
         "fun_decl"  -> BFunction <$> flag "recursive" <*> field "name" <*> fields "arg" <*> fieldOpt "type" <*> field "body"
         "let_decl"  -> BConst    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
-        "include"   -> BInclude  <$>                      field "filename"
+        "p_include" -> BInclude  <$>                      field "filename"
+        "p_import"  -> BImport   <$>                      field "filename" <*> field "alias"
         "type_decl" -> BTypeDecl <$> field "name" <*> field "type"
         _           -> fallthrough
 

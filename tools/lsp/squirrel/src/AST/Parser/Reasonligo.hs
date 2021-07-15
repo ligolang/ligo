@@ -149,7 +149,8 @@ recognise (SomeRawTree dialect rawTree)
         "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
         "type_decl" -> BTypeDecl  <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
-        "include"   -> BInclude   <$> field "filename"
+        "p_include" -> BInclude   <$> field "filename"
+        "p_import"  -> BImport    <$> field "filename" <*> field "alias"
         _           -> fallthrough
 
     -- MichelsonCode

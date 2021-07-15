@@ -444,6 +444,7 @@ getImmediateDecls = \case
 
       BAttribute _ -> pure []
       BInclude _ -> pure []
+      BImport _ _ -> pure []
 
   (match -> Just (_, pat)) -> case pat of
     TRecord typeFields -> foldMapM getImmediateDecls typeFields

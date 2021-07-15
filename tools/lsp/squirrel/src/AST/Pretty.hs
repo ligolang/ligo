@@ -165,6 +165,7 @@ instance Pretty1 Binding where
     BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
     BAttribute    name          -> sexpr "attr"  [name]
     BInclude      fname         -> sexpr "#include" [fname]
+    BImport       fname alias   -> sexpr "#import" [fname, alias]
 
     BFunction isRec name params ty body ->
       sexpr "fun" $ concat
@@ -411,6 +412,7 @@ instance LPP1 'Pascal Binding where
     BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    n t           -> "const" <+> n <+> ":" <+> lpp t
 
     BFunction _ name params ty body ->
@@ -544,6 +546,7 @@ instance LPP1 'Reason Binding where
       [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     node                       -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason Variant where
@@ -643,6 +646,7 @@ instance LPP1 'Caml Binding where
     BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
 
     BFunction isRec name params ty body ->
       foldr (<+>) empty $ concat
