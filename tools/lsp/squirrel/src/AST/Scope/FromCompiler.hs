@@ -3,6 +3,7 @@
 module AST.Scope.FromCompiler where
 
 import Control.Category ((>>>))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Lens ((%~))
 import Data.Function (on)
 import Data.HashMap.Strict ((!))
@@ -20,18 +21,14 @@ import Cli
 import Product
 import Range
 import Util (removeDots)
-import Util.Graph (traverseAM)
+import Util.Graph (traverseAMConcurrently)
 
 data FromCompiler
 
--- FIXME: Two things need to be fixed here:
--- 1. If one contract throws an exception, the entire thing will fail. Standard
+-- FIXME: If one contract throws an exception, the entire thing will fail. Standard
 -- scopes will use Fallback.
--- 2. Performance should be improved. This is O(n²) and ideally we should be
--- able to do something smarter. Maybe unjoining scopes for decls in different
--- files for children or simply calling each contract asynchronously.
-instance HasLigoClient m => HasScopeForest FromCompiler m where
-  scopeForest = traverseAM \(FindContract ast (SomeLIGO dialect _) msg) -> do
+instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest FromCompiler m where
+  scopeForest = traverseAMConcurrently \(FindContract ast (SomeLIGO dialect _) msg) -> do
     (defs, _) <- getLigoDefinitions ast
     pure $ FindContract ast (fromCompiler dialect defs) msg
 

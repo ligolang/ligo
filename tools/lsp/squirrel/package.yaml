@@ -81,8 +81,8 @@ library:
     - grammar/camligo/src/scanner.c
 
   dependencies:
-    - algebraic-graphs
     - aeson
+    - algebraic-graphs
     - bytestring
     - containers
     - data-default
@@ -103,6 +103,8 @@ library:
     - text
     - transformers
     - tree-sitter
+    - unliftio
+    - unliftio-core
     - unordered-containers
 
 executables:
@@ -149,6 +151,8 @@ executables:
       - ligo-squirrel
       - optparse-applicative
       - with-utf8
+
+    ghc-options: -threaded
 
 tests:
   lsp-handlers-test:
