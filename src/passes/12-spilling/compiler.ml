@@ -178,6 +178,8 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_COMPILE_EXPRESSION_SUBST
       | C_TEST_GET_NTH_BS
       | C_TEST_STATE_RESET
+      | C_TEST_BOOTSTRAP_CONTRACT
+      | C_TEST_NTH_BOOTSTRAP_CONTRACT
       | C_TEST_LAST_ORIGINATIONS
       | C_TEST_RUN
       | C_TEST_EVAL

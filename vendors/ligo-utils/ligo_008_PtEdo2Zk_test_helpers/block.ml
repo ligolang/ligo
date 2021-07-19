@@ -244,7 +244,7 @@ let check_constants_consistency constants =
          blocks per roll snapshot")
 
 let initial_context ?(with_commitments = false) constants header
-    initial_accounts =
+    initial_accounts initial_contracts =
   let open Tezos_protocol_008_PtEdo2Zk_parameters in
   let bootstrap_accounts =
     List.map
@@ -252,9 +252,18 @@ let initial_context ?(with_commitments = false) constants header
         Default_parameters.make_bootstrap_account (pkh, pk, amount))
       initial_accounts
   in
+  let ({Account.pkh;_}, _) = List.hd initial_accounts in
+  let bootstrap_contracts =
+    let open Tezos_protocol_008_PtEdo2Zk.Protocol.Parameters_repr in
+    List.map
+      (fun (amount, script) ->
+        {delegate = pkh;amount;script})
+      initial_contracts
+  in
   let parameters =
     Default_parameters.parameters_of_constants
       ~bootstrap_accounts
+      ~bootstrap_contracts
       ~with_commitments
       constants
   in
@@ -306,7 +315,7 @@ let genesis_with_parameters parameters =
 (* if no parameter file is passed we check in the current directory
    where the test is run *)
 let genesis ?with_commitments ?endorsers_per_block ?initial_endorsers
-    ?min_proposal_quorum (initial_accounts : (Account.t * Tez_repr.t) list) =
+    ?min_proposal_quorum (initial_accounts : (Account.t * Tez_repr.t) list) (initial_contracts : (Tez_repr.t * Script_repr.t) list) =
   if initial_accounts = [] then
     Stdlib.failwith "Must have one account with a roll to bake" ;
   let open Tezos_protocol_008_PtEdo2Zk_parameters in
@@ -356,7 +365,7 @@ let genesis ?with_commitments ?endorsers_per_block ?initial_endorsers
       ~operations_hash:Operation_list_list_hash.zero
   in
   let contents = Forge.make_contents ~priority:0 ~seed_nonce_hash:None () in
-  initial_context ?with_commitments constants shell initial_accounts
+  initial_context ?with_commitments constants shell initial_accounts initial_contracts
   >|=? fun context ->
   {
     hash;
