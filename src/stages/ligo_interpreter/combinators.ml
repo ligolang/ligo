@@ -102,7 +102,6 @@ let get_pair : value -> (value * value) option =
       let x = LMap.to_kv_list lm in
       match x with
       | [ (Label "0", x ) ; (Label "1", y) ] -> Some (x,y)
-      | _ -> None 
+      | _ -> None
     )
     | _ -> None
-      

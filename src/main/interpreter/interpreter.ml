@@ -392,6 +392,17 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
     | ( C_TEST_LOG , [ v ]) ->
       let () = Format.printf "%a\n" Ligo_interpreter.PP.pp_value v in
       return_ct C_unit
+    | ( C_TEST_BOOTSTRAP_CONTRACT , [ V_Ct (C_mutez z) ; contract ; storage ] ) ->
+       let contract_ty = List.nth_exn types 1 in
+       let storage_ty = List.nth_exn types 2 in
+       let>> code = Compile_contract (loc, contract, contract_ty) in
+       let>> storage = Eval (loc, storage, storage_ty) in
+       let>> () = Bootstrap_contract ((Z.to_int z), code, storage) in
+       return_ct C_unit
+    | ( C_TEST_NTH_BOOTSTRAP_CONTRACT , [ V_Ct (C_nat n) ] ) ->
+       let n = Z.to_int n in
+       let>> address = Nth_bootstrap_contract n in
+       return_ct (C_address address)
     | ( C_TEST_STATE_RESET , [ n ; amts ] ) ->
       let>> () = Reset_state (loc,n,amts) in
       return_ct C_unit
@@ -737,7 +748,7 @@ let eval : Ast_typed.module_fully_typed -> (env * Tezos_state.context , Errors.i
            fail @@
              Errors.modules_not_supported el.location
     in
-    let* initial_state = Tezos_state.init_ctxt () in
+    let* initial_state = Tezos_state.init_ctxt [] in
     let* (env,state) = bind_fold_list aux (Env.empty_env, initial_state) prg in
     ok (env, state)
 

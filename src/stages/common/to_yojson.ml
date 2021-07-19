@@ -152,6 +152,8 @@ let constant' = function
   | C_TEST_GET_NTH_BS          -> `List [`String "TEST_GET_NTH_BS"; `Null ]
   | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
   | C_TEST_STATE_RESET         -> `List [`String "TEST_STATE_RESET"; `Null ]
+  | C_TEST_BOOTSTRAP_CONTRACT  -> `List [`String "TEST_BOOTSTRAP_CONTRACT"; `Null ]
+  | C_TEST_NTH_BOOTSTRAP_CONTRACT  -> `List [`String "TEST_NTH_BOOTSTRAP_CONTRACT"; `Null ]
   | C_TEST_LAST_ORIGINATIONS   -> `List [`String "TEST_LAST_ORIGINATIONS"; `Null ]
   | C_TEST_COMPILE_META_VALUE  -> `List [`String "TEST_COMPILE_META_VALUE"; `Null ]
   | C_TEST_COMPILE_EXPRESSION_SUBST -> `List [`String "TEST_COMPILE_EXPRESSION_SUBST"; `Null ]

@@ -153,6 +153,8 @@ let constant' ppf : constant' -> unit = function
   | C_TEST_GET_NTH_BS -> fprintf ppf "TEST_GET_NTH_BS"
   | C_TEST_COMPILE_EXPRESSION -> fprintf ppf "TEST_COMPILE_EXPRESSION"
   | C_TEST_STATE_RESET -> fprintf ppf "TEST_STATE_RESET"
+  | C_TEST_BOOTSTRAP_CONTRACT -> fprintf ppf "TEST_BOOTSTRAP_CONTRACT"
+  | C_TEST_NTH_BOOTSTRAP_CONTRACT -> fprintf ppf "TEST_NTH_BOOTSTRAP_CONTRACT"
   | C_TEST_LOG -> fprintf ppf "TEST_LOG"
   | C_TEST_LAST_ORIGINATIONS -> fprintf ppf "TEST_LAST_ORIGINATIONS"
   | C_TEST_COMPILE_META_VALUE -> fprintf ppf "TEST_COMPILE_META_VALUE"

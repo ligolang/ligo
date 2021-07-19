@@ -97,6 +97,7 @@ val genesis :
   ?initial_endorsers:int ->
   ?min_proposal_quorum:int32 ->
   (Account.t * Tez_repr.tez) list ->
+  (Tez_repr.t * Script_repr.t) list ->
   block tzresult Lwt.t
 
 val genesis_with_parameters : Parameters_repr.t -> block tzresult Lwt.t

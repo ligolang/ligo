@@ -15,6 +15,7 @@ type context = {
   baker : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ;
   source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ;
   bootstrapped : Memory_proto_alpha.Protocol.Alpha_context.Contract.t list ;
+  bootstrapped_contracts : Ligo_interpreter.Types.bootstrap_contract list ;
 }
 
 type state_error = Tezos_error_monad.TzCore.error list
@@ -138,6 +139,14 @@ let script_of_compiled_code ~loc (contract : unit Tezos_utils.Michelson.michelso
     storage = storage ;
   }
 
+let script_repr_of_compiled_code ~loc (contract : unit Tezos_utils.Michelson.michelson) (storage : unit Tezos_utils.Michelson.michelson) : (Tezos_protocol_008_PtEdo2Zk.Protocol.Script_repr.t, _) result  =
+  let* contract = ligo_to_canonical ~loc contract in
+  let* storage = ligo_to_canonical ~loc storage in
+  ok @@ Tezos_protocol_008_PtEdo2Zk.Protocol.Script_repr.{
+    code = contract ;
+    storage = storage ;
+  }
+
 let set_timestamp ~loc ({threaded_context;baker;_} as context :context) (timestamp:Z.t) =
   let open Tezos_alpha_test_helpers in
   let* baker = unwrap_baker ~loc baker in
@@ -192,6 +201,7 @@ let get_last_originations : Memory_proto_alpha.Protocol.Alpha_context.Contract.t
 
 let bake_op ~loc (ctxt:context) operation =
   let open Tezos_alpha_test_helpers in
+  (* let open Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context in *)
   let* baker = unwrap_baker ~loc ctxt.baker in
   let* incr = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
     Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.threaded_context
@@ -231,12 +241,30 @@ let originate_contract ~loc (ctxt :context) (contract : unit Tezos_utils.Michels
   let* res = bake_op ~loc ctxt operation in
   ok (dst, res)
 
-let init_ctxt ?(loc=Location.generated) ?(initial_balances=[]) ?(n=2) ()  =
+let get_bootstrapped_contract (n : int) =
+  (* TODO-er: this function repeats work each time called... improve *)
+  let rec foldnat s e = function
+      0 -> e
+    | k -> foldnat s (s e) (k - 1) in
+  let open Tezos_raw_protocol_008_PtEdo2Zk.Contract_repr in
+  let origination_nonce = foldnat incr_origination_nonce (initial_origination_nonce (Tezos_crypto.Operation_hash.hash_bytes [Bytes.of_string "Un festival de GADT."])) n in
+  let contract = to_b58check (originated_contract origination_nonce) in
+  let contract = Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.of_b58check contract in
+  Trace.trace_alpha_tzresult (fun _ -> Errors.generic_error Location.generated "Error parsing address") @@ contract
+
+let init_ctxt ?(loc=Location.generated) ?(initial_balances=[]) ?(n=2) bootstrapped_contracts =
+  let open Tezos_raw_protocol_008_PtEdo2Zk in
+  let* initial_contracts = bind_map_list (fun (mutez, contract, storage, _) ->
+                      let* contract = script_repr_of_compiled_code ~loc contract storage in
+                      ok (Tez_repr.of_mutez_exn (Int64.of_int mutez),contract)) bootstrapped_contracts in
+  let* storage_tys = bind_mapi_list (fun i (_, _, _,storage_ty) ->
+                      let* contract = get_bootstrapped_contract i in
+                      ok (contract, storage_ty)) bootstrapped_contracts in
   let* (threaded_context, acclst) = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
-    Tezos_alpha_test_helpers.Context.init ~initial_balances n
+    Tezos_alpha_test_helpers.Context.init ~initial_balances ~initial_contracts n
   in
   match acclst with
   | baker::source::_ ->
-    ok { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] ; storage_tys = [] ; alpha_context = None }
+    ok { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] ; storage_tys ; alpha_context = None ; bootstrapped_contracts }
   | _ ->
     fail (Errors.bootstrap_not_enough loc)

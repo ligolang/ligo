@@ -294,7 +294,7 @@ module Delegate = struct
 end
 
 let init ?endorsers_per_block ?with_commitments ?(initial_balances = [])
-    ?initial_endorsers ?min_proposal_quorum n =
+    ?initial_endorsers ?min_proposal_quorum ?(initial_contracts = []) n =
   let accounts = Account.generate_accounts ~initial_balances n in
   let contracts =
     List.map
@@ -307,4 +307,5 @@ let init ?endorsers_per_block ?with_commitments ?(initial_balances = [])
     ?initial_endorsers
     ?min_proposal_quorum
     accounts
+    initial_contracts
   >|=? fun blk -> (blk, contracts)

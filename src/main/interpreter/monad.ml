@@ -27,6 +27,8 @@ module Command = struct
   type 'a t =
     | Get_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> LT.expression t
     | Mem_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> bool t
+    | Bootstrap_contract : int * LT.value * LT.value  -> unit t
+    | Nth_bootstrap_contract : int  -> Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t t
     | Reset_state : Location.t * LT.value * LT.value -> unit t
     | External_call : Location.t * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
@@ -116,6 +118,14 @@ module Command = struct
       let* key,key_ty,_ = Michelson_backend.compile_simple_value ~ctxt ~loc _k k_ty in
       let* storage' = Tezos_state.get_big_map ~loc ctxt _m key key_ty in
       ok (Option.is_some storage', ctxt)
+    | Nth_bootstrap_contract (n) ->
+      let* contract = Tezos_state.get_bootstrapped_contract n in
+      ok (contract,ctxt)
+    | Bootstrap_contract (mutez, contract, storage) ->
+      let* contract = trace_option (corner_case ()) @@ LC.get_michelson_contract contract in
+      let* (storage,_,storage_ty) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
+      let ctxt = { ctxt with bootstrapped_contracts = (mutez, contract, storage, storage_ty) :: ctxt.bootstrapped_contracts } in
+      ok ((),ctxt)
     | Reset_state (loc,n,amts) ->
       let* amts = trace_option (corner_case ()) @@ LC.get_list amts in
       let* amts = bind_map_list
@@ -125,7 +135,7 @@ module Command = struct
         amts
       in
       let* n = trace_option (corner_case ()) @@ LC.get_nat n in
-      let* ctxt = Tezos_state.init_ctxt ~loc ~initial_balances:amts ~n:(Z.to_int n) () in
+      let* ctxt = Tezos_state.init_ctxt ~loc ~initial_balances:amts ~n:(Z.to_int n) (List.rev ctxt.bootstrapped_contracts) in
       ok ((),ctxt)
     | External_call (loc, { address; entrypoint }, param, amt) -> (
       let* x = Tezos_state.transfer ~loc ctxt address ?entrypoint param amt in

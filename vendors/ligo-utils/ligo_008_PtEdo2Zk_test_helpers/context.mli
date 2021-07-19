@@ -134,5 +134,6 @@ val init :
   ?initial_balances:int64 list ->
   ?initial_endorsers:int ->
   ?min_proposal_quorum:int32 ->
+  ?initial_contracts:(Tez_repr.t * Script_repr.t) list ->
   int ->
   (Block.t * Alpha_context.Contract.t list) tzresult Lwt.t
