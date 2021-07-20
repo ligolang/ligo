@@ -248,7 +248,7 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
       File "a dummy file name", line 20, character 5:
 
       Invalid case pattern.
-              Can't match on values.|}] ;
+      Can't match on values.|}] ;
   error (`Concrete_pascaligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -340,7 +340,7 @@ let%expect_test "main_cit_cameligo" =
       File "a dummy file name", line 20, character 5:
 
       Invalid pattern.
-              Can't match on values.|}] ;
+      Can't match on values.|}] ;
   error (`Concrete_cameligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -403,7 +403,7 @@ let%expect_test "main_cit_reasonligo" =
       File "a dummy file name", line 20, character 5:
 
       Invalid pattern matching.
-              Can't match on values.|}] ;
+      Can't match on values.|}] ;
   error (`Concrete_reasonligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|

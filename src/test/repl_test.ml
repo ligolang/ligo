@@ -37,14 +37,15 @@ let test_def () =
                                ()
 
 let test_mod () =
-  test_seq init_state_cameligo ["module EURO = struct
-    type t = int
-    let add (a , b : t * t) : t = a + b
-    let zero : t = 0
-    let one : t = 1
-   end"; "EURO.one"]
-           ["EURO"; "1"]
-           ()
+  test_seq init_state_cameligo [
+    "module EURO = struct\n\
+      type t = int\n\
+      let add (a , b : t * t) : t = a + b\n\
+      let zero : t = 0\n\
+      let one : t = 1\n\
+    end"; "EURO.one"]
+    ["EURO"; "1"]
+    ()
 
 let test_use () =
   test_seq init_state_cameligo ["#use \"contracts/build/A.mligo\""; "toto"]
@@ -59,14 +60,14 @@ let test_long () =
             "MYMOD.A.toto";
             "let f (x : int) = MYMOD.f (unit, x)";
             "f 4";
-            "module EURO = struct
-    type t = nat
-    let add (a, b : t * t) : t = a + b
-    module CONST = struct
-        let zero : t = 0n
-        let one : t = 1n
-    end
-end";
+            "module EURO = struct\n\
+                type t = nat\n\
+                let add (a, b : t * t) : t = a + b\n\
+                module CONST = struct\n\
+                    let zero : t = 0n\n\
+                    let one : t = 1n\n\
+                end\n\
+            end";
             "module US_DOLLAR = EURO";
             "US_DOLLAR.CONST.zero + 32n" ]
            ["toto";
@@ -93,14 +94,15 @@ let test_def_jsligo () =
                              ()
 
 let test_mod_jsligo () =
-  test_seq init_state_jsligo ["namespace EURO {
-    export type t = int;
-    export let add = ([a, b]: [t, t]): t => a + b;
-    export let zero: t = 0;
-    export let one: t = 1
-}"; "EURO.one"]
-           ["EURO"; "1"]
-           ()
+  test_seq init_state_jsligo [
+    "namespace EURO {\n\
+      export type t = int;\n\
+      export let add = ([a, b]: [t, t]): t => a + b;\n\
+      export let zero: t = 0;\n\
+      export let one: t = 1\n\
+    }"; "EURO.one"]
+    ["EURO"; "1"]
+    ()
 
 let test_use_jsligo () =
   test_seq init_state_jsligo ["#use \"contracts/build/A.mligo\""; "toto"]
@@ -109,33 +111,33 @@ let test_use_jsligo () =
 
 let test_long_jsligo () =
   test_seq init_state_jsligo ["#use \"contracts/build/A.jsligo\"";
-            "toto";
-            "#import \"contracts/build/B.jsligo\" \"MYMOD\"";
-            "MYMOD.toto";
-            "MYMOD.A.toto";
-            "let g = (x : int) : [list<operation>, int] => MYMOD.f (unit, x)";
-            "g(4)";
-            "namespace EURO {
-    export type t = nat;
-    export let add = ([a, b]: [t, t]): t => a + b;
-    export namespace CONST {
-        export let zero: t = 0 as nat;
-        export let one: t = 1 as nat;
-    };
-}";
-            "import US_DOLLAR = EURO";
-            "US_DOLLAR.CONST.zero + (32 as nat)" ]
-           ["toto";
-            "1";
-            "Done.";
-            "32";
-            "1";
-            "g";
-            "( LIST_EMPTY() , 48 )";
-            "EURO";
-            "US_DOLLAR";
-            "+32"]
-           ()
+        "toto";
+        "#import \"contracts/build/B.jsligo\" \"MYMOD\"";
+        "MYMOD.toto";
+        "MYMOD.A.toto";
+        "let g = (x : int) : [list<operation>, int] => MYMOD.f (unit, x)";
+        "g(4)";
+        "namespace EURO {\n\
+            export type t = nat;\n\
+            export let add = ([a, b]: [t, t]): t => a + b;\n\
+            export namespace CONST {\n\
+                export let zero: t = 0 as nat;\n\
+                export let one: t = 1 as nat;\n\
+            };\n\
+        }";
+        "import US_DOLLAR = EURO";
+        "US_DOLLAR.CONST.zero + (32 as nat)" ]
+        ["toto";
+        "1";
+        "Done.";
+        "32";
+        "1";
+        "g";
+        "( LIST_EMPTY() , 48 )";
+        "EURO";
+        "US_DOLLAR";
+        "+32"]
+        ()
 
 let () =
   Printexc.record_backtrace true ;

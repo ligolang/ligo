@@ -153,7 +153,7 @@ let rec compare_and_stop_at_bound_vars
         (*instantiated_binder*)
         (List.zip_exn k.tv_list p_ctor_args)
       in
-      ok @@ Compare_renaming.List l
+      ok @@ Compare_renaming.Node l
 
     (* Π(ε, …), Γ(φ, …) or Σ(ε, …), Σ(φ, …) or another incompatible combination of Π and Σ *)
     | Some `Row r, P_row { p_row_tag ; p_row_args } ->
@@ -166,7 +166,7 @@ let rec compare_and_stop_at_bound_vars
         (*instantiated_binder*)
         (List.zip_exn (LMap.to_list r.tv_map) (LMap.to_list p_row_args))
       in
-      ok @@ Compare_renaming.List l
+      ok @@ Compare_renaming.Node l
 
     (* _, ∀ α, constraints => β *)
     | _, P_forall pf ->
@@ -174,7 +174,7 @@ let rec compare_and_stop_at_bound_vars
       (* continue recursively after adding the new bound variable to bound_by_foralls *)
       let constraints = List.map ~f:(fun c -> Compare_renaming.Leaf (`Constraint c)) pf.constraints in
       let* tree = compare_and_stop_at_bound_vars ~db_access lhs pf.body.wrap_content (PolySet.add pf.binder bound_by_foralls) in
-      ok @@ Compare_renaming.List (tree :: constraints)
+      ok @@ Compare_renaming.Node (tree :: constraints)
 
     (* _, α *)
     | Some some_assignment, P_variable v ->

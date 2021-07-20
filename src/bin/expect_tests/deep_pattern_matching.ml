@@ -27,7 +27,7 @@ let%expect_test _ =
       6 |   | Two -> 1
 
     Invalid pattern.
-            Can't match on values. |}]
+    Can't match on values. |}]
 
 (* unbound variable *)
 

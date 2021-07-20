@@ -49,8 +49,8 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp loc s
     | `Concrete_pascaligo_unsupported_pattern_type pl ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid case pattern.
-        Can't match on values. @]"
+        "@[<hv>%a@.Invalid case pattern.\
+        @.Can't match on values. @]"
         Snippet.pp_lift @@ Raw.pattern_to_region pl
     | `Concrete_pascaligo_unsupported_string_singleton te ->
       Format.fprintf f
@@ -62,9 +62,9 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_pascaligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid list pattern in a case clause. @.At this point, one of the following is expected:
-  * an empty list pattern \"nil\";
-  * a cons list pattern \"head#tail\".@]"
+        "@[<hv>%a@.Invalid list pattern in a case clause. @.At this point, one of the following is expected:\
+        @.  * an empty list pattern \"nil\";\
+        @.  * a cons list pattern \"head#tail\".@]"
         Snippet.pp_lift @@ Raw.pattern_to_region cons
     | `Concrete_pascaligo_unsupported_deep_tuple_pattern tuple ->
       Format.fprintf f

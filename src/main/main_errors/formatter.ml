@@ -45,7 +45,7 @@ let rec error_ppformat : display_format:string display_format ->
                           %s@,\
                           Program:@,%s@,\
                           %s@,\
-                          Error:@,## IGNORE THE LOCATION IF ANY##@,%a
+                          Error:@,## IGNORE THE LOCATION IF ANY##@,%a@,\
                           %s@,@]"
         sep md_file s grp sep prg sep
         (error_ppformat ~display_format) err sep

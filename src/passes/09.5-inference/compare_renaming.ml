@@ -8,7 +8,7 @@ module Set = RedBlackTrees.PolySet
 
 (* TODO: move this to a separate file, it has little to do with compare_renaming *)
 (* TODO: use the rope from the heuristic instead *)
-type 'a tree = Leaf of 'a | List of 'a tree list
+type 'a tree = Leaf of 'a | Node of 'a tree list
 
 (* For comparisons, None means different, Some tree means equality
    modulo variables and flattening the tree gives the pairs of type
@@ -18,14 +18,14 @@ let (<?) ca cb =
   match ca with
   | Some t1 ->
     (match cb () with
-     | Some t2 -> Some ((List [t1; t2]) : _ tree)
+     | Some t2 -> Some ((Node [t1; t2]) : _ tree)
      | None -> None)
   | None -> None
 
 type 'a cmp = 'a -> 'a -> (type_variable * type_variable) tree option
 
 let use_generated g : 'a cmp = fun expected actual ->
-  if g expected actual = 0 then Some (List []) else None
+  if g expected actual = 0 then Some (Node []) else None
 
 let list : compare:('a cmp) -> ('a list) cmp = fun ~compare  expected actual ->
   let aux = fun tree (exp, act) ->
@@ -34,12 +34,12 @@ let list : compare:('a cmp) -> ('a list) cmp = fun ~compare  expected actual ->
     | Some tree1 -> ( 
       match compare exp act with
       | None -> None
-      | Some tree2 -> Some ((List [tree1; tree2]) : _ tree)
+      | Some tree2 -> Some ((Node [tree1; tree2]) : _ tree)
     )
   in
   if Int.compare (List.length expected) (List.length actual) != 0
   then None
-  else List.fold_left ~f:aux ~init:(Some (List [])) (List.zip_exn expected actual)
+  else List.fold_left ~f:aux ~init:(Some (Node [])) (List.zip_exn expected actual)
 
 let lmap : compare:('a cmp) -> ('a LMap.t) cmp = fun ~compare expected actual ->
   if List.compare Ast_core.Compare.label (LMap.keys expected) (LMap.keys actual) != 0 then
@@ -195,11 +195,11 @@ and constructor_or_row_list : constructor_or_row list cmp = fun expected actual 
 
 let rec flatten_tree : _ tree -> _ list -> _ list = fun t acc ->
   match t with
-  | List (Leaf a        :: rest) -> flatten_tree (List rest)                    (a :: acc)
-  | List ((List [])     :: rest) -> flatten_tree (List rest)                          acc
-  | List (List (hd::tl) :: rest) -> flatten_tree (List (hd :: List tl :: rest))       acc
+  | Node (Leaf a        :: rest) -> flatten_tree (Node rest)                    (a :: acc)
+  | Node ((Node [])     :: rest) -> flatten_tree (Node rest)                          acc
+  | Node (Node (hd::tl) :: rest) -> flatten_tree (Node (hd :: Node tl :: rest))       acc
   | Leaf a                  ->                                                   a :: acc
-  | List []                 ->                                                        acc
+  | Node []                 ->                                                        acc
 
 let flatten_tree : _ tree -> _ list = fun t -> List.rev @@ flatten_tree t []
 
