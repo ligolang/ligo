@@ -40,8 +40,8 @@ end
 
 let other_check all_constraints assignments =
   ignore all_constraints ; ignore assignments ;
-  "check that all_constraints are referencing only variables which are either bound by a forall or assigned in the assignments, 
-  and check that the variables referenced by the assignments are also assigned or bound by a forall within their scope (how do we even know that scope thing???? 
+  "check that all_constraints are referencing only variables which are either bound by a forall or assigned in the assignments,\n\
+  and check that the variables referenced by the assignments are also assigned or bound by a forall within their scope (how do we even know that scope thing????\n\
   leave as TODO for now. Also, todo: call this in the solver somewhere."
   
   (*let check_variable : type_variable -> (type_variable -> constructor_or_row option) -> unit result =
@@ -55,17 +55,17 @@ let other_check all_constraints assignments =
       let repr_unification_var = repr unification_var in
       (* Format.eprintf "In toposort for : %a , repr : %a\n%!" Ast_typed.PP.type_variable unification_var Ast_typed.PP.type_variable repr_unification_var; *)
       if Set.mem repr_unification_var already_seen then 
-        (*return without further changes*) ok (already_seen, Compare_renaming.List [])
+        (*return without further changes*) ok (already_seen, Compare_renaming.Node [])
       else (*add the dependencies first, then our newfound variable if it is still new*) (
         match find_assignment repr_unification_var with
         | Some c_or_r ->
           let args : type_variable list = match c_or_r with `Constructor k -> k.tv_list | `Row r -> List.map ~f:(fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map in
           let* (already_seen, tree) = bind_fold_map_list (fun already_seen tvar -> toposort already_seen tvar repr find_assignment) already_seen args in
           if Set.mem repr_unification_var already_seen then
-            ok (already_seen, Compare_renaming.List tree)
+            ok (already_seen, Compare_renaming.Node tree)
           else 
             ok (PolySet.add repr_unification_var already_seen,
-                Compare_renaming.List [ Compare_renaming.List tree ; Leaf repr_unification_var ])
+                Compare_renaming.Node [ Node tree ; Leaf repr_unification_var ])
         | None ->
           let msg () = (Format.asprintf "TODO ERROR in typecheck_utils: unassigned variable %a" Var.pp repr_unification_var) in
           let () = queue_print (fun () -> Format.eprintf "%s" (msg())) in
@@ -81,7 +81,7 @@ let other_check all_constraints assignments =
           (PolySet.create ~cmp:Var.compare)
           unification_vars
       in
-      ok @@ Compare_renaming.flatten_tree @@ Compare_renaming.List trees
+      ok @@ Compare_renaming.flatten_tree @@ Compare_renaming.Node trees
 
   type canon_constructor_or_row = [
     | `Constructor of < c_tag : Ast_core.constant_tag ; tv_list : type_variable list >

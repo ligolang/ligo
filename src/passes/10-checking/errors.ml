@@ -351,12 +351,12 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
         Snippet.pp l
     | `Typer_bad_substraction loc ->
-      Format.fprintf f "@[<hv>%a@.Invalid subtraction.
-The following forms of subtractions are possible:
-  * timestamp - int = timestamp
-  * timestamp - timestamp = int
-  * int/nat - int/nat = int
-  * mutez/tez - mutez/tez = mutez.@]"
+      Format.fprintf f "@[<hv>%a@.Invalid subtraction.\
+        @.The following forms of subtractions are possible:\
+        @.  * timestamp - int = timestamp\
+        @.  * timestamp - timestamp = int\
+        @.  * int/nat - int/nat = int\
+        @.  * mutez/tez - mutez/tez = mutez.@]"
         Snippet.pp loc
     | `Typer_wrong_size (loc,_t) ->
       Format.fprintf f

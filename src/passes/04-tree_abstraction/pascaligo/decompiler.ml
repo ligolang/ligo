@@ -197,9 +197,8 @@ let rec decompile_expression ?(dialect=Verbose) : AST.expression -> _ result = f
     )
   | None ->
     failwith @@ Format.asprintf
-      "An expression was expected, but this was decompile to statements. \n
-      Expr : %a
-      Loc : %a"
+      "An expression was expected, but this was decompile to statements.\
+      @.Expr : %a@ @,Loc : %a"
       AST.PP.expression e
       Location.pp e.location
 
@@ -209,9 +208,8 @@ and decompile_statements : dialect -> AST.expression -> _ result = fun dialect e
     Some stat -> ok @@ stat
   | None ->
       failwith @@ Format.asprintf
-        "Statements was expected, but this was decompile to expression. \n
-        Expr : %a
-        Loc : %a"
+        "Statements was expected, but this was decompile to expression.\
+        @.Expr : %a@ @,Loc : %a"
         AST.PP.expression expr
         Location.pp expr.location
 

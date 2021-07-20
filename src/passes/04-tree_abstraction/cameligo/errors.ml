@@ -47,8 +47,7 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp reg s
     | `Concrete_cameligo_unsupported_pattern_type pl ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid pattern.
-        Can't match on values. @]"
+        "@[<hv>%a@.Invalid pattern.@.Can't match on values. @]"
         Snippet.pp_lift (List.fold_left ~f:(fun a p -> Region.cover a (Raw.pattern_to_region p)) ~init:Region.ghost pl)
     | `Concrete_cameligo_unsupported_string_singleton te ->
       Format.fprintf f
@@ -60,9 +59,9 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_cameligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected:
-  * an empty list pattern \"[]\";
-  * a cons list pattern \"head :: tail\".@]"
+        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected:\
+        @.  * an empty list pattern \"[]\";\
+        @.  * a cons list pattern \"head :: tail\".@]"
         Snippet.pp_lift @@ Raw.pattern_to_region cons
     | `Concrete_cameligo_recursion_on_non_function reg ->
       Format.fprintf f "@[<hv>%a@.Invalid let declaration.@.Only functions can be recursive. @]"
