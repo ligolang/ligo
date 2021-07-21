@@ -7,18 +7,20 @@ type contract_pass_data = {
   main_name : string ;
 }
 
+let annotation_or_label annot label = String.capitalize_ascii (Option.value ~default:label (Ast_typed.Helpers.remove_empty_annotation annot))
+
 let check_entrypoint_annotation_format ep (exp: expression) =
   match String.split_on_char '%' ep with
     | [ "" ; ep'] ->
       let cap = String.capitalize_ascii ep' in
       if String.equal cap ep' then fail @@ Errors.bad_format_entrypoint_ann ep exp.location
       else ok cap
-    | _ -> fail @@ Errors.bad_format_entrypoint_ann ep exp.location 
+    | _ -> fail @@ Errors.bad_format_entrypoint_ann ep exp.location
 
 
 let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression , self_ast_typed_error) result = fun dat e ->
   let bad_self_err () = Errors.bad_self_type
-    e.type_expression 
+    e.type_expression
     {e.type_expression with
       type_content =
         T_constant {
@@ -40,8 +42,11 @@ let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data
       match dat.contract_type.parameter.type_content with
       | (T_sum _ as t) when String.equal "Default" entrypoint -> ok {dat.contract_type.parameter with type_content = t}
       | T_sum cmap ->
-        let* {associated_type;_} = trace_option (Errors.unmatched_entrypoint entrypoint_exp.location) @@
-          LMap.find_opt (Label entrypoint) cmap.content
+        let content = LMap.to_kv_list cmap.content in
+        let content = List.map ~f:(fun (Label entrypoint, {michelson_annotation;associated_type;_}) ->
+                          (annotation_or_label michelson_annotation entrypoint, associated_type)) content in
+        let* associated_type = trace_option (Errors.unmatched_entrypoint entrypoint_exp.location) @@
+          List.Assoc.find content ~equal:String.equal entrypoint
         in
         ok associated_type
       | t -> ok {dat.contract_type.parameter with type_content = t}

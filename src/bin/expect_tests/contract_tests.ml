@@ -1768,3 +1768,31 @@ let%expect_test _ =
                  NIL operation ;
                  PAIR ;
                  RIGHT (pair (or never int) int) } } } |}]
+
+(* annotations and self *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "self_annotations.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter (or (unit %foo) (unit %b)) ;
+      storage unit ;
+      code { DROP ;
+             SELF %foo ;
+             PUSH mutez 0 ;
+             PUSH unit Unit ;
+             TRANSFER_TOKENS ;
+             PUSH unit Unit ;
+             NIL operation ;
+             DIG 2 ;
+             CONS ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "error_self_annotations.mligo" ; "main" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/error_self_annotations.mligo", line 6, characters 22-26:
+      5 | let main (_,_ : param * unit) : operation list * unit =
+      6 |   let c = (Tezos.self("%a") : unit contract) in
+      7 |   let op = Tezos.transaction () 0mutez c in
+
+    Invalid entrypoint value.
+    The entrypoint value does not match a constructor of the contract parameter. |}]
