@@ -16,6 +16,7 @@ type 'a result_monad = ('a,Errors.interpreter_error) result
 let ( let>>= ) o f = Trace.bind f o
 
 let corner_case ?(loc = Location.generated) () = Errors.generic_error loc "Corner case, please report to devs."
+let add_warning _ = ()
 
 let wrap_compare compare a b =
   let res = compare a b in
@@ -205,7 +206,7 @@ module Command = struct
         Str.substitute_first (Str.regexp ("\\$"^s)) (fun _ -> Michelson_backend.subst_vname s) exp_str
       in
       let exp_as_string' = List.fold_left ~f:aux ~init:exp_as_string substs in
-      let* (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~loc syntax exp_as_string' file_opt substs in
+      let* (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~loc ~add_warning syntax exp_as_string' file_opt substs in
       ok (LT.V_Michelson (LT.Ty_code (mich_v, mich_ty, object_ty)), ctxt)
     | Compile_meta_value (loc,x,ty) ->
       let* x = Michelson_backend.compile_simple_value ~ctxt ~loc x ty in
@@ -221,7 +222,7 @@ module Command = struct
        end
     | Compile_contract_from_file (source_file, entrypoint) ->
       let* contract_code =
-        Michelson_backend.compile_contract source_file entrypoint in
+        Michelson_backend.compile_contract ~add_warning source_file entrypoint in
       let* size =
         let* s = Ligo_compile.Of_michelson.measure contract_code in
         ok @@ LT.V_Ct (C_int (Z.of_int s))
@@ -474,12 +475,12 @@ let rec eval
   | Fail_ligo err -> fail err
   | Try_catch (e', handler) ->
     match Trace.to_stdlib_result (eval e' ctxt log) with
-    | Ok (r, _) -> ok r
-    | Error (`Main_interpret_target_lang_error (loc, e), _) ->
+    | Ok r -> ok r
+    | Error (`Main_interpret_target_lang_error (loc, e)) ->
        eval (handler (LT.Object_lang_ex (loc, e))) ctxt log
-    | Error (`Main_interpret_meta_lang_eval (loc, s), _) ->
+    | Error (`Main_interpret_meta_lang_eval (loc, s)) ->
        eval (handler (LT.Meta_lang_ex {location = loc; reason = Reason s})) ctxt log
-    | Error (`Main_interpret_meta_lang_failwith (loc, v), _) ->
+    | Error (`Main_interpret_meta_lang_failwith (loc, v)) ->
        eval (handler (LT.Meta_lang_ex {location = loc; reason = Val v})) ctxt log
     | Error _ ->
        failwith "Interpreter error not handled"

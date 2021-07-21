@@ -227,12 +227,12 @@ let rec muchused_helper (muchuse : muchuse) : module_fully_typed -> muchuse =
   in
   List.fold_right ~f:aux (List.map ~f:Location.unwrap p) ~init:muchuse
 
-let muchused_map_module : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function module' ->
-  let update_annotations annots c =
-    List.fold_right ~f:(fun a r -> update_annotation a r) annots ~init:c in
+let muchused_map_module ~add_warning : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function module' ->
+  let update_annotations annots =
+    List.iter ~f:(fun a -> add_warning a) annots in
   let _,muchused = muchused_helper muchuse_neutral module' in
   let warn_var v =
     `Self_ast_typed_warning_muchused
       (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
-  update_annotations (List.map ~f:warn_var muchused) @@
+  let () = update_annotations @@ List.map ~f:warn_var muchused in
     ok @@ module'

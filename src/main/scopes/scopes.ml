@@ -6,10 +6,10 @@ module Formatter = Formatter
 
 type sub_module = { m : Ast_core.module_  ; bindings : bindings_map }
 
-let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> ((def_map * scopes), Main_errors.all) result = fun ~with_types ~options core_prg ->
+let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> ((def_map * scopes), Main_errors.all) result = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
-  let compile m = Ligo_compile.Of_core.infer ~options m >>? Ligo_compile.Of_core.typecheck ~options Env in
+  let compile m = Ligo_compile.Of_core.infer ~options m >>? Ligo_compile.Of_core.typecheck ~add_warning ~options Env in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.expression_content with
@@ -176,4 +176,3 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
   let (_,top_d,inner_d,s,_) = declaration 0 core_prg in
   let d = Def_map.union merge_refs top_d inner_d in
   ok @@ (d,s)
-

@@ -27,7 +27,7 @@ let to_singleton = function
 
 module Ne = struct
 
-  type 'a t = 'a * 'a list
+  type 'a t = 'a * 'a List.t
 
   let unzip ((hd, tl): _ t) =
     let (a, b) = hd and (la, lb) = List.unzip tl in

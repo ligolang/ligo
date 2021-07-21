@@ -2,13 +2,13 @@ open Trace
 open Test_helpers
 open Ast_imperative
 
-let get_program = wrap_ref (fun s ->
-      let* program = type_file "./contracts/pledge.religo" Env options in
+let get_program ~add_warning = wrap_ref (fun s ->
+      let* program = type_file ~add_warning "./contracts/pledge.religo" Env options in
       s := Some program ;
       ok program)
 
-let compile_main () =
-  let* typed_prg,_    = get_program () in
+let compile_main ~add_warning () =
+  let* typed_prg,_    = get_program ~add_warning () in
   let* mini_c_prg     = Ligo_compile.Of_typed.compile typed_prg in
   let* michelson_prg  = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let* _contract =
@@ -35,8 +35,8 @@ let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
   empty_op_list
 
 
-let pledge () =
-  let* (program,env) = get_program () in
+let pledge ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let storage = e_address oracle_addr in
   let parameter = e_unit () in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
@@ -47,8 +47,8 @@ let pledge () =
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
-let distribute () =
-  let* (program,env) = get_program () in
+let distribute ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
@@ -58,8 +58,8 @@ let distribute () =
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
-let distribute_unauthorized () =
-  let* (program,env) = get_program () in
+let distribute_unauthorized ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
@@ -70,7 +70,7 @@ let distribute_unauthorized () =
     "You're not the oracle for this distribution."
 
 let main = test_suite "Pledge & Distribute" [
-    test "donate" pledge ;
-    test "distribute" distribute ;
-    test "distribute (unauthorized)" distribute_unauthorized ;
+    test_w "donate"                    (pledge                 ) ;
+    test_w "distribute"                (distribute             ) ;
+    test_w "distribute (unauthorized)" (distribute_unauthorized) ;
 ]

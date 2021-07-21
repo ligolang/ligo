@@ -12,7 +12,8 @@ let generator_to_variant s =
     fail @@ Main_errors.invalid_generator s
 
 let mutate_ast source_file syntax infer protocol_version libs display_format seed generator =
-  format_result ~display_format (Parsing.Formatter.ppx_format) @@
+  Trace.warning_with @@ fun add_warning get_warnings ->
+  format_result ~display_format (Parsing.Formatter.ppx_format) get_warnings @@
     let* generator = generator_to_variant generator in
     let get_module = match generator with
       | `Generator_list -> (module Fuzz.Lst : Fuzz.Monad)
@@ -23,7 +24,7 @@ let mutate_ast source_file syntax infer protocol_version libs display_format see
     let options       = Compiler_options.make ~infer ~init_env ~libs () in
     let* meta     = Compile.Of_source.extract_meta syntax source_file in
     let* c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
-    let* imperative_prg = Compile.Utils.to_imperative ~options ~meta c_unit source_file in
+    let* imperative_prg = Compile.Utils.to_imperative ~add_warning ~options ~meta c_unit source_file in
     let* _, imperative_prg = Fuzzer.mutate_module_ ?n:seed imperative_prg in
     let dialect         = Decompile.Helpers.Dialect_name "verbose" in
     let syntax = Helpers.variant_to_syntax meta.syntax in
@@ -32,7 +33,7 @@ let mutate_ast source_file syntax infer protocol_version libs display_format see
     ok @@ buffer
 
 let mutate_cst source_file syntax infer protocol_version libs display_format seed generator =
-  format_result ~display_format (Parsing.Formatter.ppx_format) @@
+  format_result ~display_format (Parsing.Formatter.ppx_format) (fun () -> []) @@
     let* generator = generator_to_variant generator in
     let get_module = match generator with
       | `Generator_list -> (module Fuzz.Lst : Fuzz.Monad)

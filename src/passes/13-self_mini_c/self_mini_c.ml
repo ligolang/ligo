@@ -13,7 +13,7 @@ let map_expression :
   (expression -> expression) -> (expression -> expression) =
   fun f e ->
   match to_stdlib_result @@ Helpers.map_expression (fun e -> ok (f e)) e with
-  | Ok (e, _) -> e
+  | Ok (e) -> e
   | Error _ -> assert false (* impossible *)
 
 

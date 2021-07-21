@@ -7,8 +7,8 @@ let refile = "./contracts/basic_multisig/multisig.religo"
 
 let get_program f = get_program f (Contract "main")
 
-let compile_main f () =
-  let* typed_prg,_ = get_program f () in
+let compile_main ~add_warning f () =
+  let* typed_prg,_ = get_program ~add_warning f () in
   let* mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
   let* michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let* _contract =
@@ -63,8 +63,8 @@ let chain_id_zero =
   e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
-let params counter payload keys is_validl f =
-  let* _,env   = get_program f () in
+let params ~add_warning counter payload keys is_validl f =
+  let* _,env   = get_program ~add_warning f () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in
@@ -83,44 +83,44 @@ let params counter payload keys is_validl f =
     ]
 
 (* Provide one valid signature when the threshold is two of two keys *)
-let not_enough_1_of_2 f () =
-  let* program = get_program f () in
+let not_enough_1_of_2 ~add_warning f () =
+  let* program = get_program ~add_warning f () in
   let exp_failwith = "Not enough signatures passed the check" in
   let keys = gen_keys () in
-  let* test_params = params 0 empty_payload [keys] [true] f in
+  let* test_params = params ~add_warning 0 empty_payload [keys] [true] f in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~sender:first_contract () in
   let* () = expect_string_failwith
     program ~options "main" (e_pair test_params (init_storage 2 0 [keys;gen_keys()])) exp_failwith in
   ok ()
 
-let unmatching_counter f () =
-  let* program = get_program f () in
+let unmatching_counter ~add_warning f () =
+  let* program = get_program ~add_warning f () in
   let exp_failwith = "Counters does not match" in
   let keys = gen_keys () in
-  let* test_params = params 1 empty_payload [keys] [true] f in
+  let* test_params = params ~add_warning 1 empty_payload [keys] [true] f in
   let* () = expect_string_failwith
     program "main" (e_pair test_params (init_storage 1 0 [keys])) exp_failwith in
   ok ()
 
 (* Provide one invalid signature (correct key but incorrect signature)
    when the threshold is one of one key *)
-let invalid_1_of_1 f () =
-  let* program = get_program f () in
+let invalid_1_of_1 ~add_warning f () =
+  let* program = get_program ~add_warning f () in
   let exp_failwith = "Invalid signature" in
   let keys = [gen_keys ()] in
-  let* test_params = params 0 empty_payload keys [false] f in
+  let* test_params = params ~add_warning 0 empty_payload keys [false] f in
   let* () = expect_string_failwith
     program "main" (e_pair test_params (init_storage 1 0 keys)) exp_failwith in
   ok ()
 
 (* Provide one valid signature when the threshold is one of one key *)
-let valid_1_of_1 f () =
-  let* program = get_program f () in
+let valid_1_of_1 ~add_warning f () =
+  let* program = get_program ~add_warning f () in
   let* op_list = op_list in
   let keys = gen_keys () in
   let* () = expect_eq_n_trace_aux [0;1;2] program "main"
       (fun n ->
-        let* params = params n empty_payload [keys] [true] f in
+        let* params = params ~add_warning n empty_payload [keys] [true] f in
         ok @@ e_pair params (init_storage 1 n [keys])
       )
       (fun n ->
@@ -129,14 +129,14 @@ let valid_1_of_1 f () =
   ok ()
 
 (* Provive two valid signatures when the threshold is two of three keys *)
-let valid_2_of_3 f () =
-  let* program = get_program f () in
+let valid_2_of_3 ~add_warning f () =
+  let* program = get_program ~add_warning f () in
   let* op_list = op_list in
   let param_keys = [gen_keys (); gen_keys ()] in
   let st_keys = param_keys @ [gen_keys ()] in
   let* () = expect_eq_n_trace_aux [0;1;2] program "main"
       (fun n ->
-        let* params = params n empty_payload param_keys [true;true] f in
+        let* params = params ~add_warning n empty_payload param_keys [true;true] f in
         ok @@ e_pair params (init_storage 2 n st_keys)
       )
       (fun n ->
@@ -145,52 +145,52 @@ let valid_2_of_3 f () =
   ok ()
 
 (* Provide one invalid signature and two valid signatures when the threshold is two of three keys *)
-let invalid_3_of_3 f () =
-  let* program = get_program f () in
+let invalid_3_of_3 ~add_warning f () =
+  let* program = get_program ~add_warning f () in
   let valid_keys = [gen_keys() ; gen_keys()] in
   let invalid_key = gen_keys () in
   let param_keys = valid_keys @ [invalid_key] in
   let st_keys = valid_keys @ [gen_keys ()] in
-  let* test_params = params 0 empty_payload param_keys [false;true;true] f in
+  let* test_params = params ~add_warning 0 empty_payload param_keys [false;true;true] f in
   let exp_failwith = "Invalid signature" in
   let* () = expect_string_failwith
     program "main" (e_pair test_params (init_storage 2 0 st_keys)) exp_failwith in
   ok ()
 
 (* Provide two valid signatures when the threshold is three of three keys *)
-let not_enough_2_of_3 f () =
-  let* program = get_program f () in
+let not_enough_2_of_3 ~add_warning f () =
+  let* program = get_program ~add_warning f () in
   let valid_keys = [gen_keys() ; gen_keys()] in
   let st_keys = gen_keys () :: valid_keys  in
-  let* test_params = params 0 empty_payload (valid_keys) [true;true] f in
+  let* test_params = params ~add_warning 0 empty_payload (valid_keys) [true;true] f in
   let exp_failwith = "Not enough signatures passed the check" in
   let* () = expect_string_failwith
     program "main" (e_pair test_params (init_storage 3 0 st_keys)) exp_failwith in
   ok ()
 
 let main = test_suite "Basic Multisig" [
-    test "compile"                       (compile_main       file);
-    test "unmatching_counter"            (unmatching_counter file);
-    test "valid_1_of_1"                  (valid_1_of_1       file);
-    test "invalid_1_of_1"                (invalid_1_of_1     file);
-    test "not_enough_signature"          (not_enough_1_of_2  file);
-    test "valid_2_of_3"                  (valid_2_of_3       file);
-    test "invalid_3_of_3"                (invalid_3_of_3     file);
-    test "not_enough_2_of_3"             (not_enough_2_of_3  file);
-    test "compile (mligo)"               (compile_main       mfile);
-    test "unmatching_counter (mligo)"    (unmatching_counter mfile);
-    test "valid_1_of_1 (mligo)"          (valid_1_of_1       mfile);
-    test "invalid_1_of_1 (mligo)"        (invalid_1_of_1     mfile);
-    test "not_enough_signature (mligo)"  (not_enough_1_of_2  mfile);
-    test "valid_2_of_3 (mligo)"          (valid_2_of_3       mfile);
-    test "invalid_3_of_3 (mligo)"        (invalid_3_of_3     mfile);
-    test "not_enough_2_of_3 (mligo)"     (not_enough_2_of_3  mfile);
-    test "compile (religo)"              (compile_main       refile);
-    test "unmatching_counter (religo)"   (unmatching_counter refile);
-    test "valid_1_of_1 (religo)"         (valid_1_of_1       refile);
-    test "invalid_1_of_1 (religo)"       (invalid_1_of_1     refile);
-    test "not_enough_signature (religo)" (not_enough_1_of_2  refile);
-    test "valid_2_of_3 (religo)"         (valid_2_of_3       refile);
-    test "invalid_3_of_3 (religo)"       (invalid_3_of_3     refile);
-    test "not_enough_2_of_3 (religo)"    (not_enough_2_of_3  refile);
+    test_w "compile"                       (compile_main       file);
+    test_w "unmatching_counter"            (unmatching_counter file);
+    test_w "valid_1_of_1"                  (valid_1_of_1       file);
+    test_w "invalid_1_of_1"                (invalid_1_of_1     file);
+    test_w "not_enough_signature"          (not_enough_1_of_2  file);
+    test_w "valid_2_of_3"                  (valid_2_of_3       file);
+    test_w "invalid_3_of_3"                (invalid_3_of_3     file);
+    test_w "not_enough_2_of_3"             (not_enough_2_of_3  file);
+    test_w "compile (mligo)"               (compile_main       mfile);
+    test_w "unmatching_counter (mligo)"    (unmatching_counter mfile);
+    test_w "valid_1_of_1 (mligo)"          (valid_1_of_1       mfile);
+    test_w "invalid_1_of_1 (mligo)"        (invalid_1_of_1     mfile);
+    test_w "not_enough_signature (mligo)"  (not_enough_1_of_2  mfile);
+    test_w "valid_2_of_3 (mligo)"          (valid_2_of_3       mfile);
+    test_w "invalid_3_of_3 (mligo)"        (invalid_3_of_3     mfile);
+    test_w "not_enough_2_of_3 (mligo)"     (not_enough_2_of_3  mfile);
+    test_w "compile (religo)"              (compile_main       refile);
+    test_w "unmatching_counter (religo)"   (unmatching_counter refile);
+    test_w "valid_1_of_1 (religo)"         (valid_1_of_1       refile);
+    test_w "invalid_1_of_1 (religo)"       (invalid_1_of_1     refile);
+    test_w "not_enough_signature (religo)" (not_enough_1_of_2  refile);
+    test_w "valid_2_of_3 (religo)"         (valid_2_of_3       refile);
+    test_w "invalid_3_of_3 (religo)"       (invalid_3_of_3     refile);
+    test_w "not_enough_2_of_3 (religo)"    (not_enough_2_of_3  refile);
   ]

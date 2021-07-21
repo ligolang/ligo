@@ -6,8 +6,8 @@ open Main_errors
 
 let get_program = get_program "./contracts/hashlock.mligo" (Contract "main")
 
-let compile_main () =
-  let* typed_prg,_   = get_program () in
+let compile_main ~add_warning () =
+  let* typed_prg,_   = get_program ~add_warning () in
   let* mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
   let* michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let* _contract =
@@ -39,8 +39,8 @@ let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
   empty_op_list
 
 
-let commit () =
-  let* (program,env) = get_program () in
+let commit ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* now = mk_time "2000-01-01T00:10:10Z" in
   let* lock_time = mk_time "2000-01-02T00:10:10Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
@@ -72,8 +72,8 @@ let commit () =
     (e_pair salted_hash init_storage) (e_pair empty_op_list post_storage)
 
 (* Test that the contract fails if we haven't committed before revealing the answer *)
-let reveal_no_commit () =
-  let* (program,env) = get_program () in
+let reveal_no_commit ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -89,8 +89,8 @@ let reveal_no_commit () =
     "You have not made a commitment to hash against yet."
 
 (* Test that the contract fails if our commit isn't 24 hours old yet *)
-let reveal_young_commit () =
-  let* (program,env) = get_program () in
+let reveal_young_commit ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -121,8 +121,8 @@ let reveal_young_commit () =
     "It has not been 24 hours since your commit yet."
 
 (* Test that the contract fails if our reveal doesn't meet our commitment *)
-let reveal_breaks_commit () =
-  let* (program,env) = get_program () in
+let reveal_breaks_commit ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -152,8 +152,8 @@ let reveal_breaks_commit () =
     "This reveal does not match your commitment."
 
 (* Test that the contract fails if we reveal the wrong bytes for the stored hash *)
-let reveal_wrong_commit () =
-  let* (program,env) = get_program () in
+let reveal_wrong_commit ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
@@ -183,8 +183,8 @@ let reveal_wrong_commit () =
     "Your commitment did not match the storage hash."
 
 (* Test that the contract fails if we try to reuse it after unused flag changed *)
-let reveal_no_reuse () =
-  let* (program,env) = get_program () in
+let reveal_no_reuse ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
@@ -214,8 +214,8 @@ let reveal_no_reuse () =
     "This contract has already been used."
 
 (* Test that the contract executes successfully with valid commit-reveal *)
-let reveal () =
-  let* (program,env) = get_program () in
+let reveal ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -245,12 +245,12 @@ let reveal () =
     (e_pair reveal init_storage) (e_pair empty_op_list post_storage)
 
 let main = test_suite "Hashlock (CameLIGO)" [
-    test "compile" compile_main ;
-    test "commit" commit ;
-    test "reveal (fail if no commitment)" reveal_no_commit ;
-    test "reveal (fail if commit too young)" reveal_young_commit ;
-    test "reveal (fail if breaks commitment)" reveal_breaks_commit ;
-    test "reveal (fail if wrong bytes for hash)" reveal_wrong_commit ;
-    test "reveal (fail if attempt to reuse)" reveal_no_reuse ;
-    test "reveal" reveal ;
+    test_w "compile"                               (compile_main) ;
+    test_w "commit"                                (commit) ;
+    test_w "reveal (fail if no commitment)"        (reveal_no_commit) ;
+    test_w "reveal (fail if commit too young)"     (reveal_young_commit) ;
+    test_w "reveal (fail if breaks commitment)"    (reveal_breaks_commit) ;
+    test_w "reveal (fail if wrong bytes for hash)" (reveal_wrong_commit) ;
+    test_w "reveal (fail if attempt to reuse)"     (reveal_no_reuse) ;
+    test_w "reveal"                                (reveal) ;
 ]

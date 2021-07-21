@@ -341,12 +341,21 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; (good_test "pm_ticket.mligo") ; "main" ] ;
   [%expect{|
-    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 18-19:
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
+      6 |   match p with
+      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+    :
     Warning: unused variable "myt".
     Hint: replace it by "_myt" to prevent this warning.
+
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 18-19:
+      4 |
+      5 | let main = fun (p,s: parameter * storage) ->
+      6 |   match p with
+    :
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter (pair (pair (nat %mynat) (ticket %myt int)) (option nat)) ;
       storage nat ;

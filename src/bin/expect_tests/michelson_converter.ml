@@ -47,20 +47,38 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; (contract "michelson_converter_pair.mligo") ; "main_r" ; "test_input_pair_r" ; "s"] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+     15 | type param_l = t4 michelson_pair_left_comb
+     16 | let main_l (p, s : param_l * string) : (operation list * string) =
+     17 |   let r4 : t4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+     10 | type param_r = t4 michelson_pair_right_comb
+     11 | let main_r (p, s : param_r * string) : (operation list * string) =
+     12 |   let r4 : t4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , "eqeq" ) |}] ;
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_r" ] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+     15 | type param_l = t4 michelson_pair_left_comb
+     16 | let main_l (p, s : param_l * string) : (operation list * string) =
+     17 |   let r4 : t4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+     10 | type param_r = t4 michelson_pair_right_comb
+     11 | let main_r (p, s : param_r * string) : (operation list * string) =
+     12 |   let r4 : t4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
@@ -80,20 +98,38 @@ let%expect_test _ =
              PAIR } } |}];
   run_ligo_good [ "dry-run" ; (contract "michelson_converter_pair.mligo") ; "main_l" ; "test_input_pair_l" ; "s"] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+     15 | type param_l = t4 michelson_pair_left_comb
+     16 | let main_l (p, s : param_l * string) : (operation list * string) =
+     17 |   let r4 : t4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+     10 | type param_r = t4 michelson_pair_right_comb
+     11 | let main_r (p, s : param_r * string) : (operation list * string) =
+     12 |   let r4 : t4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , "eqeq" ) |}] ;
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_pair.mligo") ; "main_l" ] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+     15 | type param_l = t4 michelson_pair_left_comb
+     16 | let main_l (p, s : param_l * string) : (operation list * string) =
+     17 |   let r4 : t4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_pair.mligo", line 16, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_pair.mligo", line 11, characters 15-16:
+     10 | type param_r = t4 michelson_pair_right_comb
+     11 | let main_r (p, s : param_r * string) : (operation list * string) =
+     12 |   let r4 : t4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
@@ -102,20 +138,38 @@ let%expect_test _ =
       code { CAR ; DUP ; CAR ; CDR ; SWAP ; CAR ; CDR ; CONCAT ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_r" ; "vr" ; "Foo4 2"] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+     29 | type param_l = st4 michelson_or_left_comb
+     30 | let main_l (p, s : param_l * st4) : (operation list * st4) =
+     31 |   let r4 : st4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+     24 | type param_r = st4 michelson_or_right_comb
+     25 | let main_r (p, s : param_r * st4) : (operation list * st4) =
+     26 |   let r4 : st4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_r" ] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+     29 | type param_l = st4 michelson_or_left_comb
+     30 | let main_l (p, s : param_l * st4) : (operation list * st4) =
+     31 |   let r4 : st4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+     24 | type param_r = st4 michelson_or_right_comb
+     25 | let main_r (p, s : param_r * st4) : (operation list * st4) =
+     26 |   let r4 : st4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
@@ -133,20 +187,38 @@ let%expect_test _ =
              PAIR } } |}] ;
   run_ligo_good [ "dry-run" ; contract "michelson_converter_or.mligo" ; "main_l" ; "vl" ; "Foo4 2"] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+     29 | type param_l = st4 michelson_or_left_comb
+     30 | let main_l (p, s : param_l * st4) : (operation list * st4) =
+     31 |   let r4 : st4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+     24 | type param_r = st4 michelson_or_right_comb
+     25 | let main_r (p, s : param_r * st4) : (operation list * st4) =
+     26 |   let r4 : st4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
     ( LIST_EMPTY() , Baz4("eq") ) |}] ;
   run_ligo_good [ "compile-contract" ; contract "michelson_converter_or.mligo" ; "main_l" ] ;
   [%expect {|
-    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+     29 | type param_l = st4 michelson_or_left_comb
+     30 | let main_l (p, s : param_l * st4) : (operation list * st4) =
+     31 |   let r4 : st4 = Layout.convert_from_left_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-    File "../../test/contracts/michelson_converter_or.mligo", line 30, characters 15-16:
+
+    File "../../test/contracts/michelson_converter_or.mligo", line 25, characters 15-16:
+     24 | type param_r = st4 michelson_or_right_comb
+     25 | let main_r (p, s : param_r * st4) : (operation list * st4) =
+     26 |   let r4 : st4 = Layout.convert_from_right_comb p in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
@@ -167,18 +239,37 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_r"] ;
   [%expect {|
-    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25:
-    Warning: unused variable "store".
-    Hint: replace it by "_store" to prevent this warning.
-    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18:
-    Warning: unused variable "action".
-    Hint: replace it by "_action" to prevent this warning.
-    File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25:
-    Warning: unused variable "store".
-    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 12-18:
+      8 |
+      9 | let main_l (action, store : param_l * unit) : (operation list * unit) =
+     10 |  ([] : operation list),  unit
+    :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
+
+    File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25:
+      8 |
+      9 | let main_l (action, store : param_l * unit) : (operation list * unit) =
+     10 |  ([] : operation list),  unit
+    :
+    Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
+
+    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18:
+      5 |
+      6 | let main_r (action, store : param_r * unit) : (operation list * unit) =
+      7 |  ([] : operation list),  unit
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
+
+    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25:
+      5 |
+      6 | let main_r (action, store : param_r * unit) : (operation list * unit) =
+      7 |  ([] : operation list),  unit
+    :
+    Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
 
     { parameter (pair (int %foo) (pair (nat %bar) (string %baz))) ;
       storage unit ;
@@ -186,18 +277,37 @@ let%expect_test _ =
 
   run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_l"] ;
   [%expect {|
-    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25:
-    Warning: unused variable "store".
-    Hint: replace it by "_store" to prevent this warning.
-    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18:
-    Warning: unused variable "action".
-    Hint: replace it by "_action" to prevent this warning.
-    File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25:
-    Warning: unused variable "store".
-    Hint: replace it by "_store" to prevent this warning.
     File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 12-18:
+      8 |
+      9 | let main_l (action, store : param_l * unit) : (operation list * unit) =
+     10 |  ([] : operation list),  unit
+    :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
+
+    File "../../test/contracts/michelson_comb_type_operators.mligo", line 9, characters 20-25:
+      8 |
+      9 | let main_l (action, store : param_l * unit) : (operation list * unit) =
+     10 |  ([] : operation list),  unit
+    :
+    Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
+
+    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 12-18:
+      5 |
+      6 | let main_r (action, store : param_r * unit) : (operation list * unit) =
+      7 |  ([] : operation list),  unit
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
+
+    File "../../test/contracts/michelson_comb_type_operators.mligo", line 6, characters 20-25:
+      5 |
+      6 | let main_r (action, store : param_r * unit) : (operation list * unit) =
+      7 |  ([] : operation list),  unit
+    :
+    Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
 
     { parameter (pair (pair (int %foo) (nat %bar)) (string %baz)) ;
       storage unit ;
@@ -207,6 +317,10 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; (contract "michelson_converter_mixed_pair_or.mligo") ; "main2" ] ;
   [%expect {|
     File "../../test/contracts/michelson_converter_mixed_pair_or.mligo", line 29, characters 15-16:
+     28 |
+     29 | let main2 (pm, s : union1_michelson * nat) =
+     30 |   let p = union1_from_michelson pm in
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
@@ -222,6 +336,10 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; (contract "double_fold_converter.religo") ; "main" ] ;
   [%expect {|
     File "../../test/contracts/double_fold_converter.religo", line 33, characters 8-18:
+     32 |     let tokenOwner: option(tokenOwner) = Map.find_opt(transferContents.token_id, storage);
+     33 |     let tokenOwner = switch (tokenOwner) {
+     34 |         | None => (failwith(errorTokenUndefined): tokenOwner)
+    :
     Warning: unused variable "tokenOwner".
     Hint: replace it by "_tokenOwner" to prevent this warning.
 

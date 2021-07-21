@@ -155,7 +155,7 @@ end
 
 let main = test_suite "Typer (from core AST)"
   [
-    test "int" int ;
+    test "int"             int ;
     test "unit"            TestExpressions.unit ;
     test "int2"            TestExpressions.int ;
     test "bool"            TestExpressions.bool ;

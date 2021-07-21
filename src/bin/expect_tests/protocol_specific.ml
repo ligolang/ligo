@@ -7,6 +7,10 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "protocol_dalphanet.mligo" ; "main"  ] ;
   [%expect{|
     File "../../test/contracts/protocol_dalphanet.mligo", line 12, characters 13-14:
+     11 |
+     12 | let main (p, s : bls_l * bool) : operation list * bool =
+     13 |  (([] : operation list), Tezos.pairing_check p)
+    :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
@@ -31,6 +35,10 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "sapling.mligo" ; "main" ; "--disable-michelson-typechecking" ; "--protocol=edo" ] ;
   [%expect {|
     File "../../test/contracts/sapling.mligo", line 8, characters 14-19:
+      7 |
+      8 | let main (tr, store : parameter * storage) : return =
+      9 |  ([] : operation list),
+    :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
 

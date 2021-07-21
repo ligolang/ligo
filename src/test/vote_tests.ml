@@ -24,8 +24,8 @@ let reset title start_time finish_time =
 
 let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 
-let init_vote () =
-  let* (program, env) = get_program () in
+let init_vote ~add_warning () =
+  let* (program, env) = get_program ~add_warning () in
   let* result =
     Test_helpers.run_typed_program_with_imperative_input
       (program, env) "main" (e_pair yea (init_storage "basic")) in
@@ -39,5 +39,5 @@ let init_vote () =
   ok ()
 
 let main = test_suite "Vote" [
-    test "type" init_vote ;
+    test_w "type" init_vote;
   ]
