@@ -1,6 +1,10 @@
 module Test.Common.Capabilities.CodeAction.ExtractTypeAlias
   ( extractTypeAliasDriver
+  , extractTextEdits
   , testCases
+  , constructExpectedWorkspaceEdit
+  , testInfos
+  , TestInfo (..)
   ) where
 
 import Control.Lens
