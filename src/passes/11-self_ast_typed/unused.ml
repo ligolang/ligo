@@ -130,10 +130,10 @@ and defuse_of_record defuse {body;fields;_} =
   let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse vars' in
   (defuse, unused)
 
-let rec unused_map_module : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function (Module_Fully_Typed p) ->
-  let self = unused_map_module in
-  let update_annotations annots c =
-    List.fold_right ~f:(fun a r -> update_annotation a r) annots ~init:c in
+let rec unused_map_module ~add_warning : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function (Module_Fully_Typed p) ->
+  let self = unused_map_module ~add_warning in
+  let update_annotations annots =
+    List.iter ~f:add_warning annots in
   let aux = fun (x : declaration) ->
     match x with
     | Declaration_constant {expr ; _} -> (
@@ -142,8 +142,8 @@ let rec unused_map_module : module_fully_typed -> (module_fully_typed, self_ast_
       let warn_var v =
         `Self_ast_typed_warning_unused
           (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
-      update_annotations (List.map ~f:warn_var unused) @@
-        ok @@ ()
+      let () = update_annotations @@ List.map ~f:warn_var unused in
+      ok @@ ()
     )
     | Declaration_type _ -> ok @@ ()
     | Declaration_module {module_} ->

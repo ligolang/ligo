@@ -6,17 +6,19 @@ module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
 let test source_file syntax infer protocol_version display_format =
-    format_result ~display_format (Ligo_interpreter.Formatter.tests_format) @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~display_format (Ligo_interpreter.Formatter.tests_format) get_warnings @@
       let* init_env   = Helpers.get_initial_env ~test_env:true protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let* typed,_    = Compile.Utils.type_file ~options source_file syntax Env in
+      let* typed,_    = Compile.Utils.type_file ~add_warning ~options source_file syntax Env in
       Interpreter.eval_test typed
 
 let dry_run source_file entry_point input storage amount balance sender source now syntax infer protocol_version display_format werror =
-    format_result ~werror ~display_format (Decompile.Formatter.expression_format) @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~werror ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let* mini_c_prg,_,typed_prg,env = Build.build_contract_use  ~options syntax source_file in
+      let* mini_c_prg,_,typed_prg,env = Build.build_contract_use ~add_warning ~options syntax source_file in
       let* michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg entry_point in
       let* parameter_ty =
         (* fails if the given entry point is not a valid contract *)
@@ -34,13 +36,14 @@ let dry_run source_file entry_point input storage amount balance sender source n
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
 
 let interpret expression init_file syntax infer protocol_version amount balance sender source now display_format =
-    format_result ~display_format (Decompile.Formatter.expression_format) @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       let* init_env   = Helpers.get_initial_env protocol_version in
       let* protocol_version = Helpers.protocol_to_variant protocol_version in
       let options = Compiler_options.make ~infer ~init_env ~protocol_version () in
       let* (decl_list,mods,env) = match init_file with
         | Some init_file ->
-           let* mini_c_prg,mods,_,env = Build.build_contract_use ~options syntax init_file in
+           let* mini_c_prg,mods,_,env = Build.build_contract_use ~add_warning ~options syntax init_file in
            ok (mini_c_prg,mods,env)
         | None -> ok ([],Ast_core.SMap.empty,init_env) in
       let* typed_exp,_    = Compile.Utils.type_expression ~options init_file syntax expression env in
@@ -52,10 +55,11 @@ let interpret expression init_file syntax infer protocol_version amount balance 
 
 
 let evaluate_call source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format werror =
-    format_result ~werror ~display_format (Decompile.Formatter.expression_format) @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~werror ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let* mini_c_prg,mods,typed_prg,env = Build.build_contract_use ~options syntax source_file in
+      let* mini_c_prg,mods,typed_prg,env = Build.build_contract_use ~add_warning ~options syntax source_file in
       let* meta             = Compile.Of_source.extract_meta syntax source_file in
       let* c_unit_param,_   = Compile.Of_source.compile_string ~options ~meta parameter in
       let* imperative_param = Compile.Of_c_unit.compile_expression ~meta c_unit_param in
@@ -71,10 +75,11 @@ let evaluate_call source_file entry_point parameter amount balance sender source
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
 
 let evaluate_expr source_file entry_point amount balance sender source now syntax infer protocol_version display_format werror =
-    format_result ~werror ~display_format Decompile.Formatter.expression_format @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~werror ~display_format Decompile.Formatter.expression_format get_warnings @@
       let* init_env   = Helpers.get_initial_env protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let* mini_c,_,typed_prg,_ = Build.build_contract_use ~options syntax source_file in
+      let* mini_c,_,typed_prg,_ = Build.build_contract_use ~add_warning ~options syntax source_file in
       let* (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
       let exp = Mini_c.e_var ~loc:exp.location (Location.wrap @@ Var.of_name entry_point) exp.type_expression in
       let* compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in

@@ -2,9 +2,9 @@ open Trace
 module Errors = Errors
 module Helpers = Helpers
 
-let all_module_passes = [
-  Unused.unused_map_module ;
-  Muchused.muchused_map_module ;
+let all_module_passes ~add_warning = [
+  Unused.unused_map_module ~add_warning;
+  Muchused.muchused_map_module ~add_warning;
   Helpers.map_module Tail_recursion.peephole_expression ;
   Helpers.map_module Michelson_layout.peephole_expression ;
   Helpers.map_module Pattern_matching_simpl.peephole_expression ;
@@ -21,8 +21,8 @@ let contract_passes = [
   No_nested_big_map.self_typing ;
 ]
 
-let all_module =
-  bind_chain all_module_passes
+let all_module ~add_warning =
+  bind_chain (all_module_passes ~add_warning)
 
 let all_expression =
   bind_chain all_expression_passes

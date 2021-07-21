@@ -16,7 +16,7 @@ let return_result : ?warn:bool -> ?output_file:string -> ('value, _) result -> u
     let return_with_warn warns f =
           if not (String.length (String.trim warns) = 0) && warn then
             begin
-              Format.eprintf "%s" warns;
+              Format.eprintf "%s\n" warns;
               Format.pp_print_flush Format.err_formatter ()
             end;
           f ()

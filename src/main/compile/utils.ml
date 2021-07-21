@@ -4,36 +4,36 @@ let to_c_unit ~options ~meta file_path =
   let* c_unit  = Of_source.compile ~options ~meta file_path in
   ok @@ c_unit
 
-let to_imperative ~options ~meta (c_unit: Buffer.t) file_path =
+let to_imperative ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
   let () = ignore options in
-  let* imperative = Of_c_unit.compile ~meta c_unit file_path in
+  let* imperative = Of_c_unit.compile ~add_warning ~meta c_unit file_path in
   ok @@ imperative
 
-let to_sugar ~options ~meta (c_unit: Buffer.t) file_path =
-  let* imperative = to_imperative ~options ~meta c_unit file_path in
+let to_sugar ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
+  let* imperative = to_imperative ~add_warning ~options ~meta c_unit file_path in
   let* sugar      = Of_imperative.compile imperative in
   ok @@ sugar
 
-let to_core ~options ~meta (c_unit: Buffer.t) file_path =
-  let* sugar  = to_sugar ~options ~meta c_unit file_path in
+let to_core ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
+  let* sugar  = to_sugar ~add_warning ~options ~meta c_unit file_path in
   let* core   = Of_sugar.compile sugar in
   ok @@ core
 
-let type_file ~options f stx form : (Ast_typed.module_fully_typed * Ast_typed.environment, _) result =
+let type_file ~add_warning ~options f stx form : (Ast_typed.module_fully_typed * Ast_typed.environment, _) result =
   let* meta          = Of_source.extract_meta stx f in
   let* c_unit,_      = Of_source.compile ~options ~meta f in
-  let* core          = to_core ~options ~meta c_unit f in
+  let* core          = to_core ~add_warning ~options ~meta c_unit f in
   let* inferred      = Of_core.infer ~options core in
-  let* typed,e       = Of_core.typecheck ~options form inferred in
+  let* typed,e       = Of_core.typecheck ~add_warning ~options form inferred in
   ok @@ (typed,e)
 
-let to_mini_c ~options f stx env =
-  let* typed,_  = type_file ~options f stx env in
+let to_mini_c ~add_warning ~options f stx env =
+  let* typed,_  = type_file ~add_warning ~options f stx env in
   let* mini_c     = Of_typed.compile typed in
   ok @@ mini_c
 
-let compile_file ~options f stx ep =
-  let* typed,_    = type_file ~options f stx @@ Contract ep in
+let compile_file ~add_warning ~options f stx ep =
+  let* typed,_    = type_file ~add_warning ~options f stx @@ Contract ep in
   let* mini_c     = Of_typed.compile typed in
   let* michelson  = Of_mini_c.aggregate_and_compile_contract ~options mini_c ep in
   let* contract   = Of_michelson.build_contract michelson in
@@ -49,14 +49,14 @@ let type_expression_string ~options syntax expression env =
   let* typed_exp,e       = Of_core.compile_expression ~infer ~env core_exp in
   ok @@ (typed_exp,e)
 
-let type_contract_string ~options syntax expression env =
+let type_contract_string ~add_warning ~options syntax expression env =
   let* meta          = Of_source.make_meta_from_syntax syntax in
   let* c_unit, _     = Of_source.compile_string_without_preproc expression in
-  let* imperative    = Of_c_unit.compile_string ~meta c_unit in
+  let* imperative    = Of_c_unit.compile_string ~add_warning ~meta c_unit in
   let* sugar         = Of_imperative.compile imperative in
   let* core          = Of_sugar.compile sugar in
   let* inferred      = Of_core.infer ~options:{options with init_env = env} core in
-  let* typed,e       = Of_core.typecheck ~options:{options with init_env = env} Env inferred in
+  let* typed,e       = Of_core.typecheck ~add_warning ~options:{options with init_env = env} Env inferred in
   ok @@ (typed,core,e)
 
 let type_expression ~options source_file syntax expression env =

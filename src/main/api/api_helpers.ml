@@ -12,8 +12,8 @@ let warn_str (display_format:ex_display_format) (a: 'a list) : string =
             let s = Yojson.Safe.pretty_to_string @@ `List json in
             Format.asprintf "%s\n" s
 
-let toplevel : ?werror:bool -> display_format:ex_display_format -> displayable -> ('value, _) Trace.result -> _ =
-  fun ?(werror=false) ~display_format disp value ->
+let toplevel : ?werror:bool -> display_format:ex_display_format -> displayable -> (unit -> Main_warnings.all list) -> ('value, _) Trace.result -> _ =
+  fun ?(werror=false) ~display_format disp warns value ->
     let (Ex_display_format t) = display_format in
     let as_str : string =
       match t with
@@ -21,8 +21,12 @@ let toplevel : ?werror:bool -> display_format:ex_display_format -> displayable -
       | Dev -> convert ~display_format:t disp ;
       | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp
     in
-    let warns = Trace.warnings value in
-    let warns_str = warn_str display_format warns in
+    let warns = warns () in
+    let warns = List.map warns ~f:(fun value ->
+      match t with
+        ( Human_readable | Dev) as s -> convert ~display_format:s (Displayable {value;format=Main_warnings.format})
+        | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t (Displayable {value;format=Main_warnings.format})) in        
+    let warns_str = String.concat "\n" warns in
     if not (List.is_empty warns) && werror then
         Error (warns_str,warns_str)
     else
@@ -30,7 +34,7 @@ let toplevel : ?werror:bool -> display_format:ex_display_format -> displayable -
     | Ok _ -> Ok (as_str,warns_str)
     | Error _ -> Error (as_str,warns_str)
 
-let format_result : ?werror:bool -> display_format:ex_display_format -> 'value format -> ('value, Main_errors.all) Trace.result -> _ =
-  fun ?(werror=false) ~display_format value_format value ->
+let format_result : ?werror:bool -> display_format:ex_display_format -> 'value format -> (unit -> Main_warnings.all list) -> ('value, Main_errors.all) Trace.result -> _ =
+  fun ?(werror=false) ~display_format value_format warns value ->
     let format = bind_format value_format Main_errors.Formatter.error_format in
-    toplevel ~werror ~display_format (Displayable {value ; format}) value
+    toplevel ~werror ~display_format (Displayable {value ; format}) warns value

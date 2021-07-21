@@ -16,12 +16,34 @@ let test_format : 'a Simple_utils.Display.format = {
   to_json = (fun _ -> (`Null:Display.json)) ;
 }
 
+let wrap_test_w name f =
+  warning_with @@ fun add_warning get_warning ->
+  let result =
+    trace (test_tracer name) @@
+    f ~add_warning () in
+  List.iter ~f:(fun w -> 
+     Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ; 
+  ) @@ get_warning () ;
+  match to_stdlib_result result with
+  | Ok () -> ()
+  | Error _ ->
+     let format = Display.bind_format test_format Formatter.error_format in
+     let disp = Simple_utils.Display.Displayable {value=result ; format} in
+     let s = Simple_utils.Display.convert ~display_format:(Dev) disp in
+     Format.printf "%s\n" s ;
+     raise Alcotest.Test_error
+
+let test_w name f =
+  Test (
+    Alcotest.test_case name `Quick @@ fun () ->
+    wrap_test_w name f
+  )
 let wrap_test name f =
   let result =
     trace (test_tracer name) @@
     f () in
   match to_stdlib_result result with
-  | Ok ((), annotations) -> ignore annotations; ()
+  | Ok () -> ()
   | Error _ ->
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value=result ; format} in
@@ -81,10 +103,10 @@ let wrap_ref f =
 let type_file ?(st = "auto") f entry options =
   Ligo_compile.Utils.type_file ~options f st entry
 
-let get_program ?(st = "auto") f entry =
+let get_program ~add_warning ?(st = "auto") f entry =
   wrap_ref (fun s ->
       let options = Compiler_options.make () in
-      let* program = type_file ~st f entry options in
+      let* program = type_file ~add_warning ~st f entry options in
       s := Some program ;
       ok program
     )

@@ -18,6 +18,9 @@ let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
   [%expect {|
     File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+      1 | let main (ps : unit * unit) : operation list * unit =
+      2 |   if true
+    :
     Warning: unused variable "ps".
     Hint: replace it by "_ps" to prevent this warning.
 

@@ -14,7 +14,6 @@ type self_ast_imperative_error = [
   | `Self_ast_imperative_bad_convertion_bytes of expression
   | `Self_ast_imperative_vars_captured of (location * expression_variable) list
   | `Self_ast_imperative_const_assigned of (location * expression_variable)
-  | `Self_ast_imperative_warning_layout of (location * label)
 ]
 
 let too_long_constructor c e = `Self_ast_imperative_long_constructor (c,e)
@@ -27,7 +26,6 @@ let bad_set_param_type c e = `Self_ast_imperative_bad_set_param_type (c,e)
 let bad_conversion_bytes e = `Self_ast_imperative_bad_convertion_bytes e
 let vars_captured vars = `Self_ast_imperative_vars_captured vars
 let const_rebound decl_loc var = `Self_ast_imperative_const_assigned (decl_loc, var)
-let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> self_ast_imperative_error -> unit =
@@ -80,10 +78,6 @@ let error_ppformat : display_format:string display_format ->
        Format.fprintf f
          "@[<hv>%a@ Invalid assignment to constant variable \"%a\", declared at@.%a@]"
          Snippet.pp var.location PP.expression_variable var Snippet.pp decl_loc
-    | `Self_ast_imperative_warning_layout (loc,Label s) ->
-      Format.fprintf f
-        "@[<hv>%a@ Warning: layout attribute only applying to %s, probably ignored.@.@]"
-        Snippet.pp loc s
   )
 
 let error_jsonformat : self_ast_imperative_error -> json = fun a ->
@@ -186,11 +180,3 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
                        ("location", loc);
                      ] in
      json_error ~stage ~content
-  | `Self_ast_imperative_warning_layout (loc, Label s) ->
-    let message = `String (Format.sprintf "Layout attribute on constructor %s" s) in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let content = `Assoc [
-      ("message", message);
-      ("location", loc);
-    ] in
-    json_error ~stage ~content

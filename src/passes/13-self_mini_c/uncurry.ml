@@ -250,7 +250,7 @@ let map_expression :
   (expression -> expression) -> (expression -> expression) =
   fun f e ->
   match Trace.to_stdlib_result @@ Helpers.map_expression (fun e -> Trace.ok (f e)) e with
-  | Ok (e, _) -> e
+  | Ok e -> e
   | Error _ -> assert false (* impossible *)
 
 let uncurry_expression : expression -> expression =

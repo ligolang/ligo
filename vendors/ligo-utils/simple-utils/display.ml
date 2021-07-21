@@ -38,9 +38,9 @@ let bind_format :
   'value format -> 'error format -> ('value,'error) Trace.result format =
   fun value_format error_format ->
     let pp ~display_format f a = match Trace.to_stdlib_result a with
-    | Error (e, _) -> error_format.pp ~display_format f e
-    | Ok (v, _) -> value_format.pp ~display_format f v in
+    | Error (e) -> error_format.pp ~display_format f e
+    | Ok (v) -> value_format.pp ~display_format f v in
     let to_json a = match Trace.to_stdlib_result a with
-      | Error (e, _) -> error_format.to_json e
-      | Ok (v, _) -> value_format.to_json v in
+      | Error (e) -> error_format.to_json e
+      | Ok (v) -> value_format.to_json v in
     { pp ; to_json }

@@ -3,8 +3,8 @@ open Test_helpers
 
 let get_program = get_program "./contracts/multisig-v2.ligo" (Contract "main")
 
-let compile_main () =
-  let* typed_prg,_   = get_program () in
+let compile_main ~add_warning () =
+  let* typed_prg,_   = get_program ~add_warning () in
   let* mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
   let* michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let* _contract =
@@ -52,8 +52,8 @@ let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_l
   ]
 
 (* sender not stored in the authorized set *)
-let wrong_addr () =
-  let* (program,env) = get_program () in
+let wrong_addr ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let init_storage = storage {
     threshold = 1 ; max_proposal = 1 ; max_msg_size = 1 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0 ; 2,0] ;
@@ -68,8 +68,8 @@ let wrong_addr () =
   ok ()
 
 (* send a message which exceed the size limit *)
-let message_size_exceeded () =
-  let* (program,env) = get_program () in
+let message_size_exceeded ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let init_storage = storage {
     threshold = 1 ; max_proposal = 1 ; max_msg_size = 1 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0] ;
@@ -84,8 +84,8 @@ let message_size_exceeded () =
   ok ()
 
 (* sender has already has reached maximum number of proposal *)
-let maximum_number_of_proposal () =
-  let* (program,env) = get_program () in
+let maximum_number_of_proposal ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* packed_payload1 = pack_payload env (send_param empty_message) in
   let bytes1 = e_bytes_raw packed_payload1 in
   let init_storage = storage {
@@ -102,8 +102,8 @@ let maximum_number_of_proposal () =
   ok ()
 
 (* sender message is already stored in the message store *)
-let send_already_accounted () =
-  let* (program,env) = get_program () in
+let send_already_accounted ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage = storage {
@@ -118,8 +118,8 @@ let send_already_accounted () =
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list init_storage)
 
 (* sender message isn't stored in the message store *)
-let send_never_accounted () =
-  let* (program,env) = get_program () in
+let send_never_accounted ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage' = {
@@ -139,8 +139,8 @@ let send_never_accounted () =
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message is already binded to one address in the message store *)
-let withdraw_already_accounted_one () =
-  let* (program,env) = get_program () in
+let withdraw_already_accounted_one ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
@@ -160,8 +160,8 @@ let withdraw_already_accounted_one () =
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message is already binded to two addresses in the message store *)
-let withdraw_already_accounted_two () =
-  let* (program,env) = get_program () in
+let withdraw_already_accounted_two ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
@@ -181,8 +181,8 @@ let withdraw_already_accounted_two () =
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* triggers the threshold and check that all the participants get their counters decremented *)
-let counters_reset () =
-  let* (program,env) = get_program () in
+let counters_reset ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = send_param empty_message in
@@ -204,8 +204,8 @@ let counters_reset () =
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message was never accounted *)
-let withdraw_never_accounted () =
-  let* (program,env) = get_program () in
+let withdraw_never_accounted ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let param = withdraw_param in
   let init_storage = storage {
     threshold = 2 ; max_proposal = 1 ;  max_msg_size = 1 ; state_hash = Bytes.empty ;
@@ -219,8 +219,8 @@ let withdraw_never_accounted () =
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
 (* successful storing in the message store *)
-let succeeded_storing () =
-  let* (program,env) = get_program () in
+let succeeded_storing ~add_warning () =
+  let* (program,env) = get_program ~add_warning () in
   let* packed_payload = pack_payload env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage th = {
@@ -251,14 +251,14 @@ let succeeded_storing () =
   ok ()
 
 let main = test_suite "Multisig v2" [
-    test "compile"                        compile_main                   ;
-    test "wrong_addr"                     wrong_addr                     ;
-    test "message_size_exceeded"          message_size_exceeded          ;
-    test "maximum_number_of_proposal"     maximum_number_of_proposal     ;
-    test "send_already_accounted"         send_already_accounted         ;
-    test "send_never_accounted"           send_never_accounted           ;
-    test "succeeded_storing"              succeeded_storing              ;
-    test "withdraw_already_accounted_one" withdraw_already_accounted_one ;
-    test "withdraw_already_accounted_two" withdraw_already_accounted_two ;
-    test "counters_reset"                 counters_reset                 ;
+    test_w "compile"                        (compile_main                  ) ;
+    test_w "wrong_addr"                     (wrong_addr                    ) ;
+    test_w "message_size_exceeded"          (message_size_exceeded         ) ;
+    test_w "maximum_number_of_proposal"     (maximum_number_of_proposal    ) ;
+    test_w "send_already_accounted"         (send_already_accounted        ) ;
+    test_w "send_never_accounted"           (send_never_accounted          ) ;
+    test_w "succeeded_storing"              (succeeded_storing             ) ;
+    test_w "withdraw_already_accounted_one" (withdraw_already_accounted_one) ;
+    test_w "withdraw_already_accounted_two" (withdraw_already_accounted_two) ;
+    test_w "counters_reset"                 (counters_reset                ) ;
   ]

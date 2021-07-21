@@ -9,11 +9,11 @@ let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez
 let string_of_contract t = Format.asprintf "%a" Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.pp t
 let string_of_key_hash t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 
-let compile_contract source_file entry_point =
+let compile_contract ~add_warning source_file entry_point =
   let open Ligo_compile in
   let syntax = "auto" in
   let options = Compiler_options.make () in
-  let* michelson = Build.build_contract ~options syntax entry_point source_file in
+  let* michelson = Build.build_contract ~add_warning ~options syntax entry_point source_file in
   Of_michelson.build_contract ~disable_typecheck:false michelson
 
 let clean_location_with v x =
@@ -106,11 +106,11 @@ let make_function in_ty out_ty arg_binder body subst_lst =
   let* typed_exp' = add_ast_env subst_lst arg_binder body in
   ok @@ Ast_typed.e_a_lambda {result=typed_exp'; binder=arg_binder} in_ty out_ty
 
-let compile_expression ~loc syntax exp_as_string source_file subst_lst =
+let compile_expression ~loc ~add_warning syntax exp_as_string source_file subst_lst =
   let open Ligo_compile in
   let options = Compiler_options.make () in
   let* (decl_list,env) = match source_file with
-    | Some init_file -> Build.build_mini_c ~options syntax Env init_file
+    | Some init_file -> Build.build_mini_c ~add_warning ~options syntax Env init_file
     | None -> ok ([],options.init_env)
   in
   let* typed_exp =

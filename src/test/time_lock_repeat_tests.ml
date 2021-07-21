@@ -5,8 +5,8 @@ open Main_errors
 
 let get_program = get_program "./contracts/timelock_repeat.mligo" (Contract "main")
 
-let compile_main () =
-  let* typed_prg,_   = type_file "./contracts/timelock_repeat.mligo" (Contract "main") options in
+let compile_main ~add_warning () =
+  let* typed_prg,_   = type_file ~add_warning "./contracts/timelock_repeat.mligo" (Contract "main") options in
   let* mini_c_prg      = Ligo_compile.Of_typed.compile typed_prg in
   let* michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let* _contract =
@@ -31,8 +31,8 @@ let storage st interval execute =
                ("interval", e_int interval) ;
                ("execute", execute)]
 
-let early_call () =
-  let* (program, env) = get_program () in
+let early_call ~add_warning () =
+  let* (program, env) = get_program ~add_warning () in
   let* now = mk_time "2000-01-01T00:10:10Z" in
   let* lock_time = mk_time "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
@@ -45,8 +45,8 @@ let early_call () =
 let fake_decompiled_empty_message = e_string "[lambda of type: (lambda %execute unit (list operation)) ]"
 
 (* Test that when we use the contract the next use time advances by correct interval *)
-let interval_advance () =
-  let* (program, env) = get_program () in
+let interval_advance ~add_warning () =
+  let* (program, env) = get_program ~add_warning () in
   let* now = mk_time "2000-01-01T10:10:10Z" in
   let* lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
@@ -58,7 +58,7 @@ let interval_advance () =
   (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
 
 let main = test_suite "Time Lock Repeating" [
-    test "compile" compile_main ;
-    test "early call" early_call ;
-    test "interval advance" interval_advance ;
+    test_w "compile"          (compile_main    );
+    test_w "early call"       (early_call      );
+    test_w "interval advance" (interval_advance);
   ]

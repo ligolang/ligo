@@ -21,6 +21,10 @@ let get_declarations_typed typed_prg =
      let mod_declarations  = Ligo_compile.Of_typed.list_mod_declarations typed_prg in
      func_declarations @ type_declarations @ mod_declarations
 
+(* Error and warnings *)
+
+let add_warning _ = ()
+
 (* REPL logic *)
 
 type repl_result =
@@ -101,7 +105,7 @@ let try_contract state s =
   let* c =
     generic_try (`Repl_unexpected : Main_errors.all) @@ fun _ ->
       let* typed_prg,core_prg,env =
-      Ligo_compile.Utils.type_contract_string ~options:options state.syntax s state.env in
+      Ligo_compile.Utils.type_contract_string ~add_warning ~options:options state.syntax s state.env in
       let* mini_c,mods =
         Ligo_compile.Of_typed.compile_with_modules ~module_env:state.mod_types typed_prg in
       let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mods in
@@ -120,7 +124,7 @@ let try_contract state s =
 
 let import_file state file_name module_name =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
-  let* mini_c,mod_types,_,env = Build.build_contract_module ~options (variant_to_syntax state.syntax) Ligo_compile.Of_core.Env file_name module_name in
+  let* mini_c,mod_types,_,env = Build.build_contract_module ~add_warning ~options (variant_to_syntax state.syntax) Ligo_compile.Of_core.Env file_name module_name in
   let env = Ast_typed.Environment.add_module module_name env state.env in
   let mod_env = Ast_core.SMap.find module_name mod_types in
   let mod_types = Ast_core.SMap.add module_name mod_env state.mod_types in
@@ -130,7 +134,7 @@ let import_file state file_name module_name =
 let use_file state s =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
   (* Missing typer environment? *)
-  let* mini_c,mod_types,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~options (variant_to_syntax state.syntax) s in
+  let* mini_c,mod_types,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~add_warning ~options (variant_to_syntax state.syntax) s in
   let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mod_types in
   let state = { state with env = env;
                            decl_list = state.decl_list @ mini_c;
@@ -159,7 +163,7 @@ let parse s =
 let eval display_format state c =
   let (Ex_display_format t) = display_format in
   match Trace.to_stdlib_result c with
-    Ok ((state, out), _) ->
+    Ok (state, out) ->
      let disp = (Displayable {value = out; format = repl_result_format }) in
      let out : string =
        match t with
@@ -167,7 +171,7 @@ let eval display_format state c =
        | Dev -> convert ~display_format:t disp ;
        | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp in
      (1, state, out)
-  | Error (e, _) ->
+  | Error e ->
      let disp = (Displayable {value = e; format = Main_errors.Formatter.error_format }) in
      let out : string =
        match t with

@@ -11,10 +11,10 @@ let infer ~(options: Compiler_options.t) (m : Ast_core.module_) =
     | true  -> let* (_,e,_,_) = trace inference_tracer @@ Inference.type_module ~init_env:env_inf m in ok @@ e
     | false -> ok @@ m
 
-let typecheck ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : (Ast_typed.module_fully_typed * Ast_typed.environment , _) result =
+let typecheck ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : (Ast_typed.module_fully_typed * Ast_typed.environment , _) result =
   let* e,typed = trace checking_tracer @@ Checking.type_module ~init_env:options.init_env m in
   let* applied = trace self_ast_typed_tracer @@
-    let* selfed = Self_ast_typed.all_module typed in
+    let* selfed = Self_ast_typed.all_module typed ~add_warning in
     match cform with
     | Contract entrypoint -> Self_ast_typed.all_contract entrypoint selfed
     | Env -> ok selfed in
