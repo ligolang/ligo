@@ -46,6 +46,8 @@ type typer_error = [
   | `Typer_expected_key of Location.t * Ast_typed.type_expression
   | `Typer_expected_signature of Location.t * Ast_typed.type_expression
   | `Typer_expected_contract of Location.t * Ast_typed.type_expression
+  | `Typer_expected_typed_address of Location.t * Ast_typed.type_expression
+  | `Typer_expected_address of Location.t * Ast_typed.type_expression
   | `Typer_expected_string of Location.t * Ast_typed.type_expression
   | `Typer_expected_key_hash of Location.t * Ast_typed.type_expression
   | `Typer_expected_mutez of Location.t * Ast_typed.type_expression
@@ -135,6 +137,7 @@ let expected_sapling_transaction (loc:Location.t) (t:Ast_typed.type_expression) 
 let expected_sapling_state (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_sapling_state (loc,t)
 let expected_ligo_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_ligo_code (loc,t)
 let expected_michelson_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_michelson_code (loc,t)
+let expected_address (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_address (loc,t)
 let expected_set (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_set (loc,t)
 let expected_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_map (loc,t)
 let expected_big_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_big_map (loc,t)
@@ -144,6 +147,7 @@ let expected_bytes (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expec
 let expected_key (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_key (loc,t)
 let expected_signature (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_signature (loc,t)
 let expected_contract (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_contract (loc,t)
+let expected_typed_address (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_typed_address (loc,t)
 let expected_ticket (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_ticket (loc,t)
 let expected_string (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_string (loc,t)
 let expected_key_hash (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_key_hash (loc,t)
@@ -500,6 +504,16 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_expected_contract (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument.@.Expected a contract, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
+    | `Typer_expected_typed_address (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Incorrect argument.@.Expected a typed address, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
+    | `Typer_expected_address (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Incorrect argument.@.Expected a address, but got an argument of type \"%a\". @]"
         Snippet.pp loc
         Ast_typed.PP.type_expression t
     | `Typer_expected_ticket (loc,t) ->
@@ -1021,6 +1035,24 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_expected_contract (loc,t) ->
     let message = `String "expected contract" in
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_typed_address (loc,t) ->
+    let message = `String "expected typed address" in
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_address (loc,t) ->
+    let message = `String "expected address" in
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);

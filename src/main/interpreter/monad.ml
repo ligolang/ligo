@@ -28,8 +28,9 @@ module Command = struct
   type 'a t =
     | Get_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> LT.expression t
     | Mem_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> bool t
-    | Bootstrap_contract : int * LT.value * LT.value  -> unit t
-    | Nth_bootstrap_contract : int  -> Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t t
+    | Bootstrap_contract : int * LT.value * LT.value * Ast_typed.type_expression  -> unit t
+    | Nth_bootstrap_contract : int -> Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t t
+    | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression * Ast_typed.type_expression) t
     | Reset_state : Location.t * LT.value * LT.value -> unit t
     | External_call : Location.t * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
@@ -50,6 +51,8 @@ module Command = struct
     | Eval : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_typed.type_expression -> LT.value t
+    | Check_storage_address : Location.t * Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression -> unit t
+    | Contract_exists : Location.t * LT.value -> bool t
     | Inject_script : Location.t * LT.value * LT.value * Z.t -> LT.value t
     | Set_now : Location.t * Z.t -> unit t
     | Set_source : LT.value -> unit t
@@ -122,10 +125,23 @@ module Command = struct
     | Nth_bootstrap_contract (n) ->
       let* contract = Tezos_state.get_bootstrapped_contract n in
       ok (contract,ctxt)
-    | Bootstrap_contract (mutez, contract, storage) ->
+    | Nth_bootstrap_typed_address (loc, n) ->
+      let* contract = Tezos_state.get_bootstrapped_contract n in
+      let* storage_ty =
+        trace_option (Errors.generic_error loc "Storage type not available" ) @@
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.storage_tys contract in
+      let* parameter_ty =
+        trace_option (Errors.generic_error loc "Parameter type not available" ) @@
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.parameter_tys contract in
+      let* contract = Tezos_state.get_bootstrapped_contract n in
+      ok ((contract, parameter_ty, storage_ty),ctxt)
+    | Bootstrap_contract (mutez, contract, storage, contract_ty) ->
       let* contract = trace_option (corner_case ()) @@ LC.get_michelson_contract contract in
+      let* input_ty, _ = trace_option (corner_case ()) @@ Ast_typed.get_t_function contract_ty in
+      let* parameter_ty, _ = trace_option (corner_case ()) @@ Ast_typed.get_t_pair input_ty in
       let* (storage,_,storage_ty) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
-      let ctxt = { ctxt with bootstrapped_contracts = (mutez, contract, storage, storage_ty) :: ctxt.bootstrapped_contracts } in
+      let ctxt =
+        { ctxt with next_bootstrapped_contracts = (mutez, contract, storage, parameter_ty, storage_ty) :: ctxt.next_bootstrapped_contracts } in
       ok ((),ctxt)
     | Reset_state (loc,n,amts) ->
       let* amts = trace_option (corner_case ()) @@ LC.get_list amts in
@@ -136,7 +152,7 @@ module Command = struct
         amts
       in
       let* n = trace_option (corner_case ()) @@ LC.get_nat n in
-      let* ctxt = Tezos_state.init_ctxt ~loc ~initial_balances:amts ~n:(Z.to_int n) (List.rev ctxt.bootstrapped_contracts) in
+      let* ctxt = Tezos_state.init_ctxt ~loc ~initial_balances:amts ~n:(Z.to_int n) (List.rev ctxt.next_bootstrapped_contracts) in
       ok ((),ctxt)
     | External_call (loc, { address; entrypoint }, param, amt) -> (
       let* x = Tezos_state.transfer ~loc ctxt address ?entrypoint param amt in
@@ -286,6 +302,19 @@ module Command = struct
            fail @@ Errors.generic_error loc
                      "Should be caught by the typer"
       end
+    | Check_storage_address (loc, addr, ty) ->
+      let* ligo_ty =
+        trace_option (Errors.generic_error loc "Not supported (yet) when the provided account has been fetched from Test.get_last_originations" ) @@
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.storage_tys addr in
+      let* _,ty = trace_option (Errors.generic_error loc "Argument expected to be a typed_address" ) @@
+                    Ast_typed.get_t_typed_address ty in
+      let* () = trace_option (Errors.generic_error loc "Storage type does not match expected type") @@
+          (Ast_typed.assert_type_expression_eq (ligo_ty, ty)) in
+      ok ((), ctxt)
+    | Contract_exists (loc, addr) ->
+      let* addr = trace_option (corner_case ()) @@ LC.get_address addr in
+      let* info = Tezos_state.contract_exists ~loc ctxt addr in
+      ok @@ (info, ctxt)
     | Inject_script (loc, code, storage, amt) -> (
       let* contract_code = trace_option (corner_case ()) @@ LC.get_michelson_contract code in
       let* (storage,_,ligo_ty) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in

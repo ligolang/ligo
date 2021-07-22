@@ -78,7 +78,8 @@ let generate_accounts ?(initial_balances = []) n : (t * Tez_repr.t) list =
   in
   List.map
     (fun i ->
-      let (pkh, pk, sk) = Signature.generate_key () in
+      let seed = Format.asprintf "%32d" i in
+      let (pkh, pk, sk) = Signature.generate_key ~seed:(Bytes.of_string seed) () in
       let account = {pkh; pk; sk} in
       Signature.Public_key_hash.Table.add known_accounts pkh account ;
       (account, amount i))

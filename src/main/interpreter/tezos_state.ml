@@ -6,16 +6,18 @@ open Ligo_interpreter_exc
 type block = Tezos_alpha_test_helpers.Block.t
 type last_originations = (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * Memory_proto_alpha.Protocol.Alpha_context.Contract.t list) list
 type storage_tys = (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression) list
+type parameter_tys = (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression) list
 
 type context = {
-  alpha_context : Memory_proto_alpha.Protocol.Alpha_context.t option;
+  alpha_context : Memory_proto_alpha.Protocol.Alpha_context.t;
   threaded_context : block ;
   last_originations : last_originations ;
   storage_tys : storage_tys ;
+  parameter_tys : parameter_tys ;
   baker : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ;
   source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ;
   bootstrapped : Memory_proto_alpha.Protocol.Alpha_context.Contract.t list ;
-  bootstrapped_contracts : Ligo_interpreter.Types.bootstrap_contract list ;
+  next_bootstrapped_contracts : Ligo_interpreter.Types.bootstrap_contract list ;
 }
 
 type state_error = Tezos_error_monad.TzCore.error list
@@ -46,6 +48,17 @@ let canonical_to_ligo x =
   x |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
     |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
 
+let alpha_context_of_block ~loc (threaded_context : block) =
+  let open Tezos_raw_protocol_008_PtEdo2Zk in
+  let* timestamp = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
+                     Alpha_services.Delegate.Minimal_valid_time.get Tezos_alpha_test_helpers.Block.rpc_ctxt threaded_context 0 0 in
+  Trace.trace_alpha_tzresult_lwt (throw_obj_exc loc) @@
+    Alpha_context.prepare
+      ~level:threaded_context.header.shell.level
+      ~predecessor_timestamp:threaded_context.header.shell.timestamp
+      ~timestamp
+      ~fitness:threaded_context.header.shell.fitness
+      threaded_context.context
 
 let get_alpha_context (ctxt : context) =
   ctxt.alpha_context
@@ -68,7 +81,7 @@ let get_big_map ~loc (ctxt : context) id key key_ty  =
   let* key =
     Trace.trace_tzresult_lwt Main_errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_data key_michelson key_ty in
-  let* fctxt = Trace.trace_option (Errors.generic_error loc "Not an alpha context yet?") @@ get_alpha_context ctxt in
+  let fctxt = get_alpha_context ctxt in
   let* hash,_ = Trace.trace_alpha_tzresult_lwt (throw_obj_exc loc) @@ Script_ir_translator.hash_data fctxt key_ty key in
   let exec_get = Lwt_main.run @@
                  Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_services.Contract.big_map_get Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.threaded_context id hash in
@@ -88,6 +101,11 @@ let get_big_map ~loc (ctxt : context) id key key_ty  =
      | _ -> fail @@ error
      end
   | Error _ ->  fail @@ error
+
+let contract_exists ~loc ctxt contract =
+  let ctxt = get_alpha_context ctxt in
+  Trace.trace_alpha_tzresult_lwt (throw_obj_exc loc) @@
+    Memory_proto_alpha.Protocol.Alpha_context.Contract.exists ctxt contract
 
 let get_storage ~loc ctxt addr =
   let* st_v = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
@@ -110,10 +128,10 @@ let get_storage ~loc ctxt addr =
 let get_balance ~loc (ctxt :context) addr =
   Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
     Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.threaded_context) addr
-(*
-let decode_op ~loc : bytes -> (Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation,_) result = fun b ->
-  Trace.trace_decoding_error (fun _ -> Errors.generic_error loc "Error while decoding operation") @@
-  Data_encoding.Binary.of_bytes Memory_proto_alpha.Protocol.Alpha_context.Operation.internal_operation_encoding b *)
+
+let get_contract ~loc (ctxt :context) addr =
+  Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
+    Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.threaded_context) addr
 
 let get_contract_rejection_data :
   state_error -> (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * unit Tezos_utils.Michelson.michelson) option =
@@ -157,7 +175,7 @@ let set_timestamp ~loc ({threaded_context;baker;_} as context :context) (timesta
   let* threaded_context = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
     Incremental.finalize_block incr
   in
-  ok { context with threaded_context; alpha_context = Some (Incremental.alpha_ctxt incr) }
+  ok { context with threaded_context; alpha_context = Incremental.alpha_ctxt incr }
 
 let extract_origination_from_result :
   type a .
@@ -201,7 +219,6 @@ let get_last_originations : Memory_proto_alpha.Protocol.Alpha_context.Contract.t
 
 let bake_op ~loc (ctxt:context) operation =
   let open Tezos_alpha_test_helpers in
-  (* let open Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context in *)
   let* baker = unwrap_baker ~loc ctxt.baker in
   let* incr = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
     Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.threaded_context
@@ -216,7 +233,7 @@ let bake_op ~loc (ctxt:context) operation =
     let* threaded_context = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
       Incremental.finalize_block incr
     in
-    ok (Success {ctxt with threaded_context ; last_originations ; alpha_context = Some (Incremental.alpha_ctxt incr) })
+    ok (Success {ctxt with threaded_context ; last_originations ; alpha_context = Incremental.alpha_ctxt incr })
   | Error errs -> ok (Fail errs)
 
 
@@ -254,17 +271,20 @@ let get_bootstrapped_contract (n : int) =
 
 let init_ctxt ?(loc=Location.generated) ?(initial_balances=[]) ?(n=2) bootstrapped_contracts =
   let open Tezos_raw_protocol_008_PtEdo2Zk in
-  let* initial_contracts = bind_map_list (fun (mutez, contract, storage, _) ->
+  let* initial_contracts = bind_map_list (fun (mutez, contract, storage, _, _) ->
                       let* contract = script_repr_of_compiled_code ~loc contract storage in
                       ok (Tez_repr.of_mutez_exn (Int64.of_int mutez),contract)) bootstrapped_contracts in
-  let* storage_tys = bind_mapi_list (fun i (_, _, _,storage_ty) ->
+  let* storage_tys = bind_mapi_list (fun i (_, _, _, _, storage_ty) ->
                       let* contract = get_bootstrapped_contract i in
                       ok (contract, storage_ty)) bootstrapped_contracts in
+  let* parameter_tys = bind_mapi_list (fun i (_, _, _, parameter_ty, _) ->
+                      let* contract = get_bootstrapped_contract i in
+                      ok (contract, parameter_ty)) bootstrapped_contracts in
   let* (threaded_context, acclst) = Trace.trace_tzresult_lwt (throw_obj_exc loc) @@
-    Tezos_alpha_test_helpers.Context.init ~initial_balances ~initial_contracts n
-  in
+    Tezos_alpha_test_helpers.Context.init ~initial_balances ~initial_contracts n in
+  let* alpha_context = alpha_context_of_block ~loc threaded_context in
   match acclst with
   | baker::source::_ ->
-    ok { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] ; storage_tys ; alpha_context = None ; bootstrapped_contracts }
+    ok { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] ; storage_tys ; parameter_tys ; alpha_context ; next_bootstrapped_contracts = [] }
   | _ ->
     fail (Errors.bootstrap_not_enough loc)
