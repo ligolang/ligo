@@ -41,8 +41,8 @@ function DocPageContent({
   const sidebarName = permalinkToSidebar[currentDocRoute.path];
   const sidebar = docsSidebars[sidebarName];
 
-  let defaultSyntax = 'pascaligo';
-  if (isClient) {
+  let defaultSyntax = 'jsligo';
+  if (typeof window !== "undefined" && 'localStorage' in window) {
     defaultSyntax = localStorage.getItem('syntax') || defaultSyntax
   }
   
