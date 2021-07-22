@@ -78,6 +78,8 @@ module Tree_abstraction = struct
     | "Crypto.blake2b"  -> some_const C_BLAKE2b
     | "Crypto.sha256"   -> some_const C_SHA256
     | "Crypto.sha512"   -> some_const C_SHA512
+    | "Crypto.sha3"     -> some_const C_SHA3
+    | "Crypto.keccak"   -> some_const C_KECCAK
 
     (* Bytes module *)
 
