@@ -1002,7 +1002,7 @@ let test_external_call_to_address loc = typer_3 loc "TEST_EXTERNAL_CALL_TO_ADDRE
   ok (t_test_exec_result ())
 
 let test_get_storage loc = typer_1 loc "TEST_GET_STORAGE" @@ fun c ->
-  let* (_, storage_ty) = trace_option (expected_contract loc (t_unit ())) @@ get_t_typed_address c in
+  let* (_, storage_ty) = trace_option (expected_typed_address loc c) @@ get_t_typed_address c in
   ok storage_ty
 
 let test_get_storage_of_address loc = typer_1 loc "TEST_GET_STORAGE_OF_ADDRESS" @@ fun addr ->
@@ -1062,6 +1062,12 @@ let test_to_contract loc = typer_1 loc "TEST_TO_CONTRACT" @@ fun t ->
   let param_ty = Option.value (Ast_typed.Helpers.get_entrypoint "default" param_ty) ~default:param_ty in
   ok (t_contract param_ty)
 
+let test_nth_bootstrap_typed_address loc = typer_1_opt loc "TEST_NTH_BOOTSTRAP_TYPED_ADDRESS" @@ fun nat tv_opt ->
+  let* () = trace_option (expected_nat loc nat) @@ get_t_nat nat in
+  let* tv = trace_option (not_annotated loc) tv_opt in
+  let* tv_parameter, tv_storage = trace_option (expected_option loc tv) @@ get_t_typed_address tv in
+  ok (t_typed_address tv_parameter tv_storage)
+
 let test_to_entrypoint loc = typer_2_opt loc "TEST_TO_ENTRYPOINT" @@ fun entry_tv contract_tv tv_opt ->
   let t_string = t_string () in
   let* () = assert_eq loc entry_tv t_string in
@@ -1070,6 +1076,14 @@ let test_to_entrypoint loc = typer_2_opt loc "TEST_TO_ENTRYPOINT" @@ fun entry_t
   let* tv = trace_option (not_annotated loc) tv_opt in
   let* tv' = trace_option (expected_contract loc tv) @@ get_t_contract tv in
   ok @@ t_contract tv'
+
+let test_to_typed_address loc = typer_1_opt loc "TEST_TO_TYPED_ADDRESS" @@ fun contract_tv tv_opt ->
+  let* parameter_ty = trace_option (expected_contract loc contract_tv) @@
+             get_t_contract contract_tv in
+  let* tv = trace_option (not_annotated loc) tv_opt in
+  let* (parameter_ty', storage_ty) = trace_option (expected_contract loc tv) @@ get_t_typed_address tv in
+  let* () = assert_eq loc parameter_ty parameter_ty' in
+  ok @@ t_typed_address parameter_ty storage_ty
 
 let test_originate_from_file loc = typer_4 loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
   let* () = trace_option (expected_string loc source_file) @@ assert_t_string source_file in
@@ -1230,7 +1244,9 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_TEST_EVAL -> ok @@ test_eval loc ;
   | C_TEST_COMPILE_CONTRACT -> ok @@ test_compile_contract loc ;
   | C_TEST_TO_CONTRACT -> ok @@ test_to_contract loc ;
+  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> ok @@ test_nth_bootstrap_typed_address loc ;
   | C_TEST_TO_ENTRYPOINT -> ok @@ test_to_entrypoint loc ;
+  | C_TEST_TO_TYPED_ADDRESS -> ok @@ test_to_typed_address loc ;
   | C_TEST_ORIGINATE_FROM_FILE -> ok @@ test_originate_from_file loc ;
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> ok @@ polymorphic_add loc ;

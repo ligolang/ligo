@@ -64,4 +64,4 @@ and exception_type =
 | Meta_lang_ex of { location : Location.t ; reason : fail_reason }
 
 and bootstrap_contract =
-  int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression
+  int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression * Ast_typed.type_expression

@@ -169,6 +169,8 @@ let constant' ppf : constant' -> unit = function
   | C_TEST_COMPILE_CONTRACT -> fprintf ppf "TEST_COMPILE_CONTRACT"
   | C_TEST_TO_CONTRACT -> fprintf ppf "TEST_TO_CONTRACT"
   | C_TEST_TO_ENTRYPOINT -> fprintf ppf "TEST_TO_ENTRYPOINT"
+  | C_TEST_TO_TYPED_ADDRESS -> fprintf ppf "TEST_TO_TYPED_ADDRESS"
+  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> fprintf ppf "TEST_NTH_BOOTSTRAP_TYPED_ADDRESS"
   | C_SHA3 -> fprintf ppf "SHA3"
   | C_KECCAK -> fprintf ppf "KECCAK"
   | C_LEVEL -> fprintf ppf "LEVEL"

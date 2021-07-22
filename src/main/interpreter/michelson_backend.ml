@@ -71,7 +71,7 @@ let make_options ?param ctxt =
   | Some ctxt ->
      let tezos_context = Tezos_state.get_alpha_context ctxt in
      let source = string_of_contract ctxt.source in
-     let* options = make_dry_run_options ?tezos_context { default with source = Some source } in
+     let* options = make_dry_run_options ~tezos_context { default with source = Some source } in
      let timestamp = Timestamp.of_zint (Z.of_int64 (Proto_alpha_utils.Time.Protocol.to_seconds (Tezos_state.get_timestamp ctxt))) in
      ok @@ { options with now = timestamp }
 
@@ -344,7 +344,8 @@ and make_subst_ast_env_exp ?(toplevel = true) env fv =
   let op (l, fv) (evl, v : _ * Ligo_interpreter.Types.value_expr) =
     let loc = Location.get_location evl in
     let ev = Location.unwrap evl in
-    if not (List.mem fv evl ~equal:Self_ast_typed.Helpers.eq_vars) then
+    if not (List.mem fv evl ~equal:Self_ast_typed.Helpers.eq_vars)
+       || List.mem (List.map ~f:fst l) (Var.to_name ev) ~equal:String.equal then
       ok (l, fv)
     else
       match v with

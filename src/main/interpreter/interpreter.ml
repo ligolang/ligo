@@ -130,8 +130,8 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
        print_endline (Format.asprintf "%a" (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value) l);
        raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" }))
 
-let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
-  fun loc _env c operands ->
+let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
+  fun loc expr_ty _env c operands ->
   let open Monad in
   let types = List.map ~f:snd operands in
   let operands = List.map ~f:fst operands in
@@ -192,6 +192,8 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
     | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_int b'  )  ] )
     | ( C_MUL    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] ) -> let>> r = Int_mul (a',b') in return_ct (C_int r)
     | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> let>> r = Int_mul_n (a',b') in return_ct (C_nat r)
+    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_mutez b')  ] ) -> let>> r = Int_mul_n (a',b') in return_ct (C_mutez r)
+    | ( C_MUL    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b'  )  ] ) -> let>> r = Int_mul_n (a',b') in return_ct (C_mutez r)
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] )
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] )
     | ( C_DIV    , [ V_Ct (C_nat a'  )  ; V_Ct (C_int b'  )  ] ) ->
@@ -206,6 +208,20 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_nat res
+        | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"}))
+      end
+    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) ->
+      let>> a = Int_ediv_n (a',b') in
+      begin
+        match a with
+        | Some (res,_) -> return_ct @@ C_nat res
+        | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"}))
+      end
+    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b')  ] ) ->
+      let>> a = Int_ediv_n (a',b') in
+      begin
+        match a with
+        | Some (res,_) -> return_ct @@ C_mutez res
         | None -> raise (Exc (Meta_lang_ex {location = loc ; reason = Reason "Dividing by zero"}))
       end
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] )
@@ -397,7 +413,7 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
        let storage_ty = List.nth_exn types 2 in
        let>> code = Compile_contract (loc, contract, contract_ty) in
        let>> storage = Eval (loc, storage, storage_ty) in
-       let>> () = Bootstrap_contract ((Z.to_int z), code, storage) in
+       let>> () = Bootstrap_contract ((Z.to_int z), code, storage, contract_ty) in
        return_ct C_unit
     | ( C_TEST_NTH_BOOTSTRAP_CONTRACT , [ V_Ct (C_nat n) ] ) ->
        let n = Z.to_int n in
@@ -476,6 +492,10 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
        let contract_ty = List.nth_exn types 0 in
        let>> code = To_contract (loc, addr, Some ent, contract_ty) in
        return code
+    | ( C_TEST_TO_TYPED_ADDRESS , [ V_Ct (C_contract { address; _ }) ] ) ->
+       let>> () = Check_storage_address (loc, address, expr_ty) in
+       let addr = LT.V_Ct ( C_address address ) in
+       return addr
     | ( C_TEST_RUN , [ V_Func_val f ; v ] ) ->
        let* () = check_value (V_Func_val f) in
        let* () = check_value v in
@@ -525,6 +545,16 @@ let rec apply_operator : Location.t -> env -> Ast_typed.constant' -> (value * As
               let>> a = State_error_to_value e in
               return a)
        | _ -> fail @@ Errors.generic_error loc "Error typing param")
+    | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , [ V_Ct (C_nat n) ] ) ->
+      let n = Z.to_int n in
+      let* parameter_ty', storage_ty' = monad_option (Errors.generic_error loc "Expected typed address") @@
+                                          Ast_typed.get_t_typed_address expr_ty in
+      let>> (address, parameter_ty, storage_ty) = Nth_bootstrap_typed_address (loc, n) in
+      let* () = monad_option (Errors.generic_error loc "Parameter in bootstrap contract does not match") @@
+                   Ast_typed.assert_type_expression_eq (parameter_ty, parameter_ty') in
+      let* () = monad_option (Errors.generic_error loc "Storage in bootstrap contract does not match") @@
+                   Ast_typed.assert_type_expression_eq (storage_ty, storage_ty') in
+      return_ct (C_address address)
     | ( C_FAILWITH , [ a ] ) ->
       raise (Exc (Meta_lang_ex {location = loc ; reason = Val a}))
     | _ -> Fail_ligo (Errors.generic_error loc "Unbound primitive.")
@@ -622,7 +652,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
           let* value = eval_ligo ae env in
           return @@ (value, ae.type_expression))
         arguments in
-      apply_operator term.location env cons_name arguments'
+      apply_operator term.location term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label c ; element } when (String.equal c "true" || String.equal c "false")
      && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool (bool_of_string c))
