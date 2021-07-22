@@ -25,20 +25,24 @@ module RIO
 
 import Prelude hiding (log)
 
-import Algebra.Graph.AdjacencyMap qualified as G (vertex, vertexList)
+import Algebra.Graph.AdjacencyMap (AdjacencyMap)
+import Algebra.Graph.AdjacencyMap qualified as G
+
 import Control.Arrow
-import Control.Concurrent.MVar (MVar)
-import Control.Exception.Safe (MonadCatch, MonadThrow)
+import Control.Concurrent.MVar
+import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
 import Control.Lens ((^.))
 import Control.Monad
-import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Control.Monad.IO.Unlift (MonadUnliftIO, liftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
 
 import Data.Foldable (find, traverse_)
 import Data.Function (on)
 import Data.HashMap.Strict (HashMap)
 import Data.List (groupBy, nubBy, sortOn)
-import Data.Maybe (isJust)
+import Data.Map qualified as Map
+import Data.Maybe (catMaybes, isJust, isNothing)
+import Data.Set qualified as Set
 import Data.String.Interpolate (i)
 
 import Language.LSP.Diagnostics qualified as D
@@ -68,6 +72,7 @@ type RioEnv =
   Product
     '[ ASTMap J.NormalizedUri Contract RIO
      , MVar (HashMap J.NormalizedUri Bool)
+     , "includes" := MVar (AdjacencyMap ContractInfo)
      ]
 
 newtype RIO a = RIO
@@ -120,17 +125,17 @@ diagnostic ver = traverse_ \(nuri, diags) -> do
   J.publishDiagnostics maxDiagnostics nuri ver diags'
 
 preload
-  :: J.Uri
+  :: J.NormalizedUri
   -> RIO Source
 preload uri = do
-  let Just fin = J.uriToFilePath uri  -- FIXME: non-exhaustive
-  mvf <- J.getVirtualFile (J.toNormalizedUri uri)
+  let Just fin = J.uriToFilePath $ J.fromNormalizedUri uri  -- FIXME: non-exhaustive
+  mvf <- J.getVirtualFile uri
   return case mvf of
     Just vf -> Text fin (V.virtualFileText vf)
     Nothing -> Path fin
 
 loadWithoutScopes
-  :: J.Uri
+  :: J.NormalizedUri
   -> RIO ContractInfo
 loadWithoutScopes uri = do
   src <- preload uri
@@ -138,19 +143,52 @@ loadWithoutScopes uri = do
   Log.debug "LOAD" [i|running with env #{ligoEnv}|]
   parse src
 
+-- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
+-- return 'Nothing'.
+tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ContractInfo)
+tryLoadWithoutScopes uri = (Just <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
+
 scopes :: ContractInfo -> RIO ContractInfo'
 scopes = fmap (head . G.vertexList) . addScopes @Standard . G.vertex
 
 load
-  :: J.Uri
+  :: J.NormalizedUri
   -> RIO Contract
 load uri = J.getRootPath >>= \case
-  Nothing -> Contract <$> loadDefault <*> pure [J.toNormalizedUri uri]
+  Nothing -> Contract <$> loadDefault <*> pure [uri]
   Just root -> do
-    rawGraph <- parseContractsWithDependencies (loadWithoutScopes . J.filePathToUri . srcPath) root
-    fullGraph <- addScopes @Standard rawGraph
+    imap <- asks $ getTag @"includes"
+    includes <- liftIO $ takeMVar imap
     tmap <- asks getElem
-    (graph, result) <- case J.uriToFilePath uri of
+
+    rootContract <- loadWithoutScopes uri
+    let rootFileName = contractFile rootContract
+    let groups = wcc includes
+    rawGraph <- case find (isJust . lookupContract rootFileName) groups of
+      -- Possibly the graph hasn't be initialized yet or a new file was created.
+      Nothing -> parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
+      Just oldIncludes -> do
+        let lookupOrLoad fp = maybe
+              (tryLoadWithoutScopes (normalizeFilePath fp))
+              (pure . Just)
+              (lookupContract fp oldIncludes)
+        newIncludes <- catMaybes <$> traverse lookupOrLoad (getIncludes rootContract)
+        let
+          newSet = Set.fromList newIncludes
+          oldSet = Map.keysSet $ G.adjacencyMap oldIncludes
+          newVertices = Set.difference newSet oldSet
+          removedVertices = Set.difference oldSet newSet
+          groups' = filter (isNothing . lookupContract rootFileName) groups
+          -- Replacing a contract with itself looks unintuitive but it works
+          -- because ordering is decided purely on the file name.
+          newGroup =
+            G.overlay (G.fromAdjacencySets [(rootContract, newVertices)])
+            $ G.replaceVertex rootContract rootContract
+            $ foldr (G.removeEdge rootContract) oldIncludes removedVertices
+        pure $ G.overlays (newGroup : groups')
+
+    fullGraph <- addScopes @Standard rawGraph
+    (graph, result) <- case J.uriToFilePath $ J.fromNormalizedUri uri of
       Nothing -> (fullGraph, ) <$> loadDefault
       Just fp -> case find (isJust . lookupContract fp) (wcc rawGraph) of
         Nothing ->
@@ -159,13 +197,17 @@ load uri = J.getRootPath >>= \case
           scoped <- addScopes @Standard graph'
           (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
-    let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
+    let contracts = (id &&& normalizeFilePath . contractFile) <$> G.vertexList graph
     let nuris = snd <$> contracts
     forM_ contracts \(contract, nuri) ->
       ASTMap.insert nuri (Contract contract nuris) tmap
 
+    liftIO $ putMVar imap rawGraph
+
     pure (Contract result nuris)
   where
+    sourceToUri = normalizeFilePath . srcPath
+    normalizeFilePath = J.toNormalizedUri . J.filePathToUri
     loadDefault = scopes =<< loadWithoutScopes uri
 
 collectErrors

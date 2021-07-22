@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import Algebra.Graph.AdjacencyMap qualified as G (empty)
 import Control.Concurrent.MVar
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
@@ -96,9 +97,10 @@ mainLoop = do
 
 initialize :: IO RioEnv
 initialize = do
-  astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
+  astMap <- ASTMap.empty RIO.load
   openDocs <- newMVar HashMap.empty
-  pure (astMap :> openDocs :> Nil)
+  includes <- newMVar G.empty
+  pure (astMap :> openDocs :> Tag includes :> Nil)
 
 handlers :: S.Handlers RIO
 handlers = mconcat

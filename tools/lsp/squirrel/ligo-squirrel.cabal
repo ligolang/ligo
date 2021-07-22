@@ -193,6 +193,7 @@ executable ligo-squirrel
       algebraic-graphs
     , base
     , clock
+    , containers
     , data-default
     , duplo
     , exceptions

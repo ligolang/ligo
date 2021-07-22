@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module AST.Parser
   ( Source (..)
   , parse
@@ -5,6 +7,8 @@ module AST.Parser
   , parseContracts
   , parseContractsWithDependencies
   , parseContractsWithDependenciesScopes
+
+  , getIncludes
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
@@ -14,6 +18,8 @@ import Control.Exception.Safe (throwM)
 import Control.Lens ((%~))
 import Control.Monad ((<=<))
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Writer (execWriter, tell)
+import Data.DList (toList)
 import Data.Functor.Const (Const (..))
 import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..))
@@ -98,6 +104,17 @@ parseContractsWithDependenciesScopes parser =
   addScopes @impl <=< parseContractsWithDependencies parser
 
 -- *** Utilities
+
+-- | Returns all files that are included by some contract. The returned list
+-- does not include the contract itself, unless it's self-including.
+getIncludes :: FindFilepath (SomeLIGO info) -> [FilePath]
+getIncludes (FindContract file tree _) = toList $ execWriter $ loopM_ go $ getLIGO tree
+  where
+    pwd = takeDirectory $ srcPath file
+    go (layer -> Just (BInclude (layer -> Just (String filename)))) =
+      -- TODO: fix quotes appearing in includes
+      tell [removeDots $ pwd </> unpack (replace "\"" "" filename)]
+    go _ = pure ()
 
 -- | Given some language, returns the filepath of its includes and the range
 -- where the include was made.
