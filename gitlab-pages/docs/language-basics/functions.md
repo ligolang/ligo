@@ -368,8 +368,6 @@ function incr_map (const l : list (int)) : list (int) is
   List.map (function (const i : int) : int is i + 1, l)
 ```
 
-> Note that `list_map` is *deprecated*.
-
 You can call the function `incr_map` defined above using the LIGO
 compiler like so:
 

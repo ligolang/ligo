@@ -184,8 +184,6 @@ Number of elements in a set.
 const cardinal : nat = Set.size (my_set)
 ```
 
-> Note that `size` is *deprecated*. Please use `Set.size`
-
 </Syntax>
 <Syntax syntax="cameligo">
 

@@ -30,8 +30,6 @@ Concatenate together two `bytes` arguments and return the result.
 function concat_op (const s : bytes) : bytes is Bytes.concat(s , 0x7070)
 ```
 
-> Note that `bytes_concat` is *deprecated*. 
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -78,8 +76,6 @@ input "ff7a7aff" to the following function:
 function slice_op (const s : bytes) : bytes is Bytes.sub(1n , 2n , s)
 ```
 
-> Note that `bytes_slice` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -87,16 +83,12 @@ function slice_op (const s : bytes) : bytes is Bytes.sub(1n , 2n , s)
 let slice_op (s : bytes) : bytes = Bytes.sub 1n 2n s
 ```
 
-> Note that `Bytes.slice` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```
 let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
 ```
-
-> Note that `Bytes.slice` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">

@@ -409,8 +409,6 @@ function iter_op (const l : list (int)) : unit is
   } with List.iter (iterated, l)
 ```
 
-> Note that `list_iter` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -462,8 +460,6 @@ function increment (const i : int): int is i + 1
 // Creates a new list with all elements incremented by 1
 const plus_one : list (int) = List.map (increment, larger_list)
 ```
-
-> Note that `list_map` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -525,8 +521,6 @@ Here is an example of their use.
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 ```
-
-> Note that `list_fold` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -753,8 +747,6 @@ elements in a given set as follows.
 const cardinal : nat = Set.size (my_set)
 ```
 
-> Note that `size` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -796,8 +788,6 @@ modify it in-place. First, let us consider the former way:
 const larger_set  : set (int) = Set.add (4, my_set)
 const smaller_set : set (int) = Set.remove (3, my_set)
 ```
-
-> Note that `set_add` and `set_remove` are *deprecated*.
 
 If we are in a block, we can use an instruction to modify the set
 bound to a given variable. This is called a *patch*. It is only
@@ -892,8 +882,6 @@ function iter_op (const s : set (int)) : unit is
       if i > 2 then Unit else (failwith ("Below range.") : unit)
   } with Set.iter (iterated, s)
 ```
-
-> Note that `set_iter` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -993,8 +981,6 @@ has been added to properly conform to the function signature of OCaml's
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
 ```
-
-> Note that `set_fold` is *deprecated*.
 
 It is possible to use a *loop* over a set as well.
 

@@ -71,9 +71,6 @@ let gcd (x,y : nat * nat) : nat =
   iter (x,y)
 ```
 
-> Note that `fold_while`, `stop` and `continue` (now `Loop.resume`) are
-> *deprecated*.
-
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
@@ -104,9 +101,6 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
   iter ((x,y))
 };
 ```
-
-> Note that `fold_while`, `stop` and `continue` (now `Loop.resume`) are
-> *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">

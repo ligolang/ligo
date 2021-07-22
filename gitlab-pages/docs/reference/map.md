@@ -413,8 +413,6 @@ function iter_op (const m : register) : unit is
   } with Map.iter (iterated, m)
 ```
 
-> Note that `map_iter` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -470,8 +468,6 @@ function map_op (const m : register) : register is
   } with Map.map (increment, m)
 ```
 
-> Note that `map_map` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -517,8 +513,6 @@ function fold_op (const m : register) : int is
       i + j.1.1
   } with Map.fold (folded, m, 5)
 ```
-
-> Note that `map_fold` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">

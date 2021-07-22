@@ -30,16 +30,12 @@ function main (const p : unit; const s: tez) : list (operation) * tez is
   ((nil : list (operation)), Tezos.balance)
 ```
 
-> Note that `balance` and `Current.balance` are *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
 let main (p,s : unit * tez) = ([] : operation list), Tezos.balance
 ```
-
-> Note that `balance` and `Current.balance` are *deprecated*.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -48,8 +44,6 @@ let main (p,s : unit * tez) = ([] : operation list), Tezos.balance
 let main = ((p,s) : (unit, tez)) =>
   ([]: list (operation), Tezos.balance);
 ```
-
-> Note that `balance` and `Current.balance` are *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -95,8 +89,6 @@ const some_date: timestamp = ("2000-01-01T10:10:10Z" : timestamp);
 const one_day_later: timestamp = some_date + one_day;
 ```
 
-> Note that `now` is *deprecated*. Please use `Tezos.now`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -108,8 +100,6 @@ let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp)
 let one_day_later: timestamp = some_date + one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -120,8 +110,6 @@ let in_24_hrs: timestamp = today + one_day;
 let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp);
 let one_day_later: timestamp = some_date + one_day;
 ```
-
-> Note that `Current.time` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -148,8 +136,6 @@ const one_day: int = 86_400;
 const in_24_hrs: timestamp = today - one_day;
 ```
 
-> Note that `now` is *deprecated*. Please use `Tezos.now`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -159,8 +145,6 @@ let one_day: int = 86_400
 let in_24_hrs: timestamp = today - one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -169,8 +153,6 @@ let today: timestamp = Tezos.now;
 let one_day: int = 86_400;
 let in_24_hrs: timestamp = today - one_day;
 ```
-
-> Note that `Current.time` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -196,8 +178,6 @@ for numbers
 const not_tommorow: bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `now` is *deprecated*. Please use `Tezos.now`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -205,16 +185,12 @@ const not_tommorow: bool = (Tezos.now = in_24_hrs)
 let not_tomorrow: bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `Current.time` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=c
 let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 ```
-
-> Note that `Current.time` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -251,16 +227,12 @@ function threshold (const p : unit) : int is
   if Tezos.amount = 100tz then 42 else 0
 ```
 
-> Note that `amount` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
 let threshold (p : unit) : int = if Tezos.amount = 100tz then 42 else 0
 ```
-
-> Note that `Current.amount` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -269,8 +241,6 @@ let threshold (p : unit) : int = if Tezos.amount = 100tz then 42 else 0
 let threshold = (p : unit) : int =>
   if (Tezos.amount == 100tz) { 42; } else { 0; };
 ```
-
-> Note that `Current.amount` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -306,8 +276,6 @@ Get the address that initiated the current transaction.
 function main (const p : unit) : address is Tezos.sender
 ```
 
-> Note that `sender` is *deprecated*. Please use `Tezos.sender`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -315,16 +283,12 @@ function main (const p : unit) : address is Tezos.sender
 let main (p: unit) : address = Tezos.sender
 ```
 
-> Note that `Current.sender` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
 let main = (p : unit) : address => Tezos.sender;
 ```
-
-> Note that `Current.sender` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -362,8 +326,6 @@ function main (const p : key_hash) : address is block {
 } with Tezos.address(c)
 ```
 
-> Note that `implicit_account` and `address` are *deprecated*. Please use `Tezos.implicit_account` and `Tezos.address` instead.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -372,9 +334,6 @@ let main (p : key_hash) =
   let c : unit contract = Tezos.implicit_account p
   in Tezos.address c
 ```
-
-> Note that `Current.implicit_account` and `Current.address` are
-> *deprecated*.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -385,9 +344,6 @@ let main = (p : key_hash) : address => {
   Tezos.address (c);
 };
 ```
-
-> Note that `Current.implicit_account` and `Current.address` are
-> *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -425,8 +381,6 @@ Get the address of the currently running contract.
 function main (const p : unit) : address is Tezos.self_address
 ```
 
-> Note that `self_address` is *deprecated*. Please use `Tezos.self_address`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -434,16 +388,12 @@ function main (const p : unit) : address is Tezos.self_address
 let main (p : unit) : address = Tezos.self_address
 ```
 
-> Note that `Current.self_address` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
 let main = (p : unit) : address => Tezos.self_address;
 ```
-
-> Note that `Current.self_address` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -530,16 +480,12 @@ function main (const kh: key_hash) : contract (unit) is
   Tezos.implicit_account (kh)
 ```
 
-> Note that `implicit_account` is *deprecated*. Please use `Tezos.implicit_account`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
 let main (kh : key_hash) : unit contract = Tezos.implicit_account kh
 ```
-
-> Note that `Current.implicit_account` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -548,8 +494,6 @@ let main (kh : key_hash) : unit contract = Tezos.implicit_account kh
 let main = (kh : key_hash): contract (unit) =>
   Tezos.implicit_account (kh);
 ```
-
-> Note that `Current.implicit_account` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -607,8 +551,6 @@ current transaction.
 function main (const p: unit) : address is Tezos.source
 ```
 
-> Note that `source` is *deprecated*. Please use `Tezos.source`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -616,16 +558,12 @@ function main (const p: unit) : address is Tezos.source
 let main (p : unit) : address = Tezos.source
 ```
 
-> Note that `Current.source` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
 let main = (p : unit) : address => Tezos.source;
 ```
-
-> Note that `Current.source` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -751,16 +689,6 @@ Transfer `tez` to an account, or run code of another smart contract.
 
 To indicate an account, use `unit` as `parameter`.
 
-<Syntax syntax="pascaligo">
-Note that `transaction` is deprecated. Please use `Tezos.transaction` instead.
-</Syntax>
-<Syntax syntax="cameligo">
-Note that `transaction` is deprecated. Please use `Tezos.transaction` instead.
-</Syntax>
-<Syntax syntax="reasonligo">
-Note that `transaction` is deprecated. Please use `Tezos.transaction` instead.
-</Syntax>
-
 <SyntaxTitle syntax="pascaligo">
 function set_delegate : option(key_hash) -> operation
 </SyntaxTitle>
@@ -784,19 +712,6 @@ The operation fails when:
 
 Use `None` to withdraw the current delegate.
 
-<Syntax syntax="pascaligo">
-Note that `set_delegate` is deprecated. Please use `Tezos.set_delegate`
-instead.
-</Syntax>
-<Syntax syntax="cameligo">
-Note that `Operation.set_delegate` is deprecated. Please use
-`Tezos.set_delegate` instead.
-</Syntax>
-<Syntax syntax="reasonligo">
-Note that `Operation.set_delegate` is deprecated. Please use
-`Tezos.set_delegate` instead.
-</Syntax>
-
 <SyntaxTitle syntax="pascaligo">
 function get_contract_opt : address -> option(contract('parameter))
 </SyntaxTitle>
@@ -814,19 +729,6 @@ Get a contract from an address.
 
 When no contract is found or the contract doesn't match the type,
 `None` is returned.
-
-<Syntax syntax="pascaligo">
-Note that `get_contract` and `get_contract_opt` are deprecated. Please use
-`Tezos.get_contract_opt` instead.
-</Syntax>
-<Syntax syntax="cameligo">
-Note that `Operation.get_contract` and `Operation.get_contract_opt` are
-deprecated. Please use `Tezos.get_contract_opt` instead.
-</Syntax>
-<Syntax syntax="reasonligo">
-Note that `Operation.get_contract` and `Operation.get_contract_opt` are
-deprecated. Please use `Tezos.get_contract_opt` instead.
-</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function get_entrypoint_opt : string -> address -> option(contract('parameter))
@@ -847,21 +749,6 @@ Entrypoints are written in the form of: `%entrypoint`.
 
 When no contract is found or the contract doesn't match the type,
 `None` is returned.
-
-<Syntax syntax="pascaligo">
-Note that `get_entrypoint` and `get_entrypoint_opt` are deprecated. Please use
-`Tezos.get_entrypoint_opt` instead.
-</Syntax>
-
-<Syntax syntax="cameligo">
-Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are
-deprecated. Please use `Tezos.get_entrypoint_opt` instead.
-</Syntax>
-
-<Syntax syntax="reasonligo">
-Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are
-deprecated. Please use `Tezos.get_entrypoint_opt` instead.
-</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 const level : nat

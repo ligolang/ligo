@@ -282,8 +282,6 @@ function deny (const action : parameter; const store : storage) : return is
   else ((nil : list (operation)), store)
 ```
 
-> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
-
 </Syntax>
 
 <Syntax syntax="cameligo">
@@ -299,7 +297,6 @@ let deny (action, store : parameter * storage) : return =
   else (([] : operation list), store)
 ```
 
-> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -315,8 +312,6 @@ let deny = ((action, store): (parameter, storage)) : return => {
   else { (([] : list (operation)), store); };
 };
 ```
-
-> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -335,8 +330,6 @@ let deny = ([action, store]: [parameter, storage]): return_ => {
   };
 };
 ```
-
-> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -376,8 +369,6 @@ function main (const action : parameter; const store : storage) : return is
   else ((nil : list (operation)), store)
 ```
 
-> Note that `source` is *deprecated*. Please use `Tezos.source`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -388,8 +379,6 @@ let main (action, store: parameter * storage) : return =
   if Tezos.source <> owner then (failwith "Access denied." : return)
   else (([] : operation list), store)
 ```
-
-> Note that `source` is *deprecated*. Please use `Tezos.source`.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -403,8 +392,6 @@ let main = ((action, store) : (parameter, storage)) : return => {
 };
 ```
 
-> Note that `source` is *deprecated*. Please use `Tezos.source`.
-
 </Syntax>
 <Syntax syntax="jsligo">
 
@@ -416,8 +403,6 @@ let main = ([action, store]: [parameter, storage]): return_ => {
   else { return [list([]) as list<operation>, store]; };
 };
 ```
-
-> Note that `source` is *deprecated*. Please use `Tezos.source`.
 
 </Syntax>
 
@@ -531,9 +516,6 @@ let proxy (action, store : parameter * storage) : return =
   in [op], store
 ```
 
-> Note that `Operation.get_contract` and `Operation.transaction` are
-> *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -576,9 +558,6 @@ let proxy = ((action, store): (parameter, storage)) : return => {
 };
 ```
 
-> Note that `Operation.get_contract` and `Operation.transaction` are
-> *deprecated*.
-
 </Syntax>
 <Syntax syntax="jsligo">
 
@@ -620,8 +599,5 @@ let proxy = ([action, store]: [parameter, storage]): return_ => {
   return [list([op]), store];
 };
 ```
-
-> Note that `Operation.get_contract` and `Operation.transaction` are
-> *deprecated*.
 
 </Syntax>
