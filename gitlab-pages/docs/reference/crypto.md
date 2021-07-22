@@ -159,6 +159,97 @@ let hasherman512 = (s: bytes): bytes => Crypto.sha512(s);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
+function sha3 : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sha3 : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sha3: bytes => bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let sha3: (b: bytes) => bytes
+</SyntaxTitle>
+
+Runs the [sha3 hash algorithm](https://en.wikipedia.org/wiki/SHA-3) over the given
+`bytes` data and returns a `bytes` representing the hash.
+
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+function hasherman3 (const s: bytes) : bytes is Crypto.sha3(s)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+let hasherman3 (s: bytes) : bytes = Crypto.sha3 s
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let hasherman3 = (s: bytes) => Crypto.sha3(s);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let hasherman3 = (s: bytes): bytes => Crypto.sha3(s);
+```
+
+</Syntax>
+<SyntaxTitle syntax="pascaligo">
+function keccak : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val keccak : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let keccak: bytes => bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let keccak: (b: bytes) => bytes
+</SyntaxTitle>
+
+Runs the [keccak](https://en.wikipedia.org/wiki/keccak) over the given
+`bytes` data and returns a `bytes` representing the hash.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+function hasherman_keccak (const s: bytes) : bytes is Crypto.keccak(s)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+let hasherman_keccak (s: bytes) : bytes = Crypto.keccak s
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let hasherman_keccak = (s: bytes) => Crypto.keccak(s);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let hasherman_keccak = (s: bytes): bytes => Crypto.keccak(s);
+```
+
+</Syntax>
+
+<SyntaxTitle syntax="pascaligo">
 function hash_key : key -> key_hash
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
