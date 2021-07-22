@@ -134,14 +134,48 @@ function CodeExamples (props) {
   return (
    
 <Tabs
-  defaultValue="pascaligo"
+  defaultValue="jsligo"
   values={[
-    { label: 'PascaLIGO', value: 'pascaligo', },
-    { label: 'CameLIGO', value: 'cameligo', },
-    { label: 'ReasonLIGO', value: 'reasonligo', },
     { label: 'JsLIGO (experimental)', value: 'jsligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
   ]
 }>
+  <TabItem value="jsligo">
+
+<Highlight {...defaultProps} language="jsligo" code={JSLIGO_EXAMPLE} theme={prismTheme}>
+    {({ className, style, tokens, getLineProps, getTokenProps }) => (
+      <pre className={className} style={style}>
+        {tokens.map((line, i) => (
+          <div {...getLineProps({ line, key: i })}>
+            {line.map((token, key) => (
+              <span {...getTokenProps({ token, key })} />
+            ))}
+          </div>
+        ))}
+      </pre>
+    )}
+  </Highlight>
+</TabItem>
+
+    <TabItem value="cameligo">
+
+      <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={prismTheme}>
+        {({ className, style, tokens, getLineProps, getTokenProps }) => (
+          <pre className={className} style={style}>
+            {tokens.map((line, i) => (
+              <div {...getLineProps({ line, key: i })}>
+                {line.map((token, key) => (
+                  <span {...getTokenProps({ token, key })} />
+                ))}
+              </div>
+            ))}
+          </pre>
+        )}
+      </Highlight>
+      </TabItem>
+
         <TabItem value="pascaligo">
           <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={prismTheme}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
@@ -157,22 +191,7 @@ function CodeExamples (props) {
             )}
           </Highlight>
         </TabItem>
-        <TabItem value="cameligo">
-
-          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={prismTheme}>
-            {({ className, style, tokens, getLineProps, getTokenProps }) => (
-              <pre className={className} style={style}>
-                {tokens.map((line, i) => (
-                  <div {...getLineProps({ line, key: i })}>
-                    {line.map((token, key) => (
-                      <span {...getTokenProps({ token, key })} />
-                    ))}
-                  </div>
-                ))}
-              </pre>
-            )}
-          </Highlight>
-        </TabItem>
+        
         <TabItem value="reasonligo">
 
         <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={prismTheme}>
@@ -189,23 +208,7 @@ function CodeExamples (props) {
             )}
           </Highlight>
         </TabItem>
-        <TabItem value="jsligo">
-
-        <Highlight {...defaultProps} language="jsligo" code={JSLIGO_EXAMPLE} theme={prismTheme}>
-            {({ className, style, tokens, getLineProps, getTokenProps }) => (
-              <pre className={className} style={style}>
-                {tokens.map((line, i) => (
-                  <div {...getLineProps({ line, key: i })}>
-                    {line.map((token, key) => (
-                      <span {...getTokenProps({ token, key })} />
-                    ))}
-                  </div>
-                ))}
-              </pre>
-            )}
-          </Highlight>
-        </TabItem>
-
+        
 
 
   </Tabs>
