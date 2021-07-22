@@ -32,8 +32,6 @@ over the given `bytes` data and returns a `bytes` representing the hash.
 function hasherman_blake (const s: bytes) : bytes is Crypto.blake2b(s)
 ```
 
-> Note that `blake2b` is *deprecated*. Please use `Crypto.blake2b`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -83,8 +81,6 @@ Runs the [sha256 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 function hasherman (const s : bytes) : bytes is Crypto.sha256(s)
 ```
 
-> Note that `sha_256` is *deprecated*. Please use `Crypto.sha256`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -132,8 +128,6 @@ Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 ```pascaligo
 function hasherman512 (const s: bytes) : bytes is Crypto.sha512(s)
 ```
-
-> Note that `sha_512` is *deprecated*.  Please use `Crypto.sha512`.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -276,8 +270,6 @@ function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash
 } with (ret, kh2)
 ```
 
-> Note that `hash_key` is *deprecated*. Please use `Crypto.hash_key`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -349,8 +341,6 @@ function check_signature
      const msg: bytes) : bool
   is Crypto.check(pk, signed, msg)
 ```
-
-> Note that `crypto_check` is *deprecated*. Please use `Crypto.check`.
 
 </Syntax>
 <Syntax syntax="cameligo">

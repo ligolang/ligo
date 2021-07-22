@@ -33,8 +33,6 @@ function id_string (const p : string) : option (string) is block {
 } with (Bytes.unpack (packed) : option (string))
 ```
 
-> Note that `bytes_pack` and `bytes_unpack` are *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -87,9 +85,6 @@ function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash
     if kh1 = kh2 then ret := True else skip
   } with (ret, kh2)
 ```
-
-> Note that `hash_key` is *deprecated*. Please use `Crypto.hash_key`.
-
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -147,8 +142,6 @@ function check_signature
   is Crypto.check (pk, signed, msg)
 ```
 
-> Note that `crypto_check` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -182,8 +175,6 @@ let check_signature =
 
 Often you want to get the address of the contract being executed. You
 can do it with `Tezos.self_address`.
-
-> Note that `self_address` is *deprecated*.
 
 > ⚠️ Due to limitations in Michelson, `Tezos.self_address` in a
 > contract is only allowed at the top-level. Using it in an embedded

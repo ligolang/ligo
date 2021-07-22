@@ -108,8 +108,6 @@ const name  : string = "Alice"
 const slice : string = String.sub (0n, 1n, name)
 ```
 
-> Note that `string_slide` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -118,8 +116,6 @@ let name  : string = "Alice"
 let slice : string = String.sub 0n 1n name
 ```
 
-> Note that `String.slice` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -127,8 +123,6 @@ let slice : string = String.sub 0n 1n name
 let name  : string = "Alice";
 let slice : string = String.sub (0n, 1n, name);
 ```
-
-> Note that `String.slice` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">

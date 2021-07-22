@@ -399,8 +399,6 @@ let is_nat: (i: int) => option&lt;nat&gt;
 
 Convert an `int` to a `nat` if possible.
 
-Note that `Michelson.is_nat` is deprecated. Please use `is_nat` instead.
-
 <SyntaxTitle syntax="pascaligo">
 function abs: int -> nat
 </SyntaxTitle>
@@ -501,13 +499,6 @@ let main = ([p, s] : [int, unit]): unit => {
 ```
 
 </Syntax>
-<Syntax syntax="cameligo">
-`Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
-</Syntax>
-<Syntax syntax="reasonligo">
-`Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
-</Syntax>
-
 
 <SyntaxTitle syntax="pascaligo">
 function assert : bool -> unit

@@ -24,8 +24,6 @@ current timestamp value.
 const today : timestamp = Tezos.now
 ```
 
-> Note that `now` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -33,16 +31,12 @@ const today : timestamp = Tezos.now
 let today : timestamp = Tezos.now
 ```
 
-> Note that `Current.time` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=a
 let today : timestamp = Tezos.now;
 ```
-
-> Note that `Current.time` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -75,8 +69,6 @@ const some_date : timestamp = ("2000-01-01T10:10:10Z" : timestamp)
 const one_day_later : timestamp = some_date + one_day
 ```
 
-> Note that `now` is *deprecated*. Please use `Tezos.now`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -88,8 +80,6 @@ let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp)
 let one_day_later : timestamp = some_date + one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -100,8 +90,6 @@ let in_24_hrs : timestamp = today + one_day;
 let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp);
 let one_day_later : timestamp = some_date + one_day;
 ```
-
-> Note that `Current.time` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -128,8 +116,6 @@ const one_day : int = 86400
 const in_24_hrs : timestamp = today - one_day
 ```
 
-> Note that `now` is *deprecated*. Please use `Tezos.now`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -139,8 +125,6 @@ let one_day : int = 86400
 let in_24_hrs : timestamp = today - one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -149,8 +133,6 @@ let today : timestamp = Tezos.now;
 let one_day : int = 86400;
 let in_24_hrs : timestamp = today - one_day;
 ```
-
-> Note that `Current.time` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -176,8 +158,6 @@ applying to numbers.
 const not_tommorow : bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `now` is *deprecated*. Please use `Tezos.now`.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -185,16 +165,12 @@ const not_tommorow : bool = (Tezos.now = in_24_hrs)
 let not_tomorrow : bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `Current.time` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=c
 let not_tomorrow : bool = (Tezos.now == in_24_hrs);
 ```
-
-> Note that `Current.time` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">

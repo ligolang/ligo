@@ -95,8 +95,6 @@ function iter_op (const l : list (int)) : unit is
   } with List.iter (iterated, l)
 ```
 
-> Note that `list_iter` is *deprecated*.
-
 Alternatively it's also possible to use [loops](../language-basics/loops.md).
 
 </Syntax>
@@ -156,8 +154,6 @@ function increment (const i : int): int is i + 1
 // Creates a new list with all elements incremented by 1
 const plus_one : list (int) = List.map (increment, larger_list)
 ```
-
-> Note that `list_map` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -221,8 +217,6 @@ function sum (const acc : int; const i : int): int is acc + i
 
 const sum_of_elements : int = List.fold (sum, my_list, 0)
 ```
-
-> Note that `list_fold` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
