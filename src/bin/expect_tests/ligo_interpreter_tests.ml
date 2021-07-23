@@ -206,5 +206,5 @@ let%expect_test _ =
       2 |   let ut = Test.reset_state 2n [1n;1n] in
       3 |   let f = (fun (_ : (unit * unit)) -> ()) in
 
-    An uncaught error occured in the object language:
+    An uncaught error occured:
     Insufficient tokens in initial accounts to create one roll |}]
