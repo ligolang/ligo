@@ -177,9 +177,21 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_interpret_test_entry_not_found s ->
       Format.fprintf f "Test entry '%s' not found" s
     | `Main_interpret_target_lang_error (loc, errs) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured in the object language:@.%a@]"
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@]"
         Snippet.pp loc
         (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+    | `Main_interpret_target_lang_failwith (loc, Failwith_int n) ->
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (int): %d@]"
+        Snippet.pp loc
+        n
+    | `Main_interpret_target_lang_failwith (loc, Failwith_bytes b) ->
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (bytes): %s@]"
+        Snippet.pp loc
+        (Bytes.to_string b)
+    | `Main_interpret_target_lang_failwith (loc, Failwith_string s) ->
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (string): %s@]"
+        Snippet.pp loc
+        s
     | `Main_interpret_boostrap_not_enough loc ->
       Format.fprintf f "@[<hv>%a@.We need at least two boostrap accounts for the default source and baker@]"
       Snippet.pp loc
@@ -380,6 +392,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
 
   | `Main_interpret_test_entry_not_found _
   | `Main_interpret_target_lang_error _
+  | `Main_interpret_target_lang_failwith _
   | `Main_interpret_boostrap_not_enough _
   | `Main_interpret_meta_lang_eval _
   | `Main_interpret_meta_lang_failwith _

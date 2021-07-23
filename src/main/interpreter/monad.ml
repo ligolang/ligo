@@ -257,7 +257,7 @@ module Command = struct
       let* input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types func_code.expr_ty in
       let* options = Michelson_backend.make_options ~param:input_ty (Some ctxt) in
       let* runres = Ligo_run.Of_michelson.run_function ~options func_code.expr func_code.expr_ty arg_code in
-      let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
+      let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail x -> fail @@ Errors.target_lang_failwith loc x in
       let expr, expr_ty =
         clean_locations expr, clean_locations expr_ty in
       let ret = LT.V_Michelson (Ty_code (expr, expr_ty, f.body.type_expression)) in
@@ -324,7 +324,7 @@ module Command = struct
         let addr = LT.V_Ct ( C_address contract ) in
         let storage_tys = (contract, ligo_ty) :: (ctxt.storage_tys) in
         ok (addr, {ctxt with storage_tys})
-      | Tezos_state.Fail errs -> raise (Exc.Exc (Object_lang_ex (loc,errs)))
+      | Tezos_state.Fail errs -> fail (Errors.target_lang_error loc errs)
     )
     | Mutate_some_value (_loc, z, v, v_type) ->
       let n = Z.to_int z in
@@ -486,7 +486,7 @@ type 'a t =
   | Call : 'a Command.t -> 'a t
   | Return : 'a -> 'a t
   | Fail_ligo : Errors.interpreter_error -> 'a t
-  | Try_catch : 'a t * (Ligo_interpreter.Types.exception_type -> 'a t) -> 'a t
+  | Try_or : 'a t * 'a t -> 'a t
 
 let rec eval
   : type a.
@@ -502,24 +502,20 @@ let rec eval
   | Call command -> Command.eval command ctxt log
   | Return v -> ok (v, ctxt)
   | Fail_ligo err -> fail err
-  | Try_catch (e', handler) ->
-    match Trace.to_stdlib_result (eval e' ctxt log) with
-    | Ok r -> ok r
-    | Error (`Main_interpret_target_lang_error (loc, e)) ->
-       eval (handler (LT.Object_lang_ex (loc, e))) ctxt log
-    | Error (`Main_interpret_meta_lang_eval (loc, s)) ->
-       eval (handler (LT.Meta_lang_ex {location = loc; reason = Reason s})) ctxt log
-    | Error (`Main_interpret_meta_lang_failwith (loc, v)) ->
-       eval (handler (LT.Meta_lang_ex {location = loc; reason = Val v})) ctxt log
-    | Error _ ->
-       failwith "Interpreter error not handled"
-    | exception Exc.Exc exc ->
-       eval (handler exc) ctxt log
+  | Try_or (e', handler) ->
+    try_catch (function
+          `Main_interpret_target_lang_error _
+        | `Main_interpret_target_lang_failwith _
+        | `Main_interpret_meta_lang_eval _
+        | `Main_interpret_meta_lang_failwith _ ->
+           eval handler ctxt log
+        | e -> fail e)
+    (eval e' ctxt log)
 
 let fail err : 'a t = Fail_ligo err
 let return (x: 'a) : 'a t = Return x
 let call (command : 'a Command.t) : 'a t = Call command
-let try_catch (c : 'a t) (handler : Ligo_interpreter.Types.exception_type -> 'a t) : 'a t = Try_catch (c, handler)
+let try_or (c : 'a t) (handler : 'a t) : 'a t = Try_or (c, handler)
 let ( let>> ) o f = Bind (call o, f)
 let ( let* ) o f = Bind (o, f)
 
