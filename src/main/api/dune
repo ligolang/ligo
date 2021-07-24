@@ -14,4 +14,4 @@
  (deps (env_var CHANGELOG_PATH))
  (action (with-stdout-to
           changelog.ml
-          (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ${CHANGELOG_PATH:-../../gitlab-pages/docs/intro/changelog.md})\""))))
+          (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ${CHANGELOG_PATH:-../../../gitlab-pages/docs/intro/changelog.md})\""))))

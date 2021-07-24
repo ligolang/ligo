@@ -42,7 +42,6 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> COLON     ":"
 %token <Region.t> DOT       "."
 %token <Region.t> ELLIPSIS  "..."
-%token <Region.t> QMARK     "?"
 
 %token <Region.t> BOOL_OR  "||"
 %token <Region.t> BOOL_AND "&&"
@@ -87,7 +86,6 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> Const    "const"
 %token <Region.t> Default  "default"
 %token <Region.t> Else     "else"
-%token <Region.t> Enum     "enum"
 %token <Region.t> Export   "export"
 %token <Region.t> False    "false"
 %token <Region.t> For      "for"
