@@ -69,7 +69,6 @@ let is_sym =
   | COLON _
   | DOT _
   | ELLIPSIS _
-  | QMARK _
   | BOOL_OR _
   | BOOL_AND _
   | BOOL_NOT _
