@@ -92,10 +92,12 @@ let rec run_test ?(prefix = "") : test -> unit = fun t ->
       )
     )
 
-let wrap_ref f =
+let wrap_ref file f =
   let s = ref None in
   fun () -> match !s with
-    | Some s -> ok s
+    | Some (a,file') -> 
+      if file' = file then
+        ok a else f s
     | None -> f s
 
 (* Common functions used in tests *)
@@ -104,10 +106,10 @@ let type_file ?(st = "auto") f entry options =
   Ligo_compile.Utils.type_file ~options f st entry
 
 let get_program ~add_warning ?(st = "auto") f entry =
-  wrap_ref (fun s ->
+  wrap_ref f (fun s ->
       let options = Compiler_options.make () in
       let* program = type_file ~add_warning ~st f entry options in
-      s := Some program ;
+      s := Some (program,f) ;
       ok program
     )
 
