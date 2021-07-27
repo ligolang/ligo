@@ -7,7 +7,6 @@ struct
   open Type_variable_abstraction
   open Type_variable_abstraction.Types
   open UnionFind
-  open Trace
 
   type 'typeVariable t = ('typeVariable, c_typeclass_simpl MultiSet.t) ReprMap.t
   type ('type_variable, 'a) state = < typeclasses_using_as_function_on_root : 'type_variable t ; .. > as 'a
@@ -47,7 +46,7 @@ struct
     | SC_Typeclass c -> register_typeclasses_using_as_function_on_root repr c state
     | _ -> state
 
-  let remove_constraint (type tv) _printer (repr : type_variable -> tv) (state : tv t) (constraint_to_remove : type_constraint_simpl) =
+  let remove_constraint ~raise:_ (type tv) _printer (repr : type_variable -> tv) (state : tv t) (constraint_to_remove : type_constraint_simpl) =
     Format.eprintf "remove_constraint for typeclassesConstraining.... \n%!";
     match constraint_to_remove with
     | Type_variable_abstraction.Types.SC_Typeclass constraint_to_remove ->
@@ -63,10 +62,10 @@ struct
           ~init:state
           (functions_on_roots repr constraint_to_remove) in
       Format.eprintf "  ok\n%!";
-      ok state
+      state
     | _ -> 
       Format.eprintf "  ok\n%!";
-      ok state
+      state
 
   let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
     fun ?debug:_ merge_keys state -> 

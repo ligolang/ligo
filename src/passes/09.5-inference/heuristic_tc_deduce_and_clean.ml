@@ -16,7 +16,6 @@
    the arguments of the constructor or row, and continue inferring
    until the typeclass is in a minimal form. *)
 
-open Trace
 open Typer_common.Errors
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
@@ -76,10 +75,10 @@ let get_referenced_constraints ({ tc; } : selector_output) : type_constraint_sim
  * *********************************************************************** *)
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
+  fun ~raise selected repr ->
   let open Type_variable_abstraction.Misc in
   let open Type_variable_abstraction.Reasons in
-  let* ( deduced , cleaned , changed ) = wrapped_deduce_and_clean repr selected.tc ~original:selected.tc in
+  let ( deduced , cleaned , changed ) = wrapped_deduce_and_clean ~raise repr selected.tc ~original:selected.tc in
   let deduced_single_line = (match cleaned with
    SC_Typeclass {tc=[line];args;tc_bound} -> List.filter_map ~f:(function Location.{wrap_content = P_variable v},a when not @@ List.mem ~equal:Caml.(=) tc_bound v -> Some (c_equation
           (wrap (Propagator_break_ctor "v") @@ P_variable (repr v))
@@ -88,9 +87,9 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
 ) | _ -> None) @@ List.zip_exn line args
          | _ -> []) in
   if not changed then
-    ok []
+    []
   else
-    ok [{
+    [{
         remove_constraints = [SC_Typeclass selected.tc];
         add_constraints = deduced_single_line;
         add_constraints_simpl = cleaned :: deduced;

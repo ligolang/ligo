@@ -7,7 +7,6 @@ struct
   open Type_variable_abstraction
   open Type_variable_abstraction.Types
   open UnionFind
-  open Trace
 
   type 'typeVariable t = ('typeVariable, c_typeclass_simpl MultiSet.t) ReprMap.t
   type ('type_variable, 'a) state = < typeclasses_using_as_unbound_var : 'type_variable t ; .. > as 'a
@@ -38,7 +37,7 @@ struct
     | SC_Typeclass c -> register_typeclasses_using_as_unbound_var repr c state
     | _ -> state
 
-  let remove_constraint printer repr state constraint_to_remove =
+  let remove_constraint ~raise:_ printer repr state constraint_to_remove =
     Format.eprintf "remove_constraint for typeclassesConstraining.... \n%!";
     match constraint_to_remove with
     | Type_variable_abstraction.Types.SC_Typeclass constraint_to_remove ->
@@ -56,10 +55,10 @@ struct
           ~init:state
           (p_variable_cells constraint_to_remove) in
       Format.eprintf "  ok\n%!";
-      ok state
+      state
     | _ -> 
       Format.eprintf "  ok\n%!";
-      ok state
+      state
 
   let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
     fun ?debug:_ merge_keys state -> 

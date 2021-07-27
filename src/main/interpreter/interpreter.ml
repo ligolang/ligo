@@ -447,7 +447,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       let value_ty = List.nth_exn types 0 in
       let>> l = Mutate_all_value (loc,v,value_ty) in
       let* r = iter_while (fun (e, m) ->
-        let* v = eval_ligo e _env in
+        let* v = eval_ligo e _env in 
         let r =  match tester with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
              let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
@@ -737,47 +737,46 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
        fail @@
          Errors.modules_not_supported term.location
 
-let ( let>>= ) o f = Trace.bind f o
 
 
 let try_eval expr env state r =
   Monad.eval (eval_ligo expr env) state r
 
-let eval : Ast_typed.module_fully_typed -> (env * Tezos_state.context , Errors.interpreter_error) result =
+let eval ~raise : Ast_typed.module_fully_typed -> env * Tezos_state.context =
   fun (Module_Fully_Typed prg) ->
-    let aux : env * Tezos_state.context -> declaration location_wrap -> (env * Tezos_state.context, Errors.interpreter_error) Trace.result =
+    let aux : env * Tezos_state.context -> declaration location_wrap -> env * Tezos_state.context =
       fun (top_env,state) el ->
         match Location.unwrap el with
         | Ast_typed.Declaration_type _ ->
-           ok (top_env,state)
+           (top_env,state)
         | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
-          let>>= (v,state) = try_eval expr top_env state None in
-          let* mich = match v with
+          let (v,state) = try_eval ~raise expr top_env state None in
+          let mich = match v with
             | V_Func_val _ | V_Michelson _ | V_Ligo _ ->
-               ok None
+               None
             | _ ->
-               let>>= mich_expr,mich_expr_ty,_ = Michelson_backend.compile_simple_value ~loc:expr.location v expr.type_expression in
-               ok @@ Some (mich_expr, mich_expr_ty) in
+               let mich_expr,mich_expr_ty,_ = Michelson_backend.compile_simple_value ~raise ~loc:expr.location v expr.type_expression in
+               Some (mich_expr, mich_expr_ty) in
           let top_env' = Env.extend ~ast_type:expr.type_expression ?micheline:mich top_env (binder, v) in
-          ok (top_env',state)
+          (top_env',state)
         | Ast_typed.Declaration_module {module_binder; module_=_} ->
-          let>>= module_env =
-            fail @@
+          let module_env =
+            raise.raise @@
               Errors.modules_not_supported el.location
           in
           let top_env' = Env.extend top_env (Location.wrap @@ Var.of_name module_binder, module_env) in
-          ok (top_env',state)
+          (top_env',state)
         | Ast_typed.Module_alias _ ->
-           fail @@
+           raise.raise @@
              Errors.modules_not_supported el.location
     in
-    let* initial_state = Tezos_state.init_ctxt [] in
-    let* (env,state) = bind_fold_list aux (Env.empty_env, initial_state) prg in
-    ok (env, state)
+    let initial_state = Tezos_state.init_ctxt ~raise [] in
+    let (env,state) = List.fold ~f:aux ~init:(Env.empty_env, initial_state) prg in
+    (env, state)
 
-let eval_test : Ast_typed.module_fully_typed -> ((string * value) list, Errors.interpreter_error) result =
+let eval_test ~raise : Ast_typed.module_fully_typed -> (string * value) list =
   fun prg ->
-    let>>= (env, _state) = eval prg in
+    let (env, _state) = eval ~raise prg in
     let v = Env.to_kv_list_rev env in
     let aux : expression_variable * value_expr -> (string * value) option = fun (ev, v) ->
       let name = Var.to_name @@ Location.unwrap ev in
@@ -786,6 +785,6 @@ let eval_test : Ast_typed.module_fully_typed -> ((string * value) list, Errors.i
       else
         None
     in
-    ok @@ List.filter_map ~f:aux v
+    List.filter_map ~f:aux v
 
 let () = Printexc.record_backtrace true

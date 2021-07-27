@@ -37,20 +37,19 @@ module Indexers_plugins_fields_ = Indexers_plugins_fields
 (* mapPlugins :: (F : MappedFunction) → (Indexers_plugins_fields F.MakeIn) → (Indexers_plugins_fields F.MakeOut) *)
 module Map_indexer_plugins = functor (F : Mapped_function) -> struct
   let f :
+    raise:Typer_common.Errors.typer_error Trace.raise ->
     F.extra_args ->
     Indexers_plugins_fields(F.MakeInType).flds ->
-    Indexers_plugins_fields(F.MakeOutType).flds F.Monad.t
-    = fun extra_args fieldsIn ->
-      let module Let_syntax = F.Monad in
-      let open F.Monad in
-      let* assignments                      = (let module F = F.F(Assignments)                      in F.f "assign" extra_args fieldsIn#assignments)                      in
-      let* grouped_by_variable              = (let module F = F.F(GroupedByVariable)                in F.f "g by v" extra_args fieldsIn#grouped_by_variable)              in
-      let* cycle_detection_topological_sort = (let module F = F.F(CycleDetectionTopologicalSort)    in F.f "c topo" extra_args fieldsIn#cycle_detection_topological_sort) in
-      let* by_constraint_identifier         = (let module F = F.F(ByConstraintIdentifier)           in F.f "by  id" extra_args fieldsIn#by_constraint_identifier)         in
-      let* typeclasses_constraining         = (let module F = F.F(TypeclassesConstraining)          in F.f "tc con" extra_args fieldsIn#typeclasses_constraining)         in
-      let* typeclasses_using_as_unbound_var = (let module F = F.F(Typeclasses_using_as_unbound_var) in F.f "tc unb" extra_args fieldsIn#typeclasses_using_as_unbound_var) in
-      let* typeclasses_using_as_function_on_root = (let module F = F.F(Typeclasses_using_as_function_on_root) in F.f "tc unb" extra_args fieldsIn#typeclasses_using_as_function_on_root) in
-      F.Monad.return (object
+    Indexers_plugins_fields(F.MakeOutType).flds
+    = fun ~raise extra_args fieldsIn ->
+      let assignments                           = (let module F = F.F(Assignments)                           in F.f ~raise "assign" extra_args fieldsIn#assignments)                      in
+      let grouped_by_variable                   = (let module F = F.F(GroupedByVariable)                     in F.f ~raise "g by v" extra_args fieldsIn#grouped_by_variable)              in
+      let cycle_detection_topological_sort      = (let module F = F.F(CycleDetectionTopologicalSort)         in F.f ~raise "c topo" extra_args fieldsIn#cycle_detection_topological_sort) in
+      let by_constraint_identifier              = (let module F = F.F(ByConstraintIdentifier)                in F.f ~raise "by  id" extra_args fieldsIn#by_constraint_identifier)         in
+      let typeclasses_constraining              = (let module F = F.F(TypeclassesConstraining)               in F.f ~raise "tc con" extra_args fieldsIn#typeclasses_constraining)         in
+      let typeclasses_using_as_unbound_var      = (let module F = F.F(Typeclasses_using_as_unbound_var)      in F.f ~raise "tc unb" extra_args fieldsIn#typeclasses_using_as_unbound_var) in
+      let typeclasses_using_as_function_on_root = (let module F = F.F(Typeclasses_using_as_function_on_root) in F.f ~raise "tc unb" extra_args fieldsIn#typeclasses_using_as_function_on_root) in
+      (object
         method assignments                      = assignments
         method grouped_by_variable              = grouped_by_variable
         method cycle_detection_topological_sort = cycle_detection_topological_sort

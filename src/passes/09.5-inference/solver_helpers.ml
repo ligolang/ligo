@@ -1,4 +1,3 @@
-open Typer_common.Errors
 module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
@@ -14,7 +13,7 @@ module MergeAliases = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
-    let f _ UnionFind.Poly2.{ demoted_repr ; new_repr } state =
+    let f ~raise:_ _ UnionFind.Poly2.{ demoted_repr ; new_repr } state =
       let merge_keys = {
         map = (fun m -> ReprMap.alias ~debug:(fun ppf (a,_) -> Ast_typed.PP.type_variable ppf a) ~demoted_repr ~new_repr m);
         set = (fun s -> ReprSet.alias ~demoted_repr ~new_repr s);
@@ -33,7 +32,7 @@ module AddConstraint = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
-    let f _ (repr, constraint_) state =
+    let f ~raise:_ _ (repr, constraint_) state =
       (* Format.eprintf "In AddConstraint for %s and constraint %a\n%!" name PP.type_constraint_ constraint_; *)
       Indexer_plugin.add_constraint repr state constraint_
   end
@@ -41,24 +40,16 @@ end
 (* check module matches signature without hiding its contents *)
 let _ = (module AddConstraint : Mapped_function)
 
-module Typer_error_trace_monad = struct
-  type 'a t = ('a, typer_error) Trace.result
-  let bind x ~f = Trace.bind f x
-  let return x = Trace.ok x
-  let (let*) x f = bind x ~f
-end
-
 (* Function which merges all aliases withing a single plugin's state *)
 module RemoveConstraint = struct
   (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
   type extra_args = ((type_variable -> type_variable) * type_constraint_simpl)
   module MakeInType = PerPluginState
   module MakeOutType = PerPluginState
-  module Monad = Typer_error_trace_monad
   module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
-    let f _ (repr, to_remove) state =
+    let f ~raise _ (repr, to_remove) state =
       (* Format.eprintf "In Remove Constraint in %s for %a\n%!" name PP.type_constraint_ to_remove; *)
-      Indexer_plugin.remove_constraint Ast_typed.PP.type_variable repr state to_remove
+      Indexer_plugin.remove_constraint ~raise Ast_typed.PP.type_variable repr state to_remove
   end
 end
 (* check module matches signature without hiding its contents *)
@@ -71,7 +62,7 @@ module CreateState = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
-    let f _ () (() as _state) = Indexer_plugin.create_state ~cmp:Ast_typed.Compare.type_variable
+    let f ~raise:_ _ () (() as _state) = Indexer_plugin.create_state ~cmp:Ast_typed.Compare.type_variable
   end
 end
 (* check module matches signature without hiding its contents *)
@@ -84,14 +75,12 @@ module PPPlugin = struct
   module MakeOutType = PerPluginUnit
   module Monad = NoMonad
   module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
-    let f _ ppf state =
+    let f ~raise:_ _ ppf state =
       Format.fprintf ppf "%s =@ @[<hv 2> %a @] ;@ " Indexer_plugin.name (Indexer_plugin.pp Var.pp) state
   end
 end
 (* check module matches signature without hiding its contents *)
 let _ = (module PPPlugin : Mapped_function)
-
-type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
 
 let init_propagator_heuristic (Heuristic_plugin plugin) =
   Heuristic_state { plugin; already_selected = Set.create ~cmp:plugin.comparator }

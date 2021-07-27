@@ -1,13 +1,11 @@
-open Trace
 open Ast_sugar
 open Desugaring
-open Main_errors
 
-let compile (m : module_) : (Ast_core.module_ , _) result =
-  trace desugaring_tracer @@ compile_module m
+let compile (m : module_) : Ast_core.module_  =
+  compile_module m
 
-let compile_expression (e : expression) : (Ast_core.expression , _) result =
-  trace desugaring_tracer @@ compile_expression e
+let compile_expression (e : expression) : Ast_core.expression  =
+  compile_expression e
 
 let list_declarations (m : module_) : string list =
   List.fold_left

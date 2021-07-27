@@ -19,25 +19,25 @@ let apply_repl_sequence init_state commands =
   let _, trace = List.fold_map ~f ~init:init_state commands in
   trace
 
-let test_seq init_state cmds res () =
+let test_seq ~raise init_state cmds res () =
   let r = apply_repl_sequence init_state cmds in
   if (List.compare String.compare res r = 0)
-  then ok @@ ()
-  else fail @@ `Test_repl (res, r)
+  then ()
+  else raise.raise @@ `Test_repl (res, r)
 
-let test_basic () =
+let test_basic ~raise () =
   let _,_,s = Repl.parse_and_eval (Ex_display_format Dev) init_state_cameligo "1 + 3" in
   if (String.compare s "4" = 0)
-  then ok @@ ()
-  else fail @@ `Test_repl ([s], ["4"])
+  then ()
+  else raise.raise @@ `Test_repl ([s], ["4"])
 
-let test_def () =
-  test_seq init_state_cameligo ["let f (x : int) = x * 2"; "f 3"]
+let test_def ~raise () =
+  test_seq ~raise init_state_cameligo ["let f (x : int) = x * 2"; "f 3"]
                                ["f"; "6"]
                                ()
 
-let test_mod () =
-  test_seq init_state_cameligo [
+let test_mod ~raise () =
+  test_seq ~raise init_state_cameligo [
     "module EURO = struct\n\
       type t = int\n\
       let add (a , b : t * t) : t = a + b\n\
@@ -47,13 +47,13 @@ let test_mod () =
     ["EURO"; "1"]
     ()
 
-let test_use () =
-  test_seq init_state_cameligo ["#use \"contracts/build/A.mligo\""; "toto"]
+let test_use ~raise () =
+  test_seq ~raise init_state_cameligo ["#use \"contracts/build/A.mligo\""; "toto"]
            ["toto"; "1"]
            ()
 
-let test_long () =
-  test_seq init_state_cameligo ["#use \"contracts/build/A.mligo\"";
+let test_long ~raise () =
+  test_seq ~raise init_state_cameligo ["#use \"contracts/build/A.mligo\"";
             "toto";
             "#import \"contracts/build/B.mligo\" \"MYMOD\"";
             "MYMOD.toto";
@@ -82,19 +82,19 @@ let test_long () =
             "+32"]
            ()
 
-let test_basic_jsligo () =
+let test_basic_jsligo ~raise () =
   let _,_,s = Repl.parse_and_eval (Ex_display_format Dev) init_state_jsligo "1 + 3" in
   if (String.compare s "4" = 0)
-  then ok @@ ()
-  else fail @@ `Test_repl ([s], ["4"])
+  then ()
+  else raise.raise @@ `Test_repl ([s], ["4"])
 
-let test_def_jsligo () =
-  test_seq init_state_jsligo ["let f = (x : int) : int => x * 2"; "f(3)"]
+let test_def_jsligo ~raise () =
+  test_seq ~raise init_state_jsligo ["let f = (x : int) : int => x * 2"; "f(3)"]
                              ["f"; "6"]
                              ()
 
-let test_mod_jsligo () =
-  test_seq init_state_jsligo [
+let test_mod_jsligo ~raise () =
+  test_seq ~raise init_state_jsligo [
     "namespace EURO {\n\
       export type t = int;\n\
       export let add = ([a, b]: [t, t]): t => a + b;\n\
@@ -104,13 +104,13 @@ let test_mod_jsligo () =
     ["EURO"; "1"]
     ()
 
-let test_use_jsligo () =
-  test_seq init_state_jsligo ["#use \"contracts/build/A.mligo\""; "toto"]
+let test_use_jsligo ~raise () =
+  test_seq ~raise init_state_jsligo ["#use \"contracts/build/A.mligo\""; "toto"]
            ["toto"; "1"]
            ()
 
-let test_long_jsligo () =
-  test_seq init_state_jsligo ["#use \"contracts/build/A.jsligo\"";
+let test_long_jsligo ~raise () =
+  test_seq ~raise init_state_jsligo ["#use \"contracts/build/A.jsligo\"";
         "toto";
         "#import \"contracts/build/B.jsligo\" \"MYMOD\"";
         "MYMOD.toto";

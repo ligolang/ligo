@@ -10,17 +10,17 @@ module Make (Comments : COMMENTS) (Token : Token.S) :
     module Errors = Errors
 
     type file_path = string
-    type result = (Token.t list, Errors.t) Trace.result
 
-    val from_file    : file_path  -> result
-    val from_string  : string     -> result
-    val from_buffer  : Buffer.t   -> result
-    val from_channel : in_channel -> result
-
+    val from_file    : raise:Errors.t Trace.raise -> file_path -> Token.t list
+    val from_string  : raise:Errors.t Trace.raise -> string -> Token.t list
+    val from_buffer  : raise:Errors.t Trace.raise -> Buffer.t -> Token.t list
+    val from_channel : raise:Errors.t Trace.raise -> in_channel -> Token.t list
+    
     (* Aliases *)
-
-    val lex_file    : file_path  -> result
-    val lex_string  : string     -> result
-    val lex_buffer  : Buffer.t   -> result
-    val lex_channel : in_channel -> result
+    
+    val lex_file    : raise:Errors.t Trace.raise -> file_path -> Token.t list
+    val lex_string  : raise:Errors.t Trace.raise -> string -> Token.t list
+    val lex_buffer  : raise:Errors.t Trace.raise -> Buffer.t -> Token.t list
+    val lex_channel : raise:Errors.t Trace.raise -> in_channel -> Token.t list
+    
   end

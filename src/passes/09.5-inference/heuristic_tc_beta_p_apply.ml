@@ -11,7 +11,6 @@
      (α…) ∈ ∃δ…, …,τ[α↦β],… => [ …,β,… ]
    where τ[α↦β] denotes the substitution of α by β in τ. *)
 
-open Trace
 open Typer_common.Errors
 open Simple_utils
 
@@ -142,7 +141,7 @@ let subst_in_body ~old ~update (tv:type_value) =
   Type_variable_abstraction.Substitution.Pattern.type_value ~tv ~substs:(old, Location.wrap @@ P_variable update)
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
+  fun ~raise:_ selected repr ->
   let { tc; f=def } = selected in
   let beta changed = function
       SC_Apply use when (Compare.type_variable (repr use.f) (def.tv) = 0) ->
@@ -155,9 +154,9 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   in
   let changed, updated_tc_constraints = List.fold_map ~f:beta ~init:false tc.tc_constraints in
   if not changed then
-    ok []
+    []
   else
-    ok [{
+    [{
       remove_constraints = [SC_Typeclass selected.tc];
       add_constraints = [];
       add_constraints_simpl = [SC_Typeclass { tc with tc_constraints = List.concat updated_tc_constraints }];

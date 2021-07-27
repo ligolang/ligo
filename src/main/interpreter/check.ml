@@ -35,54 +35,52 @@ let type_constants =
   let open Stage_common.Constant in
 [test_michelson_name; test_ligo_name; account_name; time_name ; typed_address_name ; mutation_name ; failure_name]
 
-type 'err ty_exp_mapper = type_expression -> (unit, 'err) result
+type 'err ty_exp_mapper = type_expression -> unit
 
-let rows : ('a -> (unit,_) result) -> rows -> (unit,_) result
+let rows : ('a -> unit) -> rows -> unit
 = fun g {content; _} ->
-  let* _ = Helpers.bind_map_lmap
+  let _ = LMap.map
   (fun {associated_type ; _} ->
-    let* _ = g associated_type in
-    ok @@ ()
+    let () = g associated_type in
+    ()
   ) content in
-  ok @@ ()
+  ()
 
-let rec traverse_type_expression : 'err ty_exp_mapper -> type_expression -> (unit , _) result = fun f te ->
+let rec traverse_type_expression : 'err ty_exp_mapper -> type_expression -> unit  = fun f te ->
   let module SSet = Set.Make (String) in
   let open Stage_common in
   let self = traverse_type_expression f in
-  let* () = f te in
+  let () = f te in
   match te.type_content with
   | T_sum temap -> rows self temap
   | T_record temap -> rows self temap
   | T_arrow arr ->
-     let* _ = Maps.arrow self arr in
-     ok ()
-  | T_variable _ -> ok ()
-  | T_module_accessor _ -> ok ()
-  | T_singleton _ -> ok ()
+     let _ = Maps.arrow self arr in
+     ()
+  | T_variable _ -> ()
+  | T_module_accessor _ -> ()
+  | T_singleton _ -> ()
   | T_constant { parameters } ->
-     let* _ = bind_map_list self parameters in
-     ok ()
+     let _ = List.map ~f:self parameters in
+     ()
 
-let check_obj_ligo (t : Ast_typed.expression) =
+let check_obj_ligo ~raise (t : Ast_typed.expression) =
   let equal_constant a b = Ast_typed.Compare.constant' a b = 0 in
   let folder_constant () expr = match expr.expression_content with
     | E_constant {cons_name}
          when List.mem invalid_constants cons_name ~equal:equal_constant ->
-       fail @@ Errors.generic_error expr.location "Test functions cannot be used in code to be run/returned by the Michelson interpreter."
-    | _ -> ok () in
+       raise.raise @@ Errors.generic_error expr.location "Test functions cannot be used in code to be run/returned by the Michelson interpreter."
+    | _ -> () in
   let traverser_types loc expr = match expr.type_content with
     | T_constant { injection ; _ } when List.mem type_constants (Ligo_string.extract injection) ~equal:String.equal ->
-       fail @@ Errors.generic_error loc "Test types cannot be used in code to be run/returned by the Michelson interpreter"
-    | _ -> ok () in
+       raise.raise @@ Errors.generic_error loc "Test types cannot be used in code to be run/returned by the Michelson interpreter"
+    | _ -> () in
   let folder_types () (expr : expression) =
     traverse_type_expression (traverser_types expr.type_expression.location) expr.type_expression in
-  let* () = fold_expression folder_types () t in
-  let* () = fold_expression folder_constant () t in
-  ok ()
+  let () = fold_expression folder_types () t in
+  let () = fold_expression folder_constant () t in
+  ()
 
 let is_obj_ligo (t : Ast_typed.expression) : bool =
   let ret = check_obj_ligo t in
-  match Trace.to_stdlib_result ret with
-  | Ok _ -> true
-  | Error _ -> false
+  not @@ Trace.to_bool ret

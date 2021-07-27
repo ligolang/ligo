@@ -6,7 +6,6 @@ module M = functor
 struct
   open Type_variable_abstraction.Types
 open Solver_types
-open Trace
 
 type 'typeVariable t = (constraint_identifier, c_typeclass_simpl) PolyMap.t
 let create_state ~cmp:_ =
@@ -16,15 +15,15 @@ let add_constraint ?debug:_ _repr state new_constraint =
   match new_constraint with
   | SC_Typeclass c -> PolyMap.add c.id_typeclass_simpl c state
   | _ -> state
-let remove_constraint _ _repr state constraint_to_rm =
+let remove_constraint ~raise:_ _ _repr state constraint_to_rm =
   match constraint_to_rm with
   | SC_Typeclass { id_typeclass_simpl; _ } ->
     (* TODO: a proper error instead of an exception *)
     Format.eprintf "Remove from by Constraint Identifier...%!";
     let map = PolyMap.remove id_typeclass_simpl state in
     Format.eprintf "  ok\n%!";
-    ok @@ map
-  | _ -> ok state
+    map
+  | _ -> state
 
 let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun ?debug:_ _merge_keys state -> state

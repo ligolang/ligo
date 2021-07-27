@@ -6,7 +6,6 @@ module M = functor
 struct
   open Type_variable_abstraction.Types
 open UnionFind
-open Trace
 
 (* Haskell doesn't have easy-to-use type-level functions or types as
    fields of records, so we're bending its syntax here.
@@ -35,11 +34,11 @@ let add_constraint ?debug repr state new_constraint =
     Option.value ~default:state @@ ReprMap.add_opt ?debug (repr r.tv) (`Row r) state
   | _ -> state
 
-let remove_constraint _ _repr state _constraint_to_remove =
+let remove_constraint ~raise:_ _ _repr state _constraint_to_remove =
   (* assignments cannot be remove (they are similar to instanciations
      of existential variables in Coq, and happen globally regardless
      of the constraints available in the database). *)
-  ok state
+  state
 
 let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun ?debug:_ merge_keys state -> merge_keys.map state

@@ -16,7 +16,6 @@
    the arguments of the constructor or row, and continue inferring
    until the typeclass is in a minimal form. *)
 
-open Trace
 open Typer_common.Errors
 open Simple_utils
 
@@ -155,7 +154,7 @@ let row_value v = { associated_value = p_variable v.associated_variable; michels
 
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
+  fun ~raise:_ selected repr ->
     (* Format.eprintf "in inline_named.propagator for %a\n%!"
     printer selected; *)
   let { tc; c } = selected in
@@ -175,9 +174,9 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   in
   let changed, updated_tc = fold_map_cells inline_p_variable false tc in
   if not changed then
-    ok []
+    []
   else
-    ok [{
+    [{
       remove_constraints = [SC_Typeclass selected.tc];
       add_constraints = [];
       add_constraints_simpl = [SC_Typeclass updated_tc];

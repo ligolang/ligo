@@ -15,7 +15,6 @@ end
 
 module Core = Typesystem.Core
 open Solver_types
-open Trace
 open Typer_common.Errors
 open Ast_core.Reasons
 
@@ -87,7 +86,7 @@ let get_referenced_constraints ({ poly; a_k_var } : selector_output) : type_cons
   ]
 
 let propagator : (selector_output , typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
+  fun ~raise:_ selected repr ->
   (* Format.eprintf "In specialize propagator for %a\n%!" pp_selector_output selected; *)
   let a = selected.poly in
   let b = selected.a_k_var in
@@ -112,7 +111,7 @@ let propagator : (selector_output , typer_error) Type_variable_abstraction.Solve
   
   let eq1 = Misc.c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable (repr b.tv)) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
-    ok [
+    [
         {
           remove_constraints = [ SC_Poly a ];
           add_constraints = eqs;
@@ -159,4 +158,3 @@ type nonrec selector_output = MM.selector_output = {
 let selector = Compat.selector
 let propagator = Compat.propagator
 let comparator = Compat.comparator
-
