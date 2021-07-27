@@ -112,6 +112,7 @@ executables:
     dependencies:
       - algebraic-graphs
       - clock
+      - containers
       - data-default
       - exceptions
       - focus
