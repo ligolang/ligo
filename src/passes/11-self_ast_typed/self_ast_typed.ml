@@ -19,6 +19,7 @@ let all_expression_passes = [
 let contract_passes = [
   Contract_passes.self_typing ;
   No_nested_big_map.self_typing ;
+  Contract_passes.entrypoint_typing ;
 ]
 
 let all_module ~add_warning =

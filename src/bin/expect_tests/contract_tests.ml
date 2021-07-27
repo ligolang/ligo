@@ -2009,3 +2009,17 @@ let%expect_test _ =
 
     Invalid entrypoint value.
     The entrypoint value does not match a constructor of the contract parameter. |}]
+
+(* entrypoint check *)
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "bad_get_entrypoint.mligo" ; "main" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 3, characters 11-16:
+      2 |   let v = (Tezos.get_entrypoint_opt
+      3 |            "foo"
+      4 |            ("tz1fakefakefakefakefakefakefakcphLA5" : address) : unit contract option) in
+
+    Invalid entrypoint "foo".
+    One of the following patterns is expected:
+      * "%bar" is expected for entrypoint "Bar"
+      * "%default" when no entrypoint is used. |}]

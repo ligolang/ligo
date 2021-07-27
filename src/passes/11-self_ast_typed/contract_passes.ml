@@ -56,3 +56,13 @@ let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data
       Ast_typed.assert_type_expression_eq (entrypoint_t , t) in
     ok (true, dat, e)
   | _ -> ok (true,dat,e)
+
+let entrypoint_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression , self_ast_typed_error) result = fun dat e ->
+  match e.expression_content with
+  | E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT|C_CONTRACT_ENTRYPOINT ; arguments=[entrypoint_exp;_]} ->
+    let* _ = match entrypoint_exp.expression_content with
+     | E_literal (Literal_string ep) -> check_entrypoint_annotation_format (Ligo_string.extract ep) entrypoint_exp
+     | _ -> fail @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
+    in
+    ok (true, dat, e)
+  | _ -> ok (true,dat,e)
