@@ -1,45 +1,47 @@
 open Test_helpers
 open Trace
 open Main_errors
-open Function
 
 type ('a,'err) sdata = {
   erroneous_source_file : string ;
-  preproc : string -> (Buffer.t * (string * string) list, 'err) result;
-  parser : Buffer.t -> ('a,'err) result
+  preproc :raise:'err raise -> string -> Buffer.t * (string * string) list;
+  parser : raise:'err raise -> Buffer.t -> 'a
 }
 
 let pascaligo_sdata = {
   erroneous_source_file =
     "../passes/02-parsing/pascaligo/all.ligo" ;
   preproc =
-    trace preproc_tracer <@
-    Preprocessing.Pascaligo.preprocess_string [] ;
+    (fun ~raise s -> trace ~raise preproc_tracer @@
+    fun ~raise -> Trace.from_result ~raise @@
+    Preprocessing.Pascaligo.preprocess_string [] s);
   parser =
-    trace parser_tracer <@
-      Parsing.Pascaligo.parse_expression
+    fun ~raise buffer -> trace ~raise parser_tracer @@
+      fun ~raise -> Parsing.Pascaligo.parse_expression buffer ~raise
 }
 
 let cameligo_sdata = {
   erroneous_source_file =
     "../passes/02-parsing/cameligo/all.mligo";
   preproc =
-    trace preproc_tracer <@
-    Preprocessing.Cameligo.preprocess_string [];
+    (fun ~raise s -> trace ~raise preproc_tracer @@
+    fun ~raise -> Trace.from_result ~raise @@
+    Preprocessing.Cameligo.preprocess_string [] s);
   parser =
-    trace parser_tracer <@
-    Parsing.Cameligo.parse_expression
+    fun ~raise buffer -> trace ~raise parser_tracer (
+    Parsing.Cameligo.parse_expression buffer)
 }
 
 let reasonligo_sdata = {
   erroneous_source_file =
     "../passes/02-parsing/reasonligo/all.religo" ;
   preproc =
-    trace preproc_tracer <@
-    Preprocessing.Reasonligo.preprocess_string [];
+    (fun ~raise s -> trace ~raise preproc_tracer @@
+    fun ~raise -> Trace.from_result ~raise @@
+    Preprocessing.Reasonligo.preprocess_string [] s);
   parser =
-    trace parser_tracer <@
-    Parsing.Reasonligo.parse_expression
+    fun ~raise buffer -> trace ~raise parser_tracer (
+    Parsing.Reasonligo.parse_expression buffer)
 }
 
 let get_exp_as_string filename =
@@ -53,16 +55,17 @@ let get_exp_as_string filename =
     close_in chan;
     List.rev !lines
 
-let assert_syntax_error sdata () =
+let assert_syntax_error ~raise sdata () =
   let aux entry =
     Format.printf "Entry : <%s>%!\n" entry ;
-    let* c_unit,_ = sdata.preproc entry in
-    let result   = sdata.parser c_unit in
+    let c_unit,_ = sdata.preproc ~raise entry in
+    Assert.assert_fail ~raise (test_internal __LOC__) @@ 
+      sdata.parser c_unit;
     Format.printf "Parsed%!\n" ;
-    Assert.assert_fail (test_internal __LOC__) result
+    ()
   in
   let exps = get_exp_as_string sdata.erroneous_source_file in
-  bind_iter_list aux exps
+  List.iter ~f:aux exps
 
 
 let () =

@@ -1,16 +1,15 @@
-open Trace
 open Test_helpers
 
 let get_program = get_program "./contracts/multisig-v2.ligo" (Contract "main")
 
-let compile_main ~add_warning () =
-  let* typed_prg,_   = get_program ~add_warning () in
-  let* mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
-  let* michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
-  let* _contract =
+let compile_main ~raise ~add_warning () =
+  let typed_prg,_   = get_program ~raise ~add_warning () in
+  let mini_c_prg    = Ligo_compile.Of_typed.compile ~raise typed_prg in
+  let michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg "main" in
+  let _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract michelson_prg in
-  ok ()
+  ()
 
 open Ast_imperative
 
@@ -52,8 +51,8 @@ let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_l
   ]
 
 (* sender not stored in the authorized set *)
-let wrong_addr ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
+let wrong_addr ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
   let init_storage = storage {
     threshold = 1 ; max_proposal = 1 ; max_msg_size = 1 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0 ; 2,0] ;
@@ -61,15 +60,15 @@ let wrong_addr ~add_warning () =
   } in
   let sender = contract 3 in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  let* () =
+  let () =
     let exp_failwith = "Unauthorized address" in
-    expect_string_failwith ~options (program,env) "main"
+    expect_string_failwith ~raise ~options (program,env) "main"
     (e_pair (send_param empty_message) init_storage) exp_failwith in
-  ok ()
+  ()
 
 (* send a message which exceed the size limit *)
-let message_size_exceeded ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
+let message_size_exceeded ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
   let init_storage = storage {
     threshold = 1 ; max_proposal = 1 ; max_msg_size = 1 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0] ;
@@ -77,16 +76,16 @@ let message_size_exceeded ~add_warning () =
   } in
   let sender = contract 1 in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  let* () =
+  let () =
     let exp_failwith = "Message size exceed maximum limit" in
-    expect_string_failwith ~options (program,env) "main"
+    expect_string_failwith ~raise ~options (program,env) "main"
     (e_pair (send_param empty_message)  init_storage) exp_failwith in
-  ok ()
+  ()
 
 (* sender has already has reached maximum number of proposal *)
-let maximum_number_of_proposal ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
-  let* packed_payload1 = pack_payload env (send_param empty_message) in
+let maximum_number_of_proposal ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
+  let packed_payload1 = pack_payload ~raise env (send_param empty_message) in
   let bytes1 = e_bytes_raw packed_payload1 in
   let init_storage = storage {
     threshold = 1 ; max_proposal = 1 ; max_msg_size = 15 ; state_hash = Bytes.empty ;
@@ -95,16 +94,16 @@ let maximum_number_of_proposal ~add_warning () =
   } in
   let sender = contract 1 in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  let* () =
+  let () =
     let exp_failwith = "Maximum number of proposal reached" in
-    expect_string_failwith ~options (program,env) "main"
+    expect_string_failwith ~raise ~options (program,env) "main"
       (e_pair (send_param empty_message2) init_storage) exp_failwith in
-  ok ()
+  ()
 
 (* sender message is already stored in the message store *)
-let send_already_accounted ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
-  let* packed_payload = pack_payload env empty_message in
+let send_already_accounted ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
+  let packed_payload = pack_payload ~raise env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage = storage {
     threshold = 2 ;  max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
@@ -114,13 +113,13 @@ let send_already_accounted ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program,env) "main"
+  expect_eq ~raise ~options (program,env) "main"
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list init_storage)
 
 (* sender message isn't stored in the message store *)
-let send_never_accounted ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
-  let* packed_payload = pack_payload env empty_message in
+let send_never_accounted ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
+  let packed_payload = pack_payload ~raise env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage' = {
     threshold = 2 ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
@@ -135,13 +134,13 @@ let send_never_accounted ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program,env) "main"
+  expect_eq ~raise ~options (program,env) "main"
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message is already binded to one address in the message store *)
-let withdraw_already_accounted_one ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
-  let* packed_payload = pack_payload env empty_message in
+let withdraw_already_accounted_one ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
+  let packed_payload = pack_payload ~raise env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
   let init_storage' = {
@@ -156,13 +155,13 @@ let withdraw_already_accounted_one ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program,env) "main"
+  expect_eq ~raise ~options (program,env) "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message is already binded to two addresses in the message store *)
-let withdraw_already_accounted_two ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
-  let* packed_payload = pack_payload env empty_message in
+let withdraw_already_accounted_two ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
+  let packed_payload = pack_payload ~raise env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
   let init_storage' = {
@@ -177,13 +176,13 @@ let withdraw_already_accounted_two ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program,env) "main"
+  expect_eq ~raise ~options (program,env) "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* triggers the threshold and check that all the participants get their counters decremented *)
-let counters_reset ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
-  let* packed_payload = pack_payload env empty_message in
+let counters_reset ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
+  let packed_payload = pack_payload ~raise env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let param = send_param empty_message in
   let hash_after_msg = sha_256_hash (Bytes.concat Bytes.empty [Bytes.empty ; packed_payload]) in
@@ -200,12 +199,12 @@ let counters_reset ~add_warning () =
   let options =
     let sender = contract 3 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program,env) "main"
+  expect_eq ~raise ~options (program,env) "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message was never accounted *)
-let withdraw_never_accounted ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
+let withdraw_never_accounted ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
   let param = withdraw_param in
   let init_storage = storage {
     threshold = 2 ; max_proposal = 1 ;  max_msg_size = 1 ; state_hash = Bytes.empty ;
@@ -215,13 +214,13 @@ let withdraw_never_accounted ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  expect_eq ~options (program,env) "main"
+  expect_eq ~raise ~options (program,env) "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
 (* successful storing in the message store *)
-let succeeded_storing ~add_warning () =
-  let* (program,env) = get_program ~add_warning () in
-  let* packed_payload = pack_payload env empty_message in
+let succeeded_storing ~raise ~add_warning () =
+  let (program,env) = get_program ~raise ~add_warning () in
+  let packed_payload = pack_payload ~raise env empty_message in
   let bytes = e_bytes_raw packed_payload in
   let init_storage th = {
     threshold = th ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
@@ -231,10 +230,10 @@ let succeeded_storing ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
-  let* () = expect_eq_n_trace_aux ~options [1;2] (program,env) "main"
+  let () = expect_eq_n_trace_aux ~raise ~options [1;2] (program,env) "main"
       (fun th ->
         let init_storage = storage (init_storage th) in
-        ok @@ e_pair (send_param empty_message) init_storage
+        e_pair (send_param empty_message) init_storage
       )
       (fun th ->
         let hash_after_msg = sha_256_hash (Bytes.concat Bytes.empty [Bytes.empty ; packed_payload]) in
@@ -246,9 +245,9 @@ let succeeded_storing ~add_warning () =
           state_hash = final_state_hash ;
           msg_store_list = final_msg_store ;
           id_counter_list = final_id_counter } in
-        ok @@ e_pair ret final_storage
+        e_pair ret final_storage
       ) in
-  ok ()
+  ()
 
 let main = test_suite "Multisig v2" [
     test_w "compile"                        (compile_main                  ) ;

@@ -14,10 +14,6 @@ module Make (Comments : COMMENTS) (Token : Token.S) =
     module Lexer = Lexer.Make (Token)
     module Scan  = LexerLib.API.Make (Lexer)
 
-    (* Results *)
-
-    type result = (Token.t list, Errors.t) Trace.result
-
     (* Lexer configurations *)
 
     let mk_config ~input =
@@ -36,24 +32,24 @@ module Make (Comments : COMMENTS) (Token : Token.S) =
 
     (* Lifting [Stdlib.result] to [Trace.result]. *)
 
-    let lift = function
-      Stdlib.Ok tokens -> Trace.ok tokens
-    | Error msg -> Trace.fail @@ Errors.generic msg
+    let lift ~(raise:'a Trace.raise) = function
+      Ok tokens -> tokens
+    | Error msg -> raise.raise @@ Errors.generic msg
 
     (* Lexing functions *)
 
-    let from_file file_path =
+    let from_file ~raise file_path =
       let config = mk_config ~input:(Some file_path)
-      in Scan.Tokens.from_file config file_path |> lift
+      in Scan.Tokens.from_file config file_path |> lift ~raise
 
-    let from_string string =
-      Scan.Tokens.from_string (mk_config ~input:None) string |> lift
+    let from_string ~raise string =
+      Scan.Tokens.from_string (mk_config ~input:None) string |> lift ~raise
 
-    let from_buffer buffer =
-      Scan.Tokens.from_buffer (mk_config ~input:None) buffer |> lift
+    let from_buffer ~raise buffer =
+      Scan.Tokens.from_buffer (mk_config ~input:None) buffer |> lift ~raise
 
-    let from_channel channel =
-      Scan.Tokens.from_channel (mk_config ~input:None) channel |> lift
+    let from_channel ~raise channel =
+      Scan.Tokens.from_channel (mk_config ~input:None) channel |> lift ~raise
 
     (* Aliases *)
 

@@ -72,7 +72,7 @@ let update_remove_constraint_from_set tcs c = function
   | Some s -> MultiSet.remove c s
 
 
-let remove_constraint _ repr (state : _ t) constraint_to_rm : (_,Type_variable_abstraction.Errors.typer_error) Trace.result =
+let remove_constraint ~(raise:Type_variable_abstraction.Errors.typer_error Trace.raise) _ repr (state : _ t) constraint_to_rm : _ =
   (* This update is "monotonic" as required by ReprMap + the solver.
      The `add` function of this indexer is only called once per
      constraint, and constraints are indexed by their lhs variable.
@@ -105,10 +105,10 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm : (_,Type_variable_a
       | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop and aliasing constraints cannot be removed"
     )
   with
-  exception CouldNotRemove c -> fail (Typer_common.Errors.could_not_remove c)
+  exception CouldNotRemove c -> raise.raise (`Typer_could_not_remove c)
   | result -> 
     Format.eprintf "  ok\n%!";
-    ok result
+    result
 
 let merge_aliases =
   fun ?debug:_ updater { abs; constructor ; poly ; row ; access_label_by_result_type ; access_label_by_record_type } -> {

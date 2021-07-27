@@ -10,104 +10,92 @@ type v_syntax =
   | ReasonLIGO
   | JsLIGO
 
-let dialect_to_variant dialect =
+let dialect_to_variant ~raise dialect =
   match dialect with
-  | None -> ok None
+  | None -> None
   | Some (Dialect_name dialect) ->
      match dialect with
-     | "terse" -> ok (Some Tree_abstraction.Pascaligo.Decompiler.Terse)
-     | "verbose" -> ok (Some Tree_abstraction.Pascaligo.Decompiler.Verbose)
-     | _ -> fail (`Main_invalid_dialect_name dialect)
+     | "terse" -> (Some Tree_abstraction.Pascaligo.Decompiler.Terse)
+     | "verbose" -> (Some Tree_abstraction.Pascaligo.Decompiler.Verbose)
+     | _ -> raise.raise (`Main_invalid_dialect_name dialect)
 
-let syntax_to_variant ?dialect (Syntax_name syntax) source =
+let syntax_to_variant ~raise ?dialect (Syntax_name syntax) source =
   match syntax, source with
     "auto", Some sf ->
       (match Filename.extension sf with
          ".ligo" | ".pligo" ->
-                    let* dialect = dialect_to_variant dialect in
-                    ok (PascaLIGO dialect)
-       | ".mligo"           -> ok CameLIGO
-       | ".religo"          -> ok ReasonLIGO
-       | ".jsligo"          -> ok JsLIGO
-       | ext                -> fail (syntax_auto_detection ext))
+                    let dialect = dialect_to_variant ~raise dialect in
+                    (PascaLIGO dialect)
+       | ".mligo"           -> CameLIGO
+       | ".religo"          -> ReasonLIGO
+       | ".jsligo"          -> JsLIGO
+       | ext                -> raise.raise (syntax_auto_detection ext))
   | ("pascaligo" | "PascaLIGO"),   _ ->
-     let* dialect = dialect_to_variant dialect in
-     ok (PascaLIGO dialect)
-  | ("cameligo" | "CameLIGO"),     _ -> ok CameLIGO
-  | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
-  | ("jsligo" | "JsLIGO"),         _ -> ok JsLIGO
-  | _ -> fail (invalid_syntax syntax)
+     let dialect = dialect_to_variant ~raise dialect in
+     (PascaLIGO dialect)
+  | ("cameligo" | "CameLIGO"),     _ -> CameLIGO
+  | ("reasonligo" | "ReasonLIGO"), _ -> ReasonLIGO
+  | ("jsligo" | "JsLIGO"),         _ -> JsLIGO
+  | _ -> raise.raise (invalid_syntax syntax)
 
 let specialise_and_print_pascaligo dialect m =
-  let* ast = trace self_ast_imperative_tracer @@
-    Self_ast_imperative.decompile_imperative m in
-  let* cst = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.decompile_module ?dialect ast in
-  let* source = trace pretty_tracer @@
-    ok (Parsing.Pascaligo.pretty_print cst)
-  in ok source
+  let ast = Self_ast_imperative.decompile_imperative m in
+  let cst = Tree_abstraction.Pascaligo.decompile_module ?dialect ast in
+  let source = (Parsing.Pascaligo.pretty_print cst)
+  in source
 
 let specialise_and_print_expression_pascaligo dialect expression =
-  let* ast = trace self_ast_imperative_tracer @@
-    Self_ast_imperative.decompile_imperative_expression expression in
-  let* cst = trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.decompile_expression ?dialect ast in
-  let* source = trace pretty_tracer @@
-    ok (Parsing.Pascaligo.pretty_print_expression cst)
-  in ok source
+  let ast = Self_ast_imperative.decompile_imperative_expression expression in
+  let cst = Tree_abstraction.Pascaligo.decompile_expression ?dialect ast in
+  let source =(Parsing.Pascaligo.pretty_print_expression cst)
+  in source
 
 let specialise_and_print_cameligo m =
-  let* cst = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.decompile_module m in
-  let* source = trace pretty_tracer @@
-    ok (Parsing.Cameligo.pretty_print cst)
-  in ok source
+  let cst = Tree_abstraction.Cameligo.decompile_module m in
+  let source = (Parsing.Cameligo.pretty_print cst)
+  in source
 
 let specialise_and_print_expression_cameligo expression =
-  let* cst = trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.decompile_expression expression in
-  let* source = trace pretty_tracer @@
-    ok (Parsing.Cameligo.pretty_print_expression cst)
-  in ok source
+  let cst = Tree_abstraction.Cameligo.decompile_expression expression in
+  let source = (Parsing.Cameligo.pretty_print_expression cst)
+  in source
 
 let specialise_and_print_reasonligo m =
-  let* cst = trace cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.decompile_module m in
-  let* source = trace pretty_tracer @@
-    ok (Parsing.Reasonligo.pretty_print cst)
-  in ok source
+  let cst = Tree_abstraction.Reasonligo.decompile_module m in
+  let source = (Parsing.Reasonligo.pretty_print cst)
+  in source
 
 let specialise_and_print_expression_reasonligo expression =
-  let* cst = trace cit_reasonligo_tracer @@
+  let cst =
     Tree_abstraction.Reasonligo.decompile_expression expression in
-  let* source = trace pretty_tracer @@
-    ok (Parsing.Reasonligo.pretty_print_expression cst)
-  in ok source
+  let source =
+    (Parsing.Reasonligo.pretty_print_expression cst)
+  in source
 
 let specialise_and_print_jsligo m =
-  let* ast = trace self_ast_imperative_tracer @@
+  let ast =
     Self_ast_imperative.decompile_imperative m in
-  let* cst = trace cit_jsligo_tracer @@
+  let cst =
     Tree_abstraction.Jsligo.decompile_module ast in
-  let* source = trace pretty_tracer @@
-    ok (Parsing.Jsligo.pretty_print cst)
-  in ok source
+  let source =
+    (Parsing.Jsligo.pretty_print cst)
+  in source
 
 let specialise_and_print_expression_jsligo expression =
-  let* ast = trace self_ast_imperative_tracer @@
+  let ast =
     Self_ast_imperative.decompile_imperative_expression expression in
-  let* cst = trace cit_jsligo_tracer @@
+  let cst =
     Tree_abstraction.Jsligo.decompile_expression ast in
   let b = Buffer.create 100 in
-  bind_fold_list (fun all x -> 
-    let* source = trace pretty_tracer @@
-    ok (Parsing.Jsligo.pretty_print_expression x) in
+  List.fold ~f:(fun all x -> 
+    let source =
+    (Parsing.Jsligo.pretty_print_expression x) in
     Buffer.add_buffer all source; 
-    ok @@ b
-  ) b cst
+    b
+  ) ~init:b cst
 
 
-let specialise_and_print syntax source : (Buffer.t, _) Trace.result =
+let specialise_and_print syntax source : Buffer.t =
   let specialise_and_print =
     match syntax with
       PascaLIGO dialect -> specialise_and_print_pascaligo dialect

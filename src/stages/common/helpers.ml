@@ -1,41 +1,5 @@
 open Types
 
-let bind_lmap (l:_ label_map) =
-  let open Trace in
-  let open LMap in
-  let aux k v prev =
-    prev >>? fun prev' ->
-    v >>? fun v' ->
-    ok @@ add k v' prev' in
-  fold aux l (ok empty)
-
-let bind_map_lmap f map = bind_lmap (LMap.map f map)
-let bind_map_lmapi f map = bind_lmap (LMap.mapi f map)
-let bind_fold_lmap f init lmap =
-  let open Trace in
-  let open LMap  in
-  let aux k v acc =
-    acc >>? fun acc ->
-    f acc k v in
-  ok init |> fold aux lmap
-let bind_iter_lmap f lmap =
-  let open Trace in
-  let open LMap  in
-  let aux k v unit =
-    unit >>? fun () ->
-    f k v in
-  ok () |> fold aux lmap
-
-
-let bind_fold_map_lmap f init lmap =
-  let open Trace in
-  let open LMap  in
-  let aux k v acc =
-    acc >>? fun (acc',prev') ->
-    let* (acc',v') = f acc' k v in
-    let prev' = add k v' prev' in
-    ok @@ (acc', prev') in
-  ok (init, empty) |> fold aux lmap
 
 let range i j =
   let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in
@@ -87,40 +51,39 @@ let rec fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
     | P_tuple lp -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp
     | P_record (_,lp) -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp
 
-open Trace
 let fold_pattern_list f acc l = List.fold_left ~f:(fold_pattern f) ~init:acc l
 
-let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern -> ('b pattern, 'err) result =
+let rec map_pattern_t : ('a binder -> 'b binder) -> 'a pattern -> 'b pattern =
   fun f p ->
     let self = map_pattern_t f in
-    let ret wrap_content = ok { p with wrap_content } in
+    let ret wrap_content = { p with wrap_content } in
     match p.wrap_content with
     | P_unit -> ret P_unit
     | P_var b ->
-      let* b' = f b in
+      let b' = f b in
       ret (P_var b')
     | P_list lp -> (
-      let* lp =
+      let lp =
         match lp with
         | Cons (pa,pb) ->
-          let* pa = self pa in
-          let* pb = self pb in
-          ok @@ (Cons (pa, pb) : 'b list_pattern)
+          let pa = self pa in
+          let pb = self pb in
+          (Cons (pa, pb) : 'b list_pattern)
         | List lp ->
-          let* lp = bind_map_list self lp in
-          ok @@ (List lp : 'b list_pattern)
+          let lp = List.map ~f:self lp in
+          (List lp : 'b list_pattern)
       in
       ret @@ P_list lp
     )
     | P_variant (l,p) -> (
-      let* p = self p in
+      let p = self p in
       ret @@ P_variant (l,p)
     )
     | P_tuple lp ->
-      let* lp = bind_map_list self lp in
+      let lp = List.map ~f:self lp in
       ret @@ P_tuple lp
     | P_record (x,lp) ->
-      let* lp = bind_map_list self lp in
+      let lp = List.map ~f:self lp in
       ret @@ P_record (x,lp)
 
 let var_attribute = { const_or_var = Some `Var }

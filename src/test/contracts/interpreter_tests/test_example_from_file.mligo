@@ -74,4 +74,3 @@ let test2 =
   let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa2)) (tz 4000000000000n)) in
   let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa3)) (tz 4000000000000n)) in
   ()
-

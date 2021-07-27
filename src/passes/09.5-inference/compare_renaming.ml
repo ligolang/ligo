@@ -203,14 +203,14 @@ let rec flatten_tree : _ tree -> _ list -> _ list = fun t acc ->
 
 let flatten_tree : _ tree -> _ list = fun t -> List.rev @@ flatten_tree t []
 
-let compare_and_check_vars = fun ~(compare : 'a cmp) ~print_whole whole_expected whole_actual ->
+let compare_and_check_vars ~raise = fun ~(compare : 'a cmp) ~print_whole whole_expected whole_actual ->
   let aux seen (expected,actual) =
     match Map.find_opt expected seen with
-      None -> ok @@ Map.add expected actual seen
+      None -> Map.add expected actual seen
     | Some substitution ->
       if Ast_core.Compare.type_variable actual substitution = 0
-      then ok seen            (* we saw the same substitution for the same expected variable, all fine  *)
-      else fail (Typer_common.Errors.corner_case
+      then seen            (* we saw the same substitution for the same expected variable, all fine  *)
+      else raise.raise (Typer_common.Errors.corner_case
                  @@ Format.asprintf "%s expected (unification?) type variable %a but got %a, while comparing the expected %a with the actual %a"
                    __LOC__
                    Ast_core.PP.type_variable substitution
@@ -221,13 +221,13 @@ let compare_and_check_vars = fun ~(compare : 'a cmp) ~print_whole whole_expected
   in
   match compare whole_expected whole_actual with
   | None ->
-    fail (Typer_common.Errors.corner_case
+    raise.raise (Typer_common.Errors.corner_case
           @@ Format.asprintf "%s expected \n%a\nbut got actual\n%a\n"
             __LOC__  
             print_whole whole_expected
             print_whole whole_actual)
   | Some t ->
-    let* _seen = bind_fold_list aux
-        (RedBlackTrees.PolyMap.create ~cmp:Ast_core.Compare.type_variable)
+    let _seen = List.fold ~f:aux
+        ~init:(RedBlackTrees.PolyMap.create ~cmp:Ast_core.Compare.type_variable)
         (flatten_tree t)
-    in ok ()
+    in ()

@@ -8,7 +8,7 @@ module M = functor (Solver_instance : sig type indexers_plugins_states end) -> s
 
 module SRope = Rope.SimpleRope
 
-let rec until predicate f state = if predicate state then ok state else let* state = f state in until predicate f state
+let rec until predicate f state = if predicate state then state else let state = f state in until predicate f state
 
 (* TODO: replace this with a more efficient SRope.t (needs a "pop" function) *)
 module Pending = struct
@@ -103,14 +103,14 @@ module Worklist = struct
         Pending.is_empty pending_updates                                &&
         Pending.is_empty pending_removes                                 )
 
-  let process lens f (state, worklist) =
+  let process ~raise lens f (state, worklist) =
     match (Pending.pop (lens.get worklist)) with
-      None -> ok (state, Unchanged worklist)
+      None -> (state, Unchanged worklist)
     | Some (element, rest) ->
       (* set this field of the worklist to the rest of this Pending.t *)
       let worklist = lens.set worklist rest in
       (* Process the element *)
-      let* (state, new_worklist) = f (state, element) in
+      let (state, new_worklist) = f ~raise (state, element) in
       (* While processing, f can queue new tasks in a fresh worklist, we're merging the worklists here *)
       let merged_worklists = {
         pending_type_constraint                        = Pending.union new_worklist.pending_type_constraint                        worklist.pending_type_constraint                        ;
@@ -124,24 +124,24 @@ module Worklist = struct
         pending_removes                                = Pending.union new_worklist.pending_removes                                worklist.pending_removes                                ;
       }
       (* return the state updated by f, and the updated worklist (without the processed element, with the new tasks) *)
-      in ok (state, Some_processing_done merged_worklists)
+      in (state, Some_processing_done merged_worklists)
 
   
-  let rec process_all ~time_to_live lens f (state, worklist) =
+  let rec process_all ~raise ~time_to_live lens f (state, worklist) =
     if decrement_has_timeout_expired time_to_live
-    then ok (state, Unchanged worklist)
+    then (state, Unchanged worklist)
     else
-      let* (state, worklist) = process lens f (state, worklist) in
+      let (state, worklist) = process ~raise lens f (state, worklist) in
       match worklist with
         Some_processing_done worklist ->
-        let* (state, worklist) = process_all ~time_to_live lens f (state, worklist) in
+        let (state, worklist) = process_all ~raise ~time_to_live lens f (state, worklist) in
         (match worklist with
            Some_processing_done worklist ->
-           ok (state, Some_processing_done worklist)
+           (state, Some_processing_done worklist)
          | Unchanged worklist ->
-           ok (state, Some_processing_done worklist))
+           (state, Some_processing_done worklist))
       | Unchanged worklist ->
-        ok (state, Unchanged worklist)
+        (state, Unchanged worklist)
 
   let empty = {
     (* TODO: these should be ropes *)
@@ -168,45 +168,45 @@ let pending_updates                                = { get = (fun { pending_upda
 let pending_removes                                = { get = (fun { pending_removes                                = x ; _ } -> x); set = (fun w x -> { w with pending_removes                                = x }) }
 
 
-let rec until' :
+let rec until' ~raise :
   (* predicate      *) ('state * Worklist.t -> bool) ->
-  (* f              *) ('state * Worklist.t -> ('state * Worklist.monad, typer_error) result) ->
+  (* f              *) (raise:typer_error raise -> 'state * Worklist.t -> 'state * Worklist.monad) ->
   (* state,worklist *) 'state * Worklist.t ->
-  (* returns:       *) ('state * Worklist.t, typer_error) result
+  (* returns:       *) 'state * Worklist.t
   = fun predicate f ((state : 'state), (worklist : Worklist.t)) ->
     if predicate (state, worklist) then
-      ok (state, worklist)
+      (state, worklist)
     else
-      let* (state, worklist_monad) = f (state, worklist) in
+      let (state, worklist_monad) = f ~raise (state, worklist) in
       match worklist_monad with
         Worklist.Unchanged w ->
         (if predicate (state, w) then
-           ok (state, w)
-         else fail (solver_made_no_progress "inside 'until': no worklist worker was triggered"))
+           (state, w)
+         else raise.raise (solver_made_no_progress "inside 'until': no worklist worker was triggered"))
       | Worklist.Some_processing_done w ->
-        until' predicate f (state, w)
+        until' ~raise predicate f (state, w)
 
-let rec choose_processor' : 'typer_state 'typer_error . ('typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result) list -> 'typer_state * Worklist.monad -> ('typer_state * Worklist.monad, 'typer_error) result =
-  fun processors (state, worklist) ->
+let rec choose_processor' : 'typer_state 'typer_error . raise:'typer_error raise -> (raise:'typer_error raise -> 'typer_state * Worklist.t -> 'typer_state * Worklist.monad) list -> 'typer_state * Worklist.monad -> 'typer_state * Worklist.monad =
+  fun ~raise processors (state, worklist) ->
   match processors with
-    [] -> ok (state, worklist)
+    [] -> (state, worklist)
   | hd::tl ->
     match worklist with
       Worklist.Some_processing_done worklist ->
-      ok @@ (state, Worklist.Some_processing_done worklist)
+      (state, Worklist.Some_processing_done worklist)
     | Worklist.Unchanged worklist ->
-      let* (state, worklist) =
-        hd (state, worklist)
-      in choose_processor' tl (state, worklist)
+      let (state, worklist) =
+        hd ~raise (state, worklist)
+      in choose_processor' ~raise tl (state, worklist)
 
-let choose_processor : 'typer_state 'typer_error . ('typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result) list -> 'typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result =
-  fun processors (state, worklist) -> choose_processor' processors (state, Worklist.Unchanged worklist)
+let choose_processor : 'typer_state 'typer_error .raise:'typer_error raise -> (raise:'typer_error raise -> 'typer_state * Worklist.t -> 'typer_state * Worklist.monad) list -> 'typer_state * Worklist.t -> 'typer_state * Worklist.monad =
+  fun ~raise processors (state, worklist) -> choose_processor' ~raise processors (state, Worklist.Unchanged worklist)
 
 (* module Worklist_monad = struct
 
   module Let_syntax = struct
     let bind some_result ~f =
-      let* (state, (worklist_monad : Worklist.monad)) = some_result in
+      let (state, (worklist_monad : Worklist.monad)) = some_result in
       match worklist_monad with
         Worklist.Some_processing_done w -> ok (state, Worklist.Some_processing_done w)
       | Worklist.Unchanged w -> f (state, w)

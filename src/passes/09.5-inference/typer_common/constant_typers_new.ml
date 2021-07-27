@@ -312,107 +312,107 @@ tc "arguments for (+)"
   let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
   let t_set_delegate  = tuple1 (option key_hash) --> operation
 
-  let constant_type : constant' -> (Typesystem.Core.type_value, typer_error) result = function
-    | C_INT                 -> ok @@ t_int ;
-    | C_UNIT                -> ok @@ t_unit ;
-    | C_NOW                 -> ok @@ t_now ;
-    | C_IS_NAT              -> ok @@ t_is_nat ;
-    | C_SOME                -> ok @@ t_some ;
-    | C_NONE                -> ok @@ t_none ;
-    | C_ASSERTION           -> ok @@ t_assertion ;
-    | C_ASSERT_SOME         -> ok @@ t_assert_some ;
-    | C_FAILWITH            -> ok @@ t_failwith ;
-    | C_NEVER               -> ok @@ t_never ;
+  let constant_type ~raise : constant' -> Typesystem.Core.type_value = function
+    | C_INT                 -> t_int ;
+    | C_UNIT                -> t_unit ;
+    | C_NOW                 -> t_now ;
+    | C_IS_NAT              -> t_is_nat ;
+    | C_SOME                -> t_some ;
+    | C_NONE                -> t_none ;
+    | C_ASSERTION           -> t_assertion ;
+    | C_ASSERT_SOME         -> t_assert_some ;
+    | C_FAILWITH            -> t_failwith ;
+    | C_NEVER               -> t_never ;
     (* LOOPS *)
-    | C_FOLD_WHILE          -> ok @@ t_fold_while ;
-    | C_FOLD_CONTINUE       -> ok @@ t_continuation ;
-    | C_FOLD_STOP           -> ok @@ t_continuation ;
+    | C_FOLD_WHILE          -> t_fold_while ;
+    | C_FOLD_CONTINUE       -> t_continuation ;
+    | C_FOLD_STOP           -> t_continuation ;
     (* MATH *)
-    | C_NEG                 -> ok @@ t_neg ;
-    | C_ABS                 -> ok @@ t_abs ;
-    | C_ADD                 -> ok @@ t_add ;
-    | C_SUB                 -> ok @@ t_sub ;
-    | C_MUL                 -> ok @@ t_times ;
-    | C_EDIV                -> ok @@ t_ediv ;
-    | C_DIV                 -> ok @@ t_div ;
-    | C_MOD                 -> ok @@ t_mod ;
+    | C_NEG                 -> t_neg ;
+    | C_ABS                 -> t_abs ;
+    | C_ADD                 -> t_add ;
+    | C_SUB                 -> t_sub ;
+    | C_MUL                 -> t_times ;
+    | C_EDIV                -> t_ediv ;
+    | C_DIV                 -> t_div ;
+    | C_MOD                 -> t_mod ;
     (* LOGIC *)
-    | C_NOT                 -> ok @@ t_not ;
-    | C_AND                 -> ok @@ t_and ;
-    | C_OR                  -> ok @@ t_or ;
-    | C_XOR                 -> ok @@ t_xor ;
-    | C_LSL                 -> ok @@ t_lsl ;
-    | C_LSR                 -> ok @@ t_lsr ;
+    | C_NOT                 -> t_not ;
+    | C_AND                 -> t_and ;
+    | C_OR                  -> t_or ;
+    | C_XOR                 -> t_xor ;
+    | C_LSL                 -> t_lsl ;
+    | C_LSR                 -> t_lsr ;
     (* COMPARATOR *)
-    | C_EQ                  -> ok @@ t_comp ;
-    | C_NEQ                 -> ok @@ t_comp ;
-    | C_LT                  -> ok @@ t_comp ;
-    | C_GT                  -> ok @@ t_comp ;
-    | C_LE                  -> ok @@ t_comp ;
-    | C_GE                  -> ok @@ t_comp ;
+    | C_EQ                  -> t_comp ;
+    | C_NEQ                 -> t_comp ;
+    | C_LT                  -> t_comp ;
+    | C_GT                  -> t_comp ;
+    | C_LE                  -> t_comp ;
+    | C_GE                  -> t_comp ;
     (* BYTES / STRING *)
-    | C_SIZE                -> ok @@ t_size ;
-    | C_CONCAT              -> ok @@ t_concat ;
-    | C_SLICE               -> ok @@ t_slice ;
-    | C_BYTES_PACK          -> ok @@ t_bytes_pack ;
-    | C_BYTES_UNPACK        -> ok @@ t_bytes_unpack ;
+    | C_SIZE                -> t_size ;
+    | C_CONCAT              -> t_concat ;
+    | C_SLICE               -> t_slice ;
+    | C_BYTES_PACK          -> t_bytes_pack ;
+    | C_BYTES_UNPACK        -> t_bytes_unpack ;
     (* SET  *)
-    | C_SET_EMPTY           -> ok @@ t_set_empty ;
-    | C_SET_ADD             -> ok @@ t_set_add ;
-    | C_SET_REMOVE          -> ok @@ t_set_remove ;
-    | C_SET_ITER            -> ok @@ t_set_iter ;
-    | C_SET_FOLD            -> ok @@ t_set_fold ;
-    | C_SET_FOLD_DESC      -> ok @@ t_SET_FOLD_DESC ;
-    | C_SET_MEM             -> ok @@ t_set_mem ;
-    | C_SET_UPDATE          -> ok @@ t_set_update ;
+    | C_SET_EMPTY           -> t_set_empty ;
+    | C_SET_ADD             -> t_set_add ;
+    | C_SET_REMOVE          -> t_set_remove ;
+    | C_SET_ITER            -> t_set_iter ;
+    | C_SET_FOLD            -> t_set_fold ;
+    | C_SET_FOLD_DESC      -> t_SET_FOLD_DESC ;
+    | C_SET_MEM             -> t_set_mem ;
+    | C_SET_UPDATE          -> t_set_update ;
 
     (* LIST *)
-    | C_CONS                -> ok @@ t_cons ;
-    | C_LIST_EMPTY          -> ok @@ t_list_empty ;
-    | C_LIST_ITER           -> ok @@ t_list_iter ;
-    | C_LIST_MAP            -> ok @@ t_list_map ;
-    | C_LIST_FOLD           -> ok @@ t_list_fold ;
-    | C_LIST_FOLD_LEFT      -> ok @@ t_list_fold_left ;
-    | C_LIST_FOLD_RIGHT     -> ok @@ t_list_fold_right ;
-    | C_LIST_HEAD_OPT       -> ok @@ t_list_head_opt ;
-    | C_LIST_TAIL_OPT       -> ok @@ t_list_tail_opt ;
+    | C_CONS                -> t_cons ;
+    | C_LIST_EMPTY          -> t_list_empty ;
+    | C_LIST_ITER           -> t_list_iter ;
+    | C_LIST_MAP            -> t_list_map ;
+    | C_LIST_FOLD           -> t_list_fold ;
+    | C_LIST_FOLD_LEFT      -> t_list_fold_left ;
+    | C_LIST_FOLD_RIGHT     -> t_list_fold_right ;
+    | C_LIST_HEAD_OPT       -> t_list_head_opt ;
+    | C_LIST_TAIL_OPT       -> t_list_tail_opt ;
 
     (* MAP *)
-    | C_MAP_EMPTY           -> ok @@ t_map_empty ;
-    | C_BIG_MAP_EMPTY       -> ok @@ t_big_map_empty ;
-    | C_MAP_ADD             -> ok @@ t_map_add ;
-    | C_MAP_REMOVE          -> ok @@ t_map_remove ;
-    | C_MAP_UPDATE          -> ok @@ t_map_update ;
-    | C_MAP_ITER            -> ok @@ t_map_iter ;
-    | C_MAP_MAP             -> ok @@ t_map_map ;
-    | C_MAP_FOLD            -> ok @@ t_map_fold ;
-    | C_MAP_MEM             -> ok @@ t_map_mem ;
-    | C_MAP_FIND            -> ok @@ t_map_find ;
-    | C_MAP_FIND_OPT        -> ok @@ t_map_find_opt ;
-    | C_MAP_GET_AND_UPDATE  -> ok @@ t_map_get_and_update ;
+    | C_MAP_EMPTY           -> t_map_empty ;
+    | C_BIG_MAP_EMPTY       -> t_big_map_empty ;
+    | C_MAP_ADD             -> t_map_add ;
+    | C_MAP_REMOVE          -> t_map_remove ;
+    | C_MAP_UPDATE          -> t_map_update ;
+    | C_MAP_ITER            -> t_map_iter ;
+    | C_MAP_MAP             -> t_map_map ;
+    | C_MAP_FOLD            -> t_map_fold ;
+    | C_MAP_MEM             -> t_map_mem ;
+    | C_MAP_FIND            -> t_map_find ;
+    | C_MAP_FIND_OPT        -> t_map_find_opt ;
+    | C_MAP_GET_AND_UPDATE  -> t_map_get_and_update ;
     (* BIG MAP *)
-    | C_BIG_MAP_GET_AND_UPDATE -> ok @@ t_big_map_get_and_update ;
+    | C_BIG_MAP_GET_AND_UPDATE -> t_big_map_get_and_update ;
     (* CRYPTO *)
-    | C_SHA256              -> ok @@ t_hash256 ;
-    | C_SHA512              -> ok @@ t_hash512 ;
-    | C_BLAKE2b             -> ok @@ t_blake2b ;
-    | C_HASH_KEY            -> ok @@ t_hash_key ;
-    | C_CHECK_SIGNATURE     -> ok @@ t_check_signature ;
-    | C_CHAIN_ID            -> ok @@ t_chain_id ;
+    | C_SHA256              -> t_hash256 ;
+    | C_SHA512              -> t_hash512 ;
+    | C_BLAKE2b             -> t_blake2b ;
+    | C_HASH_KEY            -> t_hash_key ;
+    | C_CHECK_SIGNATURE     -> t_check_signature ;
+    | C_CHAIN_ID            -> t_chain_id ;
     (*BLOCKCHAIN *)
-    | C_CONTRACT            -> ok @@ t_get_contract ;
-    | C_CONTRACT_OPT        -> ok @@ t_get_contract_opt ;
-    | C_CONTRACT_ENTRYPOINT -> ok @@ t_get_entrypoint ;
-    | C_CONTRACT_ENTRYPOINT_OPT -> ok @@ t_get_entrypoint_opt ;
-    | C_AMOUNT              -> ok @@ t_amount ;
-    | C_BALANCE             -> ok @@ t_balance ;
-    | C_CALL                -> ok @@ t_transaction ;
-    | C_SENDER              -> ok @@ t_sender ;
-    | C_SOURCE              -> ok @@ t_source ;
-    | C_ADDRESS             -> ok @@ t_address ;
-    | C_SELF_ADDRESS        -> ok @@ t_self_address;
-    | C_IMPLICIT_ACCOUNT    -> ok @@ t_implicit_account;
-    | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
-    | C_POLYMORPHIC_ADD     -> ok @@ t_polymorphic_add ;
-    | c                     -> fail (corner_case (Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant' c))
+    | C_CONTRACT            -> t_get_contract ;
+    | C_CONTRACT_OPT        -> t_get_contract_opt ;
+    | C_CONTRACT_ENTRYPOINT -> t_get_entrypoint ;
+    | C_CONTRACT_ENTRYPOINT_OPT -> t_get_entrypoint_opt ;
+    | C_AMOUNT              -> t_amount ;
+    | C_BALANCE             -> t_balance ;
+    | C_CALL                -> t_transaction ;
+    | C_SENDER              -> t_sender ;
+    | C_SOURCE              -> t_source ;
+    | C_ADDRESS             -> t_address ;
+    | C_SELF_ADDRESS        -> t_self_address;
+    | C_IMPLICIT_ACCOUNT    -> t_implicit_account;
+    | C_SET_DELEGATE        -> t_set_delegate ;
+    | C_POLYMORPHIC_ADD     -> t_polymorphic_add ;
+    | c                     -> raise.raise (corner_case (Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant' c))
 end

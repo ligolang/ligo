@@ -12,7 +12,7 @@ let warn_str (display_format:ex_display_format) (a: 'a list) : string =
             let s = Yojson.Safe.pretty_to_string @@ `List json in
             Format.asprintf "%s\n" s
 
-let toplevel : ?werror:bool -> display_format:ex_display_format -> displayable -> (unit -> Main_warnings.all list) -> ('value, _) Trace.result -> _ =
+let toplevel : ?werror:bool -> display_format:ex_display_format -> displayable -> (unit -> Main_warnings.all list) -> ('value, _) result -> _ =
   fun ?(werror=false) ~display_format disp warns value ->
     let (Ex_display_format t) = display_format in
     let as_str : string =
@@ -30,11 +30,12 @@ let toplevel : ?werror:bool -> display_format:ex_display_format -> displayable -
     if not (List.is_empty warns) && werror then
         Error (warns_str,warns_str)
     else
-    match Trace.to_stdlib_result value with
+    match value with
     | Ok _ -> Ok (as_str,warns_str)
     | Error _ -> Error (as_str,warns_str)
 
-let format_result : ?werror:bool -> display_format:ex_display_format -> 'value format -> (unit -> Main_warnings.all list) -> ('value, Main_errors.all) Trace.result -> _ =
+let format_result : ?werror:bool -> display_format:ex_display_format -> 'value format -> (unit -> Main_warnings.all list) -> (raise:Main_errors.all Trace.raise -> 'value) -> _ =
   fun ?(werror=false) ~display_format value_format warns value ->
     let format = bind_format value_format Main_errors.Formatter.error_format in
+    let value = Trace.to_stdlib_result value in
     toplevel ~werror ~display_format (Displayable {value ; format}) warns value

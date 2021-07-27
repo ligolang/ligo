@@ -1,4 +1,3 @@
-open Trace
 open Types
 open Misc
 
@@ -6,10 +5,10 @@ module Formatter = Formatter
 
 type sub_module = { m : Ast_core.module_  ; bindings : bindings_map }
 
-let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> ((def_map * scopes), Main_errors.all) result = fun ~with_types ~options core_prg ->
+let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
-  let compile m = Ligo_compile.Of_core.infer ~options m >>? Ligo_compile.Of_core.typecheck ~add_warning ~options Env in
+  let compile ~raise m = Ligo_compile.Of_core.infer ~raise ~options m |> Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.expression_content with
@@ -130,7 +129,7 @@ let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_c
   and declaration i core_prg =
     let aux = fun (i,top_def_map,inner_def_map,scopes,sub_prg) (x : Ast_core.declaration Location.wrap) ->
       let m = List.append sub_prg.m [x] in
-      let typed_prg = if with_types then Trace.to_option @@ compile m else None in
+      let typed_prg = if with_types then Trace.to_option (compile m) else None in
       let bindings = match typed_prg with
         | Some (typed_prg,_) -> extract_variable_types sub_prg.bindings typed_prg
         | None -> sub_prg.bindings
@@ -175,4 +174,4 @@ let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_c
   in
   let (_,top_d,inner_d,s,_) = declaration 0 core_prg in
   let d = Def_map.union merge_refs top_d inner_d in
-  ok @@ (d,s)
+  (d,s)

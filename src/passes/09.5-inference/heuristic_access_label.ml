@@ -105,7 +105,7 @@ let get_referenced_constraints ({ a_r_map; a_var_l } : selector_output) : type_c
   ]
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
+  fun ~raise selected repr ->
   (* Format.eprintf "In access_label.propagator for %a\n%!"
     printer selected; *)
   let a_var_l = selected.a_var_l in
@@ -117,10 +117,10 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   assert (Compare.type_variable row_tv record_type = 0);
   (* produce constraints: *)
 
-  let* field_type =
+  let field_type =
     match LMap.find_opt a_var_l.label a_r_map.tv_map with
-    | None -> fail @@ corner_case "Type error: label {a_var_l.label} does not exist in record {a_r_map.tv_map}"
-    | Some field_type -> ok @@ repr field_type.associated_variable
+    | None -> raise.raise @@ corner_case "Type error: label {a_var_l.label} does not exist in record {a_r_map.tv_map}"
+    | Some field_type -> repr field_type.associated_variable
       
   in
 
@@ -132,7 +132,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
       "propagator: break_ctor: row"
   ] in
   
-  ok [
+  [
     {
       remove_constraints = [];
       add_constraints = eqs;
@@ -164,4 +164,3 @@ type nonrec selector_output = MM.selector_output = {
     a_r_map : c_row_simpl ;
     a_var_l : c_access_label_simpl ;
   }
-

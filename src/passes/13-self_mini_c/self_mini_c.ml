@@ -3,19 +3,13 @@ open Errors
 open Mini_c
 open Trace
 
-let get_t_function e = trace_option not_a_function @@ Mini_c.get_t_function e
-let get_function e = trace_option not_a_function @@ Mini_c.get_function e
-let aggregate_entry p f = trace_option could_not_aggregate_entry @@ Mini_c.aggregate_entry p f
-let get_entry l n = trace_option could_not_aggregate_entry @@ Mini_c.get_entry l n
+let get_t_function ~raise e = trace_option ~raise not_a_function @@ Mini_c.get_t_function e
+let get_function ~raise e = trace_option ~raise not_a_function @@ Mini_c.get_function e
+let aggregate_entry ~raise p f = trace_option ~raise could_not_aggregate_entry @@ Mini_c.aggregate_entry p f
+let get_entry ~raise l n = trace_option ~raise could_not_aggregate_entry @@ Mini_c.get_entry l n
 
 (* TODO hack to specialize map_expression to identity monad *)
-let map_expression :
-  (expression -> expression) -> (expression -> expression) =
-  fun f e ->
-  match to_stdlib_result @@ Helpers.map_expression (fun e -> ok (f e)) e with
-  | Ok (e) -> e
-  | Error _ -> assert false (* impossible *)
-
+let map_expression = Helpers.map_expression
 
 (* Conservative purity test: ok to treat pure things as impure, must
    not treat impure things as pure. *)
@@ -229,9 +223,9 @@ let inline_let : bool ref -> expression -> expression =
       e
   | _ -> e
 
-let inline_lets : bool ref -> expression -> expression =
+let inline_lets ~raise : bool ref -> expression -> expression =
   fun changed ->
-  map_expression (inline_let changed)
+  map_expression ~raise (fun ~raise:_ -> inline_let changed)
 
 
 (* Let "beta" mean transforming the code:
@@ -247,7 +241,7 @@ let inline_lets : bool ref -> expression -> expression =
    - Nothing?
 *)
 
-let beta : bool ref -> expression -> expression =
+let beta ~raise:_ : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }}, e2) ->
@@ -283,11 +277,11 @@ let beta : bool ref -> expression -> expression =
       ~init:body (List.zip_exn es vars)
   | _ -> e
 
-let betas : bool ref -> expression -> expression =
+let betas ~raise : bool ref -> expression -> expression =
   fun changed ->
-  map_expression (beta changed)
+  map_expression ~raise (beta changed)
 
-let eta : bool ref -> expression -> expression =
+let eta ~raise:_ : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_expression = _ } ;
@@ -327,26 +321,26 @@ let eta : bool ref -> expression -> expression =
        | _ -> e)
   | _ -> e
 
-let etas : bool ref -> expression -> expression =
+let etas ~raise : bool ref -> expression -> expression =
   fun changed ->
-  map_expression (eta changed)
+  map_expression ~raise (eta changed)
 
-let contract_check =
+let contract_check ~raise init =
   let all = [Michelson_restrictions.self_in_lambdas] in
-  let all_e = List.map ~f:Helpers.map_sub_level_expression all in
-  bind_chain all_e
+  let all_e = List.map ~f:(Helpers.map_sub_level_expression ~raise) all in
+  List.fold ~f:(|>) all_e ~init
 
-let rec all_expression : expression -> expression =
+let rec all_expression ~raise : expression -> expression =
   fun e ->
   let changed = ref false in
-  let e = inline_lets changed e in
-  let e = betas changed e in
-  let e = etas changed e in
+  let e = inline_lets ~raise changed e in
+  let e = betas ~raise changed e in
+  let e = etas ~raise changed e in
   if !changed
-  then all_expression e
+  then all_expression ~raise e
   else e
 
-let all_expression e =
-  let e = Uncurry.uncurry_expression e in
-  let e = all_expression e in
+let all_expression ~raise e =
+  let e = Uncurry.uncurry_expression ~raise e in
+  let e = all_expression ~raise e in
   e

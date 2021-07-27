@@ -5,36 +5,37 @@ type form =
   | Contract of string
   | Env
 
-let infer ~(options: Compiler_options.t) (m : Ast_core.module_) =
-  let env_inf = Option.value_exn (Trace.to_option @@ Checking.decompile_env options.init_env) in
+let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
+  let env_inf = Checking.decompile_env options.init_env in
   match options.infer with
-    | true  -> let* (_,e,_,_) = trace inference_tracer @@ Inference.type_module ~init_env:env_inf m in ok @@ e
-    | false -> ok @@ m
+    | true  -> let (_,e,_,_) = trace ~raise inference_tracer @@ Inference.type_module ~init_env:env_inf m in e
+    | false -> m
 
-let typecheck ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : (Ast_typed.module_fully_typed * Ast_typed.environment , _) result =
-  let* e,typed = trace checking_tracer @@ Checking.type_module ~init_env:options.init_env m in
-  let* applied = trace self_ast_typed_tracer @@
-    let* selfed = Self_ast_typed.all_module typed ~add_warning in
+let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.module_fully_typed * Ast_typed.environment =
+  let e,typed = trace ~raise checking_tracer @@ Checking.type_module ~init_env:options.init_env m in
+  let applied = trace ~raise self_ast_typed_tracer @@
+    fun ~raise -> 
+    let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
     match cform with
-    | Contract entrypoint -> Self_ast_typed.all_contract entrypoint selfed
-    | Env -> ok selfed in
-  ok @@ (applied,e)
+    | Contract entrypoint -> Self_ast_typed.all_contract ~raise entrypoint selfed
+    | Env -> selfed in
+  (applied,e)
 
-let compile_expression ?(infer = false) ~(env : Ast_typed.environment) (e : Ast_core.expression)
-    : (Ast_typed.expression * Ast_typed.environment , _) result =
-  let env_inf = Option.value_exn (Trace.to_option @@ Checking.decompile_env env) in
-  let* inferred = match infer with 
-    | true  -> let* (_,e,_,_) =
-      trace inference_tracer @@ Inference.type_expression_subst env_inf Inference.Solver.initial_state e in
-      ok e
-    | false -> ok e 
+let compile_expression ~raise ?(infer = false) ~(env : Ast_typed.environment) (e : Ast_core.expression)
+    : Ast_typed.expression * Ast_typed.environment =
+  let env_inf = Checking.decompile_env env in
+  let inferred = match infer with 
+    | true  -> let (_,e,_,_) =
+      trace ~raise inference_tracer @@ Inference.type_expression_subst env_inf Inference.Solver.initial_state e in
+      e
+    | false -> e 
   in
-  (* let* inferred = trace self_Ast_core_tracer @@ Self_Ast_core.all_expression inferred in *)
-  let* e,typed = trace checking_tracer @@ Checking.type_expression env inferred in
-  let* applied = trace self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
-  ok @@ (applied, e)
+  (* let inferred = trace ~raise self_Ast_core_tracer @@ Self_Ast_core.all_expression inferred in *)
+  let e,typed = trace ~raise checking_tracer @@ Checking.type_expression env inferred in
+  let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
+  (applied, e)
 
-let apply (entry_point : string) (param : Ast_core.expression) : (Ast_core.expression , _) result =
+let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =
   let name = Location.wrap @@ Var.of_name entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content  = Ast_core.E_variable name ;
@@ -44,7 +45,7 @@ let apply (entry_point : string) (param : Ast_core.expression) : (Ast_core.expre
     { expression_content  = Ast_core.E_application {lamb=entry_point_var; args=param} ;
       sugar    = None ;
       location = Virtual "generated application" } in
-  ok applied
+  applied
 
 let list_declarations (m : Ast_core.module_) : string list =
   List.fold_left
@@ -77,4 +78,4 @@ let list_mod_declarations (m : Ast_core.module_) : string list =
       | _ -> prev)
     ~init:[] m
 
-let evaluate_type (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace checking_tracer @@ Checking.evaluate_type env t
+let evaluate_type ~raise (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace ~raise checking_tracer @@ Checking.evaluate_type env t

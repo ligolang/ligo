@@ -79,42 +79,43 @@ let get_groups md_file : snippetsmap =
   if Meta : evaluate each expression in each programs from the snippets group map
   if Object : run the ligo test framework
 **)
-let compile_groups ~add_warning filename grp_list =
-  let aux : (syntax * group_name) * (lang * string) -> (unit, all) result =
+let compile_groups ~raise ~add_warning filename grp_list =
+  let aux : (syntax * group_name) * (lang * string) -> unit =
     fun ((syntax , grp) , (lang , contents)) ->
-      trace (test_md_file filename syntax grp contents) @@
+      trace ~raise (test_md_file filename syntax grp contents) @@
+      fun ~raise -> 
       let options         = Compiler_options.make () in
-      let* meta       = Ligo_compile.Of_source.make_meta syntax None in
-      let* c_unit,_   = Ligo_compile.Of_source.compile_string ~options ~meta contents in
-      let* imperative = Ligo_compile.Of_c_unit.compile ~add_warning ~meta c_unit filename in
-      let* sugar      = Ligo_compile.Of_imperative.compile imperative in
-      let* core       = Ligo_compile.Of_sugar.compile sugar in
-      let* inferred   = Ligo_compile.Of_core.infer ~options core in
+      let meta       = Ligo_compile.Of_source.make_meta ~raise syntax None in
+      let c_unit,_   = Ligo_compile.Of_source.compile_string ~raise ~options ~meta contents in
+      let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
+      let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
+      let core       = Ligo_compile.Of_sugar.compile sugar in
+      let inferred   = Ligo_compile.Of_core.infer  ~raise~options core in
       match lang with
       | Meta ->
         let init_env = Environment.default_with_test options.protocol_version in
         let options = { options with init_env } in
-        let* typed,_    = Ligo_compile.Of_core.typecheck ~add_warning ~options Env inferred in
-        let* _ = Interpreter.eval_test typed in
-        ok ()
+        let typed,_    = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
+        let _ = Interpreter.eval_test ~raise typed in
+        ()
       | Object ->
-        let* typed,_    = Ligo_compile.Of_core.typecheck ~add_warning ~options Env inferred in
-        let* mini_c     = Ligo_compile.Of_typed.compile typed in
-        let* (_michelsons : Stacking.compiled_expression list) =
-          bind_map_list
-            (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
+        let typed,_    = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
+        let mini_c     = Ligo_compile.Of_typed.compile ~raise typed in
+        let (_michelsons : Stacking.compiled_expression list) =
+          List.map ~f:
+            (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c exp)
             mini_c
         in
-        ok ()
+        ()
   in
-  let* () = bind_iter_list aux grp_list in
-  ok ()
+  let () = List.iter ~f:aux grp_list in
+  ()
 
-let compile ~add_warning filename () =
+let compile ~raise ~add_warning filename () =
   let groups = get_groups filename in
   let groups_map = SnippetsGroup.bindings groups in
-  let* () = compile_groups ~add_warning filename groups_map in
-  ok ()
+  let () = compile_groups ~raise ~add_warning filename groups_map in
+  ()
 
 let get_all_md_files () =
   let exclude_files = [

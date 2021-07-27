@@ -1,5 +1,4 @@
 open Types
-open Trace
 
 type tenv = Ast_typed.environment
 
@@ -15,9 +14,9 @@ let extract_variable_types :
         (v,t')
       in
       let b' = List.map ~f:aux b in
-      ok @@ Bindings_map.add_bindings b' env
+      Bindings_map.add_bindings b' env
     in
-    let aux : bindings_map -> Ast_typed.expression -> (bindings_map, _) result = fun env exp ->
+    let aux : bindings_map -> Ast_typed.expression -> bindings_map = fun env exp ->
       let return = add env in
       match exp.expression_content with
       | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
@@ -69,16 +68,14 @@ let extract_variable_types :
           return (Ast_typed.LMap.to_list fields)
       )
     in
-    let aux' : bindings_map -> Ast_typed.declaration -> (bindings_map, _) result = fun env decl ->
+    let aux' : bindings_map -> Ast_typed.declaration -> bindings_map = fun env decl ->
       match decl with
       | Declaration_constant { binder ; expr ; _ } -> add env [binder,expr.type_expression]
-      | Declaration_type _ -> ok env
-      | Declaration_module _ -> ok env
-      | Module_alias _ -> ok env
+      | Declaration_type _ -> env
+      | Declaration_module _ -> env
+      | Module_alias _ -> env
     in
-    match to_option @@ Self_ast_typed.Helpers.fold_module_decl aux aux' prev prg with
-    | Some bindings -> bindings
-    | None -> prev
+    Self_ast_typed.Helpers.fold_module_decl aux aux' prev prg
 
 let get_binder_name : 'a Var.t -> string = fun v ->
   if Var.is_generated v

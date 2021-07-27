@@ -88,6 +88,6 @@ module Mutator (M : Monad) = struct
 
   let mutate_module_ ?n (mod_ : module_) =
     let rndmod_ = map_module (Expression mutate_expression) mod_ in
-    Trace.ok @@ get_one ?n rndmod_
+    get_one ?n rndmod_
 
 end

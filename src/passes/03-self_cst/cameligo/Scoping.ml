@@ -9,11 +9,6 @@ open Region
 open Errors
 open Trace
 
-(* TODO don't *)
-let ignore x =
-  let* _ = x in
-  ok ()
-
 (* Useful modules *)
 
 module SSet = Set.Make (String)
@@ -57,18 +52,18 @@ let reserved =
   |> add "unit"
   |> add "unpack"
 
-let check_reserved_names vars =
+let check_reserved_names ~raise vars =
   let is_reserved elt = SSet.mem elt.value reserved in
   let inter = VarSet.filter is_reserved vars in
   if not (VarSet.is_empty inter) then
     let clash = VarSet.choose inter in
-    fail @@ reserved_name clash
-  else ok vars
+    raise.raise @@ reserved_name clash
+  else vars
 
-let check_reserved_name var =
+let check_reserved_name ~raise var =
   if SSet.mem var.value reserved then
-    fail @@ reserved_name var
-  else ok ()
+    raise.raise @@ reserved_name var
+  else ()
 
 let is_wildcard var =
   let var = var.value in
@@ -78,92 +73,92 @@ let is_wildcard var =
 
 open! CST
 
-let rec vars_of_pattern env = function
-  PConstr p -> (vars_of_pconstr env p : _ result)
+let rec vars_of_pattern ~raise env = function
+  PConstr p -> vars_of_pconstr ~raise env p
 | PUnit _
 | PInt _ | PNat _ | PBytes _
-| PString _ | PVerbatim _ -> ok @@ env
-| PVar {var} when is_wildcard var -> ok @@ env
+| PString _ | PVerbatim _ -> env
+| PVar {var} when is_wildcard var -> env
 | PVar {var} ->
-    let* () = check_reserved_name var in
+    let () = check_reserved_name ~raise var in
     if VarSet.mem var env then
-      fail @@ non_linear_pattern var
-    else ok @@ VarSet.add var env
-| PList l -> vars_of_plist env l
-| PTuple t -> Helpers.bind_fold_npseq vars_of_pattern env t.value
-| PPar p -> vars_of_pattern env p.value.inside
-| PRecord p -> vars_of_fields env p.value.ne_elements
-| PTyped p -> vars_of_pattern env p.value.pattern
+      raise.raise @@ non_linear_pattern var
+    else VarSet.add var env
+| PList l -> vars_of_plist ~raise env l
+| PTuple t -> Helpers.fold_npseq (vars_of_pattern ~raise) env t.value
+| PPar p -> vars_of_pattern ~raise env p.value.inside
+| PRecord p -> vars_of_fields ~raise env p.value.ne_elements
+| PTyped p -> vars_of_pattern ~raise env p.value.pattern
 
-and vars_of_fields env fields =
-  Helpers.bind_fold_npseq vars_of_field_pattern env fields
+and vars_of_fields ~raise env fields =
+  Helpers.fold_npseq (vars_of_field_pattern ~raise) env fields
 
-and vars_of_field_pattern env field =
+and vars_of_field_pattern ~raise env field =
   (* TODO: Hmm, not really sure
   let var = field.value.field_name in
   if VarSet.mem var env then
-    fail @@ non_linear_pattern var
+    raise.raise @@ non_linear_pattern var
   else
   *)
   let p = field.value.pattern in
-  vars_of_pattern env p
+  vars_of_pattern ~raise env p
 
-and vars_of_pconstr env = function
+and vars_of_pconstr ~raise env = function
   PSomeApp {value=(_, pattern); _} ->
-    vars_of_pattern env pattern
+    vars_of_pattern ~raise env pattern
 | PConstrApp {value=(_, Some pattern); _} ->
-    vars_of_pattern env pattern
+    vars_of_pattern ~raise env pattern
 | PNone _
 | PFalse _
 | PTrue _
-| PConstrApp _ -> ok @@ env
+| PConstrApp _ -> env
 
-and vars_of_plist env = function
+and vars_of_plist ~raise env = function
   PListComp {value; _} ->
-    Helpers.bind_fold_pseq vars_of_pattern env value.elements
+    Helpers.fold_pseq (vars_of_pattern ~raise) env value.elements
 | PCons {value; _} ->
     let head, _, tail = value in
-    bind_fold_list vars_of_pattern env [head; tail]
+    List.fold ~f:(vars_of_pattern ~raise) ~init:env [head; tail]
 
-let check_linearity = vars_of_pattern VarSet.empty
+let check_linearity ~raise = vars_of_pattern ~raise VarSet.empty
 
 (* Checking patterns *)
 
-let check_pattern p =
-  check_linearity p >>? check_reserved_names |> ignore
+let check_pattern ~raise p =
+  check_linearity ~raise p |> check_reserved_names ~raise |> ignore
 
 (* Checking variants for duplicates *)
 
-let check_variants variants =
+let check_variants ~raise variants =
   let add acc {value; _} =
     if VarSet.mem value.constr acc then
-      fail @@ duplicate_variant value.constr
-    else ok @@ VarSet.add value.constr acc in
+      raise.raise @@ duplicate_variant value.constr
+    else VarSet.add value.constr acc in
   let variants =
-    bind_fold_list add VarSet.empty variants
+    List.fold ~f:add ~init:VarSet.empty variants
   in ignore variants
 
 (* Checking record fields *)
 
-let check_fields fields =
+let check_fields ~raise fields =
   let add acc {value; _} =
     let field_name = (value: field_decl).field_name in
     if VarSet.mem field_name acc then
-      fail @@ duplicate_field_name value.field_name
+      raise.raise @@ duplicate_field_name value.field_name
     else
-      ok @@ VarSet.add value.field_name acc
-  in ignore (bind_fold_list add VarSet.empty fields)
+      VarSet.add value.field_name acc
+  in ignore (List.fold ~f:add ~init:VarSet.empty fields)
 
-let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
+let peephole_type ~raise : unit -> type_expr -> unit = fun _ t ->
   match t with
    TSum {value; _} ->
-     let* () =
-       Utils.nsepseq_to_list value.variants |> check_variants
-     in ok @@ ()
+     let () =
+       Utils.nsepseq_to_list value.variants |> check_variants ~raise
+     in ()
   | TRecord {value; _} ->
-     let* () =
-       Utils.nsepseq_to_list value.ne_elements |> check_fields
-     in ok @@ ()
+     let () =
+       Utils.nsepseq_to_list value.ne_elements |> check_fields ~raise
+     in ()
   | TProd   _
   | TApp    _
   | TFun    _
@@ -172,34 +167,34 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   | TModA   _
   | TWild   _
   | TString _
-  | TInt    _ -> ok @@ ()
+  | TInt    _ -> ()
 
-let peephole_expression : unit -> expr -> (unit,'err) result =
+let peephole_expression ~raise : unit -> expr -> unit =
   fun () e ->
   match e with
     ECase {value; _}   ->
       let apply ({value; _}: _ case_clause reg)  =
-        check_pattern value.pattern in
-      let* () =
-        Trace.bind_iter_list
-          apply
+        check_pattern ~raise value.pattern in
+      let () =
+        List.iter 
+          ~f:apply
           (Utils.nsepseq_to_list value.cases.value)
-      in ok @@ ()
+      in ()
   | ELetIn {value; _}   ->
-      let* () =
-        Trace.bind_iter_list
-          check_pattern
+      let () =
+        List.iter
+          ~f:(check_pattern ~raise)
           (Utils.nseq_to_list value.binding.binders)
-      in ok @@ ()
+      in ()
   | ETypeIn {value; _}   ->
-      let* () = check_reserved_name value.type_decl.name
-      in ok @@ ()
+      let () = check_reserved_name ~raise value.type_decl.name
+      in ()
   | EModIn {value; _}   ->
-      let* () = check_reserved_name value.mod_decl.name
-      in ok @@ ()
+      let () = check_reserved_name ~raise value.mod_decl.name
+      in ()
   | EModAlias {value; _}   ->
-      let* () = check_reserved_name value.mod_alias.alias
-      in ok @@ ()
+      let () = check_reserved_name ~raise value.mod_alias.alias
+      in ()
   | EFun     _
   | ESeq     _
   | ECodeInj _
@@ -219,31 +214,31 @@ let peephole_expression : unit -> expr -> (unit,'err) result =
   | EBytes   _
   | EUnit    _
   | ETuple   _
-  | EPar     _ -> ok @@ ()
+  | EPar     _ -> ()
 
-let peephole_declaration : unit -> declaration -> (unit, 'err) result =
+let peephole_declaration ~raise : unit -> declaration -> unit =
   fun _ ->
   function
     Let {value; _} ->
       let _, _, binding, _ = value in
-      let* () =
-        Trace.bind_iter_list
-          check_pattern
+      let () =
+        List.iter
+          ~f:(check_pattern ~raise)
           (Utils.nseq_to_list binding.binders)
-      in ok @@ ()
+      in ()
   | TypeDecl {value; _} ->
-      let* () = check_reserved_name value.name
-      in ok @@ ()
+      let () = check_reserved_name ~raise value.name
+      in ()
   | ModuleDecl {value; _} ->
-      let* () = check_reserved_name value.name
-      in ok @@ ()
+      let () = check_reserved_name ~raise value.name
+      in ()
   | ModuleAlias {value; _} ->
-      let* () = check_reserved_name value.alias
-      in ok @@ ()
-  | Directive _ -> ok ()
+      let () = check_reserved_name ~raise value.alias
+      in ()
+  | Directive _ -> ()
 
-let peephole : (unit,'err) Helpers.folder = {
-  t = peephole_type;
-  e = peephole_expression;
-  d = peephole_declaration;
+let peephole ~raise : (unit,'err) Helpers.folder = {
+  t = peephole_type ~raise;
+  e = peephole_expression ~raise;
+  d = peephole_declaration ~raise;
 }

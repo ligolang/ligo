@@ -1,6 +1,6 @@
 (* Test set operations in CameLIGO *)
 
-let literal_op (p: unit) : string set =
+let literal_op ((): unit) : string set =
   Set.literal ["foo"; "bar"; "foobar"]
 
 let add_op (s : string set) : string set =

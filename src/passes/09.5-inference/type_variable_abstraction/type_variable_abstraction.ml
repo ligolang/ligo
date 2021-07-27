@@ -263,7 +263,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
 
     module Solver_types : sig
       open Types
-      type ('selector_output , 'errors) propagator = 'selector_output -> (type_variable -> type_variable) -> (updates, 'errors) Trace.result
+      type ('selector_output , 'errors) propagator = raise:'errors Trace.raise -> 'selector_output -> (type_variable -> type_variable) -> updates
     end
 
     module Misc : sig
