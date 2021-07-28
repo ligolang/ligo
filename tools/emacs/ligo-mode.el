@@ -56,8 +56,7 @@
 (rx-define ligo-upper-ident (: symbol-start upper (0+ ligo-ident-symbol)))
 
 (rx-define ligo-macro
-  (: "#" (or "define" "undef" "if" "ifdef" "ifndef" "else" "elif"
-             "endif" "include" "warning" "error")))
+  (: "#" (or "define" "undef" "if" "else" "elif" "endif" "include" "import" "error")))
 
 (rx-define ligo-macro-expr
   (: (group ligo-macro) (group (* any)) eol))

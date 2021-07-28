@@ -27,7 +27,7 @@ import Duplo.Tree (Tree)
 
 import AST.Skeleton hiding (Type)
 import AST.Skeleton qualified as AST
-import Parser (ShowRange)
+import Parser (LineMarker (..), LineMarkerType (..), ShowRange)
 import Product (Contains)
 import Range (Range)
 
@@ -165,6 +165,7 @@ instance Pretty1 Binding where
     BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
     BAttribute    name          -> sexpr "attr"  [name]
     BInclude      fname         -> sexpr "#include" [fname]
+    BImport       fname alias   -> sexpr "#import" [fname, alias]
 
     BFunction isRec name params ty body ->
       sexpr "fun" $ concat
@@ -321,6 +322,14 @@ instance Pretty1 Error where
   pp1 = \case
     Error _src children -> sexpr "ERROR" [pp children]
 
+instance Pretty LineMarker where
+  pp (LineMarker fp f l _) = sexpr "#" [pp l, pp $ Text.pack fp, pp f]
+
+instance Pretty LineMarkerType where
+  pp RootFile     = ""
+  pp IncludedFile = "1"
+  pp ReturnToFile = "2"
+
 ----------------------------------------------------------------------------
 -- Common
 ----------------------------------------------------------------------------
@@ -370,6 +379,9 @@ instance LPP1 d PreprocessorCommand where
 instance LPP1 d MichelsonCode where
   lpp1 = pp
 
+--instance LPP1 d LineMarker where
+--  lpp1 = pp1
+
 -- instances needed to pass instance resolution during compilation
 
 instance LPP1 'Caml MapBinding where
@@ -400,6 +412,7 @@ instance LPP1 'Pascal Binding where
     BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    n t           -> "const" <+> n <+> ":" <+> lpp t
 
     BFunction _ name params ty body ->
@@ -533,6 +546,7 @@ instance LPP1 'Reason Binding where
       [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     node                       -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason Variant where
@@ -632,6 +646,7 @@ instance LPP1 'Caml Binding where
     BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
 
     BFunction isRec name params ty body ->
       foldr (<+>) empty $ concat

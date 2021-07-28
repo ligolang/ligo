@@ -38,10 +38,8 @@ instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
---   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
---
--- type LIGO        = Tree RawLigoList
-type LIGO xs = Tree RawLigoList (Product xs)
+--   TODO: Rename; add stuff if CamelLIGO/ReasonLIGO needs something.
+type LIGO xs = Tree' RawLigoList xs
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
@@ -75,6 +73,7 @@ data Binding it
   | BTypeDecl     it it -- ^ (Name) (Type)
   | BAttribute    it -- ^ (Name)
   | BInclude      it
+  | BImport       it it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 type IsRec = Bool
@@ -246,6 +245,11 @@ liftEqList _ []       []       = True
 liftEqList f (x : xs) (y : ys) = f x y && liftEqList f xs ys
 liftEqList _ _        _        = False
 
+liftEqMaybe :: (a -> b -> Bool) -> Maybe a -> Maybe b -> Bool
+liftEqMaybe _ Nothing  Nothing  = True
+liftEqMaybe f (Just x) (Just y) = f x y
+liftEqMaybe _ _        _        = False
+
 -- TODO
 -- class GEq1 f where
 --   gLiftEq :: (a -> b -> Bool) -> f a -> f b -> Bool
@@ -364,9 +368,7 @@ instance Eq1 QualifiedName where
 
 instance Eq1 Pattern where
   liftEq f (IsConstr na mbpa) (IsConstr nb mbpb) =
-    f na nb && case (mbpa, mbpb) of
-      (Just a, Just b) -> f a b
-      (_, _) -> False
+    f na nb && liftEqMaybe f mbpa mbpb
   liftEq f (IsConstant a) (IsConstant b) = f a b
   liftEq f (IsVar a) (IsVar b) = f a b
   liftEq f (IsCons ha ta) (IsCons hb tb) = f ha hb && f ta tb

@@ -8,8 +8,6 @@ import Duplo.Tree
 
 import ParseTree
 import Parser
-  (CodeSource (CodeSource), Info, ParserM, ShowRange (N), boilerplate, boilerplate', fallthrough,
-  field, fieldOpt, fields, withComments)
 import Product
 
 
@@ -151,7 +149,8 @@ recognise (SomeRawTree dialect rawTree)
         "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
         "type_decl" -> BTypeDecl  <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
-        "include"   -> BInclude   <$> field "filename"
+        "p_include" -> BInclude   <$> field "filename"
+        "p_import"  -> BImport    <$> field "filename" <*> field "alias"
         _           -> fallthrough
 
     -- MichelsonCode
@@ -242,7 +241,7 @@ recognise (SomeRawTree dialect rawTree)
 
   -- Err
   , Descent do
-      \(r :> _, ParseTree _ children source) -> do
+      \(r :> _, ParseTree _ children source) ->
         withComments do
-          return (r :> N :> CodeSource source :> Nil, Error source children)
+          return ([] :> r :> N :> CodeSource source :> Nil, Error source children)
   ]

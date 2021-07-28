@@ -3,6 +3,7 @@ module AST.Scope.Standard where
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Exception.Safe
 import Control.Lens ((%~))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 
 import AST.Scope.Common
   ( pattern FindContract, FindFilepath (..), ContractNotFoundException (..)
@@ -25,7 +26,7 @@ import Util.Graph (traverseAM)
 
 data Standard
 
-instance HasLigoClient m => HasScopeForest Standard m where
+instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
   scopeForest pc = do
     lgForest <- scopeForest @FromCompiler pc `catches`
       [ Handler \case

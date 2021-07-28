@@ -1,23 +1,4 @@
 =========
-Includes
-=========
-
-#include "foo.bar"
-#include "qux.ligo"
-
----
-
-(source_file
-  (preprocessor
-    (include
-      (String)))
-  (preprocessor
-    (include
-      (String)))
-)
-
-
-=========
 Function add
 =========
 

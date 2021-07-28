@@ -12,8 +12,8 @@ module.exports = grammar({
   name: 'CameLigo',
 
   word: $ => $.Keyword,
-  externals: $ => [$.ocaml_comment, $.comment],
-  extras: $ => [$.ocaml_comment, $.comment, /\s/],
+  externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
+  extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
   rules: {
     source_file: $ => repeat(field("declaration", $._declaration)),
@@ -494,30 +494,42 @@ module.exports = grammar({
 
     /// PREPROCESSOR
 
+    // I (@heitor.toledo) decided to keep the preprocessors here since we still
+    // attempt to parse the contract even if `ligo preprocess` failed.
     preprocessor: $ => field("preprocessor_command", choice(
-      $.include,
+      $.p_include,
       $.p_if,
       $.p_error,
-      $.p_warning,
       $.p_define,
     )),
 
-    include: $ => seq(
-      '#include',
+    p_include: $ => seq(
+      '#',
+      'include',
       field("filename", $.String)
+    ),
+
+    p_import: $ => seq(
+      '#',
+      'import',
+      field("filename", $.String),
+      field("alias", $.String),
     ),
 
     p_if: $ => choice(
       seq(
-        choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
+        '#',
+        choice('if', 'elif', 'else'),
         field("rest", $._till_newline),
       ),
-      '#endif',
+      seq(
+        '#',
+        'endif',
+      ),
     ),
 
-    p_error: $ => seq('#error', field("message", $._till_newline)),
-    p_warning: $ => seq('#warning', field("message", $._till_newline)),
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
+    p_error: $ => seq('#', 'error', field("message", $._till_newline)),
+    p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
 
     /// MISCELLANEOUS UTILITIES
 

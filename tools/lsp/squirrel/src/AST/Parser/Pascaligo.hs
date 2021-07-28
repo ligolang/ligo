@@ -155,7 +155,8 @@ recognise (SomeRawTree dialect rawTree)
         "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> field "typeValue"
-        "include"    -> BInclude  <$>             field    "filename"
+        "p_include"  -> BInclude  <$>             field    "filename"
+        "p_import"   -> BImport   <$>             field    "filename" <*> field "alias"
         _            -> fallthrough
 
     -- VarDecl
@@ -257,7 +258,7 @@ recognise (SomeRawTree dialect rawTree)
 
     -- Err
   , Descent do
-      \(r :> _, ParseTree _ children source) -> do
+      \(r :> _, ParseTree _ children source) ->
         withComments do
-          return (r :> N :> CodeSource source :> Nil, Error source children)
+          return ([] :> r :> N :> CodeSource source :> Nil, Error source children)
   ]

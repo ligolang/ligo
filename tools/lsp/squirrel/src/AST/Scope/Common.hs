@@ -26,7 +26,7 @@ import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..))
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
   (Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..),
   withNestedLIGO)
@@ -69,7 +69,7 @@ makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: AdjacencyMap ContractInfo -> m (AdjacencyMap (FindFilepath ScopeForest))
+  scopeForest :: AdjacencyMap ParsedContractInfo -> m (AdjacencyMap (FindFilepath ScopeForest))
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -124,14 +124,7 @@ instance Exception ScopeError
 
 type ScopeM = ExceptT ScopeError (Reader (Lang, [ScopeForest]))
 
-type Info' =
-  [ [ScopedDecl]
-  , Maybe Level
-  , [Text]
-  , Range
-  , ShowRange
-  , CodeSource
-  ]
+type Info' = Scope ': Maybe Level ': ParsedInfo
 
 data ScopeForest = ScopeForest
   { sfScopes :: [ScopeTree]
@@ -268,36 +261,37 @@ spine r (only -> (i, trees))
   | leq r (getRange i) = foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
   | otherwise = []
 
-addLocalScopes :: MonadCatch m => SomeLIGO Info -> ScopeForest -> m (SomeLIGO Info')
+addLocalScopes :: MonadCatch m => SomeLIGO ParsedInfo -> ScopeForest -> m (SomeLIGO Info')
 addLocalScopes tree forest =
   let
+    getPreRange xs = let PreprocessedRange r = getElem xs in r
     defaultHandler f (i :< fs) = do
       fs' <- traverse f fs
-      let env = envAtPoint (getRange i) forest
+      let env = envAtPoint (getPreRange i) forest
       return ((env :> Nothing :> i) :< fs')
   in
   withNestedLIGO tree $
-    descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
+    descent @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Name t)
 
     , Descent \(i, NameDecl t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, NameDecl t)
 
     , Descent \(i, Ctor t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Ctor t)
 
     , Descent \(i, TypeName t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeName t)
     ]
 
 addScopes
   :: forall impl m. HasScopeForest impl m
-  => AdjacencyMap ContractInfo
+  => AdjacencyMap ParsedContractInfo
   -> m (AdjacencyMap ContractInfo')
 addScopes graph = do
   -- Bottom-up: add children forests into their parents
@@ -332,8 +326,9 @@ pattern FindContract :: Source -> info -> [Msg] -> FindFilepath info
 pattern FindContract f t m = FindFilepath (ParsedContract f t m)
 {-# COMPLETE FindContract #-}
 
-type ContractInfo  = FindFilepath (SomeLIGO Info)
-type ContractInfo' = FindFilepath (SomeLIGO Info')
+type ContractInfo       = FindFilepath (SomeLIGO Info)
+type ParsedContractInfo = FindFilepath (SomeLIGO ParsedInfo)
+type ContractInfo'      = FindFilepath (SomeLIGO Info')
 
 data ContractNotFoundException where
   ContractNotFoundException :: FilePath -> AdjacencyMap (FindFilepath info) -> ContractNotFoundException

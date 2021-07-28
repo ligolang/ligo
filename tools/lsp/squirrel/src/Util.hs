@@ -9,6 +9,9 @@ module Util
   , unionOrd
   , findKey
   , removeDots
+
+  -- * Debugging utilities
+  , validate
   ) where
 
 import Data.Foldable (foldlM)
@@ -16,6 +19,9 @@ import Data.Map.Internal qualified as MI
 import Data.Set qualified as Set
 import Language.LSP.Types qualified as J
 import System.FilePath (joinPath, splitDirectories)
+
+import Duplo.Lattice
+import Duplo.Tree
 
 import Range
 
@@ -38,7 +44,7 @@ safeIndex (x : _) 0 = Just x
 safeIndex (_ : xs) n = safeIndex xs (n - 1)
 
 toUri :: Range -> J.Uri
-toUri = J.filePathToUri . rFile
+toUri = J.filePathToUri . _rFile
 
 toLocation :: Range -> J.Location
 toLocation = J.Location <$> toUri <*> toLspRange
@@ -85,3 +91,17 @@ removeDots = joinPath . fst . foldr removeDir ([], 0) . splitDirectories
       | name == ".." = (       acc, n + 1)
       | n > 0        = (       acc, n - 1)
       | otherwise    = (name : acc, 0)
+
+-- | Throws an error if the tree contains any subtrees such that the ranges are
+-- not smaller than its parent nodes, or returns the tree unmodified, otherwise.
+--
+-- The error might be useful for debugging, as it will include the offending
+-- ranges.
+--
+-- Warning: Use only for debugging.
+validate :: (Functor f, Lattice a, Show a) => Cofree f a -> Cofree f a
+validate (info :< tree) = info :< fmap (go info) tree
+  where
+    go info' (info'' :< tree')
+      | info'' `leq` info' = info'' :< fmap (go info'') tree'
+      | otherwise = error $ show info'' <> " ≰ " <> show info'

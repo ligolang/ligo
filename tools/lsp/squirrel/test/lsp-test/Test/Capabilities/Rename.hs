@@ -2,7 +2,6 @@ module Test.Capabilities.Rename
   ( unit_rename_id
   , unit_rename_param
   , unit_rename_fail
-  , unit_rename_in_included_file
   ) where
 
 import AST.Scope (Fallback)
@@ -18,6 +17,3 @@ unit_rename_id = renameId @Fallback
 
 unit_rename_param :: Assertion
 unit_rename_param = renameParam @Fallback
-
-unit_rename_in_included_file :: Assertion
-unit_rename_in_included_file = renameInIncludedFile @Fallback

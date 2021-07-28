@@ -119,7 +119,7 @@ constructTypeAlias
   -> Either T.Text (LIGO Info') -- Either type name or type node
   -> Range -- range of the topmost level of the stripped tree
   -> J.TextEdit
-constructTypeAlias dialect alias t Range{rStart = (sl, sc, _)} =
+constructTypeAlias dialect alias t Range{_rStart = (sl, sc, _)} =
   J.TextEdit
     { _range = toLspRange $ point sl sc
     , _newText = T.pack . (<>"\n") . show . lppDialect @(LIGO Info') dialect $
@@ -137,7 +137,7 @@ constructTypeAlias dialect alias t Range{rStart = (sl, sc, _)} =
     }
 
 defaultState :: Product Info'
-defaultState = [] :> Nothing :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
+defaultState = [] :> Nothing :> PreprocessedRange (point 1 1) :> [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
 
 -- | Diagnostics collected for every type that allows for
 -- type extraction code action to be clicked.

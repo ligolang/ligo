@@ -48,8 +48,14 @@ extractDocumentSymbols uri tree =
               J.SkFunction
               (const Nothing)
 
-          -- TODO: currently we do not count imports as declarations in scopes
+          -- TODO: currently we do not count includes and imports as declarations in scopes
           (BInclude (match @Constant -> Just (getElem @Range -> r, _))) ->
+            tellSymbolInfo
+              r
+              J.SkNamespace
+              ("some include at " <> pack (show r))
+
+          (BImport (match @Constant -> Just (getElem @Range -> r, _)) _) ->
             tellSymbolInfo
               r
               J.SkNamespace

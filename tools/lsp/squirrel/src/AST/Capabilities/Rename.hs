@@ -15,7 +15,7 @@ import Language.LSP.Types qualified as J
 import AST.Capabilities.Find (CanSearch, findScopedDecl, rangeOf)
 import AST.Scope.ScopedDecl (ScopedDecl (ScopedDecl, _sdRefs))
 import AST.Skeleton (SomeLIGO)
-import Range (Range, rFile, toLspRange)
+import Range (Range, _rFile, toLspRange)
 import Util (toUri)
 
 -- | Result of trying to rename declaration.
@@ -34,7 +34,7 @@ renameDeclarationAt pos tree newName =
     Just ScopedDecl{_sdRefs} -> Ok $
       -- XXX: _sdRefs includes the declaration itself too,
       -- so we do not add _sdOrigin.
-      HM.fromList $ mapMaybe extractGroup $ groupBy ((==) `on` rFile) $ sortOn rFile _sdRefs
+      HM.fromList $ mapMaybe extractGroup $ groupBy ((==) `on` _rFile) $ sortOn _rFile _sdRefs
   where
     extractGroup :: [Range] -> Maybe (J.Uri, J.List J.TextEdit)
     extractGroup []         = Nothing

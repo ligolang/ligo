@@ -20,7 +20,7 @@
     ],
     "repository": {
         "macro": {
-            "begin": "^\\s*((#)\\w+)",
+            "begin": "^((#)\\s*\\w+)",
             "beginCaptures": {
                 "1": { "name": "meta.preprocessor.mligo" },
                 "2": { "name": "punctuation.definition.directive.mligo" }
