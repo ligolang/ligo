@@ -12,10 +12,12 @@ import {
 } from 'vscode-languageclient/node';
 
 import updateExtension from './updateExtension'
+import updateLigo from './updateLigo'
 
 let client: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
+  await updateLigo()
   await updateExtension(context)
 
   const serverOptions: ServerOptions = {

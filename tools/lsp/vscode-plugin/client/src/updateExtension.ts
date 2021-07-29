@@ -6,6 +6,8 @@ import * as fs from 'fs'
 import * as semver from 'semver'
 import * as vscode from 'vscode'
 
+import { extensionId } from './common'
+
 async function postWithTimeout<T>(
   ep: string,
   body: any,
@@ -14,7 +16,7 @@ async function postWithTimeout<T>(
   const req = {
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'ligolang-publish.ligo-vscode',
+      'User-Agent': extensionId,
     },
     timeout,
   }
@@ -23,7 +25,7 @@ async function postWithTimeout<T>(
     .post(ep, body, req)
     .catch((err) => {
       vscode.window.showErrorMessage(
-        `Could not query the Visual Studio Code Marketplace: ${err.message}`,
+        `Could not query the LIGO extension from the Visual Studio Code Marketplace: ${err.message}`,
       )
       return undefined
     })
@@ -36,7 +38,7 @@ async function getCurrentExtensionVersion(): Promise<string | undefined> {
         criteria: [
           {
             filterType: 7, // Filter by name.
-            value: 'ligolang-publish.ligo-vscode',
+            value: extensionId,
           },
         ],
         pageNumber: 1,
@@ -81,7 +83,7 @@ export default async function updateExtension(cxt: ExtensionContext): Promise<vo
     case 'Update':
       await vscode.commands.executeCommand(
         'workbench.extensions.installExtension',
-        'ligolang-publish.ligo-vscode',
+        extensionId,
       )
       break
     case 'Cancel':
