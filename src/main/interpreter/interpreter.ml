@@ -779,9 +779,9 @@ let eval_test ~raise : Ast_typed.module_fully_typed -> (string * value) list =
     let (env, _state) = eval ~raise prg in
     let v = Env.to_kv_list_rev env in
     let aux : expression_variable * value_expr -> (string * value) option = fun (ev, v) ->
-      let name = Var.to_name @@ Location.unwrap ev in
-      if (Base.String.is_prefix name ~prefix:"test") then
-        Some (name, v.eval_term)
+      let ev = Location.unwrap ev in
+      if not (Var.is_generated ev) && (Base.String.is_prefix (Var.to_name ev) ~prefix:"test") then
+        Some (Var.to_name ev, v.eval_term)
       else
         None
     in
