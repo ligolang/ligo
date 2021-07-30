@@ -1,10 +1,10 @@
 import { execFileSync } from 'child_process'
 
 import * as axios from 'axios'
+import * as path from 'path'
+import * as fs from 'fs'
 import * as semver from 'semver'
 import * as vscode from 'vscode'
-
-import { extensionId } from './common'
 
 /* eslint-disable camelcase */
 /**
@@ -26,6 +26,68 @@ type Release = {
 }
 /* eslint-enable camelcase */
 
+export async function installLigo(ligoPath: string, latest: Release): Promise<void> {
+  const asset = latest.assets.links.find((download) => download.name === 'Static Linux binary')
+  if (!asset) {
+    await vscode.window.showErrorMessage('Could not find a download for a static Linux binary.')
+    return
+  }
+
+  const fileOptions = {
+    mode: 0o755,
+    encoding: 'binary' as BufferEncoding,
+  }
+
+  vscode.window.withProgress(
+    {
+      cancellable: true,
+      location: vscode.ProgressLocation.Notification,
+      title: 'Downloading static Linux binary for LIGO',
+    },
+    async (progress, cancelToken) => axios.default
+      .get(
+        asset.direct_asset_url,
+        {
+          responseType: 'arraybuffer',
+          cancelToken: new axios.default.CancelToken(cancelToken.onCancellationRequested),
+          onDownloadProgress: (progressEvent) => {
+            const increment = Math.round((progressEvent.loaded / progressEvent.total) * 100)
+            const newState = {
+              increment,
+              message: `${increment}%`,
+            }
+            progress.report(newState)
+          },
+        },
+      )
+      .then((res) => {
+        if (cancelToken.isCancellationRequested) {
+          vscode.window.showInformationMessage('LIGO installation cancelled.')
+          return
+        }
+
+        // FIXME: Sometimes the installation may fail. This will happen if ligo
+        // is currently being used by the extension. The error will be ETXTBSY
+        // and indicates that the file is currently busy.
+        fs.writeFile(ligoPath, Buffer.from(res.data), fileOptions, (err) => {
+          if (err) {
+            vscode.window.showErrorMessage(`Could not install LIGO: ${err.message}`)
+          } else {
+            vscode.window.showInformationMessage(`LIGO installed at: ${path.resolve(ligoPath)}`)
+          }
+        })
+      })
+      .catch((err) => {
+        if (axios.default.isCancel(err)) {
+          vscode.window.showInformationMessage('LIGO download cancelled.')
+          return
+        }
+
+        vscode.window.showErrorMessage(`Could not download LIGO: ${err.message}`)
+      }),
+  )
+}
+
 async function getLigoReleases(): Promise<Release[] | undefined> {
   // https://stackoverflow.com/a/53126068/10213577
   const ligoGitLabProjectId = 12294987
@@ -45,9 +107,8 @@ async function getLatestLigoRelease(): Promise<Release | undefined> {
   return releases[0]
 }
 
-function getLigoPath(): string | undefined {
-  const config = vscode.workspace.getConfiguration(extensionId)
-  const ligoPath = config.get<string>('ligoBinaryPath')
+function getLigoPath(config: vscode.WorkspaceConfiguration): string | undefined {
+  const ligoPath = config.get<string>('ligoLanguageServer.ligoBinaryPath')
   if (ligoPath) {
     return ligoPath
   }
@@ -97,13 +158,17 @@ async function promptLigoUpdate(
   }
 
   const answer = await vscode.window.showInformationMessage(
-    'A new LIGO version is available. Would you like to update?',
-    'Update',
+    'A new LIGO version is available. If you use the static Linux binary, please select "Static Linux Binary", otherwise "Open Downloads".',
+    'Static Linux Binary',
+    'Open Downloads',
     'Cancel',
   )
 
   switch (answer) {
-    case 'Update':
+    case 'Static Linux Binary':
+      installLigo(ligoPath, latestRelease)
+      break
+    case 'Open Downloads':
       openLigoReleases()
       break
     case 'Cancel':
@@ -112,8 +177,8 @@ async function promptLigoUpdate(
   }
 }
 
-export default async function updateLigo(): Promise<void> {
-  const ligoPath = getLigoPath()
+export default async function updateLigo(config: vscode.WorkspaceConfiguration): Promise<void> {
+  const ligoPath = getLigoPath(config)
 
   let data: string
   try {
@@ -130,7 +195,6 @@ export default async function updateLigo(): Promise<void> {
       'Cancel',
     )
 
-    const config = vscode.workspace.getConfiguration(extensionId)
     switch (answer) {
       case 'Choose path': {
         const uris = await vscode.window.showOpenDialog({ canSelectMany: false })
@@ -138,8 +202,15 @@ export default async function updateLigo(): Promise<void> {
           return
         }
 
-        config.update('ligoBinaryPath', uris[0].fsPath)
-        updateLigo()
+        vscode.window.showInformationMessage(config.has('ligoLanguageServer.ligoBinaryPath').toString())
+        vscode.window.showInformationMessage(config.get('ligoLanguageServer.ligoBinaryPath').toString())
+        await config.update(
+          'ligoLanguageServer.ligoBinaryPath',
+          uris[0].fsPath,
+          vscode.ConfigurationTarget.Global,
+          true,
+        )
+        updateLigo(config)
         return
       }
       case 'Download':
