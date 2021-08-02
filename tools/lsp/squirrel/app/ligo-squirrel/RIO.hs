@@ -78,7 +78,7 @@ type RioEnv =
   Product
     '[ MVar Config
      , ASTMap J.NormalizedUri Contract RIO
-     , MVar (HashMap J.NormalizedUri Bool)
+     , MVar (HashMap J.NormalizedUri Int)
      , "includes" := MVar (AdjacencyMap ParsedContractInfo)
      ]
 
