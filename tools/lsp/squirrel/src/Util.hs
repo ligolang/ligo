@@ -2,8 +2,6 @@ module Util
   ( foldMapM
   , unconsFromEnd
   , safeIndex
-  , nubOrd
-  , nubOnOrd
   , toUri
   , toLocation
   , unionOrd
@@ -16,9 +14,9 @@ module Util
 
 import Data.Foldable (foldlM)
 import Data.Map.Internal qualified as MI
-import Data.Set qualified as Set
 import Language.LSP.Types qualified as J
 import System.FilePath (joinPath, splitDirectories)
+import Witherable (ordNub)
 
 import Duplo.Lattice
 import Duplo.Tree
@@ -49,25 +47,10 @@ toUri = J.filePathToUri . _rFile
 toLocation :: Range -> J.Location
 toLocation = J.Location <$> toUri <*> toLspRange
 
--- | Like 'nub', but with O(n log n) complexity. Requires 'Ord' constraint.
-nubOrd :: Ord a => [a] -> [a]
-nubOrd = nubOnOrd id
-
--- | Like 'nubOrd', but takes a projection function for custom comparison.
-nubOnOrd :: Ord b => (a -> b) -> [a] -> [a]
-nubOnOrd f = go Set.empty
-  where
-    go _  [] = []
-    go ys (x : xs)
-      | y `Set.member` ys = go ys xs
-      | otherwise         = x : go (Set.insert y ys) xs
-      where
-        y = f x
-
 -- | Takes the union of two lists, leaving no duplicates using the provided 'Ord'
 -- instance.  O((m + n) log (m + n)) complexity.
 unionOrd :: Ord a => [a] -> [a] -> [a]
-unionOrd as bs = nubOrd (as <> bs)
+unionOrd as bs = ordNub (as <> bs)
 
 -- | Find a key in a map by testing for equality using some projection.
 -- O(log n) assuming the projection function is O(1).

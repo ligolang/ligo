@@ -138,6 +138,7 @@ library
     , unliftio
     , unliftio-core
     , unordered-containers
+    , witherable
   default-language: Haskell2010
 
 executable ligo-squirrel
@@ -217,6 +218,7 @@ executable ligo-squirrel
     , unliftio
     , unliftio-core
     , unordered-containers
+    , witherable
   default-language: Haskell2010
 
 executable ligo-vet

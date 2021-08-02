@@ -45,7 +45,7 @@ import Data.Function (on)
 import Data.HashMap.Strict (HashMap)
 import Data.List (groupBy, nubBy, sortOn)
 import Data.Map qualified as Map
-import Data.Maybe (catMaybes, isJust, isNothing)
+import Data.Maybe (isJust, isNothing)
 import Data.Set qualified as Set
 import Data.String.Interpolate (i)
 
@@ -53,6 +53,8 @@ import Language.LSP.Diagnostics qualified as D
 import Language.LSP.Server qualified as J
 import Language.LSP.Types qualified as J
 import Language.LSP.VFS qualified as V
+
+import Witherable (wither)
 
 import Duplo.Tree (collect)
 
@@ -227,7 +229,7 @@ load uri = J.getRootPath >>= \case
               (tryLoadWithoutScopes (normalizeFilePath fp))
               (pure . Just)
               (lookupContract fp oldIncludes)
-        newIncludes <- catMaybes <$> traverse (lookupOrLoad . snd) (toList includeEdges)
+        newIncludes <- wither (lookupOrLoad . snd) (toList includeEdges)
         let
           newSet = Set.fromList newIncludes
           oldSet = Map.keysSet $ G.adjacencyMap oldIncludes

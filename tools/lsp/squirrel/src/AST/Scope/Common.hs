@@ -20,6 +20,7 @@ import Data.Monoid (First (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text, pack)
+import Witherable (ordNub)
 
 import Duplo.Lattice
 import Duplo.Pretty
@@ -35,7 +36,7 @@ import ParseTree
 import Parser
 import Product
 import Range
-import Util (findKey, nubOrd, unionOrd)
+import Util (findKey, unionOrd)
 import Util.Graph (traverseAM)
 
 data ParsedContract info = ParsedContract
@@ -310,11 +311,11 @@ addScopes graph = do
   traverseAM addScope forestGraph
   where
     nubRef sd = sd
-      { _sdRefs = nubOrd (_sdRefs sd)
-      , _sdDoc  = nubOrd (_sdDoc  sd)
+      { _sdRefs = ordNub (_sdRefs sd)
+      , _sdDoc  = ordNub (_sdDoc  sd)
       }
     nubForest f = f
-      { sfScopes = nubOrd (sfScopes f)
+      { sfScopes = ordNub (sfScopes f)
       , sfDecls  = Map.map nubRef (sfDecls f)
       }
 
