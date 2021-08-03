@@ -1,8 +1,3 @@
--- We need this pragma because of the following situation:
--- * If we remove this pragma, GHC will warn that `_deprecated` from the
---   `SymbolInformation` type is deprecated and CI will fail.
--- * If we remove `_deprecated`, it will complain that such strict field was not
---   initialized and build will fail.
 {-# OPTIONS_GHC -Wno-deprecations #-}
 
 module AST.Capabilities.DocumentSymbol where
@@ -22,6 +17,12 @@ import AST.Scope.ScopedDecl (ScopedDecl (..))
 import AST.Skeleton
 import Product
 import Range
+
+-- We need the pragma at the top because of the following situation:
+-- * If we remove this pragma, GHC will warn that `_deprecated` from the
+--   `SymbolInformation` type is deprecated and CI will fail.
+-- * If we remove `_deprecated`, it will complain that such strict field was not
+--   initialized and build will fail.
 
 -- | Extract document symbols for some specific parsed ligo contract which
 -- is realisable by @haskell-lsp@ client.
