@@ -2023,3 +2023,29 @@ let%expect_test _ =
     One of the following patterns is expected:
       * "%bar" is expected for entrypoint "Bar"
       * "%default" when no entrypoint is used. |}]
+
+(* using test in compilation *)
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "compile_test.mligo" ; "main" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/compile_test.mligo", line 15, characters 28-42:
+     14 |  (match action with
+     15 |    Increment (n) -> let _ = Test.log "foo" in add (store, n)
+     16 |  | Decrement (n) -> sub (store, n)
+
+    Invalid call to Test primitive. |}]
+
+(* remove unused declarations *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "remove_unused_module.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ; PUSH unit Unit ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "remove_unused_toptup.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage int ;
+      code { CDR ; PUSH nat 2 ; PUSH nat 1 ; DIG 2 ; ADD ; ADD ; NIL operation ; PAIR } } |}]

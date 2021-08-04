@@ -328,7 +328,7 @@ and compile_simple_value ~raise ?ctxt ~loc ?(toplevel = true) : Ligo_interpreter
                        _ =
   fun v ty ->
   let typed_exp = val_to_ast ~raise ~loc ~toplevel v ty in
-  let () = Check.check_obj_ligo ~raise typed_exp in
+  let _ = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.expression_obj typed_exp in
   let compiled_exp = compile_value ~raise typed_exp in
   let expr, _ = run_expression_unwrap ~raise ?ctxt ~loc compiled_exp in
   (* TODO-er: check the ignored second component: *)

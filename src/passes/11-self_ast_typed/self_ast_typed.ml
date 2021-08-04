@@ -1,6 +1,9 @@
 module Errors = Errors
 module Helpers = Helpers
 
+let module_obj ~raise = Helpers.map_module @@ Obj_ligo.check_obj_ligo ~raise
+let expression_obj ~raise = Obj_ligo.check_obj_ligo ~raise
+
 let all_module_passes ~add_warning ~raise = [
   Unused.unused_map_module ~add_warning;
   Muchused.muchused_map_module ~add_warning;
@@ -13,6 +16,7 @@ let all_expression_passes ~raise = [
   Helpers.map_expression @@ Tail_recursion.peephole_expression ~raise ;
   Helpers.map_expression @@ Michelson_layout.peephole_expression ~raise ;
   Pattern_matching_simpl.peephole_expression ~raise ;
+  Obj_ligo.check_obj_ligo ~raise ;
 ]
 
 let contract_passes ~raise = [
@@ -34,7 +38,11 @@ let all_contract ~raise main_name prg =
     main_name = main_name ;
     } in
   let all_p = List.map ~f:(fun pass -> Helpers.fold_map_module pass data) @@ contract_passes ~raise in
-    List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg
+  let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
+  let prg = Contract_passes.remove_unused ~raise main_name prg in
+  let prg = module_obj ~raise prg in
+  prg
+
 let all = [
   Tail_recursion.peephole_expression
 ]

@@ -17,6 +17,7 @@ type self_ast_typed_error = [
   | `Self_ast_typed_pair_in of Location.t
   | `Self_ast_typed_pair_out of Location.t
   | `Self_ast_typed_match_anomaly of Location.t
+  | `Self_ast_typed_obj_ligo of Location.t
 ]
 
 let pattern_matching_anomaly (loc:Location.t) : self_ast_typed_error = `Self_ast_typed_match_anomaly loc
@@ -39,6 +40,7 @@ let expected_same entrypoint t1 t2 e =
   `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e)
 let expected_pair_in loc = `Self_ast_typed_pair_in loc
 let expected_pair_out loc = `Self_ast_typed_pair_out loc
+let expected_obj_ligo loc = `Self_ast_typed_obj_ligo loc
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> self_ast_typed_error -> unit =
@@ -108,6 +110,10 @@ let error_ppformat : display_format:string display_format ->
     | `Self_ast_typed_pair_out loc ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]"
+        Snippet.pp loc
+    | `Self_ast_typed_obj_ligo loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid call to Test primitive.@]"
         Snippet.pp loc
   )
 
@@ -252,6 +258,16 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_pair_out loc ->
     let message = `String "badly typed contract" in
     let description = `String "expected a pair as return type" in
+    let content = `Assoc [
+       ("message", message);
+       ("location", Location.to_yojson loc);
+       ("description", description);
+       ]
+    in
+    json_error ~stage ~content
+  | `Self_ast_typed_obj_ligo loc ->
+    let message = `String "unexpected Test primitive" in
+    let description = `String "these Test primitive or type cannot be used in code to be compiled or run" in
     let content = `Assoc [
        ("message", message);
        ("location", Location.to_yojson loc);

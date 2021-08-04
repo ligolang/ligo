@@ -29,7 +29,7 @@ let%expect_test _ =
     Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "
     sum[Add -> int , Sub -> int]". |}];
 
-  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "f"];
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "unvalid"];
   [%expect {|
     File "../../test/contracts/negative/error_no_tail_recursive_function.mligo", line 2, characters 14-21:
       1 | let rec unvalid (n:int):int =
