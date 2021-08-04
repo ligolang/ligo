@@ -11,9 +11,18 @@ import {
   ServerOptions,
 } from 'vscode-languageclient/node';
 
+import * as vscode from 'vscode'
+
+import updateExtension from './updateExtension'
+import updateLigo from './updateLigo'
+
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
+  const config = vscode.workspace.getConfiguration()
+  await updateLigo(config)
+  await updateExtension(context)
+
   const serverOptions: ServerOptions = {
     command: `${context.extensionPath}/bin/ligo-squirrel`,
     options: {
