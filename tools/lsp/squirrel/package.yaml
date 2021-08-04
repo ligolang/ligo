@@ -112,6 +112,7 @@ executables:
     main: Main.hs
 
     dependencies:
+      - aeson
       - algebraic-graphs
       - clock
       - containers

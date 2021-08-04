@@ -5,8 +5,10 @@ module RIO
   , RioEnv
   , run
 
+  , getCustomConfig
+  , fetchCustomConfig
+
   , source
-  , maxDiagnostics
   , clearDiagnostics
 
   , Contract (..)
@@ -36,6 +38,8 @@ import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO, liftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
 
+import Data.Aeson qualified as Aeson (Result (..), fromJSON)
+import Data.Default (def)
 import Data.Foldable (find, toList, traverse_)
 import Data.Function (on)
 import Data.HashMap.Strict (HashMap)
@@ -70,7 +74,8 @@ data Contract = Contract
 
 type RioEnv =
   Product
-    '[ ASTMap J.NormalizedUri Contract RIO
+    '[ MVar Config
+     , ASTMap J.NormalizedUri Contract RIO
      , MVar (HashMap J.NormalizedUri Bool)
      , "includes" := MVar (AdjacencyMap ParsedContractInfo)
      ]
@@ -96,13 +101,61 @@ deriving newtype instance MonadThrow m => MonadThrow (J.LspT config m)
 deriving newtype instance MonadCatch m => MonadCatch (J.LspT config m)
 
 instance HasLigoClient RIO where
-  getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) J.getConfig
+  getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) getCustomConfig
+
+-- TODO: The lsp library provides no way to update the Config in the LspM monad
+-- manually. So we have to maintain our own config to store the result of
+-- `workspace/configuration` requests. We should get this fixed by the
+-- maintainers, if possible.
+getCustomConfig :: RIO Config
+getCustomConfig = do
+  mConfig <- asks getElem
+  contents <- liftIO $ tryReadMVar mConfig
+  case contents of
+    -- TODO: The lsp library only sends the `workspace/configuration` request
+    -- after initialization is complete, so during initialization, there is no
+    -- way to know the client configuration. We need to get this fixed by the
+    -- library maintainers, if possible.
+    Nothing -> do
+      Log.debug "getCustomConfig" "No config fetched yet, resorting to default"
+      pure def
+    Just config -> pure config
+
+-- Fetch the configuration from the server and write it to the Config MVar
+fetchCustomConfig :: RIO ()
+fetchCustomConfig = do
+  void $
+    J.sendRequest J.SWorkspaceConfiguration configRequestParams handleResponse
+  where
+    configRequestParams =
+      J.ConfigurationParams (J.List [J.ConfigurationItem Nothing Nothing])
+
+    handleResponse
+        :: Either J.ResponseError (J.ResponseResult 'J.WorkspaceConfiguration)
+        -> RIO ()
+    handleResponse response = do
+      config <- parseResponse response
+      mConfig <- asks getElem
+      void $ liftIO $ tryPutMVar mConfig config
+
+    parseResponse
+      :: Either J.ResponseError (J.ResponseResult 'J.WorkspaceConfiguration)
+      -> RIO Config
+    parseResponse (Right (J.List [value])) = do
+      case Aeson.fromJSON value of
+        Aeson.Success c -> pure c
+        Aeson.Error _err -> useDefault
+    parseResponse _ = useDefault
+
+    useDefault :: RIO Config
+    useDefault = do
+      Log.debug
+        "fetchCustomConfig"
+        "Couldn't parse config from server, using default"
+      pure def
 
 source :: Maybe J.DiagnosticSource
 source = Just "ligo-lsp"
-
-maxDiagnostics :: Int
-maxDiagnostics = 100
 
 run :: (J.LanguageContextEnv Config.Config, RioEnv) -> RIO a -> IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
@@ -121,6 +174,7 @@ forceFetch' uri = do
 diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
 diagnostic ver = traverse_ \(nuri, diags) -> do
   let diags' = D.partitionBySource diags
+  maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
   Log.debug "LOOP.DIAG" [i|Diags #{diags'}|]
   J.publishDiagnostics maxDiagnostics nuri ver diags'
 
@@ -228,7 +282,10 @@ collectErrors fetcher uri version = fetcher uri >>= \(FindContract _ tree errs) 
   diagnostic version grouped
 
 clearDiagnostics :: Foldable f => f J.NormalizedUri -> RIO ()
-clearDiagnostics = mapM_ \nuri -> J.publishDiagnostics maxDiagnostics nuri Nothing mempty
+clearDiagnostics uris = do
+  maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
+  forM_ uris $ \nuri ->
+    J.publishDiagnostics maxDiagnostics nuri Nothing mempty
 
 errorToDiag :: (Range, Error a) -> (J.NormalizedUri, J.Diagnostic)
 errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =

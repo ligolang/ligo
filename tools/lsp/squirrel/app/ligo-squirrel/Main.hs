@@ -97,14 +97,15 @@ mainLoop = do
 
 initialize :: IO RioEnv
 initialize = do
+  config <- newEmptyMVar
   astMap <- ASTMap.empty RIO.load
   openDocs <- newMVar HashMap.empty
   includes <- newMVar G.empty
-  pure (astMap :> openDocs :> Tag includes :> Nil)
+  pure (config :> astMap :> openDocs :> Tag includes :> Nil)
 
 handlers :: S.Handlers RIO
 handlers = mconcat
-  [ S.notificationHandler J.SInitialized (\_msg -> pure ())
+  [ S.notificationHandler J.SInitialized handleInitialized
 
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
@@ -132,6 +133,9 @@ handlers = mconcat
   --, S.requestHandler J.STextDocumentCodeAction _
   --, S.requestHandler J.SWorkspaceExecuteCommand _
   ]
+
+handleInitialized :: S.Handler RIO 'J.Initialized
+handleInitialized _ = RIO.fetchCustomConfig
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
