@@ -65,3 +65,48 @@ let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contra
     in
     (true, dat, e)
   | _ -> (true,dat,e)
+
+let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = fun main_name prg ->
+  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@ Helpers.get_fv expr in
+  let get_fmv_expr expr = Helpers.get_fmv_expr expr in
+  let get_fmv_mod module' = Helpers.get_fmv_mod module' in
+  let Module_Fully_Typed module' = prg in
+  let aux = function
+      {Location.wrap_content = Declaration_constant {name = Some name;  _}; _} -> not (String.equal name main_name)
+    | _ -> true in
+  let prg_decls = List.rev module' in
+  let _, prg_decls = List.split_while prg_decls ~f:aux in
+  let main_decl, prg_decls = trace_option ~raise (Errors.corner_case "Entrypoint not found") @@ List.uncons prg_decls in
+  let main_expr = trace_option ~raise (Errors.corner_case "Entrypoint not found") @@ match main_decl with
+      {Location.wrap_content = Declaration_constant {expr; _}; _} -> Some expr
+    | _ -> None in
+  let rec aux (fv, fmv) acc = function
+    | [] -> acc
+    | {Location.wrap_content = Declaration_constant {binder; expr; _}; _} as hd :: tl ->
+       let binder = binder.wrap_content in
+       if List.mem fv binder ~equal:Var.equal then
+         let expr_fv = get_fv expr in
+         let fv = List.remove_element ~compare:Var.compare binder fv in
+         let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
+         aux (fv, fmv) (hd :: acc) tl
+       else
+         aux (fv, fmv) acc tl
+    | {Location.wrap_content = Declaration_module {module_binder = name; module_}; _} as hd :: tl ->
+       if List.mem fmv name ~equal:equal_module_variable then
+         let expr_fv = get_fmv_mod module_ in
+         let fmv = List.remove_element ~compare:compare_module_variable name fmv in
+         let fmv = List.dedup_and_sort ~compare:compare_module_variable (fmv @ expr_fv) in
+         aux (fv, fmv) (hd :: acc) tl
+       else
+         aux (fv, fmv) acc tl
+    | {Location.wrap_content = Module_alias {alias = name; binders}; _} as hd :: tl ->
+       if List.mem fmv name ~equal:equal_module_variable then
+         let main_module = List.Ne.hd binders in
+         let fmv = List.remove_element ~compare:compare_module_variable name fmv in
+         let fmv = List.dedup_and_sort ~compare:compare_module_variable (main_module :: fmv) in
+         aux (fv, fmv) (hd :: acc) tl
+       else
+         aux (fv, fmv) acc tl
+    | hd :: tl ->
+       aux (fv, fmv) (hd :: acc) tl in
+  Module_Fully_Typed (aux (get_fv main_expr, get_fmv_expr main_expr) [main_decl] prg_decls)

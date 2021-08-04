@@ -14,7 +14,7 @@ let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
 let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.module_fully_typed * Ast_typed.environment =
   let e,typed = trace ~raise checking_tracer @@ Checking.type_module ~init_env:options.init_env m in
   let applied = trace ~raise self_ast_typed_tracer @@
-    fun ~raise -> 
+    fun ~raise ->
     let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
     match cform with
     | Contract entrypoint -> Self_ast_typed.all_contract ~raise entrypoint selfed
@@ -24,11 +24,11 @@ let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) 
 let compile_expression ~raise ?(infer = false) ~(env : Ast_typed.environment) (e : Ast_core.expression)
     : Ast_typed.expression * Ast_typed.environment =
   let env_inf = Checking.decompile_env env in
-  let inferred = match infer with 
+  let inferred = match infer with
     | true  -> let (_,e,_,_) =
       trace ~raise inference_tracer @@ Inference.type_expression_subst env_inf Inference.Solver.initial_state e in
       e
-    | false -> e 
+    | false -> e
   in
   (* let inferred = trace ~raise self_Ast_core_tracer @@ Self_Ast_core.all_expression inferred in *)
   let e,typed = trace ~raise checking_tracer @@ Checking.type_expression env inferred in

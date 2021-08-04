@@ -10,7 +10,7 @@ let test source_file syntax infer protocol_version display_format =
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) get_warnings @@
       fun ~raise ->
       let init_env   = Helpers.get_initial_env ~raise ~test_env:true protocol_version in
-      let options = Compiler_options.make ~infer ~init_env () in
+      let options = Compiler_options.make ~infer ~init_env ~test:true () in
       let typed,_    = Compile.Utils.type_file ~raise ~add_warning ~options source_file syntax Env in
       Interpreter.eval_test ~raise typed
 

@@ -199,7 +199,7 @@ module Command = struct
       let ret = LT.V_Michelson (Ty_code (storage,ty,ligo_ty)) in
       (ret, ctxt)
     | Check_obj_ligo e ->
-      let () = Check.check_obj_ligo ~raise e in
+      let _ = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.expression_obj e in
       ((), ctxt)
     | Compile_expression (loc, source_file, syntax, exp_as_string, subst_opt) ->
       let file_opt = trace_option ~raise (corner_case ()) @@ LC.get_string_option source_file in
@@ -249,7 +249,7 @@ module Command = struct
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true f.env fv in
       let in_ty, out_ty = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@ Ast_typed.get_t_function f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
-      let () = Check.check_obj_ligo ~raise func_typed_exp in
+      let _ = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.expression_obj func_typed_exp in
       let func_code = Michelson_backend.compile_value ~raise func_typed_exp in
       let arg_code,_,_ = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc ~toplevel:true v in_ty in
       let input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty in

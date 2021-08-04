@@ -47,7 +47,12 @@ let rec is_dup (t : type_expression) =
             eq_name injection bls12_381_g2_name ||
             eq_name injection bls12_381_fr_name ||
             eq_name injection sapling_transaction_name ||
-            eq_name injection sapling_state_name ->
+            eq_name injection sapling_state_name ||
+            (* Test primitives are dup *)
+            eq_name injection account_name ||
+            eq_name injection failure_name ||
+            eq_name injection typed_address_name ||
+            eq_name injection mutation_name ->
      true
   | T_constant {injection; parameters = [t]; _}
        when eq_name injection option_name ||

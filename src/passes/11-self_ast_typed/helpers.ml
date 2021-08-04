@@ -245,6 +245,7 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
     )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
       let (res,let_result) = self init let_result in
+      let (res,rhs) = fold_map_module f res rhs in
       (res, return @@ E_mod_in { module_binder ; rhs ; let_result })
     )
   | E_mod_alias { alias ; binders ; result } -> (
@@ -295,9 +296,10 @@ and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> 'a *
       let wrap_content : declaration = Declaration_type t in
       (acc, {x with wrap_content})
     )
-    | Declaration_module m -> (
-      let wrap_content : declaration = Declaration_module m in
-      (acc, {x with wrap_content})
+    | Declaration_module {module_binder; module_} -> (
+      let (acc', module_) = fold_map_module m acc module_ in
+      let wrap_content : declaration = Declaration_module {module_binder; module_} in
+      (acc', {x with wrap_content})
     )
     | Module_alias _ -> (acc,x)
   in
@@ -421,4 +423,30 @@ let rec get_fv ?(exclude = []) (expr : expression) =
       | _ ->
          (true,fv, expr)
     ) [] expr in
+  fv
+
+let in_mvars var vars =
+  List.mem ~equal:equal_module_variable vars var
+
+let remove_mvar_from var vars =
+  let f v vars = if compare_module_variable var v = 0 then vars else v :: vars in
+  List.fold_right ~f ~init:[] vars
+
+let rec get_fmv_mapper ?(exclude = []) = (fun (fv : module_variable list) (expr : expression) ->
+      match expr.expression_content with
+      | E_module_accessor {module_name = v;_} when not (in_mvars v exclude) && not (in_mvars v fv) ->
+         (false, v :: fv, expr)
+      | E_mod_in {module_binder=var;rhs;let_result} ->
+         let rhs_vars = get_fmv_mod rhs in
+         let result_vars = get_fmv_expr let_result in
+         let result_vars = remove_mvar_from var result_vars in
+         (false, rhs_vars @ result_vars, expr)
+      | _ ->
+         (true,fv, expr)
+    )
+and get_fmv_expr ?(exclude = []) (expr : expression) =
+  let (fv, _) = fold_map_expression (get_fmv_mapper ~exclude) [] expr in
+  fv
+and get_fmv_mod ?(exclude = []) (module_ : module_fully_typed) =
+  let (fv, _) = fold_map_module (get_fmv_mapper ~exclude) [] module_ in
   fv
