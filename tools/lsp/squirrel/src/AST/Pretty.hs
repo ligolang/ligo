@@ -399,7 +399,7 @@ instance LPP1 'Pascal AST.Type where
     TProduct  elements  -> parens $ train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("|"<.>) xs
     TSum      []        -> error "looks like you've been given malformed AST" -- never called
-    TApply    f xs      -> f <.> lpp xs
+    TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
@@ -533,7 +533,7 @@ instance LPP1 'Reason AST.Type where
     TProduct  elements  -> tuple elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
-    TApply    f xs      -> f <+> lpp xs
+    TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
@@ -628,6 +628,11 @@ instance LPP1 'Reason MapBinding where
 -- Caml
 ----------------------------------------------------------------------------
 
+tupleCameLIGO :: LPP 'Caml p => [p] -> Doc
+tupleCameLIGO = \case
+  [x] -> lpp @'Caml x
+  xs  -> tuple @'Caml xs
+
 instance LPP1 'Caml AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "->" <+> codom
@@ -635,7 +640,7 @@ instance LPP1 'Caml AST.Type where
     TProduct  elements  -> train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
-    TApply    f xs      -> f <+> lpp xs
+    TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]

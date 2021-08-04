@@ -3,16 +3,12 @@ module Test.Capabilities.Hover ( unit_hover ) where
 import Data.Text (isPrefixOf)
 import Language.LSP.Test
 import Language.LSP.Types (Hover (..), HoverContents (..), MarkupContent (..), Position (..))
-import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)
 
-import Test.Common.Capabilities.Util qualified as Common (contractsDir)
+import Test.Common.Capabilities.Hover (contractsDir)
 import Test.Common.FixedExpectations (shouldSatisfy)
 import Test.Common.Util (openLigoDoc, runHandlersTest)
-
-contractsDir :: FilePath
-contractsDir = Common.contractsDir </> "hover"
 
 unit_hover :: Assertion
 unit_hover = do
@@ -21,5 +17,5 @@ unit_hover = do
     getHover doc (Position 3 11)
   shouldSatisfy maybeHover $ \case
     Just (Hover (HoverContents (MarkupContent _ hoverText)) _) ->
-      "b :: bool" `isPrefixOf` hoverText
+      "b : bool" `isPrefixOf` hoverText
     _ -> error "expected a hover"
