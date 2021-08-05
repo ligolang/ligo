@@ -7,13 +7,12 @@ import Control.Concurrent.MVar
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks, unless)
+import Control.Monad.Reader (asks, when)
 
 import Data.Default
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Any (..))
 import Data.String.Interpolate (i)
 import Data.Text qualified as T
 
@@ -145,7 +144,7 @@ handleDidOpenTextDocument notif = do
   openDocsVar <- asks getElem
   openDocs <- liftIO $ takeMVar openDocsVar
   RIO.collectErrors RIO.forceFetch uri (Just ver)
-  liftIO $ putMVar openDocsVar $ HashMap.insert uri True openDocs
+  liftIO $ putMVar openDocsVar $ HashMap.insert uri ver openDocs
 
 -- FIXME: Suppose the following scenario:
 -- * VSCode has `squirrel/test/contracts/` open as folder;
@@ -170,7 +169,7 @@ handleDidChangeTextDocument notif = do
   -- collected from this uri.
   -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
   -- conditions.
-  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Bool)))
+  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
   openDocs <- liftIO $ takeMVar openDocsVar
   RIO.clearDiagnostics nuris
   RIO.collectErrors (const (pure doc)) uri ver
@@ -182,12 +181,12 @@ handleDidCloseTextDocument notif = do
   tmap <- asks getElem
   RIO.Contract _ nuris <- ASTMap.fetchCached uri tmap
 
-  openDocsVar <- asks getElem
+  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
   openDocs <- liftIO $ takeMVar openDocsVar
-  let openDocs' = HashMap.insert uri False openDocs
+  let openDocs' = HashMap.delete uri openDocs
   -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
   let nuriMap = HashMap.fromList ((, ()) <$> nuris)
-  unless (getAny $ foldMap Any $ HashMap.intersection openDocs' nuriMap) $
+  when (HashMap.null $ HashMap.intersection openDocs' nuriMap) $
     RIO.clearDiagnostics nuris
   liftIO $ putMVar openDocsVar openDocs'
 

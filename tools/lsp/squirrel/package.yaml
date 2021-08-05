@@ -106,6 +106,7 @@ library:
     - unliftio
     - unliftio-core
     - unordered-containers
+    - witherable
 
 executables:
   ligo-squirrel:
@@ -134,6 +135,7 @@ executables:
       - unliftio
       - unliftio-core
       - unordered-containers
+      - witherable
 
     source-dirs:
       - app/ligo-squirrel
