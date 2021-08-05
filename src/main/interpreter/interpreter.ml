@@ -19,8 +19,8 @@ let monad_option error = fun v ->
       None -> fail error
     | Some s -> return s
 
-let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> value Monad.t =
-  fun loc c operands ->
+let rec apply_comparison : Location.t -> calltrace -> Ast_typed.constant' -> value list -> value Monad.t =
+  fun loc calltrace c operands ->
     let open Monad in
     match (c,operands) with
     | ( comp , [ V_Ct (C_int a'      ) ; V_Ct (C_int b'      ) ] )
@@ -37,7 +37,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> return (cmpres <= 0)
         | C_GT -> return (cmpres > 0)
         | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable"
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_bool b ) ; V_Ct (C_bool a ) ] ) ->
@@ -49,7 +49,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> return (cmpres <= 0)
         | C_GT -> return (cmpres > 0)
         | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable"
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_address b ) ; V_Ct (C_address a ) ] ) ->
@@ -61,7 +61,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> return (cmpres <= 0)
         | C_GT -> return (cmpres > 0)
         | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable"
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_key_hash b ) ; V_Ct (C_key_hash a ) ] ) ->
@@ -73,7 +73,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> return (cmpres <= 0)
         | C_GT -> return (cmpres > 0)
         | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable"
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_unit ) ; V_Ct (C_unit ) ] ) ->
@@ -84,7 +84,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> return true
         | C_GT -> return false
         | C_GE -> return true
-        | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable"
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
       in
       return @@ v_bool x
     | ( comp     , [ V_Ct (C_string a'  ) ; V_Ct (C_string b'  ) ] ) ->
@@ -95,7 +95,7 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> return @@ fun a b -> (String.compare a b <= 0)
         | C_GT -> return @@ fun a b -> (String.compare a b > 0)
         | C_GE -> return @@ fun a b -> (String.compare a b >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable" in
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable" in
       Monad.return @@ v_bool (f_op a' b')
 
     | ( comp     , [ V_Ct (C_bytes a'  ) ; V_Ct (C_bytes b'  ) ] ) ->
@@ -106,13 +106,13 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
         | C_LE -> return @@ fun a b -> (Bytes.compare a b <= 0)
         | C_GT -> return @@ fun a b -> (Bytes.compare a b > 0)
         | C_GE -> return @@ fun a b -> (Bytes.compare a b >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable" in
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable" in
       Monad.return @@ v_bool (f_op a' b')
     | ( comp , [ V_Construct (ctor_a, args_a) ; V_Construct (ctor_b, args_b ) ] ) -> (
        match comp with
        | C_EQ ->
           if (String.equal ctor_a ctor_b) then
-            let* r = apply_comparison loc c [ args_a ;  args_b ] in
+            let* r = apply_comparison loc calltrace c [ args_a ;  args_b ] in
             Monad.return @@ v_bool @@ is_true r
           else
             Monad.return @@ v_bool false
@@ -120,16 +120,16 @@ let rec apply_comparison : Location.t -> Ast_typed.constant' -> value list -> va
           if (not (String.equal ctor_a ctor_b)) then
             Monad.return @@ v_bool true
           else
-            let* r = apply_comparison loc c [ args_a ;  args_b ] in
+            let* r = apply_comparison loc calltrace c [ args_a ;  args_b ] in
             Monad.return @@ v_bool @@ is_true r
-       | _ -> fail @@ Errors.meta_lang_eval loc "Not comparable"
+       | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
     )
     | ( _ , l ) ->
        print_endline (Format.asprintf "%a" (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value) l);
-       fail @@ Errors.meta_lang_eval loc "Not comparable"
+       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
-  fun loc expr_ty _env c operands ->
+let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
+  fun loc calltrace expr_ty env c operands ->
   let open Monad in
   let types = List.map ~f:snd operands in
   let operands = List.map ~f:fst operands in
@@ -158,7 +158,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
     | ( C_FOLD_STOP      , [ v ] ) -> return @@ v_pair (v_bool false , v)
     | ( C_ASSERTION , [ v ] ) ->
       if (is_true v) then return_ct @@ C_unit
-      else fail @@ Errors.meta_lang_eval loc "Failed assertion"
+      else fail @@ Errors.meta_lang_eval loc calltrace "Failed assertion"
     | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
       | Some v -> return @@ v_some v
       | None -> return @@ v_none ()
@@ -170,16 +170,16 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
         | None ->
            let* key_ty, val_ty =
              monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map (List.nth_exn types 1) in
-           let>> typed_exp = Get_big_map (loc, key_ty, val_ty, k, id) in
-           let* v = eval_ligo typed_exp _env in
+           let>> typed_exp = Get_big_map (loc, calltrace, key_ty, val_ty, k, id) in
+           let* v = eval_ligo typed_exp calltrace env in
            return @@ v
        )
     | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
       | Some v -> return @@ v
-      | None -> fail @@ Errors.meta_lang_eval loc (Predefined.Tree_abstraction.pseudo_module_to_string c)
+      | None -> fail @@ Errors.meta_lang_eval loc calltrace (Predefined.Tree_abstraction.pseudo_module_to_string c)
     )
     (* binary *)
-    | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison loc c operands
+    | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison loc calltrace c operands
     | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return_ct @@ C_int (Z.sub a' b')
     | ( C_CONS   , [ v                  ; V_List vl          ] ) -> return @@ V_List (v::vl)
     | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] )
@@ -199,28 +199,28 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_int res
-        | None -> fail @@ Errors.meta_lang_eval loc "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
       end
     | ( C_DIV    , [ V_Ct (C_nat a')  ; V_Ct (C_nat b')  ] ) ->
       let>> a = Int_ediv_n (a',b') in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_nat res
-        | None -> fail @@ Errors.meta_lang_eval loc "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
       end
     | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) ->
       let>> a = Int_ediv_n (a',b') in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_nat res
-        | None -> fail @@ Errors.meta_lang_eval loc "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
       end
     | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b')  ] ) ->
       let>> a = Int_ediv_n (a',b') in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_mutez res
-        | None -> fail @@ Errors.meta_lang_eval loc "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
       end
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] )
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_nat b')    ] )
@@ -228,13 +228,13 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       let>> a = Int_ediv (a',b') in
       match a with
       | Some (_,r) -> return_ct @@ C_nat r
-      | None -> fail @@ Errors.meta_lang_eval loc "Dividing by zero"
+      | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
     )
     | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> (
       let>> a = Int_ediv_n (a',b') in
       match a with
       | Some (_,r) -> return_ct @@ C_nat r
-      | None -> fail @@ Errors.meta_lang_eval loc "Dividing by zero"
+      | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
     )
     | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return_ct @@ C_string (a' ^ b')
     | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return_ct @@ C_bytes  (Bytes.cat a' b')
@@ -247,7 +247,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
         Monad.bind_map_list
           (fun elt ->
             let env' = Env.extend env (arg_binder,elt) in
-            eval_ligo body env')
+            eval_ligo body calltrace env')
           elts
       in
       return (V_List elts)
@@ -256,7 +256,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
         Monad.bind_map_list
           (fun (k,v) ->
             let env' = Env.extend env (arg_binder,v_pair (k,v)) in
-            let* v' = eval_ligo body env' in
+            let* v' = eval_ligo body calltrace env' in
             return @@ (k,v')
           )
           elts
@@ -266,20 +266,20 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       Monad.bind_fold_list
         (fun _ elt ->
           let env' = Env.extend env (arg_binder,elt) in
-          eval_ligo body env'
+          eval_ligo body calltrace env'
         )
         (V_Ct C_unit) elts
     | ( C_MAP_ITER , [ V_Func_val {arg_binder ; body ; env}  ; V_Map (elts) ] ) ->
       Monad.bind_fold_list
         (fun _ kv ->
           let env' = Env.extend env (arg_binder,v_pair kv) in
-          eval_ligo body env'
+          eval_ligo body calltrace env'
         )
         (V_Ct C_unit) elts
     | ( C_FOLD_WHILE , [ V_Func_val {arg_binder ; body ; env}  ; init ] ) -> (
       let rec aux b el =
         let env' = Env.extend env (arg_binder, el) in
-        let* res = eval_ligo body env' in
+        let* res = eval_ligo body calltrace env' in
         let (b',el') = try Option.value_exn (extract_fold_while_result res) with _ -> (failwith "bad pair") in
         if b then aux b' el' else return el' in
       aux true init
@@ -293,7 +293,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
         (fun prev elt ->
           let fold_args = v_pair (prev,elt) in
           let env' = Env.extend env (arg_binder,  fold_args) in
-          eval_ligo body env'
+          eval_ligo body calltrace env'
         )
         init elts
     | ( C_BIG_MAP_EMPTY , []) -> return @@ V_Map ([])
@@ -305,7 +305,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
         (fun prev kv ->
           let fold_args = v_pair (prev, v_pair kv) in
           let env' = Env.extend env (arg_binder,  fold_args) in
-          eval_ligo body env'
+          eval_ligo body calltrace env'
         )
         init kvs
     | ( C_MAP_MEM , [k ; V_Map kvs]) -> return @@ v_bool (List.Assoc.mem ~equal:Caml.(=) kvs k)
@@ -316,7 +316,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
             | None ->
                let* key_ty, val_ty =
                  monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map (List.nth_exn types 1) in
-               let>> b = Mem_big_map (loc, key_ty, val_ty, k, m) in
+               let>> b = Mem_big_map (loc, calltrace, key_ty, val_ty, k, m) in
                return @@ v_bool b
           )
     | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.Assoc.remove ~equal:Caml.(=) kvs k))
@@ -340,14 +340,14 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
         (fun prev elt ->
           let fold_args = v_pair (prev,elt) in
           let env' = Env.extend env (arg_binder, fold_args) in
-          eval_ligo body env'
+          eval_ligo body calltrace env'
         )
         init elts
     | ( C_SET_ITER , [ V_Func_val {arg_binder ; body ; env}  ; V_Set (elts) ] ) ->
       Monad.bind_fold_list
         (fun _ elt ->
           let env' = Env.extend env (arg_binder,elt) in
-          eval_ligo body env'
+          eval_ligo body calltrace env'
         )
         (V_Ct C_unit) elts
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem ~equal:Caml.(=) elts v)
@@ -360,25 +360,25 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
     >>>>>>>>
     *)
     | ( C_TEST_COMPILE_EXPRESSION_SUBST, [ file_opt ; V_Ligo (syntax,ligo_exp) ; subst ] ) ->
-      let>> code = Compile_expression (loc, file_opt, syntax, ligo_exp, Some subst) in
+      let>> code = Compile_expression (loc, calltrace, file_opt, syntax, ligo_exp, Some subst) in
       return code
     | ( C_TEST_COMPILE_EXPRESSION, [ file_opt ; V_Ligo (syntax,ligo_exp) ] ) ->
-      let>> code = Compile_expression (loc, file_opt, syntax, ligo_exp, None) in
+      let>> code = Compile_expression (loc, calltrace, file_opt, syntax, ligo_exp, None) in
       return code
     | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ) ->
       let>> (code,size) = Compile_contract_from_file (source_file,entryp) in
-      let>> addr = Inject_script (loc, code, storage, amt) in
+      let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
       return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code (param,_,_)) ; V_Ct ( C_mutez amt ) ] ) -> (
       let contract = { address; entrypoint = None } in
-      let>> err_opt = External_call (loc,contract,param,amt) in
+      let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
       match err_opt with
       | None -> return_ct C_unit
-      | Some e -> fail @@ Errors.target_lang_error loc e
+      | Some e -> fail @@ Errors.target_lang_error loc calltrace e
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code (param,_,_)) ; V_Ct ( C_mutez amt ) ] ) -> (
       let contract = { address; entrypoint = None } in
-      let>> err_opt = External_call (loc,contract,param,amt) in
+      let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
       match err_opt with
       | None -> return (LC.v_ctor "Success" (LC.v_unit ()))
       | Some e ->
@@ -386,7 +386,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
         return a
     )
     | ( C_TEST_SET_NOW , [ V_Ct (C_timestamp t) ] ) ->
-      let>> () = Set_now (loc,t) in
+      let>> () = Set_now (loc,calltrace,t) in
       return_ct C_unit
     | ( C_TEST_SET_SOURCE , [ addr ] ) ->
       let>> () = Set_source addr in
@@ -395,10 +395,10 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       let>> () = Set_baker addr in
       return_ct C_unit
     | ( C_TEST_GET_STORAGE_OF_ADDRESS , [ addr ] ) ->
-      let>> storage = Get_storage_of_address (loc, addr) in
+      let>> storage = Get_storage_of_address (loc, calltrace, addr) in
       return storage
     | ( C_TEST_GET_BALANCE , [ addr ] ) ->
-      let>> balance = Get_balance (loc, addr) in
+      let>> balance = Get_balance (loc, calltrace, addr) in
       return balance
     | ( C_TEST_MICHELSON_EQUAL , [ a ; b ] ) ->
       let>> b = Michelson_equal (loc,a,b) in
@@ -418,7 +418,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
        let>> address = Nth_bootstrap_contract n in
        return_ct (C_address address)
     | ( C_TEST_STATE_RESET , [ n ; amts ] ) ->
-      let>> () = Reset_state (loc,n,amts) in
+      let>> () = Reset_state (loc,calltrace,n,amts) in
       return_ct C_unit
     | ( C_TEST_GET_NTH_BS , [ n ] ) ->
       let>> x = Get_bootstrap (loc,n) in
@@ -427,10 +427,10 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       let>> x = Get_last_originations () in
       return x
     | ( C_TEST_MUTATE_EXPRESSION , [ V_Ct (C_nat n); V_Ligo (syntax,ligo_exp) ] ) ->
-      let>> x = Mutate_expression (loc,n,syntax,ligo_exp) in
+      let>> x = Mutate_expression (n,syntax,ligo_exp) in
       return (V_Ligo x)
     | ( C_TEST_MUTATE_COUNT , [ V_Ligo (syntax,ligo_exp) ] ) ->
-      let>> x = Mutate_count (loc,syntax,ligo_exp) in
+      let>> x = Mutate_count (syntax,ligo_exp) in
       return x
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
@@ -440,23 +440,23 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       | None ->
          return (v_none ())
       | Some (e, m) ->
-         let* v = eval_ligo e _env in
+         let* v = eval_ligo e calltrace env in
          return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
     | ( C_TEST_MUTATION_TEST , [ v; tester ] ) ->
       let* () = check_value v in
       let value_ty = List.nth_exn types 0 in
       let>> l = Mutate_all_value (loc,v,value_ty) in
       let* r = iter_while (fun (e, m) ->
-        let* v = eval_ligo e _env in 
+        let* v = eval_ligo e calltrace env in
         let r =  match tester with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
              let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
              let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
-             eval_ligo body f_env'
+             eval_ligo body (loc :: calltrace) f_env'
           | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
              let f_env' = Env.extend env (arg_binder, v) in
              let f_env'' = Env.extend f_env' (fun_name, tester) in
-             eval_ligo body f_env''
+             eval_ligo body (loc :: calltrace) f_env''
           | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
         Monad.try_or (let* v = r in return (Some (v, m))) (return None)) l in
       (match r with
@@ -467,16 +467,16 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
       let value_ty = List.nth_exn types 0 in
       let>> l = Mutate_all_value (loc,v,value_ty) in
       let* r = bind_map_list (fun (e, m) ->
-        let* v = eval_ligo e _env in
+        let* v = eval_ligo e calltrace env in
         let r =  match tester with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
              let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
              let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
-             eval_ligo body f_env'
+             eval_ligo body (loc :: calltrace) f_env'
           | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
              let f_env' = Env.extend env (arg_binder, v) in
              let f_env'' = Env.extend f_env' (fun_name, tester) in
-             eval_ligo body f_env''
+             eval_ligo body (loc :: calltrace) f_env''
           | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
         Monad.try_or (let* v = r in return (Some (v, m))) (return None)) l in
       let r = List.map ~f:(fun (v, m) -> V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])) @@ List.filter_opt r in
@@ -509,8 +509,8 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
        let storage_ty = match Ast_typed.get_t_typed_address typed_address_ty with
          | Some (_, storage_ty) -> storage_ty
          | _ -> failwith "Expecting typed_address" in
-       let>> typed_exp = Get_storage(loc, addr, storage_ty) in
-       let* value = eval_ligo typed_exp _env in
+       let>> typed_exp = Get_storage(loc, calltrace, addr, storage_ty) in
+       let* value = eval_ligo typed_exp calltrace env in
        return value
     | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
        let contract_ty = List.nth_exn types 0 in
@@ -518,24 +518,24 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
        let>> code = Compile_contract (loc, contract, contract_ty) in
        let>> storage = Eval (loc, storage, storage_ty) in
        let>> size = Get_size code in
-       let>> addr  = Inject_script (loc, code, storage, amt) in
+       let>> addr  = Inject_script (loc, calltrace, code, storage, amt) in
        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
     | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , [ (V_Ct (C_contract contract)) ; param ; V_Ct ( C_mutez amt ) ] ) ->
        let param_ty = List.nth_exn types 1 in
        let>> param = Eval (loc, param, param_ty) in
        (match param with
        | V_Michelson (Ty_code (param,_,_)) ->
-          let>> err_opt = External_call (loc,contract,param,amt) in
+          let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
           (match err_opt with
                      | None -> return @@ V_Ct C_unit
-                     | Some e -> fail @@ Errors.target_lang_error loc e)
+                     | Some e -> fail @@ Errors.target_lang_error loc calltrace e)
        | _ -> fail @@ Errors.generic_error loc "Error typing param")
     | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , [ (V_Ct (C_contract contract)) ; param; V_Ct ( C_mutez amt ) ] ) ->
        let param_ty = List.nth_exn types 1 in
        let>> param = Eval (loc, param, param_ty) in
        (match param with
        | V_Michelson (Ty_code (param,_,_)) ->
-          let>> err_opt = External_call (loc,contract,param,amt) in
+          let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
           (match err_opt with
            | None -> return (LC.v_ctor "Success" (LC.v_unit ()))
            | Some e ->
@@ -553,7 +553,7 @@ let rec apply_operator : Location.t -> Ast_typed.type_expression -> env -> Ast_t
                    Ast_typed.assert_type_expression_eq (storage_ty, storage_ty') in
       return_ct (C_address address)
     | ( C_FAILWITH , [ a ] ) ->
-      fail @@ Errors.meta_lang_failwith loc a
+      fail @@ Errors.meta_lang_failwith loc calltrace a
     | _ -> fail @@ Errors.generic_error loc "Unbound primitive."
   )
 
@@ -580,32 +580,32 @@ and eval_literal : Ast_typed.literal -> value Monad.t = function
      end
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo : Ast_typed.expression -> env -> value Monad.t
-  = fun term env ->
+and eval_ligo : Ast_typed.expression -> calltrace -> env -> value Monad.t
+  = fun term calltrace env ->
     let open Monad in
     match term.expression_content with
     | E_application {lamb = f; args} -> (
-        let* f' = eval_ligo f env in
-        let* args' = eval_ligo args env in
+        let* f' = eval_ligo f calltrace env in
+        let* args' = eval_ligo args calltrace env in
         match f' with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
             let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, args') in
-            eval_ligo body f_env'
+            eval_ligo body (term.location :: calltrace) f_env'
           | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
             let f_env' = Env.extend env (arg_binder, args') in
             let f_env'' = Env.extend f_env' (fun_name, f') in
-            eval_ligo body f_env''
+            eval_ligo body (term.location :: calltrace) f_env''
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder ; body=result ; env}
     | E_let_in {let_binder ; rhs; let_result} -> (
-      let* rhs' = eval_ligo rhs env in
-      eval_ligo (let_result) (Env.extend ~ast_type:rhs.type_expression env (let_binder,rhs'))
+      let* rhs' = eval_ligo rhs calltrace env in
+      eval_ligo (let_result) calltrace (Env.extend ~ast_type:rhs.type_expression env (let_binder,rhs'))
     )
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
-      eval_ligo (let_result) env
+      eval_ligo (let_result) calltrace env
     )
     | E_mod_in    _ -> fail @@
                          Errors.modules_not_supported term.location
@@ -619,13 +619,13 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
         (fun (label,(v:Ast_typed.expression)) ->
-          let* v' = eval_ligo v env in
+          let* v' = eval_ligo v calltrace env in
           return (label,v'))
         (LMap.to_kv_list_rev recmap)
       in
       return @@ V_Record (LMap.of_list lv')
     | E_record_accessor { record ; path} -> (
-      let* record' = eval_ligo record env in
+      let* record' = eval_ligo record calltrace env in
       match record' with
       | V_Record recmap ->
         let a = LMap.find path recmap in
@@ -633,11 +633,11 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
       | _ -> failwith "trying to access a non-record"
     )
     | E_record_update {record ; path ; update} -> (
-      let* record' = eval_ligo record env in
+      let* record' = eval_ligo record calltrace env in
       match record' with
       | V_Record recmap ->
         if LMap.mem path recmap then
-          let* field' = eval_ligo update env in
+          let* field' = eval_ligo update calltrace env in
           return @@ V_Record (LMap.add path field' recmap)
         else
           failwith "field l does not exist in record"
@@ -646,18 +646,18 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_constant {cons_name ; arguments} -> (
       let* arguments' = Monad.bind_map_list
         (fun (ae:Ast_typed.expression) ->
-          let* value = eval_ligo ae env in
+          let* value = eval_ligo ae calltrace env in
           return @@ (value, ae.type_expression))
         arguments in
-      apply_operator term.location term.type_expression env cons_name arguments'
+      apply_operator term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label c ; element } when (String.equal c "true" || String.equal c "false")
      && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool (bool_of_string c))
     | E_constructor { constructor = Label c ; element } ->
-       let* v' = eval_ligo element env in
+       let* v' = eval_ligo element calltrace env in
       return @@ V_Construct (c,v')
     | E_matching { matchee ; cases} -> (
-      let* e' = eval_ligo matchee env in
+      let* e' = eval_ligo matchee calltrace env in
       match cases, e' with
       | Match_variant {cases;_}, V_List [] ->
         let {constructor=_ ; pattern=_ ; body} =
@@ -665,7 +665,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             ~f:(fun {constructor = (Label c) ; pattern=_ ; body=_} ->
               String.equal "Nil" c)
             cases in
-        eval_ligo body env
+        eval_ligo body calltrace env
       | Match_variant {cases;tv}, V_List lst ->
         let {constructor=_ ; pattern ; body} =
           List.find_exn
@@ -677,7 +677,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         let tl = V_List (List.tl_exn lst) in
         let proj = v_pair (hd,tl) in
         let env' = Env.extend ~ast_type:ty env (pattern, proj) in
-        eval_ligo body env'
+        eval_ligo body calltrace env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
         let cases = LMap.of_list (List.map ~f:ctor_body cases) in
@@ -685,8 +685,8 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             (LMap.find (Label c) cases) in
         let match_true  = get_case "true" in
         let match_false = get_case "false" in
-        if b then eval_ligo match_true env
-        else eval_ligo match_false env
+        if b then eval_ligo match_true calltrace env
+        else eval_ligo match_false calltrace env
       | Match_variant {cases ; tv} , V_Construct (matched_c , proj) ->
         let* tv = match Ast_typed.get_t_sum tv with
           | Some tv ->
@@ -706,7 +706,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             cases in
         (* TODO-er: check *)
         let env' = Env.extend ~ast_type:tv env (pattern, proj) in
-        eval_ligo body env'
+        eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
         let aux : label -> ( expression_variable * _ ) -> env -> env =
           fun l (v,ty) env ->
@@ -717,7 +717,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             Env.extend ~ast_type:ty env (v,iv)
         in
         let env' = LMap.fold aux fields env in
-        eval_ligo body env'
+        eval_ligo body calltrace env'
       | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" Ast_typed.PP.expression term)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
@@ -740,7 +740,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
 
 
 let try_eval expr env state r =
-  Monad.eval (eval_ligo expr env) state r
+  Monad.eval (eval_ligo expr [] env) state r
 
 let eval ~raise : Ast_typed.module_fully_typed -> env * Tezos_state.context =
   fun (Module_Fully_Typed prg) ->
