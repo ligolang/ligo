@@ -48,14 +48,14 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %a.@." Snippet.pp l Ast_typed.PP.expression e
   | V_Failure err ->
      match err with
-     | Object_lang_ex (loc, errs) ->
-        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured in the object language:@.%a@]"
-          Snippet.pp loc
-          (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
-     | Meta_lang_ex {location;reason = Reason s} ->
-        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured in the meta language:@.%s@]" Snippet.pp location s
-     | Meta_lang_ex {location;reason = Val s} ->
-        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured in the meta language:@.%a@]" Snippet.pp location pp_value s
+     | Object_lang_ex {location;errors;calltrace = _} ->
+        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured:@.%a@]"
+          Snippet.pp location
+          (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errors
+     | Meta_lang_ex {location;reason = Reason s;calltrace = _} ->
+        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured:@.%s@]" Snippet.pp location s
+     | Meta_lang_ex {location;reason = Val s;calltrace = _} ->
+        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured:@.%a@]" Snippet.pp location pp_value s
 
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term

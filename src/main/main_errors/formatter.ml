@@ -176,10 +176,15 @@ let rec error_ppformat : display_format:string display_format ->
 
     | `Main_interpret_test_entry_not_found s ->
       Format.fprintf f "Test entry '%s' not found" s
-    | `Main_interpret_target_lang_error (loc, errs) ->
+    | `Main_interpret_target_lang_error (loc, [], errs) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@]"
         Snippet.pp loc
         (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+    | `Main_interpret_target_lang_error (loc, calltrace, errs) ->
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@]"
+        Snippet.pp loc
+        (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (PP_helpers.list_sep_d Location.pp) calltrace
     | `Main_interpret_target_lang_failwith (loc, Failwith_int n) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (int): %d@]"
         Snippet.pp loc
@@ -195,14 +200,24 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_interpret_boostrap_not_enough loc ->
       Format.fprintf f "@[<hv>%a@.We need at least two boostrap accounts for the default source and baker@]"
       Snippet.pp loc
-    | `Main_interpret_meta_lang_eval (loc,reason) ->
+    | `Main_interpret_meta_lang_eval (loc,[],reason) ->
       Format.fprintf f "@[<hv>%a@.%s@]"
         Snippet.pp loc
         reason
-    | `Main_interpret_meta_lang_failwith (loc,value) ->
+    | `Main_interpret_meta_lang_eval (loc,calltrace,reason) ->
+      Format.fprintf f "@[<hv>%a@.%s@.Trace:@.%a@]"
+        Snippet.pp loc
+        reason
+        (PP_helpers.list_sep_d Location.pp) calltrace
+    | `Main_interpret_meta_lang_failwith (loc,[],value) ->
       Format.fprintf f "@[<hv>%a@.Test failed with %a@]"
         Snippet.pp loc
         Ligo_interpreter.PP.pp_value value
+    | `Main_interpret_meta_lang_failwith (loc,calltrace,value) ->
+      Format.fprintf f "@[<hv>%a@.Test failed with %a@.Trace:@.%a@]"
+        Snippet.pp loc
+        Ligo_interpreter.PP.pp_value value
+        (PP_helpers.list_sep_d Location.pp) calltrace
     | `Main_interpret_generic (loc,desc) ->
       Format.fprintf f "@[<hv>%a@.%s@]"
         Snippet.pp loc

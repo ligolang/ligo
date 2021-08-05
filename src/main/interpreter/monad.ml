@@ -23,23 +23,23 @@ let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()
 
 module Command = struct
   type 'a t =
-    | Get_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> LT.expression t
-    | Mem_big_map : Location.t * LT.type_expression * LT.type_expression * LT.value * Z.t -> bool t
+    | Get_big_map : Location.t * Ligo_interpreter.Types.calltrace * LT.type_expression * LT.type_expression * LT.value * Z.t -> LT.expression t
+    | Mem_big_map : Location.t * Ligo_interpreter.Types.calltrace * LT.type_expression * LT.type_expression * LT.value * Z.t -> bool t
     | Bootstrap_contract : int * LT.value * LT.value * Ast_typed.type_expression  -> unit t
     | Nth_bootstrap_contract : int -> Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t t
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression * Ast_typed.type_expression) t
-    | Reset_state : Location.t * LT.value * LT.value -> unit t
-    | External_call : Location.t * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
+    | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
+    | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
-    | Get_storage : Location.t * LT.value * Ast_typed.type_expression -> Ast_typed.expression t
-    | Get_storage_of_address : Location.t * LT.value -> LT.value t
+    | Get_storage : Location.t * Ligo_interpreter.Types.calltrace * LT.value * Ast_typed.type_expression -> Ast_typed.expression t
+    | Get_storage_of_address : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
     | Get_size : LT.value -> LT.value t
-    | Get_balance : Location.t * LT.value -> LT.value t
+    | Get_balance : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
     | Get_last_originations : unit -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
-    | Compile_expression : Location.t * LT.value * string * string * LT.value option -> LT.value t
-    | Mutate_expression : Location.t * Z.t * string * string -> (string * string) t
-    | Mutate_count : Location.t * string * string -> LT.value t
+    | Compile_expression : Location.t * Ligo_interpreter.Types.calltrace * LT.value * string * string * LT.value option -> LT.value t
+    | Mutate_expression : Z.t * string * string -> (string * string) t
+    | Mutate_count : string * string -> LT.value t
     | Mutate_some_value : Location.t * Z.t * LT.value * Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) option t
     | Mutate_all_value : Location.t * LT.value * Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) list t
     | Compile_contract_from_file : string * string -> (LT.value * LT.value) t
@@ -49,9 +49,9 @@ module Command = struct
     | Compile_contract : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_typed.type_expression -> LT.value t
     | Check_storage_address : Location.t * Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression -> unit t
-    | Contract_exists : Location.t * LT.value -> bool t
-    | Inject_script : Location.t * LT.value * LT.value * Z.t -> LT.value t
-    | Set_now : Location.t * Z.t -> unit t
+    | Contract_exists : Location.t * LT.calltrace * LT.value -> bool t
+    | Inject_script : Location.t * Ligo_interpreter.Types.calltrace * LT.value * LT.value * Z.t -> LT.value t
+    | Set_now : Location.t * Ligo_interpreter.Types.calltrace * Z.t -> unit t
     | Set_source : LT.value -> unit t
     | Set_baker : LT.value -> unit t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
@@ -94,7 +94,7 @@ module Command = struct
       (a * Tezos_state.context)
     = fun ~raise command ctxt _log ->
     match command with
-    | Get_big_map (loc, k_ty, v_ty, _k, _m) ->
+    | Get_big_map (loc, calltrace, k_ty, v_ty, k, m) ->
       (* TODO-er: hack to get the micheline type... *)
       let none_compiled = Michelson_backend.compile_value ~raise (Ast_typed.e_a_none v_ty) in
       let val_ty = clean_locations none_compiled.expr_ty in
@@ -102,8 +102,8 @@ module Command = struct
         | Prim (_, "option", [l], _) ->
            l
         | _ -> failwith "None has a non-option type?" in
-      let key,key_ty,_ = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc _k k_ty in
-      let storage' = Tezos_state.get_big_map ~raise ~loc ctxt _m key key_ty in
+      let key,key_ty,_ = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc k k_ty in
+      let storage' = Tezos_state.get_big_map ~raise ~loc ~calltrace ctxt m key key_ty in
       begin
         match storage' with
         | Some storage' ->
@@ -116,9 +116,9 @@ module Command = struct
            (typed, ctxt)
         | None -> (Ast_typed.e_a_none v_ty, ctxt)
       end
-    | Mem_big_map (loc, k_ty, _v_ty, _k, _m) ->
-      let key,key_ty,_ = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc _k k_ty in
-      let storage' = Tezos_state.get_big_map ~raise ~loc ctxt _m key key_ty in
+    | Mem_big_map (loc, calltrace, k_ty, _v_ty, k, m) ->
+      let key,key_ty,_ = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc k k_ty in
+      let storage' = Tezos_state.get_big_map ~raise ~loc ~calltrace ctxt m key key_ty in
       (Option.is_some storage', ctxt)
     | Nth_bootstrap_contract (n) ->
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in
@@ -141,7 +141,7 @@ module Command = struct
       let ctxt =
         { ctxt with next_bootstrapped_contracts = (mutez, contract, storage, parameter_ty, storage_ty) :: ctxt.next_bootstrapped_contracts } in
       ((),ctxt)
-    | Reset_state (loc,n,amts) ->
+    | Reset_state (loc,calltrace,n,amts) ->
       let amts = trace_option ~raise (corner_case ()) @@ LC.get_list amts in
       let amts = List.map ~f:
         (fun x ->
@@ -150,10 +150,10 @@ module Command = struct
         amts
       in
       let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
-      let ctxt = Tezos_state.init_ctxt ~raise ~loc ~initial_balances:amts ~n:(Z.to_int n) (List.rev ctxt.next_bootstrapped_contracts) in
+      let ctxt = Tezos_state.init_ctxt ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n) (List.rev ctxt.next_bootstrapped_contracts) in
       ((),ctxt)
-    | External_call (loc, { address; entrypoint }, param, amt) -> (
-      let x = Tezos_state.transfer ~raise ~loc ctxt address ?entrypoint param amt in
+    | External_call (loc, calltrace, { address; entrypoint }, param, amt) -> (
+      let x = Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt in
       match x with
       | Success ctxt -> (None, ctxt)
       | Fail errs -> (Some errs, ctxt)
@@ -169,9 +169,9 @@ module Command = struct
       | None ->
         (LC.v_ctor "Fail" (LC.v_ctor "Other" (LC.v_unit ())), ctxt)
     )
-    | Get_storage (loc, addr, ty_expr) ->
+    | Get_storage (loc, calltrace, addr, ty_expr) ->
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
-      let (storage',ty) = Tezos_state.get_storage ~raise ~loc ctxt addr in
+      let (storage',ty) = Tezos_state.get_storage ~raise ~loc ~calltrace ctxt addr in
       let storage = storage'
         |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
@@ -179,15 +179,15 @@ module Command = struct
       let ret = LT.V_Michelson (Ty_code (storage,ty,ty_expr)) in
       let ret = Michelson_backend.val_to_ast ~raise ~loc ret ty_expr in
       (ret, ctxt)
-    | Get_balance (loc,addr) ->
+    | Get_balance (loc, calltrace, addr) ->
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
-      let balance = Tezos_state.get_balance ~raise ~loc ctxt addr in
+      let balance = Tezos_state.get_balance ~raise ~loc ~calltrace ctxt addr in
       let mutez = Michelson_backend.int_of_mutez balance in
       let balance = LT.V_Ct (C_mutez mutez) in
       (balance, ctxt)
-    | Get_storage_of_address (loc, addr) ->
+    | Get_storage_of_address (loc, calltrace, addr) ->
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
-      let (storage',ty) = Tezos_state.get_storage ~raise ~loc ctxt addr in
+      let (storage',ty) = Tezos_state.get_storage ~raise ~loc ~calltrace ctxt addr in
       let storage = storage'
         |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
@@ -201,7 +201,7 @@ module Command = struct
     | Check_obj_ligo e ->
       let _ = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.expression_obj e in
       ((), ctxt)
-    | Compile_expression (loc, source_file, syntax, exp_as_string, subst_opt) ->
+    | Compile_expression (loc, calltrace, source_file, syntax, exp_as_string, subst_opt) ->
       let file_opt = trace_option ~raise (corner_case ()) @@ LC.get_string_option source_file in
       let substs =
         match subst_opt with
@@ -220,7 +220,7 @@ module Command = struct
         Str.substitute_first (Str.regexp ("\\$"^s)) (fun _ -> Michelson_backend.subst_vname s) exp_str
       in
       let exp_as_string' = List.fold_left ~f:aux ~init:exp_as_string substs in
-      let (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~raise ~loc ~add_warning syntax exp_as_string' file_opt substs in
+      let (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~raise ~add_warning ~loc ~calltrace syntax exp_as_string' file_opt substs in
       (LT.V_Michelson (LT.Ty_code (mich_v, mich_ty, object_ty)), ctxt)
     | Compile_meta_value (loc,x,ty) ->
       let x = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc x ty in
@@ -309,33 +309,33 @@ module Command = struct
       let () = trace_option ~raise (Errors.generic_error loc "Storage type does not match expected type") @@
           (Ast_typed.assert_type_expression_eq (ligo_ty, ty)) in
       ((), ctxt)
-    | Contract_exists (loc, addr) ->
+    | Contract_exists (loc, calltrace, addr) ->
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
-      let info = Tezos_state.contract_exists ~raise ~loc ctxt addr in
+      let info = Tezos_state.contract_exists ~raise ~loc ~calltrace ctxt addr in
       (info, ctxt)
-    | Inject_script (loc, code, storage, amt) -> (
+    | Inject_script (loc, calltrace, code, storage, amt) -> (
       let contract_code = trace_option ~raise (corner_case ()) @@ LC.get_michelson_contract code in
       let (storage,_,ligo_ty) = trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage in
-      let (contract, res) = Tezos_state.originate_contract ~raise ~loc ctxt contract_code storage amt in
+      let (contract, res) = Tezos_state.originate_contract ~raise ~loc ~calltrace ctxt contract_code storage amt in
       match res with
       | Tezos_state.Success ctxt ->
         let addr = LT.V_Ct ( C_address contract ) in
         let storage_tys = (contract, ligo_ty) :: (ctxt.storage_tys) in
         (addr, {ctxt with storage_tys})
-      | Tezos_state.Fail errs -> raise.raise (Errors.target_lang_error loc errs)
+      | Tezos_state.Fail errs -> raise.raise (Errors.target_lang_error loc calltrace errs)
     )
-    | Mutate_some_value (_loc, z, v, v_type) ->
+    | Mutate_some_value (loc, z, v, v_type) ->
       let n = Z.to_int z in
-      let expr = Michelson_backend.val_to_ast ~raise ~toplevel:true ~loc:Location.generated v v_type in
+      let expr = Michelson_backend.val_to_ast ~raise ~toplevel:true ~loc v v_type in
       let module Fuzzer = Fuzz.Ast_typed.Mutator in
       let ret = Fuzzer.some_mutate_expression ~n expr in
       (ret, ctxt)
-    | Mutate_all_value (_loc, v, v_type) ->
-      let expr = Michelson_backend.val_to_ast ~raise ~toplevel:true ~loc:Location.generated v v_type in
+    | Mutate_all_value (loc, v, v_type) ->
+      let expr = Michelson_backend.val_to_ast ~raise ~toplevel:true ~loc v v_type in
       let module Fuzzer = Fuzz.Ast_typed.Mutator in
       let exprs = Fuzzer.all_mutate_expression expr in
       (exprs, ctxt)
-    | Mutate_expression (_loc, z, syntax, expr) ->
+    | Mutate_expression (z, syntax, expr) ->
       let open Ligo_compile in
       let n = Z.to_int z in
       let options = Compiler_options.make () in
@@ -377,7 +377,7 @@ module Command = struct
            end in
       let expr = Buffer.contents buffer in
       ((syntax, expr), ctxt)
-    | Mutate_count (_loc, syntax, expr) ->
+    | Mutate_count (syntax, expr) ->
       begin
         let open Ligo_compile in
         let options = Compiler_options.make () in
@@ -419,8 +419,8 @@ module Command = struct
              end in
         (LT.V_Ct (C_nat (Z.of_int count)) , ctxt)
       end
-    | Set_now (loc, now) ->
-      let ctxt = Tezos_state.set_timestamp ~raise ~loc ctxt now in
+    | Set_now (loc, calltrace, now) ->
+      let ctxt = Tezos_state.set_timestamp ~raise ~loc ~calltrace ctxt now in
       ((), ctxt)
     | Set_source source ->
       let source = trace_option ~raise (corner_case ()) @@ LC.get_address source in
@@ -498,7 +498,7 @@ let rec eval
   | Return v -> (v, ctxt)
   | Fail_ligo err -> raise.raise err
   | Try_or (e', handler) ->
-    try_with 
+    try_with
       (eval e' ctxt log)
       (function
             `Main_interpret_target_lang_error _

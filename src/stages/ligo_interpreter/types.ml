@@ -59,9 +59,11 @@ and value =
 
 and fail_reason = Val of value | Reason of string
 
+and calltrace = Location.t list
+
 and exception_type =
-  Object_lang_ex of Location.t * Tezos_error_monad.TzCore.error list
-| Meta_lang_ex of { location : Location.t ; reason : fail_reason }
+  Object_lang_ex of { location: Location.t ; errors: Tezos_error_monad.TzCore.error list ; calltrace : calltrace }
+| Meta_lang_ex of { location : Location.t ; reason : fail_reason ; calltrace : calltrace }
 
 and bootstrap_contract =
   int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression * Ast_typed.type_expression
