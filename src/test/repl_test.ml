@@ -115,8 +115,8 @@ let test_long_jsligo ~raise () =
         "#import \"contracts/build/B.jsligo\" \"MYMOD\"";
         "MYMOD.toto";
         "MYMOD.A.toto";
-        "let g = (x : int) : [list<operation>, int] => MYMOD.f (unit, x)";
-        "g(4)";
+        "let f = (x : int) : [list<operation>, int] => MYMOD.f (unit, x)";
+        "f(4)";
         "namespace EURO {\n\
             export type t = nat;\n\
             export let add = ([a, b]: [t, t]): t => a + b;\n\
@@ -132,7 +132,7 @@ let test_long_jsligo ~raise () =
         "Done.";
         "32";
         "1";
-        "g";
+        "f";
         "( LIST_EMPTY() , 48 )";
         "EURO";
         "US_DOLLAR";

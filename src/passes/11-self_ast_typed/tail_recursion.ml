@@ -30,7 +30,7 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
   | E_mod_alias {alias=_;binders=_;result} ->
     check_recursive_call ~raise n final_path result
   | E_raw_code _ -> ()
-  | E_constructor {element;_} -> 
+  | E_constructor {element;_} ->
     check_recursive_call ~raise n false element
   | E_matching {matchee;cases} ->
     check_recursive_call ~raise n false matchee;
@@ -42,8 +42,8 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
   | E_record_update {record;update;_} ->
     check_recursive_call ~raise n false record;
     check_recursive_call ~raise n false update
-  | E_module_accessor {element; _} ->
-    check_recursive_call ~raise n false element
+  | E_module_accessor _ ->
+    ()
 
 and check_recursive_call_in_matching ~raise = fun n final_path c ->
   match c with
