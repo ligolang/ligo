@@ -77,7 +77,9 @@ data Type
   = RecordType [TypeField]
   | VariantType [TypeConstructor]
   | TupleType [TypeDeclSpecifics]
+  | ApplyType Type [Type]
   | AliasType Text
+  | ArrowType Type Type
   deriving stock (Eq, Show)
 
 data TypeField = TypeField
@@ -120,7 +122,7 @@ instance Pretty ScopedDecl where
 
 lppDeclCategory :: ScopedDecl -> Doc
 lppDeclCategory decl = case _sdSpec decl of
-  TypeSpec{} -> pp @Text "TYPE"
+  TypeSpec tspec -> lppLigoLike (_sdDialect decl) tspec
   ValueSpec vspec -> case _vdsTspec vspec of
     Nothing -> pp @Text "unknown"
     Just tspec -> lppLigoLike (_sdDialect decl) tspec
@@ -139,6 +141,8 @@ instance IsLIGO Type where
   toLIGO (VariantType cons) = node (LIGO.TSum (map toLIGO cons))
   toLIGO (TupleType typs) = node (LIGO.TProduct (map toLIGO typs))
   toLIGO (AliasType typ) = node (LIGO.TypeName typ)
+  toLIGO (ApplyType name types) = node (LIGO.TApply (toLIGO name) (map toLIGO types))
+  toLIGO (ArrowType left right) = node (LIGO.TArrow (toLIGO left) (toLIGO right))
 
 instance IsLIGO TypeField where
   toLIGO TypeField{ .. } = node

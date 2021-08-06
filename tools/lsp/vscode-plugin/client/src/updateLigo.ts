@@ -202,8 +202,6 @@ export default async function updateLigo(config: vscode.WorkspaceConfiguration):
           return
         }
 
-        vscode.window.showInformationMessage(config.has('ligoLanguageServer.ligoBinaryPath').toString())
-        vscode.window.showInformationMessage(config.get('ligoLanguageServer.ligoBinaryPath').toString())
         await config.update(
           'ligoLanguageServer.ligoBinaryPath',
           uris[0].fsPath,

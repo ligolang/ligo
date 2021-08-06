@@ -284,6 +284,7 @@ test-suite integration-test
       Test.Integrational.Capabilities.Completion
       Test.Integrational.Capabilities.DocumentSymbol
       Test.Integrational.Capabilities.Find
+      Test.Integrational.Capabilities.Hover
       Test.Integrational.Capabilities.Rename
       Test.Integrational.Capabilities.SignatureHelp
       Test.Integrational.Cli
@@ -291,6 +292,7 @@ test-suite integration-test
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
@@ -374,6 +376,7 @@ test-suite ligo-contracts-test
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
@@ -470,6 +473,7 @@ test-suite lsp-handlers-test
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
@@ -552,6 +556,7 @@ test-suite lsp-test
       Test.Capabilities.Completion
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Find
+      Test.Capabilities.Hover
       Test.Capabilities.Rename
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
@@ -561,6 +566,7 @@ test-suite lsp-test
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util

@@ -5,6 +5,7 @@ module AST.Scope.ScopedDecl.Parser
   , parseTypeDeclSpecifics
   ) where
 
+import Control.Lens ((??))
 import Data.Foldable (asum)
 import Data.Maybe (fromMaybe, mapMaybe)
 import Duplo.Tree (layer)
@@ -31,13 +32,29 @@ parseTypeDeclSpecifics node = TypeDeclSpecifics
 -- Also see 'parseAliasType'.
 parseType :: PPableLIGO info => LIGO info -> Type
 parseType node =
-  fromMaybe (parseAliasType node) (asum (map ($ node) parsers))
+  fromMaybe (parseAliasType node) (asum (parsers ?? node))
   where
     parsers =
       [ parseRecordType
       , parseVariantType
       , parseTupleType
+      , parseApplyType
+      , parseArrowType
       ]
+
+parseArrowType :: PPableLIGO info => LIGO info -> Maybe Type
+parseArrowType node = do
+  LIGO.TArrow left right <- layer node
+  let left' = parseType left
+  let right' = parseType right
+  pure $ ArrowType left' right'
+
+parseApplyType :: PPableLIGO info => LIGO info -> Maybe Type
+parseApplyType node = do
+  LIGO.TApply name types <- layer node
+  let name' = parseType name
+  let types' = map parseType types
+  pure $ ApplyType name' types'
 
 parseRecordType :: PPableLIGO info => LIGO info -> Maybe Type
 parseRecordType node = do

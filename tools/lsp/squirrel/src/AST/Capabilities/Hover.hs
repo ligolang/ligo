@@ -1,8 +1,8 @@
-{-# LANGUAGE RecordWildCards #-}
-
 -- | Hover code capability
 
-module AST.Capabilities.Hover where
+module AST.Capabilities.Hover
+  ( hoverDecl
+  ) where
 
 import Language.LSP.Types qualified as LSP
 
@@ -11,7 +11,6 @@ import AST.Pretty (docToText)
 import AST.Scope.ScopedDecl (ScopedDecl (..), lppDeclCategory)
 import AST.Skeleton
 
-import Data.Text (intercalate, pack)
 import Duplo.Pretty
 import Range
 
@@ -33,11 +32,11 @@ mkContents decl@ScopedDecl{ .. } = LSP.HoverContents $ LSP.MarkupContent
   , _value = contentDoc
   }
   where
-    contentDoc = intercalate "\n"
-      [ ppToText _sdName <> " :: " <> docToText (lppDeclCategory decl)
-      , "\n"
-      , "*defined at*"
-      , pack (show _sdOrigin)
-      , "\n"
-      , ppToText _sdDoc
+    contentDoc = mconcat
+      [ ppToText _sdName <> " : " <> docToText (lppDeclCategory decl)
+      , "\n\n"
+      , "*defined at* " <> ppToText _sdOrigin
+      , if null _sdDoc
+        then ""
+        else "\n\n" <> ppToText _sdDoc
       ]
