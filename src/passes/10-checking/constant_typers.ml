@@ -209,9 +209,13 @@ let int ~raise loc : typer = typer_1 ~raise loc "INT" @@ fun t ->
 let bytes_pack ~raise loc : typer = typer_1 ~raise loc "PACK" @@ fun _t ->
   t_bytes ()
 
-let bytes_unpack ~raise loc = typer_1_opt ~raise loc "UNPACK" @@ fun input output_opt ->
+let bytes_unpack ~raise loc = typer_1_opt ~raise loc "UNPACK" @@ fun input tv_opt ->
   let () = trace_option ~raise (expected_bytes loc input) @@ assert_t_bytes input in
-  trace_option ~raise (not_annotated loc) @@ output_opt
+  match tv_opt with
+  | None -> raise.raise (not_annotated loc)
+  | Some t ->
+    let t = trace_option ~raise (expected_option loc t) @@ get_t_option t in
+    t_option t
 
 let hash256 ~raise loc = typer_1 ~raise loc "SHA256" @@ fun t ->
   let () = trace_option ~raise (expected_bytes loc t) @@ assert_t_bytes t in

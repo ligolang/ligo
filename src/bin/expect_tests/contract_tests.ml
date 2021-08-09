@@ -2049,3 +2049,13 @@ let%expect_test _ =
     { parameter unit ;
       storage int ;
       code { CDR ; PUSH nat 2 ; PUSH nat 1 ; DIG 2 ; ADD ; ADD ; NIL operation ; PAIR } } |}]
+
+(* wrong annotation in Bytes.unpack *)
+let%expect_test _ =
+  run_ligo_bad [ "compile-expression" ; "--init-file" ; bad_contract "bad_annotation_unpack.mligo" ; "cameligo" ; "x" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/bad_annotation_unpack.mligo", line 1, characters 9-42:
+      1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
+
+    Incorrect argument.
+    Expected an option, but got an argument of type "string". |}]
