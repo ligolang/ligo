@@ -98,14 +98,14 @@ let try_eval ~raise state s =
      let state = { state with env = env; decl_list = state.decl_list } in
      (state, Expression_value expr)
   | Fail _ ->
-    raise.raise @@ `Repl_unexpected
+    raise.raise `Repl_unexpected
 
 let try_contract ~raise state s =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
   try
     try_with (fun ~raise ->
       let typed_prg,core_prg,env =
-      Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s state.env in
+        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s state.env in
       let mini_c,mods =
         Ligo_compile.Of_typed.compile_with_modules ~raise ~module_env:state.mod_types typed_prg in
       let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mods in
@@ -121,7 +121,9 @@ let try_contract ~raise state s =
       | (`Main_cit_reasonligo _ : Main_errors.all) ->
          try_eval ~raise state s
       | e -> raise.raise e)
-  with _ -> raise.raise `Repl_unexpected
+  with
+  | Failure _ ->
+     raise.raise `Repl_unexpected
 
 let import_file ~raise state file_name module_name =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
@@ -204,9 +206,8 @@ let make_initial_state syntax protocol infer dry_run_opts =
 
 let rec read_input prompt delim =
   let open Option in
-  let s = LNoise.linenoise prompt in
-  match s with
-  | None -> None
+  match LNoise.linenoise prompt with
+  | exception Sys.Break | None -> None
   | Some s -> LNoise.history_add s |> ignore;
               let result = Str.split_delim (Str.regexp delim) s in
               match result with
