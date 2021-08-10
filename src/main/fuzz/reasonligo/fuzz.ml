@@ -10,7 +10,12 @@ let arith_bin_op_ctor =
   let mult op = Mult op in
   let div op = Div op in
   let mod_ op = Mod op in
-  [add;sub;mult;div;mod_]
+  let land_ op = Land op in
+  let lor_ op = Land op in
+  let lxor_ op = Land op in
+  let lsl_ op = Land op in
+  let lsr_ op = Land op in
+  [add;sub;mult;div;mod_;land_;lor_;lxor_;lsl_;lsr_]
 
 let bool_bin_op_ctor =
   let and_ op = And op in

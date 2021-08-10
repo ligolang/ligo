@@ -123,7 +123,12 @@ module Fold_helpers(M : Monad) = struct
       | EArith Sub   {value;region=_}
       | EArith Mult  {value;region=_}
       | EArith Div   {value;region=_}
-      | EArith Mod   {value;region=_} ->
+      | EArith Mod   {value;region=_}
+      | EArith Land  {value;region=_} 
+      | EArith Lor   {value;region=_} 
+      | EArith Lxor  {value;region=_} 
+      | EArith Lsl   {value;region=_} 
+      | EArith Lsr   {value;region=_} ->
        bin_op value
     | EArith Neg   {value;region=_} ->
        let {op=_;arg} = value in
@@ -391,6 +396,21 @@ module Fold_helpers(M : Monad) = struct
     | EArith Mod   {value;region} ->
        let* value = bin_op value in
        return @@ EArith (Mod {value;region})
+    | EArith Land   {value;region} ->
+       let* value = bin_op value in
+       return @@ EArith (Land {value;region})
+    | EArith Lor   {value;region} ->
+       let* value = bin_op value in
+       return @@ EArith (Lor {value;region})
+    | EArith Lxor   {value;region} ->
+       let* value = bin_op value in
+       return @@ EArith (Lxor {value;region})
+    | EArith Lsl   {value;region} ->
+       let* value = bin_op value in
+       return @@ EArith (Lsl {value;region})
+    | EArith Lsr   {value;region} ->
+       let* value = bin_op value in
+       return @@ EArith (Lsr {value;region})
     | EArith Neg   {value;region} ->
        let* arg = self value.arg in
        let value = {value with arg} in

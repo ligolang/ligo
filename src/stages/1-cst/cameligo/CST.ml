@@ -32,6 +32,11 @@ type kwd_in        = Region.t
 type kwd_let       = Region.t
 type kwd_match     = Region.t
 type kwd_mod       = Region.t
+type kwd_land      = Region.t
+type kwd_lor       = Region.t
+type kwd_lxor      = Region.t
+type kwd_lsl       = Region.t
+type kwd_lsr       = Region.t
 type kwd_not       = Region.t
 type kwd_of        = Region.t
 type kwd_or        = Region.t
@@ -324,6 +329,11 @@ and arith_expr =
 | Mult  of times bin_op reg
 | Div   of slash bin_op reg
 | Mod   of kwd_mod bin_op reg
+| Land  of kwd_land bin_op reg
+| Lor   of kwd_lor bin_op reg
+| Lxor  of kwd_lxor bin_op reg
+| Lsl   of kwd_lsl bin_op reg
+| Lsr   of kwd_lsr bin_op reg
 | Neg   of minus un_op reg
 | Int   of (string * Z.t) reg
 | Nat   of (string * Z.t) reg
@@ -529,8 +539,9 @@ let logic_expr_to_region = function
 
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
-| Div {region;_} | Mod {region;_} | Neg {region;_}
-| Int {region;_} | Mutez {region; _}
+| Div {region;_} | Mod {region;_} | Land {region;_} 
+| Lor {region;_} | Lxor {region;_} | Lsl {region;_} | Lsr {region;_}
+| Neg {region;_} | Int {region;_} | Mutez {region; _}
 | Nat {region; _} -> region
 
 let string_expr_to_region = function

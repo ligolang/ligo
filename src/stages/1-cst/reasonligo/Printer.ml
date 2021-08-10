@@ -507,6 +507,26 @@ and print_arith_expr state = function
     print_expr  state arg1;
     print_token state op "mod";
     print_expr  state arg2
+| Land {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "land";
+    print_expr  state arg2
+| Lor {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lor";
+    print_expr  state arg2
+| Lxor {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lxor";
+    print_expr  state arg2
+| Lsl {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lsl";
+    print_expr  state arg2
+| Lsr {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lsr";
+    print_expr  state arg2
 | Neg {value={op;arg}; _} ->
     print_token state op "-";
     print_expr  state arg
@@ -1246,6 +1266,16 @@ and pp_arith_expr state = function
     pp_bin_op "Div" region state value
 | Mod {value; region} ->
     pp_bin_op "Mod" region state value
+| Land {value; region} ->
+    pp_bin_op "Land" region state value
+| Lor {value; region} ->
+    pp_bin_op "Lor" region state value
+| Lxor {value; region} ->
+    pp_bin_op "Lxor" region state value
+| Lsl {value; region} ->
+    pp_bin_op "Lsl" region state value
+| Lsr {value; region} ->
+    pp_bin_op "Lsr" region state value
 | Neg {value; region} ->
     pp_loc_node state "Neg" region;
     pp_expr (state#pad 1 0) value.arg;

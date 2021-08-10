@@ -80,6 +80,11 @@ module T =
     | Let       of Region.t  (* let   *)
     | Match     of Region.t  (* match *)
     | Mod       of Region.t  (* mod   *)
+    | Land      of Region.t  (* land  *)
+    | Lor       of Region.t  (* lor   *)
+    | Lxor      of Region.t  (* lxor  *)
+    | Lsl       of Region.t  (* lsl   *)
+    | Lsr       of Region.t  (* lsr   *)
     | Not       of Region.t  (* not   *)
     | Of        of Region.t  (* of    *)
     | Or        of Region.t  (* or    *)
@@ -181,6 +186,11 @@ module T =
     | "Let"   -> "let"
     | "Match" -> "match"
     | "Mod"   -> "mod"
+    | "Land"  -> "land"
+    | "Lor"   -> "lor"
+    | "Lxor"  -> "lxor"
+    | "Lsl"   -> "lsl"
+    | "Lsr"   -> "lsr"
     | "Not"   -> "not"
     | "Of"    -> "of"
     | "Or"    -> "or"
@@ -283,6 +293,11 @@ module T =
     | Let    region -> region, "Let"
     | Match  region -> region, "Match"
     | Mod    region -> region, "Mod"
+    | Land   region -> region, "Land"
+    | Lor    region -> region, "Lor"
+    | Lxor   region -> region, "Lxor"
+    | Lsl    region -> region, "Lsl"
+    | Lsr    region -> region, "Lsr"
     | Not    region -> region, "Not"
     | Of     region -> region, "Of"
     | Or     region -> region, "Or"
@@ -364,6 +379,11 @@ module T =
     | Let    _ -> "let"
     | Match  _ -> "match"
     | Mod    _ -> "mod"
+    | Land   _ -> "land"
+    | Lor    _ -> "lor"
+    | Lxor   _ -> "lxor"
+    | Lsl    _ -> "lsl"
+    | Lsr    _ -> "lsr"
     | Not    _ -> "not"
     | Of     _ -> "of"
     | Or     _ -> "or"
@@ -406,6 +426,11 @@ module T =
       (fun reg -> Let       reg);
       (fun reg -> Match     reg);
       (fun reg -> Mod       reg);
+      (fun reg -> Land      reg);
+      (fun reg -> Lor       reg);
+      (fun reg -> Lxor      reg);
+      (fun reg -> Lsl       reg);
+      (fun reg -> Lsr       reg);
       (fun reg -> Not       reg);
       (fun reg -> Of        reg);
       (fun reg -> Or        reg);
@@ -435,8 +460,6 @@ module T =
       |> add "inherit"
       |> add "initializer"
       |> add "lazy"
-      |> add "lsl"
-      |> add "lsr"
       |> add "method"
       |> add "mutable"
       |> add "new"
