@@ -76,6 +76,11 @@ module T =
     | If     of Region.t  (* if     *)
     | Let    of Region.t  (* let    *)
     | Mod    of Region.t  (* mod    *)
+    | Land   of Region.t  (* land   *)
+    | Lor    of Region.t  (* lor    *)
+    | Lxor   of Region.t  (* lxor   *)
+    | Lsl    of Region.t  (* lsl    *)
+    | Lsr    of Region.t  (* lsr    *)
     | Or     of Region.t  (* or     *)
     | Rec    of Region.t  (* rec    *)
     | Switch of Region.t  (* switch *)
@@ -174,6 +179,11 @@ module T =
     | "If"      -> "if"
     | "Let"     -> "let"
     | "Mod"     -> "mod"
+    | "Land"    -> "land"
+    | "Lor"     -> "lor"
+    | "Lxor"    -> "lxor"
+    | "Lsl"     -> "lsl"
+    | "Lsr"     -> "lsr"
     | "Or"      -> "or"
     | "Rec"     -> "rec"
     | "Switch"  -> "switch"
@@ -268,6 +278,11 @@ module T =
     | Rec      region -> region, "Rec"
     | Switch   region -> region, "Switch"
     | Mod      region -> region, "Mod"
+    | Land     region -> region, "Land"
+    | Lor      region -> region, "Lor"
+    | Lxor     region -> region, "Lxor"
+    | Lsl      region -> region, "Lsl"
+    | Lsr      region -> region, "Lsr"
     | Or       region -> region, "Or"
     | True     region -> region, "True"
     | Type     region -> region, "Type"
@@ -334,6 +349,11 @@ module T =
     | If      _ -> "if"
     | Let     _ -> "let"
     | Mod     _ -> "mod"
+    | Land    _ -> "land"
+    | Lor     _ -> "lor"
+    | Lxor    _ -> "lxor"
+    | Lsl     _ -> "lsl"
+    | Lsr     _ -> "lsr"
     | Or      _ -> "or"
     | Rec     _ -> "rec"
     | Switch  _ -> "switch"
@@ -370,6 +390,11 @@ module T =
       (fun reg -> Rec    reg);
       (fun reg -> Switch reg);
       (fun reg -> Mod    reg);
+      (fun reg -> Land   reg);
+      (fun reg -> Lor    reg);
+      (fun reg -> Lxor   reg);
+      (fun reg -> Lsl    reg);
+      (fun reg -> Lsr    reg);
       (fun reg -> Or     reg);
       (fun reg -> True   reg);
       (fun reg -> Type   reg);
@@ -396,8 +421,6 @@ module T =
       |> add "inherit"
       |> add "initializer"
       |> add "lazy"
-      |> add "lsl"
-      |> add "lsr"
       |> add "match"
       |> add "method"
       |> add "mutable"

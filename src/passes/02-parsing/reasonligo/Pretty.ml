@@ -263,6 +263,11 @@ and pp_arith_expr = function
 | Mult  e -> pp_bin_op "*" e
 | Div   e -> pp_bin_op "/" e
 | Mod   e -> pp_bin_op "mod" e
+| Land  e -> pp_bin_op "land" e
+| Lor   e -> pp_bin_op "lor" e
+| Lxor  e -> pp_bin_op "lxor" e
+| Lsl   e -> pp_bin_op "lsl" e
+| Lsr   e -> pp_bin_op "lsr" e
 | Neg   e -> string "-" ^^ pp_expr e.value.arg
 | Int   e -> pp_int e
 | Nat   e -> pp_nat e

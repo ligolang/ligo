@@ -240,6 +240,11 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     | Mult times -> compile_bin_op C_MUL times
     | Div slash  -> compile_bin_op C_DIV slash
     | Mod mod_   -> compile_bin_op C_MOD mod_
+    | Land land_ -> compile_bin_op C_AND land_
+    | Lor lor_   -> compile_bin_op C_OR lor_
+    | Lxor lxor_ -> compile_bin_op C_XOR lxor_
+    | Lsl lsl_   -> compile_bin_op C_LSL lsl_
+    | Lsr lsr_   -> compile_bin_op C_LSR lsr_
     | Neg minus  -> compile_un_op C_NEG minus
     | Int i ->
       let ((_,i), loc) = r_split i in

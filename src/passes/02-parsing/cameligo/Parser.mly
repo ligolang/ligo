@@ -655,10 +655,18 @@ add_expr_level:
 | mult_expr_level                                  {               $1 }
 
 mult_expr_level:
-  bin_op(mult_expr_level, "*", unary_expr_level)   { EArith (Mult $1) }
-| bin_op(mult_expr_level, "/", unary_expr_level)   {  EArith (Div $1) }
-| bin_op(mult_expr_level, "mod", unary_expr_level) {  EArith (Mod $1) }
-| unary_expr_level                                 {               $1 }
+  bin_op(mult_expr_level, "*", shift_expr_level)    {  EArith (Mult $1) }
+| bin_op(mult_expr_level, "/", shift_expr_level)    {   EArith (Div $1) }
+| bin_op(mult_expr_level, "mod", shift_expr_level)  {   EArith (Mod $1) }
+| bin_op(mult_expr_level, "land", shift_expr_level) {  EArith (Land $1) }
+| bin_op(mult_expr_level, "lor", shift_expr_level)  {   EArith (Lor $1) }
+| bin_op(mult_expr_level, "lxor", shift_expr_level) {  EArith (Lxor $1) }
+| shift_expr_level                                  {                $1 }
+
+shift_expr_level:
+  bin_op(unary_expr_level, "lsl", shift_expr_level) { EArith (Lsl $1) }
+| bin_op(unary_expr_level, "lsr", shift_expr_level) { EArith (Lsr $1) }
+| unary_expr_level                                  { $1 }
 
 unary_expr_level:
   "-" call_expr_level {

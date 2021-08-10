@@ -579,3 +579,52 @@ let is_a_nat: option<nat> = Michelson.is_nat(1);
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
+## Bitwise operations
+You can perform bitwise operations as follows:
+
+> bitwise operations can be performed mostly with `nat`'s
+>
+> only in case of bitwise and, the first operand can be either `int` or `nat`
+
+```cameligo
+// Bitwise and (first operand can be int or nat)
+let four : nat = 4n land 4n // 4
+let four_ : nat = 7 land 4n // 4
+// Bitwise or 
+let seven : nat = 7n lor 4n // 7
+// Bitwise xor
+let three : nat = 7n lxor 4n // 3
+// Bitwise shift left
+let fourteen : nat = 7n lsl 1n // 14
+// Bitwise shift right
+let seven_ : nat = 14n land 1n // 7
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+## Bitwise operations
+You can perform bitwise operations as follows:
+
+> bitwise operations can be performed mostly with `nat`'s
+>
+> only in case of bitwise and, the first operand can be either `int` or `nat`
+
+```reasonligo
+// Bitwise and (first operand can be int or nat)
+let four : nat = 4n land 4n; // 4
+let four_ : nat = 7 land 4n; // 4
+// Bitwise or
+let seven : nat = 7n lor 4n; // 7
+// Bitwise xor
+let three : nat = 7n lxor 4n; // 3
+// Bitwise shift left
+let fourteen : nat = 7n lsl 1n; // 14
+// Bitwise shift right
+let seven_ : nat = 14n land 1n; // 7
+```
+
+</Syntax>
