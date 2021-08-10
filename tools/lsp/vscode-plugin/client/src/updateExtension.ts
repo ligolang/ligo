@@ -8,6 +8,26 @@ import * as vscode from 'vscode'
 
 import { extensionId } from './common'
 
+/**
+ * Stripped version of the extension query type returned by the VSCode
+ * Marketplace with fields that are interesting to us.
+ */
+type ExtensionQuery = {
+  results: [
+    {
+      extensions: [
+        {
+          versions: [
+            {
+              version: string
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
 async function postWithTimeout<T>(
   ep: string,
   body: any,
@@ -49,8 +69,8 @@ async function getCurrentExtensionVersion(): Promise<string | undefined> {
   }
 
   const queryUrl = 'https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery?api-version=6.1-preview.1'
-  return (await postWithTimeout<any>(queryUrl, query))
-    .data.results[0]?.extensions[0]?.versions[0]?.version
+  return (await postWithTimeout<ExtensionQuery>(queryUrl, query))
+    ?.data.results[0]?.extensions[0]?.versions[0]?.version
 }
 
 export default async function updateExtension(cxt: ExtensionContext): Promise<void> {
@@ -59,13 +79,13 @@ export default async function updateExtension(cxt: ExtensionContext): Promise<vo
 
   const installedVersion = packageFile?.version
 
-  if (installedVersion === undefined) {
+  if (!installedVersion) {
     return
   }
 
   const availableVersion = await getCurrentExtensionVersion()
 
-  if (availableVersion === undefined) {
+  if (!availableVersion) {
     return
   }
 

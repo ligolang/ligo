@@ -95,7 +95,10 @@ async function getLigoReleases(): Promise<Release[] | undefined> {
   return axios.default
     .get(releasesUrl)
     .then((res) => res.data)
-    .catch((err) => vscode.window.showErrorMessage(`Could not fetch LIGO releases: ${err.message}`))
+    .catch((err) => {
+      vscode.window.showErrorMessage(`Could not fetch LIGO releases: ${err.message}`)
+      return undefined
+    })
 }
 
 async function getLatestLigoRelease(): Promise<Release | undefined> {
