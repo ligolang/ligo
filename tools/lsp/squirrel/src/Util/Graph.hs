@@ -29,23 +29,28 @@ import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Data.Traversable (for)
 import Data.Tuple (swap)
-import UnliftIO.Async qualified as Async
+
+import Util (mapConcurrentlyBounded)
+
+traverseAMImpl
+  :: (Monad m, Ord a, Ord b)
+  => ((a -> m (a, b)) -> [a] -> m [(a, b)])
+  -> (a -> m b)
+  -> AdjacencyMap a
+  -> m (AdjacencyMap b)
+traverseAMImpl traverser f g = do
+  keysList <- traverser (sequenceA . (id &&& f)) (G.vertexList g)
+  let adj = G.adjacencyMap g
+  let keys = Map.fromList keysList
+  pure $ G.fromAdjacencySets $ map (second (Set.map (keys Map.!) . (adj Map.!)) . swap) keysList
 
 -- | Traverse an adjacency map.
 traverseAM :: (Monad m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
-traverseAM f g = do
-  keysList <- traverse (sequenceA . (id &&& f)) (G.vertexList g)
-  let adj = G.adjacencyMap g
-  let keys = Map.fromList keysList
-  pure $ G.fromAdjacencySets $ map (second (Set.map (keys Map.!) . (adj Map.!)) . swap) keysList
+traverseAM = traverseAMImpl traverse
 
 -- | Traverse an adjacency map concurrently.
 traverseAMConcurrently :: (MonadUnliftIO m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
-traverseAMConcurrently f g = do
-  keysList <- Async.mapConcurrently (sequenceA . (id &&& f)) (G.vertexList g)
-  let adj = G.adjacencyMap g
-  let keys = Map.fromList keysList
-  pure $ G.fromAdjacencySets $ map (second (Set.map (keys Map.!) . (adj Map.!)) . swap) keysList
+traverseAMConcurrently = traverseAMImpl mapConcurrentlyBounded
 
 data Vis = Visiting | Visited
 
