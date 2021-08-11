@@ -117,6 +117,7 @@ function getLigoPath(config: vscode.WorkspaceConfiguration): string | undefined 
   }
 
   try {
+    vscode.window.showWarningMessage('LIGO binary not found through the configuration for the Visual Studio Code extension. Using PATH.')
     return execFileSync('which', ['ligo']).toString().trim()
   } catch {
     return undefined
@@ -180,7 +181,14 @@ async function promptLigoUpdate(
   }
 }
 
-export default async function updateLigo(config: vscode.WorkspaceConfiguration): Promise<void> {
+export default async function updateLigo(): Promise<void> {
+  const config = vscode.workspace.getConfiguration()
+  /* eslint-disable no-use-before-define */
+  return updateLigoImpl(config)
+  /* eslint-enable no-use-before-define */
+}
+
+async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<void> {
   const ligoPath = getLigoPath(config)
 
   let data: string
@@ -211,7 +219,7 @@ export default async function updateLigo(config: vscode.WorkspaceConfiguration):
           vscode.ConfigurationTarget.Global,
           true,
         )
-        updateLigo(config)
+        updateLigo()
         return
       }
       case 'Download':
