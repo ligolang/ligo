@@ -42,7 +42,6 @@ module.exports = grammar({
       , [$.Name, $.TypeName]
       , [$.annot_pattern, $.let_decl]
       , [$.lambda, $.tuple_pattern]
-      , [$._expr_term, $.nullary_constr_pattern]
       , [$._expr_term, $.FieldName]
       , [$._expr_term, $.TypeName]
       , [$.FieldName, $.TypeName]
@@ -195,8 +194,7 @@ module.exports = grammar({
         $.tuple_pattern,
         $.var_pattern,
         $.annot_pattern,
-        $.unary_constr_pattern,
-        $.nullary_constr_pattern,
+        $.constr_pattern,
         $.list_pattern,
         $.record_pattern,
       ),
@@ -225,14 +223,10 @@ module.exports = grammar({
       field("type", $._type_expr),
     ),
 
-    unary_constr_pattern: $ => prec(1, seq(
+    constr_pattern: $ => prec(1, seq(
       field("constructor", $.ConstrName),
-      field("arg", $._pattern),
+      optional(field("arg", $._pattern)),
     )),
-
-    nullary_constr_pattern: $ => seq(
-      field("constructor", $.ConstrName),
-    ),
 
     list_pattern: $ => common.brackets(
       common.sepBy(',', field("pattern", $._spread_pattern)),

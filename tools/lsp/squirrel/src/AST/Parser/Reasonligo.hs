@@ -52,8 +52,7 @@ recognise (SomeRawTree dialect rawTree)
         "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field "type"
         "list_pattern"           -> IsList   <$> fields "pattern"
         "var_pattern"            -> IsVar    <$> field  "var"
-        "nullary_constr_pattern" -> IsConstr <$> field  "constructor" <*> return Nothing
-        "unary_constr_pattern"   -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
+        "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
         "spread_pattern"         -> IsSpread <$> field  "expr"
         "record_pattern"         -> IsRecord <$> fields "field"
         "wildcard"               -> return IsWildcard
