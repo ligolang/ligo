@@ -37,19 +37,44 @@ module.exports = grammar({
   externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
+  // This grammar is not LR(1), thus it has a bunch of conflicts.
+  // There are two major non-LR(1)-ities.
+  // The first one is Expr/Pattern conflict at the beginning of expression.
+  // For example, in ((x . , ... x might be an expression in case of ((x, y))
+  // and x might be a pattern in case of ((x, y) => x * y).
+  // The second one is Expr/Type conflict in lambda type annotation.
+  // For example, in (x) : y => z . ( z might be an expression in case of (x) : y => z (w)
+  // and z might be a type in case of (x) : y => z (w) => v where
+  // y => z (w) is lambda type annotation and v is lambda body.
+  // Those major conflicts lead to a bunch of conflicts in grammar.
+  // For example, [] might be an expression or a pattern.
+  // In case of expression, the parser follows list rule.
+  // In case of pattern, the parser follows list_pattern rule.
+  // As a result we get list/list_pattern conflict.
+  // In {x, ... x might be either FieldName in record expression or
+  // NameDecl in record pattern, so we get FieldName/NameDecl conflict.
+  // It is possible to combine several conflicts into one
+  // by combining conflicting rules together, but it leads to problems in Reasonligo.hs.
+  // Also, there is a combination of two major conflicts, for example for z in (x) : y => (z . )
+
   conflicts: $ =>
-    [[$._expr_term, $._unannotated_pattern]
-      , [$.Name, $.TypeName]
-      , [$.lambda, $.tuple_pattern]
-      , [$.FieldName, $.TypeName]
-      , [$.FieldName, $.NameDecl]
-      , [$.string_type, $._literal]
-      , [$.Name, $.NameDecl]
-      , [$.NameDecl, $.TypeName]
-      , [$.Name, $.NameDecl, $.TypeName]
-      , [$.TypeWildcard, $.wildcard]
-      , [$.list, $.list_pattern]
-      , [$._core_type, $._literal]
+    [ // Pattern/Expr conflicts
+      [$._expr_term, $._unannotated_pattern]
+    , [$.lambda, $.tuple_pattern]
+    , [$.FieldName, $.NameDecl]
+    , [$.Name, $.NameDecl]
+    , [$.list, $.list_pattern]
+
+      // Type/Expr conflicts
+    , [$.Name, $.TypeName]
+    , [$.FieldName, $.TypeName]
+    , [$.string_type, $._literal]
+    , [$.TypeWildcard, $.wildcard]
+    , [$._core_type, $._literal]
+
+      // Pattern/Expr + Type/Expr conflicts
+    , [$.Name, $.NameDecl, $.TypeName]
+    , [$.NameDecl, $.TypeName]
     ],
 
   rules: {
