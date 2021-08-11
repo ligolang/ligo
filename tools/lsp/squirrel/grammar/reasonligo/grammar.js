@@ -314,7 +314,7 @@ module.exports = grammar({
     binary_call: $ => choice(
       ...OPS
         .map(([op, precendence]) =>
-          prec.right(precendence, seq(
+          prec.left(precendence, seq(
             field("left", $._expr),
             field("op", $[op]),
             field("right", $._expr),
