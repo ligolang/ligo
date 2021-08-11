@@ -38,9 +38,8 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
   conflicts: $ =>
-    [[$._expr_term, $._pattern]
+    [[$._expr_term, $._unannotated_pattern]
       , [$.Name, $.TypeName]
-      , [$.annot_pattern, $.let_decl]
       , [$.lambda, $.tuple_pattern]
       , [$._expr_term, $.FieldName]
       , [$._expr_term, $.TypeName]
@@ -168,7 +167,7 @@ module.exports = grammar({
     let_decl: $ => prec.left(PREC.LET, common.withAttrs($, seq(
       'let',
       optional(field("rec", $.rec)),
-      common.sepBy1(',', field("binding", $._pattern)),
+      common.sepBy1(',', field("binding", $._unannotated_pattern)),
       optional(seq(
         ':',
         field("type", $._type_expr)
@@ -189,11 +188,16 @@ module.exports = grammar({
 
     _pattern: $ =>
       choice(
+        $._unannotated_pattern,
+        $.annot_pattern,
+      ),
+
+    _unannotated_pattern: $ =>
+      choice(
         $.wildcard,
         $._literal,
         $.tuple_pattern,
         $.var_pattern,
-        $.annot_pattern,
         $.constr_pattern,
         $.list_pattern,
         $.record_pattern,
