@@ -51,10 +51,8 @@ module.exports = grammar({
       , [$.Name, $.NameDecl]
       , [$.NameDecl, $.TypeName]
       , [$.Name, $.NameDecl, $.TypeName]
-      , [$.list_pattern, $.Nil, $.list]
-      , [$.list, $.Nil]
-      , [$.list_pattern, $.Nil]
       , [$.TypeWildcard, $.wildcard]
+      , [$.list, $.list_pattern]
       , [$._core_type, $._literal]
     ],
 
@@ -212,7 +210,6 @@ module.exports = grammar({
         $.String,
         $.Bytes,
         $.Unit,
-        $.Nil,
         $.None,
       ),
 
@@ -576,7 +573,6 @@ module.exports = grammar({
     False: $ => 'false',
     True: $ => 'true',
     Unit: $ => seq('(', ')'),
-    Nil: $ => seq('[', ']'),
     None: $ => 'None',
     Some: $ => 'Some',
     skip: $ => 'skip',

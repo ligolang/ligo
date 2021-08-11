@@ -236,7 +236,6 @@ recognise (SomeRawTree dialect rawTree)
         ("None", _)            -> return $ Ctor "None"
         ("Bool", b)            -> return $ Ctor b
         ("Unit", _)            -> return $ Ctor "Unit"
-        ("Nil", _)             -> return $ Ctor "Nil"
         _                      -> fallthrough
 
   -- Err
