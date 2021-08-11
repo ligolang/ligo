@@ -140,7 +140,14 @@ executables:
     source-dirs:
       - app/ligo-squirrel
 
-    ghc-options: -threaded
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      # Run the idle GC if the application has been idle for at least 10 seconds
+      # but ensure it runs at last once per minute.
+      # Weird quoting is required for cabal to correctly pass this as _one_
+      # option, otherwise it splits by spaces.  :facepalm:
+      - '"-with-rtsopts=-N -A64m -AL256m -I10 -Iw60"'
 
   ligo-vet:
     main: Main.hs
@@ -155,7 +162,10 @@ executables:
       - optparse-applicative
       - with-utf8
 
-    ghc-options: -threaded
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - '"-with-rtsopts=-N -A64m -AL256m"'
 
 tests:
   lsp-handlers-test:
@@ -186,9 +196,6 @@ tests:
       - -threaded
       - -eventlog
       - -rtsopts
-        # Weird quoting is required for cabal to correctly pass this as _one_ option,
-        # otherwise it splits by spaces.
-        # :facepalm:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     build-tools:
@@ -206,9 +213,6 @@ tests:
       - -threaded
       - -eventlog
       - -rtsopts
-        # Weird quoting is required for cabal to correctly pass this as _one_ option,
-        # otherwise it splits by spaces.
-        # :facepalm:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
@@ -242,9 +246,6 @@ tests:
       - -threaded
       - -eventlog
       - -rtsopts
-        # Weird quoting is required for cabal to correctly pass this as _one_ option,
-        # otherwise it splits by spaces.
-        # :facepalm:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
@@ -274,9 +275,6 @@ tests:
       - -threaded
       - -eventlog
       - -rtsopts
-        # Weird quoting is required for cabal to correctly pass this as _one_ option,
-        # otherwise it splits by spaces.
-        # :facepalm:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     source-dirs:
