@@ -33,14 +33,12 @@ instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest FromCompiler m whe
     pure $ FindContract ast (fromCompiler dialect defs) msg
 
 -- | Extract `ScopeForest` from LIGO scope dump.
---
 fromCompiler :: Lang -> LigoDefinitions -> ScopeForest
 fromCompiler dialect (LigoDefinitions decls scopes) =
     foldr (buildTree decls) (ScopeForest [] Map.empty) scopes
   where
     -- For a new scope to be injected, grab its range and decl and start
     -- injection process.
-    --
     buildTree :: LigoDefinitionsInner -> LigoScope -> ScopeForest -> ScopeForest
     buildTree (LigoDefinitionsInner decls') (LigoScope r es _) = do
       let ds = Map.fromList $ map (fromLigoDecl . (decls' !)) es
@@ -66,7 +64,6 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
         vspec = ValueDeclSpecifics{ .. }
 
     -- Find a place for a scope inside a ScopeForest.
-    --
     injectScope :: (ScopeTree, Map DeclRef ScopedDecl) -> ScopeForest -> ScopeForest
     injectScope (subject, ds') (ScopeForest forest ds) =
         ScopeForest (loop forest) (ds <> ds')
@@ -79,12 +76,10 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
 
         -- If there are no trees above subject here, just put it in.
         -- Otherwise, put it in a tree that covers it.
-        --
         maybeLoop :: Maybe ScopeTree -> Maybe ScopeTree
         maybeLoop = Just . maybe subject restart
 
         -- Take a forest out of tree, loop, put it back.
-        --
         restart (only -> (r, trees)) = make (r, loop trees)
 
 data ListZipper a = ListZipper

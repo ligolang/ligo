@@ -4,7 +4,6 @@ module Test.Capabilities.SelectionRange
 
 import Control.Lens ((^.))
 import Data.Function ((&))
-import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
@@ -27,7 +26,7 @@ simplify (Range (l1, c1, _) (l2, c2, _) f) = SimpleRange (l1, c1) (l2, c2) f
 
 unit_selectionRangeInsideCase :: Assertion
 unit_selectionRangeInsideCase = do
-  filepath <- makeAbsolute (contractsDir </> "heap.ligo")
+  let filepath = contractsDir </> "heap.ligo"
   tree <- readContract filepath
   let position = (point 16 8){_rFile = filepath}
       results = findCoveringRanges (tree ^. nestedLIGO) position
