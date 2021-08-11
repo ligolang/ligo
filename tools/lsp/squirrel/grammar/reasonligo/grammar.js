@@ -41,8 +41,6 @@ module.exports = grammar({
     [[$._expr_term, $._unannotated_pattern]
       , [$.Name, $.TypeName]
       , [$.lambda, $.tuple_pattern]
-      , [$._expr_term, $.FieldName]
-      , [$._expr_term, $.TypeName]
       , [$.FieldName, $.TypeName]
       , [$.FieldName, $.NameDecl]
       , [$.string_type, $._literal]
