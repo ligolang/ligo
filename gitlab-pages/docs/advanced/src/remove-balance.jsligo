@@ -6,4 +6,4 @@ let balances_under = (b : balances, threshold:tez) : balances => {
     if (v < threshold) { return Map.remove (k,acc) } else {return acc}
   };
   return Map.fold (f,b,b);
-}
+};

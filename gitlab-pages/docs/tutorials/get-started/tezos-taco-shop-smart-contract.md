@@ -356,7 +356,7 @@ let init_storage : taco_shop_storage = Map.literal (list([
 > The storage value is a map with two bindings (entries) distinguished
 > by their keys `1n` and `2n`.
 
-Out of curiosity, let's try to use LIGO `compile-expression` command compile this value down to michelson.  
+Out of curiosity, let's try to use LIGO `compile-expression` command compile this value down to michelson.
 
 <Syntax syntax="pascaligo">
 
@@ -671,8 +671,8 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
 
 </Syntax>
 
-Now let's test our function against a few inputs using the LIGO test framework.  
-For that, we will have another file in which will describe our test:  
+Now let's test our function against a few inputs using the LIGO test framework.
+For that, we will have another file in which will describe our test:
 
 <Syntax syntax="pascaligo">
 
@@ -681,28 +681,31 @@ For that, we will have another file in which will describe our test:
 
 function assert_string_failure (const res : test_exec_result ; const expected : string) : unit is
   block {
-  const expected = Test.compile_value(expected) ;
-  } with (
+  const expected = Test.eval(expected) ;
+  } with
     case res of
     | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal (actual, expected))
     | Fail (Other) -> failwith ("contract failed for an unknown reason")
     | Success -> failwith ("bad price check")
     end
-  )
 
-function test(const _ : unit) is block {
-  // originate the contract with a initial storage
+const test = block {
+  // Originate the contract with a initial storage
   const init_storage =
     map [
       1n -> record [ current_stock = 50n ; max_price = 50tez ] ;
       2n -> record [ current_stock = 20n ; max_price = 75tez ] ; ];
   const (pedro_taco_shop_ta, _code, _size) = Test.originate(buy_taco, init_storage, 0tez) ;
+  // Convert typed_address to contract
   const pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
+  // Convert contract to address
   const pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
-  // test inputs
+
+  // Test inputs
   const classico_kind = 1n ;
   const unknown_kind = 3n ;
 
+  // Auxiliary function for testing equality in maps
   function eq_in_map (const r : taco_supply; const m : taco_shop_storage; const k : nat) is block {
     var b := case Map.find_opt(k, m) of
     | None -> False
@@ -737,25 +740,29 @@ function test(const _ : unit) is block {
 #include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.mligo"
 
 let assert_string_failure (res : test_exec_result) (expected : string) : unit =
-  let expected = Test.compile_value expected in
+  let expected = Test.eval expected in
   match res with
   | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal actual expected)
   | Fail (Other) -> failwith "contract failed for an unknown reason"
   | Success -> failwith "bad price check"
 
-let test () =
+let test =
   (* originate the contract with a initial storage *)
   let init_storage = Map.literal [
       (1n, { current_stock = 50n ; max_price = 50tez }) ;
       (2n, { current_stock = 20n ; max_price = 75tez }) ; ]
   in
   let (pedro_taco_shop_ta, _code, _size) = Test.originate buy_taco init_storage 0tez in
+  (* Convert typed_address to contract *)
   let pedro_taco_shop_ctr = Test.to_contract pedro_taco_shop_ta in
+  (* Convert contract to address *)
   let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr) in
-  (* test inputs *)
+
+  (* Test inputs *)
   let classico_kind = 1n in
   let unknown_kind = 3n in
 
+  (* Auxiliary function for testing equality in maps *)
   let eq_in_map (r : taco_supply) (m : taco_shop_storage) (k : nat) =
     match Map.find_opt k m with
     | None -> false
@@ -788,7 +795,7 @@ let test () =
 #include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.religo"
 
 let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit => {
-  let expected = Test.compile_value (expected) ;
+  let expected = Test.eval (expected) ;
   switch (res) {
   | Fail (Rejected (actual,_)) => assert (Test.michelson_equal (actual, expected))
   | Fail (Other) => failwith ("contract failed for an unknown reason")
@@ -796,18 +803,22 @@ let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit
   }
 } ;
 
-let test = (_ : unit) =>
+let test =
   /* originate the contract with a initial storage */
   let init_storage = Map.literal ([
       (1n, { current_stock : 50n , max_price : 50tez }) ,
       (2n, { current_stock : 20n , max_price : 75tez }) , ]) ;
   let (pedro_taco_shop_ta, _code, _size) = Test.originate (buy_taco, init_storage, 0tez) ;
+  /* Convert typed_address to contract */
   let pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
+  /* Convert contract to address */
   let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
-  /* test inputs */
+
+  /* Test inputs */
   let classico_kind = 1n ;
   let unknown_kind = 3n ;
 
+  /* Auxiliary function for testing equality in maps */
   let eq_in_map = ((r, m, k) : (taco_supply, taco_shop_storage, nat)) : bool =>
     switch (Map.find_opt (k, m)) {
     | None => false
@@ -841,7 +852,7 @@ let test = (_ : unit) =>
 #include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.jsligo"
 
 let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit => {
-  let expected = Test.compile_value (expected) ;
+  let expected = Test.eval (expected) ;
   match (res, {
     Fail: (x: test_exec_error) => (
       match (x, {
@@ -852,18 +863,22 @@ let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit
   } );
 } ;
 
-let test = (_: unit): unit => {
-  /* originate the contract with a initial storage */
+let _test = (_: unit): unit => {
+  /* Originate the contract with a initial storage */
   let init_storage = Map.literal (list([
       [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
       [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }] ])) ;
   let [pedro_taco_shop_ta, _code, _size] = Test.originate (buy_taco, init_storage, 0 as tez) ;
+  /* Convert typed_address to contract */
   let pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
+  /* Convert contract to address */
   let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
-  /* test inputs */
+
+  /* Test inputs */
   let classico_kind = (1 as nat) ;
   let unknown_kind = (3 as nat) ;
 
+  /* Auxiliary function for testing equality in maps */
   let eq_in_map = ([r, m, k] : [taco_supply, taco_shop_storage, nat]) : bool =>
     match(Map.find_opt(k, m), {
      None: () => false,
@@ -889,55 +904,70 @@ let test = (_: unit): unit => {
   return unit
 }
 
+let test = _test (unit)
 ```
 
 </Syntax>
 
 Let's break it down a little bit:
-- we define `assert_string_failure`, a function reading a transfer result and testing against a failure. It also compares the failing data - here, a string - to what we expect it to be
-- `test` is actually performing the tests: Originates the taco-shop contract; purchasing a Taco with 1tez and checking that the stock has been updated ; attempting to purchase a Taco with 2tez and trying to purchase an unregistred Taco.
+- we include the file corresponding to the smart contract we want to
+  test;
+- we define `assert_string_failure`, a function reading a transfer
+  result and testing against a failure. It also compares the failing
+  data - here, a string - to what we expect it to be;
+- `test` is actually performing the tests: Originates the taco-shop
+  contract; purchasing a Taco with 1tez and checking that the stock
+  has been updated ; attempting to purchase a Taco with 2tez and
+  trying to purchase an unregistred Taco. An auxiliary function to
+  check equality of values on maps is defined.
 
 > checkout the [reference page](../../reference/test.md) for a more detailed description of the Test API
 
-Now it is time to use the ligo command `test`:  
+Now it is time to use the LIGO command `test`. It will evaluate our
+smart contract and print the result value of those entries that start
+with `"test"`:
 
 <Syntax syntax="pascaligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.ligo test
+ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.ligo
 # Output:
 #
-# Test passed with ()
+# Everything at the top-level was executed.
+# - test exited with value ().
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo test
+ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo
 # Output:
 #
-# Test passed with ()
+# Everything at the top-level was executed.
+# - test exited with value ().
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.religo test
+ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.religo
 # Output:
 #
-# Test passed with ()
+# Everything at the top-level was executed.
+# - test exited with value ().
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.jsligo test
+ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.jsligo
 # Output:
 #
-# Test passed with ()
+# Everything at the top-level was executed.
+# - test exited with value ().
 ```
 
 </Syntax>

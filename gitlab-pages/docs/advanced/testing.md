@@ -474,7 +474,7 @@ Notice that now we wrote the test property *inside* LIGO, but the contract being
 
 [More info about the `Test` module available when using the sub-command `test`.](../reference/test.md)
 
-#### Unit testing a function
+#### Unit testing a function with `compile_expression_subst`
 
 Consider a map binding addresses to amounts and a function removing all entries in that map having an amount less to a given threshold.
 
@@ -516,7 +516,7 @@ function balances_under (const b : balances ; const threshold : tez) is
 // This is remove-balance.religo
 type balances = map(address, tez);
 
-let balances_under = ( (b, threshold) : (balances, tez) ) : balances => 
+let balances_under = ( (b, threshold) : (balances, tez) ) : balances =>
   let f = ( (acc,(k,v)) : (balances, (address, tez)) ) =>  if (v < threshold) { Map.remove (k,acc) } else {acc} ;
   Map.fold (f,b,b)
 ```
@@ -579,10 +579,14 @@ let x = Test.reset_state ( 5 as nat, list([]) as list <nat> );
 
 </Syntax>
 
-Now build the `balances` map that will serve as the input of our test.  
-Because types/values living in the context of `balances_under` are not directly accessible from our unit-test code, you will need to compile bootstrap account
-addresses to michelson using `Test.compile_value` and inject the resulting michelson value in the map using `Test.compile_expression_subst`.  
-Note that within the code injection (e.g. `{| <code> |}`), you have access to all the types accesible from the tested file.
+Now build the `balances` map that will serve as the input of our test.
+Because types/values living in the context of `balances_under` are not
+directly accessible from our unit-test code, you will need to compile
+bootstrap account addresses to michelson using `Test.compile_value`
+and inject the resulting michelson value in the map using
+`Test.compile_expression_subst`. Note that within the code injection
+(e.g. `{| <code> |}`), you have access to all the types accesible from
+the tested file.
 
 <Syntax syntax="cameligo">
 
@@ -641,14 +645,22 @@ let balances : michelson_program =
 
 </Syntax>
 
-In general, you can use `Test.compile_value` for simple types such as `int`; `string`; `nat`; `bytes`; `address` and `pair` which will directly compile its argument to michelson without the need of writing a LIGO code injection. Otherwise, use `Test.compile_expression_subst` or `Test.compile_expression` to compile an expression written in the same manner as in the tested file.  
-  
-> `Test.compile_expression_subst` will bind a new variable holding a michelson [injection](./code-injection.md) 
+In general, you can use `Test.compile_value` for simple types such as
+`int`; `string`; `nat`; `bytes`; `address` and `pair` which will
+directly compile its argument to michelson without the need of writing
+a LIGO code injection. Otherwise, use `Test.compile_expression_subst`
+or `Test.compile_expression` to compile an expression written in the
+same manner as in the tested file.
+
+> `Test.compile_expression_subst` will bind a new variable holding a michelson [injection](./code-injection.md)
 > for each hole (e.g. `$a1`) present in the substitution before compiling the expression.
 
-Our simple test loop will call `balances_under` with the compiled map defined above, get the size of the resulting map and compare it to an expected value with `Test.michelson_equal`.   
-The threshold - of type `nat` in the test file but of type `tez` in the tested file - also needs to be dynamically compiled from the test loop and 
-injected in the function call using `Test.compile_expression_subst`.  
+Our simple test loop will call `balances_under` with the compiled map
+defined above, get the size of the resulting map and compare it to an
+expected value with `Test.michelson_equal`. The threshold - of type
+`nat` in the test file but of type `tez` in the tested file - also
+needs to be dynamically compiled from the test loop and injected in
+the function call using `Test.compile_expression_subst`.
 
 We also print the actual and expected sizes for good measure.
 
@@ -664,7 +676,7 @@ let test =
   List.iter
     (fun ((threshold , expected_size) : nat * nat) ->
       let expected_size = Test.compile_value expected_size in
-      let size = 
+      let size =
         Test.compile_expression_subst under_test
           [%cameligo ({| Map.size (balances_under $b $threshold) |} : ligo_program)]
           [ ("b", balances) ; ("threshold", to_tez threshold)]
@@ -715,7 +727,7 @@ let to_tez: nat => michelson_program = (i: nat): michelson_program =>
 
 let test =
   List.iter (
-    (((threshold , expected_size) : (nat, nat)) => 
+    (((threshold , expected_size) : (nat, nat)) =>
       let expected_size = Test.compile_value(expected_size) ;
       let size = Test.compile_expression_subst (
         under_test,
@@ -743,7 +755,7 @@ let _test = () : unit =>
   List.iter
     ( ([threshold , expected_size] : [nat , nat]) : unit => {
       let expected_size = Test.compile_value (expected_size) ;
-      let size = 
+      let size =
         Test.compile_expression_subst (
           under_test,
           jsligo` Map.size (balances_under ($b, $threshold)) ` as ligo_program,
@@ -761,10 +773,10 @@ let test = _test();
 
 You can now execute the test:
 
-<Syntax syntax="cameligo">
+<Syntax syntax="pascaligo">
 
 ```shell
-> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance.mligo test
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance.ligo
 // Outputs:
 // ("expected" , 2)
 // ("actual" , 2)
@@ -772,11 +784,305 @@ You can now execute the test:
 // ("actual" , 1)
 // ("expected" , 0)
 // ("actual" , 0)
-// Test passed with ()
+// Everything at the top-level was executed.
+// - test exited with value ().
 ```
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
+```shell
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance.mligo
+// Outputs:
+// ("expected" , 2)
+// ("actual" , 2)
+// ("expected" , 1)
+// ("actual" , 1)
+// ("expected" , 0)
+// ("actual" , 0)
+// Everything at the top-level was executed.
+// - test exited with value ().
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```shell
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance.religo
+// Outputs:
+// ("expected" , 2)
+// ("actual" , 2)
+// ("expected" , 1)
+// ("actual" , 1)
+// ("expected" , 0)
+// ("actual" , 0)
+// Everything at the top-level was executed.
+// - test exited with value ().
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```shell
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance.jsligo
+// Outputs:
+// ("expected" , 2)
+// ("actual" , 2)
+// ("expected" , 1)
+// ("actual" , 1)
+// ("expected" , 0)
+// ("actual" , 0)
+// Everything at the top-level was executed.
+// - test exited with value ().
+```
+
+</Syntax>
+
+> ⚠️ `Test.compile_expression_subst` is being deprecated. It is
+> recommended that it is replaced by `Test.run` and `Test.eval` as in
+> the following section.
+
+#### Unit testing a function with `run`
+
+A cleaner alternative for testing is using the primitive `Test.run`.
+This primitive runs a function on an input, translating both (function
+and input) to Michelson before running on the Michelson interpreter.
+More concretely: a) compiles the function argument to Michelson
+`f_mich`; b) compiles the value argument (which was evaluated already)
+to Michelson `v_mich`; c) runs the Michelson interpreter on the code
+`f_mich` with starting stack `[ v_mich ]`.
+
+Now we will see how we can re-write the tests for `balance_under`
+using it. First, we include the file containing the function under
+test and reset the state with 5 bootstrap accounts just as before:
+
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=rmv_bal_test
+#include "./gitlab-pages/docs/advanced/src/remove-balance.mligo"
+let _u = Test.reset_state 5n ([] : nat list)
+```
+
+</Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=rmv_bal_test
+#include "./gitlab-pages/docs/advanced/src/remove-balance.ligo"
+const _u = Test.reset_state (5n, (list [] : list (nat)))
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=rmv_bal_test
+#include "./gitlab-pages/docs/advanced/src/remove-balance.religo"
+let _u = Test.reset_state (5n, ([] : list(nat)));
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=rmv_bal_test
+#include "./gitlab-pages/docs/advanced/src/remove-balance.jsligo"
+let x = Test.reset_state ( 5 as nat, list([]) as list <nat> );
+```
+
+</Syntax>
+
+Also as before, we construct the `balances` map that will serve as the
+input of our test. This time, however, we can write it directly, as if we
+were in regular LIGO:
+
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=rmv_bal_test
+let balances : balances =
+  let (a1, a2, a3) = (Test.nth_bootstrap_account 1, Test.nth_bootstrap_account 2, Test.nth_bootstrap_account 3) in
+  Map.literal [ (a1 , 10tz ) ; (a2, 100tz ) ; (a3, 1000tz ) ]
+```
+
+</Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=rmv_bal_test
+const balances : balances = block {
+  const a1 = Test.nth_bootstrap_account(1);
+  const a2 = Test.nth_bootstrap_account(2);
+  const a3 = Test.nth_bootstrap_account(3); } with
+  (map [ a1 -> 10tz ; a2 -> 100tz ; a3 -> 1000tz ])
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=rmv_bal_test
+let balances : balances =
+  let (a1, a2, a3) = (Test.nth_bootstrap_account(1), Test.nth_bootstrap_account(2), Test.nth_bootstrap_account(3));
+  Map.literal([ (a1 , 10tz ) , (a2, 100tz ) , (a3, 1000tz ) ]);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=rmv_bal_test
+let balances : balances =
+  Map.literal(list([[Test.nth_bootstrap_account(1), 10 as tez],
+                    [Test.nth_bootstrap_account(2), 100 as tez],
+                    [Test.nth_bootstrap_account(3), 1000 as tez]]));
+```
+
+</Syntax>
+
+Again, our test loop will call `balances_under` with the map
+defined above, get the size of the resulting map and compare it to an
+expected value with `Test.michelson_equal`.
+
+This time, we directly work with `tez` instead of working with a
+threshold of type `nat` and converting it. The function that is being
+compiled is called `tester`, and it does the same as the expression we
+used before in `compile_expression_subst`.
+
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=rmv_bal_test
+let test =
+  List.iter
+    (fun ((threshold , expected_size) : tez * nat) ->
+      let tester (balances, threshold : balances * tez) = Map.size (balances_under balances threshold) in
+      let size = Test.run tester (balances, threshold) in
+      let expected_size = Test.eval expected_size in
+      let () = Test.log ("expected", expected_size) in
+      let () = Test.log ("actual",size) in
+      assert (Test.michelson_equal size expected_size)
+    )
+    [(15tez,2n);(130tez,1n);(1200tez,0n)]
+```
+
+</Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=rmv_bal_test
+const test =
+  List.iter (
+    (function (const threshold : tez ; const expected_size : nat) is
+      block {
+        function tester(const input : (balances * tez)) is Map.size(balances_under(input.0, input.1));
+        const size_ = Test.run(tester, (balances, threshold));
+        const expected_size = Test.eval(expected_size);
+        Test.log (("expected", expected_size));
+        Test.log (("actual", size_));
+      } with
+        assert (Test.michelson_equal (size_, expected_size))),
+    list [(15tez, 2n); (130tez, 1n); (1200tez, 0n)])
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=rmv_bal_test
+let test =
+  List.iter (
+    (((threshold , expected_size) : (tez, nat)) =>
+      let tester = ((balances, threshold) : (balances, tez)) => Map.size (balances_under (balances, threshold));
+      let size = Test.run(tester, (balances, threshold));
+      let expected_size = Test.eval(expected_size) ;
+      let _u = Test.log (("expected", expected_size)) ;
+      let _u = Test.log (("actual", size)) ;
+      assert ( Test.michelson_equal (size, expected_size) )),
+    [ (15tez, 2n), (130tez, 1n), (1200tez, 0n)] );
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=rmv_bal_test
+let test =
+  List.iter
+    ( ([threshold , expected_size] : [tez , nat]) : unit => {
+      let tester = ([balances, threshold] : [balances, tez]) : nat => Map.size (balances_under (balances, threshold));
+      let size = Test.run(tester, [balances, threshold]);
+      let expected_size = Test.eval(expected_size) ;
+      let unit = Test.log (["expected", expected_size]) ;
+      let unit = Test.log (["actual",size]) ;
+      return (assert (Test.michelson_equal (size,expected_size)))
+    },
+    list ([ [15 as tez,2 as nat] , [130 as tez,1 as nat] , [1200 as tez,0 as nat]]) );
+```
+
+</Syntax>
+
+You can now execute the test:
+
+<Syntax syntax="cameligo">
+
+```shell
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.mligo
+// Outputs:
+// ("expected" , 2)
+// ("actual" , 2)
+// ("expected" , 1)
+// ("actual" , 1)
+// ("expected" , 0)
+// ("actual" , 0)
+// Everything at the top-level was executed.
+// - test exited with value ().
+```
+
+</Syntax>
+
+<Syntax syntax="pascaligo">
+
+```shell
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.ligo
+// Outputs:
+// ("expected" , 2)
+// ("actual" , 2)
+// ("expected" , 1)
+// ("actual" , 1)
+// ("expected" , 0)
+// ("actual" , 0)
+// Everything at the top-level was executed.
+// - test exited with value ().
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+```shell
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.religo
+// Outputs:
+// ("expected" , 2)
+// ("actual" , 2)
+// ("expected" , 1)
+// ("actual" , 1)
+// ("expected" , 0)
+// ("actual" , 0)
+// Everything at the top-level was executed.
+// - test exited with value ().
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```shell
+> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.jsligo
+// Outputs:
+// ("expected" , 2)
+// ("actual" , 2)
+// ("expected" , 1)
+// ("actual" , 1)
+// ("expected" , 0)
+// ("actual" , 0)
+// Everything at the top-level was executed.
+// - test exited with value ().
+```
+
+</Syntax>
 
 ### Testing with `interpret`
 
@@ -784,7 +1090,7 @@ The sub-command `interpret` allows to interpret an expression in a
 context initialised by a source file. The interpretation is done using
 Michelson's interpreter.
 
-Let's see how it works on an example. Suppose we write the following
+We can see how it works on an example. Suppose we write the following
 contract which we want to test.
 
 <Syntax syntax="pascaligo">
