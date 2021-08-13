@@ -22,7 +22,7 @@ ligo compile-contract examples/counter.ligo main
 
 ## Defining the initial storage
 
-If your contract implements a sophisticated storage, you can compile a Ligo expression into a Michelson value quite easily.
+If your contract implements a sophisticated storage, you can compile a LIGO expression into a Michelson value quite easily.
 
 ```zsh
 ligo compile-storage SOURCE_FILE ENTRY_POINT EXPRESSION

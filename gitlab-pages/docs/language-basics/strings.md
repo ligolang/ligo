@@ -95,7 +95,7 @@ let full_greeting: string = greeting + " " + name;
 
 
 
-## Extracting Subtrings
+## Extracting Substrings
 
 Substrings can be extracted using the predefined function
 `String.sub`. The first character has index 0 and the interval of

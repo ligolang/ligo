@@ -16,7 +16,7 @@ values of type `tez` are units of measure of Tezos tokens.
 
 <Syntax syntax="pascaligo">
 
-  * Natural numbers are written as digits follwed by the suffix `n`,
+  * Natural numbers are written as digits followed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
 
@@ -33,7 +33,7 @@ separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 </Syntax>
 <Syntax syntax="cameligo">
 
-  * Natural numbers are written as digits follwed by the suffix `n`,
+  * Natural numbers are written as digits followed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
 
@@ -50,7 +50,7 @@ separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 </Syntax>
 <Syntax syntax="jsligo">
 
-  * Natural numbers are written as digits follwed by the annotation `as nat`,
+  * Natural numbers are written as digits followed by the annotation `as nat`,
     like so: `12 as nat`, `0 as nat`, and the same restriction on zero as 
     integers applies: `0 as nat` is the only way to specify the natural zero.
 

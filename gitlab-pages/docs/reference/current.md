@@ -69,7 +69,7 @@ let now: timestamp
 let now: timestamp
 </SyntaxTitle>
 
-Returns the current time as a [unix timestamp](https://en.wikipedia.org/wiki/Unix_time).
+Returns the current time as a [UNIX timestamp](https://en.wikipedia.org/wiki/Unix_time).
 
 In LIGO, timestamps are type compatible in operations with
 integers. This lets you set for instance time constraints for your
@@ -1009,7 +1009,7 @@ let read_ticket: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&g
 
 
 Reading a ticket will return a tuple with the ticket address, the value and the same ticket for later use.
-A ticket is only consumed when it is dropped (e.g. `DROP`-ed from the michelson stack) so if the returned ticket isn't stored in some form by your contract, it will be fully consumed.
+A ticket is only consumed when it is dropped (e.g. `DROP`-ed from the Michelson stack) so if the returned ticket isn't stored in some form by your contract, it will be fully consumed.
 
 <Syntax syntax="pascaligo">
 

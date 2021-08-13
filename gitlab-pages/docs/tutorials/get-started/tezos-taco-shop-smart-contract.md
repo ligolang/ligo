@@ -30,7 +30,7 @@ Pedro's tacos are a rare delicacy, so their **price goes up** as the
 **stock for the day begins to deplete**.
 
 Each taco kind, has its own `max_price` that it sells for, and a
-finite supply for the current sales lifecycle.
+finite supply for the current sales life-cycle.
 
 > For the sake of simplicity, we will not implement the replenishing
 > of the supply after it has run out.
@@ -68,7 +68,7 @@ current_purchase_price = max_price / available_stock
 
 ## Installing LIGO
 
-In this tutorial, we will use LIGO's dockerized version, for the sake
+In this tutorial, we will use LIGO's dockerised version, for the sake
 of simplicity. You can find the installation instructions
 [here](../../intro/installation.md#dockerized-installation-recommended).
 
@@ -133,7 +133,7 @@ bit of the LIGO syntax:
   contract, the second is the storage
 - **`(list (operation) * int)`** - return type of our function, in our
   case a tuple with a list of operations, and an `int` (new value for
-  the storage after a succesful run of the contract)
+  the storage after a successful run of the contract)
 - **`((nil : list (operation)), contractStorage + parameter)`** -
   essentially a return statement
 - **`(nil : list (operation))`**  - a `nil` value annotated as a list
@@ -356,7 +356,7 @@ let init_storage : taco_shop_storage = Map.literal (list([
 > The storage value is a map with two bindings (entries) distinguished
 > by their keys `1n` and `2n`.
 
-Out of curiosity, let's try to use LIGO `compile-expression` command compile this value down to michelson.
+Out of curiosity, let's try to use LIGO `compile-expression` command compile this value down to Michelson.
 
 <Syntax syntax="pascaligo">
 
@@ -399,7 +399,7 @@ ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-st
 
 </Syntax>
 
-Our initial storage record is compiled to a michelson map `{ Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }`
+Our initial storage record is compiled to a Michelson map `{ Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }`
 holding the `current_stock` and `max_prize` in as a pair.
 
 ---
@@ -415,10 +415,10 @@ have sold a taco!
 
 ### Selling the Tacos for Free
 
-Let is start by customizing our contract a bit, we will:
+Let is start by customising our contract a bit, we will:
 
 - rename `parameter` to `taco_kind_index`
-- only in pascaligo syntax: change `taco_shop_storage` to a `var` instead of a `const`, because
+- only in PascaLIGO syntax: change `taco_shop_storage` to a `var` instead of a `const`, because
   we will want to modify it
 
 <Syntax syntax="pascaligo">
@@ -918,7 +918,7 @@ Let's break it down a little bit:
 - `test` is actually performing the tests: Originates the taco-shop
   contract; purchasing a Taco with 1tez and checking that the stock
   has been updated ; attempting to purchase a Taco with 2tez and
-  trying to purchase an unregistred Taco. An auxiliary function to
+  trying to purchase an unregistered Taco. An auxiliary function to
   check equality of values on maps is defined.
 
 > checkout the [reference page](../../reference/test.md) for a more detailed description of the Test API

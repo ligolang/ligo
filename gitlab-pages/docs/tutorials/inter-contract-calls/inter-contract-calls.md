@@ -19,9 +19,9 @@ We will mainly focus on internal _transactions,_ as this is the most common type
 ## A note on complexity
 
 Usually, you do not want to have overly-complex contract interactions when you develop your Tezos contracts. There are several reasons for this:
-1. Transactions between contracts are expensive. Tezos bakers need to fetch the callee from the context (this is how internal blockchain storage is called in Tezos), deserialise and typecheck it, then perform the requested operation and store the result. Among these actions, code execution is the cheapest one in terms of gas.
+1. Transactions between contracts are expensive. Tezos bakers need to fetch the callee from the context (this is how internal blockchain storage is called in Tezos), deserialise and type-check it, then perform the requested operation and store the result. Among these actions, code execution is the cheapest one in terms of gas.
 2. Transactions between contracts are hard and error-prone. When you split your business logic across several contracts, you need to think of how these contracts interact. This may cause unforeseen vulnerabilities if you do not give it enough attention.
-3. Tezos most probably has other means to achieve what you want. Lambdas make it possible to alter the behavior of the contract after origination, new cryptographic primitives get introduced via protocol upgrades, separation of concerns can be achieved by splitting your business logic into LIGO modules that will eventually get compiled into a single contract, etc.
+3. Tezos most probably has other means to achieve what you want. Lambdas make it possible to alter the behaviour of the contract after origination, new cryptographic primitives get introduced via protocol upgrades, separation of concerns can be achieved by splitting your business logic into LIGO modules that will eventually get compiled into a single contract, etc.
 
 However, there are legit reasons for using internal operations, including the following:
 1. You communicate with an external entity, e.g., transfer a third-party FA2 token.
@@ -438,7 +438,7 @@ This BFS execution order is very different from Ethereum's direct synchronous me
 
 ![DFS order of execution](./assets/dfs_order.png)
 
-Here is a more complex scenario featuring a graph of 12 different operations. We omit the contract and entrypoint names and use lowercase latin letters and numbers to identify operations.
+Here is a more complex scenario featuring a graph of 12 different operations. We omit the contract and entrypoint names and use lowercase letters and numbers to identify operations.
 1. BFS order (Tezos):
 
 ![BFS order of execution](./assets/complex_bfs.png)

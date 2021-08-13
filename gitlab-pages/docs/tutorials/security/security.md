@@ -8,7 +8,7 @@ import Syntax from '@theme/Syntax';
 In this article, we will cover the basics of Tezos smart contract security. We will describe several potential vulnerabilities that stem from developers' misconceptions about the distributed nature of blockchains. We will also suggest ways to protect your contracts against these kinds of attacks.
 
 **Disclaimer:**
-1. This guide is aimed at giving the reader an overview of popular attacks on smart contracts and ditributed applications. It is not an exhaustive list of all the possible attack vectors. Please, use your own judgement.
+1. This guide is aimed at giving the reader an overview of popular attacks on smart contracts and distributed applications. It is not an exhaustive list of all the possible attack vectors. Please, use your own judgement.
 2. The descriptions in this document are valid for the protocol 008_PtEdo2Zk (Edo). Since Tezos is an upgradeable blockchain, some of the blockchain mechanics may change in case a new proposal is adopted.
 
 ## Resource constraints
@@ -138,7 +138,7 @@ What can go wrong? To answer this question, we will need to dive a bit into how 
 
 To guarantee that the nodes spend reasonable time processing transactions, Tezos requires that the execution consumes no more than a certain amount of _gas_ (in the current protocol, it is 1 040 000 gas units).
 
-But in Tezos, the amount of gas consumed depends on the size of the storage! All non-lazy (i.e. non-BigMap) storage entries get fetched, deserialised, and typechecked upon each contract invocation. It means that:
+But in Tezos, the amount of gas consumed depends on the size of the storage! All non-lazy (i.e. non-BigMap) storage entries get fetched, deserialised, and type-checked upon each contract invocation. It means that:
 1. Our contract will be more and more expensive to call with every transaction made.
 2. Eventually, when the gas consumption is too high, every transaction will hit the upper bound, which will render the contract unusable.
 
@@ -212,7 +212,7 @@ In fact, if the front-runner is a baker, the so-called _miner extracted value_ [
 
 ## Timestamps
 
-Aside from transaction ordering, bakers can manipulate other variables you might want to rely on. A classic example of such a value is `Tezos.now`. Previously, it used to be equal to the current block timestamp. This behaviour has been changed to eliminate straghtforward manipulations. Since Tezos is a distributed system, there is no way to make sure the block was produced _exactly_ at the specified time. Thus, bakers could slightly adjust the timestamp to make a transaction produce a different result.
+Aside from transaction ordering, bakers can manipulate other variables you might want to rely on. A classic example of such a value is `Tezos.now`. Previously, it used to be equal to the current block timestamp. This behaviour has been changed to eliminate straightforward manipulations. Since Tezos is a distributed system, there is no way to make sure the block was produced _exactly_ at the specified time. Thus, bakers could slightly adjust the timestamp to make a transaction produce a different result.
 
 In the current protocol, `Tezos.now` is equal to the _previous_ block timestamp plus a fixed value. Although `Tezos.now` becomes less manipulable with this new behaviour, the only assumption you can make is that the operation goes through _roughly about_ the specified timestamp. And, of course, you should never use `Tezos.now` as a source of randomness.
 

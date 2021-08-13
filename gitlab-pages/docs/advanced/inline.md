@@ -77,6 +77,6 @@ following results:
 </table>
 
 :::info
-Note that these results can change due to ongoing work to optimize output of 
+Note that these results can change due to ongoing work to optimise output of 
 the LIGO compiler.
 :::

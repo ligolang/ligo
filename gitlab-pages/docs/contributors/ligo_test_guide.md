@@ -21,7 +21,7 @@ The fastest way to improve LIGO's test coverage is to extend existing test cases
 
 LIGO is divided into two parts
 - the **front end** handles syntax  
-- the **backend** optimizes and compiles a core language shared between syntaxes
+- the **backend** optimises and compiles a core language shared between syntaxes
 
 You can find basic test cases for a particular LIGO syntax by studying its parser. You will find the parser under [src/passes/1-parser](https://gitlab.com/ligolang/ligo/tree/dev/src/passes/01-parsing).  
 
@@ -49,7 +49,7 @@ LIGO's OCaml-based tests are written in [alcotest](https://github.com/mirage/alc
 
 ### Assignment Test
 
-We'll first analyze a short integration test for assignment.
+We'll first analyse a short integration test for assignment.
     
     let assign () : unit result =
       let%bind program = type_file "./contracts/assign.ligo" in

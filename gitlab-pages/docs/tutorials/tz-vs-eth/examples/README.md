@@ -5,7 +5,7 @@ These examples demonstrate features of LIGO and act as a supplementary material 
 ## Contracts
 
 * SolidityLikeDispatching – a contract that demonstrates how we can emulate the Solidity compiler method dispatching.
-* Counter – a counter contract that demontrates the use of entrypoints in LIGO.
+* Counter – a counter contract that demonstrates the use of entrypoints in LIGO.
 * Lambda – an example that demonstrates how we can pass lambdas as parameters.
 * LambdaInStorage — a contract that shows how we can save lambdas to storage to make our contracts upgradeable.
 

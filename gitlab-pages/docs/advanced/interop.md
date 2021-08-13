@@ -11,7 +11,7 @@ correctly match the standard LIGO types.
 
 ## Michelson types and annotations
 Michelson types consist of `or`'s and `pair`'s, combined with field annotations.
-Field annotations add contraints on a Michelson type, for example a pair of 
+Field annotations add constraints on a Michelson type, for example a pair of 
 `(pair (int %foo) (string %bar))` will only work with the exact equivalence or 
 the same type without the field annotations.
 

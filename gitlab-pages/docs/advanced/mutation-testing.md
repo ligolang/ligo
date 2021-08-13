@@ -834,7 +834,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation-contract.jsligo
 
 The mutation testing found that the operation `sub` (corresponding to
 the entrypoint `Decrement`) can be changed with no consequences in the
-test: we take this as a warning signaling that the test above does not
+test: we take this as a warning signalling that the test above does not
 cover the `Decrement` entrypoint. We can fix this by adding a new call
 to the `Decrement` entrypoint in the test above:
 

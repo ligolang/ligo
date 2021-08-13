@@ -14,7 +14,7 @@ Deployment of the docs/website for LIGO is taken care of within the CI, from `de
 
 ### Changelog
 
-We're using our own implemetation of [GitLab's changelog model](https://docs.gitlab.com/ee/development/changelog.html).
+We're using our own implementation of [GitLab's changelog model](https://docs.gitlab.com/ee/development/changelog.html).
 
 In short, it involves the following procedures:
 
@@ -42,7 +42,7 @@ test suite changes) **should not** have a changelog entry. Example: “Refactor 
 
 ### Development releases (next)
 
-Development releases of Ligo are tagged `next` and are built with each commit to the `dev` branch. Both the docker image & the website are published automatically.
+Development releases of LIGO are tagged `next` and are built with each commit to the `dev` branch. Both the docker image & the website are published automatically.
 
 ### Stable releases
 

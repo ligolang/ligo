@@ -502,7 +502,7 @@ function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
 traversal of the data structure is over. Folding can be done in two
-ways, labeled with the directions left and right. One way to tell them
+ways, labelled with the directions left and right. One way to tell them
 apart is to look where the folded function, and the fold itself, keep
 the accumulator in their signatures. Take for example a function `f`, 
 a list `[1; 2; 3; 4; 5]`, and an accumulator that's just an empty

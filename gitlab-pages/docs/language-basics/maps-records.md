@@ -346,7 +346,7 @@ type account = {
 <Syntax syntax="jsligo">
 
 A unique feature of LIGO is the ability to perform nested updates on records. 
-JsLIGO however does not support the specialized syntax as the other syntaxes. 
+JsLIGO however does not support the specialised syntax as the other syntaxes. 
 The following however also does the trick.
 
 For example if you have the following record structure:
@@ -425,7 +425,7 @@ change_color_preference "(record [id=1001; preferences=record [color=Blue; other
 ### Record Patches
 
 Another way to understand what it means to update a record value is to
-make sure that any further reference to the value afterward will
+make sure that any further reference to the value afterwards will
 exhibit the modification. This is called a `patch` and this is only
 possible in PascaLIGO, because a patch is an *instruction*, therefore
 we can only use it in a block. Similarly to a *functional update*, a

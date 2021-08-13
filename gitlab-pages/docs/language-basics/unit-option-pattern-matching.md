@@ -6,7 +6,7 @@ title: Unit, Option, Pattern matching
 import Syntax from '@theme/Syntax';
 
 
-Optionals are a pervasive programing pattern in OCaml. Since Michelson
+Optionals are a pervasive programming pattern in OCaml. Since Michelson
 and LIGO are both inspired by OCaml, *optional types* are available in
 LIGO as well. Similarly, OCaml features a *unit* type, and LIGO
 features it as well. Both the option type and the unit types are
@@ -273,8 +273,8 @@ let div = ([a, b]: [nat, nat]): option<nat> => {
 
 ## Pattern matching
 
-*Pattern matching* is similiar to the `switch` construct in
-Javascript, and can be used to route the program's control flow based
+*Pattern matching* is similar to the `switch` construct in
+JavaScript, and can be used to route the program's control flow based
 on the value of a variant, record, tuple, or list.
 
 A component of a pattern can be discarded by using a wildcard `_`
@@ -298,7 +298,7 @@ with `_` can be used as a binder to prevent warnings.
 
 ### Match on variants
 
-Here is a function that transforms a color variant type to an int.
+Here is a function that transforms a colour variant type to an int.
 
 <Syntax syntax="pascaligo">
 

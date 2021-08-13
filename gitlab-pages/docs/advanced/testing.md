@@ -238,7 +238,7 @@ let test = _test();
 
 </Syntax>
 
-The test subcommand will evaluate all top-level definitions and print any
+The test sub-command will evaluate all top-level definitions and print any
 entries that begin with the prefix `test` as well as the value that these
 definitions evaluate to. If any of the definitions are found to have
 failed, a message will be issued with the line number where the problem
@@ -582,10 +582,10 @@ let x = Test.reset_state ( 5 as nat, list([]) as list <nat> );
 Now build the `balances` map that will serve as the input of our test.
 Because types/values living in the context of `balances_under` are not
 directly accessible from our unit-test code, you will need to compile
-bootstrap account addresses to michelson using `Test.compile_value`
-and inject the resulting michelson value in the map using
+bootstrap account addresses to Michelson using `Test.compile_value`
+and inject the resulting Michelson value in the map using
 `Test.compile_expression_subst`. Note that within the code injection
-(e.g. `{| <code> |}`), you have access to all the types accesible from
+(e.g. `{| <code> |}`), you have access to all the types accessible from
 the tested file.
 
 <Syntax syntax="cameligo">
@@ -647,12 +647,12 @@ let balances : michelson_program =
 
 In general, you can use `Test.compile_value` for simple types such as
 `int`; `string`; `nat`; `bytes`; `address` and `pair` which will
-directly compile its argument to michelson without the need of writing
+directly compile its argument to Michelson without the need of writing
 a LIGO code injection. Otherwise, use `Test.compile_expression_subst`
 or `Test.compile_expression` to compile an expression written in the
 same manner as in the tested file.
 
-> `Test.compile_expression_subst` will bind a new variable holding a michelson [injection](./code-injection.md)
+> `Test.compile_expression_subst` will bind a new variable holding a Michelson [injection](./code-injection.md)
 > for each hole (e.g. `$a1`) present in the substitution before compiling the expression.
 
 Our simple test loop will call `balances_under` with the compiled map

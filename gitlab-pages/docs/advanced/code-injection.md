@@ -106,8 +106,8 @@ ligo compile-expression reasonligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH n
 
 As we can see, the embedded Michelson code was not modified. However,
 if the resulting function is applied, then the embedded Michelson code
-could be modified/optimized by the compiler. To exemplify this
-behavior, an application can be introduced in the example above by
+could be modified/optimised by the compiler. To exemplify this
+behaviour, an application can be introduced in the example above by
 eta-expanding. In this case, the first two instructions will be
 removed by LIGO because they have no effect on the final result.
 
