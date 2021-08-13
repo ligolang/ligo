@@ -12,7 +12,7 @@ We will be implementing a counter contract.
 
 ## Dry-running a Contract
 
-Testing a contract can be quite easy if we utilize LIGO's built-in dry
+Testing a contract can be quite easy if we utilise LIGO's built-in dry
 run feature. Dry-run works by simulating the main function execution,
 as if it were deployed on a real chain. You need to provide the
 following:
@@ -154,7 +154,7 @@ ligo dry-run src/counter.ligo main "Increment(5)" 5
 ```
 
 
-Our contract's storage has been successfuly incremented to `10`.
+Our contract's storage has been successfully incremented to `10`.
 
 ## Deploying and interacting with a contract on a live-chain
 

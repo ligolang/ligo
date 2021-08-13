@@ -16,7 +16,7 @@ Michelson is a Domain-Specific Language (DSL) for writing Tezos smart contracts
 inspired by Lisp and Forth. This unusual lineage aims at satisfying unusual
 constraints, but entails some tensions in the design.
 
-First, to measure stepwise gas consumption, *Michelson is interpreted*.
+First, to measure step-wise gas consumption, *Michelson is interpreted*.
 
 On the one hand, to assess gas usage per instruction, instructions
 should be simple, which points to low-level features (a RISC-like
@@ -35,7 +35,7 @@ contracts on the chain.
 To reduce the size of the code, Michelson was designed as *a
 stack-based language*, whence the lineage from Forth and other
 concatenative languages like PostScript, Joy, Cat, Factor etc. (Java
-bytecode would count too.)
+byte-code would count too.)
 
 Programs in those languages are *compact* because they assume an
 implicit stack in which some input values are popped, and output
@@ -112,7 +112,7 @@ element, dropping it, subtracting the first two etc.
 Perhaps the biggest challenge when programming in Michelson is the
 lack of *variables* to denote the data: the stack layout has to be
 kept in mind when retrieving and storing data. For example, let us
-implement a program in Javascript that is similar to the Michelson
+implement a program in JavaScript that is similar to the Michelson
 above:
 
 **`counter.js`**
@@ -128,10 +128,10 @@ function sub (a) { storage -= a; }
 function reset () { storage = 0; }
 ```
 
-In our Javascript program the initial `storage` value is `0` and it
+In our JavaScript program the initial `storage` value is `0` and it
 can be modified by calling `add (a)`, `sub (a)` and `reset ()`.
 
-We cannot run Javascript on the Tezos blockchain, but we can choose
+We cannot run JavaScript on the Tezos blockchain, but we can choose
 LIGO, which will abstract the stack management and allow us to create
 readable, type-safe, and efficient smart contracts.
 

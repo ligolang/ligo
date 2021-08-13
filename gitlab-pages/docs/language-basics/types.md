@@ -23,7 +23,7 @@ For quick reference, you can find all the built-in types [here](https://gitlab.c
 calls for a more precise name. This increases readability and
 maintainability of your smart contracts. For example we can choose to
 alias a string type as an animal breed - this will allow us to
-comunicate our intent with added clarity.
+communicate our intent with added clarity.
 
 
 <Syntax syntax="pascaligo">
@@ -61,7 +61,7 @@ let dog_breed: breed = "Saluki";
 
 
 > The above type definitions are aliases, which means that `breed` and
-> `string` are interchangable in all contexts.
+> `string` are interchangeable in all contexts.
 
 ## Simple types
 

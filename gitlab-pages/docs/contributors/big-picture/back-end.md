@@ -13,6 +13,6 @@ The files of the Transpiler are in `transpiler/`, while those of Mini_c are in `
 The previous LIGO’s compilation to Michelson model was quite complicated. The current one is quite straightforward, where the environment of variables (x -> 12, y -> “foo”) is compiled as Michelson stack (12 :: foo).
 It has been simplified for multiple reasons:
 Having a simple model reduces its number of points of failure.
-Having a simple model makes optimizing it easier.
+Having a simple model makes optimising it easier.
 We submitted a change to the Tezos’ protocol that actually make it more efficient.
 

@@ -327,7 +327,7 @@ let main = ([action, store]: [unit, storage]) : [list<operation>, storage] =>
 
 Modules also allow us to separate our code in different files: when we
 import a file, we obtain a module encapsulating all the definitions in
-it. This will become very handy for organizing large contracts, as we
+it. This will become very handy for organising large contracts, as we
 can divide it into different files, and the module system keeps the naming
 space clean.
 

@@ -12,8 +12,8 @@ functions. This page will tell you about them.
 ## Pack and Unpack
 
 As Michelson provides the `PACK` and `UNPACK` instructions for data
-serialization, so does LIGO with `Bytes.pack` and `Bytes.unpack`.  The
-former serializes Michelson data structures into a binary format, and
+serialisation, so does LIGO with `Bytes.pack` and `Bytes.unpack`.  The
+former serialises Michelson data structures into a binary format, and
 the latter reverses that transformation. Unpacking may fail, so the
 return type of `Byte.unpack` is an option that needs to be annotated.
 

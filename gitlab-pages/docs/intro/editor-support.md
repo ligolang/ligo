@@ -9,4 +9,4 @@ Painters need a brush and a canvas. Developers need a good IDE experience. LIGO 
 
 - **[Install the LIGO extension for VIM](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vim/ligo/start/ligo/README.md)**
 
-- **[Install the LIGO extension for EMacs](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/emacs/README.md)**
+- **[Install the LIGO extension for Emacs](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/emacs/README.md)**

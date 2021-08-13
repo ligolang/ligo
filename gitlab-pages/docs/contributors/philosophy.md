@@ -14,7 +14,7 @@ Automated Testing is the process through which a program runs another program, a
 There already is a testing library for LIGO programs written in OCaml that is used to test LIGO itself. Making it accessible to users will greatly improve safety. A way to do so would be to make it accessible from within LIGO.
 
 ### Static Analysis
-Static analysis is the process of having a program analyze another one.
+Static analysis is the process of having a program analyse another one.
 For instance, type systems are a kind of static analysis through which it is possible to find lots of bugs. LIGO already has a simple type system, and we plan to make it much stronger.
 
 ### Conciseness

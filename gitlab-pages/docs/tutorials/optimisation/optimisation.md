@@ -55,7 +55,7 @@ When you make a **transaction** to a contract, things get a little more complica
    - During some transaction, the storage size decreases to 400 bytes.
    - You submit an operation that increases the storage size to 505 bytes. Since 500 bytes have been paid for already, you only need to burn `5B * 0.00025ꜩ/B = 0.00125ꜩ`.
 * A new kind of limit you must not exceed in transactions is _gas limit._ The consumed gas depends on the amount of computation required to verify your transaction.
-* Execution fees depend on the amount of gas consumed (`gas`), and the excess bytes written to the storage (`bytes_written`): `0.0001ꜩ + 100nꜩ/gu * gas + 1000nꜩ/B * bytes_written`. Note that this is just a default formula: bakers are free to include underpriced transactions or choose the transactions with higher fees. Thus, it would make sense to add some buffer if you want to increase the probability that your transaction will be included.
+* Execution fees depend on the amount of gas consumed (`gas`), and the excess bytes written to the storage (`bytes_written`): `0.0001ꜩ + 100nꜩ/gu * gas + 1000nꜩ/B * bytes_written`. Note that this is just a default formula: bakers are free to include under-priced transactions or choose the transactions with higher fees. Thus, it would make sense to add some buffer if you want to increase the probability that your transaction will be included.
 
 ## Optimisation targets
 
@@ -109,7 +109,7 @@ Here is a list of instructions you should use wisely:
 
 ### Code size
 
-The size of the contract code is arguably the most important optimisation target. When you originate an oversized contract, you risk hitting an operation size limit and pay more for storing the code of the contract in the context. The size of the contract matters in gas consumption as well: the bigger your contract is, the more _gas_ is consumed for reading, deserialising, and typechecking it.
+The size of the contract code is arguably the most important optimisation target. When you originate an oversized contract, you risk hitting an operation size limit and pay more for storing the code of the contract in the context. The size of the contract matters in gas consumption as well: the bigger your contract is, the more _gas_ is consumed for reading, deserialising, and type-checking it.
 
 LIGO offers a convenient way to measure the size of the contract code:
 
@@ -134,7 +134,7 @@ Note that allowing users to extend non-lazy containers is insecure: the contract
 Is there a list of cases when you should certainly prefer using big map over regular containers such as `list`, `map` or `set`? We would say you should consider using big maps if any of these hold true:
 1. The container is extendable by the users.
 2. The container is large or unbounded. The precise definition of "large" depends on what is in the container and how many elements are accessed in transactions.
-3. You do not use the contents of the container often. For example, you may have just one entrypoint that requires accessing this container, and this entypoint is called rarely, most probably you would want to use a big map.
+3. You do not use the contents of the container often. For example, you may have just one entrypoint that requires accessing this container, and this entrypoint is called rarely, most probably you would want to use a big map.
 
 ### Excess storage
 
@@ -263,11 +263,11 @@ However, the best approach is to measure the gas consumption and the size of you
 ### Lazy-loading
 This peculiar technique can be used to lower the average gas consumption of your contract by making large entrypoints a bit more expensive to call.
 
-Imagine you have a contract with a number of small frequently-used entrypoints and several large entrypoints that are called rarely. During each transaction to the contract, the bakers would read **the whole code** of your contract, deserialise and typecheck it, and only after that, execute the requested entrypoint.
+Imagine you have a contract with a number of small frequently-used entrypoints and several large entrypoints that are called rarely. During each transaction to the contract, the bakers would read **the whole code** of your contract, deserialise and type-check it, and only after that, execute the requested entrypoint.
 
 <Syntax syntax="pascaligo">
 
-It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and typechecked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
+It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
 
 Here is how it looks like:
 
@@ -303,7 +303,7 @@ block {
 </Syntax>
 <Syntax syntax="cameligo">
 
-It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and typechecked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `(bool, entrypoint_lambda) big_map` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `(unit, entrypoint_lambda) big_map`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
+It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `(bool, entrypoint_lambda) big_map` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `(unit, entrypoint_lambda) big_map`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
 
 Here is how it looks like:
 ```cameligo skip
@@ -330,7 +330,7 @@ let main (parameter, storage : parameter * storage) =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and typechecked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
+It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
 
 Here is how it looks like:
 ```reasonligo skip
