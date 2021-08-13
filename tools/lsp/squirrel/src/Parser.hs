@@ -169,6 +169,12 @@ type Info = [[Text], [LineMarker], Range, ShowRange, CodeSource]
 
 type ParsedInfo = PreprocessedRange ': Info
 
+emptyParsedInfo :: Product ParsedInfo
+emptyParsedInfo =
+  PreprocessedRange emptyPoint :> [] :> [] :> emptyPoint :> N :> CodeSource "" :> Nil
+  where
+    emptyPoint = point (-1) (-1)
+
 instance
   ( Contains Range xs
   , Contains [Text] xs

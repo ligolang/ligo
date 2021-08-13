@@ -2,6 +2,8 @@
 
 module Main (main) where
 
+import Prelude hiding (log)
+
 import Algebra.Graph.AdjacencyMap qualified as G (empty)
 import Control.Concurrent.MVar
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
@@ -10,6 +12,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
 
 import Data.Default
+import Data.Foldable (for_)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Maybe (fromMaybe)
@@ -92,7 +95,6 @@ mainLoop = do
             Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
 
-
 initialize :: IO RioEnv
 initialize = do
   config <- newEmptyMVar
@@ -129,6 +131,7 @@ handlers = mconcat
 
   , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
   , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
+  , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
   --, S.requestHandler J.SWorkspaceExecuteCommand _
   ]
 
@@ -136,6 +139,7 @@ handleInitialized :: S.Handler RIO 'J.Initialized
 handleInitialized _ = do
   RIO.registerDidChangeConfiguration
   void RIO.fetchCustomConfig
+  RIO.registerFileWatcher
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
@@ -376,6 +380,22 @@ handleDidChangeConfiguration :: S.Handler RIO 'J.WorkspaceDidChangeConfiguration
 handleDidChangeConfiguration notif = do
   let config = notif ^. J.params . J.settings
   RIO.updateCustomConfig config
+
+handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
+handleDidChangeWatchedFiles notif = do
+  let J.List changes = notif ^. J.params . J.changes
+  for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) -> case change of
+    J.FcCreated -> do
+      log [i|Created #{uri}|]
+      void $ RIO.forceFetch' uri
+    J.FcChanged -> do
+      log [i|Changed #{uri}|]
+      void $ RIO.forceFetch' uri
+    J.FcDeleted -> do
+      log [i|Deleted #{uri}|]
+      RIO.delete uri
+  where
+    log = Log.debug "WorkspaceDidChangeWatchedFiles"
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

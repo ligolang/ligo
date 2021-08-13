@@ -10,6 +10,7 @@ module ASTMap
   , empty
 
   , insert
+  , delete
 
   , fetchLatest
   , fetchCurrent
@@ -83,11 +84,35 @@ insert
      )
   => k  -- ^ Key
   -> v  -- ^ Value
-  -> ASTMap k v m  -- Map
+  -> ASTMap k v m  -- ^ Map
   -> m ()
 insert k v ASTMap{amValues} = do
   time <- liftIO $ getTime Monotonic
   void $ atomically $ Map.focus (insertOrChooseNewer snd (v, time)) k amValues
+
+-- | Delete a value from an 'ASTMap'. Returns the deleted value, if it exists.
+delete
+  :: ( Eq k, Hashable k
+     , MonadIO m
+     )
+  => k  -- ^ Key
+  -> ASTMap k v m  -- ^ Map
+  -> m (Maybe v)
+delete k ASTMap{amValues, amLoadStarted, amInvalid} = do
+  time <- liftIO $ getTime Monotonic
+  go <- atomically $ Map.focus (checkIfLoading time) k amLoadStarted
+  if go then
+    atomically do
+      Map.delete k amLoadStarted
+      Map.delete k amInvalid
+      v <- Map.focus Focus.lookupAndDelete k amValues
+      pure $ fst <$> v
+  else
+    -- Someone started to load it... maybe the file was recreated after it was
+    -- deleted and we didn't have enough time somehow? Do nothing I guess...
+    pure Nothing
+  where
+    checkIfLoading vNew = Focus.cases (True, Focus.Leave) \vOld -> (vNew >= vOld, Focus.Leave)
 
 -- | Load the current value.
 --
