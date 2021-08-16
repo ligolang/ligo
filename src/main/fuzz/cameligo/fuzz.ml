@@ -17,11 +17,6 @@ let bool_bin_op_ctor =
   let or_ op = Or op in
   [and_;or_]
 
-let bool_nul_op_ctor =
-  let true_ op = True op in
-  let false_ op = False op in
-  [true_;false_]
-
 let comp_bin_op_ctor =
   let lt op = Lt op in
   let leq op = Leq op in
@@ -64,9 +59,6 @@ module Mutator (M : Monad) = struct
        return (EArith (Mutez {value=(s, Z.of_int z);region}))
     | ELogic (BoolExpr (Or op)) | ELogic (BoolExpr (And op)) ->
        let* ctor = bool_bin_op_ctor |> map_return |> oneof in
-       return (ELogic (BoolExpr (ctor op)))
-    | ELogic (BoolExpr (True op)) | ELogic (BoolExpr (False op)) ->
-       let* ctor = bool_nul_op_ctor |> map_return |> oneof in
        return (ELogic (BoolExpr (ctor op)))
     | ELogic (CompExpr (Lt op)) | ELogic (CompExpr (Leq op))
     | ELogic (CompExpr (Gt op)) | ELogic (CompExpr (Geq op))

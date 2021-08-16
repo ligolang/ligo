@@ -10,7 +10,7 @@ module Comments      = Preprocessing_jsligo.Comments
 module File          = Preprocessing_jsligo.File
 module Token         = Lexing_jsligo.Token
 module Self_tokens   = Lexing_jsligo.Self_tokens
-module CST           = Cst.Jsligo
+module CST           = Cst_jsligo.CST
 module ParErr        = Parser_msg
 module ParserMainGen = Parsing_shared.ParserMainGen
 

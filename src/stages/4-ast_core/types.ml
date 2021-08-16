@@ -47,6 +47,7 @@ and type_content =
   | T_app             of ty_expr type_app
   | T_module_accessor of ty_expr module_access
   | T_singleton       of literal
+  | T_abstraction     of ty_expr abstraction
 
 and rows = { fields : row_element label_map ; layout : layout option }
 

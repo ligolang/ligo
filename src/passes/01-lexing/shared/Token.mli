@@ -38,7 +38,7 @@ module Region = Simple_utils.Region
 (* TOKENS *)
 
 type lexeme = string
-  
+
 module type S =
   sig
     type token
@@ -60,10 +60,9 @@ module type S =
 
     (* Injections *)
 
-    type   int_err = Non_canonical_zero 
+    type   int_err = Non_canonical_zero
     type mutez_err = Unsupported_mutez_syntax
                    | Non_canonical_zero_tez
-    type ident_err = Reserved_name
     type   nat_err = Invalid_natural
                    | Unsupported_nat_syntax
                    | Non_canonical_zero_nat
@@ -71,21 +70,19 @@ module type S =
     type  lang_err = Unsupported_lang_syntax
     type   kwd_err = Invalid_keyword
 
-
-    
     val mk_int      : lexeme -> Region.t -> (token,   int_err) result
     val mk_nat      : lexeme -> Region.t -> (token,   nat_err) result
     val mk_mutez    : lexeme -> Region.t -> (token, mutez_err) result
-    val mk_ident    : lexeme -> Region.t -> (token, ident_err) result
     val mk_sym      : lexeme -> Region.t -> (token,   sym_err) result
     val mk_kwd      : lexeme -> Region.t -> (token,   kwd_err) result
+    val mk_ident    : lexeme -> Region.t -> token
     val mk_string   : lexeme -> Region.t -> token
     val mk_verbatim : lexeme -> Region.t -> token
     val mk_bytes    : lexeme -> Region.t -> token
-    val mk_constr   : lexeme -> Region.t -> token
+    val mk_uident   : lexeme -> Region.t -> token
     val mk_attr     : lexeme -> Region.t -> token
     val mk_lang     : lexeme Region.reg -> Region.t -> (token, lang_err) result
-    val eof         : Region.t -> token
+    val mk_eof      : Region.t -> token
 
     (* Predicates *)
 

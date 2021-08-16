@@ -74,8 +74,8 @@ let test_variant_match =
 let test_bool_match =
   let b = true in
   assert (match b with
-  | true -> true
-  | false -> false)
+  | True -> true
+  | False -> false)
 
 let test_list_match =
   let a = [1; 2; 3; 4] in

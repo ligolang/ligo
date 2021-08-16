@@ -144,7 +144,6 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression =
     let (name,loc) = r_split var in
     let v = Var.of_name name in
     return @@ t_variable ~loc v
-  | TWild _reg -> raise.raise @@ unsupported_twild te
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te
   | TModA ma ->
@@ -197,16 +196,13 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     return @@ e_constant ~loc (Const op_type) [arg]
   in
   match e with
-    EVar var ->
+    EVar var -> (
     let (var, loc) = r_split var in
-    (match constants var with
-      Some const -> return @@ e_constant ~loc const []
+    match constants var with
+    | Some const -> return @@ e_constant ~loc const []
     | None -> return @@ e_variable_ez ~loc var
-    )
+  )
   | EPar par -> self par.value.inside
-  | EUnit reg ->
-    let loc = Location.lift reg in
-    return @@ e_unit ~loc ()
   | EBytes bytes ->
     let (bytes, loc) = r_split bytes in
     let (_s,b) = bytes in
@@ -250,8 +246,6 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         Or or_   -> compile_bin_op C_OR  or_
       | And and_ -> compile_bin_op C_AND and_
       | Not not_ -> compile_un_op  C_NOT not_
-      | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
-      | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
     )
     | CompExpr ce -> (
       match ce with
@@ -285,7 +279,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let fun_name = match field with
       EVar v -> v.value | EModA _ -> raise.raise @@ unknown_constant module_name.value loc
       |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|EFun _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETuple _|EPar _
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|ETuple _|EPar _
       |ESet _|EMap _|EBlock _ -> failwith "Corner case : This couldn't be produce by the parser"
     in
     let var = module_name.value ^ "." ^ fun_name in
@@ -330,7 +324,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         EVar v -> v.value
       | EModA _ -> raise.raise @@ unknown_constant module_name loc
       |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|EFun _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETuple _|EPar _
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|ETuple _|EPar _
       |ESet _|EMap _|EBlock _ -> failwith "Corner case : This couldn't be produce by the parser"
       in
       let var = module_name ^ "." ^ fun_name in
@@ -367,17 +361,15 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         ParamConst p ->
         let (p, _) = r_split p in
         let (var, loc) = r_split p.var in
-        let p_type =
-          Option.map ~f:(compile_type_expression ~raise  <@ snd)
-                          p.param_type in
-        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes=Stage_common.Helpers.const_attribute}
+        let p_type = Option.map ~f:(compile_type_expression ~raise <@ snd) p.param_type in
+        let var = Location.wrap ~loc @@ Var.of_name var.variable.value in
+        return {var ; ascr=p_type;attributes=Stage_common.Helpers.const_attribute}
       | ParamVar p ->
         let (p, _) = r_split p in
         let (var, loc) = r_split p.var in
-        let p_type =
-          Option.map ~f:(compile_type_expression ~raise  <@ snd)
-                          p.param_type in
-        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes=Stage_common.Helpers.var_attribute} in
+        let p_type = Option.map ~f:(compile_type_expression ~raise <@ snd) p.param_type in
+        let var = Location.wrap ~loc @@ Var.of_name var.variable.value in
+        return {var ; ascr=p_type;attributes=Stage_common.Helpers.var_attribute} in
     let (func, loc) = r_split func in
     let (param, loc_par)  = r_split func.param in
     let param =
@@ -400,18 +392,16 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     in
     return @@ Option.value ~default:lambda @@
       Option.map ~f:(e_annotation ~loc lambda) fun_type
-  | EConstr (SomeApp some) ->
-    let ((_, arg), loc) = r_split some in
-    let args = compile_tuple_expression arg in
-    return @@ e_some ~loc args
-  | EConstr (NoneExpr reg) ->
-    let loc = Location.lift reg in
-    return @@ e_none ~loc ()
-  | EConstr (ConstrApp constr) ->
+  | EConstr constr -> (
     let ((constr,args_o), loc) = r_split constr in
-    let args_o = Option.map ~f:compile_tuple_expression args_o in
-    let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
-    return @@ e_constructor ~loc constr.value args
+    match constr.value , args_o with
+    | "Unit" , None ->
+      return @@ e_unit ~loc ()
+    | _ ->
+      let args_o = Option.map ~f:compile_tuple_expression args_o in
+      let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
+      return @@ e_constructor ~loc constr.value args
+  )
   | ECase case ->
     let (case, loc) = r_split case in
     let matchee = self case.expr in
@@ -518,7 +508,7 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
      let (var,loc) = r_split var in
      let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
     let b =
-      let var = Location.wrap ~loc @@ Var.of_name var in
+      let var = Location.wrap ~loc @@ Var.of_name var.variable.value in
       { var ; ascr = None ; attributes }
     in
     Location.wrap ~loc @@ P_var b
@@ -532,26 +522,11 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
     | _ -> Location.wrap ~loc @@ P_tuple nested
   )
   | CST.PConstr constr_pattern -> (
-    match constr_pattern with
-    | PUnit p ->
-      let loc = Location.lift p in
-      Location.wrap ~loc @@ P_unit
-    | PFalse p ->
-      let loc = Location.lift p in
-      Location.wrap ~loc @@ P_variant (Label "false" , Location.wrap ~loc P_unit)
-    | PTrue p ->
-      let loc = Location.lift p in
-      Location.wrap ~loc @@ P_variant (Label "true" , Location.wrap ~loc P_unit)
-    | PNone p ->
-      let loc = Location.lift p in
-      Location.wrap ~loc @@ P_variant (Label "None" , Location.wrap ~loc P_unit)
-    | PSomeApp some ->
-      let ((_,p), loc) = r_split some in
-      let pattern' = conv ~raise ~const p in
-      Location.wrap ~loc @@ P_variant (Label "Some", pattern')
-    | PConstrApp constr_app ->
-      let ((constr,p_opt), loc) = r_split constr_app in
-      let (l , _loc) = r_split constr in
+    let ((constr,p_opt), loc) = r_split constr_pattern in
+    let (l , _loc) = r_split constr in
+    match l with
+    | "Unit" -> Location.wrap ~loc @@ P_unit
+    | _ ->
       let pv_opt = match p_opt with
         | Some p -> conv ~raise ~const (CST.PTuple p)
         | None -> Location.wrap ~loc P_unit
@@ -572,8 +547,7 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
             let p' = conv ~raise ~const p in
             Location.wrap (P_list (Cons (p', acc)))
         in
-        let conscomb = List.fold_right ~f:aux ~init:(Location.wrap ~loc (P_list (List []))) lst in 
-        conscomb
+        List.fold_right ~f:aux ~init:(Location.wrap ~loc (P_list (List []))) lst
     )
     | PParCons p ->
       let (hd, _, tl) = p.value.inside in
@@ -635,7 +609,7 @@ and compile_parameters ~raise (params : CST.parameters) =
       ParamConst pc ->
       let (pc, _loc) = r_split pc in
       let (var, loc) = r_split pc.var in
-      let var = Location.wrap ~loc @@ Var.of_name var in
+      let var = Location.wrap ~loc @@ Var.of_name var.variable.value in
       let param_type =
         Option.map ~f:(compile_type_expression ~raise <@ snd)
                         pc.param_type in
@@ -643,7 +617,7 @@ and compile_parameters ~raise (params : CST.parameters) =
     | ParamVar pv ->
       let (pv, _loc) = r_split pv in
       let (var, loc) = r_split pv.var in
-      let var = Location.wrap ~loc @@ Var.of_name var in
+      let var = Location.wrap ~loc @@ Var.of_name var.variable.value in
       let param_type =
         Option.map ~f:(compile_type_expression ~raise  <@ snd)
                         pv.param_type in
@@ -776,7 +750,7 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> _  
       EVar v -> v.value
       | EModA _ -> raise.raise @@ unknown_constant module_name.value loc
       |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|EFun _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETuple _|EPar _
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|ETuple _|EPar _
       |ESet _|EMap _|EBlock _ -> failwith "Corner case : This couldn't be produce by the parser"
     in
     let var = module_name.value ^ "." ^ fun_name in
@@ -871,7 +845,7 @@ and compile_data_declaration ~raise : next:AST.expression -> CST.data_decl -> _ 
       | PVar name -> (
         let name, ploc = r_split name in
         let init = compile_expression ~raise cd.init in
-        let p = Location.wrap ~loc:ploc @@ Var.of_name name
+        let p = Location.wrap ~loc:ploc @@ Var.of_name name.variable.value
         and attr = const_decl.value.attributes in
         let attr = compile_attributes attr in
         return loc p type_ Stage_common.Helpers.const_attribute attr init
@@ -887,7 +861,7 @@ and compile_data_declaration ~raise : next:AST.expression -> CST.data_decl -> _ 
       | PVar name ->
         let name, ploc = r_split name in
         let init = compile_expression ~raise vd.init in
-        let p = Location.wrap ~loc:ploc @@ Var.of_name name in
+        let p = Location.wrap ~loc:ploc @@ Var.of_name name.variable.value in
         return loc p type_ Stage_common.Helpers.var_attribute [] init
       | pattern ->
         (* not sure what to do with  attributes in that case *)
@@ -992,21 +966,34 @@ and compile_declaration ~raise : CST.declaration -> _ =
   let return reg decl =
     [Location.wrap ~loc:(Location.lift reg) decl] in
   match decl with
-    TypeDecl {value={name; type_expr; _}; region} ->
+    TypeDecl {value={name; type_expr; params}; region} ->
     let name, _ = r_split name in
-    let type_expr = compile_type_expression ~raise type_expr in
+    let type_expr =
+      let rhs = compile_type_expression ~raise type_expr in
+      match params with
+      | None -> rhs
+      | Some x ->
+        let lst = Utils.nsepseq_to_list x.value.inside in
+        let aux : CST.type_var -> AST.type_expression -> AST.type_expression =
+          fun param type_ ->
+            let (param,ploc) = r_split param in
+            let ty_binder = Location.wrap ~loc:ploc @@ Var.of_name param in
+            t_abstraction ~loc:(Location.lift region) ty_binder () type_
+        in
+        List.fold_right ~f:aux ~init:rhs lst
+    in
     return region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
   | ConstDecl {value={pattern; const_type; init; attributes; _}; region} -> (
     let attr = compile_attributes attributes in
     match pattern with
     | PVar name ->
       let name, loc = r_split name in
-      let var = Location.wrap ~loc @@ Var.of_name name in
+      let var = Location.wrap ~loc @@ Var.of_name name.variable.value in
       let ascr =
         Option.map ~f:(compile_type_expression ~raise <@ snd) const_type in
       let expr = compile_expression ~raise init in
       let binder = {var;ascr;attributes=Stage_common.Helpers.const_attribute} in
-      return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr}
+      return region @@ AST.Declaration_constant {name = Some name.variable.value; binder;attr;expr}
     | _ ->
       raise.raise (unsupported_top_level_destructuring region)
   )

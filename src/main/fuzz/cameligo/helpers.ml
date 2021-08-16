@@ -57,9 +57,12 @@ module Fold_helpers(M : Monad) = struct
          self init field_type
        in
        bind_fold_ne_list aux init @@ npseq_to_ne_list value.ne_elements
-    | TApp    {value;region=_} ->
-       let (_, tuple) = value in
-       bind_fold_ne_list self init @@ npseq_to_ne_list tuple.value.inside
+    | TApp    {value;region=_} -> (
+       let (_, args) = value in
+       match args with
+       | CArgTuple x -> bind_fold_ne_list self init @@ npseq_to_ne_list x.value.inside
+       | CArg x -> self init x
+    )
     | TFun    {value;region=_} ->
        let (ty1, _, ty2) = value in
        let* res = self init ty1 in
@@ -70,7 +73,7 @@ module Fold_helpers(M : Monad) = struct
     | TModA {value;region=_} ->
        self init value.field
     | TVar    _
-      | TWild   _
+      | TArg _ 
       | TInt    _
       | TString _ -> ok @@ init
 
@@ -110,8 +113,6 @@ module Fold_helpers(M : Monad) = struct
        let {op=_;arg} = value in
        let* res = fold_expression f init arg in
        ok @@ res
-    | ELogic BoolExpr True _ -> ok @@ init
-    | ELogic BoolExpr False _ -> ok @@ init
     | ELogic CompExpr Lt    {value;region=_}
       | ELogic CompExpr Leq   {value;region=_}
       | ELogic CompExpr Gt    {value;region=_}
@@ -143,11 +144,7 @@ module Fold_helpers(M : Monad) = struct
     | EList ECons {value;region=_} -> bin_op value
     | EList EListComp {value;region=_} ->
        bind_fold_list self init @@ pseq_to_list value.elements
-    | EConstr ENone _ -> ok @@ init
-    | EConstr ESomeApp {value;region=_} ->
-       let _, expr = value in
-       self init expr
-    | EConstr EConstrApp {value;region=_} ->
+    | EConstr {value;region=_} ->
        let _, expr = value in
        (match expr with
           None -> ok @@ init
@@ -292,12 +289,18 @@ module Fold_helpers(M : Monad) = struct
        let* ne_elements = bind_map_npseq aux value.ne_elements in
        let value = {value with ne_elements} in
        return @@ TRecord {value;region}
-    | TApp    {value;region} ->
-       let (const, tuple) = value in
-       let* inside = bind_map_npseq self tuple.value.inside in
-       let tuple = {tuple with value = {tuple.value with inside }} in
-       let value = (const, tuple) in
-       return @@ TApp {value;region}
+    | TApp x ->
+      let (constr, args) = x.value in
+      let* args = match args with
+        | CArgTuple x ->
+          let* inside = bind_map_npseq self x.value.inside in
+          let x = { x with value = {x.value with inside}} in
+          ok @@ CArgTuple x
+        | CArg x ->
+          let* x = self x in
+          ok @@ CArg x
+      in
+      ok (TApp {x with value = (constr, args)})
     | TFun    {value;region} ->
        let (ty1, wild, ty2) = value in
        let* ty1 = self ty1 in
@@ -312,10 +315,10 @@ module Fold_helpers(M : Monad) = struct
        let* field = self value.field in
        let value = {value with field} in
        return @@ TModA {value;region}
-    | TVar    _
-      | TWild   _
-      | TInt _
-      | TString _ -> ok @@ t
+    | TVar _
+    | TArg _
+    | TInt _
+    | TString _ -> ok @@ t
 
   let rec map_expression : mapper -> expr -> expr monad = fun f e  ->
     let self_type = map_type_expression f in
@@ -361,8 +364,6 @@ module Fold_helpers(M : Monad) = struct
        let* arg = self value.arg in
        let value = {value with arg} in
        return @@ ELogic (BoolExpr (Not {value;region}))
-    | ELogic BoolExpr True _
-      | ELogic BoolExpr False _ as e -> return @@ e
     | ELogic CompExpr Lt    {value;region} ->
        let* value = bin_op value in
        return @@ ELogic (CompExpr (Lt {value;region}))
@@ -430,17 +431,11 @@ module Fold_helpers(M : Monad) = struct
        let* elements = bind_map_pseq self value.elements in
        let value = {value with elements} in
        return @@ EList (EListComp {value;region})
-    | EConstr ENone _ as e -> return @@ e
-    | EConstr ESomeApp {value;region} ->
-       let some_, expr = value in
-       let* expr = self expr in
-       let value = some_,expr in
-       return @@ EConstr (ESomeApp {value;region})
-    | EConstr EConstrApp {value;region} ->
+    | EConstr {value;region} ->
        let const, expr = value in
        let* expr = bind_map_option self expr in
        let value = const,expr in
-       return @@ EConstr (EConstrApp {value;region})
+       return @@ EConstr {value;region}
     | ERecord  {value;region} ->
        let aux (e : field_assign reg) =
          let* field_expr = self e.value.field_expr in
@@ -481,11 +476,11 @@ module Fold_helpers(M : Monad) = struct
        return @@ EPar {value;region}
     | ELetIn   {value;region} ->
        let {kwd_let=_;kwd_rec=_;binding;kwd_in=_;body;attributes=_} = value in
-       let {binders;lhs_type;eq;let_rhs} = binding in
+       let {binders;type_params;lhs_type;eq;let_rhs} = binding in
        let* let_rhs = self let_rhs in
        let* lhs_type = bind_map_option (fun (a,b) ->
                            let* b = self_type b in ok (a,b)) lhs_type in
-       let binding = {binders;lhs_type;eq;let_rhs} in
+       let binding = {binders;type_params;lhs_type;eq;let_rhs} in
        let* body = self body in
        let value = {value with binding;body} in
        return @@ ELetIn {value;region}
@@ -547,11 +542,11 @@ module Fold_helpers(M : Monad) = struct
     match d with
       Let {value;region} ->
        let (kwd_let,kwd_rec,let_binding,attr) = value in
-       let {binders;lhs_type;eq;let_rhs} = let_binding in
+       let {binders;type_params;lhs_type;eq;let_rhs} = let_binding in
        let* let_rhs = self_expr let_rhs in
        let* lhs_type = bind_map_option (fun (a,b) ->
                            let* b = self_type b in ok (a,b)) lhs_type in
-       let let_binding = {binders;lhs_type;eq;let_rhs} in
+       let let_binding = {binders;type_params;lhs_type;eq;let_rhs} in
        let value = (kwd_let,kwd_rec,let_binding,attr) in
        return @@ Let {value;region}
     | TypeDecl {value;region} ->

@@ -95,6 +95,9 @@ module Substitution = struct
           let element = s_type_expression ~substs element in
           T.T_module_accessor { module_name; element }
         | T.T_singleton x -> T.T_singleton x
+        | T.T_abstraction x ->
+          let type_ = s_type_expression ~substs x.type_ in
+          T.T_abstraction {x with type_}
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
       let type_content = s_type_content ~substs type_content in

@@ -6,7 +6,7 @@ let () = Sys.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "interpret_test.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test_lambda_call exited with value ().
     - test_higher_order1 exited with value ().
@@ -52,33 +52,33 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "interpret_test_log.mligo" ] ;
-  [%expect {|
+  [%expect{|
     {a = 1 ; b = 2n ; c = "aaa"}
     One (())
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "test_now.mligo" ] ;
-  [%expect {|
-  "storage at origination"
-  "2000-01-01T10:10:10Z"
-  "setting now at:"
-  "storage after calling"
-  "2010-01-01T10:10:11Z"
-  Everything at the top-level was executed.
-  - test_ts exited with value timestamp(946721410).
-  - test exited with value true. |}]
+  [%expect{|
+    "storage at origination"
+    "2000-01-01T10:10:10Z"
+    "setting now at:"
+    "storage after calling"
+    "2010-01-01T10:10:11Z"
+    Everything at the top-level was executed.
+    - test_ts exited with value timestamp(946721410).
+    - test exited with value true. |}]
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "test_now_from_file.mligo" ] ;
-  [%expect {|
-  "storage at origination"
-  "2000-01-01T10:10:10Z"
-  "setting now at:"
-  "storage after calling"
-  "2010-01-01T10:10:11Z"
-  Everything at the top-level was executed.
-  - test exited with value true. |}]
+  [%expect{|
+    "storage at origination"
+    "2000-01-01T10:10:10Z"
+    "setting now at:"
+    "storage after calling"
+    "2010-01-01T10:10:11Z"
+    Everything at the top-level was executed.
+    - test exited with value true. |}]
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "test_fail.mligo" ] ;
@@ -139,7 +139,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "test_mutate_example.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Increment (0)
     10
     Increment (-32)

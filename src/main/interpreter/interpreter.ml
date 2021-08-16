@@ -354,6 +354,8 @@ let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression ->
     | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> return @@ V_Set (List.filter ~f:(fun el -> not (el = v)) elts)
     | ( C_ADDRESS , [ V_Ct (C_contract { address }) ] ) ->
       return (V_Ct (C_address address))
+    | ( C_TRUE , [] ) -> return @@ v_bool true
+    | ( C_FALSE , [] ) -> return @@ v_bool false
     (*
     >>>>>>>>
       Test operators
@@ -651,8 +653,10 @@ and eval_ligo : Ast_typed.expression -> calltrace -> env -> value Monad.t
         arguments in
       apply_operator term.location calltrace term.type_expression env cons_name arguments'
     )
-    | E_constructor { constructor = Label c ; element } when (String.equal c "true" || String.equal c "false")
-     && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool (bool_of_string c))
+    | E_constructor { constructor = Label c ; element } when String.equal c "True"
+      && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool true)
+    | E_constructor { constructor = Label c ; element } when String.equal c "False"
+      && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool false)
     | E_constructor { constructor = Label c ; element } ->
        let* v' = eval_ligo element calltrace env in
       return @@ V_Construct (c,v')
@@ -683,8 +687,8 @@ and eval_ligo : Ast_typed.expression -> calltrace -> env -> value Monad.t
         let cases = LMap.of_list (List.map ~f:ctor_body cases) in
         let get_case c =
             (LMap.find (Label c) cases) in
-        let match_true  = get_case "true" in
-        let match_false = get_case "false" in
+        let match_true  = get_case "True" in
+        let match_false = get_case "False" in
         if b then eval_ligo match_true calltrace env
         else eval_ligo match_false calltrace env
       | Match_variant {cases ; tv} , V_Construct (matched_c , proj) ->

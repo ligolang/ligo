@@ -571,15 +571,12 @@ rule scan client state = parse
 
   (* Strings *)
 | '\''
-| '"' as lexeme {   
-  if client#support_string_delimiter lexeme then (
+| '"' as lexeme {
+  if client#support_string_delimiter lexeme then
     let {region; state; _} = state#sync lexbuf in
     let thread             = mk_thread region in
     scan_string lexeme thread state lexbuf |> client#mk_string
-  )
-  else (
-    rollback lexbuf; client#callback state lexbuf
-  )
+  else (rollback lexbuf; client#callback state lexbuf)
 }
 
   (* Comment *)
@@ -617,8 +614,7 @@ rule scan client state = parse
 
 | eof { client#mk_eof state lexbuf }
 
-| _ { 
-  rollback lexbuf;
+| _ { rollback lexbuf;
       client#callback state lexbuf (* May raise exceptions *) }
 
 (* Finishing a linemarker *)
@@ -712,11 +708,11 @@ and scan_string delimiter thread state = parse
 | ['\t' '\r' '\b']
          { let {region; _} = state#sync lexbuf
            in fail region Invalid_character_in_string }
-| '"'    { 
+| '"'    {
   if delimiter = '"' then
     let {state; _} = state#sync lexbuf
         in thread, state
-  else 
+  else
     let {state; _} = state#sync lexbuf in
            scan_string delimiter (thread#push_char '"') state lexbuf
   }
@@ -724,7 +720,7 @@ and scan_string delimiter thread state = parse
   if delimiter = '\'' then
     let {state; _} = state#sync lexbuf
         in thread, state
-  else 
+  else
     let {state; _} = state#sync lexbuf in
            scan_string delimiter (thread#push_char '\'') state lexbuf
 

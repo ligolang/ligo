@@ -6,37 +6,12 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
-let starvar = Environment.starvar
-
 module Environment = O.Environment
 
 type environment = Environment.t
 
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
-
-let is_not_will_be_ignored te = not @@ match te.O.type_content with
-  | O.T_variable var -> Var.equal var starvar
-  | _ -> false
-
-let rec is_closed ~raise ~loc (t : O.type_content) : unit =
-  let self = is_closed ~raise in
-  let self_list = List.iter
-                    ~f:(fun (v : O.type_expression) -> self ~loc:v.location v.type_content) in
-  match t with
-  | O.T_constant {injection;parameters} ->
-     let arg_len = List.length parameters in
-     let arg_actual = List.filter ~f:is_not_will_be_ignored parameters |>  List.length in
-     let name = injection |> Ligo_string.extract |> Var.of_name in
-     if arg_len <> arg_actual then
-       raise.raise @@ type_constant_wrong_number_of_arguments name arg_len arg_actual loc
-     else
-    ()
-  | O.T_sum rows | O.T_record rows ->
-     self_list (O.LMap.to_list rows.content |> List.map ~f:(fun v -> v.O.associated_type))
-  | O.T_arrow {type1;type2} ->
-     self_list [type1; type2]
-  | _ -> ()
 
 let rec type_module ~raise ~init_env (p:I.module_) : environment * O.module_fully_typed =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -51,15 +26,16 @@ let rec type_module ~raise ~init_env (p:I.module_) : environment * O.module_full
   (e,p)
 
 
-and type_declaration ~raise env : I.declaration Location.wrap -> environment * O.declaration Location.wrap =
-fun d ->
+and type_declaration : raise: typer_error raise -> environment -> I.declaration Location.wrap -> environment * O.declaration Location.wrap =
+fun ~raise env d ->
 let return ?(loc = d.location) e (d : O.declaration) = e,Location.wrap ~loc d in
 match Location.unwrap d with
-  | Declaration_type {type_binder ; type_expr} ->
+  | Declaration_type {type_binder ; type_expr} -> (
     let type_binder = Var.todo_cast type_binder in
     let tv = evaluate_type ~raise env type_expr in
     let env' = Environment.add_type type_binder tv env in
     return env' @@ Declaration_type { type_binder ; type_expr = tv }
+  )
   | Declaration_constant {name ; binder ; attr={inline} ; expr} -> (
     let tv'_opt = Option.map ~f:(evaluate_type ~raise env) binder.ascr in
     let expr =
@@ -83,20 +59,91 @@ match Location.unwrap d with
     return post_env @@ Module_alias { alias; binders}
   )
 
+and evaluate_otype ~raise (e:environment) (t:O.type_expression) : O.type_expression =
+  (* NOTE: this is similar to evaluate_type, but just look up for variables in environment
+    feels wrong, but that's to allow re-evaluate body of T_abstractions *)
+  let return tv' = make_t ~loc:t.location tv' t.type_meta in
+  match t.type_content with
+  | T_constant { language; injection; parameters } ->
+    let parameters = List.map ~f:(evaluate_otype ~raise e) parameters in
+    return (T_constant { language; injection; parameters })
+  | T_arrow {type1;type2} ->
+      let type1 = evaluate_otype ~raise e type1 in
+      let type2 = evaluate_otype ~raise e type2 in
+      return (T_arrow {type1;type2})
+  | T_sum m -> (
+    let lmap =
+      let aux ({associated_type;michelson_annotation;decl_pos} : O.row_element) =
+        let associated_type = evaluate_otype ~raise e associated_type in
+        ({associated_type;michelson_annotation;decl_pos} : O.row_element)
+      in
+      O.LMap.map aux m.content
+    in
+    let sum : O.rows  = match Environment.get_sum lmap e with
+      | None ->
+        let layout = m.layout in
+        {content = lmap; layout}
+      | Some r -> r
+    in
+    let ty = make_t (T_sum sum) None in
+    let () =
+      let aux k _v acc = match Environment.get_constructor k e with
+          | Some (_,type_) ->
+            if Ast_typed.Misc.type_expression_eq (acc,type_) then type_
+            else if I.LMap.mem (Label "M_left") m.content || I.LMap.mem (Label "M_right") m.content then type_
+            else raise.raise (redundant_constructor e k t.location)
+          | None -> acc in
+      let _ = O.LMap.fold aux m.content ty in ()
+    in
+    return @@ T_sum sum
+  )
+  | T_record m -> (
+    let aux ({associated_type;michelson_annotation;decl_pos}: O.row_element) =
+      let associated_type = evaluate_otype ~raise e associated_type in
+      ({associated_type;michelson_annotation;decl_pos} : O.row_element)
+    in
+    let lmap = O.LMap.map aux m.content in
+    let record : O.rows = match Environment.get_record lmap e with
+    | None ->
+      let layout = m.layout in
+      {content=lmap;layout}
+    | Some (_,r) ->  r
+    in
+    return @@ T_record record
+  )
+  | T_variable variable -> (
+    let name : O.type_variable = Var.todo_cast variable in
+    match Environment.get_type_opt name e with
+    | Some x -> x
+    | None -> (
+      match Environment.get_kind_opt name e with
+      | Some () -> return (T_variable name)
+      | None -> raise.raise (unbound_type_variable e name t.location)
+    )
+  )
+  | T_module_accessor {module_name; element} ->
+    let module_ = match Environment.get_module_opt module_name e with
+      Some m -> m
+    | None   -> raise.raise @@ unbound_module_variable e module_name t.location
+    in
+    evaluate_otype ~raise module_ element
+  | T_singleton x -> return (T_singleton x)
+  | T_abstraction x ->
+    let env' = Environment.add_kind x.ty_binder.wrap_content () e in
+    let type_ = evaluate_otype ~raise env' x.type_ in
+    return (T_abstraction {x with type_})
+
 and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expression =
-  let evaluate_type = evaluate_type ~raise in
-  let return tv' =
-    let () = is_closed ~raise ~loc:t.location tv' in
-    (make_t ~loc:t.location tv' (Some t)) in
+  let return tv' = make_t ~loc:t.location tv' (Some t) in
   match t.type_content with
   | T_arrow {type1;type2} ->
-      let type1 = evaluate_type e type1 in
-      let type2 = evaluate_type e type2 in
+      let type1 = evaluate_type ~raise e type1 in
+      let type2 = evaluate_type ~raise e type2 in
       return (T_arrow {type1;type2})
   | T_sum m -> (
     let lmap =
       let aux ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
-        let associated_type = evaluate_type e associated_type in
+        let associated_type = evaluate_type ~raise e associated_type in
         ({associated_type;michelson_annotation;decl_pos} : O.row_element)
       in
       O.LMap.map aux m.fields
@@ -121,7 +168,7 @@ and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expressi
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos}: I.row_element) =
-      let associated_type = evaluate_type e associated_type in
+      let associated_type = evaluate_type ~raise e associated_type in
       ({associated_type;michelson_annotation;decl_pos} : O.row_element)
     in
     let lmap = O.LMap.map aux m.fields in
@@ -133,67 +180,79 @@ and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expressi
     in
     return @@ T_record record
   )
-  | T_variable variable ->
-    (* Check that the variable is in the environment *)
+  | T_variable variable -> (
     let name : O.type_variable = Var.todo_cast variable in
-    let r = trace_option ~raise (unbound_type_variable e name t.location) @@
-                   (Environment.get_type_opt (name) e) in
-    let () = is_closed ~raise ~loc:t.location r.type_content in
-    r
+    match Environment.get_type_opt name e with
+    | Some x -> x
+    | None -> (
+      match Environment.get_kind_opt name e with
+      | Some () -> return (T_variable name)
+      | None -> raise.raise (unbound_type_variable e name t.location)
+    )
+  )
   | T_app {type_operator;arguments} -> (
     let name : O.type_variable = Var.todo_cast type_operator in
-    let v = trace_option ~raise (unbound_type_variable e name t.location) @@
-      Environment.get_type_opt name e in
-    let aux : O.type_injection -> O.type_expression = fun inj ->
-      (*handles converters*)
-      let open Stage_common.Constant in
-      let {language=_ ; injection ; parameters} : O.type_injection = inj in
-      match Ligo_string.extract injection, parameters with
-      | (i, [t]) when String.equal i michelson_pair_right_comb_name ->
-        let lmap = match t.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> lmap
-            | _ -> raise.raise (michelson_comb_no_record t.location) in
-        let record = Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
-        return @@ record
-      | (i, [t]) when String.equal i  michelson_pair_left_comb_name ->
-          let lmap = match t.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> lmap
-            | _ -> raise.raise (michelson_comb_no_record t.location) in
-          let record = Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
-          return @@ record
-      | (i, [t]) when String.equal i michelson_or_right_comb_name ->
-        let cmap = match t.type_content with
-            | T_sum cmap -> cmap.content
-            | _ -> raise.raise (michelson_comb_no_variant t.location) in
-          let pair = Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair
-      | (i, [t]) when String.equal i michelson_or_left_comb_name ->
-        let cmap = match t.type_content with
-            | T_sum cmap -> cmap.content
-            | _ -> raise.raise (michelson_comb_no_variant t.location) in
-          let pair = Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair
-      | _ -> return (T_constant inj)
+    let operator = trace_option ~raise (unbound_type_variable e name t.location) @@
+      Environment.get_type_opt name e
     in
-    match get_param_inj v with
-    | Some (language,injection,parameters) ->
-      let arg_env = List.length parameters in
-      let arg_actual = List.length arguments in
-      let parameters =
-        if arg_env <> arg_actual then raise.raise @@ type_constant_wrong_number_of_arguments type_operator arg_env arg_actual t.location
-        else List.map ~f:(evaluate_type e) arguments
+    let is_fully_applied location (t:O.type_expression) =
+      match t.type_content with
+      | T_abstraction x ->
+        let rec aux : (O.type_expression * int) -> (O.type_expression * int) =
+          fun (t,i) -> match t.type_content with T_abstraction x -> aux (x.type_,i+1) | _ -> (t,i)
+        in
+        let expected = snd @@ aux (x.type_,1) in
+        raise.raise (type_constant_wrong_number_of_arguments None expected 0 location)
+      | _ -> ()
+    in
+    let rec aux : O.type_expression * I.type_variable Location.wrap list -> O.type_expression * I.type_variable Location.wrap list =
+      fun (op, lst) ->
+        match op.type_content with
+        | O.T_abstraction {ty_binder;kind=_;type_} -> (
+          aux (type_ , lst @ [ty_binder])
+        )
+        | _ -> (op, lst)
+    in
+    let (ty_body,vars) = aux (operator, []) in
+    let vargs =
+      match List.zip vars arguments with
+      | Unequal_lengths ->
+        let actual = List.length arguments in
+        let expected = List.length vars in
+        raise.raise (type_constant_wrong_number_of_arguments (Some name) expected actual t.location)
+      | Ok x -> x
+    in
+    let aux : environment -> (I.type_variable Location.wrap * I.type_expression) -> environment =
+      fun env' (ty_binder,arg) ->
+        let arg' = evaluate_type ~raise e arg in
+        let () = is_fully_applied arg.location arg' in
+        let ty_binder : O.type_variable = Var.todo_cast ty_binder.wrap_content in
+        Environment.add_type ty_binder arg' env'
+    in
+    let env' = List.fold_left ~f:aux ~init:e vargs in
+    match ty_body.type_content with
+    | T_constant {language;injection;parameters} ->
+      let aux : O.type_expression -> O.type_expression =
+        fun t ->
+          let t' = evaluate_otype ~raise env' t in
+          let () = is_fully_applied t.location t' in
+          t'
       in
-      let inj : O.type_injection = {language ; injection ; parameters } in
-      aux inj
-    | None -> raise.raise @@ type_variable_with_parameters_not_injection type_operator t.location
+      let args = List.map ~f:aux parameters in
+      return (T_constant {language;injection;parameters=args})
+    | _ -> evaluate_otype ~raise env' ty_body
   )
   | T_module_accessor {module_name; element} ->
     let module_ = match Environment.get_module_opt module_name e with
       Some m -> m
     | None   -> raise.raise @@ unbound_module_variable e module_name t.location
     in
-    evaluate_type module_ element
+    evaluate_type ~raise module_ element
   | T_singleton x -> return (T_singleton x)
+  | T_abstraction x ->
+    let env' = Environment.add_kind x.ty_binder.wrap_content () e in
+    let type_ = evaluate_type ~raise env' x.type_ in
+    return (T_abstraction {x with type_})
 
 and type_expression ~raise : environment -> ?tv_opt:O.type_expression -> I.expression -> O.environment * O.expression
   = fun e ?tv_opt ae ->
@@ -423,15 +482,15 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
   | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
       let lst' = List.map ~f:(type_expression' ~raise e) arguments in
       let tv_lst = List.map ~f:get_type_expression lst' in
-      let cst = (match lst' with 
+      let cst = (match lst' with
         | {expression_content = E_literal (Literal_string _); _ } :: _ -> S.C_CONCAT
         | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } :: _ -> C_ADD
         | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } :: _ -> C_CONCAT
         | {expression_content = E_literal (Literal_int _); _ } :: _ -> C_ADD
-        | {expression_content = E_record_accessor {record; path}; _ } :: _ -> 
+        | {expression_content = E_record_accessor {record; path}; _ } :: _ ->
             (let x = get_record_field_type record.type_expression path in
-            match x with 
-            Some s when is_t_string s -> 
+            match x with
+            Some s when is_t_string s ->
               C_CONCAT
             | _ -> C_ADD )
         | {expression_content = E_variable _; type_expression = texpr } :: _ ->
@@ -612,6 +671,9 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     return @@ I.T_module_accessor ma
   | O.T_singleton l ->
     return @@ I.T_singleton l
+  | O.T_abstraction x ->
+    let type_ = untype_type_expression x.type_ in
+    return @@ T_abstraction {x with type_}
 
 let rec untype_expression (e:O.expression) : I.expression =
   untype_expression_content e.type_expression e.expression_content
@@ -710,7 +772,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let result = untype_expression let_result in
       return @@ e_mod_in module_binder rhs result
   | E_mod_alias ma ->
-      let ma = Stage_common.Maps.mod_alias untype_expression ma in 
+      let ma = Stage_common.Maps.mod_alias untype_expression ma in
       return @@ make_e @@ E_mod_alias ma
   | E_raw_code {language; code} ->
       let code = untype_expression code in
@@ -745,7 +807,7 @@ function
 and untype_module_fully_typed : O.module_fully_typed -> I.module_ = fun (Module_Fully_Typed m) ->
   List.map ~f:(Location.map untype_declaration) m
 
-let rec decompile_env (env : Ast_typed.environment) = 
+let rec decompile_env (env : Ast_typed.environment) =
   let expression_environment = List.map ~f:decompile_binding env.expression_environment in
   let type_environment       = List.map ~f:decompile_type_binding env.type_environment in
   let module_environment     = List.map ~f:decompile_module_binding env.module_environment in
@@ -757,12 +819,16 @@ and decompile_binding Ast_typed.{expr_var;env_elt} =
     ED_binder -> Ast_core.ED_binder
   | ED_declaration {expression;free_variables} ->
     let expression = untype_expression expression in
-    Ast_core.ED_declaration {expression;free_variables} 
+    Ast_core.ED_declaration {expression;free_variables}
   in
   Ast_core.{expr_var;env_elt = {type_value;definition}}
 
 and decompile_type_binding Ast_typed.{type_variable;type_} =
-  let type_ = untype_type_expression type_ in
+  let type_ =
+    match type_ with
+    | Ty type_ -> untype_type_expression type_
+    | Kind () -> Ast_core.t_variable type_variable
+  in
   Ast_core.{type_variable;type_}
 
 and decompile_module_binding Ast_typed.{module_variable;module_} =

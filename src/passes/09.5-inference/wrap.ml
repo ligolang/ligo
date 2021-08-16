@@ -54,6 +54,10 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
     in
     p_constant csttag @@ List.map ~f:type_expression_to_type_value args
   )
+  | T_abstraction { ty_binder ; kind = _ ; type_ } -> (
+    let body = type_expression_to_type_value type_ in
+    p_for_all ty_binder.wrap_content [] body
+  )
 
 let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun name expr ->
   let pattern = type_expression_to_type_value expr in

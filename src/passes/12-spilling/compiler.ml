@@ -142,10 +142,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
-  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
-  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
-  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
-  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
   | C_SHA3 -> C_SHA3
   | C_KECCAK -> C_KECCAK
   | C_LEVEL -> C_LEVEL
@@ -305,6 +301,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     raise.raise @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
   | T_singleton _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "Singleton uncaught"
+  | T_abstraction _ ->
+    raise.raise @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)
@@ -419,8 +417,10 @@ and compile_expression ~raise ?(module_env = SMap.empty) (ae:AST.expression) : e
       let a = self lamb in
       let b = self args in
       return @@ E_application (a, b)
-  | E_constructor {constructor=Label name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
-    return @@ E_constant { cons_name = if bool_of_string name then C_TRUE else C_FALSE ; arguments = [] }
+  | E_constructor {constructor=Label name;element} when String.equal name "True" && element.expression_content = AST.e_unit () ->
+    return @@ E_constant { cons_name = C_TRUE ; arguments = [] }
+  | E_constructor {constructor=Label name;element} when String.equal name "False" && element.expression_content = AST.e_unit () ->
+    return @@ E_constant { cons_name = C_FALSE ; arguments = [] }
   | E_constructor {constructor;element} -> (
     let ty' = compile_type ~raise ae.type_expression in
     let ty_variant =
@@ -643,9 +643,9 @@ and compile_expression ~raise ?(module_env = SMap.empty) (ae:AST.expression) : e
               trace_option ~raise
                 (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
                 (AST.LMap.find_opt (Label c) cases) in
-            let match_true  = get_case "true" in
-            let match_false = get_case "false" in
-            let (t , f) = Pair.map ~f:(self) (match_true, match_false) in
+            let match_true  = get_case "True" in
+            let match_false = get_case "False" in
+            let (t , f) = Pair.map ~f:self (match_true, match_false) in
             return @@ E_if_bool (expr', t, f)
           | _ -> (
               let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
@@ -836,9 +836,9 @@ and compile_recursive ~raise module_env {fun_name; fun_type; lambda} =
             trace_option ~raise
               (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
               (AST.LMap.find_opt (Label c) cases) in
-          let match_true  = get_case "true" in
-          let match_false = get_case "false" in
-          let (t , f) = Pair.map ~f:(self) (match_true, match_false) in
+          let match_true  = get_case "True" in
+          let match_false = get_case "False" in
+          let (t , f) = Pair.map ~f:self (match_true, match_false) in
           return @@ E_if_bool (expr', t, f)
         | _ -> (
             let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@

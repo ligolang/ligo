@@ -82,6 +82,8 @@ let attributes ppf attributes =
 let module_access f ppf = fun {module_name;element} ->
   fprintf ppf "%a.%a" module_variable module_name f element
 (* Types *)
+let abstraction type_expression ppf ({ty_binder ; kind = _ ; type_}) : unit =
+  fprintf ppf "fun %a . %a" type_variable ty_binder.wrap_content type_expression type_
 
 let type_app type_expression ppf ({type_operator ; arguments}: 'a type_app) : unit =
   fprintf ppf "%a%a" type_variable type_operator (list_sep_d_par type_expression) arguments

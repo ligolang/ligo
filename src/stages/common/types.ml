@@ -61,6 +61,12 @@ type 'a module_access = {
 }
 
 (* Type level types *)
+type 'ty_exp abstraction = {
+  ty_binder : type_variable Location.wrap ; 
+  kind : unit ;
+  type_ : 'ty_exp ;
+}
+
 type 'ty_exp rows = {
   fields     : 'ty_exp row_element label_map;
   attributes : string list ;

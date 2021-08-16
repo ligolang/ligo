@@ -4,22 +4,22 @@ open Cst.Jsligo
 
 let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
 
-let bind_map_npseq f (hd, tl) =
+let map_npseq f (hd, tl) =
   let hd = f hd in
   let tl = List.map ~f:(fun (a,b) -> let b = f b in (a,b)) tl
   in (hd,tl)
 
-let bind_map_nseq f (hd, tl) =
+let map_nseq f (hd, tl) =
   let hd = f hd in
   let tl = List.map ~f:(fun a -> let a = f a in a) tl
   in (hd,tl)
 
-let bind_fold_npseq f init (hd,tl) =
+let fold_npseq f init (hd,tl) =
   let res = f init hd in
   let res = List.fold ~f:(fun init (_,b) -> f init b) ~init:res tl
   in res
 
-let bind_fold_nseq f init (hd,tl) =
+let fold_nseq f init (hd,tl) =
   let res = f init hd in
   let res = List.fold ~f:(fun init b -> f init b) ~init:res tl
   in res
@@ -34,8 +34,8 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
   let self = fold_type_expression f in
   let init = f.t init t in
   match t with
-    TProd  {inside; _} -> 
-    List.Ne.fold_left self init @@ npseq_to_ne_list inside.value.inside
+    TProd  {inside = {value = { inside ;_};_} ; _} -> 
+      List.Ne.fold_left self init @@ npseq_to_ne_list inside
   | TSum    {value;region=_} ->
     let {lead_vbar=_;variants;attributes=_} = value in
     List.Ne.fold_left self init @@ npseq_to_ne_list variants
@@ -57,7 +57,6 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
   | TPar    {value;region=_} ->
     self init value.inside
   | TVar    _
-  | TWild   _
   | TModA _
   | TInt _
   | TString _ -> init
@@ -86,8 +85,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     let {op=_;arg} = value in
     let res = fold_expression f init arg in
     res
-  | ELogic BoolExpr True _ -> init
-  | ELogic BoolExpr False _ -> init
   | ELogic CompExpr Lt    {value;region=_}
   | ELogic CompExpr Leq   {value;region=_}
   | ELogic CompExpr Gt    {value;region=_}
@@ -156,11 +153,11 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     ) in
     (match body with
       FunctionBody {value = {inside; _}; _} ->
-        bind_fold_npseq self_statement res inside
+        fold_npseq self_statement res inside
     | ExpressionBody e -> self res e
     )
   | ESeq     {value;region=_} ->
-    bind_fold_npseq self init value
+    fold_npseq self init value
   | ECodeInj _ ->
     init
   | ENew {value = (_, e); _} -> self init e
@@ -170,22 +167,18 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     | Expr_entry e -> self init e
     | Rest_entry {value = {expr; _}; _} -> self init expr
     in
-    bind_fold_npseq fold_array_item init inside
+    fold_npseq fold_array_item init inside
   | EAssign (e1, _, e2) ->
     let res = self init e1 in
     let res = self res e2 in
     self res e1
-  | EConstr ENone _ -> init
-  | EConstr ESomeApp {value;region=_} ->
-    let _, expr = value in
-    self init expr
-  | EConstr EConstrApp {value;region=_} ->
+  | EConstr {value;region=_} ->
     let _, expr = value in
     (match expr with
       None -> init
     | Some e -> self init e
     )
-    
+
 and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a =
   fun f init d ->
   let self_expr = fold_expression f in
@@ -194,7 +187,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a =
   let self = fold_statement f in
   let init = f.d init d in
   match d with
-    SBlock {value = {inside; _}; _} -> bind_fold_npseq self init inside
+    SBlock {value = {inside; _}; _} -> fold_npseq self init inside
   | SExpr e -> self_expr init e
   | SCond {value = {test; ifso; ifnot}; _} ->
     let res = self_expr init test.inside in
@@ -210,7 +203,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a =
     )
   | SLet {value = {bindings; _}; _}
   | SConst {value = {bindings; _}; _} ->
-    let fold_binding init ({value; _}: let_binding reg) =
+    let fold_binding init ({value; _}: val_binding reg) =
       let {lhs_type; expr; _} = value in
       let res = (match lhs_type with
       | None -> init
@@ -218,7 +211,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a =
       ) in
       self_expr res expr
     in
-    bind_fold_npseq fold_binding init bindings
+    fold_npseq fold_binding init bindings
   | SType {value; _} -> self_type init value.type_expr
   | SSwitch {value = {expr; cases; _}; _} ->
     let res = self_expr init expr in
@@ -227,23 +220,23 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a =
         let res = self_expr init expr in
         (match statements with
           None -> res
-        | Some s -> bind_fold_npseq self res s
+        | Some s -> fold_npseq self res s
         )
     | Switch_default_case {statements; _} ->
       (match statements with
           None -> res
-        | Some s -> bind_fold_npseq self res s
+        | Some s -> fold_npseq self res s
         )
     in
     List.Ne.fold_left fold_case res cases
   | SBreak _ -> init
-  | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> bind_fold_npseq self init inside
-  | SExport {value = (_, s); _} -> self init s 
+  | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> fold_npseq self init inside
+  | SExport {value = (_, s); _} -> self init s
   | SImport _ -> init
   | SForOf {value = {expr; statement; _}; _}
   | SWhile {value = {expr; statement; _}; _} ->
       let res = self_expr init expr in
-      self res statement  
+      self res statement
 
 and remove_directives : toplevel_statements -> statement list =
 fun (first, rest) ->
@@ -269,12 +262,12 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
   let t = f.t t in
   let return a = a in
   match t with
-    TProd {inside ={value;region}; attributes} ->
-    let inside = bind_map_npseq self value.inside in
+    TProd {inside = {value; region}; attributes} ->
+    let inside = map_npseq self value.inside in
     let value = {value with inside} in
-    return @@ TProd {inside = {value;region}; attributes}
+    return @@ TProd {inside = {value; region}; attributes}
   | TSum {value;region} ->
-    let variants = bind_map_npseq self value.variants in
+    let variants = map_npseq self value.variants in
     let value = {value with variants} in
     return @@ TSum {value; region}
   | TObject {value;region} ->
@@ -283,12 +276,12 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
       let value = {element.value with field_type} in
       {element with value }
     in
-    let ne_elements = bind_map_npseq aux value.ne_elements in
+    let ne_elements = map_npseq aux value.ne_elements in
     let value = {value with ne_elements} in
     return @@ TObject {value;region}
   | TApp    {value;region} ->
     let (const, tuple) = value in
-    let inside = bind_map_npseq self tuple.value.inside in
+    let inside = map_npseq self tuple.value.inside in
     let tuple = {tuple with value = {tuple.value with inside }} in
     let value = (const, tuple) in
     return @@ TApp {value;region}
@@ -299,7 +292,7 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
     in
     let (ty1, wild, ty2) = value in
     let ty1 =
-      let inside = bind_map_npseq map_fun_type_arg ty1.inside in
+      let inside = map_npseq map_fun_type_arg ty1.inside in
       {lpar = ty1.lpar; inside; rpar = ty1.rpar}
     in
     let ty2 = self ty2 in
@@ -310,7 +303,6 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
     let value = {value with inside} in
     return @@ TPar {value;region}
   | (TVar    _
-  | TWild   _
   | TModA _
   | TInt _
   | TString _ as e) -> e
@@ -332,7 +324,7 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
     EFun {value; region} ->
       let map_fun_expr_body = function
         FunctionBody {value; region} ->
-          let inside = bind_map_npseq self_statement value.inside in
+          let inside = map_npseq self_statement value.inside in
           FunctionBody {
             value = {value with inside};
             region
@@ -360,7 +352,7 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
       let value = {value with inside} in
       return @@ EPar { value; region }
   | ESeq  {value; region} ->
-      let value = bind_map_npseq self value in
+      let value = map_npseq self value in
       return @@ ESeq { value; region }
   | EVar v -> return @@ EVar v
   | EModA a -> return @@ EModA a
@@ -374,8 +366,6 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
     let arg = self value.arg in
     let value = {value with arg} in
     return @@ ELogic (BoolExpr (Not {value;region}))
-  | ELogic BoolExpr True _
-  | ELogic BoolExpr False _ as e -> return @@ e
   | ELogic CompExpr Lt    {value;region} ->
     let value = bin_op value in
     return @@ ELogic (CompExpr (Lt {value;region}))
@@ -419,7 +409,7 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
   | ECall {value = (e, a); region} ->
     let map_arguments = function
       Multiple {value; region} ->
-        let inside = bind_map_npseq self value.inside in
+        let inside = map_npseq self value.inside in
         let value = {value with inside} in
         Multiple { value; region }
     | Unit _ as u -> u
@@ -442,7 +432,7 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
         let expr = self value.expr in
         Rest_entry {value = {value with expr}; region}
       in
-      let inside = bind_map_npseq map_array_item value.inside in
+      let inside = map_npseq map_array_item value.inside in
       let value = {value with inside} in
       return @@ EArray {value; region}
   | EObject {value;region} ->
@@ -458,7 +448,7 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
       let expr = self value.expr in
       Property_rest {value = {value with expr}; region}
     in
-    let inside = bind_map_npseq map_property value.inside in
+    let inside = map_npseq map_property value.inside in
     let value = {value with inside} in
     return @@ EObject {value;region}
   | EString _ as e -> return @@ e
@@ -490,17 +480,11 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
     let code = self value.code in
     let value = {value with code} in
     return @@ ECodeInj {value;region}
-  | EConstr ENone _ as e -> return @@ e
-  | EConstr ESomeApp {value;region} ->
-    let some_, expr = value in
-    let expr = self expr in
-    let value = some_,expr in
-    return @@ EConstr (ESomeApp {value;region})
-  | EConstr EConstrApp {value;region} ->
+  | EConstr {value;region} ->
     let const, expr = value in
     let expr = Option.map ~f:self expr in
     let value = const,expr in
-    return @@ EConstr (EConstrApp {value;region})
+    return @@ EConstr {value;region}
 
 and map_statement : ('err) mapper -> statement -> statement =
   fun f s ->
@@ -509,9 +493,10 @@ and map_statement : ('err) mapper -> statement -> statement =
   let self_type = map_type_expression f in
   let self_module = map_module f in
   let return a = a in
+  (* let s = f.d s in *)
   match s with
     SBlock {value; region} ->
-      let inside = bind_map_npseq self value.inside in
+      let inside = map_npseq self value.inside in
       return @@ SBlock {
         value = {value with inside};
         region
@@ -543,13 +528,13 @@ and map_statement : ('err) mapper -> statement -> statement =
         let t = self_type t in
         (c, t)
       in
-      let map_binding ({value; region}: let_binding Region.reg) =
+      let map_binding ({value; region}: val_binding Region.reg) =
         let a = region in
         let lhs_type = Option.map ~f:map_lhs_type value.lhs_type in
         let expr = self_expr value.expr in
-        ({value = {value with lhs_type; expr}; region}:let_binding Region.reg)
+        ({value = {value with lhs_type; expr}; region}: val_binding Region.reg)
       in
-      let bindings = bind_map_npseq map_binding value.bindings in
+      let bindings = map_npseq map_binding value.bindings in
       return @@ SLet {
         value = {value with bindings};
         region
@@ -559,13 +544,13 @@ and map_statement : ('err) mapper -> statement -> statement =
       let t = self_type t in
       (c, t)
     in
-    let map_binding ({value; region}: let_binding Region.reg) =
+    let map_binding ({value; region}: val_binding Region.reg) =
       let a = region in
       let lhs_type = Option.map ~f:map_lhs_type value.lhs_type in
       let expr = self_expr value.expr in
-      ({value = {value with lhs_type; expr}; region}:let_binding Region.reg)
+      ({value = {value with lhs_type; expr}; region}: val_binding Region.reg)
     in
-    let bindings = bind_map_npseq map_binding value.bindings in
+    let bindings = map_npseq map_binding value.bindings in
     return @@ SConst {
       value = {value with bindings};
       region
@@ -577,10 +562,10 @@ and map_statement : ('err) mapper -> statement -> statement =
     let map_case = function
       Switch_case c ->
         let expr = self_expr c.expr in
-        let statements = Option.map ~f:(bind_map_npseq self) c.statements in
+        let statements = Option.map ~f:(map_npseq self) c.statements in
         Switch_case {c with expr; statements}
     | Switch_default_case d ->
-      let statements = Option.map ~f:(bind_map_npseq self) d.statements in
+      let statements = Option.map ~f:(map_npseq self) d.statements in
       Switch_default_case {d with statements}
     in
     let expr = self_expr value.expr in
@@ -588,13 +573,13 @@ and map_statement : ('err) mapper -> statement -> statement =
     return @@ SSwitch { value = {value with expr; cases}; region}
   | SBreak b ->
     return @@ SBreak b
-  | SNamespace {value; region} -> 
+  | SNamespace {value; region} ->
     let (kwd_namespace, name, statements) = value in
-    let ({value = statements_value; region = statements_region}: statements braced reg) = statements in
-    let inside = bind_map_npseq self statements_value.inside in
-    let statements: statements braced reg = {
+    let ({value = statements_value; region = statements_region}: statements braces reg) = statements in
+    let inside = map_npseq self statements_value.inside in
+    let statements: statements braces reg = {
       value = {
-        statements_value with 
+        statements_value with
         inside
       };
       region = statements_region
@@ -604,7 +589,7 @@ and map_statement : ('err) mapper -> statement -> statement =
       value;
       region
     }
-  | SExport {value; region} -> 
+  | SExport {value; region} ->
     let (kwd_export, statement) = value in
     let statement = self statement in
     return @@ SExport {
@@ -639,7 +624,7 @@ and map_module : 'err mapper -> t -> t =
   fun f {statements; eof} ->
     let self = map_toplevel_statement f in
     (fun statements -> {statements; eof})
-    @@ bind_map_nseq self statements
+    @@ map_nseq self statements
 
 (* TODO this is stupid *)
 let fold_to_map : unit -> (unit, 'err) folder -> ('err) mapper =

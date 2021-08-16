@@ -128,6 +128,11 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
+  | T_abstraction a , T_abstraction b ->
+    let compare_kind ka kb = (ka = kb) in
+    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
+    Some (assert (compare_kind a.kind b.kind))
+  | T_abstraction _ , _ -> None
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
@@ -280,6 +285,10 @@ let p_row (p_row_tag : row_tag) (p_row_args : row_lmap ) =
       p_row_tag ;
       p_row_args ;
     }
+
+let p_for_all (binder : type_variable) (constraints: p_constraints) (body: type_value) =
+  Reasons.wrap Forall @@
+    P_forall { binder ; constraints ; body }
 
 let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
   let p_row_args = LMap.of_list @@ List.mapi ~f:(fun i (x,y) -> Label x,{associated_value=y; michelson_annotation = None; decl_pos = i }) p_row_args in

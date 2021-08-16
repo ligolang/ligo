@@ -31,7 +31,7 @@ let list : compare:('a cmp) -> ('a list) cmp = fun ~compare  expected actual ->
   let aux = fun tree (exp, act) ->
     match tree with
     | None -> None
-    | Some tree1 -> ( 
+    | Some tree1 -> (
       match compare exp act with
       | None -> None
       | Some tree2 -> Some ((Node [tree1; tree2]) : _ tree)
@@ -132,7 +132,7 @@ and row_value : row_value cmp = fun expected actual ->
   use_generated Ast_core.Compare.row_value expected actual
 
 and p_constraint { pc = a } { pc = b } = type_constraint a b
-  
+
 and type_value_ : type_value_ cmp = fun expected actual ->
   match expected, actual with
   | (Ast_core.Types.P_forall   a , Ast_core.Types.P_forall   b) -> p_forall a b
@@ -223,7 +223,7 @@ let compare_and_check_vars ~raise = fun ~(compare : 'a cmp) ~print_whole whole_e
   | None ->
     raise.raise (Typer_common.Errors.corner_case
           @@ Format.asprintf "%s expected \n%a\nbut got actual\n%a\n"
-            __LOC__  
+            __LOC__
             print_whole whole_expected
             print_whole whole_actual)
   | Some t ->

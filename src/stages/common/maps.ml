@@ -7,6 +7,11 @@ let module_access : ('a -> 'b) -> 'a module_access -> 'b module_access
 
 (* Types level *)
 
+let for_all : ('a -> 'b) -> 'a abstraction -> 'b abstraction =
+  fun f ({ type_ ; _} as fa) ->
+    let type_ = f type_ in
+    { fa with type_}
+
 let type_app : ('a -> 'b) -> 'a type_app -> 'b type_app
 = fun g {type_operator;arguments} ->
   let arguments = List.map ~f:g arguments in

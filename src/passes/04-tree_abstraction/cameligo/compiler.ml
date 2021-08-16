@@ -13,6 +13,10 @@ let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
 
 let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
 
+and type_vars_to_list : CST.type_vars -> CST.type_var Region.reg list = function
+  | QParam x -> [x]
+  | QParamTuple x -> Utils.nsepseq_to_list x.value.inside
+
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
@@ -26,7 +30,7 @@ open Predefined.Tree_abstraction.Cameligo
 let r_split = Location.r_split
 
 let mk_var var = if String.compare var Var.wildcard = 0 then Var.fresh () else Var.of_name var
-
+let quote_var var = "'"^var
 let compile_variable var = Location.map mk_var @@ Location.lift_region var
 let compile_attributes attributes : string list =
   List.map ~f:(fst <@ r_split) attributes
@@ -65,7 +69,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
     let lst = npseq_to_list nsepseq in
     let lst = List.map ~f:self lst in
     return @@ t_tuple ~loc lst
-  | TApp app ->
+  | TApp app -> (
     let get_t_string_singleton_opt = function
       | CST.TString s -> Some s.value
       | _ -> None
@@ -77,12 +81,15 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
       | _ -> None
     in
     let ((operator,args), loc) = r_split app in
+    let args = match args with
+      | CArg x -> [x]
+      | CArgTuple args -> npseq_to_list args.value.inside
+    in
     (* this is a bad design, michelson_or and pair should be an operator
        see AnnotType *)
-    (match operator.value with
-      | "michelson_or" ->
-        let lst = npseq_to_list args.value.inside in
-        (match lst with
+    match operator.value with
+      | "michelson_or" -> (
+        match args with
         | [a ; b ; c ; d ] -> (
           let b' =
             trace_option ~raise (michelson_type_wrong te operator.value) @@
@@ -94,10 +101,10 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let c' = self c in
           return @@ t_michelson_or ~loc a' b' c' d'
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value)
-      | "michelson_pair" ->
-        let lst = npseq_to_list args.value.inside in
-        (match lst with
+        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+      )
+      | "michelson_pair" -> (
+        match args with
         | [a ; b ; c ; d ] -> (
           let b' =
             trace_option ~raise (michelson_type_wrong te operator.value) @@
@@ -109,10 +116,10 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let c' = self c in
           return @@ t_michelson_pair ~loc a' b' c' d'
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value)
-      | "sapling_state" ->
-        let lst = npseq_to_list args.value.inside in
-        (match lst with
+        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+      )
+      | "sapling_state" -> (
+        match args with
         | [(a : CST.type_expr)] -> (
           let sloc = Location.lift @@ Raw.type_expr_to_region a in
           let a' =
@@ -121,10 +128,10 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           return @@ t_sapling_state ~loc singleton
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value)
-      | "sapling_transaction" ->
-        let lst = npseq_to_list args.value.inside in
-        (match lst with
+        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+      )
+      | "sapling_transaction" -> (
+        match args with
         | [(a : CST.type_expr)] -> (
           let sloc = Location.lift @@ Raw.type_expr_to_region a in
           let a' =
@@ -133,13 +140,13 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           return @@ t_sapling_transaction ~loc singleton
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value)
+        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+      )
     | _ ->
       let operator = Var.of_name operator.value in
-      let lst = npseq_to_list args.value.inside in
-      let lst = List.map ~f:self lst in
+      let lst = List.map ~f:self args in
       return @@ t_app ~loc operator lst
-    )
+  )
   | TFun func ->
     let ((input_type,_,output_type), loc) = r_split func in
     let input_type = self input_type in
@@ -154,9 +161,12 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
     let (name,loc) = r_split var in
     let v = Var.of_name name in
     return @@ t_variable ~loc v
-  | TWild _ -> raise.raise @@ unsupported_twild te
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te
+  | TArg var ->
+    let (quoted_var,loc) = r_split var in
+    let v = Var.of_name (quote_var quoted_var.name.value) in
+    return @@ t_variable ~loc v
   | TModA ma ->
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
@@ -205,12 +215,13 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     return @@ e_constant ~loc (Const op_type) [arg]
   in
   match e with
-    EVar var ->
+    EVar var -> (
     let (var, loc) = r_split var in
-    (match constants var with
-      Some const -> return @@ e_constant ~loc const []
+    match constants var with
+    | Some const ->
+      return @@ e_constant ~loc const []
     | None -> return @@ e_variable_ez ~loc var
-    )
+  )
   | EPar par -> self par.value.inside
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
@@ -263,8 +274,6 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         Or or_   -> compile_bin_op C_OR  or_
       | And and_ -> compile_bin_op C_AND and_
       | Not not_ -> compile_un_op  C_NOT not_
-      | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
-      | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
     )
     | CompExpr ce -> (
       match ce with
@@ -396,14 +405,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let expr,lhs_type = aux lst in
     let expr = fun_ expr  in
     return @@ e_lambda ~loc binder lhs_type expr
-  | EConstr (ESomeApp some) ->
-    let ((_, arg), loc) = r_split some in
-    let args = compile_tuple_expression @@ List.Ne.singleton arg in
-    return @@ e_some ~loc args
-  | EConstr (ENone reg) ->
-    let loc = Location.lift reg in
-    return @@ e_none ~loc ()
-  | EConstr (EConstrApp constr) ->
+  | EConstr constr ->
     let ((constr,args_o), loc) = r_split constr in
     let args_o = Option.map ~f:(compile_tuple_expression <@ List.Ne.singleton) args_o in
     let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
@@ -512,11 +514,12 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
 and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
   fun p ->
   match unepar p with
-  | CST.PVar {var;attributes} ->
-    let (var,loc) = r_split var in
-    let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
-                       Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
+  | CST.PVar x ->
+    let (pvar,loc) = r_split x in
+    let attributes = pvar.attributes |> List.map ~f:(fun x -> x.Region.value) |>
+    Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b =
+      let (var, loc) = r_split pvar.variable in
       let var = Location.wrap ~loc @@ Var.of_name var in
       { var ; ascr = None ; attributes }
     in
@@ -538,30 +541,14 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
     let lst = List.Ne.to_list lst in
     let (labels,nested) = List.unzip lst in
     Location.wrap ~loc @@ P_record (labels , nested)
-  | CST.PConstr constr_pattern -> (
-    match constr_pattern with
-    | PFalse reg ->
-      let loc = Location.lift reg in
-      Location.wrap ~loc @@ P_variant (Label "false" , Location.wrap ~loc P_unit)
-    | PTrue reg ->
-      let loc = Location.lift reg in
-      Location.wrap ~loc @@ P_variant (Label "true" , Location.wrap ~loc P_unit)
-    | PNone reg ->
-      let loc = Location.lift reg in
-      Location.wrap ~loc @@ P_variant (Label "None" , Location.wrap ~loc P_unit)
-    | PSomeApp some ->
-      let ((_,p), loc) = r_split some in
-      let pattern' = conv ~raise p in
-      Location.wrap ~loc @@ P_variant (Label "Some", pattern')
-    | PConstrApp constr_app ->
-      let ((constr,p_opt), loc) = r_split constr_app in
-      let (l , ploc) = r_split constr in
+  | CST.PConstr pattern ->
+      let (constr, p_opt), loc = r_split pattern in
+      let l, ploc = r_split constr in
       let pv_opt = match p_opt with
         | Some p -> conv ~raise p
         | None -> Location.wrap ~loc:ploc P_unit
       in
       Location.wrap ~loc @@ P_variant (Label l, pv_opt)
-  )
   | CST.PList list_pattern -> (
     let repr = match list_pattern with
     | PListComp p_inj -> (
@@ -576,7 +563,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
             let p' = conv ~raise p in
             Location.wrap (P_list (Cons (p', acc)))
         in
-        let conscomb = List.fold_right ~f:aux ~init:(Location.wrap ~loc (P_list (List []))) lst in 
+        let conscomb = List.fold_right ~f:aux ~init:(Location.wrap ~loc (P_list (List []))) lst in
         conscomb
     )
     | PCons p ->
@@ -618,7 +605,7 @@ and untpar = function
 | _ as v -> v
 
 and check_annotation ~raise = function
-| CST.PVar {var} -> raise.raise (missing_funarg_annotation var)
+| CST.PVar var -> raise.raise (missing_funarg_annotation var.value.variable)
 | CST.PPar { value = { inside ; _ }; _ } -> check_annotation ~raise inside
 | CST.PTuple { value ; _ } ->
   let l = Utils.nsepseq_to_list value in
@@ -647,7 +634,9 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
   | CST.PPar par, [] ->
     let par, _ = r_split par in
     aux (par.inside, [])
-  | PVar {var=name;attributes=var_attributes}, args -> (*function *)
+  | CST.PVar pvar, args -> (* function *)
+    let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
+    let {variable=name;attributes=var_attributes} : CST.var_pattern = pvar in
     let var_attributes = var_attributes |> List.map ~f:(fun x -> x.Region.value) |>
                         Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let () = List.iter ~f:(check_annotation ~raise) args in
@@ -687,8 +676,10 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) loc @@ Var.fresh ()
-  | PVar {var;attributes} ->
-    let (var,loc) = r_split var in
+  | PVar pvar ->
+    let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
+    let {variable;attributes} : CST.var_pattern = pvar in
+    let (var,loc) = r_split variable in
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     return_1 ~attributes loc @@ mk_var var
@@ -722,10 +713,24 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
     List.map ~f:(Location.wrap ~loc:(Location.lift reg)) decl in
   let return_1 reg decl = return reg [decl] in
   match decl with
-    TypeDecl {value={name; type_expr; _};region} ->
+  | TypeDecl {value={name; type_expr; params};region} -> (
     let (name,_) = r_split name in
-    let type_expr = compile_type_expression ~raise type_expr in
+    let type_expr =
+      let rhs = compile_type_expression ~raise type_expr in
+      match params with
+      | None -> rhs
+      | Some x ->
+        let lst = type_vars_to_list x in
+        let aux : CST.type_var Region.reg -> AST.type_expression -> AST.type_expression =
+          fun param type_ ->
+            let (param,ploc) = r_split param in
+            let ty_binder = Location.wrap ~loc:ploc @@ Var.of_name (quote_var param.name.value) in
+            t_abstraction ~loc:(Location.lift region) ty_binder () type_
+        in
+        List.fold_right ~f:aux ~init:rhs lst
+    in
     return_1 region @@ AST.Declaration_type  {type_binder=Var.of_name name; type_expr}
+  )
 
   | Directive _ -> []
 

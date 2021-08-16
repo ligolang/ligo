@@ -30,6 +30,14 @@ let npseq_cons hd lst = hd,(ghost, fst lst)::(snd lst)
 
 let par a = CST.{lpar=ghost;inside=a;rpar=ghost}
 
+let type_vars_of_list : string Region.reg list -> CST.type_vars = fun lst ->
+  let type_var_of_name : _ -> CST.type_var Region.reg = fun name -> wrap CST.{quote=ghost;name} in
+  match lst with
+  | [name] -> QParam (type_var_of_name name)
+  | x -> 
+    let x = Utils.nsepseq_map type_var_of_name (list_to_nsepseq x) in
+    QParamTuple (wrap (par x))
+
 let inject compound a = CST.{compound;elements=a;terminator=None}
 
 let ne_inject compound fields ~attr = CST.{
@@ -106,8 +114,9 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
     let type_constant = wrap @@ Var.to_name type_operator in
     let arguments = List.map ~f:decompile_type_expr arguments in
     let arguments = list_to_nsepseq arguments in
-    let lst : _ CST.par = {lpar=ghost;inside=arguments;rpar=ghost} in
-    return @@ CST.TApp (wrap (type_constant,wrap lst))
+    let par : _ CST.par = {lpar=ghost;inside=arguments;rpar=ghost} in
+    let lst : CST.type_constr_arg = CST.CArgTuple (wrap par) in
+    return @@ CST.TApp (wrap (type_constant,lst))
   | T_annoted _annot ->
     failwith "let's work on it later"
   | T_module_accessor {module_name;element} ->
@@ -121,6 +130,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
       return z
     | _ -> failwith "unsupported singleton"
   )
+  | T_abstraction x -> decompile_type_expr x.type_
 
 let get_e_variable : AST.expression -> _ = fun expr ->
   match expr.expression_content with
@@ -145,12 +155,13 @@ let get_e_tuple : AST.expression -> _  = fun expr ->
 
 let pattern_type ({var;ascr;attributes}: _ AST.binder) =
   let attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-  let var = CST.PVar {var = decompile_variable var.wrap_content; attributes = attributes} in
+  let var : CST.var_pattern = {variable = decompile_variable var.wrap_content; attributes = attributes} in
+  let pattern : CST.pattern = CST.PVar (wrap var) in
   match ascr with
     Some s ->
       let type_expr = decompile_type_expr s in
-      CST.PPar (wrap @@ par (CST.PTyped (wrap @@ CST.{pattern=var;colon=ghost;type_expr})))
-  | None -> var
+      CST.PTyped (wrap @@ CST.{pattern;colon=ghost;type_expr})
+  | None -> pattern
 
 let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   let return_expr expr = expr in
@@ -222,17 +233,17 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr @@ CST.ECall (wrap (lamb,args))
   | E_lambda lambda ->
     let (binders,_lhs_type,_block_with,body) = decompile_lambda lambda in
-    let fun_expr : CST.fun_expr = {kwd_fun=ghost;binders;lhs_type=None;arrow=ghost;body} in
+    let fun_expr : CST.fun_expr = {kwd_fun=ghost;binders;lhs_type=None;arrow=ghost;body;type_params=None;attributes=[]} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder={var;ascr;attributes=var_attributes};rhs;let_result;attributes} ->
     let var_attributes = var_attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-    let var = CST.PVar { var = decompile_variable @@ var.wrap_content; attributes = var_attributes } in
+    let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ var.wrap_content; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
-    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) @@ ascr in
+    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) ascr in
     let let_rhs = decompile_expression rhs in
-    let binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
+    let binding : CST.let_binding = {binders;type_params=None;lhs_type;eq=ghost;let_rhs} in
     let body = decompile_expression let_result in
     let attributes = decompile_attributes attributes in
     let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;kwd_in=ghost;body;attributes} in
@@ -240,7 +251,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   | E_type_in {type_binder;rhs;let_result} ->
     let name = decompile_variable type_binder in
     let type_expr = decompile_type_expr rhs in
-    let type_decl : CST.type_decl = {kwd_type=ghost;name;eq=ghost;type_expr} in
+    let type_decl : CST.type_decl = {kwd_type=ghost;params=None;name;eq=ghost;type_expr} in
     let body = decompile_expression let_result in
     let tin : CST.type_in = {type_decl;kwd_in=ghost;body} in
     return_expr @@ CST.ETypeIn (wrap tin)
@@ -267,7 +278,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let Label constr = constructor in
     let constr = wrap constr in
     let element = decompile_expression element in
-    return_expr_with_par @@ CST.EConstr (EConstrApp (wrap (constr, Some element)))
+    return_expr_with_par @@ CST.EConstr (wrap (constr, Some element))
   | E_matching {matchee; cases} ->
     let expr  = decompile_expression matchee in
     let aux : _ AST.match_case -> _ CST.case_clause CST.reg =
@@ -476,30 +487,48 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
-    Declaration_type {type_binder;type_expr} ->
+    Declaration_type {type_binder;type_expr} -> (
     let name = decompile_variable type_binder in
+    let params =  
+      match type_expr.type_content with
+      | T_abstraction _ -> (
+        let rec aux : AST.type_expression -> _ list -> _ list  =
+          fun t lst ->
+            match t.type_content with
+            | T_abstraction x -> aux x.type_ (x.ty_binder::lst)
+            | _ -> lst
+        in
+        let vars = aux type_expr [] in
+        let params = type_vars_of_list @@
+          List.map ~f:(fun x -> decompile_variable x.wrap_content) vars
+        in
+        Some params
+      )
+      | _ -> None
+    in
     let type_expr = decompile_type_expr type_expr in
-    CST.TypeDecl (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
+    CST.TypeDecl (wrap (CST.{kwd_type=ghost;params;name; eq=ghost; type_expr}))
+  )
   | Declaration_constant {binder;attr;expr}-> (
     let attributes : CST.attributes = decompile_attributes attr in
     let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-    let var = CST.PVar {var = decompile_variable binder.var.wrap_content; attributes = var_attributes } in
+    let var = CST.PVar (wrap ({variable = decompile_variable binder.var.wrap_content; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
     let lhs_type = Option.map ~f:(compose (prefix_colon) decompile_type_expr) binder.ascr in
     match expr.expression_content with
       E_lambda lambda ->
-      let let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
-      let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
+      let let_rhs = decompile_expression (AST.make_e (AST.E_lambda lambda)) in
+      let let_binding : CST.let_binding = {binders;type_params=None;lhs_type;eq=ghost;let_rhs} in
       let let_decl : CST.let_decl = (ghost,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
     | E_recursive {lambda; _} ->
-      let let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
-      let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
+      let let_rhs = decompile_expression (AST.make_e (AST.E_lambda lambda)) in
+      let let_binding : CST.let_binding = {binders;type_params=None;lhs_type;eq=ghost;let_rhs} in
       let let_decl : CST.let_decl = (ghost,Some ghost,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
     | _ ->
       let let_rhs = decompile_expression expr in
-      let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
+      let let_binding : CST.let_binding = {binders;type_params=None;lhs_type;eq=ghost;let_rhs} in
       let let_decl : CST.let_decl = (ghost,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
   )
@@ -521,7 +550,8 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
     | AST.P_var v ->
       let name = (decompile_variable v.var.wrap_content).value in
       let attributes = v.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-      CST.PVar {var = wrap name; attributes }
+      let pvar : CST.var_pattern = {variable = wrap name; attributes } in
+      CST.PVar (wrap pvar)
     | AST.P_list pl -> (
       let ret x = (CST.PList x) in
       match pl with
@@ -540,21 +570,10 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
         let injection = wrap @@ inject (brackets) plst in
         ret (PListComp injection)
     )
-    | AST.P_variant (constructor,p) -> (
-      match constructor with
-      | Label "Some" ->
-        let p = decompile_pattern p in
-        let proj = wrap (ghost, p) in
-        CST.PConstr (PSomeApp proj)
-      | Label "None" -> CST.PConstr (PNone ghost)
-      | Label "true" -> CST.PConstr (PTrue ghost)
-      | Label "false" -> CST.PConstr (PFalse ghost)
-      | Label constructor -> (
+    | AST.P_variant (AST.Label constructor, p) ->
         let p = decompile_pattern p in
         let constr = wrap (wrap constructor, Some p) in
-        CST.PConstr (PConstrApp constr)
-      )
-    )
+        CST.PConstr constr
     | AST.P_tuple lst ->
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq pl in

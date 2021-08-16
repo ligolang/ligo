@@ -1,6 +1,4 @@
-(* ocamllex specification for ReasonLIGO *)
-{
-(* START HEADER *)
+(* Token specification for CameLIGO *)
 
 (* Vendor dependencies *)
 
@@ -33,7 +31,7 @@ module T =
     | Nat      of (lexeme * Z.t) Region.reg
     | Mutez    of (lexeme * Z.t) Region.reg
     | Ident    of lexeme Region.reg
-    | Constr   of lexeme Region.reg
+    | UIdent   of lexeme Region.reg
     | Lang     of lexeme Region.reg Region.reg
     | Attr     of string Region.reg
 
@@ -68,11 +66,11 @@ module T =
     | BOOL_OR  of Region.t (* "||"  *)
     | BOOL_AND of Region.t (* "&&"  *)
     | NOT      of Region.t (* "!"   *)
+    | QUOTE    of Region.t (* "'"   *)
 
     (* Keywords *)
 
     | Else   of Region.t  (* else   *)
-    | False  of Region.t  (* false  *)
     | If     of Region.t  (* if     *)
     | Let    of Region.t  (* let    *)
     | Mod    of Region.t  (* mod    *)
@@ -84,19 +82,17 @@ module T =
     | Or     of Region.t  (* or     *)
     | Rec    of Region.t  (* rec    *)
     | Switch of Region.t  (* switch *)
-    | True   of Region.t  (* true   *)
     | Type   of Region.t  (* type   *)
     | Module of Region.t  (* module *)
 
-    (* Data constructors *)
-
-    | C_None  of Region.t  (* None *)
-    | C_Some  of Region.t  (* Some *)
-
     (* Virtual tokens *)
 
-    | EOF of Region.t
     | ES6FUN of Region.t
+
+    (* End-Of-File *)
+
+    | EOF of Region.t
+
 
     (* Unlexing the tokens *)
 
@@ -112,7 +108,7 @@ module T =
         (* Identifiers, labels, numbers and strings *)
 
       "Ident"   -> id_sym ()
-    | "Constr"  -> ctor_sym ()
+    | "UIdent"  -> ctor_sym ()
     | "Int"      -> "1"
     | "Nat"      -> "1n"
     | "Mutez"    -> "1mutez"
@@ -175,7 +171,6 @@ module T =
     (* Keywords *)
 
     | "Else"    -> "else"
-    | "False"   -> "false"
     | "If"      -> "if"
     | "Let"     -> "let"
     | "Mod"     -> "mod"
@@ -187,16 +182,12 @@ module T =
     | "Or"      -> "or"
     | "Rec"     -> "rec"
     | "Switch"  -> "switch"
-    | "True"    -> "true"
     | "Type"    -> "type"
     | "Module"  -> "module"
 
-    (* Data constructors *)
+    | "QUOTE"   -> "'"
 
-    | "C_None"  -> "None"
-    | "C_Some"  -> "Some"
-
-    (* Virtual tokens *)
+    (* End-Of-File *)
 
     | "EOF" -> ""
 
@@ -233,8 +224,8 @@ module T =
         region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
     | Ident Region.{region; value} ->
         region, sprintf "Ident %S" value
-    | Constr Region.{region; value} ->
-        region, sprintf "Constr %S" value
+    | UIdent Region.{region; value} ->
+        region, sprintf "UIdent %S" value
     | Lang Region.{region; value} ->
         region, sprintf "Lang %S" (value.Region.value)
     | Attr Region.{region; value} ->
@@ -272,7 +263,6 @@ module T =
     | BOOL_OR  region -> region, "BOOL_OR"
     | BOOL_AND region -> region, "BOOL_AND"
     | Else     region -> region, "Else"
-    | False    region -> region, "False"
     | If       region -> region, "If"
     | Let      region -> region, "Let"
     | Rec      region -> region, "Rec"
@@ -284,13 +274,18 @@ module T =
     | Lsl      region -> region, "Lsl"
     | Lsr      region -> region, "Lsr"
     | Or       region -> region, "Or"
-    | True     region -> region, "True"
     | Type     region -> region, "Type"
-    | C_None   region -> region, "C_None"
-    | C_Some   region -> region, "C_Some"
-    | EOF      region -> region, "EOF"
-    | ES6FUN   region -> region, "ES6FUN"
     | Module   region -> region, "Module"
+    | QUOTE    region -> region, "QUOTE"
+
+    (* Virtual tokens *)
+
+    | ES6FUN region -> region, "ES6FUN"
+
+    (* End-Of-File *)
+
+    | EOF region -> region, "EOF"
+
 
     let to_lexeme = function
       (* Directives *)
@@ -306,7 +301,7 @@ module T =
     | Nat i
     | Mutez i    -> fst i.Region.value
     | Ident id   -> id.Region.value
-    | Constr id  -> id.Region.value
+    | UIdent id  -> id.Region.value
     | Attr a     -> sprintf "[@%s]" a.Region.value
     | Lang lang  -> Region.(lang.value.value)
 
@@ -341,11 +336,11 @@ module T =
     | BOOL_OR  _ -> "||"
     | BOOL_AND _ -> "&&"
     | NOT      _ -> "!"
+    | QUOTE    _ -> "'"
 
     (* Keywords *)
 
     | Else    _ -> "else"
-    | False   _ -> "false"
     | If      _ -> "if"
     | Let     _ -> "let"
     | Mod     _ -> "mod"
@@ -357,19 +352,17 @@ module T =
     | Or      _ -> "or"
     | Rec     _ -> "rec"
     | Switch  _ -> "switch"
-    | True    _ -> "true"
     | Type    _ -> "type"
     | Module  _ -> "module"
 
-    (* Data constructors *)
-
-    | C_None  _ -> "None"
-    | C_Some  _ -> "Some"
-
     (* Virtual tokens *)
 
-    | EOF _ -> ""
     | ES6FUN _ -> ""
+
+    (* End-Of-File *)
+
+    | EOF _ -> ""
+
 
     (* CONVERSIONS *)
 
@@ -380,11 +373,12 @@ module T =
 
     let to_region token = proj_token token |> fst
 
-    (* LEXIS *)
+    (* SMART CONSTRUCTORS *)
+
+    (* Keywords *)
 
     let keywords = [
       (fun reg -> Else   reg);
-      (fun reg -> False  reg);
       (fun reg -> If     reg);
       (fun reg -> Let    reg);
       (fun reg -> Rec    reg);
@@ -396,125 +390,24 @@ module T =
       (fun reg -> Lsl    reg);
       (fun reg -> Lsr    reg);
       (fun reg -> Or     reg);
-      (fun reg -> True   reg);
       (fun reg -> Type   reg);
       (fun reg -> Module reg)
     ]
 
-    let reserved =
-      let open SSet in
-      empty
-      |> add "as"
-      |> add "asr"
-      |> add "begin"
-      |> add "class"
-      |> add "constraint"
-      |> add "do"
-      |> add "done"
-      |> add "downto"
-      |> add "end"
-      |> add "exception"
-      |> add "external"
-      |> add "for"
-      |> add "function"
-      |> add "functor"
-      |> add "inherit"
-      |> add "initializer"
-      |> add "lazy"
-      |> add "match"
-      |> add "method"
-      |> add "mutable"
-      |> add "new"
-      |> add "nonrec"
-      |> add "object"
-      |> add "of"
-      |> add "open"
-      |> add "private"
-      |> add "sig"
-      |> add "struct"
-      |> add "then"
-      |> add "to"
-      |> add "try"
-      |> add "val"
-      |> add "virtual"
-      |> add "when"
-      |> add "while"
-      |> add "pri"
-      |> add "pub"
-
-    let constructors = [
-      (fun reg -> C_None reg);
-      (fun reg -> C_Some reg)
-    ]
-
-    let add map (key, value) = SMap.add key value map
-
-    let mk_map mk_key list =
-      let apply map value = add map (mk_key value, value)
-      in List.fold_left apply SMap.empty list
-
-    type lexis = {
-      kwd  : (Region.t -> token) SMap.t;
-      cstr : (Region.t -> token) SMap.t;
-      res  : SSet.t
-    }
-
-    let lexicon : lexis =
-      let build = mk_map (fun f -> to_lexeme (f Region.ghost))
-      in {kwd  = build keywords;
-          cstr = build constructors;
-          res  = reserved}
-
-    (* Keywords *)
+    let keywords =
+      let add map (key, value) = SMap.add key value map in
+      let apply map mk_kwd =
+        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
+      in List.fold_left apply SMap.empty keywords
 
     type kwd_err = Invalid_keyword
 
     let mk_kwd ident region =
-      match SMap.find_opt ident lexicon.kwd with
+      match SMap.find_opt ident keywords with
         Some mk_kwd -> Ok (mk_kwd region)
       |        None -> Error Invalid_keyword
 
-    (* Identifiers *)
-
-    type ident_err = Reserved_name
-
-(* END OF HEADER *)
-}
-
-(* START LEXER DEFINITION *)
-
-(* Named regular expressions *)
-
-let small   = ['a'-'z']
-let capital = ['A'-'Z']
-let letter  = small | capital
-let digit   = ['0'-'9']
-let ident   = small (letter | '_' | digit)* |
-              '_' (letter | '_' (letter | digit) | digit)+
-let constr  = capital (letter | '_' | digit)*
-
-(* Rules *)
-
-rule scan_ident region lexicon = parse
-  (ident as value) eof {
-    if   SSet.mem value lexicon.res
-    then Error Reserved_name
-    else Ok (match SMap.find_opt value lexicon.kwd with
-               Some mk_kwd -> mk_kwd region
-             |        None -> Ident Region.{region; value}) }
-
-and scan_constr region lexicon = parse
-  (constr as value) eof {
-    match SMap.find_opt value lexicon.cstr with
-      Some mk_cstr -> mk_cstr region
-    |         None -> Constr Region.{region; value} }
-
-(* END LEXER DEFINITION *)
-
-{
-(* START TRAILER *)
-
-    (* Smart constructors (injections) *)
+    (* Strings *)
 
     let mk_string lexeme region =
       String Region.{region; value=lexeme}
@@ -522,13 +415,16 @@ and scan_constr region lexicon = parse
     let mk_verbatim lexeme region =
       Verbatim Region.{region; value=lexeme}
 
+    (* Bytes *)
+
     let mk_bytes lexeme region =
       let norm = Str.(global_replace (regexp "_") "" lexeme) in
       let value = lexeme, `Hex norm
       in Bytes Region.{region; value}
 
-    type int_err = 
-      Non_canonical_zero
+    (* Numerical values *)
+
+    type int_err = Non_canonical_zero
 
     let mk_int lexeme region =
       let z =
@@ -538,9 +434,9 @@ and scan_constr region lexicon = parse
          else Ok (Int Region.{region; value = lexeme,z})
 
     type nat_err =
-        Invalid_natural
-      | Unsupported_nat_syntax
-      | Non_canonical_zero_nat
+      Invalid_natural
+    | Unsupported_nat_syntax
+    | Non_canonical_zero_nat
 
     let mk_nat lexeme region =
       match String.index_opt lexeme 'n' with
@@ -554,7 +450,7 @@ and scan_constr region lexicon = parse
           then Error Non_canonical_zero_nat
           else Ok (Nat Region.{region; value = lexeme,z})
 
-    type mutez_err = 
+    type mutez_err =
         Unsupported_mutez_syntax
       | Non_canonical_zero_tez
 
@@ -566,7 +462,11 @@ and scan_constr region lexicon = parse
       then Error Non_canonical_zero_tez
       else Ok (Mutez Region.{region; value = lexeme, z})
 
-    let eof region = EOF region
+    (* End-Of-File *)
+
+    let mk_eof region = EOF region
+
+    (* Symbols *)
 
     type sym_err = Invalid_symbol of string
 
@@ -607,20 +507,22 @@ and scan_constr region lexicon = parse
       | "!"   ->  Ok (NOT      region)
       | "++"  ->  Ok (PLUS2    region)
 
+      | "'"   -> Ok (QUOTE    region)
+
       (* Invalid symbols *)
 
       | s ->  Error (Invalid_symbol s)
 
-
     (* Identifiers *)
 
-    let mk_ident lexeme region =
-      Lexing.from_string lexeme |> scan_ident region lexicon
+    let mk_ident value region =
+      match SMap.find_opt value keywords with
+        Some mk_kwd -> mk_kwd region
+      |        None -> Ident Region.{region; value}
 
-    (* Constructors *)
+    (* Constructors/Modules *)
 
-    let mk_constr lexeme region =
-      Lexing.from_string lexeme |> scan_constr region lexicon
+    let mk_uident value region = UIdent Region.{region; value}
 
     (* Attributes *)
 
@@ -628,12 +530,11 @@ and scan_constr region lexicon = parse
 
     (* Code injection *)
 
-    type lang_err = 
-      Unsupported_lang_syntax
+    type lang_err = Unsupported_lang_syntax
 
-    let mk_lang lang region = Ok(Lang Region.{value=lang; region})
+    let mk_lang lang region = Ok (Lang Region.{value=lang; region})
 
-    (* Predicates *)
+    (* PREDICATES *)
 
     let is_eof = function EOF _ -> true | _ -> false
 
@@ -647,6 +548,3 @@ and scan_constr region lexicon = parse
 include T
 
 module type S = module type of T
-
-(* END TRAILER *)
-}

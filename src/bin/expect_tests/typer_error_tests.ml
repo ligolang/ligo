@@ -56,7 +56,7 @@ let%expect_test _ =
       7 |   42
 
     Invalid type(s).
-    Expected: "sum[false -> unit , true -> unit]", but got: "int". |} ] ;
+    Expected: "sum[False -> unit , True -> unit]", but got: "int". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_type_record_update.mligo" ; "main" ] ;
   [%expect {|
@@ -66,7 +66,7 @@ let%expect_test _ =
       8 |   x
 
     Invalid type(s).
-    Expected: "int", but got: "sum[false -> unit , true -> unit]". |} ] ;
+    Expected: "int", but got: "sum[False -> unit , True -> unit]". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_1.mligo" ; "main" ] ;
   [%expect {|
@@ -96,7 +96,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s).
-    Expected: "( int * string * sum[false -> unit , true -> unit] )", but got: "
+    Expected: "( int * string * sum[False -> unit , True -> unit] )", but got: "
     ( int * string )". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
@@ -107,8 +107,8 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , c -> sum[false -> unit , true -> unit] , d -> string]", but got: "
-    record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]". |} ] ;
+    Expected: "record[a -> int , c -> sum[False -> unit , True -> unit] , d -> string]", but got: "
+    record[a -> int , b -> string , c -> sum[False -> unit , True -> unit]]". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_5.mligo" ; "main" ] ;
   [%expect {|
@@ -126,7 +126,7 @@ let%expect_test _ =
 
     Invalid type(s).
     Expected: "map (int , string)", but got: "map (int ,
-    sum[false -> unit , true -> unit])". |} ] ;
+    sum[False -> unit , True -> unit])". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;
   [%expect {|
@@ -136,7 +136,7 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]". |} ] ;
+    Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> sum[False -> unit , True -> unit]]". |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/id.mligo" ; "main" ] ;
   [%expect {|
@@ -199,10 +199,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ; "main" ] ;
   [%expect {|
-    File "../../test/contracts/negative/will_be_ignored.mligo", line 6, characters 20-28:
-      5 | let main (amoun, s: tez * storage): operation list * storage =
+    File "../../test/contracts/negative/will_be_ignored.mligo", line 7, characters 47-55:
       6 |      let receiver : contract =
       7 |       match (Tezos.get_contract_opt(s.owner) : contract option) with
+      8 |         Some (contract) -> contract
 
-    Wrong number of arguments for type constant: contract expected: 1
-    got: 0 |}]
+    Type takes the wrong number of arguments, expected: 1 got: 0 |}]

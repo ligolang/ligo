@@ -157,6 +157,9 @@ and map_type_expression ~raise : 'err ty_exp_mapper -> type_expression -> type_e
     let ma = Maps.module_access self ma in
     return @@ T_module_accessor ma
   | T_singleton _ -> te'
+  | T_abstraction x ->
+    let x = Maps.for_all self x in
+    return (T_abstraction x)
 
 and map_module ~raise : 'err abs_mapper -> module_ -> module_ = fun m p ->
   let aux = fun (x : declaration) ->

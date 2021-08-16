@@ -10,6 +10,8 @@ let make_e ?(location = Location.generated) expression_content type_expression =
   location ;
   }
 let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
+let t_abstraction ?loc ?core ty_binder kind type_ =
+  make_t ?loc (T_abstraction {ty_binder ; kind ; type_}) core
 
 let t_constant ?loc ?core injection parameters : type_expression =
   make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
@@ -33,6 +35,18 @@ let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12
 let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
 let t_never       ?loc ?core () : type_expression = t_constant ?loc ?core never_name []
 
+let t_abstraction1 ?loc name kind : type_expression = 
+  let ty_binder = Location.wrap @@ Var.fresh () in
+  let type_ = t_constant name [t_variable ~core:(Ast_core.t_variable ty_binder.wrap_content) ty_binder.wrap_content] in
+  t_abstraction ?loc ty_binder kind type_
+let t_abstraction2 ?loc name kind_l kind_r : type_expression = 
+  let ty_binder_l = Location.wrap @@ Var.fresh () in
+  let ty_binder_r = Location.wrap @@ Var.fresh () in
+  let type_ = t_constant name
+    [ t_variable ty_binder_l.wrap_content ;
+      t_variable ty_binder_r.wrap_content ]
+  in
+  t_abstraction ?loc ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core option_name [o]
 let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core list_name [t]
@@ -74,7 +88,7 @@ let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression)
   let map = LMap.of_list lst in
   t_sum ?loc ?core ~layout map
 let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
-  [("true", t_unit ());("false", t_unit ())]
+  [("True", t_unit ());("False", t_unit ())]
 
 (* types specific to LIGO test framework*)
 let t_ligo_code ?loc ?core () : type_expression = t_constant ?loc ?core test_ligo_name []
@@ -334,7 +348,11 @@ let e_let_in let_binder rhs let_result inline = E_let_in { let_binder ; rhs ; le
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
 
-let e_bool b : expression_content = e_constructor (Label (string_of_bool b)) (make_e (e_unit ())(t_unit()))
+let e_bool b : expression_content =
+  if b then
+    e_constructor (Label "True") (make_e (e_unit ())(t_unit()))
+  else
+    e_constructor (Label "False") (make_e (e_unit ())(t_unit()))
 
 let e_a_unit = make_e (e_unit ()) (t_unit ())
 let e_a_int n = make_e (e_int n) (t_int ())
@@ -350,7 +368,8 @@ let e_a_address s = make_e (e_address s) (t_address ())
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
 let e_a_constructor c e t = make_e (e_constructor (Label c) e) t
-let e_a_some s = make_e (e_some s) (t_option s.type_expression)
+let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
+
 let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
 let e_a_recursive l= make_e (e_recursive l) l.fun_type
 let e_a_none t = make_e (e_none ()) (t_option t)
@@ -403,10 +422,14 @@ let get_a_unit (t:expression) =
 
 let get_a_bool (t:expression) =
   match t.expression_content with
-  | E_constructor {constructor=Label name;element}
-    when (String.equal name "true" || String.equal name "false")
+  | E_constructor {constructor=Label name;element} when
+    (String.equal name "True")
     && element.expression_content = e_unit () ->
-      Some (bool_of_string name)
+      Some true
+  | E_constructor {constructor=Label name;element} when
+    (String.equal name "False")
+    && element.expression_content = e_unit () ->
+      Some false
   | _ -> None
 
 

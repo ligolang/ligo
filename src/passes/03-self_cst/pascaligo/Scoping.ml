@@ -88,8 +88,17 @@ let reserved =
   |> add "self_address"
   |> add "implicit_account"
   |> add "set_delegate"
+  |> add "true"
+  |> add "false"
 
-let check_reserved_names ~raise vars =
+let reserved_ctors =
+  let open SSet in
+  empty
+  |> add "None"
+  |> add "Some"
+  |> add "Unit"
+
+  let check_reserved_names ~raise vars =
   let is_reserved elt = SSet.mem elt.value reserved in
   let inter = VarSet.filter is_reserved vars in
   if not (VarSet.is_empty inter) then
@@ -106,6 +115,20 @@ let is_wildcard var =
   let var = var.value in
   String.compare var Var.wildcard = 0
 
+  (* Check linearty of type variable in parametric types *)
+
+let check_linearity_type_vars ~raise : CST.type_vars -> unit =
+  fun xs ->
+    let type_vars_to_list : CST.type_vars -> CST.type_var list = fun x -> Utils.nsepseq_to_list x.value.inside in
+    let lst = type_vars_to_list xs in
+    let aux : VarSet.t -> CST.type_var -> VarSet.t = fun varset var ->
+      if VarSet.mem var varset then
+        raise.raise @@ non_linear_type_decl var
+      else VarSet.add var varset
+    in
+    let varset = List.fold_left lst ~f:aux ~init:VarSet.empty in 
+    ignore varset ; ()
+
 (* Checking the linearity of patterns *)
 
 open! CST
@@ -117,6 +140,7 @@ let rec vars_of_pattern ~raise env = function
 | PTuple t -> vars_of_ptuple ~raise env t.value
 | PRecord p -> vars_of_fields ~raise env p.value.elements
 | PVar var ->
+    let var = var.value.variable in
     if VarSet.mem var env then
       raise.raise @@ non_linear_pattern var
     else
@@ -138,15 +162,12 @@ and vars_of_field_pattern ~raise env field =
   *)
   let p = field.value.pattern in
   vars_of_pattern ~raise env p
-  
+
 
 and vars_of_pconstr ~raise env = function
-  PUnit _ | PFalse _ | PTrue _ | PNone _ -> env
-| PSomeApp {value=_, pattern; _} ->
-    vars_of_pattern ~raise env pattern
-| PConstrApp {value=_, Some tuple; _} ->
-    vars_of_ptuple ~raise env tuple.value
-| PConstrApp {value=_,None; _} -> env
+  | {value=(_, Some pattern); _} ->
+    Helpers.fold_npseq (vars_of_pattern ~raise) env pattern.value.inside
+  | {value=(_, None); _} -> env
 
 and vars_of_plist ~raise env = function
   PListComp {value; _} ->
@@ -184,24 +205,35 @@ let check_variants ~raise variants =
     List.fold ~f:add ~init:VarSet.empty variants
   in ignore variants
 
+(* Checking variants for reserved constructor *)
+
+let check_reserved_constructors ~raise (vars : variant reg list) =
+  let f = fun  x ->
+    if SSet.mem x.value.constr.value reserved_ctors then
+      raise.raise @@ reserved_name x.value.constr
+  in
+  List.iter ~f vars
+
 (* Checking parameters *)
 
 let check_parameters ~raise params =
   let add acc = function
-    ParamConst {value; _} ->
-      let () = check_reserved_name ~raise value.var in
-      if is_wildcard value.var then
-        acc
-      else if VarSet.mem value.var acc then
-        raise.raise @@ duplicate_parameter value.var
-      else VarSet.add value.var acc
+  | ParamConst {value; _} ->
+    let var_name = value.var.value.variable in
+    let () = check_reserved_name ~raise var_name in
+    if is_wildcard var_name then
+      acc
+    else if VarSet.mem var_name acc then
+      raise.raise @@ duplicate_parameter var_name
+    else VarSet.add var_name acc
   | ParamVar {value; _} ->
-      let () = check_reserved_name ~raise value.var in
-      if is_wildcard value.var then
-        acc
-      else if VarSet.mem value.var acc then
-        raise.raise @@ duplicate_parameter value.var
-      else VarSet.add value.var acc in
+    let var_name = value.var.value.variable in
+    let () = check_reserved_name ~raise var_name in
+    if is_wildcard var_name then
+      acc
+    else if VarSet.mem var_name acc then
+      raise.raise @@ duplicate_parameter var_name
+    else VarSet.add var_name acc in
   let params =
     List.fold ~f:add ~init:VarSet.empty params
   in ignore params
@@ -223,7 +255,9 @@ let peephole_type ~raise : unit -> type_expr -> unit =
   match t with
     TProd   {value=_;region=_} -> ()
   | TSum    {value;region=_} ->
-    let () = Utils.nsepseq_to_list value.variants |> check_variants ~raise in
+    let lst = Utils.nsepseq_to_list value.variants in
+    let () = check_reserved_constructors ~raise lst in
+    let () = check_variants ~raise lst in
     ()
   | TRecord {value;region=_} ->
     let () = Utils.nsepseq_to_list value.ne_elements |> check_fields ~raise in
@@ -233,7 +267,6 @@ let peephole_type ~raise : unit -> type_expr -> unit =
   | TPar    {value=_;region=_} -> ()
   | TVar    {value=_;region=_} -> ()
   | TModA   {value=_;region=_} -> ()
-  | TWild   _                  -> ()
   | TString {value=_;region=_} -> ()
   | TInt    {value=_;region=_} -> ()
 
@@ -257,12 +290,11 @@ let peephole_expression ~raise : unit -> expr -> unit = fun () e ->
   | ERecord  {value=_;region=_} -> ()
   | EProj    {value=_;region=_} -> ()
   | EUpdate  {value=_;region=_} -> ()
-  | EModA   {value=_;region=_} -> ()
+  | EModA   {value=_;region=_}  -> ()
   | EMap     _                  -> ()
   | EVar     {value=_;region=_} -> ()
   | ECall    {value=_;region=_} -> ()
   | EBytes   {value=_;region=_} -> ()
-  | EUnit    _                  -> ()
   | ETuple   {value=_;region=_} -> ()
   | EPar     {value=_;region=_} -> ()
   | EFun     {value=_;region=_} -> ()
@@ -308,6 +340,7 @@ let peephole_statement ~raise : unit -> statement -> unit = fun _ s ->
 let peephole_declaration ~raise : unit -> declaration -> unit = fun _ d ->
   match d with
   | TypeDecl  {value;region=_} ->
+    let () = Option.value_map ~default:() ~f:(check_linearity_type_vars ~raise) value.params in
     let () = check_reserved_name ~raise value.name in
     ()
   | ConstDecl {value;region=_} ->

@@ -2,15 +2,11 @@
 
    The underlying design principles are:
 
-     (1) enforce stylistic constraints at a lexical level, in order to
-         early reject potentially misleading or poorly written
-         LIGO contracts;
-
-     (2) provide precise error messages with hints as how to fix the
+     (1) provide precise error messages with hints as how to fix the
          issue, which is achieved by consulting the lexical
          right-context of lexemes;
 
-     (3) be as independent as possible from the LIGO version, so
+     (2) be as independent as possible from the LIGO version, so
          upgrades have as little impact as possible on this
          specification: this is achieved by using the most general
          regular expressions to match the lexing buffer and broadly
@@ -18,7 +14,7 @@
          finer, second analysis to an external module making the
          tokens (hence a functor below);
 
-     (4) support unit testing (lexing of the whole input with debug
+     (3) support unit testing (lexing of the whole input with debug
          traces).
 
      A limitation to the independence with respect to the LIGO version

@@ -21,11 +21,11 @@ and type_content =
   | T_arrow    of ty_expr arrow
   | T_module_accessor of ty_expr module_access
   | T_singleton of literal
+  | T_abstraction of ty_expr abstraction
 
 and type_injection = {
   language : string ;
   injection : Ligo_string.t ;
-  (* kind (?) *)
   parameters : ty_expr list ;
 }
 
@@ -255,9 +255,11 @@ and environment_binding = {
 
 and type_environment = type_environment_binding list
 
+and type_or_kind = Ty of type_expression | Kind of unit
+
 and type_environment_binding = {
     type_variable: type_variable ;
-    type_: type_expression ;
+    type_: type_or_kind ;
   }
 
 and module_environment = module_environment_binding list

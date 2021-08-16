@@ -90,6 +90,9 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
       return @@ O.T_module_accessor ma
     | I.T_singleton x ->
       return @@ O.T_singleton x
+    | I.T_abstraction x ->
+      let type_ = self x.type_ in
+      return @@ O.T_abstraction { x with type_ }
 
 let compile_binder = binder compile_type_expression
 
@@ -236,8 +239,8 @@ let rec compile_expression : I.expression -> O.expression =
       return @@ O.E_matching {
           matchee ;
           cases = [
-            { pattern = Location.wrap @@ O.P_variant (Label "true" , Location.wrap O.P_unit) ; body = match_true  } ;
-            { pattern = Location.wrap @@ O.P_variant (Label "false", Location.wrap O.P_unit) ; body = match_false } ;
+            { pattern = Location.wrap @@ O.P_variant (Label "True" , Location.wrap O.P_unit) ; body = match_true  } ;
+            { pattern = Location.wrap @@ O.P_variant (Label "False", Location.wrap O.P_unit) ; body = match_false } ;
           ]
         }
     | I.E_sequence {expr1; expr2} ->

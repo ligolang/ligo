@@ -20,13 +20,13 @@ let fold_pseq f init seq =
   let res = Option.map ~f:(fold_npseq f init) seq in
   Option.value ~default:(init) res
 
-type ('a, 'err) folder = {
+type 'a folder = {
   e : 'a -> expr -> 'a;
   t : 'a -> type_expr -> 'a;
   d : 'a -> declaration -> 'a;
 }
 
-let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun f init t ->
+let rec fold_type_expression : 'a folder -> 'a -> type_expr -> 'a = fun f init t ->
   let self = fold_type_expression f in
   let init = f.t init t in
   match t with
@@ -47,9 +47,12 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
       self init field_type
     in
     List.Ne.fold_left aux init @@ npseq_to_ne_list value.ne_elements
-  | TApp    {value;region=_} ->
-    let (_, tuple) = value in
-    List.Ne.fold_left self init @@ npseq_to_ne_list tuple.value.inside
+  | TApp    {value;region=_} -> (
+    let (_, args) = value in
+    match args with
+    | CArgTuple x -> List.Ne.fold_left self init @@ npseq_to_ne_list x.value.inside
+    | CArg x -> self init x
+  )
   | TFun    {value;region=_} ->
     let (ty1, _, ty2) = value in
     let res = self init ty1 in
@@ -59,12 +62,12 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
     self init value.inside
   | TModA {value;region=_} ->
     self init value.field
+  | TArg    _
   | TVar    _
-  | TWild   _
   | TInt    _
   | TString _ -> init
 
-let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  ->
+let rec fold_expression : 'a folder -> 'a -> expr -> 'a = fun f init e  ->
   let self = fold_expression f in
   let self_type = fold_type_expression f in
   let self_module = fold_module f in
@@ -100,8 +103,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     let {op=_;arg} = value in
     let res = fold_expression f init arg in
     res
-  | ELogic BoolExpr True _ -> init
-  | ELogic BoolExpr False _ -> init
   | ELogic CompExpr Lt    {value;region=_}
   | ELogic CompExpr Leq   {value;region=_}
   | ELogic CompExpr Gt    {value;region=_}
@@ -133,11 +134,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
   | EList ECons {value;region=_} -> bin_op value
   | EList EListComp {value;region=_} ->
     List.fold ~f:self ~init @@ pseq_to_list value.elements
-  | EConstr ENone _ -> init
-  | EConstr ESomeApp {value;region=_} ->
-    let _, expr = value in
-    self init expr
-  | EConstr EConstrApp {value;region=_} ->
+  | EConstr {value;region=_} ->
     let _, expr = value in
     (match expr with
       None -> init
@@ -216,7 +213,7 @@ and case_clause self init ({value;region=_}: _ case_clause reg) =
   let {pattern=_;arrow=_;rhs} = value in
   self init rhs
 
-and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> 'a =
+and fold_declaration : 'a folder -> 'a -> declaration -> 'a =
   fun f init d ->
   let self_expr = fold_expression f in
   let self_type = fold_type_expression f in
@@ -245,7 +242,7 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> 'a =
     init
   | Directive _ -> init
 
-and fold_module : ('a, 'err) folder -> 'a -> t -> 'a =
+and fold_module : 'a folder -> 'a -> t -> 'a =
   fun f init {decl;eof=_} ->
   let self = fold_declaration f in
   List.Ne.fold_left self init @@ decl
@@ -282,12 +279,18 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
     let ne_elements = map_npseq aux value.ne_elements in
     let value = {value with ne_elements} in
     return @@ TRecord {value;region}
-  | TApp    {value;region} ->
-    let (const, tuple) = value in
-    let inside = map_npseq self tuple.value.inside in
-    let tuple = {tuple with value = {tuple.value with inside }} in
-    let value = (const, tuple) in
-    return @@ TApp {value;region}
+  | TApp x ->
+    let (constr, args) = x.value in
+    let args = match args with
+      | CArgTuple x ->
+        let inside = map_npseq self x.value.inside in
+        let x = { x with value = {x.value with inside}} in
+        CArgTuple x
+      | CArg x ->
+        let x = self x in
+        CArg x
+    in
+    TApp {x with value = (constr, args)}
   | TFun    {value;region} ->
     let (ty1, wild, ty2) = value in
     let ty1 = self ty1 in
@@ -302,8 +305,8 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
     let field = self value.field in
     let value = {value with field} in
     return @@ TModA {value;region}
+  | TArg _
   | TVar    _
-  | TWild   _
   | TInt _
   | TString _ -> t
 
@@ -351,8 +354,6 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let arg = self value.arg in
     let value = {value with arg} in
     return @@ ELogic (BoolExpr (Not {value;region}))
-  | ELogic BoolExpr True _
-  | ELogic BoolExpr False _ as e -> return @@ e
   | ELogic CompExpr Lt    {value;region} ->
     let value = bin_op value in
     return @@ ELogic (CompExpr (Lt {value;region}))
@@ -420,17 +421,11 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let elements = map_pseq self value.elements in
     let value = {value with elements} in
     return @@ EList (EListComp {value;region})
-  | EConstr ENone _ as e -> return @@ e
-  | EConstr ESomeApp {value;region} ->
-    let some_, expr = value in
-    let expr = self expr in
-    let value = some_,expr in
-    return @@ EConstr (ESomeApp {value;region})
-  | EConstr EConstrApp {value;region} ->
+  | EConstr {value;region} ->
     let const, expr = value in
     let expr = Option.map ~f:self expr in
     let value = const,expr in
-    return @@ EConstr (EConstrApp {value;region})
+    return @@ EConstr {value;region}
   | ERecord  {value;region} ->
     let aux (e : field_assign reg) =
       let field_expr = self e.value.field_expr in
@@ -471,11 +466,10 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     return @@ EPar {value;region}
   | ELetIn   {value;region} ->
     let {kwd_let=_;kwd_rec=_;binding;kwd_in=_;body;attributes=_} = value in
-    let {binders;lhs_type;eq;let_rhs} = binding in
+    let {binders;type_params;lhs_type;eq;let_rhs} = binding in
     let let_rhs = self let_rhs in
-    let lhs_type = Option.map ~f:(fun (a,b) ->
-      let b = self_type b in (a,b)) lhs_type in
-    let binding = {binders;lhs_type;eq;let_rhs} in
+    let lhs_type = Option.map ~f:(fun (a,b) -> (a,self_type b)) lhs_type in
+    let binding : let_binding = {binders;type_params;lhs_type;eq;let_rhs} in
     let body = self body in
     let value = {value with binding;body} in
     return @@ ELetIn {value;region}
@@ -537,11 +531,10 @@ and map_declaration : ('err) mapper -> declaration -> declaration =
   match d with
     Let {value;region} ->
     let (kwd_let,kwd_rec,let_binding,attr) = value in
-    let {binders;lhs_type;eq;let_rhs} = let_binding in
+    let {binders;type_params;lhs_type;eq;let_rhs} = let_binding in
     let let_rhs = self_expr let_rhs in
-    let lhs_type = Option.map ~f:(fun (a,b) ->
-      let b = self_type b in (a,b)) lhs_type in
-    let let_binding = {binders;lhs_type;eq;let_rhs} in
+    let lhs_type =  Option.map ~f:(fun (a,b) -> (a,self_type b)) lhs_type in
+    let let_binding = {binders;type_params;lhs_type;eq;let_rhs} in
     let value = (kwd_let,kwd_rec,let_binding,attr) in
     return @@ Let {value;region}
   | TypeDecl {value;region} ->
@@ -566,7 +559,7 @@ and map_module : ('err) mapper -> t -> t =
   List.Ne.map self @@ decl
 
 (* TODO this is stupid *)
-let fold_to_map : unit -> (unit, 'err) folder -> ('err) mapper =
+let fold_to_map : unit -> unit folder -> 'err mapper =
   fun init {e;t;d} ->
   let e expr =
     let () = e init expr in expr

@@ -42,6 +42,7 @@ and type_content = function
   | T_constant        t -> `List [ `String "t_constant"; type_injection t]
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
+  | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t]
 
 and type_injection {language;injection;parameters} =
   `Assoc [
@@ -254,10 +255,15 @@ and environment_binding {expr_var;env_elt} =
   ]
 and expression_environment e = list environment_binding e
 
+and type_or_kind x =
+  match x with
+  | Ty ty -> `List [ `String "Ty"; type_expression ty]
+  | Kind () -> `List [ `String "Kind"; `Null ]
+
 and type_environment_binding {type_variable;type_} =
   `Assoc [
     ("type_variable", type_variable_to_yojson type_variable);
-    ("type_", type_expression type_);
+    ("type_", type_or_kind type_);
   ]
 and type_environment e = list type_environment_binding e
 

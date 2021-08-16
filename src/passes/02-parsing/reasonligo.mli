@@ -6,7 +6,7 @@ module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module CST    = Cst.Reasonligo
+module CST    = Cst_reasonligo.CST
 module Errors = Parsing_shared.Errors
 
 (* Parsing *)
