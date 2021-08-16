@@ -7,7 +7,7 @@ import Control.Concurrent.MVar
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks, when)
+import Control.Monad.Reader (asks, void, when)
 
 import Data.Default
 import Data.HashMap.Strict (HashMap)
@@ -70,7 +70,6 @@ mainLoop = do
       , S.signatureHelpRetriggerCharacters = Just [',']
       }
 
-
     -- | Handle all uncaught exceptions.
     catchExceptions
       :: forall m config. (MonadCatch m, S.MonadLsp config m)
@@ -129,12 +128,14 @@ handlers = mconcat
   -- , S.requestHandler J.STextDocumentOnTypeFormatting
 
   , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
-  --, S.requestHandler J.STextDocumentCodeAction _
+  , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
   --, S.requestHandler J.SWorkspaceExecuteCommand _
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
-handleInitialized _ = RIO.fetchCustomConfig
+handleInitialized _ = do
+  RIO.registerDidChangeConfiguration
+  void RIO.fetchCustomConfig
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
@@ -370,6 +371,11 @@ handlePrepareRenameRequest req respond = do
     tree <- contractTree <$> RIO.fetch nuri
 
     respond . Right . fmap (J.InL . toLspRange) $ prepareRenameDeclarationAt pos tree
+
+handleDidChangeConfiguration :: S.Handler RIO 'J.WorkspaceDidChangeConfiguration
+handleDidChangeConfiguration notif = do
+  let config = notif ^. J.params . J.settings
+  RIO.updateCustomConfig config
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

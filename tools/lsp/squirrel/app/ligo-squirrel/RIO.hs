@@ -7,6 +7,9 @@ module RIO
 
   , getCustomConfig
   , fetchCustomConfig
+  , updateCustomConfig
+
+  , registerDidChangeConfiguration
 
   , source
   , clearDiagnostics
@@ -31,14 +34,13 @@ import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 
 import Control.Arrow
-import Control.Concurrent.MVar
 import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
 import Control.Lens ((^.))
 import Control.Monad
-import Control.Monad.IO.Unlift (MonadUnliftIO, liftIO)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
 
-import Data.Aeson qualified as Aeson (Result (..), fromJSON)
+import Data.Aeson qualified as Aeson (Result (..), Value, fromJSON)
 import Data.Default (def)
 import Data.Foldable (find, toList, traverse_)
 import Data.Function (on)
@@ -54,6 +56,8 @@ import Language.LSP.Server qualified as J
 import Language.LSP.Types qualified as J
 import Language.LSP.VFS qualified as V
 
+import UnliftIO.MVar
+
 import Witherable (wither)
 
 import Duplo.Tree (collect)
@@ -62,7 +66,7 @@ import AST hiding (cTree, find)
 import ASTMap (ASTMap)
 import ASTMap qualified
 import Cli
-import Config (Config (..))
+import Config (Config (..), getConfigFromNotification)
 import Duplo.Lattice (Lattice (leq))
 import Log qualified
 import Product
@@ -112,7 +116,7 @@ instance HasLigoClient RIO where
 getCustomConfig :: RIO Config
 getCustomConfig = do
   mConfig <- asks getElem
-  contents <- liftIO $ tryReadMVar mConfig
+  contents <- tryReadMVar mConfig
   case contents of
     -- TODO: The lsp library only sends the `workspace/configuration` request
     -- after initialization is complete, so during initialization, there is no
@@ -124,10 +128,11 @@ getCustomConfig = do
     Just config -> pure config
 
 -- Fetch the configuration from the server and write it to the Config MVar
-fetchCustomConfig :: RIO ()
+fetchCustomConfig :: RIO (Maybe Config)
 fetchCustomConfig = do
   void $
     J.sendRequest J.SWorkspaceConfiguration configRequestParams handleResponse
+  tryReadMVar =<< asks getElem
   where
     configRequestParams =
       J.ConfigurationParams (J.List [J.ConfigurationItem Nothing Nothing])
@@ -138,7 +143,8 @@ fetchCustomConfig = do
     handleResponse response = do
       config <- parseResponse response
       mConfig <- asks getElem
-      void $ liftIO $ tryPutMVar mConfig config
+      _oldConfig <- tryTakeMVar mConfig
+      void $ tryPutMVar mConfig config
 
     parseResponse
       :: Either J.ResponseError (J.ResponseResult 'J.WorkspaceConfiguration)
@@ -155,6 +161,31 @@ fetchCustomConfig = do
         "fetchCustomConfig"
         "Couldn't parse config from server, using default"
       pure def
+
+updateCustomConfig :: Aeson.Value -> RIO ()
+updateCustomConfig config = do
+  mConfig <- asks getElem
+  tryTakeMVar mConfig >>= \case
+    Nothing -> decodeConfig def mConfig
+    Just oldConfig -> decodeConfig oldConfig mConfig
+  where
+    log = Log.debug "updateCustomConfig"
+
+    decodeConfig old mConfig = case getConfigFromNotification old config of
+      Left err -> do
+        log [i|Failed to decode configuration: #{err}|]
+        maybe (void $ tryPutMVar mConfig old) (const $ pure ()) =<< fetchCustomConfig
+      Right newConfig -> do
+        log [i|Set new configuration: #{newConfig}|]
+        void $ tryPutMVar mConfig newConfig
+
+registerDidChangeConfiguration :: RIO ()
+registerDidChangeConfiguration = do
+  let
+    reg = J.Registration "ligoChangeConfiguration" J.SWorkspaceDidChangeConfiguration J.Empty
+    params = J.RegistrationParams $ J.List [J.SomeRegistration reg]
+
+  void $ J.sendRequest J.SClientRegisterCapability params (const $ pure ())
 
 source :: Maybe J.DiagnosticSource
 source = Just "ligo-lsp"
@@ -214,7 +245,7 @@ load uri = J.getRootPath >>= \case
   Nothing -> Contract <$> loadDefault <*> pure [uri]
   Just root -> do
     imap <- asks $ getTag @"includes"
-    includes <- liftIO $ takeMVar imap
+    includes <- takeMVar imap
     tmap <- asks getElem
 
     rootContract <- loadWithoutScopes uri
@@ -259,7 +290,7 @@ load uri = J.getRootPath >>= \case
     forM_ contracts \(contract, nuri) ->
       ASTMap.insert nuri (Contract contract nuris) tmap
 
-    liftIO $ putMVar imap rawGraph
+    putMVar imap rawGraph
 
     pure (Contract result nuris)
   where
