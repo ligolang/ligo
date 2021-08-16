@@ -37,25 +37,44 @@ module.exports = grammar({
   externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
+  // This grammar is not LR(1), thus it has a bunch of conflicts.
+  // There are two major non-LR(1)-ities.
+  // The first one is Expr/Pattern conflict at the beginning of expression.
+  // For example, in ((x . , ... x might be an expression in case of ((x, y))
+  // and x might be a pattern in case of ((x, y) => x * y).
+  // The second one is Expr/Type conflict in lambda type annotation.
+  // For example, in (x) : y => z . ( z might be an expression in case of (x) : y => z (w)
+  // and z might be a type in case of (x) : y => z (w) => v where
+  // y => z (w) is lambda type annotation and v is lambda body.
+  // Those major conflicts lead to a bunch of conflicts in grammar.
+  // For example, [] might be an expression or a pattern.
+  // In case of expression, the parser follows list rule.
+  // In case of pattern, the parser follows list_pattern rule.
+  // As a result we get list/list_pattern conflict.
+  // In {x, ... x might be either FieldName in record expression or
+  // NameDecl in record pattern, so we get FieldName/NameDecl conflict.
+  // It is possible to combine several conflicts into one
+  // by combining conflicting rules together, but it leads to problems in Reasonligo.hs.
+  // Also, there is a combination of two major conflicts, for example for z in (x) : y => (z . )
+
   conflicts: $ =>
-    [[$._expr_term, $._pattern]
-      , [$.Name, $.TypeName]
-      , [$.annot_pattern, $.let_decl]
-      , [$.lambda, $.tuple_pattern]
-      , [$._expr_term, $.nullary_constr_pattern]
-      , [$._expr_term, $.FieldName]
-      , [$._expr_term, $.TypeName]
-      , [$.FieldName, $.TypeName]
-      , [$.FieldName, $.NameDecl]
-      , [$.string_type, $._literal]
-      , [$.Name, $.NameDecl]
-      , [$.NameDecl, $.TypeName]
-      , [$.Name, $.NameDecl, $.TypeName]
-      , [$.list_pattern, $.Nil, $.list]
-      , [$.list, $.Nil]
-      , [$.list_pattern, $.Nil]
-      , [$.TypeWildcard, $.wildcard]
-      , [$._core_type, $._literal]
+    [ // Pattern/Expr conflicts
+      [$._expr_term, $._unannotated_pattern]
+    , [$.lambda, $.tuple_pattern]
+    , [$.FieldName, $.NameDecl]
+    , [$.Name, $.NameDecl]
+    , [$.list, $.list_pattern]
+
+      // Type/Expr conflicts
+    , [$.Name, $.TypeName]
+    , [$.FieldName, $.TypeName]
+    , [$.string_type, $._literal]
+    , [$.TypeWildcard, $.wildcard]
+    , [$._core_type, $._literal]
+
+      // Pattern/Expr + Type/Expr conflicts
+    , [$.Name, $.NameDecl, $.TypeName]
+    , [$.NameDecl, $.TypeName]
     ],
 
   rules: {
@@ -171,7 +190,7 @@ module.exports = grammar({
     let_decl: $ => prec.left(PREC.LET, common.withAttrs($, seq(
       'let',
       optional(field("rec", $.rec)),
-      common.sepBy1(',', field("binding", $._pattern)),
+      common.sepBy1(',', field("binding", $._unannotated_pattern)),
       optional(seq(
         ':',
         field("type", $._type_expr)
@@ -192,13 +211,17 @@ module.exports = grammar({
 
     _pattern: $ =>
       choice(
+        $._unannotated_pattern,
+        $.annot_pattern,
+      ),
+
+    _unannotated_pattern: $ =>
+      choice(
         $.wildcard,
         $._literal,
         $.tuple_pattern,
         $.var_pattern,
-        $.annot_pattern,
-        $.unary_constr_pattern,
-        $.nullary_constr_pattern,
+        $.constr_pattern,
         $.list_pattern,
         $.record_pattern,
       ),
@@ -212,7 +235,6 @@ module.exports = grammar({
         $.String,
         $.Bytes,
         $.Unit,
-        $.Nil,
         $.None,
       ),
 
@@ -228,14 +250,10 @@ module.exports = grammar({
       field("type", $._type_expr),
     ),
 
-    unary_constr_pattern: $ => prec(1, seq(
+    constr_pattern: $ => prec(1, seq(
       field("constructor", $.ConstrName),
-      field("arg", $._pattern),
+      optional(field("arg", $._pattern)),
     )),
-
-    nullary_constr_pattern: $ => seq(
-      field("constructor", $.ConstrName),
-    ),
 
     list_pattern: $ => common.brackets(
       common.sepBy(',', field("pattern", $._spread_pattern)),
@@ -314,7 +332,7 @@ module.exports = grammar({
     binary_call: $ => choice(
       ...OPS
         .map(([op, precendence]) =>
-          prec.right(precendence, seq(
+          prec.left(precendence, seq(
             field("left", $._expr),
             field("op", $[op]),
             field("right", $._expr),
@@ -576,7 +594,6 @@ module.exports = grammar({
     False: $ => 'false',
     True: $ => 'true',
     Unit: $ => seq('(', ')'),
-    Nil: $ => seq('[', ']'),
     None: $ => 'None',
     Some: $ => 'Some',
     skip: $ => 'skip',
