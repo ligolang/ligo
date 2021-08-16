@@ -51,6 +51,14 @@ let reserved =
   |> add "time"
   |> add "unit"
   |> add "unpack"
+  |> add "true"
+  |> add "false"
+
+let reserved_ctors =
+  let open SSet in
+  empty
+  |> add "None"
+  |> add "Some"
 
 let check_reserved_names ~raise vars =
   let is_reserved elt = SSet.mem elt.value reserved in
@@ -69,6 +77,23 @@ let is_wildcard var =
   let var = var.value in
   String.compare var Var.wildcard = 0
 
+(* Check linearty of quoted variable in parametric types *)
+
+let check_linearity_type_vars ~raise : CST.type_vars -> unit =
+  fun xs ->
+    let type_vars_to_list : CST.type_vars -> CST.type_var Region.reg list = function
+      | QParam x -> [x]
+      | QParamTuple x -> Utils.nsepseq_to_list x.value.inside
+    in
+    let lst = type_vars_to_list xs in
+    let aux : VarSet.t -> CST.type_var reg -> VarSet.t = fun varset var ->
+      if VarSet.mem var.value.name varset then
+        raise.raise @@ non_linear_type_decl var
+      else VarSet.add var.value.name varset
+    in
+    let varset = List.fold_left lst ~f:aux ~init:VarSet.empty in 
+    ignore varset ; ()
+
 (* Checking the linearity of patterns *)
 
 open! CST
@@ -78,8 +103,9 @@ let rec vars_of_pattern ~raise env = function
 | PUnit _
 | PInt _ | PNat _ | PBytes _
 | PString _ | PVerbatim _ -> env
-| PVar {var} when is_wildcard var -> env
-| PVar {var} ->
+| PVar var when is_wildcard var.value.variable -> env
+| PVar x ->
+    let var = x.value.variable in
     let () = check_reserved_name ~raise var in
     if VarSet.mem var env then
       raise.raise @@ non_linear_pattern var
@@ -104,14 +130,9 @@ and vars_of_field_pattern ~raise env field =
   vars_of_pattern ~raise env p
 
 and vars_of_pconstr ~raise env = function
-  PSomeApp {value=(_, pattern); _} ->
+  | {value=(_, Some pattern); _} ->
     vars_of_pattern ~raise env pattern
-| PConstrApp {value=(_, Some pattern); _} ->
-    vars_of_pattern ~raise env pattern
-| PNone _
-| PFalse _
-| PTrue _
-| PConstrApp _ -> env
+  | {value=(_, None); _} -> env
 
 and vars_of_plist ~raise env = function
   PListComp {value; _} ->
@@ -138,6 +159,15 @@ let check_variants ~raise variants =
     List.fold ~f:add ~init:VarSet.empty variants
   in ignore variants
 
+(* Checking variants for reserved constructor *)
+
+let check_reserved_constructors ~raise (vars : variant reg list) =
+  let f = fun  x ->
+    if SSet.mem x.value.constr.value reserved_ctors then
+      raise.raise @@ reserved_name x.value.constr
+  in
+  List.iter ~f vars
+
 (* Checking record fields *)
 
 let check_fields ~raise fields =
@@ -152,20 +182,21 @@ let check_fields ~raise fields =
 let peephole_type ~raise : unit -> type_expr -> unit = fun _ t ->
   match t with
    TSum {value; _} ->
-     let () =
-       Utils.nsepseq_to_list value.variants |> check_variants ~raise
-     in ()
+     let lst = Utils.nsepseq_to_list value.variants in
+     let () = check_variants ~raise lst in
+     let () = check_reserved_constructors ~raise lst in
+     ()
   | TRecord {value; _} ->
      let () =
        Utils.nsepseq_to_list value.ne_elements |> check_fields ~raise
      in ()
+  | TArg    _
   | TProd   _
   | TApp    _
   | TFun    _
   | TPar    _
   | TVar    _
   | TModA   _
-  | TWild   _
   | TString _
   | TInt    _ -> ()
 
@@ -227,6 +258,7 @@ let peephole_declaration ~raise : unit -> declaration -> unit =
           (Utils.nseq_to_list binding.binders)
       in ()
   | TypeDecl {value; _} ->
+      let () = Option.value_map ~default:() ~f:(check_linearity_type_vars ~raise) value.params in
       let () = check_reserved_name ~raise value.name
       in ()
   | ModuleDecl {value; _} ->
@@ -237,7 +269,7 @@ let peephole_declaration ~raise : unit -> declaration -> unit =
       in ()
   | Directive _ -> ()
 
-let peephole ~raise : (unit,'err) Helpers.folder = {
+let peephole ~raise : unit Helpers.folder = {
   t = peephole_type ~raise;
   e = peephole_expression ~raise;
   d = peephole_declaration ~raise;

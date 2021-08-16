@@ -12,7 +12,9 @@ let t_variable   ?loc ?sugar t  : type_expression = make_t ?loc ?sugar (T_variab
 
 let t_constant ?loc ?sugar type_operator arguments : type_expression =
   make_t ?loc ?sugar (T_app {type_operator=Var.of_name type_operator;arguments})
-
+let t_abstraction ?loc ?sugar ty_binder kind type_ =
+  make_t ?loc ?sugar (T_abstraction {ty_binder ; kind ; type_})
+  
   (*X_name here should be replaced by X_injection*)
 let t_signature  ?loc ?sugar () : type_expression = t_constant ?loc ?sugar signature_name []
 let t_chain_id   ?loc ?sugar () : type_expression = t_constant ?loc ?sugar chain_id_name []
@@ -32,6 +34,15 @@ let t_bls12_381_g2 ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls
 let t_bls12_381_fr ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls12_381_fr_name []
 let t_never      ?loc ?sugar () : type_expression = t_constant ?loc ?sugar never_name []
 
+let t_abstraction1 ?loc ?sugar name kind : type_expression = 
+  let ty_binder = Location.wrap @@ Var.fresh () in
+  let type_ = t_constant name [t_variable ty_binder.wrap_content] in
+  t_abstraction ?loc ?sugar ty_binder kind type_
+let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression = 
+  let ty_binder_l = Location.wrap @@ Var.fresh () in
+  let ty_binder_r = Location.wrap @@ Var.fresh () in
+  let type_ = t_constant name [t_variable ty_binder_l.wrap_content ; t_variable ty_binder_r.wrap_content] in
+  t_abstraction ?loc ?sugar ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
 let t_option         ?loc ?sugar o   : type_expression = t_constant ?loc ?sugar option_name [o]
 let t_list           ?loc ?sugar t   : type_expression = t_constant ?loc ?sugar list_name [t]
@@ -65,7 +76,7 @@ let t_sum_ez ?loc ?sugar ?layout (lst:(string * type_expression) list) : type_ex
   t_sum ?loc ?sugar ?layout map
 
 let t_bool ?loc ?sugar ()       : type_expression = t_sum_ez ?loc ?sugar
-  [("true", t_unit ());("false", t_unit ())]
+  [("True", t_unit ());("False", t_unit ())]
 
 let t_function ?loc ?sugar param result : type_expression = make_t ?loc ?sugar (T_arrow {type1=param; type2=result})
 let t_shallow_closure ?loc ?sugar param result: type_expression = make_t ?loc ?sugar (T_arrow {type1=param; type2=result})
@@ -186,7 +197,11 @@ let e_module_accessor ?loc ?sugar module_name element = make_e ?loc ?sugar @@ E_
 
 let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = make_e ?loc ?sugar @@ E_ascription {anno_expr;type_annotation}
 
-let e_bool b : expression = e_constructor (Label (string_of_bool b)) (e_ascription (e_unit ())(t_unit()))
+let e_bool b : expression =
+  if b then
+    e_constructor (Label "True") (e_ascription (e_unit ())(t_unit()))
+  else
+    e_constructor (Label "False") (e_ascription (e_unit ())(t_unit()))
 
 let get_e_int (t:expression) =
   match t.expression_content with
@@ -210,10 +225,12 @@ let get_e_unit (t:expression) =
 
 let get_e_bool (t:expression) =
   match t.expression_content with
-  | E_constructor {constructor=Label name;element}
-    when (String.equal name "true" || String.equal name "false")
+  | E_constructor {constructor=Label name;element} when (String.equal name "True")
     && element.expression_content = (e_unit ()).expression_content ->
-      Some (bool_of_string name)
+      Some true
+  | E_constructor {constructor=Label name;element} when (String.equal name "False")
+    && element.expression_content = (e_unit ()).expression_content ->
+      Some false
   | _ -> None
 
 

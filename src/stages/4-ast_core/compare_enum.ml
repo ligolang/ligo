@@ -123,10 +123,6 @@ let constant'_tag = function
   | C_IMPLICIT_ACCOUNT        -> 108
   | C_SET_DELEGATE            -> 109
   | C_CREATE_CONTRACT         -> 110
-  | C_CONVERT_TO_LEFT_COMB    -> 111
-  | C_CONVERT_TO_RIGHT_COMB   -> 112
-  | C_CONVERT_FROM_LEFT_COMB  -> 113
-  | C_CONVERT_FROM_RIGHT_COMB -> 114
   | C_TRUE                    -> 115
   | C_FALSE                   -> 116
   | C_TEST_ORIGINATE          -> 117

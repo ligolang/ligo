@@ -118,8 +118,9 @@ let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
 let e_map ?loc lst : expression = make_e ?loc @@ E_map lst
 let e_big_map ?loc lst : expression = make_e ?loc @@ E_big_map lst
 
-let e_bool ?loc   b : expression = e_constructor ?loc (Label (string_of_bool b)) (e_unit ())
-
+let e_bool ?loc   b : expression =
+  if b then e_constructor ?loc (Label "True") (e_unit ())
+  else e_constructor ?loc (Label "False") (e_unit ())
 let make_option_typed ?loc e t_opt =
   match t_opt with
   | None -> e

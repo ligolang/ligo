@@ -60,7 +60,8 @@ module Make
     module Lexer_CLI = CLI.Lexer_CLI
 
     module MainLexer =
-      LexerMainGen.Make (File) (Token)
+      LexerMainGen.Make (File)
+                        (Token)
                         (Lexer_CLI : LexerLib.CLI.S)
                         (Self_tokens)
     (* Other CLIs *)

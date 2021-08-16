@@ -14,7 +14,7 @@ module Token = Lexing_reasonligo.Token
 %token          <(string * Z.t) Region.reg> Nat       "<nat>"
 %token          <(string * Z.t) Region.reg> Mutez     "<mutez>"
 %token                  <string Region.reg> Ident     "<ident>"
-%token                  <string Region.reg> Constr    "<constr>"
+%token                  <string Region.reg> UIdent    "<uident>"
 %token                  <string Region.reg> Attr      "[@attr]"
 %token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
 
@@ -55,12 +55,11 @@ module Token = Lexing_reasonligo.Token
 %token <Region.t> NOT      "!"
 %token <Region.t> BOOL_OR  "||"
 %token <Region.t> BOOL_AND "&&"
-
+%token <Region.t> QUOTE    "'"
 
   (* Keywords *)
 
 %token <Region.t> Else   "else"
-%token <Region.t> False  "false"
 %token <Region.t> If     "if"
 %token <Region.t> Let    "let"
 %token <Region.t> Rec    "rec"
@@ -72,14 +71,8 @@ module Token = Lexing_reasonligo.Token
 %token <Region.t> Lsl    "lsl"
 %token <Region.t> Lsr    "lsr"
 %token <Region.t> Or     "or"
-%token <Region.t> True   "true"
 %token <Region.t> Type   "type"
 %token <Region.t> Module "module"
-
-  (* Data constructors *)
-
-%token <Region.t> C_None "None"
-%token <Region.t> C_Some "Some"
 
   (* Virtual tokens *)
 

@@ -65,7 +65,6 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
   | TModA {value;region=_} ->
     self init value.field
   | TVar    _
-  | TWild   _
   | TInt    _
   | TString _ -> init
 
@@ -102,8 +101,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     let {op=_;arg} = value in
     let res = fold_expression f init arg in
     res
-  | ELogic BoolExpr True _ -> init
-  | ELogic BoolExpr False _ -> init
   | ELogic CompExpr Lt    {value;region=_}
   | ELogic CompExpr Leq   {value;region=_}
   | ELogic CompExpr Gt    {value;region=_}
@@ -131,11 +128,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
   | EList EListComp {value;region=_} ->
     List.fold ~f:self ~init @@ pseq_to_list value.elements
   | EList ENil _ -> init
-  | EConstr NoneExpr _ -> init
-  | EConstr SomeApp {value;region=_} ->
-    let _, expr = value in
-    List.Ne.fold_left self init @@ npseq_to_ne_list expr.value.inside
-  | EConstr ConstrApp {value;region=_} ->
+  | EConstr {value;region=_} ->
     let _, expr = value in
     (match expr with
       None -> init
@@ -164,7 +157,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     let res = self init lam in
     List.Ne.fold_left self res @@ npseq_to_ne_list args.value.inside
   | EBytes   _ -> init
-  | EUnit    _ -> init
   | ETuple   {value;region=_} ->
     List.Ne.fold_left self init @@ npseq_to_ne_list value.inside
   | EPar     {value;region=_} ->
@@ -450,7 +442,6 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
     let value = {value with field} in
     return @@ TModA {value;region}
   | (TVar    _
-  | TWild    _
   | TInt     _
   | TString _ as e )-> e
 
@@ -496,8 +487,6 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let arg = self value.arg in
     let value = {value with arg} in
     return @@ ELogic (BoolExpr (Not {value;region}))
-  | ELogic BoolExpr True _
-  | ELogic BoolExpr False _ as e -> return @@ e
   | ELogic CompExpr Lt    {value;region} ->
     let value = bin_op value in
     return @@ ELogic (CompExpr (Lt {value;region}))
@@ -551,20 +540,16 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let value = {value with elements} in
     return @@ EList (EListComp {value;region})
   | EList ENil _ as e -> return @@ e
-  | EConstr NoneExpr _ as e -> return @@ e
-  | EConstr SomeApp {value;region} ->
-    let some_, expr = value in
-    let inside = map_npseq self expr.value.inside in
-    let expr = {expr with value = {expr.value with inside}} in
-    let value = some_,expr in
-    return @@ EConstr (SomeApp {value;region})
-  | EConstr ConstrApp {value;region} ->
+  | EConstr {value;region} ->
     let const, expr = value in
-    let expr = Option.map ~f:(fun (e : tuple_expr)
-      -> let inside = map_npseq self e.value.inside in
-         {e with value = {e.value with inside}}) expr in
+    let expr = Option.map
+      ~f:(fun (e : tuple_expr) ->
+        let inside = map_npseq self e.value.inside in
+        {e with value = {e.value with inside}})
+      expr
+    in
     let value = const,expr in
-    return @@ EConstr (ConstrApp {value;region})
+    return @@ EConstr {value;region}
   | ERecord  {value;region} ->
     let aux (e : field_assignment reg) =
       let field_expr = self e.value.field_expr in
@@ -573,7 +558,7 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let ne_elements = map_npseq aux value.ne_elements in
     let value = {value with ne_elements} in
     return @@ ERecord {value;region}
-  | EProj    _  as e -> return @@ e
+  | EProj _  as e -> return e
   | EUpdate  {value;region} ->
     let aux (e : field_path_assignment reg) =
       let field_expr = self e.value.field_expr in
@@ -596,7 +581,6 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let value = (lam,args) in
     return @@ ECall {value;region}
   | EBytes   _ as e -> return @@ e
-  | EUnit    _ as e -> return @@ e
   | ETuple   {value;region} ->
     let inside = map_npseq self value.inside in
     let value = {value with inside} in

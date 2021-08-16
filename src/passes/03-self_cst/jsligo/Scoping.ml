@@ -76,6 +76,12 @@ let reserved =
   |> add "arguments"
   |> add "eval"
 
+let reserved_ctors =
+  let open SSet in
+  empty
+  |> add "None"
+  |> add "Some"
+
 let check_reserved_names ~raise vars =
   let is_reserved elt = SSet.mem elt.value reserved in
   let inter = VarSet.filter is_reserved vars in
@@ -89,37 +95,49 @@ let check_reserved_name ~raise var =
     raise.raise @@ reserved_name var
   else ()
 
+(* Check linearty of quoted variable in parametric types *)
+
+let check_linearity_type_vars ~raise : CST.type_vars -> unit =
+  fun xs ->
+    let type_vars_to_list : CST.type_vars -> CST.type_var list = fun x -> Utils.nsepseq_to_list x.value.inside in
+    let lst = type_vars_to_list xs in
+    let aux : VarSet.t -> CST.type_var -> VarSet.t = fun varset var ->
+      if VarSet.mem var varset then
+        raise.raise @@ non_linear_type_decl var
+      else VarSet.add var varset
+    in
+    let varset = List.fold_left lst ~f:aux ~init:VarSet.empty in 
+    ignore varset ; ()
+
 (* Checking the linearity of patterns *)
 
 open! CST
 
 let rec vars_of_pattern ~raise env = function
-  PVar var ->
-    if VarSet.mem var env then
-      raise.raise @@ non_linear_pattern var
-    else VarSet.add var env 
+  PVar {value={variable; _}; _} ->
+    if VarSet.mem variable env then
+      raise.raise (non_linear_pattern variable)
+    else VarSet.add variable env
 | PConstr   p ->
     if VarSet.mem p env then
-      raise.raise @@ non_linear_pattern p
-    else VarSet.add p env 
-| PDestruct {value = {property; target = {value = {binders; _}; _}; _}; _} -> 
+      raise.raise (non_linear_pattern p)
+    else VarSet.add p env
+| PDestruct {value = {property; target = {value = {binders; _}; _}; _}; _} ->
     if VarSet.mem property env then
-      raise.raise @@ non_linear_pattern property
-    else (
+      raise.raise (non_linear_pattern property)
+    else
       let env = vars_of_pattern ~raise env binders in
       VarSet.add property env
-    )
 | PObject   {value = {inside; _}; _}
-| PArray    {value = {inside; _}; _} -> 
-    let env = Utils.nsepseq_to_list inside |> check_patterns ~raise in
-    env
-| PAssign {value = {property; _}; _} -> 
+| PArray    {value = {inside; _}; _} ->
+    Utils.nsepseq_to_list inside |> check_patterns ~raise
+| PAssign {value = {property; _}; _} ->
     if VarSet.mem property env then
-      raise.raise@@ non_linear_pattern property
-    else VarSet.add property env 
+      raise.raise (non_linear_pattern property)
+    else VarSet.add property env
 | PWild _
 | PRest _ ->
-    env 
+    env
 
 and check_linearity p = vars_of_pattern VarSet.empty p
 
@@ -134,19 +152,18 @@ and check_patterns ~raise patterns =
     env
   in List.fold ~f:add ~init:VarSet.empty patterns
 
-
 (* Checking variants for duplicates *)
 
 let check_variants ~raise variants =
   let rec add acc = function
     TString value
-  | TVar value -> 
+  | TVar value ->
       if VarSet.mem value acc then
         raise.raise @@ duplicate_variant value
       else VarSet.add value acc
   | TProd {inside = {value = {inside; _}; _}; _ } as t -> (
     let items = Utils.nsepseq_to_list inside in
-    match items with 
+    match items with
       hd :: [] -> add acc hd
     | TString _ as hd :: _ -> add acc hd
     | _ -> 
@@ -158,6 +175,19 @@ let check_variants ~raise variants =
   let variants =
     List.fold ~f:add ~init:VarSet.empty variants
   in ignore variants
+
+(* Checking variants for reserved constructor *)
+
+let check_reserved_constructors ~raise (vars : type_expr list) =
+  let f = fun  x ->
+    match x with
+    | TString x
+    | TProd {inside = {value = {inside = (TString x, _); _}; _}; _} ->
+      if SSet.mem x.value reserved_ctors then
+        raise.raise @@ reserved_name x
+    | _ -> ()
+  in
+  List.iter ~f vars
 
 (* Checking object fields *)
 
@@ -173,7 +203,9 @@ let check_fields ~raise fields =
 let peephole_type ~raise : unit -> type_expr -> unit = fun _ t ->
   match t with
     TSum {value; _} ->
-      let () = Utils.nsepseq_to_list value.variants |> check_variants ~raise in
+      let lst = Utils.nsepseq_to_list value.variants in
+      let () = check_variants ~raise lst in
+      let () = check_reserved_constructors ~raise lst in
     ()
   | TObject {value; _} ->
       let () = Utils.nsepseq_to_list value.ne_elements |> check_fields ~raise in
@@ -185,14 +217,13 @@ let peephole_type ~raise : unit -> type_expr -> unit = fun _ t ->
   | TString _
   | TVar _
   | TModA _
-  | TInt _
-  | TWild _ -> ()
+  | TInt _ -> ()
 
-let peephole_expression : unit -> expr -> unit = fun () _ ->
+let peephole_expression : unit -> expr -> unit = fun () _ -> ()
+
+let check_binding ~raise ({value = {binders; _}; _}: CST.val_binding Region.reg) =
+  let () = ignore (check_pattern ~raise binders) in
   ()
-
-let check_binding ~raise ({value = {binders; _}; _}: CST.let_binding Region.reg) = 
-  ignore (check_pattern ~raise binders)
 
 let check_bindings ~raise bindings =
   let add _acc b =
@@ -214,7 +245,8 @@ let rec peephole_statement ~raise : unit -> statement -> unit = fun _ s ->
   | SConst {value = {bindings; _}; _} ->
     let () = Utils.nsepseq_to_list bindings |> check_bindings ~raise in 
     ()
-  | SType  {value = {name; _}; _} ->
+  | SType  {value = {name; params; _}; _} ->
+    let () = Option.value_map ~default:() ~f:(check_linearity_type_vars ~raise) params in
     let () = check_reserved_name ~raise name in 
     ()
   | SWhile {value = {expr; statement; _}; _}

@@ -2,7 +2,7 @@
 
 [@@@warning "-42-27-26"]
 
-module CST = Cst.Pascaligo
+module CST = Cst_pascaligo.CST
 open CST
 module Region = Simple_utils.Region
 open! Region
@@ -66,9 +66,17 @@ and pp_const_decl {value; _} =
 (* Type declarations *)
 
 and pp_type_decl decl =
-  let {name; type_expr; _} = decl.value in
-  string "type " ^^ pp_ident name ^^ string " is"
+  let {name; params; type_expr; _} = decl.value in
+  string "type " ^^ pp_ident name
+  ^^ pp_type_params params
+  ^^ string " is"
   ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
+
+and pp_type_params = function
+  None -> empty
+| Some {value; _} ->
+    let vars = pp_nsepseq "," pp_ident value.inside
+    in string "(" ^^ nest 1 (vars ^^ string ")")
 
 and pp_module_decl decl =
   let {name; module_; enclosing; _} = decl.value in
@@ -89,7 +97,6 @@ and pp_type_expr = function
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
 | TVar t    -> pp_ident t
-| TWild   _ -> string "_"
 | TString s -> pp_string s
 | TInt    i -> pp_int i
 | TModA   t -> pp_module_access pp_type_expr t
@@ -217,9 +224,15 @@ and pp_param_decl = function
   ParamConst c -> pp_param_const c
 | ParamVar   v -> pp_param_var v
 
+and pp_pvar {value; _} =
+  let {variable; attributes} = value in
+  let v = pp_ident variable in
+  if attributes = [] then v
+  else group (pp_attributes attributes ^/^ v)
+
 and pp_param_const {value; _} =
   let {var; param_type; _} : param_const = value in
-  let name = string ("const " ^ var.value) in
+  let name = string "const " ^^ pp_pvar var in
   match param_type with
     None -> name
   | Some (_, e) ->
@@ -227,7 +240,7 @@ and pp_param_const {value; _} =
 
 and pp_param_var {value; _} =
   let {var; param_type; _} : param_var = value in
-  let name   = string ("var " ^ var.value) in
+  let name   = string "var " ^^ pp_pvar var in
   match param_type with
     None -> name
   | Some (_, e) ->
@@ -442,7 +455,6 @@ and pp_expr = function
 | EVar        e -> pp_ident e
 | ECall       e -> pp_fun_call e
 | EBytes      e -> pp_bytes e
-| EUnit       _ -> string "Unit"
 | ETuple      e -> pp_tuple_expr e
 | EPar        e -> pp_par pp_expr e
 | EFun        e -> pp_fun_expr e
@@ -485,8 +497,6 @@ and pp_bool_expr = function
   Or   e  -> pp_bin_op "or" e
 | And  e  -> pp_bin_op "and" e
 | Not  e  -> pp_un_op "not" e
-| True  _ -> string "True"
-| False _ -> string "False"
 
 and pp_bin_op op {value; _} =
   let {arg1; arg2; _} = value
@@ -534,21 +544,12 @@ and pp_list_expr = function
 | EListComp e -> pp_injection pp_expr e
 | ENil      _ -> string "nil"
 
-and pp_constr_expr = function
-  SomeApp   a -> pp_some_app a
-| NoneExpr  _ -> string "None"
-| ConstrApp a -> pp_constr_app a
-
-and pp_some_app {value; _} =
-  prefix 4 1 (string "Some") (pp_arguments (snd value))
-
-and pp_constr_app {value; _} =
+and pp_constr_expr {value; _} =
   let constr, args = value in
   let constr = string constr.value in
   match args with
           None -> constr
   | Some tuple -> prefix 2 1 constr (pp_tuple_expr tuple)
-
 
 and pp_field_assign {value; _} =
   let {field_name; field_expr; _} = value in
@@ -607,8 +608,6 @@ and pp_fun_call {value; _} =
   let arguments = pp_tuple_expr arguments in
   group (pp_expr lambda ^^ nest 2 (break 1 ^^ arguments))
 
-and pp_arguments v = pp_tuple_expr v
-
 (* Injections *)
 
 and pp_injection :
@@ -658,7 +657,7 @@ and pp_nsepseq :
 
 and pp_pattern = function
   PConstr p -> pp_constr_pattern p
-| PVar    v -> pp_ident v
+| PVar    v -> pp_pvar v
 | PInt    i -> pp_int i
 | PNat    n -> pp_nat n
 | PBytes  b -> pp_bytes b
@@ -673,7 +672,6 @@ and pp_field_pattern {value; _} =
   let {field_name; pattern; _} = value in
   prefix 2 1 (pp_ident field_name ^^ string " =") (pp_pattern pattern)
 
-
 and pp_int {value; _} =
   string (Z.to_string (snd value))
 
@@ -683,20 +681,7 @@ and pp_nat {value; _} =
 and pp_bytes {value; _} =
   string ("0x" ^ Hex.show (snd value))
 
-and pp_constr_pattern = function
-  PUnit      _ -> string "Unit"
-| PFalse     _ -> string "False"
-| PTrue      _ -> string "True"
-| PNone      _ -> string "None"
-| PSomeApp   a -> pp_psome a
-| PConstrApp a -> pp_pconstr_app a
-
-and pp_psome {value=_, p; _} =
-  prefix 4 1 
-    (string "Some") 
-    (match p with PTuple _ -> pp_pattern p | _ -> (string "(" ^^ pp_pattern p ^^ string ")" ))
-
-and pp_pconstr_app {value; _} =
+and pp_constr_pattern {value; _} =
   match value with
     constr, None -> pp_ident constr
   | constr, Some ptuple ->
@@ -732,7 +717,7 @@ let print_type_expr = pp_type_expr
 let print_pattern   = pp_pattern
 let print_expr      = pp_expr
 
-type cst        = Cst.Pascaligo.t
-type expr       = Cst.Pascaligo.expr
-type type_expr  = Cst.Pascaligo.type_expr
-type pattern    = Cst.Pascaligo.pattern
+type cst        = CST.t
+type expr       = CST.expr
+type type_expr  = CST.type_expr
+type pattern    = CST.pattern

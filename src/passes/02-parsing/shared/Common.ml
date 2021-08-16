@@ -111,7 +111,7 @@ module MakeParser
 
     let lift ~(raise:Errors.t Trace.raise) = function
       Ok tree -> tree
-    | Error msg -> raise.raise @@ Errors.generic msg
+    | Error msg -> raise.raise @@ `Parsing msg
 
     (* We always parse a string buffer of type [Buffer.t], but the
        interpretation of its contents depends on the functions

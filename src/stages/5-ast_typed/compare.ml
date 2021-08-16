@@ -53,6 +53,7 @@ let type_expression_tag ty_cont =
   | T_arrow           _ -> 5
   | T_module_accessor _ -> 6
   | T_singleton       _ -> 7
+  | T_abstraction         _ -> 8
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -92,8 +93,9 @@ and type_content a b =
   | T_arrow    a, T_arrow    b -> arrow a b
   | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
   | T_singleton a , T_singleton b -> literal a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _) ->
+  | T_abstraction a , T_abstraction b -> for_all a b
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
@@ -122,6 +124,11 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
   cmp2
     type_expression ta1 ta2
     type_expression tb1 tb2
+
+and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _ ; type_ = tb } =
+  cmp2
+    type_expression ta tb
+    type_variable ba.wrap_content bb.wrap_content
 
 let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
   Int.compare (constant_tag ct ) (constant_tag ct2 )
@@ -334,10 +341,18 @@ and module_ m = List.compare (Location.compare_wrap ~compare:declaration) m
 (* Environment *)
 let free_variables = List.compare expression_variable
 
+let type_or_kind x y =
+  match x, y with
+  | Ty x , Ty y -> type_expression x y
+  | Kind () , Kind () -> 0
+  | (Ty _ | Kind ()) , (Ty _ | Kind ()) ->
+    let tag = function Ty _ -> 1 | Kind () -> 2 in
+    Int.compare (tag x) (tag y)
+
 let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_=tb} =
   cmp2
     type_variable va vb
-    type_expression ta tb
+    type_or_kind ta tb
 
 let type_environment = List.compare type_environment_binding
 

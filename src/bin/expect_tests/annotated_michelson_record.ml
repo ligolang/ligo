@@ -234,7 +234,7 @@ let%expect_test _ =
              Hint: replace it by "_action" to prevent this warning.
 
              ( LIST_EMPTY() ,
-               record[five -> 1 , four -> +2 , one -> 1 , three -> true(unit) , two -> ""] ) |}]
+               record[five -> 1 , four -> +2 , one -> 1 , three -> True(unit) , two -> ""] ) |}]
 
 (*TREE*)
 let%expect_test _ =
@@ -465,9 +465,9 @@ let%expect_test _ =
              Hint: replace it by "_action" to prevent this warning.
 
              ( LIST_EMPTY() ,
-               record[five -> 1 , four -> +2 , one -> 1 , three -> true(unit) , two -> ""] ) |}]
+               record[five -> 1 , four -> +2 , one -> 1 , three -> True(unit) , two -> ""] ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "--init-file="^(contract "annotated_michelson_record_comb.mligo") ; "accesses " ] ;
   [%expect {|
-             ( 1 , "" , true(unit) , +1 , 2 ) |}]
+             ( 1 , "" , True(unit) , +1 , 2 ) |}]

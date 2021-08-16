@@ -131,10 +131,6 @@ let constant' = function
   | C_IMPLICIT_ACCOUNT         -> `List [`String "C_IMPLICIT_ACCOUNT"; `Null ]
   | C_SET_DELEGATE             -> `List [`String "C_SET_DELEGATE"; `Null ]
   | C_CREATE_CONTRACT          -> `List [`String "C_CREATE_CONTRACT"; `Null ]
-  | C_CONVERT_TO_LEFT_COMB     -> `List [`String "C_CONVERT_TO_LEFT_COMB"; `Null ]
-  | C_CONVERT_TO_RIGHT_COMB    -> `List [`String "C_CONVERT_TO_RIGHT_COMB"; `Null ]
-  | C_CONVERT_FROM_LEFT_COMB   -> `List [`String "C_CONVERT_FROM_LEFT_COMB"; `Null ]
-  | C_CONVERT_FROM_RIGHT_COMB  -> `List [`String "C_CONVERT_FROM_RIGHT_COMB"; `Null ]
   | C_TEST_ORIGINATE           -> `List [`String "TEST_ORIGINATE"; `Null ]
   | C_TEST_ORIGINATE_FROM_FILE -> `List [`String "TEST_ORIGINATE_FROM_FILE"; `Null ]
   | C_TEST_SET_NOW             -> `List [`String "TEST_SET_NOW"; `Null ]
@@ -225,6 +221,13 @@ let label_map f lmap =
 let attributes attr =
   let list = List.map ~f:(fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
+
+let for_all type_expression {ty_binder ; kind = _ ; type_ } =
+  `Assoc [
+    ("ty_binder", Location.wrap_to_yojson type_variable_to_yojson ty_binder) ;
+    (* ("kind", ) *)
+    ("type_", type_expression type_)
+  ]
 
 let binder type_expression {var;ascr;attributes} =
   let attributes = match attributes.const_or_var with

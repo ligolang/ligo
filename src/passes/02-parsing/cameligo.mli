@@ -6,7 +6,7 @@ module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module CST    = Cst.Cameligo
+module CST    = Cst_cameligo.CST
 module Errors = Parsing_shared.Errors
 
 (* Parsing *)

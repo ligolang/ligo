@@ -13,7 +13,7 @@ module Token       = Lexing_pascaligo.Token
 module Self_tokens = Lexing_pascaligo.Self_tokens
 module ParErr      = Parsing_pascaligo.ParErr
 module Parser      = Parsing_pascaligo.Parser
-module CST         = Cst.Pascaligo
+module CST         = Cst_pascaligo.CST
 module Pretty      = Parsing_pascaligo.Pretty
 
 (* Making the parsers *)

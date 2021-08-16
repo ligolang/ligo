@@ -20,19 +20,16 @@ type lexeme       = string
 (* Keywords of JsLIGO *)
 
 type kwd_else      = Region.t
-type kwd_false     = Region.t
 type kwd_if        = Region.t
 type kwd_let       = Region.t
 type kwd_const     = Region.t
 type kwd_or        = Region.t
 type kwd_then      = Region.t
-type kwd_true      = Region.t
 type kwd_type      = Region.t
 type kwd_return    = Region.t
 type kwd_switch    = Region.t
 type kwd_case      = Region.t
 type kwd_default   = Region.t
-type kwd_unit      = Region.t
 type kwd_new       = Region.t
 type kwd_as        = Region.t
 type kwd_break     = Region.t
@@ -40,13 +37,8 @@ type kwd_namespace = Region.t
 type kwd_export    = Region.t
 type kwd_import    = Region.t
 type kwd_while     = Region.t
-type kwd_for     = Region.t
-type kwd_of     = Region.t
-
-(* Data constructors *)
-
-type c_None  = Region.t
-type c_Some  = Region.t
+type kwd_for       = Region.t
+type kwd_of        = Region.t
 
 (* Symbols *)
 
@@ -107,6 +99,7 @@ type eof = Region.t
 type variable     = string reg
 type fun_name     = string reg
 type type_name    = string reg
+type type_var     = string reg
 type type_constr  = string reg
 type constr       = string reg
 type attribute    = string reg
@@ -116,7 +109,7 @@ type module_name  = string reg
 
 (* Parentheses *)
 
-type 'a braced = {
+type 'a braces = {
   lbrace : lbrace;
   inside : 'a;
   rbrace : rbrace
@@ -161,12 +154,11 @@ and attributes = attribute list
 
 (* Non-recursive values *)
 
-and let_binding = {
+and val_binding = {
   binders    : pattern;
   lhs_type   : (colon * type_expr) option;
   eq         : equal;
-  expr       : expr;
-  attributes : attributes
+  expr       : expr
 }
 
 (* Type declarations *)
@@ -174,9 +166,14 @@ and let_binding = {
 and type_decl = {
   kwd_type   : kwd_type;
   name       : type_name;
+  params     : type_vars option;
   eq         : equal;
   type_expr  : type_expr
 }
+
+and type_vars = (type_var, comma) nsepseq chevrons reg
+
+and fun_type_args = (fun_type_arg, comma) nsepseq par
 
 and fun_type_arg = {
   name      : variable;
@@ -184,31 +181,29 @@ and fun_type_arg = {
   type_expr : type_expr
 }
 
-and fun_type_args = (fun_type_arg, comma) nsepseq par
-
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
 | TObject of field_decl reg ne_injection reg
-| TApp    of (type_constr * type_tuple) reg
+| TApp    of (type_constr * type_params) reg
 | TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TWild   of wild
 | TString of lexeme reg
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
+
+and type_params = (type_expr, comma) nsepseq chevrons reg
+
+and cartesian = {
+  inside     : (type_expr, comma) nsepseq brackets reg;
+  attributes : attributes
+}
 
 and 'a module_access = {
   module_name : module_name;
   selector    : dot;
   field       : 'a;
-}
-
-
-and cartesian = {
-  inside: (type_expr, comma) nsepseq brackets reg;
-  attributes: attributes
 }
 
 and sum_type = {
@@ -224,8 +219,6 @@ and field_decl = {
   attributes : attributes
 }
 
-and type_tuple = (type_expr, comma) nsepseq chevrons reg
-
 and rest_pattern = {
   ellipsis  : ellipsis;
   rest      : variable
@@ -240,18 +233,27 @@ and assign_pattern = {
 and destruct = {
   property  : variable;
   colon     : colon;
-  target    : let_binding reg;
+  target    : val_binding reg;
 }
 
 and pattern =
   PRest     of rest_pattern reg
 | PAssign   of assign_pattern reg
-| PVar      of variable
+| PVar      of var_pattern reg
+| PWild     of Region.t
 | PConstr   of variable
 | PDestruct of destruct reg
-| PObject   of (pattern, comma) nsepseq braced reg
-| PWild     of Region.t
-| PArray    of (pattern, comma) nsepseq brackets reg
+| PObject   of object_pattern
+| PArray    of array_pattern
+
+and array_pattern = (pattern, comma) nsepseq brackets reg
+
+and object_pattern = (pattern, comma) nsepseq braces reg
+
+and var_pattern = {
+  variable   : variable;
+  attributes : attribute list
+}
 
 and string_expr =
   String   of string reg
@@ -308,8 +310,8 @@ and property_rest = {
 
 and property =
   Punned_property of expr reg
-| Property of property2 reg
-| Property_rest of property_rest reg
+| Property        of property2 reg
+| Property_rest   of property_rest reg
 
 and expr =
   EFun     of fun_expr reg
@@ -323,31 +325,35 @@ and expr =
 | ENew     of (kwd_new * expr) reg
 | EBytes   of (string * Hex.t) reg
 | EArray   of (array_item, comma) nsepseq brackets reg
-| EObject  of (property, comma) nsepseq braced reg
+| EObject  of object_expr
 | EString  of string_expr
 | EProj    of projection reg
 | EAssign  of expr * equal * expr
-| EConstr  of constr_expr
-
+| EConstr  of (constr * expr option) reg
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
 | ECodeInj of code_inj reg
 
+and object_expr = (property, comma) nsepseq braces reg
+
 and statement =
-  SBlock      of (statement, semi) nsepseq braced reg
+  SBlock      of (statement, semi) nsepseq braces reg
 | SExpr       of expr
 | SCond       of cond_statement reg
 | SReturn     of return reg
-| SLet        of let_ reg
-| SConst      of const_ reg
+| SLet        of let_decl reg
+| SConst      of const_decl reg
 | SType       of type_decl reg
 | SSwitch     of switch reg
 | SBreak      of kwd_break
-| SNamespace  of (kwd_namespace * module_name * (statements braced reg)) reg
+| SNamespace  of namespace_statement
 | SExport     of (kwd_export * statement) reg
 | SImport     of import reg
 | SWhile      of while_ reg
 | SForOf      of for_of reg
+
+and namespace_statement =
+  (kwd_namespace * module_name * statements braces reg) reg
 
 and while_ = {
   kwd_while: kwd_while;
@@ -358,15 +364,19 @@ and while_ = {
 }
 
 and for_of = {
-  kwd_for   : kwd_for;
-  lpar      : lpar;
-  const     : bool;
-  name      : variable;
-  kwd_of    : kwd_of;
-  expr      : expr;
-  rpar      : rpar;
-  statement : statement
+  kwd_for    : kwd_for;
+  lpar       : lpar;
+  index_kind : index_kind;
+  index      : variable;
+  kwd_of     : kwd_of;
+  expr       : expr;
+  rpar       : rpar;
+  statement  : statement
 }
+
+and index_kind = [
+  `Let   of kwd_let
+| `Const of kwd_const]
 
 and import = {
   kwd_import   : kwd_import;
@@ -378,10 +388,10 @@ and import = {
 and statements = (statement, semi) nsepseq
 
 and arguments =
-  Multiple of (expr,comma) nsepseq par reg
+  Multiple of (expr, comma) nsepseq par reg
 | Unit     of the_unit reg
 
-and annot_expr = expr * kwd_as * type_expr
+and annot_expr = expr * kwd_as * type_expr (* TODO: Used with colon too in Parser *)
 
 and 'a injection = {
   compound   : compound option;
@@ -397,13 +407,8 @@ and 'a ne_injection = {
 }
 
 and compound =
-| Braces   of lbrace * rbrace
+  Braces   of lbrace * rbrace
 | Brackets of lbracket * rbracket
-
-and constr_expr =
-  ENone      of c_None
-| ESomeApp   of (c_Some * expr) reg
-| EConstrApp of (constr * expr option) reg
 
 and arith_expr =
   Add   of plus bin_op reg
@@ -419,11 +424,9 @@ and logic_expr =
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of bool_or bin_op reg
-| And   of bool_and bin_op reg
-| Not   of negate un_op reg
-| True  of kwd_true
-| False of kwd_false
+  Or   of bool_or bin_op reg
+| And  of bool_and bin_op reg
+| Not  of negate un_op reg
 
 and 'a bin_op = {
   op   : 'a;
@@ -449,39 +452,43 @@ and projection = {
   selection : selection;
 }
 
-and selection_field_name =
-  { dot: dot; value : variable }
+and selection_field_name = {
+  dot   : dot;
+  value : variable
+}
 
 and selection =
   FieldName of selection_field_name reg
 | Component of expr brackets reg
 
-and let_ = {
+and let_decl = {
+  attributes : attributes;
   kwd_let    : kwd_let;
-  bindings   : (let_binding reg, comma) nsepseq;
+  bindings   : (val_binding reg, comma) nsepseq
 }
 
-and const_ = {
+and const_decl = {
+  attributes : attributes;
   kwd_const  : kwd_const;
-  bindings   : (let_binding reg, comma) nsepseq;
+  bindings   : (val_binding reg, comma) nsepseq;
 }
 
-and fun_expr_body =
-  FunctionBody of statements braced reg
+and body =
+  FunctionBody   of statements braces reg
 | ExpressionBody of expr
 
 and fun_expr = {
   parameters : expr;
   lhs_type   : (colon * type_expr) option;
   arrow      : arrow;
-  body       : fun_expr_body;
+  body       : body;
 }
 
 and cond_statement = {
-  kwd_if   : kwd_if;
-  test     : expr par;
-  ifso     : statement;
-  ifnot    : (kwd_else * statement) option;
+  kwd_if : kwd_if;
+  test   : expr par;
+  ifso   : statement;
+  ifnot  : (kwd_else * statement) option;
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
@@ -515,18 +522,15 @@ let type_expr_to_region = function
 | TVar    {region; _}
 | TModA   {region; _}
 | TInt    {region; _}
-| TWild    region
  -> region
 
 let pattern_to_region = function
-  PRest {region;_ }   | PAssign {region ;_ }
+  PRest {region;_ }   | PAssign {region ;_ } | PWild region
 | PVar {region ;_ }    | PConstr {region; _ } | PDestruct {region ;_ }
-| PObject {region ;_ } | PArray {region; _} | PWild region -> region
-
+| PObject {region ;_ } | PArray {region; _} -> region
 
 let bool_expr_to_region = function
   Or {region;_} | And {region;_}
-| True region | False region
 | Not {region;_} -> region
 
 let comp_expr_to_region = function
@@ -546,17 +550,12 @@ let arith_expr_to_region = function
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region
 
-and constr_expr_to_region = function
-  ENone region
-| EConstrApp {region; _}
-| ESomeApp   {region; _} -> region
-
 let rec expr_to_region = function
   ELogic e -> logic_expr_to_region e
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
-| EConstr e -> constr_expr_to_region e
 | EAssign (f, _, e) -> Region.cover (expr_to_region f) (expr_to_region e)
+| EConstr {region; _}
 | EAnnot {region;_ } | EFun {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
@@ -572,7 +571,7 @@ let statement_to_region = function
 | SLet  {region; _}
 | SConst {region; _}
 | SSwitch {region; _}
-| SType {region; _} 
+| SType {region; _}
 | SImport {region; _}
 | SExport {region; _}
 | SForOf {region; _}
@@ -583,7 +582,7 @@ let selection_to_region = function
   FieldName f -> f.region
 | Component c -> c.region
 
-let arrow_function_body_to_region = function
+let body_to_region = function
   FunctionBody {region; _} -> region
 | ExpressionBody s -> expr_to_region s
 
@@ -592,7 +591,7 @@ let property_to_region = function
 | Property {region; _}
 | Property_rest {region; _} -> region
 
-let array_item_to_region = function 
+let array_item_to_region = function
   Expr_entry e -> expr_to_region e
 | Empty_entry r -> r
 | Rest_entry {region; _} -> region

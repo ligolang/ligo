@@ -6,7 +6,7 @@ module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module CST    = Cst.Jsligo
+module CST    = Cst_jsligo.CST
 module Errors = Parsing_shared.Errors
 
 (* Parsing *)

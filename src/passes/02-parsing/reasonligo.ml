@@ -13,7 +13,7 @@ module Token       = Lexing_reasonligo.Token
 module Self_tokens = Lexing_reasonligo.Self_tokens
 module ParErr      = Parsing_reasonligo.ParErr
 module Parser      = Parsing_reasonligo.Parser
-module CST         = Cst.Reasonligo
+module CST         = Cst_reasonligo.CST
 module Pretty      = Parsing_reasonligo.Pretty
 
 (* Making the parsers *)

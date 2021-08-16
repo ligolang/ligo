@@ -14,22 +14,21 @@ let fold_npseq f init (hd,tl) =
   let res = List.fold ~f:(fun init (_,b) -> f init b) ~init:res tl in
   res
 
-
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
-let bind_map_pseq f = Option.map ~f:(map_npseq f)
-let bind_fold_pseq f init seq =
+let map_pseq f = Option.map ~f:(map_npseq f)
+let fold_pseq f init seq =
   let res = Option.map ~f:(fold_npseq f init) seq in
   Option.value ~default:(init) res
 
-type ('a, 'err) folder = {
+type 'a folder = {
   e : 'a -> expr -> 'a;
   t : 'a -> type_expr -> 'a ;
   d : 'a -> declaration -> 'a;
 }
 
-let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun f init t ->
+let rec fold_type_expression : 'a folder -> 'a -> type_expr -> 'a = fun f init t ->
   let self = fold_type_expression f in
   let init = f.t init t in
   match t with
@@ -38,9 +37,11 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
   | TSum    {value;region=_} ->
     let {lead_vbar=_;variants;attributes=_} = value in
     let aux init ({value;region=_} : _ reg) =
-      let {constr=_;arg;attributes=_} = value in
-      match arg with
-        Some (_,t) -> self init t
+      let {constr=_;args;attributes=_} = value in
+      match args with
+        Some x ->
+        let t = x.value.inside in
+        self init t
       | None -> init
     in
     List.Ne.fold_left aux init @@ npseq_to_ne_list variants
@@ -63,11 +64,11 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
   | TModA {value;region=_} ->
     self init value.field
   | TVar    _
-  | TWild   _
   | TInt    _
+  | TArg _
   | TString _ -> init
 
-let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  ->
+let rec fold_expression : 'a folder -> 'a -> expr -> 'a = fun f init e  ->
   let self = fold_expression f in
   let self_type = fold_type_expression f in
   let self_module = fold_module f in
@@ -76,22 +77,25 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     let {op=_;arg1;arg2} = value in
     let res = fold_expression f init arg1 in
     let res = fold_expression f res  arg2 in
-    res
-  in
+    res in
   match e with
-    ECase    {value;region=_} ->
-    let {kwd_switch=_;expr;lbrace=_;cases;rbrace=_} = value in
-    let res = self init expr in
-    let res = matching_cases self res cases in
-    res
-  | ECond    {value;region=_} ->
-    let {kwd_if=_;test;ifso;ifnot} = value in
-    let res = self init test in
-    let res = self res @@ fst ifso.inside in
-    (match ifnot with
+    ECase {value; _} ->
+      let {kwd_switch=_; expr; lbrace=_; cases; rbrace=_} = value in
+      let res = self init expr in
+      let res = matching_cases self res cases in
+      res
+  | ECond {value; _} -> (
+    let {kwd_if=_; test; ifso; ifnot} = value in
+    let test_expr =
+      match test with
+        `Braces t -> t.value.inside
+      | `Parens t -> t.value.inside in
+    let res = self init test_expr in
+    let res = self res @@ fst ifso.value.inside in
+    match ifnot with
     | None -> res
-    | Some (_,e) -> self res @@ fst e.inside
-    )
+    | Some (_,e) -> self res @@ fst e.value.inside
+  )
   | EAnnot   {value;region=_} ->
     let (expr, _, type_expr) = value in
     let res = self init expr in
@@ -103,8 +107,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     let {op=_;arg} = value in
     let res = fold_expression f init arg in
     res
-  | ELogic BoolExpr True _ -> init
-  | ELogic BoolExpr False _ -> init
   | ELogic CompExpr Lt    {value;region=_}
   | ELogic CompExpr Leq   {value;region=_}
   | ELogic CompExpr Gt    {value;region=_}
@@ -140,16 +142,12 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     res
   | EList EListComp {value;region=_} ->
     List.fold ~f:self ~init @@ pseq_to_list value.elements
-  | EConstr ENone _ -> init
-  | EConstr ESomeApp {value;region=_} ->
+  | EConstr {value;region=_} -> (
     let _, expr = value in
-    self init expr
-  | EConstr EConstrApp {value;region=_} ->
-    let _, expr = value in
-    (match expr with
+    match expr with
       None -> init
     | Some e -> self init e
-    )
+  )
   | ERecord  {value;region=_} ->
     let aux init ({value;region=_} : _ reg) =
       let {field_name=_;assignment=_;field_expr} = value in
@@ -194,19 +192,16 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     let {type_decl;semi=_;body} = value in
     let {kwd_type=_;name=_;eq=_;type_expr} = type_decl in
     let res = self_type init type_expr in
-    let res = self res body in
-    res
+    self res body
   | EModIn  {value;region=_} ->
     let {mod_decl;semi=_;body} = value in
     let {kwd_module=_;name=_;eq=_;lbrace=_;module_;rbrace=_} = mod_decl in
     let res = self_module init module_ in
-    let res = self res body in
-    res
+    self res body
   | EModAlias  {value;region=_} ->
     let {mod_alias;semi=_;body} = value in
     let {kwd_module=_;alias=_;eq=_;binders=_} = mod_alias in
-    let res = self init body in
-    res
+    self init body
   | EFun     {value;region=_} ->
     let {binders=_; lhs_type; arrow=_; body} = value in
     let res = self init body in
@@ -227,7 +222,7 @@ and case_clause self init ({value;region=_}: _ case_clause reg) =
   let {pattern=_;arrow=_;rhs} = value in
   self init rhs
 
-and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> 'a =
+and fold_declaration : 'a folder -> 'a -> declaration -> 'a =
   fun f init d ->
   let self_expr = fold_expression f in
   let self_type = fold_type_expression f in
@@ -256,200 +251,208 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> 'a =
     init
   | Directive _ -> init
 
-and fold_module : ('a, 'err) folder -> 'a -> t -> 'a =
+and fold_module : 'a folder -> 'a -> t -> 'a =
   fun f init {decl;eof=_} ->
   let self = fold_declaration f in
   List.Ne.fold_left self init @@ decl
 
-type ('err) mapper = {
+type mapper = {
   e : expr -> expr;
   t : type_expr -> type_expr ;
   d : declaration -> declaration ;
 }
 
-let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
+let rec map_type_expression : mapper -> type_expr -> 'b = fun f t ->
   let self = map_type_expression f in
   let t = f.t t in
-  let return a = a in
   match t with
-    TProd   {value;region} ->
+  | TProd {value;region} ->
     let inside = map_npseq self value.inside in
     let value = {value with inside} in
-    return @@ TProd {value;region}
-  | TSum    {value;region} ->
+    TProd {value; region}
+  | TSum {value;region} ->
     let aux (e : variant reg) =
-      let arg = Option.map ~f:(fun (a,b) -> let b = self b in (a,b)) e.value.arg in
-      let value = {e.value with arg} in
+      let app (x: type_expr par reg) =
+        let inside = self x.value.inside in
+        {x with value = {x.value with inside}}
+      in
+      let args = Option.map ~f:app e.value.args in
+      let value = {e.value with args} in
       {e with value}
     in
     let variants = map_npseq aux value.variants in
     let value = {value with variants} in
-    return @@ TSum {value;region}
-  | TRecord {value;region} ->
+    TSum {value; region}
+  | TRecord {value; region} ->
     let aux (element : _ reg ) =
       let field_type = self element.value.field_type in
       let value = {element.value with field_type} in
-      {element with value }
+      {element with value}
     in
     let ne_elements = map_npseq aux value.ne_elements in
     let value = {value with ne_elements} in
-    return @@ TRecord {value;region}
-  | TApp    {value;region} ->
-    let (const, tuple) = value in
+    TRecord {value; region}
+  | TApp {value; region} ->
+    let const, tuple = value in
     let inside = map_npseq self tuple.value.inside in
-    let tuple = {tuple with value = {tuple.value with inside }} in
+    let tuple = {tuple with value = {tuple.value with inside}} in
     let value = (const, tuple) in
-    return @@ TApp {value;region}
-  | TFun    {value;region} ->
-    let (ty1, wild, ty2) = value in
+    TApp {value; region}
+  | TFun {value; region} ->
+    let ty1, wild, ty2 = value in
     let ty1 = self ty1 in
     let ty2 = self ty2 in
-    let value = (ty1, wild, ty2) in
-    return @@ TFun {value;region}
-  | TPar    {value;region} ->
+    let value = ty1, wild, ty2 in
+    TFun {value;region}
+  | TPar {value; region} ->
     let inside = self value.inside in
     let value = {value with inside} in
-    return @@ TPar {value;region}
-  | TModA {value;region} ->
+    TPar {value;region}
+  | TModA {value; region} ->
     let field = self value.field in
     let value = {value with field} in
-    return @@ TModA {value;region}
+    TModA {value;region}
   | (TVar   _
-  | TWild   _
   | TInt    _
-  | TString _ as e )-> e
+  | TArg    _
+  | TString _ as e) -> e
 
-let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
+let rec map_expression : mapper -> expr -> expr = fun f e  ->
   let self = map_expression f in
   let self_type = map_type_expression f in
   let self_module = map_module f in
-  let return a = a in
   let e = f.e e in
   let bin_op value =
-    let {op;arg1;arg2} = value in
+    let {op; arg1; arg2} = value in
     let arg1 = self arg1 in
     let arg2 = self arg2 in
-    {op;arg1;arg2}
+    {op; arg1; arg2}
   in
   match e with
-    ECase    {value;region} ->
-    let {kwd_switch=_;expr;lbrace=_;cases;rbrace=_} = value in
-    let expr = self expr in
-    let cases = matching_cases self cases in
-    let value = {value with expr;cases} in
-    return @@ ECase {value;region}
-  | ECond    {value;region} ->
-    let {kwd_if;test;ifso;ifnot} = value in
-    let test = self test in
-    let aux (x: _ braced) =
-      let inside = (fun (a,b)
-        -> let a = self a in (a,b)) x.inside in
-      {x with inside}
-    in
-    let ifso = aux ifso in
-    let ifnot = Option.map ~f:(fun (a,b) ->
-      let b = aux b in (a,b)) ifnot in
-    let value = {kwd_if;test;ifso;ifnot} in
-    return @@ ECond {value;region}
-  | EAnnot   {value;region} ->
+    ECase {value; region} ->
+      let {kwd_switch=_; expr; lbrace=_; cases; rbrace=_} = value in
+      let expr = self expr in
+      let cases = matching_cases self cases in
+      let value = {value with expr; cases} in
+      ECase {value; region}
+  | ECond {value; region} ->
+      let {kwd_if; test; ifso; ifnot} = value in
+      let test_expr' =
+        match test with
+          `Braces t -> self t.value.inside
+        | `Parens t -> self t.value.inside in
+      let test' =
+        match test with
+          `Braces {region; value} ->
+            `Braces Region.{region; value = {value with inside = test_expr'}}
+        | `Parens {region; value} ->
+            `Parens Region.{region; value = {value with inside = test_expr'}} in
+      let map_branch (x: _ braces reg) =
+        let inside =
+          let expr, semi_opt = x.value.inside in
+          let expr' = self expr in
+          (expr', semi_opt)
+        in
+        {x with value = {x.value with inside}}
+      in
+      let ifso' = map_branch ifso in
+      let ifnot' = Option.map
+          ~f:(fun (kwd_else, b) -> (kwd_else, map_branch b))
+          ifnot
+      in
+      let value = {kwd_if; test=test'; ifso=ifso'; ifnot=ifnot'} in
+      ECond {value; region}
+  | EAnnot {value;region} ->
     let expr, comma, type_expr = value in
     let expr = self expr in
     let type_expr = self_type type_expr in
     let value = expr, comma, type_expr in
-    return @@ EAnnot {value;region}
+    EAnnot {value;region}
   | ELogic BoolExpr Or  {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (BoolExpr (Or {value;region}))
+    ELogic (BoolExpr (Or {value;region}))
   | ELogic BoolExpr And {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (BoolExpr (And {value;region}))
+    ELogic (BoolExpr (And {value;region}))
   | ELogic BoolExpr Not {value;region} ->
     let arg = self value.arg in
     let value = {value with arg} in
-    return @@ ELogic (BoolExpr (Not {value;region}))
-  | ELogic BoolExpr True _
-  | ELogic BoolExpr False _ as e -> return @@ e
+    ELogic (BoolExpr (Not {value;region}))
   | ELogic CompExpr Lt    {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (CompExpr (Lt {value;region}))
+    ELogic (CompExpr (Lt {value;region}))
   | ELogic CompExpr Leq   {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (CompExpr (Leq {value;region}))
+    ELogic (CompExpr (Leq {value;region}))
   | ELogic CompExpr Gt    {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (CompExpr (Gt {value;region}))
+    ELogic (CompExpr (Gt {value;region}))
   | ELogic CompExpr Geq   {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (CompExpr (Geq {value;region}))
+    ELogic (CompExpr (Geq {value;region}))
   | ELogic CompExpr Equal {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (CompExpr (Equal {value;region}))
+    ELogic (CompExpr (Equal {value;region}))
   | ELogic CompExpr Neq   {value;region} ->
     let value = bin_op value in
-    return @@ ELogic (CompExpr (Neq {value;region}))
+    ELogic (CompExpr (Neq {value;region}))
   | EArith Add   {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Add {value;region})
+    EArith (Add {value;region})
   | EArith Sub   {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Sub {value;region})
+    EArith (Sub {value;region})
   | EArith Mult  {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Mult {value;region})
+    EArith (Mult {value;region})
   | EArith Div   {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Div {value;region})
+    EArith (Div {value;region})
   | EArith Mod   {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Mod {value;region})
+    EArith (Mod {value;region})
   | EArith Land  {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Land {value;region})
+    EArith (Land {value;region})
   | EArith Lor   {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Lor {value;region})
+    EArith (Lor {value;region})
   | EArith Lxor  {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Lxor {value;region})
+    EArith (Lxor {value;region})
   | EArith Lsl   {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Lsl {value;region})
+    EArith (Lsl {value;region})
   | EArith Lsr   {value;region} ->
     let value = bin_op value in
-    return @@ EArith (Lsr {value;region})
+    EArith (Lsr {value;region})
   | EArith Neg   {value;region} ->
     let arg = self value.arg in
     let value = {value with arg} in
-    return @@ EArith (Neg {value;region})
+    EArith (Neg {value;region})
   | EArith Int   _
   | EArith Nat   _
-  | EArith Mutez _ as e -> return @@ e
+  | EArith Mutez _ as e -> e
   | EString Cat {value;region} ->
     let value = bin_op value in
-    return @@ EString (Cat {value;region})
+    EString (Cat {value;region})
   | EString String   _
-  | EString Verbatim _ as e -> return @@ e
+  | EString Verbatim _ as e -> e
   | EList ECons {value;region} ->
     let {lbracket=_;lexpr;comma=_;ellipsis=_;rexpr;rbracket=_} = value in
     let lexpr = self lexpr in
     let rexpr = self rexpr in
     let value = {value with lexpr;rexpr} in
-    return @@ EList (ECons {value;region})
+    EList (ECons {value;region})
   | EList EListComp {value;region} ->
-    let elements = bind_map_pseq self value.elements in
+    let elements = map_pseq self value.elements in
     let value = {value with elements} in
-    return @@ EList (EListComp {value;region})
-  | EConstr ENone _ as e -> return @@ e
-  | EConstr ESomeApp {value;region} ->
-    let some_, expr = value in
-    let expr = self expr in
-    let value = some_,expr in
-    return @@ EConstr (ESomeApp {value;region})
-  | EConstr EConstrApp {value;region} ->
+    EList (EListComp {value;region})
+  | EConstr {value;region} ->
     let const, expr = value in
     let expr = Option.map ~f:self expr in
     let value = const,expr in
-    return @@ EConstr (EConstrApp {value;region})
+    EConstr {value;region}
   | ERecord  {value;region} ->
     let aux (e : field_assign reg) =
       let field_expr = self e.value.field_expr in
@@ -457,8 +460,8 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     in
     let ne_elements = map_npseq aux value.ne_elements in
     let value = {value with ne_elements} in
-    return @@ ERecord {value;region}
-  | EProj    _  as e -> return @@ e
+    ERecord {value;region}
+  | EProj    _  as e -> e
   | EUpdate  {value;region} ->
     let aux (e : field_path_assignment reg) =
       let field_expr = self e.value.field_expr in
@@ -467,33 +470,33 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let ne_elements = map_npseq aux value.updates.value.ne_elements in
     let updates = {value.updates with value = {value.updates.value with ne_elements}} in
     let value = {value with updates} in
-    return @@ EUpdate {value;region}
+    EUpdate {value;region}
   | EModA {value;region} ->
     let field = self value.field in
     let value = {value with field} in
-    return @@ EModA {value;region}
-  | EVar     _ as e -> return e
+    EModA {value;region}
+  | EVar     _ as e -> e
   | ECall    {value;region} ->
     let (lam, args) = value in
     let lam = self lam in
-    let args = (match args with
-    | Unit _ as u -> u
-    | Multiple {value;region} ->
-      let inside = map_npseq self value.inside in
-      let value = {value with inside} in
-      Multiple {value;region}
-    ) in
+    let args = match args with
+      | Unit _ as u -> u
+      | Multiple {value;region} ->
+        let inside = map_npseq self value.inside in
+        let value = {value with inside} in
+        Multiple {value;region}
+      in
     let value = (lam,args) in
-    return @@ ECall {value;region}
-  | EBytes   _ as e -> return @@ e
-  | EUnit    _ as e -> return @@ e
+    ECall {value;region}
+  | EBytes   _ as e -> e
+  | EUnit    _ as e -> e
   | ETuple   {value;region} ->
     let value = map_npseq self value in
-    return @@ ETuple {value;region}
+    ETuple {value;region}
   | EPar     {value;region} ->
     let inside = self value.inside in
     let value = {value with inside} in
-    return @@ EPar {value;region}
+    EPar {value;region}
   | ELetIn   {value;region} ->
     let {kwd_let=_;kwd_rec=_;binding;semi=_;body;attributes=_} = value in
     let {binders;lhs_type;eq;let_rhs} = binding in
@@ -503,7 +506,7 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let binding = {binders;lhs_type;eq;let_rhs} in
     let body = self body in
     let value = {value with binding;body} in
-    return @@ ELetIn {value;region}
+    ELetIn {value;region}
   | ETypeIn  {value;region} ->
     let {type_decl;semi;body} = value in
     let {kwd_type=_;name=_;eq=_;type_expr} = type_decl in
@@ -511,7 +514,7 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let body = self body in
     let type_decl = {type_decl with type_expr} in
     let value = {type_decl;semi;body} in
-    return @@ ETypeIn {value;region}
+    ETypeIn {value;region}
   | EModIn  {value;region} ->
     let {mod_decl;semi;body} = value in
     let {kwd_module=_;name=_;eq=_;lbrace=_;module_;rbrace=_} = mod_decl in
@@ -519,31 +522,31 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let body = self body in
     let mod_decl = {mod_decl with module_} in
     let value = {mod_decl;semi;body} in
-    return @@ EModIn {value;region}
+    EModIn {value;region}
   | EModAlias  {value;region} ->
     let {mod_alias;semi;body} = value in
     let {kwd_module=_;alias=_;eq=_;binders=_} = mod_alias in
     let body = self body in
     let value = {mod_alias;semi;body} in
-    return @@ EModAlias {value;region}
+    EModAlias {value;region}
   | EFun     {value;region} ->
     let {binders=_; lhs_type; arrow=_; body} = value in
     let body = self body in
     let lhs_type = Option.map ~f:(fun (a,b) ->
       let b = self_type b in (a,b)) lhs_type in
     let value = {value with body;lhs_type} in
-    return @@ EFun {value;region}
+    EFun {value;region}
   | ESeq     {value;region} ->
-    let elements = bind_map_pseq self value.elements in
+    let elements = map_pseq self value.elements in
     let value = {value with elements} in
-    return @@ ESeq {value;region}
+    ESeq {value;region}
   | ECodeInj {value;region} ->
     let code = self value.code in
     let value = {value with code} in
-    return @@ ECodeInj {value;region}
+    ECodeInj {value;region}
 
 and matching_cases self (cases: _ Utils.nsepseq reg) =
-  let value = map_npseq (case_clause self) @@ cases.value in
+  let value = map_npseq (case_clause self) cases.value in
   {cases with value}
 
 and case_clause self (case_clause: _ case_clause reg) =
@@ -552,12 +555,13 @@ and case_clause self (case_clause: _ case_clause reg) =
   let value = {case_clause.value with rhs} in
   {case_clause with value}
 
-and map_declaration : ('err) mapper -> declaration -> declaration =
+and map_declaration : mapper -> declaration -> declaration =
   fun f d ->
   let self_expr = map_expression f in
   let self_type = map_type_expression f in
   let self_module = map_module f in
   let return a = a in
+  let d = f.d d in
   match d with
     ConstDecl {value;region} ->
     let (kwd_let,kwd_rec,let_binding,attr) = value in
@@ -583,22 +587,16 @@ and map_declaration : ('err) mapper -> declaration -> declaration =
     return @@ ModuleAlias {value;region}
   | Directive _ as d -> return d
 
-and map_module : ('err) mapper -> t -> t =
+and map_module : mapper -> t -> t =
   fun f {decl;eof} ->
   let self = map_declaration f in
   (fun decl -> {decl;eof}) @@
   List.Ne.map self @@ decl
 
 (* TODO this is stupid *)
-let fold_to_map : unit -> (unit, 'err) folder -> ('err) mapper =
+let fold_to_map : unit -> unit folder -> mapper =
   fun init {e;t;d} ->
-  let e expr =
-    let () = e init expr in expr
-  in
-  let t ty =
-    let () = t init ty in ty
-  in
-  let d decl =
-    let () = d init decl in decl
-  in
-  {e;t;d}
+    let e expr = let () = e init expr in expr in
+    let t ty = let () = t init ty in ty in
+    let d decl = let () = d init decl in decl in
+    {e; t; d}

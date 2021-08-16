@@ -13,7 +13,7 @@ module Token       = Lexing_jsligo.Token
 module Self_tokens = Lexing_jsligo.Self_tokens
 module ParErr      = Parsing_jsligo.ParErr
 module Parser      = Parsing_jsligo.Parser
-module CST         = Cst.Jsligo
+module CST         = Cst_jsligo.CST
 module Pretty      = Parsing_jsligo.Pretty
 
 (* Making the parsers *)

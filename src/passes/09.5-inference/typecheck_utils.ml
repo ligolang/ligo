@@ -42,7 +42,7 @@ let other_check all_constraints assignments =
   "check that all_constraints are referencing only variables which are either bound by a forall or assigned in the assignments,\n\
   and check that the variables referenced by the assignments are also assigned or bound by a forall within their scope (how do we even know that scope thing????\n\
   leave as TODO for now. Also, todo: call this in the solver somewhere."
-  
+
   (*let check_variable : type_variable -> (type_variable -> constructor_or_row option) -> unit result =
     fun v find_assignment *)
 
@@ -95,7 +95,7 @@ let other_check all_constraints assignments =
 
         intermediate "canon" at the end = { int()↦α bool()↦β map(α,β)↦δ }
         intermediate "first" at the end { α↦α α↦χ β↦β δ↦δ γ↦γ }
-        
+
         loop for the example point γ just after the "." in [ α β χ δ . γ ]:
           intermediate "canon" = { int()↦α bool()↦β map(α,β)↦δ }
           intermediate "first" { α↦α α↦χ β↦β δ↦δ }

@@ -27,7 +27,7 @@ open Predefined.Tree_abstraction.Cameligo
 let r_split = Location.r_split
 
 let mk_var var = if String.compare var Var.wildcard = 0 then Var.fresh () else Var.of_name var
-
+let quote_var var = "'"^var
 let compile_variable var = Location.map Var.of_name @@ Location.lift_region var
 let compile_attributes attributes : string list =
   List.map ~f:(fst <@ r_split) attributes
@@ -44,8 +44,11 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
       let attr = compile_attributes attributes in
       let aux (variant : CST.variant CST.reg) =
         let v, _ = r_split variant in
+        let args = match v.args with
+                     None -> None
+                   | Some {value; _} -> Some value.inside in
         let type_expr =
-          Option.map ~f:(self <@ snd) v.arg in
+          Option.map ~f:self args in
         let type_expr = Option.value ~default:(t_unit ()) type_expr in
         let variant_attr = compile_attributes v.attributes in
         (v.constr.value, type_expr, variant_attr) in
@@ -156,14 +159,17 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
     let (name,loc) = r_split var in
     let v = Var.of_name name in
     return @@ t_variable ~loc v
-  | TWild _reg ->raise.raise @@ unsupported_twild te
-  | TString _s ->raise.raise @@ unsupported_string_singleton te
-  | TInt _s ->raise.raise @@ unsupported_string_singleton te
+  | TString _s -> raise.raise @@ unsupported_string_singleton te
+  | TInt _s -> raise.raise @@ unsupported_string_singleton te
   | TModA ma ->
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
     let element = self ma.field in
     return @@ t_module_accessor ~loc module_name element
+  | TArg var ->
+    let (name,loc) = r_split var in
+    let v = Var.of_name (quote_var name.name.value) in
+    return @@ t_variable ~loc v
 
 
 let compile_selection (selection : CST.selection) =
@@ -208,12 +214,12 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
     return @@ e_constant ~loc (Const op_type) [arg]
   in
   match e with
-    EVar var ->
+    EVar var -> (
     let (var, loc) = r_split var in
-    (match constants var with
-      Some const -> return @@ e_constant ~loc const []
+    match constants var with
+    | Some const -> return @@ e_constant ~loc const []
     | None -> return @@ e_variable_ez ~loc var
-    )
+  )
   | EPar par -> self par.value.inside
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
@@ -266,8 +272,6 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
         Or or_   -> compile_bin_op C_OR  or_
       | And and_ -> compile_bin_op C_AND and_
       | Not not_ -> compile_un_op  C_NOT not_
-      | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
-      | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
     )
     | CompExpr ce -> (
       match ce with
@@ -401,14 +405,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
     let body = self body in
     let expr = fun_ body in
     return @@ e_lambda ~loc binder lhs_type expr
-  | EConstr (ESomeApp some) ->
-    let ((_, arg), loc) = r_split some in
-    let args = compile_tuple_expression @@ List.Ne.singleton arg in
-    return @@ e_some ~loc args
-  | EConstr (ENone reg) ->
-    let loc = Location.lift reg in
-    return @@ e_none ~loc ()
-  | EConstr (EConstrApp constr) ->
+  | EConstr constr ->
     let ((constr,args_o), loc) = r_split constr in
     let args_o = Option.map ~f:(compile_tuple_expression <@ List.Ne.singleton) args_o in
     let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
@@ -426,12 +423,17 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
     let ty   = compile_type_expression ~raise ty in
     return @@ e_annotation ~loc expr ty
   | ECond cond ->
-    let (cond, loc) = r_split cond in
-    let test        = self cond.test in
-    let then_clause = self (fst cond.ifso.inside) in
-    let else_clause =
-      Option.map ~f:(fun ((_,x) : _ * _ CST.braced) -> self (fst x.CST.inside))
-        cond.ifnot in
+    let cond, loc = r_split cond in
+    let test = match cond.test with
+      | `Braces {value; _} -> value.inside
+      | `Parens {value; _} -> value.inside
+    in
+    let test        = self test in
+    let then_clause = self (fst cond.ifso.value.inside) in
+    let else_clause = Option.map
+      ~f:(fun ((_, b) : _ * CST.branch) -> self (fst b.Region.value.CST.inside))
+      cond.ifnot
+    in
     return @@ e_cond ~loc test then_clause @@ Option.value ~default:(e_unit ~loc ()) else_clause
   | EList lst -> (
     match lst with
@@ -512,8 +514,8 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
 and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
   fun p ->
   match unepar p with
-  | CST.PVar {var;attributes} ->
-    let (var,loc) = r_split var in
+  | CST.PVar {value={variable; attributes}; _} ->
+    let (var,loc) = r_split variable in
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b =
@@ -539,23 +541,8 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
     let lst = List.Ne.to_list lst in
     let (labels,nested) = List.unzip lst in
     Location.wrap ~loc @@ P_record (labels , nested)
-  | CST.PConstr constr_pattern -> (
-    match constr_pattern with
-    | PFalse p ->
-      let loc = Location.lift p in
-      Location.wrap ~loc @@ P_variant (Label "false" , Location.wrap ~loc P_unit)
-    | PTrue p ->
-      let loc = Location.lift p in
-      Location.wrap ~loc @@ P_variant (Label "true" , Location.wrap ~loc P_unit)
-    | PNone p ->
-      let loc = Location.lift p in
-      Location.wrap ~loc @@ P_variant (Label "None" , Location.wrap ~loc P_unit)
-    | PSomeApp some ->
-      let ((_,p), loc) = r_split some in
-      let pattern' = conv ~raise p in
-      Location.wrap ~loc @@ P_variant (Label "Some", pattern')
-    | PConstrApp constr_app ->
-      let ((constr,p_opt), loc) = r_split constr_app in
+  | CST.PConstr pattern -> (
+      let ((constr,p_opt), loc) = r_split pattern in
       let (l , _loc) = r_split constr in
       let pv_opt = match p_opt with
         | Some pv -> conv ~raise pv
@@ -638,7 +625,7 @@ and untpar = function
 | _ as v -> v
 
 and check_annotation ~raise = function
-| CST.PVar {var} ->raise.raise (missing_funarg_annotation var)
+| CST.PVar {value={variable;_}} -> raise.raise (missing_funarg_annotation variable)
 | CST.PPar { value = { inside ; _ }; _ } -> check_annotation ~raise inside
 | CST.PTuple { value ; _ } ->
   let l = Utils.nsepseq_to_list value in
@@ -670,7 +657,8 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
   | CST.PPar par ->
     let par, _ = r_split par in
     aux par.inside
-  | PVar {var=name;attributes=var_attributes} -> (*function or const *)
+  | PVar {value={variable=name;attributes=var_attributes}; _} ->
+     (*function or const *)
     let var_attributes = var_attributes |> List.map ~f:(fun x -> x.Region.value) |>
                         Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let fun_binder = compile_variable name in
@@ -698,8 +686,8 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) loc @@ Var.fresh ()
-  | PVar {var;attributes} ->
-    let (var,loc) = r_split var in
+  | PVar {value={variable; attributes}; _} ->
+    let (var,loc) = r_split variable in
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     return_1 ~attributes loc @@ mk_var var
@@ -731,9 +719,22 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
     List.map ~f:(Location.wrap ~loc:(Location.lift reg)) decl in
   let return_1 reg decl = return reg [decl] in
   match decl with
-    TypeDecl {value={name; type_expr; _};region} ->
+    TypeDecl {value={name; type_expr; params; _};region} ->
     let (name,_) = r_split name in
-    let type_expr = compile_type_expression ~raise type_expr in
+    let type_expr =
+      let rhs = compile_type_expression ~raise type_expr in
+      match params with
+      | None -> rhs
+      | Some x ->
+        let lst = Utils.nsepseq_to_list x.value.inside in
+        let aux : CST.type_var Region.reg -> AST.type_expression -> AST.type_expression =
+          fun param type_ ->
+            let (param,ploc) = r_split param in
+            let ty_binder = Location.wrap ~loc:ploc @@ Var.of_name (quote_var param.name.value) in
+            t_abstraction ~loc:(Location.lift region) ty_binder () type_
+        in
+        List.fold_right ~f:aux ~init:rhs lst
+    in
     return_1 region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
   | ModuleDecl {value={name; module_; _};region} ->
     let (name,_) = r_split name in

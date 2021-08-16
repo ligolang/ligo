@@ -7,15 +7,17 @@ type self_cst_jsligo_error = [
   `Reserved_name of variable
 | `Duplicate_variant of variable
 | `Non_linear_pattern of variable
+| `Non_linear_type_decl of type_var
 | `Duplicate_field_name of variable
 | `Not_supported_variant of type_expr
 ]
 
-let reserved_name var = `Reserved_name var
-let duplicate_variant var = `Duplicate_variant var
-let non_linear_pattern var = `Non_linear_pattern var
-let duplicate_field_name var = `Duplicate_field_name var
-let not_supported_variant t = `Not_supported_variant t
+let reserved_name var : self_cst_jsligo_error = `Reserved_name var
+let duplicate_variant var : self_cst_jsligo_error = `Duplicate_variant var
+let non_linear_pattern var : self_cst_jsligo_error = `Non_linear_pattern var
+let duplicate_field_name var : self_cst_jsligo_error = `Duplicate_field_name var
+let not_supported_variant t : self_cst_jsligo_error = `Not_supported_variant t
+let non_linear_type_decl var : self_cst_jsligo_error = `Non_linear_type_decl var
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> self_cst_jsligo_error -> unit =
@@ -25,7 +27,8 @@ let error_ppformat : display_format:string display_format ->
     match a with
       `Reserved_name var ->
       Format.fprintf f
-        "Reserved name %S.\nHint: Change the name.\n"
+        "@[<hv>%a@.Reserved name %S.@.Hint: Change the name.@]"
+        Snippet.pp_lift var.region
         var.value
     | `Duplicate_variant var ->
       Format.fprintf f
@@ -34,8 +37,13 @@ let error_ppformat : display_format:string display_format ->
         var.value
     | `Non_linear_pattern var ->
       Format.fprintf f
-        "Repeated variable %S in this pattern.\n\
-        Hint: Change the name.\n"
+        "@[<hv>%a@.Repeated variable %S in this pattern.@.Hint: Change the name.@]"
+        Snippet.pp_lift var.region
+        var.value
+    | `Non_linear_type_decl var ->
+      Format.fprintf f
+        "@[<hv>%a@.Repeated type variable %S in type declaration.@.Hint: Change the name.@]"
+        Snippet.pp_lift var.region
         var.value
     | `Duplicate_field_name var ->
       Format.fprintf f
@@ -69,6 +77,12 @@ let error_jsonformat : self_cst_jsligo_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Non_linear_pattern var ->
     let message = `String "Repeated variable in this pattern." in
+    let content = `Assoc [
+      ("message", message );
+      ("var", `String var.value);] in
+    json_error ~stage ~content
+  | `Non_linear_type_decl var ->
+    let message = `String "Repeated type variable in type declaration" in
     let content = `Assoc [
       ("message", message );
       ("var", `String var.value);] in

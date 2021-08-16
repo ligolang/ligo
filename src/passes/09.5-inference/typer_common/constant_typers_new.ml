@@ -261,6 +261,8 @@ tc "arguments for (+)"
   let t_unit         = tuple0 --> unit
   let t_amount       = tuple0 --> mutez
   let t_balance      = tuple0 --> mutez
+  let t_true = tuple0 --> bool
+  let t_false = tuple0 --> bool
   let t_address      = forall "a" @@ fun a -> tuple1 (contract a) --> address
   let t_now          = tuple0 --> timestamp
   let t_transaction  = forall "a" @@ fun a -> tuple3 a mutez (contract a) --> operation
@@ -414,5 +416,7 @@ tc "arguments for (+)"
     | C_IMPLICIT_ACCOUNT    -> t_implicit_account;
     | C_SET_DELEGATE        -> t_set_delegate ;
     | C_POLYMORPHIC_ADD     -> t_polymorphic_add ;
+    | C_TRUE                -> t_true ;
+    | C_FALSE               -> t_false ;
     | c                     -> raise.raise (corner_case (Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant' c))
 end

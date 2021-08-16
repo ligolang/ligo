@@ -9,9 +9,7 @@ module type FILE = Preprocessing_shared.File.S
 (* This module factors the common actions expected from LexerMain in
    all LIGO syntaxes, like reading and checking the command-line,
    building the preprocessor, the lexer, composing them and calling
-   them. Note the use of a generative functor to remind the callers
-   that a side-effect is performed (reading from and writing to
-   [Sys.argv]: see module [LexerLib.CLI].). *)
+   them. *)
 
 module Make (File        : FILE)
             (Token'      : Token.S)

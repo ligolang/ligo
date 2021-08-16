@@ -36,6 +36,9 @@ let rec untype_type_expression_nofail (t:O.type_expression) : I.type_expression 
     let ma = O.{module_name; element = self element} in
     return @@ I.T_module_accessor ma
   | O.T_singleton x -> return @@ I.T_singleton x
+  | O.T_abstraction x ->
+    let type_ = untype_type_expression_nofail x.type_ in
+    return @@ I.T_abstraction {x with type_}
 
 let untype_type_expression (t:O.type_expression) : I.type_expression =
   untype_type_expression_nofail t

@@ -1,11 +1,27 @@
 [@@@warning "-42"]
 
-module CST = Cst.Jsligo
+module CST = Cst_jsligo.CST
 open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
 module Option = Simple_utils.Option
+
+let pp_braces printer (node : 'a braces reg) =
+  let inside = node.value.inside
+  in string "{" ^^ nest 1 (printer inside ^^ string "}")
+
+let pp_brackets printer (node : 'a brackets reg) =
+  let inside = node.value.inside
+  in string "[" ^^ nest 1 (printer inside ^^ string "]")
+
+let pp_nsepseq :
+  'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
+  fun sep printer elements ->
+    let elems = Utils.nsepseq_to_list elements
+    and sep   = string sep ^^ break 1
+    in separate_map sep printer elems
+
 
 let rec print ast =
   let stmt     = Utils.nseq_to_list ast.statements in
@@ -17,29 +33,8 @@ and pp_toplevel_statement = function
   TopLevel (stmt, _) -> Some (pp_statement stmt)
 | Directive _   -> None
 
-and pp_braced :
-  'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq braced reg -> document =
-  fun sep printer {value; _}  ->
-    let ({inside; _}: _ Utils.nsepseq braced) = value in
-    let elements = pp_nsepseq sep printer inside in
-    nest 2 (string "{" ^^ hardline ^^ elements) ^^ hardline ^^ string "}"
-
-and pp_brackets :
-  'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq brackets reg -> document =
-  fun sep printer {value; _} ->
-    let ({inside; _}: _ Utils.nsepseq brackets) = value in
-    let elements = pp_nsepseq sep printer inside in
-    string "[" ^^ break 0 ^^ group elements ^^ string "]"
-
-and pp_nsepseq :
-  'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
-  fun sep printer elements ->
-    let elems = Utils.nsepseq_to_list elements
-    and sep   = string sep ^^ break 1
-    in separate_map sep printer elems
-
 and pp_statement = function
-  SBlock      s -> group (pp_braced ";" pp_statement s)
+  SBlock      s -> pp_SBlock s
 | SExpr       s -> pp_expr s
 | SCond       s -> group (pp_cond_expr s)
 | SReturn     s -> pp_return s
@@ -54,46 +49,62 @@ and pp_statement = function
 | SForOf      s -> pp_for_of s
 | SWhile      s -> pp_while s
 
+and pp_SBlock stmt =
+  let print = pp_nsepseq ";" pp_statement
+  in group (pp_braces print stmt)
+
 and pp_for_of {value; _} =
-  string "for" ^^ string "(" ^^ string 
-    (if value.const then "const" else "let") ^^ string value.name.value ^^ 
-    string " of " ^^ 
-    pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement
+  string "for" ^^ string "("
+  ^^ pp_index_kind value.index_kind
+  ^^ string value.index.value
+  ^^ string " of "
+  ^^ pp_expr value.expr
+  ^^ string ")"
+  ^/^ pp_statement value.statement
+
+and pp_index_kind = function
+  `Let _ -> string "let "
+| `Const _ -> string "const "
 
 and pp_while {value; _} =
-  string "while" ^^ string "(" ^^ pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement 
+  string "while" ^^ string "(" ^^ pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement
 
-and pp_import {value; _} = 
-  string "import" ^^ string value.alias.value ^^ string "=" ^^ pp_nsepseq "." (fun a -> string a.value) value.module_path
+and pp_import (node : CST.import Region.reg) =
+  let {value; _} : CST.import Region.reg = node in
+  string "import" ^^ string value.alias.value
+  ^^ string "="
+  ^^ pp_nsepseq "." (fun a -> string a.Region.value) value.module_path
 
 and pp_export {value = (_, statement); _} =
   string "export" ^^ pp_statement statement
 
 and pp_namespace {value = (_, name, statements); _} =
-  string "namespace" ^^ string name.value ^^ group (pp_braced ";" pp_statement statements) 
+  let pp_statements = pp_nsepseq ";" pp_statement in
+  string "namespace" ^^ string name.value
+  ^^ group (pp_braces pp_statements statements)
 
 and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
   let if_then = string "if" ^^ pp_par_expr test ^^ string " " ^^ pp_statement ifso in
   match ifnot with
     None -> if_then
-  | Some (_,statement) -> if_then ^^ string " else " ^^ pp_statement statement
+  | Some (_,statement) ->
+      if_then ^^ string " else " ^^ pp_statement statement
 
 and pp_return {value = {expr; _}; _} =
   match expr with
     Some s -> string "return " ^^ pp_expr s
   | None -> string "return"
 
-and pp_let {value = {bindings; _}; _} =
-  string "let " ^^ pp_nsepseq "," pp_let_binding bindings
+and pp_let (node : let_decl reg) =
+  let {attributes; bindings; _} : let_decl = node.value
+  in (if attributes = [] then empty else pp_attributes attributes)
+     ^^ string "let " ^^ pp_nsepseq "," pp_val_binding bindings
 
 and pp_const {value = {bindings; _}; _} =
-  string "const " ^^ pp_nsepseq "," pp_let_binding bindings
+  string "const " ^^ pp_nsepseq "," pp_val_binding bindings
 
-and pp_let_binding {value = {binders; lhs_type; expr; attributes; _}; _} =
-  (if attributes = [] then empty else 
-  pp_attributes attributes)
-  ^^ 
+and pp_val_binding {value = {binders; lhs_type; expr; _}; _} =
   prefix 2 0 ((match lhs_type with
     Some (_, type_expr) -> pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
   | None -> pp_pattern binders)
@@ -131,12 +142,19 @@ and pp_case = function
 
 
 and pp_type {value; _} =
-  let ({name; type_expr; _}: type_decl) = value
+  let ({name; params; type_expr; _}: type_decl) = value
   in
-  string "type " ^^ string name.value ^^ string " = "
-  ^^ group (pp_type_expr type_expr)
+  string "type " ^^ string name.value
+  ^^ pp_type_params params
+  ^^ string " = "
+  ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
 
-and pp_ident Region.{value; _} = string value
+and pp_type_params = function
+  None -> empty
+| Some {value; _} ->
+   string "<" ^^ nest 1 (pp_nsepseq "," pp_ident value.inside) ^^ string ">"
+
+and pp_ident (node : string Region.reg) = string node.value
 
 and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
 
@@ -157,8 +175,8 @@ and pp_expr = function
 | ECall    e -> pp_call_expr e
 | ENew     e -> pp_new_expr e
 | EBytes   e -> pp_bytes e
-| EArray   e -> group(pp_brackets "," pp_array_item e)
-| EObject  e -> group(pp_object_expr e)
+| EArray   e -> pp_array e
+| EObject  e -> group (pp_object_expr e)
 | EString  e -> pp_string_expr e
 | EProj    e -> pp_projection e
 | EAssign  (a,b,c) -> pp_assign (a,b,c)
@@ -166,6 +184,10 @@ and pp_expr = function
 | EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
+
+and pp_array (node: (array_item, comma) Utils.nsepseq brackets reg) =
+  let pp_items = pp_nsepseq "," pp_array_item
+  in group (pp_brackets pp_items node)
 
 and pp_call_expr {value; _} =
   let lambda, arguments = value in
@@ -184,16 +206,7 @@ and pp_array_item = function
 | Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
-
-and pp_constr_expr = function
-  ENone      _ -> string "None ()" 
-| ESomeApp   a -> pp_some a
-| EConstrApp a -> pp_constr_app a
-
-and pp_some {value=_, e; _} =
-  prefix 4 1 (string "Some") (string "(" ^^ pp_expr e ^^ string ")")
-
-and pp_constr_app {value; _} =
+and pp_constr_expr {value; _} =
   let constr, arg = value in
   let constr = string constr.value in
   match arg with
@@ -201,12 +214,16 @@ and pp_constr_app {value; _} =
   | Some e -> prefix 2 1 constr (string "(" ^^ pp_expr e ^^ string ")")
 
 and pp_object_property = function
-  Punned_property {value; _} -> pp_expr value
-| Property {value = {name; value; _}; _} -> pp_expr name ^^ string ": " ^^ pp_expr value
-| Property_rest {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
+  Punned_property {value; _} ->
+    pp_expr value
+| Property {value = {name; value; _}; _} ->
+    pp_expr name ^^ string ": " ^^ pp_expr value
+| Property_rest {value = {expr; _}; _} ->
+    string "..." ^^ pp_expr expr
 
-and pp_object_expr oe =
-  pp_braced "," pp_object_property oe
+and pp_object_expr (node: (property, comma) Utils.nsepseq braces reg) =
+  let pp_properties = pp_nsepseq "," pp_object_property
+  in pp_braces pp_properties node
 
 and pp_string_expr = function
   String e -> pp_string e
@@ -235,8 +252,6 @@ and pp_bool_expr = function
   Or   e  -> pp_bin_op "||" e
 | And  e  -> pp_bin_op "&&" e
 | Not  e  -> pp_un_op "!" e
-| True  _ -> string "true"
-| False _ -> string "false"
 
 and pp_bin_op op {value; _} =
   let {arg1; arg2; _} = value
@@ -276,8 +291,8 @@ and pp_expr_fun = function
     group (pp_nsepseq "," pp_expr_fun value)
 | EAnnot   {value; _} ->
     let expr, _, type_expr = value in
-      group (nest 1 (pp_expr_fun expr ^^ string ": "
-                     ^^ pp_type_expr type_expr))
+    group (nest 1 (pp_expr_fun expr ^^ string ": "
+                   ^^ pp_type_expr type_expr))
 | EUnit _ -> string "()"
 | _ as c -> pp_expr c
 
@@ -291,8 +306,13 @@ and pp_fun {value; _} =
        string ": " ^^ nest 2 (pp_type_expr e)
   in
   match body with
-  | FunctionBody fb -> parameters ^^ annot ^^ string " => " ^^ (pp_braced ";" pp_statement fb)
-  | ExpressionBody e -> (prefix 2 0 (nest 1 parameters ^^ annot ^^ string " => ") (pp_expr e))
+  | FunctionBody fb ->
+      let pp_statements = pp_nsepseq ";" pp_statement in
+      parameters ^^ annot ^^ string " => "
+      ^^ (pp_braces pp_statements fb)
+  | ExpressionBody e ->
+     prefix 2 0 (nest 1 parameters ^^ annot ^^ string " => ")
+                (pp_expr e)
 
 and pp_seq {value; _} =
   pp_nsepseq "," pp_expr value
@@ -305,7 +325,6 @@ and pp_type_expr: type_expr -> document = function
 | TFun    t -> pp_fun_type t
 | TPar    t -> pp_type_par t
 | TVar    t -> pp_ident t
-| TWild   _ -> string "_"
 | TString s -> pp_string s
 | TModA   t -> pp_module_access pp_type_expr t
 | TInt    t -> pp_int t
@@ -315,11 +334,12 @@ and pp_module_access : type a.(a -> document) -> a module_access reg -> document
   let {module_name; field; _} = value in
   group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
-and pp_cartesian v =
-  (if v.attributes = [] then empty
-  else pp_attributes v.attributes)
-  ^/^
-  group(pp_brackets "," pp_type_expr v.inside)
+ and pp_cartesian (node: CST.cartesian) =
+  let pp_type_exprs = pp_nsepseq "," pp_type_expr
+  in group (
+    pp_attributes node.attributes ^^ hardline ^^ 
+    pp_brackets pp_type_exprs node.inside
+  )
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in
@@ -336,9 +356,9 @@ and pp_sum_type {value; _} =
 
 and pp_attributes = function
   [] -> empty
-| attr -> 
-  let make s = string "@" ^^ string s.value ^^ string " "
-  in 
+| attr ->
+  let make s = string "@" ^^ string s.Region.value ^^ string " "
+  in
   string "/* " ^^ concat_map make attr ^^ string "*/ "
 
 and pp_object_type fields = group (pp_ne_injection pp_field_decl fields)
@@ -372,10 +392,10 @@ and pp_compound = function
 | Braces   (_, _) -> ("{","}")
 | Brackets (_, _) -> ("[","]")
 
-
 and pp_type_app {value; _} =
   let ctor, tuple = value in
-  (pp_ident ctor) ^^ (string "<" ^^ nest 1 (pp_type_tuple tuple) ^^ string ">")
+  pp_ident ctor
+  ^^ string "<" ^^ nest 1 (pp_type_tuple tuple) ^^ string ">"
 
 and pp_type_tuple {value; _} =
   let head, tail = value.inside in
@@ -404,12 +424,25 @@ and pp_type_par {value; _} =
 and pp_pattern = function
   PRest     p -> pp_rest_pattern p
 | PAssign   p -> pp_assign_pattern p
-| PVar      v -> pp_ident v
+| PVar      v -> pp_pvar v
 | PConstr   p -> pp_ident p
 | PDestruct p -> pp_destruct p
-| PObject   p -> pp_braced "," pp_pattern p
+| PObject   p -> pp_pobject p
 | PWild     _ -> string "_"
-| PArray    p -> group(pp_brackets "," pp_pattern p)
+| PArray    p -> pp_parray p
+
+and pp_parray (node:  (pattern, comma) Utils.nsepseq brackets reg) =
+  let pp_patterns = pp_nsepseq "," pp_pattern
+  in group (pp_brackets pp_patterns node)
+
+and pp_pobject (node: (pattern, comma) Utils.nsepseq braces reg) =
+  pp_braces (pp_nsepseq "," pp_pattern) node
+
+and pp_pvar {value; _} =
+  let {variable; attributes} = value in
+  let v = pp_ident variable in
+  if attributes = [] then v
+  else group (pp_attributes attributes ^/^ v)
 
 and pp_rest_pattern {value = {rest; _}; _} =
   string "..." ^^ pp_ident rest
@@ -418,13 +451,13 @@ and pp_assign_pattern {value = {property; value; _}; _} =
   pp_ident property ^^ string "=" ^^ pp_expr value
 
 and pp_destruct {value = {property; target; _}; _} =
-  pp_ident property ^^ string ":" ^^ pp_let_binding target
+  pp_ident property ^^ string ":" ^^ pp_val_binding target
 
 let print_type_expr = pp_type_expr
 let print_pattern   = pp_pattern
 let print_expr      = pp_expr
 
-type cst        = Cst.Jsligo.t
-type expr       = Cst.Jsligo.expr
-type type_expr  = Cst.Jsligo.type_expr
-type pattern    = Cst.Jsligo.pattern
+type cst       = CST.t
+type expr      = CST.expr
+type type_expr = CST.type_expr
+type pattern   = CST.pattern

@@ -5,11 +5,9 @@ The following preprocessing directives are supported
   * #elif
   * #else
   * #endif
-  * #endregion
   * #error
   * #if
   * #include
-  * #region
   * #undef
 
 Note: There is no error raised for invalid preprocessing directives

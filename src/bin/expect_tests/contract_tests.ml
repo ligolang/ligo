@@ -46,18 +46,6 @@ let%expect_test _ =
 
     430 bytes |}] ;
 
-  run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
-  [%expect {|
-    File "../../test/contracts/issue-184-combs.mligo", line 30, characters 16-18:
-     29 |
-     30 | let main2 (ums, us : (union1_michelson list) * (union1 list)) =
-     31 |   let new_us = List.map union1_from_michelson ums in
-    :
-    Warning: unused variable "us".
-    Hint: replace it by "_us" to prevent this warning.
-
-    231 bytes |}] ;
-
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
 
@@ -1167,8 +1155,8 @@ let%expect_test _ =
       3 | type binding is nat * nat
       4 | type storage is map (binding)
       5 |
-     Wrong number of arguments for type constant: map expected: 2
-    got: 1 |}]
+
+    Type map takes the wrong number of arguments, expected: 2 got: 1 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
@@ -1664,10 +1652,9 @@ File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, ch
   8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
   9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
 
-Invalid entrypoint "Toto".
-One of the following patterns is expected:
-  * "%bar" is expected for entrypoint "Bar"
-  * "%default" when no entrypoint is used. |}];
+Invalid entrypoint "Toto". One of the following patterns is expected:
+* "%bar" is expected for entrypoint "Bar"
+* "%default" when no entrypoint is used. |}];
 
   run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
   [%expect {|
@@ -1715,9 +1702,9 @@ const main : (int , storage) -> (list (operation) , storage) =
   storage) return let x : (int , int) =
                     let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
                   (list[] : list (operation) , x)
-const f0 = lambda (a : string) return true(unit)
-const f1 = lambda (a : string) return true(unit)
-const f2 = lambda (a : string) return true(unit)
+const f0 = lambda (a : string) return TRUE()
+const f1 = lambda (a : string) return TRUE()
+const f2 = lambda (a : string) return TRUE()
 const letin_nesting =
   lambda (#1 : unit) return let s = "test" in
                             let p0 = (f0)@(s) in { ASSERTION(p0);
@@ -1737,9 +1724,9 @@ const main = lambda (n : (int , storage)) : (list (operation) ,
   storage) return let x : (int , int) =
                     let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
                   (list[] : list (operation) , x)
-const f0 = lambda (a : string) return true(unit)
-const f1 = lambda (a : string) return true(unit)
-const f2 = lambda (a : string) return true(unit)
+const f0 = lambda (a : string) return TRUE()
+const f1 = lambda (a : string) return TRUE()
+const f2 = lambda (a : string) return TRUE()
 const letin_nesting =
   lambda (#1 : unit) return let s = "test" in
                             let p0 = (f0)@(s) in { ASSERTION(p0);
@@ -1754,10 +1741,12 @@ const x =  match (+1 , (+2 , +3)) with
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
   [%expect {|
-    File "../../test/contracts/existential.mligo", line 1, characters 8-9:
+    File "../../test/contracts/existential.mligo", line 2, characters 21-22:
       1 | let a : 'a = 2
       2 | let b : _ ->'b = fun _ -> 2
-    Unexpected character '\''. |}];
+      3 | let c : 'a -> 'a = fun x -> 2
+
+    Missing a type annotation for argument "_". |}];
   run_ligo_bad ["print-ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
   [%expect {|
     File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 2, characters 6-7:
@@ -1920,8 +1909,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-expression" ; "--init-file" ; contract "warning_layout.mligo" ; "cameligo" ; "B 42n" ] ;
   [%expect {|
-    File "../../test/contracts/warning_layout.mligo", line 2, character 2 to line 6, character 13:
-      1 | type parameter_warns =
+    File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
       2 |   [@layout:comb]
       3 |     B of nat
       4 |   | C of int
@@ -2019,10 +2007,9 @@ let%expect_test _ =
       3 |            "foo"
       4 |            ("tz1fakefakefakefakefakefakefakcphLA5" : address) : unit contract option) in
 
-    Invalid entrypoint "foo".
-    One of the following patterns is expected:
-      * "%bar" is expected for entrypoint "Bar"
-      * "%default" when no entrypoint is used. |}]
+    Invalid entrypoint "foo". One of the following patterns is expected:
+    * "%bar" is expected for entrypoint "Bar"
+    * "%default" when no entrypoint is used. |}]
 
 (* using test in compilation *)
 let%expect_test _ =

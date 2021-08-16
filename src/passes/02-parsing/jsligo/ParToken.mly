@@ -13,10 +13,10 @@ module Token = Lexing_jsligo.Token
 %token                  <string Region.reg> Verbatim "<verbatim>"
 %token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
 %token          <(string * Z.t) Region.reg> Int      "<int>"
-// %token          <(string * Z.t) Region.reg> Nat      "<nat>"
-// %token          <(string * Z.t) Region.reg> Mutez    "<mutez>"
+(* %token          <(string * Z.t) Region.reg> Nat      "<nat>"*)
+(* %token          <(string * Z.t) Region.reg> Mutez    "<mutez>"*)
 %token                  <string Region.reg> Ident    "<ident>"
-%token                  <string Region.reg> Uident   "<uident>"
+%token                  <string Region.reg> UIdent   "<uident>"
 %token                  <string Region.reg> Attr     "[@attr]"
 // %token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
 
@@ -27,8 +27,8 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> SLASH   "/"
 %token <Region.t> TIMES   "*"
 %token <Region.t> REM     "%"
-// %token <Region.t> PLUS2   "++"
-// %token <Region.t> MINUS2  "--"
+(* %token <Region.t> PLUS2   "++"*)
+(* %token <Region.t> MINUS2  "--"*)
 
 %token <Region.t> LPAR     "("
 %token <Region.t> RPAR     ")"
@@ -73,21 +73,20 @@ module Token = Lexing_jsligo.Token
 // %token <Region.t> OR_EQ    "|="
 // %token <Region.t> XOR_EQ   "^="
 
-
 %token <Region.t> VBAR   "|"
 %token <Region.t> ARROW  "=>"
 %token <Region.t> WILD   "_"
 
+
 (* JavaScript Keywords *)
 
-// %token <Region.t> Break    "break"
+(* %token <Region.t> Break    "break"*)
 %token <Region.t> Case     "case"
-// %token <Region.t> Class    "class"
+(* %token <Region.t> Class    "class"*)
 %token <Region.t> Const    "const"
 %token <Region.t> Default  "default"
 %token <Region.t> Else     "else"
 %token <Region.t> Export   "export"
-%token <Region.t> False    "false"
 %token <Region.t> For      "for"
 %token <Region.t> If       "if"
 %token <Region.t> Import   "import"
@@ -96,11 +95,10 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> Of       "of"
 %token <Region.t> Return   "return"
 %token <Region.t> Switch   "switch"
-// %token <Region.t> This     "this"
-%token <Region.t> True     "true"
-// %token <Region.t> Void     "void"
+(* %token <Region.t> This     "this"*)
+(* %token <Region.t> Void     "void"*)
 %token <Region.t> While    "while"
-// %token <Region.t> With     "with"
+(* %token <Region.t> With     "with"*)
 
 
 (* TypeScript keywords *)
@@ -109,12 +107,11 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> Namespace   "namespace"
 %token <Region.t> Type        "type"
 
-(* Data constructors *)
-
-%token <Region.t> C_None "None"
-%token <Region.t> C_Some "Some"
-
 (* Virtual tokens *)
+
+%token <Region.t> ZWSP
+
+(* End of File *)
 
 %token <Region.t> EOF
 

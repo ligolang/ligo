@@ -8,7 +8,6 @@ $HOME/git/OCaml-build/Makefile
 ./Stubs/Lexing_shared.ml
 ./Stubs/Parsing_reasonligo.ml
 ./Stubs/Parsing_shared.ml
-./Stubs/Cst.ml
 ./Stubs/Cst_reasonligo.ml
 
 $HOME/git/ligo/src/stages/1-cst/reasonligo/CST.ml
@@ -17,7 +16,7 @@ $HOME/git/ligo/src/stages/1-cst/reasonligo/Printer.ml
 $HOME/git/ligo/src/passes/00-preprocessing/reasonligo/Comments.ml
 $HOME/git/ligo/src/passes/00-preprocessing/reasonligo/File.ml
 $HOME/git/ligo/src/passes/01-lexing/reasonligo/Self_tokens.ml
-$HOME/git/ligo/src/passes/01-lexing/reasonligo/Token.mll
+$HOME/git/ligo/src/passes/01-lexing/reasonligo/Token.ml
 $HOME/git/ligo/src/passes/01-lexing/reasonligo/Style.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/LexerMainGen.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/Lexer.mll

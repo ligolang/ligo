@@ -6,7 +6,7 @@ module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module CST    = Cst.Pascaligo
+module CST    = Cst_pascaligo.CST
 module Errors = Parsing_shared.Errors
 
 (* Parsing *)
