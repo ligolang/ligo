@@ -1217,7 +1217,7 @@ This contract keeps an integer as storage, and has three entry-points:
 one for incrementing the storage, one for decrementing the storage,
 and one for resetting the storage to `0`.
 
-As a simple property, we check whether starting with an storage of
+As a simple property, we check whether starting with a storage of
 `10`, if we execute the entry-point for incrementing `32`, then we get
 a resulting storage of `42`. For checking it, we can interpret the
 `main` function:

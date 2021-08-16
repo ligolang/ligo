@@ -191,9 +191,9 @@ xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
-You have to understand that `p` has not been changed by the functional
-update: a nameless new version of it has been created and returned by
-the block-less function.
+> You have to understand that `p` has not been changed by the functional
+> update: a nameless new version of it has been created and returned by
+> the block-less function.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -241,6 +241,20 @@ let xy_translate = ((p, vec) : (point, vector)) : point =>
   {...p, x : p.x + vec.dx, y : p.y + vec.dy};
 ```
 
+You can call the function `xy_translate` defined above by running the
+following command of the shell:
+
+```shell
+ligo evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_update.religo
+xy_translate "({x:2,y:3,z:1}, {dx:3,dy:4})"
+# Outputs: {z = 1 , y = 7 , x = 5}
+```
+
+> You have to understand that `p` has not been changed by the
+> functional update: a nameless new version of it has been created and
+> returned.
+
 </Syntax>
 <Syntax syntax="jsligo">
 
@@ -256,21 +270,21 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
-</Syntax>
-
-
 You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
 ligo evaluate-call
-gitlab-pages/docs/language-basics/src/maps-records/record_update.religo
+gitlab-pages/docs/language-basics/src/maps-records/record_update.jsligo
 xy_translate "({x:2,y:3,z:1}, {dx:3,dy:4})"
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
-You have to understand that `p` has not been changed by the functional
-update: a nameless new version of it has been created and returned.
+> You have to understand that `p` has not been changed by the
+> functional update: a nameless new version of it has been created and
+> returned.
+
+</Syntax>
 
 #### Nested updates
 
