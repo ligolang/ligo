@@ -242,3 +242,7 @@ let evaluate_expression ~raise ?options exp exp_type =
   match etv with
     | Success (_, value) -> value
     | Fail res -> raise.raise @@ Errors.main_failwith res
+
+let clean_expression exp =
+  let open Tezos_micheline.Micheline in
+  inject_locations (fun v -> v) (strip_locations exp)
