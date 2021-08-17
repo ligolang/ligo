@@ -27,9 +27,9 @@ module RIO
   , registerFileWatcher
   ) where
 
-{- TODO: break this module into file loading, diagnostics, haskell-lsp wrappers
-         and other parts when it grows too big.
--}
+-- TODO: break this module into file loading, diagnostics, lsp wrappers and
+-- other parts when it grows too big.
+-- FIXME [LIGO-252]: Refactor ASTMap and RIO to deal with files that don't exist.
 
 import Prelude hiding (log)
 
