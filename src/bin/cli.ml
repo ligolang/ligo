@@ -129,6 +129,13 @@ let disable_michelson_typechecking =
     info ~doc ["disable-michelson-typechecking"] in
   value @@ flag info
 
+let without_run =
+  let open Arg in
+  let info =
+    let doc = "disable running of compiled expression." in
+    info ~doc ["without-run"] in
+  value @@ flag info
+
 let with_types =
   let open Arg in
   let info =
@@ -226,7 +233,7 @@ let generator =
 module Api = Ligo_api
 let compile_file =
   let f source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format output_file warn werror =
-    return_result ~warn ?output_file @@ 
+    return_result ~warn ?output_file @@
     Api.Compile.contract ~werror source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format in
   let term = Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ infer $ protocol_version $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file $ warn $ werror) in
   let cmdname = "compile-contract" in
@@ -508,12 +515,12 @@ let evaluate_expr ~cmdname_deprecation =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_expression =
-  let f expression syntax infer protocol_version init_file display_format michelson_format warn werror =
+  let f expression syntax infer protocol_version init_file display_format without_run michelson_format warn werror =
     return_result ~warn @@
-    Api.Compile.expression expression syntax infer protocol_version init_file display_format michelson_format werror
+    Api.Compile.expression expression syntax infer protocol_version init_file display_format without_run michelson_format werror
     in
   let term =
-    Term.(const f $ expression "" 1 $ req_syntax 0 $ infer $ protocol_version $ init_file $ display_format $ michelson_code_format $ warn $ werror) in
+    Term.(const f $ expression "" 1 $ req_syntax 0 $ infer $ protocol_version $ init_file $ display_format $ without_run $ michelson_code_format $ warn $ werror) in
   let cmdname = "compile-expression" in
   let doc = "Subcommand: Compile to a Michelson value." in
   let man = [`S Manpage.s_description;

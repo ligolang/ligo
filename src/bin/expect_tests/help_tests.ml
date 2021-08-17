@@ -842,4 +842,7 @@ let%expect_test _ =
 
            --werror=BOOL (absent=false)
                BOOL indicates whether warning messages should be treated as
-               errors or not |} ] ;
+               errors or not
+
+           --without-run
+               disable running of compiled expression. |} ] ;
