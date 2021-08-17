@@ -67,9 +67,9 @@ let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contra
   | _ -> (true,dat,e)
 
 let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = fun main_name prg ->
-  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@ Helpers.get_fv expr in
-  let get_fmv_expr expr = Helpers.get_fmv_expr expr in
-  let get_fmv_mod module' = Helpers.get_fmv_mod module' in
+  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@ Helpers.Free_variables.expression expr in
+  let get_fmv_expr expr = Helpers.Free_module_variables.expression expr in
+  let get_fmv_mod module' = Helpers.Free_module_variables.module' module' in
   let Module_Fully_Typed module' = prg in
   let aux = function
       {Location.wrap_content = Declaration_constant {name = Some name;  _}; _} -> not (String.equal name main_name)
