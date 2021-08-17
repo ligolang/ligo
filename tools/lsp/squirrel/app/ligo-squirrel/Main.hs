@@ -5,7 +5,6 @@ module Main (main) where
 import Prelude hiding (log)
 
 import Algebra.Graph.AdjacencyMap qualified as G (empty)
-import Control.Concurrent.MVar
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
@@ -22,6 +21,8 @@ import Data.Text qualified as T
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+
+import UnliftIO.MVar
 
 import AST
 import ASTMap qualified
@@ -147,9 +148,9 @@ handleDidOpenTextDocument notif = do
   let ver = notif^.J.params.J.textDocument.J.version
 
   openDocsVar <- asks getElem
-  openDocs <- liftIO $ takeMVar openDocsVar
-  RIO.collectErrors RIO.forceFetch uri (Just ver)
-  liftIO $ putMVar openDocsVar $ HashMap.insert uri ver openDocs
+  modifyMVar_ openDocsVar \openDocs -> do
+    RIO.collectErrors RIO.forceFetch uri (Just ver)
+    pure $ HashMap.insert uri ver openDocs
 
 -- FIXME: Suppose the following scenario:
 -- * VSCode has `squirrel/test/contracts/` open as folder;
@@ -175,10 +176,10 @@ handleDidChangeTextDocument notif = do
   -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
   -- conditions.
   openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
-  openDocs <- liftIO $ takeMVar openDocsVar
-  RIO.clearDiagnostics nuris
-  RIO.collectErrors (const (pure doc)) uri ver
-  liftIO $ putMVar openDocsVar openDocs
+  modifyMVar_ openDocsVar \openDocs -> do
+    RIO.clearDiagnostics nuris
+    RIO.collectErrors (const (pure doc)) uri ver
+    pure openDocs
 
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
@@ -187,13 +188,13 @@ handleDidCloseTextDocument notif = do
   RIO.Contract _ nuris <- ASTMap.fetchCached uri tmap
 
   openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
-  openDocs <- liftIO $ takeMVar openDocsVar
-  let openDocs' = HashMap.delete uri openDocs
-  -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
-  let nuriMap = HashMap.fromList ((, ()) <$> nuris)
-  when (HashMap.null $ HashMap.intersection openDocs' nuriMap) $
-    RIO.clearDiagnostics nuris
-  liftIO $ putMVar openDocsVar openDocs'
+  modifyMVar_ openDocsVar \openDocs -> do
+    let openDocs' = HashMap.delete uri openDocs
+    -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
+    let nuriMap = HashMap.fromList ((, ()) <$> nuris)
+    when (HashMap.null $ HashMap.intersection openDocs' nuriMap) $
+      RIO.clearDiagnostics nuris
+    pure openDocs'
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
 handleDefinitionRequest req respond = do

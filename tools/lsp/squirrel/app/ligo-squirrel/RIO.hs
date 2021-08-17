@@ -289,9 +289,7 @@ load
   -> RIO Contract
 load uri = J.getRootPath >>= \case
   Nothing -> Contract <$> loadDefault <*> pure [uri]
-  Just root -> do
-    imap <- asks $ getTag @"includes"
-    includes <- takeMVar imap
+  Just root -> asks (getTag @"includes") >>= flip modifyMVar \includes -> do
     tmap <- asks getElem
 
     rootContract <- loadWithoutScopes uri
@@ -334,9 +332,8 @@ load uri = J.getRootPath >>= \case
     forM_ contracts \(contract, nuri) ->
       ASTMap.insert nuri (Contract contract nuris) tmap
 
-    putMVar imap rawGraph
+    pure (rawGraph, Contract result nuris)
 
-    pure (Contract result nuris)
   where
     sourceToUri = normalizeFilePath . srcPath
     normalizeFilePath = J.toNormalizedUri . J.filePathToUri
