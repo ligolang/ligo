@@ -262,7 +262,7 @@ let rec val_to_ast ~raise ~loc ?(toplevel = true) : Ligo_interpreter.Types.value
 
 and make_ast_func ~raise ?(toplevel = true) ?name env arg body orig =
   let open Ast_typed in
-  let fv = Self_ast_typed.Helpers.get_fv body in
+  let fv = Self_ast_typed.Helpers.Free_variables.expression body in
   let env = make_subst_ast_env_exp ~raise ~toplevel env fv in
   let env = List.rev env in
   let typed_exp' = add_ast_env ?name:name env arg body in
@@ -344,7 +344,7 @@ and make_subst_ast_env_exp ~raise ?(toplevel = true) env fv =
   let op (evl, v : _ * Ligo_interpreter.Types.value_expr) (l,fv) =
     let loc = Location.get_location evl in
     let ev = Location.unwrap evl in
-    if not (List.mem fv evl ~equal:Self_ast_typed.Helpers.eq_vars)
+    if not (List.mem fv evl ~equal:(Location.equal_content ~equal:Var.equal))
        || List.mem (List.map ~f:fst l) (Var.to_name ev) ~equal:String.equal then
       (l, fv)
     else
@@ -352,7 +352,7 @@ and make_subst_ast_env_exp ~raise ?(toplevel = true) env fv =
       | { ast_type = Some ty } ->
          let expr = val_to_ast ~raise ~toplevel:false ~loc v.eval_term ty in
          let l = (Var.to_name ev, (expr,ty, None)) :: l in
-         let fv' = Self_ast_typed.Helpers.get_fv expr in
+         let fv' = Self_ast_typed.Helpers.Free_variables.expression expr in
          (l, fv @ fv')
       | _ ->
          (l, fv) in

@@ -245,7 +245,7 @@ module Command = struct
       ((contract,size), ctxt)
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
-      let fv = Self_ast_typed.Helpers.get_fv f.orig_lambda in
+      let fv = Self_ast_typed.Helpers.Free_variables.expression f.orig_lambda in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true f.env fv in
       let in_ty, out_ty = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@ Ast_typed.get_t_function f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
@@ -266,7 +266,7 @@ module Command = struct
     | Compile_contract (loc, v, _ty_expr) ->
        let compiled_expr, compiled_expr_ty = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env } ->
-            let fv = Self_ast_typed.Helpers.get_fv orig_lambda in
+            let fv = Self_ast_typed.Helpers.Free_variables.expression orig_lambda in
             let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true env fv in
             let in_ty, out_ty =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@

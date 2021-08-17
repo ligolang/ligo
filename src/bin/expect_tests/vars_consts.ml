@@ -229,6 +229,20 @@ let%expect_test _ =
       3 |     var (x, y) := (4, 5);
       4 |     function add(const _u : unit) is (x + y); |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "print-ast-core" ; (bad_test "capture_assign.ligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative/vars_consts/capture_assign.ligo", line 5, characters 4-10:
+      4 |     const y = 0;
+      5 |     x := 6;
+      6 |   } with unit;
+
+    Invalid capture of non-constant variable "x", declared at
+    File "../../test/contracts/negative/vars_consts/capture_assign.ligo", line 2, characters 6-7:
+      1 | function foo(const _ : unit) is block {
+      2 |   var x := 42;
+      3 |   function bar(const _ : unit) is block { |}]
+
 (* Positives *)
 
 let%expect_test _ =
@@ -344,3 +358,4 @@ let%expect_test _ =
                                                                  rec (add:unit -> int => lambda (_ : unit) : int return C_POLYMORPHIC_ADD(x ,
                                                                y) ) in
                                                                (add)@(unit) ) |}]
+

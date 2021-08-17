@@ -5,7 +5,7 @@ open Trace
 
 let get_of m l =
   List.filter_map ~f:(fun v ->
-      match List.find ~f:(fun d -> compare_vars v d = 0) l with
+      match List.find ~f:(equal_vars v) l with
       | Some d -> Some (d.location, v)
       | None -> None) m
 
@@ -23,7 +23,7 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
                  (fun (vars : expression_variable list) expr ->
                    match expr.expression_content with
                    | E_lambda {binder={var;attributes}} ->
-                      let fv_expr = get_fv expr in
+                      let fv_expr = Free_variables.expression expr in
                       let fv_expr = get_of fv_expr vars in
                       if not (List.is_empty fv_expr) then
                         raise.raise @@ vars_captured fv_expr
@@ -46,8 +46,8 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
                       let _ = self ~vars matchee in
                       let _ = List.map ~f:f cases in
                       (false, vars, expr)
-                   | E_recursive {fun_name;lambda={binder={var;attributes}}} ->
-                      let fv_expr = get_fv ~exclude:[fun_name] expr in
+                   | E_recursive {lambda={binder={var;attributes}}} ->
+                      let fv_expr = Free_variables.expression expr in
                       let fv_expr = get_of fv_expr vars in
                       if not (List.is_empty fv_expr) then
                         raise.raise @@ vars_captured fv_expr
