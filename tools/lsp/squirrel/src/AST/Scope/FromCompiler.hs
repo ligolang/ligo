@@ -51,13 +51,13 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
     normalizeRange :: Range -> Range
     normalizeRange = rFile %~ removeDots
 
-    -- LIGO compiler provides nor comment neither refs, so they left [].
-    --
+    -- LIGO compiler provides no comments, so they left [].
     fromLigoDecl :: LigoDefinitionScope -> (DeclRef, ScopedDecl)
-    fromLigoDecl (LigoDefinitionScope n orig bodyR ty _) = do
+    fromLigoDecl (LigoDefinitionScope n orig bodyR ty refs) = do
       let r = normalizeRange $ fromLigoRangeOrDef orig
+      let rs = normalizeRange . fromLigoRangeOrDef <$> refs
       ( DeclRef n r
-       , ScopedDecl n r [] [] dialect (ValueSpec vspec) -- TODO LIGO-90
+       , ScopedDecl n r (r : rs) [] dialect (ValueSpec vspec)
        )
       where
         _vdsInitRange = mbFromLigoRange bodyR

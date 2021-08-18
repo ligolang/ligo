@@ -133,9 +133,13 @@ data LigoDefinitionScope = LigoDefinitionScope
     -- | The type itself
     -- `"t"`
   , _ldsT :: Maybe LigoTypeFull
-    -- | `Value` for now since they are always `null` by now
+    -- | We parse it in chunks of 2, each odd element of the array is a name for
+    -- the corresponding element which is `LigoRangeInner`.
+    -- ```
+    -- { "references": [ ["<scope>", LigoRangeInner] ] }
+    -- ```
     -- `"references"`
-  , _ldsReferences :: Value
+  , _ldsReferences :: [LigoRange]
   }
   deriving stock (Generic, Show)
 
@@ -336,7 +340,7 @@ instance FromJSON LigoDefinitionScope where
     _ldsRange <- parseLigoRange "scope_range" =<< o .: "range"
     _ldsBodyRange <- parseLigoRange "scope_body_range" =<< o .: "body_range"
     _ldsT <- o .:? "t"
-    _ldsReferences <- o .: "references"
+    _ldsReferences <- traverse (parseLigoRangeArray "scope_references_ranges") =<< o .: "references"
     return $ LigoDefinitionScope {..}
 
 instance ToJSON LigoDefinitionScope where
