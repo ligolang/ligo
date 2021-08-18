@@ -15,6 +15,7 @@ module RIO
   , clearDiagnostics
 
   , Contract (..)
+  , delete
   , preload
   , load
   , collectErrors
@@ -22,11 +23,13 @@ module RIO
   , fetch
   , forceFetch'
   , fetch'
+
+  , registerFileWatcher
   ) where
 
-{- TODO: break this module into file loading, diagnostics, haskell-lsp wrappers
-         and other parts when it grows too big.
--}
+-- TODO: break this module into file loading, diagnostics, lsp wrappers and
+-- other parts when it grows too big.
+-- FIXME [LIGO-252]: Refactor ASTMap and RIO to deal with files that don't exist.
 
 import Prelude hiding (log)
 
@@ -60,7 +63,7 @@ import UnliftIO.MVar
 
 import Witherable (wither)
 
-import Duplo.Tree (collect)
+import Duplo.Tree (collect, make)
 
 import AST hiding (cTree, find)
 import ASTMap (ASTMap)
@@ -68,7 +71,9 @@ import ASTMap qualified
 import Cli
 import Config (Config (..), getConfigFromNotification)
 import Duplo.Lattice (Lattice (leq))
+import Extension (extGlobs)
 import Log qualified
+import Parser (emptyParsedInfo)
 import Product
 import Range
 import Util.Graph (wcc)
@@ -187,10 +192,27 @@ registerDidChangeConfiguration = do
 
   void $ J.sendRequest J.SClientRegisterCapability params (const $ pure ())
 
+registerFileWatcher :: RIO ()
+registerFileWatcher = do
+  let
+    watcher extGlob = J.FileSystemWatcher
+      { J._globPattern = extGlob
+      , J._kind = Just J.WatchKind
+        { J._watchChange = True
+        , J._watchCreate = True
+        , J._watchDelete = True
+        }
+      }
+    regOpts = J.DidChangeWatchedFilesRegistrationOptions $ J.List $ map watcher extGlobs
+    reg = J.Registration "ligoFileWatcher" J.SWorkspaceDidChangeWatchedFiles regOpts
+    regParams = J.RegistrationParams $ J.List [J.SomeRegistration reg]
+
+  void $ J.sendRequest J.SClientRegisterCapability regParams (const $ pure ())
+
 source :: Maybe J.DiagnosticSource
 source = Just "ligo-lsp"
 
-run :: (J.LanguageContextEnv Config.Config, RioEnv) -> RIO a -> IO a
+run :: (J.LanguageContextEnv Config, RioEnv) -> RIO a -> IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
 fetch, forceFetch :: J.NormalizedUri -> RIO ContractInfo'
@@ -210,6 +232,30 @@ diagnostic ver = traverse_ \(nuri, diags) -> do
   maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
   Log.debug "LOOP.DIAG" [i|Diags #{diags'}|]
   J.publishDiagnostics maxDiagnostics nuri ver diags'
+
+delete :: J.NormalizedUri -> RIO ()
+delete uri = do
+  imap <- asks $ getTag @"includes"
+  let fpM = J.uriToFilePath $ J.fromNormalizedUri uri
+  case fpM of
+    Nothing -> pure ()
+    Just fp -> do
+      let
+        -- Dummy
+        c = FindContract
+          (Path fp)
+          (SomeLIGO Caml $ make (emptyParsedInfo, Error "Impossible" []))
+          []
+      modifyMVar_ imap $ pure . G.removeVertex c
+
+  tmap <- asks $ getElem @(ASTMap J.NormalizedUri Contract RIO)
+  deleted <- ASTMap.delete uri tmap
+
+  -- Invalidate contracts that are in the same group as the deleted one, as
+  -- references might have changed.
+  forM_ deleted \(Contract _ deps) ->
+    forM_ deps
+      (`ASTMap.invalidate` tmap)
 
 preload
   :: J.NormalizedUri
@@ -243,9 +289,7 @@ load
   -> RIO Contract
 load uri = J.getRootPath >>= \case
   Nothing -> Contract <$> loadDefault <*> pure [uri]
-  Just root -> do
-    imap <- asks $ getTag @"includes"
-    includes <- takeMVar imap
+  Just root -> asks (getTag @"includes") >>= flip modifyMVar \includes -> do
     tmap <- asks getElem
 
     rootContract <- loadWithoutScopes uri
@@ -275,12 +319,10 @@ load uri = J.getRootPath >>= \case
             $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
         pure $ G.overlays (newGroup : groups')
 
-    fullGraph <- addScopes @Standard rawGraph
     (graph, result) <- case J.uriToFilePath $ J.fromNormalizedUri uri of
-      Nothing -> (fullGraph, ) <$> loadDefault
+      Nothing -> (,) <$> addScopes @Standard rawGraph <*> loadDefault
       Just fp -> case find (isJust . lookupContract fp) (wcc rawGraph) of
-        Nothing ->
-          (fullGraph, ) <$> loadDefault
+        Nothing -> (,) <$> addScopes @Standard rawGraph <*> loadDefault
         Just graph' -> do
           scoped <- addScopes @Standard graph'
           (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
@@ -290,9 +332,8 @@ load uri = J.getRootPath >>= \case
     forM_ contracts \(contract, nuri) ->
       ASTMap.insert nuri (Contract contract nuris) tmap
 
-    putMVar imap rawGraph
+    pure (rawGraph, Contract result nuris)
 
-    pure (Contract result nuris)
   where
     sourceToUri = normalizeFilePath . srcPath
     normalizeFilePath = J.toNormalizedUri . J.filePathToUri

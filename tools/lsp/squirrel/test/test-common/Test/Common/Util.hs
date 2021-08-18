@@ -29,6 +29,8 @@ import System.IO.Error (isDoesNotExistError)
 import AST.Parser (Source (Path), insertPreprocessorRanges, parsePreprocessed, parseWithScopes)
 import AST.Scope.Common (HasScopeForest, Info', contractTree, _cMsgs, _cTree, _getContract)
 import AST.Skeleton (SomeLIGO)
+
+import Extension (supportedExtensions)
 import Parser (ParsedInfo, Msg)
 
 contractsDir :: FilePath
@@ -74,6 +76,3 @@ readContractWithScopes filepath
 
 runHandlersTest :: FilePath -> Session a -> IO a
 runHandlersTest = runSession "ligo-squirrel" fullCaps
-
-supportedExtensions :: [FilePath]
-supportedExtensions = [".ligo", ".mligo", ".religo"]
