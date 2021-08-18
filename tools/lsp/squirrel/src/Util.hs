@@ -19,7 +19,8 @@ import Data.Foldable (foldlM)
 import Data.Map.Internal qualified as MI
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Language.LSP.Types qualified as J
-import System.FilePath (joinPath, splitDirectories)
+import System.Directory (canonicalizePath)
+import System.IO.Unsafe (unsafePerformIO)
 import UnliftIO.Async qualified as Async
 import UnliftIO.Concurrent qualified as Concurrent
 import Witherable (ordNub)
@@ -72,14 +73,8 @@ findKey f x (MI.Bin _ k v l r) = case compare x (f k) of
   GT -> findKey f x r
 
 removeDots :: FilePath -> FilePath
-removeDots = joinPath . fst . foldr removeDir ([], 0) . splitDirectories
-  where
-    removeDir :: FilePath -> ([FilePath], Int) -> ([FilePath], Int)
-    removeDir name (acc, n)
-      | name == "."  = (       acc, n)
-      | name == ".." = (       acc, n + 1)
-      | n > 0        = (       acc, n - 1)
-      | otherwise    = (name : acc, 0)
+{-# NOINLINE removeDots #-}
+removeDots = unsafePerformIO . canonicalizePath
 
 -- | Divides the list into chunks of equally sized bins. The numeric parameter
 -- defines the size of each bin.
