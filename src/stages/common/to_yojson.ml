@@ -158,6 +158,7 @@ let constant' = function
   | C_TEST_MUTATE_VALUE        -> `List [`String "TEST_MUTATE_VALUE"; `Null]
   | C_TEST_MUTATION_TEST       -> `List [`String "TEST_MUTATION_TEST"; `Null]
   | C_TEST_MUTATION_TEST_ALL   -> `List [`String "TEST_MUTATION_TEST_ALL"; `Null]
+  | C_TEST_SAVE_MUTATION       -> `List [`String "TEST_SAVE_MUTATION"; `Null]
   | C_TEST_RUN                 -> `List [`String "TEST_RUN"; `Null ]
   | C_TEST_EVAL                -> `List [`String "TEST_EVAL"; `Null ]
   | C_TEST_COMPILE_CONTRACT    -> `List [`String "TEST_COMPILE_CONTRACT"; `Null ]

@@ -10,6 +10,7 @@
     ligo.fuzz.jsligo
     main_errors
     ligo_compile
+    ligo.decompile
     simple-utils
     compiler_options
     qcheck

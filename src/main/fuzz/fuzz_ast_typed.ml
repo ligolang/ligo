@@ -1,6 +1,85 @@
 open Ast_typed
 include Fuzz_shared.Monad
 
+type mutation = Location.t * expression
+
+let get_mutation_id (loc, expr) =
+  let s = Format.asprintf  "%a%a" Location.pp loc Ast_typed.PP.expression expr in
+  let hash = Tezos_crypto.Base58.raw_encode @@ Bytes.to_string @@ Tezos_crypto.Hacl.Hash.Keccak_256.digest (Bytes.of_string s) in
+  String.sub hash 0 8
+
+let add_line : Buffer.t -> string -> unit = fun buffer s ->
+  Buffer.add_string buffer (Format.asprintf "%s\n" s)
+
+let consume_lines : in_channel -> int -> string =
+  fun in_chan stop ->
+  let rec loop_lines curr line =
+    if curr >= stop then
+      line
+    else
+      let curr = curr + 1 in
+      let line = input_line in_chan in
+      loop_lines curr line in
+  loop_lines 0 ""
+
+let add_lines_to_buffer : in_channel -> int -> Buffer.t -> unit =
+  fun in_chan stop buffer ->
+  let rec loop_lines curr =
+    if curr >= stop then
+      ()
+    else
+      let curr = curr + 1 in
+      let line = input_line in_chan in
+      let () = add_line buffer line in
+      loop_lines curr in
+  loop_lines 0
+
+let add_all_lines_to_buffer : in_channel -> Buffer.t -> unit =
+  fun in_chan buffer ->
+  let rec loop_lines () =
+    try (let line = input_line in_chan in
+         let () = add_line buffer line in
+         loop_lines ()) with
+    | _ -> () in
+  loop_lines ()
+
+let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
+  match Location.get_file loc with
+  | Some r ->
+     (* Open file *)
+     let file = r # file in
+     let ic = open_in_bin file in
+     (* Decompile expression *)
+     let n_syntax     = Trace.to_stdlib_result (Decompile.Helpers.syntax_to_variant (Syntax_name "auto") (Some file)) in
+     let n_syntax     = match n_syntax with
+       | Ok r -> r
+       | Error _ -> failwith "Cannot detect syntax" in
+     let core         = Decompile.Of_typed.decompile_expression _expr in
+     let sugar        = Decompile.Of_core.decompile_expression core in
+     let imperative   = Decompile.Of_sugar.decompile_expression sugar in
+     let buffer       = Decompile.Of_imperative.decompile_expression imperative n_syntax in
+     (* Create buffer *)
+     let output_buffer = Buffer.create 0 in
+     (* Read first lines *)
+     let () = add_lines_to_buffer ic (r # start # line - 1) output_buffer in
+     let s = if (r # start # line = r # stop # line) then
+               let line = input_line ic in
+               let prefix = String.sub line 0 (r # start # offset `Byte) in
+               let postfix = String.sub line (r # stop # offset `Byte) (String.length line - r # stop # offset `Byte) in
+               prefix ^ Buffer.contents buffer ^ postfix
+             else
+               let line = input_line ic in
+               let prefix = String.sub line 0 (r # start # offset `Byte) in
+               let line = consume_lines ic (r # stop # line - r # start # line) in
+               let postfix = String.sub line (r # stop # offset `Byte) (String.length line - r # stop # offset `Byte) in
+               prefix ^ Buffer.contents buffer ^ postfix in
+     let () = add_line output_buffer s in
+     (* Read rest of lines *)
+     let () = add_all_lines_to_buffer ic output_buffer in
+     output_buffer
+  | None ->
+     failwith "Error when constructing buffer from mutation: file location was expected"
+
 (* Helpers for changing operators *)
 let map_constant cons_name arguments final_type_expression =
   let possible_const =
@@ -67,9 +146,6 @@ let transform_string =
   [String.capitalize_ascii; String.uncapitalize_ascii; String.lowercase_ascii; String.uppercase_ascii; constn; double]
 
 module Mutator = struct
-
-  type mutation = Location.t * expression
-
   let combine : 'a -> ('a * mutation option) list -> 'b -> ('b * mutation option) list -> ('a * 'b * mutation option) list =
     fun a al b bl ->
     List.map ~f:(fun (b, m) -> (a, b, m)) bl @ List.map ~f:(fun (a, m) -> (a, b, m)) al

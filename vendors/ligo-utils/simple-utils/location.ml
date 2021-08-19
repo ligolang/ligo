@@ -107,3 +107,7 @@ let cover : t -> t -> t = fun a b ->
   | File _ , Virtual _ -> a
   | Virtual _ , _ -> b
   | File rega , File regb -> File (Region.cover rega regb)
+
+let get_file : t -> Region.t option = function
+  | File r -> Some r
+  | _ -> None

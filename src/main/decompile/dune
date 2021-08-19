@@ -20,7 +20,6 @@
     checking
     ast_typed
     self_ast_typed
-    interpreter
     spilling
     mini_c
     self_mini_c

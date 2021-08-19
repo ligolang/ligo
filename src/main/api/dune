@@ -6,6 +6,7 @@
   simple-utils 
   ligo
   build
+  interpreter
  )
 )
 
