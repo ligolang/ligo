@@ -453,7 +453,8 @@ let last_originations: unit => map (address , list(address))
 <SyntaxTitle syntax="jsligo">
 let last_originations = (_: unit) => map&lt;address , address list&gt;
 </SyntaxTitle>
-Returns the address of the nth bootstrapped account.
+Returns addresses of orginated accounts in the last transfer.
+It is given in the form of a map binding the address of the source of the origination operation to the addresses of newly originated accounts.
 
 <SyntaxTitle syntax="pascaligo">
 function compile_expression : option(string) -> ligo_program -> michelson_program
