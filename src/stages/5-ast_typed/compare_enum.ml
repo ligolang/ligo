@@ -176,6 +176,7 @@ let constant'_tag = function
   | C_TEST_NTH_BOOTSTRAP_CONTRACT -> 166
   | C_TEST_TO_TYPED_ADDRESS   -> 167
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> 168
+  | C_TEST_SAVE_MUTATION      -> 169
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

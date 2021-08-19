@@ -147,6 +147,9 @@ let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression ->
     | ( C_SIZE   , [ V_Ct (C_string s ) ] ) -> return_ct @@ C_nat (Z.of_int @@ String.length s)
     | ( C_SIZE   , [ V_Ct (C_bytes b  ) ] ) -> return_ct @@ C_nat (Z.of_int @@ Bytes.length b)
     | ( C_NOT    , [ V_Ct (C_bool a'  ) ] ) -> return_ct @@ C_bool (not a')
+    (* TODO-er: fix two complements: *)
+    | ( C_NOT    , [ V_Ct (C_int a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
+    | ( C_NOT    , [ V_Ct (C_nat a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_INT    , [ V_Ct (C_nat a')    ] ) -> return_ct @@ C_int a'
     | ( C_ABS    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_nat (Z.abs a')
     | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (Z.neg a')
@@ -437,7 +440,7 @@ let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression ->
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
       let value_ty = List.nth_exn types 1 in
-      let>> v = Mutate_some_value (loc,n,v, value_ty) in
+      let>> v = Mutate_some_value (loc,n,v,value_ty) in
       match v with
       | None ->
          return (v_none ())
@@ -468,7 +471,7 @@ let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression ->
       let* () = check_value v in
       let value_ty = List.nth_exn types 0 in
       let>> l = Mutate_all_value (loc,v,value_ty) in
-      let* r = bind_map_list (fun (e, m) ->
+      let* mutations = bind_map_list (fun (e, m) ->
         let* v = eval_ligo e calltrace env in
         let r =  match tester with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
@@ -481,8 +484,25 @@ let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression ->
              eval_ligo body (loc :: calltrace) f_env''
           | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
         Monad.try_or (let* v = r in return (Some (v, m))) (return None)) l in
-      let r = List.map ~f:(fun (v, m) -> V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])) @@ List.filter_opt r in
+      let r = List.map ~f:(fun (v, m) -> V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])) @@ List.filter_opt mutations in
       return (V_List r)
+    | ( C_TEST_SAVE_MUTATION , [(V_Ct (C_string dir)) ; (V_Mutation ((loc, _) as mutation)) ] ) ->
+      let* reg = monad_option (Errors.generic_error loc "Not a valid mutation") @@ Location.get_file loc in
+      let file_contents = Fuzz.Ast_typed.buffer_of_mutation mutation in
+      let id = Fuzz.Ast_typed.get_mutation_id mutation in
+      let file_path = reg # file in
+      (try
+        let odir = Sys.getcwd () in
+        let () = Sys.chdir dir in
+        let file_path = Filename.basename file_path in
+        let file_path = Filename.remove_extension file_path ^ "." ^ id ^ Filename.extension file_path in
+        let out_chan = open_out_bin file_path in
+        let () = Buffer.output_buffer out_chan file_contents in
+        let () = Sys.chdir odir in
+        return (v_some (v_string file_path))
+       with
+       | Sys_error _ ->
+          return (v_none ()))
     | ( C_TEST_TO_CONTRACT , [ addr ] ) ->
        let contract_ty = List.nth_exn types 0 in
        let>> code = To_contract (loc, addr, None, contract_ty) in

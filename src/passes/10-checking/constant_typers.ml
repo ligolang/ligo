@@ -981,6 +981,11 @@ let test_mutation_test_all ~raise loc = typer_2 ~raise loc "TEST_MUTATION_TEST_A
   let () = assert_eq_1 ~raise ~loc arg expr in
   (t_list (t_pair res (t_mutation ())))
 
+let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ fun dir mutation ->
+  let () = assert_eq_1 ~raise ~loc mutation (t_mutation ()) in
+  let () = assert_eq_1 ~raise ~loc dir (t_string ()) in
+  (t_option (t_string ()))
+
 let test_mutate_count ~raise loc = typer_1 ~raise loc "TEST_MUTATE_COUNT" @@ fun expr ->
   let () = assert_eq_1 ~raise ~loc expr (t_ligo_code ()) in
   (t_nat ())
@@ -1119,7 +1124,7 @@ let constant_typers ~raise loc c : typer = match c with
   | C_HASH_KEY            -> hash_key ~raise loc ;
   | C_CHECK_SIGNATURE     -> check_signature ~raise loc ;
   | C_CHAIN_ID            -> chain_id ~raise loc;
-    (*BLOCKCHAIN *)
+  (* BLOCKCHAIN *)
   | C_CONTRACT            -> get_contract ~raise loc ;
   | C_CONTRACT_OPT        -> get_contract_opt ~raise loc ;
   | C_CONTRACT_ENTRYPOINT -> get_entrypoint ~raise loc ;
@@ -1147,6 +1152,7 @@ let constant_typers ~raise loc c : typer = match c with
   | C_PAIRING_CHECK -> pairing_check ~raise loc ;
   | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
   | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
+  (* TEST *)
   | C_TEST_ORIGINATE -> test_originate ~raise loc ;
   | C_TEST_SET_NOW -> test_set_now ~raise loc ;
   | C_TEST_SET_SOURCE -> test_set_source ~raise loc ;
@@ -1181,6 +1187,7 @@ let constant_typers ~raise loc c : typer = match c with
   | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
   | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
   | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~raise loc ;
+  | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
