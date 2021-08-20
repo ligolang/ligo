@@ -128,9 +128,10 @@ let rec apply_comparison : Location.t -> calltrace -> Ast_typed.constant' -> val
        print_endline (Format.asprintf "%a" (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value) l);
        fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
+let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
+  let eval_ligo = eval_ligo ~raise in
   let types = List.map ~f:snd operands in
   let operands = List.map ~f:fst operands in
   let return_ct v = return @@ V_Ct v in
@@ -364,12 +365,6 @@ let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression ->
       Test operators
     >>>>>>>>
     *)
-    | ( C_TEST_COMPILE_EXPRESSION_SUBST, [ file_opt ; V_Ligo (syntax,ligo_exp) ; subst ] ) ->
-      let>> code = Compile_expression (loc, calltrace, file_opt, syntax, ligo_exp, Some subst) in
-      return code
-    | ( C_TEST_COMPILE_EXPRESSION, [ file_opt ; V_Ligo (syntax,ligo_exp) ] ) ->
-      let>> code = Compile_expression (loc, calltrace, file_opt, syntax, ligo_exp, None) in
-      return code
     | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ) ->
       let>> (code,size) = Compile_contract_from_file (source_file,entryp) in
       let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
@@ -431,46 +426,44 @@ let rec apply_operator : Location.t -> calltrace -> Ast_typed.type_expression ->
     | ( C_TEST_LAST_ORIGINATIONS , [ _ ] ) ->
       let>> x = Get_last_originations () in
       return x
-    | ( C_TEST_MUTATE_EXPRESSION , [ V_Ct (C_nat n); V_Ligo (syntax,ligo_exp) ] ) ->
-      let>> x = Mutate_expression (n,syntax,ligo_exp) in
-      return (V_Ligo x)
-    | ( C_TEST_MUTATE_COUNT , [ V_Ligo (syntax,ligo_exp) ] ) ->
-      let>> x = Mutate_count (syntax,ligo_exp) in
-      return x
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
       let value_ty = List.nth_exn types 1 in
-      let>> v = Mutate_some_value (loc,n,v,value_ty) in
+      let v = Mutation.mutate_some_value ~raise loc n v value_ty in
       match v with
       | None ->
          return (v_none ())
       | Some (e, m) ->
          let* v = eval_ligo e calltrace env in
          return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
-    | ( C_TEST_MUTATION_TEST , [ v; tester ] ) ->
+    | ( C_TEST_MUTATION_TEST , [ v; tester ] ) -> (
       let* () = check_value v in
       let value_ty = List.nth_exn types 0 in
-      let>> l = Mutate_all_value (loc,v,value_ty) in
-      let* r = iter_while (fun (e, m) ->
+      let l = Mutation.mutate_all_value ~raise loc v value_ty in
+      let aux : Ast_typed.expression * 'a -> (value * 'a) option t = fun (e, m) ->
         let* v = eval_ligo e calltrace env in
-        let r =  match tester with
+        let r = match tester with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
-             let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
-             eval_ligo body (loc :: calltrace) f_env'
+            let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
+            let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
+            eval_ligo body (loc :: calltrace) f_env'
           | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
-             let f_env' = Env.extend env (arg_binder, v) in
-             let f_env'' = Env.extend f_env' (fun_name, tester) in
-             eval_ligo body (loc :: calltrace) f_env''
-          | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
-        Monad.try_or (let* v = r in return (Some (v, m))) (return None)) l in
-      (match r with
+            let f_env' = Env.extend env (arg_binder, v) in
+            let f_env'' = Env.extend f_env' (fun_name, tester) in
+            eval_ligo body (loc :: calltrace) f_env''
+          | _ -> raise.raise @@ Errors.generic_error loc "Trying to apply on something that is not a function?"
+        in
+        try_or (let* v = r in return (Some (v, m))) (return None)
+      in
+      let* r = iter_while aux l in
+      match r with
        | None -> return (v_none ())
-       | Some (v, m) -> return (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
+       | Some (v, m) -> return (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])))
+    )
     | ( C_TEST_MUTATION_TEST_ALL , [ v; tester ] ) ->
       let* () = check_value v in
       let value_ty = List.nth_exn types 0 in
-      let>> l = Mutate_all_value (loc,v,value_ty) in
+      let l = Mutation.mutate_all_value ~raise loc v value_ty in
       let* mutations = bind_map_list (fun (e, m) ->
         let* v = eval_ligo e calltrace env in
         let r =  match tester with
@@ -602,8 +595,9 @@ and eval_literal : Ast_typed.literal -> value Monad.t = function
      end
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo : Ast_typed.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
+    let eval_ligo = eval_ligo ~raise in
     let open Monad in
     match term.expression_content with
     | E_application {lamb = f; args} -> (
@@ -671,7 +665,7 @@ and eval_ligo : Ast_typed.expression -> calltrace -> env -> value Monad.t
           let* value = eval_ligo ae calltrace env in
           return @@ (value, ae.type_expression))
         arguments in
-      apply_operator term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~raise term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label c ; element } when String.equal c "True"
       && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool true)
@@ -761,10 +755,7 @@ and eval_ligo : Ast_typed.expression -> calltrace -> env -> value Monad.t
        fail @@
          Errors.modules_not_supported term.location
 
-
-
-let try_eval expr env state r =
-  Monad.eval (eval_ligo expr [] env) state r
+let try_eval ~raise expr env state r = Monad.eval ~raise (eval_ligo ~raise expr [] env) state r
 
 let eval ~raise : Ast_typed.module_fully_typed -> env * Tezos_state.context =
   fun (Module_Fully_Typed prg) ->

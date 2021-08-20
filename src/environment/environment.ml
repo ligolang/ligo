@@ -49,7 +49,6 @@ let edo_types = basic_types @ michelson_base
 let meta_ligo_types : (type_variable * type_expression) list =
   edo_types @ [
     (v_test_michelson, t_constant test_michelson_name []) ;
-    (v_test_ligo , t_constant test_ligo_name []) ;
     (v_test_exec_error, t_test_exec_error () ) ;
     (v_test_exec_result , t_test_exec_result () ) ;
     (v_account , t_constant account_name []) ;

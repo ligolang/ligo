@@ -37,11 +37,6 @@ module Command = struct
     | Get_balance : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
     | Get_last_originations : unit -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
-    | Compile_expression : Location.t * Ligo_interpreter.Types.calltrace * LT.value * string * string * LT.value option -> LT.value t
-    | Mutate_expression : Z.t * string * string -> (string * string) t
-    | Mutate_count : string * string -> LT.value t
-    | Mutate_some_value : Location.t * Z.t * LT.value * Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) option t
-    | Mutate_all_value : Location.t * LT.value * Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) list t
     | Compile_contract_from_file : string * string -> (LT.value * LT.value) t
     | Compile_meta_value : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
@@ -201,27 +196,6 @@ module Command = struct
     | Check_obj_ligo e ->
       let _ = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.expression_obj e in
       ((), ctxt)
-    | Compile_expression (loc, calltrace, source_file, syntax, exp_as_string, subst_opt) ->
-      let file_opt = trace_option ~raise (corner_case ()) @@ LC.get_string_option source_file in
-      let substs =
-        match subst_opt with
-        | None -> []
-        | Some substs ->
-          let lst = trace_option ~raise (corner_case ()) @@ LC.get_list substs in
-          let aux = fun el ->
-            let (s,c) = trace_option ~raise (corner_case ()) @@ LC.get_pair el in
-            let s = trace_option ~raise (corner_case ()) @@ LC.get_string s in
-            let i = trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr c in
-            (s, i)
-          in
-          List.map ~f:aux lst
-      in
-      let aux = fun exp_str (s,_) -> (* TODO: a bit naive .. *)
-        Str.substitute_first (Str.regexp ("\\$"^s)) (fun _ -> Michelson_backend.subst_vname s) exp_str
-      in
-      let exp_as_string' = List.fold_left ~f:aux ~init:exp_as_string substs in
-      let (mich_v, mich_ty, object_ty) = Michelson_backend.compile_expression ~raise ~add_warning ~loc ~calltrace syntax exp_as_string' file_opt substs in
-      (LT.V_Michelson (LT.Ty_code (mich_v, mich_ty, object_ty)), ctxt)
     | Compile_meta_value (loc,x,ty) ->
       let x = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc x ty in
       (LT.V_Michelson (LT.Ty_code x), ctxt)
@@ -324,101 +298,6 @@ module Command = struct
         (addr, {ctxt with storage_tys})
       | Tezos_state.Fail errs -> raise.raise (Errors.target_lang_error loc calltrace errs)
     )
-    | Mutate_some_value (loc, z, v, v_type) ->
-      let n = Z.to_int z in
-      let expr = Michelson_backend.val_to_ast ~raise ~toplevel:true ~loc v v_type in
-      let module Fuzzer = Fuzz.Ast_typed.Mutator in
-      let ret = Fuzzer.some_mutate_expression ~n expr in
-      (ret, ctxt)
-    | Mutate_all_value (loc, v, v_type) ->
-      let expr = Michelson_backend.val_to_ast ~raise ~toplevel:true ~loc v v_type in
-      let module Fuzzer = Fuzz.Ast_typed.Mutator in
-      let exprs = Fuzzer.all_mutate_expression expr in
-      (exprs, ctxt)
-    | Mutate_expression (z, syntax, expr) ->
-      let open Ligo_compile in
-      let n = Z.to_int z in
-      let options = Compiler_options.make () in
-      let meta  = Of_source.make_meta ~raise syntax None in
-      let c_unit_exp, _ = Of_source.compile_string ~raise ~options ~meta expr in
-      let module Gen = Fuzz.Lst in
-      let buffer = match meta.syntax with
-        | CameLIGO ->
-           begin
-             let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
-             let raw = trace ~raise Main_errors.parser_tracer @@
-                          Parsing.Cameligo.parse_expression c_unit_exp in
-             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
-               (Parsing.Cameligo.pretty_print_expression mutated_prg)
-           end
-        | ReasonLIGO ->
-           begin
-             let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
-             let raw = trace ~raise Main_errors.parser_tracer @@
-                          Parsing.Reasonligo.parse_expression c_unit_exp in
-             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
-               (Parsing.Reasonligo.pretty_print_expression mutated_prg)
-           end
-        | PascaLIGO ->
-           begin
-             let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
-             let raw = trace ~raise Main_errors.parser_tracer @@
-                          Parsing.Pascaligo.parse_expression c_unit_exp in
-             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
-               (Parsing.Pascaligo.pretty_print_expression mutated_prg)
-           end
-        | JsLIGO ->
-           begin
-             let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
-             let raw = trace ~raise Main_errors.parser_tracer @@
-                          Parsing.Jsligo.parse_expression c_unit_exp in
-             let _, mutated_prg = Fuzzer.mutate_expression ~n raw in
-               (Parsing.Jsligo.pretty_print_expression mutated_prg)
-           end in
-      let expr = Buffer.contents buffer in
-      ((syntax, expr), ctxt)
-    | Mutate_count (syntax, expr) ->
-      begin
-        let open Ligo_compile in
-        let options = Compiler_options.make () in
-        let meta  = Of_source.make_meta ~raise syntax None in
-        let c_unit_exp, _ = Of_source.compile_string ~raise ~options ~meta expr in
-        let module Gen = Fuzz.Lst in
-        let count = match meta.syntax with
-          | CameLIGO ->
-             begin
-               let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
-               let raw = trace ~raise Main_errors.parser_tracer @@
-                            Parsing.Cameligo.parse_expression c_unit_exp in
-               let mutated_prgs = Fuzzer.mutate_expression_list raw in
-               List.length mutated_prgs
-             end
-          | ReasonLIGO ->
-             begin
-               let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
-               let raw = trace ~raise Main_errors.parser_tracer @@
-                            Parsing.Reasonligo.parse_expression c_unit_exp in
-               let mutated_prgs = Fuzzer.mutate_expression_list raw in
-               List.length mutated_prgs
-             end
-          | PascaLIGO ->
-             begin
-               let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
-               let raw = trace ~raise Main_errors.parser_tracer @@
-                            Parsing.Pascaligo.parse_expression c_unit_exp in
-               let mutated_prgs = Fuzzer.mutate_expression_list raw in
-               List.length mutated_prgs
-             end
-          | JsLIGO ->
-             begin
-               let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
-               let raw = trace ~raise Main_errors.parser_tracer @@
-                            Parsing.Jsligo.parse_expression c_unit_exp in
-               let mutated_prgs = Fuzzer.mutate_expression_list raw in
-               List.length mutated_prgs
-             end in
-        (LT.V_Ct (C_nat (Z.of_int count)) , ctxt)
-      end
     | Set_now (loc, calltrace, now) ->
       let ctxt = Tezos_state.set_timestamp ~raise ~loc ~calltrace ctxt now in
       ((), ctxt)

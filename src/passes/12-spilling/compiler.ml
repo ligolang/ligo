@@ -170,8 +170,6 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_GET_BALANCE
       | C_TEST_MICHELSON_EQUAL
       | C_TEST_LOG
-      | C_TEST_COMPILE_EXPRESSION
-      | C_TEST_COMPILE_EXPRESSION_SUBST
       | C_TEST_GET_NTH_BS
       | C_TEST_STATE_RESET
       | C_TEST_BOOTSTRAP_CONTRACT
@@ -187,7 +185,6 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_ORIGINATE_FROM_FILE
       | C_BIG_MAP_IDENTIFIER
       | C_TEST_COMPILE_META_VALUE
-      | C_TEST_MUTATE_EXPRESSION
       | C_TEST_MUTATE_COUNT
       | C_TEST_MUTATE_VALUE
       | C_TEST_MUTATION_TEST

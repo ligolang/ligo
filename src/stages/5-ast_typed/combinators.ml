@@ -91,7 +91,6 @@ let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
   [("True", t_unit ());("False", t_unit ())]
 
 (* types specific to LIGO test framework*)
-let t_ligo_code ?loc ?core () : type_expression = t_constant ?loc ?core test_ligo_name []
 let t_michelson_code ?loc ?core () : type_expression = t_constant ?loc ?core test_michelson_name []
 let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
@@ -150,7 +149,6 @@ let get_t_mutez (t:type_expression) : unit option = get_t_base_inj t tez_name
 let get_t_timestamp (t:type_expression) : unit option = get_t_base_inj t timestamp_name
 let get_t_address (t:type_expression) : unit option = get_t_base_inj t address_name
 let get_t_bytes (t:type_expression) : unit option = get_t_base_inj t bytes_name
-let get_t_ligo_code (t:type_expression) : unit option = get_t_base_inj t test_ligo_name
 let get_t_michelson_code (t:type_expression) : unit option = get_t_base_inj t test_michelson_name
 let get_t_string (t:type_expression) : unit option = get_t_base_inj t string_name
 let get_t_contract (t:type_expression) : type_expression option = get_t_unary_inj t contract_name
@@ -270,7 +268,6 @@ let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
 let assert_t_bytes = get_t_bytes
 let assert_t_string = get_t_string
-let assert_t_ligo_code = get_t_ligo_code
 let assert_t_michelson_code = get_t_michelson_code
 let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t contract_name with
   | Some _ -> Some ()

@@ -867,22 +867,6 @@ let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main 
   let () = assert_eq_1 ~raise ~loc storage storage_ty in
   (t_triplet (t_typed_address param_ty storage_ty) (t_michelson_code ()) (t_int ()))
 
-let test_compile_expression_subst ~raise loc = typer_3 ~raise loc "TEST_COMPILE_EXPRESSION_SUBST" @@ fun source_file_opt ligo_insertion subst_list ->
-  let subst_pair = trace_option ~raise (expected_list loc subst_list) @@ get_t_list subst_list in
-  let (str,code) = trace_option ~raise (expected_pair loc subst_pair) @@ get_t_pair subst_pair in
-  let source_file = trace_option ~raise (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
-  let () = trace_option ~raise (expected_michelson_code loc code) @@ get_t_michelson_code code in
-  let () = trace_option ~raise (expected_string loc str) @@ get_t_string str in
-  let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-  let () = trace_option ~raise (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
-  (t_michelson_code ())
-
-let test_compile_expression ~raise loc = typer_2 ~raise loc "TEST_COMPILE_EXPRESSION" @@ fun source_file_opt ligo_insertion ->
-  let source_file = trace_option ~raise (expected_option loc source_file_opt) @@ get_t_option source_file_opt in
-  let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-  let () = trace_option ~raise (expected_ligo_code loc ligo_insertion) @@ assert_t_ligo_code ligo_insertion in
-  (t_michelson_code ())
-
 let test_state_reset ~raise loc = typer_2 ~raise loc "TEST_STATE_RESET" @@ fun n amts ->
   let amt = trace_option ~raise (expected_list loc amts) @@ get_t_list amts in
   let () = trace_option ~raise (expected_nat loc amt) @@ get_t_nat amt in
@@ -962,11 +946,6 @@ let test_last_originations ~raise loc = typer_1 ~raise loc "TEST_LAST_ORIGINATIO
 let test_compile_meta_value ~raise loc = typer_1 ~raise loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->
   (t_michelson_code ())
 
-let test_mutate_expression ~raise loc = typer_2 ~raise loc "TEST_MUTATE_EXPRESSION" @@ fun n expr ->
-  let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
-  let () = assert_eq_1 ~raise ~loc expr (t_ligo_code ()) in
-  (t_ligo_code ())
-
 let test_mutate_value ~raise loc = typer_2 ~raise loc "TEST_MUTATE_VALUE" @@ fun n expr ->
   let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
   (t_option (t_pair expr (t_mutation ())))
@@ -985,10 +964,6 @@ let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ f
   let () = assert_eq_1 ~raise ~loc mutation (t_mutation ()) in
   let () = assert_eq_1 ~raise ~loc dir (t_string ()) in
   (t_option (t_string ()))
-
-let test_mutate_count ~raise loc = typer_1 ~raise loc "TEST_MUTATE_COUNT" @@ fun expr ->
-  let () = assert_eq_1 ~raise ~loc expr (t_ligo_code ()) in
-  (t_nat ())
 
 let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun _ _ ->
   (t_michelson_code ())
@@ -1167,15 +1142,11 @@ let constant_typers ~raise loc c : typer = match c with
   | C_TEST_MICHELSON_EQUAL -> test_michelson_equal ~raise loc ;
   | C_TEST_GET_NTH_BS -> test_get_nth ~raise loc ;
   | C_TEST_LOG -> test_log ~raise loc ;
-  | C_TEST_COMPILE_EXPRESSION -> test_compile_expression ~raise loc ;
-  | C_TEST_COMPILE_EXPRESSION_SUBST -> test_compile_expression_subst ~raise loc ;
   | C_TEST_STATE_RESET -> test_state_reset ~raise loc ;
   | C_TEST_BOOTSTRAP_CONTRACT -> test_bootstrap_contract ~raise loc ;
   | C_TEST_NTH_BOOTSTRAP_CONTRACT -> test_nth_bootstrap_contract ~raise loc ;
   | C_TEST_LAST_ORIGINATIONS -> test_last_originations ~raise loc ;
   | C_TEST_COMPILE_META_VALUE -> test_compile_meta_value ~raise loc ;
-  | C_TEST_MUTATE_EXPRESSION -> test_mutate_expression ~raise loc ;
-  | C_TEST_MUTATE_COUNT -> test_mutate_count ~raise loc ;
   | C_TEST_MUTATE_VALUE -> test_mutate_value ~raise loc ;
   | C_TEST_MUTATION_TEST -> test_mutation_test ~raise loc ;
   | C_TEST_MUTATION_TEST_ALL -> test_mutation_test_all ~raise loc ;
