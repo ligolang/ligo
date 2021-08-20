@@ -78,6 +78,7 @@ let%expect_test _ =
     "storage after calling"
     "2010-01-01T10:10:11Z"
     Everything at the top-level was executed.
+    - test_ts exited with value timestamp(946721410).
     - test exited with value true. |}]
 
 let%expect_test _ =
@@ -136,24 +137,6 @@ let%expect_test _ =
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value (). |}]
-
-let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_mutate_example.mligo" ] ;
-  [%expect{|
-    Increment (0)
-    10
-    Increment (-32)
-    -22
-    Increment (33)
-    43
-    Increment (31)
-    41
-    Increment (64)
-    74
-    Everything at the top-level was executed.
-    - testme_test exited with value "./testme.mligo".
-    - test_prg exited with value <fun>.
-    - test exited with value true. |}]
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "bootstrapped_contracts.mligo" ] ;

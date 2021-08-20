@@ -27,15 +27,6 @@ type add_operation_outcome =
 
 let compare_account_ = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare
 let compare_account a b = (compare_account_ a b) = 0
-let ligo_to_canonical ~raise ~loc ~calltrace (x: unit Tezos_utils.Michelson.michelson) =
-  let open Tezos_micheline.Micheline in
-  let x = inject_locations (fun _ -> 0) (strip_locations x) in
-  let x = strip_locations x in
-  let x = Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@
-    Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.prims_of_strings x
-  in
-  (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Script.lazy_expr x)
-
 let ligo_to_precanonical ~raise ~loc ~calltrace (x: unit Tezos_utils.Michelson.michelson) =
   let open Tezos_micheline.Micheline in
   let x = inject_locations (fun _ -> 0) (strip_locations x) in
@@ -43,6 +34,9 @@ let ligo_to_precanonical ~raise ~loc ~calltrace (x: unit Tezos_utils.Michelson.m
   let x = Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@
     Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.prims_of_strings x in
   x
+let ligo_to_canonical ~raise ~loc ~calltrace (x: unit Tezos_utils.Michelson.michelson) =
+  let x = ligo_to_precanonical ~raise ~loc ~calltrace x in
+  (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Script.lazy_expr x)
 
 let canonical_to_ligo x =
   x |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
@@ -240,7 +234,7 @@ let bake_op ~raise ~loc ~calltrace (ctxt:context) operation =
 let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt : add_operation_outcome =
   let open Tezos_alpha_test_helpers in
   let parameters = ligo_to_canonical ~raise ~loc ~calltrace parameter in
-  let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
+  let operation : Tezos_raw_protocol_008_PtEdo2Zk__Alpha_context.packed_operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
     Op.transaction ~fee:(Test_tez.Tez.of_int 23) ~parameters ?entrypoint (B ctxt.threaded_context) ctxt.source dst (Test_tez.Tez.of_mutez_exn amt)

@@ -180,13 +180,9 @@ module Tree_abstraction = struct
     | "Test.reset_state" -> some_const C_TEST_STATE_RESET
     | "Test.bootstrap_contract" -> some_const C_TEST_BOOTSTRAP_CONTRACT
     | "Test.nth_bootstrap_contract" -> some_const C_TEST_NTH_BOOTSTRAP_CONTRACT
-    | "Test.compile_expression" -> some_const C_TEST_COMPILE_EXPRESSION
-    | "Test.compile_expression_subst" -> some_const C_TEST_COMPILE_EXPRESSION_SUBST
     | "Test.nth_bootstrap_account" -> some_const C_TEST_GET_NTH_BS
     | "Test.last_originations" -> some_const C_TEST_LAST_ORIGINATIONS
     | "Test.compile_value" -> some_const C_TEST_COMPILE_META_VALUE
-    | "Test.mutate_expression" -> some_const C_TEST_MUTATE_EXPRESSION
-    | "Test.mutate_count" -> some_const C_TEST_MUTATE_COUNT
     | "Test.mutate_value" -> some_const C_TEST_MUTATE_VALUE
     | "Test.mutation_test" -> some_const C_TEST_MUTATION_TEST
     | "Test.mutation_test_all" -> some_const C_TEST_MUTATION_TEST_ALL
@@ -364,12 +360,9 @@ module Tree_abstraction = struct
     | C_TEST_STATE_RESET -> "Test.reset_state"
     | C_TEST_BOOTSTRAP_CONTRACT -> "Test.bootstrap_contract"
     | C_TEST_NTH_BOOTSTRAP_CONTRACT -> "Test.nth_bootstrap_contract"
-    | C_TEST_COMPILE_EXPRESSION -> "Test.compile_expression"
-    | C_TEST_COMPILE_EXPRESSION_SUBST -> "Test.compile_expression_subst"
     | C_TEST_GET_NTH_BS -> "Test.nth_bootstrap_account"
     | C_TEST_LAST_ORIGINATIONS -> "Test.last_originations"
     | C_TEST_COMPILE_META_VALUE -> "Test.compile_value"
-    | C_TEST_MUTATE_EXPRESSION -> "Test.mutate_expression"
     | C_TEST_MUTATE_COUNT -> "Test.mutate_count"
     | C_TEST_MUTATE_VALUE -> "Test.mutate_value"
     | C_TEST_MUTATION_TEST -> "Test.mutation_test"
