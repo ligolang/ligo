@@ -1,4 +1,6 @@
-module AST.Scope.Standard where
+module AST.Scope.Standard
+  ( Standard
+  ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Exception.Safe

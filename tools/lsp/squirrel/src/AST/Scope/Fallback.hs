@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 
-module AST.Scope.Fallback where
+module AST.Scope.Fallback
+  ( Fallback
+  ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))

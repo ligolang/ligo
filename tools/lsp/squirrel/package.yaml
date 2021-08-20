@@ -59,7 +59,6 @@ ghc-options:
   - -Wno-monomorphism-restriction
   - -Wno-implicit-prelude
   - -Wno-partial-fields
-  - -Wno-missing-export-lists  # FIXME
   - -Wno-missing-safe-haskell-mode
   - -Wno-prepositive-qualified-module
 

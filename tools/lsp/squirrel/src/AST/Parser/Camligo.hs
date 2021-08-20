@@ -1,6 +1,8 @@
 -- TODO: recogniser does not recognize maps and bigmaps properly
 
-module AST.Parser.Camligo where
+module AST.Parser.Camligo
+  ( recognise
+  ) where
 
 import AST.Skeleton
 
@@ -9,7 +11,6 @@ import Duplo.Tree
 import ParseTree
 import Parser
 import Product
-
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)

@@ -1,6 +1,43 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module AST.Scope.Common where
+module AST.Scope.Common
+  ( ParsedContract (..)
+  , FindFilepath (..)
+  , HasScopeForest (..)
+  , Level (..)
+  , ScopeError (..)
+  , ScopeM
+  , Info'
+  , ScopeForest (..)
+  , ScopeInfo
+  , ScopeTree
+  , DeclRef (..)
+  , MergeStrategy (..)
+  , ContractInfo
+  , ParsedContractInfo
+  , ContractInfo'
+  , ContractNotFoundException (..)
+
+  , pattern FindContract
+
+  , contractFile
+  , contractTree
+  , contractMsgs
+
+  , cFile
+  , cTree
+  , cMsgs
+  , getContract
+
+  , emptyScopeForest
+  , ofLevel
+  , mergeScopeForest
+  , withScopeForest
+  , lookupEnv
+  , spine
+  , addScopes
+  , lookupContract
+  ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
@@ -75,33 +112,12 @@ class HasLigoClient m => HasScopeForest impl m where
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
 
-type FullEnv = Product ["vars" := Env, "types" := Env]
-type Env     = Map Range [ScopedDecl]
-
 data Level = TermLevel | TypeLevel
   deriving stock Eq
-
-instance {-# OVERLAPS #-} Pretty FullEnv where
-  pp = block . map aux . Map.toList . mergeFE
-    where
-      aux (r, fe) =
-        pp r `indent` block fe
-
-      mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty Level where
   pp TermLevel = "TermLevel"
   pp TypeLevel = "TypeLevel"
-
-void' :: Functor f => f a -> f (Product '[])
-void' = fmap $ const Nil
-
-emptyEnv :: FullEnv
-emptyEnv = Tag Map.empty :> Tag Map.empty :> Nil
-
-with :: Level -> FullEnv -> (Env -> Env) -> FullEnv
-with TermLevel env f = modTag @"vars"  f env
-with TypeLevel env f = modTag @"types" f env
 
 ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of

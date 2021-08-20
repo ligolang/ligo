@@ -36,15 +36,14 @@ library
       AST.Scope.ScopedDecl.Parser
       AST.Scope.Standard
       AST.Skeleton
-      AST.StubErrors
       Cli
       Cli.Impl
       Cli.Json
       Cli.Types
-      Comment
       Config
       Debouncer
       Extension
+      ListZipper
       Log
       Parser
       ParseTree
@@ -97,7 +96,7 @@ library
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   include-dirs:
       grammar/pascaligo/src
       grammar/reasonligo/src
@@ -191,7 +190,7 @@ executable ligo-squirrel
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts "-with-rtsopts=-N -A64m -AL256m -I10 -Iw60"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts "-with-rtsopts=-N -A64m -AL256m -I10 -Iw60"
   build-depends:
       aeson
     , algebraic-graphs
@@ -266,7 +265,7 @@ executable ligo-vet
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-depends:
       base
     , duplo
@@ -344,7 +343,7 @@ test-suite integration-test
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
@@ -428,7 +427,7 @@ test-suite ligo-contracts-test
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
@@ -525,7 +524,7 @@ test-suite lsp-handlers-test
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
@@ -618,7 +617,7 @@ test-suite lsp-test
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:

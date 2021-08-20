@@ -1,6 +1,29 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Parser where
+module Parser
+  ( Msg
+  , ParserM
+  , LineMarkerType (..)
+  , LineMarker (..)
+  , Failure (..)
+  , ShowRange (..)
+  , CodeSource (..)
+  , Info
+  , ParsedInfo
+
+  , runParserM
+  , parseLineMarkerText
+  , flag
+  , field
+  , fieldOpt
+  , fields
+  , emptyParsedInfo
+  , fillInfo
+  , withComments
+  , boilerplate
+  , boilerplate'
+  , fallthrough
+  ) where
 
 import Control.Arrow
 import Control.Monad.Catch

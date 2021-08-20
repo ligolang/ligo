@@ -1,6 +1,9 @@
 -- | Code folding utilities
 
-module AST.Capabilities.Folding where
+module AST.Capabilities.Folding
+  ( foldingAST
+  , toFoldingRange
+  ) where
 
 import Language.LSP.Types qualified as J
 

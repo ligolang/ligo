@@ -5,7 +5,24 @@
 
 {-# LANGUAGE DeriveGeneric #-}
 
-module AST.Skeleton where
+module AST.Skeleton
+  ( SomeLIGO (..)
+  , LIGO
+  , Tree'
+  , RawLigoList
+  , Lang (..)
+  , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
+  , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
+  , TField (..), Variant (..), Type (..), Binding (..), RawContract (..)
+  , TypeName (..), FieldName (..), MichelsonCode (..), Error (..), Ctor (..)
+  , NameDecl (..), Preprocessor (..), PreprocessorCommand (..), ModuleName (..)
+  , ModuleAccess (..)
+
+  , getLIGO
+  , setLIGO
+  , nestedLIGO
+  , withNestedLIGO
+  ) where
 
 import Control.Lens.Lens (Lens, lens)
 import Data.Functor.Classes
@@ -270,28 +287,25 @@ liftEqMaybe _ _        _        = False
 --   liftEq = liftEq'
 
 newtype DefaultEq1DeriveForText it =
-  DefaultEq1DeriveForText { unDefaultEq1DeriveForText :: Text }
+  DefaultEq1DeriveForText Text
 
 instance Eq1 DefaultEq1DeriveForText where
   liftEq _ (DefaultEq1DeriveForText a) (DefaultEq1DeriveForText b) = a == b
 
 newtype DefaultEq1DeriveFor1Field it =
-  DefaultEq1DeriveFor1Field { unDefaultEq1DeriveFor1Field :: it }
+  DefaultEq1DeriveFor1Field it
 
 instance Eq1 DefaultEq1DeriveFor1Field where
   liftEq f (DefaultEq1DeriveFor1Field a) (DefaultEq1DeriveFor1Field b) = f a b
 
 data DefaultEq1DeriveFor2Field it =
-  DefaultEq1DeriveFor2Field
-    { unDefaultEq1DeriveFor2FieldA :: it
-    , unDefaultEq1DeriveFor2FieldB :: it
-    }
+  DefaultEq1DeriveFor2Field it it
 
 instance Eq1 DefaultEq1DeriveFor2Field where
   liftEq f (DefaultEq1DeriveFor2Field a b) (DefaultEq1DeriveFor2Field c d) = f a c && f b d
 
 newtype DefaultEq1DeriveFor1List it =
-  DefaultEq1DeriveFor1List { unDefaultEq1DeriveFor1List :: [it] }
+  DefaultEq1DeriveFor1List [it]
 
 instance Eq1 DefaultEq1DeriveFor1List where
   liftEq f (DefaultEq1DeriveFor1List a) (DefaultEq1DeriveFor1List b) = liftEqList f a b

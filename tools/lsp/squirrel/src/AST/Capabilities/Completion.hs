@@ -1,4 +1,8 @@
-module AST.Capabilities.Completion where
+module AST.Capabilities.Completion
+  ( Completion (..)
+  , complete
+  , toCompletionItem
+  ) where
 
 import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
