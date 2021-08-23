@@ -32,6 +32,7 @@
     "@ligo/syntax": "file:src/@ligo/syntax",
     "@ligolang/ligo-snippets": "^1.0.1",
     "axios": "^0.19.2",
+    "caniuse-lite": "^1.0.30001251",
     "react-codejar": "^1.0.2",
     "yaml": "^1.10.0"
   }
