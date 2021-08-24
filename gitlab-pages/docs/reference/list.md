@@ -23,6 +23,43 @@ let length: nat
 
 Get the number of elements in a list.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const xs: list (int) = list [1; 2; 3]
+
+const length : nat = List.length (xs);
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let xs : int list = [1; 2; 3]
+
+let length : nat = List.length xs
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let xs : list(int) = [1, 2, 3]
+
+let length : nat = List.length (xs);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let xs : list<int> = list([1, 2, 3]);
+
+let length : nat = List.length (xs);
+```
+
+</Syntax>
+
 <SyntaxTitle syntax="pascaligo">
 function size : nat
 </SyntaxTitle>
@@ -40,8 +77,37 @@ Get the number of elements in a list.
 
 Synonym for `List.length`.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const size_ : nat = List.size (xs);
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let size : nat = List.size xs
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let size : nat = List.size (xs);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let size : nat = List.size (xs);
+```
+
+</Syntax>
+
 <SyntaxTitle syntax="pascaligo">
-function head_opt : list('a) -> option('a)
+function head_opt : list ('a) -> option ('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val head_opt : 'a list -> 'a option
@@ -55,8 +121,37 @@ let head_opt : (list: list&lt;'a&gt;) => option&lt;'a&gt;
 
 Get the head of a list
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const head_opt : option (int)  = List.head_opt (xs);
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let head_opt : int option = List.head_opt xs
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let head_opt : option(int)  = List.head_opt (xs);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let head_opt : option<int>  = List.head_opt (xs);
+```
+
+</Syntax>
+
 <SyntaxTitle syntax="pascaligo">
-function tail_opt : list('a) -> option(list('a))
+function tail_opt : list ('a) -> option (list ('a))
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val tail_opt : 'a list -> 'a list option
@@ -69,6 +164,35 @@ let tail_opt : (list: list&lt;'a&gt;) => option&lt;list&lt;'a&gt;&gt;
 </SyntaxTitle>
 
 Get the tail of a list
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const tail_opt : option(list(int)) = List.tail_opt (xs);
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let tail_opt : int list option = List.tail_opt xs
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let tail_opt : option(list(int)) = List.tail_opt (xs);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let tail_opt : option<list<int>> = List.tail_opt (xs);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function iter : ('a -> unit) -> list('a) -> unit
@@ -197,7 +321,7 @@ let plus_one : list<int> = List.map(increment, larger_list);
 function fold : (('accumulator -> 'item -> 'accumulator) -> list('item) -> 'accumulator) -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold : ('accumulator -> 'item -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
+val fold : (('accumulator * 'item) -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let fold: ((('accumulator, 'item) => 'accumulator), list('item), 'accumulator) => 'accumulator
@@ -256,7 +380,7 @@ let sum_of_elements: int = List.fold(sum, my_list, 0);
 function fold_left : (('accumulator -> 'item -> 'accumulator) -> 'accumulator -> list('item)) -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold_left : ('accumulator -> 'item -> 'accumulator) -> 'accumulator -> 'item list -> 'accumulator
+val fold_left : (('accumulator * 'item) -> 'accumulator) -> 'accumulator -> 'item list -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let fold_left: ((('accumulator, 'item) => 'accumulator), 'accumulator, list('item)) => 'accumulator
@@ -316,7 +440,7 @@ let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 function fold_right : (('item -> 'accumulator -> 'accumulator) -> list('item) -> 'accumulator) -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold_right : ('item -> 'accumulator -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
+val fold_right : (('item * 'accumulator) -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let fold_right: ((('item, 'accumulator) => 'accumulator), list('item), 'accumulator) => 'accumulator
