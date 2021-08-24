@@ -482,24 +482,26 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
   | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
       let lst' = List.map ~f:(type_expression' ~raise e) arguments in
       let tv_lst = List.map ~f:get_type_expression lst' in
-      let cst = (match lst' with
-        | {expression_content = E_literal (Literal_string _); _ } :: _ -> S.C_CONCAT
-        | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } :: _ -> C_ADD
-        | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } :: _ -> C_CONCAT
-        | {expression_content = E_literal (Literal_int _); _ } :: _ -> C_ADD
-        | {expression_content = E_record_accessor {record; path}; _ } :: _ ->
+      let decide = function
+        | {O.expression_content = E_literal (Literal_string _); _ } -> Some S.C_CONCAT
+        | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } -> Some C_ADD
+        | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } -> Some C_CONCAT
+        | {expression_content = E_constant {cons_name = C_SLICE; _ }; _ } -> Some C_CONCAT
+        | {expression_content = E_literal (Literal_int _); _ } -> Some C_ADD
+        | {expression_content = E_record_accessor {record; path}; _ } ->
             (let x = get_record_field_type record.type_expression path in
             match x with
             Some s when is_t_string s ->
-              C_CONCAT
-            | _ -> C_ADD )
-        | {expression_content = E_variable _; type_expression = texpr } :: _ ->
+              Some C_CONCAT
+            | _ -> None )
+        | {expression_content = E_variable _; type_expression = texpr } ->
             if is_t_string texpr then
-              C_CONCAT
+              Some C_CONCAT
             else
-              C_ADD
-      | _ -> C_ADD
-      ) in
+              None
+        | _ -> None in
+      let cst =
+        Option.value ~default:S.C_ADD @@ List.find_map lst' ~f:decide in
       let (name', tv) =
         type_constant ~raise cst ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
