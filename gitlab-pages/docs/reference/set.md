@@ -222,6 +222,35 @@ let add: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;value
 
 Add a value to a set.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sets
+const updated_set = Set.add (4, my_set)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sets
+let updated_set = Set.add 4 my_set
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sets
+let updated_set = Set.add (4, my_set);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let updated_set = Set.add (4, my_set);
+```
+
+</Syntax>
+
 <SyntaxTitle syntax="pascaligo">
 function remove : 'value -> set('value) -> set('value)
 </SyntaxTitle>
@@ -237,17 +266,97 @@ let remove: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;va
 
 Remove a value from a set.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sets
+const updated_set = Set.remove (3, my_set)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sets
+let updated_set = Set.remove 3 my_set
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sets
+let updated_set = Set.remove (3, my_set);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let updated_set = Set.remove (3, my_set);
+```
+
+</Syntax>
+
 <SyntaxTitle syntax="pascaligo">
-function update : 'elt -> bool -> set('a) -> set('a)
+function update : 'a -> bool -> set('a) -> set('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val update : 'elt -> bool -> 'a set -> 'a set
+val update : 'a -> bool -> 'a set -> 'a set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let update: 'elt => bool => set('a) => set('a)
+let update: ('a, bool, set('a)) => set('a)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let update: (value : 'a, flag : bool, set : set&lt;'a&gt;) => set&lt;'a&gt;
 </SyntaxTitle>
 
+
 add or remove an element in a set based on the boolean value being passed.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sets
+// in case of True value will be added to the set 
+const updated_set = Set.update (4, True, my_set)
+
+// in case of False value will be removed from the set 
+const updated_set = Set.update (4, False, my_set)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sets
+(* in case of true value will be added to the set *)
+let updated_set = Set.update 4 true my_set
+
+(* in case of false value will be removed from the set *)
+let updated_set = Set.update 4 false my_set
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sets
+/* in case of true value will be added to the set */
+let updated_set = Set.update (4, true, my_set);
+
+
+/* in case of false value will be removed from the set */
+let updated_set = Set.update (4, false, my_set);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+// in case of true value will be added to the set 
+let updated_set = Set.update (4, true, my_set);
+
+// in case of false value will be removed from the set 
+let updated_set = Set.update (4, false, my_set);
+```
+
+</Syntax>
+
 
 <SyntaxTitle syntax="pascaligo">
 function iter : ('a -> unit) -> set('a) -> unit
@@ -313,7 +422,7 @@ let iter_op = (s: set<int>): unit => {
 function fold : (('accumulator -> 'item -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold : ('accumulator -> 'item -> 'accumulator) -> 'set list -> 'accumulator -> 'accumulator
+val fold : (('accumulator * 'item) -> 'accumulator) -> 'item set -> 'accumulator -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let fold: ((('accumulator, 'item) => 'accumulator), set('item), 'accumulator) => 'accumulator
@@ -363,7 +472,7 @@ let sum_of_elements: int = Set.fold(sum, my_set, 0);
 function fold_desc: (('item -> 'accumulator -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold_desc : ('item -> 'accumulator -> 'accumulator) -> 'set list -> 'accumulator -> 'accumulator
+val fold_desc : (('item * 'accumulator) -> 'accumulator) -> 'item set -> 'accumulator -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let fold_desc: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulator) => 'accumulator
