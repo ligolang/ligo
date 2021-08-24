@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -Wno-deprecations #-}
 
-module AST.Capabilities.DocumentSymbol where
+module AST.Capabilities.DocumentSymbol
+  ( extractDocumentSymbols
+  ) where
 
 import Control.Lens ((^.))
 import Control.Monad.Catch.Pure (MonadCatch)

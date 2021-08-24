@@ -12,7 +12,6 @@ module AST.Parser
 
   , extractIncludedFiles
   , insertPreprocessorRanges
-  , fromOriginalPoint
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
@@ -46,7 +45,7 @@ import Duplo.Tree (Cofree (..), inject)
 import AST.Parser.Camligo qualified as Caml
 import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
-import AST.Scope hiding (find)
+import AST.Scope
 import AST.Skeleton
 import Cli (HasLigoClient, LigoDecodedExpectedClientFailureException (..), fromLigoErrorToMsg, preprocess)
 

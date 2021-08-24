@@ -31,7 +31,10 @@
 -- note that type alias is added *after* the block with includes. I (awkure) decided
 -- that's its more convenient this way.
 
-module AST.Capabilities.CodeAction.ExtractTypeAlias where
+module AST.Capabilities.CodeAction.ExtractTypeAlias
+  ( typeExtractionCodeAction
+  , extractedTypeNameAlias
+  ) where
 
 import Control.Exception.Safe (MonadCatch)
 

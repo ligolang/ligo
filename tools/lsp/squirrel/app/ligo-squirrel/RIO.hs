@@ -65,7 +65,7 @@ import Witherable (wither)
 
 import Duplo.Tree (collect, make)
 
-import AST hiding (cTree, find)
+import AST hiding (cTree)
 import ASTMap (ASTMap)
 import ASTMap qualified
 import Cli

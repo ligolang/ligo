@@ -1,5 +1,7 @@
 -- | Parser for a PascaLigo contract.
-module AST.Parser.Pascaligo where
+module AST.Parser.Pascaligo
+  ( recognise
+  ) where
 
 import AST.Skeleton
 
@@ -8,7 +10,6 @@ import Duplo.Tree
 import ParseTree
 import Parser
 import Product (Product (Nil, (:>)))
-
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)

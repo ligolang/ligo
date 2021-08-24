@@ -1,6 +1,9 @@
 -- | Document formatting capability
 
-module AST.Capabilities.Format where
+module AST.Capabilities.Format
+  ( formatDocument
+  , formatAt
+  ) where
 
 import Control.Exception.Safe (catchAny)
 import Data.Text (Text)
