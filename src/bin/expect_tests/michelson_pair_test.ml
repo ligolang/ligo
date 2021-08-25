@@ -114,17 +114,14 @@ let%expect_test _ =
 
     { parameter unit ;
       storage (pair (int %three) (pair %four (int %one) (nat %two))) ;
-      code { LEFT (pair (list operation) (pair int (pair int nat))) ;
-             LOOP_LEFT
-               { DROP ;
-                 PUSH nat 2 ;
-                 PUSH int 1 ;
-                 PAIR ;
-                 PUSH int 3 ;
-                 PAIR ;
-                 NIL operation ;
-                 PAIR ;
-                 RIGHT (pair unit (pair int (pair int nat))) } } } |}]
+      code { DROP ;
+             PUSH nat 2 ;
+             PUSH int 1 ;
+             PAIR ;
+             PUSH int 3 ;
+             PAIR ;
+             NIL operation ;
+             PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree_intermediary.ligo" ; "main" ] ;

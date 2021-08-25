@@ -7,12 +7,14 @@ let expression_obj ~raise = Obj_ligo.check_obj_ligo ~raise
 let all_module_passes ~add_warning ~raise = [
   Unused.unused_map_module ~add_warning;
   Muchused.muchused_map_module ~add_warning;
-  Helpers.map_module @@ Tail_recursion.peephole_expression ~raise ;
+  Helpers.map_module @@ Recursion.check_tail_expression ~raise ;
+  Helpers.map_module @@ Recursion.remove_rec_expression ;
   Helpers.map_module @@ Pattern_matching_simpl.peephole_expression ~raise ;
 ]
 
 let all_expression_passes ~raise = [
-  Helpers.map_expression @@ Tail_recursion.peephole_expression ~raise ;
+  Helpers.map_expression @@ Recursion.check_tail_expression ~raise ;
+  Helpers.map_expression @@ Recursion.remove_rec_expression ;
   Pattern_matching_simpl.peephole_expression ~raise ;
   Obj_ligo.check_obj_ligo ~raise ;
 ]
@@ -42,7 +44,7 @@ let all_contract ~raise main_name prg =
   prg
 
 let all = [
-  Tail_recursion.peephole_expression
+  Recursion.check_tail_expression
 ]
 
 let map_expression = Helpers.map_expression

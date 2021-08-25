@@ -1961,14 +1961,11 @@ let%expect_test _ =
   [%expect {|
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
-      code { LEFT (pair (list operation) int) ;
-             LOOP_LEFT
-               { DUP ;
-                 CAR ;
-                 IF_LEFT { SWAP ; DROP ; NEVER } { SWAP ; CDR ; ADD } ;
-                 NIL operation ;
-                 PAIR ;
-                 RIGHT (pair (or never int) int) } } } |}]
+      code { DUP ;
+             CAR ;
+             IF_LEFT { SWAP ; DROP ; NEVER } { SWAP ; CDR ; ADD } ;
+             NIL operation ;
+             PAIR } } |}]
 
 (* annotations and self *)
 let%expect_test _ =
@@ -2046,3 +2043,20 @@ let%expect_test _ =
 
     Incorrect argument.
     Expected an option, but got an argument of type "string". |}]
+
+(* remove recursion *)
+let%expect_test _ =
+  run_ligo_good [ "print-ast-typed" ; contract "remove_recursion.mligo" ] ;
+  [%expect {|
+    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let #3 = EQ(n ,
+    0) in  match #3 with
+            | False unit_proj#4 ->
+              (f)@(SUB(n ,
+              1)) | True unit_proj#5 ->
+                    1 ) in (f)@(4)
+    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let #6 = EQ(n ,
+    0) in  match #6 with
+            | False unit_proj#7 ->
+              (h)@(SUB(n ,
+              1)) | True unit_proj#8 ->
+                    1 ) in h) ) |}]
