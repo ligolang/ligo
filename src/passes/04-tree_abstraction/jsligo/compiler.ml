@@ -736,7 +736,13 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let loc = Location.lift region in
     let outer_loc = Location.lift outer_region in
     e_assign ~loc:outer_loc (Location.wrap ~loc @@ Var.of_name value) [] e2
-  | EAssign _ as e -> raise.raise @@ not_supported_assignment e
+  | EAssign (EProj {value = {expr = EVar {value = evar_value; _}; selection = Component {value = {inside = EArith (Int _); _}; _} as selection}; region}, outer_region, e2) ->    
+    let e2 = compile_expression ~raise e2 in
+    let outer_loc = Location.lift outer_region in
+    let (sels, _) = compile_selection ~raise selection in
+    e_assign_ez ~loc:outer_loc evar_value [sels] e2
+  | EAssign _ as e ->
+    raise.raise @@ not_supported_assignment e
   | ENew {value = (_, e); _} -> raise.raise @@ new_not_supported e
 
 and conv ~raise : const:bool -> CST.pattern -> nested_match_repr =

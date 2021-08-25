@@ -3321,6 +3321,11 @@ let loop_bugs_ligo ~raise ~add_warning () : unit =
     expect_eq ~raise program "shadowing_assigned_in_body" input expected in
   ()
 
+let tuple_assignment_jsligo ~raise ~add_warning () : unit = 
+  let program = type_file ~raise ~add_warning "./contracts/tuple_assignment.jsligo" in
+  expect_eq ~raise program "tuple_assignment" (e_unit ()) (e_tuple [e_int 2; e_int 5])
+  
+  
 let main = test_suite "Integration (End to End)"
   [
     test_w "simple1" simple1 ;
@@ -3598,4 +3603,6 @@ let main = test_suite "Integration (End to End)"
     test_w "no semicolon (jsligo)" no_semicolon_jsligo ;
     test_w "single_record_expr (religo)" single_record_expr_religo ;
     test_w "shadowing (mligo)" shadowing;
+
+    test_w "tuple_assignment (jsligo)" tuple_assignment_jsligo;
   ]
