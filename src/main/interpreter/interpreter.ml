@@ -766,13 +766,7 @@ let eval ~raise : Ast_typed.module_fully_typed -> env * Tezos_state.context =
            (top_env,state)
         | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
           let (v,state) = try_eval ~raise expr top_env state None in
-          let mich = match v with
-            | V_Func_val _ | V_Michelson _ | V_Ligo _ ->
-               None
-            | _ ->
-               let mich_expr,mich_expr_ty,_ = Michelson_backend.compile_simple_value ~raise ~loc:expr.location v expr.type_expression in
-               Some (mich_expr, mich_expr_ty) in
-          let top_env' = Env.extend ~ast_type:expr.type_expression ?micheline:mich top_env (binder, v) in
+          let top_env' = Env.extend ~ast_type:expr.type_expression top_env (binder, v) in
           (top_env',state)
         | Ast_typed.Declaration_module {module_binder; module_=_} ->
           let module_env =
