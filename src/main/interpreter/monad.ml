@@ -239,14 +239,14 @@ module Command = struct
       (LT.V_Michelson (Ty_code value), ctxt)
     | Compile_contract (loc, v, _ty_expr) ->
        let compiled_expr, compiled_expr_ty = match v with
-         | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env } ->
+         | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
             let fv = Self_ast_typed.Helpers.Free_variables.expression orig_lambda in
             let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true env fv in
             let in_ty, out_ty =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_typed.get_t_function orig_lambda.type_expression in
             let compiled_expr =
-              Michelson_backend.compile_contract_ ~raise subst_lst arg_binder in_ty out_ty body in
+              Michelson_backend.compile_contract_ ~raise subst_lst arg_binder rec_name in_ty out_ty body in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)
             let expr_ty = clean_locations compiled_expr.expr_ty in

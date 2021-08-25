@@ -163,6 +163,12 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_rec_contract.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 

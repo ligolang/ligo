@@ -92,12 +92,14 @@ let compile_value ~raise typed_exp =
   let compiled_exp   = Of_mini_c.aggregate_and_compile_expression ~raise ~options [] mini_c_exp in
   compiled_exp
 
-let compile_contract_ ~raise subst_lst arg_binder in_ty out_ty typed_exp =
+let compile_contract_ ~raise subst_lst arg_binder rec_name in_ty out_ty typed_exp =
   let open Ligo_compile in
   let options = Compiler_options.make () in
   let subst_lst = List.rev subst_lst in
   let typed_exp' = add_ast_env subst_lst arg_binder typed_exp in
-  let typed_exp = Ast_typed.e_a_lambda {result=typed_exp'; binder=arg_binder} in_ty out_ty in
+  let typed_exp = match rec_name with
+    | None -> Ast_typed.e_a_lambda { result = typed_exp'; binder = arg_binder } in_ty out_ty
+    | Some fun_name -> Ast_typed.e_a_recursive { fun_name ; fun_type  = (Ast_typed.t_function in_ty out_ty ()) ; lambda = { result = typed_exp';binder = arg_binder } } in
   let mini_c_exp     = Of_typed.compile_expression ~raise typed_exp in
   let compiled_exp   = Of_mini_c.aggregate_and_compile ~raise ~options [] (ContractForm mini_c_exp) in
   compiled_exp
