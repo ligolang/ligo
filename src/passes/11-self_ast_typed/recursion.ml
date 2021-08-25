@@ -1,5 +1,7 @@
-open Errors
+module FV = Helpers.Free_variables
+
 open Ast_typed
+open Errors
 open Trace
 
 let var_equal = Location.equal_content ~equal:Var.equal
@@ -56,11 +58,23 @@ and check_recursive_call_in_matching ~raise = fun n final_path c ->
     check_recursive_call ~raise n final_path body
 
 
-let peephole_expression ~raise : expression -> expression = fun e ->
+let check_tail_expression ~raise : expression -> expression = fun e ->
   let return expression_content = { e with expression_content } in
   match e.expression_content with
   | E_recursive {fun_name; lambda} as e-> (
     let () = check_recursive_call ~raise fun_name true lambda.result in
     return e
+    )
+  | e -> return e
+
+
+let remove_rec_expression : expression -> expression = fun e ->
+  let return expression_content = { e with expression_content } in
+  match e.expression_content with
+  | E_recursive {fun_name; lambda} as e-> (
+    if List.mem (FV.expression lambda.result) fun_name ~equal:var_equal then
+      return e
+    else
+      return (E_lambda lambda)
     )
   | e -> return e
