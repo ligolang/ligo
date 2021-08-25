@@ -1,9 +1,9 @@
 open Types
 
 let extend :
-  env -> ?ast_type:Ast_typed.type_expression -> ?micheline:micheline_value -> (expression_variable * value) -> env
-  = fun env ?ast_type ?micheline (var,eval_term) ->
-  (var, {ast_type;micheline;eval_term}) :: env
+  env -> ?ast_type:Ast_typed.type_expression -> (expression_variable * value) -> env
+  = fun env ?ast_type (var,eval_term) ->
+  (var, {ast_type;eval_term}) :: env
 
 let lookup :
   env -> expression_variable -> value_expr option

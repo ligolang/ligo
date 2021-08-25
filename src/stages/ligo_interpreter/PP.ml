@@ -28,7 +28,7 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
     in
     Format.fprintf ppf "[%a]" (list_sep aux (tag " ; ")) vmap
   | V_BigMap (id, _) ->
-     Format.fprintf ppf "%sn" (Int.to_string id)
+     Format.fprintf ppf "%sid" (Int.to_string id)
   | V_Record recmap  ->
     if (Ast_typed.Helpers.is_tuple_lmap recmap) then
       let aux : Format.formatter -> value -> unit = fun ppf v ->

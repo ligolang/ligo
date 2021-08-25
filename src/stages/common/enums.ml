@@ -136,7 +136,7 @@ type constant' =
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
-  | C_BIG_MAP_IDENTIFIER
+  | C_BIG_MAP_IDENTIFIER [@only_interpreter]
   (* Crypto *)
   | C_SHA256
   | C_SHA512

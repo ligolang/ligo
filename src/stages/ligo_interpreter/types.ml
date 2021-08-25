@@ -41,7 +41,6 @@ and micheline_value = (unit, string) Tezos_micheline.Micheline.node *
                         (unit, string) Tezos_micheline.Micheline.node
 
 and value_expr = { ast_type : Ast_typed.type_expression option ;
-                   micheline : micheline_value option ;
                    eval_term : value }
 and value =
   | V_Func_val of func_val
