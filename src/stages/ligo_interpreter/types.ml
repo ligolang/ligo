@@ -20,7 +20,7 @@ and michelson_code =
   | Ty_code of (unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression)
 
 and contract =
-  { address : Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t;
+  { address : Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t;
     entrypoint: string option }
 
 and constant_val =
@@ -32,9 +32,9 @@ and constant_val =
   | C_string of string
   | C_bytes of bytes
   | C_mutez of Int.n Int.num
-  | C_address of Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t (*should be represented as michelson data ? not convenient *)
+  | C_address of Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t (*should be represented as michelson data ? not convenient *)
   | C_contract of contract
-  | C_key_hash of Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.public_key_hash
+  | C_key_hash of Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.public_key_hash
 
 
 and micheline_value = (unit, string) Tezos_micheline.Micheline.node *

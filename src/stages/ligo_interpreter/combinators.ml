@@ -21,7 +21,7 @@ let v_none : unit -> value =
 let v_ctor : string -> value -> value =
   fun ctor value -> V_Construct (ctor, value)
 
-let v_address : Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t -> value =
+let v_address : Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t -> value =
   fun a -> V_Ct (C_address a)
 
 let extract_pair : value -> (value * value) option =
@@ -53,7 +53,7 @@ let is_bool : value -> bool =
 let counter_of_address : string -> int = fun addr ->
   try (int_of_string addr) with | Failure _ -> -1
 
-let get_address : value -> Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t option = function
+let get_address : value -> Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t option = function
   | V_Ct ( C_address x ) -> Some x
   | _ -> None
 

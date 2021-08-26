@@ -26,8 +26,8 @@ module Command = struct
     | Get_big_map : Location.t * Ligo_interpreter.Types.calltrace * LT.type_expression * LT.type_expression * LT.value * Z.t -> LT.expression t
     | Mem_big_map : Location.t * Ligo_interpreter.Types.calltrace * LT.type_expression * LT.type_expression * LT.value * Z.t -> bool t
     | Bootstrap_contract : int * LT.value * LT.value * Ast_typed.type_expression  -> unit t
-    | Nth_bootstrap_contract : int -> Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t t
-    | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression * Ast_typed.type_expression) t
+    | Nth_bootstrap_contract : int -> Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t t
+    | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression * Ast_typed.type_expression) t
     | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
     | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
@@ -43,7 +43,7 @@ module Command = struct
     | Eval : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_typed.type_expression -> LT.value t
-    | Check_storage_address : Location.t * Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression -> unit t
+    | Check_storage_address : Location.t * Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression -> unit t
     | Contract_exists : Location.t * LT.calltrace * LT.value -> bool t
     | Inject_script : Location.t * Ligo_interpreter.Types.calltrace * LT.value * LT.value * Z.t -> LT.value t
     | Set_now : Location.t * Ligo_interpreter.Types.calltrace * Z.t -> unit t
@@ -103,7 +103,7 @@ module Command = struct
         match storage' with
         | Some storage' ->
            let code = storage'
-                      |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
+                      |> Tezos_protocol_009_PsFLoren.Protocol.Michelson_v1_primitives.strings_of_prims
                       |> Tezos_micheline.Micheline.inject_locations (fun _ -> ()) in
            let mini_c = trace ~raise Main_errors.decompile_michelson @@ Stacking.Decompiler.decompile_value inner_ty code in
            let typed = trace ~raise Main_errors.decompile_mini_c @@ Spilling.decompile mini_c v_ty in
@@ -168,7 +168,7 @@ module Command = struct
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
       let (storage',ty) = Tezos_state.get_storage ~raise ~loc ~calltrace ctxt addr in
       let storage = storage'
-        |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
+        |> Tezos_protocol_009_PsFLoren.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
       in
       let ret = LT.V_Michelson (Ty_code (storage,ty,ty_expr)) in
@@ -184,7 +184,7 @@ module Command = struct
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
       let (storage',ty) = Tezos_state.get_storage ~raise ~loc ~calltrace ctxt addr in
       let storage = storage'
-        |> Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.strings_of_prims
+        |> Tezos_protocol_009_PsFLoren.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
       in
       let ligo_ty =

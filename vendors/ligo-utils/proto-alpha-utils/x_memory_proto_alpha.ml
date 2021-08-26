@@ -58,7 +58,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let prims_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_008_PtEdo2Zk.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_009_PsFLoren.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -193,7 +193,7 @@ let fake_bake tezos_context chain_id now =
                     | _ -> Stdlib.failwith "bad timestamp")
         ~protocol_data
         ())
-      >>= fun x -> Lwt.return @@ Alpha_environment.wrap_error x >>=? fun state ->
+      >>= fun x -> Lwt.return @@ Alpha_environment.wrap_tzresult x >>=? fun state ->
                       return state.ctxt) in
   tezos_context
 
@@ -302,7 +302,7 @@ let typecheck_contract contract =
   Script_ir_translator.typecheck_code ~legacy dummy_environment.tezos_context contract' >>= fun x ->
   match x with
   | Ok _ -> return @@ contract
-  | Error errs -> Lwt.return @@ Error (List.map ~f:(alpha_error_wrap) errs)
+  | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
 
 type 'a interpret_res =
   | Succeed of 'a
@@ -326,8 +326,10 @@ let failure_interpret
   Script_interpreter.step (module No_trace : STEP_LOGGER) tezos_context step_constants instr bef >>= fun x ->
   match x with
   | Ok (s , _ctxt) -> return @@ Succeed s
-  | Error ((Reject (_, expr, _))::_t) -> return @@ Fail expr (* This catches failwith errors *)
-  | Error errs -> Lwt.return @@ Error (List.map ~f:(alpha_error_wrap) errs)
+  | Error errs ->
+    match Alpha_environment.wrap_tztrace errs with 
+      Alpha_environment.(Ecoproto_error ( (Reject (_, expr, _)))::_t) -> return @@ Fail expr (* This catches failwith errors *)
+    | _ -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
 
 let pack (data_ty: 'a ty) (data: 'a) : bytes tzresult Lwt.t =
   pack_data dummy_environment.tezos_context data_ty data >>=?? fun (packed,_) -> return packed

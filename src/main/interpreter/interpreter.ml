@@ -589,7 +589,7 @@ and eval_literal : Ast_typed.literal -> value Monad.t = function
      end
   | Literal_address s   ->
      begin
-       match Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.of_b58check s with
+       match Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.of_b58check s with
        | Ok t -> Monad.return @@ V_Ct (C_address t)
        | Error _ -> Monad.fail @@ Errors.literal Location.generated (Literal_address s)
      end

@@ -11,9 +11,9 @@ depends: [
   "tezos-stdlib-unix"
   "tezos-shell-services"
   "tezos-protocol-environment"
-  "tezos-protocol-008-PtEdo2Zk"
-  "tezos-protocol-008-PtEdo2Zk-parameters"
-  "tezos-client-008-PtEdo2Zk"
+  "tezos-protocol-009-PsFLoren"
+  "tezos-protocol-009-PsFLoren-parameters"
+  "tezos-client-009-PsFLoren"
   "alcotest-lwt"
 ]
 build: [

@@ -25,41 +25,37 @@
 
 open Protocol
 open Alpha_context
-open Environment
 
-(* This module is mostly to wrap the errors from the protocol *)
-module Tez = struct
-  include Tez
+type t = {
+  pkh : Signature.Public_key_hash.t;
+  pk : Signature.Public_key.t;
+  sk : Signature.Secret_key.t;
+}
 
-  let ( +? ) t1 t2 = t1 +? t2 |> wrap_error
+type account = t
 
-  let ( -? ) t1 t2 = t1 -? t2 |> wrap_error
+val known_accounts : t Signature.Public_key_hash.Table.t
 
-  let ( *? ) t1 t2 = t1 *? t2 |> wrap_error
+val activator_account : account
 
-  let ( /? ) t1 t2 = t1 /? t2 |> wrap_error
+val dummy_account : account
 
-  let ( + ) t1 t2 =
-    match t1 +? t2 with
-    | Ok r ->
-        r
-    | Error _ ->
-        Pervasives.failwith "adding tez"
+val new_account : ?seed:Bytes.t -> unit -> account
 
-  let of_int x =
-    match Tez.of_mutez (Int64.mul (Int64.of_int x) 1_000_000L) with
-    | None ->
-        invalid_arg "tez_of_int"
-    | Some x ->
-        x
+val add_account : t -> unit
 
-  let of_mutez_exn x =
-    match Tez.of_mutez x with
-    | None ->
-        invalid_arg "tez_of_mutez"
-    | Some x ->
-        x
+val find : Signature.Public_key_hash.t -> t tzresult Lwt.t
 
-  let max_tez =
-    match Tez.of_mutez Int64.max_int with None -> assert false | Some p -> p
-end
+val find_alternate : Signature.Public_key_hash.t -> t
+
+(** [generate_accounts ?initial_balances n] : generates [n] random
+    accounts with the initial balance of the [i]th account given by the
+    [i]th value in the list [initial_balances] or otherwise
+    4.000.000.000 tz (if the list is too short); and add them to the
+    global account state *)
+val generate_accounts : ?initial_balances:int64 list -> int -> (t * Tez.t) list
+
+val commitment_secret : Blinded_public_key_hash.activation_code
+
+val new_commitment :
+  ?seed:Bytes.t -> unit -> (account * Commitment.t) tzresult Lwt.t

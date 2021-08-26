@@ -14,13 +14,13 @@ depends: [
   "dune" { build & >= "2.7.1" & < "2.9" }
   "menhir" { = "20200624" }
   "ocamlgraph"
-  "coq" { build & >= "8.12" & < "8.13" }
+  "coq" { build & >= "8.12" & < "8.14" }
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_expect"
   "tezos-utils"
   "proto-alpha-utils"
-  "ligo-008-PtEdo2Zk-test-helpers"
+  "ligo-009-PsFLoren-test-helpers"
   "yojson"
   "alcotest" { with-test & >= "1.0" & < "1.1" }
   "getopt"
@@ -35,7 +35,7 @@ depends: [
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # work around tezos' failure to constrain
-  "lwt" { = "5.3.0" }
+  "lwt" { = "5.4.2" }
   "bisect_ppx" {dev & >= "2.5.0"}
 ]
 build: [

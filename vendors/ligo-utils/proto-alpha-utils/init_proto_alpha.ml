@@ -15,8 +15,8 @@ module Context_init = struct
       sk :  Signature.Secret_key.t ;
     }
 
-  let generate_accounts n : (account * Tez_repr.t) list =
-    let amount = Tez_repr.of_mutez_exn 4_000_000_000_000L in
+  let generate_accounts n : (account * Alpha_context.Tez.t) list =
+    let amount = Alpha_context.Tez.of_mutez_exn 4_000_000_000_000L in
     List.map ~f:(fun _ ->
         let (pkh, pk, sk) = Signature.generate_key () in
         let account = { pkh ; pk ; sk } in
@@ -43,7 +43,7 @@ module Context_init = struct
   let protocol_param_key = [ "protocol_parameters" ]
 
   let check_constants_consistency constants =
-    let open Constants_repr in
+    let open Alpha_context.Constants in
     let open Error_monad in
     let { blocks_per_cycle ; blocks_per_commitment ;
           blocks_per_roll_snapshot ; _ } = constants in
@@ -67,13 +67,13 @@ module Context_init = struct
     let open Tezos_base.TzPervasives.Error_monad in
     let bootstrap_accounts =
       List.map ~f:(fun ({ pk ; pkh ; _ }, amount) ->
-          Parameters_repr.{ public_key_hash = pkh ; public_key = Some pk ; amount }
+          Alpha_context.Parameters.{ public_key_hash = pkh ; public_key = Some pk ; amount }
         ) initial_accounts
     in
     let json =
       Data_encoding.Json.construct
-        Parameters_repr.encoding
-        Parameters_repr.{
+        Alpha_context.Parameters.encoding
+        Alpha_context.Parameters.{
           bootstrap_accounts ;
           bootstrap_contracts = [] ;
           commitments ;
@@ -86,26 +86,26 @@ module Context_init = struct
       Data_encoding.Binary.to_bytes_exn Data_encoding.json json
     in
     Tezos_protocol_environment.Context.(
-      set Memory_context.empty ["version"] (MBytes.of_string "genesis")
+      add Memory_context.empty ["version"] (MBytes.of_string "genesis")
     ) >>= fun ctxt ->
     Tezos_protocol_environment.Context.(
-      set ctxt protocol_param_key proto_params
+      add ctxt protocol_param_key proto_params
     ) >>= fun ctxt ->
     Main.init ctxt header
-    >|= Alpha_environment.wrap_error >>=? fun { context; _ } ->
+    >|= Alpha_environment.wrap_tzresult >>=? fun { context; _ } ->
     return context
 
   let genesis
         ?(commitments = [])
         ?(security_deposit_ramp_up_cycles = None)
         ?(no_reward_cycles = None)
-        (initial_accounts : (account * Tez_repr.t) list)
+        (initial_accounts : (account * Alpha_context.Tez.t) list)
     =
     if initial_accounts = [] then
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Constants_repr.parametric = Tezos_protocol_008_PtEdo2Zk_parameters.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.parametric = Tezos_protocol_009_PsFLoren_parameters.Default_parameters.constants_test in
     check_constants_consistency constants >>=? fun () ->
 
     let hash =
@@ -174,7 +174,7 @@ module Context_init = struct
       ~predecessor:hash
       ~timestamp
       ~protocol_data
-      () >>= fun x -> Lwt.return @@ Alpha_environment.wrap_error x >>=? fun state ->
+      () >>= fun x -> Lwt.return @@ Alpha_environment.wrap_tzresult x >>=? fun state ->
                       return state.ctxt
 
   let main n =
@@ -200,7 +200,7 @@ type environment = {
 let init_environment () =
   Context_init.main 10 >>=? fun (tezos_context, accounts, contracts) ->
   let accounts = List.map ~f:fst accounts in
-  let x = Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.(integral_of_int 800000) in
+  let x = Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.(integral_of_int_exn 800000) in
   let tezos_context = Alpha_context.Gas.set_limit tezos_context x in
   let identities =
     List.map ~f:(fun ((a:Context_init.account), c) -> {
