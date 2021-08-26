@@ -51,7 +51,7 @@ import Duplo.Pretty
 import Duplo.Tree
 import Parser
 import Product
-import Range
+import Range hiding (startLine)
 
 ----------------------------------------------------------------------------
 -- Types

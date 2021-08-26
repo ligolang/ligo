@@ -18,7 +18,7 @@ import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))
 import Control.Exception.Safe (Handler (..), catches, throwM)
-import Control.Lens ((&), (.~), (%~), (+~), (-~), (^.), _1)
+import Control.Lens ((&), (.~), (%~), (+~), (-~), (^.))
 import Control.Monad ((<=<), join, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
@@ -53,7 +53,7 @@ import Extension
 import ParseTree (Source (..), srcToText, toParseTree)
 import Parser
 import Product (Product (..), getElem, modElem, putElem)
-import Range (PreprocessedRange (..), Range, getRange, point, rangeLines, rFile, rFinish, rStart)
+import Range (PreprocessedRange (..), Range, getRange, point, rangeLines, rFile, rFinish, rStart, startLine, finishLine)
 import Util (mapConcurrentlyBounded, removeDots)
 import Util.Graph (wcc)
 
@@ -207,7 +207,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
     (info :< tree, markers, edges) =
       runRWS (loopM' before' after' $ insertOriginalRange . fromOriginalPoint <$> ligo) () mempty
     -- We still want RawContract to start at line 1:
-    ligo' = bool (modElem (rStart . _1 +~ 1) info :< tree) (info :< tree) (IntMap.null markers)
+    ligo' = bool (modElem (startLine +~ 1) info :< tree) (info :< tree) (IntMap.null markers)
   in
   (FindContract file (SomeLIGO dialect $ deleteOriginalRange <$> ligo') msgs, edges)
   where
@@ -230,7 +230,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
       -- For the preprocessed ranges, we use the line markers to map the range
       -- to the file and line they represent.
       for_ (getElem @[LineMarker] info) \lm@(LineMarker (withPwd -> n) f _ r) ->
-        let line = r ^. rStart . _1 in
+        let line = r ^. startLine in
         case f of
           RootFile     -> modify $ IntMap.insert line $ MarkerInfo lm r 0
           IncludedFile -> gets (IntMap.lookupLT line) >>= \case
@@ -238,7 +238,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
             Just (_, MarkerInfo prev lr d) -> do
               modify $ IntMap.insert
                 line
-                (MarkerInfo lm (bool lr (r & rStart . _1 -~ lmLoc prev ^. rStart . _1) $ d == 0) (d + 1))
+                (MarkerInfo lm (bool lr (r & startLine -~ lmLoc prev ^. finishLine - lmLine prev) $ d == 0) (d + 1))
               when (directIncludes `implies` d == 0) $
                 tell [(withPwd $ lmFile prev, n)]
           ReturnToFile -> modify $ IntMap.lookupLT line >>= \case
@@ -246,7 +246,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
             Just (_, MarkerInfo _ lr d) -> IntMap.insert line $ MarkerInfo lm lr (d - 1)
 
       let range = getRange info
-      let line = range ^. rStart . _1
+      let line = range ^. startLine
       prev <- gets $ IntMap.lookupLE line
       case prev of
         Nothing -> pure $ info :< tree
@@ -255,14 +255,14 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
                 if depth > 0 then
                   rStart .~ lastRange ^. rStart
                 else
-                  rStart . _1 -~ lmLoc marker ^. rStart . _1 - lmLine marker + 1
+                  startLine -~ lmLoc marker ^. finishLine - lmLine marker
           let preRange = range
-                & rangeLines -~ (lmLoc marker ^. rStart . _1 - lmLine marker + 1)
+                & rangeLines -~ (lmLoc marker ^. finishLine - lmLine marker)
                 & rFile .~ withPwd (lmFile marker)
           pure $ putElem (PreprocessedRange preRange) (putElem newRange info) :< tree
     after' (info :< tree) = do
       let OriginalRange range = getElem info
-      let line = range ^. rFinish . _1
+      let line = range ^. finishLine
       prev <- gets $ IntMap.lookupLE line
       case prev of
         Nothing -> pure $ info :< tree
@@ -274,7 +274,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
                 if depth > 0 then
                   rFinish .~ lastRange ^. rStart
                 else
-                  rFinish . _1 -~ lmLoc marker ^. rStart . _1 - lmLine marker + 1
+                  finishLine -~ lmLoc marker ^. finishLine - lmLine marker
           pure $ modElem mkNewRange info :< tree
 
 -- | Given a list of contracts, builds a graph that represents how they are
