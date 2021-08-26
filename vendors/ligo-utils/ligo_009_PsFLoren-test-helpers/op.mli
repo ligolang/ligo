@@ -34,10 +34,16 @@ val endorsement :
   unit ->
   Kind.endorsement Operation.t tzresult Lwt.t
 
-val miss_signed_endorsement :
+val endorsement_with_slot :
+  ?delegate:public_key_hash * int list ->
   ?level:Raw_level.t ->
   Context.t ->
-  Kind.endorsement Operation.t tzresult Lwt.t
+  ?signing_context:Context.t ->
+  unit ->
+  Kind.endorsement_with_slot Operation.t tzresult Lwt.t
+
+val miss_signed_endorsement :
+  ?level:Raw_level.t -> Context.t -> Kind.endorsement Operation.t tzresult Lwt.t
 
 val transaction :
   ?counter:Z.t ->
@@ -62,6 +68,9 @@ val delegation :
 val revelation :
   ?fee:Tez.tez -> Context.t -> public_key -> Operation.packed tzresult Lwt.t
 
+val failing_noop :
+  Context.t -> public_key_hash -> string -> Operation.packed tzresult Lwt.t
+
 val origination :
   ?counter:Z.t ->
   ?delegate:public_key_hash ->
@@ -82,6 +91,7 @@ val double_endorsement :
   Context.t ->
   Kind.endorsement Operation.t ->
   Kind.endorsement Operation.t ->
+  slot:int ->
   Operation.packed
 
 val double_baking :

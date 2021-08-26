@@ -6,7 +6,7 @@ let subst_vname s = "test_gen_"^s
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
 
-let string_of_contract t = Format.asprintf "%a" Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.pp t
+let string_of_contract t = Format.asprintf "%a" Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.pp t
 let string_of_key_hash t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 
 let compile_contract ~raise ~add_warning source_file entry_point =
@@ -30,14 +30,14 @@ let simple_val_insertion ~raise ~loc ~calltrace michelson_ty michelson_value lig
     let x = Tezos_micheline.Micheline.strip_locations
               (clean_location_with 0 x) in
     let x = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@
-      Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.prims_of_strings x (* feels wrong ... *)
+      Tezos_protocol_009_PsFLoren.Protocol.Michelson_v1_primitives.prims_of_strings x (* feels wrong ... *)
     in
     x
   in
   let code = Tezos_utils.Michelson.(seq [i_drop ; (i_push michelson_ty michelson_value)]) in
   let expr = cano code in
   let u = Format.asprintf "%a" Micheline_printer.print_expr
-            (Micheline_printer.printable Tezos_protocol_008_PtEdo2Zk.Protocol.Michelson_v1_primitives.string_of_prim expr)
+            (Micheline_printer.printable Tezos_protocol_009_PsFLoren.Protocol.Michelson_v1_primitives.string_of_prim expr)
   in
   let type_annotation = t_function (t_unit ()) ligo_obj_ty () in
   let code_block = make_e (e_string (Ligo_string.verbatim u)) type_annotation in

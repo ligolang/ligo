@@ -116,7 +116,7 @@ module Delegate : sig
     frozen_balance : Tez.t;
     frozen_balance_by_cycle : Delegate.frozen_balance Cycle.Map.t;
     staking_balance : Tez.t;
-    delegated_contracts : Contract_repr.t list;
+    delegated_contracts : Alpha_context.Contract.t list;
     delegated_balance : Tez.t;
     deactivated : bool;
     grace_period : Cycle.t;
@@ -134,6 +134,6 @@ val init :
   ?initial_balances:int64 list ->
   ?initial_endorsers:int ->
   ?min_proposal_quorum:int32 ->
-  ?initial_contracts:(Tez_repr.t * Script_repr.t) list ->
+  ?initial_contracts:(Tez.t * Script.t) list ->
   int ->
   (Block.t * Alpha_context.Contract.t list) tzresult Lwt.t

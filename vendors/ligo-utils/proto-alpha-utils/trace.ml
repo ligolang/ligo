@@ -8,8 +8,6 @@ type tezos_alpha_error =  [`Tezos_alpha_error of TP.error]
 let of_tz_error (err:X_error_monad.error) : tezos_alpha_error =
   `Tezos_alpha_error err
 
-let of_alpha_tz_error err = of_tz_error (AE.Ecoproto_error err)
-
 
 let trace_decoding_error :
   (Data_encoding.Binary.read_error -> 'err) -> ('a, Data_encoding.Binary.read_error) Stdlib.result -> ('a,'err) result =
@@ -23,7 +21,7 @@ let trace_alpha_tzresult :
   fun ~raise tracer err -> match err with
   | Ok x -> x
   | Error errs ->
-    raise.raise @@ tracer (List.map ~f:of_alpha_tz_error errs)
+    raise.raise @@ tracer (List.map ~f:of_tz_error @@ AE.wrap_tztrace errs)
 
 let trace_alpha_tzresult_lwt ~raise tracer (x:_ AE.Error_monad.tzresult Lwt.t) : _ =
   trace_alpha_tzresult ~raise tracer @@ Lwt_main.run x

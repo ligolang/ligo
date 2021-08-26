@@ -4,9 +4,9 @@
   (libraries
     tezos-error-monad
     tezos-stdlib-unix
-    tezos-protocol-008-PtEdo2Zk
-    tezos-protocol-008-PtEdo2Zk-parameters
-    tezos-client-008-PtEdo2Zk
+    tezos-protocol-009-PsFLoren
+    tezos-protocol-009-PsFLoren-parameters
+    tezos-client-009-PsFLoren
     tezos-memory-proto-alpha
     data-encoding
     simple-utils
