@@ -245,6 +245,25 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
     | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
     | ( C_AND    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' && b')
     | ( C_XOR    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   ( (a' || b') && (not (a' && b')) )
+    (* Bitwise operators *)
+    | ( C_AND    , [ V_Ct (C_int a'  ) ; V_Ct (C_nat b'  ) ] ) -> let>> v = Int_logand (a',b') in return_ct @@ C_nat v
+    | ( C_AND    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let>> v = Int_logand (a',b') in return_ct @@ C_nat v
+    | ( C_OR     , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let>> v = Int_logor (a',b') in return_ct @@ C_nat v
+    | ( C_XOR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let>> v = Int_logxor (a',b') in return_ct @@ C_nat v
+    | ( C_LSL    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> 
+      let>> v = Int_shift_left (a',b') in
+      begin
+        match v with
+        | Some v -> return_ct @@ C_nat v
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Overflow"
+      end
+    | ( C_LSR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> 
+      let>> v = Int_shift_right (a',b') in
+      begin
+        match v with
+        | Some v -> return_ct @@ C_nat v
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Overflow"
+      end
     | ( C_LIST_EMPTY, []) -> return @@ V_List ([])
     | ( C_LIST_MAP , [ V_Func_val {arg_binder ; body ; env}  ; V_List (elts) ] ) ->
       let* elts =

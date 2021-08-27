@@ -48,7 +48,9 @@ let%expect_test _ =
     - test_set_add exited with value ().
     - test_set_mem exited with value ().
     - test_recursion_let_rec_in exited with value ().
-    - test_top_level_recursion exited with value (). |}]
+    - test_top_level_recursion exited with value ().
+    - test_bitwise_ops exited with value ().
+    - test_bitwise_module exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "test" ; test "interpret_test_log.mligo" ] ;
