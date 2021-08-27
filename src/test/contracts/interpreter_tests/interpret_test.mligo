@@ -232,3 +232,33 @@ let rec sum_rec ((n,acc):int * int) : int =
     if (n < 1) then acc else sum_rec (n-1, acc+n)
 
 let test_top_level_recursion = assert (sum_rec (10,0) = 55)
+
+let test_bitwise_ops  =
+    let b_and_int     = 7   land 4n in
+    let b_and_nat     = 4n  land 4n in
+    let b_or          = 7n  lor  4n in
+    let b_xor         = 7n  lxor 4n in
+    let b_shift_left  = 7n  lsl  2n in
+    let b_shift_right = 14n lsr  2n in
+
+    assert (b_and_int     = 4n  &&
+            b_and_nat     = 4n  &&
+            b_or          = 7n  &&
+            b_xor         = 3n  &&
+            b_shift_left  = 28n &&
+            b_shift_right = 3n   )
+
+let test_bitwise_module =
+    let b_and_int       = Bitwise.and         7   4n in
+    let b_and_nat       = Bitwise.and         4n  4n in
+    let b_or            = Bitwise.or          7n  4n in
+    let b_xor           = Bitwise.xor         7n  4n in
+    let b_shift_left    = Bitwise.shift_left  7n  2n in
+    let b_shift_right   = Bitwise.shift_right 14n 2n in
+
+    assert (b_and_int     = 4n  &&
+            b_and_nat     = 4n  &&
+            b_or          = 7n  &&
+            b_xor         = 3n  &&
+            b_shift_left  = 28n &&
+            b_shift_right = 3n   )
