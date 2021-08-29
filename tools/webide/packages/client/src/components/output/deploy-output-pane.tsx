@@ -28,7 +28,6 @@ const Pre = styled.pre`
 const DeployOutputPane = (props) => {
 const {contract, output, network} = props
 let networkUrlPart = network
-if(network === 'edonet') networkUrlPart = 'edo2net'
   return (
     <Container>
       <Output id="output">

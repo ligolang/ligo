@@ -6,10 +6,9 @@ import {
 } from './examples';
 
 export enum networkType {
-  Delphinet = 'delphinet',
   Mainnet = 'mainnet',
-  Edonet = 'edonet',
   Florencenet = 'florencenet',
+  Granadanet = 'granadanet',
 }
 
 export enum signerType {
@@ -62,7 +61,7 @@ type Action =
 const DEFAULT_STATE: DeployState = {
   entrypoint: '',
   storage: '',
-  network: NetworkType.EDONET,
+  network: NetworkType.GRANADANET,
   signer: signerType.Sign,
 };
 
