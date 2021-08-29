@@ -2044,6 +2044,21 @@ let%expect_test _ =
     Incorrect argument.
     Expected an option, but got an argument of type "string". |}]
 
+(* check annotations' capitalization *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "annotation_cases.mligo" ; "main1" ] ;
+  [%expect {|
+    { parameter (pair (pair (nat %AAA) (nat %fooB)) (nat %cCC)) ;
+      storage unit ;
+      code { DROP ; PUSH unit Unit ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "annotation_cases.mligo" ; "main2" ] ;
+  [%expect {|
+    { parameter (or (or (nat %AAA) (nat %fooB)) (nat %cCC)) ;
+      storage unit ;
+      code { DROP ; PUSH unit Unit ; NIL operation ; PAIR } } |}]
+
 (* remove recursion *)
 let%expect_test _ =
   run_ligo_good [ "print-ast-typed" ; contract "remove_recursion.mligo" ] ;

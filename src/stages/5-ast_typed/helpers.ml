@@ -65,7 +65,7 @@ let kv_list_of_record_or_tuple ~layout record_t_content record =
 let remove_empty_annotation (ann : string option) : string option =
   match ann with
   | Some "" -> None
-  | Some ann -> Some (String.uncapitalize_ascii ann)
+  | Some ann -> Some ann
   | None -> None
 
 let is_michelson_or (t: _ label_map) =
