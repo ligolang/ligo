@@ -64,7 +64,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
               }
           }}
         >
-          <Option value={networkType.Edonet}>Edonet</Option>
+          <Option value={networkType.Granadanet}>Granadanet</Option>
           <Option value={networkType.Florencenet}>Florencenet</Option>
           <Option value={networkType.Mainnet}>Mainnet</Option>
         </SelectCommand>
@@ -88,7 +88,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
           }
         ></Textarea>
       </Group>
-      {useNetwork && (useNetwork === networkType.Edonet || useNetwork === networkType.Florencenet) &&
+      {useNetwork && ( useNetwork === networkType.Florencenet || useNetwork === networkType.Granadanet) &&
       <HGroup>
         <Checkbox
           checked={true}

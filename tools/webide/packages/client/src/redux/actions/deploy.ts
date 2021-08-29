@@ -19,7 +19,6 @@ import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeContractAction, ChangeOutputAction } from '../result';
 import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
-import { networkType } from '../deploy';
 
 export class DeployAction extends CancellableAction {
   async deployOnServerSide(dispatch: Dispatch, getState: () => AppState) {
@@ -42,18 +41,18 @@ export class DeployAction extends CancellableAction {
     beaconWallet: any,
     launchNetwork: string
   ): Promise<void> => {
-    if (launchNetwork === NetworkType.EDONET) {
+    if (launchNetwork === NetworkType.GRANADANET) {
       await beaconWallet.requestPermissions({
         network: {
-          type: NetworkType.EDONET,
-          name: 'Edonet',
-          rpcUrl: `https://api.tez.ie/rpc/edonet`,
+          type: NetworkType.GRANADANET,
+          name: 'Granadanet',
+          rpcUrl: `https://api.tez.ie/rpc/granadanet`,
         },
       });
-    } else if (launchNetwork === NetworkType.CUSTOM) {
+    } else if (launchNetwork === NetworkType.FLORENCENET) {
       await beaconWallet.requestPermissions({
         network: {
-          type: NetworkType.CUSTOM,
+          type: NetworkType.FLORENCENET,
           name: 'Florencenet',
           rpcUrl: `https://api.tez.ie/rpc/florencenet`,
         },
@@ -89,12 +88,12 @@ export class DeployAction extends CancellableAction {
       MichelsonFormat.Json
     );
 
-    let networkURL = 'https://api.tez.ie/rpc/edonet';
-    let network = { type: NetworkType.EDONET };
+    let networkURL = 'https://api.tez.ie/rpc/florencenet';
+    let network = { type: NetworkType.FLORENCENET };
 
-    if (deployState.network === 'florencenet') {
-      networkURL = 'https://api.tez.ie/rpc/florencenet';
-      network = { type: NetworkType.CUSTOM };
+    if (deployState.network === 'granadanet') {
+      networkURL = 'https://api.tez.ie/rpc/granadanet';
+      network = { type: NetworkType.GRANADANET };
     } else if (deployState.network === NetworkType.MAINNET) {
       networkURL = 'https://api.tez.ie/rpc/mainnet';
       network = { type: NetworkType.MAINNET };
