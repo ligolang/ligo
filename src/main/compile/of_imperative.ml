@@ -7,7 +7,7 @@ let compile ~raise (m : module_) : Ast_sugar.module_ =
   trace ~raise purification_tracer @@ compile_module m
 
 let compile_expression ~raise (e : expression) : Ast_sugar.expression =
-  trace ~raise purification_tracer @@ compile_expression e
+  trace ~raise purification_tracer @@ compile_expression ~last:true e
 
 let pretty_print formatter (m : module_) =
   PP.module_ formatter m
