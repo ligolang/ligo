@@ -116,7 +116,8 @@ and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.
   in
   let ef = List.fold_left ~f:aux ~init:(fun e -> e) free_vars in
   fun e -> match e with
-    | None -> expr (ef (O.e_skip ()))
+    | None -> 
+      expr (ef (O.e_skip ()))
     | Some e -> expr (ef e)
 
 
@@ -169,14 +170,14 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
       return @@ O.T_abstraction { x with type_ }
 
 
-let rec compile_expression ~raise : I.expression -> O.expression =
+let rec compile_expression ~raise ~last : I.expression -> O.expression =
   fun e ->
-  let e = compile_expression' ~raise e in
+  let e = compile_expression' ~raise ~last e in
   e None
 
-and compile_expression' ~raise : I.expression -> O.expression option -> O.expression =
+and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.expression =
   fun e ->
-  let self = compile_expression ~raise in
+  let self = compile_expression ~raise ~last in
   let self_type = compile_type_expression ~raise in
   let return' expr = function
     | None -> expr
@@ -186,7 +187,7 @@ and compile_expression' ~raise : I.expression -> O.expression option -> O.expres
   match e.expression_content with
     | I.E_literal literal   -> return @@ O.E_literal literal
     | I.E_constant {cons_name;arguments} ->
-      let arguments = List.map ~f:(compile_expression ~raise) arguments in
+      let arguments = List.map ~f:(compile_expression ~raise ~last:true) arguments in
       return' @@ O.e_constant ~loc:e.location (Stage_common.Types.const_name cons_name) arguments
     | I.E_variable name     -> return @@ O.E_variable name
     | I.E_application app ->
@@ -219,7 +220,7 @@ and compile_expression' ~raise : I.expression -> O.expression option -> O.expres
       let const = constructor self const in
       return @@ O.E_constructor const
     | I.E_matching m ->
-      let m = compile_matching ~raise m e.location in
+      let m = compile_matching ~raise ~last m e.location in
       m
     | I.E_record recd ->
       let recd = record self recd in
@@ -265,7 +266,7 @@ and compile_expression' ~raise : I.expression -> O.expression option -> O.expres
       let else_clause = add_to_end else_clause (O.e_variable env) in
 
       let free_vars = List.dedup_and_sort ~compare:compare_var @@ free_vars_true @ free_vars_false in
-      if (List.length free_vars != 0) then
+      if (List.length free_vars != 0 && last = false) then
         let cond_expr  = O.e_cond condition then_clause else_clause in
         let return_expr = fun expr ->
           O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
@@ -276,10 +277,15 @@ and compile_expression' ~raise : I.expression -> O.expression option -> O.expres
       else
         return' @@ O.e_cond ~loc:e.location condition then_clause' else_clause'
     | I.E_sequence {expr1; expr2} ->
-      let expr1 = compile_expression' ~raise expr1 in
-      let expr2 = compile_expression' ~raise expr2 in
-      fun e -> (expr1 (Some (expr2 e))
-        )
+      let expr1 = compile_expression' ~raise ~last:false expr1 in
+      let expr2 = (match expr2.expression_content with
+      | I.E_sequence _ -> 
+        compile_expression' ~raise ~last:false expr2
+      | _ -> 
+        compile_expression' ~raise ~last expr2
+      )
+      in 
+      fun e -> expr1 (Some (expr2 e))
     | I.E_skip -> return @@ O.E_skip
     | I.E_tuple tuple ->
       let tuple = List.map ~f:self tuple in
@@ -295,27 +301,27 @@ and compile_expression' ~raise : I.expression -> O.expression option -> O.expres
         O.e_let_in_ez ~loc variable true [] rhs
         @@ Option.value ~default:(O.e_skip ()) expr
     | I.E_for f ->
-      let f = compile_for ~raise f in
+      let f = compile_for ~raise ~last f in
       f
     | I.E_for_each fe ->
-      let fe = compile_for_each ~raise fe in
+      let fe = compile_for_each ~raise ~last fe in
       fe
     | I.E_while w ->
-      let w = compile_while ~raise w in
+      let w = compile_while ~raise ~last w in
       w
 
-and compile_matching ~raise : I.matching -> Location.t -> O.expression option -> O.expression =
+and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression option -> O.expression =
   fun {matchee;cases} loc ->
   let return expr = function
     | None -> expr
     | Some e -> O.e_sequence expr e
   in
-  let matchee = compile_expression ~raise matchee in
+  let matchee = compile_expression ~raise ~last matchee in
   let env = Location.wrap (Var.fresh ~name:"env" ()) in
   let aux :
     _ I.match_case -> (_ O.match_case * _ O.match_case)  * (I.expression_variable list) =
     fun {pattern ; body} ->
-      let body = compile_expression ~raise body in
+      let body = compile_expression ~raise ~last body in
       let get_pattern_vars : I.expression_variable list -> I.type_expression I.pattern -> I.expression_variable list =
         fun acc p->
           match p.wrap_content with
@@ -335,6 +341,7 @@ and compile_matching ~raise : I.matching -> Location.t -> O.expression option ->
   let free_vars = List.dedup_and_sort ~compare:compare_var (List.concat @@ List.map ~f:snd l) in
   match free_vars with
   | [] -> return (O.e_matching ~loc matchee cases_no_fv) 
+  | _ when last -> return (O.e_matching ~loc matchee cases_no_fv)
   | _ ->
     let match_expr  = O.e_matching matchee cases_fv in
     let return_expr = fun expr ->
@@ -344,16 +351,16 @@ and compile_matching ~raise : I.matching -> Location.t -> O.expression option ->
     in
     restore_mutable_variable return_expr free_vars env
 
-and compile_while ~raise I.{cond;body} =
+and compile_while ~raise ~last I.{cond;body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
   let binder  = Location.wrap @@ Var.fresh ~name:"binder"  () in
 
-  let cond = compile_expression ~raise cond in
+  let cond = compile_expression ~raise ~last cond in
   let ctrl =
     (O.e_variable binder)
   in
 
-  let for_body = compile_expression ~raise body in
+  let for_body = compile_expression ~raise ~last body in
   let ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [] binder in
   let for_body = add_to_end for_body ctrl in
 
@@ -375,16 +382,26 @@ and compile_while ~raise I.{cond;body} =
     O.e_let_in_ez env_rec false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]) @@
     expr
   in
-  restore_mutable_variable return_expr captured_name_list env_rec
+  let return expr = function
+    | None -> expr
+    | Some e -> O.e_sequence expr e
+  in
+  if last then
+    return (
+      O.e_let_in_ez env_rec false [] init_rec @@
+      O.e_let_in_ez env_rec false [] loop @@
+      (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]))
+  else 
+    restore_mutable_variable return_expr captured_name_list env_rec
 
 
-and compile_for ~raise I.{binder;start;final;incr;f_body} =
+and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
   let loop_binder = Location.wrap @@ Var.fresh ~name:"loop_binder" () in
   (*Make the cond and the step *)
   let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
-  let cond = compile_expression ~raise cond in
-  let step = compile_expression ~raise incr in
+  let cond = compile_expression ~raise ~last cond in
+  let step = compile_expression ~raise ~last incr in
   let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable loop_binder)] in
   let ctrl =
     O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
@@ -392,7 +409,7 @@ and compile_for ~raise I.{binder;start;final;incr;f_body} =
     continue_expr
   in
   (* Modify the body loop*)
-  let body = compile_expression ~raise f_body in
+  let body = compile_expression ~raise ~last f_body in
   let ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] loop_binder in
   let for_body = add_to_end for_body ctrl in
 
@@ -413,7 +430,7 @@ and compile_for ~raise I.{binder;start;final;incr;f_body} =
   let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
   let init_rec = O.e_pair (store_mutable_variable captured_name_list) @@ O.e_variable binder in
 
-  let start = compile_expression ~raise start in
+  let start = compile_expression ~raise ~last start in
   let return_expr = fun expr ->
     O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] start @@
     O.e_let_in_ez env_rec false [] init_rec @@
@@ -421,9 +438,21 @@ and compile_for ~raise I.{binder;start;final;incr;f_body} =
     O.e_let_in_ez env_rec false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]) @@
     expr
   in
-  restore_mutable_variable return_expr captured_name_list env_rec
+  let return expr = function
+    | None -> expr
+    | Some e -> O.e_sequence expr e
+  in
+  if last then 
+    return (
+      O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] start @@
+      O.e_let_in_ez env_rec false [] init_rec @@
+      O.e_let_in_ez env_rec false [] loop @@
+      (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero])
+    )
+  else
+    restore_mutable_variable return_expr captured_name_list env_rec
 
-and compile_for_each ~raise I.{fe_binder;collection;collection_type; fe_body} =
+and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
   let args    = Location.wrap @@ Var.fresh ~name:"args" () in
 
@@ -432,12 +461,12 @@ and compile_for_each ~raise I.{fe_binder;collection;collection_type; fe_body} =
     | None -> [fst fe_binder]
   in
 
-  let body = compile_expression ~raise fe_body in
+  let body = compile_expression ~raise ~last fe_body in
   let ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
   let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
 
   let init_record = store_mutable_variable free_vars in
-  let collect = compile_expression ~raise collection in
+  let collect = compile_expression ~raise ~last collection in
   let aux name expr=
     O.e_let_in_ez name false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
   in
@@ -457,7 +486,14 @@ and compile_for_each ~raise I.{fe_binder;collection;collection_type; fe_body} =
   let fold = fun expr ->
     O.e_let_in_ez env_rec false [] (O.e_constant op_name [lambda; collect ; init_record]) expr
   in
-  restore_mutable_variable fold free_vars env_rec
+  let return expr = function
+    | None -> expr
+    | Some e -> O.e_sequence expr e
+  in
+  if last then 
+    return (O.e_constant op_name [lambda; collect ; init_record])
+  else
+    restore_mutable_variable fold free_vars env_rec
 
 and compile_declaration ~raise : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
@@ -467,14 +503,14 @@ and compile_declaration ~raise : I.declaration Location.wrap -> _ =
     let dt = declaration_type (compile_type_expression ~raise) dt in
     return @@ O.Declaration_type dt
   | I.Declaration_constant dc ->
-    let dc = declaration_constant (compile_expression ~raise) (compile_type_expression ~raise) dc in
+    let dc = declaration_constant (compile_expression ~raise ~last:true) (compile_type_expression ~raise) dc in
     return @@ O.Declaration_constant dc
   | I.Declaration_module dm ->
-    let dm = declaration_module (compile_expression ~raise) (compile_type_expression ~raise) dm in
+    let dm = declaration_module (compile_expression ~raise ~last:true) (compile_type_expression ~raise) dm in
     return @@ O.Declaration_module dm
   | I.Module_alias ma ->
     let ma = module_alias ma in
     return @@ O.Module_alias ma
 
 and compile_module ~raise : I.module_ -> O.module_ = fun m ->
-  module' (compile_expression ~raise) (compile_type_expression ~raise) m
+  module' (compile_expression ~raise ~last:true) (compile_type_expression ~raise) m

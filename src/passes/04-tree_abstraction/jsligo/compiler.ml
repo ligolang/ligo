@@ -1045,9 +1045,29 @@ and compile_statements ~raise : CST.statements -> statement_result = fun stateme
   | [] -> result
   in
   let hd  = fst statements in
-  let snd = snd statements in
-  let init = compile_statement ~raise hd in
-  aux init snd
+  let snd_ = snd statements in
+  match hd, snd_ with 
+    CST.SCond {value = {ifnot = None; _}; region}, (other :: tl) -> 
+      let init = compile_statement ~raise hd in 
+      (match init with 
+        Return {expression_content = E_cond e; location} -> 
+          let else_clause_hd = compile_statement ~raise (snd other) in
+          let else_clause = aux else_clause_hd tl in
+          let compile_clause = function 
+            Binding e -> (e @@ e_unit ())
+          | Expr e -> (e_sequence e (e_unit ()))    
+          | Break b -> (e_sequence b (e_unit ()))
+          | Return r -> r
+          in
+          let else_clause = compile_clause else_clause in
+          Return {expression_content = E_cond {e with else_clause}; location}
+      | _ -> 
+        aux init snd_
+      )
+  | _, _ -> 
+    let init = compile_statement ~raise hd in
+    aux init snd_
+
 
 and compile_statement ~raise : CST.statement -> statement_result = fun statement ->
   let self = compile_statement ~raise in
