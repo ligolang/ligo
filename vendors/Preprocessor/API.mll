@@ -516,8 +516,8 @@ rule scan state = parse
             | None -> fail state reg (File_not_found import_file) in
           let state  = {state with
                          import = (import_path, imported_module)::state.import}
-          in (proc_nl state lexbuf; scan state lexbuf)
-        else (proc_nl state lexbuf; scan state lexbuf)
+          in scan state lexbuf
+        else scan state lexbuf
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
