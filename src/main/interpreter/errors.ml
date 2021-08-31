@@ -21,6 +21,9 @@ let bootstrap_not_enough : Location.t -> interpreter_error = fun l ->
 let generic_error : Location.t -> string -> interpreter_error = fun loc desc ->
   `Main_interpret_generic (loc,desc)
 
+let not_enough_initial_accounts : Location.t -> Memory_proto_alpha.Protocol.Alpha_context.Tez.tez -> interpreter_error = fun loc max ->
+  `Main_interpret_not_enough_initial_accounts (loc,max)
+
 let literal : Location.t -> Ast_typed.literal -> interpreter_error = fun s l ->
   `Main_interpret_literal (s, l)
 

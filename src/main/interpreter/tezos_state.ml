@@ -268,6 +268,14 @@ let get_bootstrapped_contract ~raise (n : int) =
 
 let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balances=[]) ?(n=2) bootstrapped_contracts =
   let open Tezos_raw_protocol in
+  let () = (* check baker initial balance if the default amount is changed *)
+    match initial_balances with
+    | [] -> () (* if empty list: will be defaulted with coherent values*)
+    | baker::_ -> (
+      let max = Tezos_protocol_009_PsFLoren_parameters.Default_parameters.constants_test.tokens_per_roll in
+      if (Alpha_context.Tez.of_mutez_exn baker < max) then raise.raise (Errors.not_enough_initial_accounts loc max) else ()
+    )
+  in
   let initial_contracts = List.map ~f:(fun (mutez, contract, storage, _, _) ->
                       let contract = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
                       (Alpha_context.Tez.of_mutez_exn (Int64.of_int mutez),contract)) bootstrapped_contracts in

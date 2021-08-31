@@ -869,7 +869,7 @@ let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main 
 
 let test_state_reset ~raise loc = typer_2 ~raise loc "TEST_STATE_RESET" @@ fun n amts ->
   let amt = trace_option ~raise (expected_list loc amts) @@ get_t_list amts in
-  let () = trace_option ~raise (expected_nat loc amt) @@ get_t_nat amt in
+  let () = trace_option ~raise (expected_mutez loc amt) @@ get_t_mutez amt in
   let () = trace_option ~raise (expected_nat loc n) @@ get_t_nat n in
   (t_unit ())
 

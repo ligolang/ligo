@@ -352,16 +352,16 @@ let log = (a: 'a) => unit
 Log a value.
 
 <SyntaxTitle syntax="pascaligo">
-function reset_state : nat -> list(nat) -> unit
+function reset_state : nat -> list(tez) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val reset_state : nat -> nat list -> unit
+val reset_state : nat -> tez list -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let reset_state: (nat, list(nat)) => unit
+let reset_state: (nat, list(tez)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let reset_state = (no_of_accounts: nat, amount: list&lt;nat&gt;) => unit
+let reset_state = (no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
 </SyntaxTitle>
 Generate a number of random bootstrapped accounts with a default amount of 4000000 tez. The passed list can be used to overwrite the amount.
 By default, the state only has two bootstrapped accounts.
