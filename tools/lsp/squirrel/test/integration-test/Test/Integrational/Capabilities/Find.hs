@@ -74,6 +74,24 @@ includeInvariants =
     , driDef = Just (interval 1 7 8)
     , driRefs = []
     }
+  {- FIXME: We currently can't, given a file A, find for references in a file B.
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "LIGO-260" </> "A.mligo"
+    , driDesc = "b, find in other file (LIGO-260 regression test)"
+    , driDef = Just (interval 1 5 6){_rFile = contractsDir </> "LIGO-260" </> "B.mligo"}
+    , driRefs =
+      [ (interval 4 9 10){_rFile = contractsDir </> "LIGO-260" </> "A.mligo"}
+      ]
+    }
+  -}
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "LIGO-260" </> "C.mligo"
+    , driDesc = "c, find in other file (LIGO-260 regression test)"
+    , driDef = Just (interval 1 5 6){_rFile = contractsDir </> "LIGO-260" </> "C.mligo"}
+    , driRefs =
+      [ (interval 4 13 14){_rFile = contractsDir </> "LIGO-260" </> "A.mligo"}
+      ]
+    }
   ]
 
 test_findDefinitionAndGoToReferencesCorrespondence :: TestTree

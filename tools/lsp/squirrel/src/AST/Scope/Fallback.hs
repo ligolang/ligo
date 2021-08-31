@@ -2,6 +2,8 @@
 
 module AST.Scope.Fallback
   ( Fallback
+  , loop
+  , loopM_
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G

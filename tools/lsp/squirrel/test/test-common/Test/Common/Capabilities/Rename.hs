@@ -3,6 +3,7 @@ module Test.Common.Capabilities.Rename
   , renameId
   , renameParam
   , renameInIncludedFile
+  , renameNestedInclude
   ) where
 
 import Control.Arrow ((***))
@@ -94,3 +95,14 @@ renameInIncludedFile = do
   fp2 <- makeAbsolute (contractsDir </> "LIGO-104-A2.mligo")
   testRenameOk @impl (point 1 5){_rFile = fp2} "rename_me" (point 1 5){_rFile = fp2} "renamed"
     [(fp1, [(interval 3 11 20){_rFile = fp1}]), (fp2, [(interval 1 5 14){_rFile = fp2}])]
+
+-- Regression test for LIGO-260
+renameNestedInclude :: forall impl. HasScopeForest impl IO => Assertion
+renameNestedInclude = do
+  func  <- makeAbsolute (contractsDir </> "LIGO-260" </> "Func.mligo")
+  param <- makeAbsolute (contractsDir </> "LIGO-260" </> "Param.mligo")
+  let def = (interval 1 5 6){_rFile = func}
+  testRenameOk @impl def "f" def "func"
+    [ (param, [(interval 1 2 3){_rFile = param}])
+    , (func, [(interval 4 3 4){_rFile = func}, def])
+    ]

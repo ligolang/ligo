@@ -24,13 +24,14 @@ module Range
   , rFinish
   , rFile
   , rangeLines
+  , startLine
+  , finishLine
   )
   where
 
 import Language.LSP.Types qualified as LSP
 
-import Control.Lens (Traversal')
-import Control.Lens.TH (makeLenses)
+import Control.Lens (Lens', Traversal', _1, makeLenses)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Maybe (fromMaybe)
@@ -176,3 +177,11 @@ instance (Contains Range xs, Eq (Product xs)) => Lattice (Product xs) where
   a `leq` b = getElem @Range a `leq` getElem @Range b
 
 makeLenses ''Range
+
+startLine :: Lens' Range Int
+startLine = rStart . _1
+{-# INLINE startLine #-}
+
+finishLine :: Lens' Range Int
+finishLine = rFinish . _1
+{-# INLINE finishLine #-}
