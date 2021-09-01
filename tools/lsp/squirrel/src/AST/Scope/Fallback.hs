@@ -6,7 +6,6 @@ module AST.Scope.Fallback
   , loopM_
   ) where
 
-import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
 import Control.Monad.Catch.Pure hiding (throwM)
@@ -40,16 +39,15 @@ import Parser
 import Product
 import Range
 import Util (foldMapM, unconsFromEnd)
-import Util.Graph (subgraph, traverseAM)
+import Util.Graph (traverseAM)
 
 data Fallback
 
 instance HasLigoClient m => HasScopeForest Fallback m where
   scopeForest = flip evalStateT Map.empty . go
     where
-      mkForest (FindContract src (SomeLIGO dialect ligo) msg) includes = do
-        includes' <- go includes
-        let runLigoEnv = first singleton . flip runReader (dialect, contractTree <$> G.vertexList includes') . runExceptT . getEnv
+      mkForest (FindContract src (SomeLIGO dialect ligo) msg) = do
+        let runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
             fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
             sf = case runLigoEnv ligo of
               Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
@@ -62,13 +60,9 @@ instance HasLigoClient m => HasScopeForest Fallback m where
         case Map.lookup (contractFile pc) vis of
           Nothing -> do
             modify $ Map.insert (contractFile pc) Nothing
-            mkForest pc (subgraph pc graph)
+            mkForest pc
           Just res -> case res of
-            -- 'Nothing' only occurs here if we have some cyclic include. To
-            -- recover from it, we break the cycle by not visiting its inner
-            -- includes.
-            -- TODO: Visit nodes that don't form a cycle.
-            Nothing -> mkForest pc G.empty
+            Nothing -> mkForest pc
             Just sf -> pure sf
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
@@ -214,10 +208,7 @@ assignDecls
      )
   => LIGO xs
   -> ScopeM (LIGO ([ScopedDecl] : Bool : Range : xs))
-assignDecls tree = do
-  (_, includes) <- lift ask
-  let decls = concat $ Map.elems . sfDecls <$> includes
-  loopM go $ fmap (\r -> decls :> False :> getRange r :> r) tree
+assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
   where
     go = \case
       (match -> Just (r, Let decl body)) -> do
@@ -279,7 +270,7 @@ functionScopedDecl
   -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
-  (dialect, _) <- lift ask
+  dialect <- lift ask
   (PreprocessedRange origin, name) <- getName nameNode
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure (params dialect)
@@ -306,7 +297,7 @@ valueScopedDecl
   -> Maybe (LIGO info) -- ^ initializer node
   -> ScopeM ScopedDecl
 valueScopedDecl docs nameNode typ body = do
-  (dialect, _) <- lift ask
+  dialect <- lift ask
   (PreprocessedRange origin, name) <- getName nameNode
   pure $ ScopedDecl
     { _sdName = name
@@ -328,7 +319,7 @@ typeScopedDecl
      )
   => [Text] -> LIGO info -> LIGO info -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
-  (dialect, _) <- lift ask
+  dialect <- lift ask
   (PreprocessedRange origin, name) <- getTypeName nameNode
   pure $ ScopedDecl
     { _sdName = name

@@ -139,7 +139,7 @@ instance Pretty ScopeError where
 
 instance Exception ScopeError
 
-type ScopeM = ExceptT ScopeError (Reader (Lang, [ScopeForest]))
+type ScopeM = ExceptT ScopeError (Reader Lang)
 
 type Info' = Scope ': Maybe Level ': ParsedInfo
 
