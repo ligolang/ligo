@@ -6,8 +6,8 @@ let var_equal : Ast_typed.expression_variable -> Ast_typed.expression_variable -
   Var.equal v1.wrap_content v2.wrap_content
 
 let extract_variable_types :
-  bindings_map -> Ast_typed.module_fully_typed -> bindings_map =
-  fun prev prg ->
+  bindings_map -> Ast_typed.declaration -> bindings_map =
+  fun prev decl ->
     let add env b =
       let aux : Ast_typed.expression_variable *  Ast_typed.type_expression -> Ast_typed.expression_variable * Ast_typed.type_expression = fun (v,t) ->
         let t' = match t.orig_var with Some t' -> { t with type_content = T_variable t'} | None -> (* let () = Format.printf "\nYAA\n NONE : %a" Ast_typed.PP.type_expression t in *) t in
@@ -68,14 +68,13 @@ let extract_variable_types :
           return (Ast_typed.LMap.to_list fields)
       )
     in
-    let aux' : bindings_map -> Ast_typed.declaration -> bindings_map = fun env decl ->
-      match decl with
-      | Declaration_constant { binder ; expr ; _ } -> add env [binder,expr.type_expression]
-      | Declaration_type _ -> env
-      | Declaration_module _ -> env
-      | Module_alias _ -> env
-    in
-    Self_ast_typed.Helpers.fold_module_decl aux aux' prev prg
+    match decl with
+    | Declaration_constant { binder ; expr ; _ } ->
+      let prev = add prev [binder,expr.type_expression] in
+      Self_ast_typed.Helpers.fold_expression aux prev expr
+    | Declaration_type _ -> prev
+    | Declaration_module _ -> prev
+    | Module_alias _ -> prev
 
 let get_binder_name : 'a Var.t -> string = fun v ->
   if Var.is_generated v

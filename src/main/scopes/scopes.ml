@@ -3,12 +3,11 @@ open Misc
 
 module Formatter = Formatter
 
-type sub_module = { m : Ast_core.module_  ; bindings : bindings_map }
+type sub_module = { type_env : tenv  ; bindings : bindings_map }
 
-let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
+let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
-  let compile ~raise m = Ligo_compile.Of_core.infer ~raise ~options m |> Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.expression_content with
@@ -127,32 +126,36 @@ let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_c
     (i,defs,scopes)
 
   and declaration i core_prg =
-    let aux = fun (i,top_def_map,inner_def_map,scopes,sub_prg) (x : Ast_core.declaration Location.wrap) ->
-      let m = List.append sub_prg.m [x] in
-      let typed_prg = if with_types then Trace.to_option (compile m) else None in
-      let bindings = match typed_prg with
-        | Some (typed_prg,_) -> extract_variable_types sub_prg.bindings typed_prg
-        | None -> sub_prg.bindings
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise env decl in
+    let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
+      let typed_prg =
+        if with_types then Trace.to_option (compile_declaration partials.type_env decl ())
+        else None
       in
-      let sub_prg' = { m ; bindings } in
-      match x.wrap_content with
+      let partials = match typed_prg with
+        | Some (type_env,decl') ->
+          let bindings = extract_variable_types partials.bindings decl'.wrap_content in
+          { type_env ; bindings }
+        | None -> partials
+      in
+      match decl.wrap_content with
       | Declaration_constant { binder= { var ; ascr } ; expr ; _ } -> (
-        let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,x.location) bindings expr in
+        let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,decl.location) partials.bindings expr in
         let inner_def_map = merge_defs new_inner_def_map inner_def_map in
-        let def = make_v_def_option_type bindings var ascr var.location expr.location in
+        let def = make_v_def_option_type partials.bindings var ascr var.location expr.location in
         let (i,top_def_map) = add_shadowing_def (i,var.wrap_content) def top_def_map in
-        ( i, top_def_map, inner_def_map, scopes , sub_prg' )
+        ( i, top_def_map, inner_def_map, scopes , partials )
       )
       | Declaration_type {type_binder; type_expr} -> (
-        let def = make_t_def (get_binder_name type_binder) x.location type_expr in
+        let def = make_t_def (get_binder_name type_binder) decl.location type_expr in
         let (i,top_def_map) = add_shadowing_def (i,type_binder) def top_def_map in
-        ( i, top_def_map, inner_def_map, scopes, sub_prg' )
+        ( i, top_def_map, inner_def_map, scopes, partials )
       )
       | Declaration_module {module_binder; module_} -> (
         let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration i module_ in
-        let def = make_m_def module_binder x.location new_outer_def_map in
+        let def = make_m_def module_binder decl.location new_outer_def_map in
         let top_def_map = Def_map.add module_binder def top_def_map in
-        ( i, top_def_map, inner_def_map, scopes, sub_prg' )
+        ( i, top_def_map, inner_def_map, scopes, partials )
       )
       | Module_alias {alias; binders} -> (
         let env_opt = Def_map.find_opt (fst binders) top_def_map in
@@ -165,11 +168,10 @@ let scopes ~add_warning : with_types:bool -> options:Compiler_options.t -> Ast_c
           | Some def -> Def_map.add alias def top_def_map
           | None -> top_def_map
         in
-        ( i, top_def_map, inner_def_map, scopes, sub_prg' )
+        ( i, top_def_map, inner_def_map, scopes, partials )
       )
     in
-
-    let init = { m = [] ; bindings = Bindings_map.empty } in
+    let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in
     List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg 
   in
   let (_,top_d,inner_d,s,_) = declaration 0 core_prg in
