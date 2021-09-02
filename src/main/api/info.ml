@@ -27,9 +27,9 @@ let get_scope source_file syntax infer protocol_version libs display_format with
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format Scopes.Formatter.scope_format get_warnings @@
       fun ~raise ->
-      let init_env   = Helpers.get_initial_env ~raise protocol_version in
-      let options       = Compiler_options.make ~infer ~init_env ~libs () in
+      let init_env   = Helpers.get_initial_env ~raise ~test_env:true protocol_version in
+      let options = Compiler_options.make ~infer ~init_env ~libs () in
       let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
       let core_prg = Compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit source_file in
-      Scopes.scopes ~add_warning ~with_types ~options core_prg
+      Scopes.scopes ~options ~with_types core_prg

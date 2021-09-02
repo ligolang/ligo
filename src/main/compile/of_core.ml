@@ -30,7 +30,6 @@ let compile_expression ~raise ?(infer = false) ~(env : Ast_typed.environment) (e
       e
     | false -> e
   in
-  (* let inferred = trace ~raise self_Ast_core_tracer @@ Self_Ast_core.all_expression inferred in *)
   let e,typed = trace ~raise checking_tracer @@ Checking.type_expression env inferred in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
   (applied, e)
