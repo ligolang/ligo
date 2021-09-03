@@ -140,7 +140,7 @@ module Command = struct
       let amts = trace_option ~raise (corner_case ()) @@ LC.get_list amts in
       let amts = List.map ~f:
         (fun x ->
-          let x = trace_option ~raise (corner_case ()) @@ LC.get_nat x in
+          let x = trace_option ~raise (corner_case ()) @@ LC.get_mutez x in
           (Z.to_int64 x) )
         amts
       in

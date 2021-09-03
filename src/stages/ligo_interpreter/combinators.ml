@@ -66,14 +66,14 @@ let get_michelson_expr : value -> (unit Tezos_utils.Michelson.michelson * unit T
   | V_Michelson ( Ty_code x ) -> Some x
   | _ -> None
 
-(* let get_michelson_subst : value -> (unit Tezos_utils.Michelson.michelson * Ast_core.expression) option =
-  function
-  | V_Michelson ( Subst_code x ) -> Some x
-  | _ -> None *)
-
 let get_nat : value -> Z.t option =
   function
   | V_Ct ( C_nat x) -> Some x
+  | _ -> None
+
+let get_mutez : value -> Z.t option =
+  function
+  | V_Ct ( C_mutez x) -> Some x
   | _ -> None
 
 let get_nat_option : value -> z option option =

@@ -52,8 +52,8 @@ let test2 =
   
   // You can change the default behavior by reseting the state:
   let number_of_account = 4n in
-  let overide_default_amounts = [ 100n ; 100n ] in // the [i]th element of the list overwrite default balance of the [i]th account 
-  let () = Test.reset_state number_of_account ([1n;2n]: nat list) in
+  let overide_default_amounts = [ 8000tez ; 100mutez ] in // the [i]th element of the list overwrite default balance of the [i]th account 
+  let () = Test.reset_state number_of_account overide_default_amounts in
   // And by setting the source in between calls to `Test.transfer` or `Test.originate`
   let bsa0 = (Test.nth_bootstrap_account 0) in
   let bsa1 = (Test.nth_bootstrap_account 1) in
@@ -65,8 +65,8 @@ let test2 =
   let tz = fun (n:nat) ->
     Test.run (fun (n:nat) -> n * 1mutez) n
   in
-  let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa0)) (tz 1n)) in
-  let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa1)) (tz 2n)) in
+  let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa0)) (tz 8000_000_000n)) in
+  let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa1)) (tz 100n)) in
   let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa2)) (tz 4000000000000n)) in
   let () = assert (Test.michelson_equal (Test.compile_value (Test.get_balance bsa3)) (tz 4000000000000n)) in
   ()

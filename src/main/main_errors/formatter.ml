@@ -173,7 +173,11 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_self_mini_c e -> Self_mini_c.Errors.error_ppformat ~display_format f e
     | `Main_spilling e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_stacking e -> Stacking.Errors.error_ppformat ~display_format f e
-
+    
+    | `Main_interpret_not_enough_initial_accounts (loc,max) ->
+      Format.fprintf f "@[<hv>%a@. baker account initial balance must at least reach %a tez @]"
+        Snippet.pp loc
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.pp max
     | `Main_interpret_test_entry_not_found s ->
       Format.fprintf f "Test entry '%s' not found" s
     | `Main_interpret_target_lang_error (loc, [], errs) ->
@@ -414,6 +418,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_interpret_generic _
   | `Main_interpret_literal _
   | `Main_interpret_modules_not_supported _
+  | `Main_interpret_not_enough_initial_accounts _
    -> `Null
 
   | `Main_decompile_michelson e -> Stacking.Errors.error_jsonformat e

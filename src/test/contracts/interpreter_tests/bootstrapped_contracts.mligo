@@ -24,7 +24,7 @@ let u = Test.bootstrap_contract 100mutez main { fellow = addr1; state = 12; }
 (* Init contract in addr1 pointing to addr0 *)
 let u = Test.bootstrap_contract 100mutez main { fellow = addr0; state = 9; }
 
-let u = Test.reset_state 4n ([] : nat list)
+let u = Test.reset_state 4n ([] : tez list)
 
 let test_transfer =
   let () = Test.log "Initial states:" in

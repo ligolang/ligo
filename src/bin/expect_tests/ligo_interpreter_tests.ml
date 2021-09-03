@@ -195,15 +195,32 @@ let%expect_test _ =
     Failed assertion |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "test" ; bad_test "bad_balances_reset.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
+      1 | let test = Test.reset_state 2n [4000tez;4000tez]
+
+     baker account initial balance must at least reach 8000 tez |}]
+
+let%expect_test _ =
+(* TODO: this error is not ideal, we should trace that*)
   run_ligo_bad [ "test" ; bad_test "test_failure3.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 2, characters 11-38:
-      1 | let test =
-      2 |   let ut = Test.reset_state 2n [1n;1n] in
-      3 |   let f = (fun (_ : (unit * unit)) -> ()) in
+    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 2-26:
+      2 |   let f = (fun (_ : (unit * unit)) -> ()) in
+      3 |   Test.originate f () 0tez
 
     An uncaught error occured:
-    Insufficient tokens in initial accounts to create one roll |}]
+    Ill typed contract:
+      1: { parameter unit ; storage unit ; code { DROP ; PUSH unit Unit } }
+    At line 1 characters 39 to 64,
+      wrong stack type at end of body:
+      - expected return stack type:
+        [ pair (list operation) unit ],
+      - actual stack type:
+        [ unit ].
+    Type unit is not compatible with type pair (list operation) unit.
+    Type unit is not compatible with type pair (list operation) unit. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "test" ; bad_test "test_trace.mligo" ] ;

@@ -433,7 +433,7 @@ the bootstrap addresses later)
 
 ```cameligo test-ligo group=rmv_bal_test
 #include "./gitlab-pages/docs/advanced/src/remove-balance.mligo"
-let _u = Test.reset_state 5n ([] : nat list)
+let _u = Test.reset_state 5n ([] : tez list)
 ```
 
 </Syntax>
@@ -441,7 +441,7 @@ let _u = Test.reset_state 5n ([] : nat list)
 
 ```pascaligo test-ligo group=rmv_bal_test
 #include "./gitlab-pages/docs/advanced/src/remove-balance.ligo"
-const _u = Test.reset_state (5n, (list [] : list (nat)))
+const _u = Test.reset_state (5n, (list [] : list (tez)))
 ```
 
 </Syntax>
@@ -449,7 +449,7 @@ const _u = Test.reset_state (5n, (list [] : list (nat)))
 
 ```reasonligo test-ligo group=rmv_bal_test
 #include "./gitlab-pages/docs/advanced/src/remove-balance.religo"
-let _u = Test.reset_state (5n, ([] : list(nat)));
+let _u = Test.reset_state (5n, ([] : list(tez)));
 ```
 
 </Syntax>
@@ -457,7 +457,7 @@ let _u = Test.reset_state (5n, ([] : list(nat)));
 
 ```jsligo test-ligo group=rmv_bal_test
 #include "./gitlab-pages/docs/advanced/src/remove-balance.jsligo"
-let x = Test.reset_state ( 5 as nat, list([]) as list <nat> );
+let x = Test.reset_state ( 5 as nat, list([]) as list <tez> );
 ```
 
 </Syntax>
