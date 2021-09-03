@@ -729,6 +729,13 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       aux hd @@ tl
   )
 
+  | EAssign (EVar {value; region} (* as e1*), outer_region, (EAssign (EVar _ as ev, _, _) as e2)) ->
+    let loc = Location.lift region in
+    let outer_loc = Location.lift outer_region in
+    let var = compile_expression ~raise ev in
+    let e2 = compile_expression ~raise e2 in
+    let e1 = e_assign ~loc:outer_loc (Location.wrap ~loc @@ Var.of_name value) [] var in
+    e_sequence e2 e1
   | EAssign (EVar {value; region} (* as e1*), outer_region, e2) ->
     (*TODO : weird, warning (e1 unused) poped here during rebase *)
     (* let e1 = compile_expression ~raise e1 in *)
@@ -1086,7 +1093,15 @@ and compile_statement ~raise : CST.statement -> statement_result = fun statement
       compile_object_let_destructuring ~raise ~const matchee o
     | _ ->
       let lst = compile_let_binding ~raise ~const attributes let_rhs lhs_type binders region in
-      let aux (_name,binder,attr,rhs) expr = e_let_in ~loc: (Location.lift region) binder attr rhs expr in
+      let aux (_name,binder,attr,rhs) expr = 
+        match rhs.expression_content with  
+          E_assign {variable; _} -> 
+            let var = {expression_content = E_variable variable; location = rhs.location} in
+            let e2 = e_let_in ~loc: (Location.lift region) binder attr var expr in
+            e_sequence rhs e2
+        | _ -> 
+          e_let_in ~loc: (Location.lift region) binder attr rhs expr 
+        in
       fun init -> List.fold_right ~f:aux ~init lst
   in
   let rec initializers ~const (result: expression -> expression) (rem: (Region.t * CST.val_binding Region.reg) list) : expression -> expression =
