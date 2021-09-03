@@ -642,10 +642,14 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
       eval_ligo (let_result) calltrace env
     )
-    | E_mod_in    _ -> fail @@
-                         Errors.modules_not_supported term.location
-    | E_mod_alias _ -> fail @@
-                         Errors.modules_not_supported term.location
+    | E_mod_in {module_binder; rhs; let_result} ->
+       let>> state = Get_state () in
+       let (module_env, state) = eval_module ~raise (rhs, state) in
+       let>> () = Put_state state in
+       eval_ligo (let_result) calltrace (Env.extend_mod env (module_binder, module_env))
+    | E_mod_alias {alias;binders;result} ->
+       let module_env = resolve_module_path ~raise ~loc:term.location binders env in
+       eval_ligo (result) calltrace (Env.extend_mod env (alias, module_env))
     | E_literal l ->
       eval_literal l
     | E_variable var ->
@@ -770,14 +774,39 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
         return @@ V_Ligo (language , exp_as_string)
       | _ -> failwith "impossible"
     )
-    | E_module_accessor {module_name=_; element=_} ->
-       fail @@
-         Errors.modules_not_supported term.location
+    | E_module_accessor _ ->
+       let rec aux env e = match e.expression_content with
+         | E_variable var ->
+            let* value_expr = monad_option (Errors.generic_error term.location "Error resolving module path: variable not found")
+                               (List.Assoc.find env.expression_env ~equal:(Location.equal_content ~equal:Var.equal) var) in
+            return value_expr.eval_term
+         | E_record_accessor {record = { expression_content = E_variable record }; path} ->
+            let* value_rcrd = monad_option (Errors.generic_error term.location "Error resolving module path: record not found")
+                               (List.Assoc.find env.expression_env ~equal:(Location.equal_content ~equal:Var.equal) record) in
+            (match value_rcrd.eval_term with
+             | V_Record recmap ->
+                let a = LMap.find path recmap in
+                return a
+             | _ -> raise.raise @@ Errors.generic_error term.location "Error resolving module path")
+         | E_module_accessor {module_name;element} ->
+            let module_env =  match List.Assoc.find env.module_env ~equal:String.equal module_name with
+              | None -> raise.raise @@ Errors.generic_error term.location "Error resolving module path"
+              | Some e -> e in
+            aux module_env element
+         | _ -> raise.raise @@ Errors.generic_error term.location "Unsupported module path"
+       in aux env term
 
-let try_eval ~raise expr env state r = Monad.eval ~raise (eval_ligo ~raise expr [] env) state r
+and try_eval ~raise expr env state r = Monad.eval ~raise (eval_ligo ~raise expr [] env) state r
 
-let eval ~raise : Ast_typed.module_fully_typed -> env * Tezos_state.context =
-  fun (Module_Fully_Typed prg) ->
+and resolve_module_path ~raise ~loc binders env =
+  let aux (e : env) (m : module_variable) =
+    match List.Assoc.find e.module_env ~equal:String.equal m with
+    | None -> raise.raise @@ Errors.generic_error loc "Error resolving module path"
+    | Some e -> e in
+  List.Ne.fold_left aux env binders
+
+and eval_module ~raise : Ast_typed.module_fully_typed * Tezos_state.context -> env * Tezos_state.context =
+  fun (Module_Fully_Typed prg, initial_state) ->
     let aux : env * Tezos_state.context -> declaration location_wrap -> env * Tezos_state.context =
       fun (top_env,state) el ->
         match Location.unwrap el with
@@ -787,25 +816,23 @@ let eval ~raise : Ast_typed.module_fully_typed -> env * Tezos_state.context =
           let (v,state) = try_eval ~raise expr top_env state None in
           let top_env' = Env.extend ~ast_type:expr.type_expression top_env (binder, v) in
           (top_env',state)
-        | Ast_typed.Declaration_module {module_binder; module_=_} ->
-          let module_env =
-            raise.raise @@
-              Errors.modules_not_supported el.location
-          in
-          let top_env' = Env.extend top_env (Location.wrap @@ Var.of_name module_binder, module_env) in
+        | Ast_typed.Declaration_module {module_binder; module_=m} ->
+          let (module_env, state) = eval_module ~raise (m, state) in
+          let top_env' = Env.extend_mod top_env (module_binder, module_env) in
           (top_env',state)
-        | Ast_typed.Module_alias _ ->
-           raise.raise @@
-             Errors.modules_not_supported el.location
+        | Ast_typed.Module_alias {alias;binders} ->
+          let module_env = resolve_module_path ~raise ~loc:el.location binders top_env in
+          let top_env' = Env.extend_mod top_env (alias, module_env) in
+          (top_env',state)
     in
-    let initial_state = Tezos_state.init_ctxt ~raise [] in
     let (env,state) = List.fold ~f:aux ~init:(Env.empty_env, initial_state) prg in
     (env, state)
 
 let eval_test ~raise : Ast_typed.module_fully_typed -> (string * value) list =
   fun prg ->
-    let (env, _state) = eval ~raise prg in
-    let v = Env.to_kv_list_rev env in
+    let initial_state = Tezos_state.init_ctxt ~raise [] in
+    let (env, _state) = eval_module ~raise (prg, initial_state) in
+    let v = Env.to_kv_list_rev env.expression_env in
     let aux : expression_variable * value_expr -> (string * value) option = fun (ev, v) ->
       let ev = Location.unwrap ev in
       if not (Var.is_generated ev) && (Base.String.is_prefix (Var.to_name ev) ~prefix:"test") then

@@ -265,7 +265,8 @@ let rec val_to_ast ~raise ~loc ?(toplevel = true) : Ligo_interpreter.Types.value
 and make_ast_func ~raise ?(toplevel = true) ?name env arg body orig =
   let open Ast_typed in
   let fv = Self_ast_typed.Helpers.Free_variables.expression body in
-  let env = make_subst_ast_env_exp ~raise ~toplevel env fv in
+  let fvm = Self_ast_typed.Helpers.Free_module_variables.expression body in
+  let env = make_subst_ast_env_exp ~raise ~toplevel env fv fvm in
   let env = List.rev env in
   let typed_exp' = add_ast_env ?name:name env arg body in
   let lambda = { result=typed_exp' ; binder=arg} in
@@ -337,10 +338,13 @@ and compile_simple_value ~raise ?ctxt ~loc ?(toplevel = true) : Ligo_interpreter
   let expr_ty = clean_location_with () compiled_exp.expr_ty in
   (expr, expr_ty, typed_exp.type_expression)
 
-and make_subst_ast_env_exp ~raise ?(toplevel = true) env fv =
+and make_subst_ast_env_exp ~raise ?(toplevel = true) env fv fvm =
   let open Ligo_interpreter.Types in
   let lst = if toplevel then
-               (List.rev env)
+              if List.is_empty fvm then
+                (List.rev env.expression_env)
+              else
+                raise.raise (Errors.generic_error Location.generated "Reflection of free module variables not supported yet")
              else
                [] in
   let op (evl, v : _ * Ligo_interpreter.Types.value_expr) (l,fv) =
