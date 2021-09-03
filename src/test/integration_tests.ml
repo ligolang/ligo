@@ -3329,6 +3329,10 @@ let tuple_assignment_jsligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/tuple_assignment.jsligo" in
   expect_eq ~raise program "tuple_assignment" (e_unit ()) (e_tuple [e_int 2; e_int 5])  
   
+let chained_assignment_jsligo ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/chained_assignment.jsligo" in
+  expect_eq ~raise program "bar" (e_unit ()) (e_int 9) 
+
 let main = test_suite "Integration (End to End)"
   [
     test_w "simple1" simple1 ;
@@ -3608,4 +3612,5 @@ let main = test_suite "Integration (End to End)"
     test_w "shadowing (mligo)" shadowing;
     test_w "if no else (jsligo)" if_no_else_jsligo;
     test_w "tuple_assignment (jsligo)" tuple_assignment_jsligo;
+    test_w "chained_assignment (jsligo)" chained_assignment_jsligo;
   ]
