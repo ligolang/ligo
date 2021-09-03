@@ -5,7 +5,20 @@ module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
 module Int = Int_repr_copied
 
 type mutation = Location.t * Ast_typed.expression
-type env = (expression_variable * value_expr) list
+type env = {
+    expression_env: (expression_variable * value_expr) list;
+    module_env: (module_variable * env) list
+}
+
+and value_mod_decl_constant = {
+    binder : expression_variable ;
+    expr : value
+  }
+
+and value_mod_decl =
+  | Declaration_constant of value_mod_decl_constant
+
+and value_mod = value_mod_decl list
 
 and func_val = {
     rec_name : expression_variable option ;

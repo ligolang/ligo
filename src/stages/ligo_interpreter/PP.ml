@@ -64,6 +64,6 @@ let pp_env : Format.formatter -> env -> unit = fun ppf env ->
   let aux : Format.formatter -> expression_variable * value_expr -> unit = fun ppf (var,v) ->
     Format.fprintf ppf "%a -> %a" Var.pp var.wrap_content pp_value_expr v in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
-    (List.length env)
+    (List.length env.expression_env)
     (list_sep aux (tag "@ "))
-    env
+    env.expression_env

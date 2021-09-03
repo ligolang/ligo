@@ -29,6 +29,8 @@ module Command = struct
     | Nth_bootstrap_contract : int -> Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t t
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression * Ast_typed.type_expression) t
     | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
+    | Get_state : unit -> Tezos_state.context t
+    | Put_state : Tezos_state.context -> unit t
     | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
     | Get_storage : Location.t * Ligo_interpreter.Types.calltrace * LT.value * Ast_typed.type_expression -> Ast_typed.expression t
@@ -147,6 +149,10 @@ module Command = struct
       let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
       let ctxt = Tezos_state.init_ctxt ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n) (List.rev ctxt.next_bootstrapped_contracts) in
       ((),ctxt)
+    | Get_state () ->
+      (ctxt,ctxt)
+    | Put_state (ctxt) ->
+      ((),ctxt)
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) -> (
       let x = Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt in
       match x with
@@ -220,7 +226,8 @@ module Command = struct
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
       let fv = Self_ast_typed.Helpers.Free_variables.expression f.orig_lambda in
-      let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true f.env fv in
+      let fvm = Self_ast_typed.Helpers.Free_module_variables.expression f.orig_lambda in
+      let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true f.env fv fvm in
       let in_ty, out_ty = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@ Ast_typed.get_t_function f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
       let _ = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.expression_obj func_typed_exp in
@@ -241,7 +248,8 @@ module Command = struct
        let compiled_expr, compiled_expr_ty = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
             let fv = Self_ast_typed.Helpers.Free_variables.expression orig_lambda in
-            let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true env fv in
+            let fvm = Self_ast_typed.Helpers.Free_module_variables.expression orig_lambda in
+            let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise ~toplevel:true env fv fvm in
             let in_ty, out_ty =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_typed.get_t_function orig_lambda.type_expression in
