@@ -61,6 +61,7 @@ type typer_error = [
   | `Typer_expected_unit of Location.t * Ast_typed.type_expression
   | `Typer_not_matching of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_not_annotated of Location.t
+  | `Typer_contract_not_annotated of Location.t
   | `Typer_bad_substraction of Location.t
   | `Typer_wrong_size of Location.t * Ast_typed.type_expression
   | `Typer_wrong_neg of Location.t * Ast_typed.type_expression
@@ -157,6 +158,7 @@ let expected_unit (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expect
 let expected_ascription (t:Ast_core.expression) = `Typer_expected_ascription t
 let not_matching (loc:Location.t) (t1:Ast_typed.type_expression) (t2:Ast_typed.type_expression) = `Typer_not_matching (loc,t1,t2)
 let not_annotated (loc: Location.t) = `Typer_not_annotated loc
+let contract_not_annotated (loc: Location.t) = `Typer_contract_not_annotated loc
 let bad_subtraction (loc:Location.t) = `Typer_bad_substraction loc
 let wrong_size (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_wrong_size (loc,t)
 let wrong_neg (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_wrong_neg (loc,t)
@@ -352,6 +354,10 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_record_access_tracer (_,err) -> error_ppformat ~display_format f err
     | `Typer_not_annotated l ->
       Format.fprintf f "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
+        Snippet.pp l
+    | `Typer_contract_not_annotated l ->
+      Format.fprintf f "@[<hv>%a@.Can't infer the complete type of this value, please add a type annotation.\
+        @.The value has type 'a contract option, here 'a can't be inferred@]"
         Snippet.pp l
     | `Typer_bad_substraction loc ->
       Format.fprintf f "@[<hv>%a@.Invalid subtraction.\
@@ -1224,6 +1230,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_not_annotated _ ->
     let message = `String "not annotated" in
+    let content = `Assoc [
+      ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_contract_not_annotated _ ->
+    let message = `String "not annotated contract" in
     let content = `Assoc [
       ("message", message);
     ] in
