@@ -342,6 +342,7 @@ let e_application lamb args : expression_content = E_application {lamb;args}
 let e_raw_code language code : expression_content = E_raw_code { language ; code }
 let e_variable v : expression_content = E_variable v
 let e_let_in let_binder rhs let_result inline = E_let_in { let_binder ; rhs ; let_result; inline }
+let e_mod_in module_binder rhs let_result = E_mod_in { module_binder ; rhs ; let_result }
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
 
@@ -380,6 +381,7 @@ let e_a_application a b t = make_e (e_application a b) t
 let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi ~f:(fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
+let e_a_mod_in module_binder rhs let_result = make_e (e_mod_in module_binder rhs let_result) (get_type_expression let_result)
 let e_a_raw_code l c t = make_e (e_raw_code l c) t
 let e_a_nil t = make_e (e_nil ()) (t_list t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)

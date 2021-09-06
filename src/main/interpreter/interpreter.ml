@@ -172,8 +172,9 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
         | Some (Some v) -> return @@ v_some v
         | Some None -> return @@ v_none ()
         | None ->
+           let* ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
            let* key_ty, val_ty =
-             monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map (List.nth_exn types 1) in
+             monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map ty in
            let>> typed_exp = Get_big_map (loc, calltrace, key_ty, val_ty, k, id) in
            let* v = eval_ligo typed_exp calltrace env in
            return @@ v
@@ -250,14 +251,14 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
     | ( C_AND    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let>> v = Int_logand (a',b') in return_ct @@ C_nat v
     | ( C_OR     , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let>> v = Int_logor (a',b') in return_ct @@ C_nat v
     | ( C_XOR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> let>> v = Int_logxor (a',b') in return_ct @@ C_nat v
-    | ( C_LSL    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> 
+    | ( C_LSL    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) ->
       let>> v = Int_shift_left (a',b') in
       begin
         match v with
         | Some v -> return_ct @@ C_nat v
         | None -> fail @@ Errors.meta_lang_eval loc calltrace "Overflow"
       end
-    | ( C_LSR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> 
+    | ( C_LSR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) ->
       let>> v = Int_shift_right (a',b') in
       begin
         match v with
@@ -266,19 +267,23 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
       end
     | ( C_LIST_EMPTY, []) -> return @@ V_List ([])
     | ( C_LIST_MAP , [ V_Func_val {arg_binder ; body ; env}  ; V_List (elts) ] ) ->
+      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ Ast_typed.get_t_list lst_ty in
       let* elts =
         Monad.bind_map_list
           (fun elt ->
-            let env' = Env.extend env (arg_binder,elt) in
+            let env' = Env.extend env arg_binder (ty,elt) in
             eval_ligo body calltrace env')
           elts
       in
       return (V_List elts)
-    | ( C_MAP_MAP , [ V_Func_val {arg_binder ; body ; env}  ; V_Map (elts) ] ) ->
+    | ( C_MAP_MAP , [ V_Func_val {arg_binder ; body ; env }  ; V_Map (elts) ] ) ->
+      let* map_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* k_ty,v_ty = monad_option (Errors.generic_error map_ty.location "Expected map type") @@ Ast_typed.get_t_map map_ty in
       let* elts =
         Monad.bind_map_list
           (fun (k,v) ->
-            let env' = Env.extend env (arg_binder,v_pair (k,v)) in
+            let env' = Env.extend env arg_binder ((Ast_typed.t_pair k_ty v_ty),v_pair (k,v)) in
             let* v' = eval_ligo body calltrace env' in
             return @@ (k,v')
           )
@@ -286,22 +291,27 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
       in
       return (V_Map elts)
     | ( C_LIST_ITER , [ V_Func_val {arg_binder ; body ; env}  ; V_List (elts) ] ) ->
+      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ Ast_typed.get_t_list lst_ty in
       Monad.bind_fold_list
         (fun _ elt ->
-          let env' = Env.extend env (arg_binder,elt) in
+          let env' = Env.extend env arg_binder (ty,elt) in
           eval_ligo body calltrace env'
         )
         (V_Ct C_unit) elts
     | ( C_MAP_ITER , [ V_Func_val {arg_binder ; body ; env}  ; V_Map (elts) ] ) ->
+      let* map_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* k_ty,v_ty = monad_option (Errors.generic_error map_ty.location "Expected map type") @@ Ast_typed.get_t_map map_ty in
       Monad.bind_fold_list
         (fun _ kv ->
-          let env' = Env.extend env (arg_binder,v_pair kv) in
+          let env' = Env.extend env arg_binder ((Ast_typed.t_pair k_ty v_ty),v_pair kv) in
           eval_ligo body calltrace env'
         )
         (V_Ct C_unit) elts
     | ( C_FOLD_WHILE , [ V_Func_val {arg_binder ; body ; env}  ; init ] ) -> (
+      let* arg_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
       let rec aux b el =
-        let env' = Env.extend env (arg_binder, el) in
+        let env' = Env.extend env arg_binder (arg_ty, el) in
         let* res = eval_ligo body calltrace env' in
         let (b',el') = try Option.value_exn (extract_fold_while_result res) with _ -> (failwith "bad pair") in
         if b then aux b' el' else return el' in
@@ -312,10 +322,13 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
       (*TODO : allign with tezos*)
       return @@ V_Ct (C_string (String.sub s (Z.to_int st) (Z.to_int ed)))
     | ( C_LIST_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_List elts ; init ] ) ->
+      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ Ast_typed.get_t_list lst_ty in
       Monad.bind_fold_list
         (fun prev elt ->
           let fold_args = v_pair (prev,elt) in
-          let env' = Env.extend env (arg_binder,  fold_args) in
+          let env' = Env.extend env arg_binder ((Ast_typed.t_pair acc_ty ty), fold_args) in
           eval_ligo body calltrace env'
         )
         init elts
@@ -324,10 +337,13 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
        return @@ V_BigMap (n, [])
     | ( C_MAP_EMPTY , []) -> return @@ V_Map ([])
     | ( C_MAP_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Map kvs ; init ] ) ->
+      let* map_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let* k_ty,v_ty = monad_option (Errors.generic_error map_ty.location "Expected map type") @@ Ast_typed.get_t_map map_ty in
       Monad.bind_fold_list
         (fun prev kv ->
           let fold_args = v_pair (prev, v_pair kv) in
-          let env' = Env.extend env (arg_binder,  fold_args) in
+          let env' = Env.extend env arg_binder (Ast_typed.(t_pair acc_ty (t_pair k_ty v_ty)),  fold_args) in
           eval_ligo body calltrace env'
         )
         init kvs
@@ -337,8 +353,9 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
             | Some (Some _) -> return @@ v_bool true
             | Some None -> return @@ v_bool false
             | None ->
+               let* ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
                let* key_ty, val_ty =
-                 monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map (List.nth_exn types 1) in
+                 monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map ty in
                let>> b = Mem_big_map (loc, calltrace, key_ty, val_ty, k, m) in
                return @@ v_bool b
           )
@@ -359,17 +376,22 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.dedup_and_sort ~compare (v::l))
     | ( C_SET_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Set elts ; init ] ) ->
+      let* set_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let* ty = monad_option (Errors.generic_error set_ty.location "Expected set type") @@ Ast_typed.get_t_set set_ty in
       Monad.bind_fold_list
         (fun prev elt ->
           let fold_args = v_pair (prev,elt) in
-          let env' = Env.extend env (arg_binder, fold_args) in
+          let env' = Env.extend env arg_binder (Ast_typed.(t_pair acc_ty ty), fold_args) in
           eval_ligo body calltrace env'
         )
         init elts
     | ( C_SET_ITER , [ V_Func_val {arg_binder ; body ; env}  ; V_Set (elts) ] ) ->
+      let* set_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* ty = monad_option (Errors.generic_error set_ty.location "Expected set type") @@ Ast_typed.get_t_set set_ty in
       Monad.bind_fold_list
         (fun _ elt ->
-          let env' = Env.extend env (arg_binder,elt) in
+          let env' = Env.extend env arg_binder (ty,elt) in
           eval_ligo body calltrace env'
         )
         (V_Ct C_unit) elts
@@ -426,8 +448,8 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
       let () = Format.printf "%a\n" Ligo_interpreter.PP.pp_value v in
       return_ct C_unit
     | ( C_TEST_BOOTSTRAP_CONTRACT , [ V_Ct (C_mutez z) ; contract ; storage ] ) ->
-       let contract_ty = List.nth_exn types 1 in
-       let storage_ty = List.nth_exn types 2 in
+       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+       let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
        let>> code = Compile_contract (loc, contract, contract_ty) in
        let>> storage = Eval (loc, storage, storage_ty) in
        let>> () = Bootstrap_contract ((Z.to_int z), code, storage, contract_ty) in
@@ -447,7 +469,7 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
       return x
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
-      let value_ty = List.nth_exn types 1 in
+      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
       let v = Mutation.mutate_some_value ~raise loc n v value_ty in
       match v with
       | None ->
@@ -457,18 +479,21 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
          return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
     | ( C_TEST_MUTATION_TEST , [ v; tester ] ) -> (
       let* () = check_value v in
-      let value_ty = List.nth_exn types 0 in
+      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
       let l = Mutation.mutate_all_value ~raise loc v value_ty in
       let aux : Ast_typed.expression * 'a -> (value * 'a) option t = fun (e, m) ->
         let* v = eval_ligo e calltrace env in
         let r = match tester with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-            let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
-            let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
+            let* in_ty, _ = monad_option (Errors.generic_error loc "Expected function type") @@
+                             Ast_typed.get_t_function orig_lambda.type_expression in
+            let f_env' = Env.extend env arg_binder (in_ty, v) in
             eval_ligo body (loc :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
-            let f_env' = Env.extend env (arg_binder, v) in
-            let f_env'' = Env.extend f_env' (fun_name, tester) in
+          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
+            let* in_ty, _ = monad_option (Errors.generic_error loc "Expected function type") @@
+                              Ast_typed.get_t_function orig_lambda.type_expression in
+            let f_env' = Env.extend env arg_binder (in_ty, v) in
+            let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, tester) in
             eval_ligo body (loc :: calltrace) f_env''
           | _ -> raise.raise @@ Errors.generic_error loc "Trying to apply on something that is not a function?"
         in
@@ -481,18 +506,19 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
     )
     | ( C_TEST_MUTATION_TEST_ALL , [ v; tester ] ) ->
       let* () = check_value v in
-      let value_ty = List.nth_exn types 0 in
+      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
       let l = Mutation.mutate_all_value ~raise loc v value_ty in
       let* mutations = bind_map_list (fun (e, m) ->
         let* v = eval_ligo e calltrace env in
         let r =  match tester with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
              let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
-             let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, v) in
+             let f_env' = Env.extend env arg_binder (in_ty, v) in
              eval_ligo body (loc :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
-             let f_env' = Env.extend env (arg_binder, v) in
-             let f_env'' = Env.extend f_env' (fun_name, tester) in
+          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
+             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
+             let f_env' = Env.extend env arg_binder (in_ty, v) in
+             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, tester) in
              eval_ligo body (loc :: calltrace) f_env''
           | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
         Monad.try_or (let* v = r in return (Some (v, m))) (return None)) l in
@@ -516,11 +542,11 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
        | Sys_error _ ->
           return (v_none ()))
     | ( C_TEST_TO_CONTRACT , [ addr ] ) ->
-       let contract_ty = List.nth_exn types 0 in
+       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
        let>> code = To_contract (loc, addr, None, contract_ty) in
        return code
     | ( C_TEST_TO_ENTRYPOINT , [ V_Ct (C_string ent) ; addr ] ) ->
-       let contract_ty = List.nth_exn types 0 in
+       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
        let>> code = To_contract (loc, addr, Some ent, contract_ty) in
        return code
     | ( C_TEST_TO_TYPED_ADDRESS , [ V_Ct (C_contract { address; _ }) ] ) ->
@@ -535,11 +561,11 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
     | ( C_TEST_EVAL , [ v ] )
     | ( C_TEST_COMPILE_META_VALUE , [ v ] ) ->
        let* () = check_value v in
-       let value_ty = List.nth_exn types 0 in
+       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
        let>> code = Eval (loc, v, value_ty) in
        return code
     | ( C_TEST_GET_STORAGE , [ addr ] ) ->
-       let typed_address_ty = List.nth_exn types 0 in
+       let* typed_address_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
        let storage_ty = match Ast_typed.get_t_typed_address typed_address_ty with
          | Some (_, storage_ty) -> storage_ty
          | _ -> failwith "Expecting typed_address" in
@@ -547,15 +573,15 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
        let* value = eval_ligo typed_exp calltrace env in
        return value
     | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
-       let contract_ty = List.nth_exn types 0 in
-       let storage_ty = List.nth_exn types 1 in
+       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
+       let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let>> code = Compile_contract (loc, contract, contract_ty) in
        let>> storage = Eval (loc, storage, storage_ty) in
        let>> size = Get_size code in
        let>> addr  = Inject_script (loc, calltrace, code, storage, amt) in
        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
     | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , [ (V_Ct (C_contract contract)) ; param ; V_Ct ( C_mutez amt ) ] ) ->
-       let param_ty = List.nth_exn types 1 in
+       let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let>> param = Eval (loc, param, param_ty) in
        (match param with
        | V_Michelson (Ty_code (param,_,_)) ->
@@ -565,7 +591,7 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
                      | Some e -> fail @@ Errors.target_lang_error loc calltrace e)
        | _ -> fail @@ Errors.generic_error loc "Error typing param")
     | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , [ (V_Ct (C_contract contract)) ; param; V_Ct ( C_mutez amt ) ] ) ->
-       let param_ty = List.nth_exn types 1 in
+       let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let>> param = Eval (loc, param, param_ty) in
        (match param with
        | V_Michelson (Ty_code (param,_,_)) ->
@@ -625,11 +651,12 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
         match f' with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
-            let f_env' = Env.extend ~ast_type:in_ty env (arg_binder, args') in
+            let f_env' = Env.extend env arg_binder (in_ty, args') in
             eval_ligo body (term.location :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; _} ->
-            let f_env' = Env.extend env (arg_binder, args') in
-            let f_env'' = Env.extend f_env' (fun_name, f') in
+          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
+            let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
+            let f_env' = Env.extend env arg_binder (in_ty, args') in
+            let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
             eval_ligo body (term.location :: calltrace) f_env''
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
@@ -637,7 +664,7 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder ; body=result ; env}
     | E_let_in {let_binder ; rhs; let_result} -> (
       let* rhs' = eval_ligo rhs calltrace env in
-      eval_ligo (let_result) calltrace (Env.extend ~ast_type:rhs.type_expression env (let_binder,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env let_binder (rhs.type_expression,rhs'))
     )
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
       eval_ligo (let_result) calltrace env
@@ -646,10 +673,10 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
        let>> state = Get_state () in
        let (module_env, state) = eval_module ~raise (rhs, state) in
        let>> () = Put_state state in
-       eval_ligo (let_result) calltrace (Env.extend_mod env (module_binder, module_env))
+       eval_ligo (let_result) calltrace (Env.extend_mod env module_binder module_env)
     | E_mod_alias {alias;binders;result} ->
        let module_env = resolve_module_path ~raise ~loc:term.location binders env in
-       eval_ligo (result) calltrace (Env.extend_mod env (alias, module_env))
+       eval_ligo (result) calltrace (Env.extend_mod env alias module_env)
     | E_literal l ->
       eval_literal l
     | E_variable var ->
@@ -717,7 +744,7 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
         let hd = List.hd_exn lst in
         let tl = V_List (List.tl_exn lst) in
         let proj = v_pair (hd,tl) in
-        let env' = Env.extend ~ast_type:ty env (pattern, proj) in
+        let env' = Env.extend env pattern (ty, proj) in
         eval_ligo body calltrace env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
@@ -746,7 +773,7 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
               String.equal matched_c c)
             cases in
         (* TODO-er: check *)
-        let env' = Env.extend ~ast_type:tv env (pattern, proj) in
+        let env' = Env.extend env pattern (tv, proj) in
         eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
         let aux : label -> ( expression_variable * _ ) -> env -> env =
@@ -755,7 +782,7 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
               | Some x -> x
               | None -> failwith "label do not match"
             in
-            Env.extend ~ast_type:ty env (v,iv)
+            Env.extend env v (ty,iv)
         in
         let env' = LMap.fold aux fields env in
         eval_ligo body calltrace env'
@@ -778,18 +805,18 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
        let rec aux env e = match e.expression_content with
          | E_variable var ->
             let* value_expr = monad_option (Errors.generic_error term.location "Error resolving module path: variable not found")
-                               (List.Assoc.find env.expression_env ~equal:(Location.equal_content ~equal:Var.equal) var) in
+                               (List.Assoc.find (Ligo_interpreter.Environment.expressions env) ~equal:(Location.equal_content ~equal:Var.equal) var) in
             return value_expr.eval_term
          | E_record_accessor {record = { expression_content = E_variable record }; path} ->
             let* value_rcrd = monad_option (Errors.generic_error term.location "Error resolving module path: record not found")
-                               (List.Assoc.find env.expression_env ~equal:(Location.equal_content ~equal:Var.equal) record) in
+                               (List.Assoc.find (Ligo_interpreter.Environment.expressions env) ~equal:(Location.equal_content ~equal:Var.equal) record) in
             (match value_rcrd.eval_term with
              | V_Record recmap ->
                 let a = LMap.find path recmap in
                 return a
              | _ -> raise.raise @@ Errors.generic_error term.location "Error resolving module path")
          | E_module_accessor {module_name;element} ->
-            let module_env =  match List.Assoc.find env.module_env ~equal:String.equal module_name with
+            let module_env =  match List.Assoc.find (Ligo_interpreter.Environment.modules env) ~equal:String.equal module_name with
               | None -> raise.raise @@ Errors.generic_error term.location "Error resolving module path"
               | Some e -> e in
             aux module_env element
@@ -800,7 +827,7 @@ and try_eval ~raise expr env state r = Monad.eval ~raise (eval_ligo ~raise expr 
 
 and resolve_module_path ~raise ~loc binders env =
   let aux (e : env) (m : module_variable) =
-    match List.Assoc.find e.module_env ~equal:String.equal m with
+    match List.Assoc.find (Ligo_interpreter.Environment.modules e) ~equal:String.equal m with
     | None -> raise.raise @@ Errors.generic_error loc "Error resolving module path"
     | Some e -> e in
   List.Ne.fold_left aux env binders
@@ -814,15 +841,15 @@ and eval_module ~raise : Ast_typed.module_fully_typed * Tezos_state.context -> e
            (top_env,state)
         | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
           let (v,state) = try_eval ~raise expr top_env state None in
-          let top_env' = Env.extend ~ast_type:expr.type_expression top_env (binder, v) in
+          let top_env' = Env.extend top_env binder (expr.type_expression, v) in
           (top_env',state)
-        | Ast_typed.Declaration_module {module_binder; module_=m} ->
-          let (module_env, state) = eval_module ~raise (m, state) in
-          let top_env' = Env.extend_mod top_env (module_binder, module_env) in
+        | Ast_typed.Declaration_module {module_binder; module_} ->
+          let (module_env, state) = eval_module ~raise (module_, state) in
+          let top_env' = Env.extend_mod top_env module_binder module_env in
           (top_env',state)
         | Ast_typed.Module_alias {alias;binders} ->
           let module_env = resolve_module_path ~raise ~loc:el.location binders top_env in
-          let top_env' = Env.extend_mod top_env (alias, module_env) in
+          let top_env' = Env.extend_mod top_env alias module_env in
           (top_env',state)
     in
     let (env,state) = List.fold ~f:aux ~init:(Env.empty_env, initial_state) prg in
@@ -832,7 +859,7 @@ let eval_test ~raise : Ast_typed.module_fully_typed -> (string * value) list =
   fun prg ->
     let initial_state = Tezos_state.init_ctxt ~raise [] in
     let (env, _state) = eval_module ~raise (prg, initial_state) in
-    let v = Env.to_kv_list_rev env.expression_env in
+    let v = Env.to_kv_list_rev (Ligo_interpreter.Environment.expressions env) in
     let aux : expression_variable * value_expr -> (string * value) option = fun (ev, v) ->
       let ev = Location.unwrap ev in
       if not (Var.is_generated ev) && (Base.String.is_prefix (Var.to_name ev) ~prefix:"test") then

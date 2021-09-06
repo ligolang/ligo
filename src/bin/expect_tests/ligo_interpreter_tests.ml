@@ -177,6 +177,12 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_module.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value 1. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 

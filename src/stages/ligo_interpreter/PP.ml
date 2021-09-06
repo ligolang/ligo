@@ -60,10 +60,13 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term
 
-let pp_env : Format.formatter -> env -> unit = fun ppf env ->
-  let aux : Format.formatter -> expression_variable * value_expr -> unit = fun ppf (var,v) ->
-    Format.fprintf ppf "%a -> %a" Var.pp var.wrap_content pp_value_expr v in
+let rec pp_env : Format.formatter -> env -> unit = fun ppf env ->
+  let aux : Format.formatter -> env_item -> unit = fun ppf ->
+    function | Expression {name;item} ->
+                Format.fprintf ppf "%a -> %a" Var.pp name.wrap_content pp_value_expr item
+             | Module {name;item} ->
+                Format.fprintf ppf "%a -> %a" Ast_typed.PP.module_variable name pp_env item in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
-    (List.length env.expression_env)
+    (List.length env)
     (list_sep aux (tag "@ "))
-    env.expression_env
+    env
