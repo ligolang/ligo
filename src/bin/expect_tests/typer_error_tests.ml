@@ -205,3 +205,14 @@ let%expect_test _ =
       8 |         Some (contract) -> contract
 
     Type takes the wrong number of arguments, expected: 1 got: 0 |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ; "main" ] ;
+  [%expect {|
+      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 6, characters 9-45:
+        5 | let get_add_entrypoint (addr : address) =
+        6 |   match (Tezos.get_entrypoint_opt "%add" addr) with
+        7 |     Some contract -> contract
+  
+      Can't infer the complete type of this value, please add a type annotation.
+      The value has type 'a contract option, here 'a can't be inferred |}]

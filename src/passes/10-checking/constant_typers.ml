@@ -322,7 +322,7 @@ let get_contract ~raise loc = typer_1_opt ~raise loc "CONTRACT" @@ fun addr_tv t
 let get_contract_opt ~raise loc = typer_1_opt ~raise loc "CONTRACT OPT" @@ fun addr_tv tv_opt ->
   let t_addr = t_address () in
   let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
+  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
   let tv = trace_option ~raise (expected_option loc tv) @@ get_t_option tv in
   let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
   t_option (t_contract tv')
@@ -341,7 +341,7 @@ let get_entrypoint_opt ~raise loc = typer_2_opt ~raise loc "CONTRACT_ENTRYPOINT_
   let t_addr = t_address () in
   let () = assert_eq_1 ~raise ~loc entry_tv t_string in
   let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
+  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
   let tv = trace_option ~raise (expected_option loc tv) @@ get_t_option tv in
   let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
   t_option (t_contract tv' )
