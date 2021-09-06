@@ -188,7 +188,7 @@ module.exports = grammar({
     // [1;2]
     list_pattern: $ => seq(
       "[",
-      common.sepBy(';', field("item", $._pattern)),
+      common.sepEndBy(';', field("item", $._pattern)),
       "]"
     ),
 
@@ -445,7 +445,7 @@ module.exports = grammar({
 
     list_expr: $ => seq(
       "[",
-      common.sepBy(";", field("item", $._expr)),
+      common.sepEndBy(";", field("item", $._expr)),
       "]"
     ),
 
