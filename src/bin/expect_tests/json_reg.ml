@@ -2,7 +2,7 @@ open Cli_expect
 
 (* evaluate-expr *)
 let%expect_test _ =
-  run_ligo_good [ "print-ast" ; test "multisig-v2.ligo" ; "--format=json" ] ;
+  run_ligo_good [ "print" ; "ast" ; test "multisig-v2.ligo" ; "--format";"json" ] ;
   [%expect {|
 [
   {

@@ -7,7 +7,7 @@ let good_test s = (test "")^"/deep_pattern_matching/"^s
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail14.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail14.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 6-8:
       1 | let main (_ : unit * unit) : operation list * unit =
@@ -19,7 +19,7 @@ let%expect_test _ =
 
 (* Trying to match on values *)
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail10.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail10.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail10.mligo", line 5, characters 8-9:
       4 |   match x with
@@ -32,7 +32,7 @@ let%expect_test _ =
 (* unbound variable *)
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail9.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail9.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail9.mligo", line 6, characters 11-12:
       5 |   | One a -> 2
@@ -42,7 +42,7 @@ let%expect_test _ =
 
 (* wrong patterns type *)
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail1.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail1.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.mligo", line 6, characters 10-33:
       5 |   match x with
@@ -52,7 +52,7 @@ let%expect_test _ =
     Pattern do not conform type sum[Cons -> ( int * int ) , Nil -> unit] |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.mligo", line 5, characters 11-16:
       4 |   match x with
@@ -62,7 +62,7 @@ let%expect_test _ =
     Pattern do not conform type sum[Cons -> ( int * int ) , Nil -> unit] |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.mligo", line 6, characters 4-13:
       5 |   | Some_fake x -> x
@@ -73,7 +73,7 @@ let%expect_test _ =
 (* wrong body type *)
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail7.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail7.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.mligo", line 6, characters 9-10:
       5 |   | A -> "hey"
@@ -83,7 +83,7 @@ let%expect_test _ =
     Expected: "string", but got: "int". |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail8.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 17, character 8 to line 18, character 15:
      16 |       | Nil ->
@@ -97,7 +97,7 @@ let%expect_test _ =
 
 (* rendundancy detected while compiling the pattern matching *)
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail3.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 4, character 2 to line 6, character 21:
       3 | let t = fun (x: myt * ( int * int * int)) ->
@@ -110,7 +110,7 @@ let%expect_test _ =
 (* anomaly detected in the pattern matching self_ast_typed pass *)
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail11.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail11.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail11.mligo", line 2, character 2 to line 4, character 11:
       1 | let t12 = fun (x : int list) ->
@@ -121,7 +121,7 @@ let%expect_test _ =
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail12.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.mligo", line 4, character 2 to line 6, character 40:
       3 | let t13 = fun (x:recordi) ->
@@ -132,7 +132,7 @@ let%expect_test _ =
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail13.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail13.mligo", line 7, characters 5-14:
       6 |    | Increment n -> s +1
@@ -142,7 +142,7 @@ let%expect_test _ =
     Variant pattern argument is expected of type nat but is of type unit. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail4.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail4.mligo", line 4, character 2 to line 6, character 18:
       3 | let t = fun (x: myt * myt) ->
@@ -155,191 +155,191 @@ let%expect_test _ =
 (* Positives *)
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t1 (Nil,Nil)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t1 (Nil,Nil)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t1 (Nil,Cons(1,2))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t1 (Nil,Cons(1,2))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t1 (Cons(1,2),Nil)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t1 (Cons(1,2),Nil)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     2 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t1 (Cons(1,2),Cons(3,4))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t1 (Cons(1,2),Cons(3,4))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     10 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t2 Nil Nil" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t2 Nil Nil" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t2 Nil (Cons (1,2))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t2 Nil (Cons (1,2))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     3 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t2 (Cons(1,2)) (Cons(1,2))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t2 (Cons(1,2)) (Cons(1,2))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     6 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t2 (Cons(1,2)) Nil" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t2 (Cons(1,2)) Nil" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     7 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t3 (One (Nil))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t3 (One (Nil))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t3 (One (Cons(1,2)))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t3 (One (Cons(1,2)))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     3 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t3 (Two {a = 1 ; b = 2n ; c = \"tri\"})" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t3 (Two {a = 1 ; b = 2n ; c = \"tri\"})" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     6 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t2_3 (Cons(1,2)) Nil (One(Nil))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t2_3 (Cons(1,2)) Nil (One(Nil))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     8 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t4 (One(Nil)) (One (Nil))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t4 (One(Nil)) (One (Nil))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t4 (One(Nil)) (Two {a=1;b=2n;c=\"tri\"})" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t4 (One(Nil)) (Two {a=1;b=2n;c=\"tri\"})" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     2 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t4 (One(Cons(1,2))) (Two {a=1;b=2n;c=\"tri\"})" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t4 (One(Cons(1,2))) (Two {a=1;b=2n;c=\"tri\"})" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     3 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t4 (Two {a=0;b=0n;c=\"\"}) (Two {a=1;b=2n;c=\"tri\"})" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t4 (Two {a=0;b=0n;c=\"\"}) (Two {a=1;b=2n;c=\"tri\"})" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     4 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t5 1" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t5 1" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t6 42" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t6 42" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     2 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t7 (Some 10)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t7 (Some 10)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     10 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t7 (None: int option)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t7 (None: int option)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t8 (Some (1,2)) 2" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t8 (Some (1,2)) 2" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     3 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t8 (None:(int * int) option) 2" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t8 (None:(int * int) option) 2" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     2 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t9 (None:int option) (None:int option)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t9 (None:int option) (None:int option)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t9 (None:int option) (Some 1)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t9 (None:int option) (Some 1)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t9 (Some 1) (None:int option)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t9 (Some 1) (None:int option)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     2 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t9 (Some 1) (Some 2)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t9 (Some 1) (Some 2)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     3 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t10 (Consi(None:int option)) (Consi(Some 100))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t10 (Consi(None:int option)) (Consi(Some 100))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t11 (Consi(None:int option)) (Consi(Some 100))" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t11 (Consi(None:int option)) (Consi(Some 100))" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     4 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t12 ([]: int list)" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t12 ([]: int list)" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{| 0 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t12 [1]" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t12 [1]" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t12 [1;2]" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t12 [1;2]" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     3 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t12 [1;2;3]" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t12 [1;2;3]" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     6 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t12 [1;2;3;4]" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t12 [1;2;3;4]" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     -1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t13 none_a some_a" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t13 none_a some_a" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     -1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t13 some_a a_empty_b_not" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t13 some_a a_empty_b_not" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     111 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t13 some_a b_empty_a_not" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t13 some_a b_empty_a_not" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     222 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init-file="^(good_test "pm_test.mligo") ; "t13 some_a some_a" ] ;
+  run_ligo_good [ "run" ; "interpret" ; "t13 some_a some_a" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
   [%expect{|
     4 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; (good_test "pm_ticket.mligo") ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.mligo") ] ;
   [%expect{|
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
       6 |   match p with
@@ -366,7 +366,7 @@ let%expect_test _ =
              IF_NONE { NIL operation ; PAIR } { SWAP ; DROP ; NIL operation ; PAIR } } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print-ast-core" ; (good_test "list_pattern.mligo") ] ;
+  run_ligo_good [ "print" ; "ast-core" ; (good_test "list_pattern.mligo") ] ;
   [%expect{|
     const a =
        match CONS(1 , LIST_EMPTY()) with
@@ -377,7 +377,7 @@ let%expect_test _ =
 
 (* REASONLIGO LEFTOVER: for now, we only type the test file *)
 let%expect_test _ =
-  run_ligo_good [ "print-ast-typed" ; (good_test "pm_test.religo") ] ;
+  run_ligo_good [ "print" ; "ast-typed" ; (good_test "pm_test.religo") ] ;
   [%expect{|
     type myt = sum[Cons -> ( int * int ) , Nil -> unit]
     type myr = record[a -> int , b -> nat , c -> string]

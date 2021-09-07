@@ -1,25 +1,25 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t1" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t1" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| 1 |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t2" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t2" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| "7" |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t3" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t3" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| ( 3 , +3 , "7" ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t4" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t4" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| ( 4 , +3 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t5" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t5" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| +1 |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t6" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t6" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| ( 3 , +2 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t7" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t7" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| ( 2 , +3 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t8" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t8" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| ( 2 , +2 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.mligo") ; "t9" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t9" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| 2 |}] ;
-  run_ligo_bad [ "interpret" ; "--init="^(bad_test "let_destructuring.mligo") ; "t1" ] ;
+  run_ligo_bad [ "run"; "interpret" ; "t1" ; "--init-file";(bad_test "let_destructuring.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/let_destructuring.mligo", line 4, characters 6-23:
       3 | let t1 =
@@ -29,35 +29,35 @@ let%expect_test _ =
     Pattern do not conform type record[a -> int , b -> nat] |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.religo") ; "t1" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t1"; "--init-file";(test "let_destructuring.religo") ] ;
   [%expect{| 1 |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.religo") ; "t2" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t2"; "--init-file";(test "let_destructuring.religo") ] ;
   [%expect{| "7" |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.religo") ; "t3" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t3"; "--init-file";(test "let_destructuring.religo") ] ;
   [%expect{| ( 3 , +3 , "7" ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.religo") ; "t4" ] ;
+  run_ligo_good [ "run"; "interpret" ; "t4"; "--init-file";(test "let_destructuring.religo") ] ;
    [%expect{| ( 4 , +3 ) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t1" ] ;
+  run_ligo_good ["run"; "interpret" ; "t1" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| 1 |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t2" ] ;
+  run_ligo_good ["run"; "interpret" ; "t2" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| "7" |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t3" ] ;
+  run_ligo_good ["run"; "interpret" ; "t3" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| ( 3 , +3 , "7" ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t4" ] ;
+  run_ligo_good ["run"; "interpret" ; "t4" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| ( 4 , +3 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t5" ] ;
+  run_ligo_good ["run"; "interpret" ; "t5" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| +1 |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t6" ] ;
+  run_ligo_good ["run"; "interpret" ; "t6" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| ( 3 , +2 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t7" ] ;
+  run_ligo_good ["run"; "interpret" ; "t7" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| ( 2 , +3 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t8" ] ;
+  run_ligo_good ["run"; "interpret" ; "t8" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| ( 2 , +2 ) |}] ;
-  run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.ligo") ; "t9" ] ;
+  run_ligo_good ["run"; "interpret" ; "t9" ; "--init-file";(test "let_destructuring.ligo") ] ;
   [%expect{| 2 |}] ;
-  run_ligo_bad [ "interpret" ; "--init="^(bad_test "let_destructuring.ligo") ; "t1" ] ;
+  run_ligo_bad ["run"; "interpret" ; "t1" ; "--init-file";(bad_test "let_destructuring.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/let_destructuring.ligo", line 4, characters 6-30:
       3 | const t1 = block {

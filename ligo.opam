@@ -32,6 +32,7 @@ depends: [
   "RedBlackTrees"
   "linenoise"
   "qcheck"
+  "tezos-clic"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # work around tezos' failure to constrain

@@ -4,7 +4,7 @@ let contract basename =
   "../../test/contracts/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree.ligo" ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.ligo" ] ;
   [%expect {|
     File "../../test/contracts/michelson_pair_tree.ligo", line 6, characters 21-27:
       5 |
@@ -34,7 +34,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree.mligo" ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.mligo" ] ;
   [%expect {|
     File "../../test/contracts/michelson_pair_tree.mligo", line 6, characters 10-16:
       5 |
@@ -64,7 +64,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree.religo" ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.religo" ] ;
   [%expect {|
     File "../../test/contracts/michelson_pair_tree.religo", line 6, characters 13-19:
       5 |
@@ -94,7 +94,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree.jsligo" ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.jsligo" ] ;
   [%expect {|
     File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 21-26:
       7 |
@@ -124,7 +124,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree_intermediary.ligo" ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree_intermediary.ligo" ] ;
   [%expect {|
     File "../../test/contracts/michelson_pair_tree_intermediary.ligo", line 6, characters 21-27:
       5 |

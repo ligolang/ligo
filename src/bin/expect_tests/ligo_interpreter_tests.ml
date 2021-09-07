@@ -5,8 +5,8 @@ let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "interpret_test.mligo" ] ;
-  [%expect{|
+  run_ligo_good [ "run"; "test" ; test "interpret_test.mligo" ] ;
+  [%expect {|
     Everything at the top-level was executed.
     - test_lambda_call exited with value ().
     - test_higher_order1 exited with value ().
@@ -53,15 +53,15 @@ let%expect_test _ =
     - test_bitwise_module exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "interpret_test_log.mligo" ] ;
-  [%expect{|
+  run_ligo_good ["run"; "test" ; test "interpret_test_log.mligo" ] ;
+  [%expect {|
     {a = 1 ; b = 2n ; c = "aaa"}
     One (())
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_now.mligo" ] ;
-  [%expect{|
+  run_ligo_good ["run"; "test" ; test "test_now.mligo" ] ;
+  [%expect {|
     "storage at origination"
     "2000-01-01T10:10:10Z"
     "setting now at:"
@@ -72,8 +72,8 @@ let%expect_test _ =
     - test exited with value true. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_now_from_file.mligo" ] ;
-  [%expect{|
+  run_ligo_good ["run";"test" ; test "test_now_from_file.mligo" ] ;
+  [%expect {|
     "storage at origination"
     "2000-01-01T10:10:10Z"
     "setting now at:"
@@ -84,20 +84,20 @@ let%expect_test _ =
     - test exited with value true. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_fail.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_fail.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value "my contract always fail". |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_fail_from_file.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_fail_from_file.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value "my contract always fail". |}]
 
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "compile_expr.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "compile_expr.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test1 exited with value ().
@@ -106,7 +106,7 @@ let%expect_test _ =
   - test4 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "compile_expr_from_file.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "compile_expr_from_file.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test1 exited with value ().
@@ -115,33 +115,33 @@ let%expect_test _ =
   - test4 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_example.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value 111.
   - test2 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_example_from_file.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_example_from_file.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value 111.
   - test2 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_subst_with_storage.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_subst_with_storage.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_subst_with_storage_from_file.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_subst_with_storage_from_file.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "bootstrapped_contracts.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "bootstrapped_contracts.mligo" ] ;
   [%expect {|
     "Initial states:"
     (Pair "KT1CSKPf2jeLpMmrgKquN2bCjBTkAcAdRVDy" 12)
@@ -154,31 +154,31 @@ let%expect_test _ =
             |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "override_function.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "override_function.mligo" ] ;
   [%expect {|
     4
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_fresh.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_fresh.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_rec_contract.mligo" ] ;
+  run_ligo_good [ "run" ; "test" ; test "test_rec_contract.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_importer.mligo" ] ;
+  run_ligo_good [ "run" ; "test" ; test "test_importer.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "test" ; test "test_module.mligo" ] ;
+  run_ligo_good [ "run" ; "test" ; test "test_module.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value 1. |}]
@@ -189,7 +189,7 @@ let () = Sys.chdir pwd
 let bad_test n = bad_test ("/interpreter_tests/"^n)
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "test_failure1.mligo" ] ;
+  run_ligo_bad ["run";"test" ; bad_test "test_failure1.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test =
@@ -198,7 +198,7 @@ let%expect_test _ =
     Test failed with "I am failing" |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "test_failure2.mligo" ] ;
+  run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
@@ -207,7 +207,7 @@ let%expect_test _ =
     Failed assertion |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "bad_balances_reset.mligo" ] ;
+  run_ligo_bad ["run"; "test" ; bad_test "bad_balances_reset.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
       1 | let test = Test.reset_state 2n [4000tez;4000tez]
@@ -216,7 +216,7 @@ let%expect_test _ =
 
 let%expect_test _ =
 (* TODO: this error is not ideal, we should trace that*)
-  run_ligo_bad [ "test" ; bad_test "test_failure3.mligo" ] ;
+  run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 2-26:
       2 |   let f = (fun (_ : (unit * unit)) -> ()) in
@@ -235,7 +235,7 @@ let%expect_test _ =
     Type unit is not compatible with type pair (list operation) unit. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "test_trace.mligo" ] ;
+  run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 5-24:
       2 |   if x < 0 then
@@ -253,7 +253,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "test" ; bad_test "test_trace2.mligo" ] ;
+  run_ligo_bad ["run";"test" ; bad_test "test_trace2.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88:
       5 | let make_call (contr : unit contract) =

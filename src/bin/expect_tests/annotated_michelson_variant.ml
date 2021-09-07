@@ -5,7 +5,7 @@ let contract basename =
 
 (*COMB*)
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_two" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_variant_comb.mligo" ; "--entry-point" ; "main_comb_two" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -103,7 +103,7 @@ let%expect_test _ =
                         { DROP ; PUSH int 1 ; LEFT string } ;
                       NIL operation ;
                       PAIR } } |}];
-  run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_three" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_variant_comb.mligo" ; "--entry-point" ; "main_comb_three" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -196,7 +196,7 @@ let%expect_test _ =
              { parameter unit ;
                storage (or (int %ana) (or (string %anb) (nat %anc))) ;
                code { DROP ; PUSH nat 1 ; RIGHT string ; RIGHT int ; NIL operation ; PAIR } } |}];
-  run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_five" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_variant_comb.mligo" ; "--entry-point" ; "main_comb_five" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -304,7 +304,7 @@ let%expect_test _ =
                       PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_two" ; "()" ; "Foo(1)" ] ;
+  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "()" ; "Foo(1)" ; "-e" ; "main_comb_two" ] ;
   [%expect{|
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
      34 |     | One a -> Five (1)
@@ -395,7 +395,7 @@ let%expect_test _ =
     Hint: replace it by "_action" to prevent this warning.
 
     ( LIST_EMPTY() , Bar("foo") ) |}];
-  run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_three" ; "()" ; "A(1)" ] ;
+  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "()" ; "A(1)" ; "-e" ; "main_comb_three" ] ;
   [%expect{|
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
      34 |     | One a -> Five (1)
@@ -486,7 +486,7 @@ let%expect_test _ =
     Hint: replace it by "_action" to prevent this warning.
 
     ( LIST_EMPTY() , C(+1) ) |}];
-  run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_five" ; "()" ; "One(1)"] ;
+  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "()" ; "One(1)" ; "-e" ; "main_comb_five" ] ;
   [%expect{|
     File "../../test/contracts/annotated_michelson_variant_comb.mligo", line 35, characters 10-11:
      34 |     | One a -> Five (1)
@@ -580,7 +580,7 @@ let%expect_test _ =
 
 (*TREE*)
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_two" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_variant_tree.mligo" ; "-e" ; "main_comb_two" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -678,7 +678,7 @@ let%expect_test _ =
                         { DROP ; PUSH string "foo" ; LEFT int } ;
                       NIL operation ;
                       PAIR } } |}];
-  run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_three" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_variant_tree.mligo" ; "-e" ; "main_comb_three" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -771,7 +771,7 @@ let%expect_test _ =
              { parameter unit ;
                storage (or (or (int %ana) (string %anb)) (nat %anc)) ;
                code { DROP ; PUSH nat 1 ; RIGHT (or int string) ; NIL operation ; PAIR } } |}];
-  run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_five" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_variant_tree.mligo" ; "-e" ; "main_comb_five" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -879,7 +879,7 @@ let%expect_test _ =
                       PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_two" ; "()" ; "Foo(1)" ] ;
+  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "()" ; "Foo(1)" ; "-e" ; "main_comb_two" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -970,7 +970,7 @@ let%expect_test _ =
              Hint: replace it by "_action" to prevent this warning.
 
              ( LIST_EMPTY() , Bar("foo") ) |}];
-  run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_three" ; "()" ; "A(2)" ] ;
+  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "()" ; "A(2)" ; "-e" ; "main_comb_three" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)
@@ -1061,7 +1061,7 @@ let%expect_test _ =
              Hint: replace it by "_action" to prevent this warning.
 
              ( LIST_EMPTY() , C(+1) ) |}];
-  run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_five" ; "()" ; "One(1)"] ;
+  run_ligo_good [ "run" ; "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "()" ; "One(1)" ; "-e" ; "main_comb_five" ] ;
   [%expect {|
              File "../../test/contracts/annotated_michelson_variant_tree.mligo", line 35, characters 10-11:
               34 |     | One a -> Five (1)

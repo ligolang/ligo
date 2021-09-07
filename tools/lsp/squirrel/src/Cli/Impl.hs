@@ -228,7 +228,7 @@ getLigoDefinitions contract = do
     -- A middleware for processing `ExpectedClientFailure` error needed to pass it multiple levels up
     -- allowing us from restoring from expected ligo errors.
     Left LigoExpectedClientFailureException {ecfeStdout, ecfeStderr} -> do
-      -- otherwise call ligo with `compile-contract` to extract more readable error message
+      -- otherwise call ligo with `compile contract` to extract more readable error message
       Log.debug "LIGO.PARSE" [i|decoding ligo error|]
       case eitherDecodeStrict' @LigoError . encodeUtf8 $ ecfeStderr of
         Left err -> do

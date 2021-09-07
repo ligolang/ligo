@@ -1,7 +1,7 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/coase.ligo" ; "pascaligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "pascaligo" ] ;
   [%expect {|
     type card_pattern_id is nat
 
@@ -158,7 +158,7 @@ let%expect_test _ =
           | Transfer_single (at) -> transfer_single (at, s)
           ]
       ] |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/coase.ligo" ; "cameligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "cameligo" ] ;
   [%expect {|
     type card_pattern_id =  nat
 
@@ -341,7 +341,7 @@ let%expect_test _ =
               Buy_single bs -> buy_single bs s
             | Sell_single as -> sell_single as s
             | Transfer_single at -> transfer_single at s) |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/coase.ligo" ; "reasonligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/coase.ligo" ; "reasonligo" ] ;
   [%expect {|
 type card_pattern_id = nat;
 
@@ -544,7 +544,7 @@ let main: (parameter, storage) => return =
      }); |}]
 
 let%expect_test _ =
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/deep_access.ligo" ; "pascaligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "pascaligo" ] ;
   [%expect{|
     type pii is int * int
 
@@ -581,7 +581,7 @@ let%expect_test _ =
         | None (Unit) ->
             (failwith ("Should not happen.") : string)
         ] |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/deep_access.ligo" ; "cameligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "cameligo" ] ;
   [%expect{|
     type pii =  int * int
 
@@ -616,7 +616,7 @@ let%expect_test _ =
           Some s -> s
         | None () ->
             ((failwith ("Should not happen.")) : string)) |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
   [%expect{|
 type pii = (int, int);
 
@@ -657,7 +657,7 @@ let nested_record: nested_record_t => string =
 
 let%expect_test _ =
 (*
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/double_fold_converter.religo" ; "pascaligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/double_fold_converter.religo" ; "pascaligo" ] ;
   [%expect{|
 type tokenId is nat
 
@@ -776,9 +776,9 @@ block {
       Transfer (transferParameter) ->
         transfer (transferParameter, storage)
     ] |}]; *)
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/double_fold_converter.religo" ; "cameligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/double_fold_converter.religo" ; "cameligo" ] ;
   [%expect.unreachable];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/double_fold_converter.religo" ; "reasonligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/double_fold_converter.religo" ; "reasonligo" ] ;
   [%expect.unreachable]
 [@@expect.uncaught_exn {|
   (* CR expect_test_collector: This test expectation appears to contain a backtrace.
@@ -787,7 +787,7 @@ block {
 
   (Cli_expect_tests.Cli_expect.Should_exit_good)
   Raised at file "src/bin/expect_tests/cli_expect.ml", line 28, characters 7-29
-  Called from file "src/bin/expect_tests/transpiler_test.ml", line 779, characters 2-107
+  Called from file "src/bin/expect_tests/transpiler_test.ml", line 779, characters 2-111
   Called from file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -800,7 +800,7 @@ block {
   Unknown constant: Layout.convert_from_right_comb |}]
 
 let%expect_test _ =
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "pascaligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "pascaligo" ] ;
   [%expect {|
     type parameter is Pos of nat | Zero of nat
 
@@ -873,7 +873,7 @@ let%expect_test _ =
     block {
       if Operator.eq (p, 1) then failwith (42) else skip
     } with p |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect {|
     type parameter =  | Pos of nat | Zero of nat
 
@@ -948,7 +948,7 @@ let%expect_test _ =
           if (Operator.eq (p) (1)) then (failwith (42)) else ();
           p
         end) |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
   [%expect {|
 type parameter = Pos(nat) | Zero(nat);
 
@@ -1050,7 +1050,7 @@ let failer: int => int =
    }); |}]
 
 let%expect_test _ =
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "pascaligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "pascaligo" ] ;
   [%expect {|
     recursive function sum (const gen__parameters1 : int * int) is
       case gen__parameters1 of [
@@ -1070,7 +1070,7 @@ let%expect_test _ =
             fibo
               (Operator.sub (n, 1), Operator.add (n_1, n_0), n_1)
       ] |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "cameligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "cameligo" ] ;
   [%expect {|
     let rec sum : int * int -> int =
       (fun gen__parameters1 : int * int ->
@@ -1092,7 +1092,7 @@ let%expect_test _ =
                 (Operator.sub (n) (1))
                 (Operator.add (n_1) (n_0))
                 n_1) |}];
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "reasonligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "reasonligo" ] ;
   [%expect {|
     let rec sum: (int, int) => int =
       ((gen__parameters1: (int, int)): int =>
@@ -1124,7 +1124,7 @@ let%expect_test _ =
          }); |}]
 
 let%expect_test _ =
-  run_ligo_good [ "transpile-contract" ; "../../test/contracts/transpiler_nested.ligo" ; "cameligo" ] ;
+  run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/transpiler_nested.ligo" ; "cameligo" ] ;
   [%expect {|
     let f : nat -> nat = (fun x : nat -> x)
 

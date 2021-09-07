@@ -2,17 +2,17 @@ open Cli_expect
 
 (* evaluate-expr *)
 let%expect_test _ =
-  run_ligo_good [ "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "a" ] ;
+  run_ligo_good ["run"; "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "--entry-point" ; "a" ] ;
   [%expect {|
     record[bar -> "bar" , foo -> +0] |} ];
 
-  run_ligo_good [ "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "b" ] ;
+  run_ligo_good ["run"; "evaluate-expr" ; "../../test/contracts/evaluation_tests.ligo" ; "--entry-point" ; "b" ] ;
   [%expect {|
     2 |} ]
 
 (* list-declarations *)
 let%expect_test _ =
-  run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.ligo" ] ;
+  run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.ligo" ] ;
   [%expect {|
     ../../test/contracts/loop.ligo declarations:
     inner_capture_in_conditional_block
@@ -33,7 +33,7 @@ let%expect_test _ =
     while_sum
     counter |} ];
 
-  run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.mligo" ; "--format=json" ] ;
+  run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.mligo" ; "--format" ;"json" ] ;
   [%expect {|
     {
       "source_file": "../../test/contracts/loop.mligo",
@@ -43,7 +43,7 @@ let%expect_test _ =
     } |} ];
 
 
-  run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.mligo" ] ;
+  run_ligo_good [ "info"; "list-declarations" ; "../../test/contracts/loop.mligo" ] ;
   [%expect {|
     ../../test/contracts/loop.mligo declarations:
     counter_nest
@@ -52,7 +52,7 @@ let%expect_test _ =
     counter_simple
     aux_simple |} ];
 
-  run_ligo_good [ "list-declarations" ; "../../test/contracts/loop.religo" ] ;
+  run_ligo_good ["info"; "list-declarations" ; "../../test/contracts/loop.religo" ] ;
   [%expect {|
     ../../test/contracts/loop.religo declarations:
     counter_nest
@@ -61,6 +61,6 @@ let%expect_test _ =
     counter_simple
     aux_simple |} ];
 
-  run_ligo_bad [ "interpret" ; "1" ; "--syntax=cameligo" ; "--protocol=do_not_exist" ] ;
+  run_ligo_bad ["run" ; "interpret" ; "1" ; "--syntax"; "cameligo" ; "--protocol"; "do_not_exist" ] ;
   [%expect {|
     Invalid protocol version 'do_not_exist'. Available versions: edo |}] ;
