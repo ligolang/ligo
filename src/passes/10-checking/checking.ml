@@ -13,9 +13,9 @@ type environment = Environment.t
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
 
-let rec type_module ~raise ~init_env (p:I.module_) : environment * O.module_fully_typed =
+let rec type_module ~raise ~test ~init_env (p:I.module_) : environment * O.module_fully_typed =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let (e', d') = type_declaration ~raise e d in
+    let (e', d') = type_declaration ~raise ~test e d in
     (e', d' :: acc)
   in
   let (e, lst) =
@@ -26,8 +26,8 @@ let rec type_module ~raise ~init_env (p:I.module_) : environment * O.module_full
   (e,p)
 
 
-and type_declaration : raise: typer_error raise -> environment -> I.declaration Location.wrap -> environment * O.declaration Location.wrap =
-fun ~raise env d ->
+and type_declaration : raise: typer_error raise -> test: bool -> environment -> I.declaration Location.wrap -> environment * O.declaration Location.wrap =
+fun ~raise ~test env d ->
 let return ?(loc = d.location) e (d : O.declaration) = e,Location.wrap ~loc d in
 match Location.unwrap d with
   | Declaration_type {type_binder ; type_expr} -> (
@@ -40,13 +40,13 @@ match Location.unwrap d with
     let tv'_opt = Option.map ~f:(evaluate_type ~raise env) binder.ascr in
     let expr =
       trace ~raise (constant_declaration_error_tracer binder.var expr tv'_opt) @@
-      type_expression' ?tv_opt:tv'_opt env expr in
+      type_expression' ~test ?tv_opt:tv'_opt env expr in
     let binder : O.expression_variable = cast_var binder.var in
     let post_env = Environment.add_ez_declaration binder expr env in
     return post_env @@ Declaration_constant { name ; binder ; expr ; inline}
   )
   | Declaration_module {module_binder;module_} -> (
-    let e,module_ = type_module ~raise ~init_env:env module_ in
+    let e,module_ = type_module ~raise ~test ~init_env:env module_ in
     let post_env = Environment.add_module module_binder e env in
     return post_env @@ Declaration_module { module_binder; module_}
   )
@@ -254,12 +254,12 @@ and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expressi
     let type_ = evaluate_type ~raise env' x.type_ in
     return (T_abstraction {x with type_})
 
-and type_expression ~raise : environment -> ?tv_opt:O.type_expression -> I.expression -> O.environment * O.expression
+and type_expression ~raise ~test : environment -> ?tv_opt:O.type_expression -> I.expression -> O.environment * O.expression
   = fun e ?tv_opt ae ->
-    let res = type_expression' ~raise e ?tv_opt ae in
+    let res = type_expression' ~raise ~test e ?tv_opt ae in
     (e, res)
 
-and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun e ?tv_opt ae ->
+and type_expression' ~raise ~test : environment -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun e ?tv_opt ae ->
   let module L = Logger.Stateful() in
   let return expr tv =
     let () =
@@ -304,7 +304,7 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
   | E_literal (Literal_operation op) ->
       return (e_operation op) (t_operation ())
   | E_record_accessor {record;path} ->
-      let e' = type_expression' ~raise e record in
+      let e' = type_expression' ~raise ~test e record in
       let aux ~raise (prev:O.expression) (a:I.label) : O.expression =
             let property = a in
             let r_tv = trace_option ~raise (bad_record_access property ae prev.type_expression ae.location) @@
@@ -325,7 +325,7 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       (ae)
   | E_constructor {constructor = Label s ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
     let t = trace_option ~raise (michelson_or (Label s) ae.location) @@ tv_opt in
-    let expr' = type_expression' ~raise e element in
+    let expr' = type_expression' ~raise ~test e element in
     ( match t.type_content with
       | T_sum c ->
         let {associated_type ; _} : O.row_element = O.LMap.find (Label s) c.content in
@@ -338,12 +338,12 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
   | E_constructor {constructor; element} ->
       let (c_tv, sum_tv) = trace_option ~raise (unbound_constructor e constructor ae.location) @@
         Environment.get_constructor constructor e in
-      let expr' = type_expression' ~raise e element in
+      let expr' = type_expression' ~raise ~test e element in
       let () = assert_type_expression_eq ~raise expr'.location (c_tv, expr'.type_expression) in
       return (E_constructor {constructor; element=expr'}) sum_tv
   (* Record *)
   | E_record m ->
-      let m' = O.LMap.map (type_expression' ~raise e) m in
+      let m' = O.LMap.map (type_expression' ~raise ~test e) m in
       let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e; michelson_annotation = None; decl_pos=0}:O.row_element)) m' in
       let record_type = match Environment.get_record lmap e with
         | None -> t_record ~layout:default_layout lmap
@@ -351,8 +351,8 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       in
       return (E_record m') record_type
   | E_record_update {record; path; update} ->
-    let record = type_expression' ~raise e record in
-    let update = type_expression' ~raise e update in
+    let record = type_expression' ~raise ~test e record in
+    let update = type_expression' ~raise ~test e update in
     let wrapped = get_type_expression record in
     let tv =
       match wrapped.type_content with
@@ -379,7 +379,7 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
                | None -> let binder = {lambda.binder with ascr = Some input_type } in
                          { lambda with binder = binder }
                | Some _ -> lambda in
-     let (lambda,lambda_type) = type_lambda ~raise e lambda in
+     let (lambda,lambda_type) = type_lambda ~raise ~test e lambda in
      return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
@@ -394,7 +394,7 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       (* this special case is here to force annotation of the untyped lambda
          generated by pascaligo's for_collect loop *)
       let lname = cast_var lname in
-      let (v_col , v_initr ) = Pair.map ~f:(type_expression' ~raise e) (collect , init_record ) in
+      let (v_col , v_initr ) = Pair.map ~f:(type_expression' ~raise ~test e) (collect , init_record ) in
       let tv_col = get_type_expression v_col   in (* this is the type of the collection  *)
       let tv_out = get_type_expression v_initr in (* this is the output type of the lambda*)
       let input_type = match tv_col.type_content with
@@ -408,13 +408,13 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
           make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> raise.raise @@ bad_collect_loop tv_col ae.location in
       let e' = Environment.add_ez_binder lname input_type e in
-      let body = type_expression' ~raise ?tv_opt:(Some tv_out) e' result in
+      let body = type_expression' ~raise ~test ?tv_opt:(Some tv_out) e' result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) in
       let lst' = [lambda'; v_col; v_initr] in
       let tv_lst = List.map ~f:get_type_expression lst' in
       let (opname', tv) =
-        type_constant ~raise opname ae.location tv_lst tv_opt in
+        type_constant ~raise ~test opname ae.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_FOLD_WHILE as opname;
                 arguments = [
@@ -424,20 +424,20 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
                         location = _ }) as _lambda ;
                     init_record ;
                 ]} ->
-      let v_initr = type_expression' ~raise e init_record in
+      let v_initr = type_expression' ~raise ~test e init_record in
       let tv_out = get_type_expression v_initr in
       let input_type  = tv_out in
       let lname = cast_var lname in
       let e' = Environment.add_ez_binder lname input_type e in
-      let body = type_expression' ~raise e' result in
+      let body = type_expression' ~raise ~test e' result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) in
       let lst' = [lambda';v_initr] in
       let tv_lst = List.map ~f:get_type_expression lst' in
-      let (opname',tv) = type_constant ~raise opname ae.location tv_lst tv_opt in
+      let (opname',tv) = type_constant ~raise ~test opname ae.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_CREATE_CONTRACT as cons_name;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise e) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~test e) arguments in
       let () = match lst' with
         | { expression_content = O.E_lambda l ; _ } :: _ ->
           let open Ast_typed.Misc in
@@ -448,10 +448,10 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       in
       let tv_lst = List.map ~f:get_type_expression lst' in
       let (name', tv) =
-        type_constant ~raise cons_name ae.location tv_lst tv_opt in
+        type_constant ~raise ~test cons_name ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name=C_SET_ADD|C_CONS as cst;arguments=[key;set]} ->
-      let key' =  type_expression' ~raise e key in
+      let key' =  type_expression' ~raise ~test e key in
       let tv_key = get_type_expression key' in
       let tv = match tv_opt with
           Some tv -> tv
@@ -460,27 +460,27 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
           | C_CONS -> t_list tv_key
           | _ -> failwith "Only C_SET_ADD and C_CONS are possible because those were the two cases matched above"
       in
-      let set' =  type_expression' ~raise e ~tv_opt:tv set in
+      let set' =  type_expression' ~raise ~test e ~tv_opt:tv set in
       let tv_set = get_type_expression set' in
       let tv_lst = [tv_key;tv_set] in
-      let (name', tv) = type_constant ~raise cst ae.location tv_lst tv_opt in
+      let (name', tv) = type_constant ~raise ~test cst ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';set']}) tv
   | E_constant {cons_name=C_MAP_ADD as cst; arguments=[key;value;map]} ->
-      let key' = type_expression' ~raise e key in
-      let val' = type_expression' ~raise e value in
+      let key' = type_expression' ~raise ~test e key in
+      let val' = type_expression' ~raise ~test e value in
       let tv_key = get_type_expression key' in
       let tv_val = get_type_expression val' in
       let tv = match tv_opt with
           Some tv -> tv
         | None -> t_map_or_big_map tv_key tv_val
       in
-      let map' =  type_expression' ~raise e ~tv_opt:tv map in
+      let map' =  type_expression' ~raise ~test e ~tv_opt:tv map in
       let tv_map = get_type_expression map' in
       let tv_lst = [tv_key;tv_val;tv_map] in
-      let (name', tv) = type_constant ~raise cst ae.location tv_lst tv_opt in
+      let (name', tv) = type_constant ~raise ~test cst ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
   | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise e) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~test e) arguments in
       let tv_lst = List.map ~f:get_type_expression lst' in
       let decide = function
         | {O.expression_content = E_literal (Literal_string _); _ } -> Some S.C_CONCAT
@@ -503,17 +503,17 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       let cst =
         Option.value ~default:S.C_ADD @@ List.find_map lst' ~f:decide in
       let (name', tv) =
-        type_constant ~raise cst ae.location tv_lst tv_opt in
+        type_constant ~raise ~test cst ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise e) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~test e) arguments in
       let tv_lst = List.map ~f:get_type_expression lst' in
       let (name', tv) =
-        type_constant ~raise cons_name ae.location tv_lst tv_opt in
+        type_constant ~raise ~test cons_name ae.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_application {lamb; args} ->
-      let lamb' = type_expression' ~raise e lamb in
-      let args' = type_expression' ~raise e args in
+      let lamb' = type_expression' ~raise ~test e lamb in
+      let args' = type_expression' ~raise ~test e args in
       let tv = match lamb'.type_expression.type_content with
         | T_arrow {type1;type2} ->
             let () = assert_type_expression_eq ~raise args'.location (type1, args'.type_expression) in
@@ -526,33 +526,33 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       return (E_application {lamb=lamb'; args=args'}) tv
   (* Advanced *)
   | E_matching {matchee;cases} -> (
-    let matchee' = type_expression' ~raise e matchee in
+    let matchee' = type_expression' ~raise ~test e matchee in
     let matcheevar = Location.wrap (Var.fresh ()) in
     let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * O.environment)) =
       fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,e))
     in
     let eqs = List.map ~f:aux cases in
-    let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:ae.location ~type_f:(type_expression') ~body_t:(tv_opt) matcheevar eqs in
+    let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:ae.location ~type_f:(type_expression' ~test) ~body_t:(tv_opt) matcheevar eqs in
     let case_exp = { case_exp with location = ae.location } in
     let x = O.e_let_in matcheevar matchee' case_exp false in
     return x case_exp.type_expression
   )
   | E_let_in {let_binder = {var ; ascr} ; rhs ; let_result; inline} ->
     let rhs_tv_opt = Option.map ~f:(evaluate_type ~raise e) ascr in
-    let rhs = type_expression' ~raise ?tv_opt:rhs_tv_opt e rhs in
+    let rhs = type_expression' ~raise ~test ?tv_opt:rhs_tv_opt e rhs in
     let binder = cast_var var in
     let e' = Environment.add_ez_declaration binder rhs e in
-    let let_result = type_expression' ~raise e' let_result in
+    let let_result = type_expression' ~raise ~test e' let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; inline}) let_result.type_expression
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise e rhs in
     let e' = Environment.add_type type_binder rhs e in
-    let let_result = type_expression' ~raise e' let_result in
+    let let_result = type_expression' ~raise ~test e' let_result in
     return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
   | E_mod_in {module_binder; rhs; let_result} ->
-    let env,rhs = type_module ~raise ~init_env:e rhs in
+    let env,rhs = type_module ~raise ~test ~init_env:e rhs in
     let e' = Environment.add_module module_binder env e in
-    let let_result = type_expression' ~raise e' let_result in
+    let let_result = type_expression' ~raise ~test e' let_result in
     return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
   | E_mod_alias {alias; binders; result} ->
     let aux e binder =
@@ -560,12 +560,12 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       Environment.get_module_opt binder e in
     let env = List.Ne.fold_left aux e binders in
     let e' = Environment.add_module alias env e in
-    let result = type_expression' ~raise e' result in
+    let result = type_expression' ~raise ~test e' result in
     return (E_mod_alias {alias; binders; result}) result.type_expression
   | E_raw_code {language;code} ->
     let (code,type_expression) = trace_option ~raise (expected_ascription code) @@
       I.get_e_ascription code.expression_content in
-    let code = type_expression' ~raise e code in
+    let code = type_expression' ~raise ~test e code in
     let type_expression = evaluate_type ~raise e type_expression in
     let code = {code with type_expression} in
     return (E_raw_code {language;code}) code.type_expression
@@ -573,11 +573,11 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
     let fun_name = cast_var fun_name in
     let fun_type = evaluate_type ~raise e fun_type in
     let e' = Environment.add_ez_binder fun_name fun_type e in
-    let (lambda,_) = type_lambda ~raise e' lambda in
+    let (lambda,_) = type_lambda ~raise ~test e' lambda in
     return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
     let tv = evaluate_type ~raise e type_annotation in
-    let expr' = type_expression' ~raise ~tv_opt:tv e anno_expr in
+    let expr' = type_expression' ~raise ~test ~tv_opt:tv e anno_expr in
     let type_annotation =
       trace_option ~raise (corner_case "merge_annotations (Some ...) (Some ...) failed") @@
       O.merge_annotation
@@ -595,11 +595,11 @@ and type_expression' ~raise : environment -> ?tv_opt:O.type_expression -> I.expr
       Some m -> m
     | None   -> raise.raise @@ unbound_module_variable e module_name ae.location
     in
-    let element = type_expression' ~raise ?tv_opt module_env element in
+    let element = type_expression' ~raise ~test ?tv_opt module_env element in
     return (E_module_accessor {module_name; element}) element.type_expression
 
 
-and type_lambda ~raise e {
+and type_lambda ~raise ~test e {
       binder ;
       output_type ;
       result ;
@@ -612,14 +612,14 @@ and type_lambda ~raise e {
       let binder = cast_var binder.var in
       let input_type = trace_option ~raise (missing_funarg_annotation binder) input_type in
       let e' = Environment.add_ez_binder binder input_type e in
-      let body = type_expression' ~raise ?tv_opt:output_type e' result in
+      let body = type_expression' ~raise ~test ?tv_opt:output_type e' result in
       let output_type = body.type_expression in
       (({binder; result=body}:O.lambda),(t_function input_type output_type ()))
 
 
 
-and type_constant ~raise (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
-  let typer = Constant_typers.constant_typers ~raise loc name in
+and type_constant ~raise ~test (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
+  let typer = Constant_typers.constant_typers ~raise ~test loc name in
   let tv = typer lst tv_opt in
   (name, tv)
 

@@ -12,7 +12,7 @@ let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
     | false -> m
 
 let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.module_fully_typed * Ast_typed.environment =
-  let e,typed = trace ~raise checking_tracer @@ Checking.type_module ~init_env:options.init_env m in
+  let e,typed = trace ~raise checking_tracer @@ Checking.type_module ~test:options.test ~init_env:options.init_env m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
     let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
@@ -30,7 +30,7 @@ let compile_expression ~raise ?(infer = false) ~(env : Ast_typed.environment) (e
       e
     | false -> e
   in
-  let e,typed = trace ~raise checking_tracer @@ Checking.type_expression env inferred in
+  let e,typed = trace ~raise checking_tracer @@ Checking.type_expression ~test:false env inferred in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
   (applied, e)
 
