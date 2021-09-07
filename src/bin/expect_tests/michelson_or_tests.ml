@@ -9,7 +9,7 @@ let bad_contract basename =
 let () = Unix.putenv "TERM" "dumb"
 
 let%expect_test _ =
-  run_ligo_good [ "dry-run" ; contract "double_michelson_or.mligo" ; "main" ; "unit" ; "(M_left (1) : storage)" ] ;
+  run_ligo_good [ "run"; "dry-run" ; contract "double_michelson_or.mligo" ; "unit" ; "(M_left (1) : storage)" ] ;
   [%expect {|
     File "../../test/contracts/double_michelson_or.mligo", line 8, characters 6-9:
       7 |   let foo = (M_right ("one") : storage) in
@@ -37,7 +37,7 @@ let%expect_test _ =
 
     ( LIST_EMPTY() , M_right("one") ) |}];
 
-  run_ligo_good [ "dry-run" ; contract "double_michelson_or.ligo" ; "main" ; "unit" ; "(M_left (1) : storage)" ] ;
+  run_ligo_good ["run"; "dry-run" ; contract "double_michelson_or.ligo" ; "unit" ; "(M_left (1) : storage)" ] ;
   [%expect {|
     File "../../test/contracts/double_michelson_or.ligo", line 9, characters 8-11:
       8 |   const foo : storage = (M_right ("one") : storage);
@@ -67,7 +67,7 @@ let%expect_test _ =
 
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "michelson_or_tree.mligo" ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_or_tree.mligo" ] ;
   [%expect {|
     File "../../test/contracts/michelson_or_tree.mligo", line 6, characters 10-16:
       5 |
@@ -90,7 +90,7 @@ let%expect_test _ =
       code { DROP ; PUSH int 1 ; LEFT nat ; RIGHT int ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_or.mligo" ; "main" ] ;
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_michelson_or.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/bad_michelson_or.mligo", line 6, characters 12-27:
       5 | let main (action, store : unit * storage) : return =
@@ -101,7 +101,7 @@ let%expect_test _ =
     The contructor "M_right" must be annotated with a variant type. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "michelson_or_tree_intermediary.ligo" ; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_or_tree_intermediary.ligo" ] ;
   [%expect {|
     File "../../test/contracts/michelson_or_tree_intermediary.ligo", line 6, characters 21-27:
       5 |

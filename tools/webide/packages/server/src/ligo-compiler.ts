@@ -127,13 +127,15 @@ export class LigoCompiler {
 
     try {
       const result = await this.execPromise(this.ligoCmd, [
-        'compile-contract',
+        'compile', 
+        'contract',
+        name,
+        '-e',
+        entrypoint,
         '--michelson-format',
         format,
         '-s',
         syntax,
-        name,
-        entrypoint,
       ]);
       return result;
     } finally {
@@ -149,11 +151,12 @@ export class LigoCompiler {
     const { name, remove } = await this.createTemporaryFile(expression);
     try {
       const result = await this.execPromise(this.ligoCmd, [
-        'compile-expression',
-        '--init-file',
-        name,
+        'compile',
+        'expression',
         syntax,
         methodName,
+        '--init-file',
+        name,
       ]);
 
       return result;
@@ -166,10 +169,11 @@ export class LigoCompiler {
     const { name, remove } = await this.createTemporaryFile(code);
     try {
       const result = await this.execPromise(this.ligoCmd, [
+        'info',
         'list-declarations',
+        name,
         '-s',
         syntax,
-        name,
       ]);
       return result;
     } finally {
@@ -188,14 +192,16 @@ export class LigoCompiler {
 
     try {
       const result = await this.execPromise(this.ligoCmd, [
-        'compile-storage',
+        'compile', 
+        'storage',
+        name,
+        storage,
+        '-e',
+        entrypoint,
         '--michelson-format',
         format,
         '-s',
         syntax,
-        name,
-        entrypoint,
-        storage,
       ]);
 
       return result;
@@ -214,13 +220,15 @@ export class LigoCompiler {
     const { name, remove } = await this.createTemporaryFile(code);
     try {
       const result = await this.execPromise(this.ligoCmd, [
+        'run',
         'dry-run',
-        '-s',
-        syntax,
         name,
-        entrypoint,
         parameter,
         storage,
+        '-e',
+        entrypoint,
+        '-s',
+        syntax,
       ]);
       return result;
     } finally {
@@ -232,6 +240,7 @@ export class LigoCompiler {
     const { name, remove } = await this.createTemporaryFile(code);
     try {
       const result = await this.execPromise(this.ligoCmd, [
+        'run',
         'evaluate-expr',
         '-s',
         syntax,
@@ -253,12 +262,14 @@ export class LigoCompiler {
     const { name, remove } = await this.createTemporaryFile(code);
     try {
       const result = await this.execPromise(this.ligoCmd, [
+        'run',
         'evaluate-call',
+        name,
+        parameter,
+        '-e',
+        entrypoint,
         '-s',
         syntax,
-        name,
-        entrypoint,
-        parameter,
       ]);
       return result;
     } finally {

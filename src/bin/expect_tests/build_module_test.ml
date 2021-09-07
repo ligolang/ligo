@@ -4,7 +4,7 @@ let contract basename =
   "../../test/contracts/build/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good [ "print-graph" ; contract "cycle_A.mligo" ] ;
+  run_ligo_good [ "print" ; "dependency-graph" ; contract "cycle_A.mligo" ] ;
   [%expect {|
     `-- ../../test/contracts/build/cycle_A.mligo
         `-- ../../test/contracts/build/cycle_B.mligo
@@ -12,7 +12,7 @@ let%expect_test _ =
                 `-- ../../test/contracts/build/cycle_A.mligo |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print-graph" ; contract "cycle_A.mligo"; "--display-format=json" ] ;
+  run_ligo_good [ "print" ; "dependency-graph" ; contract "cycle_A.mligo"; "--format" ; "json" ] ;
   [%expect {|
     {
       "root": "../../test/contracts/build/cycle_A.mligo",
@@ -29,7 +29,7 @@ let%expect_test _ =
     } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print-graph" ; contract "D.mligo" ] ;
+  run_ligo_good [ "print" ; "dependency-graph" ; contract "D.mligo" ] ;
   [%expect {|
     `-- ../../test/contracts/build/D.mligo
         |-- ../../test/contracts/build/C.mligo
@@ -41,7 +41,7 @@ let%expect_test _ =
             `-- ../../test/contracts/build/G.mligo |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print-graph" ; contract "D.mligo"; "--display-format=json" ] ;
+  run_ligo_good [ "print" ; "dependency-graph" ; contract "D.mligo"; "--format" ; "json" ] ;
   [%expect {|
     {
       "root": "../../test/contracts/build/D.mligo",
@@ -61,7 +61,7 @@ let%expect_test _ =
     } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "B.mligo" ; "f" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "B.mligo" ; "-e" ; "f" ] ;
   [%expect{|
     { parameter unit ;
       storage int ;
@@ -79,7 +79,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print-ast-typed" ; contract "D.mligo" ] ;
+  run_ligo_good [ "print" ; "ast-typed" ; contract "D.mligo" ] ;
   [%expect {|
     const toto = ADD(E.toto ,
     C.B.titi)
@@ -90,7 +90,7 @@ let%expect_test _ =
                                                      toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print-mini-c" ; contract "D.mligo" ] ;
+  run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
     let ../../test/contracts/build/A.mligo = let toto = L(1) in toto
     let ../../test/contracts/build/B.mligo =
@@ -129,7 +129,7 @@ let%expect_test _ =
        let s = #13 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "D.mligo"; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "D.mligo" ] ;
   [%expect{|
     { parameter int ;
       storage int ;
@@ -197,7 +197,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print-ast-typed" ; contract "cycle_A.mligo" ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; contract "cycle_A.mligo" ] ;
   [%expect {|
     Dependency cycle detected :
      `-- ../../test/contracts/build/cycle_A.mligo
@@ -206,7 +206,7 @@ let%expect_test _ =
                 `-- ../../test/contracts/build/cycle_A.mligo |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "type_B.mligo"; "main" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "type_B.mligo" ] ;
   [%expect {|
     File "../../test/contracts/build/type_B.mligo", line 5, characters 5-6:
       4 | 	let s = s + 1 in
@@ -221,5 +221,5 @@ let%expect_test _ =
       code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ = 
-  run_ligo_good [ "compile-expression" ; "--init-file" ; contract "C.mligo" ; "cameligo" ; "tata" ] ;
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "tata" ; "--init-file" ; contract "C.mligo" ] ;
   [%expect {| 44 |}]

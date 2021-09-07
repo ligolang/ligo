@@ -10,7 +10,7 @@
     repl
     ligo_api
   )
-  (modules cli cli_helpers version)
+  (modules cli cli_helpers old_cli old_cli_helpers version)
   (flags (:standard -open Simple_utils -open Ligo))
 )
 
