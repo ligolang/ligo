@@ -7,5 +7,6 @@ module Errors = Errors
 
 let compile_module = Compiler.compile_module
 let compile_expression = Compiler.compile_expression
+let compile_type = Compiler.compile_type
 
 let decompile = Decompiler.decompile

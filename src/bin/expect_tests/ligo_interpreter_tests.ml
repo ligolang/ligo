@@ -178,6 +178,26 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_bigmap.mligo" ] ;
+  [%expect {|
+    [32 -> 42n]
+    None (())
+    [32 -> 42n]
+    [3 -> 42n ; 21 -> 42n ; 32 -> 42n]
+    None (())
+    Some (42n)
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_bigmap_set.mligo" ] ;
+  [%expect {|
+    9n
+    0n
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_module.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.

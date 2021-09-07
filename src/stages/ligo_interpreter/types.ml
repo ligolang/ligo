@@ -53,7 +53,6 @@ and value =
   | V_List of value list
   | V_Record of value label_map
   | V_Map of (value * value) list
-  | V_BigMap of (Int.n Int.num * (value * value option) list)
   | V_Set of value list
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
@@ -71,3 +70,10 @@ and exception_type =
 
 and bootstrap_contract =
   int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression * Ast_typed.type_expression
+
+type bigmap_state = (value * value) list
+type bigmap_data = {
+      key_type : Tezos_raw_protocol_009_PsFLoren.Script_repr.expr;
+      value_type : Tezos_raw_protocol_009_PsFLoren.Script_repr.expr;
+      version : bigmap_state }
+type bigmap = int * bigmap_data

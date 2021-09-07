@@ -163,7 +163,6 @@ let constant'_tag = function
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> 155
   | C_TEST_TO_ENTRYPOINT        -> 156
   | C_POLYMORPHIC_ADD         -> 157
-  | C_BIG_MAP_IDENTIFIER -> 158
   | C_NEVER                   -> 159
   | C_TEST_MUTATE_COUNT       -> 161
   | C_TEST_MUTATE_VALUE       -> 162
@@ -174,6 +173,7 @@ let constant'_tag = function
   | C_TEST_TO_TYPED_ADDRESS   -> 167
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> 168
   | C_TEST_SAVE_MUTATION      -> 169
+  | C_TEST_SET_BIG_MAP        -> 170
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

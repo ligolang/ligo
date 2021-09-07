@@ -2,9 +2,12 @@ open Trace
 open Proto_alpha_utils
 module Tezos_alpha_test_helpers = Ligo_009_PsFLoren_test_helpers
 open Ligo_interpreter_exc
-module Tezos_client = Tezos_client_009_PsFLoren
 module Tezos_protocol = Tezos_protocol_009_PsFLoren
 module Tezos_raw_protocol = Tezos_raw_protocol_009_PsFLoren
+
+open Ligo_interpreter.Types
+
+type bigmaps = bigmap list
 
 type block = Tezos_alpha_test_helpers.Block.t
 type last_originations = (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * Memory_proto_alpha.Protocol.Alpha_context.Contract.t list) list
@@ -21,6 +24,7 @@ type context = {
   source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ;
   bootstrapped : Memory_proto_alpha.Protocol.Alpha_context.Contract.t list ;
   next_bootstrapped_contracts : Ligo_interpreter.Types.bootstrap_contract list ;
+  bigmaps : bigmaps ;
 }
 
 type state_error = Tezos_error_monad.TzCore.error list
@@ -63,41 +67,26 @@ let get_alpha_context (ctxt : context) =
 let get_timestamp (ctxt : context) =
   ctxt.threaded_context.header.shell.timestamp
 
-let get_big_map ~raise ~loc ~calltrace (ctxt : context) id key key_ty  =
-  let open Tezos_raw_protocol in
-  let id = Alpha_context.Big_map.Id.parse_z id in
-  let key_ty_michelson =
-    Trace.trace_tzresult_lwt ~raise Main_errors.parsing_input_tracer @@
-    Memory_proto_alpha.prims_of_strings key_ty in
-  let (Ex_ty key_ty) =
-    Trace.trace_tzresult_lwt ~raise Main_errors.parsing_input_tracer @@
-    Memory_proto_alpha.parse_michelson_ty key_ty_michelson in
-  let key_michelson =
-    Trace.trace_tzresult_lwt ~raise Main_errors.parsing_input_tracer @@
-    Memory_proto_alpha.prims_of_strings key in
-  let key =
-    Trace.trace_tzresult_lwt ~raise Main_errors.parsing_input_tracer @@
-    Memory_proto_alpha.parse_michelson_data key_michelson key_ty in
-  let fctxt = get_alpha_context ctxt in
-  let hash,_ = Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Script_ir_translator.hash_data fctxt key_ty key in
-  let exec_get = Lwt_main.run @@
-                 Tezos_protocol.Protocol.Alpha_services.Contract.big_map_get Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.threaded_context id hash in
-  let error = Errors.generic_error loc "Unexpected response when accessing element from big_map identifier" in
-  match exec_get with
-  | Ok x -> (Some x)
-  | Error [err] ->
-     begin
-     let err = Error_monad.json_of_error err in
-     match err with
-     | `O kvs ->
-        begin
-        match List.Assoc.find kvs "id" ~equal:String.equal with
-        | Some (`String id) when String.equal id "RPC_context.Not_found" -> None
-        | _ -> raise.raise @@ error
-        end
-     | _ -> raise.raise @@ error
-     end
-  | Error _ ->  raise.raise @@ error
+let equal_key (a : value) (b : value) = Ligo_interpreter.Combinators.equal_value a b
+
+let get_big_map ~raise (ctxt : context) id key key_ty  =
+  let data = List.Assoc.find_exn ctxt.bigmaps ~equal:(=) id in
+  let key_value = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.bigmaps key_ty key in
+  let state = data.version in
+  List.Assoc.find state ~equal:equal_key key_value
+
+let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
+  let open Tezos_micheline.Micheline in
+  let key_type = strip_locations k_ty in
+  let key_type = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise
+                   (fun _ -> Errors.generic_error Location.generated "Cannot extract key type") @@
+                   Tezos_protocol_009_PsFLoren.Protocol.Michelson_v1_primitives.prims_of_strings key_type in
+  let value_type = strip_locations v_ty in
+  let value_type = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise
+                     (fun _ -> Errors.generic_error Location.generated "Cannot extract value type") @@
+                     Tezos_protocol_009_PsFLoren.Protocol.Michelson_v1_primitives.prims_of_strings value_type in
+  let data : Ligo_interpreter.Types.bigmap_data = { key_type ; value_type ; version } in
+  { ctxt with bigmaps = List.Assoc.add ctxt.bigmaps ~equal:(=) id data }
 
 let contract_exists ~raise ~loc ~calltrace ctxt contract =
   let ctxt = get_alpha_context ctxt in
@@ -193,6 +182,25 @@ let extract_origination_from_result :
     [(src, x.originated_contracts)]
   | _ -> []
 
+let extract_lazy_storage_diff_from_result :
+  type a .
+    a Tezos_raw_protocol_009_PsFLoren.Apply_results.contents_result ->
+    Tezos_raw_protocol_009_PsFLoren.Alpha_context.Lazy_storage.diffs option list =
+  fun x ->
+  let open Tezos_raw_protocol_009_PsFLoren in
+  match x with
+  | Manager_operation_result { operation_result = Applied (Transaction_result y) ; internal_operation_results } ->
+    let aux (x:Apply_results.packed_internal_operation_result) =
+      match x with
+      | Internal_operation_result ({source = _ ; _},Applied (Origination_result x)) -> [x.lazy_storage_diff]
+      | Internal_operation_result ({source = _ ; _},Applied (Transaction_result x)) -> [x.lazy_storage_diff]
+      | _ -> []
+    in
+    (List.concat @@ List.map ~f:aux internal_operation_results) @ [y.lazy_storage_diff]
+  | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ } ->
+    [x.lazy_storage_diff]
+  | _ -> []
+
 let get_last_originations : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_protocol.Protocol.operation_receipt -> last_originations =
   fun top_src x ->
     let open Tezos_raw_protocol in
@@ -214,6 +222,85 @@ let get_last_originations : Memory_proto_alpha.Protocol.Alpha_context.Contract.t
       aux [] contents
     )
 
+let get_lazy_storage_diffs : Tezos_protocol.Protocol.operation_receipt ->
+                             Tezos_raw_protocol_009_PsFLoren.Alpha_context.Lazy_storage.diffs option list =
+  fun x ->
+    let open Tezos_raw_protocol in
+    match x with
+    | No_operation_metadata -> []
+    | Operation_metadata { contents } -> (
+      let rec aux : type a . _ -> a Apply_results.contents_result_list -> _ =
+        fun acc x ->
+          match x with
+          | Cons_result (hd, tl) -> (
+            let x = extract_lazy_storage_diff_from_result hd in
+            aux (acc @ x) tl
+          )
+          | Single_result x -> (
+            let x = extract_lazy_storage_diff_from_result x in
+            x @ acc
+          )
+      in
+      aux [] contents
+    )
+
+let convert_lazy_storage_diffs (lazy_storage_diffs : Tezos_raw_protocol_009_PsFLoren.Alpha_context.Lazy_storage.diffs) =
+  let enc = Data_encoding.Binary.to_bytes_exn Tezos_raw_protocol.Alpha_context.Lazy_storage.encoding lazy_storage_diffs in
+  Data_encoding.Binary.of_bytes_exn Tezos_raw_protocol.Lazy_storage_diff.encoding enc
+
+let upd_context_of_receipts ~raise (ctxt : context) (op : Tezos_raw_protocol.Apply_results.packed_operation_metadata) =
+  let last_originations = get_last_originations ctxt.source op in
+  let lazy_storage_diffs = get_lazy_storage_diffs op in
+  let lazy_storage_diffs = List.concat @@ List.filter_opt lazy_storage_diffs in
+  let lazy_storage_diffs = convert_lazy_storage_diffs lazy_storage_diffs in
+  let bigmaps = let get_id id = Z.to_int (Tezos_raw_protocol_009_PsFLoren.Lazy_storage_kind.Big_map.Id.unparse_to_z id) in
+                List.fold lazy_storage_diffs ~init:ctxt.bigmaps ~f:(fun bigmaps -> function
+                    | Item (Big_map, id, Remove) ->
+                       List.Assoc.remove bigmaps ~equal:(=) (get_id id)
+                    | Item (Big_map, id, Update {init=Alloc {key_type;value_type};updates}) ->
+                       let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
+                       let aux (kv : (value * value) list) (key, value) =
+                         let key_value = Michelson_to_value.conv ~raise ~bigmaps key_type key in
+                         match value with
+                         | None -> List.Assoc.remove kv ~equal:equal_key key_value
+                         | Some value ->
+                            let value_value = Michelson_to_value.conv ~raise ~bigmaps value_type value in
+                            List.Assoc.add kv ~equal:equal_key key_value value_value in
+                       let state = List.fold kv_diff ~init:[] ~f:aux in
+                       let data = {key_type;value_type;version = state} in
+                       List.Assoc.add bigmaps ~equal:(=) (get_id id) data
+                    | Item (Big_map, id, Update {init=Copy {src};updates}) ->
+                       let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
+                       let data = List.Assoc.find_exn bigmaps ~equal:(=) (get_id src) in
+                       let state = data.version in
+                       let aux (kv : (value * value) list) (key, value) =
+                         let key_value = Michelson_to_value.conv ~raise ~bigmaps data.key_type key in
+                         match value with
+                         | None -> List.Assoc.remove kv ~equal:equal_key key_value
+                         | Some value ->
+                            let value_value = Michelson_to_value.conv ~raise ~bigmaps data.value_type value in
+                            List.Assoc.add kv ~equal:equal_key key_value value_value in
+                       let state = List.fold kv_diff ~init:state ~f:aux in
+                       let data = { data with version = state } in
+                       List.Assoc.add bigmaps ~equal:(=) (get_id id) data
+                    | Item (Big_map, id, Update {init=Existing;updates}) ->
+                       let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
+                       let data = List.Assoc.find_exn bigmaps ~equal:(=) (get_id id) in
+                       let state = data.version in
+                       let aux (kv : (value * value) list) (key, value) =
+                         let key_value = Michelson_to_value.conv ~raise ~bigmaps data.key_type key in
+                         match value with
+                         | None -> List.Assoc.remove kv ~equal:equal_key key_value
+                         | Some value ->
+                            let value_value = Michelson_to_value.conv ~raise ~bigmaps data.value_type value in
+                            List.Assoc.add kv ~equal:equal_key key_value value_value in
+                       let state = List.fold kv_diff ~init:state ~f:aux in
+                       let data = { data with version = state } in
+                       List.Assoc.add bigmaps ~equal:(=) (get_id id) data
+                    | _  -> bigmaps) in
+  { ctxt with last_originations ; bigmaps }
+
+
 let bake_op ~raise ~loc ~calltrace (ctxt:context) operation =
   let open Tezos_alpha_test_helpers in
   let baker = unwrap_baker ~raise ~loc ctxt.baker in
@@ -226,11 +313,11 @@ let bake_op ~raise ~loc ~calltrace (ctxt:context) operation =
     let last_op = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       Incremental.get_last_operation_result incr
     in
-    let last_originations = get_last_originations ctxt.source last_op in
+    let ctxt = upd_context_of_receipts ~raise ctxt last_op in
     let threaded_context = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       Incremental.finalize_block incr
     in
-    (Success {ctxt with threaded_context ; last_originations ; alpha_context = Incremental.alpha_ctxt incr })
+    (Success {ctxt with threaded_context ; alpha_context = Incremental.alpha_ctxt incr })
   | Error errs -> (Fail errs)
 
 
@@ -290,6 +377,6 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
   let alpha_context,_ = alpha_context_of_block ~raise ~loc ~calltrace threaded_context in
   match acclst with
   | baker::source::_ ->
-    { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] ; storage_tys ; parameter_tys ; alpha_context ; next_bootstrapped_contracts = [] }
+    { threaded_context ; baker ; source ; bootstrapped = acclst ; last_originations = [] ; storage_tys ; parameter_tys ; alpha_context ; next_bootstrapped_contracts = [] ; bigmaps = [] }
   | _ ->
     raise.raise (Errors.bootstrap_not_enough loc)

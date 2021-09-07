@@ -85,14 +85,6 @@ let big_map_empty ~raise loc = typer_0 ~raise loc "BIG_MAP_EMPTY" @@ fun tv_opt 
     let (src, dst) = trace_option ~raise (expected_big_map loc t) @@ get_t_big_map t in
     t_big_map src dst
 
-let big_map_identifier ~raise loc = typer_1_opt ~raise loc "BIG_MAP_IDENTIFIER" @@ fun id tv_opt  ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let () = trace_option ~raise (expected_nat loc id) @@ get_t_nat id in
-    let (src, dst) = trace_option ~raise (expected_big_map loc t) @@ get_t_big_map t in
-    t_big_map src dst
-
 let map_add ~raise loc : typer = typer_3 loc ~raise "MAP_ADD" @@ fun k v m ->
   let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
       Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
@@ -1000,6 +992,11 @@ let test_to_typed_address ~raise loc = typer_1_opt ~raise loc "TEST_TO_TYPED_ADD
   let () = assert_eq_1 ~raise ~loc parameter_ty parameter_ty' in
   t_typed_address parameter_ty storage_ty
 
+let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun id bm ->
+  let () = assert_eq_1 ~raise ~loc id (t_int ()) in
+  let _ = trace_option ~raise (expected_big_map loc bm) @@ get_t_big_map bm in
+  t_unit ()
+
 let test_originate_from_file ~raise loc = typer_4 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
   let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
   let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
@@ -1079,7 +1076,6 @@ let constant_typers ~raise loc c : typer = match c with
     (* MAP *)
   | C_MAP_EMPTY           -> map_empty ~raise loc;
   | C_BIG_MAP_EMPTY       -> big_map_empty ~raise loc;
-  | C_BIG_MAP_IDENTIFIER  -> big_map_identifier ~raise loc;
   | C_MAP_ADD             -> map_add ~raise loc ;
   | C_MAP_REMOVE          -> map_remove ~raise loc ;
   | C_MAP_UPDATE          -> map_update ~raise loc ;
@@ -1157,6 +1153,7 @@ let constant_typers ~raise loc c : typer = match c with
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
   | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
   | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
+  | C_TEST_SET_BIG_MAP -> test_set_big_map ~raise loc ;
   | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~raise loc ;
   | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
   (* JsLIGO *)

@@ -69,6 +69,12 @@ let compile_value ~raise typed_exp =
   let compiled_exp   = Of_mini_c.aggregate_and_compile_expression ~raise ~options [] mini_c_exp in
   compiled_exp
 
+let compile_type ~raise type_exp =
+  let open Ligo_compile in
+  let mini_c_exp     = Of_typed.compile_type ~raise type_exp in
+  let compiled_exp   = Of_mini_c.compile_type mini_c_exp in
+  compiled_exp
+
 let compile_contract_ ~raise subst_lst arg_binder rec_name in_ty out_ty typed_exp =
   let open Ligo_compile in
   let options = Compiler_options.make () in
@@ -167,8 +173,7 @@ let rec val_to_ast ~raise ~loc ?(toplevel = true) : Ligo_interpreter.Types.value
      make_ast_func ~raise ~toplevel ?name:v.rec_name v.env v.arg_binder v.body v.orig_lambda
   | V_Michelson (Ty_code (expr, expr_ty, ty_exp)) ->
      let mini_c = trace ~raise Main_errors.decompile_michelson @@ Stacking.Decompiler.decompile_value expr_ty expr in
-     let typed = trace ~raise Main_errors.decompile_mini_c @@ Spilling.decompile mini_c ty_exp in
-     typed
+     trace ~raise Main_errors.decompile_mini_c @@ Spilling.decompile mini_c ty_exp
   | V_Record map when is_t_record ty ->
      let map_ty = trace_option ~raise (Errors.generic_error loc "Expected record") @@  get_t_record ty in
      make_ast_record ~raise ~loc map_ty map
@@ -188,11 +193,6 @@ let rec val_to_ast ~raise ~loc ?(toplevel = true) : Ligo_interpreter.Types.value
      make_ast_map~raise ~loc key_ty value_ty kv
   | V_Map _ ->
      raise.raise @@ Errors.generic_error loc "Expected either map or big_map"
-  | V_BigMap id when is_t_big_map ty ->
-     let (key_ty, value_ty) = trace_option ~raise (Errors.generic_error loc "Expected big_map") @@ get_t_big_map ty in
-     make_ast_big_map_id ~raise ~loc key_ty value_ty id
-  | V_BigMap _ ->
-     raise.raise @@ Errors.generic_error loc "Expected big_map"
   | V_Ligo _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: ligo"
   | V_Michelson (Contract _) ->
@@ -259,20 +259,6 @@ and make_ast_big_map ~raise ~loc key_ty value_ty kv =
                 (k, v)) kv in
   let kv = List.dedup_and_sort ~compare kv in
   List.fold_right kv ~f:(fun (k, v) r -> Ast_typed.e_a_big_map_add k v r) ~init:(Ast_typed.e_a_big_map_empty key_ty value_ty)
-
-and make_ast_big_map_id ~raise ~loc key_ty value_ty (id, kv) =
-  let kv = List.map ~f:(fun (k, v) ->
-                match v with
-                | Some v ->
-                   let k = val_to_ast ~raise ~loc k key_ty in
-                   let v = val_to_ast ~raise ~loc v value_ty in
-                   Ast_typed.e_a_big_map_add k v
-                | None ->
-                   let k = val_to_ast ~raise ~loc k key_ty in
-                   Ast_typed.e_a_big_map_remove k
-) kv in
-  let e = Ast_typed.e_a_big_map_identifier key_ty value_ty (Ast_typed.e_a_nat id) in
-  List.fold_right kv ~f:(fun mk t -> mk t) ~init:e
 
 and make_ast_map ~raise ~loc key_ty value_ty kv =
   let kv = List.map ~f:(fun (k, v) ->
@@ -354,3 +340,31 @@ let compile_literal ~raise ~loc : Ast_typed.literal -> _ =
   (expr, expr_ty, typed_exp.type_expression)
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
+
+let run_michelson_code ~raise ~loc (ctxt : Tezos_state.context) code func_ty arg arg_ty =
+  let a,b,_ = compile_simple_value ~raise ~loc arg arg_ty in
+  let func_ty = compile_type ~raise func_ty in
+  let open Tezos_micheline in
+  let (code, errs) = Micheline_parser.tokenize code in
+  let func = (match errs with
+              | _ :: _ -> raise.raise (Errors.generic_error Location.generated "Could not parse")
+              | [] ->
+                 let (code, errs) = Micheline_parser.parse_expression ~check:false code in
+                 match errs with
+                 | _ :: _ -> raise.raise (Errors.generic_error Location.generated "Could not parse")
+                 | [] ->
+                    let code = Micheline.strip_locations code in
+                    (* hmm *)
+                    let code = Micheline.inject_locations (fun _ -> ()) code in
+                    match code with
+                    | Seq (_, s) ->
+                       Tezos_utils.Michelson.(seq ([i_push b a] @ s))
+                    | _ ->
+                       raise.raise (Errors.generic_error Location.generated "Could not parse")
+             ) in
+  let r = Ligo_run.Of_michelson.run_expression ~raise func func_ty in
+  match r with
+  | Success (a, b) ->
+      Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.bigmaps a b
+  | _ ->
+     raise.raise (Errors.generic_error loc "Could not execute Michelson function")

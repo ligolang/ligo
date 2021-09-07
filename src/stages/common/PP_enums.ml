@@ -106,7 +106,6 @@ let constant' ppf : constant' -> unit = function
   | C_BIG_MAP_EMPTY         -> fprintf ppf "BIG_MAP_EMPTY"
   | C_BIG_MAP_LITERAL       -> fprintf ppf "BIG_MAP_LITERAL"
   | C_BIG_MAP_GET_AND_UPDATE -> fprintf ppf "BIG_MAP_GET_AND_UPDATE"
-  | C_BIG_MAP_IDENTIFIER    -> fprintf ppf "BIG_MAP_IDENTIFIER"
   (* Crypto *)
   | C_SHA256                -> fprintf ppf "SHA256"
   | C_SHA512                -> fprintf ppf "SHA512"
@@ -165,6 +164,7 @@ let constant' ppf : constant' -> unit = function
   | C_TEST_TO_ENTRYPOINT -> fprintf ppf "TEST_TO_ENTRYPOINT"
   | C_TEST_TO_TYPED_ADDRESS -> fprintf ppf "TEST_TO_TYPED_ADDRESS"
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> fprintf ppf "TEST_NTH_BOOTSTRAP_TYPED_ADDRESS"
+  | C_TEST_SET_BIG_MAP -> fprintf ppf "TEST_SET_BIG_MAP"
   | C_SHA3 -> fprintf ppf "SHA3"
   | C_KECCAK -> fprintf ppf "KECCAK"
   | C_LEVEL -> fprintf ppf "LEVEL"

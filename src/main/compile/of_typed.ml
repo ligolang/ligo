@@ -15,6 +15,9 @@ let compile ~raise ?(module_env = SMap.empty) : Ast_typed.module_fully_typed -> 
 let compile_expression ~raise ?(module_env = SMap.empty) : expression -> Mini_c.expression = fun e ->
   trace ~raise spilling_tracer @@ compile_expression ~module_env:module_env e
 
+let compile_type ~raise : type_expression -> Mini_c.type_expression = fun e ->
+  trace ~raise spilling_tracer @@ compile_type e
+
 let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type -> string -> Ast_typed.module_fully_typed -> Ast_typed.expression -> unit  =
     fun c entry contract param ->
   let entry_point = trace_option ~raise entrypoint_not_found (Ast_typed.get_entry contract entry) in
