@@ -9,11 +9,11 @@ module Environment = O.Environment
 
 type environment = Environment.t
 
-val type_module      : raise:typer_error raise -> init_env:environment -> I.module_ -> environment * O.module_fully_typed
-val type_declaration : raise:typer_error raise -> environment -> I.declaration Location.wrap -> environment * O.declaration Location.wrap
+val type_module      : raise:typer_error raise -> test:bool -> init_env:environment -> I.module_ -> environment * O.module_fully_typed
+val type_declaration : raise:typer_error raise -> test:bool -> environment -> I.declaration Location.wrap -> environment * O.declaration Location.wrap
 val evaluate_type    : raise:typer_error raise -> environment -> I.type_expression -> O.type_expression
-val type_expression  : raise:typer_error raise -> environment -> ?tv_opt:O.type_expression -> I.expression -> O.environment * O.expression
-val type_constant    : raise:typer_error raise -> I.constant' -> Location.t -> O.type_expression list -> O.type_expression option -> O.constant' * O.type_expression
+val type_expression  : raise:typer_error raise -> test:bool -> environment -> ?tv_opt:O.type_expression -> I.expression -> O.environment * O.expression
+val type_constant    : raise:typer_error raise -> test:bool -> I.constant' -> Location.t -> O.type_expression list -> O.type_expression option -> O.constant' * O.type_expression
 (*
 val untype_type_value : O.type_value -> (I.type_expression) result
 val untype_literal : O.literal -> I.literal result

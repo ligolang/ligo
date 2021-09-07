@@ -19,65 +19,46 @@ let monad_option error = fun v ->
       None -> fail error
     | Some s -> return s
 
-let rec apply_comparison : Location.t -> calltrace -> Ast_typed.constant' -> value list -> value Monad.t =
-  fun loc calltrace c operands ->
-    let open Monad in
-    match (c,operands) with
-    | ( comp , [ V_Ct (C_int a'      ) ; V_Ct (C_int b'      ) ] )
-    | ( comp , [ V_Ct (C_mutez a'    ) ; V_Ct (C_mutez b'    ) ] )
-    | ( comp , [ V_Ct (C_timestamp a') ; V_Ct (C_timestamp b') ] )
-    | ( comp , [ V_Ct (C_nat a'      ) ; V_Ct (C_nat b'      ) ] ) ->
+let wrap_compare_result comp cmpres loc calltrace =
+  let open Monad in
+  match comp with
+  | C_EQ -> return (cmpres = 0)
+  | C_NEQ -> return (cmpres <> 0)
+  | C_LT -> return (cmpres < 0)
+  | C_LE -> return (cmpres <= 0)
+  | C_GT -> return (cmpres > 0)
+  | C_GE -> return (cmpres >= 0)
+  | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+
+let compare_constants c o1 o2 loc calltrace =
+  let open Monad in
+  match (c, [o1; o2]) with
+  | (comp, [V_Ct (C_int a'); V_Ct (C_int b')])
+  | (comp, [V_Ct (C_mutez a'); V_Ct (C_mutez b')])
+  | (comp, [V_Ct (C_timestamp a'); V_Ct (C_timestamp b')])
+  | (comp, [V_Ct (C_nat a'); V_Ct (C_nat b')]) ->
       let>> i = Int_compare_wrapped (a', b') in
       let>> cmpres = Int_of_int i in
-      let>> cmpres = Int_compare (cmpres, Ligo_interpreter.Int_repr_copied.zero) in
-      let* x = match comp with
-        | C_EQ -> return (cmpres = 0)
-        | C_NEQ -> return (cmpres <> 0)
-        | C_LT -> return (cmpres < 0)
-        | C_LE -> return (cmpres <= 0)
-        | C_GT -> return (cmpres > 0)
-        | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      let>> cmpres =
+        Int_compare (cmpres, Ligo_interpreter.Int_repr_copied.zero)
       in
+      let* x = wrap_compare_result comp cmpres loc calltrace in
       return @@ v_bool x
-    | ( comp     , [ V_Ct (C_bool b ) ; V_Ct (C_bool a ) ] ) ->
+  | (comp, [V_Ct (C_bool b); V_Ct (C_bool a)]) ->
       let cmpres = Bool.compare b a in
-      let* x = match comp with
-        | C_EQ -> return (cmpres = 0)
-        | C_NEQ -> return (cmpres <> 0)
-        | C_LT -> return (cmpres < 0)
-        | C_LE -> return (cmpres <= 0)
-        | C_GT -> return (cmpres > 0)
-        | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-      in
+      let* x = wrap_compare_result comp cmpres loc calltrace in
       return @@ v_bool x
-    | ( comp     , [ V_Ct (C_address b ) ; V_Ct (C_address a ) ] ) ->
+  | (comp, [V_Ct (C_address b); V_Ct (C_address a)]) ->
       let cmpres = Tezos_state.compare_account_ b a in
-      let* x = match comp with
-        | C_EQ -> return (cmpres = 0)
-        | C_NEQ -> return (cmpres <> 0)
-        | C_LT -> return (cmpres < 0)
-        | C_LE -> return (cmpres <= 0)
-        | C_GT -> return (cmpres > 0)
-        | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-      in
+      let* x = wrap_compare_result comp cmpres loc calltrace in
       return @@ v_bool x
-    | ( comp     , [ V_Ct (C_key_hash b ) ; V_Ct (C_key_hash a ) ] ) ->
+  | (comp, [V_Ct (C_key_hash b); V_Ct (C_key_hash a)]) ->
       let cmpres = Tezos_crypto.Signature.Public_key_hash.compare b a in
-      let* x = match comp with
-        | C_EQ -> return (cmpres = 0)
-        | C_NEQ -> return (cmpres <> 0)
-        | C_LT -> return (cmpres < 0)
-        | C_LE -> return (cmpres <= 0)
-        | C_GT -> return (cmpres > 0)
-        | C_GE -> return (cmpres >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-      in
+      let* x = wrap_compare_result comp cmpres loc calltrace in
       return @@ v_bool x
-    | ( comp     , [ V_Ct (C_unit ) ; V_Ct (C_unit ) ] ) ->
-      let* x = match comp with
+  | (comp, [V_Ct C_unit; V_Ct C_unit]) ->
+      let* x =
+        match comp with
         | C_EQ -> return true
         | C_NEQ -> return false
         | C_LT -> return false
@@ -87,46 +68,204 @@ let rec apply_comparison : Location.t -> calltrace -> Ast_typed.constant' -> val
         | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
       in
       return @@ v_bool x
-    | ( comp     , [ V_Ct (C_string a'  ) ; V_Ct (C_string b'  ) ] ) ->
-      let* f_op = match comp with
-        | C_EQ -> return @@ fun a b -> (String.compare a b = 0)
-        | C_NEQ -> return @@ fun a b -> (String.compare a b != 0)
-        | C_LT -> return @@ fun a b -> (String.compare a b < 0)
-        | C_LE -> return @@ fun a b -> (String.compare a b <= 0)
-        | C_GT -> return @@ fun a b -> (String.compare a b > 0)
-        | C_GE -> return @@ fun a b -> (String.compare a b >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable" in
-      Monad.return @@ v_bool (f_op a' b')
+  | (comp, [V_Ct (C_string a'); V_Ct (C_string b')]) ->
+      let* f_cmp = return @@ fun a b -> String.compare a b in
+      let* cmpres = return @@ f_cmp a' b' in
+      let* x = wrap_compare_result comp cmpres loc calltrace in
+      Monad.return @@ v_bool x
+  | (comp, [V_Ct (C_bytes a'); V_Ct (C_bytes b')]) ->
+      let* f_cmp = return @@ fun a b -> Bytes.compare a b in
+      let* cmpres = return @@ f_cmp a' b' in
+      let* x = wrap_compare_result comp cmpres loc calltrace in
+      Monad.return @@ v_bool x
+  | ( comp,
+      [
+        V_Ct (C_contract {address = addr1; entrypoint = entr1});
+        V_Ct (C_contract {address = addr2; entrypoint = entr2});
+      ] ) ->
+      let compare_opt_strings o1 o2 =
+        match (o1, o2) with (Some s1, Some s2) -> s1 = s2 | _ -> false
+      in
+      let cmpres = Tezos_state.compare_account_ addr1 addr2 in
+      let* x =
+        match comp with
+        | C_EQ -> return (cmpres = 0 && compare_opt_strings entr1 entr2)
+        | C_NEQ -> return (cmpres <> 0 && compare_opt_strings entr1 entr2)
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      in
+      return @@ v_bool x
+  | (_, l) ->
+      print_endline
+        (Format.asprintf
+            "%a"
+            (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
+            l) ;
+      fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-    | ( comp     , [ V_Ct (C_bytes a'  ) ; V_Ct (C_bytes b'  ) ] ) ->
-      let* f_op = match comp with
-        | C_EQ -> return @@ fun a b -> (Bytes.compare a b = 0)
-        | C_NEQ -> return @@ fun a b -> (Bytes.compare a b != 0)
-        | C_LT -> return @@ fun a b -> (Bytes.compare a b < 0)
-        | C_LE -> return @@ fun a b -> (Bytes.compare a b <= 0)
-        | C_GT -> return @@ fun a b -> (Bytes.compare a b > 0)
-        | C_GE -> return @@ fun a b -> (Bytes.compare a b >= 0)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable" in
-      Monad.return @@ v_bool (f_op a' b')
-    | ( comp , [ V_Construct (ctor_a, args_a) ; V_Construct (ctor_b, args_b ) ] ) -> (
-       match comp with
-       | C_EQ ->
-          if (String.equal ctor_a ctor_b) then
-            let* r = apply_comparison loc calltrace c [ args_a ;  args_b ] in
+let rec apply_comparison :
+    Location.t ->
+    calltrace ->
+    Ast_typed.constant' ->
+    value list ->
+    value Monad.t =
+  fun loc calltrace c operands ->
+  let open Monad in
+  match (c, operands) with
+  | (C_EQ  , [ (V_Michelson _) as a ; (V_Michelson _) as b ] ) ->
+    let>> b = Michelson_equal (loc,a,b) in
+    return @@ v_bool b
+  | (C_NEQ  , [ (V_Michelson _) as a ; (V_Michelson _) as b ] ) ->
+    let>> b = Michelson_equal (loc,a,b) in
+    return @@ v_bool (not b)
+  | (comp, [(V_Ct _ as v1); (V_Ct _ as v2)]) ->
+      compare_constants comp v1 v2 loc calltrace
+  | (comp, [V_Ligo (a1, b1); V_Ligo (a2, b2)]) ->
+      let* x =
+        match comp with
+        | C_EQ -> return (a1 = a2 && b1 = b2)
+        | C_NEQ -> return (a1 = a2 && b1 = b2)
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      in
+      return @@ v_bool x
+  | (comp, [V_List xs; V_List ys]) ->
+    let* v = eq_lists xs ys loc calltrace in
+    let* v =
+      match comp with
+      | C_EQ -> return v
+      | C_NEQ -> return @@ v_bool (not (is_true v))
+      | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+    in
+    return v
+  | (comp, [V_Set xs; V_Set ys]) ->
+    let* v = eq_set xs ys loc calltrace in
+      let* v =
+        match comp with
+        | C_EQ -> return v
+        | C_NEQ -> return @@ v_bool (not (is_true v))
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      in
+      return v
+  | (comp, [V_Map xs; V_Map ys]) ->
+      let* v = eq_map xs ys loc calltrace in
+      let* v =
+        match comp with
+        | C_EQ -> return v
+        | C_NEQ -> return @@ v_bool (not (is_true v))
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      in
+      return v
+  | (comp, [V_Record xs; V_Record ys]) ->
+    let* v = eq_record xs ys loc calltrace in
+    let* v =
+      match comp with
+      | C_EQ -> return v
+      | C_NEQ -> return @@ v_bool (not (is_true v))
+      | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+    in
+    return v
+  | (comp, [V_Construct (ctor_a, args_a); V_Construct (ctor_b, args_b)]) -> (
+      match comp with
+      | C_EQ ->
+          if String.equal ctor_a ctor_b then
+            let* r = apply_comparison loc calltrace c [args_a; args_b] in
             Monad.return @@ v_bool @@ is_true r
+          else Monad.return @@ v_bool false
+      | C_NEQ ->
+          if not (String.equal ctor_a ctor_b) then Monad.return @@ v_bool true
           else
-            Monad.return @@ v_bool false
-       | C_NEQ ->
-          if (not (String.equal ctor_a ctor_b)) then
-            Monad.return @@ v_bool true
-          else
-            let* r = apply_comparison loc calltrace c [ args_a ;  args_b ] in
+            let* r = apply_comparison loc calltrace c [args_a; args_b] in
             Monad.return @@ v_bool @@ is_true r
-       | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-    )
-    | ( _ , l ) ->
-       print_endline (Format.asprintf "%a" (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value) l);
-       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable")
+  | (_, l) ->
+    (* TODO: Don't know how to compare these *)
+      (* V_Func_val *)
+      (* V_Mutation *)
+      (* V_Failure *)
+      (* V_Michelson *)
+      (* V_BigMap *)
+      print_endline
+        (Format.asprintf
+            "%a"
+            (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
+            l) ;
+      fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+
+(* List equal *)
+and eq_lists xs ys loc calltrace  =
+  let open Monad in
+  let rec aux acc xs ys =
+    match (xs, ys) with
+    | [], [] -> acc
+    | (x::xs), (y::ys) ->
+      let* cmp = apply_comparison loc calltrace C_EQ [x; y] in
+      let* acc = acc in
+      aux (return @@ v_bool (is_true acc && is_true cmp)) xs ys
+    | _ -> return @@ v_bool false
+  in
+  aux (return @@ v_bool true) xs ys
+(* Set equal *)
+and eq_set xs ys loc calltrace = 
+  let open Monad in
+  if List.length xs <> List.length ys then return @@ v_bool false
+  else
+    let rec find item lst =
+      match lst with
+      | [] -> return @@ v_bool false
+      | l::lst -> 
+        let* cmp = apply_comparison loc calltrace C_EQ [item; l] in
+        if is_true cmp then return @@ cmp
+        else find item lst 
+    in
+    let rec aux xs =
+      match xs with
+      | [] -> return @@ v_bool true
+      | x::xs -> 
+        let* cmp = find x ys in
+        if not (is_true cmp) then return @@ cmp
+        else aux xs
+    in
+    aux xs
+(* Map equal *)
+and eq_map xs ys loc calltrace = 
+  let open Monad in
+  if List.length xs <> List.length ys then return @@ v_bool false
+  else
+    let rec find ((k,v) as item) lst =
+      match lst with
+      | [] -> return @@ v_bool false
+      | (k',v')::lst -> 
+        let* cmp = apply_comparison loc calltrace C_EQ [k; k'] in
+        if is_true cmp 
+        then 
+          let* cmp = apply_comparison loc calltrace C_EQ [v; v'] in
+          if is_true cmp then return @@ cmp
+          else find item lst
+        else find item lst 
+    in
+    let rec aux xs =
+      match xs with
+      | [] -> return @@ v_bool true
+      | x::xs -> 
+        let* cmp = find x ys in
+        if not (is_true cmp) then return @@ cmp
+        else aux xs
+    in
+    aux xs
+(* Record equal *)
+and eq_record xs ys loc calltrace = 
+  let open Monad in
+  if LMap.cardinal xs <> LMap.cardinal ys then return @@ v_bool false
+  else
+    LMap.fold
+      (fun k v b ->
+        let* b = b in
+        if not (is_true b) then return @@ v_bool false
+        else
+          match LMap.find_opt k ys with
+          | Some v' -> apply_comparison loc calltrace C_EQ [v'; v]
+          | None -> return @@ v_bool false)
+      xs
+      (return @@ v_bool true)
 
 let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->

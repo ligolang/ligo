@@ -126,7 +126,8 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     (i,defs,scopes)
 
   and declaration i core_prg =
-    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise env decl in
+    let test = options.test in
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
         if with_types then Trace.to_option (compile_declaration partials.type_env decl ())

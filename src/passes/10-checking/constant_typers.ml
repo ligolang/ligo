@@ -766,10 +766,11 @@ let simple_comparator ~raise : Location.t -> string -> typer = fun loc s -> type
       t_timestamp () ;
       t_unit ();
       t_never ();
+      t_michelson_code () ;
     ] in
   t_bool ()
 
-let rec record_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
+let rec record_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
   let () =
     Assert.assert_true ~raise (uncomparable_types loc a b) @@ eq_1 a b
   in
@@ -778,12 +779,12 @@ let rec record_comparator ~raise : Location.t -> string -> typer = fun loc s -> 
     get_t_record a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_record b in
   let aux a b : type_expression =
-    comparator ~raise loc s [a.associated_type;b.associated_type] None
+    comparator ~raise ~test loc s [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
 
-and sum_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
+and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
   let () =
     Assert.assert_true ~raise (uncomparable_types loc a b) @@ eq_1 a b
   in
@@ -792,12 +793,44 @@ and sum_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2
     get_t_sum a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_sum b in
   let aux a b : type_expression =
-    comparator ~raise loc s [a.associated_type;b.associated_type] None
+    comparator ~raise ~test loc s [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
 
-and option_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
+and list_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_lst b_lst ->
+  let () =
+    Assert.assert_true ~raise (uncomparable_types loc a_lst b_lst) @@ eq_1 a_lst b_lst
+  in
+  let a =
+    trace_option ~raise (comparator_composed loc a_lst) @@
+    get_t_list a_lst in
+  let b = trace_option ~raise (expected_option loc b_lst) @@ get_t_list b_lst in
+  comparator ~raise ~test loc s [a;b] None
+
+and set_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_set b_set ->
+  let () =
+    Assert.assert_true ~raise (uncomparable_types loc a_set b_set) @@ eq_1 a_set b_set
+  in
+  let a =
+    trace_option ~raise (comparator_composed loc a_set) @@
+    get_t_set a_set in
+  let b = trace_option ~raise (expected_option loc b_set) @@ get_t_set b_set in
+  comparator ~raise ~test loc s [a;b] None
+
+and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
+  let () =
+    Assert.assert_true ~raise (uncomparable_types loc a_map b_map) @@ eq_1 a_map b_map
+  in
+  let (a_key, a_value) =
+    trace_option ~raise (comparator_composed loc a_map) @@
+    get_t_map a_map in
+  let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_map b_map in
+  let _ = comparator ~raise ~test loc s [a_key;b_key] None in
+  let _ = comparator ~raise ~test loc s [a_value;b_value] None in
+  t_bool ()
+
+and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
   let () =
     Assert.assert_true ~raise (uncomparable_types loc a_opt b_opt) @@ eq_1 a_opt b_opt
   in
@@ -805,13 +838,23 @@ and option_comparator ~raise : Location.t -> string -> typer = fun loc s -> type
     trace_option ~raise (comparator_composed loc a_opt) @@
     get_t_option a_opt in
   let b = trace_option ~raise (expected_option loc b_opt) @@ get_t_option b_opt in
-  comparator ~raise loc s [a;b] None
+  comparator ~raise ~test loc s [a;b] None
 
-and comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
-
-  bind_or ~raise
-    (bind_or (simple_comparator loc s [a;b] None) (option_comparator loc s [a;b] None))
-    (bind_or (record_comparator loc s [a;b] None) (sum_comparator loc s [a;b] None))
+and comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
+  if test
+  then
+    bind_or ~raise 
+    (bind_or 
+      (bind_or (list_comparator ~test loc s [a;b] None) (set_comparator ~test loc s [a;b] None))
+      (map_comparator ~test loc s [a;b] None))
+    
+    (bind_or 
+      (bind_or (simple_comparator loc s [a;b] None) (option_comparator ~test loc s [a;b] None))
+      (bind_or (record_comparator ~test loc s [a;b] None) (sum_comparator ~test loc s [a;b] None)))
+  else
+    bind_or ~raise
+      (bind_or (simple_comparator loc s [a;b] None) (option_comparator ~test loc s [a;b] None))
+      (bind_or (record_comparator ~test loc s [a;b] None) (sum_comparator ~test loc s [a;b] None))
 
 let ticket ~raise loc = typer_2 ~raise loc "TICKET" @@ fun dat amt ->
   let () = assert_eq_1 ~raise ~loc amt (t_nat ()) in
@@ -1007,7 +1050,7 @@ let test_originate_from_file ~raise loc = typer_4 ~raise loc "TEST_ORIGINATE_FRO
 let test_compile_contract ~raise loc = typer_1 ~raise loc "TEST_COMPILE_CONTRACT" @@ fun _ ->
   (t_michelson_code ())
 
-let constant_typers ~raise loc c : typer = match c with
+let constant_typers ~raise ~test loc c : typer = match c with
   | C_INT                 -> int ~raise loc ;
   | C_UNIT                -> unit ~raise loc ;
   | C_NEVER               -> never ~raise loc ;
@@ -1042,12 +1085,12 @@ let constant_typers ~raise loc c : typer = match c with
   | C_LSL                 -> lsl_ ~raise loc;
   | C_LSR                 -> lsr_ ~raise loc;
     (* COMPARATOR *)
-  | C_EQ                  -> comparator ~raise loc "EQ" ;
-  | C_NEQ                 -> comparator ~raise loc "NEQ" ;
-  | C_LT                  -> comparator ~raise loc "LT" ;
-  | C_GT                  -> comparator ~raise loc "GT" ;
-  | C_LE                  -> comparator ~raise loc "LE" ;
-  | C_GE                  -> comparator ~raise loc "GE" ;
+  | C_EQ                  -> comparator ~raise ~test loc "EQ" ;
+  | C_NEQ                 -> comparator ~raise ~test loc "NEQ" ;
+  | C_LT                  -> comparator ~raise ~test loc "LT" ;
+  | C_GT                  -> comparator ~raise ~test loc "GT" ;
+  | C_LE                  -> comparator ~raise ~test loc "LE" ;
+  | C_GE                  -> comparator ~raise ~test loc "GE" ;
     (* BYTES / STRING *)
   | C_SIZE                -> size ~raise loc ;
   | C_CONCAT              -> concat ~raise loc ;
