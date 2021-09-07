@@ -106,7 +106,6 @@ let constant' = function
   | C_BIG_MAP_EMPTY      -> `List [`String "C_BIG_MAP_EMPTY"; `Null ]
   | C_BIG_MAP_LITERAL    -> `List [`String "C_BIG_MAP_LITERAL"; `Null ]
   | C_BIG_MAP_GET_AND_UPDATE -> `List [`String "C_BIG_MAP_GET_AND_UPDATE"; `Null ]
-  | C_BIG_MAP_IDENTIFIER -> `List [`String "C_BIG_MAP_IDENTIFIER"; `Null ]
   (* Crypto *)
   | C_SHA256             -> `List [`String "C_SHA256"; `Null ]
   | C_SHA512             -> `List [`String "C_SHA512"; `Null ]
@@ -163,6 +162,7 @@ let constant' = function
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> `List [`String "TEST_NTH_BOOTSTRAP_TYPED_ADDRESS"; `Null ]
   | C_TEST_TO_ENTRYPOINT       -> `List [`String "TEST_TO_ENTRYPOINT"; `Null ]
   | C_TEST_TO_TYPED_ADDRESS    -> `List [`String "TEST_TO_TYPED_ADDRESS"; `Null ]
+  | C_TEST_SET_BIG_MAP         -> `List [`String "TEST_SET_BIG_MAP"; `Null ]
   | C_SHA3                     -> `List [`String "SHA3"; `Null ]
   | C_KECCAK                   -> `List [`String "KECCAK"; `Null ]
   | C_LEVEL                    -> `List [`String "LEVEL"; `Null ]

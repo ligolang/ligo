@@ -28,6 +28,10 @@ let compile_expression : options:Compiler_options.t -> expression -> compiled_ex
   let expr_ty = dummy_locations expr_ty in
   ({ expr_ty ; expr } : Program.compiled_expression)
 
+let compile_type = fun e ->
+  let expr_ty = Scoping.translate_type e in
+  dummy_locations expr_ty
+
 let aggregate_and_compile ~raise : options:Compiler_options.t -> program -> form_t -> Stacking.compiled_expression =
     fun ~options program form ->
   let aggregated = trace ~raise self_mini_c_tracer @@ Self_mini_c.aggregate_entry program form in

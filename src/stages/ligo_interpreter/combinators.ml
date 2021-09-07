@@ -98,10 +98,29 @@ let get_string_option : value -> string option option =
   | V_Construct ("None", V_Ct C_unit) -> Some (None)
   | _ -> None
 
-let get_list : value -> 'a list option =
+let get_option : value -> value option option =
   fun value ->
     match value with
-    | V_List lst -> Some lst
+    | V_Construct ("Some", v) -> Some (Some v)
+    | V_Construct ("None", _) -> Some None
+    | _ -> None
+
+let get_map : value -> (value * value) list option =
+  fun value ->
+    match value with
+    | V_Map v -> Some v
+    | _ -> None
+
+let get_set : value -> value list option =
+  fun value ->
+    match value with
+    | V_Set v -> Some v
+    | _ -> None
+
+let get_list : value -> value list option =
+  fun value ->
+    match value with
+    | V_List v -> Some v
     | _ -> None
 
 let get_pair : value -> (value * value) option =
@@ -114,3 +133,43 @@ let get_pair : value -> (value * value) option =
       | _ -> None
     )
     | _ -> None
+
+let get_func : value -> func_val option =
+  fun value ->
+    match value with
+    | V_Func_val v -> Some v
+    | _ -> None
+
+let equal_constant_val (c : constant_val) (c' : constant_val) : bool =
+  match c, c' with
+  | C_unit, C_unit -> true
+  | C_bool b, C_bool b' -> b = b'
+  | C_int i, C_int i' -> Int.compare i i' = 0
+  | C_nat n, C_nat n' -> Int.compare n n' = 0
+  | C_timestamp t, C_timestamp t' -> Int.compare t t' = 0
+  | C_string s, C_string s' -> String.equal s s'
+  | C_bytes b, C_bytes b' -> Bytes.equal b b'
+  | C_mutez m, C_mutez m' -> Int.compare m m' = 0
+  | C_address a, C_address a' ->
+     Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.equal a a'
+  | C_contract {address=a;entrypoint=None}, C_contract {address=a';entrypoint=None} ->
+     Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.equal a a'
+  | C_contract {address=a;entrypoint=Some e}, C_contract {address=a';entrypoint=Some e'} ->
+     Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.equal a a' && String.equal e e'
+  | C_key_hash kh, C_key_hash kh' ->
+     Tezos_crypto.Signature.Public_key_hash.equal kh kh'
+  | _, _ -> false
+
+let rec equal_value (v : value) (v' : value) : bool =
+  match v, v' with
+  | V_Ct c, V_Ct c' -> equal_constant_val c c'
+  | V_List l, V_List l' -> List.equal equal_value l l'
+  | V_Construct (c, l), V_Construct (c', l') ->
+     String.equal c c' && equal_value l l'
+  | V_Record r, V_Record r' ->
+     let r = LMap.to_kv_list r in
+     let r' = LMap.to_kv_list r' in
+     List.equal (fun (Label l, v) (Label l', v') -> String.equal l l' && equal_value v v') r r'
+  | V_Set s, V_Set s' ->
+     List.equal equal_value s s'
+  | _, _ -> false

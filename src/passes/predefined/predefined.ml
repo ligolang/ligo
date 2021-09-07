@@ -143,7 +143,6 @@ module Tree_abstraction = struct
     | "Big_map.add"      -> some_const C_MAP_ADD
     (* Edo linear operator *)
     | "Big_map.get_and_update" -> some_const C_BIG_MAP_GET_AND_UPDATE
-    | "Big_map.identifier" -> some_const C_BIG_MAP_IDENTIFIER
 
     (* Bitwise module *)
 
@@ -194,6 +193,7 @@ module Tree_abstraction = struct
     | "Test.nth_bootstrap_typed_address" -> some_const C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
     | "Test.to_entrypoint" -> some_const C_TEST_TO_ENTRYPOINT
     | "Test.to_typed_address" -> some_const C_TEST_TO_TYPED_ADDRESS
+    | "Test.set_big_map" -> some_const C_TEST_SET_BIG_MAP
 
     (* Operator module *)
 
@@ -318,7 +318,6 @@ module Tree_abstraction = struct
         | C_MAP_UPDATE      -> "Big_map.update" *)
     | C_BIG_MAP_LITERAL -> "Big_map.literal"
     | C_BIG_MAP_EMPTY   -> "Big_map.empty"
-    | C_BIG_MAP_IDENTIFIER -> "Big_map.identifier"
     (*  | C_MAP_MEM         -> "Big_map.mem"
         | C_MAP_REMOVE      -> "Big_map.remove"
         | C_MAP_ADD         -> "Big_map.add" *)
@@ -375,6 +374,7 @@ module Tree_abstraction = struct
     | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> "Test.nth_bootstrap_typed_address"
     | C_TEST_TO_ENTRYPOINT -> "Test.to_entrypoint"
     | C_TEST_TO_TYPED_ADDRESS -> "Test.to_typed_address"
+    | C_TEST_SET_BIG_MAP -> "Test.set_big_map"
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 

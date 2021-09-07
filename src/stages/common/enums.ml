@@ -136,7 +136,6 @@ type constant' =
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
-  | C_BIG_MAP_IDENTIFIER [@only_interpreter]
   (* Crypto *)
   | C_SHA256
   | C_SHA512
@@ -194,6 +193,7 @@ type constant' =
   | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]
   | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
+  | C_TEST_SET_BIG_MAP
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK

@@ -167,18 +167,6 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
       | Some v -> return @@ v_some v
       | None -> return @@ v_none ()
     )
-    | C_MAP_FIND_OPT , [ k ; V_BigMap (id, kvs) ] ->
-       (match List.Assoc.find kvs ~equal:Caml.(=) k with
-        | Some (Some v) -> return @@ v_some v
-        | Some None -> return @@ v_none ()
-        | None ->
-           let* ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-           let* key_ty, val_ty =
-             monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map ty in
-           let>> typed_exp = Get_big_map (loc, calltrace, key_ty, val_ty, k, id) in
-           let* v = eval_ligo typed_exp calltrace env in
-           return @@ v
-       )
     | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
       | Some v -> return @@ v
       | None -> fail @@ Errors.meta_lang_eval loc calltrace (Predefined.Tree_abstraction.pseudo_module_to_string c)
@@ -333,8 +321,6 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
         )
         init elts
     | ( C_BIG_MAP_EMPTY , []) -> return @@ V_Map ([])
-    | ( C_BIG_MAP_IDENTIFIER , [ V_Ct (C_nat n) ]) ->
-       return @@ V_BigMap (n, [])
     | ( C_MAP_EMPTY , []) -> return @@ V_Map ([])
     | ( C_MAP_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Map kvs ; init ] ) ->
       let* map_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
@@ -348,30 +334,12 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
         )
         init kvs
     | ( C_MAP_MEM , [k ; V_Map kvs]) -> return @@ v_bool (List.Assoc.mem ~equal:Caml.(=) kvs k)
-    | ( C_MAP_MEM , [k ; V_BigMap (m, kvs) ]) ->
-          ( match List.Assoc.find kvs ~equal:(=) k with
-            | Some (Some _) -> return @@ v_bool true
-            | Some None -> return @@ v_bool false
-            | None ->
-               let* ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-               let* key_ty, val_ty =
-                 monad_option (Errors.generic_error loc "Not a big-map") @@ Ast_typed.get_t_big_map ty in
-               let>> b = Mem_big_map (loc, calltrace, key_ty, val_ty, k, m) in
-               return @@ v_bool b
-          )
     | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.Assoc.remove ~equal:Caml.(=) kvs k))
-    | ( C_MAP_ADD , [ k ; v ; V_BigMap (id, kvs) ]) -> return (V_BigMap (id, (k, Some v) :: kvs))
     | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k)
-    | ( C_MAP_REMOVE , [ k ; V_BigMap (id, kvs) ] ) -> return (V_BigMap (id, (k, None) :: kvs))
     | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
       | "Some" -> return @@ V_Map ((k,v)::(List.Assoc.remove ~equal:Caml.(=) kvs k))
       | "None" -> return @@ V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k)
       | _ -> assert false
-    )
-    | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_BigMap (id, kvs) ] ) -> (match option with
-         | "Some" -> return @@ V_BigMap (id, (k, Some v)::(List.Assoc.remove ~equal:Caml.(=) kvs k))
-         | "None" -> return @@ V_BigMap (id, (k, None)::(List.Assoc.remove ~equal:Caml.(=) kvs k))
-         | _ -> assert false
     )
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.dedup_and_sort ~compare (v::l))
@@ -569,8 +537,7 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
        let storage_ty = match Ast_typed.get_t_typed_address typed_address_ty with
          | Some (_, storage_ty) -> storage_ty
          | _ -> failwith "Expecting typed_address" in
-       let>> typed_exp = Get_storage(loc, calltrace, addr, storage_ty) in
-       let* value = eval_ligo typed_exp calltrace env in
+       let>> value = Get_storage(loc, calltrace, addr, storage_ty) in
        return value
     | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
@@ -612,6 +579,10 @@ let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expres
       let* () = monad_option (Errors.generic_error loc "Storage in bootstrap contract does not match") @@
                    Ast_typed.assert_type_expression_eq (storage_ty, storage_ty') in
       return_ct (C_address address)
+    | ( C_TEST_SET_BIG_MAP , [ V_Ct (C_int n) ; V_Map kv ] ) ->
+      let bigmap_ty = List.nth_exn types 1 in
+      let>> () = Set_big_map (n, kv, bigmap_ty) in
+      return_ct (C_unit)
     | ( C_FAILWITH , [ a ] ) ->
       fail @@ Errors.meta_lang_failwith loc calltrace a
     | _ -> fail @@ Errors.generic_error loc "Unbound primitive."
@@ -653,11 +624,14 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             eval_ligo body (term.location :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
+          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda} ->
             let in_ty, _ = Ast_typed.get_t_function_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
             eval_ligo body (term.location :: calltrace) f_env''
+          | V_Ligo (_, code) ->
+            let>> ctxt = Get_state () in
+            return @@ Michelson_backend.run_michelson_code ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->

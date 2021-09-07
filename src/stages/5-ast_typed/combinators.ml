@@ -312,7 +312,6 @@ let e_set_empty (): expression_content = E_constant {cons_name=C_SET_EMPTY; argu
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
 let e_map_empty (): expression_content = E_constant {cons_name=C_MAP_EMPTY; arguments=[]}
 let e_big_map_empty (): expression_content = E_constant {cons_name=C_BIG_MAP_EMPTY; arguments=[]}
-let e_big_map_identifier id : expression_content = E_constant {cons_name=C_BIG_MAP_IDENTIFIER; arguments=[id]}
 let e_map_remove k tl : expression_content = E_constant {cons_name=C_MAP_REMOVE; arguments=[k; tl]}
 let e_contract_opt v : expression_content = E_constant {cons_name=C_CONTRACT_OPT; arguments=[v]}
 let e_contract v : expression_content = E_constant {cons_name=C_CONTRACT; arguments=[v]}
@@ -391,7 +390,6 @@ let e_a_map_empty kt vt = make_e (e_map_empty ()) (t_map kt vt)
 let e_a_map_add k v tl = make_e (e_map_add k v tl) (t_map k.type_expression v.type_expression)
 let e_a_big_map_empty kt vt = make_e (e_big_map_empty ()) (t_big_map kt vt)
 let e_a_big_map_add k v tl = make_e (e_map_add k v tl) (t_big_map k.type_expression v.type_expression)
-let e_a_big_map_identifier kt vt id = make_e (e_big_map_identifier id) (t_big_map kt vt)
 let e_a_big_map_remove k tl = make_e (e_map_remove k tl) tl.type_expression
 let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
 let e_a_contract a t = make_e (e_contract a) (t_contract t)
