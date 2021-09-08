@@ -127,39 +127,15 @@ let rec apply_comparison :
         | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
       in
       return @@ v_bool x
-  | (comp, [V_List xs; V_List ys]) ->
-    let* v = eq_lists xs ys loc calltrace in
+  | (comp, [V_List   _ as xs; V_List   _ as ys])
+  | (comp, [V_Set    _ as xs; V_Set    _ as ys]) 
+  | (comp, [V_Map    _ as xs; V_Map    _ as ys])
+  | (comp, [V_Record _ as xs; V_Record _ as ys]) ->
+    let c = Ligo_interpreter.Combinators.equal_value xs ys in
     let* v =
       match comp with
-      | C_EQ -> return v
-      | C_NEQ -> return @@ v_bool (not (is_true v))
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-    in
-    return v
-  | (comp, [V_Set xs; V_Set ys]) ->
-    let* v = eq_set xs ys loc calltrace in
-      let* v =
-        match comp with
-        | C_EQ -> return v
-        | C_NEQ -> return @@ v_bool (not (is_true v))
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-      in
-      return v
-  | (comp, [V_Map xs; V_Map ys]) ->
-      let* v = eq_map xs ys loc calltrace in
-      let* v =
-        match comp with
-        | C_EQ -> return v
-        | C_NEQ -> return @@ v_bool (not (is_true v))
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-      in
-      return v
-  | (comp, [V_Record xs; V_Record ys]) ->
-    let* v = eq_record xs ys loc calltrace in
-    let* v =
-      match comp with
-      | C_EQ -> return v
-      | C_NEQ -> return @@ v_bool (not (is_true v))
+      | C_EQ  -> return @@ v_bool c
+      | C_NEQ -> return @@ v_bool (not c)
       | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
     in
     return v
@@ -189,83 +165,6 @@ let rec apply_comparison :
             (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-
-(* List equal *)
-and eq_lists xs ys loc calltrace  =
-  let open Monad in
-  let rec aux acc xs ys =
-    match (xs, ys) with
-    | [], [] -> acc
-    | (x::xs), (y::ys) ->
-      let* cmp = apply_comparison loc calltrace C_EQ [x; y] in
-      let* acc = acc in
-      aux (return @@ v_bool (is_true acc && is_true cmp)) xs ys
-    | _ -> return @@ v_bool false
-  in
-  aux (return @@ v_bool true) xs ys
-(* Set equal *)
-and eq_set xs ys loc calltrace = 
-  let open Monad in
-  if List.length xs <> List.length ys then return @@ v_bool false
-  else
-    let rec find item lst =
-      match lst with
-      | [] -> return @@ v_bool false
-      | l::lst -> 
-        let* cmp = apply_comparison loc calltrace C_EQ [item; l] in
-        if is_true cmp then return @@ cmp
-        else find item lst 
-    in
-    let rec aux xs =
-      match xs with
-      | [] -> return @@ v_bool true
-      | x::xs -> 
-        let* cmp = find x ys in
-        if not (is_true cmp) then return @@ cmp
-        else aux xs
-    in
-    aux xs
-(* Map equal *)
-and eq_map xs ys loc calltrace = 
-  let open Monad in
-  if List.length xs <> List.length ys then return @@ v_bool false
-  else
-    let rec find ((k,v) as item) lst =
-      match lst with
-      | [] -> return @@ v_bool false
-      | (k',v')::lst -> 
-        let* cmp = apply_comparison loc calltrace C_EQ [k; k'] in
-        if is_true cmp 
-        then 
-          let* cmp = apply_comparison loc calltrace C_EQ [v; v'] in
-          if is_true cmp then return @@ cmp
-          else find item lst
-        else find item lst 
-    in
-    let rec aux xs =
-      match xs with
-      | [] -> return @@ v_bool true
-      | x::xs -> 
-        let* cmp = find x ys in
-        if not (is_true cmp) then return @@ cmp
-        else aux xs
-    in
-    aux xs
-(* Record equal *)
-and eq_record xs ys loc calltrace = 
-  let open Monad in
-  if LMap.cardinal xs <> LMap.cardinal ys then return @@ v_bool false
-  else
-    LMap.fold
-      (fun k v b ->
-        let* b = b in
-        if not (is_true b) then return @@ v_bool false
-        else
-          match LMap.find_opt k ys with
-          | Some v' -> apply_comparison loc calltrace C_EQ [v'; v]
-          | None -> return @@ v_bool false)
-      xs
-      (return @@ v_bool true)
 
 let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
