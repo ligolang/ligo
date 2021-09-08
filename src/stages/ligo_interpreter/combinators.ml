@@ -172,4 +172,6 @@ let rec equal_value (v : value) (v' : value) : bool =
      List.equal (fun (Label l, v) (Label l', v') -> String.equal l l' && equal_value v v') r r'
   | V_Set s, V_Set s' ->
      List.equal equal_value s s'
+  | V_Map m, V_Map m' -> 
+    List.equal (fun (k1, v1) (k2, v2) -> equal_value k1 k2 && equal_value v1 v2) m m'
   | _, _ -> false
