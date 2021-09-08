@@ -73,6 +73,7 @@ recognise (SomeRawTree dialect rawTree)
         "cons_pattern"        -> IsCons   <$> field  "head"   <*> field "tail"
         "var_pattern"         -> IsVar    <$> field  "name"
         "record_pattern"      -> IsRecord <$> fields "field"
+        "wildcard_pattern"    -> pure IsWildcard
         _                     -> fallthrough
 
     -- Irrefutable tuple

@@ -256,7 +256,7 @@ module.exports = grammar({
     )),
 
     list_pattern: $ => common.brackets(
-      common.sepBy(',', field("pattern", $._spread_pattern)),
+      common.sepEndBy(',', field("pattern", $._spread_pattern)),
     ),
 
     _spread_pattern: $ => choice(
@@ -400,7 +400,7 @@ module.exports = grammar({
     ),
 
     list: $ => common.brackets(
-      common.sepBy(',', field("element", $._spread_expr)),
+      common.sepEndBy(',', field("element", $._spread_expr)),
     ),
 
     _spread_expr: $ => choice(

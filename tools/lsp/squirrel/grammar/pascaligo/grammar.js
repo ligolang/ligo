@@ -434,9 +434,11 @@ module.exports = grammar({
         field("tail", $._pattern),
       ),
 
+    wildcard_pattern: $ => "_",
+
     _core_pattern: $ =>
       choice(
-        '_',
+        $.wildcard_pattern,
         $.Int,
         $.Nat,
         $.String,
