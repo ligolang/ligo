@@ -348,6 +348,7 @@ test-suite integration-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , base
     , directory
     , duplo
@@ -432,6 +433,7 @@ test-suite ligo-contracts-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , base
     , directory
     , duplo
@@ -529,6 +531,7 @@ test-suite lsp-handlers-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , base
     , directory
     , duplo
@@ -622,6 +625,7 @@ test-suite lsp-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , algebraic-graphs
     , base
     , directory
     , duplo

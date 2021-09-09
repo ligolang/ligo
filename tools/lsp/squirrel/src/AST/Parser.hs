@@ -25,7 +25,7 @@ import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.RWS.Strict (RWS, execRWS, gets, modify, tell)
 import Data.Bifunctor (bimap, second)
 import Data.Bool (bool)
-import Data.DList (DList, fromList, toList)
+import Data.DList (DList, toList)
 import Data.Foldable (for_)
 import Data.IntMap.Strict (IntMap)
 import Data.IntMap.Strict qualified as IntMap
@@ -196,7 +196,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
     infixr 1 `implies`
 
     collectMarkers :: LIGO Info -> RWS () (DList LineMarker) () ()
-    collectMarkers (info :< _) = for_ (fromList $ getElem @[LineMarker] info) (tell . pure)
+    collectMarkers (info :< _) = for_ (getElem @[LineMarker] info) (tell . pure)
 
     collectMarkerInfos :: [LineMarker] -> RWS () (DList (FilePath, FilePath)) (IntMap MarkerInfo) ()
     collectMarkerInfos markers =

@@ -175,6 +175,7 @@ tests:
       - test/test-common/
 
     dependencies:
+      - algebraic-graphs
       - ligo-squirrel
       - lsp-test
       - tasty
@@ -215,6 +216,7 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
+      - algebraic-graphs
       - HUnit
       - directory
       - filepath
@@ -248,6 +250,7 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
+      - algebraic-graphs
       - HUnit
       - directory
       - filepath
@@ -281,6 +284,7 @@ tests:
       - test/test-common/
 
     dependencies:
+      - algebraic-graphs
       - HUnit
       - directory
       - filepath

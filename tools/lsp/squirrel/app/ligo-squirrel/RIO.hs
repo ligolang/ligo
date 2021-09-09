@@ -38,7 +38,6 @@ import Algebra.Graph.AdjacencyMap qualified as G
 
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
-import Control.Lens ((^.))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
@@ -63,7 +62,7 @@ import UnliftIO.MVar
 
 import Witherable (wither)
 
-import Duplo.Tree (collect, make)
+import Duplo.Tree (make)
 
 import AST hiding (cTree)
 import ASTMap (ASTMap)
@@ -73,7 +72,7 @@ import Config (Config (..), getConfigFromNotification)
 import Duplo.Lattice (Lattice (leq))
 import Extension (extGlobs)
 import Log qualified
-import Parser (emptyParsedInfo)
+import Parser (collectTreeErrors, emptyParsedInfo)
 import Product
 import Range
 import Util.Graph (wcc)
@@ -376,6 +375,3 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =
   where
     begin = J.Position (sl - 1) (sc - 1)
     end   = J.Position (el - 1) (ec - 1)
-
-collectTreeErrors :: SomeLIGO Info' -> [Msg]
-collectTreeErrors = map (getElem *** void) . collect . (^. nestedLIGO)

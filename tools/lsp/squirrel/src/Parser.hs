@@ -12,6 +12,7 @@ module Parser
   , ParsedInfo
 
   , runParserM
+  , collectTreeErrors
   , parseLineMarkerText
   , flag
   , field
@@ -38,7 +39,7 @@ import Text.Read (readMaybe)
 import Duplo.Pretty
 import Duplo.Tree
 
-import AST.Skeleton (Error (..))
+import AST.Skeleton (Error (..), SomeLIGO, getLIGO)
 import ParseTree
 import Product
 import Range
@@ -57,6 +58,9 @@ runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p [] ([], [])
 
 type Msg      = (Range, Error ())
 type ParserM  = RWST [RawTree] [Msg] ([Text], [Text]) IO
+
+collectTreeErrors :: Contains Range info => SomeLIGO info -> [Msg]
+collectTreeErrors = map (getElem *** void) . collect . getLIGO
 
 -- | The flag of some line marker.
 --
