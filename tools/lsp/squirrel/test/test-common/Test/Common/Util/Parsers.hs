@@ -2,26 +2,15 @@ module Test.Common.Util.Parsers
   ( checkFile
   ) where
 
-import Algebra.Graph.AdjacencyMap qualified as G (vertex, vertexList)
 import Control.Exception.Safe (try)
 import Duplo (HandlerFailed (..))
 
-import AST.Parser (insertPreprocessorRanges, parsePreprocessed)
-import AST.Scope.Common (ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, ScopeError, addScopes)
+import AST.Parser (parsePreprocessed)
+import AST.Scope (pattern FindContract, HasScopeForest, ScopeError, addShallowScopes)
 import Parser (collectTreeErrors)
 import ParseTree (Source (Path))
 
 import Test.Common.FixedExpectations (Expectation, HasCallStack, expectationFailure)
-
--- | Like 'addScopes', but doesn't visit includes. That is, this function only
--- sees the scopes for the given contract, and doesn't try to visit includes.
-addShallowScopes
-  :: forall parser m
-   . HasScopeForest parser m
-  => ContractInfo
-  -> m ContractInfo'
-addShallowScopes =
-  fmap (head . G.vertexList) . addScopes @parser . G.vertex . insertPreprocessorRanges
 
 checkFile
   :: forall parser

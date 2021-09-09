@@ -280,9 +280,6 @@ loadWithoutScopes uri = do
 tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
 tryLoadWithoutScopes uri = (Just . insertPreprocessorRanges <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
 
-scopes :: ParsedContractInfo -> RIO ContractInfo'
-scopes = fmap (head . G.vertexList) . addScopes @Standard . G.vertex
-
 load
   :: J.NormalizedUri
   -> RIO Contract
@@ -336,8 +333,7 @@ load uri = J.getRootPath >>= \case
   where
     sourceToUri = normalizeFilePath . srcPath
     normalizeFilePath = J.toNormalizedUri . J.filePathToUri
-    loadParsed = fmap insertPreprocessorRanges . loadWithoutScopes
-    loadDefault = scopes =<< loadParsed uri
+    loadDefault = addShallowScopes @Standard =<< loadWithoutScopes uri
 
 collectErrors
   :: (J.NormalizedUri -> RIO ContractInfo')
