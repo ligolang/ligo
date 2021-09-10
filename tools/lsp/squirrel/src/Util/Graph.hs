@@ -1,16 +1,13 @@
 {-# LANGUAGE OverloadedLists #-}
 
 module Util.Graph
-  ( Cycle
-  , traverseAM
+  ( traverseAM
   , traverseAMConcurrently
-  , findCycles
   , wcc
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
-import Algebra.Graph.AdjacencyMap.Algorithm (Cycle)
 import Control.Arrow ((&&&), second)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.State
@@ -20,13 +17,10 @@ import Data.DList qualified as DList
 import Data.Foldable (for_, toList)
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.List.NonEmpty qualified as NE
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
-import Data.Traversable (for)
 import Data.Tuple (swap)
 import UnliftIO.Async (pooledMapConcurrently)
 
@@ -49,35 +43,6 @@ traverseAM = traverseAMImpl traverse
 -- | Traverse an adjacency map concurrently.
 traverseAMConcurrently :: (MonadUnliftIO m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
 traverseAMConcurrently = traverseAMImpl pooledMapConcurrently
-
-data Vis = Visiting | Visited
-
--- | Find all cycles in some graph. This is an implementation of
--- https://www.baeldung.com/cs/detecting-cycles-in-directed-graph#pseudocode
--- which states to be O(|V|+|E|), but I (@h) believe it is O((|V|+|E|)²) in the
--- worst case.
-findCycles :: forall a. Ord a => AdjacencyMap a -> [Cycle a]
-findCycles graph = concat $ flip evalState Map.empty $
-  for (G.vertexList graph) \v -> do
-    visited <- get
-    if Map.member v visited
-      then pure []
-      else do
-        modify $ Map.insert v Visiting
-        proccessDfsTree (v :| [])
-  where
-    proccessDfsTree :: Cycle a -> State (Map a Vis) [Cycle a]
-    proccessDfsTree stack@(top :| _) = do
-      stacks <- for (toList $ G.postSet top graph) \v -> do
-        visited <- get
-        case Map.lookup v visited of
-          Nothing       -> pure []
-          Just Visiting -> pure [NE.reverse stack]
-          Just Visited  -> do
-            put $ Map.insert v Visiting visited
-            proccessDfsTree (v NE.<| stack)
-      modify $ Map.insert top Visited
-      pure $ concat stacks
 
 -- | Contains the state used internally by 'wcc'.
 data StateWCC a = WCC
