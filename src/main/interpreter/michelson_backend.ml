@@ -286,9 +286,12 @@ and make_subst_ast_env_exp ~raise ?(toplevel = true) env expr =
                 env
              else
                [] in
-  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@ Self_ast_typed.Helpers.Free_variables.expression expr in
-  let get_fmv_expr expr = Self_ast_typed.Helpers.Free_module_variables.expression expr in
-  let get_fmv_mod module' = Self_ast_typed.Helpers.Free_module_variables.module' module' in
+  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@ 
+   snd @@ Self_ast_typed.Helpers.Free_variables.expression expr in
+  let get_fmv_expr expr = 
+   fst @@ Self_ast_typed.Helpers.Free_module_variables.expression expr in
+  let get_fmv_mod module' = 
+   fst @@ Self_ast_typed.Helpers.Free_module_variables.module' module' in
   let rec aux (fv, fmv) acc = function
     | [] -> acc
     | Expression { name; item } :: tl ->
