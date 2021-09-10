@@ -30,7 +30,6 @@ type kwd_return    = Region.t
 type kwd_switch    = Region.t
 type kwd_case      = Region.t
 type kwd_default   = Region.t
-type kwd_new       = Region.t
 type kwd_as        = Region.t
 type kwd_break     = Region.t
 type kwd_namespace = Region.t
@@ -322,7 +321,6 @@ and expr =
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | ECall    of (expr * arguments) reg
-| ENew     of (kwd_new * expr) reg
 | EBytes   of (string * Hex.t) reg
 | EArray   of (array_item, comma) nsepseq brackets reg
 | EObject  of object_expr
@@ -560,7 +558,7 @@ let rec expr_to_region = function
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | EObject {region; _} | EArray { region; _}
-| ENew {region; _}   | ECodeInj {region; _} | EModA { region; _} -> region
+| ECodeInj {region; _} | EModA { region; _} -> region
 
 let statement_to_region = function
   SBreak b -> b

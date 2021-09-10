@@ -386,7 +386,7 @@ field_decl:
   attributes field_name {
     let value = {
       field_name=$2;
-      colon=ghost;  (* TODO: Create a new CST node *)
+      colon=ghost;  (* TODO: Create a "new" CST node *)
       field_type = TVar $2;
       attributes=$1}
     in {$2 with value}
@@ -572,7 +572,7 @@ unary_expr_level:
 | call_expr_level { $1 }
 
 call_expr_level:
-  call_expr | new_expr { $1 }
+  call_expr | member_expr { $1 }
 
 array_item:
   /* */      { Empty_entry Region.ghost }
@@ -681,10 +681,3 @@ call_expr:
     let region = cover start stop
     and value  = $1, Unit {region = cover $2 $3; value = ($2,$3)}
     in ECall {region; value} }
-
-new_expr:
-  "new" new_expr {
-    let region = cover $1 (expr_to_region $2)
-    in ENew {region; value=$1,$2}
-  }
-| member_expr { $1 }

@@ -438,7 +438,6 @@ and print_expr state = function
 | ELogic e               -> print_logic_expr  state e
 | EArith e               -> print_arith_expr  state e
 | ECall e                -> print_fun_call    state e
-| ENew e                 -> print_new_expr    state e
 | EBytes e               -> print_bytes       state e
 | EArray e               -> print_array       state e
 | EObject e              -> print_object      state e
@@ -455,10 +454,6 @@ and print_constr_expr state {value; _} =
   match argument with
     None -> ()
   | Some arg -> print_expr state arg
-
-and print_new_expr state {value = (kwd_new, expr); _} =
-  print_token state kwd_new "new";
-  print_expr state expr
 
 and print_array_item state = function
   Empty_entry r -> print_token state r "<empty>"
@@ -917,9 +912,6 @@ and pp_expr state = function
 | ECall {value; region} ->
     pp_loc_node state "ECall" region;
     pp_fun_call (state#pad 1 0) value
-| ENew {value = (_, e); region} ->
-    pp_loc_node state "ENew" region;
-    pp_expr (state#pad 1 0) e
 | EBytes b ->
     pp_node state "EBytes";
     pp_bytes state b

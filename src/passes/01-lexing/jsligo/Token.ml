@@ -110,7 +110,6 @@ module T =
     | If       of Region.t  (* if       *)
     | Import   of Region.t  (* import   *)
     | Let      of Region.t  (* let      *)
-    | New      of Region.t  (* new      *)
     | Of       of Region.t  (* of       *)
     | Return   of Region.t  (* return   *)
     | Switch   of Region.t  (* switch   *)
@@ -228,7 +227,6 @@ module T =
     | "If"       -> "if"
     | "Import"   -> "import"
     | "Let"      -> "let"
-    | "New"      -> "new"
     | "Of"       -> "of"
     | "Return"   -> "return"
     | "Switch"   -> "switch"
@@ -364,7 +362,6 @@ module T =
     | If       region -> region, "If"
     | Import   region -> region, "Import"
     | Let      region -> region, "Let"
-    | New      region -> region, "New"
     | Of       region -> region, "Of"
     | Return   region -> region, "Return"
     | Switch   region -> region, "Switch"
@@ -478,7 +475,6 @@ module T =
     | If       _ -> "if"
     | Import   _ -> "import"
     | Let      _ -> "let"
-    | New      _ -> "new"
     | Of       _ -> "of"
     | Return   _ -> "return"
     | Switch   _ -> "switch"
@@ -528,7 +524,6 @@ module T =
        (fun reg -> If      reg);
        (fun reg -> Import  reg);
        (fun reg -> Let     reg);
-       (fun reg -> New     reg);
        (fun reg -> Of     reg);
        (fun reg -> Return  reg);
        (fun reg -> Switch  reg);
