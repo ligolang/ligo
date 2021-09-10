@@ -9,6 +9,7 @@ module AST.Scope.Fallback
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
 import Control.Monad.Catch.Pure hiding (throwM)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.State
 import Control.Monad.Writer (Writer, WriterT, execWriterT, runWriter, tell)
 
@@ -20,7 +21,6 @@ import Data.Map qualified as Map
 import Data.Maybe (listToMaybe)
 import Data.Set qualified as Set
 import Data.Text (Text)
-
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
@@ -39,12 +39,14 @@ import Parser
 import Product
 import Range
 import Util (foldMapM, unconsFromEnd)
-import Util.Graph (traverseAM)
+import Util.Graph (traverseAMConcurrently)
 
 data Fallback
 
-instance HasLigoClient m => HasScopeForest Fallback m where
-  scopeForest = flip evalStateT Map.empty . go
+instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
+  -- TODO: 'mkForest' is pure, so we should find a parallel function and use it
+  -- instead, and then call 'pure'
+  scopeForest = traverseAMConcurrently mkForest
     where
       mkForest (FindContract src (SomeLIGO dialect ligo) msg) = do
         let runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
@@ -52,18 +54,7 @@ instance HasLigoClient m => HasScopeForest Fallback m where
             sf = case runLigoEnv ligo of
               Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
               Right sf' -> FindContract src sf' msg
-        modify $ Map.insert (contractFile sf) (Just sf)
         pure sf
-
-      go graph = flip traverseAM graph \pc -> do
-        vis <- get
-        case Map.lookup (contractFile pc) vis of
-          Nothing -> do
-            modify $ Map.insert (contractFile pc) Nothing
-            mkForest pc
-          Just res -> case res of
-            Nothing -> mkForest pc
-            Just sf -> pure sf
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo

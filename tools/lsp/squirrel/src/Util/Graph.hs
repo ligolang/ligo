@@ -28,8 +28,7 @@ import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Data.Traversable (for)
 import Data.Tuple (swap)
-
-import Util (mapConcurrentlyBounded)
+import UnliftIO.Async (pooledMapConcurrently)
 
 traverseAMImpl
   :: (Monad m, Ord a, Ord b)
@@ -49,7 +48,7 @@ traverseAM = traverseAMImpl traverse
 
 -- | Traverse an adjacency map concurrently.
 traverseAMConcurrently :: (MonadUnliftIO m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
-traverseAMConcurrently = traverseAMImpl mapConcurrentlyBounded
+traverseAMConcurrently = traverseAMImpl pooledMapConcurrently
 
 data Vis = Visiting | Visited
 

@@ -7,9 +7,6 @@ module Util
   , unionOrd
   , findKey
   , removeDots
-  , chunksOf
-  , split
-  , mapConcurrentlyBounded
 
   -- * Debugging utilities
   , validate
@@ -17,12 +14,9 @@ module Util
 
 import Data.Foldable (foldlM)
 import Data.Map.Internal qualified as MI
-import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Language.LSP.Types qualified as J
 import System.Directory (canonicalizePath)
 import System.IO.Unsafe (unsafePerformIO)
-import UnliftIO.Async qualified as Async
-import UnliftIO.Concurrent qualified as Concurrent
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -75,36 +69,6 @@ findKey f x (MI.Bin _ k v l r) = case compare x (f k) of
 removeDots :: FilePath -> FilePath
 {-# NOINLINE removeDots #-}
 removeDots = unsafePerformIO . canonicalizePath
-
--- | Divides the list into chunks of equally sized bins. The numeric parameter
--- defines the size of each bin.
---
--- If the list cannot be evenly divided, it will create one extra bin with less
--- elements.
---
--- A non-positive argument will return a bin containing the original list.
-chunksOf :: Int -> [a] -> [[a]]
-chunksOf _ [] = []
-chunksOf n xs
-  | n <= 0    = [xs]
-  | otherwise = l : chunksOf n r
-  where
-    (l, r) = splitAt n xs
-
--- | Like 'chunksOf', but the numeric parameter chooses the number of bins
--- rather than the length of the bins.
---
--- If the list cannot be evenly divided, it will create extra bins as necessary
--- accordingly to ``length xs `quot` n``.
-split :: Int -> [a] -> [[a]]
-split n xs = chunksOf (length xs `quot` n) xs
-
--- | Maps a list concurrently, but first divides the input into bins accordingly
--- to the number of concurrent capabilities.
-mapConcurrentlyBounded :: MonadUnliftIO m => (a -> m b) -> [a] -> m [b]
-mapConcurrentlyBounded f xs = do
-  caps <- Concurrent.getNumCapabilities
-  concat <$> Async.mapConcurrently (traverse f) (split caps xs)
 
 -- | Throws an error if the tree contains any subtrees such that the ranges are
 -- not smaller than its parent nodes, or returns the tree unmodified, otherwise.

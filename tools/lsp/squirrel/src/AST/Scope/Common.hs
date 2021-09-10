@@ -46,6 +46,7 @@ import Control.Arrow ((&&&))
 import Control.Exception.Safe
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
 import Control.Monad.Trans.Except
 import Data.DList (DList, snoc)
@@ -75,7 +76,7 @@ import Parser
 import Product
 import Range
 import Util (findKey, unionOrd)
-import Util.Graph (traverseAM)
+import Util.Graph (traverseAMConcurrently)
 
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
@@ -308,7 +309,8 @@ addLocalScopes tree forest =
     ]
 
 addScopes
-  :: forall impl m. HasScopeForest impl m
+  :: forall impl m
+   . (HasScopeForest impl m, MonadUnliftIO m)
   => AdjacencyMap ParsedContractInfo
   -> m (AdjacencyMap ContractInfo')
 addScopes graph = do
@@ -325,7 +327,7 @@ addScopes graph = do
       FindContract src
         <$> addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe)
         <*> pure (_cMsgs sf)
-  traverseAM addScope forestGraph
+  traverseAMConcurrently addScope forestGraph
   where
     nubRef sd = sd
       { _sdRefs = ordNub (_sdRefs sd)
