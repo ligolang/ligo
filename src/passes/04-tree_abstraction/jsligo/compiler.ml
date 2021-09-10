@@ -750,7 +750,6 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     e_assign_ez ~loc:outer_loc evar_value [sels] e2
   | EAssign _ as e ->
     raise.raise @@ not_supported_assignment e
-  | ENew {value = (_, e); _} -> raise.raise @@ new_not_supported e
 
 and conv ~raise : const:bool -> CST.pattern -> nested_match_repr =
   fun ~const p ->

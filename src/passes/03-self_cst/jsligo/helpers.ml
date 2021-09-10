@@ -160,7 +160,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     fold_npseq self init value
   | ECodeInj _ ->
     init
-  | ENew {value = (_, e); _} -> self init e
   | EArray {value = {inside; _}; _} ->
     let fold_array_item init = function
       Empty_entry _ -> init
@@ -418,9 +417,6 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
     let a = map_arguments a in
     let value = (e, a) in
     return @@ ECall {value; region}
-  | ENew  {value = (k, e); region} ->
-    let e = self e in
-    return @@ ENew {value = (k, e); region}
   | EBytes _ as e -> return @@ e
   | EArray {value;region} ->
       let map_array_item = function

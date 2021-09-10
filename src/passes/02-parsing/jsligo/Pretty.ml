@@ -173,7 +173,6 @@ and pp_expr = function
 | ELogic   e -> pp_logic_expr e
 | EArith   e -> group (pp_arith_expr e)
 | ECall    e -> pp_call_expr e
-| ENew     e -> pp_new_expr e
 | EBytes   e -> pp_bytes e
 | EArray   e -> pp_array e
 | EObject  e -> group (pp_object_expr e)
@@ -197,9 +196,6 @@ and pp_call_expr {value; _} =
     | Multiple xs -> Utils.nsepseq_to_list xs.value.inside in
   let arguments = string "(" ^^ group (separate_map (string ", ") pp_expr arguments) ^^ string ")" in
   pp_expr lambda ^^ arguments
-
-and pp_new_expr {value =(_, e);_} =
-  string "new " ^^ pp_expr e
 
 and pp_array_item = function
   Empty_entry _ -> empty

@@ -165,7 +165,6 @@ module Fold_helpers(M : Monad) = struct
        bind_fold_npseq self init value
     | ECodeInj _ ->
        ok @@ init
-    | ENew {value = (_, e); _} -> self init e
     | EArray {value = {inside; _}; _} ->
        let fold_array_item init = function
            Empty_entry _ -> ok init
@@ -424,9 +423,6 @@ module Fold_helpers(M : Monad) = struct
        let* a = map_arguments a in
        let value = (e, a) in
        return @@ ECall {value; region}
-    | ENew  {value = (k, e); region} ->
-       let* e = self e in
-       return @@ ENew {value = (k, e); region}
     | EBytes _ as e -> return @@ e
     | EArray {value;region} ->
        let map_array_item = function

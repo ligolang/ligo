@@ -91,7 +91,6 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> If       "if"
 %token <Region.t> Import   "import"
 %token <Region.t> Let      "let"
-%token <Region.t> New      "new"
 %token <Region.t> Of       "of"
 %token <Region.t> Return   "return"
 %token <Region.t> Switch   "switch"
