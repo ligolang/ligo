@@ -76,14 +76,16 @@ addReferences ligo = execState $ loopM_ addRef ligo
       (match -> Just (r, TypeName n)) -> addThisRef TypeLevel (getElem r) n
       _                               -> return ()
 
+    addThisRef :: Level -> PreprocessedRange -> Text -> State ScopeForest ()
     addThisRef cat' (PreprocessedRange r) n = do
       modify
         $ withScopeForest \(sf, ds) ->
           flip runState ds do
-            let frameSet = Set.toList =<< spine r =<< sf
+            let frameSet = Set.toList =<< toList . spine r =<< sf
             walkScope cat' r n frameSet
             return sf
 
+    walkScope :: Level -> Range -> Text -> [DeclRef] -> State (Map DeclRef ScopedDecl) ()
     walkScope _     _ _ [] = return ()
     walkScope level r n (declref : rest) = do
       decl <- gets (Map.! declref)
@@ -93,6 +95,7 @@ addReferences ligo = execState $ loopM_ addRef ligo
       else do
         walkScope level r n rest
 
+    addRefToDecl :: Range -> ScopedDecl -> ScopedDecl
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
@@ -207,7 +210,7 @@ assignDecls
      , Eq (Product xs)
      )
   => LIGO xs
-  -> ScopeM (LIGO ([ScopedDecl] : Bool : Range : xs))
+  -> ScopeM (LIGO (Scope : Bool : Range : xs))
 assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
   where
     go = \case
@@ -275,7 +278,7 @@ functionScopedDecl docs nameNode paramNodes typ body = do
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure (params dialect)
       _vdsTspec = parseTypeDeclSpecifics <$> typ
-  pure $ ScopedDecl
+  pure ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
     , _sdRefs = []
@@ -299,7 +302,7 @@ valueScopedDecl
 valueScopedDecl docs nameNode typ body = do
   dialect <- lift ask
   (PreprocessedRange origin, name) <- getName nameNode
-  pure $ ScopedDecl
+  pure ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
     , _sdRefs = []
@@ -321,7 +324,7 @@ typeScopedDecl
 typeScopedDecl docs nameNode body = do
   dialect <- lift ask
   (PreprocessedRange origin, name) <- getTypeName nameNode
-  pure $ ScopedDecl
+  pure ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
     , _sdRefs = []
@@ -335,20 +338,20 @@ singleton :: a -> [a]
 singleton x = [x]
 
 extractScopeTree
-  :: LIGO ([ScopedDecl] : Bool : Range : xs)
-  -> Tree' '[[]] '[[ScopedDecl], Bool, Range]
+  :: LIGO (Scope : Bool : Range : xs)
+  -> Tree' '[[]] '[Scope, Bool, Range]
 extractScopeTree ((decls :> visible :> r :> _) :< fs)
   = make (decls :> visible :> r :> Nil, map extractScopeTree (toList fs))
 
 -- 'Bool' in the node list denotes whether this part of a tree is a scope
 compressScopeTree
-  :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
-  -> [Tree' '[[]] '[[ScopedDecl], Range]]
+  :: Tree' '[[]] '[Scope, Bool, Range]
+  -> [Tree' '[[]] '[Scope, Range]]
 compressScopeTree = go
   where
     go
-      :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
-      -> [Tree' '[[]] '[[ScopedDecl], Range]]
+      :: Tree' '[[]] '[Scope, Bool, Range]
+      -> [Tree' '[[]] '[Scope, Range]]
     go (only -> (_ :> False :> _ :> Nil, rest)) =
       rest >>= go
 
@@ -359,12 +362,12 @@ compressScopeTree = go
          ]
 
 extractScopeForest
-  :: [Tree' '[[]] '[[ScopedDecl], Range]]
+  :: [Tree' '[[]] '[Scope, Range]]
   -> ScopeForest
 extractScopeForest = uncurry ScopeForest . runWriter . mapM go
   where
     go
-      :: Tree' '[[]] '[[ScopedDecl], Range]
+      :: Tree' '[[]] '[Scope, Range]
       -> Writer (Map DeclRef ScopedDecl) ScopeTree
     go (only -> (decls :> r :> Nil, ts)) = do
       let mkDeclRef sd = DeclRef (_sdName sd) (_sdOrigin sd)
@@ -380,7 +383,7 @@ getImmediateDecls
      , Contains PreprocessedRange info
      , Eq (Product info)
      )
-  => LIGO info -> ScopeM [ScopedDecl]
+  => LIGO info -> ScopeM Scope
 getImmediateDecls = \case
   (match -> Just (r, pat)) -> do
     case pat of

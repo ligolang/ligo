@@ -48,6 +48,7 @@ import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
 import Control.Monad.Reader
 import Control.Monad.Trans.Except
+import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
 import Data.List (sortOn)
@@ -262,21 +263,21 @@ instance Pretty ScopeForest where
 
       decls' = sexpr "decls" . map pp . Map.toList
 
-lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
+lookupEnv :: Text -> Scope -> Maybe ScopedDecl
 lookupEnv name = getFirst . foldMap \decl ->
   First do
     guard (_sdName decl == name)
     return decl
 
-envAtPoint :: Range -> ScopeForest -> [ScopedDecl]
+envAtPoint :: Range -> ScopeForest -> Scope
 envAtPoint r (ScopeForest sf ds) = do
-  let sp = sf >>= spine r >>= Set.toList
+  let sp = sf >>= toList . spine r >>= Set.toList
   map (ds Map.!) sp
 
-spine :: Range -> ScopeTree -> [Set DeclRef]
+spine :: Range -> ScopeTree -> DList (Set DeclRef)
 spine r (only -> (i, trees))
-  | leq r (getRange i) = foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
-  | otherwise = []
+  | leq r (getRange i) = foldMap (spine r) trees `snoc` getElem @(Set DeclRef) i
+  | otherwise = mempty
 
 addLocalScopes :: MonadCatch m => SomeLIGO ParsedInfo -> ScopeForest -> m (SomeLIGO Info')
 addLocalScopes tree forest =
