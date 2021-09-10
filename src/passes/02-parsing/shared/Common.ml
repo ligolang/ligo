@@ -204,11 +204,8 @@ module type LIGO_PARSER =
 
     (* The monolithic API. *)
 
-    module MenhirInterpreter :
-      sig
-        include MenhirLib.IncrementalEngine.INCREMENTAL_ENGINE
-                with type token = token
-      end
+    module MenhirInterpreter : MenhirLib.IncrementalEngine.EVERYTHING
+           with type token = token
 
     (* The entry point(s) to the incremental API. *)
 
@@ -220,6 +217,11 @@ module type LIGO_PARSER =
         val contract :
           Lexing.position -> CST.t MenhirInterpreter.checkpoint
       end
+
+    (* The recovery API. *)
+
+    module Recovery : Merlin_recovery.RECOVERY_GENERATED
+           with module I := MenhirInterpreter
   end
 
 (* Making parsers for CSTs and expressions *)

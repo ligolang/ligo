@@ -53,21 +53,8 @@ module type PARSER =
 
     (* The incremental API. *)
 
-    module MenhirInterpreter :
-      sig
-        type 'a terminal
-        type 'a nonterminal
-
-        include MenhirLib.IncrementalEngine.INCREMENTAL_ENGINE
-                with type token = token
-
-        include MenhirLib.IncrementalEngine.INSPECTION
-                with type 'a lr1state := 'a lr1state
-                with type production := production
-                with type 'a terminal := 'a terminal
-                with type 'a nonterminal := 'a nonterminal
-                with type 'a env := 'a env
-      end
+    module MenhirInterpreter : MenhirLib.IncrementalEngine.EVERYTHING
+           with type token = token
 
     module Incremental :
       sig
@@ -78,26 +65,8 @@ module type PARSER =
 
     (* The recovery API. *)
 
-    module Recovery :
-      sig
-        type action =
-          | Abort
-          | R of int
-          | S : 'a MenhirInterpreter.symbol -> action
-          | Sub of action list
-
-        type decision =
-          | Nothing
-          | One of action list
-          | Select of (int -> action list)
-
-        val nullable : 'a MenhirInterpreter.nonterminal -> bool
-        val token_of_terminal : 'a MenhirInterpreter.terminal -> 'a -> token
-        val recover : int -> decision
-        val can_pop : 'a MenhirInterpreter.terminal -> bool
-        val depth : int array
-        val default_value : 'a MenhirInterpreter.symbol -> 'a
-      end
+    module Recovery : Merlin_recovery.RECOVERY_GENERATED
+           with module I := MenhirInterpreter
   end
 
 (* Parser errors for the Incremental API of Menhir *)

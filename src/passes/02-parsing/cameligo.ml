@@ -22,6 +22,8 @@ module CameligoParser =
   struct
     module CST = CST
     include Parser
+
+    module Recovery = Parsing_cameligo.RecoverParser
   end
 
 include Parsing_shared.Common.MakeTwoParsers

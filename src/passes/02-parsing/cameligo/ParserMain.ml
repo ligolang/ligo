@@ -33,6 +33,8 @@ module Parser =
       struct
         let main = Incremental.contract
       end
+
+    module Recovery = Parsing_cameligo.RecoverParser
   end
 
 module Pretty =
@@ -46,6 +48,7 @@ module Printer =
     include Cst_cameligo.Printer
     type tree = CST.t
   end
+
 
 (* Finally... *)
 

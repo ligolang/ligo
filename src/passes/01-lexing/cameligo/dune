@@ -1,3 +1,24 @@
+;; Generate ['a terminal] type to complete inspection API in parsing stage
+
+(rule
+  (targets MenhirToken.ml MenhirToken.mli)
+  (deps (:ParToken ../../02-parsing/cameligo/ParToken.mly))
+  (action (run menhir %{ParToken} --only-tokens --inspection --table --base MenhirToken))
+)
+
+(library
+ (name menhir_cameligo_tokens)
+ (public_name ligo.lexing.menhir_cameligo_tokens)
+ (modules MenhirToken)
+ (libraries
+   lexing_shared
+   hex)
+ (flags (:standard
+          -open Lexing_shared
+            -open Wrap     ;; for [wrap]
+            -open Common)) ;; for [lexeme]
+)
+
 ;; Build of the CameLIGO lexer as a library
 
 (library
@@ -7,6 +28,7 @@
   (libraries
     ;; LIGO
     lexing_shared
+    menhir_cameligo_tokens
     ;; Third party
     str
     hex)
