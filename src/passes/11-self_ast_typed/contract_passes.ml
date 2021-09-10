@@ -67,7 +67,11 @@ let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contra
   | _ -> (true,dat,e)
 
 let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = fun main_name prg ->
-  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@ Helpers.Free_variables.expression expr in
+  let get_fv expr = 
+    let fmv, fv = Helpers.Free_variables.expression expr in
+    let fv = List.map ~f:(fun v -> v.Location.wrap_content) fv in 
+    (fmv, fv)
+  in
   let get_fmv_expr expr = Helpers.Free_module_variables.expression expr in
   let get_fmv_mod module' = Helpers.Free_module_variables.module' module' in
   let Module_Fully_Typed module' = prg in
@@ -85,17 +89,20 @@ let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = 
     | {Location.wrap_content = Declaration_constant {binder; expr; _}; _} as hd :: tl ->
        let binder = binder.wrap_content in
        if List.mem fv binder ~equal:Var.equal then
-         let expr_fv = get_fv expr in
+         let (expr_fmv, expr_fv) = get_fv expr in
          let fv = List.remove_element ~compare:Var.compare binder fv in
          let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
+         let fmv = List.dedup_and_sort ~compare:compare_module_variable (fmv @ expr_fmv) in
          aux (fv, fmv) (hd :: acc) tl
        else
          aux (fv, fmv) acc tl
     | {Location.wrap_content = Declaration_module {module_binder = name; module_}; _} as hd :: tl ->
        if List.mem fmv name ~equal:equal_module_variable then
-         let expr_fv = get_fmv_mod module_ in
+         let (expr_fmv, expr_fv) = get_fmv_mod module_ in
+         let expr_fv = List.map ~f:(fun v -> v.Location.wrap_content) expr_fv in
          let fmv = List.remove_element ~compare:compare_module_variable name fmv in
-         let fmv = List.dedup_and_sort ~compare:compare_module_variable (fmv @ expr_fv) in
+         let fmv = List.dedup_and_sort ~compare:compare_module_variable (fmv @ expr_fmv) in
+         let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
          aux (fv, fmv) (hd :: acc) tl
        else
          aux (fv, fmv) acc tl
@@ -109,4 +116,10 @@ let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = 
          aux (fv, fmv) acc tl
     | hd :: tl ->
        aux (fv, fmv) (hd :: acc) tl in
-  Module_Fully_Typed (aux (get_fv main_expr, get_fmv_expr main_expr) [main_decl] prg_decls)
+       
+  let (fmvs, fvs) = get_fmv_expr main_expr in
+  let fvs = List.map ~f:(fun v -> v.Location.wrap_content) fvs in
+  let (fmvs1, fvs1) = get_fv main_expr in
+  let fvs = List.dedup_and_sort ~compare:Var.compare (fvs @ fvs1) in
+  let fmvs = List.dedup_and_sort ~compare:compare_module_variable (fmvs @ fmvs1) in
+  Module_Fully_Typed (aux (fvs, fmvs) [main_decl] prg_decls)
