@@ -316,11 +316,11 @@ load uri = J.getRootPath >>= \case
         pure $ G.overlays (newGroup : groups')
 
     (graph, result) <- case J.uriToFilePath $ J.fromNormalizedUri uri of
-      Nothing -> (,) <$> addScopes @Standard rawGraph <*> loadDefault
+      Nothing -> (,) <$> addScopes @Fallback rawGraph <*> loadDefault
       Just fp -> case find (isJust . lookupContract fp) (wcc rawGraph) of
-        Nothing -> (,) <$> addScopes @Standard rawGraph <*> loadDefault
+        Nothing -> (,) <$> addScopes @Fallback rawGraph <*> loadDefault
         Just graph' -> do
-          scoped <- addScopes @Standard graph'
+          scoped <- addScopes @Fallback graph'
           (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
     let contracts = (id &&& normalizeFilePath . contractFile) <$> G.vertexList graph
@@ -333,7 +333,7 @@ load uri = J.getRootPath >>= \case
   where
     sourceToUri = normalizeFilePath . srcPath
     normalizeFilePath = J.toNormalizedUri . J.filePathToUri
-    loadDefault = addShallowScopes @Standard =<< loadWithoutScopes uri
+    loadDefault = addShallowScopes @Fallback =<< loadWithoutScopes uri
 
 collectErrors
   :: (J.NormalizedUri -> RIO ContractInfo')
