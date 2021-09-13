@@ -207,7 +207,7 @@ interactive_expr: Begin UIdent With
 ##
 
 Ill-formed selection of a value from a module.
-At this point, the selection operator '.' is expected, followed by the
+At this point, the selection symbol '.' is expected, followed by the
 qualified name of a value.
 
 interactive_expr: Begin For Ident ARROW Ident In With
@@ -502,7 +502,7 @@ interactive_expr: Begin For Ident With
 Ill-formed bounded loop.
 At this point, one of the following is expected:
   * if iterating over a numerical interval, then the assignment
-    operator ':=' is expected, followed by the initial value of the
+    symbol ':=' is expected, followed by the initial value of the
     index as an expression;
   * if iterating over a list or a set, then the keyword 'in' is
     expected, followed by either the keyword 'list' or 'map';
@@ -565,7 +565,7 @@ interactive_expr: Begin Ident With
 
 Ill-formed assignment.
 At this point, if the left-hand side of the assignment is complete,
-the assignment operator ':=' is expected, followed by an expression.
+the assignment symbol ':=' is expected, followed by an expression.
 
 interactive_expr: Begin If Verbatim Then LBRACE Skip With
 ##
@@ -1177,7 +1177,7 @@ interactive_expr: Begin Var Ident COLON UIdent ARROW
 
 Ill-formed variable declaration.
 At this point, if the type annotation is complete, the assignment
-operator ':=' is expected, followed by the expression whose value is
+symbol ':=' is expected, followed by the expression whose value is
 the initial value of the variable being defined.
 
 interactive_expr: Begin Var Ident With
@@ -1194,7 +1194,7 @@ interactive_expr: Begin Var Ident With
 Ill-formed variable declaration.
 At this point, one of the following is expected:
   * a type annotation introduced by a colon ':';
-  * the assignment operator ':=' followed by an expression whose
+  * the assignment symbol ':=' followed by an expression whose
     value is the initial value of the variable being defined.
 
 interactive_expr: Begin Var With
@@ -3785,7 +3785,7 @@ contract: Type Ident Is WILD TIMES UIdent With
 ##
 
 Ill-formed selection of a type in a module.
-At this point, the selection operator '.' is expected, followed by the
+At this point, the selection symbol '.' is expected, followed by the
 qualified name of a type.
 
 contract: Type Ident Is With
