@@ -56,7 +56,6 @@ let list_of_option = function
 %on_error_reduce nsepseq(cons_pattern_level,COMMA)
 %on_error_reduce pattern
 %on_error_reduce nsepseq(core_irrefutable,COMMA)
-%on_error_reduce irrefutable
 %on_error_reduce variant(fun_type_level)
 %on_error_reduce variant(prod_type_level)
 %on_error_reduce nsepseq(variant(fun_type_level),VBAR)
@@ -64,7 +63,6 @@ let list_of_option = function
 %on_error_reduce nsepseq(core_type,TIMES)
 %on_error_reduce fun_type_level
 %on_error_reduce prod_type_level
-%on_error_reduce core_irrefutable
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -339,10 +337,10 @@ field_decl:
 
 let_declaration:
   attributes "let" ioption("rec") let_binding {
-    let attributes = $1 in
-    let kwd_let    = $2 in
-    let kwd_rec    = $3 in
-    let binding    = $4 in
+    let attributes = $1
+    and kwd_let    = $2
+    and kwd_rec    = $3
+    and binding    = $4 in
     let value      = kwd_let, kwd_rec, binding, attributes in
     let stop       = expr_to_region binding.let_rhs in
     let region     = cover $2 stop
@@ -356,8 +354,8 @@ let_binding:
     let binders = Utils.nseq_cons (PVar $1) $3 in
     {binders; type_params=$2; lhs_type=$4; eq=$5; let_rhs=$6}
   }
-| irrefutable let_lhs_type "=" expr {
-    {binders=$1,[]; type_params=None; lhs_type=$2; eq=$3; let_rhs=$4} }
+| irrefutable type_parameters let_lhs_type "=" expr {
+    {binders=$1,[]; type_params=$2; lhs_type=$3; eq=$4; let_rhs=$5} }
 
 %inline let_lhs_type:
   ioption(type_annotation(type_expr)) { $1 }
@@ -380,6 +378,7 @@ type_annotation(right_type_expr):
 
 (* Irrefutable Patterns *)
 
+%inline
 irrefutable:
   tuple(core_irrefutable) {
     let region = nsepseq_to_region pattern_to_region $1
@@ -387,6 +386,7 @@ irrefutable:
   }
 | core_irrefutable { $1 }
 
+%inline
 core_irrefutable:
   "_"                         { PVar    (mk_wild $1) }
 | var_pattern                 { PVar    $1 }
@@ -641,7 +641,7 @@ local_module_alias(right_expr):
     in EModAlias {region; value} }
 
 fun_expr(right_expr):
-  attributes "fun" type_parameters nseq(irrefutable) ret_type "->" right_expr {
+  attributes "fun" type_parameters nseq(core_irrefutable) ret_type "->" right_expr {
     let stop   = expr_to_region $7 in
     let region = cover $2 stop in
     let value  = {kwd_fun=$2; type_params=$3; binders=$4;
@@ -864,7 +864,7 @@ path:
 (* Sequences *)
 
 sequence:
-  "begin" series? "end" {
+  "begin" ioption(series) "end" {
     let region   = cover $1 $3
     and compound = Some (BeginEnd ($1,$3)) in
     let elements = $2 in
