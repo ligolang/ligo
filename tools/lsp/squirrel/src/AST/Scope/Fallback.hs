@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
-
 module AST.Scope.Fallback
   ( Fallback
   , loop
@@ -25,12 +23,13 @@ import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
-import AST.Pretty (PPableLIGO, TotalLPP, docToText, lppDialect)
+import AST.Pretty (PPableLIGO)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  (DeclarationSpecifics (..), Parameter (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..),
-  fillTypeIntoCon)
-import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
+  ( DeclarationSpecifics (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..)
+  , fillTypeIntoCon
+  )
+import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics)
 import AST.Skeleton hiding (Type)
 import Cli.Types
 import Control.Monad.Except
@@ -252,14 +251,13 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
       pure (make (range', node))
 
 functionScopedDecl
-  :: ( TotalLPP param
-     , Eq (Product info)
+  :: ( Eq (Product info)
      , PPableLIGO info
      , Contains PreprocessedRange info
      )
   => [Text] -- ^ documentation comments
   -> LIGO info -- ^ name node
-  -> [param] -- ^ parameter nodes
+  -> [LIGO info] -- ^ parameter nodes
   -> Maybe (LIGO info) -- ^ type node
   -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM ScopedDecl
@@ -267,7 +265,7 @@ functionScopedDecl docs nameNode paramNodes typ body = do
   dialect <- lift ask
   (PreprocessedRange origin, name) <- getName nameNode
   let _vdsInitRange = getRange <$> body
-      _vdsParams = pure (params dialect)
+      _vdsParams = pure $ parseParameters paramNodes
       _vdsTspec = parseTypeDeclSpecifics <$> typ
   pure ScopedDecl
     { _sdName = name
@@ -277,8 +275,6 @@ functionScopedDecl docs nameNode paramNodes typ body = do
     , _sdDialect = dialect
     , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
     }
-  where
-    params dialect = map (Parameter . docToText . lppDialect dialect) paramNodes
 
 valueScopedDecl
   :: ( Eq (Product info)
@@ -445,7 +441,7 @@ getImmediateDecls = \case
   (match -> Just (r, Variant name paramTyp)) -> do
     -- type is Nothing at this stage, but it will be substituted with the
     -- (hopefully) correct type higher in the tree (see 'BTypeDecl' branch).
-    constructorDecl <- functionScopedDecl (getElem r) name [paramTyp] Nothing Nothing
+    constructorDecl <- functionScopedDecl (getElem r) name [] Nothing Nothing
     nestedDecls <- maybe (pure []) getImmediateDecls paramTyp
     pure (constructorDecl : nestedDecls)
   _ -> pure []

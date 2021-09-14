@@ -112,7 +112,7 @@ function
   (fun_decl
     (attr)
     (NameDecl)
-    (param_decl (NameDecl) (TypeName))
+    (param_decl (var_pattern (NameDecl)) (TypeName))
     (TypeName)
     (let_expr
       (block
@@ -174,7 +174,7 @@ function foo (const a : int) : int is
 (source_file
   (fun_decl
     (NameDecl)
-    (param_decl (NameDecl) (TypeName))
+    (param_decl (var_pattern (NameDecl)) (TypeName))
     (TypeName)
     (let_expr
       (block
