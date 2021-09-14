@@ -135,7 +135,10 @@
           components.exes.ligo-squirrel =
             pack squirrel.components.exes.ligo-squirrel;
         } else
-          pkgs.pkgsCross.musl64.callPackage ./squirrel { };
+          pkgs.pkgsCross.musl64.callPackage ./squirrel {
+            # Use standard build for hpack because it's available in nix binary cache
+            inherit (pkgs) hpack;
+          };
 
         exes = builtins.mapAttrs
           (_: project: project.components.exes.ligo-squirrel) {
