@@ -4,6 +4,8 @@
   (instrumentation (backend bisect_ppx))
   (libraries
     mini_c
+    tezos-hacl-glue-unix
+    bls12-381-unix
   )
   (inline_tests)
   (preprocess

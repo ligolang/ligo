@@ -11,7 +11,7 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 depends: [
   "dune"
   "tezos-protocol-environment"
-  "tezos-protocol-009-PsFLoren"
+  "tezos-protocol-010-PtGRANAD"
 ]
 build: [
   ["dune" "build" "-p" name]

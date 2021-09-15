@@ -6,6 +6,7 @@
     simple-utils
     tezos-utils
     stage_common
+    tezos-hacl-glue-unix
   )
   (inline_tests)
   (preprocess (pps ppx_expect))

@@ -96,7 +96,7 @@ let fetch_lambda_types ~raise (contract_ty : _ Michelson.t) =
   | _ -> raise.raise Errors.unknown (*TODO*)
 
 let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_009_PsFLoren in
+  let open! Tezos_raw_protocol_010_PtGRANAD in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -130,18 +130,17 @@ let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
   let top_level = Script_ir_translator.Toplevel
     { storage_type ; param_type ;
       root_name = None ; legacy_create_contract_literal = false } in
-  let ty_stack_before = Script_typed_ir.Item_t (input_ty, Empty_t, None) in
-  let ty_stack_after = Script_typed_ir.Item_t (output_ty, Empty_t, None) in
-  let (descr : (_*unit,_*unit) Script_typed_ir.descr) =
+  let ty_stack_before = Script_typed_ir.Item_t (input_ty, Bot_t, None) in
+  let ty_stack_after = Script_typed_ir.Item_t (output_ty, Bot_t, None) in
+  let (descr : (_,_,_,_) descr) =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_code_tracer @@
     Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let res =
     Trace.trace_tzresult_lwt ~raise Errors.error_of_execution_tracer @@
-    Memory_proto_alpha.failure_interpret ?options descr (input, ()) in
+    Memory_proto_alpha.failure_interpret ?options descr input (EmptyCell, EmptyCell) in
   match res with
-  | Memory_proto_alpha.Succeed stack ->
-    let (output, ()) = stack in
+  | Memory_proto_alpha.Succeed output ->
     let (ty, value) = ex_value_ty_to_michelson ~raise (Ex_typed_value (output_ty, output)) in
     Success (ty, value)
   | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
@@ -151,7 +150,7 @@ let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     | _              -> raise.raise @@ Errors.unknown_failwith_type )
 
 let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_009_PsFLoren in
+  let open! Tezos_raw_protocol_010_PtGRANAD in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -172,22 +171,21 @@ let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
   in
-  let ty_stack_before = Script_typed_ir.Item_t (input_ty, Empty_t, None) in
-  let ty_stack_after = Script_typed_ir.Item_t (output_ty, Empty_t, None) in
+  let ty_stack_before = Script_typed_ir.Item_t (input_ty, Bot_t, None) in
+  let ty_stack_after = Script_typed_ir.Item_t (output_ty, Bot_t, None) in
   let top_level = Script_ir_translator.Dip (ty_stack_before, Script_ir_translator.Lambda) in
   let exp' = match exp with
     | Seq (_, [Prim (_, "LAMBDA", [_;_;v], _)]) -> v
     | _ -> failwith "not lambda" in
-  let (descr : (_*unit,_*unit) Script_typed_ir.descr) =
+  let (descr : (_,_,_,_) descr) =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_code_tracer @@
       Memory_proto_alpha.parse_michelson_fail ~top_level exp' ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let res =
     Trace.trace_tzresult_lwt ~raise Errors.error_of_execution_tracer @@
-    Memory_proto_alpha.failure_interpret ?options descr (input, ()) in
+    Memory_proto_alpha.failure_interpret ?options descr input (EmptyCell, EmptyCell) in
   match res with
-  | Memory_proto_alpha.Succeed stack ->
-    let (output, ()) = stack in
+  | Memory_proto_alpha.Succeed output ->
     let (ty, value) = ex_value_ty_to_michelson ~raise (Ex_typed_value (output_ty, output)) in
     Success (ty, value)
   | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
@@ -197,7 +195,7 @@ let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     | _              -> raise.raise @@ Errors.unknown_failwith_type )
 
 let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
-  let open! Tezos_raw_protocol_009_PsFLoren in
+  let open! Tezos_raw_protocol_010_PtGRANAD in
   let exp_type =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings exp_type in
@@ -205,18 +203,17 @@ let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
     Memory_proto_alpha.parse_michelson_ty exp_type in
   let top_level = Script_ir_translator.Lambda
-  and ty_stack_before = Script_typed_ir.Empty_t
-  and ty_stack_after = Script_typed_ir.Item_t (exp_type', Empty_t, None) in
+  and ty_stack_before = Script_typed_ir.Bot_t
+  and ty_stack_after = Script_typed_ir.Item_t (exp_type', Bot_t, None) in
   let descr =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_code_tracer @@
     Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let res =
     Trace.trace_tzresult_lwt ~raise Errors.error_of_execution_tracer @@
-    Memory_proto_alpha.failure_interpret ?options descr () in
+    Memory_proto_alpha.failure_interpret ?options descr EmptyCell EmptyCell in
   match res with
-  | Memory_proto_alpha.Succeed stack ->
-    let (output, ()) = stack in
+  | Memory_proto_alpha.Succeed output ->
     let (ty, value) = ex_value_ty_to_michelson ~raise (Ex_typed_value (exp_type', output)) in
     Success (ty, value)
   | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with

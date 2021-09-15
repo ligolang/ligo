@@ -6,6 +6,8 @@
     simple-utils
     tezos-utils
     environment
+    tezos-hacl-glue-unix
+    bls12-381-unix
   )
   (preprocess
     (pps ppx_expect)
