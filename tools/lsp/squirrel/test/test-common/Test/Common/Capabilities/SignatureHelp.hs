@@ -124,6 +124,16 @@ caseInfos =
       ]
     , tiActiveParamNo = 1
     }
+  , TestInfo
+    { tiContract = "LIGO-271-curried.mligo"
+    , tiCursor = point 3 17
+    , tiFunction = "foo"
+    , tiParameters =
+      [ ParameterPattern (IsAnnot (IsVar "a") (AliasType "int"))
+      , ParameterPattern (IsAnnot (IsVar "b") (AliasType "nat"))
+      ]
+    , tiActiveParamNo = 1
+    }
   ]
 
 simpleFunctionCallDriver :: forall parser. HasScopeForest parser IO => TestTree

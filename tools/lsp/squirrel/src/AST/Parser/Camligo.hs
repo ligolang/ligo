@@ -118,12 +118,18 @@ recognise (SomeRawTree dialect rawTree)
         ("<", _)      -> return $ Op "<"
         (">=", _)     -> return $ Op ">="
         ("<=", _)     -> return $ Op "<="
-        ("=", _)      -> return $ Op "=="
+        ("=", _)      -> return $ Op "="
         ("!=", _)     -> return $ Op "!="
-        ("<>", _)     -> return $ Op "!="
+        ("<>", _)     -> return $ Op "<>"
         ("||", _)     -> return $ Op "||"
         ("&&", _)     -> return $ Op "&&"
-        ("negate", n) -> return $ Op n
+        ("not", _)    -> return $ Op "not"
+        ("lsl", _)    -> return $ Op "lsl"
+        ("lsr", _)    -> return $ Op "lsr"
+        ("land", _)   -> return $ Op "land"
+        ("lor", _)    -> return $ Op "lor"
+        ("lxor", _)   -> return $ Op "lxor"
+        ("or", _)     -> return $ Op "or"
         _             -> fallthrough
 
     -- Literal
