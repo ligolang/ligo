@@ -17,11 +17,11 @@ import AST.Capabilities.SignatureHelp
 import AST.Pretty (ppToText)
 import AST.Scope.Common (HasScopeForest)
 import AST.Scope.ScopedDecl
-  ( Parameter (..), Pattern (..), Type (..), TypeDeclSpecifics (..), lppLigoLike
+  ( Parameter (..), Pattern (..), Type (..), lppLigoLike
   )
 import AST.Skeleton (nestedLIGO)
 import Extension (getExt)
-import Range (Range, interval, point)
+import Range (Range, point)
 
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
@@ -114,13 +114,8 @@ caseInfos =
     , tiCursor = point 3 30
     , tiFunction = "foo"
     , tiParameters =
-      [ ParameterPattern
-        (IsAnnot
-          (IsTuple [IsVar "a", IsVar "b"])
-          (TupleType
-            [ TypeDeclSpecifics (interval 1 17 20) (AliasType "nat")
-            , TypeDeclSpecifics (interval 1 23 26) (AliasType "nat")
-            ]))
+      [ ParameterPattern (IsAnnot (IsVar "a") (AliasType "nat"))
+      , ParameterPattern (IsAnnot (IsVar "b") (AliasType "nat"))
       ]
     , tiActiveParamNo = 1
     }

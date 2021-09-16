@@ -26,7 +26,10 @@ import Duplo.Tree (layer, match, spineTo)
 
 import AST.Capabilities.Find (CanSearch)
 import AST.Scope.Common (Level (TermLevel), lookupEnv, ofLevel)
-import AST.Scope.ScopedDecl (IsLIGO, Parameter (..), Pattern (..), ScopedDecl (..), lppLigoLike, _ValueSpec, vdsParams)
+import AST.Scope.ScopedDecl
+  ( IsLIGO, Parameter (..), Pattern (..), ScopedDecl (..), Type (..), TypeDeclSpecifics (_tdsInit)
+  , lppLigoLike, _ValueSpec, vdsParams
+  )
 import AST.Skeleton (Expr (Apply, Paren, Tuple), LIGO, Lang (..))
 import Product (Contains, Product, getElem)
 import Range (Range (..), getRange)
@@ -64,6 +67,18 @@ extractTupleArguments = \case
     _ -> [arg]
   args -> args
 
+-- | Converts tuples in the form `(a, b) : (x * y)` into `((a : x), (b : y))`
+-- for ease of visualization. Such conversion is done if and only if we have a
+-- tuple pattern and a tuple type together such that both have the same name of
+-- parameters.
+matchValuesAndTypes :: Parameter -> [Parameter]
+matchValuesAndTypes = \case
+  param@(ParameterPattern (IsAnnot (IsTuple vals) (TupleType tys)))
+    | length vals == length tys ->
+      zipWith (\val typ -> ParameterPattern $ IsAnnot val $ _tdsInit typ) vals tys
+    | otherwise -> [param]
+  param -> [param]
+
 -- | Find all function signatures (one in this implementation) that could be
 -- applied at the given position. A function signature includes its label which
 -- is what will represent the function, its documentation comments and its
@@ -74,11 +89,12 @@ findSignature
 findSignature tree position = do
   (ScopedDecl{..}, activeNo) <- findNestingFunction tree position
   params <- _sdSpec ^? _ValueSpec . vdsParams . _Just
-  let label = makeSignatureLabel _sdDialect _sdName (map (ppToText . lppLigoLike _sdDialect) params)
+  let prettifiedParams = matchValuesAndTypes =<< params
+  let label = makeSignatureLabel _sdDialect _sdName (map (ppToText . lppLigoLike _sdDialect) prettifiedParams)
   let sigInfo = LSP.SignatureInformation
         { _label = label
         , _documentation = Just (LSP.SignatureHelpDocString $ ppToText (fsep (map pp _sdDoc)))
-        , _parameters = Just . LSP.List $ toLspParameters _sdDialect params
+        , _parameters = Just . LSP.List $ toLspParameters _sdDialect prettifiedParams
         , _activeParameter = Nothing
         }
   pure (sigInfo, activeNo)
