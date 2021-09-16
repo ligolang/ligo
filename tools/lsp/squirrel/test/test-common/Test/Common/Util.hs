@@ -26,7 +26,8 @@ import System.Environment (getEnv)
 import System.FilePath ((</>))
 import System.IO.Error (isDoesNotExistError)
 
-import AST.Parser (Source (Path), insertPreprocessorRanges, parsePreprocessed, parseWithScopes)
+import AST.Includes (insertPreprocessorRanges)
+import AST.Parser (Source (Path), parsePreprocessed, parseWithScopes)
 import AST.Scope.Common (HasScopeForest, Info', contractTree, _cMsgs, _cTree, _getContract)
 import AST.Skeleton (SomeLIGO)
 

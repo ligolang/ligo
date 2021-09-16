@@ -23,6 +23,7 @@ library
       AST.Capabilities.SelectionRange
       AST.Capabilities.SignatureHelp
       AST.CodeAction
+      AST.Includes
       AST.Parser
       AST.Parser.Camligo
       AST.Parser.Pascaligo

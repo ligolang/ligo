@@ -5,6 +5,8 @@ module Test.Parsers
 
 import System.FilePath ((</>))
 
+import AST (Fallback)
+
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
@@ -50,11 +52,11 @@ test_okayContracts
   = testGroup "Parsers should parse these contracts" <$> testCases
   where
     testCases = map makeTestCase <$> getOkayContracts
-    makeTestCase contractPath = testCase contractPath (checkFile True contractPath)
+    makeTestCase contractPath = testCase contractPath (checkFile @Fallback True contractPath)
 
 test_badContracts :: IO TestTree
 test_badContracts
   = testGroup "Parsers should not parse these contracts" <$> testCases
   where
     testCases = map makeTestCase <$> getBadContracts
-    makeTestCase contractPath = testCase contractPath (checkFile False contractPath)
+    makeTestCase contractPath = testCase contractPath (checkFile @Fallback False contractPath)

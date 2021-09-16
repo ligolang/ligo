@@ -38,7 +38,6 @@ import Algebra.Graph.AdjacencyMap qualified as G
 
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
-import Control.Lens ((^.))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
@@ -63,7 +62,7 @@ import UnliftIO.MVar
 
 import Witherable (wither)
 
-import Duplo.Tree (collect, make)
+import Duplo.Tree (make)
 
 import AST hiding (cTree)
 import ASTMap (ASTMap)
@@ -73,7 +72,7 @@ import Config (Config (..), getConfigFromNotification)
 import Duplo.Lattice (Lattice (leq))
 import Extension (extGlobs)
 import Log qualified
-import Parser (emptyParsedInfo)
+import Parser (collectTreeErrors, emptyParsedInfo)
 import Product
 import Range
 import Util.Graph (wcc)
@@ -281,9 +280,6 @@ loadWithoutScopes uri = do
 tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
 tryLoadWithoutScopes uri = (Just . insertPreprocessorRanges <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
 
-scopes :: ParsedContractInfo -> RIO ContractInfo'
-scopes = fmap (head . G.vertexList) . addScopes @Standard . G.vertex
-
 load
   :: J.NormalizedUri
   -> RIO Contract
@@ -337,8 +333,7 @@ load uri = J.getRootPath >>= \case
   where
     sourceToUri = normalizeFilePath . srcPath
     normalizeFilePath = J.toNormalizedUri . J.filePathToUri
-    loadParsed = fmap insertPreprocessorRanges . loadWithoutScopes
-    loadDefault = scopes =<< loadParsed uri
+    loadDefault = addShallowScopes @Standard =<< loadWithoutScopes uri
 
 collectErrors
   :: (J.NormalizedUri -> RIO ContractInfo')
@@ -376,6 +371,3 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =
   where
     begin = J.Position (sl - 1) (sc - 1)
     end   = J.Position (el - 1) (ec - 1)
-
-collectTreeErrors :: SomeLIGO Info' -> [Msg]
-collectTreeErrors = map (getElem *** void) . collect . (^. nestedLIGO)

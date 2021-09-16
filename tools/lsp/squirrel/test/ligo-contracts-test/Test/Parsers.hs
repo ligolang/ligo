@@ -3,7 +3,7 @@ module Test.Parsers
   , test_badContracts
   ) where
 
-import AST (parseContracts, srcPath)
+import AST (Fallback, parseContracts, srcPath)
 
 import Data.List (isPrefixOf)
 import System.FilePath ((</>))
@@ -17,21 +17,52 @@ okayIgnoreContracts :: [FilePath]
 okayIgnoreContracts = (contractsDir </>) <$> ignore
   where
     ignore =
-      [ "modules.religo"
+      [ -- LIGO-157
+        "modules.religo"
       , "get_scope_tests/module.mligo"
       , "uncurry_contract.mligo"
-      , "existential.mligo"
-      , "protocol_dalphanet.mligo"
       , "modules.mligo"
+      , "modules.ligo"
+      , "warning_duplicate.mligo"
+
+        -- LIGO-278
+      , "deep_pattern_matching/pm_ticket.mligo"
+      , "deep_pattern_matching/pm_test.ligo"
+      , "deep_pattern_matching/pm_test.mligo"
+      , "deep_pattern_matching/pm_test.religo"
+
+        -- LIGO-279
+      , "loop.ligo"
+      , "loop7.ligo"
+      , "loop8.ligo"
+      , "loop9.ligo"
+      , "loop10.ligo"
+      , "loop11.ligo"
+      , "loop12.ligo"
+      , "loop13.ligo"
+      , "loop14.ligo"
+      , "loop15.ligo"
+      , "loop16.ligo"
+      , "loop17.ligo"
+      , "loop18.ligo"
+      , "loop_bugs.ligo"
+      , "basic_multisig/multisig.ligo"
+      , "multisig.ligo"
+      , "multisig-v2.ligo"
+
+        -- LIGO-280
+      , "k.ligo"
+
+        -- LIGO-281
+      , "michelson_pair_tree.religo"
+      , "tuples_sequences_functions.religo"
+      , "string_arithmetic.religo"
+
+        -- Uncategorized
+      , "existential.mligo"
       , "heap.ligo"
       , "heap-instance.ligo"
-      , "modules.ligo"
-      , "assert.religo"
-      , "warning_duplicate.mligo"
-      , "deep_pattern_matching/pm_test.religo"
       , "vars_consts/multiple_vars.ligo"
-      , "tutorials/inter-contract-calls/PausableToken.ligo"
-      , "tutorials/inter-contract-calls/CreateAndCall.religo"
       , "build/B.mligo"
       , "build/C.mligo"
       , "build/D.mligo"
@@ -78,11 +109,11 @@ test_okayContracts
   = testGroup "Parsers should parse these contracts" <$> testCases
   where
     testCases = map makeTestCase <$> getOkayContracts
-    makeTestCase contractPath = testCase contractPath (checkFile True contractPath)
+    makeTestCase contractPath = testCase contractPath (checkFile @Fallback True contractPath)
 
 test_badContracts :: IO TestTree
 test_badContracts
   = testGroup "Parsers should not parse these contracts" <$> testCases
   where
     testCases = map makeTestCase <$> getBadContracts
-    makeTestCase contractPath = testCase contractPath (checkFile False contractPath)
+    makeTestCase contractPath = testCase contractPath (checkFile @Fallback False contractPath)
