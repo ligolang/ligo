@@ -2,15 +2,30 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-{ haskell-nix, grammars }:
+{ haskell-nix, grammars, runCommand, hpack }:
 let
+  projectSrc = haskell-nix.haskellLib.cleanGit {
+    name = "squirrel";
+    # location relative to git root
+    src = ../../..;
+    subDir = "tools/lsp/squirrel";
+  };
+
+  # haskell.nix can generate .cabal file automatically, but it uses a custom
+  # build of hpack which requires rebuilding GHC and all haskell dependencies.
+  # We use hpack from nixpkgs instead to avoid big rebuilds.
+  cabalFile = runCommand "ligo-squirrel.cabal" {} ''
+    ${hpack}/bin/hpack ${projectSrc} - > $out
+  '';
+
   project = haskell-nix.stackProject {
-    src = haskell-nix.haskellLib.cleanGit {
-      name = "squirrel";
-      # location relative to git root
-      src = ../../..;
-      subDir = "tools/lsp/squirrel";
-    };
+    # project src with .cabal file added
+    src = runCommand "src-with-cabal" {} ''
+      cp -r --no-preserve=mode ${projectSrc} $out
+      cp ${cabalFile} $out/ligo-squirrel.cabal
+    '';
+
+    ignorePackageYaml = true;
 
     modules = [
       ({ config, ... }: {
