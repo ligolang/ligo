@@ -5,17 +5,19 @@ module Test.Common.Capabilities.SignatureHelp
   ) where
 
 import Control.Lens ((^.))
+import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (Assertion, testCase)
+import Test.Tasty.HUnit (testCase)
 
 import AST.Capabilities.SignatureHelp
   ( SignatureInformation (..), findSignature, makeSignatureLabel, toLspParameters
   )
+import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
 import AST.Pretty (ppToText)
-import AST.Scope.Common (HasScopeForest)
+import AST.Scope.Common (HasScopeForest, contractTree, lookupContract)
 import AST.Scope.ScopedDecl
   ( Parameter (..), Pattern (..), Type (..), lppLigoLike
   )
@@ -25,7 +27,6 @@ import Range (Range, point)
 
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
-import Test.Common.Util (readContractWithScopes)
 
 data TestInfo = TestInfo
   { tiContract :: String
@@ -131,19 +132,16 @@ caseInfos =
     }
   ]
 
-simpleFunctionCallDriver :: forall parser. HasScopeForest parser IO => TestTree
-simpleFunctionCallDriver = testGroup "Signature Help on a simple function call" testCases
+simpleFunctionCallDriver :: forall parser. HasScopeForest parser IO => IO TestTree
+simpleFunctionCallDriver = do
+  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed (contractsDir </> "signature-help")
+  pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) caseInfos
   where
-    testCases :: [TestTree]
-    testCases = map makeTestCase caseInfos
+    makeTestCase graph info = testCase (tiContract info) (makeTest graph info)
 
-    makeTestCase :: TestInfo -> TestTree
-    makeTestCase info = testCase (tiContract info) (makeTest info)
-
-    makeTest :: TestInfo -> Assertion
-    makeTest TestInfo{..} = do
+    makeTest graph TestInfo{..} = do
       let filepath = contractsDir </> "signature-help" </> tiContract
-      tree <- readContractWithScopes @parser filepath
+      let tree = contractTree $ fromJust $ lookupContract filepath graph
       dialect <- getExt filepath
       let result = findSignature (tree ^. nestedLIGO) tiCursor
       let label = makeSignatureLabel dialect tiFunction (map (ppToText . lppLigoLike dialect) tiParameters)
