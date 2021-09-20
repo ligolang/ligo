@@ -29,13 +29,13 @@ function foobar (var i : int) : int is
     }
     else
       case p of
-        Zero (n) -> failwith(42n)
-      | Pos (n)  -> skip
+        Zero (_) -> failwith(42n)
+      | Pos (_)  -> skip
       end
   } with
       case p of
-        Zero (n) -> i
-      | Pos (n)  -> (failwith ("waaaa") : int)
+        Zero (_) -> i
+      | Pos (_)  -> (failwith ("waaaa") : int)
       end
 
 function failer (const p : int) : int is block {

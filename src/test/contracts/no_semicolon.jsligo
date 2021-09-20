@@ -8,6 +8,6 @@ let a = (b: f): int => {
   }
 }
 
-let c = (c: f): int => {
+let c = (_: f): int => {
   return 3
 }

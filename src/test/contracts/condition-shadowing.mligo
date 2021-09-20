@@ -1,5 +1,5 @@
 let main (i : int) =
-  let result = 0 in
+  let _result = 0 in
   if i = 2
-  then let result = 42 in result
-  else let result = 0 in result
+  then let _result = 42 in _result
+  else let _result = 0 in _result

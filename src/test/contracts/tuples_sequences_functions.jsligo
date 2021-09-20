@@ -16,8 +16,8 @@ let j = (a: int, b: int): int => a - b;
 // };
 let n = (a: int): int => a + 1;
 let o = (a: int): int => a + 1;
-let n2 = (a: int, b: int): int => a + 1;
-let o2 = (a: int, b: int): int => a + 1;
+let n2 = (a: int, _b: int): int => a + 1;
+let o2 = (a: int, _b: int): int => a + 1;
 // let p = {{
 //     3;
 // }};

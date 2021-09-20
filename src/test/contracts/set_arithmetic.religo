@@ -1,6 +1,6 @@
 /* Test set operations in ReasonLIGO */
 
-let literal_op = (p: unit) : set (string) =>
+let literal_op = (_: unit) : set (string) =>
   Set.literal (["foo", "bar", "foobar"]);
 
 let add_op = (s: set (string)) : set (string) =>

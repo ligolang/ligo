@@ -33,7 +33,7 @@ function main (const p : parameter; var s : storage) : return is
 block {
 
   var payload: payload := p.payload;
-  
+
 
   if p.counter =/= s.counter then
     failwith ("Counters does not match")
@@ -58,14 +58,16 @@ block {
       end
     };
 
+    var _ := pkh_sigs;
+
     if valid < s.threshold then
       failwith ("Not enough signatures passed the check")
     else s.counter := s.counter + 1n
   };
   const contract_opt : option (contract(payload)) = Tezos.get_contract_opt(c_address);
   var op : list(operation) := nil;
-  case contract_opt of 
+  case contract_opt of
     | Some (c) -> op := list [Tezos.transaction (payload, 0tez, c)]
-    | None     -> failwith ("Contract not found") 
+    | None     -> failwith ("Contract not found")
   end;
 } with (op, s)

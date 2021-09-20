@@ -132,7 +132,7 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
     end // The message is not stored, ignore.
   } with ((nil : list (operation)), s)
 
-function default (const p : default_pt; const s : storage) : return is
+function default (const _ : default_pt; const s : storage) : return is
     ((nil : list (operation)), s)
 
 function main (const param : parameter; const s : storage) : return  is

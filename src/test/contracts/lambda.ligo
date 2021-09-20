@@ -1,3 +1,3 @@
-function f (const x : unit) : unit is Unit
+function f (const _ : unit) : unit is Unit
 
-function main (const p : unit ; const s : unit) : unit is f (Unit)
+function main (const _ : unit ; const _ : unit) : unit is f (Unit)

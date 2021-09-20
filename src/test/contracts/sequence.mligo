@@ -1,8 +1,8 @@
 let y (_ : unit) : nat =
-  let x : nat = 1n in
+  let _x : nat = 1n in
   begin
-    (let x : nat = 2n in unit) ;
-    (let x : nat = 23n in unit) ;
-    (let x : nat = 42n in unit) ;
-    x
+    (let _x : nat = 2n in unit) ;
+    (let _x : nat = 23n in unit) ;
+    (let _x : nat = 42n in unit) ;
+    _x
   end

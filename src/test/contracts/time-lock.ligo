@@ -16,7 +16,7 @@ function call (const p : call_pt; const s : storage_t) : contract_return_t is
     const ret_ops : list (operation) = message (unit)
   } with (ret_ops, s)
 
-function default (const p : default_pt; const s : storage_t) :
+function default (const _ : default_pt; const s : storage_t) :
   contract_return_t is
   ((nil : list (operation)), s)
 

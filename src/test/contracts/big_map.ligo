@@ -2,10 +2,10 @@ type parameter is unit
 type storage is big_map (int, int) * unit
 type return is list (operation) * storage
 
-function main (const p : parameter; var s : storage) : return is
+function main (const _ : parameter; var s : storage) : return is
   block {
-    var toto : option (int) := Some (0);
-    toto := s.0[23];
+    var _toto : option (int) := Some (0);
+    _toto := s.0[23];
     s.0[2] := 444
   }
   with ((nil : list (operation)), s)

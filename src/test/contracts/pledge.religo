@@ -16,7 +16,7 @@ type parameter =
   | Donate(unit)
   | Distribute((unit => list(operation)))
 
-let donate = ((p,s): (unit, storage)) : (list(operation), storage) => {
+let donate = ((_,s): (unit, storage)) : (list(operation), storage) => {
   (([]: list(operation)), s);
 };
 

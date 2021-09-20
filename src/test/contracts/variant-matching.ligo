@@ -6,6 +6,6 @@ type foobar is
 function fb (const p : foobar) : int is
   case p of
     Foo (n) -> n
-  | Bar (t) -> 42
-  | Kee (n) -> 23
+  | Bar (_) -> 42
+  | Kee (_) -> 23
   end

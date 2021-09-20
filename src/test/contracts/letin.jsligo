@@ -6,9 +6,9 @@ let main = (n : [int, storage]) : [list <operation>, storage] => {
   return [list([]) as list <operation>, x2];
 };
 
-let f0 = (a: string): bool => true
-let f1 = (a: string): bool => true
-let f2 = (a: string): bool => true
+let f0 = (_a: string): bool => true
+let f1 = (_a: string): bool => true
+let f2 = (_a: string): bool => true
 
 let letin_nesting = (_: unit): string => {
   let s = "test";
@@ -27,7 +27,7 @@ let letin_nesting2 = (x: int): int => {
   return x + y + z
 }
 
-let f = (x: int): nat => {
+let f = (_x: int): nat => {
  let [_, [x, _]] = [(1 as nat), [(2 as nat), (3 as nat)]];
  return x;
 }

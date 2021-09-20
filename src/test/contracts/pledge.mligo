@@ -16,7 +16,7 @@ type parameter =
 | Donate of unit
 | Distribute of (unit -> operation list)
 
-let donate ((p,s): unit * storage) : operation list * storage = ([]: operation list), s
+let donate ((_,s): unit * storage) : operation list * storage = ([]: operation list), s
 
 let distribute ((p,s): (unit -> operation list) * storage) : operation list * storage =
   if Tezos.sender = s
