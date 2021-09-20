@@ -166,10 +166,10 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-let rec apply_operator ~raise : Location.t -> calltrace -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
+let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type_expression -> env -> Ast_typed.constant' -> (value * Ast_typed.type_expression) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
-  let eval_ligo = eval_ligo ~raise in
+  let eval_ligo = eval_ligo ~raise ~steps in
   let types = List.map ~f:snd operands in
   let operands = List.map ~f:fst operands in
   let return_ct v = return @@ V_Ct v in
@@ -649,10 +649,11 @@ and eval_literal : Ast_typed.literal -> value Monad.t = function
      end
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise ~steps : Ast_typed.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo = eval_ligo ~raise in
+    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps in
     let open Monad in
+    let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace "Out of fuel") else return () in
     match term.expression_content with
     | E_application {lamb = f; args} -> (
         let* f' = eval_ligo f calltrace env in
@@ -683,7 +684,7 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
     )
     | E_mod_in {module_binder; rhs; let_result} ->
        let>> state = Get_state () in
-       let (module_env, state) = eval_module ~raise (rhs, state) in
+       let (module_env, state) = eval_module ~raise ~steps (rhs, state) in
        let>> () = Put_state state in
        eval_ligo (let_result) calltrace (Env.extend_mod env module_binder module_env)
     | E_mod_alias {alias;binders;result} ->
@@ -727,7 +728,7 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
           let* value = eval_ligo ae calltrace env in
           return @@ (value, ae.type_expression))
         arguments in
-      apply_operator ~raise term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~raise ~steps term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label c ; element } when String.equal c "True"
       && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool true)
@@ -835,7 +836,7 @@ and eval_ligo ~raise : Ast_typed.expression -> calltrace -> env -> value Monad.t
          | _ -> raise.raise @@ Errors.generic_error term.location "Unsupported module path"
        in aux env term
 
-and try_eval ~raise expr env state r = Monad.eval ~raise (eval_ligo ~raise expr [] env) state r
+and try_eval ~raise ~steps expr env state r = Monad.eval ~raise (eval_ligo ~raise ~steps expr [] env) state r
 
 and resolve_module_path ~raise ~loc binders env =
   let aux (e : env) (m : module_variable) =
@@ -844,7 +845,7 @@ and resolve_module_path ~raise ~loc binders env =
     | Some e -> e in
   List.Ne.fold_left aux env binders
 
-and eval_module ~raise : Ast_typed.module_fully_typed * Tezos_state.context -> env * Tezos_state.context =
+and eval_module ~raise ~steps : Ast_typed.module_fully_typed * Tezos_state.context -> env * Tezos_state.context =
   fun (Module_Fully_Typed prg, initial_state) ->
     let aux : env * Tezos_state.context -> declaration location_wrap -> env * Tezos_state.context =
       fun (top_env,state) el ->
@@ -852,11 +853,11 @@ and eval_module ~raise : Ast_typed.module_fully_typed * Tezos_state.context -> e
         | Ast_typed.Declaration_type _ ->
            (top_env,state)
         | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
-          let (v,state) = try_eval ~raise expr top_env state None in
+          let (v,state) = try_eval ~raise ~steps expr top_env state None in
           let top_env' = Env.extend top_env binder (expr.type_expression, v) in
           (top_env',state)
         | Ast_typed.Declaration_module {module_binder; module_} ->
-          let (module_env, state) = eval_module ~raise (module_, state) in
+          let (module_env, state) = eval_module ~raise ~steps (module_, state) in
           let top_env' = Env.extend_mod top_env module_binder module_env in
           (top_env',state)
         | Ast_typed.Module_alias {alias;binders} ->
@@ -867,10 +868,10 @@ and eval_module ~raise : Ast_typed.module_fully_typed * Tezos_state.context -> e
     let (env,state) = List.fold ~f:aux ~init:(Env.empty_env, initial_state) prg in
     (env, state)
 
-let eval_test ~raise : Ast_typed.module_fully_typed -> (string * value) list =
+let eval_test ~raise ~steps : Ast_typed.module_fully_typed -> (string * value) list =
   fun prg ->
     let initial_state = Tezos_state.init_ctxt ~raise [] in
-    let (env, _state) = eval_module ~raise (prg, initial_state) in
+    let (env, _state) = eval_module ~raise ~steps (prg, initial_state) in
     let v = Env.to_kv_list_rev (Ligo_interpreter.Environment.expressions env) in
     let aux : expression_variable * value_expr -> (string * value) option = fun (ev, v) ->
       let ev = Location.unwrap ev in
