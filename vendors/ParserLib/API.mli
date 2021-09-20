@@ -55,14 +55,47 @@ module type PARSER =
 
     module MenhirInterpreter :
       sig
+        type 'a terminal
+        type 'a nonterminal
+
         include MenhirLib.IncrementalEngine.INCREMENTAL_ENGINE
                 with type token = token
+
+        include MenhirLib.IncrementalEngine.INSPECTION
+                with type 'a lr1state := 'a lr1state
+                with type production := production
+                with type 'a terminal := 'a terminal
+                with type 'a nonterminal := 'a nonterminal
+                with type 'a env := 'a env
       end
 
     module Incremental :
       sig
         val main :
           Lexing.position -> tree MenhirInterpreter.checkpoint
+      end
+
+    (* The recovery API. *)
+
+    module Recovery :
+      sig
+        type action =
+          | Abort
+          | R of int
+          | S : 'a MenhirInterpreter.symbol -> action
+          | Sub of action list
+
+        type decision =
+          | Nothing
+          | One of action list
+          | Select of (int -> action list)
+
+        val nullable : 'a MenhirInterpreter.nonterminal -> bool
+        val token_of_terminal : 'a MenhirInterpreter.terminal -> 'a -> token
+        val recover : int -> decision
+        val can_pop : 'a MenhirInterpreter.terminal -> bool
+        val depth : int array
+        val default_value : 'a MenhirInterpreter.symbol -> 'a
       end
   end
 
@@ -103,4 +136,16 @@ module Make (Lexer  : LEXER)
     val incr_from_channel : (module PAR_ERR) -> in_channel    parser
     val incr_from_string  : (module PAR_ERR) -> string        parser
     val incr_from_file    : (module PAR_ERR) -> file_path     parser
+
+    (* Incremental API with recovery *)
+
+    type 'src recovery_parser =
+      'src -> (Parser.tree * message list, message) Stdlib.result
+    (* Contains a tree with list errors that happened but parser recovered
+       or a fatal error (e. g. FileNotFound) *)
+
+    val recov_from_lexbuf  : (module PAR_ERR) -> Lexing.lexbuf recovery_parser
+    val recov_from_channel : (module PAR_ERR) -> in_channel    recovery_parser
+    val recov_from_string  : (module PAR_ERR) -> string        recovery_parser
+    val recov_from_file    : (module PAR_ERR) -> file_path     recovery_parser
   end

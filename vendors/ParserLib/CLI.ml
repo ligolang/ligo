@@ -67,6 +67,7 @@ module type S =
     val pretty     : bool
     val cst        : bool
     val cst_tokens : bool
+    val recovery   : bool
 
     type status = Lexer_CLI.status
 
@@ -90,7 +91,8 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
         "      --mono       Use Menhir monolithic API";
         "      --cst        Print the CST";
         "      --cst-tokens Print tokens from the CST";
-        "      --pretty     Pretty-print the input"
+        "      --pretty     Pretty-print the input";
+        "      --recovery   enable error recovery"
       ] in
       begin
         Buffer.add_string buffer (String.concat "\n" options);
@@ -104,6 +106,7 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
     and pretty     = ref false
     and cst        = ref false
     and cst_tokens = ref false
+    and recovery   = ref false
 
     and help       = ref false
     and version    = ref false
@@ -182,6 +185,7 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
         noshort, "pretty",     set pretty true, None;
         noshort, "cst",        set cst true, None;
         noshort, "cst-tokens", set cst_tokens true, None;
+        noshort, "recovery",   set recovery true, None;
 
         noshort, "cli",        set cli true, None;
         'h',     "help",       set help true, None;
@@ -223,6 +227,7 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
       |> add "--pretty"
       |> add "--cst"
       |> add "--cst-tokens"
+      |> add "--recovery"
 
       (* The following options are present in all CLI *)
       |> add "--cli"
@@ -255,6 +260,7 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
     and pretty     = !pretty
     and cst        = !cst
     and cst_tokens = !cst_tokens
+    and recovery   = !recovery
 
     (* Re-exporting and printing on stdout the CLI options *)
 
@@ -264,7 +270,8 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
         sprintf "mono       = %b" mono;
         sprintf "pretty     = %b" pretty;
         sprintf "cst        = %b" cst;
-        sprintf "cst_tokens = %b" cst_tokens] in
+        sprintf "cst_tokens = %b" cst_tokens;
+        sprintf "recovery   = %b" recovery] in
     begin
       Buffer.add_string buffer (String.concat "\n" options);
       Buffer.add_char   buffer '\n';
@@ -274,18 +281,13 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
     (* Checking combinations of options *)
 
     let status =
-      match mono, pretty, cst, cst_tokens with
-        false, false, false, false
-      |  true, false, false, false
-      | false, true,  false, false
-      | false, false, true,  false
-      | false, false, false,  true
-      |  true,  true,     _,     _
-      |  true,     _,  true,     _
-      |  true,     _,     _,  true -> status
-      |     _,  true,  true,     _ -> `Conflict ("--pretty", "--cst")
-      |     _,  true,     _,  true -> `Conflict ("--pretty", "--cst-tokens")
-      |     _,     _,  true,  true -> `Conflict ("--cst", "--cst-tokens")
+      match mono, pretty, cst, cst_tokens, recovery with
+      |     _,  true,  true,     _,     _ -> `Conflict ("--pretty", "--cst")
+      |     _,  true,     _,  true,     _ -> `Conflict ("--pretty", "--cst-tokens")
+      |     _,     _,  true,  true,     _ -> `Conflict ("--cst", "--cst-tokens")
+      |  true,     _,     _,     _,  true -> `Conflict ("--mono", "--recovery")
+      |     _,     _,     _,     _,     _ -> status
+
 
     (* Status *)
 

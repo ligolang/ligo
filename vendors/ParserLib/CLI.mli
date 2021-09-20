@@ -96,6 +96,10 @@ module type S =
 
     val cst_tokens : bool  (* --cst-tokens *)
 
+    (* Enable error recovery *)
+
+    val recovery : bool (* --recovery *)
+
     (* Status *)
 
     type status = Lexer_CLI.status
