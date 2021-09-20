@@ -1,4 +1,4 @@
-function foo (const i : int) : int is
+function foo (const _i : int) : int is
   block {
-    function bar (const i : int) : int is i
+    function bar (const _i : int) : int is _i
   } with bar (0)

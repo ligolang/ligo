@@ -2,7 +2,7 @@ module Foo = struct
   let foo = ()
 end
 
-let foo (x : unit) (y : unit) (z : unit) (w : unit) : unit = ()
+let foo (_x : unit) (_y : unit) (_z : unit) (_w : unit) : unit = ()
 
 (* tests old type preservation bug w/ uncurrying a function call whose
    args also include a curried application *)

@@ -1,5 +1,5 @@
 let main (p, s : bool * unit) =
-  let u : unit = assert p
+  let () : unit = assert p
   in ([] : operation list), s
 
 let some (o : unit option) =

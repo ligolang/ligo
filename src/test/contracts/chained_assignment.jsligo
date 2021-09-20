@@ -1,7 +1,7 @@
 let bar = (_: unit): int => {
-  let x = 1;
-  let y = 1;
-  x = y = 3;
-  let z = x = y;
-  return x + y + z;
+  let _x = 1;
+  let _y = 1;
+  _x = _y = 3;
+  let z = _x = _y;
+  return _x + _y + z;
 }

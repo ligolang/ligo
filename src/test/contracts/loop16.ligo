@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function nested_for_collection_local_var (var nee : unit) : int*string is
+function nested_for_collection_local_var (var _ : unit) : int*string is
   block {
     var myint : int := 0;
     var myst : string := "";

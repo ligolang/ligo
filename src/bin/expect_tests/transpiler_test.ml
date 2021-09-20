@@ -552,7 +552,7 @@ let%expect_test _ =
 
     type ppp is ppi * ppi
 
-    function main (const toto : unit) is
+    function main (const _ : unit) is
     block {
       const a : ppp
       = (record [x = (0, 1); y = (10, 11)],
@@ -560,7 +560,7 @@ let%expect_test _ =
       a.0.x.0 := 2
     } with a.0.x.0
 
-    function asymetric_tuple_access (const foo : unit) is
+    function asymetric_tuple_access (const _ : unit) is
     block {
       const tuple : int * int * int * int = (0, (1, (2, 3)))
     } with
@@ -590,7 +590,7 @@ let%expect_test _ =
     type ppp =  ppi * ppi
 
     let main : unit -> int =
-      (fun toto : unit ->
+      (fun _ : unit ->
         let [@var] a : ppp =
           { x = 0, 1; y = 10, 11 },
           { x = 100, 101; y = 110, 111 } in
@@ -598,7 +598,7 @@ let%expect_test _ =
         a.0.x.0)
 
     let asymetric_tuple_access : unit -> int =
-      (fun foo : unit ->
+      (fun _ : unit ->
         let [@var] tuple : int * int * int * int = 0, 1, 2, 3 in
         (Operator.add
           ((Operator.add
@@ -625,7 +625,7 @@ type ppi = {x: pii, y: pii };
 type ppp = (ppi, ppi);
 
 let main: unit => int =
-  ((toto: unit): int =>
+  ((_: unit): int =>
      let [@var] a: ppp =
        {
           x: 0, 1,
@@ -635,7 +635,7 @@ let main: unit => int =
      a[0].x[0]);
 
 let asymetric_tuple_access: unit => int =
-  ((foo: unit): int =>
+  ((_: unit): int =>
      let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
      (
       Operator.add(((
@@ -858,15 +858,15 @@ let%expect_test _ =
         else
           block {
             case p of [
-              Zero (n) -> failwith (42n)
-            | Pos (n) -> skip
+              Zero (_) -> failwith (42n)
+            | Pos (_) -> skip
             ]
           } with gen__env8;
       const i = gen__env8.i
     } with
         case p of [
-          Zero (n) -> i
-        | Pos (n) -> (failwith ("waaaa") : int)
+          Zero (_) -> i
+        | Pos (_) -> (failwith ("waaaa") : int)
         ]
 
     function failer (const p : int) is
@@ -933,14 +933,14 @@ let%expect_test _ =
           else
             begin
               match p with
-                Zero n -> (failwith (42n))
-              | Pos n -> ();
+                Zero _ -> (failwith (42n))
+              | Pos _ -> ();
               gen__env8
             end in
         let i = gen__env8.i in
         match p with
-          Zero n -> i
-        | Pos n -> ((failwith ("waaaa")) : int))
+          Zero _ -> i
+        | Pos _ -> ((failwith ("waaaa")) : int))
 
     let failer : int -> int =
       (fun p : int ->
@@ -1026,16 +1026,16 @@ let foobar: int => int =
 
          {
            switch p{
-           | Zero n => (failwith((42n)))
-           | Pos n => ()
+           | Zero _ => (failwith((42n)))
+           | Pos _ => ()
            };
            gen__env8
          }
          };
      let i = gen__env8.i;
      switch p{
-     | Zero n => i
-     | Pos n => ((failwith(("waaaa"))) : int)
+     | Zero _ => i
+     | Pos _ => ((failwith(("waaaa"))) : int)
      });
 
 let failer: int => int =

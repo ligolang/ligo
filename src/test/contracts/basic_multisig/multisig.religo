@@ -56,7 +56,7 @@ let main = ((p, s): (parameter, storage)) : return =>
             else { (valid, keys); };
         };
       };
-    let (valid, keys) =
+    let (valid, _keys) =
       List.fold (aux, p.signatures, (valid, keys));
     if (valid < s.threshold) {
       (failwith ("Not enough signatures passed the check") : storage);

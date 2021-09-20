@@ -28,7 +28,7 @@ let rec aux_nest (prev : sum_aggregator) : int =
   else
     prev.sum
 
-let counter_nest (n : int) : int =
+let counter_nest (_n : int) : int =
   let initial : sum_aggregator = {counter=0; sum=0} in
   let out = aux_nest initial
   in out

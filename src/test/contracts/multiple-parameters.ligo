@@ -7,8 +7,8 @@ function abcd (const a : int;
                const c : int;
                const d : int) : int is a+b+c+d+2
 
-function abcde (const a : int;
-                const b : int;
+function abcde (const _a : int;
+                const _b : int;
                 const c : int;
-                const d : int;
+                const _d : int;
                 const e : int) : int is c+e+3

@@ -26,7 +26,7 @@ function fold_op (const s : list (int)) : int is
 function iter_op (const s : list (int)) : int is
   block {
     var r : int := 0;
-    function aggregate (const i : int) : unit is
+    function aggregate (const _i : int) : unit is
       block { skip (* r := r + 1 *) } with unit;
     List.iter (aggregate, s)
   } with r

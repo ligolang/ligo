@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function for_collection_map_kv (var nee : unit) : int * string is
+function for_collection_map_kv (var _ : unit) : int * string is
   block {
     var acc : int := 0;
     var st : string := "";
@@ -10,4 +10,3 @@ function for_collection_map_kv (var nee : unit) : int * string is
       st := st ^ k;
     }
   } with (acc, st)
-  

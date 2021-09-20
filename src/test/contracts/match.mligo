@@ -21,7 +21,7 @@ let match_bool (b : bool) : int =
 
 let match_list (l : int list) : int =
   match l with
-    hd::tl -> hd
+    hd::_tl -> hd
   | [] -> 10
 
 let match_option (i : int option) : int =

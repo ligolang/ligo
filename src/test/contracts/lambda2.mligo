@@ -4,5 +4,5 @@ type storage = unit
 let main (a, s : unit * storage) = (fun x -> ()) ()
 *)
 
-let main (a, s : unit * storage) =
+let main (_, _ : unit * storage) =
   (fun (f : unit -> unit) -> f ()) (fun (_ : unit) -> unit)

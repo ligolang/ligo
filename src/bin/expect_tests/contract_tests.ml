@@ -12,38 +12,14 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/multisig.ligo", line 49, characters 10-20:
-     48 |       | key # tl -> block {
-     49 |           keys := tl;
-     50 |           if pkh_sig.0 = Crypto.hash_key (key) then
-    :
-    Warning: unused variable "keys".
-    Hint: replace it by "_keys" to prevent this warning.
-
     569 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25:
-    134 |
-    135 | function default (const p : default_pt; const s : storage) : return is
-    136 |     ((nil : list (operation)), s)
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
     1541 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/vote.mligo", line 34, characters 6-9:
-     33 | let vote (vote, store : vote * storage) : return =
-     34 |   let now = Tezos.now in
-     35 |   (* let _ =
-    :
-    Warning: unused variable "now".
-    Hint: replace it by "_now" to prevent this warning.
-
     430 bytes |}] ;
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record card_to_buy = 1n end)" ] ;
@@ -327,14 +303,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig.ligo" ] ;
   [%expect {|
-File "../../test/contracts/multisig.ligo", line 49, characters 10-20:
- 48 |       | key # tl -> block {
- 49 |           keys := tl;
- 50 |           if pkh_sig.0 = Crypto.hash_key (key) then
-:
-Warning: unused variable "keys".
-Hint: replace it by "_keys" to prevent this warning.
-
 { parameter
     (pair (pair (nat %counter) (lambda %message unit (list operation)))
           (list %signatures (pair key_hash signature))) ;
@@ -440,14 +408,6 @@ Hint: replace it by "_keys" to prevent this warning.
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-File "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25:
-134 |
-135 | function default (const p : default_pt; const s : storage) : return is
-136 |     ((nil : list (operation)), s)
-:
-Warning: unused variable "p".
-Hint: replace it by "_p" to prevent this warning.
-
 { parameter
     (or (or (unit %default) (lambda %send bytes (list operation)))
         (lambda %withdraw bytes (list operation))) ;
@@ -832,14 +792,6 @@ Hint: replace it by "_p" to prevent this warning.
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "vote.mligo" ] ;
   [%expect {|
-File "../../test/contracts/vote.mligo", line 34, characters 6-9:
- 33 | let vote (vote, store : vote * storage) : return =
- 34 |   let now = Tezos.now in
- 35 |   (* let _ =
-:
-Warning: unused variable "now".
-Hint: replace it by "_now" to prevent this warning.
-
 { parameter
     (or (pair %reset (pair (timestamp %finish_time) (timestamp %start_time)) (string %title))
         (or %vote (unit %nay) (unit %yea))) ;
@@ -1146,7 +1098,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (#1) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
+  [%expect {| const y = lambda (#1) return let _x = +1 in let _ = let _x = +2 in UNIT() in let _ = let _x = +23 in UNIT() in let _ = let _x = +42 in UNIT() in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1304,30 +1256,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "big_map.ligo" ; "(big_map1,unit)" ] ;
   [%expect {|
-    File "../../test/contracts/big_map.ligo", line 8, characters 4-19:
-      7 |     var toto : option (int) := Some (0);
-      8 |     toto := s.0[23];
-      9 |     s.0[2] := 444
-    :
-    Warning: unused variable "toto".
-    Hint: replace it by "_toto" to prevent this warning.
-
-    File "../../test/contracts/big_map.ligo", line 7, characters 8-12:
-      6 |   block {
-      7 |     var toto : option (int) := Some (0);
-      8 |     toto := s.0[23];
-    :
-    Warning: unused variable "toto".
-    Hint: replace it by "_toto" to prevent this warning.
-
-    File "../../test/contracts/big_map.ligo", line 5, characters 21-22:
-      4 |
-      5 | function main (const p : parameter; var s : storage) : return is
-      6 |   block {
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
 
 let%expect_test _ =
@@ -1702,9 +1630,9 @@ const main : (int , storage) -> (list (operation) , storage) =
   storage) return let x : (int , int) =
                     let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
                   (list[] : list (operation) , x)
-const f0 = lambda (a : string) return TRUE()
-const f1 = lambda (a : string) return TRUE()
-const f2 = lambda (a : string) return TRUE()
+const f0 = lambda (_a : string) return TRUE()
+const f1 = lambda (_a : string) return TRUE()
+const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
   lambda (#1 : unit) return let s = "test" in
                             let p0 = (f0)@(s) in { ASSERTION(p0);
@@ -1724,9 +1652,9 @@ const main = lambda (n : (int , storage)) : (list (operation) ,
   storage) return let x : (int , int) =
                     let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
                   (list[] : list (operation) , x)
-const f0 = lambda (a : string) return TRUE()
-const f1 = lambda (a : string) return TRUE()
-const f2 = lambda (a : string) return TRUE()
+const f0 = lambda (_a : string) return TRUE()
+const f1 = lambda (_a : string) return TRUE()
+const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
   lambda (#1 : unit) return let s = "test" in
                             let p0 = (f0)@(s) in { ASSERTION(p0);
@@ -1790,13 +1718,14 @@ let%expect_test _ =
   let output = String.concat "\n" lines in
   print_string output;
   [%expect {|
-    File "../../test/contracts/uncurry_contract.mligo", line 5, characters 41-51:
-      4 |
-      5 | let foo (x : unit) (y : unit) (z : unit) (w : unit) : unit = ()
-      6 |
-    :
-    Warning: unused variable "w".
-    Hint: replace it by "_w" to prevent this warning. |}]
+    { parameter unit ;
+      storage unit ;
+      code { LAMBDA
+               (pair unit (pair unit (pair unit unit)))
+               unit
+               { UNPAIR 4 ; DROP 4 ; PUSH unit Unit } ;
+             LAMBDA (pair nat nat) nat { UNPAIR ; MUL } ;
+             DIG 2 ; |}]
 
 (* old uncurry bugs: *)
 let%expect_test _ =

@@ -1,7 +1,7 @@
 let a = (x: bool): bool => {
-    let a = 2;
+    let _a = 2;
     if (x == true) {
-      a = 1; // to ensure this doesn't cause issues.
+      _a = 1; // to ensure this doesn't cause issues.
       return true
     }
     return false

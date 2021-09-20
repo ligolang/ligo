@@ -4,7 +4,7 @@ type foo is record [bar : int -> int]
 
 function f (const i : int) : int is i
 
-function g (const i : unit) : int -> int is f
+function g (const _ : unit) : int -> int is f
 
 const r : foo = record [bar = f]
 

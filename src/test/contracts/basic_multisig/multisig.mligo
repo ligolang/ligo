@@ -51,7 +51,7 @@ let main (p, s : parameter * storage) : return =
                     else (failwith "Invalid signature" : nat)
                   in valid, keys
                 else valid, keys in
-      let valid, keys  =
+      let valid, _keys  =
         List.fold aux p.signatures (valid, keys) in
       if valid < s.threshold then
         (failwith ("Not enough signatures passed the check") : storage)

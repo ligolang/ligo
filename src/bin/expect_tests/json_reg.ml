@@ -13818,7 +13818,7 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "p" },
+                                  "wrap_content": { "name": "_" },
                                   "location": [
                                     "File",
                                     {

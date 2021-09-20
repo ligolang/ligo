@@ -1,5 +1,5 @@
 let main = ([p, s] : [bool, unit]):[list<operation>, unit] => {
-  let u : unit = assert (p);
+  let _ : unit = assert (p);
   return [(list([]) as list<operation>), s];
 };
 

@@ -16,7 +16,7 @@ type parameter is
 | Donate of unit
 | Distribute of (unit -> list(operation))
 
-function donate (const p: unit; const s: storage) : list(operation) * storage is ((nil: list(operation)), s);
+function donate (const _: unit; const s: storage) : list(operation) * storage is ((nil: list(operation)), s);
 
 function distribute (const p: (unit -> list(operation)); const s: storage) : list(operation) * storage is
   begin

@@ -79,7 +79,8 @@ let get_groups md_file : snippetsmap =
   if Meta : evaluate each expression in each programs from the snippets group map
   if Object : run the ligo test framework
 **)
-let compile_groups ~raise ~add_warning filename grp_list =
+let compile_groups ~raise filename grp_list =
+  let add_warning _ = () in
   let aux : (syntax * group_name) * (lang * string) -> unit =
     fun ((syntax , grp) , (lang , contents)) ->
       trace ~raise (test_md_file filename syntax grp contents) @@
@@ -111,10 +112,10 @@ let compile_groups ~raise ~add_warning filename grp_list =
   let () = List.iter ~f:aux grp_list in
   ()
 
-let compile ~raise ~add_warning filename () =
+let compile ~raise filename () =
   let groups = get_groups filename in
   let groups_map = SnippetsGroup.bindings groups in
-  let () = compile_groups ~raise ~add_warning filename groups_map in
+  let () = compile_groups ~raise filename groups_map in
   ()
 
 let get_all_md_files () =
@@ -144,6 +145,6 @@ let main =
     List.map
       ~f:(fun md_file ->
         let test_name = "File : "^md_file^"\"" in
-        test_w test_name (compile md_file)
+        test test_name (compile md_file)
       )
       (get_all_md_files ())
