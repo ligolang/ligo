@@ -55,6 +55,14 @@ let syntax =
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "auto" info
 
+let steps =
+  let open Arg in
+  let info =
+    let docv = "STEPS" in
+    let doc = "$(docv) is a bound in the number of steps to be done by the interpreter." in
+    info ~docv ~doc ["steps" ; "n"] in
+  value @@ opt string "1000000" info
+
 let protocol_version =
   let open Arg in
   let open Environment.Protocols in
@@ -602,12 +610,12 @@ let get_scope =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let test =
-  let f source_file syntax infer protocol_version display_format =
+  let f source_file syntax steps infer protocol_version display_format =
     return_result @@
-    Api.Run.test source_file syntax infer protocol_version display_format
+    Api.Run.test source_file syntax steps infer protocol_version display_format
   in
   let term =
-    Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ display_format) in
+    Term.(const f $ source_file 0 $ syntax $ steps $ infer $ protocol_version $ display_format) in
   let cmdname = "test" in
   let doc = "Subcommand: Test a contract with the LIGO test framework (BETA)." in
   let man = [`S Manpage.s_description;

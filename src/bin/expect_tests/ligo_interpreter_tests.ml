@@ -292,3 +292,20 @@ let%expect_test _ =
     Did not find service: GET ocaml:context/contracts/tz1fakefakefakefakefakefakefakcphLA5/storage
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 12, characters 2-33 |}]
+
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_mutation_loop.mligo" ; "--steps" ; "1000" ] ;
+  [%expect {|
+    Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 3, characters 29-30:
+      2 |     if rounds > 0 then
+      3 |         my_rec_fun (rounds - 1)
+      4 |     else
+
+    Replacing by: 2.
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
+     16 |     | None -> ()
+     17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
+     18 |                                     failwith "Some mutation also passes the tests!"
+
+    Test failed with "Some mutation also passes the tests!" |}]
