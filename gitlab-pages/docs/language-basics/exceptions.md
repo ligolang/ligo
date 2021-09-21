@@ -136,3 +136,46 @@ let some = (o: option<unit>): unit => {
 ```
 
 </Syntax>
+
+You can use `assert_with_error` or `assert_some_with_error` to use a custom error message
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=failwith
+function main (const p : bool; const s : storage) : return is
+  block {
+	  assert_with_error (p,"my custom message")
+  }
+  with ((nil : list (operation)), s)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=failwith
+let main (p, s : bool * unit) =
+  let u : unit = assert_with_error p "my custom error message"
+  in ([] : operation list), s
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=failwith
+let main = (p : bool, s : unit) => {
+  let u : unit = assert_with_error (p, "my custom error message");
+  ([]: list (operation), s);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=failwith
+let main2 = (p: bool, s: unit): [list<operation>, unit] => {
+  let u: unit = assert_with_error (p, "my custom error message");
+  return [list([]) as list<operation>, s];
+};
+```
+
+</Syntax>

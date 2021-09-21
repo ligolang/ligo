@@ -2023,3 +2023,11 @@ let%expect_test _ =
       4 |     return x;
 
     Cannot redeclare block-scoped variable. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "run-function"; contract "assert.mligo"; "(false, ())"; "-e"; "with_error"];
+  [%expect {| failwith("my custom error") |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "run-function"; contract "assert.mligo"; "(None: unit option)"; "-e"; "some_with_error"];
+  [%expect {| failwith("my custom error") |}]

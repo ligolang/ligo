@@ -1273,6 +1273,10 @@ let option ~raise ~add_warning () : unit =
     expect_eq_evaluate ~raise program "n" expected
   in
   let () =
+    let expected = e_int 42 in
+    expect_eq_evaluate ~raise program "i" expected
+  in
+  let () =
     let expected = e_typed_none (t_int ()) in
     expect_eq ~raise program "assign" (e_int 12) expected
   in

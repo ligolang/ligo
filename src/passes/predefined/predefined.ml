@@ -55,6 +55,7 @@ module Tree_abstraction = struct
     | "Tezos.create_contract"    -> some_const C_CREATE_CONTRACT
     | "Tezos.transaction"        -> some_const C_CALL
     | "Tezos.set_delegate"       -> some_const C_SET_DELEGATE
+    | "Tezos.get_contract_with_error" -> some_const C_CONTRACT_WITH_ERROR
     | "Tezos.get_contract_opt"   -> some_const C_CONTRACT_OPT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
     | "Tezos.level"              -> some_const C_LEVEL
@@ -88,6 +89,11 @@ module Tree_abstraction = struct
     | "Bytes.length" -> some_const C_SIZE
     | "Bytes.concat" -> some_const C_CONCAT
     | "Bytes.sub"    -> some_const C_SLICE
+
+    (* Options module *)
+
+    | "Option.unopt"            -> some_const C_UNOPT
+    | "Option.unopt_with_error" -> some_const C_UNOPT_WITH_ERROR
 
     (* List module *)
 
@@ -232,6 +238,7 @@ module Tree_abstraction = struct
     | C_CREATE_CONTRACT         -> "Tezos.create_contract"
     | C_CALL                    -> "Tezos.transaction"
     | C_SET_DELEGATE            -> "Tezos.set_delegate"
+    | C_CONTRACT_WITH_ERROR     -> "Tezos.get_contract_with_error"
     | C_CONTRACT_OPT            -> "Tezos.get_contract_opt"
     | C_CONTRACT_ENTRYPOINT_OPT -> "Tezos.get_entrypoint_opt"
     | C_CONTRACT                -> "Tezos.get_contract"
@@ -475,11 +482,13 @@ module Tree_abstraction = struct
 
       (* Others *)
 
-      | "assert"          -> some_const C_ASSERTION
-      | "assert_some"     -> some_const C_ASSERT_SOME
-      | "size"            -> some_deprecated C_SIZE (* Deprecated *)
+      | "assert"                 -> some_const C_ASSERTION
+      | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
+      | "assert_some"            -> some_const C_ASSERT_SOME
+      | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
+      | "size"                   -> some_deprecated C_SIZE (* Deprecated *)
 
-      | _ as c            -> pseudo_modules c
+      | _ as c                   -> pseudo_modules c
 
     let constant'_to_string = function
       (* Tezos module (ex-Michelson) *)
@@ -569,8 +578,10 @@ module Tree_abstraction = struct
 
       (* Others *)
 
-      | "assert"       -> some_const C_ASSERTION
-      | "assert_some"  -> some_const C_ASSERT_SOME
+      | "assert"                 -> some_const C_ASSERTION
+      | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
+      | "assert_some"            -> some_const C_ASSERT_SOME
+      | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
       | "true"         -> some_const C_TRUE
       | "false"        -> some_const C_FALSE
 
@@ -666,8 +677,10 @@ module Tree_abstraction = struct
 
       (* Others *)
 
-      | "assert"      -> some_const C_ASSERTION
-      | "assert_some" -> some_const C_ASSERT_SOME
+      | "assert"                 -> some_const C_ASSERTION
+      | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
+      | "assert_some"            -> some_const C_ASSERT_SOME
+      | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
       | "true"         -> some_const C_TRUE
       | "false"        -> some_const C_FALSE
 
@@ -758,14 +771,18 @@ module Stacking = struct
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
     | C_FOLD_WHILE         , _   ->
       Some ( simple_binary @@ seq [i_swap ; (i_push (prim "bool") (prim "True"));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] "LOOP" ;i_swap ; i_drop])
-    | C_FOLD_CONTINUE      , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "True")); i_pair])
-    | C_FOLD_STOP          , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
-    | C_SIZE               , _   -> Some ( simple_unary @@ prim "SIZE")
-    | C_FAILWITH           , _   -> Some ( simple_unary @@ prim "FAILWITH")
-    | C_NEVER              , _   -> Some ( simple_unary @@ prim "NEVER")
-    | C_ASSERT_SOME        , _   -> Some ( simple_unary @@ i_assert_some)
+    | C_FOLD_CONTINUE         , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "True")); i_pair])
+    | C_FOLD_STOP             , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
+    | C_SIZE                  , _   -> Some ( simple_unary @@ prim "SIZE")
+    | C_FAILWITH              , _   -> Some ( simple_unary @@ prim "FAILWITH")
+    | C_NEVER                 , _   -> Some ( simple_unary @@ prim "NEVER")
+    | C_UNOPT                 , _   -> Some ( simple_binary @@ i_if_none (seq [i_push_string "option is None"; i_failwith]) (seq []))
+    | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
+    | C_ASSERT_SOME           , _   -> Some ( simple_unary @@ i_if_none (seq [i_push_string "failed assert some" ; i_failwith]) (seq [i_drop; i_push_unit]))
+    | C_ASSERT_SOME_WITH_ERROR, _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [i_dropn 2; i_push_unit]))
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
     | C_ASSERTION          , _   -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
+    | C_ASSERTION_WITH_ERROR, _  -> Some ( simple_binary @@ i_if (seq [i_drop; i_push_unit]) (i_failwith))
     | C_INT                , _   -> Some ( simple_unary @@ prim "INT")
     | C_ABS                , _   -> Some ( simple_unary @@ prim "ABS")
     | C_IS_NAT             , _   -> Some ( simple_unary @@ prim "ISNAT")
@@ -827,6 +844,11 @@ module Stacking = struct
               (fun with_args ->
                  seq [with_args "CONTRACT";
                       i_assert_some_msg (i_push_string "bad address for get_contract")]))
+    | C_CONTRACT_WITH_ERROR, _   ->
+      Some (special
+              (fun with_args ->
+                 seq [with_args "CONTRACT";
+                      i_if_none (i_failwith) (seq [i_swap; i_drop])]))
     | C_CONTRACT_OPT         , _   -> Some (trivial_special "CONTRACT")
     | C_CONTRACT_ENTRYPOINT , _  ->
       Some (special

@@ -58,8 +58,12 @@ let is_pure_constant : constant' -> bool =
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
   | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER | C_POLYMORPHIC_ADD
   (* impure: *)
+  | C_UNOPT
+  | C_UNOPT_WITH_ERROR
   | C_ASSERTION
+  | C_ASSERTION_WITH_ERROR
   | C_ASSERT_SOME
+  | C_ASSERT_SOME_WITH_ERROR
   | C_ASSERT_INFERRED
   | C_MAP_FIND
   | C_FOLD_WHILE
@@ -91,6 +95,7 @@ let is_pure_constant : constant' -> bool =
   | C_BIG_MAP_LITERAL
   | C_HASH
   | C_CONTRACT
+  | C_CONTRACT_WITH_ERROR
   | C_CONTRACT_OPT
   | C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT

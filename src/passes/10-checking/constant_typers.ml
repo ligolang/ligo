@@ -311,6 +311,14 @@ let get_contract ~raise loc = typer_1_opt ~raise loc "CONTRACT" @@ fun addr_tv t
   let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
   t_contract tv'
 
+let get_contract_with_error ~raise loc = typer_2_opt ~raise loc "CONTRACT" @@ fun addr_tv err_str tv_opt ->
+  let t_addr = t_address () in
+  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
+  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
+  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
+  let () = trace_option ~raise (expected_string loc err_str) @@ get_t_string err_str in
+  t_contract tv'
+
 let get_contract_opt ~raise loc = typer_1_opt ~raise loc "CONTRACT OPT" @@ fun addr_tv tv_opt ->
   let t_addr = t_address () in
   let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
@@ -355,12 +363,31 @@ let neg ~raise loc = typer_1 ~raise loc "NEG" @@ fun t ->
   let () = Assert.assert_true ~raise (wrong_neg loc t) @@ (eq_1 t (t_nat ()) || eq_1 t (t_int ())) in
   t_int ()
 
+let unopt ~raise loc = typer_1 ~raise loc "ASSERT" @@ fun a ->
+  let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
+  a
+
+let unopt_with_error ~raise loc = typer_2 ~raise loc "ASSERT" @@ fun a b ->
+  let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
+  let () = trace_option ~raise (expected_option loc a) @@ assert_t_string b in
+  a
+
 let assertion ~raise loc = typer_1 ~raise loc "ASSERT" @@ fun a ->
   let () = trace_option ~raise (expected_bool loc a) @@ assert_t_bool a in
   t_unit ()
 
+let assertion_with_error ~raise loc = typer_2 ~raise loc "ASSERT_WITH_ERROR" @@ fun a b ->
+  let () = trace_option ~raise (expected_bool loc a) @@ assert_t_bool a in
+  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
+  t_unit ()
+
 let assert_some ~raise loc = typer_1 ~raise loc "ASSERT_SOME" @@ fun a ->
   let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
+  t_unit ()
+
+let assert_some_with_error ~raise loc = typer_2 ~raise loc "ASSERT_SOME_WITH_ERROR" @@ fun a b ->
+  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
+  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
   t_unit ()
 
 let times ~raise loc = typer_2 ~raise loc "TIMES" @@ fun a b ->
@@ -1060,8 +1087,12 @@ let constant_typers ~raise ~test loc c : typer = match c with
   | C_IS_NAT              -> is_nat ~raise loc ;
   | C_SOME                -> some ~raise loc ;
   | C_NONE                -> none ~raise loc ;
+  | C_UNOPT               -> unopt ~raise loc ;
+  | C_UNOPT_WITH_ERROR    -> unopt_with_error ~raise loc ;
   | C_ASSERTION           -> assertion ~raise loc ;
+  | C_ASSERTION_WITH_ERROR-> assertion_with_error ~raise loc ;
   | C_ASSERT_SOME         -> assert_some ~raise loc ;
+  | C_ASSERT_SOME_WITH_ERROR -> assert_some_with_error ~raise loc ;
   | C_FAILWITH            -> failwith_ ~raise loc ;
     (* LOOPS *)
   | C_FOLD_WHILE          -> fold_while ~raise loc ;
@@ -1140,6 +1171,7 @@ let constant_typers ~raise ~test loc c : typer = match c with
   | C_CHAIN_ID            -> chain_id ~raise loc;
   (* BLOCKCHAIN *)
   | C_CONTRACT            -> get_contract ~raise loc ;
+  | C_CONTRACT_WITH_ERROR -> get_contract_with_error ~raise loc ;
   | C_CONTRACT_OPT        -> get_contract_opt ~raise loc ;
   | C_CONTRACT_ENTRYPOINT -> get_entrypoint ~raise loc ;
   | C_CONTRACT_ENTRYPOINT_OPT -> get_entrypoint_opt ~raise loc ;
