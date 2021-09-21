@@ -1421,7 +1421,7 @@ In JsLIGO, the predefined function which removes a binding in a map
 is called `Map.remove` and is used as follows:
 
 ```jsligo group=big_maps
-let updated_map: register =
+let updated_map_: register =
   Map.remove("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 ```
 

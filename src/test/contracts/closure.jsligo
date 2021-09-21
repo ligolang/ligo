@@ -4,6 +4,6 @@ let test = (k : int) : int => {
   const _j : int = k + 5;
   let close : ((a: int) => int) = (i : int) => i + _j;
 
-  let _j : int = 20; /* Shadow original variable */
+  // let _j : int = 20; /* block scoped variables can't be reused in JsLIGO */
   return close (20);
 };

@@ -293,7 +293,7 @@ let main = (p : unit) : address => Tezos.sender;
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=e
 let main = (p : unit) : address => Tezos.sender;
 ```
 
@@ -348,7 +348,7 @@ let main = (p : key_hash) : address => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=f
 let main = (p : key_hash): address => {
   let c: contract<unit> = Tezos.implicit_account(p);
   return Tezos.address(c);
@@ -398,7 +398,7 @@ let main = (p : unit) : address => Tezos.self_address;
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=g
 let main = (p : unit): address => Tezos.self_address;
 ```
 
@@ -447,7 +447,7 @@ let main = (p: unit) : contract(unit) =>
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=h
 let main = (p: unit) : contract<unit> =>
   (Tezos.self("%default") as contract<unit>);
 ```
@@ -498,7 +498,7 @@ let main = (kh : key_hash): contract (unit) =>
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=i
 let main = (kh: key_hash): contract<unit> =>
   Tezos.implicit_account(kh);
 ```
@@ -568,7 +568,7 @@ let main = (p : unit) : address => Tezos.source;
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=j
 let main = (p : unit) : address => Tezos.source;
 ```
 
@@ -657,7 +657,7 @@ let main = ((ignore, storage): (unit, storage)) => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=k
 type storage = bytes;
 
 let main = ([ignore, storage]: [unit, storage]):[list<operation>, storage] => {
@@ -1190,7 +1190,7 @@ let tc =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=manip_ticket
+```jsligo group=manip_ticket2
 let ta = Tezos.create_ticket(1, 10 as nat);
 let tb = Tezos.create_ticket(1, 5 as nat);
 let tc = Tezos.join_tickets([ta, tb]);

@@ -182,7 +182,7 @@ let twice = (x : int) : int => x * x;
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo test-ligo group=frontpage
+```jsligo test-ligo group=frontpage2
 let twice = (x: int): int => x * x;
 ```
 
@@ -589,7 +589,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo test-ligo group=frontpage
+```jsligo test-ligo group=frontpage3
 // This is mutation-contract.jsligo
 type storage = int;
 
@@ -679,7 +679,7 @@ let test = originate_and_test(main);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo test-ligo group=frontpage
+```jsligo test-ligo group=frontpage3
 // This continues mutation-contract.jsligo
 
 let originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : unit => {

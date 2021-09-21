@@ -2,12 +2,12 @@ open Trace
 
 (* Helpers *)
 
-let variant_to_syntax v =
+let variant_to_syntax (v: Ligo_compile.Helpers.v_syntax) =
   match v with
-  | Ligo_compile.Helpers.PascaLIGO -> "pascaligo"
-  | Ligo_compile.Helpers.CameLIGO -> "cameligo"
-  | Ligo_compile.Helpers.ReasonLIGO -> "reasonligo"
-  | Ligo_compile.Helpers.JsLIGO -> "jsligo"
+  | PascaLIGO -> "pascaligo"
+  | CameLIGO -> "cameligo"
+  | ReasonLIGO -> "reasonligo"
+  | JsLIGO -> "jsligo"
 
 let get_declarations_core core_prg =
      let func_declarations  = Ligo_compile.Of_core.list_declarations core_prg in

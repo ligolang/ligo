@@ -7,7 +7,7 @@ let compile ~raise ~add_warning ~meta c_unit (source_filename:string) : Ast_impe
 
 let compile_expression = parse_and_abstract_expression
 
-let compile_string ~raise ~add_warning : meta:meta -> c_unit -> Ast_imperative.module_  =
+  let compile_string ~raise ~add_warning : meta:meta -> c_unit -> Ast_imperative.module_  =
     fun ~meta c_unit ->
   parse_and_abstract_string ~raise ~add_warning meta.syntax c_unit
 

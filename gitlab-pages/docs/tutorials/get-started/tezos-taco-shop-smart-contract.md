@@ -532,7 +532,7 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
+let buy_taco2 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind : taco_supply =
     match (Map.find_opt (taco_kind_index, taco_shop_storage), {
@@ -540,11 +540,11 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
       None: (_:unit) => (failwith ("Unknown kind of taco") as taco_supply)
     }) ;
   /* Update the storage decreasing the stock by 1n */
-  let taco_shop_storage = Map.update (
+  let taco_shop_storage_ = Map.update (
     taco_kind_index,
     (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
     taco_shop_storage );
-  return [(list([]) as list <operation>), taco_shop_storage]
+  return [(list([]) as list <operation>), taco_shop_storage_]
 };
 ```
 
@@ -647,7 +647,7 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
+let buy_taco3 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind : taco_supply =
     match (Map.find_opt (taco_kind_index, taco_shop_storage), {
@@ -896,11 +896,11 @@ let _test = (_: unit): unit => {
 
   /* Purchasing an unregistred Taco */
   let nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1 as tez) ;
-  let _u = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
+  let _u2 = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
 
   /* Attempting to Purchase a Taco with 2tez */
   let nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 2 as tez) ;
-  let _u = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
+  let _u3 = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   return unit
 }
 

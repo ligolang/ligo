@@ -334,7 +334,7 @@ let deny = ([action, store]: [parameter, storage]): return_ => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=c
+```jsligo group=d
 type parameter = unit;
 type storage = unit;
 type return_ = [list<operation>, storage];
@@ -572,7 +572,7 @@ type parameter =
 // ...
 ```
 
-```jsligo group=d
+```jsligo group=e
 // proxy.jsligo
 
 type parameter =

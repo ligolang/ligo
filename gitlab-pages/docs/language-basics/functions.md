@@ -277,7 +277,7 @@ let k = ([x, _] : [int, int]) : int => x;
 or use an identifier starting with wildcard:
 
 ```jsligo
-let k = ([x, _y] : [int, int]) : int => x;
+let k_other = ([x, _y] : [int, int]) : int => x;
 ```
 
 </Syntax>

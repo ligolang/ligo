@@ -2,11 +2,9 @@ open Trace
 open Main_errors
 
 type s_syntax = Syntax_name of string
-type v_syntax = PascaLIGO | CameLIGO | ReasonLIGO | JsLIGO
+type v_syntax = Self_ast_imperative.Syntax.v_syntax
 
-type meta = {
-  syntax : v_syntax;
-}
+type meta = Self_ast_imperative.Syntax.meta
 
 let protocol_to_variant ~raise : string -> Environment.Protocols.t =
   fun s ->
@@ -18,7 +16,7 @@ let get_initial_env ~raise : ?test_env:bool -> string -> Ast_typed.environment =
   (if test_env then Environment.default_with_test else Environment.default) protocol
 
 (*TODO : move this function to src/helpers so that src/build/.. can use it *)
-let file_extension_to_variant sf =
+let file_extension_to_variant sf : v_syntax option =
   match sf with
   | ".ligo" | ".pligo" -> Some PascaLIGO
   | ".mligo"           -> Some CameLIGO
@@ -38,7 +36,7 @@ let syntax_to_variant ~raise (Syntax_name syntax) source =
   | ("jsligo" | "JsLIGO"),         _ -> JsLIGO
   | _ -> raise.raise (invalid_syntax syntax)
 
-let variant_to_syntax v =
+let variant_to_syntax (v: v_syntax) =
   match v with
   | PascaLIGO -> "pascaligo"
   | CameLIGO -> "cameligo"
@@ -49,7 +47,7 @@ let variant_to_syntax v =
 
 type options = Compiler_options.t
 
-let preprocess_file ~raise ~(options:options) ~meta file_path
+let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
   : Preprocessing.Pascaligo.success =
   let open Preprocessing in
   let preprocess_file =
@@ -61,7 +59,7 @@ let preprocess_file ~raise ~(options:options) ~meta file_path
   in trace ~raise preproc_tracer @@
       Trace.from_result (preprocess_file options.libs file_path)
 
-let preprocess_string ~raise ~(options:options) ~meta file_path =
+let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
   let open Preprocessing in
   let preprocess_string =
     match meta.syntax with
@@ -172,7 +170,7 @@ let parse_and_abstract_expression_jsligo ~raise buffer =
     Tree_abstraction.Jsligo.compile_expression applied
   in imperative
 
-let parse_and_abstract ~raise ~meta ~add_warning buffer file_path
+let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     : Ast_imperative.module_ =
   let parse_and_abstract =
     match meta.syntax with
@@ -184,10 +182,10 @@ let parse_and_abstract ~raise ~meta ~add_warning buffer file_path
     parse_and_abstract ~raise buffer file_path in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_module abstracted ~add_warning in
+    Self_ast_imperative.all_module abstracted ~add_warning ~lang:meta.syntax in
   applied
 
-let parse_and_abstract_expression ~raise ~meta buffer =
+let parse_and_abstract_expression ~raise ~(meta: meta) buffer =
   let parse_and_abstract =
     match meta.syntax with
       PascaLIGO ->
@@ -203,7 +201,7 @@ let parse_and_abstract_expression ~raise ~meta buffer =
     parse_and_abstract ~raise buffer in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_expression abstracted
+    Self_ast_imperative.all_expression ~lang:meta.syntax abstracted
   in applied
 
 let parse_and_abstract_string_reasonligo ~raise buffer =
@@ -240,7 +238,7 @@ let parse_and_abstract_string_jsligo ~raise buffer =
     Tree_abstraction.Jsligo.compile_module raw
   in imperative
 
-let parse_and_abstract_string ~raise ~add_warning syntax buffer =
+let parse_and_abstract_string ~raise ~add_warning (syntax: v_syntax) buffer =
   let parse_and_abstract =
     match syntax with
       PascaLIGO ->
@@ -255,7 +253,7 @@ let parse_and_abstract_string ~raise ~add_warning syntax buffer =
     parse_and_abstract ~raise buffer in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_module abstracted ~add_warning
+    Self_ast_imperative.all_module abstracted ~add_warning ~lang:syntax
   in applied
 
 let pretty_print_pascaligo_cst =
@@ -270,7 +268,7 @@ let pretty_print_reasonligo_cst =
 let pretty_print_jsligo_cst =
   Parsing.Jsligo.pretty_print_cst
 
-let pretty_print_cst ~raise ~meta buffer file_path=
+let pretty_print_cst ~raise ~(meta: meta) buffer file_path=
   let print =
     match meta.syntax with
       PascaLIGO  -> pretty_print_pascaligo_cst
@@ -291,7 +289,7 @@ let pretty_print_reasonligo =
 let pretty_print_jsligo =
   Parsing.Jsligo.pretty_print_file
 
-let pretty_print ~raise ~meta buffer file_path =
+let pretty_print ~raise ~(meta: meta) buffer file_path =
   let print =
     match meta.syntax with
       PascaLIGO  -> pretty_print_pascaligo

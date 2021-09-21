@@ -54,9 +54,11 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
 
 type 'err exp_mapper = expression -> expression
 type 'err ty_exp_mapper = type_expression -> type_expression
+type 'err mod_mapper = module_ -> module_
 type 'err abs_mapper =
   | Expression of 'err exp_mapper
   | Type_expression of 'err ty_exp_mapper
+  | Module of 'err mod_mapper
 let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e ->
   let self = map_expression f in
   let e' = f e in
@@ -200,6 +202,10 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
     let x = Maps.for_all self x in
     return @@ T_abstraction x
 
+and map_module_ : 'err mod_mapper -> module_ -> module_ = fun f m ->
+  let m' = f m in
+  m'
+
 and map_module : 'err abs_mapper -> module_ -> module_ = fun m p ->
   let aux = fun (x : declaration) ->
     match x,m with
@@ -211,8 +217,15 @@ and map_module : 'err abs_mapper -> module_ -> module_ = fun m p ->
         let dt = Maps.declaration_type (map_type_expression m') dt in
         (Declaration_type dt)
       )
+    | (Declaration_module dm, Module m') -> (
+        let dm = { dm with module_ = map_module_ m' dm.module_} in
+        (Declaration_module dm)
+      )
     | decl,_ -> decl
-  (* | Declaration_type of (type_variable * type_expression) *)
+  in
+  let p = match m with 
+     Module m' -> map_module_ m' p 
+  | _ -> p 
   in
   List.map ~f:(Location.map aux) p
 

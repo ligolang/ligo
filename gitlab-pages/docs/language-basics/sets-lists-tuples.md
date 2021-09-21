@@ -174,8 +174,8 @@ let [first_name, last_name]: full_name = full_name;
 This also works in functions:
 
 ```jsligo group=tuple
-let first_name = ([first_name, _]: full_name):string => first_name;
-let alice = first_name(full_name);
+let first_name_fun = ([first_name, _]: full_name):string => first_name;
+let alice = first_name_fun(full_name);
 ```
 
 Notice that we use the underscore to indicate that we ignore the last element
@@ -220,7 +220,7 @@ let first_name : string = full_name[0];
 <Syntax syntax="jsligo">
 
 ```jsligo group=tuple
-let first_name: string = full_name[0];
+let first_name_component: string = full_name[0];
 ```
 
 </Syntax>
@@ -596,7 +596,7 @@ In JsLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
 
 ```jsligo group=sets
-let my_set: set<int> = Set.empty;
+let my_empty_set: set<int> = Set.empty;
 ```
 
 </Syntax>

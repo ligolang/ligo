@@ -124,7 +124,7 @@ let some = (o : option (unit)) => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=failwith
+```jsligo group=failwith_alt
 let main = (p: bool, s: unit): [list<operation>, unit] => {
   let u: unit = assert(p);
   return [list([]) as list<operation>, s];
