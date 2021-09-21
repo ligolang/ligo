@@ -108,7 +108,7 @@ newtype RawContract it
 
 data Binding it
   = BFunction     IsRec it [it] (Maybe it) it -- ^ (Name) (Parameters) (Type) (Expr)
-  | BParameter it it -- ^ (Name) (Type)
+  | BParameter    it (Maybe it) -- ^ (Name) (Type)
   | BVar          it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
   | BConst        it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
   | BTypeDecl     it it -- ^ (Name) (Type)

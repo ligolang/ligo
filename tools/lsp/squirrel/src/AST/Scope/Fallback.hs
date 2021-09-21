@@ -405,6 +405,10 @@ getImmediateDecls = \case
       BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
         singleton <$> functionScopedDecl (getElem r) name params typ (Just body)
 
+      BConst (layer -> Just (IsParen (layer -> Just (IsTuple names)))) typ (Just (layer -> Just (Tuple vals))) ->
+        forM (zip names vals) $ \(name, val) ->
+          valueScopedDecl (getElem r) name typ (Just val)
+
       BConst (layer -> Just (IsTuple names)) typ (Just (layer -> Just (Tuple vals))) ->
         forM (zip names vals) $ \(name, val) ->
           valueScopedDecl (getElem r) name typ (Just val)
@@ -412,7 +416,7 @@ getImmediateDecls = \case
       BConst c t b -> singleton <$> valueScopedDecl (getElem r) c t b
 
       BParameter n t ->
-        singleton <$> valueScopedDecl (getElem r) n (Just t) Nothing
+        singleton <$> valueScopedDecl (getElem r) n t Nothing
 
       BTypeDecl t b -> do
         typeDecl <- typeScopedDecl (getElem r) t b

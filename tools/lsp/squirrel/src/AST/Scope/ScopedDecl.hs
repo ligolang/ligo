@@ -105,9 +105,7 @@ data ValueDeclSpecifics = ValueDeclSpecifics
 
 data Parameter
   = ParameterPattern Pattern
-  -- HACK: This exists because sometimes a parameter is actually a BParameter,
-  -- for PascaLIGO.
-  | ParameterBinding Pattern Type
+  | ParameterBinding Pattern (Maybe Type)
   deriving stock (Eq, Show)
 
 data Constant
@@ -186,7 +184,7 @@ instance IsLIGO TypeConstructor where
 
 instance IsLIGO Parameter where
   toLIGO (ParameterPattern pat) = toLIGO pat
-  toLIGO (ParameterBinding pat typ) = node (LIGO.BParameter (toLIGO pat) (toLIGO typ))
+  toLIGO (ParameterBinding pat typM) = node (LIGO.BParameter (toLIGO pat) (toLIGO <$> typM))
 
 instance IsLIGO Constant where
   toLIGO (Int i) = node (LIGO.Int i)

@@ -60,7 +60,7 @@ module.exports = grammar({
   conflicts: $ =>
     [ // Pattern/Expr conflicts
       [$._expr_term, $._unannotated_pattern]
-    , [$.lambda, $.tuple_pattern]
+    , [$._pattern, $.fun_arg]
     , [$.FieldName, $.NameDecl]
     , [$.Name, $.NameDecl]
     , [$.list, $.list_pattern]
@@ -190,7 +190,7 @@ module.exports = grammar({
     let_decl: $ => prec.left(PREC.LET, common.withAttrs($, seq(
       'let',
       optional(field("rec", $.rec)),
-      common.sepBy1(',', field("binding", $._unannotated_pattern)),
+      field("binding", $._pattern),
       optional(seq(
         ':',
         field("type", $._type_expr)
@@ -212,19 +212,24 @@ module.exports = grammar({
     _pattern: $ =>
       choice(
         $._unannotated_pattern,
-        $.annot_pattern,
+        $.tuple_pattern,
       ),
 
     _unannotated_pattern: $ =>
       choice(
         $.wildcard,
         $._literal,
-        $.tuple_pattern,
+        $.paren_pattern,
         $.var_pattern,
         $.constr_pattern,
         $.list_pattern,
         $.record_pattern,
       ),
+
+    _closed_pattern: $ => choice(
+      $._pattern,
+      $.annot_pattern,
+    ),
 
     _literal: $ =>
       choice(
@@ -238,9 +243,15 @@ module.exports = grammar({
         $.None,
       ),
 
-    tuple_pattern: $ => prec(13, common.par(
+    tuple_pattern: $ => prec.left(13, seq(
+      field("pattern", $._pattern),
+      ',',
       common.sepBy1(',', field("pattern", $._pattern)),
     )),
+
+    paren_pattern: $ => common.par(
+      field("pattern", $._closed_pattern),
+    ),
 
     var_pattern: $ => field("var", $.NameDecl),
 
@@ -261,12 +272,12 @@ module.exports = grammar({
 
     _spread_pattern: $ => choice(
       $.spread_pattern,
-      $._pattern,
+      $._unannotated_pattern,
     ),
 
     spread_pattern: $ => seq(
       '...',
-      field("expr", $._pattern),
+      field("expr", $._unannotated_pattern),
     ),
 
     record_pattern: $ => common.withAttrs($, common.block(
@@ -281,7 +292,7 @@ module.exports = grammar({
     record_field_pattern: $ => common.withAttrs($, prec(9, seq(
       field("name", $.FieldName),
       ":",
-      field("body", $._pattern),
+      field("body", $._unannotated_pattern),
     ))),
 
     record_capture_pattern: $ => common.withAttrs($, prec(9, field("name", $.NameDecl))),
@@ -312,8 +323,16 @@ module.exports = grammar({
       $._expr_term,
     ),
 
+    fun_arg: $ => seq(
+      field("argument", $._unannotated_pattern),
+      optional(seq(
+        ':',
+        field("type", $._type_expr),
+      )),
+    ),
+
     lambda: $ => prec.right(12, seq(
-      common.par(common.sepBy(',', field("argument", $._pattern))),
+      common.par(common.sepBy(',', field("argument", $.fun_arg))),
       optional(seq(
         ':',
         field("type", $._type_expr),

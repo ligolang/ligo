@@ -39,7 +39,7 @@ caseInfos =
     , tiCursor = point 3 44
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
     , tiActiveParamNo = 0
     }
   , TestInfo
@@ -47,7 +47,7 @@ caseInfos =
     , tiCursor = point 3 44
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
     , tiActiveParamNo = 0
     }
   , TestInfo
@@ -55,7 +55,7 @@ caseInfos =
     , tiCursor = point 3 44
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
     , tiActiveParamNo = 0
     }
   , TestInfo
@@ -63,7 +63,7 @@ caseInfos =
     , tiCursor = point 5 24
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
     , tiActiveParamNo = 0
     }
   , TestInfo
@@ -71,7 +71,7 @@ caseInfos =
     , tiCursor = point 5 24
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
-    , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
     , tiActiveParamNo = 0
     }
   , TestInfo
@@ -79,7 +79,10 @@ caseInfos =
     , tiCursor = point 3 47
     , tiFunction = "bar"
     , tiLabel = "function bar (const a : int; const b : int)"
-    , tiParameters = [ParameterBinding (IsVar "a") (AliasType "int"), ParameterBinding (IsVar "b") (AliasType "int")]
+    , tiParameters =
+      [ ParameterBinding (IsVar "a") (Just $ AliasType "int")
+      , ParameterBinding (IsVar "b") (Just $ AliasType "int")
+      ]
     , tiActiveParamNo = 1
     }
 
@@ -104,16 +107,16 @@ caseInfos =
     { tiContract = "all-okay.religo"
     , tiCursor = point 3 35
     , tiFunction = "bar"
-    , tiLabel = "let bar = (i : int)"
-    , tiParameters = [ParameterPattern (IsAnnot (IsVar "i") (AliasType "int"))]
+    , tiLabel = "let bar = (i: int)"
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
     , tiActiveParamNo = 0
     }
   , TestInfo
     { tiContract = "no-params.religo"
     , tiCursor = point 3 35
     , tiFunction = "bar"
-    , tiLabel = "let bar = (i : int)"
-    , tiParameters = [ParameterPattern (IsAnnot (IsVar "i") (AliasType "int"))]
+    , tiLabel = "let bar = (i: int)"
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
     , tiActiveParamNo = 0
     }
   , TestInfo
@@ -189,6 +192,17 @@ caseInfos =
       , ParameterPattern (IsParen $ IsTuple [IsAnnot (IsVar "d") (AliasType "nat"), IsAnnot (IsVar "e") (AliasType "int")])
       ]
     , tiActiveParamNo = 3
+    }
+  , TestInfo
+    { tiContract = "active-parameter-is-2nd.religo"
+    , tiCursor = point 3 38
+    , tiFunction = "bar"
+    , tiLabel = "let foo = (a: int, b: int)"
+    , tiParameters =
+      [ ParameterBinding (IsVar "a") (Just $ AliasType "int")
+      , ParameterBinding (IsVar "b") (Just $ AliasType "int")
+      ]
+    , tiActiveParamNo = 1
     }
   ]
 

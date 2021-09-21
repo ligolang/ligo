@@ -106,7 +106,7 @@ parseParameter node = asum (parsers ?? node)
 parseBParameter :: PPableLIGO info => LIGO info -> Maybe Parameter
 parseBParameter node = do
   LIGO.BParameter name typ <- layer node
-  ParameterBinding <$> parsePattern name <*> pure (parseType typ)
+  ParameterBinding <$> parsePattern name <*> pure (parseType <$> typ)
 
 parseParameters :: PPableLIGO info => [LIGO info] -> [Parameter]
 parseParameters = mapMaybe parseParameter

@@ -160,7 +160,7 @@ instance Pretty1 RawContract where
 instance Pretty1 Binding where
   pp1 = \case
     BTypeDecl     n    ty       -> sexpr "type_decl"  [n, ty]
-    BParameter    n    ty       -> sexpr "parameter"  [n, ty]
+    BParameter    n    ty       -> sexpr "parameter"  [n, pp ty]
     BVar          name ty value -> sexpr "var"   [name, pp ty, pp value]
     BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
     BAttribute    name          -> sexpr "attr"  [name]
@@ -549,7 +549,8 @@ instance LPP1 'Reason Binding where
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
-    node                       -> error "unexpected `Binding` node failed with: " <+> pp node
+    BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
+    node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -578,7 +579,7 @@ instance LPP1 'Reason Expr where
       ]
     Seq       es         -> train " " es
     Lambda    ps ty b    -> foldr (<+>) empty
-      [ train "," ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
+      [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
@@ -609,7 +610,7 @@ instance LPP1 'Reason Pattern where
     IsWildcard             -> "_"
     IsSpread     n         -> "..." <.> lpp n
     IsList       l         -> brackets $ train "," l
-    IsTuple      t         -> tuple t
+    IsTuple      t         -> train "," t
     IsRecord     fields    -> "{" <+> train "," fields <+> "}"
     IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
