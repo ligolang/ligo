@@ -269,6 +269,9 @@ let div = ([a, b]: [nat, nat]): option<nat> => {
 
 </Syntax>
 
+You can extract the value of a `Some (v)` with the function `Option.unopt (Some (v))`. In case the value is `None`, this will fail with an error.
+
+The proper way to deal with optional values is by means of pattern matching.
 
 
 ## Pattern matching

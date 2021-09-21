@@ -13,9 +13,13 @@ let constant' ppf : constant' -> unit = function
   | C_IS_NAT                -> fprintf ppf "IS_NAT"
   | C_SOME                  -> fprintf ppf "SOME"
   | C_NONE                  -> fprintf ppf "NONE"
+  | C_UNOPT                 -> fprintf ppf "UNOPT"
+  | C_UNOPT_WITH_ERROR      -> fprintf ppf "UNOPT_WITH_ERROR"
   | C_ASSERTION             -> fprintf ppf "ASSERTION"
+  | C_ASSERTION_WITH_ERROR  -> fprintf ppf "ASSERTION_WITH_ERROR"
   | C_ASSERT_INFERRED       -> fprintf ppf "ASSERT_INFERRED"
   | C_ASSERT_SOME           -> fprintf ppf "ASSERT_SOME"
+  | C_ASSERT_SOME_WITH_ERROR-> fprintf ppf "ASSERT_SOME_WITH_ERROR"
   | C_FAILWITH              -> fprintf ppf "FAILWITH"
   | C_UPDATE                -> fprintf ppf "UPDATE"
   (* Loops *)
@@ -117,6 +121,7 @@ let constant' ppf : constant' -> unit = function
   (* Blockchain *)
   | C_CALL                  -> fprintf ppf "CALL"
   | C_CONTRACT              -> fprintf ppf "CONTRACT"
+  | C_CONTRACT_WITH_ERROR   -> fprintf ppf "CONTRACT_WITH_ERROR"
   | C_CONTRACT_OPT          -> fprintf ppf "CONTRACT_OPT"
   | C_CONTRACT_ENTRYPOINT   -> fprintf ppf "CONTRACT_ENTRYPOINT"
   | C_CONTRACT_ENTRYPOINT_OPT -> fprintf ppf "CONTRACT_ENTRYPOINT_OPT"

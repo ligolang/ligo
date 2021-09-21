@@ -731,6 +731,23 @@ When no contract is found or the contract doesn't match the type,
 `None` is returned.
 
 <SyntaxTitle syntax="pascaligo">
+function get_contract_with_error : address -> string -> contract('parameter)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_contract_with_error : address -> string -> 'parameter contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_contract_with_error : address => string => contract('parameter)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_contract_with_error : (a: address,s: string) => contract&lt;&apos;parameter&gt;&gt;
+</SyntaxTitle>
+
+Get a contract from an address.
+
+When no contract is found, fail with the provided string
+
+<SyntaxTitle syntax="pascaligo">
 function get_entrypoint_opt : string -> address -> option(contract('parameter))
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
