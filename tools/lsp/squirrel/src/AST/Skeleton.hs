@@ -11,6 +11,7 @@ module AST.Skeleton
   , Tree'
   , RawLigoList
   , Lang (..)
+  , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
   , TField (..), Variant (..), Type (..), Binding (..), RawContract (..)
@@ -26,6 +27,8 @@ module AST.Skeleton
 
 import Control.Lens.Lens (Lens, lens)
 import Data.Functor.Classes
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HashSet
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
@@ -73,6 +76,27 @@ data Lang
   | Caml
   | Reason
   deriving stock Show
+
+pascaLIGOKeywords :: HashSet Text
+pascaLIGOKeywords = HashSet.fromList
+  [ "is", "begin", "end", "function", "var", "const", "recursive", "type", "set"
+  , "map", "list", "big_map", "module", "type", "case", "of", "block", "from"
+  , "step", "skip", "if", "then", "else", "record", "remove", "patch", "while"
+  , "for", "to", "in", "or", "and", "contains", "mod", "not", "nil"
+  ]
+
+cameLIGOKeywords :: HashSet Text
+cameLIGOKeywords = HashSet.fromList
+  [ "in", "struct", "begin", "end", "match", "with", "rec", "if", "then", "else"
+  , "let", "module", "type", "of", "fun", "or", "mod", "land", "lor", "lxor"
+  , "lsl", "lsr", "not"
+  ]
+
+reasonLIGOKeywords :: HashSet Text
+reasonLIGOKeywords = HashSet.fromList
+  [ "rec", "if", "else", "switch", "let", "module", "type", "or", "mod", "land"
+  , "lor", "lxor", "lsl", "lsr"
+  ]
 
 -- Let 'Accessor' be either 'FieldName' or a 'Text'ual representation of an
 -- index (a number).

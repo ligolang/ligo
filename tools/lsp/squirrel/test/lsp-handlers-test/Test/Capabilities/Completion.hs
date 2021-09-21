@@ -11,7 +11,7 @@ import Test.HUnit (Assertion)
 
 import Test.Common.Util (openLigoDoc, runHandlersTest)
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
-import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.FixedExpectations (shouldMatchList)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "completion"
@@ -24,4 +24,7 @@ unit_completion = do
     doc <- openLigoDoc filename
     getCompletions doc (Position 14 34)
 
-  sort (fmap (^. label) completions) `shouldBe` ["id", "is_admin"]
+  sort (fmap (^. label) completions) `shouldMatchList`
+    [ "id", "is_admin"
+    , "begin", "big_map", "contains", "function", "if", "in", "is", "list", "nil", "recursive", "skip", "while"
+    ]
