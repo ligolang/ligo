@@ -72,7 +72,7 @@ import Config (Config (..), getConfigFromNotification)
 import Duplo.Lattice (Lattice (leq))
 import Extension (extGlobs)
 import Log qualified
-import Parser (collectTreeErrors, emptyParsedInfo)
+import Parser
 import Product
 import Range
 import Util.Graph (wcc)
@@ -292,7 +292,7 @@ load uri = J.getRootPath >>= \case
     let rootFileName = contractFile rootContract
     let groups = wcc includes
     rawGraph <- case find (isJust . lookupContract rootFileName) groups of
-      -- Possibly the graph hasn't be initialized yet or a new file was created.
+      -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
       Just oldIncludes -> do
         let (rootContract', includeEdges) = extractIncludedFiles True rootContract
@@ -340,8 +340,10 @@ collectErrors
   -> J.NormalizedUri
   -> Maybe Int
   -> RIO ()
-collectErrors fetcher uri version = fetcher uri >>= \(FindContract _ tree errs) -> do
-  let errs' = nubBy (leq `on` fst) $ errs <> collectTreeErrors tree
+collectErrors fetcher uri version = fetcher uri >>= \contract -> do
+  -- Correct the ranges of the error messages to correspond to real locations
+  -- instead of locations after preprocessing.
+  let errs' = nubBy (leq `on` fst) $ collectAllErrors contract
   let diags = errorToDiag <$> errs'
   let extractGroup :: [[(J.NormalizedUri, J.Diagnostic)]] -> [(J.NormalizedUri, [J.Diagnostic])]
       extractGroup [] = []

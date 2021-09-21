@@ -51,7 +51,10 @@ instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
         let src = _cFile lf
         let fp = srcPath src
         FindFilepath ff <- maybe (throwM $ ContractNotFoundException fp f) pure (lookupContract fp f)
-        pure $ FindContract src (mergeScopeForest OnUnion (_cTree ff) (_cTree lf)) (_cMsgs ff <> _cMsgs lf)
+        pure $ FindContract
+          src
+          (mergeScopeForest OnUnion (_cTree ff) (_cTree lf))
+          (_cMsgs ff <> _cMsgs lf)
 
       -- | Rewrite error message at the most local scope or append it to the end.
       rewriteAt :: [Msg] -> Msg -> [Msg]

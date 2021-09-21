@@ -288,6 +288,7 @@ test-suite integration-test
       Test.Integrational.Capabilities.Rename
       Test.Integrational.Capabilities.SignatureHelp
       Test.Integrational.Cli
+      Test.Integrational.Diagnostics
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
@@ -296,6 +297,7 @@ test-suite integration-test
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
       Test.Common.FixedExpectations
       Test.Common.Util
       Test.Common.Util.Parsers
@@ -380,6 +382,7 @@ test-suite ligo-contracts-test
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
       Test.Common.FixedExpectations
       Test.Common.Util
       Test.Common.Util.Parsers
@@ -477,6 +480,7 @@ test-suite lsp-handlers-test
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
       Test.Common.FixedExpectations
       Test.Common.Util
       Test.Common.Util.Parsers
@@ -560,6 +564,7 @@ test-suite lsp-test
       Test.Capabilities.Rename
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
+      Test.Diagnostics
       Test.Parsers
       Test.Scope.ScopedDecl
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
@@ -570,6 +575,7 @@ test-suite lsp-test
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
       Test.Common.FixedExpectations
       Test.Common.Util
       Test.Common.Util.Parsers
