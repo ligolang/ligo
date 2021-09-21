@@ -312,7 +312,7 @@ let (old_move_opt, updated_map) : (option(move), register) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let [old_move, updated_map] : [option<move>, register] = 
+let [old_move, updated_map2] : [option<move>, register] = 
   Map.get_and_update (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), (Some([24, 48] as move)), moves);
 ```
 
@@ -423,7 +423,7 @@ let updated_map : register =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let updated_map : register =
+let updated_map3 : register =
   Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```
 

@@ -445,7 +445,7 @@ let updated_map: register =
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
-let updated_map: register =
+let updated_map_: register =
   Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves); 
 ```
 

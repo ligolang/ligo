@@ -253,21 +253,6 @@ let%expect_test _ =
     const bar =
       lambda (_u[@var] : unit) return let toto = 1 in
                                       let toto[@var] = 2 in let toto = 3 in toto |}]
-let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-core" ; (good_test "shadowing.jsligo") ] ;
-  [%expect{|
-    const foo[@var] =
-      rec (foo:int -> int => lambda (toto : int) : int return let toto[@var] =
-                                                                2 in
-                                                              let toto =
-                                                              3 in toto ) ,
-    const bar[@var] =
-      rec (bar:int -> int => lambda (toto : int) : int return let toto =
-                                                              1 in
-                                                              let toto[@var] =
-                                                                2 in
-                                                              let toto =
-                                                              3 in toto ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_const_var.ligo") ] ;

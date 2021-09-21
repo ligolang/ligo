@@ -106,7 +106,7 @@ let my_set : set (int) =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=sets
+```jsligo group=sets2
 let my_set : set<int> =
   Set.literal(list([3, 2, 2, 1]));
 ```
@@ -157,7 +157,7 @@ let contains_3 : bool = Set.mem (3, my_set);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=sets
+```jsligo group=sets2
 let contains_3 : bool = Set.mem (3, my_set);
 ```
 
@@ -289,7 +289,7 @@ let updated_set = Set.remove (3, my_set);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=sets
+```jsligo group=sets2
 let updated_set = Set.remove (3, my_set);
 ```
 
@@ -349,10 +349,10 @@ let updated_set = Set.update (4, false, my_set);
 
 ```jsligo group=sets
 // in case of true value will be added to the set 
-let updated_set = Set.update (4, true, my_set);
+let updated_set2 = Set.update (4, true, my_set);
 
 // in case of false value will be removed from the set 
-let updated_set = Set.update (4, false, my_set);
+let updated_set3 = Set.update (4, false, my_set);
 ```
 
 </Syntax>
@@ -512,7 +512,7 @@ let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 
 ```jsligo group=sets
 let sum_right = ([i, acc] : [int, int]) : int => acc + i;
-let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
+let sum_of_elements_desc : int = Set.fold_desc (sum_right, my_set, 0);
 ```
 
 </Syntax>

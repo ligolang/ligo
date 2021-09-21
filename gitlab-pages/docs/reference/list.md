@@ -367,12 +367,12 @@ let sum_of_elements : int = List.fold (sum, my_list, 0);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=lists
-let my_list: list<int> = list([1, 2, 3]);
+```jsligo group=lists2
+let my_list_fold: list<int> = list([1, 2, 3]);
 
-let sum = ([result, i]: [int, int]): int => result + i;
+let sum_fold = ([result, i]: [int, int]): int => result + i;
 
-let sum_of_elements: int = List.fold(sum, my_list, 0);
+let sum_of_elements_fold: int = List.fold(sum_fold, my_list_fold, 0);
 ```
 
 </Syntax>
@@ -426,7 +426,7 @@ let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=lists
+```jsligo group=lists3
 let my_list : list<int> = list([1, 2, 3]);
 
 let sum = ([result, i]: [int, int]): int => result + i;

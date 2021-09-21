@@ -2004,3 +2004,22 @@ let%expect_test _ =
               (h)@(SUB(n ,
               1)) | True unit_proj#8 ->
                     1 ) in h) ) |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_top.jsligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 0-14:
+      1 | let dog = 1;
+      2 | let dog = true;
+
+    Cannot redeclare block-scoped variable. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_block.jsligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/reuse_variable_name_block.jsligo", line 3, characters 8-13:
+      2 |     let x = 2;
+      3 |     let x = 2;
+      4 |     return x;
+
+    Cannot redeclare block-scoped variable. |}]

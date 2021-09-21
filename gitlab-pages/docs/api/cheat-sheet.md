@@ -1156,7 +1156,7 @@ Mutez (micro tez)
 
 ```jsligo
 let tez: tez = 42 as tez
-let tez: tez = 7 as mutez
+let tez2: tez = 7 as mutez
 ```
 
 </div>
@@ -1228,7 +1228,7 @@ Types
 </div>
 <div className="example">
 
-```jsligo
+```jsligo group=b
 type age = int
 type name = string
 ```
@@ -1258,7 +1258,7 @@ Functions (long form)
 </div>
 <div className="example">
 
-```jsligo
+```jsligo group=b
 let add = (a: int, b: int): int => {
   let c = a;
   let d = b;
@@ -1291,7 +1291,7 @@ Options
 ```jsligo
 type middle_name = option<string>;
 let middle_name : middle_name = Some("Foo");
-let middle_name : middle_name = None();
+let middle_name_ : middle_name = None();
 ```
 
 </div>
@@ -1358,7 +1358,7 @@ let john : person = {
   name: "john doe"
 }
 
-let name: string = john.name
+let name_: string = john.name
 ```
 
 </div>
@@ -1378,7 +1378,7 @@ let prices: prices = Map.literal(list([
 
 let price: option<tez> = Map.find_opt(50 as nat, prices)
 
-let prices: prices = Map.update(200 as nat, (Some (5 as mutez)), prices)
+let prices2: prices = Map.update(200 as nat, (Some (5 as mutez)), prices)
 ```
 
 </div>

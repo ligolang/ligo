@@ -150,7 +150,7 @@ let id_string = (p: string) : option(string) => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=pack
 let id_string = (p: string) : option<string> => {
   let packed : bytes = Bytes.pack(p);
   return (Bytes.unpack(packed) as option<string>);

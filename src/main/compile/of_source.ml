@@ -6,15 +6,15 @@ type module_name = string
 type c_unit = Buffer.t * (file_path * module_name) list
 
 (* we should have on for filename with syntax_opt and one in case of no file *)
-let extract_meta ~raise syntax file_name =
+let extract_meta ~raise syntax file_name : meta =
   let syntax   = syntax_to_variant ~raise (Syntax_name syntax) (Some file_name) in
   {syntax}
 
-let make_meta ~raise syntax file_name_opt =
+let make_meta ~raise syntax file_name_opt : meta =
   let syntax   = syntax_to_variant ~raise (Syntax_name syntax) file_name_opt in
   {syntax}
 
-let make_meta_from_syntax syntax =
+let make_meta_from_syntax syntax : meta =
   {syntax}
 
 let compile ~raise ~options ~meta (source_filename:string) : c_unit  =

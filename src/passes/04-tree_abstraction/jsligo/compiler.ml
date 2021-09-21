@@ -1036,8 +1036,8 @@ and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (Re
   in 
   aux binders
 
-and compile_statements ~raise : CST.statements -> statement_result = fun statements ->
-  let rec aux result = function
+and compile_statements ?(wrap=false) ~raise : CST.statements -> statement_result = fun statements ->
+  let aux result = function
     (_, hd) :: tl ->
       let wrapper = CST.SBlock {
         value = {
@@ -1046,18 +1046,18 @@ and compile_statements ~raise : CST.statements -> statement_result = fun stateme
           rbrace = Region.ghost};
           region = Region.ghost
       } in
-      let block = compile_statement ~raise wrapper in
-      aux (merge_statement_results result block) []
+      let block = compile_statement ~wrap:false ~raise wrapper in
+      merge_statement_results result block
   | [] -> result
   in
   let hd  = fst statements in
   let snd_ = snd statements in
   match hd, snd_ with 
     CST.SCond {value = {ifnot = None; _}; region}, (other :: tl) -> 
-      let init = compile_statement ~raise hd in 
+      let init = compile_statement ~wrap:false ~raise hd in 
       (match init with 
         Return {expression_content = E_cond e; location} -> 
-          let else_clause_hd = compile_statement ~raise (snd other) in
+          let else_clause_hd = compile_statement ~wrap:false ~raise (snd other) in
           let else_clause = aux else_clause_hd tl in
           let compile_clause = function 
             Binding e -> (e @@ e_unit ())
@@ -1071,14 +1071,14 @@ and compile_statements ~raise : CST.statements -> statement_result = fun stateme
         aux init snd_
       )
   | _, _ -> 
-    let init = compile_statement ~raise hd in
+    let init = compile_statement ~wrap ~raise hd in
     aux init snd_
 
 
-and compile_statement ~raise : CST.statement -> statement_result = fun statement ->
-  let self = compile_statement ~raise in
+and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result = fun statement ->
+  let self ?(wrap=false) = compile_statement ~wrap ~raise in
   let self_expr = compile_expression ~raise in
-  let self_statements = compile_statements ~raise in
+  let self_statements ?(wrap=false) = compile_statements ~wrap ~raise in
   let binding e = Binding (fun f -> e f) in
   let expr e = Expr e in
   let return r = Return r in
@@ -1115,14 +1115,29 @@ and compile_statement ~raise : CST.statement -> statement_result = fun statement
   | SExpr e -> 
     let e = self_expr e in
     expr e
-  | SBlock {value = {inside; _}; region} -> 
-    let statements = self_statements inside in
+  | SBlock {value = {inside; _}; region} when wrap = false -> 
+    let statements = self_statements ~wrap:true inside in
     statements
+  | SBlock {value = {inside; _}; region} -> 
+    let block_scope_var = Var.fresh () in
+    let block_binder = 
+      {var=Location.wrap block_scope_var; ascr = None; attributes = Stage_common.Helpers.const_attribute}
+    in
+    let statements = self_statements ~wrap:true inside in    
+    let statements_e = statement_result_to_expression statements in
+    let let_in = e_let_in block_binder [] statements_e in
+    let var = (e_variable (Location.wrap block_scope_var)) in
+    (match statements with 
+      Return _ -> return @@ let_in var
+    | Expr _ -> expr @@ let_in var
+    | Break _ -> Break (let_in var)
+    | Binding _ -> Binding let_in
+    )
   | SCond cond ->
     let (cond, loc) = r_split cond in
     let test         = self_expr cond.test.inside in
-    let then_clause  = self cond.ifso in 
-    let else_clause = Option.map ~f:(fun (_, s) -> self s) cond.ifnot in
+    let then_clause  = self ~wrap:false cond.ifso in 
+    let else_clause = Option.map ~f:(fun (_, s) -> self ~wrap:false s) cond.ifnot in
     let compile_clause = function 
       Binding e -> expr, (e @@ e_unit ())
     | Expr e when is_failwith_call e -> return, e

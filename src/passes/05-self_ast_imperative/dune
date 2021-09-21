@@ -2,6 +2,7 @@
   (name self_ast_imperative)
   (public_name ligo.self_ast_imperative)
   (instrumentation (backend bisect_ppx))
+  (modules_without_implementation syntax)
   (libraries
     simple-utils
     ast_imperative

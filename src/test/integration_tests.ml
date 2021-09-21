@@ -3333,6 +3333,17 @@ let chained_assignment_jsligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/chained_assignment.jsligo" in
   expect_eq ~raise program "bar" (e_unit ()) (e_int 9) 
 
+let block_scope_jsligo ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/block_scope.jsligo" in
+  let _ = expect_eq ~raise program "test_1" (e_unit ()) (e_int 3) in
+  let _ = expect_eq ~raise program "test_2" (e_unit ()) (e_int 3) in
+  let _ = expect_eq ~raise program "test_3" (e_unit ()) (e_int 3) in
+  let _ = expect_eq ~raise program "test_4" (e_unit ()) (e_int 3) in
+  let _ = expect_eq ~raise program "test_5" (e_unit ()) (e_int 2) in
+  let _ = expect_eq ~raise program "test_6" (e_unit ()) (e_int 2) in
+  ()
+
+
 let main = test_suite "Integration (End to End)"
   [
     test_w "simple1" simple1 ;
@@ -3613,4 +3624,5 @@ let main = test_suite "Integration (End to End)"
     test_w "if no else (jsligo)" if_no_else_jsligo;
     test_w "tuple_assignment (jsligo)" tuple_assignment_jsligo;
     test_w "chained_assignment (jsligo)" chained_assignment_jsligo;
+    test_w "block_scope (jsligo)" block_scope_jsligo;
   ]
