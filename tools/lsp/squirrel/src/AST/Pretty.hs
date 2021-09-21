@@ -276,6 +276,7 @@ instance Pretty1 Pattern where
     IsList       l         -> sexpr "list?" l
     IsTuple      t         -> sexpr "tuple?" t
     IsRecord     xs        -> sexpr "record?" xs
+    IsParen      x         -> "(?" <> pp x <> ")"
 
 instance Pretty1 RecordFieldPattern where
   pp1 = \case
@@ -507,6 +508,7 @@ instance LPP1 'Pascal Pattern where
     IsList       []        -> "nil"
     IsList       l         -> list l
     IsTuple      t         -> tuple t
+    IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
 
 instance LPP1 'Pascal RecordFieldPattern where
@@ -609,6 +611,7 @@ instance LPP1 'Reason Pattern where
     IsList       l         -> brackets $ train "," l
     IsTuple      t         -> tuple t
     IsRecord     fields    -> "{" <+> train "," fields <+> "}"
+    IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
 
 instance LPP1 'Reason RecordFieldPattern where
@@ -725,6 +728,7 @@ instance LPP1 'Caml Pattern where
     IsTuple      t         -> train "," t
     IsCons       h t       -> h <+> "::" <+> t
     IsRecord     fields    -> "{" <+> train "," fields <+> "}"
+    IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with:" <+> pp pat
 
 instance LPP1 'Caml RecordFieldPattern where

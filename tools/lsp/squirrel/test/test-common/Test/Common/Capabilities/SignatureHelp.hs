@@ -12,15 +12,10 @@ import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
-import AST.Capabilities.SignatureHelp
-  ( SignatureInformation (..), findSignature, makeSignatureLabel, toLspParameters
-  )
+import AST.Capabilities.SignatureHelp (SignatureInformation (..), findSignature, toLspParameters)
 import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
-import AST.Pretty (ppToText)
 import AST.Scope.Common (HasScopeForest, contractTree, lookupContract)
-import AST.Scope.ScopedDecl
-  ( Parameter (..), Pattern (..), Type (..), lppLigoLike
-  )
+import AST.Scope.ScopedDecl (Parameter (..), Pattern (..), Type (..))
 import AST.Skeleton (nestedLIGO)
 import Extension (getExt)
 import Range (Range, point)
@@ -32,6 +27,7 @@ data TestInfo = TestInfo
   { tiContract :: String
   , tiCursor :: Range
   , tiFunction :: Text
+  , tiLabel :: Text
   , tiParameters :: [Parameter]
   , tiActiveParamNo :: Int
   }
@@ -42,6 +38,7 @@ caseInfos =
     { tiContract = "all-okay.ligo"
     , tiCursor = point 3 44
     , tiFunction = "bar"
+    , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
     , tiActiveParamNo = 0
     }
@@ -49,6 +46,7 @@ caseInfos =
     { tiContract = "no-params.ligo"
     , tiCursor = point 3 44
     , tiFunction = "bar"
+    , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
     , tiActiveParamNo = 0
     }
@@ -56,6 +54,7 @@ caseInfos =
     { tiContract = "unclosed-paren.ligo"
     , tiCursor = point 3 44
     , tiFunction = "bar"
+    , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
     , tiActiveParamNo = 0
     }
@@ -63,6 +62,7 @@ caseInfos =
     { tiContract = "no-semicolon-in-block-after-var-decl.ligo"
     , tiCursor = point 5 24
     , tiFunction = "bar"
+    , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
     , tiActiveParamNo = 0
     }
@@ -70,6 +70,7 @@ caseInfos =
     { tiContract = "no-semicolon-in-block-after-const-decl.ligo"
     , tiCursor = point 5 24
     , tiFunction = "bar"
+    , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (AliasType "int")]
     , tiActiveParamNo = 0
     }
@@ -77,6 +78,7 @@ caseInfos =
     { tiContract = "active-parameter-is-2nd.ligo"
     , tiCursor = point 3 47
     , tiFunction = "bar"
+    , tiLabel = "function bar (const a : int; const b : int)"
     , tiParameters = [ParameterBinding (IsVar "a") (AliasType "int"), ParameterBinding (IsVar "b") (AliasType "int")]
     , tiActiveParamNo = 1
     }
@@ -85,6 +87,7 @@ caseInfos =
     { tiContract = "all-okay.mligo"
     , tiCursor = point 3 32
     , tiFunction = "bar"
+    , tiLabel = "let bar (i : int)"
     , tiParameters = [ParameterPattern (IsAnnot (IsVar "i") (AliasType "int"))]
     , tiActiveParamNo = 0
     }
@@ -92,6 +95,7 @@ caseInfos =
     { tiContract = "no-params.mligo"
     , tiCursor = point 3 32
     , tiFunction = "bar"
+    , tiLabel = "let bar (i : int)"
     , tiParameters = [ParameterPattern (IsAnnot (IsVar "i") (AliasType "int"))]
     , tiActiveParamNo = 0
     }
@@ -100,6 +104,7 @@ caseInfos =
     { tiContract = "all-okay.religo"
     , tiCursor = point 3 35
     , tiFunction = "bar"
+    , tiLabel = "let bar = (i : int)"
     , tiParameters = [ParameterPattern (IsAnnot (IsVar "i") (AliasType "int"))]
     , tiActiveParamNo = 0
     }
@@ -107,6 +112,7 @@ caseInfos =
     { tiContract = "no-params.religo"
     , tiCursor = point 3 35
     , tiFunction = "bar"
+    , tiLabel = "let bar = (i : int)"
     , tiParameters = [ParameterPattern (IsAnnot (IsVar "i") (AliasType "int"))]
     , tiActiveParamNo = 0
     }
@@ -114,6 +120,7 @@ caseInfos =
     { tiContract = "LIGO-271.mligo"
     , tiCursor = point 3 30
     , tiFunction = "foo"
+    , tiLabel = "let foo ((a : nat), (b : nat))"
     , tiParameters =
       [ ParameterPattern (IsAnnot (IsVar "a") (AliasType "nat"))
       , ParameterPattern (IsAnnot (IsVar "b") (AliasType "nat"))
@@ -124,11 +131,64 @@ caseInfos =
     { tiContract = "LIGO-271-curried.mligo"
     , tiCursor = point 3 17
     , tiFunction = "foo"
+    , tiLabel = "let foo (a : int) (b : nat)"
     , tiParameters =
       [ ParameterPattern (IsAnnot (IsVar "a") (AliasType "int"))
       , ParameterPattern (IsAnnot (IsVar "b") (AliasType "nat"))
       ]
     , tiActiveParamNo = 1
+    }
+  , TestInfo
+    { tiContract = "LIGO-271-curried-tuples.mligo"
+    , tiCursor = point 5 5
+    , tiFunction = "f"
+    , tiLabel = "let f ((a : int), (b : nat)) (c : unit) ((d : nat), (e : int))"
+    , tiParameters =
+      [ ParameterPattern (IsParen $ IsTuple [IsAnnot (IsVar "a") (AliasType "int"), IsAnnot (IsVar "b") (AliasType "nat")])
+      , ParameterPattern (IsAnnot (IsVar "c") (AliasType "unit"))
+      , ParameterPattern (IsAnnot (IsVar "d") (AliasType "nat"))
+      , ParameterPattern (IsAnnot (IsVar "e") (AliasType "int"))
+      ]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "LIGO-271-curried-tuples.mligo"
+    , tiCursor = point 9 9
+    , tiFunction = "f"
+    , tiLabel = "let f ((a : int), (b : nat)) (c : unit) ((d : nat), (e : int))"
+    , tiParameters =
+      [ ParameterPattern (IsAnnot (IsVar "a") (AliasType "int"))
+      , ParameterPattern (IsAnnot (IsVar "b") (AliasType "nat"))
+      , ParameterPattern (IsAnnot (IsVar "c") (AliasType "unit"))
+      , ParameterPattern (IsParen $ IsTuple [IsAnnot (IsVar "d") (AliasType "nat"), IsAnnot (IsVar "e") (AliasType "int")])
+      ]
+    , tiActiveParamNo = 1
+    }
+  , TestInfo
+    { tiContract = "LIGO-271-curried-tuples.mligo"
+    , tiCursor = point 5 11
+    , tiFunction = "f"
+    , tiLabel = "let f ((a : int), (b : nat)) (c : unit) ((d : nat), (e : int))"
+    , tiParameters =
+      [ ParameterPattern (IsParen $ IsTuple [IsAnnot (IsVar "a") (AliasType "int"), IsAnnot (IsVar "b") (AliasType "nat")])
+      , ParameterPattern (IsAnnot (IsVar "c") (AliasType "unit"))
+      , ParameterPattern (IsAnnot (IsVar "d") (AliasType "nat"))
+      , ParameterPattern (IsAnnot (IsVar "e") (AliasType "int"))
+      ]
+    , tiActiveParamNo = 2
+    }
+  , TestInfo
+    { tiContract = "LIGO-271-curried-tuples.mligo"
+    , tiCursor = point 9 16
+    , tiFunction = "f"
+    , tiLabel = "let f ((a : int), (b : nat)) (c : unit) ((d : nat), (e : int))"
+    , tiParameters =
+      [ ParameterPattern (IsAnnot (IsVar "a") (AliasType "int"))
+      , ParameterPattern (IsAnnot (IsVar "b") (AliasType "nat"))
+      , ParameterPattern (IsAnnot (IsVar "c") (AliasType "unit"))
+      , ParameterPattern (IsParen $ IsTuple [IsAnnot (IsVar "d") (AliasType "nat"), IsAnnot (IsVar "e") (AliasType "int")])
+      ]
+    , tiActiveParamNo = 3
     }
   ]
 
@@ -144,13 +204,12 @@ simpleFunctionCallDriver = do
       let tree = contractTree $ fromJust $ lookupContract filepath graph
       dialect <- getExt filepath
       let result = findSignature (tree ^. nestedLIGO) tiCursor
-      let label = makeSignatureLabel dialect tiFunction (map (ppToText . lppLigoLike dialect) tiParameters)
       result `shouldBe`
         Just ( SignatureInformation
-               { _label = label
+               { _label = tiLabel
                , _documentation = Just $ J.SignatureHelpDocString ""
                , _parameters = Just . J.List $ toLspParameters dialect tiParameters
                , _activeParameter = Nothing
                }
-             , tiActiveParamNo
+             , Just tiActiveParamNo
              )

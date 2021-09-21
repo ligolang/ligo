@@ -386,6 +386,7 @@ getImmediateDecls = \case
       IsCons     h t  -> (<>) <$> getImmediateDecls h <*> getImmediateDecls t
       IsConstant _    -> pure []
       IsConstr   _ xs -> foldMapM getImmediateDecls xs
+      IsParen    x    -> getImmediateDecls x
 
   (match -> Just (r, pat)) -> do
     case pat of

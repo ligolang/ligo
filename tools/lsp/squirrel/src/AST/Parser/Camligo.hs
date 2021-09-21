@@ -71,7 +71,7 @@ recognise (SomeRawTree dialect rawTree)
         "tuple_pattern"     -> IsTuple  <$> fields "item"
         "constr_pattern"    -> IsConstr <$> field  "ctor" <*> fieldOpt "args"
         "par_annot_pattern" -> IsAnnot  <$> field  "pat"  <*> field "type"
-        "paren_pattern"     -> IsTuple  <$> fields "pat"
+        "paren_pattern"     -> IsParen  <$> field  "pat"
         "var_pattern"       -> IsVar    <$> field  "var"
         "record_pattern"    -> IsRecord <$> fields "field"
         "wildcard_pattern"  -> pure IsWildcard
@@ -82,7 +82,7 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate $ \case
         "irrefutable_tuple"  -> IsTuple <$> fields "item"
         "annot_pattern"      -> IsAnnot <$> field  "pat"  <*> field "type"
-        "closed_irrefutable" -> IsTuple <$> fields "pat"
+        "closed_irrefutable" -> IsParen <$> field  "pat"
         _                    -> fallthrough
 
    -- RecordFieldPattern

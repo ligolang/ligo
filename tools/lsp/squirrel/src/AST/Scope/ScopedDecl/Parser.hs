@@ -134,6 +134,7 @@ parsePattern node = layer node >>= \case
   LIGO.IsList pats -> pure $ IsList $ mapMaybe parsePattern pats
   LIGO.IsTuple pats -> pure $ IsTuple $ mapMaybe parsePattern pats
   LIGO.IsRecord pats -> pure $ IsRecord $ mapMaybe parseRecordFieldPattern pats
+  LIGO.IsParen pat -> IsParen <$> parsePattern pat
 
 parseRecordFieldPattern :: PPableLIGO info => LIGO info -> Maybe RecordFieldPattern
 parseRecordFieldPattern node = layer node >>= \case

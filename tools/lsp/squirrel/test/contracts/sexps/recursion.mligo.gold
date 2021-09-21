@@ -2,15 +2,14 @@
   (fun
     rec
     sum
-    (type? (tuple? (tuple? (? n) (? acc))) (PROD int int))
+    (type? (?(tuple? (? n) (? acc))) (PROD int int))
     :
     int
     = (if ((n < 1)) acc (apply sum ((tuple (apply n -1) (acc + n))))))
   (fun
     rec
     fibo
-    (type?
-      (tuple? (tuple? (? n) (? n_1) (? n_0))) (PROD int (PROD int int)))
+    (type? (?(tuple? (? n) (? n_1) (? n_0))) (PROD int (PROD int int)))
     :
     int
     =

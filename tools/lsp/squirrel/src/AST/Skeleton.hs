@@ -220,6 +220,7 @@ data Pattern it
   | IsList       [it] -- [Pattern]
   | IsTuple      [it] -- [Pattern]
   | IsRecord     [it] -- [RecordFieldPattern]
+  | IsParen      it   -- (Pattern)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 -- Used specifically in record destructuring

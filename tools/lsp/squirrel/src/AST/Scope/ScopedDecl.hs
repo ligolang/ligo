@@ -130,6 +130,7 @@ data Pattern
   | IsList       [Pattern]
   | IsTuple      [Pattern]
   | IsRecord     [RecordFieldPattern]
+  | IsParen      Pattern
   deriving stock (Eq, Show)
 
 data RecordFieldPattern
@@ -206,6 +207,7 @@ instance IsLIGO Pattern where
   toLIGO (IsList pats) = node (LIGO.IsList (toLIGO <$> pats))
   toLIGO (IsTuple pats) = node (LIGO.IsTuple (toLIGO <$> pats))
   toLIGO (IsRecord pats) = node (LIGO.IsRecord (toLIGO <$> pats))
+  toLIGO (IsParen pat) = node (LIGO.IsParen (toLIGO pat))
 
 instance IsLIGO RecordFieldPattern where
   toLIGO (IsRecordField name body) = node (LIGO.IsRecordField (node (LIGO.FieldName name)) (toLIGO body))
