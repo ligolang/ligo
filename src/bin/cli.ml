@@ -495,11 +495,11 @@ let get_scope =
 
 (** Print commands *)
 let print_group = Clic.{name="print";title="print title"}
-let preprocess =
+let preprocessed =
   let f (syntax, display_format) source_file () =
     return_result @@
       Api.Print.preprocess source_file syntax display_format in
-  let _cmdname = "preprocess" in
+  let _cmdname = "preprocessed" in
   let _doc = "Subcommand: Preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
   let desc =    "This sub-command runs the pre-processor on a LIGO \
                  source file and outputs the result. The directive \
@@ -512,7 +512,7 @@ let preprocess =
     ~group:print_group
     ~desc
     Clic.(args2 syntax display_format)
-    Clic.(prefixes ["print"; "preprocess"] @@ source_file @@ stop)
+    Clic.(prefixes ["print"; "preprocessed"] @@ source_file @@ stop)
     f
 
 let pretty_print =
@@ -715,7 +715,7 @@ let main = [
     list_declarations ;
     measure_contract ;
     get_scope;
-    preprocess;
+    preprocessed;
     print_graph ;
     pretty_print;
     print_cst ;

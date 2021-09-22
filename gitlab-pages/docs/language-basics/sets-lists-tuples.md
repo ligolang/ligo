@@ -618,8 +618,8 @@ You can check that `2` is not repeated in `my_set` by using the LIGO
 compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
@@ -639,8 +639,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
@@ -661,8 +661,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
@@ -679,8 +679,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 

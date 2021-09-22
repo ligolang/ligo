@@ -23,7 +23,7 @@ You can use the provided script (`./bin/estimateGas`) to compare the different v
 1. Run `npx ganache-cli --flavor tezos --seed alice` in the background.
 2. Use `npx truffle migrate` to originate the contracts.
 3. Test the contracts' size and gas consumption:
-   * Use `ligo measure-contract <PATH> main` to measure the contract size
+   * Use `ligo info measure-contract <PATH> --entry-point main` to measure the contract size
    * Run the script `./bin/estimateGas` to see the gas and fees estimates for each of the contracts
 
 ## Switching between the dialects

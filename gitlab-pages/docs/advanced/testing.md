@@ -242,7 +242,7 @@ occurred.
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/testnew.ligo
+ligo run test gitlab-pages/docs/advanced/src/testnew.ligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value true.
@@ -252,7 +252,7 @@ ligo test gitlab-pages/docs/advanced/src/testnew.ligo
 <Syntax syntax="cameligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/testnew.mligo
+ligo run test gitlab-pages/docs/advanced/src/testnew.mligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value true.
@@ -262,7 +262,7 @@ ligo test gitlab-pages/docs/advanced/src/testnew.mligo
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/testnew.religo
+ligo run test gitlab-pages/docs/advanced/src/testnew.religo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value true.
@@ -272,7 +272,7 @@ ligo test gitlab-pages/docs/advanced/src/testnew.religo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/testnew.jsligo
+ligo run test gitlab-pages/docs/advanced/src/testnew.jsligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value true.
@@ -596,7 +596,7 @@ You can now execute the test:
 <Syntax syntax="cameligo">
 
 ```shell
-> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.mligo
+> ligo run test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.mligo
 // Outputs:
 // ("expected" , 2)
 // ("actual" , 2)
@@ -613,7 +613,7 @@ You can now execute the test:
 <Syntax syntax="pascaligo">
 
 ```shell
-> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.ligo
+> ligo run test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.ligo
 // Outputs:
 // ("expected" , 2)
 // ("actual" , 2)
@@ -630,7 +630,7 @@ You can now execute the test:
 <Syntax syntax="reasonligo">
 
 ```shell
-> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.religo
+> ligo run test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.religo
 // Outputs:
 // ("expected" , 2)
 // ("actual" , 2)
@@ -647,7 +647,7 @@ You can now execute the test:
 <Syntax syntax="jsligo">
 
 ```shell
-> ligo test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.jsligo
+> ligo run test gitlab-pages/docs/advanced/src/unit-remove-balance-mixed.jsligo
 // Outputs:
 // ("expected" , 2)
 // ("actual" , 2)
@@ -802,7 +802,7 @@ a resulting storage of `42`. For checking it, we can interpret the
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo interpret --init-file gitlab-pages/docs/advanced/src/testing/testme.ligo "main (Increment (32), 10)"
+ligo run interpret "main (Increment (32), 10)" --init-file gitlab-pages/docs/advanced/src/testing/testme.ligo
 // Outputs:
 // ( LIST_EMPTY() , 42 )
 ```
@@ -811,7 +811,7 @@ ligo interpret --init-file gitlab-pages/docs/advanced/src/testing/testme.ligo "m
 <Syntax syntax="cameligo">
 
 ```shell
-ligo interpret --init-file testme.mligo "main (Increment (32), 10)"
+ligo run interpret "main (Increment (32), 10)" --init-file testme.mligo
 // Outputs:
 // ( LIST_EMPTY() , 42 )
 ```
@@ -820,7 +820,7 @@ ligo interpret --init-file testme.mligo "main (Increment (32), 10)"
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo interpret --init-file testme.religo "main (Increment (32), 10)"
+ligo run interpret "main (Increment (32), 10)" --init-file testme.religo
 // Outputs:
 // ( LIST_EMPTY() , 42 )
 ```
@@ -829,7 +829,7 @@ ligo interpret --init-file testme.religo "main (Increment (32), 10)"
 <Syntax syntax="jsligo">
 
 ```shell
-ligo interpret --init-file testme.jsligo "main (Increment (32), 10)"
+ligo run interpret "main (Increment (32), 10)" --init-file testme.jsligo
 // Outputs:
 // ( LIST_EMPTY() , 42 )
 ```

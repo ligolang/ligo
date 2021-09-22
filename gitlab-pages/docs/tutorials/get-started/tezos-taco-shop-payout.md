@@ -188,7 +188,7 @@ we see a *new operation* in the list of returned operations to be
 executed subsequently.
 
 ```pascaligo skip
-ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
+ligo run dry-run taco-shop.ligo --syntax pascaligo --amount 1 --entry-point buy_taco 1n "map [
    1n -> record [
            current_stock = 50n;
            max_price = 50tez

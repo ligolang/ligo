@@ -121,7 +121,37 @@ const siteConfig = {
       cacheTime: 600 * 1000, // 600 sec - cache purge period
       changefreq: 'weekly',
       priority: 0.5,
-    })
+    }),
+    [
+      '@docusaurus/plugin-client-redirects', {        
+        redirects: [          
+          { from: ["/docs/next/manpages/compile-contract"     ], to: "/docs/next/manpages/compile contract"       },
+          { from: ["/docs/next/manpages/compile-expression"   ], to: "/docs/next/manpages/compile expression"     },
+          { from: ["/docs/next/manpages/compile-parameter"    ], to: "/docs/next/manpages/compile parameter"      },
+          { from: ["/docs/next/manpages/compile-storage"      ], to: "/docs/next/manpages/compile storage"        },
+          { from: ["/docs/next/manpages/dry-run"              ], to: "/docs/next/manpages/run dry-run"            },
+          { from: ["/docs/next/manpages/evaluate-expr"        ], to: "/docs/next/manpages/run evaluate-expr"      },
+          { from: ["/docs/next/manpages/get-scope"            ], to: "/docs/next/manpages/info get-scope"         },
+          { from: ["/docs/next/manpages/interpret"            ], to: "/docs/next/manpages/run interpret"          },
+          { from: ["/docs/next/manpages/list-declarations"    ], to: "/docs/next/manpages/info list-declarations" },
+          { from: ["/docs/next/manpages/measure-contract"     ], to: "/docs/next/manpages/info measure-contract"  },
+          { from: ["/docs/next/manpages/preprocess"           ], to: "/docs/next/manpages/print preprocessed"     },
+          { from: ["/docs/next/manpages/pretty-print"         ], to: "/docs/next/manpages/print pretty-print"     },
+          { from: ["/docs/next/manpages/print-ast"            ], to: "/docs/next/manpages/print ast"              },
+          { from: ["/docs/next/manpages/print-ast-combined"   ], to: "/docs/next/manpages/print ast-combined"     },
+          { from: ["/docs/next/manpages/print-ast-core"       ], to: "/docs/next/manpages/print ast-core"         },
+          { from: ["/docs/next/manpages/print-ast-sugar"      ], to: "/docs/next/manpages/print ast-sugar"        },
+          { from: ["/docs/next/manpages/print-ast-typed"      ], to: "/docs/next/manpages/print ast-typed"        },
+          { from: ["/docs/next/manpages/print-cst"            ], to: "/docs/next/manpages/print cst"              },
+          { from: ["/docs/next/manpages/print-graph"          ], to: "/docs/next/manpages/print dependency-graph" },
+          { from: ["/docs/next/manpages/print-mini-c"         ], to: "/docs/next/manpages/print mini-c"           },
+          { from: ["/docs/next/manpages/evaluate-call"        ], to: "/docs/next/manpages/run evaluate-call"      },
+          { from: ["/docs/next/manpages/test"                 ], to: "/docs/next/manpages/run test"               },
+          { from: ["/docs/next/manpages/transpile-contract"   ], to: "/docs/next/manpages/transpile contract"     },
+          { from: ["/docs/next/manpages/transpile-expression" ], to: "/docs/next/manpages/transpile expression"   },
+        ],      
+      }
+    ]
   ],
   
   presets: [
