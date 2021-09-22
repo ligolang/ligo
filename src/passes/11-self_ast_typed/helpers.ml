@@ -85,7 +85,7 @@ and fold_module : ('a,'err) folder -> 'a -> module_fully_typed -> 'a = fun f ini
   let aux = fun acc (x : declaration Location.wrap) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
-    | Declaration_constant {binder=_; expr ; inline=_} -> (
+    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ }} -> (
         let res = fold_expression f acc expr in
         return @@ res
     )
@@ -131,10 +131,10 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let (a,b) = Pair.map ~f:self ab in
     return @@ E_application {lamb=a;args=b}
   )
-  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; attr } -> (
     let rhs = self rhs in
     let let_result = self let_result in
-    return @@ E_let_in { let_binder ; rhs ; let_result; inline }
+    return @@ E_let_in { let_binder ; rhs ; let_result; attr }
   )
   | E_type_in ti -> (
     let ti = Maps.type_in self (fun x -> x) ti in
@@ -186,9 +186,9 @@ and map_module : 'err mapper -> module_fully_typed -> module_fully_typed = fun m
   let aux = fun (x : declaration) ->
     let return (d : declaration) = d in
     match x with
-    | Declaration_constant {name; binder; expr ; inline} -> (
+    | Declaration_constant {name; binder; expr ; attr} -> (
         let expr = map_expression m expr in
-        return @@ Declaration_constant {name; binder; expr ; inline}
+        return @@ Declaration_constant {name; binder; expr ; attr}
     )
     | Declaration_type t -> return @@ Declaration_type t
     | Declaration_module {module_binder;module_} ->
@@ -234,10 +234,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
       let (res,(a,b)) = Pair.fold_map ~f:self ~init ab in
       (res, return @@ E_application {lamb=a;args=b})
     )
-  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; attr } -> (
       let (res,rhs) = self init rhs in
       let (res,let_result) = self res let_result in
-      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
+      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
     )
   | E_type_in { type_binder ; rhs ; let_result } -> (
       let (res,let_result) = self init let_result in
@@ -287,9 +287,9 @@ and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> 'a * matc
 and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> 'a * module_fully_typed = fun m init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
     match Location.unwrap x with
-    | Declaration_constant {name; binder ; expr ; inline} -> (
+    | Declaration_constant {name; binder ; expr ; attr } -> (
       let (acc', expr) = fold_map_expression m acc expr in
-      let wrap_content : declaration = Declaration_constant {name; binder ; expr ; inline} in
+      let wrap_content : declaration = Declaration_constant {name; binder ; expr ; attr} in
       (acc', {x with wrap_content})
     )
     | Declaration_type t -> (
@@ -309,7 +309,7 @@ and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> 'a *
 and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> module_fully_typed -> 'a = fun m m_decl init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_ ; expr ; inline=_} as d ->
+      | Declaration_constant {binder=_ ; expr ; attr=_} as d ->
         let acc = m_decl acc d in
         fold_expression m acc expr
       | Declaration_type _t -> acc
@@ -325,7 +325,7 @@ type contract_type = {
 
 let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type = fun main_fname (Module_Fully_Typed m) ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
-    | Declaration_constant ({ binder ; expr=_ ; inline=_ } as p) ->
+    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
        if Var.equal binder.wrap_content (Var.of_name main_fname)
        then Some p
        else None
@@ -338,7 +338,7 @@ let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type =
     trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
     in
-  let { binder=_ ; expr ; inline=_ } = main_decl in
+  let { binder=_ ; expr ; attr=_ } = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
@@ -458,7 +458,7 @@ module Free_variables :
   and get_fv_module : module_fully_typed -> (ModVarSet.t * VarSet.t) = fun (Module_Fully_Typed p) ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr ; inline=_} ->
+      | Declaration_constant {binder=_; expr ; attr=_} ->
         get_fv_expr expr
       | Declaration_module {module_binder=_;module_} ->
         get_fv_module module_
@@ -565,7 +565,7 @@ module Free_module_variables :
   and get_fv_module : module_fully_typed -> (ModVarSet.t * VarSet.t) = fun (Module_Fully_Typed p) ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr ; inline=_} ->
+      | Declaration_constant {binder=_; expr ; attr=_} ->
         get_fv_expr expr
       | Declaration_module {module_binder=_;module_} ->
         get_fv_module module_

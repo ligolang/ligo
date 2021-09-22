@@ -7,7 +7,7 @@ module Int = Int_repr_copied
 type mutation = Location.t * Ast_typed.expression
 
 type env_item =
-  | Expression of { name: expression_variable ; item: value_expr }
+  | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool }
   | Module of { name: module_variable ; item: env }
 
 and env = env_item list

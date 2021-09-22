@@ -36,14 +36,14 @@ match Location.unwrap d with
     let env' = Environment.add_type type_binder tv env in
     return env' @@ Declaration_type { type_binder ; type_expr = tv }
   )
-  | Declaration_constant {name ; binder ; attr={inline} ; expr} -> (
+  | Declaration_constant {name ; binder ; attr={inline;no_mutation} ; expr} -> (
     let tv'_opt = Option.map ~f:(evaluate_type ~raise env) binder.ascr in
     let expr =
       trace ~raise (constant_declaration_error_tracer binder.var expr tv'_opt) @@
       type_expression' ~test ?tv_opt:tv'_opt env expr in
     let binder : O.expression_variable = cast_var binder.var in
     let post_env = Environment.add_ez_declaration binder expr env in
-    return post_env @@ Declaration_constant { name ; binder ; expr ; inline}
+    return post_env @@ Declaration_constant { name ; binder ; expr ; attr = {inline ; no_mutation} }
   )
   | Declaration_module {module_binder;module_} -> (
     let e,module_ = type_module ~raise ~test ~init_env:env module_ in
@@ -534,16 +534,16 @@ and type_expression' ~raise ~test : environment -> ?tv_opt:O.type_expression -> 
     let eqs = List.map ~f:aux cases in
     let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:ae.location ~type_f:(type_expression' ~test) ~body_t:(tv_opt) matcheevar eqs in
     let case_exp = { case_exp with location = ae.location } in
-    let x = O.e_let_in matcheevar matchee' case_exp false in
+    let x = O.e_let_in matcheevar matchee' case_exp {inline = false; no_mutation = false} in
     return x case_exp.type_expression
   )
-  | E_let_in {let_binder = {var ; ascr} ; rhs ; let_result; inline} ->
+  | E_let_in {let_binder = {var ; ascr} ; rhs ; let_result; attr = { inline; no_mutation }} ->
     let rhs_tv_opt = Option.map ~f:(evaluate_type ~raise e) ascr in
     let rhs = type_expression' ~raise ~test ?tv_opt:rhs_tv_opt e rhs in
     let binder = cast_var var in
     let e' = Environment.add_ez_declaration binder rhs e in
     let let_result = type_expression' ~raise ~test e' let_result in
-    return (E_let_in {let_binder = binder; rhs; let_result; inline}) let_result.type_expression
+    return (E_let_in {let_binder = binder; rhs; let_result; attr = { inline; no_mutation }}) let_result.type_expression
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise e rhs in
     let e' = Environment.add_type type_binder rhs e in
@@ -760,12 +760,12 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       return (e_matching matchee [case])
     )
   )
-  | E_let_in {let_binder;rhs;let_result; inline} ->
+  | E_let_in {let_binder;rhs;let_result; attr={inline;no_mutation}} ->
       let let_binder = cast_var let_binder in
       let tv = Untyper.untype_type_expression rhs.type_expression in
       let rhs = untype_expression rhs in
       let result = untype_expression let_result in
-      return (e_let_in {var=let_binder ; ascr=(Some tv) ; attributes = Stage_common.Helpers.empty_attribute} rhs result inline)
+      return (e_let_in {var=let_binder ; ascr=(Some tv) ; attributes = Stage_common.Helpers.empty_attribute} rhs result {inline;no_mutation})
   | E_type_in ti ->
     let ti = Stage_common.Maps.type_in untype_expression Untyper.untype_type_expression ti in
     return @@ make_e @@ E_type_in ti
@@ -795,11 +795,11 @@ function
   Declaration_type {type_binder; type_expr} ->
   let type_expr = untype_type_expression type_expr in
   return @@ Declaration_type {type_binder; type_expr}
-| Declaration_constant {name; binder;expr;inline} ->
+| Declaration_constant {name; binder;expr;attr={inline;no_mutation}} ->
   let ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let expr = untype_expression expr in
-  return @@ Declaration_constant {name; binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline}}
+  return @@ Declaration_constant {name; binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation}}
 | Declaration_module {module_binder;module_} ->
   let module_ = untype_module_fully_typed module_ in
   return @@ Declaration_module {module_binder;module_}

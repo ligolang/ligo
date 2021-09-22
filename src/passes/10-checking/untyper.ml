@@ -43,8 +43,8 @@ let rec untype_type_expression_nofail (t:O.type_expression) : I.type_expression 
 let untype_type_expression (t:O.type_expression) : I.type_expression =
   untype_type_expression_nofail t
 
-let untype_declaration_constant untype_expression O.{name;binder;expr;inline} =
-  let attr = I.{inline} in
+let untype_declaration_constant untype_expression O.{name;binder;expr;attr={inline;no_mutation}} =
+  let attr = I.{inline;no_mutation} in
   let ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let binder = ({var;ascr= Some ty;attributes=Stage_common.Helpers.empty_attribute}: _ I.binder) in

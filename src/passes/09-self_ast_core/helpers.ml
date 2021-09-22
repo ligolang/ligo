@@ -95,10 +95,10 @@ let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fu
     let app = Maps.application self app in
     return @@ E_application app
   )
-  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; attr = { inline; no_mutation } } -> (
       let rhs = self rhs in
       let let_result = self let_result in
-      return @@ E_let_in { let_binder ; rhs ; let_result; inline }
+      return @@ E_let_in { let_binder ; rhs ; let_result; attr = { inline; no_mutation } }
     )
   | E_type_in ti -> (
       let ti = Maps.type_in self (fun a -> a) ti in
@@ -220,10 +220,10 @@ let rec fold_map_expression ~raise : ('a , 'err) fold_mapper -> 'a -> expression
       let res,app = Fold_maps.application self init app in
       (res, return @@ E_application app)
     )
-  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; attr = { inline; no_mutation } } -> (
       let (res,rhs) = self init rhs in
       let (res,let_result) = self res let_result in
-      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
+      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr = { inline; no_mutation } })
     )
   | E_type_in ti -> (
       let res,ti = Fold_maps.type_in self idle init ti in

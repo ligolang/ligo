@@ -149,11 +149,11 @@ module Substitution = struct
         let output_type = Option.map ~f:(s_type_expression ~substs) output_type in
         let result = s_expression ~substs result in
         T.E_lambda { binder; output_type; result }
-      | T.E_let_in          { let_binder; rhs; let_result; inline} ->
+      | T.E_let_in          { let_binder; rhs; let_result; attr = {inline; no_mutation}} ->
         let let_binder = s_binder ~substs let_binder in
         let rhs = s_expression ~substs rhs in
         let let_result = s_expression ~substs let_result in
-        T.E_let_in { let_binder; rhs; let_result; inline}
+        T.E_let_in { let_binder; rhs; let_result; attr = {inline; no_mutation}}
       | T.E_type_in          { type_binder; rhs; let_result} ->
         let type_binder = s_type_variable ~substs type_binder in
         let rhs = s_type_expression ~substs rhs in
@@ -214,10 +214,10 @@ module Substitution = struct
     let return (d : T.declaration) = d in
     fun ~substs ->
       function
-      | T.Declaration_constant {name ; binder ; expr ; attr={inline}} ->
+      | T.Declaration_constant {name ; binder ; expr ; attr={inline;no_mutation}} ->
         let binder = s_binder ~substs binder in
         let expr = s_expression ~substs expr in
-        return @@ Declaration_constant {name; binder; expr; attr={inline}}
+        return @@ Declaration_constant {name; binder; expr; attr={inline;no_mutation}}
       | T.Declaration_type t -> return @@ Declaration_type t
       | T.Declaration_module {module_binder;module_} ->
         let module_       = s_module' ~substs module_ in
