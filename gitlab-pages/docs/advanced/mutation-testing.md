@@ -117,7 +117,7 @@ The function implemented (`twice`) above passes the tests:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.ligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.ligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -127,7 +127,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.ligo
 <Syntax syntax="cameligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.mligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.mligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -137,7 +137,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.mligo
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.religo
+ligo run test gitlab-pages/docs/advanced/src/mutation.religo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -147,7 +147,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.religo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.jsligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.jsligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -304,7 +304,7 @@ Running the tests again, the following output is obtained:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.ligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.ligo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation.ligo", line 2, characters 2-7:
 //   1 | function twice (const x : int) : int is
@@ -325,7 +325,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.ligo
 <Syntax syntax="cameligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.mligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.mligo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation.mligo", line 1, characters 22-27:
 //   1 | let twice (x : int) = x + x
@@ -345,7 +345,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.mligo
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.religo
+ligo run test gitlab-pages/docs/advanced/src/mutation.religo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation.religo", line 1, characters 25-30:
 //   1 | let twice = (x : int) => x + x;
@@ -365,7 +365,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.religo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.jsligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.jsligo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation.jsligo", line 1, characters 31-36:
 //   1 | let twice = (x : int) : int => x + x;
@@ -457,7 +457,7 @@ the tests proposed:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.ligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.ligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -468,7 +468,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.ligo
 <Syntax syntax="cameligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.mligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.mligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -479,7 +479,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.mligo
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.religo
+ligo run test gitlab-pages/docs/advanced/src/mutation.religo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -490,7 +490,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation.religo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation.jsligo
+ligo run test gitlab-pages/docs/advanced/src/mutation.jsligo
 // Outputs:
 // Everything at the top-level was executed.
 // - test exited with value ().
@@ -750,7 +750,7 @@ Running this test, the following output is obtained:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation-contract.ligo
+ligo run test gitlab-pages/docs/advanced/src/mutation-contract.ligo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation-contract.ligo", line 14, characters 2-15:
 //  13 | function sub (const store : storage; const delta : int) : storage is
@@ -771,7 +771,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation-contract.ligo
 <Syntax syntax="cameligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation-contract.mligo
+ligo run test gitlab-pages/docs/advanced/src/mutation-contract.mligo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation-contract.mligo", line 12, characters 51-64:
 //  11 | let add (store, delta : storage * int) : storage = store + delta
@@ -792,7 +792,7 @@ ligo test gitlab-pages/docs/advanced/src/mutation-contract.mligo
 <Syntax syntax="reasonligo">
 
 ```shell
-$ ligo test gitlab-pages/docs/advanced/src/mutation-contract.religo
+$ ligo run test gitlab-pages/docs/advanced/src/mutation-contract.religo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation-contract.religo", line 12, characters 57-70:
 //  11 | let add = ((store, delta) : (storage, int)) : storage => store + delta;
@@ -813,7 +813,7 @@ $ ligo test gitlab-pages/docs/advanced/src/mutation-contract.religo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo test gitlab-pages/docs/advanced/src/mutation-contract.jsligo
+ligo run test gitlab-pages/docs/advanced/src/mutation-contract.jsligo
 // Outputs:
 // Mutation at: File "gitlab-pages/docs/advanced/src/mutation-contract.jsligo", line 12, characters 55-68:
 //  11 | let add = ([store, delta]: [storage, int]): storage => store + delta;

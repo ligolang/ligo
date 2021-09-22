@@ -175,6 +175,6 @@ For example **code snippets** for the *Types* subsection of this doc, can be fou
 In certain cases it makes sense to be able to run/evaluate the given snippet. Usually there will be an example command which you can use, such as:
 
 ```shell
-ligo evaluate-expr -s pascaligo gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo --entry-point age -s pascaligo
 # Outputs: 25
 ```

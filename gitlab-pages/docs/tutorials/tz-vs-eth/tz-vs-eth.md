@@ -510,7 +510,7 @@ function main (const p : parameter; const s : storage) is
 
 We can then call this contract with the parameter of the form `Compute (function (const x : int) is x * x + 2 * x + 1)`. Try this out with:
 ```
-ligo interpret --init-file examples/contracts/ligo/Lambda.ligo 'main (Compute (function (const x : int) is x * x + 2 * x + 1), 3)'
+ligo run interpret 'main (Compute (function (const x : int) is x * x + 2 * x + 1), 3)' --init-file examples/contracts/ligo/Lambda.ligo
 ```
 
 </Syntax>
@@ -528,7 +528,7 @@ let main (p, s : parameter * storage) =
 
 We can then call this contract with the parameter of the form `Compute (fun (x : int) -> x * x + 2 * x + 1)`. Try this out with:
 ```
-ligo interpret --init-file examples/contracts/mligo/Lambda.mligo 'main (Compute (fun (x : int) -> x * x + 2 * x + 1), 3)'
+ligo run interpret 'main (Compute (fun (x : int) -> x * x + 2 * x + 1), 3)' --init-file examples/contracts/mligo/Lambda.mligo
 ```
 
 </Syntax>
@@ -547,7 +547,7 @@ let main = ((p, s): (parameter, storage)) =>
 
 We can then call this contract with the parameter of the form `Compute ((x : int) => x * x + 2 * x + 1)`. Try this out with:
 ```
-ligo interpret --init-file examples/contracts/religo/Lambda.religo 'main (Compute ((x : int) => x * x + 2 * x + 1), 3)'
+ligo run interpret 'main (Compute ((x : int) => x * x + 2 * x + 1), 3)' --init-file examples/contracts/religo/Lambda.religo
 ```
 
 </Syntax>

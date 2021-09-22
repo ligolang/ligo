@@ -104,7 +104,7 @@ function add (const a: int; const b : int) : int is a + b
 You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.ligo add '(1,2)'
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.ligo '(1,2)' --entry-point add
 # Outputs: 3
 ```
 
@@ -122,7 +122,7 @@ let add (a : int) (b : int) : int = a + b
 You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.mligo add '(1,2)'
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.mligo '(1,2)' --entry-point add
 # Outputs: 3
 ```
 
@@ -157,7 +157,7 @@ let increment : int -> int = add_curry 1             // Partial application
 You can run the `increment` function defined above using the LIGO
 compiler like this:
 ```shell
-ligo evaluate-call gitlab-pages/docs/language-basics/src/functions/curry.mligo increment 5
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/curry.mligo 5 --entry-point increment
 # Outputs: 6
 ```
 
@@ -193,7 +193,7 @@ let add = ((a, b): (int, int)) : int => a + b;
 You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.religo add '(1,2)'
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.religo '(1,2)' --entry-point add
 # Outputs: 3
 ```
 
@@ -241,7 +241,7 @@ let add = ([a, b]: [int, int]): int => a + b;
 You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.jsligo add '(1,2)'
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.jsligo '(1,2)' --entry-point add
 # Outputs: 3
 ```
 
@@ -303,7 +303,7 @@ const a : int = increment (1); // a = 2
 You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.ligo a
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.ligo --entry-point a
 # Outputs: 2
 ```
 
@@ -318,7 +318,7 @@ let a : int = increment 1 // a = 2
 You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mligo a
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mligo --entry-point a
 # Outputs: 2
 ```
 
@@ -333,7 +333,7 @@ let a : int = increment (1); // a == 2
 You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.religo a
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.religo --entry-point a
 # Outputs: 2
 ```
 
@@ -348,7 +348,7 @@ let a: int = increment(1); // a == 2
 You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
-ligo evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.jsligo a
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.jsligo --entry-point a
 # Outputs: 2
 ```
 
@@ -372,8 +372,8 @@ You can call the function `incr_map` defined above using the LIGO
 compiler like so:
 
 ```shell
-ligo evaluate-call
-gitlab-pages/docs/language-basics/src/functions/incr_map.ligo incr_map
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/functions/incr_map.ligo --entry-point incr_map
 "list [1;2;3]"
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
@@ -388,8 +388,8 @@ let incr_map (l : int list) : int list =
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo evaluate-call
-gitlab-pages/docs/language-basics/src/functions/incr_map.mligo incr_map
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/functions/incr_map.mligo --entry-point incr_map
 "list [1;2;3]"
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
@@ -404,8 +404,8 @@ let incr_map = (l : list (int)) : list (int) =>
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo evaluate-call
-gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/functions/incr_map.religo --entry-point incr_map
 "list [1;2;3]"
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
@@ -420,8 +420,8 @@ let incr_map = (l: list<int>): list<int> =>
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo evaluate-call
-gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo incr_map
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo --entry-point incr_map
 "list [1;2;3]"
 # Outputs: [ 2 ; 3 ; 4 ]
 ```

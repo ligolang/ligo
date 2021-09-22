@@ -9,7 +9,7 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-> Important: The `Test` module is only available inside the `ligo test` command. See also [Testing LIGO](../advanced/testing).
+> Important: The `Test` module is only available inside the `ligo run test` command. See also [Testing LIGO](../advanced/testing).
 
 <SyntaxTitle syntax="pascaligo">
 type michelson_program

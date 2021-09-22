@@ -168,7 +168,7 @@ and the parameter we have used for the invocation.
 <Syntax syntax="pascaligo">
 
 ```zsh
-ligo dry-run taco-shop.ligo main 4 3
+ligo run dry-run taco-shop.ligo 4 3 --entry-point main
 # OUTPUT:
 # ( LIST_EMPTY() , 7 )
 ```
@@ -177,7 +177,7 @@ ligo dry-run taco-shop.ligo main 4 3
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo dry-run taco-shop.mligo main 4 3
+ligo run dry-run taco-shop.mligo 4 3 --entry-point main
 # OUTPUT:
 # ( LIST_EMPTY() , 7 )
 ```
@@ -186,7 +186,7 @@ ligo dry-run taco-shop.mligo main 4 3
 <Syntax syntax="reasonligo">
 
 ```zsh
-ligo dry-run taco-shop.religo main 4 3
+ligo run dry-run taco-shop.religo 4 3 --entry-point main
 # OUTPUT:
 # ( LIST_EMPTY() , 7 )
 ```
@@ -195,7 +195,7 @@ ligo dry-run taco-shop.religo main 4 3
 <Syntax syntax="jsligo">
 
 ```zsh
-ligo dry-run taco-shop.jsligo main 4 3
+ligo run dry-run taco-shop.jsligo 4 3 --entry-point main
 # OUTPUT:
 # ( LIST_EMPTY() , 7 )
 ```
@@ -361,7 +361,7 @@ Out of curiosity, let's try to use LIGO `compile-expression` command compile thi
 <Syntax syntax="pascaligo">
 
 ```zsh
-ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.ligo init_storage
+ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.ligo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -371,7 +371,7 @@ ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-st
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.mligo init_storage
+ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.mligo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -381,7 +381,7 @@ ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-st
 <Syntax syntax="reasonligo">
 
 ```zsh
-ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.religo init_storage
+ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.religo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -391,7 +391,7 @@ ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-st
 <Syntax syntax="jsligo">
 
 ```zsh
-ligo compile-expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.jsligo init_storage
+ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.jsligo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -930,7 +930,7 @@ with `"test"`:
 <Syntax syntax="pascaligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.ligo
+ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.ligo
 # Output:
 #
 # Everything at the top-level was executed.
@@ -941,7 +941,7 @@ ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.ligo
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo
+ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo
 # Output:
 #
 # Everything at the top-level was executed.
@@ -952,7 +952,7 @@ ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo
 <Syntax syntax="reasonligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.religo
+ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.religo
 # Output:
 #
 # Everything at the top-level was executed.
@@ -963,7 +963,7 @@ ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.religo
 <Syntax syntax="jsligo">
 
 ```zsh
-ligo test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.jsligo
+ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.jsligo
 # Output:
 #
 # Everything at the top-level was executed.

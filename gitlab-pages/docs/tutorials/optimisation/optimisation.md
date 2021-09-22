@@ -114,7 +114,7 @@ The size of the contract code is arguably the most important optimisation target
 LIGO offers a convenient way to measure the size of the contract code:
 
 ```
-ligo measure-contract <SOURCE> <ENTRYPOINT>
+ligo info measure-contract <SOURCE> --entry-point <ENTRYPOINT>
 ```
 
 You should try to minimise the size of the code as possible.
