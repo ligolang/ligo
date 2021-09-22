@@ -1,7 +1,7 @@
 open Trace
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
-let string_of_contract t = Format.asprintf "%a" Tezos_protocol_009_PsFLoren.Protocol.Alpha_context.Contract.pp t
+let string_of_contract t = Format.asprintf "%a" Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.pp t
 let string_of_key_hash t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 
 let compile_contract ~raise ~add_warning source_file entry_point =

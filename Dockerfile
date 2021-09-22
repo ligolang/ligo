@@ -33,7 +33,6 @@ COPY vendors/ligo-utils/proto-alpha-utils/proto-alpha-utils.opam /ligo/vendors/l
 COPY vendors/ligo-utils/tezos-utils/tezos-utils.opam /ligo/vendors/ligo-utils/tezos-utils/tezos-utils.opam
 COPY vendors/ligo-utils/memory-proto-alpha/tezos-memory-proto-alpha.opam /ligo/vendors/ligo-utils/memory-proto-alpha/tezos-memory-proto-alpha.opam
 COPY vendors/ligo-utils/simple-utils/simple-utils.opam /ligo/vendors/ligo-utils/simple-utils/simple-utils.opam
-COPY vendors/ligo-utils/ligo_009_PsFLoren-test-helpers/ligo-009-PsFLoren-test-helpers.opam /ligo/vendors/ligo-utils/ligo_009_PsFLoren-test-helpers/ligo-009-PsFLoren-test-helpers.opam
 RUN opam update && sh scripts/install_opam_deps.sh
 
 # Now install vendor libs

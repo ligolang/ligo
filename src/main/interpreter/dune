@@ -3,7 +3,7 @@
   (public_name ligo.main_interpreter)
   (instrumentation (backend bisect_ppx))
   (libraries
-    ligo-009-PsFLoren-test-helpers
+    tezos-010-PtGRANAD-test-helpers
     ast_typed
     ligo_interpreter
     main_errors

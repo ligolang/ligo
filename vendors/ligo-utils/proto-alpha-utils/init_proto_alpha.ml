@@ -105,7 +105,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Alpha_context.Constants.parametric = Tezos_protocol_009_PsFLoren_parameters.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.parametric = Tezos_protocol_010_PtGRANAD_parameters.Default_parameters.constants_test in
     check_constants_consistency constants >>=? fun () ->
 
     let hash =
@@ -149,11 +149,12 @@ module Context_init = struct
 
   let contents
         ?(proof_of_work_nonce = default_proof_of_work_nonce)
-        ?(priority = 0) ?seed_nonce_hash () =
+        ?(priority = 0) ?seed_nonce_hash ?(liquidity_baking_escape_vote = false) () =
     Alpha_context.Block_header.({
         priority ;
         proof_of_work_nonce ;
         seed_nonce_hash ;
+        liquidity_baking_escape_vote ;
       })
 
 

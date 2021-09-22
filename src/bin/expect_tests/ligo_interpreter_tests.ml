@@ -140,18 +140,20 @@ let%expect_test _ =
   Everything at the top-level was executed.
   - test exited with value (). |}]
 
+(* DEPRECATED
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "bootstrapped_contracts.mligo" ] ;
+run_ligo_good ["run";"test" ; test "bootstrapped_contracts.mligo" ] ;
   [%expect {|
-    "Initial states:"
-    (Pair "KT1CSKPf2jeLpMmrgKquN2bCjBTkAcAdRVDy" 12)
-    (Pair "KT1QuofAgnsWffHzLA7D78rxytJruGHDe7XG" 9)
-    "Final states:"
-    (Pair "KT1CSKPf2jeLpMmrgKquN2bCjBTkAcAdRVDy" 3)
-    (Pair "KT1QuofAgnsWffHzLA7D78rxytJruGHDe7XG" 0)
-    Everything at the top-level was executed.
-    - test_transfer exited with value ().
-            |}]
+  "Initial states:"
+  (Pair "KT1CSKPf2jeLpMmrgKquN2bCjBTkAcAdRVDy" 12)
+  (Pair "KT1QuofAgnsWffHzLA7D78rxytJruGHDe7XG" 9)
+  "Final states:"
+  (Pair "KT1CSKPf2jeLpMmrgKquN2bCjBTkAcAdRVDy" 3)
+  (Pair "KT1QuofAgnsWffHzLA7D78rxytJruGHDe7XG" 0)
+  Everything at the top-level was executed.
+  - test_transfer exited with value ().
+  |}]
+*)
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "override_function.mligo" ] ;
@@ -189,13 +191,14 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+(* DEPRECATED
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_bigmap_set.mligo" ] ;
   [%expect {|
     9n
     0n
     Everything at the top-level was executed.
-    - test exited with value (). |}]
+    - test exited with value (). |}] *)
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_module.mligo" ] ;

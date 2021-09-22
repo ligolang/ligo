@@ -40,9 +40,9 @@ depends: [
   "tezos-crypto"
   "tezos-error-monad"
   "tezos-stdlib-unix"
-  "tezos-protocol-environment"
-  "tezos-protocol-009-PsFLoren" {= "9.7"}
-  "tezos-client-009-PsFLoren"
+  "tezos-protocol-environment" {= "10.2"}
+  "tezos-protocol-010-PtGRANAD" {= "10.2"}
+  "tezos-client-010-PtGRANAD"
   "tezos-memory-proto-alpha"
   "simple-utils"
   "tezos-utils"
