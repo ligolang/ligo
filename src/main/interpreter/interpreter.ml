@@ -675,9 +675,9 @@ and eval_ligo ~raise ~steps : Ast_typed.expression -> calltrace -> env -> value 
       )
     | E_lambda {binder; result;} ->
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder ; body=result ; env}
-    | E_let_in {let_binder ; rhs; let_result} -> (
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder (rhs.type_expression,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
       eval_ligo (let_result) calltrace env
@@ -693,7 +693,7 @@ and eval_ligo ~raise ~steps : Ast_typed.expression -> calltrace -> env -> value 
     | E_literal l ->
       eval_literal l
     | E_variable var ->
-      let {eval_term=v} = try Option.value_exn (Env.lookup env var) with _ -> (failwith "unbound variable") in
+      let {eval_term=v} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith "unbound variable") in
       return v
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
@@ -817,11 +817,11 @@ and eval_ligo ~raise ~steps : Ast_typed.expression -> calltrace -> env -> value 
     | E_module_accessor _ ->
        let rec aux env e = match e.expression_content with
          | E_variable var ->
-            let* value_expr = monad_option (Errors.generic_error term.location "Error resolving module path: variable not found")
+            let* value_expr, _ = monad_option (Errors.generic_error term.location "Error resolving module path: variable not found")
                                (List.Assoc.find (Ligo_interpreter.Environment.expressions env) ~equal:(Location.equal_content ~equal:Var.equal) var) in
             return value_expr.eval_term
          | E_record_accessor {record = { expression_content = E_variable record }; path} ->
-            let* value_rcrd = monad_option (Errors.generic_error term.location "Error resolving module path: record not found")
+            let* value_rcrd, _ = monad_option (Errors.generic_error term.location "Error resolving module path: record not found")
                                (List.Assoc.find (Ligo_interpreter.Environment.expressions env) ~equal:(Location.equal_content ~equal:Var.equal) record) in
             (match value_rcrd.eval_term with
              | V_Record recmap ->
@@ -852,9 +852,9 @@ and eval_module ~raise ~steps : Ast_typed.module_fully_typed * Tezos_state.conte
         match Location.unwrap el with
         | Ast_typed.Declaration_type _ ->
            (top_env,state)
-        | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
+        | Ast_typed.Declaration_constant {binder; expr ; attr = { inline=_ ; no_mutation }} ->
           let (v,state) = try_eval ~raise ~steps expr top_env state None in
-          let top_env' = Env.extend top_env binder (expr.type_expression, v) in
+          let top_env' = Env.extend top_env binder ~no_mutation (expr.type_expression, v) in
           (top_env',state)
         | Ast_typed.Declaration_module {module_binder; module_} ->
           let (module_env, state) = eval_module ~raise ~steps (module_, state) in
@@ -873,7 +873,7 @@ let eval_test ~raise ~steps : Ast_typed.module_fully_typed -> (string * value) l
     let initial_state = Tezos_state.init_ctxt ~raise [] in
     let (env, _state) = eval_module ~raise ~steps (prg, initial_state) in
     let v = Env.to_kv_list_rev (Ligo_interpreter.Environment.expressions env) in
-    let aux : expression_variable * value_expr -> (string * value) option = fun (ev, v) ->
+    let aux : expression_variable * (value_expr * bool) -> (string * value) option = fun (ev, (v, _)) ->
       let ev = Location.unwrap ev in
       if not (Var.is_generated ev) && (Base.String.is_prefix (Var.to_name ev) ~prefix:"test") then
         Some (Var.to_name ev, v.eval_term)

@@ -123,12 +123,18 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and let_in {let_binder;rhs;let_result;inline} =
+and attribute {inline;no_mutation} =
+  `Assoc [
+    ("inline", `Bool inline);
+    ("no_mutation", `Bool no_mutation);
+  ]
+
+and let_in {let_binder;rhs;let_result;attr} =
   `Assoc [
     ("let_binder", expression_variable_to_yojson let_binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
-    ("inline", `Bool inline);
+    ("attr", attribute attr);
   ]
 
 and mod_in {module_binder;rhs;let_result} =
@@ -201,12 +207,12 @@ and declaration_type {type_binder;type_expr} =
     ("type_expr", type_expression type_expr);
   ]
 
-and declaration_constant {name; binder;inline;expr} =
+and declaration_constant {name; binder;expr;attr} =
   `Assoc [
     ("name", option' string name);
     ("binder",expression_variable_to_yojson binder);
     ("expr", expression expr);
-    ("attribute", `Bool inline);
+    ("attr", attribute attr);
   ]
 
 and declaration_module {module_binder;module_} =

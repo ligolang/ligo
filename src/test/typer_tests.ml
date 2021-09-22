@@ -83,12 +83,12 @@ module TestExpressions = struct
 
   let let_in ~raise  () : unit =
     test_expression  ~raise
-      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") false (e_int Z.zero) @@ e_var "x")
+      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") {inline=false;no_mutation=false} (e_int Z.zero) @@ e_var "x")
       O.(t_int ())
 
   let let_in_ascr ~raise  () : unit =
     test_expression  ~raise
-      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) false (e_int Z.zero) @@ e_var "x")
+      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) {inline=false;no_mutation=false} (e_int Z.zero) @@ e_var "x")
       O.(t_int ())
 
   let constructor ~raise  () : unit =

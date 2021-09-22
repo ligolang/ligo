@@ -340,7 +340,7 @@ let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
 let e_raw_code language code : expression_content = E_raw_code { language ; code }
 let e_variable v : expression_content = E_variable v
-let e_let_in let_binder rhs let_result inline = E_let_in { let_binder ; rhs ; let_result; inline }
+let e_let_in let_binder rhs let_result attr = E_let_in { let_binder ; rhs ; let_result; attr }
 let e_mod_in module_binder rhs let_result = E_mod_in { module_binder ; rhs ; let_result }
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
@@ -379,7 +379,7 @@ let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layou
 let e_a_application a b t = make_e (e_application a b) t
 let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi ~f:(fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
-let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
+let e_a_let_in binder expr body attr = make_e (e_let_in binder expr body attr) (get_type_expression body)
 let e_a_mod_in module_binder rhs let_result = make_e (e_mod_in module_binder rhs let_result) (get_type_expression let_result)
 let e_a_raw_code l c t = make_e (e_raw_code l c) t
 let e_a_nil t = make_e (e_nil ()) (t_list t)
@@ -443,7 +443,7 @@ let get_a_record_accessor = fun t ->
 let get_declaration_by_name : module_fully_typed -> string -> declaration option = fun (Module_Fully_Typed p) name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { name = name'; binder = _ ; expr=_ ; inline=_ } ->
+    | Declaration_constant { name = name'; binder = _ ; expr = _ ; attr = _ } ->
       (match name' with
        | None -> false
        | Some name' -> String.equal name' name)

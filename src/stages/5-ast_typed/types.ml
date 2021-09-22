@@ -92,6 +92,8 @@ and module_with_unification_vars = Module_With_Unification_Vars of module'
 
 and module_fully_typed = Module_Fully_Typed of module'
 
+and attribute = { inline: bool ; no_mutation: bool }
+
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression
  *   a boolean indicating whether it should be inlined
@@ -101,7 +103,7 @@ and declaration_constant = {
     name : string option ;
     binder : expression_variable ;
     expr : expression ;
-    inline : bool ;
+    attr : attribute ;
   }
 
 and declaration_type = {
@@ -184,7 +186,7 @@ and let_in = {
     let_binder: expression_variable ;
     rhs: expression ;
     let_result: expression ;
-    inline : bool ;
+    attr: attribute ;
   }
 
 and mod_in = {

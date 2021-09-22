@@ -387,7 +387,7 @@ and compile_expression ~raise ?(module_env = SMap.empty) (ae:AST.expression) : e
   let return ?(tv = tv) expr =
     Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
   match ae.expression_content with
-  | E_let_in {let_binder; rhs; let_result; inline} ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline } } ->
     let rhs' = self rhs in
     let result' = self let_result in
     return (E_let_in (rhs', inline, ((Location.map Var.todo_cast let_binder, rhs'.type_expression), result')))
@@ -771,7 +771,7 @@ and compile_recursive ~raise module_env {fun_name; fun_type; lambda} =
         let let_result = replace_callback ~raise fun_name loop_type shadowed li.let_result in
         let rhs = compile_expression ~raise ~module_env li.rhs in
         let ty  = compile_type ~raise li.rhs.type_expression in
-        e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result
+        e_let_in (Location.map Var.todo_cast li.let_binder) ty li.attr.inline rhs let_result
       | E_matching m ->
         let ty = compile_type ~raise e.type_expression in
         matching ~raise fun_name loop_type shadowed m ty
@@ -893,7 +893,7 @@ and compile_recursive ~raise module_env {fun_name; fun_type; lambda} =
 and compile_declaration ~raise module_env env (d:AST.declaration) : (toplevel_statement * _ SMap.t) option =
   match d with
   | Declaration_type _ -> None
-  | Declaration_constant { binder ; expr ; inline } ->
+  | Declaration_constant { binder ; expr ; attr = { inline } } ->
     let expression = compile_expression ~raise ~module_env expr in
     let binder = Location.map Var.todo_cast binder in
     let tv = Combinators.Expression.get_type expression in
@@ -936,15 +936,17 @@ and compile_module_as_record ~raise module_name (module_env : _ SMap.t) (lst : A
   let rec module_as_record ~raise module_env (AST.Module_Fully_Typed lst) : (AST.expression * _) =
     let aux (r,env) (cur : AST.declaration ) =
       match cur with
-      | Declaration_constant { binder ; expr; inline=_ } ->
+      | Declaration_constant { binder ; expr; attr=_ } ->
         let l = Var.to_name @@ Location.unwrap binder in
-        ((Label l,(expr,false))::r,env)
+        let attr : AST.attribute = { inline = false ; no_mutation = false } in
+        ((Label l,(expr,attr))::r,env)
       | Declaration_type _ty -> (r,env)
       | Declaration_module {module_binder; module_} ->
         let l = module_binder in
         let r',_ = module_as_record env ~raise module_ in
         let env = SMap.add l (get_type_expression r') env in
-        ((Label l,(r',false))::r,env)
+        let attr : AST.attribute = { inline = false ; no_mutation = false } in
+        ((Label l,(r',attr))::r,env)
       | Module_alias {alias; binders} ->
         let l = alias in
         let module_var, access = binders in
@@ -956,7 +958,8 @@ and compile_module_as_record ~raise module_name (module_env : _ SMap.t) (lst : A
         let module_type = get_type_expression module_expr in
         let env = SMap.add l module_type env in
         let r' = module_expr in
-        ((Label l,(r',true))::r,env)
+        let attr : AST.attribute = { inline = true ; no_mutation = false } in
+        ((Label l,(r',attr))::r,env)
 
     in
     let r,env = List.fold ~f:aux ~init:([],module_env) (temp_unwrap_loc_list lst) in

@@ -22,9 +22,9 @@ let add_ast_env ~raise ?(name = Location.wrap (Var.fresh ())) env binder body =
   let open Ast_typed in
   let aux (ei : declaration) (e : expression) =
     match ei with
-    | Declaration_constant { binder = let_binder ; expr } ->
+    | Declaration_constant { binder = let_binder ; expr ; attr } ->
        if Var.compare let_binder.wrap_content binder.Location.wrap_content <> 0 && Var.compare let_binder.wrap_content name.wrap_content <> 0 then
-         e_a_let_in let_binder expr e false
+         e_a_let_in let_binder expr e attr
        else
          e
     | Declaration_module { module_binder ; module_ } ->
@@ -209,12 +209,12 @@ and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env ->
   let open! Ast_typed in
   let rec aux = function
     | [] -> []
-    | Expression { name; item } :: tl ->
+    | Expression { name; item ; no_mutation } :: tl ->
        let binder = name in
        let name = None in
        let expr = val_to_ast ~raise ~toplevel:false ~loc:binder.location item.eval_term item.ast_type in
        let inline = false in
-       Ast_typed.Declaration_constant { name ; binder ; expr ; inline } :: aux tl
+       Ast_typed.Declaration_constant { name ; binder ; expr ; attr = { inline ; no_mutation } } :: aux tl
     | Module { name; item } :: tl ->
        let module_binder = name in
        let module_ = env_to_ast ~raise ~loc item in
@@ -286,22 +286,22 @@ and make_subst_ast_env_exp ~raise ?(toplevel = true) env expr =
                 env
              else
                [] in
-  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@ 
+  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@
    snd @@ Self_ast_typed.Helpers.Free_variables.expression expr in
-  let get_fmv_expr expr = 
+  let get_fmv_expr expr =
    fst @@ Self_ast_typed.Helpers.Free_module_variables.expression expr in
-  let get_fmv_mod module' = 
+  let get_fmv_mod module' =
    fst @@ Self_ast_typed.Helpers.Free_module_variables.module' module' in
   let rec aux (fv, fmv) acc = function
     | [] -> acc
-    | Expression { name; item } :: tl ->
+    | Expression { name; item ; no_mutation } :: tl ->
        let binder = Location.unwrap name in
        if List.mem fv binder ~equal:Var.equal then
          let expr = val_to_ast ~raise ~toplevel:false ~loc:name.location item.eval_term item.ast_type in
          let expr_fv = get_fv expr in
          let fv = List.remove_element ~compare:Var.compare binder fv in
          let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
-         aux (fv, fmv) (Declaration_constant { binder = name ; name = None ; expr ; inline = false} :: acc) tl
+         aux (fv, fmv) (Declaration_constant { binder = name ; name = None ; expr ; attr = { inline = false ; no_mutation } } :: acc) tl
        else
          aux (fv, fmv) acc tl
     | Module { name; item } :: tl ->

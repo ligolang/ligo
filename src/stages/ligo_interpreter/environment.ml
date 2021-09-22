@@ -1,9 +1,9 @@
 open Types
 
 let extend :
-  env -> expression_variable -> (Ast_typed.type_expression * value) -> env
-  = fun env name (ast_type,eval_term) ->
-  Expression {name ; item = { ast_type = ast_type ; eval_term }} :: env
+  env -> expression_variable -> ?no_mutation:bool -> (Ast_typed.type_expression * value) -> env
+  = fun env name ?(no_mutation = false) (ast_type,eval_term) ->
+  Expression {name ; item = { ast_type = ast_type ; eval_term } ; no_mutation } :: env
 
 let extend_mod :
   env -> module_variable -> env -> env
@@ -11,9 +11,9 @@ let extend_mod :
   Module {name; item} :: env
 
 let expressions :
-  env -> (expression_variable * value_expr) list
+  env -> (expression_variable * (value_expr * bool)) list
   = fun env ->
-  List.filter_map env ~f:(function | Expression {name;item} -> Some (name, item) | Module _ -> None)
+  List.filter_map env ~f:(function | Expression {name;item;no_mutation} -> Some (name, (item, no_mutation)) | Module _ -> None)
 
 let modules :
   env -> (module_variable * env) list
@@ -21,7 +21,7 @@ let modules :
   List.filter_map env ~f:(function | Module {name;item} -> Some (name, item) | Expression _ -> None)
 
 let lookup :
-  env -> expression_variable -> value_expr option
+  env -> expression_variable -> (value_expr * bool) option
   = fun env var ->
   let open Location in
   let equal a b = Var.compare a.wrap_content b.wrap_content = 0 in
@@ -37,6 +37,6 @@ let filter :
     = fun env pred ->
   let rec aux = function
     | [] -> []
-    | Expression {name = _; item} :: xs when not (pred item) -> aux xs
+    | Expression {name = _; item; no_mutation = _} :: xs when not (pred item) -> aux xs
     | x :: xs -> x :: aux xs in
   aux env

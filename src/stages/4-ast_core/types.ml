@@ -13,6 +13,7 @@ let location_to_yojson loc = Location.to_yojson loc
 
 type attribute = {
   inline: bool ;
+  no_mutation: bool;
 }
 
 
@@ -94,7 +95,7 @@ and let_in = {
     let_binder: ty_expr binder ;
     rhs: expression ;
     let_result: expression ;
-    inline: bool ;
+    attr: attribute ;
   }
 
 and mod_in = {

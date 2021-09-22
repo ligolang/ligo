@@ -154,9 +154,9 @@ and expression_content ppf (ec: expression_content) =
         expression result
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; inline} ->
-      fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
-        rhs option_inline inline expression let_result
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation } } ->
+      fprintf ppf "let %a = %a%a%a in %a" expression_variable let_binder expression
+        rhs option_inline inline option_no_mutation no_mutation expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let %a = %a in %a" module_variable module_binder 
@@ -195,8 +195,8 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant {name = _; binder; expr; inline} ->
-      fprintf ppf "const %a = %a%a" expression_variable binder expression expr option_inline inline
+  | Declaration_constant {name = _; binder; expr; attr = { inline; no_mutation } } ->
+      fprintf ppf "const %a = %a%a%a" expression_variable binder expression expr option_inline inline option_no_mutation no_mutation
   | Declaration_type {type_binder; type_expr} ->
       fprintf ppf "type %a = %a" type_variable type_binder type_expression type_expr
   | Declaration_module {module_binder; module_} ->

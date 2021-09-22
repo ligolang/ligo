@@ -42,7 +42,7 @@ end = struct
     | O.E_application     { lamb; args } -> let () = expression lamb in expression args
     | O.E_lambda          { binder=_; result } -> expression result
     | O.E_recursive       { fun_name=_; fun_type; lambda={ binder=_; result } } -> let () = expression result in te where fun_type
-    | O.E_let_in          { let_binder=_; rhs; let_result; inline=_ } -> let () = expression rhs in expression let_result
+    | O.E_let_in          { let_binder=_; rhs; let_result; attr=_ } -> let () = expression rhs in expression let_result
     | O.E_type_in         { type_binder=_; rhs=_; let_result} -> expression let_result
     | O.E_mod_in          { module_binder=_; rhs=_; let_result} -> expression let_result
     | O.E_mod_alias       { alias=_; binders=_; result} -> expression result
@@ -120,7 +120,7 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
     let env' = Environment.add_type (type_binder) type_expr env in
     let c = Wrap.type_decl () in
     return (O.Declaration_type {type_binder; type_expr}) type_expr env' state c
-  | Declaration_constant {name; binder; attr={inline}; expr} -> (
+  | Declaration_constant {name; binder; attr={inline;no_mutation}; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
@@ -132,7 +132,7 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
     let binder = Stage_common.Maps.binder (evaluate_type ~raise env)  binder in
     let post_env = Environment.add_ez_declaration binder.var expr t e in
     let c = Wrap.const_decl t tv_opt in
-    return (Declaration_constant { name; binder ; expr ; attr={inline}}) t post_env state' (constraints@c)
+    return (Declaration_constant { name; binder ; expr ; attr={inline;no_mutation}}) t post_env state' (constraints@c)
     )
   | Declaration_module {module_binder;module_} -> (
     let (e,module_,t,state) = type_module ~raise ~init_env:env module_ in
@@ -466,7 +466,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     return_wrapped (e_record_update record path update) e state (c1@c2) wrapped
 
   (* Advanced *)
-  | E_let_in {let_binder ; rhs ; let_result; inline} ->
+  | E_let_in {let_binder ; rhs ; let_result; attr} ->
     let rhs_tv_opt = Option.map ~f:(evaluate_type ~raise e) (let_binder.ascr) in
     let (e,state,rhs,t_r),c1 = self e state rhs in
     let let_binder = Stage_common.Maps.binder (evaluate_type ~raise e) let_binder in
@@ -474,7 +474,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     let e = Environment.add_ez_binder (let_binder.var) (t_variable fresh) e in
     let (_,state,let_result,l_let),c2 = self e state let_result in
     let wrapped = Wrap.let_in fresh t_r rhs_tv_opt l_let in
-    return_wrapped (e_let_in let_binder rhs let_result inline) e state (c1@c2) wrapped
+    return_wrapped (e_let_in let_binder rhs let_result attr) e state (c1@c2) wrapped
 
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise e rhs in

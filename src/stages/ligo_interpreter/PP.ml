@@ -60,7 +60,7 @@ let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
 
 let rec pp_env : Format.formatter -> env -> unit = fun ppf env ->
   let aux : Format.formatter -> env_item -> unit = fun ppf ->
-    function | Expression {name;item} ->
+    function | Expression {name;item;no_mutation=_} ->
                 Format.fprintf ppf "%a -> %a" Var.pp name.wrap_content pp_value_expr item
              | Module {name;item} ->
                 Format.fprintf ppf "%a -> %a" Ast_typed.PP.module_variable name pp_env item in

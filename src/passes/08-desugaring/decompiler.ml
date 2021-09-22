@@ -75,17 +75,17 @@ let rec decompile_expression : O.expression -> I.expression =
     | O.E_recursive recs ->
       let recs = recursive self self_type recs in
       return @@ I.E_recursive recs
-    | O.E_let_in {let_binder = {var; ascr};inline=false;rhs=expr1;let_result=expr2}
+    | O.E_let_in {let_binder = {var; ascr};attr={inline=false};rhs=expr1;let_result=expr2}
       when Var.equal var.wrap_content (Var.of_name "_")
            && Stdlib.(=) ascr (Some (O.t_unit ())) ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
       return @@ I.E_sequence {expr1;expr2}
-    | O.E_let_in {let_binder;inline;rhs;let_result} ->
+    | O.E_let_in {let_binder;attr;rhs;let_result} ->
       let let_binder = binder self_type let_binder in
       let rhs = self rhs in
       let let_result = self let_result in
-      let attributes = if inline then ["inline"] else [] in
+      let attributes = if attr.inline then ["inline"] else [] in
       return @@ I.E_let_in {let_binder;mut=false;attributes;rhs;let_result}
     | O.E_type_in ti ->
       let ti = type_in self self_type ti in

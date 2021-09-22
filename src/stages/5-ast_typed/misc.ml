@@ -242,7 +242,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
 let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { name = name' ; binder = _ ; expr ; inline=_ } -> (
+    | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _}} -> (
       if match name' with None -> false | Some name' -> String.equal name name'
       then Some expr
       else None

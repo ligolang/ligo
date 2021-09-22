@@ -9,6 +9,12 @@ let option_inline ppf inline =
   else
     fprintf ppf ""
 
+let option_no_mutation ppf no_mutation =
+  if no_mutation then
+    fprintf ppf "[@@no_mutation]"
+  else
+    fprintf ppf ""
+
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
