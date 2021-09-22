@@ -527,6 +527,20 @@ fun_expr(right_expr):
     in EFun {region; value}
   }
 | attributes ES6FUN
+  unit type_annotation? "=>" right_expr {
+    let stop   = expr_to_region $6 in
+    let region = cover $3.region stop in
+    let binders = PPar {
+      region = $3.region;
+      value = {
+          lpar = fst $3.value;
+          inside = PUnit $3;
+          rpar = snd $3.value}
+      } in
+    let value = {binders; lhs_type=$4; arrow=$5; body=$6; attributes=$1}
+    in EFun {region; value}
+  }
+| attributes ES6FUN
   "(" nsepseq(fun_arg, ",") ")" type_annotation? "=>" right_expr {
     let stop   = expr_to_region $8 in
     let region = cover $3 stop in
