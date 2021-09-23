@@ -242,18 +242,18 @@ getLigoDefinitions
   -> m (LigoDefinitions, Text)
 getLigoDefinitions contract = do
   let sys = "LIGO.PARSE"
-  Log.debug sys [i|parsing the following contract:\n #{contract}|]
-  ext <- getExt (srcPath contract)
+  Log.debug sys [i|parsing the following contract:\n#{contract}|]
+  let path = srcPath contract
+  ext <- getExt path
   let
     syntax = case ext of
       Reason -> "reasonligo"
       Pascal -> "pascaligo"
       Caml   -> "cameligo"
   mbOut <- try $
-    -- TODO: Use --typer=new, but currently it displays a lot of logging
-    -- information together with the JSON which makes it difficult to reason
-    -- about. It displays more errors than --typer=old (default).
-    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, srcPath contract] contract
+    -- HACK: We forget the parsed contract since we still want LIGO to read the
+    -- unpreprocessed version.
+    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, path] (Path path)
   case mbOut of
     Right (output, errs) ->
       --Log.debug sys [i|Successfully called ligo with #{output}|]

@@ -22,6 +22,7 @@ import Data.Text qualified as Text (lines, unlines)
 import Data.Traversable (for)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
+import UnliftIO.Async (pooledMapConcurrently)
 
 import Duplo.Lattice (Lattice (leq))
 
@@ -36,7 +37,6 @@ import Cli (HasLigoClient, LigoDecodedExpectedClientFailureException (..), fromL
 import Extension
 import ParseTree (Source (..), srcToText, toParseTree)
 import Parser
-import Util (mapConcurrentlyBounded)
 import Util.Graph (wcc)
 
 parse :: MonadIO m => Source -> m ContractInfo
@@ -89,7 +89,7 @@ parseContracts
   -> m [contract]
 parseContracts parser top = do
   input <- scanContracts top
-  mapConcurrentlyBounded (parser . Path) input
+  pooledMapConcurrently (parser . Path) input
 
 -- | Scan the whole directory for LIGO contracts.
 -- This ignores every other file which is not a contract.

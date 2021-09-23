@@ -46,8 +46,10 @@ import Control.Arrow ((&&&))
 import Control.Exception.Safe
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
 import Control.Monad.Trans.Except
+import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
 import Data.List (sortOn)
@@ -74,7 +76,7 @@ import Parser
 import Product
 import Range
 import Util (findKey, unionOrd)
-import Util.Graph (traverseAM)
+import Util.Graph (traverseAMConcurrently)
 
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
@@ -139,7 +141,7 @@ instance Pretty ScopeError where
 
 instance Exception ScopeError
 
-type ScopeM = ExceptT ScopeError (Reader (Lang, [ScopeForest]))
+type ScopeM = ExceptT ScopeError (Reader Lang)
 
 type Info' = Scope ': Maybe Level ': ParsedInfo
 
@@ -262,21 +264,21 @@ instance Pretty ScopeForest where
 
       decls' = sexpr "decls" . map pp . Map.toList
 
-lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
+lookupEnv :: Text -> Scope -> Maybe ScopedDecl
 lookupEnv name = getFirst . foldMap \decl ->
   First do
     guard (_sdName decl == name)
     return decl
 
-envAtPoint :: Range -> ScopeForest -> [ScopedDecl]
+envAtPoint :: Range -> ScopeForest -> Scope
 envAtPoint r (ScopeForest sf ds) = do
-  let sp = sf >>= spine r >>= Set.toList
+  let sp = sf >>= toList . spine r >>= Set.toList
   map (ds Map.!) sp
 
-spine :: Range -> ScopeTree -> [Set DeclRef]
+spine :: Range -> ScopeTree -> DList (Set DeclRef)
 spine r (only -> (i, trees))
-  | leq r (getRange i) = foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
-  | otherwise = []
+  | leq r (getRange i) = foldMap (spine r) trees `snoc` getElem @(Set DeclRef) i
+  | otherwise = mempty
 
 addLocalScopes :: MonadCatch m => SomeLIGO ParsedInfo -> ScopeForest -> m (SomeLIGO Info')
 addLocalScopes tree forest =
@@ -307,7 +309,8 @@ addLocalScopes tree forest =
     ]
 
 addScopes
-  :: forall impl m. HasScopeForest impl m
+  :: forall impl m
+   . (HasScopeForest impl m, MonadUnliftIO m)
   => AdjacencyMap ParsedContractInfo
   -> m (AdjacencyMap ContractInfo')
 addScopes graph = do
@@ -324,7 +327,7 @@ addScopes graph = do
       FindContract src
         <$> addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe)
         <*> pure (_cMsgs sf)
-  traverseAM addScope forestGraph
+  traverseAMConcurrently addScope forestGraph
   where
     nubRef sd = sd
       { _sdRefs = ordNub (_sdRefs sd)

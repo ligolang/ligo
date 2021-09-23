@@ -6,10 +6,10 @@ module AST.Scope.Fallback
   , loopM_
   ) where
 
-import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&))
 import Control.Monad.Catch.Pure hiding (throwM)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.State
 import Control.Monad.Writer (Writer, WriterT, execWriterT, runWriter, tell)
 
@@ -21,7 +21,6 @@ import Data.Map qualified as Map
 import Data.Maybe (listToMaybe)
 import Data.Set qualified as Set
 import Data.Text (Text)
-
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
@@ -40,36 +39,22 @@ import Parser
 import Product
 import Range
 import Util (foldMapM, unconsFromEnd)
-import Util.Graph (subgraph, traverseAM)
+import Util.Graph (traverseAMConcurrently)
 
 data Fallback
 
-instance HasLigoClient m => HasScopeForest Fallback m where
-  scopeForest = flip evalStateT Map.empty . go
+instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
+  -- TODO: 'mkForest' is pure, so we should find a parallel function and use it
+  -- instead, and then call 'pure'
+  scopeForest = traverseAMConcurrently mkForest
     where
-      mkForest (FindContract src (SomeLIGO dialect ligo) msg) includes = do
-        includes' <- go includes
-        let runLigoEnv = first singleton . flip runReader (dialect, contractTree <$> G.vertexList includes') . runExceptT . getEnv
+      mkForest (FindContract src (SomeLIGO dialect ligo) msg) = do
+        let runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
             fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
             sf = case runLigoEnv ligo of
               Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
               Right sf' -> FindContract src sf' msg
-        modify $ Map.insert (contractFile sf) (Just sf)
         pure sf
-
-      go graph = flip traverseAM graph \pc -> do
-        vis <- get
-        case Map.lookup (contractFile pc) vis of
-          Nothing -> do
-            modify $ Map.insert (contractFile pc) Nothing
-            mkForest pc (subgraph pc graph)
-          Just res -> case res of
-            -- 'Nothing' only occurs here if we have some cyclic include. To
-            -- recover from it, we break the cycle by not visiting its inner
-            -- includes.
-            -- TODO: Visit nodes that don't form a cycle.
-            Nothing -> mkForest pc G.empty
-            Just sf -> pure sf
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
@@ -82,14 +67,16 @@ addReferences ligo = execState $ loopM_ addRef ligo
       (match -> Just (r, TypeName n)) -> addThisRef TypeLevel (getElem r) n
       _                               -> return ()
 
+    addThisRef :: Level -> PreprocessedRange -> Text -> State ScopeForest ()
     addThisRef cat' (PreprocessedRange r) n = do
       modify
         $ withScopeForest \(sf, ds) ->
           flip runState ds do
-            let frameSet = Set.toList =<< spine r =<< sf
+            let frameSet = Set.toList =<< toList . spine r =<< sf
             walkScope cat' r n frameSet
             return sf
 
+    walkScope :: Level -> Range -> Text -> [DeclRef] -> State (Map DeclRef ScopedDecl) ()
     walkScope _     _ _ [] = return ()
     walkScope level r n (declref : rest) = do
       decl <- gets (Map.! declref)
@@ -99,6 +86,7 @@ addReferences ligo = execState $ loopM_ addRef ligo
       else do
         walkScope level r n rest
 
+    addRefToDecl :: Range -> ScopedDecl -> ScopedDecl
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
@@ -213,11 +201,8 @@ assignDecls
      , Eq (Product xs)
      )
   => LIGO xs
-  -> ScopeM (LIGO ([ScopedDecl] : Bool : Range : xs))
-assignDecls tree = do
-  (_, includes) <- lift ask
-  let decls = concat $ Map.elems . sfDecls <$> includes
-  loopM go $ fmap (\r -> decls :> False :> getRange r :> r) tree
+  -> ScopeM (LIGO (Scope : Bool : Range : xs))
+assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
   where
     go = \case
       (match -> Just (r, Let decl body)) -> do
@@ -279,12 +264,12 @@ functionScopedDecl
   -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
-  (dialect, _) <- lift ask
+  dialect <- lift ask
   (PreprocessedRange origin, name) <- getName nameNode
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure (params dialect)
       _vdsTspec = parseTypeDeclSpecifics <$> typ
-  pure $ ScopedDecl
+  pure ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
     , _sdRefs = []
@@ -306,9 +291,9 @@ valueScopedDecl
   -> Maybe (LIGO info) -- ^ initializer node
   -> ScopeM ScopedDecl
 valueScopedDecl docs nameNode typ body = do
-  (dialect, _) <- lift ask
+  dialect <- lift ask
   (PreprocessedRange origin, name) <- getName nameNode
-  pure $ ScopedDecl
+  pure ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
     , _sdRefs = []
@@ -328,9 +313,9 @@ typeScopedDecl
      )
   => [Text] -> LIGO info -> LIGO info -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
-  (dialect, _) <- lift ask
+  dialect <- lift ask
   (PreprocessedRange origin, name) <- getTypeName nameNode
-  pure $ ScopedDecl
+  pure ScopedDecl
     { _sdName = name
     , _sdOrigin = origin
     , _sdRefs = []
@@ -344,20 +329,20 @@ singleton :: a -> [a]
 singleton x = [x]
 
 extractScopeTree
-  :: LIGO ([ScopedDecl] : Bool : Range : xs)
-  -> Tree' '[[]] '[[ScopedDecl], Bool, Range]
+  :: LIGO (Scope : Bool : Range : xs)
+  -> Tree' '[[]] '[Scope, Bool, Range]
 extractScopeTree ((decls :> visible :> r :> _) :< fs)
   = make (decls :> visible :> r :> Nil, map extractScopeTree (toList fs))
 
 -- 'Bool' in the node list denotes whether this part of a tree is a scope
 compressScopeTree
-  :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
-  -> [Tree' '[[]] '[[ScopedDecl], Range]]
+  :: Tree' '[[]] '[Scope, Bool, Range]
+  -> [Tree' '[[]] '[Scope, Range]]
 compressScopeTree = go
   where
     go
-      :: Tree' '[[]] '[[ScopedDecl], Bool, Range]
-      -> [Tree' '[[]] '[[ScopedDecl], Range]]
+      :: Tree' '[[]] '[Scope, Bool, Range]
+      -> [Tree' '[[]] '[Scope, Range]]
     go (only -> (_ :> False :> _ :> Nil, rest)) =
       rest >>= go
 
@@ -368,12 +353,12 @@ compressScopeTree = go
          ]
 
 extractScopeForest
-  :: [Tree' '[[]] '[[ScopedDecl], Range]]
+  :: [Tree' '[[]] '[Scope, Range]]
   -> ScopeForest
 extractScopeForest = uncurry ScopeForest . runWriter . mapM go
   where
     go
-      :: Tree' '[[]] '[[ScopedDecl], Range]
+      :: Tree' '[[]] '[Scope, Range]
       -> Writer (Map DeclRef ScopedDecl) ScopeTree
     go (only -> (decls :> r :> Nil, ts)) = do
       let mkDeclRef sd = DeclRef (_sdName sd) (_sdOrigin sd)
@@ -389,7 +374,7 @@ getImmediateDecls
      , Contains PreprocessedRange info
      , Eq (Product info)
      )
-  => LIGO info -> ScopeM [ScopedDecl]
+  => LIGO info -> ScopeM Scope
 getImmediateDecls = \case
   (match -> Just (r, pat)) -> do
     case pat of

@@ -29,7 +29,7 @@ import Product
 import Range
 
 type CanSearch xs =
-  ( Contains [ScopedDecl] xs
+  ( Contains Scope xs
   , Contains Range xs
   , Contains (Maybe Level) xs
   , Contains [Text] xs

@@ -8,6 +8,7 @@ module AST.Scope
   where
 
 import Algebra.Graph.AdjacencyMap qualified as G (vertex, vertexList)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 
 import AST.Includes (insertPreprocessorRanges)
 import AST.Scope.Common as M
@@ -19,7 +20,7 @@ import AST.Scope.Standard as M
 -- sees the scopes for the given contract, and doesn't try to visit includes.
 addShallowScopes
   :: forall parser m
-   . HasScopeForest parser m
+   . (HasScopeForest parser m, MonadUnliftIO m)
   => ContractInfo
   -> m ContractInfo'
 addShallowScopes =
