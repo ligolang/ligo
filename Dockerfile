@@ -43,8 +43,10 @@ COPY ligo.opam.locked /ligo
 WORKDIR /ligo
 RUN sh scripts/install_vendors_deps.sh
 
+
 # Install LIGO
 COPY src /ligo/src
+COPY dune /ligo
 COPY dune-project /ligo/dune-project
 COPY scripts/version.sh /ligo/scripts/version.sh
 WORKDIR /ligo
