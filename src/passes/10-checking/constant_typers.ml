@@ -1034,7 +1034,7 @@ let test_eval ~raise loc = typer_1 ~raise loc "TEST_EVAL" @@ fun _ ->
   (t_michelson_code ())
 
 let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
-  let param_ty, _ = trace_option ~raise (expected_michelson_code loc t) @@
+  let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
                        get_t_typed_address t in
   let param_ty = Option.value (Ast_typed.Helpers.get_entrypoint "default" param_ty) ~default:param_ty in
   (t_contract param_ty)
