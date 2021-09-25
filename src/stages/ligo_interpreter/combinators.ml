@@ -167,11 +167,13 @@ let rec equal_value (v : value) (v' : value) : bool =
   | V_Construct (c, l), V_Construct (c', l') ->
      String.equal c c' && equal_value l l'
   | V_Record r, V_Record r' ->
-     let r = LMap.to_kv_list r in
-     let r' = LMap.to_kv_list r' in
+     let r = LMap.to_kv_list r |> List.sort ~compare in
+     let r' = LMap.to_kv_list r' |> List.sort ~compare in
      List.equal (fun (Label l, v) (Label l', v') -> String.equal l l' && equal_value v v') r r'
   | V_Set s, V_Set s' ->
      List.equal equal_value s s'
   | V_Map m, V_Map m' -> 
+    let m = List.sort ~compare m in
+    let m' = List.sort ~compare m' in
     List.equal (fun (k1, v1) (k2, v2) -> equal_value k1 k2 && equal_value v1 v2) m m'
   | _, _ -> false

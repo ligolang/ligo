@@ -347,6 +347,7 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
     | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
       (*TODO : allign with tezos*)
       return @@ V_Ct (C_string (String.sub s (Z.to_int st) (Z.to_int ed)))
+    | ( C_LIST_FOLD_LEFT , [ V_Func_val {arg_binder ; body ; env}  ; init ; V_List elts ] )
     | ( C_LIST_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_List elts ; init ] ) ->
       let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
       let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
@@ -358,6 +359,25 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
           eval_ligo body calltrace env'
         )
         init elts
+    | ( C_LIST_FOLD_RIGHT , [ V_Func_val {arg_binder ; body ; env}  ; V_List elts ; init ] ) ->
+      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ Ast_typed.get_t_list lst_ty in
+      Monad.bind_fold_right_list
+        (fun elt prev ->
+          let fold_args = v_pair (elt,prev) in
+          let env' = Env.extend env arg_binder ((Ast_typed.t_pair ty acc_ty), fold_args) in
+          eval_ligo body calltrace env'
+        )
+        init elts
+    | ( C_LIST_HEAD_OPT , [ V_List elts ] ) ->
+      (match (List.hd elts) with
+      | Some v -> return @@ v_some v
+      | None   -> return @@ v_none ())
+    | ( C_LIST_TAIL_OPT , [ V_List elts ] ) ->
+      (match (List.tl elts) with
+      | Some v -> return @@ v_some (V_List v)
+      | None   -> return @@ v_none ())
     | ( C_BIG_MAP_EMPTY , []) -> return @@ V_Map ([])
     | ( C_MAP_EMPTY , []) -> return @@ V_Map ([])
     | ( C_MAP_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Map kvs ; init ] ) ->
@@ -379,6 +399,16 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
       | "None" -> return @@ V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k)
       | _ -> assert false
     )
+    | ( C_MAP_GET_AND_UPDATE , [k ; V_Construct (option,v) ; V_Map kvs ] ) ->
+      let old_value = List.Assoc.find ~equal:Caml.(=) kvs k in
+      let old_value = (match old_value with
+        | Some v -> v_some v
+        | None -> v_none ())
+      in
+      (match option with
+      | "Some" -> return @@ v_pair (old_value, V_Map ((k,v)::(List.Assoc.remove ~equal:Caml.(=) kvs k)))
+      | "None" -> return @@ v_pair (old_value, V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k))
+      | _ -> assert false)
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.dedup_and_sort ~compare (v::l))
     | ( C_SET_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Set elts ; init ] ) ->
@@ -386,6 +416,17 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
       let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
       let* ty = monad_option (Errors.generic_error set_ty.location "Expected set type") @@ Ast_typed.get_t_set set_ty in
       Monad.bind_fold_list
+        (fun prev elt ->
+          let fold_args = v_pair (prev,elt) in
+          let env' = Env.extend env arg_binder (Ast_typed.(t_pair acc_ty ty), fold_args) in
+          eval_ligo body calltrace env'
+        )
+        init elts
+    | ( C_SET_FOLD_DESC , [ V_Func_val {arg_binder ; body ; env}  ; V_Set elts ; init ] ) ->
+      let* set_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let* ty = monad_option (Errors.generic_error set_ty.location "Expected set type") @@ Ast_typed.get_t_set set_ty in
+      Monad.bind_fold_right_list
         (fun prev elt ->
           let fold_args = v_pair (prev,elt) in
           let env' = Env.extend env arg_binder (Ast_typed.(t_pair acc_ty ty), fold_args) in
@@ -403,6 +444,10 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
         (V_Ct C_unit) elts
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem ~equal:Caml.(=) elts v)
     | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> return @@ V_Set (List.filter ~f:(fun el -> not (el = v)) elts)
+    | ( C_SET_UPDATE , [ v ; b ; V_Set elts ] ) ->
+      if is_true b 
+      then return @@ V_Set (List.dedup_and_sort ~compare (v::elts))
+      else return @@ V_Set (List.filter ~f:(fun el -> not (el = v)) elts)
     | ( C_ADDRESS , [ V_Ct (C_contract { address }) ] ) ->
       return (V_Ct (C_address address))
     | ( C_TRUE , [] ) -> return @@ v_bool true

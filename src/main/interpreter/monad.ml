@@ -408,6 +408,13 @@ let bind_fold_list f init lst =
   in
   List.fold_left ~f:aux ~init:(return init) lst
 
+let bind_fold_right_list f init lst =
+  let aux y x =
+    let* x = x in
+    f y x
+  in
+  List.fold_right ~f:aux ~init:(return init) lst
+
 let rec iter_while f lst =
   match lst with
   | [] ->

@@ -262,3 +262,49 @@ let test_bitwise_module =
             b_xor         = 3n  &&
             b_shift_left  = 28n &&
             b_shift_right = 3n   )
+
+let concat (xs : nat list) (ys : nat list) = 
+  List.fold_right (fun (x,ys : (nat * nat list)) -> x :: ys) xs ys
+
+let test_list_concat =
+  let xs = [1n;2n;3n] in
+  let ys = [4n;5n;6n] in
+  let zs = concat xs ys in
+  assert (zs = [1n;2n;3n;4n;5n;6n])
+
+let test_list_head_opt =
+  assert (List.head_opt ([1n;2n;3n] : nat list) = (Some 1n : nat option) &&
+          List.head_opt ([2n;3n]    : nat list) = (Some 2n : nat option) &&
+          List.head_opt ([3n]       : nat list) = (Some 3n : nat option) &&
+          List.head_opt ([]         : nat list) = (None    : nat option))
+
+let test_list_tail_opt =
+  assert (List.tail_opt ([1n;2n;3n] : nat list) = (Some [2n;3n]         : nat list option) &&
+          List.tail_opt ([2n;3n]    : nat list) = (Some [3n]            : nat list option) &&
+          List.tail_opt ([3n]       : nat list) = (Some ([] : nat list) : nat list option) &&
+          List.tail_opt ([]         : nat list) = (None                 : nat list option))
+
+let reverse (xs : nat list) = 
+  List.fold_left (fun (ys,x : (nat list * nat)) -> x :: ys) ([] : nat list) xs
+
+let test_list_reverse =
+  let xs = [1n;2n;3n] in
+  assert (reverse xs = [3n;2n;1n])
+
+let test_set_fold_desc = 
+  let xs = Set.literal [1n;2n;3n] in
+  let sum = Set.fold_desc (fun (x,acc : nat * nat) -> acc + x) xs 0n in
+  assert (sum = 6n)
+
+let test_set_update = 
+  let xs = Set.literal [1n;2n;3n] in
+  let xs = Set.update 4n true xs in
+  let xs = Set.update 3n false xs in
+  let xs = Set.update 5n false xs in
+  assert (xs = Set.literal [1n;2n;4n])
+
+let test_map_get_and_update = 
+  let xs = Map.literal [(1n,"Hello");(2n,"World")] in
+  let (old,xs) = Map.get_and_update 2n (Some "Foo") xs in
+  let ys = Map.literal [(1n,"Hello");(2n,"Foo")] in
+  assert (xs = ys && old = Some "World")
