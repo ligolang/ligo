@@ -306,6 +306,14 @@ let array_item_to_expression ~raise : CST.array_item -> CST.expr = function
   | Rest_entry _) as r ->
     raise.raise @@ expected_an_expression r
 
+let arguments_to_expr_nseq (args : CST.arguments) : CST.expr Utils.nseq * Location.t =
+  match args with
+  | Unit the_unit ->
+    ((CST.EUnit the_unit,[]), Location.lift the_unit.region)
+  | Multiple xs ->
+    let hd,tl = xs.value.inside in
+    ((hd,List.map ~f:snd tl), Location.lift xs.region)
+
 let get_t_string_singleton_opt = function
 | CST.TString s -> Some s.value
 | _ -> None
@@ -325,6 +333,10 @@ let rec compile_tuple_expression ~raise ?loc tuple_expr =
   match lst with
     hd::[] -> hd
   | lst -> e_tuple ?loc lst
+
+and compile_arguments ~raise (args: CST.arguments) =
+  let (args,loc) = arguments_to_expr_nseq args in
+  compile_tuple_expression ~raise ~loc args
 
 and compile_bin_op ~raise (op_type : AST.constant') (op : _ CST.bin_op CST.reg) =
   let self = compile_expression ~raise in
@@ -546,20 +558,16 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
   | ECall {value=(EVar var,args);region} ->
-    let args = match args with
-      | Unit the_unit -> CST.EUnit the_unit,[]
-      | Multiple xs ->
-         let hd,tl = xs.value.inside in
-         hd,List.map ~f:snd tl in
     let loc = Location.lift region in
     let (var, loc_var) = r_split var in
     (match constants var with
       Some const ->
+      let args,args_loc = arguments_to_expr_nseq args in
       let args = List.map ~f:(fun e -> self e) @@ nseq_to_list args in
-      return @@ e_constant ~loc const args
+      return @@ e_constant ~loc:(Location.cover loc args_loc) const args
     | None ->
       let func = e_variable_ez ~loc:loc_var var in
-      let args = compile_tuple_expression ~raise args in
+      let args = compile_arguments ~raise args in
       return @@ e_application ~loc func args
     )
   | EConstr constr ->
@@ -567,40 +575,30 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let args_o = Option.map ~f:(compile_tuple_expression ~raise <@ List.Ne.singleton) args_o in
     let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
-  | ECall {value=(EModA {value={module_name;field};region=_},args);region} when
-    List.mem ~equal:Caml.(=) build_ins module_name.value ->
-      let args = match args with
-      | Unit the_unit -> CST.EUnit the_unit,[]
-      | Multiple xs ->
-         let hd,tl = xs.value.inside in
-         hd,List.map ~f:snd tl in
-      let loc = Location.lift region in
-      let fun_name = match field with
-          EVar v -> v.value
-        | EConstr _ -> raise.raise @@ unknown_constructor module_name.value loc
-        | EModA ma ->
-           let (ma, loc) = r_split ma in
-           let (module_name, _) = r_split ma.module_name in
-           raise.raise @@ unknown_constant module_name loc
-        | _ -> failwith "Corner case : This couldn't be produce by the parser"
-      in
-      let var = module_name.value ^ "." ^ fun_name in
-      (match constants var with
-        Some const ->
-        let args = List.map ~f:self @@ nseq_to_list args in
-        return @@ e_constant ~loc const args
-      | None ->
-        raise.raise @@ unknown_constant var loc
-        )
+  | ECall {value=(EModA {value={module_name;field};region=_},args);region} when List.mem ~equal:Caml.(=) build_ins module_name.value -> (
+    let args,args_loc = arguments_to_expr_nseq args in
+    let loc = Location.lift region in
+    let fun_name = match field with
+        EVar v -> v.value
+      | EConstr _ -> raise.raise @@ unknown_constructor module_name.value loc
+      | EModA ma ->
+          let (ma, loc) = r_split ma in
+          let (module_name, _) = r_split ma.module_name in
+          raise.raise @@ unknown_constant module_name loc
+      | _ -> failwith "Corner case : This couldn't be produce by the parser"
+    in
+    let var = module_name.value ^ "." ^ fun_name in
+    match constants var with
+      Some const ->
+      let args = List.map ~f:self @@ nseq_to_list args in
+      return @@ e_constant ~loc:(Location.cover loc args_loc) const args
+    | None ->
+      raise.raise @@ unknown_constant var loc
+  )
   | ECall call ->
     let ((func, args), loc) = r_split call in
-    let args = match args with
-      | Unit the_unit -> CST.EUnit the_unit,[]
-      | Multiple xs ->
-         let hd,tl = xs.value.inside in
-         hd,List.map ~f:snd tl in
     let func = self func in
-    let args = compile_tuple_expression ~raise args in
+    let args = compile_arguments ~raise args in
     return @@ e_application ~loc func args
   | EArray items ->
     let (items, loc) = r_split items in

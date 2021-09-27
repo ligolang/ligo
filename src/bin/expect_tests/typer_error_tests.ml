@@ -138,6 +138,16 @@ let%expect_test _ =
     Invalid type(s).
     Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> sum[False -> unit , True -> unit]]". |} ] ;
 
+  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 38-60:
+      9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
+     10 |     let newStorage : storage = addone (oldStorage, 1 as nat);
+     11 |     return [list([]) as list<operation>, newStorage];
+
+    Invalid type(s).
+    Expected: "nat", but got: "( nat * nat )". |} ] ;
+
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/id.mligo", line 45, characters 4-51:
