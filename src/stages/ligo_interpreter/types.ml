@@ -4,6 +4,9 @@ module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
 module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
 module Int = Int_repr_copied
 
+type mcode = unit Tezos_utils.Michelson.michelson
+type mcontract = Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.t
+
 type mutation = Location.t * Ast_typed.expression
 
 type env_item =
@@ -21,11 +24,11 @@ and func_val = {
   }
 
 and michelson_code =
-  | Contract of unit Tezos_utils.Michelson.michelson
-  | Ty_code of (unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression)
+  | Contract of mcode
+  | Ty_code of (mcode * mcode * Ast_typed.type_expression)
 
 and contract =
-  { address : Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.t;
+  { address : mcontract;
     entrypoint: string option }
 
 and constant_val =
@@ -37,7 +40,7 @@ and constant_val =
   | C_string of string
   | C_bytes of bytes
   | C_mutez of Int.n Int.num
-  | C_address of Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.t (*should be represented as michelson data ? not convenient *)
+  | C_address of mcontract (*should be represented as michelson data ? not convenient *)
   | C_contract of contract
   | C_key_hash of Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.public_key_hash
 
@@ -68,12 +71,10 @@ and exception_type =
   Object_lang_ex of { location: Location.t ; errors: Tezos_error_monad.TzCore.error list ; calltrace : calltrace }
 | Meta_lang_ex of { location : Location.t ; reason : fail_reason ; calltrace : calltrace }
 
-and bootstrap_contract =
-  int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression * Ast_typed.type_expression
-
 type bigmap_state = (value * value) list
 type bigmap_data = {
       key_type : Tezos_raw_protocol_010_PtGRANAD.Script_repr.expr;
       value_type : Tezos_raw_protocol_010_PtGRANAD.Script_repr.expr;
       version : bigmap_state }
 type bigmap = int * bigmap_data
+type bigmaps = bigmap list

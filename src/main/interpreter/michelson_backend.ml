@@ -45,12 +45,20 @@ let make_options ~raise ?param ctxt =
   match ctxt with
   | None ->
      make_dry_run_options ~raise default
-  | Some ctxt ->
-     let tezos_context = Tezos_state.get_alpha_context ctxt in
-     let source = string_of_contract ctxt.source in
-     let options = make_dry_run_options ~raise ~tezos_context { default with source = Some source } in
-     let timestamp = Timestamp.of_zint (Z.of_int64 (Proto_alpha_utils.Time.Protocol.to_seconds (Tezos_state.get_timestamp ctxt))) in
-     { options with now = timestamp }
+  | Some (ctxt: Tezos_state.context) ->
+    let source = ctxt.internals.source in
+    let timestamp = Timestamp.of_zint (Z.of_int64 (Proto_alpha_utils.Time.Protocol.to_seconds (Tezos_state.get_timestamp ctxt))) in
+    Proto_alpha_utils.Memory_proto_alpha.make_options
+      ?tezos_context:None
+      ~now:timestamp
+      ~source:source
+      ~sender:source (* debatable *)
+      ~self:source (* debatable *)
+      ?parameter_ty:None
+      ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
+      ~balance:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
+      ~chain_id:Memory_proto_alpha.Protocol.Environment.Chain_id.zero
+      ()
 
 let run_expression_unwrap ~raise ?ctxt ?(loc = Location.generated) (c_expr : Stacking.compiled_expression) =
   let options = make_options ~raise ctxt in
@@ -368,6 +376,6 @@ let run_michelson_code ~raise ~loc (ctxt : Tezos_state.context) code func_ty arg
   let r = Ligo_run.Of_michelson.run_expression ~raise func func_ty in
   match r with
   | Success (a, b) ->
-      Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.bigmaps a b
+      Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps a b
   | _ ->
      raise.raise (Errors.generic_error loc "Could not execute Michelson function")

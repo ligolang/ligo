@@ -9,10 +9,10 @@ module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Int_repr = Ligo_interpreter.Int_repr_copied
 module Exc = Ligo_interpreter_exc
+open Errors
 
 type execution_trace = unit
 
-let corner_case ?(loc = Location.generated) () = Errors.generic_error loc "Corner case, please report to devs."
 let add_warning _ = ()
 
 let wrap_compare compare a b =
@@ -47,7 +47,7 @@ module Command = struct
     | Compile_contract : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_typed.type_expression -> LT.value t
     | Check_storage_address : Location.t * Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression -> unit t
-    | Contract_exists : Location.t * LT.calltrace * LT.value -> bool t
+    | Contract_exists : LT.value -> bool t
     | Inject_script : Location.t * Ligo_interpreter.Types.calltrace * LT.value * LT.value * Z.t -> LT.value t
     | Set_now : Location.t * Ligo_interpreter.Types.calltrace * Z.t -> unit t
     | Set_source : LT.value -> unit t
@@ -103,9 +103,9 @@ module Command = struct
       let key,key_ty,_ = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc k k_ty in
       let value = Tezos_state.get_big_map ~raise ctxt (Z.to_int m) key key_ty in
       (match value with
-       | None -> (Ligo_interpreter.Combinators.v_none (), ctxt)
+       | None -> LC.v_none (), ctxt
        | Some value ->
-          (Ligo_interpreter.Combinators.v_some (Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.bigmaps value v_ty), ctxt))
+          LC.v_some (Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.transduced.bigmaps value v_ty), ctxt)
     | Mem_big_map (loc, k_ty, _v_ty, k, m) ->
       let key,key_ty,_ = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc k k_ty in
       let storage' = Tezos_state.get_big_map ~raise ctxt (Z.to_int m) key key_ty in
@@ -117,10 +117,10 @@ module Command = struct
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in
       let storage_ty =
         trace_option ~raise (Errors.generic_error loc "Storage type not available" ) @@
-          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.storage_tys contract in
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.internals.storage_tys contract in
       let parameter_ty =
         trace_option ~raise (Errors.generic_error loc "Parameter type not available" ) @@
-          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.parameter_tys contract in
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.internals.parameter_tys contract in
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in
       ((contract, parameter_ty, storage_ty),ctxt)
     | Bootstrap_contract (mutez, contract, storage, contract_ty) ->
@@ -128,8 +128,8 @@ module Command = struct
       let input_ty, _ = trace_option ~raise (corner_case ()) @@ Ast_typed.get_t_function contract_ty in
       let parameter_ty, _ = trace_option ~raise (corner_case ()) @@ Ast_typed.get_t_pair input_ty in
       let (storage,_,storage_ty) = trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage in
-      let ctxt =
-        { ctxt with next_bootstrapped_contracts = (mutez, contract, storage, parameter_ty, storage_ty) :: ctxt.next_bootstrapped_contracts } in
+      let next_bootstrapped_contracts = (mutez, contract, storage, parameter_ty, storage_ty) :: ctxt.internals.next_bootstrapped_contracts in
+      let ctxt = { ctxt with internals = { ctxt.internals with next_bootstrapped_contracts } } in 
       ((),ctxt)
     | Reset_state (loc,calltrace,n,amts) ->
       let amts = trace_option ~raise (corner_case ()) @@ LC.get_list amts in
@@ -140,7 +140,8 @@ module Command = struct
         amts
       in
       let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
-      let ctxt = Tezos_state.init_ctxt ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n) (List.rev ctxt.next_bootstrapped_contracts) in
+      let bootstrap_contract = List.rev ctxt.internals.next_bootstrapped_contracts in
+      let ctxt = Tezos_state.init_ctxt ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n) bootstrap_contract in
       ((),ctxt)
     | Get_state () ->
       (ctxt,ctxt)
@@ -170,8 +171,8 @@ module Command = struct
         |> Tezos_protocol_010_PtGRANAD.Protocol.Michelson_v1_primitives.strings_of_prims
         |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
       in
-      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.bigmaps ty storage in
-      let ret = Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.bigmaps ret ty_expr in
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty storage in
+      let ret = Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret ty_expr in
       (ret, ctxt)
     | Get_balance (loc, calltrace, addr) ->
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
@@ -188,7 +189,7 @@ module Command = struct
       in
       let ligo_ty =
         trace_option ~raise (Errors.generic_error loc "Not supported (yet) when the provided account has been fetched from Test.get_last_originations" ) @@
-          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.storage_tys addr
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.internals.storage_tys addr
       in
       let ret = LT.V_Michelson (Ty_code (storage,ty,ligo_ty)) in
       (ret, ctxt)
@@ -275,39 +276,30 @@ module Command = struct
     | Check_storage_address (loc, addr, ty) ->
       let ligo_ty =
         trace_option ~raise (Errors.generic_error loc "Not supported (yet) when the provided account has been fetched from Test.get_last_originations" ) @@
-          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.storage_tys addr in
+          List.Assoc.find ~equal:(Tezos_state.compare_account) ctxt.internals.storage_tys addr in
       let _,ty = trace_option ~raise (Errors.generic_error loc "Argument expected to be a typed_address" ) @@
                     Ast_typed.get_t_typed_address ty in
       let () = trace_option ~raise (Errors.generic_error loc "Storage type does not match expected type") @@
           (Ast_typed.assert_type_expression_eq (ligo_ty, ty)) in
       ((), ctxt)
-    | Contract_exists (loc, calltrace, addr) ->
+    | Contract_exists addr ->
       let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
-      let info = Tezos_state.contract_exists ~raise ~loc ~calltrace ctxt addr in
+      let info = Tezos_state.contract_exists ctxt addr in
       (info, ctxt)
-    | Inject_script (loc, calltrace, code, storage, amt) -> (
-      let contract_code = trace_option ~raise (corner_case ()) @@ LC.get_michelson_contract code in
-      let (storage,_,ligo_ty) = trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage in
-      let (contract, res) = Tezos_state.originate_contract ~raise ~loc ~calltrace ctxt contract_code storage amt in
-      match res with
-      | Tezos_state.Success ctxt ->
-        let addr = LT.V_Ct ( C_address contract ) in
-        let storage_tys = (contract, ligo_ty) :: (ctxt.storage_tys) in
-        (addr, {ctxt with storage_tys})
-      | Tezos_state.Fail errs -> raise.raise (Errors.target_lang_error loc calltrace errs)
-    )
+    | Inject_script (loc, calltrace, code, storage, amt) ->
+      Tezos_state.originate_contract ~raise ~loc ~calltrace ctxt (code, storage) amt
     | Set_now (loc, calltrace, now) ->
       let ctxt = Tezos_state.set_timestamp ~raise ~loc ~calltrace ctxt now in
       ((), ctxt)
     | Set_source source ->
       let source = trace_option ~raise (corner_case ()) @@ LC.get_address source in
-      ((), {ctxt with source })
+      ((), {ctxt with internals = { ctxt.internals with source }})
     | Set_baker baker ->
       let baker = trace_option ~raise (corner_case ()) @@ LC.get_address baker in
-      ((), {ctxt with baker })
+      ((), {ctxt with internals = { ctxt.internals with baker }})
     | Get_bootstrap (loc,x) -> (
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
-      match List.nth ctxt.bootstrapped (Z.to_int x) with
+      match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
       | Some x -> (LT.V_Ct (C_address x), ctxt)
       | None -> raise.raise (Errors.generic_error loc "This bootstrap account do not exist")
     )
@@ -323,7 +315,7 @@ module Command = struct
         let lst = LT.V_List (List.map ~f:LC.v_address lst) in
         (src, lst)
       in
-      let v = LT.V_Map (List.map ~f:aux ctxt.last_originations) in
+      let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       (v,ctxt)
     | Int_compare_wrapped (x, y) ->
       (wrap_compare Int_repr.compare x y, ctxt)

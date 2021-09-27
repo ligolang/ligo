@@ -29,3 +29,4 @@ let literal : Location.t -> Ast_typed.literal -> interpreter_error = fun s l ->
 
 let modules_not_supported : Location.t -> interpreter_error = fun l ->
   `Main_interpret_modules_not_supported l
+let corner_case ?(loc = Location.generated) () = generic_error loc "Corner case, please report to devs."
