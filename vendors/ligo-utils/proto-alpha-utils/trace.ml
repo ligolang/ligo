@@ -33,5 +33,11 @@ let trace_tzresult :
   | Ok x -> x
   | Error errs -> raise.raise @@ tracer (List.map ~f:of_tz_error errs)
 
+let tz_result_to_bool : ('a, TP.error list) Stdlib.result -> bool =
+  fun err ->
+    match err with
+    | Ok _ -> true
+    | Error _ -> false
+
 let trace_tzresult_lwt ~raise err (x:_ TP.tzresult Lwt.t) : _ =
   trace_tzresult ~raise err @@ Lwt_main.run x
