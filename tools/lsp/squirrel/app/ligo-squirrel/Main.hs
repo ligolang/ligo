@@ -390,8 +390,13 @@ handleDidChangeWatchedFiles notif = do
       log [i|Created #{uri}|]
       void $ RIO.forceFetch' uri
     J.FcChanged -> do
-      log [i|Changed #{uri}|]
-      void $ RIO.forceFetch' uri
+      openDocsVar <- asks $ getElem @(MVar (HashMap J.NormalizedUri Int))
+      mOpenDocs <- tryReadMVar openDocsVar
+      case mOpenDocs of
+        Just openDocs | not $ HashMap.member uri openDocs -> do
+          log [i|Changed #{uri}|]
+          void $ RIO.forceFetch' uri
+        _ -> pure ()
     J.FcDeleted -> do
       log [i|Deleted #{uri}|]
       RIO.delete uri
