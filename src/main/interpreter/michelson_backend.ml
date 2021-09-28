@@ -23,6 +23,19 @@ module Tezos_eq = struct
         let (q, r) = Z.ediv_rem x y in
         Some (q, r)
       with _ -> None
+
+  let timestamp_add : Z.t -> Z.t-> Z.t =
+    fun tz n ->
+      let open Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp in
+      let t = of_zint tz in
+      add_delta t (Memory_proto_alpha.Protocol.Alpha_context.Script_int.of_zint n) |> to_zint
+
+  let timestamp_sub : Z.t -> Z.t-> Z.t =
+    fun tz n ->
+      let open Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp in
+      let t = of_zint tz in
+      add_delta t (Memory_proto_alpha.Protocol.Alpha_context.Script_int.of_zint n) |> to_zint
+
 end
 let compile_contract ~raise ~add_warning source_file entry_point =
   let open Ligo_compile in
