@@ -4,6 +4,26 @@ let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez
 let string_of_contract t = Format.asprintf "%a" Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.pp t
 let string_of_key_hash t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 
+module Tezos_eq = struct
+  (* behavior should be equivalent to the one in the tezos codebase *)
+  let nat_shift_left x y =
+    if Z.compare y (Z.of_int 256) > 0 then None
+    else
+      let y = Z.to_int y in
+      Some (Z.shift_left x y)
+
+  let nat_shift_right x y =
+    if Z.compare y (Z.of_int 256) > 0 then None
+    else
+      let y = Z.to_int y in
+      Some (Z.shift_right x y)
+
+  let int_ediv x y =
+      try
+        let (q, r) = Z.ediv_rem x y in
+        Some (q, r)
+      with _ -> None
+end
 let compile_contract ~raise ~add_warning source_file entry_point =
   let open Ligo_compile in
   let syntax = "auto" in

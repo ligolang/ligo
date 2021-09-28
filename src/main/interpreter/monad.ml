@@ -7,17 +7,12 @@ open Trace
 
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
-module Int_repr = Ligo_interpreter.Int_repr_copied
 module Exc = Ligo_interpreter_exc
 open Errors
 
 type execution_trace = unit
 
 let add_warning _ = ()
-
-let wrap_compare compare a b =
-  let res = compare a b in
-  if (res = 0) then 0 else if (res > 0) then 1 else -1
 
 let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations ty)
 
@@ -54,35 +49,6 @@ module Command = struct
     | Set_baker : LT.value -> unit t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
-    | Int_compare_wrapped : 'a Int_repr.num * 'a Int_repr.num -> int t
-    | Int_compare : 'a Int_repr.num * 'a Int_repr.num -> int t
-    | Int_abs : Int_repr.z Int_repr.num -> Int_repr.n Int_repr.num t
-    | Int_of_zint : Z.t -> Int_repr.z Int_repr.num t
-    | Int_to_zint : 'a Int_repr.num -> Z.t t
-    | Int_of_int64 : int64 -> Int_repr.z Int_repr.num t
-    | Int_to_int64 : _ Int_repr.num -> int64 option t
-    | Int_is_nat : Int_repr.z Int_repr.num -> Int_repr.n Int_repr.num option t
-    | Int_neg : _ Int_repr.num -> Int_repr.z Int_repr.num t
-    | Int_add : _ Int_repr.num * _ Int_repr.num -> Int_repr.z Int_repr.num t
-    | Int_add_n : Int_repr.n Int_repr.num * Int_repr.n Int_repr.num -> Int_repr.n Int_repr.num t
-    | Int_mul : _ Int_repr.num * _ Int_repr.num -> Int_repr.z Int_repr.num t
-    | Int_mul_n : Int_repr.n Int_repr.num * Int_repr.n Int_repr.num -> Int_repr.n Int_repr.num t
-    | Int_ediv :
-      _ Int_repr.num * _ Int_repr.num ->
-      (Int_repr.z Int_repr.num * Int_repr.n Int_repr.num) option t
-    | Int_ediv_n :
-      Int_repr.n Int_repr.num * Int_repr.n Int_repr.num ->
-      (Int_repr.n Int_repr.num * Int_repr.n Int_repr.num) option t
-    | Int_sub : _ Int_repr.num * _ Int_repr.num -> Int_repr.z Int_repr.num t
-    | Int_shift_left : 'a Int_repr.num * Int_repr.n Int_repr.num -> 'a Int_repr.num option t
-    | Int_shift_right : 'a Int_repr.num * Int_repr.n Int_repr.num -> 'a Int_repr.num option t
-    | Int_logor : ('a Int_repr.num * 'a Int_repr.num) -> 'a Int_repr.num t
-    | Int_logand : (_ Int_repr.num * Int_repr.n Int_repr.num) -> Int_repr.n Int_repr.num t
-    | Int_logxor : (Int_repr.n Int_repr.num * Int_repr.n Int_repr.num) -> Int_repr.n Int_repr.num t
-    | Int_lognot : _ Int_repr.num -> Int_repr.z Int_repr.num t
-    | Int_of_int : int -> Int_repr.z Int_repr.num t
-    | Int_int : Int_repr.n Int_repr.num -> Int_repr.z Int_repr.num t
-
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
@@ -317,31 +283,6 @@ module Command = struct
       in
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       (v,ctxt)
-    | Int_compare_wrapped (x, y) ->
-      (wrap_compare Int_repr.compare x y, ctxt)
-    | Int_compare (x, y) -> (Int_repr.compare x y, ctxt)
-    | Int_abs z -> (Int_repr.abs z, ctxt)
-    | Int_of_int i -> (Int_repr.of_int i, ctxt)
-    | Int_of_zint z -> (Int_repr.of_zint z, ctxt)
-    | Int_to_zint z -> (Int_repr.to_zint z, ctxt)
-    | Int_of_int64 i -> (Int_repr.of_int64 i, ctxt)
-    | Int_to_int64 i -> (Int_repr.to_int64 i, ctxt)
-    | Int_is_nat z -> (Int_repr.is_nat z, ctxt)
-    | Int_neg n -> (Int_repr.neg n, ctxt)
-    | Int_add (x, y) -> (Int_repr.add x y, ctxt)
-    | Int_add_n (x, y) -> (Int_repr.add_n x y, ctxt)
-    | Int_mul (x, y) -> (Int_repr.mul x y, ctxt)
-    | Int_mul_n (x, y) -> (Int_repr.mul_n x y, ctxt)
-    | Int_ediv (x, y) -> (Int_repr.ediv x y, ctxt)
-    | Int_ediv_n (x, y) -> (Int_repr.ediv_n x y, ctxt)
-    | Int_sub (x, y) -> (Int_repr.sub x y, ctxt)
-    | Int_shift_left (x, y) -> (Int_repr.shift_left x y, ctxt)
-    | Int_shift_right (x, y) -> (Int_repr.shift_right x y, ctxt)
-    | Int_logor (x, y) -> (Int_repr.logor x y, ctxt)
-    | Int_logand (x, y) -> (Int_repr.logand x y, ctxt)
-    | Int_logxor (x, y) -> (Int_repr.logxor x y, ctxt)
-    | Int_lognot n -> (Int_repr.lognot n, ctxt)
-    | Int_int n -> (Int_repr.int n, ctxt)
 end
 
 type 'a t =
