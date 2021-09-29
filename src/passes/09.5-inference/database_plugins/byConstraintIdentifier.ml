@@ -19,9 +19,9 @@ let remove_constraint ~raise:_ _ _repr state constraint_to_rm =
   match constraint_to_rm with
   | SC_Typeclass { id_typeclass_simpl; _ } ->
     (* TODO: a proper error instead of an exception *)
-    Format.eprintf "Remove from by Constraint Identifier...%!";
+    if Ast_core.Debug.debug_new_typer then Format.eprintf "Remove from by Constraint Identifier...%!";
     let map = PolyMap.remove id_typeclass_simpl state in
-    Format.eprintf "  ok\n%!";
+    if Ast_core.Debug.debug_new_typer then Format.eprintf "  ok\n%!";
     map
   | _ -> state
 

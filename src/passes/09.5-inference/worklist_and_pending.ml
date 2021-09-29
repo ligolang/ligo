@@ -69,7 +69,7 @@ module Worklist = struct
         pending_propagators;
         pending_updates;
         pending_removes } =
-    Printf.fprintf stderr "size(worklist)=(%d | %d | %d | %d | %d | %d | %d | %d | %d)\n"
+    if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "size(worklist)=(%d | %d | %d | %d | %d | %d | %d | %d | %d)\n"
       (List.length @@ Pending.to_list pending_type_constraint                       )
       (List.length @@ Pending.to_list pending_filtered_not_already_added_constraints)
       (List.length @@ Pending.to_list pending_type_constraint_simpl                 )

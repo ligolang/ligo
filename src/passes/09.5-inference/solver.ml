@@ -224,14 +224,14 @@ end = struct
   let select_and_propagate_all ~raise : typer_state -> Worklist.t -> typer_state =
     fun state initial_constraints ->
     (* To change the order in which the constraints are processed, modify this loop. *)
-    let () = Formatt.eprintf "In select and propagate all\n" in
+    let () = if Ast_core.Debug.debug_new_typer then Formatt.eprintf "In select and propagate all\n" in
     let time_to_live = ref 50000 in
     until' ~raise
       (* repeat until the worklist is empty *)
       (Worklist.is_empty ~time_to_live)
       (fun ~raise (state, worklist) ->
          let () = if List.is_empty @@ Pending.to_list worklist.pending_type_constraint then () else
-            Formatt.eprintf "\nStart iteration with new constraints :\n  %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) in
+            if Ast_core.Debug.debug_new_typer then Formatt.eprintf "\nStart iteration with new constraints :\n  %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) in
          (* let () = Formatt.eprintf "and state: %a\n" pp_typer_state state in *)
 
          (* let () = queue_print (fun () -> Formatt.eprintf "Start iteration with constraints :\n  %a\n\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in *)
@@ -257,9 +257,9 @@ end = struct
   module All_vars = Typecheck_utils.All_vars(Plugins)
   let main ~raise : typer_state -> type_constraint list -> typer_state =
     fun state initial_constraints ->
-    let () = Formatt.eprintf "In solver main\n%!" in
+    let () = if Ast_core.Debug.debug_new_typer then Formatt.eprintf "In solver main\n%!" in
     let (state : typer_state) = select_and_propagate_all ~raise state {Worklist.empty with pending_type_constraint = Pending.of_list initial_constraints} in
-    let () = Formatt.eprintf "Starting typechecking with assignment :\n  %a\n%!"
+    let () = if Ast_core.Debug.debug_new_typer then Formatt.eprintf "Starting typechecking with assignment :\n  %a\n%!"
       (pp_typer_state ~raise) state in
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
       (All_vars.all_vars state)

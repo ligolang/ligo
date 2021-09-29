@@ -18,7 +18,7 @@ let flush_pending_print (state : _ Solver_types.typer_state) =
     List.map ~f:(fun var -> (Var.internal_get_name_and_counter var, letters)) vars in
   let cmp = Pair.compare (String.compare) (Option.compare Int.compare) in
   let partition = UnionFind.Poly2.partitions state.aliases in
-  Format.(eprintf "Partition : %a\n%!" (Ast_core.PP.list_sep_d (Ast_core.PP.list_sep_d Var.pp)) partition);
+  if false then Format.(eprintf "Partition : %a\n%!" (Ast_core.PP.list_sep_d (Ast_core.PP.list_sep_d Var.pp)) partition);
   let vars_to_letters =
     try 
     Option.value_exn 

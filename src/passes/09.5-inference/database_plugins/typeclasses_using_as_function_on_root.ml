@@ -47,7 +47,7 @@ struct
     | _ -> state
 
   let remove_constraint ~raise:_ (type tv) _printer (repr : type_variable -> tv) (state : tv t) (constraint_to_remove : type_constraint_simpl) =
-    Format.eprintf "remove_constraint for typeclassesConstraining.... \n%!";
+    if Ast_core.Debug.debug_new_typer then Format.eprintf "remove_constraint for typeclassesConstraining.... \n%!";
     match constraint_to_remove with
     | Type_variable_abstraction.Types.SC_Typeclass constraint_to_remove ->
       let aux' = function
@@ -61,10 +61,10 @@ struct
           ~f:aux
           ~init:state
           (functions_on_roots repr constraint_to_remove) in
-      Format.eprintf "  ok\n%!";
+      if Ast_core.Debug.debug_new_typer then Format.eprintf "  ok\n%!";
       state
     | _ -> 
-      Format.eprintf "  ok\n%!";
+      if Ast_core.Debug.debug_new_typer then Format.eprintf "  ok\n%!";
       state
 
   let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
