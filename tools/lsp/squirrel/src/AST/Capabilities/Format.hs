@@ -29,9 +29,11 @@ callForFormat lang source =
       Pascal -> "pascaligo"
       Caml -> "cameligo"
 
+    path = srcPath source
+
     getResult = callLigo
-      ["pretty-print", "/dev/stdin", "--syntax=" <> syntax]
-      source
+      ["print", "pretty-print", path, "--syntax", syntax]
+      (Path path)
 
 formatDocument :: HasLigoClient m => SomeLIGO Info' -> m (J.List J.TextEdit)
 formatDocument (SomeLIGO lang (extract -> info)) = do

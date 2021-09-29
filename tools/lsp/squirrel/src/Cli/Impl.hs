@@ -14,7 +14,7 @@ module Cli.Impl
   , getLigoDefinitionsFrom
   ) where
 
-import Control.Exception.Safe (Exception (..), try)
+import Control.Exception.Safe (Exception (..), SomeException (..), try, tryAny)
 import Control.Monad
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.Reader
@@ -24,6 +24,7 @@ import Data.ByteString.Lazy.Char8 qualified as S8L
 import Data.Foldable (asum)
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
+import Data.Typeable (cast)
 import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
 import System.Exit (ExitCode (..))
 import System.Process
@@ -167,7 +168,8 @@ callLigo args con = do
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
       throwM $ LigoExpectedClientFailureException (pack lo) (pack le)
     unless (le == mempty) $
-      throwM $ LigoUnexpectedClientFailureException 0 (pack lo) (pack le)
+      let ec' = case ec of { ExitSuccess -> 0; ExitFailure n -> n } in
+      throwM $ LigoUnexpectedClientFailureException ec' (pack lo) (pack le)
     return (pack lo, pack le)
 
 ----------------------------------------------------------------------------
@@ -212,7 +214,7 @@ preprocess
 preprocess contract = do
   let sys = "LIGO.PREPROCESS"
   Log.debug sys [i|preprocessing the following contract:\n #{contract}|]
-  mbOut <- try $ callLigo ["preprocess", "--format=json", srcPath contract] contract
+  mbOut <- try $ callLigo ["print", "preprocess", srcPath contract, "--format", "json"] contract
   case mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @Text . encodeUtf8 $ output of
@@ -223,8 +225,8 @@ preprocess contract = do
           Path       path   -> Text path newContract
           Text       path _ -> Text path newContract
           ByteString path _ -> ByteString path $ encodeUtf8 newContract
-    Left LigoExpectedClientFailureException {ecfeStdout, ecfeStderr} ->
-      handleLigoError sys ecfeStdout ecfeStderr
+    Left LigoExpectedClientFailureException {ecfeStderr} ->
+      handleLigoError sys ecfeStderr
 
 -- | Get ligo definitions from a contract by calling ligo binary.
 getLigoDefinitionsFrom
@@ -250,10 +252,10 @@ getLigoDefinitions contract = do
       Reason -> "reasonligo"
       Pascal -> "pascaligo"
       Caml   -> "cameligo"
-  mbOut <- try $
+  mbOut <- tryAny $
     -- HACK: We forget the parsed contract since we still want LIGO to read the
     -- unpreprocessed version.
-    callLigo ["get-scope", "--format=json", "--with-types", "--syntax=" <> syntax, path] (Path path)
+    callLigo ["info", "get-scope", path, "--format", "json", "--with-types", "--syntax", syntax] (Path path)
   case mbOut of
     Right (output, errs) ->
       --Log.debug sys [i|Successfully called ligo with #{output}|]
@@ -262,19 +264,24 @@ getLigoDefinitions contract = do
           Log.debug sys [i|Unable to parse ligo definitions with: #{err}|]
           throwM $ LigoDefinitionParseErrorException (pack err)
         Right definitions -> return (definitions, errs)
-    Left LigoExpectedClientFailureException {ecfeStdout, ecfeStderr} ->
-      handleLigoError sys ecfeStdout ecfeStderr
+    Left (SomeException e) -> case cast e of
+      Just LigoExpectedClientFailureException {ecfeStderr} ->
+        handleLigoError sys ecfeStderr
+      Nothing -> case cast e of
+        Just LigoUnexpectedClientFailureException {ucfeStderr} ->
+          handleLigoError sys ucfeStderr
+        Nothing -> throwM e
 
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
-handleLigoError :: HasLigoClient m => String -> Text -> Text -> m a
-handleLigoError subsystem stdout stderr = do
+handleLigoError :: HasLigoClient m => String -> Text -> m a
+handleLigoError subsystem stderr = do
   -- Call ligo with `compile contract` to extract more readable error message
   Log.debug subsystem [i|decoding ligo error|]
   case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
     Left err -> do
       -- LIGO dumps its crash information on StdOut rather than StdErr.
-      let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stdout
+      let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
       case failureRecovery of
         Left failure -> do
           Log.debug subsystem [i|ligo error decoding failure: #{failure}|]
@@ -301,4 +308,4 @@ attemptToRecoverFromPossibleLigoCrash errDecoded stdErr = case getAllTextSubmatc
   _        -> Left errDecoded
   where
     regex :: String
-    regex = "ligo: internal error, uncaught exception:\n      \\(Failure \"(.*)\"\\)"
+    regex = "Fatal error: exception \\(Failure \"(.*)\"\\)"
