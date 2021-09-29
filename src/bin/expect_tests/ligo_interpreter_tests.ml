@@ -228,6 +228,13 @@ let%expect_test _ =
     - test exited with value ().
     - test_mutation exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_set exited with value 3.
+    - test_list exited with value 3. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
