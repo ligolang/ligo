@@ -188,9 +188,6 @@ let rec s_hd = function
   let lst = list_to_nsepseq lst in
   CST.SBlock (wrap @@ braced @@ lst)
 
-let decompile_expression : AST.expression -> CST.expr list = fun expr ->
-  failwith "todo: fix me"
-
 let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun expr ->
   let return_expr expr = expr in
   let return_expr_with_par expr = return_expr @@ [CST.EPar (wrap @@ par @@ expr)] in
@@ -707,3 +704,14 @@ and decompile_module : AST.module_ -> CST.ast = fun prg ->
   let statements = Utils.nseq_map (fun s -> CST.TopLevel (s, None)) statements in
   (* let statements = ((fst statements, None), List.map ~f:(fun e -> (e, None)) (snd statements)) in *)
   ({statements;eof=ghost}: CST.ast)
+
+let decompile_expression : AST.expression -> CST.expr list = fun expr ->
+  match decompile_expression_in expr with
+  | [] -> []
+  | [Expr expr] -> [expr]
+  | _ ->
+     failwith @@ Format.asprintf
+                   "An expression was expected, but this was decompiled to statements.\
+                    @.Expr : %a@ @,Loc : %a"
+                   AST.PP.expression expr
+                   Location.pp expr.location
