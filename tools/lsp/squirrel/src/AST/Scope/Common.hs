@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module AST.Scope.Common
-  ( ParsedContract (..)
+  ( MarkerInfo (..)
+  , ParsedContract (..)
   , FindFilepath (..)
   , HasScopeForest (..)
   , Level (..)
@@ -77,6 +78,14 @@ import Product
 import Range
 import Util (findKey, unionOrd)
 import Util.Graph (traverseAMConcurrently)
+
+-- TODO: Many of these datatypes don't make sense to be defined here. Consider
+-- moving into different or new modules.
+data MarkerInfo = MarkerInfo
+  { miMarker    :: LineMarker
+  , miLastRange :: Range
+  , miDepth     :: Int
+  } deriving stock (Show)
 
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.

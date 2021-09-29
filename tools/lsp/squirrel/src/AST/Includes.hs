@@ -4,12 +4,13 @@ module AST.Includes
   ( extractIncludedFiles
   , includesGraph
   , insertPreprocessorRanges
+  , MarkerInfo (..)
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
-import Control.Arrow ((&&&))
-import Control.Lens ((&), (.~), (+~), (-~), (^.), view)
+import Control.Arrow (first, (&&&))
+import Control.Lens (Lens', _1, view, (&), (+~), (-~), (.~), (^.))
 import Control.Monad (join, when)
 import Control.Monad.RWS.Strict (RWS, execRWS, gets, modify, tell)
 import Data.Bifunctor (bimap)
@@ -25,7 +26,7 @@ import Data.Text qualified as Text (pack)
 import Duplo.Tree (Cofree ((:<)), inject)
 import System.FilePath ((</>), takeDirectory)
 
-import AST.Scope.Common (ContractInfo, pattern FindContract, ParsedContractInfo, contractFile)
+import AST.Scope.Common (ContractInfo, pattern FindContract, ParsedContractInfo, contractFile, MarkerInfo (..))
 import AST.Scope.Fallback (loop, loopM_)
 import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
 
@@ -43,12 +44,6 @@ import Util (removeDots)
 
 fromOriginalPoint :: Product Info -> Product ParsedInfo
 fromOriginalPoint infos = PreprocessedRange (getRange infos) :> infos
-
-data MarkerInfo = MarkerInfo
-  { miMarkers   :: LineMarker
-  , miLastRange :: Range
-  , miDepth     :: Int
-  } deriving stock (Show)
 
 insertPreprocessorRanges :: ContractInfo -> ParsedContractInfo
 insertPreprocessorRanges = fst . extractIncludedFiles False
@@ -77,8 +72,9 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
     (info :< tree) = loop (go markerInfos) $ fromOriginalPoint <$> ligo
     -- We still want RawContract to start at line 1:
     ligo' = bool (modElem (startLine +~ 1) info :< tree) (info :< tree) (IntMap.null markerInfos)
+    msgs' = fmap (first (adjustRange markerInfos)) msgs
   in
-  (FindContract file (SomeLIGO dialect ligo') msgs, edges)
+  (FindContract file (SomeLIGO dialect ligo') msgs', edges)
   where
     pwd :: FilePath
     pwd = takeDirectory $ srcPath file
@@ -116,39 +112,46 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
             Just (_, MarkerInfo _ lr d) -> IntMap.insert line $ MarkerInfo lm lr (d - 1)
 
     go :: IntMap MarkerInfo -> LIGO ParsedInfo -> LIGO ParsedInfo
-    go markers (info :< tree) =
-      let
-        range = getRange info
-        sLine = range ^. startLine
-        sPrev = IntMap.lookupLE sLine markers
-        (info' :< tree') = case sPrev of
-          Nothing -> info :< tree
-          Just (_, MarkerInfo marker lastRange depth) -> do
-            let newRange = range &
-                  if depth > 0 then
-                    rStart .~ lastRange ^. rStart
-                  else
-                    startLine -~ lmLoc marker ^. finishLine - lmLine marker
-            let preRange = range
-                  & rangeLines -~ (lmLoc marker ^. finishLine - lmLine marker)
-                  & rFile .~ withPwd (lmFile marker)
-            putElem (PreprocessedRange preRange) (putElem newRange info) :< tree
+    go markers (info :< tree) = info' :< tree
+      where
+        info' = info
+              & adjustPreprocessedRange markers
+              & modElem (adjustRange markers)
 
-        fLine = range ^. finishLine
-        fPrev = IntMap.lookupLE fLine markers
-      in
-      case fPrev of
-        Nothing -> info' :< tree'
-        Just (_, MarkerInfo marker lastRange depth) -> do
-          -- In case we are at depth 0, we need to subtract the accumulated range at
-          -- the finish as well, since we may see new includes while traversing the
-          -- tree.
-          let mkNewRange =
-                if depth > 0 then
-                  rFinish .~ lastRange ^. rStart
-                else
-                  finishLine -~ lmLoc marker ^. finishLine - lmLine marker
-          modElem mkNewRange info' :< tree'
+    adjustPreprocessedRange :: IntMap MarkerInfo -> Product ParsedInfo -> Product ParsedInfo
+    adjustPreprocessedRange markers i = case prev of
+      Nothing -> i
+      Just (_, MarkerInfo marker _ _) ->
+        let preRange = range
+              & rangeLines -~ (lmLoc marker ^. finishLine - lmLine marker)
+              & rFile .~ withPwd (lmFile marker)
+         in putElem (PreprocessedRange preRange) i
+      where
+        prev = IntMap.lookupLE (range ^. startLine) markers
+        range = getRange i
+
+    adjustSide :: Lens' Range (Int, Int, Int)
+               -> IntMap MarkerInfo
+               -> Range
+               -> Range
+    adjustSide side markers range = case prev of
+      Nothing -> range
+      Just (_, MarkerInfo marker lastRange depth) ->
+        -- In case we are at depth 0, we need to subtract the accumulated range at
+        -- the both the start and finish, since we may see new includes while
+        -- traversing the tree.
+        let newRange = range &
+              if depth > 0 then
+                side .~ lastRange ^. rStart
+              else
+                (side . _1) -~ lmLoc marker ^. finishLine - lmLine marker
+         in newRange
+      where
+        prev = IntMap.lookupLE (range ^. (side . _1)) markers
+
+    adjustRange :: IntMap MarkerInfo -> Range -> Range
+    adjustRange markers = adjustSide rFinish markers
+                        . adjustSide rStart markers
 
 -- | Given a list of contracts, builds a graph that represents how they are
 -- included.

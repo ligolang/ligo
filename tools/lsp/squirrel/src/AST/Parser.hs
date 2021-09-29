@@ -1,12 +1,12 @@
 module AST.Parser
   ( Source (..)
-  , parse
   , parsePreprocessed
   , parseWithScopes
   , parseContracts
   , scanContracts
   , parseContractsWithDependencies
   , parseContractsWithDependenciesScopes
+  , collectAllErrors
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
@@ -126,3 +126,7 @@ parseContractsWithDependenciesScopes
   -> m (AdjacencyMap ContractInfo')
 parseContractsWithDependenciesScopes parser =
   addScopes @impl <=< parseContractsWithDependencies parser
+
+collectAllErrors :: ContractInfo' -> [Msg]
+collectAllErrors (FindContract _ tree errs) =
+   errs <> collectTreeErrors tree
