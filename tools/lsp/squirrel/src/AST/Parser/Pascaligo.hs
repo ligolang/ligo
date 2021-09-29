@@ -164,7 +164,7 @@ recognise (SomeRawTree dialect rawTree)
     -- VarDecl
   , Descent do
       boilerplate \case
-        "param_decl" -> BParameter <$> field "name" <*> field "type"
+        "param_decl" -> BParameter <$> field "name" <*> fieldOpt "type"
         _            -> fallthrough
 
   --   -- Mutable

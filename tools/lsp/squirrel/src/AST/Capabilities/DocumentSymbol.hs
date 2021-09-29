@@ -95,6 +95,7 @@ extractDocumentSymbols uri tree =
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
+          (IsParen x) -> collectDecl x
 
           _ -> pure ()
 

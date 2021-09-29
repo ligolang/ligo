@@ -2,7 +2,7 @@
   (const
     (? sum)
     (lam
-      (type? (tuple? (? n) (? acc)) (PROD int int))
+      (parameter (?(tuple? (? n) (? acc))) (PROD int int))
       :
       int
       =>
@@ -11,7 +11,8 @@
   (const
     (? fibo)
     (lam
-      (type? (tuple? (? n) (? n_1) (? n_0)) (PROD int int int))
+      (parameter
+        (?(tuple? (tuple? (? n) (? n_1)) (? n_0))) (PROD int int int))
       :
       int
       =>

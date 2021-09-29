@@ -200,10 +200,15 @@ module.exports = grammar({
 
     parameters: $ => common.par(common.sepBy(';', field("parameter", $.param_decl))),
 
+    _param_pattern: $ => choice(
+      $.var_pattern,
+      $.wildcard_pattern,
+    ),
+
     param_decl: $ =>
       seq(
         field("access", $._access),
-        field("name", choice($.NameDecl, $.NameWildcard)),
+        field("name", $._param_pattern),
         ':',
         field("type", $._param_type),
       ),

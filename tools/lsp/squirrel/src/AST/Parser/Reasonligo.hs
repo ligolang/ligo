@@ -56,6 +56,7 @@ recognise (SomeRawTree dialect rawTree)
         "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
         "spread_pattern"         -> IsSpread <$> field  "expr"
         "record_pattern"         -> IsRecord <$> fields "field"
+        "paren_pattern"          -> IsParen  <$> field  "pattern"
         "wildcard"               -> return IsWildcard
         _                        -> fallthrough
 
@@ -151,6 +152,7 @@ recognise (SomeRawTree dialect rawTree)
         "attr_decl" -> BAttribute <$> field "name"
         "p_include" -> BInclude   <$> field "filename"
         "p_import"  -> BImport    <$> field "filename" <*> field "alias"
+        "fun_arg"   -> BParameter <$> field "argument" <*> fieldOpt "type"
         _           -> fallthrough
 
     -- MichelsonCode

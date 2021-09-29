@@ -2,7 +2,7 @@
   (const
     (? main)
     (lam
-      (type? (? p) key_hash)
+      (parameter (? p) key_hash)
       :
       address
       =>

@@ -314,18 +314,19 @@ module.exports = grammar({
 
     // - a
     unary_op_app: $ => prec(19, seq(
-      field("negate", "-"),
+      field("negate", choice("-", "not")),
       field("arg", $._expr)
     )),
 
     binary_op_app: $ => choice(
-      prec.left(16, mkOp($, "mod")),
-      prec.left(15, mkOp($, choice("/", "*"))),
-      prec.left(14, mkOp($, choice("-", "+"))),
-      prec.right(13, mkOp($, "::")),
-      prec.right(12, mkOp($, "^")),
-      prec.left(11, mkOp($, choice("&&", "||"))),
-      prec.left(10, mkOp($, choice("=", "<>", "==", "<", "<=", ">", ">="))),
+      prec.right(17, mkOp($, choice("lsl", "lsr"))),
+      prec.left(16, mkOp($, choice("/", "*", "mod", "land", "lor", "lxor"))),
+      prec.left(15, mkOp($, choice("-", "+"))),
+      prec.right(14, mkOp($, "::")),
+      prec.right(13, mkOp($, "^")),
+      prec.left(12, mkOp($, choice("=", "<>", "<", "<=", ">", ">="))),
+      prec.left(11, mkOp($, "&&")),
+      prec.left(10, mkOp($, choice("or", "||"))),
     ),
 
     tup_expr: $ => prec.right(9, seq(
@@ -337,17 +338,21 @@ module.exports = grammar({
     )),
 
     _sub_expr: $ => choice(
+      $._core_expr,
+      $.fun_app,
+      $.if_expr,
+      $.lambda_expr,
+      $.match_expr,
+    ),
+
+    _core_expr: $ => choice(
       $.ConstrName,
       $.Name,
       $._literal,
-      $.fun_app,
       $.paren_expr,
       $.annot_expr,
       $.record_expr,
       $.record_literal,
-      $.if_expr,
-      $.lambda_expr,
-      $.match_expr,
       $.list_expr,
       $.data_projection,
       $.module_access,
@@ -357,8 +362,8 @@ module.exports = grammar({
 
     // f a
     fun_app: $ => prec.left(20, seq(
-      field("f", $._sub_expr),
-      field("x", $._sub_expr)
+      field("f", $._core_expr),
+      repeat1(field("x", $._core_expr))
     )),
 
     paren_expr: $ => seq(
