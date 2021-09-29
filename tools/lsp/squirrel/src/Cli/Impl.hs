@@ -214,7 +214,7 @@ preprocess
 preprocess contract = do
   let sys = "LIGO.PREPROCESS"
   Log.debug sys [i|preprocessing the following contract:\n #{contract}|]
-  mbOut <- try $ callLigo ["print", "preprocess", srcPath contract, "--format", "json"] contract
+  mbOut <- try $ callLigo ["print", "preprocessed", srcPath contract, "--format", "json"] contract
   case mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @Text . encodeUtf8 $ output of
