@@ -87,7 +87,7 @@ let remove_constraint ~(raise:Type_variable_abstraction.Errors.typer_error Trace
      any problem. Indeed, the constraint appears only once in the
      multimap, and the removal will find it using the correct repr()
      at the time of removal. *)
-  Format.eprintf "in remove_constrant for groupedByVariable...%!";
+  if Ast_core.Debug.debug_new_typer then Format.eprintf "in remove_constrant for groupedByVariable...%!";
   match
     (
       match constraint_to_rm with
@@ -107,7 +107,7 @@ let remove_constraint ~(raise:Type_variable_abstraction.Errors.typer_error Trace
   with
   exception CouldNotRemove c -> raise.raise (`Typer_could_not_remove c)
   | result -> 
-    Format.eprintf "  ok\n%!";
+    if Ast_core.Debug.debug_new_typer then Format.eprintf "  ok\n%!";
     result
 
 let merge_aliases =
