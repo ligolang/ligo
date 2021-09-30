@@ -592,3 +592,21 @@ mutations of it, passing each one to the function (second argument).
 In case no failure arises when running the function on a mutation, the
 failure and mutation involved will be added to the list to be
 returned.
+
+<SyntaxTitle syntax="pascaligo">
+function save_mutation : string -> mutation -> option (string)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val save_mutation : string -> mutation -> string option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let save_mutation : (string, mutation) => option (string)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let save_mutation : (path: string, mutation: mutation) => option &lt;string&gt;
+</SyntaxTitle>
+
+This function reconstructs a file from a mutation (second argument),
+and saves it to a file in the directory path (first argument). It
+returns an optional string indicating the filename where the mutation
+was saved, or `None` if there was an error.

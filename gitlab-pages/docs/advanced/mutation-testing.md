@@ -898,3 +898,276 @@ let originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : uni
 
 Running the updated test, we see that this time no mutation on `sub`
 will give the same result.
+
+## Multiple mutations
+
+There is an alternative version of `Test.mutation_test` that will
+collect all mutants that make the passed function correctly terminate.
+Its type is similar to that of `Test.mutation_test`, but instead of
+returning an optional type, it returns a list:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+Test.mutation_test_all : 'a -> ('a -> 'b) -> list ('b * mutation)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo skip
+Test.mutation_test_all : 'a -> ('a -> 'b) -> ('b * mutation) list
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo skip
+Test.mutation_test_all : ('a, ('a -> 'b)) => list ('b, mutation)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+Test.mutation_test_all : (value: 'a, tester: ('a -> 'b)) => list <['b, mutation]>;
+```
+
+</Syntax>
+
+The example above can be modified to collect first all mutants, and
+then process the list:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+const test_mutation =
+  case Test.mutation_test_all(main, originate_and_test) of
+    nil -> unit
+  | ms -> block {
+      for m in list ms block {
+        const (_, mutation) = m;
+        const path = Test.save_mutation(".", mutation);
+        Test.log("saved at:");
+        Test.log(path)
+      }
+    } with failwith("Some mutation also passes the tests! ^^")
+  end
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo skip
+let test_mutation =
+  match Test.mutation_test_all main originate_and_test with
+    [] -> ()
+  | ms -> let () = List.iter (fun ((_, mutation) : unit * mutation) ->
+                              let path = Test.save_mutation "." mutation in
+                              let () = Test.log "saved at:" in
+                              Test.log path) ms in
+          failwith "Some mutation also passes the tests! ^^"
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo skip
+let test_mutation =
+  switch(Test.mutation_test_all(main, originate_and_test)) {
+  | [] => ()
+  | ms => { List.iter ((((_, mutation) : (unit, mutation)) => {
+                        let path = Test.save_mutation(".", mutation);
+                        Test.log("saved at:");
+                        Test.log(path);}), ms);
+            failwith ("Some mutation also passes the tests! ^^") }
+  };
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+let test_mutation =
+  match(Test.mutation_test_all(main, originate_and_test), list([
+    ([]: list<[unit, mutation]>) => unit,
+    ([hd,...tl]: list<[unit, mutation]>) => {
+                         let ms = [hd,...tl];
+                         for (const m of ms) {
+                           let [_, mutation] = m;
+                           let path = Test.save_mutation(".", mutation);
+                           Test.log("saved at:");
+                           Test.log(path);
+                         };
+                         failwith ("Some mutation also passes the tests! ^^") }
+  ]));
+```
+
+</Syntax>
+
+In this case, the list of mutants is processed by saving each mutation
+to a file with the help of:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+Test.save_mutation : string -> mutation -> option (string)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo skip
+Test.save_mutation : string -> mutation -> string option
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo skip
+Test.save_mutation : (string, mutation) => option (string)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+Test.save_mutation : (path: string, mutation: mutation) => option <string>
+```
+
+</Syntax>
+
+where the first argument represents the path where the mutation is to
+be saved, and the second argument is the mutation. This function
+returns an optional string, representing either: the name of the file
+where the mutation was saved or a failure.
+
+## Preventing mutation
+
+In some cases, it might be a good idea to prevent mutation in certain
+places. A good example of this can be an assertion that is checking
+some invariant. To prevent such mutations, the attribute
+`@no_mutation` can be used:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+// This is testnew.ligo
+type storage is int
+
+type parameter is
+  Increment of int
+| Decrement of int
+
+type return is list (operation) * storage
+
+// Two entrypoints
+function add (const store : storage; const delta : int) : storage is
+  store + delta
+[@no_mutation] function sub (const store : storage; const delta : int) : storage is
+  store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+function main (const action : parameter; const store : storage) : return is block {
+  [@no_mutation] const _ = assert (0 = 0);
+} with
+ ((nil : list (operation)),    // No operations
+  case action of
+    Increment (n) -> add (store, n)
+  | Decrement (n) -> sub (store, n)
+  end)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo skip
+// This is mutation-contract.mligo
+type storage = int
+
+type parameter =
+  Increment of int
+| Decrement of int
+
+type return = operation list * storage
+
+// Two entrypoints
+let add (store, delta : storage * int) : storage = store + delta
+[@no_mutation] let sub (store, delta : storage * int) : storage = store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+let main (action, store : parameter * storage) : return =
+ [@no_mutation] let _ = assert (0 = 0) in
+ ([] : operation list),    // No operations
+ (match action with
+   Increment (n) -> add (store, n)
+ | Decrement (n) -> sub (store, n))
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo skip
+// This is mutation-contract.religo
+type storage = int;
+
+type parameter =
+  Increment (int)
+| Decrement (int);
+
+type return = (list (operation), storage);
+
+// Two entrypoints
+let add = ((store, delta) : (storage, int)) : storage => store + delta;
+[@no_mutation] let sub = ((store, delta) : (storage, int)) : storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+let main = ((action, store) : (parameter, storage)) : return => {
+ [@no_mutation] let _ = assert (0 == 0);
+ (([] : list (operation)),    // No operations
+ (switch (action) {
+  | Increment (n) => add ((store, n))
+  | Decrement (n) => sub ((store, n))}))
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+/ This is mutation-contract.jsligo
+type storage = int;
+
+type parameter =
+  ["Increment", int]
+| ["Decrement", int];
+
+type return_ = [list<operation>, storage];
+
+// Two entrypoints
+let add = ([store, delta]: [storage, int]): storage => store + delta;
+/* @no_mutation */ let sub = ([store, delta]: [storage, int]): storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+let main = ([action, store]: [parameter, storage]) : return_ => {
+  /* @no_mutation */ let _ = assert (0 == 0);
+  return [
+    list([]) as list<operation>,    // No operations
+    match(action, {
+      Increment:(n: int) => add ([store, n]),
+      Decrement:(n: int) => sub ([store, n])})
+  ]
+};
+```
+
+</Syntax>
+
+In the example, two mutations are prevented. The first one, it is on
+the function `sub`, which prevents the mutations presented in the
+example from the previous sections. The second one, it is an assertion
+of a silly invariant, `0` equals `0`, that should not be mutated to
+things like: `0` less than `0`, `0` equal `1`, etc.
