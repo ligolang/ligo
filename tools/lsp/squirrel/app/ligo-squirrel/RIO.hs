@@ -16,9 +16,11 @@ module RIO
 
   , Contract (..)
   , delete
+  , invalidate
   , preload
   , load
   , collectErrors
+  , FetchEffort (..)
   , forceFetch
   , fetch
   , forceFetch'
@@ -214,16 +216,37 @@ source = Just "ligo-lsp"
 run :: (J.LanguageContextEnv Config, RioEnv) -> RIO a -> IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
-fetch, forceFetch :: J.NormalizedUri -> RIO ContractInfo'
-fetch = fmap cTree . fetch'
-forceFetch = fmap cTree . forceFetch'
+-- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
+-- to load a contract.
+data FetchEffort
+  = LeastEffort
+  -- ^ Return whatever is available even if it's invalid. Fast but may be
+  -- innacurate.
+  | NormalEffort
+  -- ^ Return a reasonably up-to-date document, but does some effort in loading
+  -- if it's invalid. Tries to balance on being fast and accurate.
+  | BestEffort
+  -- ^ Fetch the latest possible document, avoiding invalid documents as much as
+  -- possible. Slow but accurate.
 
-fetch', forceFetch' :: J.NormalizedUri -> RIO Contract
-fetch' uri = asks getElem >>= ASTMap.fetchCurrent uri
-forceFetch' uri = do
+fetch, forceFetch :: FetchEffort -> J.NormalizedUri -> RIO ContractInfo'
+fetch effort = fmap cTree . fetch' effort
+forceFetch effort = fmap cTree . forceFetch' effort
+
+fetch', forceFetch' :: FetchEffort -> J.NormalizedUri -> RIO Contract
+fetch' effort uri = do
+  tmap <- asks getElem
+  case effort of
+    LeastEffort  -> ASTMap.fetchFast uri tmap
+    NormalEffort -> ASTMap.fetchCurrent uri tmap
+    BestEffort   -> ASTMap.fetchLatest uri tmap
+forceFetch' effort uri = do
   tmap <- asks getElem
   ASTMap.invalidate uri tmap
-  ASTMap.fetchCurrent uri tmap
+  case effort of
+    LeastEffort  -> ASTMap.fetchFast uri tmap
+    NormalEffort -> ASTMap.fetchCurrent uri tmap
+    BestEffort   -> ASTMap.fetchLatest uri tmap
 
 diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
 diagnostic ver = traverse_ \(nuri, diags) -> do
@@ -255,6 +278,10 @@ delete uri = do
   forM_ deleted \(Contract _ deps) ->
     forM_ deps
       (`ASTMap.invalidate` tmap)
+
+invalidate :: J.NormalizedUri -> RIO ()
+invalidate uri =
+  ASTMap.invalidate uri =<< asks (getElem @(ASTMap J.NormalizedUri Contract RIO))
 
 preload
   :: J.NormalizedUri
@@ -329,18 +356,16 @@ load uri = J.getRootPath >>= \case
       ASTMap.insert nuri (Contract contract nuris) tmap
 
     pure (rawGraph, Contract result nuris)
-
   where
     sourceToUri = normalizeFilePath . srcPath
     normalizeFilePath = J.toNormalizedUri . J.filePathToUri
     loadDefault = addShallowScopes @Fallback =<< loadWithoutScopes uri
 
 collectErrors
-  :: (J.NormalizedUri -> RIO ContractInfo')
-  -> J.NormalizedUri
+  :: ContractInfo'
   -> Maybe Int
   -> RIO ()
-collectErrors fetcher uri version = fetcher uri >>= \contract -> do
+collectErrors contract version = do
   -- Correct the ranges of the error messages to correspond to real locations
   -- instead of locations after preprocessing.
   let errs' = nubBy (leq `on` fst) $ collectAllErrors contract

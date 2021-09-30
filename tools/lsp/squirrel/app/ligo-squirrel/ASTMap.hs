@@ -6,17 +6,26 @@
 -- The functions are ordered by the freshness guarantee that they provide,
 -- from the best to the worst.
 module ASTMap
-  ( ASTMap
+  ( -- * Definition and creation
+    ASTMap
   , empty
 
+    -- * Insertion
   , insert
+
+    -- * Deletion
   , delete
 
+    -- * Fetching
   , fetchLatest
   , fetchCurrent
   , fetchBundled
   , fetchCached
 
+    -- * Fetching with background loading
+  , fetchFast
+
+    -- * Invalidation
   , invalidate
   ) where
 
@@ -25,13 +34,13 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Functor ((<&>), void)
 import Data.Hashable (Hashable)
 import Data.Maybe (fromMaybe)
+import Control.Monad (when)
 import Focus (Focus)
 import Focus qualified
 import StmContainers.Map (Map)
 import StmContainers.Map qualified as Map
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
-import UnliftIO (atomically)
-
+import UnliftIO (MonadUnliftIO, async, atomically, wait)
 
 ----
 ---- Implementation notes:
@@ -55,7 +64,6 @@ import UnliftIO (atomically)
 -- * Having timestamps on values means we can guarantee that even if some thread
 --   is slow, it will never replace the cache with an older value.
 
-
 -- | Monotonically increasing time-like value.
 type Timestamp = TimeSpec
 
@@ -75,7 +83,6 @@ data ASTMap k v m = ASTMap
 empty :: (k -> m v) -> IO (ASTMap k v m)
 empty load = atomically $
     ASTMap <$> Map.new <*> Map.new <*> Map.new <*> pure load
-
 
 -- | Insert some value into an 'ASTMap'.
 insert
@@ -98,9 +105,9 @@ delete
   => k  -- ^ Key
   -> ASTMap k v m  -- ^ Map
   -> m (Maybe v)
-delete k ASTMap{amValues, amLoadStarted, amInvalid} = do
+delete k tmap@ASTMap{amValues, amLoadStarted, amInvalid} = do
   time <- liftIO $ getTime Monotonic
-  go <- atomically $ Map.focus (checkIfLoading time) k amLoadStarted
+  go <- checkIfLoading time k tmap
   if go then
     atomically do
       Map.delete k amLoadStarted
@@ -111,8 +118,16 @@ delete k ASTMap{amValues, amLoadStarted, amInvalid} = do
     -- Someone started to load it... maybe the file was recreated after it was
     -- deleted and we didn't have enough time somehow? Do nothing I guess...
     pure Nothing
+
+checkIfLoading
+  :: ( Eq k, Hashable k
+     , MonadIO m
+     )
+  => Timestamp -> k -> ASTMap k v m -> m Bool
+checkIfLoading vNew k ASTMap{amLoadStarted} =
+  atomically $ Map.focus go k amLoadStarted
   where
-    checkIfLoading vNew = Focus.cases (True, Focus.Leave) \vOld -> (vNew >= vOld, Focus.Leave)
+    go = Focus.cases (True, Focus.Leave) \vOld -> (vNew >= vOld, Focus.Leave)
 
 -- | Load the current value.
 --
@@ -143,7 +158,6 @@ loadValue k ASTMap{amValues, amLoadStarted, amLoad} time = do
         Just (v, _timestasmp) -> pure v
         Nothing -> retry
 
-
 -- | Invalidate the cached value for the given key.
 invalidate
   :: ( Eq k, Hashable k
@@ -155,7 +169,6 @@ invalidate
 invalidate k ASTMap{amInvalid} = do
   invTime <- liftIO $ getTime Monotonic
   atomically $ void $ Map.focus (insertOrChooseNewer id invTime) k amInvalid
-
 
 -- | Fetch the version of the value which is up to date at the time
 -- of the call to this function.
@@ -173,7 +186,6 @@ fetchCurrent
      )
   => k -> ASTMap k v m -> m v
 fetchCurrent k tmap = fst <$> fetchCurrent' k tmap
-
 
 -- | Internal version of 'fetchCurrent' which returns a timestamp too.
 fetchCurrent'
@@ -222,7 +234,6 @@ fetchCurrent' k tmap@ASTMap{amValues, amLoadStarted, amInvalid} = do
       Just res -> pure res
       Nothing -> (, time) <$> loadValue k tmap time
 
-
 -- | Fetch a version of the value, which is up to date at the time
 -- this function /returns/.
 --
@@ -252,7 +263,6 @@ fetchLatest k tmap@ASTMap{amInvalid} = go
             | otherwise -> True
       if again then go else pure v
 
-
 -- | Fetch a cached version of the value.
 --
 -- This function will load a value if there is no cache for it, but
@@ -269,7 +279,6 @@ fetchCached k tmap@ASTMap{amValues} = do
   case mv of
     Nothing -> liftIO (getTime Monotonic) >>= loadValue k tmap
     Just (v, _) -> pure v
-
 
 -- | Fetch a reasonably up-to-date version of the value.
 --
@@ -317,6 +326,48 @@ fetchBundled k tmap@ASTMap{amValues, amInvalid, amLoadStarted} = do
         Just (v, vTime) | vTime >= atTime -> pure v
         _ -> retry
 
+-- | Fetch a value that may be outdated, but gather a new one in the background
+-- if needed.
+--
+-- This function will check whether a value is being loaded, and if it is, it
+-- will return the previously cached value and start loading a new one in the
+-- background. If no value is being loaded, it will return the most recent
+-- cached version, if it exists, however, if such value is invalid it will start
+-- loading in the background as well. If no cached version exists, then it will
+-- load and return it when it's done.
+--
+-- This means that it will always return some value, that may be invalid or not,
+-- and will load a new one if needed. Fast, but may be innacurate.
+--
+-- TODO: Think of a better name for this function.
+fetchFast
+  :: forall k v m
+  .  ( Eq k, Hashable k
+     , MonadUnliftIO m
+     )
+  => k -> ASTMap k v m -> m v
+fetchFast k tmap@ASTMap{amInvalid, amLoadStarted, amValues} = do
+  mv <- atomically do
+    invTime <- fromMaybe 0 <$> Map.lookup k amInvalid
+    mres <- Map.lookup k amValues
+    mLoadTime <- Map.lookup k amLoadStarted
+    case mres of
+      -- We have no option other than to load it and wait, or wait for someone
+      -- else to finish loading it.
+      Nothing -> maybe (pure Nothing) (const retry) mLoadTime
+      Just (v, vTime)
+        -- Success.
+        | vTime > invTime -> pure $ Just (v, False)
+        -- Invalid, but at least there is a cached result. Return it and load a
+        -- new one in the background.
+        | otherwise -> pure $ Just (v, True)
+
+  let loadAsync = async do
+        time <- liftIO $ getTime Monotonic
+        loadValue k tmap time
+  case mv of
+    Nothing -> wait =<< loadAsync
+    Just (v, shouldLoad) -> v <$ when shouldLoad (void loadAsync)
 
 -- | A 'Focus' that will insert a value if none was present or use the
 -- one that is newer based on the function that returns the timestamp.
