@@ -2,7 +2,6 @@ include Ast_typed.Types
 
 module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
 module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
-module Int = Int_repr_copied
 
 type mcode = unit Tezos_utils.Michelson.michelson
 type mcontract = Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.t
@@ -34,12 +33,12 @@ and contract =
 and constant_val =
   | C_unit
   | C_bool of bool
-  | C_int of Int.z Int.num
-  | C_nat of Int.n Int.num
+  | C_int of Z.t
+  | C_nat of Z.t
   | C_timestamp of Z.t
   | C_string of string
   | C_bytes of bytes
-  | C_mutez of Int.n Int.num
+  | C_mutez of Z.t
   | C_address of mcontract (*should be represented as michelson data ? not convenient *)
   | C_contract of contract
   | C_key_hash of Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.public_key_hash

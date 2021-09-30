@@ -144,12 +144,12 @@ let equal_constant_val (c : constant_val) (c' : constant_val) : bool =
   match c, c' with
   | C_unit, C_unit -> true
   | C_bool b, C_bool b' -> b = b'
-  | C_int i, C_int i' -> Int.compare i i' = 0
-  | C_nat n, C_nat n' -> Int.compare n n' = 0
-  | C_timestamp t, C_timestamp t' -> Int.compare t t' = 0
+  | C_int i, C_int i' -> Z.compare i i' = 0
+  | C_nat n, C_nat n' -> Z.compare n n' = 0
+  | C_timestamp t, C_timestamp t' -> Z.compare t t' = 0
   | C_string s, C_string s' -> String.equal s s'
   | C_bytes b, C_bytes b' -> Bytes.equal b b'
-  | C_mutez m, C_mutez m' -> Int.compare m m' = 0
+  | C_mutez m, C_mutez m' -> Z.compare m m' = 0
   | C_address a, C_address a' ->
      Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.equal a a'
   | C_contract {address=a;entrypoint=None}, C_contract {address=a';entrypoint=None} ->
