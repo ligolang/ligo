@@ -36,6 +36,34 @@ module Tezos_eq = struct
       let t = of_zint tz in
       add_delta t (Memory_proto_alpha.Protocol.Alpha_context.Script_int.of_zint n) |> to_zint
 
+  let mutez_add : Z.t -> Z.t -> Z.t option = fun x y ->
+    let open Memory_proto_alpha.Protocol.Alpha_context.Tez in
+    let open Option in
+    try
+      let x = Z.to_int64 x in
+      let y = Z.to_int64 y in
+      let* x = of_mutez x in
+      let* y = of_mutez y in
+      match x +? y with
+      | Ok t -> some @@ Z.of_int64 (to_mutez t)
+      | _ -> None
+    with
+      Z.Overflow -> None
+
+  let mutez_sub : Z.t -> Z.t -> Z.t option = fun x y ->
+    let open Memory_proto_alpha.Protocol.Alpha_context.Tez in
+    let open Option in
+    try
+      let x = Z.to_int64 x in
+      let y = Z.to_int64 y in
+      let* x = of_mutez x in
+      let* y = of_mutez y in
+      match x -? y with
+      | Ok t -> some @@ Z.of_int64 (to_mutez t)
+      | _ -> None
+    with
+      Z.Overflow -> None
+
 end
 let compile_contract ~raise ~add_warning source_file entry_point =
   let open Ligo_compile in

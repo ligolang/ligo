@@ -308,3 +308,17 @@ let test_map_get_and_update =
   let (old,xs) = Map.get_and_update 2n (Some "Foo") xs in
   let ys = Map.literal [(1n,"Hello");(2n,"Foo")] in
   assert (xs = ys && old = Some "World")
+
+let test_add_mutez =
+  let m = 10tez in
+  let n = 1tez in
+  assert (m + n = 11tez)
+
+let test_sub_mutez =
+  let m = 10tez in
+  let n = 1tez in
+  assert (m - n = 9tez)
+
+let test_div_mutez =
+  let a = 1tez/2tez in
+  assert (a = 0n)
