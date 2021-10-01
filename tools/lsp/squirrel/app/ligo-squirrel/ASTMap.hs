@@ -24,6 +24,7 @@ module ASTMap
 
     -- * Fetching with background loading
   , fetchFast
+  , fetchFastAndNotify
 
     -- * Invalidation
   , invalidate
@@ -346,7 +347,17 @@ fetchFast
      , MonadUnliftIO m
      )
   => k -> ASTMap k v m -> m v
-fetchFast k tmap@ASTMap{amInvalid, amLoadStarted, amValues} = do
+fetchFast = fetchFastAndNotify (const $ pure ())
+
+-- | Just like 'fetchFast', but also runs an action after it has finished
+-- loading.
+fetchFastAndNotify
+  :: forall k v m
+  .  ( Eq k, Hashable k
+     , MonadUnliftIO m
+     )
+  => (v -> m ()) -> k -> ASTMap k v m -> m v
+fetchFastAndNotify notify k i tmap@ASTMap{amInvalid, amLoadStarted, amValues} = do
   mv <- atomically do
     invTime <- fromMaybe 0 <$> Map.lookup k amInvalid
     mres <- Map.lookup k amValues
@@ -364,7 +375,8 @@ fetchFast k tmap@ASTMap{amInvalid, amLoadStarted, amValues} = do
 
   let loadAsync = async do
         time <- liftIO $ getTime Monotonic
-        loadValue k tmap time
+        v <- loadValue k tmap time
+        v <$ notify v
   case mv of
     Nothing -> wait =<< loadAsync
     Just (v, shouldLoad) -> v <$ when shouldLoad (void loadAsync)

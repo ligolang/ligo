@@ -168,18 +168,20 @@ handleDidOpenTextDocument notif = do
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
-  let ver = notif^.J.params.J.textDocument.J.version
-  Log.debug "Text document did change" [i|Loading text document|]
-  RIO.Contract doc nuris <- RIO.forceFetch' RIO.LeastEffort uri
-  -- Clear diagnostics for all contracts in this WCC and then send diagnostics
-  -- collected from this uri.
-  -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
-  -- conditions.
-  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
-  modifyMVar_ openDocsVar \openDocs -> do
-    RIO.clearDiagnostics nuris
-    RIO.collectErrors doc ver
-    pure openDocs
+  Log.debug "Text document did change" [i|Changed text document: #{uri}|]
+  void $ RIO.forceFetchAndNotify notify RIO.LeastEffort uri
+  where
+    -- Clear diagnostics for all contracts in this WCC and then send diagnostics
+    -- collected from this uri.
+    -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
+    -- conditions.
+    notify (RIO.Contract doc nuris) = do
+      let ver = notif^.J.params.J.textDocument.J.version
+      openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
+      modifyMVar_ openDocsVar \openDocs -> do
+        RIO.clearDiagnostics nuris
+        RIO.collectErrors doc ver
+        pure openDocs
 
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
@@ -232,15 +234,19 @@ handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
 handleDocumentFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
-  tree <- contractTree <$> RIO.fetch RIO.BestEffort (J.toNormalizedUri uri)
+    nuri = J.toNormalizedUri uri
+  tree <- contractTree <$> RIO.fetch RIO.BestEffort nuri
+  RIO.invalidate nuri
   respond . Right =<< AST.formatDocument tree
 
 handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
 handleDocumentRangeFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
+    nuri = J.toNormalizedUri uri
     pos = fromLspRange $ req ^. J.params . J.range
-  tree <- contractTree <$> RIO.fetch RIO.BestEffort (J.toNormalizedUri uri)
+  tree <- contractTree <$> RIO.fetch RIO.BestEffort nuri
+  RIO.invalidate nuri
   respond . Right =<< AST.formatAt pos tree
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
@@ -372,6 +378,7 @@ handleRenameRequest req respond = do
               , _changeAnnotations = Nothing
               }
         Log.debug "Rename" [i|Rename request returned #{response}|]
+        RIO.invalidate nuri
         respond . Right $ response
         RIO.invalidate nuri
 

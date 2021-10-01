@@ -23,6 +23,7 @@ module RIO
   , FetchEffort (..)
   , forceFetch
   , fetch
+  , forceFetchAndNotify
   , forceFetch'
   , fetch'
 
@@ -240,13 +241,22 @@ fetch' effort uri = do
     LeastEffort  -> ASTMap.fetchFast uri tmap
     NormalEffort -> ASTMap.fetchCurrent uri tmap
     BestEffort   -> ASTMap.fetchLatest uri tmap
-forceFetch' effort uri = do
+
+forceFetch' :: FetchEffort -> J.NormalizedUri -> RIO Contract
+forceFetch' = forceFetchAndNotify (const $ pure ())
+
+forceFetchAndNotify :: (Contract -> RIO ()) -> FetchEffort -> J.NormalizedUri -> RIO Contract
+forceFetchAndNotify notify effort uri = do
   tmap <- asks getElem
   ASTMap.invalidate uri tmap
   case effort of
-    LeastEffort  -> ASTMap.fetchFast uri tmap
-    NormalEffort -> ASTMap.fetchCurrent uri tmap
-    BestEffort   -> ASTMap.fetchLatest uri tmap
+    LeastEffort  -> ASTMap.fetchFastAndNotify notify uri tmap
+    NormalEffort -> do
+      v <- ASTMap.fetchCurrent uri tmap
+      v <$ notify v
+    BestEffort   -> do
+      v <- ASTMap.fetchLatest uri tmap
+      v <$ notify v
 
 diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
 diagnostic ver = traverse_ \(nuri, diags) -> do
@@ -282,6 +292,12 @@ delete uri = do
 invalidate :: J.NormalizedUri -> RIO ()
 invalidate uri =
   ASTMap.invalidate uri =<< asks (getElem @(ASTMap J.NormalizedUri Contract RIO))
+
+invalidate :: J.NormalizedUri -> RIO ()
+invalidate uri = do
+  tmap <- asks $ getElem @(ASTMap J.NormalizedUri Contract J.TextDocumentVersion RIO)
+  ver <- getVersionFor uri
+  ASTMap.invalidate uri ver tmap
 
 preload
   :: J.NormalizedUri
