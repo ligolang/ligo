@@ -124,7 +124,7 @@ let rec apply_comparison :
       in
       return @@ v_bool x
   | (comp, [V_List   _ as xs; V_List   _ as ys])
-  | (comp, [V_Set    _ as xs; V_Set    _ as ys]) 
+  | (comp, [V_Set    _ as xs; V_Set    _ as ys])
   | (comp, [V_Map    _ as xs; V_Map    _ as ys])
   | (comp, [V_Record _ as xs; V_Record _ as ys]) ->
     let c = Ligo_interpreter.Combinators.equal_value xs ys in
@@ -197,11 +197,11 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
     | ( C_ASSERTION , [ v ] ) ->
       if (is_true v) then return_ct @@ C_unit
       else fail @@ Errors.meta_lang_eval loc calltrace "Failed assertion"
-    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
+    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:LC.equal_value l k with
       | Some v -> return @@ v_some v
       | None -> return @@ v_none ()
     )
-    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:Caml.(=) l k with
+    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:LC.equal_value l k with
       | Some v -> return @@ v
       | None -> fail @@ Errors.meta_lang_eval loc calltrace (Predefined.Tree_abstraction.pseudo_module_to_string c)
     )
@@ -404,26 +404,26 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
           eval_ligo body calltrace env'
         )
         init kvs
-    | ( C_MAP_MEM , [k ; V_Map kvs]) -> return @@ v_bool (List.Assoc.mem ~equal:Caml.(=) kvs k)
-    | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.Assoc.remove ~equal:Caml.(=) kvs k))
-    | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k)
+    | ( C_MAP_MEM , [k ; V_Map kvs]) -> return @@ v_bool (List.Assoc.mem ~equal:LC.equal_value kvs k)
+    | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.Assoc.remove ~equal:LC.equal_value kvs k))
+    | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
     | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
-      | "Some" -> return @@ V_Map ((k,v)::(List.Assoc.remove ~equal:Caml.(=) kvs k))
-      | "None" -> return @@ V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k)
+      | "Some" -> return @@ V_Map ((k,v)::(List.Assoc.remove ~equal:LC.equal_value kvs k))
+      | "None" -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
       | _ -> assert false
     )
     | ( C_MAP_GET_AND_UPDATE , [k ; V_Construct (option,v) ; V_Map kvs ] ) ->
-      let old_value = List.Assoc.find ~equal:Caml.(=) kvs k in
+      let old_value = List.Assoc.find ~equal:LC.equal_value kvs k in
       let old_value = (match old_value with
         | Some v -> v_some v
         | None -> v_none ())
       in
       (match option with
-      | "Some" -> return @@ v_pair (old_value, V_Map ((k,v)::(List.Assoc.remove ~equal:Caml.(=) kvs k)))
-      | "None" -> return @@ v_pair (old_value, V_Map (List.Assoc.remove ~equal:Caml.(=) kvs k))
+      | "Some" -> return @@ v_pair (old_value, V_Map ((k,v)::(List.Assoc.remove ~equal:LC.equal_value kvs k)))
+      | "None" -> return @@ v_pair (old_value, V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k))
       | _ -> assert false)
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
-    | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.dedup_and_sort ~compare (v::l))
+    | ( C_SET_ADD , [ v ; V_Set l ] ) -> return @@ V_Set (List.dedup_and_sort ~compare:LC.compare_value (v::l))
     | ( C_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Set elts ; init ] )
     | ( C_SET_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_Set elts ; init ] ) ->
       let* set_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
@@ -456,11 +456,11 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
           eval_ligo body calltrace env'
         )
         (V_Ct C_unit) elts
-    | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem ~equal:Caml.(=) elts v)
+    | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem ~equal:LC.equal_value elts v)
     | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> return @@ V_Set (List.filter ~f:(fun el -> not (el = v)) elts)
     | ( C_SET_UPDATE , [ v ; b ; V_Set elts ] ) ->
-      if is_true b 
-      then return @@ V_Set (List.dedup_and_sort ~compare (v::elts))
+      if is_true b
+      then return @@ V_Set (List.dedup_and_sort ~compare:LC.compare_value (v::elts))
       else return @@ V_Set (List.filter ~f:(fun el -> not (el = v)) elts)
     | ( C_ADDRESS , [ V_Ct (C_contract { address }) ] ) ->
       return (V_Ct (C_address address))

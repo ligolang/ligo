@@ -140,40 +140,110 @@ let get_func : value -> func_val option =
     | V_Func_val v -> Some v
     | _ -> None
 
-let equal_constant_val (c : constant_val) (c' : constant_val) : bool =
+let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   match c, c' with
-  | C_unit, C_unit -> true
-  | C_bool b, C_bool b' -> b = b'
-  | C_int i, C_int i' -> Z.compare i i' = 0
-  | C_nat n, C_nat n' -> Z.compare n n' = 0
-  | C_timestamp t, C_timestamp t' -> Z.compare t t' = 0
-  | C_string s, C_string s' -> String.equal s s'
-  | C_bytes b, C_bytes b' -> Bytes.equal b b'
-  | C_mutez m, C_mutez m' -> Z.compare m m' = 0
+  | C_unit, C_unit -> Unit.compare () ()
+  | C_unit, (C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> -1
+  | C_bool _, C_unit -> -1
+  | C_bool b, C_bool b' -> Bool.compare b b'
+  | C_bool _, (C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_int _, (C_unit | C_bool _) -> - 1
+  | C_int i, C_int i' -> Z.compare i i'
+  | C_int _, (C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_nat _, (C_unit | C_bool _ | C_int _) -> - 1
+  | C_nat n, C_nat n' -> Z.compare n n'
+  | C_nat _, (C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_timestamp _, (C_unit | C_bool _ | C_int _ | C_nat _) -> - 1
+  | C_timestamp t, C_timestamp t' -> Z.compare t t'
+  | C_timestamp _, (C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_string _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _) -> - 1
+  | C_string s, C_string s' -> String.compare s s'
+  | C_string _, (C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_bytes _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _) -> - 1
+  | C_bytes b, C_bytes b' -> Bytes.compare b b'
+  | C_bytes _ , (C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_mutez _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _) -> - 1
+  | C_mutez m, C_mutez m' -> Z.compare m m'
+  | C_mutez _ , (C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_address _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _) -> - 1
   | C_address a, C_address a' ->
-     Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.equal a a'
-  | C_contract {address=a;entrypoint=None}, C_contract {address=a';entrypoint=None} ->
-     Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.equal a a'
-  | C_contract {address=a;entrypoint=Some e}, C_contract {address=a';entrypoint=Some e'} ->
-     Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.equal a a' && String.equal e e'
+     Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.compare a a'
+  | C_address _ , (C_contract _ | C_key_hash _) -> 1
+  | C_contract _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _) -> - 1
+  | C_contract {address=a;entrypoint=e}, C_contract {address=a';entrypoint=e'} -> (
+     match Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.compare a a' with
+       0 -> Option.compare String.compare e e'
+     | c -> c
+  )
+  | C_contract _ , C_key_hash _ -> 1
+  | C_key_hash _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _) -> - 1
   | C_key_hash kh, C_key_hash kh' ->
-     Tezos_crypto.Signature.Public_key_hash.equal kh kh'
-  | _, _ -> false
+     Tezos_crypto.Signature.Public_key_hash.compare kh kh'
 
-let rec equal_value (v : value) (v' : value) : bool =
+let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
-  | V_Ct c, V_Ct c' -> equal_constant_val c c'
-  | V_List l, V_List l' -> List.equal equal_value l l'
-  | V_Construct (c, l), V_Construct (c', l') ->
-     String.equal c c' && equal_value l l'
+  | V_Ct c, V_Ct c' -> compare_constant_val c c'
+  | V_Ct _, (V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_List _, V_Ct _ -> - 1
+  | V_List l, V_List l' -> List.compare compare_value l l'
+  | V_List _, (V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Record _, (V_Ct _ | V_List _) -> -1
   | V_Record r, V_Record r' ->
+     let compare (Label l, v) (Label l', v') = match String.compare l l' with
+         0 -> compare_value v v'
+       | c -> c in
      let r = LMap.to_kv_list r |> List.sort ~compare in
      let r' = LMap.to_kv_list r' |> List.sort ~compare in
-     List.equal (fun (Label l, v) (Label l', v') -> String.equal l l' && equal_value v v') r r'
+     List.compare compare r r'
+  | V_Record _, (V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Map _, (V_Ct _ | V_List _ | V_Record _) -> -1
+  | V_Map m, V_Map m' ->
+     let compare (k1, v1) (k2, v2) = match compare_value k1 k2 with
+         0 -> compare_value v1 v2
+       | c -> c in
+     let m = List.sort ~compare m in
+     let m' = List.sort ~compare m' in
+    List.compare compare m m'
+  | V_Map _, (V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Set _, (V_Ct _ | V_List _ | V_Record _ | V_Map _) -> -1
   | V_Set s, V_Set s' ->
-     List.equal equal_value s s'
-  | V_Map m, V_Map m' -> 
-    let m = List.sort ~compare m in
-    let m' = List.sort ~compare m' in
-    List.equal (fun (k1, v1) (k2, v2) -> equal_value k1 k2 && equal_value v1 v2) m m'
-  | _, _ -> false
+     List.compare compare_value s s'
+  | V_Set _, (V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Construct _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _) -> -1
+  | V_Construct (c, l), V_Construct (c', l') -> (
+     match String.compare c c' with
+       0 -> compare_value l l'
+     | c -> c
+  )
+  | V_Construct _, (V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Michelson _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _) -> -1
+  | V_Michelson m, V_Michelson m' -> (
+    match m, m' with
+      Contract _, Ty_code _ -> -1
+    | Contract c, Contract c' -> compare c c'
+    | Ty_code _, Contract _ -> 1
+    | Ty_code t, Ty_code t' -> compare t t'
+  )
+  | V_Michelson _, (V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Ligo _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _) -> -1
+  | V_Ligo (l,v), V_Ligo (l',v') -> (
+    match String.compare l l' with
+      0 -> String.compare v v'
+    | c -> c
+  )
+  | V_Ligo _, (V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Mutation _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _) -> -1
+  | V_Mutation (l, e), V_Mutation (l', e') -> (
+    match Location.compare l l' with
+      0 -> compare e e'
+    | c -> c
+  )
+  | V_Mutation _, (V_Failure _ | V_Func_val _) -> 1
+  | V_Failure _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _) -> -1
+  | V_Failure e, V_Failure e' -> compare e e'
+  | V_Failure _, V_Func_val _ -> 1
+  | V_Func_val _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _) -> -1
+  | V_Func_val f, V_Func_val f' -> compare f f'
+
+let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
+let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

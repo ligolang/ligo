@@ -201,6 +201,12 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_bigmap_compare.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* DEPRECATED
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_bigmap_set.mligo" ] ;
