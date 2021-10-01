@@ -41,7 +41,7 @@ import Focus qualified
 import StmContainers.Map (Map)
 import StmContainers.Map qualified as Map
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
-import UnliftIO (MonadUnliftIO, async, atomically, wait)
+import UnliftIO (Async, MonadUnliftIO, async, atomically, cancel, link)
 
 ----
 ---- Implementation notes:
@@ -76,6 +76,8 @@ data ASTMap k v m = ASTMap
     -- ^ Who is loading what and when they started.
   , amInvalid :: Map k Timestamp
     -- ^ When each value was invalidated last.
+  , amWorkers :: Map k (Async v)
+    -- ^ Background threads loading values.
   , amLoad :: k -> m v
     -- ^ Loading action.
   }
@@ -83,7 +85,7 @@ data ASTMap k v m = ASTMap
 -- | Construct a new empty 'ASTMap' given the loading action.
 empty :: (k -> m v) -> IO (ASTMap k v m)
 empty load = atomically $
-    ASTMap <$> Map.new <*> Map.new <*> Map.new <*> pure load
+  ASTMap <$> Map.new <*> Map.new <*> Map.new <*> Map.new <*> pure load
 
 -- | Insert some value into an 'ASTMap'.
 insert
@@ -357,7 +359,7 @@ fetchFastAndNotify
      , MonadUnliftIO m
      )
   => (v -> m ()) -> k -> ASTMap k v m -> m v
-fetchFastAndNotify notify k i tmap@ASTMap{amInvalid, amLoadStarted, amValues} = do
+fetchFastAndNotify notify k tmap@ASTMap{amInvalid, amLoadStarted, amValues, amWorkers} = do
   mv <- atomically do
     invTime <- fromMaybe 0 <$> Map.lookup k amInvalid
     mres <- Map.lookup k amValues
@@ -373,13 +375,18 @@ fetchFastAndNotify notify k i tmap@ASTMap{amInvalid, amLoadStarted, amValues} = 
         -- new one in the background.
         | otherwise -> pure $ Just (v, True)
 
-  let loadAsync = async do
+  let load = do
         time <- liftIO $ getTime Monotonic
         v <- loadValue k tmap time
         v <$ notify v
   case mv of
-    Nothing -> wait =<< loadAsync
-    Just (v, shouldLoad) -> v <$ when shouldLoad (void loadAsync)
+    Nothing -> load
+    Just (v, shouldLoad) -> v <$ when shouldLoad do
+      mWorker <- atomically $ Map.focus Focus.lookupAndDelete k amWorkers
+      maybe (pure ()) cancel mWorker
+      worker <- async load
+      link worker
+      atomically $ Map.insert worker k amWorkers
 
 -- | A 'Focus' that will insert a value if none was present or use the
 -- one that is newer based on the function that returns the timestamp.

@@ -241,8 +241,6 @@ fetch' effort uri = do
     LeastEffort  -> ASTMap.fetchFast uri tmap
     NormalEffort -> ASTMap.fetchCurrent uri tmap
     BestEffort   -> ASTMap.fetchLatest uri tmap
-
-forceFetch' :: FetchEffort -> J.NormalizedUri -> RIO Contract
 forceFetch' = forceFetchAndNotify (const $ pure ())
 
 forceFetchAndNotify :: (Contract -> RIO ()) -> FetchEffort -> J.NormalizedUri -> RIO Contract
@@ -292,12 +290,6 @@ delete uri = do
 invalidate :: J.NormalizedUri -> RIO ()
 invalidate uri =
   ASTMap.invalidate uri =<< asks (getElem @(ASTMap J.NormalizedUri Contract RIO))
-
-invalidate :: J.NormalizedUri -> RIO ()
-invalidate uri = do
-  tmap <- asks $ getElem @(ASTMap J.NormalizedUri Contract J.TextDocumentVersion RIO)
-  ver <- getVersionFor uri
-  ASTMap.invalidate uri ver tmap
 
 preload
   :: J.NormalizedUri
