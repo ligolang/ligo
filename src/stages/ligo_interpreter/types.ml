@@ -50,7 +50,6 @@ and micheline_value = (unit, string) Tezos_micheline.Micheline.node *
 and value_expr = { ast_type : Ast_typed.type_expression ;
                    eval_term : value }
 and value =
-  | V_Func_val of func_val
   | V_Ct of constant_val
   | V_List of value list
   | V_Record of value label_map
@@ -61,6 +60,7 @@ and value =
   | V_Ligo of (string * string)
   | V_Mutation of mutation
   | V_Failure of exception_type
+  | V_Func_val of func_val
 
 and fail_reason = Val of value | Reason of string
 
