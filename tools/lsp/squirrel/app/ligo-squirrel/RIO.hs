@@ -321,6 +321,7 @@ load
 load uri = J.getRootPath >>= \case
   Nothing -> Contract <$> loadDefault <*> pure [uri]
   Just root -> asks (getTag @"includes") >>= flip modifyMVar \includes -> do
+    time <- ASTMap.getTimestamp
     tmap <- asks getElem
 
     rootContract <- loadWithoutScopes uri
@@ -361,7 +362,7 @@ load uri = J.getRootPath >>= \case
     let contracts = (id &&& normalizeFilePath . contractFile) <$> G.vertexList graph
     let nuris = snd <$> contracts
     forM_ contracts \(contract, nuri) ->
-      ASTMap.insert nuri (Contract contract nuris) tmap
+      ASTMap.insert nuri (Contract contract nuris) time tmap
 
     pure (rawGraph, Contract result nuris)
   where

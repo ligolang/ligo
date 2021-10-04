@@ -6,8 +6,12 @@
 -- The functions are ordered by the freshness guarantee that they provide,
 -- from the best to the worst.
 module ASTMap
-  ( -- * Definition and creation
-    ASTMap
+  ( -- * Time utilities
+    Timestamp
+  , getTimestamp
+
+    -- * Definition and creation
+  , ASTMap
   , empty
 
     -- * Insertion
@@ -68,6 +72,9 @@ import UnliftIO (Async, MonadUnliftIO, async, atomically, cancel, link)
 -- | Monotonically increasing time-like value.
 type Timestamp = TimeSpec
 
+getTimestamp :: MonadIO m => m Timestamp
+getTimestamp = liftIO $ getTime Monotonic
+
 -- | The cache-map.
 data ASTMap k v m = ASTMap
   { amValues :: Map k (v, Timestamp)
@@ -94,10 +101,10 @@ insert
      )
   => k  -- ^ Key
   -> v  -- ^ Value
+  -> Timestamp  -- ^ Current timestamp
   -> ASTMap k v m  -- ^ Map
   -> m ()
-insert k v ASTMap{amValues} = do
-  time <- liftIO $ getTime Monotonic
+insert k v time ASTMap{amValues} =
   void $ atomically $ Map.focus (insertOrChooseNewer snd (v, time)) k amValues
 
 -- | Delete a value from an 'ASTMap'. Returns the deleted value, if it exists.
@@ -109,7 +116,7 @@ delete
   -> ASTMap k v m  -- ^ Map
   -> m (Maybe v)
 delete k tmap@ASTMap{amValues, amLoadStarted, amInvalid} = do
-  time <- liftIO $ getTime Monotonic
+  time <- getTimestamp
   go <- checkIfLoading time k tmap
   if go then
     atomically do
@@ -170,7 +177,7 @@ invalidate
   -> ASTMap k v m  -- ^ Map
   -> m ()
 invalidate k ASTMap{amInvalid} = do
-  invTime <- liftIO $ getTime Monotonic
+  invTime <- getTimestamp
   atomically $ void $ Map.focus (insertOrChooseNewer id invTime) k amInvalid
 
 -- | Fetch the version of the value which is up to date at the time
@@ -198,7 +205,7 @@ fetchCurrent'
      )
   => k -> ASTMap k v m -> m (v, Timestamp)
 fetchCurrent' k tmap@ASTMap{amValues, amLoadStarted, amInvalid} = do
-    time <- liftIO $ getTime Monotonic
+    time <- getTimestamp
     let
       seeIfSomeoneIsFetchingIt :: STM (Maybe (v, Timestamp))
       seeIfSomeoneIsFetchingIt =
@@ -280,7 +287,7 @@ fetchCached
 fetchCached k tmap@ASTMap{amValues} = do
   mv <- atomically $ Map.lookup k amValues
   case mv of
-    Nothing -> liftIO (getTime Monotonic) >>= loadValue k tmap
+    Nothing -> getTimestamp >>= loadValue k tmap
     Just (v, _) -> pure v
 
 -- | Fetch a reasonably up-to-date version of the value.
@@ -319,7 +326,7 @@ fetchBundled k tmap@ASTMap{amValues, amInvalid, amLoadStarted} = do
     -- above, because currently it is possible that someone else starts loading
     -- the value at this point, so there will be to loads in parallel.
     case mv of
-      Nothing -> liftIO (getTime Monotonic) >>= loadValue k tmap
+      Nothing -> getTimestamp >>= loadValue k tmap
       Just v -> pure v
   where
     -- | Wait for a value with timestamp at least @atTime@
@@ -376,7 +383,7 @@ fetchFastAndNotify notify k tmap@ASTMap{amInvalid, amLoadStarted, amValues, amWo
         | otherwise -> pure $ Just (v, True)
 
   let load = do
-        time <- liftIO $ getTime Monotonic
+        time <- getTimestamp
         v <- loadValue k tmap time
         v <$ notify v
   case mv of
