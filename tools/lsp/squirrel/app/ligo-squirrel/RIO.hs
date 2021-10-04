@@ -315,21 +315,21 @@ loadWithoutScopes uri = do
 tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
 tryLoadWithoutScopes uri = (Just . insertPreprocessorRanges <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
 
-load
-  :: J.NormalizedUri
-  -> RIO Contract
-load uri = J.getRootPath >>= \case
-  Nothing -> Contract <$> loadDefault <*> pure [uri]
-  Just root -> asks (getTag @"includes") >>= flip modifyMVar \includes -> do
-    time <- ASTMap.getTimestamp
-    tmap <- asks getElem
-
-    rootContract <- loadWithoutScopes uri
+getInclusionsGraph
+  :: FilePath  -- ^ Directory to look for contracts
+  -> J.NormalizedUri  -- ^ Open contract to be loaded
+  -> RIO (AdjacencyMap ParsedContractInfo)
+getInclusionsGraph root uri = do
+  rootContract <- loadWithoutScopes uri
+  includesVar <- asks (getTag @"includes")
+  modifyMVar includesVar \includes -> do
     let rootFileName = contractFile rootContract
     let groups = wcc includes
-    rawGraph <- case find (isJust . lookupContract rootFileName) groups of
+    join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
-      Nothing -> parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
+      Nothing -> do
+        Log.debug "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
+        parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
       Just oldIncludes -> do
         let (rootContract', includeEdges) = extractIncludedFiles True rootContract
         let lookupOrLoad fp = maybe
@@ -350,25 +350,39 @@ load uri = J.getRootPath >>= \case
             $ G.replaceVertex rootContract' rootContract'
             $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
         pure $ G.overlays (newGroup : groups')
+  where
+    normalizeFilePath = J.toNormalizedUri . J.filePathToUri
+    sourceToUri = normalizeFilePath . srcPath
+
+load
+  :: forall parser
+   . HasScopeForest parser RIO
+  => J.NormalizedUri
+  -> RIO Contract
+load uri = J.getRootPath >>= \case
+  Nothing -> Contract <$> loadDefault <*> pure [uri]
+  Just root -> do
+    time <- ASTMap.getTimestamp
+
+    rawGraph <- getInclusionsGraph root uri
 
     (graph, result) <- case J.uriToFilePath $ J.fromNormalizedUri uri of
-      Nothing -> (,) <$> addScopes @Fallback rawGraph <*> loadDefault
+      Nothing -> (,) <$> addScopes @parser rawGraph <*> loadDefault
       Just fp -> case find (isJust . lookupContract fp) (wcc rawGraph) of
-        Nothing -> (,) <$> addScopes @Fallback rawGraph <*> loadDefault
+        Nothing -> (,) <$> addScopes @parser rawGraph <*> loadDefault
         Just graph' -> do
-          scoped <- addScopes @Fallback graph'
+          scoped <- addScopes @parser graph'
           (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
-    let contracts = (id &&& normalizeFilePath . contractFile) <$> G.vertexList graph
+    let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
     let nuris = snd <$> contracts
+    tmap <- asks getElem
     forM_ contracts \(contract, nuri) ->
       ASTMap.insert nuri (Contract contract nuris) time tmap
 
-    pure (rawGraph, Contract result nuris)
+    pure $ Contract result nuris
   where
-    sourceToUri = normalizeFilePath . srcPath
-    normalizeFilePath = J.toNormalizedUri . J.filePathToUri
-    loadDefault = addShallowScopes @Fallback =<< loadWithoutScopes uri
+    loadDefault = addShallowScopes @parser =<< loadWithoutScopes uri
 
 collectErrors
   :: ContractInfo'

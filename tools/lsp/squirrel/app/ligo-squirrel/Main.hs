@@ -99,7 +99,7 @@ mainLoop = do
 initialize :: IO RioEnv
 initialize = do
   config <- newEmptyMVar
-  astMap <- ASTMap.empty RIO.load
+  astMap <- ASTMap.empty $ RIO.load @Fallback
   openDocs <- newMVar HashMap.empty
   includes <- newMVar G.empty
   pure (config :> astMap :> openDocs :> Tag includes :> Nil)
@@ -252,7 +252,7 @@ handleDocumentRangeFormattingRequest req respond = do
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do
     let (_, nuri, pos) = getUriPos req
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort nuri
+    tree <- contractTree <$> RIO.fetch RIO.NormalEffort nuri
     let locations = case AST.referencesOf pos tree of
           Just refs -> toLocation <$> refs
           Nothing   -> []
