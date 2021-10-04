@@ -25,9 +25,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "modules.ligo"
       , "warning_duplicate.mligo"
 
-        -- LIGO-280
-      , "k.ligo"
-
         -- LIGO-281
       , "michelson_pair_tree.religo"
       , "tuples_sequences_functions.religo"
