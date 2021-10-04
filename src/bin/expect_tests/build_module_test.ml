@@ -223,3 +223,9 @@ let%expect_test _ =
 let%expect_test _ = 
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "tata" ; "--init-file" ; contract "C.mligo" ] ;
   [%expect {| 44 |}]
+
+let%expect_test _ = 
+  run_ligo_good [ "run" ; "test" ;  contract "c.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
