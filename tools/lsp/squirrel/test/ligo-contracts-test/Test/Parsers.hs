@@ -31,25 +31,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "deep_pattern_matching/pm_test.mligo"
       , "deep_pattern_matching/pm_test.religo"
 
-        -- LIGO-279
-      , "loop.ligo"
-      , "loop7.ligo"
-      , "loop8.ligo"
-      , "loop9.ligo"
-      , "loop10.ligo"
-      , "loop11.ligo"
-      , "loop12.ligo"
-      , "loop13.ligo"
-      , "loop14.ligo"
-      , "loop15.ligo"
-      , "loop16.ligo"
-      , "loop17.ligo"
-      , "loop18.ligo"
-      , "loop_bugs.ligo"
-      , "basic_multisig/multisig.ligo"
-      , "multisig.ligo"
-      , "multisig-v2.ligo"
-
         -- LIGO-280
       , "k.ligo"
 

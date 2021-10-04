@@ -14,10 +14,10 @@ module AST.Skeleton
   , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
-  , TField (..), Variant (..), Type (..), Binding (..), RawContract (..)
-  , TypeName (..), FieldName (..), MichelsonCode (..), Error (..), Ctor (..)
-  , NameDecl (..), Preprocessor (..), PreprocessorCommand (..), ModuleName (..)
-  , ModuleAccess (..)
+  , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
+  , RawContract (..), TypeName (..), FieldName (..), MichelsonCode (..)
+  , Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
+  , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
 
   , getLIGO
   , setLIGO
@@ -64,7 +64,7 @@ type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
-  , MapBinding, Alt, Expr, TField, Variant, Type, Binding
+  , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, MichelsonCode
   , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand
   , ModuleName, ModuleAccess
@@ -168,12 +168,18 @@ data Expr it
   | Seq       [it]                     -- [Declaration]
   | Block     [it]                     -- [Declaration]
   | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
-  | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
+  | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
   | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
   | Paren     it -- (Expr)
+  deriving stock (Generic, Functor, Foldable, Traversable)
+
+data Collection it
+  = CList
+  | CMap
+  | CSet
   deriving stock (Generic, Functor, Foldable, Traversable)
 
 newtype MichelsonCode it
@@ -362,6 +368,7 @@ instance Eq1 Constant where
   liftEq _ (Tez a) (Tez b) = a == b
   liftEq _ _ _ = False
 
+-- FIXME: Missing a lot of comparisons!
 instance Eq1 Expr where
   liftEq f (Constant a) (Constant b) = f a b
   liftEq f (Ident a) (Ident b) = f a b
@@ -372,6 +379,12 @@ instance Eq1 Expr where
   liftEq f (Map xs) (Map ys) = liftEqList f xs ys
   liftEq f (BigMap xs) (BigMap ys) = liftEqList f xs ys
   liftEq _ _ _ = False
+
+instance Eq1 Collection where
+  liftEq _ CList    CList   = True
+  liftEq _ CMap     CMap    = True
+  liftEq _ CSet     CSet    = True
+  liftEq _ _        _       = False
 
 instance Eq1 Error where
   -- liftEq _ _ _ = error "Cannot compare `Error` nodes"
