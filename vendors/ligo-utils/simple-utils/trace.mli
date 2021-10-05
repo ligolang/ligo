@@ -1,7 +1,7 @@
 (*
 Warning with is a wrapper for warning.
 It creates a function to add warning to a list and get the list of warning.
-Theses function is then pass the function given. 
+Theses function is then pass the function given.
 Generally the wrapper will be use as such:
 warning_with @@ fun add_warning get_warnings ->
   let result = function_that_emit_warnings ~add_warning in
@@ -51,6 +51,7 @@ val to_option : (raise:'b raise -> 'a) -> 'a option
 
 (* Run the second function if the first fails *)
 val bind_or : raise:'a raise -> (raise:'b raise -> 'c) -> (raise:'a raise -> 'c) -> 'c
+val bind_exists : raise:'a raise -> ((raise:'a raise -> 'b) * (raise:'a raise -> 'b) list) -> 'b
 val bind_map_or :
   ('a -> 'b) -> ('c -> raise:'d raise -> 'b) -> ('c -> raise:'a raise -> 'b) ->
   'c -> 'b
@@ -62,7 +63,7 @@ module Assert :
 sig
   val assert_fail : raise:'a raise -> 'a -> (raise:'b raise -> 'c) -> unit
   val assert_true : raise:'a raise -> 'a -> bool -> unit
-  val assert_list_size : raise:'a raise -> 'a -> 'b list -> int -> unit 
+  val assert_list_size : raise:'a raise -> 'a -> 'b list -> int -> unit
   val assert_list_empty : raise:'a raise -> 'a -> 'b list -> unit
   val assert_list_same_size : raise:'a raise -> 'a -> 'b list -> 'c list -> unit
 end

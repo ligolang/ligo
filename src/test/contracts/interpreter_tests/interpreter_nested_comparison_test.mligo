@@ -69,6 +69,16 @@ let m2: (int, string) map = Map.literal [
     (2, "w0rld");
     (3, "foo");
 ]
+// big_map
+let bm: (int, string) big_map = Big_map.literal [
+    (1, "hello");
+    (2, "world");
+]
+let bm2: (int, string) big_map = Big_map.literal [
+    (1, "hell0");
+    (2, "w0rld");
+    (3, "foo");
+]
 // contructor
 // constructor - list
 // constructor - record
@@ -104,6 +114,9 @@ let lcs2: c list = [c8;c4;c5;c6;c7;c3]
 // list - map
 let lm: (int, string) map list = [m;m;m]
 let lm2: (int, string) map list = [m2;m2;m]
+// list - big_map
+let lbm: (int, string) big_map list = [bm;bm;bm]
+let lbm2: (int, string) big_map list = [bm2;bm2;bm]
 // list - list
 let ll: int list list = [lst;lst;lst]
 let ll2: int list list = [lst;[3;2;1];lst]
@@ -150,6 +163,12 @@ let ml2: (int, int list) map = Map.literal [(1, [3;2;1])]
 // map - map
 let mm: (int, (int, string) map) map = Map.literal [(1, m)]
 let mm2: (int, (int, string) map) map = Map.literal [(2, m)]
+// big_map - map
+let bmm: (int, (int, string) map) big_map = Big_map.literal [(1, m)]
+let bmm2: (int, (int, string) map) big_map = Big_map.literal [(2, m)]
+// map - big_map
+let mbm: (int, (int, string) big_map) map = Map.literal [(1, bm)]
+let mbm2: (int, (int, string) big_map) map = Map.literal [(2, bm)]
 // map - set
 let ms: (int, int set) map = Map.literal [(1, s)]
 let ms2: (int, int set) map = Map.literal [(1, s2)]
@@ -168,6 +187,7 @@ let test_equal =
   let _ = assert (r = r) in
   let _ = assert (s = s) in
   let _ = assert (m = m) in
+  let _ = assert (bm = bm) in
   let _ = assert (c1 = c1) in
   let _ = assert (c2 = c2) in
   let _ = assert (c3 = c3) in
@@ -180,6 +200,7 @@ let test_equal =
   let _ = assert (ls = ls) in
   let _ = assert (lcs = lcs) in
   let _ = assert (lm = lm) in
+  let _ = assert (lbm = lbm) in
   let _ = assert (ll = ll) in
   let _ = assert (nest_r = nest_r) in
   let _ = assert (sl = sl) in
@@ -189,6 +210,8 @@ let test_equal =
   let _ = assert (ss = ss) in
   let _ = assert (ml = ml) in
   let _ = assert (mm = mm) in
+  let _ = assert (bmm = bmm) in
+  let _ = assert (mbm = mbm) in
   let _ = assert (ms = ms) in
   let _ = assert (mc = mc) in
   let _ = assert (mr = mr) in
@@ -202,6 +225,7 @@ let test_not_equal =
   let _ = assert (r <> r2) in
   let _ = assert (s <> s2) in
   let _ = assert (m <> m2) in
+  let _ = assert (bm <> bm2) in
   let _ = assert (c1 <> c2) in
   let _ = assert (c2 <> c1) in
   let _ = assert (c3 <> c4) in
@@ -214,6 +238,7 @@ let test_not_equal =
   let _ = assert (ls <> ls2) in
   let _ = assert (lcs <> lcs2) in
   let _ = assert (lm <> lm2) in
+  let _ = assert (lbm <> lbm2) in
   let _ = assert (ll <> ll2) in
   let _ = assert (nest_r <> nest_r2) in
   let _ = assert (sl <> sl2) in
@@ -223,6 +248,8 @@ let test_not_equal =
   let _ = assert (ss <> ss2) in
   let _ = assert (ml <> ml2) in
   let _ = assert (mm <> mm2) in
+  let _ = assert (mbm <> mbm2) in
+  let _ = assert (bmm <> bmm2) in
   let _ = assert (ms <> ms2) in
   let _ = assert (mc <> mc2) in
   let _ = assert (mr <> mr2) in
