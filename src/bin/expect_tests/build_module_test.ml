@@ -225,7 +225,7 @@ let%expect_test _ =
   [%expect {| 44 |}]
 
 let%expect_test _ = 
-  run_ligo_good [ "run" ; "test" ;  contract "c.mligo" ] ;
+  run_ligo_good [ "run" ; "test" ;  contract "C1.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value (). |}]
