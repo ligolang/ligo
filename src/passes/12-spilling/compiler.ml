@@ -340,9 +340,15 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : Ast_ty
     let fields =
       List.map
         ~f:(fun (l, (row_element : _ row_element_mini_c)) ->
-           let t = compile_type ~raise row_element.associated_type in
-           (fst (LMap.find l fields), t))
-        record_fields in
+          let t = compile_type ~raise row_element.associated_type in
+          let x = trace_option ~raise
+            (corner_case ~loc:__LOC__ ("missing label in record"))
+            (LMap.find_opt l fields)
+          in
+          (fst x, t)
+        )
+        record_fields
+    in
     let body = k body in
     return (E_let_tuple (expr', (fields, body)))
   | _ ->
@@ -351,7 +357,11 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : Ast_ty
     let rec aux expr (tree : Layout.record_tree) body =
       match tree.content with
       | Field l ->
-        let var = fst (LMap.find l fields) in
+        let x = trace_option ~raise
+          (corner_case ~loc:__LOC__ ("missing label in record"))
+          (LMap.find_opt l fields)
+        in
+        let var = fst x in
         return @@ E_let_in (expr, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = Location.wrap (Var.fresh ()) in
