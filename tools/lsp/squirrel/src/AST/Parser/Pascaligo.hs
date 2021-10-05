@@ -63,6 +63,14 @@ recognise (SomeRawTree dialect rawTree)
         "paren_expr"        -> Paren     <$> field  "expr"
         _                   -> fallthrough
 
+    -- Collection
+  , Descent do
+      boilerplate' \case
+        ("collection", "map")  -> pure CMap
+        ("collection", "set")  -> pure CSet
+        ("collection", "list") -> pure CList
+        _                      -> fallthrough
+
     -- Pattern
   , Descent do
       boilerplate \case

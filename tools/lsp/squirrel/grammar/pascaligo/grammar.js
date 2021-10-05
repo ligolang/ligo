@@ -357,12 +357,12 @@ module.exports = grammar({
         field("key", $.Name),
         optional(seq('->', field("value", $.Name))),
         'in',
-        field("kind", $._collection),
+        field("kind", $.collection),
         field("collection", $._expr),
         field("body", $.block),
       ),
 
-    _collection: $ => choice('map', 'set', 'list'),
+    collection: $ => choice('map', 'set', 'list'),
 
     // Function call
     fun_call: $ =>

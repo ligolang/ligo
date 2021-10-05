@@ -229,6 +229,12 @@ instance Pretty1 Expr where
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
     Paren     e          -> "(" <> pp e <> ")"
 
+instance Pretty1 Collection where
+  pp1 = \case
+    CList -> "list"
+    CMap  -> "map"
+    CSet  -> "set"
+
 instance Pretty1 MichelsonCode where
   pp1 = \case
     MichelsonCode _ -> "<SomeMichelsonCode>"
@@ -384,6 +390,12 @@ instance LPP1 d MichelsonCode where
 --  lpp1 = pp1
 
 -- instances needed to pass instance resolution during compilation
+
+instance LPP1 d Collection where
+  lpp1 = \case
+    CList -> "list"
+    CMap  -> "map"
+    CSet  -> "set"
 
 instance LPP1 'Caml MapBinding where
   lpp1 = error "unexpected `MapBinding` node"
