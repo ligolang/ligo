@@ -24,11 +24,26 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "modules.mligo"
       , "modules.ligo"
       , "warning_duplicate.mligo"
+      , "interpreter_tests/test_imported.mligo"
+      , "interpreter_tests/test_importer.mligo" -- Also needs LIGO-204
+      , "interpreter_tests/test_module.mligo"
+      , "modules_and_free_vars/nested_modules.mligo"
+      , "modules_and_free_vars/simple.mligo"
+      , "remove_unused_module.mligo"
 
         -- LIGO-281
       , "michelson_pair_tree.religo"
       , "tuples_sequences_functions.religo"
       , "string_arithmetic.religo"
+
+        -- LIGO-306
+      , "parametric_types.ligo"
+      , "parametric_types.mligo"
+      , "parametric_types.religo"
+
+        -- LIGO-308
+      , "build/C_test.mligo"
+      , "build/b.mligo"
 
         -- Uncategorized
       , "existential.mligo"
