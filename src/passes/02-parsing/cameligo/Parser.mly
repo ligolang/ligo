@@ -733,9 +733,7 @@ unary_expr_level:
 | call_expr_level { $1 }
 
 call_expr_level:
-  call_expr
-| core_expr
-| constr_expr { $1 }
+  call_expr | core_expr | constr_expr { $1 }
 
 constr_expr:
   "<uident>" argument {
@@ -798,8 +796,7 @@ projection:
     let stop   = nsepseq_to_region selection_to_region $3 in
     let region = cover start stop in
     let value  = {struct_name=$1; selector=$2; field_path=$3}
-    in {region; value}
-  }
+    in {region; value} }
 
 module_access_e:
   module_name "." module_var_e {

@@ -184,9 +184,15 @@ and pp_expr = function
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
 
-and pp_array (node: (array_item, comma) Utils.nsepseq brackets reg) =
-  let pp_items = pp_nsepseq "," pp_array_item
-  in group (pp_brackets pp_items node)
+and pp_array (node: (array_item, comma) Utils.sepseq brackets reg) =
+  match node.value.inside with 
+    Some node -> 
+      let pp_items = pp_nsepseq "," pp_array_item in
+      let result = string "[" ^^ nest 1 (pp_items node ^^ string "]") in
+      group result
+      (* pp_brackets (fun _ -> empty) node *)
+  | None -> 
+      pp_brackets (fun _ -> empty) node
 
 and pp_call_expr {value; _} =
   let lambda, arguments = value in
@@ -194,12 +200,14 @@ and pp_call_expr {value; _} =
     match arguments with
     | Unit _ -> []
     | Multiple xs -> Utils.nsepseq_to_list xs.value.inside in
-  let arguments = string "(" ^^ group (separate_map (string ", ") pp_expr arguments) ^^ string ")" in
-  pp_expr lambda ^^ arguments
+  let arguments =
+    string "("
+    ^^ group (separate_map (string ", ") pp_expr arguments)
+    ^^ string ")"
+  in pp_expr lambda ^^ arguments
 
 and pp_array_item = function
-  Empty_entry _ -> empty
-| Expr_entry e -> pp_expr e
+  Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
 and pp_constr_expr {value; _} =
@@ -333,22 +341,32 @@ and pp_module_access : type a.(a -> document) -> a module_access reg -> document
  and pp_cartesian (node: CST.cartesian) =
   let pp_type_exprs = pp_nsepseq "," pp_type_expr
   in group (
-    pp_attributes node.attributes ^^ hardline ^^ 
-    pp_brackets pp_type_exprs node.inside
-  )
+    pp_attributes node.attributes ^^ hardline ^^
+    pp_brackets pp_type_exprs node.inside)
 
-and pp_sum_type {value; _} =
-  let {variants; attributes; _} = value in
-  let head, tail = variants in
-  let head = pp_type_expr head in
-  let head =
-    if tail = [] then string "|" ^^ head
-    else ifflat (string "| " ^^ head) (string "| " ^^ head) in
-  let rest = List.map snd tail in
-  let app variant = break 1 ^^ string "| " ^^ pp_type_expr variant in
-  let whole = head ^^ concat_map app rest in
-  if attributes = [] then whole
-  else pp_attributes attributes ^/^ whole
+ and pp_sum_type (node : sum_type reg) =
+  let {variants; attributes; _} = node.value in
+  let variants = pp_nsepseq "|" pp_variant variants.value in
+  if attributes = [] then variants
+  else group (pp_attributes attributes ^/^ variants)
+
+and pp_variant (node : variant reg) =
+  let {tuple; attributes; _} = node.value in
+  let comp = tuple.value.inside in
+  let tuple =
+    string "[" ^^ nest 1 (pp_variant_comp comp ^^ string "]") in
+  if attributes = [] then tuple
+  else group (pp_attributes attributes ^/^ tuple)
+
+and pp_variant_comp (node: variant_comp) =
+  let {constr; params} = node in
+  let constr, params =
+    match params with
+      None -> pp_string constr, []
+    | Some (_comma, params) ->
+       pp_string constr , Utils.nsepseq_to_list params in
+  let sep = string "," ^^ break 1
+  in constr ^^ sep ^^ separate_map sep pp_type_expr params
 
 and pp_attributes = function
   [] -> empty
@@ -424,7 +442,6 @@ and pp_pattern = function
 | PConstr   p -> pp_ident p
 | PDestruct p -> pp_destruct p
 | PObject   p -> pp_pobject p
-| PWild     _ -> string "_"
 | PArray    p -> pp_parray p
 
 and pp_parray (node:  (pattern, comma) Utils.nsepseq brackets reg) =

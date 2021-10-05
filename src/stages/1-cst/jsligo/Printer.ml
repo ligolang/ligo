@@ -6,6 +6,7 @@ open CST
 module Directive = LexerLib.Directive
 module Region = Simple_utils.Region
 open! Region
+module Utils = Simple_utils.Utils
 
 let sprintf = Printf.sprintf
 
@@ -258,23 +259,45 @@ and print_type_expr state = function
 | TString s       -> print_string state s
 | TModA ma        -> print_module_access print_type_expr state ma
 
-and print_module_access : type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
-fun f state {value; _} ->
+and print_module_access :
+type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
+  fun f state {value; _} ->
   let {module_name; selector; field} = value in
   print_var   state module_name;
   print_token   state selector ".";
-  f             state field;
+  f             state field
 
-and print_sum_type state {value; _} =
-  let {variants; attributes; lead_vbar} = value in
+and print_sum_type state (node : sum_type reg) =
+  let {variants; attributes; leading_vbar} : sum_type = node.value in
   print_attributes state attributes;
-  print_option state (fun state lead_vbar ->
-    print_token      state lead_vbar "|";
-  ) lead_vbar;
-  print_nsepseq    state "|" print_type_expr variants
+  (match leading_vbar with 
+    Some leading_vbar ->
+      print_token state leading_vbar "|"
+  | None -> ());
+  print_nsepseq state "|" print_variant variants.value
+  
+and print_variant state (node : variant reg) =
+  let {attributes; tuple} = node.value in
+  print_attributes    state attributes;
+  print_variant_tuple state tuple
+
+and print_variant_tuple state {value; _} =
+  let {lbracket; inside; rbracket} = value in
+  print_token        state lbracket "[";
+  print_variant_comp state inside;
+  print_token        state rbracket "]"
+
+and print_variant_comp state (node : variant_comp) =
+  let {constr; params} = node in
+  let () = print_var state constr in
+  match params with
+    None -> ()
+  | Some (comma, seq) ->
+     (print_token state comma ",";
+      print_nsepseq state "," print_type_expr seq)
 
 and print_fun_type_arg state {name; colon; type_expr} =
-  print_var     state name;
+  print_var       state name;
   print_token     state colon ":";
   print_type_expr state type_expr
 
@@ -314,7 +337,7 @@ and print_projection state (node: projection reg) =
       print_var   state value
   | Component { value = {lbracket; inside; rbracket}; _} ->
       print_token state lbracket "[";
-      print_expr state inside;
+      print_expr  state inside;
       print_token state rbracket "]"
 
 and print_cartesian state (node : cartesian) =
@@ -404,7 +427,6 @@ and print_pattern state = function
 | PConstr v ->   print_pconstr          state v
 | PDestruct d -> print_destruct_pattern state d
 | PObject o ->   print_object_pattern   state o
-| PWild w ->     print_token            state w "<wild>"
 | PArray a ->    print_array_pattern    state a
 
 and print_property state = function
@@ -456,15 +478,17 @@ and print_constr_expr state {value; _} =
   | Some arg -> print_expr state arg
 
 and print_array_item state = function
-  Empty_entry r -> print_token state r "<empty>"
-| Expr_entry expr -> print_expr state expr
+  Expr_entry expr -> print_expr state expr
 | Rest_entry {value = {ellipsis; expr}; _} ->
   print_token state ellipsis "...";
   print_expr state expr
 
 and print_array state {value = {lbracket; inside; rbracket};_ } =
   print_token state lbracket "[";
-  print_nsepseq state "," print_array_item inside;
+  (match inside with 
+    Some inside -> 
+      print_nsepseq state "," print_array_item inside;
+  | None -> ());
   print_token state rbracket "]"
 
 and print_expr_par state {value; _} =
@@ -851,8 +875,6 @@ and pp_pattern state = function
     let properties = Utils.nsepseq_to_list inside in
     let apply len rank = pp_pattern (state#pad len rank) in
     List.iteri (List.length properties |> apply) properties
-| PWild r ->
-    pp_loc_node state "<wild>" r;
 | PArray {value = {inside; _}; region} ->
     pp_loc_node state "<array>" region;
     let items = Utils.nsepseq_to_list inside in
@@ -917,9 +939,13 @@ and pp_expr state = function
     pp_bytes state b
 | EArray {value = {inside; _}; region} ->
     pp_loc_node state "EArray" region;
-    let items  = Utils.nsepseq_to_list inside in
-    let apply len rank = pp_array_item (state#pad len rank) in
-    List.iteri (List.length items |> apply) items
+    (match inside with 
+      Some inside ->
+        let items  = Utils.nsepseq_to_list inside in
+        let apply len rank = pp_array_item (state#pad len rank) in
+        List.iteri (List.length items |> apply) items
+    | None -> 
+        pp_loc_node state "<empty>" region)
 | EConstr e_constr ->
     pp_node state "EConstr";
     pp_constr_expr (state#pad 1 0) e_constr
@@ -966,8 +992,7 @@ and pp_constr_expr state (node: (constr * expr option) reg) =
      pp_expr  (state#pad 2 1) expr
 
 and pp_array_item state = function
-  Empty_entry _ -> pp_node state "<empty>"
-| Expr_entry e ->
+  Expr_entry e ->
     pp_node state "<expr>";
     pp_expr (state#pad 1 0) e
 | Rest_entry {value; region} ->
@@ -1189,16 +1214,37 @@ and pp_fun_type_args state {inside; _} =
   List.iteri (List.length fun_type_args |> apply) fun_type_args
 
 and pp_sum_type state {variants; attributes; _} =
-  let variants = Utils.nsepseq_to_list variants in
+  let variants = Utils.nsepseq_to_list variants.value in
   let arity    = List.length variants in
   let arity    = if attributes = [] then arity else arity+1 in
   let apply arity rank variant =
-    let state = state#pad arity rank in
-    pp_type_expr state variant in
+    let state = state#pad arity rank
+    in pp_variant state variant in
   let () = List.iteri (apply arity) variants in
   if attributes <> [] then
     let state = state#pad arity (arity-1)
     in pp_attributes state attributes
+
+and pp_variant state (node : variant reg) =
+  let {attributes; tuple; _} = node.value in
+  let arity = if attributes = [] then 0 else 1 in
+  let {constr; params} = tuple.value.inside in
+  let params =
+    match params with
+      None -> []
+    | Some (_, seq) -> Utils.nsepseq_to_list seq in
+  let arity = if params = [] then arity else arity+1 in
+  let rank = 0 in
+  let () = pp_ident state constr in
+  let rank =
+    match params with
+      [] -> rank
+    | components ->
+        let apply len rank = pp_type_expr (state#pad len rank)
+        in List.iteri (List.length components |> apply) components; rank+1 in
+  let () = if attributes <> [] then
+             pp_attributes (state#pad arity rank) attributes
+  in ()
 
 and pp_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in

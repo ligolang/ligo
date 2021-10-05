@@ -80,9 +80,7 @@ module Token = Lexing_jsligo.Token
 
 (* JavaScript Keywords *)
 
-(* %token <Region.t> Break    "break"*)
 %token <Region.t> Case     "case"
-(* %token <Region.t> Class    "class"*)
 %token <Region.t> Const    "const"
 %token <Region.t> Default  "default"
 %token <Region.t> Else     "else"
@@ -94,17 +92,13 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> Of       "of"
 %token <Region.t> Return   "return"
 %token <Region.t> Switch   "switch"
-(* %token <Region.t> This     "this"*)
-(* %token <Region.t> Void     "void"*)
 %token <Region.t> While    "while"
-(* %token <Region.t> With     "with"*)
-
 
 (* TypeScript keywords *)
 
-%token <Region.t> As          "as"
-%token <Region.t> Namespace   "namespace"
-%token <Region.t> Type        "type"
+%token <Region.t> As        "as"
+%token <Region.t> Namespace "namespace"
+%token <Region.t> Type      "type"
 
 (* Virtual tokens *)
 

@@ -55,7 +55,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
 	    (failwith ("Not Enough Allowance") as allowances); 
 	  }
 	  else { 
-	    new_allowances = Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances); 
+	    new_allowances = Big_map.update ([Tezos.sender, p.address_from], (Some (abs(authorized_value - p.value))), s.allowances); 
 	  };
   };
   let opt = Big_map.find_opt (p.address_from, s.tokens);
