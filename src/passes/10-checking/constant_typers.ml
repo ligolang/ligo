@@ -857,6 +857,18 @@ and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
   let _ = comparator ~raise ~test loc s [a_value;b_value] None in
   t_bool ()
 
+and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
+  let () =
+    Assert.assert_true ~raise (uncomparable_types loc a_map b_map) @@ eq_1 a_map b_map
+  in
+  let (a_key, a_value) =
+    trace_option ~raise (comparator_composed loc a_map) @@
+    get_t_big_map a_map in
+  let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_big_map b_map in
+  let _ = comparator ~raise ~test loc s [a_key;b_key] None in
+  let _ = comparator ~raise ~test loc s [a_value;b_value] None in
+  t_bool ()
+
 and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
   let () =
     Assert.assert_true ~raise (uncomparable_types loc a_opt b_opt) @@ eq_1 a_opt b_opt
@@ -870,18 +882,19 @@ and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -
 and comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
   if test
   then
-    bind_or ~raise 
-    (bind_or 
-      (bind_or (list_comparator ~test loc s [a;b] None) (set_comparator ~test loc s [a;b] None))
-      (map_comparator ~test loc s [a;b] None))
-    
-    (bind_or 
-      (bind_or (simple_comparator loc s [a;b] None) (option_comparator ~test loc s [a;b] None))
-      (bind_or (record_comparator ~test loc s [a;b] None) (sum_comparator ~test loc s [a;b] None)))
+    bind_exists ~raise @@ List.Ne.of_list [list_comparator ~test loc s [a;b] None;
+                                           set_comparator ~test loc s [a;b] None;
+                                           map_comparator ~test loc s [a;b] None;
+                                           simple_comparator loc s [a;b] None;
+                                           option_comparator ~test loc s [a;b] None;
+                                           record_comparator ~test loc s [a;b] None;
+                                           sum_comparator ~test loc s [a;b] None;
+                                           big_map_comparator ~test loc s [a;b] None]
   else
-    bind_or ~raise
-      (bind_or (simple_comparator loc s [a;b] None) (option_comparator ~test loc s [a;b] None))
-      (bind_or (record_comparator ~test loc s [a;b] None) (sum_comparator ~test loc s [a;b] None))
+    bind_exists ~raise @@ List.Ne.of_list [simple_comparator loc s [a;b] None;
+                                           option_comparator ~test loc s [a;b] None;
+                                           record_comparator ~test loc s [a;b] None;
+                                           sum_comparator ~test loc s [a;b] None]
 
 let ticket ~raise loc = typer_2 ~raise loc "TICKET" @@ fun dat amt ->
   let () = assert_eq_1 ~raise ~loc amt (t_nat ()) in
