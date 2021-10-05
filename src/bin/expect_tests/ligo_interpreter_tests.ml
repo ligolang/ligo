@@ -60,7 +60,8 @@ let%expect_test _ =
     - test_map_get_and_update exited with value ().
     - test_add_mutez exited with value ().
     - test_sub_mutez exited with value ().
-    - test_div_mutez exited with value (). |}]
+    - test_div_mutez exited with value ().
+    - test_list_fold_left_sum exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "interpret_test_log.mligo" ] ;

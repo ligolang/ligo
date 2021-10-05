@@ -359,8 +359,18 @@ let rec apply_operator ~raise ~steps : Location.t -> calltrace -> Ast_typed.type
     | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
       (*TODO : allign with tezos*)
       return @@ V_Ct (C_string (String.sub s (Z.to_int st) (Z.to_int ed)))
+    | ( C_LIST_FOLD_LEFT , [ V_Func_val {arg_binder ; body ; env}  ; init ; V_List elts ] ) ->
+      let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
+      let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* ty = monad_option (Errors.generic_error lst_ty.location "Expected list type") @@ Ast_typed.get_t_list lst_ty in
+      Monad.bind_fold_list
+        (fun prev elt ->
+          let fold_args = v_pair (prev,elt) in
+          let env' = Env.extend env arg_binder ((Ast_typed.t_pair acc_ty ty), fold_args) in
+          eval_ligo body calltrace env'
+        )
+        init elts
     | ( C_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_List elts ; init ] )
-    | ( C_LIST_FOLD_LEFT , [ V_Func_val {arg_binder ; body ; env}  ; init ; V_List elts ] )
     | ( C_LIST_FOLD , [ V_Func_val {arg_binder ; body ; env}  ; V_List elts ; init ] ) ->
       let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
       let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
@@ -743,7 +753,7 @@ and eval_ligo ~raise ~steps : Ast_typed.expression -> calltrace -> env -> value 
     )
     | E_mod_in {module_binder; rhs; let_result} ->
        let>> state = Get_state () in
-       let (module_env, state) = eval_module ~raise ~steps (rhs, state) in
+       let (module_env, state) = eval_module ~raise ~steps (rhs, state, env) in
        let>> () = Put_state state in
        eval_ligo (let_result) calltrace (Env.extend_mod env module_binder module_env)
     | E_mod_alias {alias;binders;result} ->
@@ -904,8 +914,8 @@ and resolve_module_path ~raise ~loc binders env =
     | Some e -> e in
   List.Ne.fold_left aux env binders
 
-and eval_module ~raise ~steps : Ast_typed.module_fully_typed * Tezos_state.context -> env * Tezos_state.context =
-  fun (Module_Fully_Typed prg, initial_state) ->
+and eval_module ~raise ~steps : Ast_typed.module_fully_typed * Tezos_state.context * env -> env * Tezos_state.context =
+  fun (Module_Fully_Typed prg, initial_state, env) ->
     let aux : env * Tezos_state.context -> declaration location_wrap -> env * Tezos_state.context =
       fun (top_env,state) el ->
         match Location.unwrap el with
@@ -916,7 +926,7 @@ and eval_module ~raise ~steps : Ast_typed.module_fully_typed * Tezos_state.conte
           let top_env' = Env.extend top_env binder ~no_mutation (expr.type_expression, v) in
           (top_env',state)
         | Ast_typed.Declaration_module {module_binder; module_} ->
-          let (module_env, state) = eval_module ~raise ~steps (module_, state) in
+          let (module_env, state) = eval_module ~raise ~steps (module_, state, top_env) in
           let top_env' = Env.extend_mod top_env module_binder module_env in
           (top_env',state)
         | Ast_typed.Module_alias {alias;binders} ->
@@ -924,13 +934,13 @@ and eval_module ~raise ~steps : Ast_typed.module_fully_typed * Tezos_state.conte
           let top_env' = Env.extend_mod top_env alias module_env in
           (top_env',state)
     in
-    let (env,state) = List.fold ~f:aux ~init:(Env.empty_env, initial_state) prg in
+    let (env,state) = List.fold ~f:aux ~init:(env, initial_state) prg in
     (env, state)
 
 let eval_test ~raise ~steps : Ast_typed.module_fully_typed -> (string * value) list =
   fun prg ->
     let initial_state = Tezos_state.init_ctxt ~raise [] in
-    let (env, _state) = eval_module ~raise ~steps (prg, initial_state) in
+    let (env, _state) = eval_module ~raise ~steps (prg, initial_state, Env.empty_env) in
     let v = Env.to_kv_list_rev (Ligo_interpreter.Environment.expressions env) in
     let aux : expression_variable * (value_expr * bool) -> (string * value) option = fun (ev, (v, _)) ->
       let ev = Location.unwrap ev in
