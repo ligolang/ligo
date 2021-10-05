@@ -15,5 +15,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression" ; "jsligo" ; "Bytes.X()" ] ;
-  [%expect {| Unknown constructor in module: Bytes |} ]
+  [%expect {|
+    Ill-formed selection of a value in a module.
+    At this point, the selection symbol '.' is expected, followed by the
+    qualified name of a value. |} ]
 

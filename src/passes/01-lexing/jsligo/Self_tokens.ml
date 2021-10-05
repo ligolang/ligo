@@ -169,11 +169,47 @@ let print_token token =
 let print_tokens tokens =
   apply (fun tokens -> List.iter print_token tokens; tokens) tokens
 
+
+(* insert vertical bar for sum type *)
+
+let vertical_bar_insert tokens =
+  let open! Token in
+  let rec aux acc insert_token = function
+    (VBAR _ as hd) :: tl ->
+    aux (hd::acc) false tl
+  | (EQ _ as hd) :: tl ->
+    if insert_token then (
+      List.rev_append (hd :: VBAR Region.ghost :: acc) tl
+    )
+    else (
+      List.rev_append (hd :: acc) tl
+    )
+  | (RBRACKET _ as hd) :: tl -> 
+    aux (hd::acc) true tl
+  | hd :: tl ->
+    aux (hd::acc) insert_token tl
+  | [] ->
+    List.rev acc
+  in
+  aux [] false tokens
+
+let vertical_bar_insert tokens =
+  let open! Token in
+  let rec aux acc = function 
+    (VBAR _ as hd) :: tl ->
+      aux (vertical_bar_insert (hd::acc)) tl
+  | hd :: tl -> aux (hd::acc) tl
+  | [] -> List.rev acc
+  in aux [] tokens
+
+let vertical_bar_insert units = apply vertical_bar_insert units
+
 (* COMPOSING FILTERS (exported) *)
 
 let filter =
   attributes
   <@ automatic_semicolon_insertion
+  <@ vertical_bar_insert
   (*  <@ print_tokens*)
   <@ tokens_of
   (*  <@ print_units*)

@@ -30,15 +30,18 @@ type ('a, 'err) folder = {
   d : 'a -> statement -> 'a;
 }
 
-let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun f init t ->
+let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a =
+  fun f init t ->
   let self = fold_type_expression f in
+  let self_variant = fold_variant f in
   let init = f.t init t in
   match t with
-    TProd  {inside = {value = { inside ;_};_} ; _} -> 
+    TProd  {inside = {value = { inside ;_};_} ; _} ->
       List.Ne.fold_left self init @@ npseq_to_ne_list inside
-  | TSum    {value;region=_} ->
-    let {lead_vbar=_;variants;attributes=_} = value in
-    List.Ne.fold_left self init @@ npseq_to_ne_list variants
+  | TSum {value;region=_} ->
+     let {variants; attributes=_} = value in
+     List.Ne.fold_left self_variant init @@ npseq_to_ne_list variants.value
+
   | TObject {value;region=_} ->
     let aux init ({value;region=_} : _ reg) =
       let {field_name=_;colon=_;field_type;attributes=_} = value in
@@ -60,6 +63,15 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a = fun 
   | TModA _
   | TInt _
   | TString _ -> init
+
+and fold_variant : ('a, 'err) folder -> 'a -> variant reg -> 'a =
+  fun f init v ->
+    let self_type = fold_type_expression f in
+    let component = v.value.tuple.value.inside in
+    let {params; _} = component in
+    match params with 
+       Some params -> List.Ne.fold_left self_type init (npseq_to_ne_list (snd params))
+    | None         -> init
 
 let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  ->
   let self = fold_expression f in
@@ -162,11 +174,13 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
     init
   | EArray {value = {inside; _}; _} ->
     let fold_array_item init = function
-      Empty_entry _ -> init
-    | Expr_entry e -> self init e
+      Expr_entry e -> self init e
     | Rest_entry {value = {expr; _}; _} -> self init expr
     in
-    fold_npseq fold_array_item init inside
+    (match inside with 
+      Some inside ->
+        fold_npseq fold_array_item init inside
+    | None -> init)
   | EAssign (e1, _, e2) ->
     let res = self init e1 in
     let res = self res e2 in
@@ -258,6 +272,7 @@ type 'err mapper = {
 
 let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
   let self = map_type_expression f in
+  let self_variant = map_variant f in
   let t = f.t t in
   let return a = a in
   match t with
@@ -266,8 +281,8 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
     let value = {value with inside} in
     return @@ TProd {inside = {value; region}; attributes}
   | TSum {value;region} ->
-    let variants = map_npseq self value.variants in
-    let value = {value with variants} in
+    let v     = map_npseq self_variant value.variants.value in
+    let value = {value with variants = {value.variants with value=v}} in
     return @@ TSum {value; region}
   | TObject {value;region} ->
     let aux (element : _ reg ) =
@@ -305,6 +320,26 @@ let rec map_type_expression : ('err) mapper -> type_expr -> 'b = fun f t ->
   | TModA _
   | TInt _
   | TString _ as e) -> e
+
+and map_variant : 'err mapper -> variant reg -> variant reg =
+  fun f v -> 
+    let self_type = map_type_expression f in
+    let value = v.value in
+    let tuple = value.tuple in
+    let tuple_value = tuple.value in
+    let inside = tuple_value.inside in
+    let params = v.value.tuple.value.inside.params in
+    let params = match params with 
+      Some (comma, params) ->
+        Some (comma, map_npseq self_type params)
+    | None -> params
+    in
+    let inside = {inside with params} in
+    let tuple_value = {tuple_value with inside} in
+    let tuple = {tuple with value = tuple_value} in
+    let value = {value with tuple} in
+    let variant_reg = {v with value} in
+    variant_reg
 
 let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
   let self = map_expression f in
@@ -420,15 +455,20 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
   | EBytes _ as e -> return @@ e
   | EArray {value;region} ->
       let map_array_item = function
-        Empty_entry r -> Empty_entry r
-      | Expr_entry e ->
+        Expr_entry e ->
         let e = self e in
         Expr_entry e
       | Rest_entry {value; region} ->
         let expr = self value.expr in
         Rest_entry {value = {value with expr}; region}
       in
-      let inside = map_npseq map_array_item value.inside in
+      let inside = (match value.inside with 
+        Some inside ->
+          Some (map_npseq map_array_item inside)
+      | None ->
+          None
+      )
+      in
       let value = {value with inside} in
       return @@ EArray {value; region}
   | EObject {value;region} ->

@@ -59,7 +59,7 @@ module Compile_type = struct
 
   type type_compiler_opt = CST.type_expr -> AST.type_expression option
   (* TODO: returned attributes are always empty *)
-  let rec type_expression_to_constructor ~raise : CST.type_expr -> (string * AST.type_expression * attributes) = function
+  (* let rec type_expression_to_constructor ~raise : CST.type_expr -> (string * AST.type_expression * attributes) = function
     | TString s -> (s.value, t_unit () ~loc:(Location.lift s.region), [])
     | TProd {inside = {value = {inside = (TString s, []); _}; region}; attributes} ->
       let attributes = compile_attributes attributes in
@@ -73,9 +73,9 @@ module Compile_type = struct
       | lst ->
         let t = t_tuple lst in
         (s.value, t, attributes))
-    | _ as t -> raise.raise @@ invalid_constructor t
+    | _ as t -> raise.raise @@ invalid_constructor t *)
 
-  and get_t_int_singleton_opt = function
+  let rec get_t_int_singleton_opt = function
   | CST.TInt x ->
     let (_,z) = x.value in
     Some z
@@ -221,10 +221,36 @@ module Compile_type = struct
     | TSum sum ->
         let sum_type, loc = r_split sum in
         let {variants; attributes; _} : CST.sum_type = sum_type in
-        let lst = npseq_to_list variants in
+        let lst = npseq_to_list variants.value in
         let attr = compile_attributes attributes in
-        let aux (v : CST.type_expr) : string * type_expression * string list =
-          let (constructor, type_expr, variant_attr) = type_expression_to_constructor ~raise v in
+        let aux (v : CST.variant Region.reg) : string * type_expression * string list =
+          let variant = v.value in
+          let variant_comp = variant.tuple.value.inside in
+          let compile_params_to_type_expr b =
+            (match b with 
+              (_ as f, []) ->
+                self @@ f
+            | _ -> 
+                let cartesian: CST.cartesian = {
+                  inside      = {
+                    value = {
+                      lbracket  = variant.tuple.value.lbracket;
+                      inside    = b;
+                      rbracket  = variant.tuple.value.rbracket;
+                    };
+                    region = Region.ghost;
+                  };
+                  attributes  = variant.attributes;
+                } in
+                self @@ TProd cartesian)
+          in
+          let te = (match variant_comp.params with 
+            Some (_, b) -> compile_params_to_type_expr b
+          | None -> t_unit ())
+          in
+          let attributes = compile_attributes variant.attributes in
+          let (constructor, type_expr, variant_attr) = (variant_comp.constr.value, te, attributes) in 
+          (* type_expression_to_constructor ~raise v in *)
           (constructor, type_expr, variant_attr) in
         let sum = List.map ~f:aux lst
         in return @@ t_sum_ez_attr ~loc ~attr sum
@@ -302,8 +328,7 @@ let compile_selection ~raise : CST.selection -> _ access * location = fun select
 
 let array_item_to_expression ~raise : CST.array_item -> CST.expr = function
   | Expr_entry expr -> expr
-  | (Empty_entry _
-  | Rest_entry _) as r ->
+  | Rest_entry _ as r ->
     raise.raise @@ expected_an_expression r
 
 let arguments_to_expr_nseq (args : CST.arguments) : CST.expr Utils.nseq * Location.t =
@@ -427,26 +452,23 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     | None ->
       raise.raise @@ unknown_constant var loc
       )
-  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = (Expr_entry e, [(_, Rest_entry {value = {expr; _}; _})]); _}; _}, []); _}; _}); region } ->
+  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = Some (Expr_entry e, [(_, Rest_entry {value = {expr; _}; _})]); _}; _}, []); _}; _}); region } ->
     let loc = Location.lift region in
     let a = self e in
     let b = self expr in
     return @@ e_constant ~loc (Const C_CONS) [a; b]
-  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = items}}, []); _}; _}); region } -> (
+  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside}}, []); _}; _}); region } -> (
     let loc = Location.lift region in
-    let items = Utils.nsepseq_to_list items in
-    match items with
-      [CST.Empty_entry _] ->
-        return @@ e_list ~loc []
-    | _ -> (
-      let lst = List.map ~f:(fun e ->
-        match e with
-          CST.Expr_entry e -> compile_expression ~raise e
-        | Empty_entry _ -> e_unit ()
-        | Rest_entry _ -> raise.raise (array_rest_not_supported e)
-      ) items in
-      return @@ e_list ~loc lst
-    )
+    let items = (match inside with 
+      Some items -> Utils.nsepseq_to_list items
+    | None -> [])
+    in
+    let lst = List.map ~f:(fun e ->
+      match e with
+        CST.Expr_entry e -> compile_expression ~raise e
+      | Rest_entry _ -> raise.raise (array_rest_not_supported e)
+    ) items in
+    return @@ e_list ~loc lst 
   )
   | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
     (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
@@ -494,8 +516,11 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       constrs
     in
     e_matching ~loc matchee cases
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple { value = {inside = (CST.EArray args, _); _} ;_} ;_})]); _}; _}); region} ->
-    let args = Utils.nsepseq_to_list args.value.inside in
+  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple { value = {inside = (CST.EArray {value = {inside; _}; _}, _); _} ;_} ;_})]); _}; _}); region} ->
+    let args = (match inside with 
+      Some inside -> Utils.nsepseq_to_list inside
+    | None -> [])
+    in
     let compile_simple_pattern p =
       let rec aux = function
         CST.EVar v -> Var.of_name v.value
@@ -509,9 +534,9 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     in
     let rec compile_parameter = function
       CST.EPar p -> compile_parameter p.value.inside
-    | ESeq {value = (EAnnot {value = (EArray {value = {inside = (Empty_entry _, []); _}; _}, _, _); _}, _); _} ->
+    | ESeq {value = (EAnnot {value = (EArray {value = {inside = None; _}; _}, _, _); _}, _); _} ->
       Match_nil (e_unit ())
-    | ESeq {value = (EAnnot {value = (EArray {value = {inside = (Expr_entry hd, [(_, Rest_entry {value = {expr = tl; _}; _})]); _}; _}, _, _); _}, _); _} ->
+    | ESeq {value = (EAnnot {value = (EArray {value = {inside = Some (Expr_entry hd, [(_, Rest_entry {value = {expr = tl; _}; _})]); _}; _}, _, _); _}, _); _} ->
       let hd_loc = Location.lift @@ Raw.expr_to_region hd in
       let tl_loc = Location.lift @@ Raw.expr_to_region tl in
       let hd = compile_simple_pattern hd in
@@ -519,7 +544,8 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let hd = Location.wrap ~loc:hd_loc hd in
       let tl = Location.wrap ~loc:tl_loc tl in
       Match_cons (hd, tl)
-    | _ as e -> raise.raise @@ not_a_valid_parameter e
+    | _ as e -> 
+      raise.raise @@ not_a_valid_parameter e
     in
     let compile_case = function
       CST.EFun {value = {parameters; body; _}; _} ->
@@ -602,13 +628,13 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     return @@ e_application ~loc func args
   | EArray items ->
     let (items, loc) = r_split items in
-    let items = npseq_to_list items.inside in
-    (match items with
-      [Empty_entry _] -> return @@ e_tuple ~loc []
-    | _ ->
-        let exprs = List.map ~f:(array_item_to_expression ~raise) items in
-        let exprs' = List.map ~f:(compile_expression ~raise) exprs in
-        return @@ e_tuple ~loc exprs')
+    let items = (match items.inside with 
+      Some items -> npseq_to_list items
+    | None -> [])
+    in
+    let exprs = List.map ~f:(array_item_to_expression ~raise) items in
+    let exprs' = List.map ~f:(compile_expression ~raise) exprs in
+    return @@ e_tuple ~loc exprs'
   | EObject {value = {inside = (Property_rest {value = {expr; _}; _}, rest); _}; _} ->
     let record = compile_expression ~raise expr in
     let aux up =
@@ -752,10 +778,6 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
 and conv ~raise : const:bool -> CST.pattern -> nested_match_repr =
   fun ~const p ->
   match p with
-  | CST.PWild reg ->
-    let loc = Location.lift reg in
-    let var = Location.wrap ~loc @@ Var.fresh () in
-    (PatternVar { var ; ascr = None ; attributes = Stage_common.Helpers.empty_attribute })
   | CST.PVar {value={variable; _}; _} ->
     let (var,loc) = r_split variable in
     let var = Location.wrap ~loc @@ Var.of_name var in
@@ -870,12 +892,9 @@ and compile_parameter ~raise : CST.expr ->
         (match expr with
           CST.EVar ev ->
             return ~ascr loc [] @@ Var.of_name ev.value
-        | EArray {value = {inside = array_items; _}; _} ->
+        | EArray {value = {inside = Some array_items; _}; _} ->
             let array_item = function
-              CST.Empty_entry reg ->
-                let loc = Location.lift reg in
-                return loc [] @@ Var.fresh ()
-            | Expr_entry EVar e ->
+              CST.Expr_entry EVar e ->
                 let (var,loc) = r_split e in
                 return loc [] @@ Var.of_name var
             | Rest_entry _ as r -> raise.raise @@ array_rest_not_supported r
@@ -982,9 +1001,6 @@ and compile_pattern ~raise : const:bool -> CST.pattern -> type_expression binder
     let (var,loc) = r_split var in
     let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
     return_1 loc (Var.of_name var.variable.value) attributes
-  | PWild p ->
-    let loc = Location.lift p in
-    return_1 loc (Var.fresh ()) Stage_common.Helpers.empty_attribute
   | PArray tuple ->
     let (tuple, loc) = r_split tuple in
     let var = Var.fresh () in

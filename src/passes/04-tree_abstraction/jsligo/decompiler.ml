@@ -81,35 +81,42 @@ let decompile_variable2 : type a. a Var.t -> CST.var_pattern Region.reg = fun va
     else
       wrap @@ CST.{variable = wrap var; attributes = []}
 
-let rec decompile_type_expr : AST.type_expression -> _ = fun te ->
+let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   let return te = te in
   match te.type_content with
     T_sum { attributes ; fields } ->
     let lst = AST.LMap.to_kv_list fields in
-    let aux (AST.Label c, AST.{associated_type;attributes}) =
+    let aux (AST.Label c, AST.{associated_type;attributes=row_attr; _}) =
       let constr = wrap c in
       let arg = decompile_type_expr associated_type in
-      let arg = wrap @@ chevrons @@ nelist_to_npseq (arg , []) in
-      let _attributes = decompile_attributes attributes in
-      let variant : CST.type_expr = TApp (wrap (
-          constr ,
-          arg
-        ))
+      let arg = (match arg with 
+        TProd {inside; _ } ->
+          inside.value.inside
+      | _ as p -> 
+        (p, [])
+      ) 
       in
-      variant
+      let arg = Some (ghost, arg) in
+      let row_attr = decompile_attributes row_attr in
+      let leading_vbar = ghost in
+      let variant_comp : CST.variant_comp = {constr; params = arg} in
+      let tuple = wrap @@ brackets variant_comp in
+      let variant : CST.variant = {tuple; attributes=row_attr} in
+      wrap variant
     in
-    let variants = List.map ~f:aux lst in
+    let variants: (CST.variant Region.reg) list = List.map ~f:aux lst in
     let variants = list_to_nsepseq variants in
-    let lead_vbar = Some ghost in
+    let variants = wrap variants in
+    (* let variants: (CST.variant Region.reg) Utils.nseq = list_to_sepseq variants in *)
     let attributes = decompile_attributes attributes in
-    let sum : CST.sum_type = { lead_vbar ; variants ; attributes} in
+    let sum : CST.sum_type = { leading_vbar = (match attributes with [] -> None | _ -> Some ghost); variants ; attributes} in
     return @@ CST.TSum (wrap sum)
   | T_record {fields; attributes} ->
      let record = AST.LMap.to_kv_list fields in
      let aux (AST.Label c, AST.{associated_type; attributes; _}) =
        let field_name = wrap c in
        let colon = ghost in
-       let field_type = decompile_type_expr associated_type in
+       let field_type: CST.type_expr = decompile_type_expr associated_type in
        let attributes = decompile_attributes attributes in
        let field : CST.field_decl =
          {field_name; colon; field_type; attributes} in
@@ -412,14 +419,14 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       (CST.Expr_entry (e_hd e))
     ) tuple in
     let tuple = list_to_nsepseq tuple in
-    return_expr @@ [Expr (CST.EArray (wrap @@ brackets @@ tuple))]
+    return_expr @@ [Expr (CST.EArray (wrap @@ brackets @@ Some tuple))]
   | E_map map ->
     let map = List.map ~f:(Pair.map ~f:(fun e ->
       let e = decompile_expression_in e in
       (CST.Expr_entry (e_hd e))
     )) map in
     let tuple = list_to_nsepseq map in
-    let aux (k,v) = CST.EArray (wrap @@ brackets (k,[(ghost,v)])) in
+    let aux (k,v) = CST.EArray (wrap @@ brackets @@ Some (k,[(ghost,v)])) in
     let map = List.map ~f:aux map in
     (match map with
       [] -> return_expr @@ [Expr (CST.EVar (wrap "Big_map.empty"))]
@@ -433,7 +440,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
         let e = decompile_expression_in e in
         (CST.Expr_entry (e_hd e))
       )) big_map in
-      let aux (k,v) = CST.EArray (wrap @@ brackets (k,[(ghost,v)])) in
+      let aux (k,v) = CST.EArray (wrap @@ brackets @@ Some (k,[(ghost,v)])) in
       let big_map = List.map ~f:aux big_map in
       (match big_map with
         [] -> return_expr @@ [Expr (CST.EVar (wrap "Big_map.empty"))]
@@ -447,13 +454,8 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       let e = decompile_expression_in e in
       (CST.Expr_entry (e_hd e))
     ) lst in
-    (match lst with 
-      [] ->
-      let lst = (CST.Empty_entry ghost, []) in
-      return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets lst), [] )))))]
-    | _ ->
       let lst = list_to_nsepseq lst in
-      return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets lst), [] )))))])
+      return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets @@ Some lst), [] )))))]
   | E_set set ->
     let set = List.map ~f:decompile_expression_in set in
     let set = List.map ~f:e_hd set in
@@ -484,7 +486,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let expr = e_hd cond in
     let block = decompile_expression_in body in
     let statement = s_hd block in
-    let loop : CST.while_ = {kwd_while=ghost;lpar=ghost;expr;rpar=ghost;statement} in
+    let loop : CST.while_stmt = {kwd_while=ghost;lpar=ghost;expr;rpar=ghost;statement} in
     return_expr @@ [Statement (CST.SWhile (wrap loop))]
   | E_for _ ->
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
