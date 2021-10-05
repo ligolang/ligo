@@ -322,3 +322,8 @@ let test_sub_mutez =
 let test_div_mutez =
   let a = 1tez/2tez in
   assert (a = 0n)
+
+let test_list_fold_left_sum = 
+  let xs = [1;2;3] in
+  let sum = List.fold_left (fun (x,acc : (int * int)) -> x + acc) 0 xs in
+  assert (sum = 6)
