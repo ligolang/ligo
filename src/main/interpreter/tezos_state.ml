@@ -56,7 +56,7 @@ let get_contract ~raise ~loc ~calltrace (ctxt :context) addr =
   Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.raw) addr
 let contract_exists : context ->  Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> bool = fun ctxt contract ->
-  let info = Lwt_main.run @@ 
+  let info = Lwt_main.run @@
     Tezos_raw_protocol.Alpha_services.Contract.info Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
   Trace.tz_result_to_bool info
 
@@ -66,7 +66,7 @@ let compare_account a b = (compare_account_ a b) = 0
 type ligo_repr = unit Tezos_utils.Michelson.michelson
 type canonical_repr = Tezos_raw_protocol.Michelson_v1_primitives.prim Tezos_micheline.Micheline.canonical
 let ligo_to_canonical : raise:r -> loc:Location.t -> calltrace:calltrace -> ligo_repr -> canonical_repr Data_encoding.lazy_t =
-  fun ~raise ~loc ~calltrace x -> 
+  fun ~raise ~loc ~calltrace x ->
     let open Tezos_micheline.Micheline in
     let x = inject_locations (fun _ -> 0) (strip_locations x) in
     let x = strip_locations x in
@@ -133,6 +133,11 @@ let get_storage ~raise ~loc ~calltrace ctxt addr =
 let unwrap_baker ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_crypto.Signature.Public_key_hash.t  =
   fun x ->
     Trace.trace_option ~raise (generic_error loc "The baker is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x
+
+let unwrap_source ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t  =
+  fun x ->
+    let _ = Trace.trace_option ~raise (generic_error loc "The source address is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x in
+    x
 
 let script_of_compiled_code ~raise ~loc ~calltrace (contract : unit Tezos_utils.Michelson.michelson) (storage : unit Tezos_utils.Michelson.michelson) : Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Script.t  =
   let open! Tezos_protocol.Protocol.Alpha_context.Script in
@@ -308,7 +313,7 @@ let get_last_operation_result (incr : Tezos_alpha_test_helpers.Incremental.t) =
   match Tezos_alpha_test_helpers.Incremental.rev_tickets incr with
   | [] -> failwith "Tried to get last operation result in empty block"
   | hd :: _ -> hd
-  
+
 
 let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tezos_op -> add_operation_outcome =
   fun ~raise ~loc ~calltrace ctxt operation ->
@@ -331,11 +336,12 @@ let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tez
 
 let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt : add_operation_outcome =
   let open Tezos_alpha_test_helpers in
+  let source = unwrap_source ~raise ~loc ctxt.internals.source in
   let parameters = ligo_to_canonical ~raise ~loc ~calltrace parameter in
   let operation : Tezos_raw_protocol_010_PtGRANAD__Alpha_context.packed_operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
-    Op.transaction ~fee:(Test_tez.Tez.of_int 23) ~parameters ?entrypoint (B ctxt.raw) ctxt.internals.source dst (Test_tez.Tez.of_mutez_exn amt)
+    Op.transaction ~fee:(Test_tez.Tez.of_int 23) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.Tez.of_mutez_exn amt)
   in
   bake_op ~raise ~loc ~calltrace ctxt operation
 
@@ -344,11 +350,12 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
     let contract = trace_option ~raise (corner_case ()) @@ get_michelson_contract contract in
     let (storage,_,ligo_ty) = trace_option ~raise (corner_case ()) @@ get_michelson_expr storage in
     let open Tezos_alpha_test_helpers in
+    let source = unwrap_source ~raise ~loc ctxt.internals.source in
     let amt = Test_tez.Tez.of_mutez (Int64.of_int (Z.to_int amt)) in
     let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
     let (operation, dst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       (* TODO : fee ? *)
-      Op.origination (B ctxt.raw) ctxt.internals.source ?credit:amt ~fee:(Test_tez.Tez.of_int 10) ~script
+      Op.origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.Tez.of_int 10) ~script
     in
     match bake_op ~raise ~loc ~calltrace ctxt operation with
     | Success ctxt ->
@@ -414,4 +421,3 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
     { raw = init_raw_ctxt ; transduced ; internals }
   | _ ->
     raise.raise (bootstrap_not_enough loc)
-
