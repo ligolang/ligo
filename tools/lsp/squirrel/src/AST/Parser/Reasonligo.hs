@@ -122,6 +122,7 @@ recognise (SomeRawTree dialect rawTree)
         ("lxor", _)   -> return $ Op "lxor"
         ("lsl", _)    -> return $ Op "lsl"
         ("lsr", _)    -> return $ Op "lsr"
+        ("++", _)     -> return $ Op "++"
         (">", _)      -> return $ Op ">"
         ("<", _)      -> return $ Op "<"
         (">=", _)     -> return $ Op ">="

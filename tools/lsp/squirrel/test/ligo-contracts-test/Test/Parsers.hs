@@ -33,8 +33,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
 
         -- LIGO-281
       , "michelson_pair_tree.religo"
-      , "tuples_sequences_functions.religo"
-      , "string_arithmetic.religo"
 
         -- LIGO-306
       , "parametric_types.ligo"
