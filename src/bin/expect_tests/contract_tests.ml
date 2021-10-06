@@ -2031,3 +2031,15 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "run-function"; contract "assert.mligo"; "(None: unit option)"; "-e"; "some_with_error"];
   [%expect {| failwith("my custom error") |}]
+
+let%expect_test _ =
+  run_ligo_good [ "print" ; "ast-typed" ; contract "attributes.jsligo" ] ;
+  [%expect {|
+    const x = 1[@inline]
+    const foo = lambda (a) return let test = ADD(2 ,
+    a)[@inline] in test[@inline]
+    const y = 1
+    const bar = lambda (b) return let test = lambda (z) return ADD(ADD(2 ,
+    b) ,
+    z)[@inline] in (test)@(b)
+    const check = 4 |}]

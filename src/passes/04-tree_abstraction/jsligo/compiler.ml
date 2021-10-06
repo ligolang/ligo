@@ -1179,8 +1179,8 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result =
     let {bindings; attributes; _} : CST.let_decl = li in
     let hd = fst bindings in
     let tl = snd bindings in
-    let init = compile_initializer ~const:false [] hd in
-    let initializers' = initializers ~const:false init tl in 
+    let init = compile_initializer ~const:false attributes hd in
+    let initializers' = initializers ~const:false init tl in
     binding initializers'
   | SConst li ->
     let (li, loc) = r_split li in
