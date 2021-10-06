@@ -327,7 +327,7 @@ instance Pretty1 TField where
 
 instance Pretty1 Error where
   pp1 = \case
-    Error _src children -> sexpr "ERROR" [pp children]
+    Error src children -> sexpr "ERROR" ["\"" <> pp src <> "\"", pp children]
 
 instance Pretty LineMarker where
   pp (LineMarker fp f l _) = sexpr "#" [pp l, pp $ Text.pack fp, pp f]
