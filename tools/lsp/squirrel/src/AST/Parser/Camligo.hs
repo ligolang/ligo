@@ -175,6 +175,7 @@ recognise (SomeRawTree dialect rawTree)
     -- Type
   , Descent do
       boilerplate $ \case
+        "string_type"  -> TString  <$> field  "value"
         "fun_type"     -> TArrow   <$> field  "domain" <*> field "codomain"
         "prod_type"    -> TProduct <$> fields "x"
         "app_type"     -> TApply   <$> field  "f"      <*> fields "x"

@@ -206,13 +206,12 @@ recognise (SomeRawTree dialect rawTree)
     -- Type
   , Descent do
       boilerplate \case
+        "string_type"      -> TString  <$> field  "value"
         "fun_type"         -> TArrow   <$> field  "domain" <*> field "codomain"
         "prod_type"        -> TProduct <$> fields "element"
         "app_type"         -> TApply   <$> field  "name" <*> fields "arg"
         "record_type"      -> TRecord  <$> fields "field"
         "sum_type"         -> TSum     <$> fields "variant"
-        "michelsonTypeOr"  -> TOr      <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
-        "michelsonTypeAnd" -> TAnd     <$> field "left_type" <*> field "left_type_name" <*> field "right_type" <*> field "right_type_name"
         "type_group"       -> TProduct <$> (pure <$> field "type")
         "TypeWildcard"     -> pure TWildcard
         _                  -> fallthrough
