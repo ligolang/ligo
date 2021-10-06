@@ -5,6 +5,28 @@ let good_test s = (test "")^"/deep_pattern_matching/"^s
 
 (* Negatives *)
 
+(* wrong fields on record pattern *)
+(* wrong type on constructor argument pattern *)
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail16.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail16.mligo", line 6, characters 4-25:
+      5 |   match action with
+      6 |   | {one = _ ; three = _} -> 0
+
+    Pattern do not conform type record[one -> int , two -> int] |}]
+
+(* wrong type on constructor argument pattern *)
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail15.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.mligo", line 8, characters 15-19:
+      7 |   match action with
+      8 |   | Increment (n, m) -> 0
+      9 |   | Reset            -> 0
+
+    Pattern do not conform type ( int * int * int ) |}]
+
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail14.mligo") ] ;
