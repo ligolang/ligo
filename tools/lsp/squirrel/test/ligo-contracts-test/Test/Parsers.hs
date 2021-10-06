@@ -25,12 +25,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "modules.ligo"
       , "warning_duplicate.mligo"
 
-        -- LIGO-278
-      , "deep_pattern_matching/pm_ticket.mligo"
-      , "deep_pattern_matching/pm_test.ligo"
-      , "deep_pattern_matching/pm_test.mligo"
-      , "deep_pattern_matching/pm_test.religo"
-
         -- LIGO-280
       , "k.ligo"
 

@@ -485,6 +485,8 @@ getName = select "name"
       tell [make (r, Name t)]
   , Visit \(r, Ctor t) -> do
       tell [make (r, Name t)]
+  , Visit \(r, FieldName t) ->
+      tell [make (r, Name t)]
   ]
 
 getTypeName
