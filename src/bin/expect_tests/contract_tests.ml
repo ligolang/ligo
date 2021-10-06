@@ -2043,3 +2043,12 @@ let%expect_test _ =
     b) ,
     z)[@inline] in (test)@(b)
     const check = 4 |}]
+
+(* literal type "casting" inside modules *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "literal_type_cast.mligo" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage timestamp ;
+      code { DROP ; PUSH timestamp 0 ; NIL operation ; PAIR } }
+  |}]
