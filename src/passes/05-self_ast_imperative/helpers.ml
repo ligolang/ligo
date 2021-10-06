@@ -221,11 +221,15 @@ and map_module : 'err abs_mapper -> module_ -> module_ = fun m p ->
         let dm = { dm with module_ = map_module_ m' dm.module_} in
         (Declaration_module dm)
       )
+    | (Declaration_module dm, Expression m') -> (
+        let dm = Maps.declaration_module (map_expression m') (fun a -> a) dm in
+        (Declaration_module dm)
+      )
     | decl,_ -> decl
   in
-  let p = match m with 
-     Module m' -> map_module_ m' p 
-  | _ -> p 
+  let p = match m with
+     Module m' -> map_module_ m' p
+  | _ -> p
   in
   List.map ~f:(Location.map aux) p
 
