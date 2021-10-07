@@ -145,8 +145,8 @@ data ScopeError =
   deriving Show via PP ScopeError
 
 instance Pretty ScopeError where
-  pp = \case
-    (TreeDoesNotContainName tree _ name) -> "Given tree: " <> tree <> " does not contain name: " <> pp name
+  pp (TreeDoesNotContainName tree range name) =
+    "Given tree does not contain " <> pp name <> ": " <> tree <> " (" <> pp range <> ")"
 
 instance Exception ScopeError
 
