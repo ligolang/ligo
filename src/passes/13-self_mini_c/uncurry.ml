@@ -246,16 +246,11 @@ let rec uncurry_in_expression
 
 (* hack to specialize map_expression to identity monad since there are
    no errors here *)
-let map_expression :
-  (expression -> expression) -> (expression -> expression) =
-  fun f e ->
-  match Trace.to_stdlib_result @@ Helpers.map_expression (fun e -> Trace.ok (f e)) e with
-  | Ok (e, _) -> e
-  | Error _ -> assert false (* impossible *)
+let map_expression = Helpers.map_expression
 
-let uncurry_expression : expression -> expression =
-  map_expression
-    (fun e ->
+let uncurry_expression ~raise : expression -> expression =
+  map_expression ~raise
+    (fun ~raise:_ e ->
        match e.content with
        | E_let_in (e1, inline, ((v, _t), e2)) ->
          let return e1 e2 =

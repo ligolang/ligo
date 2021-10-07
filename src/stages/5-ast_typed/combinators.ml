@@ -10,6 +10,8 @@ let make_e ?(location = Location.generated) expression_content type_expression =
   location ;
   }
 let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
+let t_abstraction ?loc ?core ty_binder kind type_ =
+  make_t ?loc (T_abstraction {ty_binder ; kind ; type_}) core
 
 let t_constant ?loc ?core injection parameters : type_expression =
   make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
@@ -33,12 +35,26 @@ let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12
 let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
 let t_never       ?loc ?core () : type_expression = t_constant ?loc ?core never_name []
 
+let t_abstraction1 ?loc name kind : type_expression = 
+  let ty_binder = Location.wrap @@ Var.fresh () in
+  let type_ = t_constant name [t_variable ~core:(Ast_core.t_variable ty_binder.wrap_content) ty_binder.wrap_content] in
+  t_abstraction ?loc ty_binder kind type_
+let t_abstraction2 ?loc name kind_l kind_r : type_expression = 
+  let ty_binder_l = Location.wrap @@ Var.fresh () in
+  let ty_binder_r = Location.wrap @@ Var.fresh () in
+  let type_ = t_constant name
+    [ t_variable ty_binder_l.wrap_content ;
+      t_variable ty_binder_r.wrap_content ]
+  in
+  t_abstraction ?loc ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core option_name [o]
 let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core list_name [t]
 let t_set            ?loc ?core t   : type_expression = t_constant ?loc ?core set_name [t]
 let t_contract       ?loc ?core t   : type_expression = t_constant ?loc ?core contract_name [t]
-let t_typed_address       ?loc ?core p s   : type_expression = t_constant ?loc ?core typed_address_name [ p ; s ]
+let t_typed_address  ?loc ?core p s : type_expression = t_constant ?loc ?core typed_address_name [ p ; s ]
+let t_mutation       ?loc ?core ()  : type_expression = t_constant ?loc ?core mutation_name []
+let t_failure        ?loc ?core ()  : type_expression = t_constant ?loc ?core failure_name []
 let t_ticket         ?loc ?core t   : type_expression = t_constant ?loc ?core ticket_name [t]
 let t_map            ?loc ?core k v : type_expression = t_constant ?loc ?core map_name [ k ; v ]
 let t_big_map        ?loc ?core k v : type_expression = t_constant ?loc ?core big_map_name [ k ; v ]
@@ -72,10 +88,9 @@ let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression)
   let map = LMap.of_list lst in
   t_sum ?loc ?core ~layout map
 let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
-  [("true", t_unit ());("false", t_unit ())]
+  [("True", t_unit ());("False", t_unit ())]
 
 (* types specific to LIGO test framework*)
-let t_ligo_code ?loc ?core () : type_expression = t_constant ?loc ?core test_ligo_name []
 let t_michelson_code ?loc ?core () : type_expression = t_constant ?loc ?core test_michelson_name []
 let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
@@ -134,7 +149,6 @@ let get_t_mutez (t:type_expression) : unit option = get_t_base_inj t tez_name
 let get_t_timestamp (t:type_expression) : unit option = get_t_base_inj t timestamp_name
 let get_t_address (t:type_expression) : unit option = get_t_base_inj t address_name
 let get_t_bytes (t:type_expression) : unit option = get_t_base_inj t bytes_name
-let get_t_ligo_code (t:type_expression) : unit option = get_t_base_inj t test_ligo_name
 let get_t_michelson_code (t:type_expression) : unit option = get_t_base_inj t test_michelson_name
 let get_t_string (t:type_expression) : unit option = get_t_base_inj t string_name
 let get_t_contract (t:type_expression) : type_expression option = get_t_unary_inj t contract_name
@@ -254,7 +268,6 @@ let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
 let assert_t_bytes = get_t_bytes
 let assert_t_string = get_t_string
-let assert_t_ligo_code = get_t_ligo_code
 let assert_t_michelson_code = get_t_michelson_code
 let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t contract_name with
   | Some _ -> Some ()
@@ -299,11 +312,11 @@ let e_set_empty (): expression_content = E_constant {cons_name=C_SET_EMPTY; argu
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
 let e_map_empty (): expression_content = E_constant {cons_name=C_MAP_EMPTY; arguments=[]}
 let e_big_map_empty (): expression_content = E_constant {cons_name=C_BIG_MAP_EMPTY; arguments=[]}
-let e_big_map_identifier id : expression_content = E_constant {cons_name=C_BIG_MAP_IDENTIFIER; arguments=[id]}
 let e_map_remove k tl : expression_content = E_constant {cons_name=C_MAP_REMOVE; arguments=[k; tl]}
 let e_contract_opt v : expression_content = E_constant {cons_name=C_CONTRACT_OPT; arguments=[v]}
 let e_contract v : expression_content = E_constant {cons_name=C_CONTRACT; arguments=[v]}
 let e_contract_entrypoint e v : expression_content = E_constant {cons_name=C_CONTRACT_ENTRYPOINT; arguments=[e; v]}
+let e_contract_entrypoint_opt e v : expression_content = E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT; arguments=[e; v]}
 
 let e_failwith e : expression_content = E_constant {cons_name=C_FAILWITH ; arguments=[e]}
 
@@ -327,11 +340,16 @@ let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
 let e_raw_code language code : expression_content = E_raw_code { language ; code }
 let e_variable v : expression_content = E_variable v
-let e_let_in let_binder rhs let_result inline = E_let_in { let_binder ; rhs ; let_result; inline }
+let e_let_in let_binder rhs let_result attr = E_let_in { let_binder ; rhs ; let_result; attr }
+let e_mod_in module_binder rhs let_result = E_mod_in { module_binder ; rhs ; let_result }
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
 
-let e_bool b : expression_content = e_constructor (Label (string_of_bool b)) (make_e (e_unit ())(t_unit()))
+let e_bool b : expression_content =
+  if b then
+    e_constructor (Label "True") (make_e (e_unit ())(t_unit()))
+  else
+    e_constructor (Label "False") (make_e (e_unit ())(t_unit()))
 
 let e_a_unit = make_e (e_unit ()) (t_unit ())
 let e_a_int n = make_e (e_int n) (t_int ())
@@ -347,7 +365,8 @@ let e_a_address s = make_e (e_address s) (t_address ())
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
 let e_a_constructor c e t = make_e (e_constructor (Label c) e) t
-let e_a_some s = make_e (e_some s) (t_option s.type_expression)
+let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
+
 let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
 let e_a_recursive l= make_e (e_recursive l) l.fun_type
 let e_a_none t = make_e (e_none ()) (t_option t)
@@ -360,7 +379,8 @@ let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layou
 let e_a_application a b t = make_e (e_application a b) t
 let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi ~f:(fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
-let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
+let e_a_let_in binder expr body attr = make_e (e_let_in binder expr body attr) (get_type_expression body)
+let e_a_mod_in module_binder rhs let_result = make_e (e_mod_in module_binder rhs let_result) (get_type_expression let_result)
 let e_a_raw_code l c t = make_e (e_raw_code l c) t
 let e_a_nil t = make_e (e_nil ()) (t_list t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
@@ -370,11 +390,11 @@ let e_a_map_empty kt vt = make_e (e_map_empty ()) (t_map kt vt)
 let e_a_map_add k v tl = make_e (e_map_add k v tl) (t_map k.type_expression v.type_expression)
 let e_a_big_map_empty kt vt = make_e (e_big_map_empty ()) (t_big_map kt vt)
 let e_a_big_map_add k v tl = make_e (e_map_add k v tl) (t_big_map k.type_expression v.type_expression)
-let e_a_big_map_identifier kt vt id = make_e (e_big_map_identifier id) (t_big_map kt vt)
 let e_a_big_map_remove k tl = make_e (e_map_remove k tl) tl.type_expression
-let e_a_contract_opt a t = make_e (e_contract_opt a) (t_contract t)
+let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
 let e_a_contract a t = make_e (e_contract a) (t_contract t)
 let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
+let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
 
 
 let get_a_int (t:expression) =
@@ -399,10 +419,14 @@ let get_a_unit (t:expression) =
 
 let get_a_bool (t:expression) =
   match t.expression_content with
-  | E_constructor {constructor=Label name;element}
-    when (String.equal name "true" || String.equal name "false")
+  | E_constructor {constructor=Label name;element} when
+    (String.equal name "True")
     && element.expression_content = e_unit () ->
-      Some (bool_of_string name)
+      Some true
+  | E_constructor {constructor=Label name;element} when
+    (String.equal name "False")
+    && element.expression_content = e_unit () ->
+      Some false
   | _ -> None
 
 
@@ -419,7 +443,7 @@ let get_a_record_accessor = fun t ->
 let get_declaration_by_name : module_fully_typed -> string -> declaration option = fun (Module_Fully_Typed p) name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { name = name'; binder = _ ; expr=_ ; inline=_ } ->
+    | Declaration_constant { name = name'; binder = _ ; expr = _ ; attr = _ } ->
       (match name' with
        | None -> false
        | Some name' -> String.equal name' name)

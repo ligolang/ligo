@@ -8,9 +8,9 @@ let main = (n : (int, storage)) : (list (operation), storage) => {
   ([]: list (operation), x);
 };
 
-let f0 = (a: string) => true
-let f1 = (a: string) => true
-let f2 = (a: string) => true
+let f0 = (_a: string) => true
+let f1 = (_a: string) => true
+let f2 = (_a: string) => true
 
 let letin_nesting = (_: unit) => {
   let s = "test";

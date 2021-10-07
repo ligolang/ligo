@@ -5,5 +5,5 @@ type storage = unit;
      (fun x -> ()) ()
    */
 
-let main = ((p,s) : (unit, storage)) : unit =>
-  (((useless : unit)) => ()) ();
+let main = ((_,_) : (unit, storage)) : unit =>
+  (((_useless : unit)) => ()) ();

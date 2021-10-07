@@ -1,7 +1,3 @@
-;; Build of the lexer for ReasonLIGO
-
-(ocamllex Token)
-
 ;; Build of the ReasonLIGO lexer as a library
 
 (library
@@ -48,8 +44,8 @@
 ;; Build of the version source (for the user, as a CLI option)
 
 (rule
- (targets version.ml)
+ (targets Version.ml)
  (action (with-stdout-to
-          version.ml
+          Version.ml
           (run "sh" "-c"
                "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))

@@ -33,5 +33,5 @@ function match_expr_option (const o : option (int)) : int is
 function match_expr_list (const l : list (int)) : int is
   case l of
     nil -> -1
-  | hd # tl -> hd
+  | hd # _tl -> hd
   end

@@ -78,9 +78,15 @@ let print_token state region lexeme =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
 
-let print_braced state f {lbrace;inside;rbrace} =
+let print_par : state -> (state -> 'a -> unit) -> 'a par -> unit =
+  fun state print {lpar; inside; rpar} ->
+    print_token state lpar "(";
+    print state inside;
+    print_token state rpar ")"
+
+let print_braces state printer {lbrace;inside;rbrace} =
   print_token state lbrace "{";
-  f state inside;
+  printer     state inside;
   print_token state rbrace "}"
 
 let print_var state {region; value} =
@@ -95,10 +101,18 @@ let print_constr state {region; value} =
             (compact state region) value
   in Buffer.add_string state#buffer line
 
+let print_attributes state attributes =
+  let apply {value = attribute; region} =
+    let attribute_formatted = sprintf "[@%s]" attribute in
+    print_token state region attribute_formatted
+  in List.iter apply attributes
+
 let print_pvar state {region; value} =
+  let {variable; attributes} = value in
+  let () = print_attributes state attributes in
   let line =
     sprintf "%s: PVar %s\n"
-            (compact state region) value
+            (compact state region) variable.value
   in Buffer.add_string state#buffer line
 
 let print_string state {region; value} =
@@ -145,21 +159,16 @@ let rec print_tokens state {decl;eof} =
   Utils.nseq_iter (print_statement state) decl;
   print_token state eof "EOF"
 
-and print_attributes state attributes =
-  let apply {value = attribute; region} =
-    let attribute_formatted = sprintf "[@%s]" attribute in
-    print_token state region attribute_formatted
-  in List.iter apply attributes
-
 and print_statement state = function
   ConstDecl {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
     print_attributes   state attributes;
     print_token        state kwd_let "let";
     print_token_opt    state kwd_rec "rec";
     print_let_binding  state let_binding
-| TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
+| TypeDecl {value={kwd_type; name; params; eq; type_expr}; _} ->
     print_token     state kwd_type "type";
     print_var       state name;
+    print_option    state print_quoted_params params;
     print_token     state eq "=";
     print_type_expr state type_expr
 | ModuleDecl {value={kwd_module; name; eq; lbrace; module_; rbrace}; _} ->
@@ -176,6 +185,16 @@ and print_statement state = function
     print_nsepseq state "." print_var binders;
 | Directive dir -> print_directive state dir
 
+and print_quoted_params state {value; _} =
+  let print state =
+   print_nsepseq state "," print_quoted_param
+  in print_par state print value
+
+and print_quoted_param state node =
+  let {quote; name} = node.value in
+  print_token state quote "'";
+  print_var   state name
+
 and print_directive state dir =
   let s =
     Directive.to_string ~offsets:state#offsets state#mode dir
@@ -189,10 +208,10 @@ and print_type_expr state = function
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
 | TFun t          -> print_fun_type state t
-| TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
 | TInt    i       -> print_int state i
 | TModA   ma      -> print_module_access print_type_expr state ma
+| TArg t          -> print_quoted_param state t
 
 and print_sum_type state {value; _} =
   let {variants; attributes; lead_vbar} = value in
@@ -259,14 +278,13 @@ and print_cartesian state Region.{value;_} =
   print_token state rpar ")"
 
 and print_variant state {value; _} =
-  let {constr; arg; attributes=attr} = value in
+  let {constr; args; attributes=attr} = value in
   print_attributes state attr;
   print_constr state constr;
-  match arg with
+  match args with
     None -> ()
-  | Some (kwd_of, t_expr) ->
-      print_token     state kwd_of "of";
-      print_type_expr state t_expr
+  | Some {value={inside; _}; _} ->
+      print_type_expr state inside
 
 and print_record_type state =
   print_ne_injection state print_field_decl
@@ -299,13 +317,13 @@ and print_ne_injection :
 
 and print_open_compound state = function
   None -> ()
-| Some Braces   (lbrace,  _)  -> print_token state lbrace   "{"
-| Some Brackets (lbracket,_)  -> print_token state lbracket "["
+| Some `Braces   (lbrace,  _)  -> print_token state lbrace   "{"
+| Some `Brackets (lbracket,_)  -> print_token state lbracket "["
 
 and print_close_compound state = function
   None -> ()
-| Some Braces   (_, rbrace)   -> print_token state rbrace   "}"
-| Some Brackets (_, rbracket) -> print_token state rbracket "]"
+| Some `Braces   (_, rbrace)   -> print_token state rbrace   "}"
+| Some `Brackets (_, rbracket) -> print_token state rbracket "]"
 
 and print_terminator state = function
   Some semi -> print_token state semi ";"
@@ -327,9 +345,7 @@ and print_pattern state = function
     print_csv state print_pattern ptuple
 | PList p ->
     print_list_pattern state p
-| PVar {var; attributes} ->
-    print_pvar state var;
-    print_attributes state attributes
+| PVar p -> print_pvar state p
 | PInt i -> print_int state i
 | PNat i -> print_nat state i
 | PBytes b -> print_bytes state b
@@ -374,22 +390,7 @@ and print_field_pattern state {value; _} =
   print_token   state eq "=";
   print_pattern state pattern
 
-and print_constr_pattern state = function
-  PNone p      -> print_none_pattern state p
-| PSomeApp p   -> print_some_app_pattern state p
-| PFalse kwd_false -> print_token state kwd_false "false"
-| PTrue kwd_true -> print_token state kwd_true "true"
-| PConstrApp p -> print_constr_app_pattern state p
-
-and print_none_pattern state value =
-  print_token state value "None"
-
-and print_some_app_pattern state {value; _} =
-  let c_Some, argument = value in
-  print_token   state c_Some "Some";
-  print_pattern state argument
-
-and print_constr_app_pattern state node =
+and print_constr_pattern state node =
   let {value=constr, p_opt; _} = node in
   print_constr state constr;
   match p_opt with
@@ -423,19 +424,7 @@ and print_expr state = function
 | EConstr e           -> print_constr_expr state e
 | ECodeInj e          -> print_code_inj state e
 
-and print_constr_expr state = function
-  ENone e      -> print_none_expr       state e
-| ESomeApp e   -> print_some_app_expr   state e
-| EConstrApp e -> print_constr_app_expr state e
-
-and print_none_expr state value = print_token state value "None"
-
-and print_some_app_expr state {value; _} =
-  let c_Some, argument = value in
-  print_token state c_Some "Some";
-  print_expr  state argument
-
-and print_constr_app_expr state {value; _} =
+and print_constr_expr state {value; _} =
   let constr, argument = value in
   print_constr state constr;
   match argument with
@@ -507,6 +496,26 @@ and print_arith_expr state = function
     print_expr  state arg1;
     print_token state op "mod";
     print_expr  state arg2
+| Land {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "land";
+    print_expr  state arg2
+| Lor {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lor";
+    print_expr  state arg2
+| Lxor {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lxor";
+    print_expr  state arg2
+| Lsl {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lsl";
+    print_expr  state arg2
+| Lsr {value={arg1;op;arg2}; _} ->
+    print_expr  state arg1;
+    print_token state op "lsr";
+    print_expr  state arg2
 | Neg {value={op;arg}; _} ->
     print_token state op "-";
     print_expr  state arg
@@ -546,10 +555,6 @@ and print_bool_expr state = function
 | Not {value={op;arg}; _} ->
     print_token state op "not";
     print_expr  state arg
-| True kwd_true ->
-    print_token state kwd_true "true"
-| False kwd_false ->
-    print_token state kwd_false "false"
 
 and print_comp_expr state = function
   Lt {value={arg1;op;arg2}; _} ->
@@ -634,9 +639,10 @@ and print_let_in state {value; _} =
 
 and print_type_in state {value; _} =
   let {type_decl; semi; body} = value in
-  let {kwd_type; name; eq; type_expr} = type_decl in
+  let {kwd_type; name; params; eq; type_expr} = type_decl in
   print_token       state kwd_type "type";
   print_var         state name;
+  print_option    state print_quoted_params params;
   print_token       state eq     "eq";
   print_type_expr   state type_expr;
   print_token       state semi ";";
@@ -665,7 +671,8 @@ and print_mod_alias state {value; _} =
   print_expr         state body
 
 and print_fun_expr state {value; _} =
-  let {binders; lhs_type; arrow; body} = value in
+  let {binders; lhs_type; arrow; body; attributes} = value in
+  let () = print_attributes state attributes in
   let () = print_pattern state binders in
   let () =
     match lhs_type with
@@ -681,22 +688,28 @@ and print_conditional state {value; _} =
   let {kwd_if; test; ifso; ifnot} = value in
   print_token state ghost "(";
   print_token state kwd_if "if";
-  print_expr state test;
-  print_braced state
+  print_test_expr state test;
+  print_braces state
     (fun state (expr,semi) ->
       print_expr state expr;
       print_token_opt state semi ";";
-    ) ifso;
+    ) ifso.value;
   print_option state
-    (fun state (kwd_else,ifnot) ->
-      print_token state kwd_else "else";
-      print_braced state
-        (fun state (ifnot,semi) ->
-          print_expr state ifnot;
-          print_token_opt state semi ";"
-        ) ifnot
-    ) ifnot;
+    (fun state (kwd_else,branch) ->
+       print_token state kwd_else "else";
+       print_branch state branch) ifnot;
   print_token state ghost ")"
+
+and print_branch state (node : branch) =
+  let printer : state -> expr * semi option -> unit =
+    fun state (expr, semi_opt) ->
+      print_expr state expr;
+      print_token_opt state semi_opt ";"
+  in print_braces state printer node.value
+
+and print_test_expr state = function
+  `Braces t -> print_braces state print_expr t.value
+| `Parens t -> print_par state print_expr t.value
 
 (* Conversion to string *)
 
@@ -818,12 +831,7 @@ and pp_pattern state = function
   PConstr p ->
     pp_node state "PConstr";
     pp_constr_pattern (state#pad 1 0) p
-| PVar {var;attributes} ->
-    pp_node state "PVar";
-    let arity = if attributes = [] then 1 else 2 in
-    pp_ident (state#pad 1 0) var;
-    if attributes <> [] then
-      pp_attributes (state#pad arity 1) attributes
+| PVar p -> pp_pvar state p
 | PInt i ->
     pp_node state "PInt";
     pp_int  state i
@@ -856,6 +864,15 @@ and pp_pattern state = function
 | PTyped {value; _} ->
     pp_node state "PTyped";
     pp_typed_pattern state value
+
+and pp_pvar state {value; _} =
+  let {variable; attributes} = value in
+  if attributes = [] then
+    pp_ident state variable
+  else
+    (pp_node       state "PVar";
+     pp_ident      (state#pad 2 0) variable;
+     pp_attributes (state#pad 2 1) attributes)
 
 and pp_field_pattern state {value; _} =
   pp_node    state value.field_name.value;
@@ -911,21 +928,8 @@ and pp_int state {value=lexeme,z; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
   pp_node     (state#pad 2 1) (Z.to_string z)
 
-and pp_constr_pattern state = function
-  PNone region ->
-    pp_loc_node state "PNone" region
-| PSomeApp {value=_,param; region} ->
-    pp_loc_node state "PSomeApp" region;
-    pp_pattern  (state#pad 1 0) param
-| PFalse region ->
-    pp_loc_node state "PFalse" region
-| PTrue region ->
-    pp_loc_node state "PTrue" region
-| PConstrApp {value; region} ->
-    pp_loc_node state "PConstrApp" region;
-    pp_constr_app_pattern (state#pad 1 0) value
-
-and pp_constr_app_pattern state (constr, pat_opt) =
+and pp_constr_pattern state {value; _} =
+  let constr, pat_opt = value in
   pp_ident state constr;
   match pat_opt with
     None -> ()
@@ -1195,17 +1199,9 @@ and pp_field_path_assign state {value; _} =
   pp_path (state#pad 2 0) field_path;
   pp_expr (state#pad 2 1) field_expr
 
-and pp_constr_expr state = function
-  ENone region ->
-    pp_loc_node state "ENone" region
-| ESomeApp {value=_,arg; region} ->
-    pp_loc_node state "ESomeApp" region;
-    pp_expr (state#pad 1 0) arg
-| EConstrApp {value; region} ->
-    pp_loc_node state "EConstrApp" region;
-    pp_constr_app_expr state value
-
-and pp_constr_app_expr state (constr, expr_opt) =
+and pp_constr_expr state {region; value} =
+  let constr, expr_opt = value in
+  pp_loc_node state "EConstr" region;
   match expr_opt with
     None -> pp_ident (state#pad 1 0) constr
   | Some expr ->
@@ -1246,6 +1242,16 @@ and pp_arith_expr state = function
     pp_bin_op "Div" region state value
 | Mod {value; region} ->
     pp_bin_op "Mod" region state value
+| Land {value; region} ->
+    pp_bin_op "Land" region state value
+| Lor {value; region} ->
+    pp_bin_op "Lor" region state value
+| Lxor {value; region} ->
+    pp_bin_op "Lxor" region state value
+| Lsl {value; region} ->
+    pp_bin_op "Lsl" region state value
+| Lsr {value; region} ->
+    pp_bin_op "Lsr" region state value
 | Neg {value; region} ->
     pp_loc_node state "Neg" region;
     pp_expr (state#pad 1 0) value.arg;
@@ -1275,10 +1281,6 @@ and pp_bool_expr state = function
 | Not {value; _} ->
     pp_node state "Not";
     pp_expr (state#pad 1 0) value.arg
-| False region ->
-    pp_loc_node state "False" region
-| True region ->
-    pp_loc_node state "True" region
 
 and pp_comp_expr state = function
   Lt {value; region} ->
@@ -1308,18 +1310,22 @@ and pp_cond_expr state (cond: cond_expr) =
   let () =
     let state = state#pad 3 0 in
     pp_node state "<condition>";
-    pp_expr (state#pad 1 0) cond.test in
+    pp_test_expr (state#pad 1 0) cond.test in
   let () =
     let state = state#pad 3 1 in
     pp_node state "<true>";
-    pp_expr (state#pad 1 0) (fst cond.ifso.inside) in
+    pp_expr (state#pad 1 0) (fst cond.ifso.value.inside) in
   let () = match cond.ifnot with
     Some ifnot ->
     let state = state#pad 3 2 in
     pp_node state "<false>";
-    pp_expr (state#pad 1 0) @@ fst (snd ifnot).inside
+    pp_expr (state#pad 1 0) @@ fst (snd ifnot).value.inside
   | None -> ()
   in ()
+
+and pp_test_expr state = function
+  `Braces e -> pp_expr state e.value.inside
+| `Parens e -> pp_expr state e.value.inside
 
 and pp_case :
   'a.(state -> 'a -> unit) -> state -> 'a case -> unit =
@@ -1365,9 +1371,6 @@ and pp_type_expr state = function
 | TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
-| TWild wild ->
-    pp_node  state "TWild";
-    pp_loc_node state "TWild" wild
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
@@ -1377,6 +1380,12 @@ and pp_type_expr state = function
 | TModA {value; region} ->
     pp_loc_node state "TModA" region;
     pp_module_access pp_type_expr state value
+| TArg t ->
+    pp_node state "TArg";
+    pp_type_var (state#pad 1 0) t
+
+and pp_type_var state (node : type_var reg) =
+  pp_ident state {node with value = "'" ^ node.value.name.value}
 
 and pp_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in
@@ -1414,16 +1423,16 @@ and pp_cartesian state {inside; _} =
   let apply len rank = pp_type_expr (state#pad len rank)
   in List.iteri (apply arity) t_exprs
 
-and pp_variant state {constr; arg; attributes=attr} =
+and pp_variant state {constr; args; attributes=attr} =
   let arity = if attr = [] then 0 else 1 in
-  let arity = if arg = None then arity else arity + 1 in
+  let arity = if args = None then arity else arity + 1 in
   let rank  = 0 in
   let () = pp_ident state constr in
   let rank =
-    match arg with
+    match args with
       None -> rank
-    | Some (_,c) ->
-        pp_type_expr (state#pad arity rank) c; rank+1 in
+    | Some {value={inside; _}; _} ->
+        pp_type_expr (state#pad arity rank) inside; rank+1 in
   let () = if attr <> [] then
             pp_attributes (state#pad arity rank) attr
   in ()

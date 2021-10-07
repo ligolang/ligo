@@ -58,14 +58,6 @@ type kwd_while      = Region.t
 type kwd_with       = Region.t
 type kwd_module    = Region.t
 
-(* Data constructors *)
-
-type c_False = Region.t
-type c_None  = Region.t
-type c_Some  = Region.t
-type c_True  = Region.t
-type c_Unit  = Region.t
-
 (* Symbols *)
 
 type semi     = Region.t  (* ";"   *)
@@ -92,7 +84,6 @@ type minus    = Region.t  (* "-"   *)
 type slash    = Region.t  (* "/"   *)
 type times    = Region.t  (* "*"   *)
 type dot      = Region.t  (* "."   *)
-type wild     = Region.t  (* "_"   *)
 type cat      = Region.t  (* "^"   *)
 
 (* Virtual tokens *)
@@ -105,6 +96,7 @@ type variable    = string reg
 type module_name = string reg
 type fun_name    = string reg
 type type_name   = string reg
+type type_var    = string reg
 type type_constr = string reg
 type field_name  = string reg
 type map_name    = string reg
@@ -170,10 +162,13 @@ and const_decl = {
 and type_decl = {
   kwd_type   : kwd_type;
   name       : type_name;
+  params     : type_vars option;
   kwd_is     : kwd_is;
   type_expr  : type_expr;
   terminator : semi option
 }
+
+and type_vars = (type_var, comma) nsepseq par reg
 
 and module_decl = {
   kwd_module : kwd_module;
@@ -189,7 +184,7 @@ and module_alias = {
   alias      : module_name;
   kwd_is     : kwd_is;
   binders    : (module_name, dot) nsepseq;
-  terminator : semi option;
+  terminator : semi option
 }
 
 and type_expr =
@@ -200,7 +195,6 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TWild   of wild
 | TString of lexeme reg
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
@@ -235,7 +229,8 @@ and fun_expr = {
   param        : parameters;
   ret_type     : (colon * type_expr) option;
   kwd_is       : kwd_is;
-  return       : expr
+  return       : expr;
+  attributes  : attributes
 }
 
 and fun_decl = {
@@ -264,13 +259,13 @@ and param_decl =
 
 and param_const = {
   kwd_const  : kwd_const;
-  var        : variable;
+  var        : var_pattern reg;
   param_type : (colon * type_expr) option
 }
 
 and param_var = {
   kwd_var    : kwd_var;
-  var        : variable;
+  var        : var_pattern reg;
   param_type : (colon * type_expr) option
 }
 
@@ -309,6 +304,7 @@ and var_decl = {
   assign     : assign;
   init       : expr;
   terminator : semi option;
+  attributes : attributes
 }
 
 and instruction =
@@ -487,7 +483,7 @@ and expr =
 | EString  of string_expr
 | EList    of list_expr
 | ESet     of set_expr
-| EConstr  of constr_expr
+| EConstr  of (constr * arguments option) reg
 | ERecord  of record reg
 | EProj    of projection reg
 | EModA    of expr module_access reg
@@ -496,7 +492,6 @@ and expr =
 | EVar     of lexeme reg
 | ECall    of fun_call
 | EBytes   of (lexeme * Hex.t) reg
-| EUnit    of c_Unit
 | ETuple   of tuple_expr
 | EPar     of expr par reg
 | EFun     of fun_expr reg
@@ -528,11 +523,9 @@ and logic_expr =
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of kwd_or  bin_op reg
-| And   of kwd_and bin_op reg
-| Not   of kwd_not un_op  reg
-| False of c_False
-| True  of c_True
+  Or  of kwd_or  bin_op reg
+| And of kwd_and bin_op reg
+| Not of kwd_not un_op  reg
 
 and 'a bin_op = {
   op   : 'a;
@@ -573,11 +566,6 @@ and list_expr =
   ECons     of cons bin_op reg
 | EListComp of expr injection reg
 | ENil      of kwd_nil
-
-and constr_expr =
-  SomeApp   of (c_Some * arguments) reg
-| NoneExpr  of c_None
-| ConstrApp of (constr * arguments option) reg
 
 and field_assignment = {
   field_name : field_name;
@@ -657,8 +645,8 @@ and ne_injection_kwd =
 (* Patterns *)
 
 and pattern =
-  PConstr of constr_pattern
-| PVar    of lexeme reg
+  PConstr of (constr * tuple_pattern option) reg
+| PVar    of var_pattern reg
 | PInt    of (lexeme * Z.t) reg
 | PNat    of (lexeme * Z.t) reg
 | PBytes  of (lexeme * Hex.t) reg
@@ -666,20 +654,17 @@ and pattern =
 | PList   of list_pattern
 | PTuple  of tuple_pattern
 | PRecord of field_pattern reg injection reg
-  
+
+and var_pattern = {
+  variable   : variable;
+  attributes : attribute list
+}
+
 and field_pattern = {
   field_name : field_name;
   eq         : equal;
   pattern    : pattern
 }
-
-and constr_pattern =
-  PUnit      of c_Unit
-| PFalse     of c_False
-| PTrue      of c_True
-| PNone      of c_None
-| PSomeApp   of (c_Some * pattern) reg
-| PConstrApp of (constr * tuple_pattern option) reg
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
 
@@ -697,16 +682,9 @@ let rec last to_region = function
 |  [x] -> to_region x
 | _::t -> last to_region t
 
-let nseq_to_region to_region (hd,tl) =
-  Region.cover (to_region hd) (last to_region tl)
-
 let nsepseq_to_region to_region (hd,tl) =
   let reg (_, item) = to_region item in
   Region.cover (to_region hd) (last reg tl)
-
-let sepseq_to_region to_region = function
-      None -> Region.ghost
-| Some seq -> nsepseq_to_region to_region seq
 
 let type_expr_to_region = function
   TProd   {region; _}
@@ -718,28 +696,26 @@ let type_expr_to_region = function
 | TString {region; _}
 | TInt    {region; _}
 | TVar    {region; _}
-| TWild    region
 | TModA   {region; _}
- -> region
+  -> region
 
 let rec expr_to_region = function
-| ELogic  e -> logic_expr_to_region e
+  ELogic  e -> logic_expr_to_region e
 | EArith  e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
 | EAnnot  e -> annot_expr_to_region e
 | EList   e -> list_expr_to_region e
 | ESet    e -> set_expr_to_region e
-| EConstr e -> constr_expr_to_region e
 | ERecord e -> record_expr_to_region e
 | EMap    e -> map_expr_to_region e
 | ETuple  e -> tuple_expr_to_region e
+| EConstr  {region; _}
 | EUpdate  {region; _}
 | EProj    {region; _}
 | EModA    {region; _}
 | EVar     {region; _}
 | ECall    {region; _}
 | EBytes   {region; _}
-| EUnit    region
 | ECase    {region;_}
 | ECond    {region; _}
 | EPar     {region; _}
@@ -766,8 +742,7 @@ and bool_expr_to_region = function
   Or    {region; _}
 | And   {region; _}
 | Not   {region; _}
-| False region
-| True  region -> region
+  -> region
 
 and comp_expr_to_region = function
   Lt    {region; _}
@@ -799,11 +774,6 @@ and list_expr_to_region = function
   ECons {region; _}
 | EListComp {region; _}
 | ENil region -> region
-
-and constr_expr_to_region = function
-  NoneExpr  region
-| ConstrApp {region; _}
-| SomeApp   {region; _} -> region
 
 and record_expr_to_region {region; _} = region
 
@@ -840,12 +810,7 @@ let pattern_to_region = function
 | PNat        {region; _}
 | PBytes      {region; _}
 | PString     {region; _}
-| PConstr PUnit   region
-| PConstr PFalse  region
-| PConstr PTrue   region
-| PConstr PNone   region
-| PConstr PSomeApp {region; _}
-| PConstr PConstrApp {region; _}
+| PConstr     {region; _}
 | PList PListComp  {region; _}
 | PList PNil  region
 | PList PParCons {region; _}

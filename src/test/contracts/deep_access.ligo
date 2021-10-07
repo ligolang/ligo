@@ -6,7 +6,7 @@ type ppi is record [x : pii; y : pii]
 
 type ppp is ppi * ppi
 
-function main (const toto : unit) : int is
+function main (const _ : unit) : int is
   block {
     var a : ppp :=
      (record [x = (0,1); y = (10,11)],
@@ -15,7 +15,7 @@ function main (const toto : unit) : int is
   } with a.0.x.0
 
 
-function asymetric_tuple_access (const foo : unit) : int is
+function asymetric_tuple_access (const _ : unit) : int is
   block {
     var tuple : int * (int * (int * int)) := (0,(1,(2,3)))
   } with tuple.0 + tuple.1.0 + tuple.1.1.0 + tuple.1.1.1

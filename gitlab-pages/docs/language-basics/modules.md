@@ -327,7 +327,7 @@ let main = ([action, store]: [unit, storage]) : [list<operation>, storage] =>
 
 Modules also allow us to separate our code in different files: when we
 import a file, we obtain a module encapsulating all the definitions in
-it. This will become very handy for organizing large contracts, as we
+it. This will become very handy for organising large contracts, as we
 can divide it into different files, and the module system keeps the naming
 space clean.
 
@@ -467,28 +467,28 @@ without having to mention the imported file.
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/language-basics/src/modules/importer.ligo main
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.ligo --entry-point main
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/language-basics/src/modules/importer.mligo main
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.mligo --entry-point main
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/language-basics/src/modules/importer.religo main
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.religo --entry-point main
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/language-basics/src/modules/importer.jsligo main
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.jsligo --entry-point main
 ```
 
 </Syntax>

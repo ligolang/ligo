@@ -79,6 +79,7 @@ const CompileFunctionPaneComponent = (props) => {
         .then((file: MethodType) => {
           setDeclaration(file.declarations);
           file.declarations && setFunctionName(file.declarations[0]);
+          file.declarations && setCompileFunction(file.declarations[0]);
           setShowSpinner(false);
         })
         .catch((error) => {

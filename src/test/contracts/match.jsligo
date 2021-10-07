@@ -10,6 +10,6 @@ let main = ([action, store]: [parameter, storage]) : return_ => {
   let store2 = store + match (action, {
     Add: (n: int) => n,
     Sub: (n: int) => -n
-  });  
+  });
   return [(list([]) as list <operation>), store2];
 };

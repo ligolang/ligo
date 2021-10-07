@@ -11,14 +11,8 @@
      ParserLib
      ;; LIGO
      lexing_shared
-     cst_reasonligo
      ;; Third party
-     getopt
-     zarith
-     str
-     menhirLib
      terminal_size
      pprint)
   (modules
-     Errors Formatter Common ParserMainGen)
-)
+     Errors Formatter Common ParserMainGen))

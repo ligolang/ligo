@@ -33,8 +33,8 @@
   "dependencies": {
     "@google-cloud/storage": "^5.2.0",
     "@hapi/joi": "^17.1.1",
-    "@taquito/signer": "^9.0.0",
-    "@taquito/taquito": "^9.0.0",
+    "@taquito/signer": "^10.1.0",
+    "@taquito/taquito": "^10.1.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "escape-html": "^1.0.3",

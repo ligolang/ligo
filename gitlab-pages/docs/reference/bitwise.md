@@ -137,7 +137,7 @@ let three: nat = Bitwise.xor(2n, 1n);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=other
 let three: nat = Bitwise.xor(2 as nat, 1 as nat);
 ```
 

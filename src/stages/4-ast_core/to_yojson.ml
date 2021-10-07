@@ -41,6 +41,7 @@ and type_content = function
   | T_app             t -> `List [ `String "t_app";      t_app type_expression t]
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
+  | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t ]
 
 
 and rows {fields; layout = l } =
@@ -117,12 +118,18 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and let_in {let_binder;rhs;let_result;inline} =
+and let_in {let_binder;rhs;let_result;attr} =
   `Assoc [
     ("let_binder", binder type_expression let_binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
+    ("attr", attribute attr);
+  ]
+
+and attribute {inline;no_mutation} =
+  `Assoc [
     ("inline", `Bool inline);
+    ("no_mutation", `Bool no_mutation);
   ]
 
 and mod_in {module_binder;rhs;let_result} =
@@ -168,12 +175,12 @@ and declaration_type {type_binder;type_expr} =
     ("type_expr", type_expression type_expr);
   ]
 
-and declaration_constant {name; binder=b;attr={inline};expr} =
+and declaration_constant {name; binder=b;attr;expr} =
   `Assoc [
     ("name", option' string name);
     ("binder",binder type_expression b);
     ("expr", expression expr);
-    ("attribute", `Bool inline);
+    ("attr", attribute attr);
   ]
 
 and declaration_module {module_binder;module_=m} =

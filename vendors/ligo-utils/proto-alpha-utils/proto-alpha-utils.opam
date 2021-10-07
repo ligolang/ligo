@@ -1,3 +1,5 @@
+# NOTE: dependencies added here are ignored in the LIGO build. Add
+# dependencies in /ligo.opam and run [opam lock].
 opam-version: "2.0"
 name: "proto-alpha-utils"
 version: "dev"
@@ -40,9 +42,9 @@ depends: [
   "tezos-crypto"
   "tezos-error-monad"
   "tezos-stdlib-unix"
-  "tezos-protocol-environment"
-  "tezos-protocol-008-PtEdo2Zk"
-  "tezos-client-008-PtEdo2Zk"
+  "tezos-protocol-environment" {= "10.2"}
+  "tezos-protocol-010-PtGRANAD" {= "10.2"}
+  "tezos-client-010-PtGRANAD"
   "tezos-memory-proto-alpha"
   "simple-utils"
   "tezos-utils"

@@ -13,8 +13,7 @@ type typer_error = [
   | `Typer_match_extra_case of Ast_core.label list * Ast_core.label list * Location.t
   | `Typer_unbound_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
   | `Typer_redundant_constructor of Ast_typed.Environment.t * Ast_core.label * Location.t
-  | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable* int * int * Location.t
-  | `Typer_type_variable_with_parameters_not_injection of Ast_core.type_variable* Location.t
+  | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable option * int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_module_tracer of Ast_core.module_ * typer_error
   | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
@@ -46,6 +45,8 @@ type typer_error = [
   | `Typer_expected_key of Location.t * Ast_typed.type_expression
   | `Typer_expected_signature of Location.t * Ast_typed.type_expression
   | `Typer_expected_contract of Location.t * Ast_typed.type_expression
+  | `Typer_expected_typed_address of Location.t * Ast_typed.type_expression
+  | `Typer_expected_address of Location.t * Ast_typed.type_expression
   | `Typer_expected_string of Location.t * Ast_typed.type_expression
   | `Typer_expected_key_hash of Location.t * Ast_typed.type_expression
   | `Typer_expected_mutez of Location.t * Ast_typed.type_expression
@@ -60,6 +61,7 @@ type typer_error = [
   | `Typer_expected_unit of Location.t * Ast_typed.type_expression
   | `Typer_not_matching of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_not_annotated of Location.t
+  | `Typer_contract_not_annotated of Location.t
   | `Typer_bad_substraction of Location.t
   | `Typer_wrong_size of Location.t * Ast_typed.type_expression
   | `Typer_wrong_neg of Location.t * Ast_typed.type_expression
@@ -98,8 +100,7 @@ let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_typed.expression_variabl
 let match_missing_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_missing_case (m, v, loc)
 let match_extra_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_extra_case (m, v, loc)
 let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
-let type_constant_wrong_number_of_arguments (op:Ast_core.type_variable) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
-let type_variable_with_parameters_not_injection (op:Ast_core.type_variable) loc = `Typer_type_variable_with_parameters_not_injection (op,loc)
+let type_constant_wrong_number_of_arguments (op:Ast_core.type_variable option) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
 let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
 let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)
 let module_error_tracer (p:Ast_core.module_) (err:typer_error) = `Typer_module_tracer (p,err)
@@ -135,6 +136,7 @@ let expected_sapling_transaction (loc:Location.t) (t:Ast_typed.type_expression) 
 let expected_sapling_state (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_sapling_state (loc,t)
 let expected_ligo_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_ligo_code (loc,t)
 let expected_michelson_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_michelson_code (loc,t)
+let expected_address (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_address (loc,t)
 let expected_set (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_set (loc,t)
 let expected_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_map (loc,t)
 let expected_big_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_big_map (loc,t)
@@ -144,6 +146,7 @@ let expected_bytes (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expec
 let expected_key (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_key (loc,t)
 let expected_signature (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_signature (loc,t)
 let expected_contract (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_contract (loc,t)
+let expected_typed_address (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_typed_address (loc,t)
 let expected_ticket (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_ticket (loc,t)
 let expected_string (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_string (loc,t)
 let expected_key_hash (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_key_hash (loc,t)
@@ -155,6 +158,7 @@ let expected_unit (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expect
 let expected_ascription (t:Ast_core.expression) = `Typer_expected_ascription t
 let not_matching (loc:Location.t) (t1:Ast_typed.type_expression) (t2:Ast_typed.type_expression) = `Typer_not_matching (loc,t1,t2)
 let not_annotated (loc: Location.t) = `Typer_not_annotated loc
+let contract_not_annotated (loc: Location.t) = `Typer_contract_not_annotated loc
 let bad_subtraction (loc:Location.t) = `Typer_bad_substraction loc
 let wrong_size (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_wrong_size (loc,t)
 let wrong_neg (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_wrong_neg (loc,t)
@@ -279,17 +283,18 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Invalid variant.@.Constructor \"%a\" already exists as part of another variant. @]"
         Snippet.pp loc
         Ast_core.PP.label c
-    | `Typer_type_constant_wrong_number_of_arguments (op,e,a,loc) ->
+    | `Typer_type_constant_wrong_number_of_arguments (op_opt,e,a,loc) ->
+      let aux : Format.formatter -> Ast_core.type_variable option -> unit =
+        fun ppf operator_opt ->
+          match operator_opt with
+          | Some v -> Format.fprintf ppf " %a" Ast_core.PP.type_variable v
+          | None -> ()
+      in
       Format.fprintf f
-        "@[<hv>%a@ Wrong number of arguments for type constant: %a@ expected: %i@ got: %i@]"
+        "@[<hv>%a@ Type%a takes the wrong number of arguments, expected: %i got: %i@]"
         Snippet.pp loc
-        Ast_core.PP.type_variable op
+        aux op_opt
         e a
-    | `Typer_type_variable_with_parameters_not_injection (op,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@ Type %a does not expect an argument. @]"
-        Snippet.pp loc
-        Ast_core.PP.type_variable op
     | `Typer_michelson_or_no_annotation (c,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be annotated with a variant type. @]"
@@ -350,13 +355,17 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_not_annotated l ->
       Format.fprintf f "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
         Snippet.pp l
+    | `Typer_contract_not_annotated l ->
+      Format.fprintf f "@[<hv>%a@.Can't infer the complete type of this value, please add a type annotation.\
+        @.The value has type 'a contract option, here 'a can't be inferred@]"
+        Snippet.pp l
     | `Typer_bad_substraction loc ->
-      Format.fprintf f "@[<hv>%a@.Invalid subtraction.
-The following forms of subtractions are possible:
-  * timestamp - int = timestamp
-  * timestamp - timestamp = int
-  * int/nat - int/nat = int
-  * mutez/tez - mutez/tez = mutez.@]"
+      Format.fprintf f "@[<hv>%a@.Invalid subtraction.\
+        @.The following forms of subtractions are possible:\
+        @.  * timestamp - int = timestamp\
+        @.  * timestamp - timestamp = int\
+        @.  * int/nat - int/nat = int\
+        @.  * mutez/tez - mutez/tez = mutez.@]"
         Snippet.pp loc
     | `Typer_wrong_size (loc,_t) ->
       Format.fprintf f
@@ -502,6 +511,16 @@ The following forms of subtractions are possible:
         "@[<hv>%a@.Incorrect argument.@.Expected a contract, but got an argument of type \"%a\". @]"
         Snippet.pp loc
         Ast_typed.PP.type_expression t
+    | `Typer_expected_typed_address (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Incorrect argument.@.Expected a typed address, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
+    | `Typer_expected_address (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Incorrect argument.@.Expected a address, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
     | `Typer_expected_ticket (loc,t) ->
         Format.fprintf f
           "@[<hv>%a@.Incorrect argument.@.Expected a ticket, but got an argument of type \"%a\". @]"
@@ -587,7 +606,7 @@ The following forms of subtractions are possible:
     | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
     | `Typer_pattern_do_not_conform_type (p,t) ->
       let pf ppf value =
-        match p.location with 
+        match p.location with
         | Virtual _ ->  Format.fprintf ppf "%a " (Stage_common.PP.match_pattern Ast_core.PP.type_expression) value
         | File _ -> ()
       in
@@ -759,23 +778,13 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_type_constant_wrong_number_of_arguments (op, e, a, loc) ->
     let message = `String "Wrong number of arguments for type constant" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let op  = Format.asprintf "%a" Ast_core.PP.type_variable op in
+    let op = Ast_core.Yojson.option Var.to_yojson op in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);
-      ("type_constant", `String op);
+      ("type_constant", op);
       ("expected", `Int e);
       ("actuel", `Int a);
-    ] in
-    json_error ~stage ~content
-  | `Typer_type_variable_with_parameters_not_injection (op, loc) ->
-    let message = `String "Type does not expect an argument" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let op  = Format.asprintf "%a" Ast_core.PP.type_variable op in
-    let content = `Assoc [
-      ("message", message);
-      ("location", `String loc);
-      ("type_variable", `String op);
     ] in
     json_error ~stage ~content
   | `Typer_michelson_or_no_annotation (c,loc) ->
@@ -1028,6 +1037,24 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
     ] in
     json_error ~stage ~content
+  | `Typer_expected_typed_address (loc,t) ->
+    let message = `String "expected typed address" in
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_address (loc,t) ->
+    let message = `String "expected address" in
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
   | `Typer_expected_ticket (loc,t) ->
     let message = `String "expected ticket" in
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
@@ -1203,6 +1230,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_not_annotated _ ->
     let message = `String "not annotated" in
+    let content = `Assoc [
+      ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_contract_not_annotated _ ->
+    let message = `String "not annotated contract" in
     let content = `Assoc [
       ("message", message);
     ] in

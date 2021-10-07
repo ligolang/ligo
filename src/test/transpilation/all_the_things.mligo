@@ -357,6 +357,13 @@ let and_op (n : nat) : nat = Bitwise.and n 7n
 let xor_op (n : nat) : nat = Bitwise.xor n 7n
 let lsl_op (n : nat) : nat = Bitwise.shift_left n 7n
 let lsr_op (n : nat) : nat = Bitwise.shift_right n 7n
+
+
+let or_op_infix  (n : nat) : nat = n lor 4n
+let and_op_infix (n : nat) : nat = n land 7n
+let xor_op_infix (n : nat) : nat = n lxor 7n
+let lsl_op_infix (n : nat) : nat = n lsl 7n
+let lsr_op_infix (n : nat) : nat = n lsr 7n
 // Test CameLIGO boolean operators
 
 let or_true   (b : bool) : bool = b || true
@@ -941,8 +948,8 @@ let long_variant_match =
 let bool_match =
   let b = true in
   match b with
-  | true -> true
-  | false -> false
+  | True -> True
+  | True -> False
 
 let list_match =
   let a = [1; 2; 3; 4] in
@@ -1059,39 +1066,6 @@ let assertion_pass =
 
 
 let main (i : int) : nat option = is_nat i
-(* Test case from https://gitlab.com/ligolang/ligo/-/issues/184 *)
-
-type foo = {
-  bar : string;
-  baz : nat;
-}
-
-type foo_michelson = foo michelson_pair_right_comb
-
-type union1 =
-| Choice1 of foo
-| Choice2 of foo
-
-type union1_aux =
-| Option1 of foo_michelson
-| Option2 of foo_michelson
-
-type union1_michelson = union1_aux michelson_or_right_comb
-
-let union1_from_michelson (m : union1_michelson) : union1 =
- let aux : union1_aux = Layout.convert_from_right_comb m in
- match aux with
- | Option1 fm ->
-  let f : foo = Layout.convert_from_right_comb fm in
-  Choice1 f
-| Option2 fm ->
-  let f : foo = Layout.convert_from_right_comb fm in
-  Choice2 f
-
-let main2 (ums, us : (union1_michelson list) * (union1 list)) =
-  let new_us = List.map union1_from_michelson ums in
-  ([] : operation list), new_us
-
 
 let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
   let kh2 : key_hash = Crypto.hash_key k2
@@ -1359,8 +1333,8 @@ let main (action, store : parameter * storage) =
 
 let match_bool (b : bool) : int =
   match b with
-    true -> 10
-  | false -> 0
+    True -> 10
+  | False -> 0
 
 let match_list (l : int list) : int =
   match l with
@@ -1403,28 +1377,6 @@ type foo = {
   baz : nat;
 }
 
-type foo_michelson = foo michelson_pair_right_comb
-
-type union1 =
-| Choice1 of foo
-| Choice2 of foo
-
-type union1_aux =
-| Option1 of foo_michelson
-| Option2 of foo_michelson
-
-type union1_michelson = union1_aux michelson_or_right_comb
-
-let union1_from_michelson (m : union1_michelson) : union1 =
- let aux : union1_aux = Layout.convert_from_right_comb m in
- match aux with
- | Option1 fm ->
-  let f : foo = Layout.convert_from_right_comb fm in
-  Choice1 f
-| Option2 fm ->
-  let f : foo = Layout.convert_from_right_comb fm in
-  Choice2 f
-
 let main2 (pm, s : union1_michelson * nat) =
   let p = union1_from_michelson pm in
   match p with
@@ -1453,56 +1405,6 @@ type tl3 = (int,"foo4",nat,"bar4")michelson_or
 type tl2 = (tl3,"",string,"baz4") michelson_or
 type tl1 = (tl2,"",bool,"boz4")michelson_or
 let vl : tl1 = M_left (M_right "eq":tl2)
-
-type param_r = st4 michelson_or_right_comb
-let main_r (p, s : param_r * st4) : (operation list * st4) =
-  let r4 : st4 = Layout.convert_from_right_comb p in
-  ([] : operation list), r4
-
-type param_l = st4 michelson_or_left_comb
-let main_l (p, s : param_l * st4) : (operation list * st4) =
-  let r4 : st4 = Layout.convert_from_left_comb p in
-  ([] : operation list), r4
-
-(** convert_to **)
-
-let vst3 = Bar3 3n
-let vst4 = Baz4 "eq"
-
-let str3 = Layout.convert_to_right_comb (vst3:st3)
-let str4 = Layout.convert_to_right_comb (vst4:st4)
-
-let stl3 = Layout.convert_to_left_comb (vst3:st3)
-let stl4 = Layout.convert_to_left_comb (vst4:st4)
-type t3 = { foo : int ; bar : nat ;  baz : string}
-type t4 = { one: int ; two : nat ; three : string ; four : bool}
-
-(*convert from*)
-
-let s = "eq"
-let test_input_pair_r = (1,(2n,(s,true)))
-let test_input_pair_l = (((1,2n), s), true)
-
-type param_r = t4 michelson_pair_right_comb
-let main_r (p, s : param_r * string) : (operation list * string) =
-  let r4 : t4 = Layout.convert_from_right_comb p in
-  ([] : operation list),  r4.three ^ p.1.1.0
-
-type param_l = t4 michelson_pair_left_comb
-let main_l (p, s : param_l * string) : (operation list * string) =
-  let r4 : t4 = Layout.convert_from_left_comb p in
-  ([] : operation list),  r4.three ^ p.0.1
-
-(*convert to*)
-
-let v3 = { foo = 2 ; bar = 3n ; baz = "q" }
-let v4 = { one = 2 ; two = 3n ; three = "q" ; four = true }
-
-let r3 = Layout.convert_to_right_comb (v3:t3)
-let r4 = Layout.convert_to_right_comb (v4:t4)
-
-let l3 = Layout.convert_to_left_comb (v3:t3)
-let l4 = Layout.convert_to_left_comb (v4:t4)
 // Test michelson insertion in CameLIGO
 
 let michelson_add (n : nat * nat) : nat =

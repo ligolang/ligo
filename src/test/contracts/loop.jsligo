@@ -35,7 +35,7 @@ let aux_nest = (prev : sum_aggregator) : sum_aggregator => {
   };
 };
 
-let counter_nest = (n : int) : int => {
+let counter_nest = (_n : int) : int => {
   let initial : sum_aggregator = {counter: 0, sum: 0};
   let out : sum_aggregator = aux_nest (initial);
   return out.sum;

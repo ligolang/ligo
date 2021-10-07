@@ -34,6 +34,24 @@ function main (const action : parameter; const store : storage) : return is
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
   end)
+
+(* Tests for main access point *)
+
+const test_initial_storage =
+  block {
+    const initial_storage = 42;
+    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const storage = Test.get_storage(taddr);
+  } with (storage = initial_storage);
+
+const test_increment =
+  block {
+    const initial_storage = 42;
+    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const contr = Test.to_contract(taddr);
+    const _ = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
+    const storage = Test.get_storage(taddr);
+  } with (storage = initial_storage + 1);
 `;
 
 const CAMELIGO_EXAMPLE = `
@@ -60,6 +78,20 @@ let main (action, store : parameter * storage) : return =
    Increment (n) -> add (store, n)
  | Decrement (n) -> sub (store, n)
  | Reset         -> 0)
+
+(* Tests for main access point *)
+
+let test_initial_storage =
+ let initial_storage = 42 in
+ let (taddr, _, _) = Test.originate main initial_storage 0tez in
+ assert (Test.get_storage taddr = initial_storage)
+
+let test_increment =
+ let initial_storage = 42 in
+ let (taddr, _, _) = Test.originate main initial_storage 0tez in
+ let contr = Test.to_contract taddr in
+ let () = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
+ assert (Test.get_storage taddr = initial_storage + 1)
 `;
 
 
@@ -88,6 +120,22 @@ let main = ((action, store) : (parameter, storage)) : return => {
   | Decrement (n) => sub ((store, n))
   | Reset         => 0}))
 };
+
+/* Tests for main access point */
+
+let test_initial_storage = {
+  let initial_storage = 42;
+  let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+  assert (Test.get_storage(taddr) == initial_storage)
+};
+
+let test_increment = {
+  let initial_storage = 42;
+  let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+  let contr = Test.to_contract(taddr);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  assert (Test.get_storage(taddr) == initial_storage + 1)
+};
 `;
 
 const JSLIGO_EXAMPLE = `
@@ -114,9 +162,29 @@ let main = ([action, store] : [parameter, storage]) : return_ => {
    (match (action, {
     Increment: (n: int) => add ([store, n]),
     Decrement: (n: int) => sub ([store, n]),
-    Reset:     ()  => 0})
+    Reset:     ()  => 0}))
   ]
 };
+
+/* Tests for main access point */
+
+let _test_initial_storage = () : bool => {
+  let initial_storage = 42 as int;
+  let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+  return (Test.get_storage(taddr) == initial_storage);
+};
+
+let test_initial_storage = _test_initial_storage();
+
+let _test_increment = () : bool => {
+  let initial_storage = 42 as int;
+  let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+  let contr = Test.to_contract(taddr);
+  let r = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  return (Test.get_storage(taddr) == initial_storage + 1);
+}
+
+let test_increment = _test_increment();
 `;
 
 
@@ -134,14 +202,48 @@ function CodeExamples (props) {
   return (
    
 <Tabs
-  defaultValue="pascaligo"
+  defaultValue="jsligo"
   values={[
-    { label: 'PascaLIGO', value: 'pascaligo', },
-    { label: 'CameLIGO', value: 'cameligo', },
-    { label: 'ReasonLIGO', value: 'reasonligo', },
     { label: 'JsLIGO (experimental)', value: 'jsligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
   ]
 }>
+  <TabItem value="jsligo">
+
+<Highlight {...defaultProps} language="jsligo" code={JSLIGO_EXAMPLE} theme={prismTheme}>
+    {({ className, style, tokens, getLineProps, getTokenProps }) => (
+      <pre className={className} style={style}>
+        {tokens.map((line, i) => (
+          <div {...getLineProps({ line, key: i })}>
+            {line.map((token, key) => (
+              <span {...getTokenProps({ token, key })} />
+            ))}
+          </div>
+        ))}
+      </pre>
+    )}
+  </Highlight>
+</TabItem>
+
+    <TabItem value="cameligo">
+
+      <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={prismTheme}>
+        {({ className, style, tokens, getLineProps, getTokenProps }) => (
+          <pre className={className} style={style}>
+            {tokens.map((line, i) => (
+              <div {...getLineProps({ line, key: i })}>
+                {line.map((token, key) => (
+                  <span {...getTokenProps({ token, key })} />
+                ))}
+              </div>
+            ))}
+          </pre>
+        )}
+      </Highlight>
+      </TabItem>
+
         <TabItem value="pascaligo">
           <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={prismTheme}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
@@ -157,22 +259,7 @@ function CodeExamples (props) {
             )}
           </Highlight>
         </TabItem>
-        <TabItem value="cameligo">
-
-          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={prismTheme}>
-            {({ className, style, tokens, getLineProps, getTokenProps }) => (
-              <pre className={className} style={style}>
-                {tokens.map((line, i) => (
-                  <div {...getLineProps({ line, key: i })}>
-                    {line.map((token, key) => (
-                      <span {...getTokenProps({ token, key })} />
-                    ))}
-                  </div>
-                ))}
-              </pre>
-            )}
-          </Highlight>
-        </TabItem>
+        
         <TabItem value="reasonligo">
 
         <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={prismTheme}>
@@ -189,23 +276,7 @@ function CodeExamples (props) {
             )}
           </Highlight>
         </TabItem>
-        <TabItem value="jsligo">
-
-        <Highlight {...defaultProps} language="jsligo" code={JSLIGO_EXAMPLE} theme={prismTheme}>
-            {({ className, style, tokens, getLineProps, getTokenProps }) => (
-              <pre className={className} style={style}>
-                {tokens.map((line, i) => (
-                  <div {...getLineProps({ line, key: i })}>
-                    {line.map((token, key) => (
-                      <span {...getTokenProps({ token, key })} />
-                    ))}
-                  </div>
-                ))}
-              </pre>
-            )}
-          </Highlight>
-        </TabItem>
-
+        
 
 
   </Tabs>

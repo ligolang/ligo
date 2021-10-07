@@ -1,10 +1,10 @@
 let main = (i: int) => {
-  let result = 0;
+  let _result = 0;
   if (i == 2) {
-    let result = 42;
-    result;
+    let _result = 42;
+    _result;
   } else {
-    let result = 0;
-    result;
+    let _result = 0;
+    _result;
   };
 };

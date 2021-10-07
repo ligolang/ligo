@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function for_collection_with_patches (var nee : unit) : map (string,int) is
+function for_collection_with_patches (var _ : unit) : map (string,int) is
   block {
     var myint : int := 12;
     var mylist : list (string) := list ["I"; "am"; "foo"];

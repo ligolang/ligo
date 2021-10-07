@@ -2,6 +2,7 @@ $HOME/git/OCaml-build/Makefile
 
 ../shared/Lexer.mli
 ../shared/Lexer.mll
+../shared/Style.mli
 ../shared/LexerMainGen.ml
 ../shared/UnlexerGen.ml
 

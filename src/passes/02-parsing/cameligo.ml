@@ -13,7 +13,7 @@ module Token       = Lexing_cameligo.Token
 module Self_tokens = Lexing_cameligo.Self_tokens
 module ParErr      = Parsing_cameligo.ParErr
 module Parser      = Parsing_cameligo.Parser
-module CST         = Cst.Cameligo
+module CST         = Cst_cameligo.CST
 module Pretty      = Parsing_cameligo.Pretty
 
 (* Making the parsers *)
@@ -32,11 +32,11 @@ include Parsing_shared.Common.MakeTwoParsers
 
 include Parsing_shared.Common.MakePretty (CST) (Pretty)
 
-let pretty_print_file buffer file_path =
-  ContractParser.parse_file buffer file_path |> Trace.map ~f:pretty_print
+let pretty_print_file ~raise buffer file_path =
+  ContractParser.parse_file ~raise buffer file_path |> pretty_print
 
-let pretty_print_cst buffer file_path =
-  let cst = parse_file buffer file_path in
+let pretty_print_cst ~raise buffer file_path =
+  let cst = parse_file ~raise buffer file_path in
   let buffer = Buffer.create 59 in
   let state =
     Cst_cameligo.Printer.mk_state
@@ -45,4 +45,4 @@ let pretty_print_cst buffer file_path =
       ~buffer in
   let apply tree =
     Cst_cameligo.Printer.pp_cst state tree; buffer
-  in Trace.map ~f:apply cst
+  in apply cst

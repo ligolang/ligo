@@ -15,17 +15,17 @@ let rm = (m: foobar) : foobar => Map.remove (42, m);
 
 /* Dummy test so that we can add the same test for PascaLIGO */
 
-let patch_ = (m : foobar) : foobar =>
+let patch_ = (_m : foobar) : foobar =>
   Map.literal (list([[0, 5], [1, 6], [2, 7]]));
 
 /* Second dummy test, see above */
 
-let patch_empty = (m : foobar) : foobar =>
+let patch_empty = (_m : foobar) : foobar =>
   Map.literal (list([[0, 0], [1, 1], [2, 2]]));
 
 /* Third dummy test, see above */
 
-let patch_deep = (m : [foobar, nat]) : [foobar, nat] =>
+let patch_deep = (_m : [foobar, nat]) : [foobar, nat] =>
   [Map.literal(list([[0, 0], [1, 9], [2, 2]])), (10 as nat)];
 
 let size_ = (m : foobar) : nat => Map.size (m);
@@ -42,7 +42,7 @@ let iter_op = (m: foobar): unit => {
 };
 
 let map_op = (m: foobar) : foobar => {
-  let increment = (z: int, j: int):int => j + 1;
+  let increment = (_z: int, j: int):int => j + 1;
   return Map.map (increment, m);
 };
 

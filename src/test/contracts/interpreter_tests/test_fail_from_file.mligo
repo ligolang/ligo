@@ -1,8 +1,9 @@
+#include "./contract_under_test/fail_contract.mligo"
 let under_test = "./contract_under_test/fail_contract.mligo"
 
 let test =
-  let vunit = Test.compile_expression (None: string option) [%cameligo ({| () |} : ligo_program) ] in
-  let vfail = Test.compile_expression (Some under_test) [%cameligo ({| fail_data |} : ligo_program) ] in
+  let vunit = Test.compile_value () in
+  let vfail = Test.run (fun () -> fail_data) () in
   let (addr,code,_) = Test.originate_from_file under_test "main" vunit 0tez in
 
   match Test.transfer addr vunit 10tez with

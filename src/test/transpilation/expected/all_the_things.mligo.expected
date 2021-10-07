@@ -1,35 +1,38 @@
-type tokens = (address, nat) big_map
+type tokens =  (address, nat) big_map
 
-type allowances = (address * address, nat) big_map (* (sender,account) -> value *) 
+type allowances = 
+(address * address, nat) big_map (* (sender,account) -> value *) 
 
-type storage = {
+type storage = 
+{
   tokens : tokens;
   allowances : allowances;
   total_amount : nat
 }
 
-type transfer = {
+type transfer = 
+{
   address_from : address;
   address_to : address;
   value : nat
 }
 
-type approve = { spender : address; value : nat }
+type approve =  { spender : address; value : nat }
 
-type getAllowance = {
+type getAllowance = 
+{
   owner : address;
   spender : address;
   callback : nat contract
 }
 
-type getBalance = {
-  owner : address;
-  callback : nat contract
-}
+type getBalance = 
+{ owner : address; callback : nat contract }
 
-type getTotalSupply = { callback : nat contract }
+type getTotalSupply =  { callback : nat contract }
 
 type action = 
+
     Transfer of transfer
   | Approve of approve
   | GetAllowance of getAllowance
@@ -156,18 +159,21 @@ let main (b, s : bool * (unit -> tez)) :
   operation list * (unit -> tez) =
   (([] : operation list), (if b then f1 () else f2 ()))
 
-type comb_two = [@layout:comb] {
+type comb_two = 
+[@layout:comb] {
   [@annot:anbfoo] foo : int;
   [@annot:anabar] bar : string
 }
 
-type comb_three = [@layout:comb] {
+type comb_three = 
+[@layout:comb] {
   [@annot:ana] a : int;
   [@annot:anb] b : string;
   [@annot:anc] c : nat
 }
 
-type comb_five = [@layout:comb] {
+type comb_five = 
+[@layout:comb] {
   [@annot:an_One] one : int;
   [@annot:an_Two] two : string;
   [@annot:an_Three] three : bool;
@@ -175,9 +181,9 @@ type comb_five = [@layout:comb] {
   [@annot:an_Five] five : int
 }
 
-type parameter = unit
+type parameter =  unit
 
-type op_list = operation list
+type op_list =  operation list
 
 let main_comb_two (action, store : parameter * comb_two) :
   op_list * comb_two =
@@ -198,18 +204,21 @@ let r : comb_five =
 
 let accesses = r.one, r.two, r.three, r.four, r.five
 
-type comb_two = [@layout:tree] {
+type comb_two = 
+[@layout:tree] {
   [@annot:anfoo] foo : int;
   [@annot:anbar] bar : string
 }
 
-type comb_three = [@layout:tree] {
+type comb_three = 
+[@layout:tree] {
   [@annot:ana] a : int;
   [@annot:anb] b : string;
   [@annot:anc] c : nat
 }
 
-type comb_five = [@layout:tree] {
+type comb_five = 
+[@layout:tree] {
   [@annot:an_One] one : int;
   [@annot:an_Two] two : string;
   [@annot:an_Three] three : bool;
@@ -217,9 +226,9 @@ type comb_five = [@layout:tree] {
   [@annot:an_Five] five : int
 }
 
-type parameter = unit
+type parameter =  unit
 
-type op_list = operation list
+type op_list =  operation list
 
 let main_comb_two (action, store : parameter * comb_two) :
   op_list * comb_two =
@@ -235,25 +244,28 @@ let main_comb_five (action, store : parameter * comb_five) :
   op_list * comb_five =
   ([] : operation list), store
 
-type comb_two = [@layout:comb]
+type comb_two = 
+[@layout:comb]
   | [@annot:anbfoo] Foo of int
   | [@annot:anabar] Bar of string
 
-type comb_three = [@layout:comb]
+type comb_three = 
+[@layout:comb]
   | [@annot:ana] A of int
   | [@annot:anb] B of string
   | [@annot:anc] C of nat
 
-type comb_five = [@layout:comb]
+type comb_five = 
+[@layout:comb]
   | [@annot:an_One] One of int
   | [@annot:an_Two] Two of string
   | [@annot:an_Three] Three of bool
   | [@annot:an_Four] Four of nat
   | [@annot:an_Five] Five of int
 
-type parameter = unit
+type parameter =  unit
 
-type op_list = operation list
+type op_list =  operation list
 
 let main_comb_two (action, store : parameter * comb_two) :
   op_list * comb_two =
@@ -279,25 +291,28 @@ let main_comb_five (action, store : parameter * comb_five) :
     | Five a -> One 1 in
   ([] : operation list), o
 
-type comb_two = [@layout:tree]
+type comb_two = 
+[@layout:tree]
   | [@annot:anbfoo] Foo of int
   | [@annot:anabar] Bar of string
 
-type comb_three = [@layout:tree]
+type comb_three = 
+[@layout:tree]
   | [@annot:ana] A of int
   | [@annot:anb] B of string
   | [@annot:anc] C of nat
 
-type comb_five = [@layout:tree]
+type comb_five = 
+[@layout:tree]
   | [@annot:an_One] One of int
   | [@annot:an_Two] Two of string
   | [@annot:an_Three] Three of bool
   | [@annot:an_Four] Four of nat
   | [@annot:an_Five] Five of int
 
-type parameter = unit
+type parameter =  unit
 
-type op_list = operation list
+type op_list =  operation list
 
 let main_comb_two (action, store : parameter * comb_two) :
   op_list * comb_two =
@@ -376,20 +391,20 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 
 *)
 
-type parameter = unit
+type parameter =  unit
 
-type storage = tez
+type storage =  tez
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let main (p, s : parameter * storage) : return =
   ([] : operation list), Tezos.balance
 
-type toto = int
+type toto =  int
 
 let foo : toto = 42 + 127
 
-type foo = (int, int) big_map
+type foo =  (int, int) big_map
 
 let set_ (n, m : int * foo) : foo =
   Big_map.update 23 (Some n) m
@@ -425,6 +440,16 @@ let xor_op (n : nat) : nat = Bitwise.xor n 7n
 let lsl_op (n : nat) : nat = Bitwise.shift_left n 7n
 
 let lsr_op (n : nat) : nat = Bitwise.shift_right n 7n
+
+let or_op_infix (n : nat) : nat = n lor 4n
+
+let and_op_infix (n : nat) : nat = n land 7n
+
+let xor_op_infix (n : nat) : nat = n lxor 7n
+
+let lsl_op_infix (n : nat) : nat = n lsl 7n
+
+let lsr_op_infix (n : nat) : nat = n lsr 7n
 
 // Test CameLIGO boolean operators
 
@@ -513,7 +538,7 @@ let timestamp_ (a : timestamp) = a < a
 
 let key_hash_ (a : key_hash) = a < a
 
-type comp_pair = int * int
+type comp_pair =  int * int
 
 let comp_pair (a : comp_pair) =
   a
@@ -528,14 +553,14 @@ type uncomp_pair_2 = comp_pair * int
 let uncomp_pair_2 (a: uncomp_pair_2) = a < a
 *)
 
-type inner_record = (int, "one", nat, "two") michelson_pair
+type inner_record =  (int, "one", nat, "two") michelson_pair
 
-type comb_record = (int, "three", inner_record, "four")
-  michelson_pair
+type comb_record = 
+(int, "three", inner_record, "four") michelson_pair
 
 let comb_record (a : comb_record) = a < a
 
-type integer = int
+type integer =  int
 
 let main (i : int) =
   if (i = 2 : bool) then (42 : int) else (0 : integer)
@@ -553,12 +578,12 @@ let main (i : int) =
 
 let main (i : int) = if i = 2 then 42 else 0
 
-type storage = int
+type storage =  int
 
 let main (p, s : int * storage) =
   ([] : operation list), p + s
 
-type return = operation list * string
+type return =  operation list * string
 
 let main (action, store : string * string) : return =
   let toto : operation * address =
@@ -584,18 +609,18 @@ let mk_partial (j : int) : int -> int = partial j
 
 let partial_apply (i : int) : int = mk_partial 10 i
 
-type storage = (int, "foo", string, "bar") michelson_or
+type storage =  (int, "foo", string, "bar") michelson_or
 
-type foobar = (int, "baz", int, "fooo") michelson_or
+type foobar =  (int, "baz", int, "fooo") michelson_or
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let main (action, store : unit * storage) : return =
   let foo = (M_right ("one") : storage) in
   let bar = (M_right 1 : foobar) in
   (([] : operation list), (foo : storage))
 
-type foo = Bar of int | Baz
+type foo =  Bar of int | Baz
 
 let main (f : foo) : int =
   match f with
@@ -606,14 +631,14 @@ let main (f : foo) : int =
 
 let main (a, b : bool * bool) = if a = b then 999 else 1
 
-type storage = unit
+type storage =  unit
 
 let main (p, store : unit * storage) :
   operation list * storage =
   (failwith "This contract always fails"
    : operation list * storage)
 
-type storage = unit
+type storage =  unit
 
 let main (p, store : unit * storage) :
   operation list * storage =
@@ -627,7 +652,7 @@ let main (p, store : unit * storage) :
       1 in
   ([] : operation list), store
 
-type storage = unit
+type storage =  unit
 
 let main (p, store : unit * storage) :
   operation list * storage =
@@ -638,7 +663,7 @@ let main (p, store : unit * storage) :
       1 in
   ([] : operation list), store
 
-type storage = unit
+type storage =  unit
 
 let main (p, s : unit * storage) : operation list * storage =
   let n =
@@ -651,7 +676,7 @@ let main (p, s : unit * storage) : operation list * storage =
       1 in
   ([] : operation list), store
 
-type storage = unit
+type storage =  unit
 
 let main (p, s : unit * storage) =
   (fun (f : int -> int) (x : int) -> f x)
@@ -665,11 +690,11 @@ let bar (i : int) : int = i + 50
 
 let foobar (i : int) : int = foo i + bar i
 
-type storage = { challenge : string }
+type storage =  { challenge : string }
 
-type param = { new_challenge : string; attempt : string }
+type param =  { new_challenge : string; attempt : string }
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let attempt (p, store : param * storage) : return =
   (* if p.attempt <> store.challenge then failwith "Failed challenge" else *)
@@ -684,24 +709,20 @@ let attempt (p, store : param * storage) : return =
   let store : storage = { challenge = p.new_challenge } in
   ([] : operation list), store
 
-type commit = { date : timestamp; salted_hash : bytes }
+type commit =  { date : timestamp; salted_hash : bytes }
 
-type commit_set = (address, commit) big_map
+type commit_set =  (address, commit) big_map
 
-type storage = {
-  hashed : bytes;
-  unused : bool;
-  commits : commit_set
-}
+type storage = 
+{ hashed : bytes; unused : bool; commits : commit_set }
 
-type reveal = {
-  hashable : bytes;
-  message : unit -> operation list
-}
+type reveal = 
+{ hashable : bytes; message : unit -> operation list }
 
-type parameter = Commit of bytes | Reveal of reveal
+type parameter =  Commit of bytes | Reveal of reveal
 
-type return = operation list *
+type return = 
+operation list *
 storage
 (* We use hash-commit so that a baker can not steal *)
 
@@ -793,28 +814,25 @@ let foobar5 (i : int) : int =
   let goo : (int -> int) = fun (i : int) -> foo i in
   higher3 i foo goo
 
-type id = int
+type id =  int
 
-type id_details = {
-  owner : address;
-  controller : address;
-  profile : bytes
-}
+type id_details = 
+{ owner : address; controller : address; profile : bytes }
 
-type buy = {
-  profile : bytes;
-  initial_controller : address option
-}
+type buy = 
+{ profile : bytes; initial_controller : address option }
 
-type update_owner = { id : id; new_owner : address }
+type update_owner =  { id : id; new_owner : address }
 
-type update_details = {
+type update_details = 
+{
   id : id;
   new_profile : bytes option;
   new_controller : address option
 }
 
 type action = 
+
   | Buy of buy
   | Update_owner of update_owner
   | Update_details of update_details
@@ -824,14 +842,16 @@ type action =
 
 (* The prices kept in storage can be changed by bakers, though they should only be
    adjusted down over time, not up. *)
-type storage = {
+type storage = 
+{
   identities : (id, id_details) big_map;
   next_id : int;
   name_price : tez;
   skip_price : tez
 }
 
-type return = operation list *
+type return = 
+operation list *
 storage
 (* Preliminary thoughts on ids:
 
@@ -976,11 +996,11 @@ let foo : int = 144
 
 let bar : int = foo
 
-type storage = int
+type storage =  int
 
-type parameter = Increment of int | Decrement of int
+type parameter =  Increment of int | Decrement of int
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let add (a : int) (b : int) : int = a + b
 
@@ -1028,7 +1048,7 @@ let higher_order4 =
 
 let concats = (0x70 ^ 0x70 = 0x7070)
 
-type foo_record = { a : string; b : string }
+type foo_record =  { a : string; b : string }
 
 let record_concat =
   let ab : foo_record = { a = "a"; b = "b" } in
@@ -1039,7 +1059,7 @@ let record_patch =
   let res = {ab with b = "c"} in
   (res.b = "c")
 
-type bar_record = { f : int -> int; arg : int }
+type bar_record =  { f : int -> int; arg : int }
 
 let record_lambda =
   let a = 1 in
@@ -1047,7 +1067,7 @@ let record_lambda =
   let farg : bar_record = { f = foo; arg = 2 } in
   (farg.f farg.arg = 5)
 
-type foo_variant = | Foo | Bar of int | Baz of string
+type foo_variant =  | Foo | Bar of int | Baz of string
 
 let variant_match =
   let a = Bar 1 in
@@ -1073,8 +1093,8 @@ let long_variant_match =
 let bool_match =
   let b = true in
   match b with
-  | true -> true
-  | false -> false
+  | True -> True
+  | True -> False
 
 let list_match =
   let a = [1; 2; 3; 4] in
@@ -1090,7 +1110,7 @@ let list_const =
   let a = [1; 2; 3; 4] in
   (List.length (0 :: a)) = 5n
 
-type foobar = int option
+type foobar =  int option
 
 let options_match_some =
   let a = Some 0 in
@@ -1189,51 +1209,23 @@ let assertion_pass =
   let unitt = assert (1 = 1) in
   true
 
-let main (i : int) : nat option =
-  is_nat
-    i
-    (* Test case from https://gitlab.com/ligolang/ligo/-/issues/184 *)
-
-type foo = { bar : string; baz : nat }
-
-type foo_michelson = foo michelson_pair_right_comb
-
-type union1 = | Choice1 of foo | Choice2 of foo
-
-type union1_aux = 
-  | Option1 of foo_michelson
-  | Option2 of foo_michelson
-
-type union1_michelson = union1_aux michelson_or_right_comb
-
-let union1_from_michelson (m : union1_michelson) : union1 =
-  let aux : union1_aux = Layout.convert_from_right_comb m in
-  match aux with
-  | Option1 fm ->
-      let f : foo = Layout.convert_from_right_comb fm in
-      Choice1 f
-  | Option2 fm ->
-      let f : foo = Layout.convert_from_right_comb fm in
-      Choice2 f
-
-let main2
-  (ums, us : (union1_michelson list) * (union1 list)) =
-  let new_us = List.map union1_from_michelson ums in
-  ([] : operation list), new_us
+let main (i : int) : nat option = is_nat i
 
 let check_hash_key (kh1, k2 : key_hash * key) :
   bool * key_hash =
   let kh2 : key_hash = Crypto.hash_key k2 in
   kh1 = kh2, kh2
 
-type storage = unit
+type storage = 
+unit
 (* not supported yet
 let main (p, s : unit * storage) = (fun x -> ()) ()
 *)
 
 let main (p, s : unit * storage) = (fun (_ : unit) -> ()) ()
 
-type storage = unit
+type storage = 
+unit
 (* Not supported yet:
 let main (a, s : unit * storage) = (fun x -> ()) ()
 *)
@@ -1241,9 +1233,9 @@ let main (a, s : unit * storage) = (fun x -> ()) ()
 let main (a, s : unit * storage) =
   (fun (f : unit -> unit) -> f ()) (fun (_ : unit) -> unit)
 
-type foo = { a : int; b : nat }
+type foo =  { a : int; b : nat }
 
-type bar = { c : int * nat; d : foo }
+type bar =  { c : int * nat; d : foo }
 
 let t1 =
   let (a, b, c, d) = (1, 2, 3, 4) in
@@ -1333,7 +1325,7 @@ let (greet_num : int), (greeting : string) = different_types
 let correct_values_different_types (p : unit) : int * string =
   greet_num, greeting
 
-type storage = int * int
+type storage =  int * int
 
 let main (n : int * storage) : operation list * storage =
   let x : int * int =
@@ -1368,11 +1360,11 @@ let x =
   let (_, (x, _)) = (1n, (2n, 3n)) in
   x
 
-type storage = int * int list
+type storage =  int * int list
 
-type parameter = int list
+type parameter =  int list
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let x : int list = []
 
@@ -1412,7 +1404,7 @@ let rec aux_simple (i : int) : int =
 
 let counter_simple (n : int) : int = aux_simple n
 
-type sum_aggregator = { counter : int; sum : int }
+type sum_aggregator =  { counter : int; sum : int }
 
 let counter (n : int) : int =
   let initial : sum_aggregator = { counter = 0; sum = 0 } in
@@ -1438,7 +1430,7 @@ let counter_nest (n : int) : int =
   let out = aux_nest initial in
   out
 
-type foobar = (int, int) map
+type foobar =  (int, int) map
 
 let empty_map : foobar = Map.empty
 
@@ -1505,11 +1497,11 @@ let deep_op (m : foobar) : foobar =
   let coco = 0, Map.update 32 (Some 16) coco.1 in
   coco.1
 
-type storage = int
+type storage =  int
 
-type parameter = Add of int | Sub of int
+type parameter =  Add of int | Sub of int
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let main (action, store : parameter * storage) =
   let store =
@@ -1521,8 +1513,8 @@ let main (action, store : parameter * storage) =
 
 let match_bool (b : bool) : int =
   match b with
-    true -> 10
-  | false -> 0
+    True -> 10
+  | False -> 0
 
 let match_list (l : int list) : int =
   match l with
@@ -1534,11 +1526,11 @@ let match_option (i : int option) : int =
     Some n -> n
   | None -> 0
 
-type storage = int
+type storage =  int
 
-type parameter = Increment of int | Decrement of int
+type parameter =  Increment of int | Decrement of int
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let add (a : int) (b : int) : int = a + b
 
@@ -1551,11 +1543,11 @@ let main (action, store : parameter * storage) : return =
     | Decrement n -> sub store n in
   ([] : operation list), store
 
-type t3 = { foo : int; bar : nat; baz : string }
+type t3 =  { foo : int; bar : nat; baz : string }
 
-type param_r = t3 michelson_pair_right_comb
+type param_r =  t3 michelson_pair_right_comb
 
-type param_l = t3 michelson_pair_left_comb
+type param_l =  t3 michelson_pair_left_comb
 
 let main_r (action, store : param_r * unit) :
   (operation list * unit) =
@@ -1565,27 +1557,7 @@ let main_l (action, store : param_l * unit) :
   (operation list * unit) =
   ([] : operation list), unit
 
-type foo = { bar : string; baz : nat }
-
-type foo_michelson = foo michelson_pair_right_comb
-
-type union1 = | Choice1 of foo | Choice2 of foo
-
-type union1_aux = 
-  | Option1 of foo_michelson
-  | Option2 of foo_michelson
-
-type union1_michelson = union1_aux michelson_or_right_comb
-
-let union1_from_michelson (m : union1_michelson) : union1 =
-  let aux : union1_aux = Layout.convert_from_right_comb m in
-  match aux with
-  | Option1 fm ->
-      let f : foo = Layout.convert_from_right_comb fm in
-      Choice1 f
-  | Option2 fm ->
-      let f : foo = Layout.convert_from_right_comb fm in
-      Choice2 f
+type foo =  { bar : string; baz : nat }
 
 let main2 (pm, s : union1_michelson * nat) =
   let p = union1_from_michelson pm in
@@ -1594,129 +1566,59 @@ let main2 (pm, s : union1_michelson * nat) =
   | Choice2 f -> ([] : operation list), f.baz
 
 type st4 = 
+
   | Foo4 of int
   | Bar4 of nat
   | Baz4 of string
   | Boz4 of bool
 
 type st3 = 
+
   | Foo3 of int
   | Bar3 of nat
   | Baz3 of
       string
       (*convert from*)
 
-type tr3 = (string, "baz4", bool, "boz4") michelson_or
+type tr3 =  (string, "baz4", bool, "boz4") michelson_or
 
-type tr2 = (nat, "bar4", tr3, "") michelson_or
+type tr2 =  (nat, "bar4", tr3, "") michelson_or
 
-type tr1 = (int, "foo4", tr2, "") michelson_or
+type tr1 =  (int, "foo4", tr2, "") michelson_or
 
 let vr : tr1 = M_right (M_right (M_left "eq" : tr3) : tr2)
 
-type tl3 = (int, "foo4", nat, "bar4") michelson_or
+type tl3 =  (int, "foo4", nat, "bar4") michelson_or
 
-type tl2 = (tl3, "", string, "baz4") michelson_or
+type tl2 =  (tl3, "", string, "baz4") michelson_or
 
-type tl1 = (tl2, "", bool, "boz4") michelson_or
+type tl1 =  (tl2, "", bool, "boz4") michelson_or
 
 let vl : tl1 = M_left (M_right "eq" : tl2)
-
-type param_r = st4 michelson_or_right_comb
-
-let main_r (p, s : param_r * st4) : (operation list * st4) =
-  let r4 : st4 = Layout.convert_from_right_comb p in
-  ([] : operation list), r4
-
-type param_l = st4 michelson_or_left_comb
-
-let main_l (p, s : param_l * st4) : (operation list * st4) =
-  let r4 : st4 = Layout.convert_from_left_comb p in
-  ([] : operation list),
-  r4
-  (** convert_to **)
-
-let vst3 = Bar3 3n
-
-let vst4 = Baz4 "eq"
-
-let str3 = Layout.convert_to_right_comb (vst3 : st3)
-
-let str4 = Layout.convert_to_right_comb (vst4 : st4)
-
-let stl3 = Layout.convert_to_left_comb (vst3 : st3)
-
-let stl4 = Layout.convert_to_left_comb (vst4 : st4)
-
-type t3 = { foo : int; bar : nat; baz : string }
-
-type t4 = {
-  one : int;
-  two : nat;
-  three : string;
-  four : bool
-}
-(*convert from*)
-
-let s = "eq"
-
-let test_input_pair_r = (1, (2n, (s, true)))
-
-let test_input_pair_l = (((1, 2n), s), true)
-
-type param_r = t4 michelson_pair_right_comb
-
-let main_r (p, s : param_r * string) :
-  (operation list * string) =
-  let r4 : t4 = Layout.convert_from_right_comb p in
-  ([] : operation list), r4.three ^ p.1.1.0
-
-type param_l = t4 michelson_pair_left_comb
-
-let main_l (p, s : param_l * string) :
-  (operation list * string) =
-  let r4 : t4 = Layout.convert_from_left_comb p in
-  ([] : operation list),
-  r4.three
-  ^ p.
-    0.
-    1
-    (*convert to*)
-
-let v3 = { foo = 2; bar = 3n; baz = "q" }
-
-let v4 = { one = 2; two = 3n; three = "q"; four = true }
-
-let r3 = Layout.convert_to_right_comb (v3 : t3)
-
-let r4 = Layout.convert_to_right_comb (v4 : t4)
-
-let l3 = Layout.convert_to_left_comb (v3 : t3)
-
-let l4 = Layout.convert_to_left_comb (v4 : t4)
 
 // Test michelson insertion in CameLIGO
 
 let michelson_add (n : nat * nat) : nat =
   [%Michelson ({| { UNPAIR;ADD } |} : nat * nat -> nat)] n
 
-type inner_storage = (int, "one", nat, "two") michelson_or
+type inner_storage =  (int, "one", nat, "two") michelson_or
 
-type storage = (int, "three", inner_storage, "four")
-  michelson_or
+type storage = 
+(int, "three", inner_storage, "four") michelson_or
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let main (action, store : unit * storage) : return =
   let foo = (M_right (M_left 1 : inner_storage) : storage) in
   (([] : operation list), (foo : storage))
 
-type inner_storage = (int, "one", nat, "two") michelson_pair
+type inner_storage = 
+(int, "one", nat, "two") michelson_pair
 
-type storage = (int, "three", inner_storage, "four")
-  michelson_pair
+type storage = 
+(int, "three", inner_storage, "four") michelson_pair
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let main (action, store : unit * storage) : return =
   let foo = (3, (1, 2n)) in
@@ -1735,15 +1637,17 @@ let abcde (x : int * int * int * int * int) : int =
 
 // storage type
 
-type counter = nat
+type counter = 
+nat
 
-type threshold = nat
+type threshold =  nat
 
-type authorized_keys = key list
+type authorized_keys =  key list
 
-type id = string
+type id =  string
 
-type storage = {
+type storage = 
+{
   id : id;
   counter : counter;
   threshold : threshold;
@@ -1752,19 +1656,21 @@ type storage = {
 
 // I/O types
 
-type message = unit -> operation list
+type message = 
+unit -> operation list
 
-type signatures = (key_hash * signature) list
+type signatures =  (key_hash * signature) list
 
-type check_message_pt = {
+type check_message_pt = 
+{
   counter : counter;
   message : message;
   signatures : signatures
 }
 
-type return = operation list * storage
+type return =  operation list * storage
 
-type parameter = CheckMessage of check_message_pt
+type parameter =  CheckMessage of check_message_pt
 
 let check_message (param, s : check_message_pt * storage) :
   return =
@@ -1805,15 +1711,15 @@ let main (action, store : parameter * storage) : return =
   match action with
     CheckMessage (p) -> check_message (p, store)
 
-type foobar = int option
+type foobar =  int option
 
 let s : foobar = Some 42
 
 let n : foobar = None
 
-type bls_l = (bls12_381_g1 * bls12_381_g2) list
+type bls_l =  (bls12_381_g1 * bls12_381_g2) list
 
-type bool_option = bool option
+type bool_option =  bool option
 
 let a =
   [%Michelson
@@ -1838,11 +1744,11 @@ let main (p, s : bls_l * bool_option) :
   operation list * bool_option =
   (([] : operation list), pairing_check p)
 
-type foobar = { foo : int; bar : int }
+type foobar =  { foo : int; bar : int }
 
 let fb : foobar = { foo = 0; bar = 0 }
 
-type abc = { a : int; b : int; c : int }
+type abc =  { a : int; b : int; c : int }
 
 let abc : abc = { a = 42; b = 142; c = 242 }
 
@@ -1861,18 +1767,13 @@ let modify_abc (r : abc) : abc =
   let c = 42 in
   {r with b = 2048; c = c}
 
-type big_record = {
-  a : int;
-  b : int;
-  c : int;
-  d : int;
-  e : int
-}
+type big_record = 
+{ a : int; b : int; c : int; d : int; e : int }
 
 let br : big_record =
   { a = 23; b = 23; c = 23; d = 23; e = 23 }
 
-type double_record = { inner : abc }
+type double_record =  { inner : abc }
 
 let modify_inner (r : double_record) : double_record =
   {r with inner.b = 2048}
@@ -1885,13 +1786,13 @@ let rec sum ((n, acc) : int * int) : int =
 let rec fibo ((n, n_1, n_0) : int * int * int) : int =
   if (n < 2) then n_1 else fibo (n - 1, n_1 + n_0, n_1)
 
-type ss = 8 sapling_state
+type ss =  8 sapling_state
 
-type storage = int * ss
+type storage =  int * ss
 
-type parameter = 8 sapling_transaction
+type parameter =  8 sapling_transaction
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let main (tr, store : parameter * storage) : return =
   ([] : operation list),
@@ -1971,11 +1872,11 @@ let main (ps : unit * unit) : operation list * unit =
     (failwith "This contract still always fails"
      : operation list * unit)
 
-type parameter = Increment of int | Decrement of int
+type parameter =  Increment of int | Decrement of int
 
-type storage = int
+type storage =  int
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let test_param = Increment 1
 
@@ -2007,16 +1908,18 @@ Modelled after:
 Goes with ticket_wallet.mligo.
 *)
 
-type mint_parameter = [@layout:comb] {
+type mint_parameter = 
+[@layout:comb] {
   destination : unit ticket contract;
   amount : nat
 }
 
 type parameter = 
+
   | Burn of unit ticket
   | Mint of mint_parameter
 
-type storage = [@layout:comb] { admin : address }
+type storage =  [@layout:comb] { admin : address }
 
 let main (arg : parameter * storage) :
   operation list * storage =
@@ -2049,17 +1952,20 @@ Modelled after:
 Goes with ticket_builder.mligo.
 *)
 
-type send_parameter = [@layout:comb] {
+type send_parameter = 
+[@layout:comb] {
   destination : unit ticket contract;
   amount : nat;
   ticketer : address
 }
 
 type parameter = 
+
   | Receive of unit ticket
   | Send of send_parameter
 
-type storage = [@layout:comb] {
+type storage = 
+[@layout:comb] {
   manager : address;
   tickets : (address, unit ticket) big_map
 }
@@ -2141,15 +2047,16 @@ let main (arg : parameter * storage) :
         end)
   end
 
-type parameter = unit
+type parameter =  unit
 
-type storage = {
+type storage = 
+{
   next_use : timestamp;
   interval : int;
   execute : unit -> operation list
 }
 
-type return = operation list * storage
+type return =  operation list * storage
 
 let main (action, store : parameter * storage) : return =
   (* Multiple evaluations of Tezos.now give different values *)
@@ -2164,17 +2071,17 @@ let main (action, store : parameter * storage) : return =
        "You have to wait before you can execute this contract again."
      : return)
 
-type abc = int * int * int
+type abc =  int * int * int
 
 let projection_abc (tpl : abc) : int = tpl.1
 
-type foobar = int * int
+type foobar =  int * int
 
 let fb : foobar = (0, 0)
 
 let projection (tpl : foobar) : int = tpl.0 + tpl.1
 
-type big_tuple = int * int * int * int * int
+type big_tuple =  int * int * int * int * int
 
 let br : big_tuple = (23, 23, 23, 23, 23)
 
@@ -2197,7 +2104,7 @@ let o (p : int * int -> int) : int = p (3, 9)
 
 let test2 (ignore : int) = o (n)
 
-type foobar = int * int
+type foobar =  int * int
 
 let test_t : foobar = 10, 25
 
@@ -2205,7 +2112,7 @@ let foo, bar = test_t
 
 let type_tuple_d (p : unit) = foo + bar
 
-type complex = string * int * string * nat
+type complex =  string * int * string * nat
 
 let test_t_2 = "hello", 10, "world", 50n
 
@@ -2213,7 +2120,7 @@ let hello, ten, world, fifty_n = test_t_2
 
 let type_tuple_d_2 (p : unit) = hello ^ world
 
-type foobar = | Foo of int | Bar of bool | Kee of nat
+type foobar =  | Foo of int | Bar of bool | Kee of nat
 
 let foo : foobar = Foo 42
 
@@ -2221,7 +2128,8 @@ let bar : foobar = Bar true
 
 let kee : foobar = Kee 23n
 
-type storage = {
+type storage = 
+{
   title : string;
   yea : nat;
   nay : nat;
@@ -2230,17 +2138,18 @@ type storage = {
   finish_time : timestamp
 }
 
-type return = operation list * storage
+type return =  operation list * storage
 
-type vote = Yea | Nay
+type vote =  Yea | Nay
 
-type reset = {
+type reset = 
+{
   title : string;
   start_time : timestamp;
   finish_time : timestamp
 }
 
-type parameter = | Vote of vote | Reset of reset
+type parameter =  | Vote of vote | Reset of reset
 
 let reset (reset, _ : reset * storage) : return =
   ([] : operation list),
@@ -2275,10 +2184,11 @@ let main (action, store : parameter * storage) : return =
         (r, store)
         (* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE *)
 
-type storage = int
+type storage = 
+int
 (* variant defining pseudo multi-entrypoint actions *)
 
-type parameter = | Increment of int | Decrement of int
+type parameter =  | Increment of int | Decrement of int
 
 let add (a, b : int * int) : int = a + b
 

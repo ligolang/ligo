@@ -143,7 +143,7 @@ function update_details (const parameter : update_details; const storage : stora
   end with ((nil: list(operation)), storage with record [ identities = identities; ])
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
-function skip_ (const p: unit; const storage: storage) : list(operation) * storage is
+function skip_ (const _ : unit; const storage: storage) : list(operation) * storage is
   begin
     if amount = storage.skip_price
     then skip
@@ -155,5 +155,5 @@ function main (const action : action; const storage : storage) : list(operation)
   | Buy(b) -> buy (b, storage)
   | Update_owner(uo) -> update_owner (uo, storage)
   | Update_details(ud) -> update_details (ud, storage)
-  | Skip(s) -> skip_ (unit, storage)
+  | Skip(_) -> skip_ (unit, storage)
   end;

@@ -8,7 +8,6 @@ $HOME/git/OCaml-build/Makefile
 ./Stubs/Lexing_shared.ml
 ./Stubs/Parsing_jsligo.ml
 ./Stubs/Parsing_shared.ml
-./Stubs/Cst.ml
 ./Stubs/Cst_jsligo.ml
 
 $HOME/git/ligo/src/stages/1-cst/jsligo/CST.ml
@@ -17,7 +16,7 @@ $HOME/git/ligo/src/stages/1-cst/jsligo/Printer.ml
 $HOME/git/ligo/src/passes/00-preprocessing/jsligo/Comments.ml
 $HOME/git/ligo/src/passes/00-preprocessing/jsligo/File.ml
 $HOME/git/ligo/src/passes/01-lexing/jsligo/Self_tokens.ml
-$HOME/git/ligo/src/passes/01-lexing/jsligo/Token.mll
+$HOME/git/ligo/src/passes/01-lexing/jsligo/Token.ml
 $HOME/git/ligo/src/passes/01-lexing/jsligo/Style.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/LexerMainGen.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/Lexer.mll

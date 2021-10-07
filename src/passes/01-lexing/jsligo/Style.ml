@@ -43,7 +43,7 @@ let is_string = function Token.String _ -> true | _ -> false
 let is_bytes  = function Token.Bytes _ -> true | _ -> false
 
 let is_hexa = function
-  Token.Uident
+  Token.UIdent
     Region.{value="A"|"a"|"B"|"b"|"C"|"c"
                  |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
   | _ -> false
@@ -69,7 +69,6 @@ let is_sym =
   | COLON _
   | DOT _
   | ELLIPSIS _
-  | QMARK _
   | BOOL_OR _
   | BOOL_AND _
   | BOOL_NOT _

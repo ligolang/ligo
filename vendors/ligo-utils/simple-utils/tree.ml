@@ -104,18 +104,6 @@ module Append = struct
     | Empty -> empty
     | Full x -> fold' leaf node x
 
-  let rec bind_fold' leaf node = function
-    | Leaf x -> leaf x
-    | Node {a;b} ->
-      let open Trace in
-      let* a = bind_fold' leaf node a in
-      let* b = bind_fold' leaf node b in
-      node a b
-
-  let bind_fold_ne leaf node = function
-    | Empty -> raise (Failure "Tree.Append.fold_ne")
-    | Full x -> bind_fold' leaf node x
-
   let rec assoc_opt' : ('a * 'b) t' -> 'a -> 'b option = fun t k ->
     match t with
     | Leaf (k', v) when k = k' -> Some v

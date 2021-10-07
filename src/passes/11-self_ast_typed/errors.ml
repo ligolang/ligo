@@ -16,9 +16,8 @@ type self_ast_typed_error = [
     string * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_pair_in of Location.t
   | `Self_ast_typed_pair_out of Location.t
-  | `Self_ast_typed_warning_unused of Location.t * string
-  | `Self_ast_typed_warning_muchused of Location.t * string
   | `Self_ast_typed_match_anomaly of Location.t
+  | `Self_ast_typed_obj_ligo of Location.t
 ]
 
 let pattern_matching_anomaly (loc:Location.t) : self_ast_typed_error = `Self_ast_typed_match_anomaly loc
@@ -41,6 +40,7 @@ let expected_same entrypoint t1 t2 e =
   `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e)
 let expected_pair_in loc = `Self_ast_typed_pair_in loc
 let expected_pair_out loc = `Self_ast_typed_pair_out loc
+let expected_obj_ligo loc = `Self_ast_typed_obj_ligo loc
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> self_ast_typed_error -> unit =
@@ -64,10 +64,7 @@ let error_ppformat : display_format:string display_format ->
         Ast_typed.PP.type_expression expected
     | `Self_ast_typed_format_entrypoint_ann (ep,loc) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint \"%s\".
-One of the following patterns is expected:
-  * \"%%bar\" is expected for entrypoint \"Bar\"
-  * \"%%default\" when no entrypoint is used."
+        "@[<hv>%a@.Invalid entrypoint \"%s\". One of the following patterns is expected:@.* \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when no entrypoint is used."
         Snippet.pp loc
         ep
     | `Self_ast_typed_entrypoint_ann_not_literal loc ->
@@ -111,26 +108,16 @@ One of the following patterns is expected:
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]"
         Snippet.pp loc
-    | `Self_ast_typed_warning_unused (loc, s) ->
-         Format.fprintf f
-           "@[<hv>%a:@.Warning: unused variable \"%s\".@.Hint: replace it by \"_%s\" to prevent this warning.\n@]"
-           Location.pp loc s s
-    | `Self_ast_typed_warning_muchused (loc, s) ->
-         Format.fprintf f
-           "@[<hv>%a:@.Warning: variable \"%s\" cannot be used more than once.\n@]"
-           Location.pp loc s
+    | `Self_ast_typed_obj_ligo loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid call to Test primitive.@]"
+        Snippet.pp loc
   )
 
 let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
-      ("stage", `String stage) ;
-      ("content",  content )]
-  in
-  let json_warning ~stage ~content =
-    `Assoc [
-      ("status", `String "warning") ;
       ("stage", `String stage) ;
       ("content",  content )]
   in
@@ -275,23 +262,13 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
-  | `Self_ast_typed_warning_unused (loc, s) ->
-     let message = `String "unused variable" in
-     let description = `String s in
-     let loc = `String (Format.asprintf "%a" Location.pp loc) in
-     let content = `Assoc [
-                       ("message", message);
-                       ("location", loc);
-                       ("variable", description)
-                     ] in
-     json_warning ~stage ~content
-  | `Self_ast_typed_warning_muchused (loc, s) ->
-     let message = `String "much used variable" in
-     let description = `String s in
-     let loc = `String (Format.asprintf "%a" Location.pp loc) in
-     let content = `Assoc [
-                       ("message", message);
-                       ("location", loc);
-                       ("variable", description)
-                     ] in
-     json_warning ~stage ~content
+  | `Self_ast_typed_obj_ligo loc ->
+    let message = `String "unexpected Test primitive" in
+    let description = `String "these Test primitive or type cannot be used in code to be compiled or run" in
+    let content = `Assoc [
+       ("message", message);
+       ("location", Location.to_yojson loc);
+       ("description", description);
+       ]
+    in
+    json_error ~stage ~content

@@ -79,7 +79,7 @@ immediately, and then continues as a regular increment function.
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile-expression pascaligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)]"
+ligo compile expression pascaligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)]"
 // Outputs:
 // { PUSH nat 42 ; DROP ; PUSH nat 1 ; ADD }
 ```
@@ -88,7 +88,7 @@ ligo compile-expression pascaligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH na
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile-expression cameligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)]"
+ligo compile expression cameligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)]"
 // Outputs:
 // { PUSH nat 42 ; DROP ; PUSH nat 1 ; ADD }
 ```
@@ -97,7 +97,7 @@ ligo compile-expression cameligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile-expression reasonligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : (nat => nat))]"
+ligo compile expression reasonligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : (nat => nat))]"
 // Outputs:
 // { PUSH nat 42 ; DROP ; PUSH nat 1 ; ADD }
 ```
@@ -106,15 +106,15 @@ ligo compile-expression reasonligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH n
 
 As we can see, the embedded Michelson code was not modified. However,
 if the resulting function is applied, then the embedded Michelson code
-could be modified/optimized by the compiler. To exemplify this
-behavior, an application can be introduced in the example above by
+could be modified/optimised by the compiler. To exemplify this
+behaviour, an application can be introduced in the example above by
 eta-expanding. In this case, the first two instructions will be
 removed by LIGO because they have no effect on the final result.
 
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile-expression pascaligo "function (const n : nat) : nat is ([%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)])(n)"
+ligo compile expression pascaligo "function (const n : nat) : nat is ([%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)])(n)"
 // Outputs:
 // { PUSH nat 1 ; ADD }
 ```
@@ -123,7 +123,7 @@ ligo compile-expression pascaligo "function (const n : nat) : nat is ([%Michelso
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile-expression cameligo "fun (n : nat) -> [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)] n"
+ligo compile expression cameligo "fun (n : nat) -> [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)] n"
 // Outputs:
 // { PUSH nat 1 ; ADD }
 ```
@@ -132,7 +132,7 @@ ligo compile-expression cameligo "fun (n : nat) -> [%Michelson ({| { PUSH nat 42
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile-expression reasonligo "((n : nat) => [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : (nat => nat))](n))"
+ligo compile expression reasonligo "((n : nat) => [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : (nat => nat))](n))"
 // Outputs:
 // { PUSH nat 1 ; ADD }
 ```
@@ -235,21 +235,21 @@ can compile it using the following command:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile-contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.ligo main
+ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.ligo --entry-point main
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile-contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.mligo main
+ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.mligo --entry-point main
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile-contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.religo main
+ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.religo --entry-point main
 ```
 
 </Syntax>

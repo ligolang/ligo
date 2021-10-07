@@ -25,9 +25,24 @@ let to_singleton = function
   | [a] -> Some a
   | _ -> None
 
+let fold_map2_exn ~f ~init a b =
+  fold_map ~f:(fun init (a,b) -> f init a b) ~init @@ zip_exn a b
+
+let rec fold_map_right ~f ~init = function
+    | [] -> (init , [])
+    | hd :: tl ->
+        let init,tl = fold_map_right ~f ~init tl in 
+        let init,hd = f init hd in
+        init,hd::tl
+
+let uncons = function
+  | [] -> None
+  | hd :: tl ->
+     Some (hd, tl)
+
 module Ne = struct
 
-  type 'a t = 'a * 'a list
+  type 'a t = 'a * 'a List.t
 
   let unzip ((hd, tl): _ t) =
     let (a, b) = hd and (la, lb) = List.unzip tl in

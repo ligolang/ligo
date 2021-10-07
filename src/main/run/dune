@@ -1,5 +1,5 @@
 (library
-  (name run)
+  (name ligo_run)
   (public_name ligo.run)
   (instrumentation (backend bisect_ppx))
   (libraries

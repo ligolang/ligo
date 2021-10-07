@@ -40,10 +40,10 @@ let mk_str (len: int) (p: char list) : string =
 
 type mode = Copy | Skip
 
-(* Trace of directives. We keep track of directives #if, #elif, #else,
-   #region and #endregion. *)
+(* Trace of directives. We keep track of directives #if, #elif and
+   #else. *)
 
-type cond  = If of mode | Elif of mode | Else | Region
+type cond  = If of mode | Elif of mode | Else
 type trace = cond list
 
 (* The type [state] groups the information that needs to be
@@ -105,9 +105,6 @@ type error =
 | Newline_in_string
 | Unterminated_string
 | Dangling_endif
-| Open_region_in_conditional
-| Dangling_endregion
-| Conditional_in_region
 | If_follows_elif
 | Else_follows_else
 | Dangling_else
@@ -136,15 +133,6 @@ let error_to_string = function
 | Dangling_endif ->
     sprintf "Dangling #endif directive.\n\
              Hint: Remove it or add a #if before."
-| Open_region_in_conditional ->
-    sprintf "Unterminated of #region in conditional.\n\
-             Hint: Close with #endregion before #endif."
-| Dangling_endregion ->
-   sprintf "Dangling #endregion directive.\n\
-            Hint: Remove it or use #region before."
-| Conditional_in_region ->
-    sprintf "Conditional in region.\n\
-             Hint: Remove the conditional or the region."
 | If_follows_elif ->
     sprintf "Directive #if found in a clause #elif."
 | Else_follows_else ->
@@ -212,18 +200,8 @@ let reduce_cond state region =
   let rec reduce = function
                 [] -> fail state region Dangling_endif
   | If mode::trace -> {state with mode; trace}
-  |      Region::_ -> fail state region Open_region_in_conditional
   |       _::trace -> reduce trace
   in reduce state.trace
-
-(* The function [reduce_region] is called when a #endregion directive
-   is read, and the trace needs updating. *)
-
-let reduce_region state region =
-  match state.trace with
-    [] -> fail state region Dangling_endregion
-  | Region::trace -> {state with trace}
-  |             _ -> fail state region Conditional_in_region
 
 (* The function [extend] is called when encountering conditional
    directives #if, #else and #elif. As its name suggests, it extends
@@ -309,12 +287,10 @@ let directives = [
   "elif";
   "else";
   "endif";
-  "endregion";
   "error";
   "if";
   "import";
   "include";
-  "region";
   "undef"
 ]
 
@@ -331,7 +307,7 @@ let small     = ['a'-'z']
 let capital   = ['A'-'Z']
 let letter    = small | capital
 let ident     = letter (letter | '_' | digit)*
-let directive = '#' (blank* as space) (small+ as id)
+let directive = '#' blank* (small+ as id)
 
 (* Comments *)
 
@@ -524,7 +500,7 @@ rule scan state = parse
           let state  = {state with chans = incl_chan::state.chans} in
           let state' = {state with mode=Copy; trace=[]} in
           let state' = scan (push_dir incl_dir state') incl_buf in
-          let state  = {state with env=state'.env; chans=state'.chans} in
+          let state  = {state with env=state'.env; chans=state'.chans;import=state'.import} in
           let path   = if path = "" || path = "." then base
                        else path ^ Filename.dir_sep ^ base in
           let ()     = print state (sprintf "\n# %i %S 2\n" (line+1) path)
@@ -538,9 +514,10 @@ rule scan state = parse
             match find path import_file state.config#dirs with
               Some p -> fst p
             | None -> fail state reg (File_not_found import_file) in
-          let state  = {state with import = (import_path, imported_module)::state.import}
-          in (proc_nl state lexbuf; scan state lexbuf)
-        else (proc_nl state lexbuf; scan state lexbuf)
+          let state  = {state with
+                         import = (import_path, imported_module)::state.import}
+          in scan state lexbuf
+        else scan state lexbuf
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
@@ -586,17 +563,7 @@ rule scan state = parse
         else scan state lexbuf
     | "error" ->
         fail state region (Error_directive (message [] lexbuf))
-    | "region" ->
-        let msg = message [] lexbuf
-        in print state ("#" ^ space ^ "region" ^ msg ^ "\n");
-           let state = {state with trace=Region::state.trace}
-           in scan state lexbuf
-    | "endregion" ->
-        let msg = message [] lexbuf
-        in print state ("#" ^ space ^ "endregion" ^ msg ^ "\n");
-           scan (reduce_region state region) lexbuf
-    | _ -> assert false
-  }
+    | _ -> assert false }
 
 | eof { if state.trace = [] then state
         else stop state lexbuf Missing_endif }

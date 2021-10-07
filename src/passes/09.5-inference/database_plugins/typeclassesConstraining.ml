@@ -6,7 +6,6 @@ module M = functor
 struct
   open Type_variable_abstraction.Types
 open UnionFind
-open Trace
 
 type 'typeVariable t = ('typeVariable, c_typeclass_simpl MultiSet.t) ReprMap.t
 type ('type_variable, 'a) state = < typeclasses_constraining : 'type_variable t ; .. > as 'a
@@ -33,28 +32,28 @@ let add_constraint ?debug repr state new_constraint =
   | SC_Typeclass c -> register_typeclasses_constraining repr c state
   | _ -> state
 
-let remove_constraint printer repr state constraint_to_remove =
-  Format.eprintf "remove_constraint for typeclassesConstraining.... \n%!";
+let remove_constraint ~raise:_ printer repr state constraint_to_remove =
+  if Ast_core.Debug.debug_new_typer then Format.eprintf "remove_constraint for typeclassesConstraining.... \n%!";
     match constraint_to_remove with
   | Type_variable_abstraction.Types.SC_Typeclass constraint_to_remove ->
     let aux' = function
         Some set -> MultiSet.remove constraint_to_remove set
       | None -> 
-        Format.eprintf "ERROR: No set linked to tv"; (* TODO: should probably fail at this point. *)
+        if Ast_core.Debug.debug_new_typer then Format.eprintf "ERROR: No set linked to tv"; (* TODO: should probably fail at this point. *)
         MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl in
     let aux typeclasses_constrained_by tv =
-      Format.eprintf "In aux with tv : %a and repr tv : %a\n%!" Type_variable_abstraction.PP.type_variable tv printer @@ repr tv;
+      if Ast_core.Debug.debug_new_typer then Format.eprintf "In aux with tv : %a and repr tv : %a\n%!" Type_variable_abstraction.PP.type_variable tv printer @@ repr tv;
       ReprMap.monotonic_update (repr tv) aux' typeclasses_constrained_by in
     let state =
       List.fold_left
         ~f:aux
         ~init:state
         (List.rev constraint_to_remove.args) in
-    Format.eprintf "  ok\n%!";
-    ok state
+        if Ast_core.Debug.debug_new_typer then Format.eprintf "  ok\n%!";
+    state
   | _ -> 
-    Format.eprintf "  ok\n%!";
-    ok state
+    if Ast_core.Debug.debug_new_typer then Format.eprintf "  ok\n%!";
+    state
 
 let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun ?debug:_ merge_keys state -> 

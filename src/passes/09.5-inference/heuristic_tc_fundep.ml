@@ -135,33 +135,33 @@ let typeclass_is_empty (tc : c_typeclass_simpl) = List.length tc.tc = 0
    recursively by the deduce and clean; so the cleaning part should be
    moved to the deduce_and_clean heuristic instead (e.g. so that the
    initial clenaup also deduces and cleans based on the nested constraints). *)
-let rec restrict_recur repr c_or_r (tc_c  : type_constraint_simpl) =
+let rec restrict_recur ~raise repr c_or_r (tc_c  : type_constraint_simpl) =
   let opt b = if b then Some tc_c else None in
   match tc_c with
-    SC_Apply         _ -> ok @@ Some tc_c (* Always keep variables constrained by an unresolved SC_Apply; when they get resolved the heuristic will be called again and they will be reconsidered. *)
-  | SC_Abs           _ -> fail @@ corner_case "kind error: expected a type (kind *) but got a type abstraction (type-level function, kind _ -> _"
+    SC_Apply         _ -> Some tc_c (* Always keep variables constrained by an unresolved SC_Apply; when they get resolved the heuristic will be called again and they will be reconsidered. *)
+  | SC_Abs           _ -> raise.raise @@ corner_case "kind error: expected a type (kind *) but got a type abstraction (type-level function, kind _ -> _"
   | SC_Constructor  tc_c  ->
     (match c_or_r with
-       `Constructor c     -> ok @@ opt (Compare.constant_tag c.c_tag tc_c.c_tag = 0 && (List.length c.tv_list) = (List.length tc_c.tv_list))
-     | `Row         _     -> ok None)
+       `Constructor c     -> opt (Compare.constant_tag c.c_tag tc_c.c_tag = 0 && (List.length c.tv_list) = (List.length tc_c.tv_list))
+     | `Row         _     -> None)
   | SC_Row          tc_r  ->
     (match c_or_r with
-       `Row         r     -> ok @@ opt (Compare.row_tag r.r_tag tc_r.r_tag = 0 && List.compare Compare.label (LMap.keys r.tv_map) (LMap.keys tc_r.tv_map) = 0)
-     | `Constructor _     -> ok None)
-  | SC_Alias        _     -> fail @@ corner_case "alias constraints not yet supported in typeclass constraints"
-  | SC_Poly         _     -> fail @@ corner_case "forall in the nested constraints of a typeclass is unsupported"
-  | SC_Typeclass    tc_tc -> let* restricted_nested = (restrict repr c_or_r tc_tc) in
+       `Row         r     -> opt (Compare.row_tag r.r_tag tc_r.r_tag = 0 && List.compare Compare.label (LMap.keys r.tv_map) (LMap.keys tc_r.tv_map) = 0)
+     | `Constructor _     -> None)
+  | SC_Alias        _     -> raise.raise @@ corner_case "alias constraints not yet supported in typeclass constraints"
+  | SC_Poly         _     -> raise.raise @@ corner_case "forall in the nested constraints of a typeclass is unsupported"
+  | SC_Typeclass    tc_tc -> let restricted_nested = (restrict ~raise repr c_or_r tc_tc) in
                              if typeclass_is_empty restricted_nested
-                             then ok None
-                             else ok @@ Some (SC_Typeclass restricted_nested)
-  | SC_Access_label _l    -> ok (failwith "TODO: access_label in typeclass constraints not supported yet")
+                             then None
+                             else Some (SC_Typeclass restricted_nested)
+  | SC_Access_label _l    -> (failwith "TODO: access_label in typeclass constraints not supported yet")
 
-and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header : type_variable) (cell : type_value) =
-  let return ?(tc = tc) b = ok (tc,b) in
+and restrict_cell ~raise repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header : type_variable) (cell : type_value) =
+  let return ?(tc = tc) b = (tc,b) in
   if Compare.type_variable (repr @@ tv c) (repr header) = 0 then
     match cell.wrap_content with
     (* P_abs -> … *)
-    | P_forall   _                 -> fail @@ corner_case "forall in the righ-hand-side of a typeclass is unsupported"
+    | P_forall   _                 -> raise.raise @@ corner_case "forall in the righ-hand-side of a typeclass is unsupported"
     | P_constant p                 ->
       (match c with
          `Constructor c ->
@@ -176,7 +176,7 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
     | P_variable v
       (* TODO: this should be a set, not a list *)
       when List.mem ~equal:Caml.(=) tc.tc_bound v ->
-      let* updated_tc_constraints = bind_map_list (restrict_recur repr c) tc.tc_constraints in
+      let updated_tc_constraints = List.map ~f:(restrict_recur ~raise repr c) tc.tc_constraints in
       let all_accept = List.for_all ~f:(function None -> false | Some _ -> true) updated_tc_constraints in
       let restricted_constraints = List.filter_map ~f:(fun x -> x) updated_tc_constraints in
       let tc = { tc with tc_constraints = restricted_constraints ; original_id = Some (tc.id_typeclass_simpl); id_typeclass_simpl = ConstraintIdentifier.fresh () } in
@@ -184,21 +184,21 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
     | P_variable _v                -> return true (* Always keep unresolved variables; when they get resolved the heuristic will be called again and they will be kept or eliminated. *)
     | P_apply    _                 -> failwith "P_apply unsupported, TODO soon"
     | P_abs      _                 -> failwith "P_abs unsupported, TODO soon"
-    | P_constraint pc              -> fail @@ corner_case @@ Format.asprintf "Kind error: a cell of a typeclass cannot contain a constraint. %a has kind Constraint but a type-level expression with kind * was expected" PP.type_constraint pc.pc
+    | P_constraint pc              -> raise.raise @@ corner_case @@ Format.asprintf "Kind error: a cell of a typeclass cannot contain a constraint. %a has kind Constraint but a type-level expression with kind * was expected" PP.type_constraint pc.pc
   else
     return true
 
-and restrict_line repr c tc (`headers, headers, `line, line) : (bool * _, _) result =
-  let* tc,results = bind_fold_map2_list (restrict_cell repr c) tc headers line in
-  ok @@ (List.for_all ~f:(fun x -> x) results,tc)
+and restrict_line ~raise repr c tc (`headers, headers, `line, line) : bool * _ =
+  let tc,results = List.fold_map2_exn ~f:(restrict_cell ~raise repr c) ~init:tc headers line in
+  (List.for_all ~f:(fun x -> x) results,tc)
 
-and restrict repr c tc =
-  filter_lines (restrict_line repr c) tc
+and restrict ~raise repr c tc =
+  filter_lines (restrict_line ~raise repr c) tc
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
+  fun ~raise selected repr ->
     (* Format.eprintf "In propagator for tc_fundep for :%a\n" pp_selector_output selected;  *)
-  let* restricted = restrict repr selected.c selected.tc in
+  let restricted = restrict ~raise repr selected.c selected.tc in
   let not_changed =
     Compare.(cmp2
       (List.compare type_variable) restricted.args selected.tc.args
@@ -206,9 +206,9 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
     ) = 0
   in
   if (not_changed) then
-    ok []
+    []
   else
-    ok [{
+    [{
         remove_constraints = [SC_Typeclass selected.tc];
         add_constraints = [];
         add_constraints_simpl = [SC_Typeclass restricted];
@@ -352,7 +352,7 @@ simplified constraint
  *   let () = Format.eprintf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d PP.type_variable) selected.tc.args (PP_helpers.list_sep_d PP.type_variable) @@ List.map ~f:repr selected.tc.args in
  *   let restricted = restrict repr selected.c selected.tc in
  *   let () = Format.eprintf "restricted: %a\n!" PP.c_typeclass_simpl_short restricted in
- *   let* (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
+ *   let (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
  *   let ret = [
  *       {
  *         remove_constraints = [SC_Typeclass selected.tc];
@@ -360,7 +360,7 @@ simplified constraint
  *         proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
  *       }
  *     ] in
- *   ok ret *)
+ *   ret *)
 
 (* ***********************************************************************
  * Heuristic
@@ -692,4 +692,3 @@ Deduced DAG
 ======== END NOTES =========
 
 *)  
-

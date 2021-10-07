@@ -1,6 +1,4 @@
-open Errors
 open Ast_typed
-open Trace
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
@@ -49,7 +47,12 @@ let rec is_dup (t : type_expression) =
             eq_name injection bls12_381_g2_name ||
             eq_name injection bls12_381_fr_name ||
             eq_name injection sapling_transaction_name ||
-            eq_name injection sapling_state_name ->
+            eq_name injection sapling_state_name ||
+            (* Test primitives are dup *)
+            eq_name injection account_name ||
+            eq_name injection failure_name ||
+            eq_name injection typed_address_name ||
+            eq_name injection mutation_name ->
      true
   | T_constant {injection; parameters = [t]; _}
        when eq_name injection option_name ||
@@ -227,12 +230,12 @@ let rec muchused_helper (muchuse : muchuse) : module_fully_typed -> muchuse =
   in
   List.fold_right ~f:aux (List.map ~f:Location.unwrap p) ~init:muchuse
 
-let muchused_map_module : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function module' ->
-  let update_annotations annots c =
-    List.fold_right ~f:(fun a r -> update_annotation a r) annots ~init:c in
+let muchused_map_module ~add_warning : module_fully_typed -> module_fully_typed = function module' ->
+  let update_annotations annots =
+    List.iter ~f:(fun a -> add_warning a) annots in
   let _,muchused = muchused_helper muchuse_neutral module' in
   let warn_var v =
     `Self_ast_typed_warning_muchused
       (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
-  update_annotations (List.map ~f:warn_var muchused) @@
-    ok @@ module'
+  let () = update_annotations @@ List.map ~f:warn_var muchused in
+    module'

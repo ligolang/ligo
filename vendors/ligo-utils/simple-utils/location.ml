@@ -48,6 +48,10 @@ let virtual_location s = Virtual s
 let dummy = virtual_location "dummy"
 let generated = virtual_location "generated"
 
+let is_dummy_or_generated = function
+  | Virtual "dummy" | Virtual "generated" -> true
+  | _ -> false
+
 type 'a wrap = {
   wrap_content : 'a ;
   location : t ;
@@ -84,6 +88,11 @@ let wrap ?(loc = generated) wrap_content = { wrap_content ; location = loc }
 let get_location x = x.location
 let unwrap { wrap_content ; _ } = wrap_content
 let map f x = { x with wrap_content = f x.wrap_content }
+let fold f acc x = f acc x.wrap_content
+let fold_map f acc x = 
+  let acc,wrap_content = f acc x.wrap_content in
+  acc,{ x with wrap_content}
+
 let pp_wrap f ppf { wrap_content ; _ } = Format.fprintf ppf "%a" f wrap_content
 
 let lift_region : 'a Region.reg -> 'a wrap = fun x ->
@@ -98,3 +107,7 @@ let cover : t -> t -> t = fun a b ->
   | File _ , Virtual _ -> a
   | Virtual _ , _ -> b
   | File rega , File regb -> File (Region.cover rega regb)
+
+let get_file : t -> Region.t option = function
+  | File r -> Some r
+  | _ -> None

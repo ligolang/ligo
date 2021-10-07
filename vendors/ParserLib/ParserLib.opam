@@ -1,3 +1,5 @@
+# NOTE: dependencies added here are ignored in the LIGO build. Add
+# dependencies in /ligo.opam and run [opam lock].
 opam-version : "2.0"
 name         : "ParserLib"
 version      : "1.0"

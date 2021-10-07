@@ -11,8 +11,12 @@ let constant' = function
   | C_IS_NAT             -> `List [`String "C_IS_NAT"; `Null ]
   | C_SOME               -> `List [`String "C_SOME"; `Null ]
   | C_NONE               -> `List [`String "C_NONE"; `Null ]
+  | C_UNOPT              -> `List [`String "C_UNOPT"; `Null ]
+  | C_UNOPT_WITH_ERROR   -> `List [`String "C_UNOPT_WITH_ERROR"; `Null ]
   | C_ASSERTION          -> `List [`String "C_ASSERTION"; `Null ]
+  | C_ASSERTION_WITH_ERROR -> `List [`String "C_ASSERTION_WITH_ERROR"; `Null ]
   | C_ASSERT_SOME        -> `List [`String "C_ASSERT_SOME"; `Null ]
+  | C_ASSERT_SOME_WITH_ERROR -> `List [`String "C_ASSERT_SOME_WITH_ERROR"; `Null ]
   | C_ASSERT_INFERRED    -> `List [`String "C_ASSERT_INFERRED"; `Null ]
   | C_FAILWITH           -> `List [`String "C_FAILWITH"; `Null ]
   | C_UPDATE             -> `List [`String "C_UPDATE"; `Null ]
@@ -106,7 +110,6 @@ let constant' = function
   | C_BIG_MAP_EMPTY      -> `List [`String "C_BIG_MAP_EMPTY"; `Null ]
   | C_BIG_MAP_LITERAL    -> `List [`String "C_BIG_MAP_LITERAL"; `Null ]
   | C_BIG_MAP_GET_AND_UPDATE -> `List [`String "C_BIG_MAP_GET_AND_UPDATE"; `Null ]
-  | C_BIG_MAP_IDENTIFIER -> `List [`String "C_BIG_MAP_IDENTIFIER"; `Null ]
   (* Crypto *)
   | C_SHA256             -> `List [`String "C_SHA256"; `Null ]
   | C_SHA512             -> `List [`String "C_SHA512"; `Null ]
@@ -118,6 +121,7 @@ let constant' = function
   (* Blockchain *)
   | C_CALL                     -> `List [`String "C_CALL"; `Null ]
   | C_CONTRACT                 -> `List [`String "C_CONTRACT"; `Null ]
+  | C_CONTRACT_WITH_ERROR      -> `List [`String "C_CONTRACT_WITH_ERROR"; `Null ]
   | C_CONTRACT_OPT             -> `List [`String "C_CONTRACT_OPT"; `Null ]
   | C_CONTRACT_ENTRYPOINT      -> `List [`String "C_CONTRACT_ENTRYPOINT"; `Null ]
   | C_CONTRACT_ENTRYPOINT_OPT  -> `List [`String "C_CONTRACT_ENTRYPOINT_OPT"; `Null ]
@@ -131,10 +135,6 @@ let constant' = function
   | C_IMPLICIT_ACCOUNT         -> `List [`String "C_IMPLICIT_ACCOUNT"; `Null ]
   | C_SET_DELEGATE             -> `List [`String "C_SET_DELEGATE"; `Null ]
   | C_CREATE_CONTRACT          -> `List [`String "C_CREATE_CONTRACT"; `Null ]
-  | C_CONVERT_TO_LEFT_COMB     -> `List [`String "C_CONVERT_TO_LEFT_COMB"; `Null ]
-  | C_CONVERT_TO_RIGHT_COMB    -> `List [`String "C_CONVERT_TO_RIGHT_COMB"; `Null ]
-  | C_CONVERT_FROM_LEFT_COMB   -> `List [`String "C_CONVERT_FROM_LEFT_COMB"; `Null ]
-  | C_CONVERT_FROM_RIGHT_COMB  -> `List [`String "C_CONVERT_FROM_RIGHT_COMB"; `Null ]
   | C_TEST_ORIGINATE           -> `List [`String "TEST_ORIGINATE"; `Null ]
   | C_TEST_ORIGINATE_FROM_FILE -> `List [`String "TEST_ORIGINATE_FROM_FILE"; `Null ]
   | C_TEST_SET_NOW             -> `List [`String "TEST_SET_NOW"; `Null ]
@@ -147,19 +147,27 @@ let constant' = function
   | C_TEST_GET_STORAGE         -> `List [`String "TEST_GET_STORAGE"; `Null ]
   | C_TEST_GET_STORAGE_OF_ADDRESS -> `List [`String "TEST_GET_STORAGE_OF_ADDRESS"; `Null ]
   | C_TEST_GET_BALANCE         -> `List [`String "TEST_GET_BALANCE"; `Null ]
-  | C_TEST_COMPILE_EXPRESSION  -> `List [`String "TEST_COMPILE_EXPRESSION"; `Null]
   | C_TEST_MICHELSON_EQUAL        -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
   | C_TEST_GET_NTH_BS          -> `List [`String "TEST_GET_NTH_BS"; `Null ]
   | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
   | C_TEST_STATE_RESET         -> `List [`String "TEST_STATE_RESET"; `Null ]
+  | C_TEST_BOOTSTRAP_CONTRACT  -> `List [`String "TEST_BOOTSTRAP_CONTRACT"; `Null ]
+  | C_TEST_NTH_BOOTSTRAP_CONTRACT  -> `List [`String "TEST_NTH_BOOTSTRAP_CONTRACT"; `Null ]
   | C_TEST_LAST_ORIGINATIONS   -> `List [`String "TEST_LAST_ORIGINATIONS"; `Null ]
   | C_TEST_COMPILE_META_VALUE  -> `List [`String "TEST_COMPILE_META_VALUE"; `Null ]
-  | C_TEST_COMPILE_EXPRESSION_SUBST -> `List [`String "TEST_COMPILE_EXPRESSION_SUBST"; `Null ]
+  | C_TEST_MUTATE_COUNT        -> `List [`String "TEST_MUTATE_COUNT"; `Null]
+  | C_TEST_MUTATE_VALUE        -> `List [`String "TEST_MUTATE_VALUE"; `Null]
+  | C_TEST_MUTATION_TEST       -> `List [`String "TEST_MUTATION_TEST"; `Null]
+  | C_TEST_MUTATION_TEST_ALL   -> `List [`String "TEST_MUTATION_TEST_ALL"; `Null]
+  | C_TEST_SAVE_MUTATION       -> `List [`String "TEST_SAVE_MUTATION"; `Null]
   | C_TEST_RUN                 -> `List [`String "TEST_RUN"; `Null ]
   | C_TEST_EVAL                -> `List [`String "TEST_EVAL"; `Null ]
   | C_TEST_COMPILE_CONTRACT    -> `List [`String "TEST_COMPILE_CONTRACT"; `Null ]
   | C_TEST_TO_CONTRACT         -> `List [`String "TEST_TO_CONTRACT"; `Null ]
-  | C_TEST_TO_ENTRYPOINT         -> `List [`String "TEST_TO_ENTRYPOINT"; `Null ]
+  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> `List [`String "TEST_NTH_BOOTSTRAP_TYPED_ADDRESS"; `Null ]
+  | C_TEST_TO_ENTRYPOINT       -> `List [`String "TEST_TO_ENTRYPOINT"; `Null ]
+  | C_TEST_TO_TYPED_ADDRESS    -> `List [`String "TEST_TO_TYPED_ADDRESS"; `Null ]
+  | C_TEST_SET_BIG_MAP         -> `List [`String "TEST_SET_BIG_MAP"; `Null ]
   | C_SHA3                     -> `List [`String "SHA3"; `Null ]
   | C_KECCAK                   -> `List [`String "KECCAK"; `Null ]
   | C_LEVEL                    -> `List [`String "LEVEL"; `Null ]
@@ -216,6 +224,13 @@ let label_map f lmap =
 let attributes attr =
   let list = List.map ~f:(fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
+
+let for_all type_expression {ty_binder ; kind = _ ; type_ } =
+  `Assoc [
+    ("ty_binder", Location.wrap_to_yojson type_variable_to_yojson ty_binder) ;
+    (* ("kind", ) *)
+    ("type_", type_expression type_)
+  ]
 
 let binder type_expression {var;ascr;attributes} =
   let attributes = match attributes.const_or_var with

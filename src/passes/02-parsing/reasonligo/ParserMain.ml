@@ -10,7 +10,7 @@ module Comments      = Preprocessing_reasonligo.Comments
 module File          = Preprocessing_reasonligo.File
 module Token         = Lexing_reasonligo.Token
 module Self_tokens   = Lexing_reasonligo.Self_tokens
-module CST           = Cst.Reasonligo
+module CST           = Cst_reasonligo.CST
 module ParErr        = Parser_msg
 module ParserMainGen = Parsing_shared.ParserMainGen
 

@@ -44,7 +44,7 @@ function iter_op (const m : foobar) : unit is
 
 function map_op (const m : foobar) : foobar is
   block {
-    function increment (const i : int; const j : int) : int is j+1
+    function increment (const _ : int; const j : int) : int is j+1
   } with Map.map (increment, m)
 
 function fold_op (const m : foobar) : int is

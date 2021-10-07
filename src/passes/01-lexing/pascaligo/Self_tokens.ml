@@ -35,7 +35,7 @@ let tokens_of = function
   Stdlib.Ok lex_units ->
     let apply tokens = function
       Core.Token token -> token::tokens
-    | Core.Markup _ -> tokens
+    | Core.Markup    _ -> tokens
     | Core.Directive d -> Token.Directive d :: tokens
     in List.fold_left apply [] lex_units |> List.rev |> ok
 | Error _ as err -> err

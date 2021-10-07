@@ -1,5 +1,3 @@
-open Trace
-
 module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
@@ -19,24 +17,24 @@ module M(Plugins : Plugins)(Solver : sig
 
   let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
-  let filter_already_added ((state : typer_state), type_constraint) =
+  let filter_already_added ~raise:_ ((state : typer_state), type_constraint) =
     if PolySet.mem type_constraint state.added_constraints
-    then ok (state, Worklist.empty)
-    else ok ({ state with added_constraints = PolySet.add type_constraint state.added_constraints},
-             { Worklist.empty with pending_filtered_not_already_added_constraints = Pending.singleton type_constraint })
+    then (state, Worklist.empty)
+    else ({ state with added_constraints = PolySet.add type_constraint state.added_constraints},
+          { Worklist.empty with pending_filtered_not_already_added_constraints = Pending.singleton type_constraint })
 
-  let simplify_constraint (state, new_constraint) =
+  let simplify_constraint ~raise:_ (state, new_constraint) =
     let constraint_simplified = Simplifier.type_constraint_simpl new_constraint in
     (* Format.eprintf "Simplify constraint : %a\n, new_constraint : %a\n%!"
       Ast_typed.PP.type_constraint_short new_constraint
       (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_simpl_short) constraint_simplified; *)
-    ok (state, { Worklist.empty with pending_type_constraint_simpl = Pending.of_list constraint_simplified })
+    (state, { Worklist.empty with pending_type_constraint_simpl = Pending.of_list constraint_simplified })
 
-  let split_aliases (state, new_constraint) =
+  let split_aliases ~raise:_ (state, new_constraint) =
     match new_constraint with
       Ast_core.Types.SC_Alias c_alias ->
-      ok (state, { Worklist.empty with pending_c_alias = Pending.singleton c_alias })
+      (state, { Worklist.empty with pending_c_alias = Pending.singleton c_alias })
     | non_alias ->
-      ok (state, { Worklist.empty with pending_non_alias = Pending.singleton non_alias })
+      (state, { Worklist.empty with pending_non_alias = Pending.singleton non_alias })
   
 end

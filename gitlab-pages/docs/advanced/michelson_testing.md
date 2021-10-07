@@ -111,7 +111,7 @@ To obtain Michelson code from it, we run the LIGO compiler:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo main
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo --entry-point main
 // Outputs:
 // { parameter string ;
 //   storage string ;
@@ -122,7 +122,7 @@ ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo 
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo main
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo --entry-point main
 // Outputs:
 // { parameter string ;
 //   storage string ;
@@ -133,7 +133,7 @@ ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.religo main
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.religo --entry-point main
 // Outputs:
 // { parameter string ;
 //   storage string ;
@@ -148,21 +148,21 @@ tell LIGO to write it in a file called `mockup_testme.tz`:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo main --output mockup_testme.tz
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo --entry-point main --output-file mockup_testme.tz
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo main --output mockup_testme.tz
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo --entry-point main --output-file mockup_testme.tz
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile-contract gitlab-pages/docs/advanced/src/testing/mockup_testme.religo main --output mockup_testme.tz
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.religo --entry-point main --output-file mockup_testme.tz
 ```
 
 </Syntax>
@@ -239,7 +239,7 @@ Then, we execute a call to our contract with parameter `Append
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile-parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo main "Append (\"bar\")"
+ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo "Append (\"bar\")" --entry-point main
 // Outputs:
 // "bar"
 ```
@@ -248,7 +248,7 @@ ligo compile-parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile-parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo main "Append (\"bar\")"
+ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo "Append (\"bar\")" --entry-point main
 // Outputs:
 // "bar"
 ```
@@ -257,7 +257,7 @@ ligo compile-parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.mlig
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile-parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.religo main "Append (\"bar\")"
+ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.religo "Append (\"bar\")" --entry-point main
 // Outputs:
 // "bar"
 ```

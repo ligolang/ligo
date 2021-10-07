@@ -305,7 +305,7 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
     | C_LIST_HEAD_OPT | C_LIST_TAIL_OPT ->
       let* a = Mini_c.get_t_option ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
-    | C_CONTRACT ->
+    | C_CONTRACT | C_CONTRACT_WITH_ERROR ->
       let* a = Mini_c.get_t_contract ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
     | C_CONTRACT_OPT ->

@@ -17,15 +17,15 @@ module Assignments_tests = struct
     | tv when Var.equal tv tva -> tva
     | tv when Var.equal tv tvb -> tva
     | _ -> tv
-  let same_state sa sb =
+  let same_state ~raise sa sb =
     let sa = bindings sa in
     let sb = bindings sb in
-    let* () = tst_assert "Length sa = Length sb" (List.length sa = List.length sb) in
-    bind_list_iter
+    let () = tst_assert ~raise "Length sa = Length sb" (List.length sa = List.length sb) in
+    List.iter ~f:
       (fun ((tva,cora) , (tvb,corb)) ->
-         let* () = tst_assert "" (Ast_core.Compare.type_variable tva tvb = 0) in
-         let* () = tst_assert "" (Ast_core.Compare.constructor_or_row cora corb = 0) in
-         ok ()
+         let () = tst_assert ~raise "" (Ast_core.Compare.type_variable tva tvb = 0) in
+         let () = tst_assert ~raise "" (Ast_core.Compare.constructor_or_row cora corb = 0) in
+         ()
       )
       (List.zip_exn sa sb)
 end
@@ -35,36 +35,36 @@ open Assignments_tests
 (* Test independant add + remove + merge pour chaque type de contraintes:
    test add ctor constraint + add other ctor constraint + merge ctor constraint + add third ctor constraint
 *)
-let ctor_add_and_merge () =
+let ctor_add_and_merge ~raise () =
   (* create empty state *)
   let state = create_state ~cmp:Ast_core.Compare.type_variable in
   (* assert state = [] *)
-  let* () = tst_assert "length(bindings) = 0" @@ (List.length (bindings state) = 0) in
+  let () = tst_assert ~raise "length(bindings) = 0" @@ (List.length (bindings state) = 0) in
 
   (* add (tva, SC_Constructor ctor_a) to the state *)
   let ctor_a = make_c_constructor_simpl 1 None tva C_unit [] in
   let state' = add_constraint ~debug:Ast_core.PP.type_variable repr state (SC_Constructor ctor_a) in                                           
   (* assert state = [ (tva , `Constructor ctor_a) ] *)
-  let* () =
+  let () =
     match bindings state' with
     | [(tv,cor)] ->
-      let* () = tst_assert "state' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Constructor ctor_a) = 0) in
-      let* () = tst_assert "state' : tv = tva" @@ Var.equal tv tva in
-      ok ()
-    | x -> fail (test_err (Format.asprintf "state should only have one elment but has %d elements" @@ List.length x))
+      let () = tst_assert ~raise "state' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Constructor ctor_a) = 0) in
+      let () = tst_assert ~raise "state' : tv = tva" @@ Var.equal tv tva in
+      ()
+    | x -> raise.raise (test_err (Format.asprintf "state should only have one elment but has %d elements" @@ List.length x))
   in
 
   (* add (tvb, SC_Constructor ctor_b) to the state (tvb being an alias of tva, see repr) *)
   let ctor_b = make_c_constructor_simpl 2 None tvb C_unit [] in
   let state'' = add_constraint ~debug:Ast_core.PP.type_variable repr state' (SC_Constructor ctor_b) in
   (* assert that state did not update because a and b are aliases*)
-  let* () = tst_assert "state'' = state'" @@ (List.length (bindings state'') = 1) in
+  let () = tst_assert ~raise "state'' = state'" @@ (List.length (bindings state'') = 1) in
 
   (* add (tvc, SC_Constructor ctor_c) *)
   let ctor_c = make_c_constructor_simpl 3 None tvc C_unit [] in
   let state''' = add_constraint ~debug:Ast_core.PP.type_variable repr state'' (SC_Constructor ctor_c) in
   (* assert that state''' now has two elements *)
-  let* () = tst_assert "length (state''') = 2" (List.length (bindings state''') = 2) in
+  let () = tst_assert ~raise "length (state''') = 2" (List.length (bindings state''') = 2) in
 
   (* merging tvc to tva *)
   let merge_keys  : (type_variable, type_variable) merge_keys =
@@ -77,15 +77,15 @@ let ctor_add_and_merge () =
   in
   let state'''' = merge_aliases merge_keys state''' in
   (* assert that c has been merged to a in state'''' *)
-  let* () =
+  let () =
     match bindings state'''' with
     | [(tv,cor)] ->
-      let* () = tst_assert "state'''' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Constructor ctor_a) = 0) in
-      let* () = tst_assert "state'''' : tv = tva" @@ Var.equal tv tva in
-      ok ()
-    | l -> ok @@ Format.printf "%a" (PP_helpers.list_sep_d (PP_helpers.pair Ast_core.PP.type_variable Ast_core.PP.constructor_or_row)) l
+      let () = tst_assert ~raise "state'''' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Constructor ctor_a) = 0) in
+      let () = tst_assert ~raise "state'''' : tv = tva" @@ Var.equal tv tva in
+      ()
+    | l -> Format.printf "%a" (PP_helpers.list_sep_d (PP_helpers.pair Ast_core.PP.type_variable Ast_core.PP.constructor_or_row)) l
   in 
-  ok ()
+  ()
 
 (*
    test add ctor constraint + add other ctor constraint + remove ctor constraint + add third ctor constraint
@@ -97,36 +97,36 @@ let ctor_add_and_merge () =
    test add row constraint + add other row constraint + merge row constraint + add third row constraint
 *)
    
-let row_add_and_merge () =
+let row_add_and_merge ~raise () =
   (* create empty state *)
   let state = create_state ~cmp:Ast_core.Compare.type_variable in
   (* assert state = [] *)
-  let* () = tst_assert "length(bindings) = 0" @@ (List.length (bindings state) = 0) in
+  let () = tst_assert ~raise "length(bindings) = 0" @@ (List.length (bindings state) = 0) in
 
   (* add (tva, SC_Constructor ctor_a) to the state *)
   let row_a = make_c_row_simpl 4 None tva C_record [] in
   let state' = add_constraint repr state (SC_Row row_a) in                                           
   (* assert state = [ (tva , `Constructor ctor_a) ] *)
-  let* () =
+  let () =
     match bindings state' with
     | [(tv,cor)] ->
-      let* () = tst_assert "state' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Row row_a) = 0) in
-      let* () = tst_assert "state' : tv = tva" @@ Var.equal tv tva in
-      ok ()
-    | x -> fail (test_err (Format.asprintf "state should only have one elment but has %d elements" @@ List.length x))
+      let () = tst_assert ~raise "state' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Row row_a) = 0) in
+      let () = tst_assert ~raise "state' : tv = tva" @@ Var.equal tv tva in
+      ()
+    | x -> raise.raise (test_err (Format.asprintf "state should only have one elment but has %d elements" @@ List.length x))
   in
 
   (* add (tvb, SC_Constructor ctor_b) to the state (tvb being an alias of tva, see repr) *)
   let row_b = make_c_row_simpl 5 None tvb C_record [] in
   let state'' = add_constraint repr state' (SC_Row row_b) in
   (* assert that state did not update because a and b are aliases*)
-  let* () = tst_assert "state'' = state'" @@ (List.length (bindings state'') = 1) in
+  let () = tst_assert ~raise "state'' = state'" @@ (List.length (bindings state'') = 1) in
 
   (* add (tvc, SC_Constructor ctor_c) *)
   let row_c = make_c_row_simpl 6 None tvc C_record [] in
   let state''' = add_constraint repr state'' (SC_Row row_c) in
   (* assert that state''' now has two elements *)
-  let* () = tst_assert "length (state''') = 2" (List.length (bindings state''') = 2) in
+  let () = tst_assert ~raise "length (state''') = 2" (List.length (bindings state''') = 2) in
 
   (* merging tvc to tva *)
   let merge_keys  : (type_variable, type_variable) merge_keys =
@@ -139,15 +139,15 @@ let row_add_and_merge () =
   in
   let state'''' = merge_aliases merge_keys state''' in
   (* assert that c has been merged to a in state'''' *)
-  let* () =
+  let () =
     match bindings state'''' with
     | [(tv,cor)] ->
-      let* () = tst_assert "state'''' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Row row_a) = 0) in
-      let* () = tst_assert "state'''' : tv = tva" @@ Var.equal tv tva in
-      ok ()
-    | l -> ok @@ Format.printf "%a" (PP_helpers.list_sep_d (PP_helpers.pair Ast_core.PP.type_variable Ast_core.PP.constructor_or_row)) l
+      let () = tst_assert ~raise "state'''' : cor = ctor" @@ (Ast_core.Compare.constructor_or_row cor (`Row row_a) = 0) in
+      let () = tst_assert ~raise "state'''' : tv = tva" @@ Var.equal tv tva in
+      ()
+    | l -> Format.printf "%a" (PP_helpers.list_sep_d (PP_helpers.pair Ast_core.PP.type_variable Ast_core.PP.constructor_or_row)) l
   in 
-  ok ()
+  ()
 
 (*
   test add row constraint + add other row constraint + remove row constraint + add third row constraint
@@ -161,7 +161,7 @@ let row_add_and_merge () =
 (* Test that the order of add and merge doesn't matter *)
 
 type test_seq = Add_cstr of type_variable | Merge of (type_variable , type_variable) merge_keys
-let invariant () =
+let invariant ~raise () =
   let repr : type_variable -> type_variable = fun tv -> tv in
   let merge_keys demoted_repr new_repr  : (type_variable, type_variable) merge_keys =
     {
@@ -185,11 +185,11 @@ let invariant () =
   let state_b = List.fold_left ~f:aux ~init:istate
     [ Add_cstr tva ; Add_cstr tvb ; Merge (merge_keys tva tvb) ; Add_cstr tvc ; ]
   in
-  let* () = same_state state_a state_b in
-  ok ()
+  let () = same_state ~raise state_a state_b in
+  ()
   
-let assignments () =
-  let* () = ctor_add_and_merge () in
-  let* () = row_add_and_merge () in
-  let* () = invariant () in
-  ok ()
+let assignments ~raise () =
+  let () = ctor_add_and_merge ~raise () in
+  let () = row_add_and_merge ~raise () in
+  let () = invariant ~raise () in
+  ()

@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function for_collection_comp_with_acc (var nee : unit) : int is
+function for_collection_comp_with_acc (var _ : unit) : int is
   block {
     var myint : int := 0;
     var mylist : list (int) := list [1; 10; 15];

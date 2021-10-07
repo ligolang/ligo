@@ -12,7 +12,7 @@ We will be implementing a counter contract.
 
 ## Dry-running a Contract
 
-Testing a contract can be quite easy if we utilize LIGO's built-in dry
+Testing a contract can be quite easy if we utilise LIGO's built-in dry
 run feature. Dry-run works by simulating the main function execution,
 as if it were deployed on a real chain. You need to provide the
 following:
@@ -27,7 +27,7 @@ Here is a full example:
 
 
 ```shell
-ligo dry-run src/basic.ligo main Unit Unit
+ligo run dry-run src/basic.ligo Unit Unit --entry-point main
 // Outputs:
 // tuple[   list[]
 //          Unit
@@ -147,14 +147,14 @@ with a variant parameter of value `Increment (5)` and an initial
 storage value of `5`.
 
 ```shell
-ligo dry-run src/counter.ligo main "Increment(5)" 5
+ligo run dry-run src/counter.ligo "Increment(5)" 5 --entry-point main
 // tuple[   list[]
 //          10
 // ]
 ```
 
 
-Our contract's storage has been successfuly incremented to `10`.
+Our contract's storage has been successfully incremented to `10`.
 
 ## Deploying and interacting with a contract on a live-chain
 
@@ -163,7 +163,7 @@ have to compile it first, this can be done with the help of the
 `compile-contract` CLI command:
 
 ```shell
-ligo compile-contract src/counter.ligo main
+ligo compile contract src/counter.ligo --entry-point main
 ```
 
 Command above will output the following Michelson code:
@@ -205,7 +205,7 @@ need to provide the initial storage value, we can use
 Michelson.
 
 ```shell
-ligo compile-storage src/counter.ligo main 5
+ligo compile storage src/counter.ligo 5 --entry-point main
 // Outputs: 5
 ```
 
@@ -220,7 +220,7 @@ values to Michelson. We will need to use `compile-parameter` to
 compile our `action` variant into Michelson, here's how:
 
 ```shell
-ligo compile-parameter src/counter.ligo main 'Increment(5)'
+ligo compile parameter src/counter.ligo 'Increment(5)' --entry-point main
 // Outputs: (Right 5)
 ```
 

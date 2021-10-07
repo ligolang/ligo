@@ -269,7 +269,7 @@ getLigoDefinitions contract = do
 -- multiple levels up allowing us from restoring from expected ligo errors.
 handleLigoError :: HasLigoClient m => String -> Text -> Text -> m a
 handleLigoError subsystem stdout stderr = do
-  -- Call ligo with `compile-contract` to extract more readable error message
+  -- Call ligo with `compile contract` to extract more readable error message
   Log.debug subsystem [i|decoding ligo error|]
   case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
     Left err -> do

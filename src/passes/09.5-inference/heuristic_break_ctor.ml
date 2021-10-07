@@ -119,7 +119,7 @@ let comparator { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
   constructor_or_row a1 b1 <? fun () -> constructor_or_row a2 b2
 
 let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
+  fun ~raise selected repr ->
   (* Format.eprintf "In break_ctor.propagator for %a\n%!" printer selected; *)
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
@@ -157,31 +157,31 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
     | _ -> failwith "type error : break_ctor propagator"
   );
   (* Produce constraint a.tv_list = b.tv_list *)
-  let* eqs3 =
+  let eqs3 =
     match a , b with
     | `Row a , `Row b ->
       let aux = fun ((la,{associated_variable=aa;_}),(lb,{associated_variable=bb;})) ->
-        let* () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
-        ok @@ c_equation
+        let () = Trace.Assert.assert_true ~raise (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
+        c_equation
           (wrap (Propagator_break_ctor "a") @@ P_variable (repr aa))
           (wrap (Propagator_break_ctor "b") @@ P_variable (repr bb))
           "propagator: break_ctor: row"
       in
-      let* bindings =  
+      let bindings =  
         match List.map2 ~f:(fun x y -> (x,y)) (LMap.bindings a.tv_map) (LMap.bindings b.tv_map)
-        with Ok a -> ok @@ a | List.Or_unequal_lengths.Unequal_lengths -> fail @@ (corner_case "TODO: different number of labels (List.length a.tv_map) (List.length b.tv_map)")
+        with Ok a -> a | List.Or_unequal_lengths.Unequal_lengths -> raise.raise @@ (corner_case "TODO: different number of labels (List.length a.tv_map) (List.length b.tv_map)")
       in
-      bind_map_list aux bindings
+      List.map ~f:aux bindings
     | `Constructor a , `Constructor b -> (
       let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable (repr aa)) (wrap (Propagator_break_ctor "b") @@ P_variable (repr bb)) "propagator: break_ctor: ctor" in
         match List.map2 ~f:aux a.tv_list b.tv_list
-        with Ok a -> ok @@ a | List.Or_unequal_lengths.Unequal_lengths -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list)
+        with Ok a -> a | List.Or_unequal_lengths.Unequal_lengths -> raise.raise @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list)
     )
     | _ -> failwith "type error in eqs3"
   in
   let eqs = eqs3 in
   (* Format.eprintf "Break_ctor : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Type_variable_abstraction.PP.type_constraint_short) @@ eqs ; *)
-  ok [
+  [
     {
       remove_constraints = [];
       add_constraints = eqs;

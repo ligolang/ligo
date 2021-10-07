@@ -21,11 +21,11 @@ and type_content =
   | T_arrow    of ty_expr arrow
   | T_module_accessor of ty_expr module_access
   | T_singleton of literal
+  | T_abstraction of ty_expr abstraction
 
 and type_injection = {
   language : string ;
   injection : Ligo_string.t ;
-  (* kind (?) *)
   parameters : ty_expr list ;
 }
 
@@ -92,6 +92,8 @@ and module_with_unification_vars = Module_With_Unification_Vars of module'
 
 and module_fully_typed = Module_Fully_Typed of module'
 
+and attribute = { inline: bool ; no_mutation: bool }
+
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression
  *   a boolean indicating whether it should be inlined
@@ -101,7 +103,7 @@ and declaration_constant = {
     name : string option ;
     binder : expression_variable ;
     expr : expression ;
-    inline : bool ;
+    attr : attribute ;
   }
 
 and declaration_type = {
@@ -184,7 +186,7 @@ and let_in = {
     let_binder: expression_variable ;
     rhs: expression ;
     let_result: expression ;
-    inline : bool ;
+    attr: attribute ;
   }
 
 and mod_in = {
@@ -255,9 +257,11 @@ and environment_binding = {
 
 and type_environment = type_environment_binding list
 
+and type_or_kind = Ty of type_expression | Kind of unit
+
 and type_environment_binding = {
     type_variable: type_variable ;
-    type_: type_expression ;
+    type_: type_or_kind ;
   }
 
 and module_environment = module_environment_binding list

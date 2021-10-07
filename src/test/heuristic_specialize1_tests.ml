@@ -27,7 +27,7 @@ let check_specialize1_result fresh (actual : update list) expected =
   | _ -> (failwith "test failed for specialize1 expected …expected but got …actual")
 
 module Map = Database_plugins.GroupedByVariable
-let selector_test : _ -> _ -> unit -> (unit,Main_errors.all) result =
+let selector_test ~raise : _ -> _ -> unit -> unit =
   fun selector comparator () ->
   (*create a state :)
     state = [
@@ -45,16 +45,16 @@ let selector_test : _ -> _ -> unit -> (unit,Main_errors.all) result =
   let result = selector repr (!. c6) (grouped_by_variable state) in
   (* check that the selector returns a list containing the pair of constraints (1L, 6L) *)
   let comparator = List.compare comparator in
-  tst_assert "expected the selector to return a list containg the pair of constraints (1L,6L) or (6L,1L)"
+  tst_assert ~raise "expected the selector to return a list containg the pair of constraints (1L,6L) or (6L,1L)"
     (comparator result [{ a_k_var = !.. c6; poly = !.. c1 }] = 1)
 
-let propagator_test : _ -> unit -> (unit,Main_errors.all) result =
+let propagator_test ~raise : _ -> unit -> unit =
   fun propagator () ->
   (* call the propagator with the pair of constraints
       (constraint 1L m = poly ∀ v, v -> record { x = int ; y = v } -> map(v,int))
       (constraint 6L n = o -> n')
    *)
-  let* result = trace Main_errors.inference_tracer @@
+  let result = trace ~raise Main_errors.inference_tracer @@
     propagator { a_k_var = !.. c6; poly = !.. c1 } @@ fun x -> x in
   (* check that the propagator returns exactly this constraint
      (left/right in the equality is not important, variable "fresh" is not important):
@@ -62,7 +62,7 @@ let propagator_test : _ -> unit -> (unit,Main_errors.all) result =
   let fresh = Var.fresh ~name:"fresh" () in
   check_specialize1_result fresh (result : update list) (n === var fresh @-> p_row C_record { x = rv int ; y = rv (var fresh) } @-> map(var fresh, int))
 
-let selector_test2 : _ -> _ -> unit -> (unit,Main_errors.all) result =
+let selector_test2 ~raise:_ : _ -> _ -> unit -> unit =
   fun _selector _ () ->
   (*create a state :)
     state = [
@@ -75,9 +75,9 @@ let selector_test2 : _ -> _ -> unit -> (unit,Main_errors.all) result =
       (constraint 5L c = map(f, b)) (*  THIS was changed to f,b instead of f,g in the other test *)
   *)
   (* check that the selector returns a list containing the pair of constraints (3L, 5L) or (5L, 3L) *)
-  ok ()
+  ()
 
-let propagator_test2 : _ -> unit -> (unit,Main_errors.all) result =
+let propagator_test2 ~raise:_ : _ -> unit -> unit =
   fun _propagator () ->
   (* call the propagator with the pair of constraints
       (constraint 3L c = map(a, b))
@@ -88,7 +88,7 @@ let propagator_test2 : _ -> unit -> (unit,Main_errors.all) result =
      important):
      a = f
      b = b (optional, if it is not returned it is not an error, just look which version (with/without) allows this test to pass) *)
-  ok ()
+  ()
 
 let main =
   let open Inference.Heuristic_specialize1 in

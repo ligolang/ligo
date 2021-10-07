@@ -38,7 +38,7 @@ let a: string = "Hello Alice";
 or with single quotes:
 
 ```jsligo
-let a: string = 'Hello Alice';
+let a_: string = 'Hello Alice';
 ```
 
 </Syntax>
@@ -95,7 +95,7 @@ let full_greeting: string = greeting + " " + name;
 
 
 
-## Extracting Subtrings
+## Extracting Substrings
 
 Substrings can be extracted using the predefined function
 `String.sub`. The first character has index 0 and the interval of
@@ -108,8 +108,6 @@ const name  : string = "Alice"
 const slice : string = String.sub (0n, 1n, name)
 ```
 
-> Note that `string_slide` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -118,8 +116,6 @@ let name  : string = "Alice"
 let slice : string = String.sub 0n 1n name
 ```
 
-> Note that `String.slice` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -127,8 +123,6 @@ let slice : string = String.sub 0n 1n name
 let name  : string = "Alice";
 let slice : string = String.sub (0n, 1n, name);
 ```
-
-> Note that `String.slice` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="jsligo">

@@ -7,5 +7,6 @@ function while_sum (var n : nat) : nat is
     while i < n block {
       i := i + 1n;
       r := r + i
-    }
+    };
+    var _ := i;
   } with r

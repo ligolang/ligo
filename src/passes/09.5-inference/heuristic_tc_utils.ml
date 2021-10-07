@@ -23,11 +23,11 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
 
   type column = (type_variable * type_value list)
   type columns = column list
-  let loop3 : 'e 'x 'a 'b 'c . ('x -> ('a * 'b * 'c, 'e) result) -> ('a * 'b * 'c) -> (('a -> 'a -> 'a) * ('b -> 'b -> 'b) * ('c -> 'c -> 'c)) -> 'x list -> (('a * 'b * 'c), 'e) result =
+  let loop3 : 'e 'x 'a 'b 'c . ('x -> 'a * 'b * 'c) -> ('a * 'b * 'c) -> (('a -> 'a -> 'a) * ('b -> 'b -> 'b) * ('c -> 'c -> 'c)) -> 'x list -> ('a * 'b * 'c) =
     fun f (a0, b0, c0) (a,b,c) xs ->
-    let* r = bind_map_list f xs in
+    let r = List.map ~f:f xs in
     let (as_, bs, cs) = List.unzip3 r in
-    ok (List.fold_left ~f:a ~init:a0 as_, List.fold_left ~f:b ~init:b0 bs, List.fold_left ~f:c ~init:c0 cs)
+    (List.fold_left ~f:a ~init:a0 as_, List.fold_left ~f:b ~init:b0 bs, List.fold_left ~f:c ~init:c0 cs)
 
    let rec transpose_list_of_lists (matrix : type_value list list) =
       match matrix with
@@ -50,44 +50,44 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
       headers, (List.map ~f:(fun (_header,cells) -> List.hd_exn cells) columns :: matrix)
     | _ -> assert (List.for_all ~f:List.is_empty @@ List.map ~f:snd columns); (List.map ~f:fst columns), []
 
-  let update_columns3 : (columns -> (column Rope.SimpleRope.t * 'b * 'c, _) result) -> c_typeclass_simpl -> (c_typeclass_simpl * 'b * 'c, _) result =
+  let update_columns3 : (columns -> column Rope.SimpleRope.t * 'b * 'c) -> c_typeclass_simpl -> c_typeclass_simpl * 'b * 'c =
     fun f tc ->
     (*let transpose_back cs = let (hs, m) = transpose_back cs in (hs, List.rev m) in*)
-    let* updated, b, c = f @@ get_columns tc.args tc.tc in
+    let updated, b, c = f @@ get_columns tc.args tc.tc in
     let headers', matrix' = columns_to_lines @@ Rope.SimpleRope.list_of_rope updated in
-    ok ({ tc with args = headers'; tc = matrix' }, b, c)
+    ({ tc with args = headers'; tc = matrix' }, b, c)
     
 
-  let filter_lines (f : _ -> ([`headers] * type_variable list * [`line] * type_value list) -> (bool * c_typeclass_simpl, _) result) (tc_org : c_typeclass_simpl) =
-    let* (updated,tc_for_nested) =
-      bind_fold_list (fun (acc,tc) line ->
-          let* b,tc = f tc (`headers, tc_org.args, `line, line) in
-          if b then ok (line :: acc,tc) else ok (acc,tc)) ([],tc_org) tc_org.tc
+  let filter_lines (f : _ -> ([`headers] * type_variable list * [`line] * type_value list) -> bool * c_typeclass_simpl) (tc_org : c_typeclass_simpl) =
+    let (updated,tc_for_nested) =
+      List.fold ~f:(fun (acc,tc) line ->
+          let b,tc = f tc (`headers, tc_org.args, `line, line) in
+          if b then (line :: acc,tc) else (acc,tc)) ~init:([],tc_org) tc_org.tc
     in
-    ok { tc_org with tc = List.rev updated; tc_constraints = tc_for_nested.tc_constraints }
+    { tc_org with tc = List.rev updated; tc_constraints = tc_for_nested.tc_constraints }
 
   (* Check that the typeclass is a rectangular matrix, with one column
     per argument. *)
-  let check_typeclass_rectangular ({ reason_typeclass_simpl=_; tc; args } as tcs : c_typeclass_simpl) =
+  let check_typeclass_rectangular ~raise ({ reason_typeclass_simpl=_; tc; args } as tcs : c_typeclass_simpl) =
     let nargs = List.length args in
     if (List.for_all ~f:(fun allowed -> List.length allowed = nargs) tc)
-    then ok tcs
-    else fail typeclass_not_a_rectangular_matrix
+    then tcs
+    else raise.raise typeclass_not_a_rectangular_matrix
 
   (* Check that the transposed typeclass is a rectangular matrix, with
     one row per argument. *)
-  let check_typeclass_transposed_rectangular (tc : (type_variable * type_value list) list) =
+  let check_typeclass_transposed_rectangular ~raise (tc : (type_variable * type_value list) list) =
     match tc with
-      [] -> ok tc
+      [] -> tc
     | (_, hd) :: tl ->
       let hdlen = List.length hd in
       if List.for_all ~f:(fun (_, l) -> List.length l = hdlen) tl
-      then ok tc
-      else fail typeclass_not_a_rectangular_matrix
+      then tc
+      else raise.raise typeclass_not_a_rectangular_matrix
 
   let get_tag_and_args_of_constant (tv : type_value) =
     match tv.wrap_content with
-    | P_constant { p_ctor_tag; p_ctor_args } -> ok (p_ctor_tag, p_ctor_args)
+    | P_constant { p_ctor_tag; p_ctor_args } -> (p_ctor_tag, p_ctor_args)
     | P_row { p_row_tag; p_row_args } -> ignore (p_row_tag, p_row_args); failwith "TODO: return p_row_tag, p_row_args similarly to P_constant"
     | P_forall _ ->
       (* In this case we would need to do specialization.
@@ -230,18 +230,19 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
      [ m ? [ nat  ; bytes ]
        n ? [ unit ; mutez ] ] *)
 let rec replace_var_and_possibilities_1
+    ~raise
     tc_constraints
     (repr:type_variable -> type_variable)
     ((x : type_variable), (possibilities_for_x : type_value list))
-    : (column Rope.SimpleRope.t * _ * bool, _) result =
+    : column Rope.SimpleRope.t * _ * bool =
   let open Rope.SimpleRope in
-  (*let* tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
+  (*let tags_and_args = List.map ~f:get_tag_and_args_of_constant possibilities_for_x in
   let tags_of_constructors, arguments_of_constructors = List.unzip tags_and_args in*)
   match all_equal' tc_constraints repr x possibilities_for_x  with
   | Different ->
     (* The "changed" boolean return indicates whether any update was done.
        It is used to detect when the variable doesn't need any further cleanup. *)
-    ok (singleton (x, possibilities_for_x), empty, false)            (* Leave as-is, don't deduce anything *)
+    (singleton (x, possibilities_for_x), empty, false)            (* Leave as-is, don't deduce anything *)
   | Empty ->
     (* TODO: keep track of the constraints used to refine the
        typeclass so far. *)
@@ -249,26 +250,26 @@ let rec replace_var_and_possibilities_1
      *   "original expected by typeclass"
      *   "<actual> partially guessed so far (needs a recursive substitution)" *)
     (* TODO: possible bug: if there is nothing left because everything was inferred, we shouldn't fail and just continue with an empty TC… can this happen? *)
-    fail @@ corner_case "type error: the typeclass does not allow any type for \
+    raise.raise @@ corner_case "type error: the typeclass does not allow any type for \
                          the variable %a:PP_variable:x at this point"
   | All_equal_to (deduced, fresh_vars, arguments_of_constructors) ->
       (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
 
-      let* (rec_cleaned, rec_deduced, _rec_changed) =
-        replace_var_and_possibilities_rec tc_constraints repr (List.zip_exn fresh_vars (transpose_list_of_lists arguments_of_constructors))
+      let (rec_cleaned, rec_deduced, _rec_changed) =
+        replace_var_and_possibilities_rec ~raise tc_constraints repr (List.zip_exn fresh_vars (transpose_list_of_lists arguments_of_constructors))
       in
       (* The "changed" boolean return indicates whether any update was done.
          It is used to prevent removal + update of the typeclass if it wasn't modified. *)
-      ok (rec_cleaned, pair (singleton deduced) rec_deduced, true)
+      (rec_cleaned, pair (singleton deduced) rec_deduced, true)
 
-  and replace_var_and_possibilities_rec tc_constraints repr matrix =
+  and replace_var_and_possibilities_rec ~raise tc_constraints repr matrix =
     (* Format.eprintf "tc_constraints : %a; matrix: %a\n%!"
       (PP_helpers.list_sep_d PP.type_constraint_simpl_short) tc_constraints
       PP.(PP_helpers.list_sep_d (fun ppf (a,b) -> 
         Format.fprintf ppf "%a,(%a)" type_variable a (PP_helpers.list_sep_d type_value_short) b)) matrix
     ;*)
     let open Rope.SimpleRope in
-    (loop3 (replace_var_and_possibilities_1 tc_constraints repr) (empty, empty, false) (pair, pair, (||))) matrix
+    (loop3 (replace_var_and_possibilities_1 ~raise tc_constraints repr) (empty, empty, false) (pair, pair, (||))) matrix
 
 type deduce_and_clean_result = {
   deduced : constructor_or_row list ;
@@ -276,25 +277,25 @@ type deduce_and_clean_result = {
   changed : bool
 }
 
-let rec deduce_and_clean_constraints repr (c : type_constraint_simpl) =
+let rec deduce_and_clean_constraints ~raise repr (c : type_constraint_simpl) =
   match c with
   | SC_Typeclass tc ->
-   let* {cleaned;deduced;changed} = deduce_and_clean repr tc in
-      ok @@ ((SC_Typeclass cleaned) :: (List.map ~f:(function `Constructor c -> SC_Constructor c | `Row r -> SC_Row r) deduced), changed)
-  | other -> ok ([other], false)
+   let {cleaned;deduced;changed} = deduce_and_clean ~raise repr tc in
+      ((SC_Typeclass cleaned) :: (List.map ~f:(function `Constructor c -> SC_Constructor c | `Row r -> SC_Row r) deduced), changed)
+  | other -> ([other], false)
 
-and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
+and deduce_and_clean ~raise : (_ -> _) -> c_typeclass_simpl -> deduce_and_clean_result = fun repr tcs ->
   let open Rope.SimpleRope in
   (* Format.eprintf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs; *)
   (* ex.   [ x                             ; z      ]
        ∈ [ [ map3( nat   , unit  , float ) ; int    ] ;
            [ map3( bytes , mutez , float ) ; string ] ] *)
 
-  let* deduced_and_cleaned_nested_constraints = bind_map_list (deduce_and_clean_constraints repr) tcs.tc_constraints in
+  let deduced_and_cleaned_nested_constraints = List.map ~f:(deduce_and_clean_constraints ~raise repr) tcs.tc_constraints in
   let deduced_and_cleaned_nested_constraints', changed' = List.unzip deduced_and_cleaned_nested_constraints in
   let tcs' = { tcs with tc_constraints = List.concat deduced_and_cleaned_nested_constraints' } in
 
-  let* (cleaned, deduced, changed) = update_columns3 (replace_var_and_possibilities_rec tcs.tc_constraints repr) tcs' in
+  let (cleaned, deduced, changed) = update_columns3 (replace_var_and_possibilities_rec ~raise tcs.tc_constraints repr) tcs' in
   let changed'' = changed || List.exists ~f:(fun x -> x) changed' in
   (* ex. cleaned:
            [ fresh_x_1 ; fresh_x_2 ; y      ]
@@ -308,10 +309,10 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
     List.filter ~f:(function `Row {tv_map} when LMap.is_empty tv_map -> false | _ -> true) @@
     list_of_rope deduced in
 
-  ok { deduced ; cleaned ; changed = changed'' }
+  { deduced ; cleaned ; changed = changed'' }
 
- let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
-  let* {deduced; cleaned; changed} = deduce_and_clean repr tc in
+ let wrapped_deduce_and_clean ~raise repr tc ~(original:c_typeclass_simpl) =
+  let {deduced; cleaned; changed} = deduce_and_clean ~raise repr tc in
   (* Format.eprintf "retourning with deduce: %a; cleaned: %a; changed: %b\n" 
     (PP_helpers.list_sep_d PP.constructor_or_row_short) deduced
     PP.c_typeclass_simpl_short cleaned
@@ -322,6 +323,6 @@ and deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
       `Constructor x -> SC_Constructor x
     | `Row x -> SC_Row x in
   let deduced = List.map ~f:aux deduced in
-  ok (deduced, cleaned, changed)
+  (deduced, cleaned, changed)
 
 end

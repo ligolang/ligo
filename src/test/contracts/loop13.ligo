@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function for_collection_rhs_capture (var nee : unit) : int is
+function for_collection_rhs_capture (var _ : unit) : int is
   block {
     var acc : int := 0;
     const mybigint : int = 1000;
@@ -11,7 +11,7 @@ function for_collection_rhs_capture (var nee : unit) : int is
     }
   } with acc
 
-function for_collection_proc_call (var nee : unit) : int is
+function for_collection_proc_call (var _ : unit) : int is
   block {
     var acc : int := 0;
     var myset : set (int) := set [1; 2; 3];

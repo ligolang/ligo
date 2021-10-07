@@ -1,6 +1,4 @@
-open Errors
 open Ast_typed
-open Trace
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
@@ -130,26 +128,26 @@ and defuse_of_record defuse {body;fields;_} =
   let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse vars' in
   (defuse, unused)
 
-let rec unused_map_module : module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = function (Module_Fully_Typed p) ->
-  let self = unused_map_module in
-  let update_annotations annots c =
-    List.fold_right ~f:(fun a r -> update_annotation a r) annots ~init:c in
-  let aux = fun (x : declaration) ->
-    match x with
+let rec unused_map_module ~add_warning : module_fully_typed -> module_fully_typed = function (Module_Fully_Typed p) ->
+  let self = unused_map_module ~add_warning in
+  let update_annotations annots =
+    List.iter ~f:add_warning annots in
+  let aux = fun (x : declaration Location.wrap) ->
+    match Location.unwrap x with
     | Declaration_constant {expr ; _} -> (
       let defuse,_ = defuse_neutral in
       let _,unused = defuse_of_expr defuse expr in
       let warn_var v =
         `Self_ast_typed_warning_unused
           (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
-      update_annotations (List.map ~f:warn_var unused) @@
-        ok @@ ()
+      let () = update_annotations @@ List.map ~f:warn_var unused in
+      ()
     )
-    | Declaration_type _ -> ok @@ ()
+    | Declaration_type _ -> ()
     | Declaration_module {module_} ->
-      let* _ = self module_ in
-      ok @@ ()
-    | Module_alias _ -> ok @@ ()
+      let _ = self module_ in
+      ()
+    | Module_alias _ -> ()
   in
-  let* _ = bind_map_list (bind_map_location aux) p in
-  ok @@ (Module_Fully_Typed p)
+  let () = List.iter ~f:aux p in
+  (Module_Fully_Typed p)

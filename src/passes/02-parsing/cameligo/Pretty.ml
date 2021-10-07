@@ -1,59 +1,56 @@
 [@@@warning "-42"]
 
-module CST = Cst.Cameligo
+module CST = Cst_cameligo.CST
 open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
-module Option = Simple_utils.Option
-(*module Directive = LexerLib.Directive*)
 
-
-let pp_markup markup pos = 
-  let rec inner result previous_after = function 
+let pp_markup markup pos =
+  let rec inner result previous_after = function
     (LineCom (c, Before))  :: rest when pos = Before -> inner (result ^^ string "//" ^^ string c.value ^^ hardline) None rest
   | (BlockCom (c, Before)) :: rest when pos = Before -> inner (result ^^ string "(*" ^^ string c.value ^^ string "*)"  ^^ hardline) None rest
   | (LineCom (c, Inline)) :: rest when pos = Inline -> inner (result ^^ string "//" ^^ string c.value) None rest
   | (BlockCom (c, Inline)) :: rest when pos = Inline -> inner (result ^^ string " (*" ^^ string c.value ^^ string "*) ") None rest
-  | (LineCom (c, After)) :: rest when pos = After -> 
+  | (LineCom (c, After)) :: rest when pos = After ->
       let line = c.region#stop#line in
       let hl = match previous_after with
         Some previous_after ->
-          if line > previous_after + 1 then 
-            hardline ^^ hardline 
+          if line > previous_after + 1 then
+            hardline ^^ hardline
           else
             hardline
-      | None -> 
+      | None ->
           hardline
       in
       inner (result ^^ hl ^^ string "//" ^^ string c.value) (Some line) rest
-  | (BlockCom (c, After)) :: rest  when pos = After -> 
+  | (BlockCom (c, After)) :: rest  when pos = After ->
     let line = c.region#stop#line in
     let hl = match previous_after with
       Some previous_after ->
-        if line > previous_after + 1 then 
-          hardline ^^ hardline 
+        if line > previous_after + 1 then
+          hardline ^^ hardline
         else
           hardline
-    | None -> 
+    | None ->
         hardline
     in
-    inner (result ^^ hl ^^ string ("(*" ^ c.value ^ "*)")) (Some line) rest 
+    inner (result ^^ hl ^^ string ("(*" ^ c.value ^ "*)")) (Some line) rest
   | [] -> result
   | _ -> empty
   in
   inner empty None markup
 
-let pp_region_reg func token  = 
-  (pp_markup token.region#markup Before) ^^ 
-  func token ^^ 
-  (pp_markup token.region#markup Inline) ^^ 
+let pp_region_reg func token  =
+  (pp_markup token.region#markup Before) ^^
+  func token ^^
+  (pp_markup token.region#markup Inline) ^^
   (pp_markup token.region#markup After)
 
 let pp_region_t func token  =
-  (pp_markup token#markup Before) ^^ 
-  func ^^ 
-  (pp_markup token#markup Inline) ^^ 
+  (pp_markup token#markup Before) ^^
+  func ^^
+  (pp_markup token#markup Inline) ^^
   (pp_markup token#markup After)
 
 let pp_par printer {value; _} =
@@ -91,7 +88,7 @@ and pp_let_decl {value; _} =
   let kwd_let, rec_opt, binding, attr = value in
   let let_str =
     match rec_opt with
-        None -> (pp_region_t (string "let ") kwd_let) 
+        None -> (pp_region_t (string "let ") kwd_let)
     | Some r -> (pp_region_t (string "let ") kwd_let) ^^ (pp_region_t (string "rec ") r)
   in
   let let_str = if attr = [] then let_str
@@ -101,7 +98,7 @@ and pp_let_decl {value; _} =
 and pp_attributes = function
     [] -> empty
 | attr ->
-   let make s = 
+   let make s =
     pp_region_reg (fun _ -> string "[@" ^^ string s.value ^^ string "]") s
    in separate_map (break 0) make attr
 
@@ -112,19 +109,32 @@ and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
 and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 
 and pp_let_binding (binding : let_binding) =
-  let {binders; lhs_type; let_rhs; eq; _} = binding in
+  let {binders; type_params; lhs_type; let_rhs; eq; _} = binding in
   let head, tail = binders in
-  let patterns =
-    group (nest 2 (separate_map (break 1) pp_pattern (head::tail))) in
+  let lhs = pp_pattern head in
   let lhs =
-    patterns ^^
+    match type_params with
+      None -> lhs
+    | Some params -> lhs ^/^ pp_par pp_type_params params in
+  let lhs =
+    match tail with
+      [] -> lhs
+    |  _ -> group (nest 2 (lhs ^/^ separate_map (break 1) pp_pattern tail)) in
+  let lhs =
+    lhs ^^
     match lhs_type with
             None -> empty
     | Some (c,e) -> prefix 2 1 (pp_region_t (string " :") c) (pp_type_expr e)
-  in prefix 2 1 (group lhs ^^ group (pp_region_t (string " =") eq)) (group (pp_expr let_rhs))
+  in prefix 2 1 (group lhs ^^ group (pp_region_t (string " =") eq))
+            (group (pp_expr let_rhs))
+
+and pp_type_params (node : type_params) =
+  let type_vars = Utils.nseq_to_list node.type_vars in
+  let type_vars = separate_map (string " ") pp_ident type_vars
+  in string "type " ^^ type_vars
 
 and pp_pattern = function
-  PConstr   p -> pp_pconstr p
+  PConstr   p -> pp_region_reg pp_pconstr p
 | PUnit     t -> pp_region_reg (fun _ -> string "()") t
 | PVar      v -> pp_pvar v
 | PInt      i -> pp_region_reg pp_int i
@@ -138,23 +148,17 @@ and pp_pattern = function
 | PRecord   r -> pp_region_reg pp_precord r
 | PTyped    t -> pp_region_reg pp_ptyped t
 
-and pp_pvar {var; attributes} = pp_region_reg pp_ident var ^^ pp_attributes attributes
+and pp_pvar {value; _} =
+  let {variable; attributes} = value in
+  let v = pp_region_reg pp_ident variable in
+  if attributes = [] then v
+  else group (pp_attributes attributes ^/^ v)
 
-and pp_pconstr = function
-  PNone      t -> pp_region_t (string "None") t
-| PSomeApp   p -> pp_region_reg pp_patt_some p
-| PFalse     t -> pp_region_t (string "false") t
-| PTrue      t -> pp_region_t (string "true") t
-| PConstrApp a -> pp_region_reg pp_pconstr_app a
-
-and pp_pconstr_app {value; _} =
+and pp_pconstr {value; _} =
   match value with
     constr, None -> pp_region_reg pp_ident constr
   | constr, Some pat ->
       prefix 4 1 (pp_region_reg pp_ident constr) (pp_pattern pat)
-
-and pp_patt_some {value; _} =
-  prefix 4 1 (pp_region_t (string "Some") (fst value)) (pp_pattern (snd value))
 
 and pp_int {value; _} =
   string (Z.to_string (snd value))
@@ -184,7 +188,7 @@ and pp_ptuple {value; _} =
   | [(_, p)] -> group (break 1 ^^ pp_pattern p)
   | (c, p)::items ->
       group (break 1 ^^ pp_pattern p ^^ (pp_region_t (string ",") c)) ^^ app items
-  in match tail with 
+  in match tail with
     [] -> pp_pattern head
   | h :: tail -> pp_pattern head ^^ (pp_region_t (string ",") (fst h)) ^^ app (h :: tail)
 
@@ -199,11 +203,20 @@ and pp_ptyped {value; _} =
   group (pp_pattern pattern ^^ (pp_region_t (string " :") colon) ^/^ pp_type_expr type_expr)
 
 and pp_type_decl decl =
-  let {name; type_expr; kwd_type; eq; _} = decl.value in
-  (* let padding = match type_expr with TSum _ -> 0 | _ -> 2 in *)
-  pp_region_t (string "type ") kwd_type 
-  ^^ pp_region_reg pp_ident name ^^ (pp_region_t (string " = ") eq)
-  ^^ pp_type_expr type_expr
+  let {kwd_type; params; name; type_expr; eq; _} = decl.value in
+  group (pp_region_t (string "type ") kwd_type
+         ^^ (match params with
+               None -> empty
+             | Some params -> pp_quoted_params params ^^ string " ")
+         ^^ pp_region_reg pp_ident name
+         ^^ (pp_region_t (string " = ") eq)
+         ^/^ pp_type_expr type_expr)
+
+and pp_quoted_params = function
+  QParam p -> pp_quoted_param p
+| QParamTuple tuple -> pp_par pp_quoted_params_nsepseq tuple
+
+and pp_quoted_params_nsepseq seq = pp_nsepseq "," pp_quoted_param seq
 
 and pp_module_decl decl =
   let {kwd_module; name; module_; eq; kwd_struct; kwd_end} = decl.value in
@@ -224,7 +237,7 @@ and pp_expr = function
 | EArith      e -> group (pp_arith_expr e)
 | EString     e -> pp_string_expr e
 | EList       e -> group (pp_list_expr e)
-| EConstr     e -> pp_constr_expr e
+| EConstr     e -> pp_region_reg pp_constr_expr e
 | ERecord     e -> pp_region_reg pp_record_expr e
 | EProj       e -> pp_region_reg pp_projection e
 | EModA       e -> pp_module_access pp_expr e
@@ -246,8 +259,8 @@ and pp_expr = function
 and pp_case_expr {value; _} =
   let {kwd_match; expr; kwd_with; lead_vbar; cases} = value in
   group (pp_region_t (string "match ") kwd_match ^^ nest 6 (pp_expr expr) ^/^ pp_region_t (string "with") kwd_with)
-  ^^ hardline ^^ 
-  (match lead_vbar with 
+  ^^ hardline ^^
+  (match lead_vbar with
     Some v -> pp_region_t (string "| ") v
   | None -> blank 2) ^^
   pp_cases cases
@@ -287,8 +300,6 @@ and pp_bool_expr = function
   Or   e  -> pp_region_reg (pp_bin_op "||") e
 | And  e  -> pp_region_reg (pp_bin_op "&&") e
 | Not  e  -> pp_region_reg (pp_un_op "not") e
-| True  t -> pp_region_t (string "true") t
-| False t -> pp_region_t (string "false") t
 
 and pp_bin_op op {value; _} =
 let {arg1; arg2; _} = value
@@ -312,6 +323,11 @@ and pp_arith_expr = function
 | Mult  e -> pp_region_reg (pp_bin_op "*") e
 | Div   e -> pp_region_reg (pp_bin_op "/") e
 | Mod   e -> pp_region_reg (pp_bin_op "mod") e
+| Land  e -> pp_region_reg (pp_bin_op "land") e
+| Lor   e -> pp_region_reg (pp_bin_op "lor") e
+| Lxor  e -> pp_region_reg (pp_bin_op "lxor") e
+| Lsl   e -> pp_region_reg (pp_bin_op "lsl") e
+| Lsr   e -> pp_region_reg (pp_bin_op "lsr") e
 | Neg   e -> pp_region_reg (fun e -> string "-" ^^ pp_expr e.value.arg) e
 | Int   e -> pp_region_reg pp_int e
 | Nat   e -> pp_region_reg pp_nat e
@@ -337,29 +353,23 @@ and pp_injection :
     | (c, item) :: rest -> inner (result ^^ pp_region_t (string ";") c ^^ break 1 ^^ (printer item)) rest
     | [] -> result
     in
-    let elements = match elements with 
-    | Some elements -> printer (fst elements) ^^ inner empty (snd elements) 
+    let elements = match elements with
+    | Some elements -> printer (fst elements) ^^ inner empty (snd elements)
     | None -> empty
     in
-    match Option.map ~f:pp_compound compound with
+    match compound with
       None -> elements
-    | Some ((opening, a), (closing, b)) ->
-        (pp_region_t (string opening) a) ^^ nest 1 elements ^^ (pp_region_t (string closing) b)
+    | Some compound ->
+        let (opening, a), (closing, b) = pp_compound compound
+        in (pp_region_t (string opening) a) ^^ nest 1 elements ^^
+             (pp_region_t (string closing) b)
 
 and pp_compound = function
   BeginEnd (a, b) -> (("begin", a), ("end", b))
 | Braces (a, b)   -> (("{", a), ("}", b))
 | Brackets (a, b) -> (("[", a), ("]",b))
 
-and pp_constr_expr = function
-  ENone      t -> pp_region_t (string "None") t
-| ESomeApp   a -> pp_region_reg pp_some a
-| EConstrApp a -> pp_region_reg pp_constr_app a
-
-and pp_some {value=kwd_some, e; _} =
-  prefix 4 1 (pp_region_t (string "Some") kwd_some) (pp_expr e)
-
-and pp_constr_app {value; _} =
+and pp_constr_expr {value; _} =
   let constr, arg = value in
   let constr = pp_region_reg (fun t -> string t.value) constr in
   match arg with
@@ -378,11 +388,13 @@ and pp_ne_injection :
     let {compound; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq ";" printer ne_elements in
     let inj =
-      match Option.map ~f:pp_compound compound with
+      match compound with
         None -> elements
-      | Some ((opening, a), (closing, b)) ->
-        surround 2 1 (pp_region_t (string opening) a) elements (pp_region_t (string closing) b) 
-      in
+      | Some compound ->
+         let (opening, a), (closing, b) = pp_compound compound
+         in surround 2 1 (pp_region_t (string opening) a)
+                     elements (pp_region_t (string closing) b)
+    in
     let inj = if attributes = [] then inj
               else pp_attributes attributes ^^ blank 1 ^^ inj
     in inj
@@ -397,7 +409,7 @@ and pp_nsepseq :
     printer (fst elements) ^^ inner empty (snd elements)
 
 and pp_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
-  fun printer (head, tail) -> 
+  fun printer (head, tail) ->
     separate_map (break 1) printer (head::tail)
 
 and pp_projection {value; _} =
@@ -450,7 +462,7 @@ and pp_tuple_expr {value; _} =
   | [(_, p)] -> group (break 1 ^^ pp_expr p)
   | (c, p)::items ->
       group (break 1 ^^ pp_expr p ^^ (pp_region_t (string ",") c)) ^^ app items
-  in match tail with 
+  in match tail with
     [] -> pp_expr head
   | h :: tail -> pp_expr head ^^ (pp_region_t (string ",") (fst h)) ^^ app (h :: tail)
 
@@ -460,7 +472,7 @@ and pp_let_in {value; _} =
   let {kwd_let; binding; kwd_rec; body; attributes=attr; kwd_in; _} = value in
   let let_str =
     match kwd_rec with
-        None -> (pp_region_t (string "let ") kwd_let) 
+        None -> (pp_region_t (string "let ") kwd_let)
     | Some r -> (pp_region_t (string "let ") kwd_let) ^^ (pp_region_t (string "rec ") r)
   in
   let let_str = if attr = [] then let_str
@@ -486,7 +498,7 @@ and pp_mod_in {value; _} =
      ^^ pp_region_t (string " in") kwd_in ^^ hardline ^^ group (pp_expr body)
 
 and pp_mod_alias {value; _} =
-  let {mod_alias; body; kwd_in} = value in 
+  let {mod_alias; body; kwd_in} = value in
   let {kwd_module; alias; eq; binders} = mod_alias in
   pp_region_t (string "module ") kwd_module ^^ pp_region_reg pp_ident alias ^^ pp_region_t (string " =") eq
   ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." (pp_region_reg pp_ident) binders))
@@ -510,16 +522,17 @@ and pp_seq {value; _} =
   | (c, item) :: rest -> inner (result ^^ pp_region_t (string ";") c ^^ hardline ^^ (pp_expr item)) rest
   | [] -> result
   in
-  let elements = match elements with 
-  | Some elements -> pp_expr (fst elements) ^^ inner empty (snd elements) 
+  let elements = match elements with
+  | Some elements -> pp_expr (fst elements) ^^ inner empty (snd elements)
   | None -> empty
   in
-  match Option.map ~f:pp_compound compound with
+  match compound with
     None -> elements
-  | Some ((opening, a), (closing, b)) ->
-     (pp_region_t (string opening) a)
-     ^^ nest 2 (hardline ^^ elements) ^^ hardline
-     ^^ (pp_region_t (string closing) b)
+  | Some compound ->
+      let (opening, a), (closing, b) = pp_compound compound
+      in (pp_region_t (string opening) a)
+         ^^ nest 2 (hardline ^^ elements) ^^ hardline
+         ^^ (pp_region_t (string closing) b)
 
 and pp_type_expr = function
   TProd t   -> pp_region_reg pp_cartesian t
@@ -529,10 +542,14 @@ and pp_type_expr = function
 | TFun t    -> pp_region_reg pp_fun_type t
 | TPar t    -> pp_region_reg pp_type_par t
 | TVar t    -> pp_region_reg pp_ident t
-| TWild   t -> pp_region_t (string "_") t
 | TString s -> pp_region_reg pp_string s
 | TInt i    -> pp_region_reg pp_int i
 | TModA   t -> pp_region_reg (pp_module_access pp_type_expr) t
+| TArg    t -> pp_region_reg pp_quoted_param t
+
+and pp_quoted_param param =
+  let quoted = {param with value = "'" ^ param.value.name.value}
+  in pp_region_reg pp_ident quoted
 
 and pp_cartesian {value; _} =
   let head, tail = value in
@@ -541,25 +558,26 @@ and pp_cartesian {value; _} =
   | [(_, p)] -> group (break 1 ^^ pp_type_expr p)
   | (c, p)::items ->
       group (break 1 ^^ pp_type_expr p ^^ (pp_region_t (string " *") c)) ^^ app items
-  in match tail with 
+  in match tail with
     [] -> pp_type_expr head
   | h :: tail -> pp_type_expr head ^^ (pp_region_t (string " *") (fst h)) ^^ app (h :: tail)
 
 and pp_sum_type {value; _} =
   let {lead_vbar; variants; attributes; _} = value in
   let rec inner result = function
-  | (c, item) :: rest -> inner (result ^^ break 1 ^^ pp_region_t (string "| ") c  ^^ (pp_variant item)) rest
+  | (c, item) :: rest ->
+       inner (result ^^ break 1 ^^ pp_region_t (string "| ") c  ^^ (pp_variant item)) rest
   | [] -> result
   in
-  let whole = 
+  let whole =
     (match lead_vbar with
       Some v -> pp_region_t (string "| ") v
     | None -> empty)
     ^^
     pp_variant (fst variants) ^^ inner empty (snd variants)
   in
-  let whole = nest 2 (break 0 ^^ 
-  (match lead_vbar with 
+  let whole = nest 2 (break 0 ^^
+  (match lead_vbar with
     Some _ -> whole
   | None -> ifflat whole (blank 2 ^^ whole)
   ))
@@ -585,20 +603,26 @@ and pp_field_decl {value; _} =
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ pp_region_t (string " :") colon) t_expr
 
-and pp_type_app {value=ctor, tuple; _} =
-  pp_type_tuple tuple ^^ pp_region_t (group (nest 2 (break 1 ^^ pp_type_constr ctor))) ctor.region
+and pp_type_app {value = (ctor, type_constr_arg); _} =
+  pp_type_constr_arg type_constr_arg
+  ^^ pp_region_t (group (nest 2 (break 1 ^^ pp_type_constr ctor)))
+                 ctor.region
 
-and pp_type_tuple {value; _} =
+and pp_type_constr_arg = function
+  CArg t -> pp_type_expr t
+| CArgTuple t -> pp_constr_arg_tuple t
+
+and pp_constr_arg_tuple {value; _} =
   let head, tail = value.inside in
   let rec app = function
     []  -> empty
   | [(_, e)] -> group (break 1 ^^ pp_type_expr e)
   | (c, e)::items ->
-      group (break 1 ^^ pp_type_expr e ^^ pp_region_t (string ",") c) ^^ app items 
+      group (break 1 ^^ pp_type_expr e ^^ pp_region_t (string ",") c) ^^ app items
   in
-  match tail with 
+  match tail with
     []        -> pp_type_expr head
-  | h :: tail -> 
+  | h :: tail ->
     let components =
       pp_type_expr head ^^ (pp_region_t (string ",") (fst h)) ^^ app (h :: tail)
     in (pp_region_t (string "(") value.lpar) ^^ nest 1 (components ^^ (pp_region_t (string ")") value.rpar))
@@ -615,7 +639,7 @@ let print_type_expr = pp_type_expr
 let print_pattern   = pp_pattern
 let print_expr      = pp_expr
 
-type cst        = Cst.Cameligo.t
-type expr       = Cst.Cameligo.expr
-type type_expr  = Cst.Cameligo.type_expr
-type pattern    = Cst.Cameligo.pattern
+type cst        = CST.t
+type expr       = CST.expr
+type type_expr  = CST.type_expr
+type pattern    = CST.pattern

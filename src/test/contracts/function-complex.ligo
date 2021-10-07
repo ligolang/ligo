@@ -2,8 +2,8 @@
 
 function main (const i : int) : int is
   block {
-    var j : int := 0;
+    var _j : int := 0;
     var k : int := 1;
-    j := k + i;
-    k := i + j
-  } with k + j
+    _j := k + i;
+    k := i + _j
+  } with k + _j

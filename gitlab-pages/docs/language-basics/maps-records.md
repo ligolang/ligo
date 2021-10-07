@@ -185,15 +185,15 @@ function xy_translate (var p : point; const vec : vector) : point is
 You can call the function `xy_translate` defined above by running the
 following command of the shell:
 ```shell
-ligo evaluate-call
+ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_update.ligo
-xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
-You have to understand that `p` has not been changed by the functional
-update: a nameless new version of it has been created and returned by
-the block-less function.
+> You have to understand that `p` has not been changed by the functional
+> update: a nameless new version of it has been created and returned by
+> the block-less function.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -215,9 +215,9 @@ You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo evaluate-call
+ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo
-xy_translate "({x=2;y=3;z=1}, {dx=3;dy=4})"
+"({x=2;y=3;z=1}, {dx=3;dy=4})" --entry-point xy_translate
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
@@ -241,6 +241,20 @@ let xy_translate = ((p, vec) : (point, vector)) : point =>
   {...p, x : p.x + vec.dx, y : p.y + vec.dy};
 ```
 
+You can call the function `xy_translate` defined above by running the
+following command of the shell:
+
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_update.religo
+"({x:2,y:3,z:1}, {dx:3,dy:4})" --entry-point xy_translate
+# Outputs: {z = 1 , y = 7 , x = 5}
+```
+
+> You have to understand that `p` has not been changed by the
+> functional update: a nameless new version of it has been created and
+> returned.
+
 </Syntax>
 <Syntax syntax="jsligo">
 
@@ -256,21 +270,21 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
-</Syntax>
-
-
 You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo evaluate-call
-gitlab-pages/docs/language-basics/src/maps-records/record_update.religo
-xy_translate "({x:2,y:3,z:1}, {dx:3,dy:4})"
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_update.jsligo
+"({x:2,y:3,z:1}, {dx:3,dy:4})" --entry-point xy_translate
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
-You have to understand that `p` has not been changed by the functional
-update: a nameless new version of it has been created and returned.
+> You have to understand that `p` has not been changed by the
+> functional update: a nameless new version of it has been created and
+> returned.
+
+</Syntax>
 
 #### Nested updates
 
@@ -346,7 +360,7 @@ type account = {
 <Syntax syntax="jsligo">
 
 A unique feature of LIGO is the ability to perform nested updates on records. 
-JsLIGO however does not support the specialized syntax as the other syntaxes. 
+JsLIGO however does not support the specialised syntax as the other syntaxes. 
 The following however also does the trick.
 
 For example if you have the following record structure:
@@ -415,8 +429,8 @@ You can call the function `change_color_preference` defined above by running the
 following command:
 
 ```shell
-ligo evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo 
-change_color_preference "(record [id=1001; preferences=record [color=Blue; other=1]], Green)"
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo 
+"(record [id=1001; preferences=record [color=Blue; other=1]], Green)" --entry-point change_color_preference
 # Outputs: record[id -> 1001 , preferences -> record[color -> Green(unit) , other -> 1]]
 ```
 
@@ -425,7 +439,7 @@ change_color_preference "(record [id=1001; preferences=record [color=Blue; other
 ### Record Patches
 
 Another way to understand what it means to update a record value is to
-make sure that any further reference to the value afterward will
+make sure that any further reference to the value afterwards will
 exhibit the modification. This is called a `patch` and this is only
 possible in PascaLIGO, because a patch is an *instruction*, therefore
 we can only use it in a block. Similarly to a *functional update*, a
@@ -451,9 +465,9 @@ You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo evaluate-call
+ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_patch.ligo
-xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
@@ -475,9 +489,9 @@ You can call the new function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo evaluate-call
+ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_patch2.ligo
-xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
@@ -499,9 +513,9 @@ You can call the new function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo evaluate-call
+ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/maps-records/record_simu.ligo
-xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
@@ -953,8 +967,6 @@ function iter_op (const m : register) : unit is
   } with Map.iter (iterated, m)
 ```
 
-> Note that `map_iter` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -1007,8 +1019,6 @@ function map_op (const m : register) : register is
       (j.0, j.1 + 1)
   } with Map.map (increment, m)
 ```
-
-> Note that `map_map` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -1064,8 +1074,6 @@ function fold_op (const m : register) : int is
       i + j.1.1
   } with Map.fold (folded, m, 5)
 ```
-
-> Note that `map_fold` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -1413,7 +1421,7 @@ In JsLIGO, the predefined function which removes a binding in a map
 is called `Map.remove` and is used as follows:
 
 ```jsligo group=big_maps
-let updated_map: register =
+let updated_map_: register =
   Map.remove("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 ```
 
