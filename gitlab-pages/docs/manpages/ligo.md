@@ -1,164 +1,79 @@
-### NAME
 
-ligo
+### Usage
 
-### SYNOPSIS
+**ligo** *command*  \[*command options*\]
 
-**ligo** *COMMAND* \...
 
-### MORE HELP
 
-Use \`**ligo** *COMMAND* \--help\` for help on a single command.
 
-### DOCUMENTATION
 
-https://ligolang.org/docs/intro/introduction
 
-### ASK A QUESTION
+**ligo**   \[*\--help*\]
 
-https://discord.gg/9rhYaEt
 
-### OPEN AN ISSUE
 
-https://gitlab.com/ligolang/ligo/issues/new
 
-### COMMANDS
 
-**changelog**
 
-:   Dump the LIGO changelog to stdout.
+**ligo** *command*  \[*\--help*\]
 
-**compile-contract**
 
-:   Subcommand: Compile a contract.
 
-**compile-expression**
 
-:   Subcommand: Compile to a Michelson value.
 
-**compile-parameter**
 
-:   Subcommand: Compile parameters to a Michelson expression.
+**ligo**   \[*\--version*\]
 
-**compile-storage**
 
-:   Subcommand: Compile an initial storage in LIGO syntax to a Michelson
-    expression.
 
-**dry-run**
 
-:   Subcommand: Run a smart-contract with the given storage and input.
 
-**evaluate-call**
 
-:   Subcommand: Run a function with the given parameter.
 
-**evaluate-expr**
 
-:   Subcommand: Evaluate a given definition.
+### To browse the documentation
 
-**evaluate-value**
+**ligo** *man*  
 
-:   Deprecated, renamed to evaluate-expr. Use evaluate-expr instead.
-    Subcommand: Evaluate a given definition.
 
-**get-scope**
 
-:   Subcommand: Return the JSON encoded environment for a given file.
 
-**interpret**
 
-:   Subcommand: Interpret the expression in the context initialized by
-    the provided source file.
 
-**list-declarations**
+**ligo** *man*  \[*-v 3*\]
 
-:   Subcommand: List all the top-level declarations.
 
-**measure-contract**
 
-:   Subcommand: Measure a contract\`s compiled size in bytes.
 
-**preprocess**
 
-:   Subcommand: Preprocess the source file. Warning: Intended for
-    development of LIGO and can break at any time.
 
-**pretty-print**
 
-:   Subcommand: Pretty-print the source file.
 
-**print-ast**
+### Access the documentation
 
-:   Subcommand: Print the AST. Warning: Intended for development of LIGO
-    and can break at any time.
+**ligo** *man* *keyword* \[*-v --verbosity &lt;0|1|2|3&gt;*\] \[*\--format &lt;plain|colors|html&gt;*\]
 
-**print-ast-combined**
 
-:   Subcommand: Print the contract after combination with the build
-    system. Warning: Intended for development of LIGO and can break at
-    any time.
+#### DESCRIPTION
 
-**print-ast-core**
+Print documentation of commands.
 
-:   Subcommand: Print the AST. Warning: Intended for development of LIGO
-    and can break at any time.
 
-**print-ast-sugar**
+#### ARGUMENTS
 
-:   Subcommand: Print the AST. Warning: Intended for development of LIGO
-    and can break at any time.
+**keyword**
 
-**print-ast-typed**
+Keyword to search for
 
-:   Subcommand: Print the typed AST. Warning: Intended for development
-    of LIGO and can break at any time.
 
-**print-cst**
+#### OPTIONS
 
-:   Subcommand: Print the CST. Warning: Intended for development of LIGO
-    and can break at any time.
+**-v --verbosity &lt;0|1|2|3&gt;**
 
-**print-graph**
+Level of details
 
-:   Subcommand: Print the dependency graph. Warning: Intended for
-    development of LIGO and can break at any time.
+**--format &lt;plain|colors|html&gt;**
 
-**print-mini-c**
+The manual's output format
 
-:   Subcommand: Print Mini-C. Warning: Intended for development of LIGO
-    and can break at any time.
 
-**repl**
-
-:   Subcommand: REPL
-
-**run-function**
-
-:   Deprecated, renamed to evaluate-call. Use evaluate-call instead.
-    Subcommand: Run a function with the given parameter.
-
-**test**
-
-:   Subcommand: Test a contract with the LIGO test framework (BETA).
-
-**transpile-contract**
-
-:   Subcommand: Transpile a contract to another syntax (BETA).
-
-**transpile-expression**
-
-:   Subcommand: Transpile an expression to another syntax (BETA).
-
-### OPTIONS
-
-**\--help**\[=*FMT*\] (default=auto)
-
-:   Show this help in format *FMT*. The value *FMT* must be one of
-    \`auto\`, \`pager\`, \`groff\` or \`plain\`. With \`auto\`, the
-    format is \`pager\` or \`plain\` whenever the **TERM** env var is
-    \`dumb\` or undefined.
-
-**\--version**
-
-:   Show version information.

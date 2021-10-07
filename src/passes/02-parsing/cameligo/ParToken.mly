@@ -14,7 +14,7 @@ module Token = Lexing_cameligo.Token
 %token          <(string * Z.t) Region.reg> Nat       "<nat>"
 %token          <(string * Z.t) Region.reg> Mutez     "<mutez>"
 %token                  <string Region.reg> Ident     "<ident>"
-%token                  <string Region.reg> Constr    "<constr>"
+%token                  <string Region.reg> UIdent    "<uident>"
 %token                  <string Region.reg> Attr      "[@attr]"
 %token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
 
@@ -54,6 +54,7 @@ module Token = Lexing_cameligo.Token
 
 %token <Region.t> BOOL_OR  "||"
 %token <Region.t> BOOL_AND "&&"
+%token <Region.t> QUOTE    "'"
 
  (* Keywords *)
 
@@ -61,7 +62,6 @@ module Token = Lexing_cameligo.Token
 %token <Region.t> Begin  "begin"
 %token <Region.t> Else   "else"
 %token <Region.t> End    "end"
-%token <Region.t> False  "false"
 %token <Region.t> Fun    "fun"
 %token <Region.t> Rec    "rec"
 %token <Region.t> If     "if"
@@ -69,20 +69,19 @@ module Token = Lexing_cameligo.Token
 %token <Region.t> Let    "let"
 %token <Region.t> Match  "match"
 %token <Region.t> Mod    "mod"
+%token <Region.t> Land   "land"
+%token <Region.t> Lor    "lor"
+%token <Region.t> Lxor   "lxor"
+%token <Region.t> Lsl    "lsl"
+%token <Region.t> Lsr    "lsr"
 %token <Region.t> Not    "not"
 %token <Region.t> Of     "of"
 %token <Region.t> Or     "or"
 %token <Region.t> Then   "then"
-%token <Region.t> True   "true"
 %token <Region.t> Type   "type"
 %token <Region.t> With   "with"
 %token <Region.t> Module "module"
 %token <Region.t> Struct "struct"
-
-  (* Data constructors *)
-
-%token <Region.t> C_None "None"
-%token <Region.t> C_Some "Some"
 
   (* Virtual tokens *)
 

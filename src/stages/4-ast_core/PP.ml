@@ -81,6 +81,7 @@ and type_content : formatter -> type_content -> unit =
   | T_app              a -> type_app type_expression ppf a
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
+  | T_abstraction     x  -> abstraction   type_expression ppf x
 
 and row : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos=_ } ->
@@ -107,8 +108,8 @@ and expression_content ppf (ec : expression_content) =
   | E_lambda    l -> lambda expression type_expression ppf l
   | E_recursive r -> recursive expression type_expression ppf r
   | E_matching x -> fprintf ppf "%a" (match_exp expression type_expression) x
-  | E_let_in { let_binder ;rhs ; let_result; inline } ->
-    fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline expression let_result
+  | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation }} ->
+    fprintf ppf "@[let %a =@;<1 2>%a%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline option_no_mutation no_mutation expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_mod_in {module_binder; rhs; let_result;} ->
     fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]" module_variable module_binder module_ rhs expression let_result
@@ -120,11 +121,12 @@ and expression_content ppf (ec : expression_content) =
 and declaration ppf (d : declaration) =
   match d with
   | Declaration_type     dt -> declaration_type                type_expression ppf dt
-  | Declaration_constant {name = _ ; binder=b ; attr ; expr} ->
-      fprintf ppf "@[<2>const %a =@ %a%a@]"
+  | Declaration_constant {name = _ ; binder=b ; attr = { inline ; no_mutation } ; expr} ->
+      fprintf ppf "@[<2>const %a =@ %a%a%a@]"
         (binder type_expression) b
         expression expr
-        option_inline attr.inline
+        option_inline inline
+        option_no_mutation no_mutation
   | Declaration_module {module_binder;module_=m} ->
       fprintf ppf "@[<2>module %a =@ %a@]"
         module_variable module_binder

@@ -16,8 +16,8 @@ let m = {
 };
 let n = (a: int): int => a + 1;
 let o = (a: int): int => a + 1;
-let n = (a: int, b: int): int => a + 1;
-let o = (a: int, b: int): int => a + 1;
+let n = (a: int, _b: int): int => a + 1;
+let o = (a: int, _b: int): int => a + 1;
 let p = {{
     3;
 }};

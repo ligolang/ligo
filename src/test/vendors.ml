@@ -1,4 +1,3 @@
-open Trace
 open Test_helpers
 
 let uniq lst =
@@ -10,7 +9,7 @@ let uniq lst =
   in
   let _,lst = List.fold_left ~f:aux ~init:(s,[]) lst in
   lst
-let redblack () =
+let redblack ~raise:_ () =
   let open RedBlackTrees in
   Random.self_init ();
   let tree = RedBlack.empty in
@@ -37,7 +36,7 @@ let redblack () =
       if not @@ RedBlack.is_legal tree then failwith "Unbalanced tree";
       tree
   ) ~init:tree lst in
-  ok ()
+  ()
 
 
 let main = test_suite "Vendors" [

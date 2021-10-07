@@ -58,9 +58,9 @@ calculations for how expensive skipping needs to be to deter people
 from doing it just to chew up address space.  *)
 
 let buy (parameter, storage: buy * storage) =
-  let void: unit = 
-    if amount = storage.name_price 
-    then () 
+  let () : unit =
+    if amount = storage.name_price
+    then ()
     else (failwith "Incorrect amount paid.": unit)
   in
   let profile = parameter.profile in
@@ -79,7 +79,7 @@ let buy (parameter, storage: buy * storage) =
     Big_map.update new_id (Some new_id_details) identities
   in
   ([]: operation list), {storage with identities = updated_identities;
-                         next_id = new_id + 1; 
+                         next_id = new_id + 1;
                         }
 
 let update_owner (parameter, storage: update_owner * storage) =
@@ -94,7 +94,7 @@ let update_owner (parameter, storage: update_owner * storage) =
     | Some id_details -> id_details
     | None -> (failwith "This ID does not exist.": id_details)
   in
-  let u : unit =
+  let () : unit =
     if sender = current_id_details.owner
     then ()
     else failwith "You are not the owner of this ID."
@@ -121,7 +121,7 @@ let update_details (parameter, storage: update_details * storage) =
     | Some id_details -> id_details
     | None -> (failwith "This ID does not exist.": id_details)
   in
-  let u : unit =
+  let () : unit =
     if (sender = current_id_details.controller) || (sender = current_id_details.owner)
     then ()
     else failwith ("You are not the owner or controller of this ID.")
@@ -148,8 +148,8 @@ let update_details (parameter, storage: update_details * storage) =
   ([]: operation list), {storage with identities = updated_identities}
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
-let skip (p,storage: unit * storage) =
-  let void: unit =
+let skip (_,storage: unit * storage) =
+  let () : unit =
     if amount = storage.skip_price
     then ()
     else failwith "Incorrect amount paid."

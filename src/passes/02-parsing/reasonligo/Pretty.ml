@@ -1,12 +1,20 @@
 [@@@warning "-42"]
 
-module CST = Cst.Reasonligo
+module CST = Cst_reasonligo.CST
 open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
 module Option = Simple_utils.Option
 (*module Directive = LexerLib.Directive*)
+
+let pp_par printer (node : 'a par reg) =
+  let inside = node.value.inside
+  in string "(" ^^ nest 1 (printer inside ^^ string ")")
+
+let pp_braces printer (node : 'a braces reg) =
+  let inside = node.value.inside
+  in string "{" ^^ nest 1 (printer inside ^^ string "}")
 
 let rec print ast =
   let decl = Utils.nseq_to_list ast.decl in
@@ -89,25 +97,19 @@ and pp_pattern = function
 | PRecord r -> pp_precord r
 | PTyped  t -> pp_ptyped t
 
-and pp_pvar {var; attributes} = pp_ident var ^^ pp_attributes attributes
+and pp_pvar {value; _} =
+  let {variable; attributes} = value in
+  let v = pp_ident variable in
+  if attributes = [] then v
+  else group (pp_attributes attributes ^/^ v)
 
-and pp_pconstr = function
-  PNone      _ -> string "None"
-| PSomeApp   p -> pp_patt_some p
-| PFalse  _ -> string "false"
-| PTrue   _ -> string "true"
-| PConstrApp a -> pp_patt_c_app a
-
-and pp_patt_c_app {value; _} =
+and pp_pconstr {value; _} =
   match value with
     constr, None -> pp_ident constr
   | constr, Some (PVar _ as pat) ->
       prefix 2 1 (pp_ident constr)  (pp_pattern pat)
   | constr, Some (_ as pat)->
       prefix 2 0 (pp_ident constr)  (pp_pattern pat)
-
-and pp_patt_some {value; _} =
-  prefix 2 1 (string "Some") (pp_pattern (snd value))
 
 and pp_int {value; _} =
   string (Z.to_string (snd value))
@@ -153,9 +155,20 @@ and pp_ptyped {value; _} =
   group (pp_pattern pattern ^^ string ": " ^^ pp_type_expr type_expr)
 
 and pp_type_decl decl =
-  let {name; type_expr; _} = decl.value in
-  string "type " ^^ pp_ident name ^^ string " = "
+  let {name; params; type_expr; _} = decl.value in
+  string "type " ^^ pp_ident name
+  ^^ pp_type_params params
+  ^^ string " = "
   ^^ group (pp_type_expr type_expr) ^^ string ";"
+
+and pp_type_params = function
+  None -> empty
+| Some {value; _} ->
+    let vars = pp_nsepseq "," pp_quoted_param value.inside
+    in string "(" ^^ nest 1 (vars ^^ string ")")
+
+and pp_quoted_param param =
+  pp_ident {param with value = "'" ^ param.value.name.value}
 
 and pp_module_decl decl =
   let {name; module_; _} = decl.value in
@@ -185,7 +198,7 @@ and pp_expr = function
 | EBytes      e -> pp_bytes e
 | EUnit       _ -> string "()"
 | ETuple      e -> pp_tuple_expr e
-| EPar        e -> pp_par_expr e
+| EPar        e -> pp_par pp_expr e
 | ELetIn      e -> pp_let_in e
 | ETypeIn     e -> pp_type_in e
 | EModIn      e -> pp_mod_in e
@@ -217,13 +230,20 @@ and pp_clause {value; _} =
 and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
   let if_then =
-    string "if" ^^ string " (" ^^ pp_expr test ^^ string ")" ^^ string " {" ^^ break 0
-    ^^ group (nest 2 (break 2 ^^ pp_expr (fst ifso.inside))) ^^ hardline ^^ string "}" in
+    string "if" ^^ pp_test_expr test ^^ string " {" ^^ break 0
+    ^^ group (nest 2 (break 2 ^^ pp_expr (fst ifso.value.inside))) ^^ hardline ^^ string "}" in
   match ifnot with
     None -> if_then
-  | Some (_,{inside=(ifnot,_);_}) ->
-    if_then
-    ^^ string " else" ^^ string " {" ^^ break 0 ^^ group (nest 2 (break 2 ^^ pp_expr ifnot)) ^^ hardline ^^ string "}"
+  | Some (_,branch) ->
+      let expr = fst branch.value.inside in
+      if_then
+      ^^ string " else"
+      ^^ string " {" ^^ break 0
+      ^^ group (nest 2 (break 2 ^^ pp_expr expr ^^ hardline) ^^ string "}")
+
+and pp_test_expr = function
+  `Parens e -> pp_par pp_expr e
+| `Braces e -> pp_braces pp_expr e
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value in
@@ -238,8 +258,6 @@ and pp_bool_expr = function
   Or   e  -> pp_bin_op "||" e
 | And  e  -> pp_bin_op "&&" e
 | Not  e  -> pp_un_op "!" e
-| True  _ -> string "true"
-| False _ -> string "false"
 
 and pp_bin_op op {value; _} =
   let {arg1; arg2; _} = value
@@ -263,6 +281,11 @@ and pp_arith_expr = function
 | Mult  e -> pp_bin_op "*" e
 | Div   e -> pp_bin_op "/" e
 | Mod   e -> pp_bin_op "mod" e
+| Land  e -> pp_bin_op "land" e
+| Lor   e -> pp_bin_op "lor" e
+| Lxor  e -> pp_bin_op "lxor" e
+| Lsl   e -> pp_bin_op "lsl" e
+| Lsr   e -> pp_bin_op "lsr" e
 | Neg   e -> string "-" ^^ pp_expr e.value.arg
 | Int   e -> pp_int e
 | Nat   e -> pp_nat e
@@ -294,18 +317,10 @@ and pp_injection :
         string opening ^^ nest 1 elements ^^ string closing
 
 and pp_compound = function
-| Braces   (_, _) -> ("{","}")
-| Brackets (_, _) -> ("[","]")
+| `Braces   (_, _) -> ("{","}")
+| `Brackets (_, _) -> ("[","]")
 
-and pp_constr_expr = function
-  ENone      _ -> string "None"
-| ESomeApp   a -> pp_some a
-| EConstrApp a -> pp_constr_app a
-
-and pp_some {value=_, e; _} =
-  prefix 4 1 (string "Some") (pp_expr e)
-
-and pp_constr_app {value; _} =
+and pp_constr_expr {value; _} =
   let constr, arg = value in
   let constr = string constr.value in
   match arg with
@@ -398,9 +413,6 @@ and pp_tuple_expr {value; _} =
      then nest 1 (pp_expr head)
      else nest 1 (pp_expr head ^^ string "," ^^ app (List.map snd tail))
 
-and pp_par_expr {value; _} =
-  string "(" ^^ nest 1 (pp_expr value.inside ^^ string ")")
-
 and pp_let_in {value; _} =
   let {binding; kwd_rec; body; attributes; _} = value in
   let let_str =
@@ -471,10 +483,10 @@ and pp_type_expr = function
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
 | TVar t    -> pp_ident t
-| TWild   _ -> string "_"
 | TString s -> pp_string s
 | TInt    i -> pp_int i
 | TModA   t -> pp_module_access pp_type_expr t
+| TArg    t -> pp_quoted_param t
 
 and pp_cartesian {value; _} =
   let head, tail = value.inside in
@@ -504,12 +516,13 @@ and pp_sum_type {value; _} =
   else pp_attributes attributes ^/^ whole
 
 and pp_variant {value; _} =
-  let {constr; arg; attributes=attr} = value in
+  let {constr; args; attributes=attr} = value in
   let pre = if attr = [] then pp_ident constr
             else group (pp_attributes attr ^/^ pp_ident constr) in
-  match arg with
+  match args with
     None -> pre
-  | Some (_,e) -> prefix 2 0 pre (string "(" ^^ pp_type_expr e ^^ string ")")
+  | Some {value={inside=e; _}; _} ->
+      prefix 2 0 pre (string "(" ^^ pp_type_expr e ^^ string ")")
 
 and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 
@@ -554,7 +567,7 @@ let print_type_expr = pp_type_expr
 let print_pattern   = pp_pattern
 let print_expr      = pp_expr
 
-type cst        = Cst.Reasonligo.t
-type expr       = Cst.Reasonligo.expr
-type type_expr  = Cst.Reasonligo.type_expr
-type pattern    = Cst.Reasonligo.pattern
+type cst       = CST.t
+type expr      = CST.expr
+type type_expr = CST.type_expr
+type pattern   = CST.pattern

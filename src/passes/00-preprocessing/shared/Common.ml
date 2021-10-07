@@ -1,9 +1,5 @@
 (* Interfacing the preprocessor. *)
 
-(* Vendor dependencies *)
-
-module Trace = Simple_utils.Trace
-
 (* CONFIGURATION *)
 
 type file_path = string
@@ -59,10 +55,6 @@ module Config (File : FILE) (Comments : Comments.S) =
 
 module Make (File : File.S) (Comments : Comments.S) =
   struct
-    (* Vendor dependencies *)
-
-    module Trace = Simple_utils.Trace
-
     (* Directories and files *)
 
     type nonrec file_path = file_path
@@ -73,18 +65,18 @@ module Make (File : File.S) (Comments : Comments.S) =
     module Errors = Errors
 
     type success = Preprocessor.API.success
-    type result  = (success, Errors.t) Trace.result
+    type nonrec result  = (success, Errors.t) result
 
     (* Postlude *)
 
     let finalise show_pp = function
-      Stdlib.Error (_, msg) ->
-        Trace.fail @@ Errors.generic msg
+      Error (_, msg) ->
+        Error (Errors.generic msg)
     | Ok (buffer, deps) ->
         let string = Buffer.contents buffer in
         if show_pp then
           Printf.printf "%s\n%!" string;
-        Trace.ok (buffer, deps)
+        Ok (buffer, deps)
 
     (* Preprocessing a file *)
 

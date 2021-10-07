@@ -166,7 +166,7 @@ let different_types a b = `Typer_different_types (a,b)
 let different_constant_tag_number_of_arguments loc opa opb lena lenb = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
 let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
-let could_not_remove = fun constraints -> `Typer_could_not_remove constraints
+let could_not_remove (constraints : Ast_core.type_constraint_simpl) = `Typer_could_not_remove constraints
 let trace_debug (msg : string) (err : typer_error) : typer_error = `Trace_debug (msg,err)
 let solver_made_no_progress (msg : string) : typer_error = `Typer_solver_no_progress msg
 
@@ -340,12 +340,12 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
         Snippet.pp l
     | `Typer_bad_substraction loc ->
-      Format.fprintf f "@[<hv>%a@.Invalid subtraction.
-The following forms of subtractions are possible:
-  * timestamp - int = timestamp
-  * timestamp - timestamp = int
-  * int/nat - int/nat = int
-  * mutez/tez - mutez/tez = mutez.@]"
+      Format.fprintf f "@[<hv>%a@.Invalid subtraction.\
+        @.The following forms of subtractions are possible:\
+        @.  * timestamp - int = timestamp\
+        @.  * timestamp - timestamp = int\
+        @.  * int/nat - int/nat = int\
+        @.  * mutez/tez - mutez/tez = mutez.@]"
         Snippet.pp loc
     | `Typer_wrong_size (loc,_t) ->
       Format.fprintf f

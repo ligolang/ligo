@@ -4,7 +4,7 @@ open Memory_proto_alpha
 
 let (>>??) = Alpha_environment.Error_monad.(>>?)
 
-let alpha_wrap a = Alpha_environment.wrap_error a
+let alpha_wrap a = Alpha_environment.wrap_tzresult a
 let alpha_error_wrap x = Memory_proto_alpha.Alpha_environment.Ecoproto_error x
 
 let force_ok_alpha ~msg a = force_ok ~msg @@ alpha_wrap a

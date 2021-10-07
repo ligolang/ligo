@@ -17,7 +17,7 @@
   (libraries
     ;; LIGO
     lexing_cameligo
-    cst
+    cst_cameligo
     ;; Vendors
     simple-utils
     ParserLib
@@ -38,11 +38,10 @@
     lexing_cameligo
     parsing_shared
     parsing_cameligo
-    cst
+    cst_cameligo
     ;; Third party
     hex)
-  (modules ParserMain Parser_msg)
-)
+  (modules ParserMain Parser_msg))
 
 ;; Build of the covering of error states in the LR automaton
 

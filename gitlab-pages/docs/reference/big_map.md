@@ -1,23 +1,23 @@
 ---
 id: big-map-reference
 title: Big_map
-description: A lazily deserialized map that's intended to store large amounts of data.
+description: A lazily deserialised map that's intended to store large amounts of data.
 hide_table_of_contents: true
 ---
 
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-A lazily deserialized map that's intended to store large amounts of data. 
+A lazily deserialised map that's intended to store large amounts of data. 
 "Lazily" means that storage is read or written per key on demand. Therefore 
 there are no `map`, `fold`, and `iter` operations as there are in 
 [Map](map.md).
 
-Compared to non-lazy maps, which have a high upfront gas cost to deserialize all
-the data and then have cheaper access costs thereafter, lazily-deserialized maps
+Compared to non-lazy maps, which have a high upfront gas cost to deserialise all
+the data and then have cheaper access costs thereafter, lazily-deserialised maps
 spread this cost out across each access, increasing the per-access gas costs,
 but providing a cheaper overall cost when only a small portion of a large 
-dataset is needed.
+data-set is needed.
 
 <SyntaxTitle syntax="pascaligo">
 function empty : big_map ('key, 'value)
@@ -445,7 +445,7 @@ let updated_map: register =
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map
-let updated_map: register =
+let updated_map_: register =
   Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves); 
 ```
 

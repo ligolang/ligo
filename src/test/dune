@@ -7,6 +7,7 @@
     tezos-memory-proto-alpha
     ligo
     repl
+    interpreter
     alcotest
     tezos-utils
     tezos-crypto

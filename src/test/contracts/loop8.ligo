@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function for_collection_set (var nee : unit) : int * string is
+function for_collection_set (var _ : unit) : int * string is
   block {
     var acc : int := 0;
     var st : string := "to";

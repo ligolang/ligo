@@ -42,6 +42,7 @@ and type_content = function
   | T_constant        t -> `List [ `String "t_constant"; type_injection t]
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
+  | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t]
 
 and type_injection {language;injection;parameters} =
   `Assoc [
@@ -122,12 +123,18 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and let_in {let_binder;rhs;let_result;inline} =
+and attribute {inline;no_mutation} =
+  `Assoc [
+    ("inline", `Bool inline);
+    ("no_mutation", `Bool no_mutation);
+  ]
+
+and let_in {let_binder;rhs;let_result;attr} =
   `Assoc [
     ("let_binder", expression_variable_to_yojson let_binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
-    ("inline", `Bool inline);
+    ("attr", attribute attr);
   ]
 
 and mod_in {module_binder;rhs;let_result} =
@@ -200,12 +207,12 @@ and declaration_type {type_binder;type_expr} =
     ("type_expr", type_expression type_expr);
   ]
 
-and declaration_constant {name; binder;inline;expr} =
+and declaration_constant {name; binder;expr;attr} =
   `Assoc [
     ("name", option' string name);
     ("binder",expression_variable_to_yojson binder);
     ("expr", expression expr);
-    ("attribute", `Bool inline);
+    ("attr", attribute attr);
   ]
 
 and declaration_module {module_binder;module_} =
@@ -254,10 +261,15 @@ and environment_binding {expr_var;env_elt} =
   ]
 and expression_environment e = list environment_binding e
 
+and type_or_kind x =
+  match x with
+  | Ty ty -> `List [ `String "Ty"; type_expression ty]
+  | Kind () -> `List [ `String "Kind"; `Null ]
+
 and type_environment_binding {type_variable;type_} =
   `Assoc [
     ("type_variable", type_variable_to_yojson type_variable);
-    ("type_", type_expression type_);
+    ("type_", type_or_kind type_);
   ]
 and type_environment e = list type_environment_binding e
 

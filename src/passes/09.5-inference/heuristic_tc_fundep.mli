@@ -10,13 +10,13 @@ val heuristic : <
   ..
 > ex_heuristic_plugin
 
-val restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> (c_typeclass_simpl, typer_error) result
+val restrict : raise:typer_error raise -> (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl
 
 type deduce_and_clean_result = {
   deduced : constructor_or_row list ;
   cleaned : c_typeclass_simpl ;
   changed : bool ;
 }
-val deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (deduce_and_clean_result, typer_error) result
+val deduce_and_clean : raise:typer_error raise -> (type_variable -> type_variable) -> c_typeclass_simpl -> deduce_and_clean_result
 
 val pp_deduce_and_clean_result_short : Format.formatter -> deduce_and_clean_result -> unit

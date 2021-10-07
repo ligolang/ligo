@@ -56,6 +56,8 @@ function check_message (const param : check_message_pt;
       end
     };
 
+    var _ := keys;
+
     if valid < s.threshold then
       failwith ("Not enough signatures passed the check")
     else s.counter := s.counter + 1n

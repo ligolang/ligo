@@ -6,14 +6,8 @@ module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module CST    = Cst.Jsligo
+module CST    = Cst_jsligo.CST
 module Errors = Parsing_shared.Errors
-
-(* Results *)
-
-type cst    = (CST.t,    Errors.t) Trace.result
-type expr   = (CST.expr, Errors.t) Trace.result
-type buffer = (Buffer.t, Errors.t) Trace.result
 
 (* Parsing *)
 
@@ -25,15 +19,15 @@ type file_path = string
    comes originally from a string, and [expression] assumes that is
    contents is an expression and comes from a string. *)
 
-val from_file   : Buffer.t -> file_path -> cst
-val from_string : Buffer.t -> cst
-val expression  : Buffer.t -> expr
+val from_file   : raise:Errors.t Trace.raise -> Buffer.t -> file_path -> CST.t
+val from_string : raise:Errors.t Trace.raise -> Buffer.t -> CST.t
+val expression  : raise:Errors.t Trace.raise -> Buffer.t -> CST.expr
 
 (* Aliases *)
 
-val parse_file       : Buffer.t -> file_path -> cst
-val parse_string     : Buffer.t -> cst
-val parse_expression : Buffer.t -> expr
+val parse_file       : raise:Errors.t Trace.raise -> Buffer.t -> file_path -> CST.t
+val parse_string     : raise:Errors.t Trace.raise -> Buffer.t -> CST.t
+val parse_expression : raise:Errors.t Trace.raise -> Buffer.t -> CST.expr
 
 (* Pretty-printing *)
 
@@ -44,5 +38,5 @@ val pretty_print            : CST.t -> Buffer.t
 val pretty_print_expression : CST.expr -> Buffer.t
 val pretty_print_pattern    : CST.pattern -> Buffer.t
 val pretty_print_type_expr  : CST.type_expr -> Buffer.t
-val pretty_print_file       : Buffer.t -> file_path -> buffer
-val pretty_print_cst        : Buffer.t -> file_path -> buffer
+val pretty_print_file       : raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t
+val pretty_print_cst        : raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t

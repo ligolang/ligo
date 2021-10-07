@@ -3,7 +3,7 @@ module Set = RedBlackTrees.PolySet
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
-type ('selector_output , 'errors) propagator = 'selector_output -> (Ast_core.type_variable -> Ast_core.type_variable) -> (Ast_core.updates, 'errors) result
+type ('selector_output , 'errors) propagator = raise:'errors raise -> 'selector_output -> (Ast_core.type_variable -> Ast_core.type_variable) -> Ast_core.updates
 
 (* TODO: move this with the AST, probably? *)
 module Axioms = Axioms
@@ -75,7 +75,7 @@ type ('old, 'new_) merge_keys = {
 type ('state, 'a , 'b) normalizer = 'state -> 'a -> ('state * 'b PolySet.t)
 
 (* type normalizer_rm state a = state → a → MonadError typer_error state *)
-type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_common.Errors.typer_error) Trace.result
+type ('state, 'a) normalizer_rm = raise:Typer_common.Errors.typer_error raise -> 'state -> 'a -> 'state
 
 module INDEXER_PLUGIN_TYPE =
   functor
@@ -100,11 +100,12 @@ module INDEXER_PLUGIN_TYPE =
       (* Update the state when a constraint is removed *)
       (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
       val remove_constraint :
+        raise:Type_variable_abstraction.Errors.typer_error raise ->
         (Format.formatter -> 'type_variable -> unit) ->
         (Type_variable.t -> 'type_variable) ->
         'type_variable t ->
         type_constraint_simpl ->
-        ('type_variable t, Type_variable_abstraction.Errors.typer_error) Trace.result
+        'type_variable t
       (* Update the state to merge entries of maps and sets of type
          variables.  *)
       val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
@@ -171,9 +172,8 @@ module type Mapped_function = sig
   type extra_args
   module MakeInType : PerPluginType
   module MakeOutType : PerPluginType
-  module Monad : Monad
   module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Type_variable)(Opaque_type_variable).S) : sig
-    val f : string -> extra_args -> MakeInType(Indexer_plugin).t -> MakeOutType(Indexer_plugin).t Monad.t
+    val f : raise:Typer_common.Errors.typer_error raise -> string -> extra_args -> MakeInType(Indexer_plugin).t -> MakeOutType(Indexer_plugin).t
   end
 end
 
@@ -201,9 +201,10 @@ module type IndexerPlugins = sig
   module Map_indexer_plugins : functor (F : Mapped_function) ->
   sig
     val f :
+      raise: Typer_common.Errors.typer_error raise ->
       F.extra_args ->
       (Indexers_plugins_fields(F.MakeInType).flds) ->
-      (Indexers_plugins_fields(F.MakeOutType).flds F.Monad.t)
+      (Indexers_plugins_fields(F.MakeOutType).flds)
   end
 end
 

@@ -53,6 +53,7 @@ let type_expression_tag ty_cont =
   | T_app             _ -> 5
   | T_module_accessor _ -> 6
   | T_singleton       _ -> 7
+  | T_abstraction         _ -> 8
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -93,8 +94,9 @@ and type_content a b =
   | T_app      a, T_app      b -> app a b
   | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
   | T_singleton a , T_singleton b -> literal a b
-  | (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _),
-    (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _) ->
+  | T_abstraction a , T_abstraction b -> for_all a b
+  | (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _),
+    (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 
@@ -126,6 +128,11 @@ and app {type_operator=ta;arguments=aa} {type_operator=tb;arguments=ab} =
   cmp2
     type_variable ta tb
     (List.compare type_expression) aa ab
+
+and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _ ; type_ = tb } =
+  cmp2
+    type_expression ta tb
+    type_variable ba.wrap_content bb.wrap_content
 
 let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
   Int.compare (constant_tag ct ) (constant_tag ct2 )
@@ -221,12 +228,13 @@ and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb
     type_expression     fta ftb
     lambda               la  lb
 
-and let_in {let_binder=ba;rhs=ra;let_result=la;inline=aa} {let_binder=bb;rhs=rb;let_result=lb;inline=ab} =
-  cmp4
+and let_in {let_binder=ba;rhs=ra;let_result=la;attr={inline=aa;no_mutation=nma }} {let_binder=bb;rhs=rb;let_result=lb;attr={inline=ab;no_mutation=nmb}} =
+  cmp5
     (binder type_expression) ba bb
     expression ra rb
     expression la lb
     bool  aa ab
+    bool  nma nmb
 
 and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_result=lb} =
   cmp3
@@ -309,12 +317,13 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia}} {name=nb;binder=bb;expr=eb;attr={inline=ib}} =
-  cmp4
+and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb}} =
+  cmp5
     (Option.compare String.compare) na nb
     (binder type_expression) ba bb
     expression ea eb
     bool ia ib
+    bool nma nmb
 
 and declaration_type {type_binder=tba;type_expr=tea} {type_binder=tbb;type_expr=teb} =
   cmp2

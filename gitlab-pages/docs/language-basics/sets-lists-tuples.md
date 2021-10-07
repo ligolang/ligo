@@ -174,8 +174,8 @@ let [first_name, last_name]: full_name = full_name;
 This also works in functions:
 
 ```jsligo group=tuple
-let first_name = ([first_name, _]: full_name):string => first_name;
-let alice = first_name(full_name);
+let first_name_fun = ([first_name, _]: full_name):string => first_name;
+let alice = first_name_fun(full_name);
 ```
 
 Notice that we use the underscore to indicate that we ignore the last element
@@ -220,7 +220,7 @@ let first_name : string = full_name[0];
 <Syntax syntax="jsligo">
 
 ```jsligo group=tuple
-let first_name: string = full_name[0];
+let first_name_component: string = full_name[0];
 ```
 
 </Syntax>
@@ -409,8 +409,6 @@ function iter_op (const l : list (int)) : unit is
   } with List.iter (iterated, l)
 ```
 
-> Note that `list_iter` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -463,8 +461,6 @@ function increment (const i : int): int is i + 1
 const plus_one : list (int) = List.map (increment, larger_list)
 ```
 
-> Note that `list_map` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -506,7 +502,7 @@ function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
 traversal of the data structure is over. Folding can be done in two
-ways, labeled with the directions left and right. One way to tell them
+ways, labelled with the directions left and right. One way to tell them
 apart is to look where the folded function, and the fold itself, keep
 the accumulator in their signatures. Take for example a function `f`, 
 a list `[1; 2; 3; 4; 5]`, and an accumulator that's just an empty
@@ -525,8 +521,6 @@ Here is an example of their use.
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 ```
-
-> Note that `list_fold` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -602,7 +596,7 @@ In JsLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
 
 ```jsligo group=sets
-let my_set: set<int> = Set.empty;
+let my_empty_set: set<int> = Set.empty;
 ```
 
 </Syntax>
@@ -624,8 +618,8 @@ You can check that `2` is not repeated in `my_set` by using the LIGO
 compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
@@ -645,8 +639,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
@@ -667,8 +661,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
@@ -685,8 +679,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo my_set
+ligo run evaluate-expr
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo --entry-point my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
@@ -753,8 +747,6 @@ elements in a given set as follows.
 const cardinal : nat = Set.size (my_set)
 ```
 
-> Note that `size` is *deprecated*.
-
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -796,8 +788,6 @@ modify it in-place. First, let us consider the former way:
 const larger_set  : set (int) = Set.add (4, my_set)
 const smaller_set : set (int) = Set.remove (3, my_set)
 ```
-
-> Note that `set_add` and `set_remove` are *deprecated*.
 
 If we are in a block, we can use an instruction to modify the set
 bound to a given variable. This is called a *patch*. It is only
@@ -892,8 +882,6 @@ function iter_op (const s : set (int)) : unit is
       if i > 2 then Unit else (failwith ("Below range.") : unit)
   } with Set.iter (iterated, s)
 ```
-
-> Note that `set_iter` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -993,8 +981,6 @@ has been added to properly conform to the function signature of OCaml's
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
 ```
-
-> Note that `set_fold` is *deprecated*.
 
 It is possible to use a *loop* over a set as well.
 

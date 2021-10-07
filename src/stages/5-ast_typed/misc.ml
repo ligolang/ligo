@@ -138,6 +138,11 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
+  | T_abstraction a , T_abstraction b ->
+    let compare_kind ka kb = (ka = kb) in
+    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
+    Some (assert (compare_kind a.kind b.kind))
+  | T_abstraction _ , _ -> None
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
@@ -237,7 +242,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
 let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { name = name' ; binder = _ ; expr ; inline=_ } -> (
+    | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _}} -> (
       if match name' with None -> false | Some name' -> String.equal name name'
       then Some expr
       else None

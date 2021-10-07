@@ -15,8 +15,7 @@ module type TOKEN =
     val to_string : offsets:bool -> [`Byte | `Point] -> token -> string
     val to_region : token -> Region.t
     val is_eof    : token -> bool
-
-    val eof       : Region.t -> token
+    val mk_eof    : Region.t -> token
   end
 
 (* Generic signature of input lexers *)
@@ -93,7 +92,7 @@ module Make (Lexer: LEXER)
       let invalid_eof =
         object
           method last_token    = None
-          method current_token = Token.eof Region.ghost
+          method current_token = Token.mk_eof Region.ghost
         end in
       match Lexer.get_window () with
         None -> invalid_eof

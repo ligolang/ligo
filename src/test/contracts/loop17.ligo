@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function inner_capture_in_conditional_block (var nee : unit) : bool * int is
+function inner_capture_in_conditional_block (var _ : unit) : bool * int is
   block {
     var count : int := 1;
     var ret : bool := False;

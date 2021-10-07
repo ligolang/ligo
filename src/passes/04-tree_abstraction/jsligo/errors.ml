@@ -6,14 +6,11 @@ module Parsing = Parsing.Jsligo
 let stage = "abstracter"
 
 type abs_error = [
-  | `Concrete_jsligo_unknown_predefined_type of Raw.type_constr
   | `Concrete_jsligo_unknown_constant of string * Location.t
   | `Concrete_jsligo_unknown_constructor of string * Location.t
   | `Concrete_jsligo_recursive_fun of Region.t
   | `Concrete_jsligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_jsligo_unsupported_string_singleton of Raw.type_expr
-  | `Concrete_jsligo_unsupported_twild of Raw.type_expr
-  | `Concrete_jsligo_unsupported_deep_list_pattern of Raw.pattern
   | `Concrete_jsligo_michelson_type_wrong of Raw.type_expr * string
   | `Concrete_jsligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_jsligo_recursion_on_non_function of Location.t
@@ -24,7 +21,7 @@ type abs_error = [
   | `Concrete_jsligo_not_a_valid_parameter of Raw.expr
   | `Concrete_jsligo_rest_not_supported_here of Raw.property
   | `Concrete_jsligo_property_not_supported of Raw.property
-  | `Concrete_jsligo_expected_an_expression of Raw.array_item 
+  | `Concrete_jsligo_expected_an_expression of Raw.array_item
   | `Concrete_jsligo_new_not_supported of Raw.expr
   | `Concrete_jsligo_invalid_case of string * Raw.expr
   | `Concrete_jsligo_invalid_constructor of Raw.type_expr
@@ -41,14 +38,11 @@ type abs_error = [
   | `Concrete_jsligo_invalid_list_pattern_match of Raw.array_item list
   ]
 
-let unknown_predefined_type name = `Concrete_jsligo_unknown_predefined_type name
 let unknown_constant s loc = `Concrete_jsligo_unknown_constant (s,loc)
 let unknown_constructor s loc = `Concrete_jsligo_unknown_constructor (s,loc)
 let untyped_recursive_fun reg = `Concrete_jsligo_recursive_fun reg
 let unsupported_pattern_type pl = `Concrete_jsligo_unsupported_pattern_type pl
-let unsupported_deep_list_patterns cons = `Concrete_jsligo_unsupported_deep_list_pattern cons
 let unsupported_string_singleton te = `Concrete_jsligo_unsupported_string_singleton te
-let unsupported_twild te = `Concrete_jsligo_unsupported_twild te
 let recursion_on_non_function reg = `Concrete_jsligo_recursion_on_non_function reg
 let michelson_type_wrong texpr name = `Concrete_jsligo_michelson_type_wrong (texpr,name)
 let michelson_type_wrong_arity loc name = `Concrete_jsligo_michelson_type_wrong_arity (loc,name)
@@ -81,11 +75,6 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Concrete_jsligo_unknown_predefined_type type_name ->
-      Format.fprintf f
-        "@[<hv>%a@.Unknown type \"%s\". @]"
-        Snippet.pp_lift type_name.Region.region
-        type_name.Region.value
     | `Concrete_jsligo_unknown_constant (s,loc) ->
       Format.fprintf f
       "@[<hv>%a@.Unknown constant: %s"
@@ -100,29 +89,19 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp_lift reg
     | `Concrete_jsligo_unsupported_pattern_type pl ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid pattern matching.
-If this is pattern matching over Booleans, then \"true\" or \"false\" is expected.
-If this is pattern matching on a list, then one of the following is expected:
-  * an empty list pattern \"[]\";
-  * a cons list pattern \"[head, ...tail]\".
-If this is pattern matching over variants, then a constructor of a variant is expected.
-
-Other forms of pattern matching are not (yet) supported. @]"
+        "@[<hv>%a@.Invalid pattern matching.\
+        @.  If this is pattern matching over Booleans, then \"true\" or \"false\" is expected.\
+        @.  If this is pattern matching on a list, then one of the following is expected:\
+        @.    * an empty list pattern \"[]\";\
+        @.    * a cons list pattern \"[head, ...tail]\".\
+        @.  If this is pattern matching over variants, then a constructor of a variant is expected.\
+        @.\
+        @.  Other forms of pattern matching are not (yet) supported. @]"
         Snippet.pp_lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_jsligo_unsupported_string_singleton te ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type. @.It's not possible to assign a string to a type. @]"
         Snippet.pp_lift (Raw.type_expr_to_region te)
-    | `Concrete_jsligo_unsupported_twild te ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type. @.It's not possible to use _ in a type. @]"
-        Snippet.pp_lift (Raw.type_expr_to_region te)
-    | `Concrete_jsligo_unsupported_deep_list_pattern cons ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected:
-  * an empty list pattern \"[]\";
-  * a cons list pattern \"head :: tail\".@]"
-        Snippet.pp_lift @@ Raw.pattern_to_region cons
     | `Concrete_jsligo_recursion_on_non_function reg ->
       Format.fprintf f "@[<hv>%a@.Invalid let declaration.@.Only functions can be recursive. @]"
         Snippet.pp reg
@@ -241,15 +220,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Concrete_jsligo_unknown_predefined_type type_name ->
-    let message = `String "Unknown predefined type" in
-    let t = `String type_name.Region.value in
-    let loc = Format.asprintf "%a" Location.pp_lift type_name.Region.region in
-    let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("type", t ) ] in
-    json_error ~stage ~content
   | `Concrete_jsligo_unknown_constant (s,loc) ->
     let message = `String ("Unknow constant: " ^ s) in
     let content = `Assoc [
@@ -282,20 +252,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
   | `Concrete_jsligo_unsupported_string_singleton te ->
     let message = `String "Unsupported singleton string type" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
-    let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
-    json_error ~stage ~content
-  | `Concrete_jsligo_unsupported_twild te ->
-    let message = `String "Unsupported _ in type" in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
-    let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
-    json_error ~stage ~content
-  | `Concrete_jsligo_unsupported_deep_list_pattern cons ->
-    let message = `String "Currently, only empty lists and x::y are supported in list patterns" in
-    let loc = Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region cons in
     let content = `Assoc [
       ("message", message );
       ("location", `String loc);] in
@@ -365,7 +321,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("message", message );
       ("location", `String loc);] in
     json_error ~stage ~content
-  | `Concrete_jsligo_property_not_supported p -> 
+  | `Concrete_jsligo_property_not_supported p ->
     let message = `String "This kind of property not supported here." in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.property_to_region p) in
     let content = `Assoc [

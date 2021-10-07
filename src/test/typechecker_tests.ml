@@ -3,7 +3,6 @@ module Core = Typesystem.Core
 open Ast_core.Types
 open Ast_core.Reasons
 open Ast_core.Combinators
-open Trace
 
 module Random_type_generator = struct
 
@@ -46,7 +45,7 @@ module Random_type_generator = struct
         return i (concrete_t tvar cor) tmap
       | _ -> failwith "fix definition of n above"
     )
-  let generate nb_type max_depth =
+  let generate ~raise nb_type max_depth =
     let base_type1 = make_constructor_or 0 None base_t_1 C_int [] in
     let base_type2 = make_constructor_or 0 None base_t_2 C_nat [] in
     let init_map = [
@@ -68,15 +67,15 @@ module Random_type_generator = struct
     in
     let repr_mock : type_variable -> type_variable = fun tv -> tv in (*no aliases*)
     let all_vars : type_variable list = List.map ~f:(fun ({var ;_}:m) -> var) map in
-    let test_checker constraints_list =
-      trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.inference_tracer) @@
-      Inference.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+    let test_checker ~raise constraints_list =
+      Trace.trace ~raise (Main_errors.test_tracer "typechecker tests") @@
+      (fun ~raise -> Trace.trace ~raise (Main_errors.inference_tracer)
+      (Inference.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock))
     in
-    let test_checker_neg lst =
-      Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
+    let test_checker_neg ~raise lst =
+      Trace.Assert.assert_fail ~raise (Main_errors.test_internal "This check should raise.raise") (test_checker lst)
     in
-    (map,test_checker,test_checker_neg)
+    (map,test_checker ~raise,test_checker_neg ~raise)
   let build_constraint : m list -> type_constraint_simpl list = fun m ->
     List.filter_map ~f:(fun { var=_ ; cor_opt } -> match cor_opt with
       | Some (`Constructor c) -> Some (SC_Constructor c)
@@ -119,62 +118,62 @@ module Small_env_manual_test = struct
     | j' when Var.equal j' j -> Some (make_row_or 8 None j C_record [(Label "baz", b) ; (Label "goo", e)])
     | k' when Var.equal k' k -> Some (make_constructor_or 9 None k C_arrow [h ; c])
     | v -> failwith ("test internal : FIND_ASSIGNENT_MOCK" ^ (Format.asprintf "%a" Var.pp v))
-  let test_checker constraints_list =
-    trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.inference_tracer) @@
+  let test_checker ~raise constraints_list =
+    Trace.trace ~raise (Main_errors.test_tracer "typechecker tests") @@
+      fun ~raise -> Trace.trace ~raise (Main_errors.inference_tracer) @@
         Inference.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
-  let test_checker_neg lst =
-    Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
+  let test_checker_neg ~raise lst =
+    Trace.Assert.assert_fail ~raise (Main_errors.test_internal "This check should raise.raise") (test_checker lst)
 end
 
-let alias () =
+let alias ~raise () =
   let open Small_env_manual_test in
   let al_ok = make_alias a b in
   let al_nok = make_alias a c in
-  let* () = test_checker [al_ok] in
-  let* () = test_checker_neg [al_nok] in
-  ok ()
+  let () = test_checker ~raise [al_ok] in
+  let () = test_checker_neg ~raise [al_nok] in
+  ()
   
-let constructor () =
+let constructor ~raise () =
   let open Small_env_manual_test in
   let ctor_ok = make_sc_constructor 1 None a C_map [c ; d] in
-  let* () = test_checker [ctor_ok] in
+  let () = test_checker ~raise [ctor_ok] in
   let ctor_ok2 = make_sc_constructor 2 None b C_map [c ; d] in
-  let* () = test_checker [ctor_ok2] in
+  let () = test_checker ~raise [ctor_ok2] in
   let ctor_ok3 = make_sc_constructor 3 None k C_arrow [ g ; c] in
-  let* () = test_checker [ctor_ok3] in
+  let () = test_checker ~raise [ctor_ok3] in
   let ctor_nok = make_sc_constructor 4 None a C_list [c] in
-  let* () = test_checker_neg [ctor_nok] in
-  ok ()
+  let () = test_checker_neg ~raise [ctor_nok] in
+  ()
 
-let row () =
+let row ~raise () =
   let open Small_env_manual_test in
   let row_ok  = make_sc_row 1 None h C_variant [(Label "foo", c) ; (Label "bar", d)] in
-  let* () = test_checker [row_ok] in
+  let () = test_checker ~raise [row_ok] in
   let row_ok2 = make_sc_row 2 None j C_record [(Label "baz", b) ; (Label "goo", e)] in
-  let* () = test_checker [row_ok2] in
+  let () = test_checker ~raise [row_ok2] in
   let row_ok3 = make_sc_row 3 None g C_variant [(Label "foo", c) ; (Label "bar", d)] in
-  let* () = test_checker [row_ok3] in
+  let () = test_checker ~raise [row_ok3] in
   let row_ok3 = make_sc_row 4 None i C_record [(Label "baz", b) ; (Label "goo", e)] in
-  let* () = test_checker [row_ok3] in
+  let () = test_checker ~raise [row_ok3] in
   let row_nok = make_sc_row 5 None h C_record [(Label "foo", c) ; (Label "bar", d)] in
-  let* () = test_checker_neg [row_nok] in
-  ok ()
+  let () = test_checker_neg ~raise [row_nok] in
+  ()
 
-let typeclass () =
+let typeclass ~raise () =
   let open Small_env_manual_test in
   let nat = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_nat ; p_ctor_args = [] } in
   let mutez = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_mutez ; p_ctor_args = [] } in
   let args = [c ; d] in
   let tc_ok : typeclass = [[nat ; mutez]; [mutez ; nat]] in
   let tcc_ok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_ok args in
-  let* () = test_checker [tcc_ok] in
+  let () = test_checker ~raise [tcc_ok] in
   let tc_nok : typeclass = [[nat ; nat]; [mutez ; nat]] in
   let tcc_nok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_nok args in
-  let* () = test_checker_neg [tcc_nok] in
-  ok ()
+  let () = test_checker_neg ~raise [tcc_nok] in
+  ()
 
-let forall () =
+let forall ~raise () =
   let open Typesystem.Shorthands in
   let open Small_env_manual_test in
   (* a = map(c,d) , b = a, c = nat, d = mutez, e = map(f, d), f = nat , g = variant | Foo | Bar , j = record {baz goo} *)
@@ -184,35 +183,35 @@ let forall () =
   let map_lhs x = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_map ; p_ctor_args = [ x ; mutez ] } in
   let forall = forall_tc "x" @@ fun x -> [tc x] => map_lhs x in
   let forall_sc = make_sc_poly a (unwrap forall) in
-  let* () = test_checker [forall_sc] in
-  ok ()
+  let () = test_checker ~raise [forall_sc] in
+  ()
 
-let test_generator () =
+let test_generator ~raise () =
   let open Random_type_generator in
   (*this only test the types generator*)
-  let res1,_,_ = generate 7 1000 in
-  let res2,_,_ = generate 100 1000 in
-  let res3,_,_ = generate 200 23 in
-  let res4,_,_ = generate 340 5 in
+  let res1,_,_ = generate ~raise 7 1000 in
+  let res2,_,_ = generate ~raise 100 1000 in
+  let res3,_,_ = generate ~raise 200 23 in
+  let res4,_,_ = generate ~raise 340 5 in
   (* let () =
     let open Simple_utils.PP_helpers in
     let list_sep_return x = list_sep x (tag "@.") in
     Format.printf "XXXXXX length:%d \n @[<v>%a@ @]" (List.length res) (list_sep_return pp) res
   in *)
   let remove_base_type i = i -2 in
-  let* () = Assert.assert_true (Main_errors.test_internal "failing to test the type generator") @@ (
+  let () = Trace.Assert.assert_true ~raise (Main_errors.test_internal "failing to test the type generator") @@ (
     (remove_base_type @@ List.length res1 = 7) &&
     (remove_base_type @@ List.length res2 = 100) &&
     (remove_base_type @@ List.length res3 = 200) &&
     (remove_base_type @@ List.length res4 = 340) )
   in
-  ok ()
-let random_ctors () =
+  ()
+let random_ctors ~raise () =
   let open! Random_type_generator in
-  let (map,test_checker,test_checker_neg) = generate 200 40 in
+  let (map,test_checker,test_checker_neg) = generate ~raise 200 40 in
   ignore test_checker_neg ;
-  let* () = test_checker (build_constraint map) in
-  ok ()
+  let () = test_checker (build_constraint map) in
+  ()
 
 let main =
   test_suite "Typechecker" @@

@@ -14,7 +14,7 @@
      Preprocessor
      LexerLib
      ;; LIGO
-     preprocessing
+     preprocessing_shared
      ;; Third party
      zarith
      str)
@@ -22,5 +22,4 @@
      Errors Formatter Token Common
      Lexer Self_tokens LexerMainGen UnlexerGen)
   (modules_without_implementation
-     Token Self_tokens)
-)
+     Token Self_tokens))

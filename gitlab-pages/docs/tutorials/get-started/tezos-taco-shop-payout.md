@@ -20,7 +20,7 @@ people have spent at his shop when buying tacos.
 </div>
 
 
-## Analyzing the Current Contract
+## Analysing the Current Contract
 
 ### **`taco-shop.ligo`**
 
@@ -77,16 +77,16 @@ of the Tezos `mainnet`, Pedro cannot access the tokens stored in his
 shop's contract directly. This was previously possible via *spendable
 smart contracts*, which are no longer available in the new
 protocol. We will have to implement a solution to access tokens from
-the contract programatically.
+the contract programmatically.
 
 ---
 
 ## Designing a Payout Scheme
 
-Pedro is a standalone bussines owner, and in our case, he does not
+Pedro is a standalone business owner, and in our case, he does not
 have to split profits and earnings of the taco shop with anyone. So
 for the sake of simplicity, we will payout all the earned XTZ directly
-to Pedro right after a succesful purchase.
+to Pedro right after a successful purchase.
 
 This means that after all the *purchase conditions* of our contract
 are met, e.g., the correct amount is sent to the contract, we will not
@@ -130,7 +130,7 @@ const operations : list (operation) = list [payoutOperation];
 
 ---
 
-## Finalizing the Contract
+## Finalising the Contract
 
 ### **`taco-shop.ligo`**
 
@@ -188,7 +188,7 @@ we see a *new operation* in the list of returned operations to be
 executed subsequently.
 
 ```pascaligo skip
-ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
+ligo run dry-run taco-shop.ligo --syntax pascaligo --amount 1 --entry-point buy_taco 1n "map [
    1n -> record [
            current_stock = 50n;
            max_price = 50tez
@@ -214,7 +214,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
 
 ## 👼 Bonus: Donating Part of the Profits
 
-Because Pedro is a member of the Specialty Taco Association (STA), he
+Because Pedro is a member of the Speciality Taco Association (STA), he
 has decided to donate **10%** of the earnings to the STA. We will just
 add a `donationAddress` to the contract, and compute a 10% donation
 sum from each taco purchase.

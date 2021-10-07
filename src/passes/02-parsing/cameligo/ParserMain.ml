@@ -10,7 +10,7 @@ module Comments      = Preprocessing_cameligo.Comments
 module File          = Preprocessing_cameligo.File
 module Token         = Lexing_cameligo.Token
 module Self_tokens   = Lexing_cameligo.Self_tokens
-module CST           = Cst.Cameligo
+module CST           = Cst_cameligo.CST
 module ParErr        = Parser_msg
 module ParserMainGen = Parsing_shared.ParserMainGen
 

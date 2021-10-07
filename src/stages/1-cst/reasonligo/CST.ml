@@ -28,6 +28,11 @@ type kwd_if     = Region.t
 type kwd_let    = Region.t
 type kwd_switch = Region.t
 type kwd_mod    = Region.t
+type kwd_land   = Region.t
+type kwd_lor    = Region.t
+type kwd_lxor   = Region.t
+type kwd_lsl    = Region.t
+type kwd_lsr    = Region.t
 type kwd_not    = Region.t
 type kwd_of     = Region.t
 type kwd_or     = Region.t
@@ -86,6 +91,8 @@ type semi  = Region.t  (* ";" *)
 type vbar  = Region.t  (* "|" *)
 type colon = Region.t  (* ":" *)
 
+type quote = Region.t  (* "'" *)
+
 (* Wildcard *)
 
 type wild = Region.t  (* "_" *)
@@ -107,7 +114,7 @@ type attribute   = string reg
 
 (* Parentheses *)
 
-type 'a braced = {
+type 'a braces = {
   lbrace : lbrace;
   inside : 'a;
   rbrace : rbrace
@@ -154,10 +161,18 @@ and let_binding = {
 (* Type declarations *)
 
 and type_decl = {
-  kwd_type   : kwd_type;
-  name       : type_name;
-  eq         : equal;
-  type_expr  : type_expr
+  kwd_type  : kwd_type;
+  name      : type_name;
+  params    : type_vars option;
+  eq        : equal;
+  type_expr : type_expr
+}
+
+and type_vars = (type_var reg, comma) nsepseq par reg
+
+and type_var = {
+  quote : quote;
+  name  : variable
 }
 
 and module_decl = {
@@ -180,14 +195,14 @@ and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
 | TRecord of field_decl reg ne_injection reg
-| TApp    of (type_constr * type_tuple) reg
+| TApp    of (type_constr * type_args) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TWild   of wild
 | TString of lexeme reg
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
+| TArg    of type_var reg
 
 and cartesian = (type_expr, comma) nsepseq par reg
 
@@ -199,7 +214,7 @@ and sum_type = {
 
 and variant = {
   constr     : constr;
-  arg        : (kwd_of * type_expr) option;
+  args       : type_expr par reg option;
   attributes : attributes
 }
 
@@ -210,17 +225,12 @@ and field_decl = {
   attributes : attributes
 }
 
-and type_tuple = (type_expr, comma) nsepseq par reg
-
-and bound_variable = {
-  var: variable;
-  attributes: attributes;
-}
+and type_args = (type_expr, comma) nsepseq par reg
 
 and pattern =
-  PConstr   of constr_pattern
+  PConstr   of (constr * pattern option) reg
 | PUnit     of the_unit reg
-| PVar      of bound_variable
+| PVar      of var_pattern reg
 | PInt      of (lexeme * Z.t) reg
 | PNat      of (lexeme * Z.t) reg
 | PBytes    of (lexeme * Hex.t) reg
@@ -232,25 +242,23 @@ and pattern =
 | PRecord   of field_pattern reg ne_injection reg
 | PTyped    of typed_pattern reg
 
-and constr_pattern =
-  PNone      of c_None
-| PSomeApp   of (c_Some * pattern) reg
-| PFalse    of kwd_false
-| PTrue     of kwd_true
-| PConstrApp of (constr * pattern option) reg
+and var_pattern = {
+  variable   : variable;
+  attributes : attribute list
+}
 
 and list_pattern =
   PListComp of pattern injection reg
 | PCons     of cons_pattern reg
 
-and cons_pattern =
-  { lbracket : lbracket;
-    lpattern : pattern;
-    comma    : comma;
-    ellipsis : ellipsis;
-    rpattern : pattern;
-    rbracket : rbracket;
-  }
+and cons_pattern = {
+  lbracket : lbracket;
+  lpattern : pattern;
+  comma    : comma;
+  ellipsis : ellipsis;
+  rpattern : pattern;
+  rbracket : rbracket;
+}
 
 and typed_pattern = {
   pattern   : pattern;
@@ -272,7 +280,7 @@ and expr =
 | EArith    of arith_expr
 | EString   of string_expr
 | EList     of list_expr
-| EConstr   of constr_expr
+| EConstr   of (constr * expr option) reg
 | ERecord   of record reg
 | EProj     of projection reg
 | EModA     of expr module_access reg
@@ -310,14 +318,13 @@ and 'a ne_injection = {
   attributes  : attributes
 }
 
-and compound =
-| Braces   of lbrace * rbrace
-| Brackets of lbracket * rbracket
+and compound = [
+  `Braces   of lbrace * rbrace
+| `Brackets of lbracket * rbracket]
 
 and list_expr =
   ECons     of cons_expr reg
 | EListComp of expr injection reg
-(*| Append of (expr * append * expr) reg*)
 
 and cons_expr =
   { lbracket : lbracket;
@@ -333,17 +340,17 @@ and string_expr =
 | String   of string reg
 | Verbatim of string reg
 
-and constr_expr =
-  ENone      of c_None
-| ESomeApp   of (c_Some * expr) reg
-| EConstrApp of (constr * expr option) reg
-
 and arith_expr =
   Add   of plus bin_op reg
 | Sub   of minus bin_op reg
 | Mult  of times bin_op reg
 | Div   of slash bin_op reg
 | Mod   of kwd_mod bin_op reg
+| Land  of kwd_land bin_op reg
+| Lor   of kwd_lor bin_op reg
+| Lxor  of kwd_lxor bin_op reg
+| Lsl   of kwd_lsl bin_op reg
+| Lsr   of kwd_lsr bin_op reg
 | Neg   of minus un_op reg
 | Int   of (string * Z.t) reg
 | Nat   of (string * Z.t) reg
@@ -354,11 +361,9 @@ and logic_expr =
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of kwd_or bin_op reg
-| And   of kwd_and bin_op reg
-| Not   of kwd_not un_op reg
-| True  of kwd_true
-| False of kwd_false
+  Or  of kwd_or bin_op reg
+| And of kwd_and bin_op reg
+| Not of kwd_not un_op reg
 
 and 'a bin_op = {
   op   : 'a;
@@ -424,10 +429,10 @@ and path =
 
 and 'a case = {
   kwd_switch : kwd_switch;
-  expr      : expr;
-  lbrace    : lbrace;
-  cases     : ('a case_clause reg, vbar) nsepseq reg;
-  rbrace : rbrace
+  expr       : expr;
+  lbrace     : lbrace;
+  cases      : ('a case_clause reg, vbar) nsepseq reg;
+  rbrace     : rbrace
 }
 
 and 'a case_clause = {
@@ -465,18 +470,25 @@ and mod_alias = {
 }
 
 and fun_expr = {
-  binders    : pattern;
-  lhs_type   : (colon * type_expr) option;
-  arrow      : arrow;
-  body       : expr;
+  binders     : pattern;
+  lhs_type    : (colon * type_expr) option;
+  arrow       : arrow;
+  body        : expr;
+  attributes  : attributes
 }
 
 and cond_expr = {
   kwd_if   : kwd_if;
-  test     : expr;
-  ifso     : (expr * semi option) braced;
-  ifnot    : (kwd_else * (expr * semi option) braced) option;
+  test     : test_expr;
+  ifso     : branch;
+  ifnot    : (kwd_else * branch) option;
 }
+
+and test_expr = [
+  `Braces of expr braces reg
+| `Parens of expr par reg]
+
+and branch = (expr * semi option) braces reg
 
 (* Code injection.  Note how the field [language] wraps a region in
    another: the outermost region covers the header "[%<language>" and
@@ -509,23 +521,18 @@ let type_expr_to_region = function
 | TString {region; _}
 | TInt    {region; _}
 | TVar    {region; _}
-| TWild    region
 | TModA   {region; _}
+| TArg    {region; _}
  -> region
 
 let list_pattern_to_region = function
   PListComp {region; _} | PCons {region; _} -> region
 
-let constr_pattern_to_region = function
-  PNone region | PSomeApp {region;_}
-| PTrue region | PFalse region
-| PConstrApp {region;_} -> region
-
 let pattern_to_region = function
 | PList p -> list_pattern_to_region p
-| PConstr c -> constr_pattern_to_region c
+| PConstr {region;_}
 | PUnit {region;_}
-| PTuple {region;_} | PVar {var={region;_};_}
+| PTuple {region;_} | PVar {region;_}
 | PInt {region;_}
 | PString {region;_} | PVerbatim {region;_}
 | PPar {region;_}
@@ -535,7 +542,6 @@ let pattern_to_region = function
 
 let bool_expr_to_region = function
   Or {region;_} | And {region;_}
-| True region | False region
 | Not {region;_} -> region
 
 let comp_expr_to_region = function
@@ -550,6 +556,8 @@ let logic_expr_to_region = function
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
 | Div {region;_} | Mod {region;_} | Neg {region;_}
+| Land {region;_} | Lor {region;_} | Lxor {region;_} 
+| Lsl {region;_} | Lsr {region;_}
 | Int {region;_} | Mutez {region; _}
 | Nat {region; _} -> region
 
@@ -560,17 +568,12 @@ let list_expr_to_region = function
   ECons {region; _} | EListComp {region; _}
 (* | Append {region; _}*) -> region
 
-and constr_expr_to_region = function
-  ENone region
-| EConstrApp {region; _}
-| ESomeApp   {region; _} -> region
-
 let expr_to_region = function
   ELogic e -> logic_expr_to_region e
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
 | EList e -> list_expr_to_region e
-| EConstr e -> constr_expr_to_region e
+| EConstr {region;_}
 | EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
 | ETypeIn {region;_ }| EModIn {region;_}   | EModAlias {region;_}
 | ECond {region;_}   | ETuple {region;_}   | ECase {region;_}

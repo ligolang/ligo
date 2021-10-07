@@ -24,20 +24,20 @@ let reset title start_time finish_time =
 
 let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 
-let init_vote () =
-  let* (program, env) = get_program () in
-  let* result =
-    Test_helpers.run_typed_program_with_imperative_input
+let init_vote ~raise ~add_warning () =
+  let (program, env) = get_program ~raise ~add_warning () in
+  let result =
+    Test_helpers.run_typed_program_with_imperative_input ~raise
       (program, env) "main" (e_pair yea (init_storage "basic")) in
-  let* (_, storage) = trace_option (test_internal __LOC__) @@ Ast_core.extract_pair result in
-  let* storage' = trace_option (test_internal __LOC__) @@ Ast_core.extract_record storage in
+  let (_, storage) = trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_pair result in
+  let storage' = trace_option ~raise (test_internal __LOC__) @@ Ast_core.extract_record storage in
   let storage' =  List.map ~f:(fun (Ast_core.Label l,v) -> (Label l, v)) storage' in
 (*  let votes = List.assoc (Label "voters") storage' in
-  let* votes' = extract_map votes in *)
+  let votes' = extract_map votes in *)
   let yea = List.Assoc.find_exn ~equal:Caml.(=) storage' (Label "yea") in
-  let* () = trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
-  ok ()
+  let () = trace_option ~raise (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
+  ()
 
 let main = test_suite "Vote" [
-    test "type" init_vote ;
+    test_w "type" init_vote;
   ]

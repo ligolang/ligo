@@ -29,7 +29,7 @@ RUN sh scripts/install_native_dependencies.sh
 RUN opam update
 
 # Install ligo
-RUN sh scripts/install_vendors_deps.sh
+RUN sh scripts/install_opam_deps.sh
 RUN opam install -y . || (tail -n +1 ~/.opam/log/* ; false)
 
 # Use the ligo binary as a default command

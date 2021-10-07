@@ -102,6 +102,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_arrow            a -> arrow         type_expression ppf a
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
+  | T_abstraction     x  -> abstraction   type_expression ppf x
 
 and row : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos=_ } ->
@@ -109,8 +110,10 @@ and row : formatter -> row_element -> unit =
       type_expression associated_type
 
 and type_injection ppf {language;injection;parameters} =
+  (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
   fprintf ppf "%s%a" (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters
+
 
 and record ppf {content; layout=_} =
   fprintf ppf "%a"
@@ -151,9 +154,9 @@ and expression_content ppf (ec: expression_content) =
         expression result
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; inline} ->
-      fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
-        rhs option_inline inline expression let_result
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation } } ->
+      fprintf ppf "let %a = %a%a%a in %a" expression_variable let_binder expression
+        rhs option_inline inline option_no_mutation no_mutation expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let %a = %a in %a" module_variable module_binder 
@@ -192,8 +195,8 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant {name = _; binder; expr; inline} ->
-      fprintf ppf "const %a = %a%a" expression_variable binder expression expr option_inline inline
+  | Declaration_constant {name = _; binder; expr; attr = { inline; no_mutation } } ->
+      fprintf ppf "const %a = %a%a%a" expression_variable binder expression expr option_inline inline option_no_mutation no_mutation
   | Declaration_type {type_binder; type_expr} ->
       fprintf ppf "type %a = %a" type_variable type_binder type_expression type_expr
   | Declaration_module {module_binder; module_} ->
@@ -285,16 +288,20 @@ let rec environment_element ppf ({type_value;definition} : environment_element) 
     type_expression type_value
     environment_element_definition definition
 
-
 and environment_binding ppf ({expr_var;env_elt} : environment_binding) =
   fprintf ppf "{@[<hv 2> @ expr_var : %a;@ env_elt : %a;@]@ }"
     expression_variable expr_var
     environment_element env_elt
 
+and type_or_kind ppf x =
+  match x with
+  | Ty x -> type_expression ppf x
+  | Kind () -> fprintf ppf "*"
+
 and type_environment_binding ppf ({type_variable=tv;type_} : type_environment_binding) =
   fprintf ppf "{@[<hv 2> @ type_variable : %a;@ type_ : %a;@]@ }"
     type_variable tv
-    type_expression type_
+    type_or_kind type_
 
 and module_environment_binding ppf ({module_variable;module_} : module_environment_binding) =
   fprintf ppf "{@[<hv 2> @ odule_variable : %s ;@ module_ : %a;@]@ }"

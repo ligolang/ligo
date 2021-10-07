@@ -7,9 +7,9 @@ let main (n : int * storage) : operation list * storage =
   in ([] : operation list), x
 
 
-let f0 (a: string) = true
-let f1 (a: string) = true
-let f2 (a: string) = true
+let f0 (_a: string) = true
+let f1 (_a: string) = true
+let f2 (_a: string) = true
 
 let letin_nesting (_: unit) =
   begin
@@ -23,11 +23,11 @@ let letin_nesting (_: unit) =
     s
   end
 
-let letin_nesting2 (x: int) = 
-  let y = 2 in 
+let letin_nesting2 (x: int) =
+  let y = 2 in
   let z = 3 in
   x + y + z
 
 let x =
-  let (_, (x, _)) = (1n, (2n, 3n)) in 
+  let (_, (x, _)) = (1n, (2n, 3n)) in
   x

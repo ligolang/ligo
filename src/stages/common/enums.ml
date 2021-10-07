@@ -31,7 +31,6 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_operation of bytes
-[@@deriving ord]
 
 type constant' =
   | C_INT
@@ -42,8 +41,12 @@ type constant' =
   | C_IS_NAT
   | C_SOME
   | C_NONE
+  | C_UNOPT
+  | C_UNOPT_WITH_ERROR
   | C_ASSERTION
+  | C_ASSERTION_WITH_ERROR
   | C_ASSERT_SOME
+  | C_ASSERT_SOME_WITH_ERROR
   | C_ASSERT_INFERRED
   | C_FAILWITH
   | C_UPDATE
@@ -137,7 +140,6 @@ type constant' =
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
-  | C_BIG_MAP_IDENTIFIER
   (* Crypto *)
   | C_SHA256
   | C_SHA512
@@ -150,6 +152,7 @@ type constant' =
   | C_CALL
   | C_CONTRACT
   | C_CONTRACT_OPT
+  | C_CONTRACT_WITH_ERROR
   | C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT
   | C_AMOUNT
@@ -162,36 +165,40 @@ type constant' =
   | C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE
   | C_CREATE_CONTRACT
-  | C_CONVERT_TO_LEFT_COMB
-  | C_CONVERT_TO_RIGHT_COMB
-  | C_CONVERT_FROM_LEFT_COMB
-  | C_CONVERT_FROM_RIGHT_COMB
   (* Tests - ligo interpreter only *)
-  | C_TEST_ORIGINATE
-  | C_TEST_GET_STORAGE
-  | C_TEST_GET_STORAGE_OF_ADDRESS
-  | C_TEST_GET_BALANCE
-  | C_TEST_SET_NOW
-  | C_TEST_SET_SOURCE
-  | C_TEST_SET_BAKER
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
-  | C_TEST_MICHELSON_EQUAL
-  | C_TEST_GET_NTH_BS
-  | C_TEST_LOG
-  | C_TEST_COMPILE_EXPRESSION
-  | C_TEST_COMPILE_EXPRESSION_SUBST
-  | C_TEST_STATE_RESET
-  | C_TEST_LAST_ORIGINATIONS
-  | C_TEST_COMPILE_META_VALUE
-  | C_TEST_RUN
-  | C_TEST_EVAL
-  | C_TEST_COMPILE_CONTRACT
-  | C_TEST_TO_CONTRACT
-  | C_TEST_TO_ENTRYPOINT
-  | C_TEST_ORIGINATE_FROM_FILE
+  | C_TEST_ORIGINATE [@only_interpreter]
+  | C_TEST_GET_STORAGE [@only_interpreter]
+  | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
+  | C_TEST_GET_BALANCE [@only_interpreter]
+  | C_TEST_SET_NOW [@only_interpreter]
+  | C_TEST_SET_SOURCE [@only_interpreter]
+  | C_TEST_SET_BAKER [@only_interpreter]
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT [@only_interpreter]
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN [@only_interpreter]
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS [@only_interpreter]
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN [@only_interpreter]
+  | C_TEST_MICHELSON_EQUAL [@only_interpreter]
+  | C_TEST_GET_NTH_BS [@only_interpreter]
+  | C_TEST_LOG [@only_interpreter]
+  | C_TEST_STATE_RESET [@only_interpreter]
+  | C_TEST_BOOTSTRAP_CONTRACT [@only_interpreter]
+  | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
+  | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
+  | C_TEST_COMPILE_META_VALUE [@only_interpreter]
+  | C_TEST_MUTATE_COUNT [@only_interpreter]
+  | C_TEST_MUTATE_VALUE [@only_interpreter]
+  | C_TEST_MUTATION_TEST [@only_interpreter]
+  | C_TEST_MUTATION_TEST_ALL [@only_interpreter]
+  | C_TEST_SAVE_MUTATION [@only_interpreter]
+  | C_TEST_RUN [@only_interpreter]
+  | C_TEST_EVAL [@only_interpreter]
+  | C_TEST_COMPILE_CONTRACT [@only_interpreter]
+  | C_TEST_TO_CONTRACT [@only_interpreter]
+  | C_TEST_TO_ENTRYPOINT [@only_interpreter]
+  | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]
+  | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
+  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
+  | C_TEST_SET_BIG_MAP
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
@@ -207,6 +214,7 @@ type constant' =
   | C_SAPLING_EMPTY_STATE
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD
+[@@deriving only_interpreter_tags]
 
 type deprecated = {
   name : string ;

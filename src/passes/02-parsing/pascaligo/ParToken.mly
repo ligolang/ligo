@@ -14,7 +14,7 @@ module Token = Lexing_pascaligo.Token
 %token    <(Token.lexeme * Z.t) Region.reg> Nat       "<nat>"
 %token    <(Token.lexeme * Z.t) Region.reg> Mutez     "<mutez>"
 %token            <Token.lexeme Region.reg> Ident     "<ident>"
-%token            <Token.lexeme Region.reg> Constr    "<constr>"
+%token            <Token.lexeme Region.reg> UIdent    "<uident>"
 %token                  <string Region.reg> Attr      "[@attr]"
 %token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
 
@@ -58,7 +58,6 @@ module Token = Lexing_pascaligo.Token
 %token <Region.t> Contains    "contains"
 %token <Region.t> Else        "else"
 %token <Region.t> End         "end"
-%token <Region.t> False       "False"
 %token <Region.t> For         "for"
 %token <Region.t> Function    "function"
 %token <Region.t> Recursive   "recursive"
@@ -81,18 +80,11 @@ module Token = Lexing_pascaligo.Token
 %token <Region.t> Step        "step"
 %token <Region.t> Then        "then"
 %token <Region.t> To          "to"
-%token <Region.t> True        "True"
 %token <Region.t> Type        "type"
-%token <Region.t> Unit        "Unit"
 %token <Region.t> Var         "var"
 %token <Region.t> While       "while"
 %token <Region.t> With        "with"
 %token <Region.t> Module      "module"
-
-  (* Data constructors *)
-
-%token <Region.t> C_None      "None"
-%token <Region.t> C_Some      "Some"
 
   (* Virtual tokens *)
 

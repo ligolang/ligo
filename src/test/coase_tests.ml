@@ -7,14 +7,14 @@ open Main_errors
 
 let get_program = get_program "./contracts/coase.ligo" (Contract "main")
 
-let compile_main () = 
-  let* typed_prg, _env = get_program () in
-  let* mini_c_prg         = Ligo_compile.Of_typed.compile typed_prg in
-  let* michelson_prg      = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
-  let* _contract =
+let compile_main ~raise ~add_warning () = 
+  let typed_prg, _env = get_program ~raise ~add_warning () in
+  let mini_c_prg         = Ligo_compile.Of_typed.compile ~raise typed_prg in
+  let michelson_prg      = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg "main" in
+  let _contract =
     (* fails if the given entry point is not a valid contract *)
-    Ligo_compile.Of_michelson.build_contract michelson_prg in
-  ok ()
+    Ligo_compile.Of_michelson.build_contract ~raise michelson_prg in
+  ()
 
 open Ast_imperative
 
@@ -90,9 +90,9 @@ let basic a b cards next_id =
   ] in
   storage_ez card_patterns cards next_id
 
-let buy () =
-  let* program = get_program () in
-  let* () =
+let buy ~raise ~add_warning () =
+  let program = get_program ~raise ~add_warning () in
+  let () =
     let make_input = fun n ->
       let buy_action = e_record_ez [
           ("card_to_buy" , e_nat 0) ;
@@ -110,26 +110,26 @@ let buy () =
         basic 101 1000 cards ((2 * n) + 1) in
       e_pair ops storage
     in
-    let* () =
-      let* amount =
-        trace_option (test_internal "getting amount for run") @@
+    let () =
+      let amount =
+        trace_option ~raise (test_internal "getting amount for run") @@
           Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
-      expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
-    let* () =
-      let* amount =
-        trace_option (test_internal "getting amount for run") @@
+      expect_eq_n_pos_small ~raise ~options program "buy_single" make_input make_expected in
+    let () =
+      let amount =
+        trace_option ~raise (test_internal "getting amount for run") @@
           Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
-      Assert.assert_fail (test_internal "could buy without money") @@
+      Assert.assert_fail ~raise (test_internal "could buy without money") @@
         expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
-    ok ()
+    ()
   in
-  ok ()
+  ()
 
-let dispatch_buy () =
-  let* program = get_program () in
-  let* () =
+let dispatch_buy ~raise ~add_warning () =
+  let program = get_program ~raise ~add_warning () in
+  let () =
     let make_input = fun n ->
       let buy_action = e_record_ez [
           ("card_to_buy" , e_nat 0) ;
@@ -148,26 +148,26 @@ let dispatch_buy () =
         basic 101 1000 cards ((2 * n) + 1) in
       e_pair ops storage
     in
-    let* () =
-      let* amount =
-        trace_option (test_internal "getting amount for run") @@
+    let () =
+      let amount =
+        trace_option ~raise (test_internal "getting amount for run") @@
         Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
-      expect_eq_n_pos_small ~options program "main" make_input make_expected in
-    let* () =
-      let* amount =
-        trace_option (test_internal "getting amount for run") @@
+      expect_eq_n_pos_small ~raise ~options program "main" make_input make_expected in
+    let () =
+      let amount =
+        trace_option ~raise (test_internal "getting amount for run") @@
         Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
-      Assert.assert_fail (test_internal "could buy without money") @@
+      Assert.assert_fail ~raise (test_internal "could buy without money") @@
         expect_eq_n_pos_small ~options program "main" make_input make_expected in
-    ok ()
+    ()
   in
-  ok ()
+  ()
 
-let transfer () =
-  let* program = get_program () in
-  let* () =
+let transfer ~raise ~add_warning () =
+  let program = get_program ~raise ~add_warning () in
+  let () =
     let make_input = fun n ->
       let transfer_action = e_record_ez [
           ("card_to_transfer" , e_nat 0) ;
@@ -187,18 +187,18 @@ let transfer () =
         basic 100 1000 cards (2 * n) in
       e_pair ops storage
     in
-    let* () =
+    let () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
       let sender = first_contract in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender () in
-      expect_eq_n_strict_pos_small ~options program "transfer_single" make_input make_expected in
-    ok ()
+      expect_eq_n_strict_pos_small ~raise ~options program "transfer_single" make_input make_expected in
+    ()
   in
-  ok ()
+  ()
 
-let sell () =
-  let* program = get_program () in
-  let* () =
+let sell ~raise ~add_warning () =
+  let program = get_program ~raise ~add_warning () in
+  let () =
     let make_input = fun n ->
       let sell_action = e_record_ez [
           ("card_to_sell" , e_nat (n - 1)) ;
@@ -207,34 +207,34 @@ let sell () =
       let storage = basic 100 1000 cards (2 * n) in
       e_pair sell_action storage
     in
-    let make_expecter : int -> Ast_core.expression -> (unit,_) result = fun n result ->
-      let* (ops , storage) = trace_option (test_internal __LOC__) @@
+    let make_expecter : int -> Ast_core.expression -> unit = fun n result ->
+      let (ops , storage) = trace_option ~raise (test_internal __LOC__) @@
         Ast_core.get_e_pair result.expression_content in
-      let* () =
-        let* lst = trace_option (test_internal __LOC__) @@
+      let () =
+        let lst = trace_option ~raise (test_internal __LOC__) @@
           Ast_core.get_e_list ops.expression_content in
-          Assert.assert_list_size (test_internal __LOC__) lst 1 in
+          Assert.assert_list_size ~raise (test_internal __LOC__) lst 1 in
       let expected_storage =
         let cards = List.drop_last_exn @@ cards_ez first_owner n in
         basic 99 1000 cards (2 * n) in
-      let* expected_storage = Test_helpers.expression_to_core expected_storage in
-      trace_option (test_internal __LOC__) @@
+      let expected_storage = Test_helpers.expression_to_core ~raise expected_storage in
+      trace_option ~raise (test_internal __LOC__) @@
         Ast_core.Misc.assert_value_eq (expected_storage , storage)
     in
-    let* () =
+    let () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
       let sender = first_contract in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender () in
-      expect_n_strict_pos_small ~options program "sell_single" make_input make_expecter in
-    ok ()
+      expect_n_strict_pos_small ~raise ~options program "sell_single" make_input make_expecter in
+    ()
   in
-  ok ()
+  ()
 
 
 let main = test_suite "Coase (End to End)" [
-    test "compile" compile_main ;
-    test "buy" buy ;
-    test "dispatch buy" dispatch_buy ;
-    test "transfer" transfer ;
-    test "sell" sell ;
+    test_w "compile"      (compile_main ) ;
+    test_w "buy"          (buy          ) ;
+    test_w "dispatch buy" (dispatch_buy ) ;
+    test_w "transfer"     (transfer     ) ;
+    test_w "sell"         (sell         ) ;
   ]

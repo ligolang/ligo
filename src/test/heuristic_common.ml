@@ -41,25 +41,25 @@ let grouped_by_variable state =
       List.fold_left ~f:(add_constraint (fun v -> v)) ~init:(create_state ~cmp:Var.compare) state
   end
 
-let check_list_of_equalities (la : update list) (_lb : (type_variable * type_variable) list) =
+let check_list_of_equalities ~raise (la : update list) (_lb : (type_variable * type_variable) list) =
   let aux' ({ reason = _; c } : type_constraint) =
     match c with
     | Ast_core.Types.C_equation { aval = { location = _; wrap_content = aval_ } ; bval = { location = _; wrap_content = bval_ } } ->
       (match aval_, bval_ with
-         P_variable avar, P_variable bvar -> ok (if Var.equal avar bvar then [] else [avar; bvar])
+         P_variable avar, P_variable bvar -> (if Var.equal avar bvar then [] else [avar; bvar])
        | _ ->
-         fail (test_err "bad result from heuristic_break_ctor, expected equation constraint with two variables, but at least one of the members of the equation is not a variable."))
+         raise.raise (test_err "bad result from heuristic_break_ctor, expected equation constraint with two variables, but at least one of the members of the equation is not a variable."))
     | Ast_core.Types.C_typeclass _ ->
-      fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a typeclass constraint.")
+      raise.raise (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a typeclass constraint.")
     | Ast_core.Types.C_access_label _ ->
-      fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_access_label constraint.")
+      raise.raise (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_access_label constraint.")
     | Ast_core.Types.C_apply _ ->
-      fail (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_apply.") in
+      raise.raise (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_apply.") in
   let aux ({ remove_constraints; add_constraints; proof_trace } : update) =
-    let* () = tst_assert "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in
+    let () = tst_assert ~raise "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in
     ignore proof_trace;
-    bind_map_list aux' add_constraints in
-  let* assignments = bind_map_list aux la in
+    List.map ~f:aux' add_constraints in
+  let assignments = List.map ~f:aux la in
   let assignments' = List.concat assignments in
   let assignments'' = List.filter ~f:(function [] -> false | _ -> true) assignments' in
   let assignments''' = List.map ~f:(List.sort ~compare:Var.compare) assignments'' in
@@ -72,4 +72,4 @@ let check_list_of_equalities (la : update list) (_lb : (type_variable * type_var
                      ^ " expected: "
                      ^ (Format.asprintf "%a" (PP_helpers.list_sep_d_par (PP_helpers.list_sep_d_par Var.pp)) expected''')
   in
-  tst_assert msg @@ (List.compare (List.compare Var.compare) expected''' assignments'''' = 0)
+  tst_assert ~raise msg @@ (List.compare (List.compare Var.compare) expected''' assignments'''' = 0)

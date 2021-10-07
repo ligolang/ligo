@@ -93,6 +93,20 @@ let print_string state {region; value} =
             (compact state region) value
   in Buffer.add_string state#buffer line
 
+let print_attributes state attributes =
+  let apply {value = attribute; region} =
+    let attribute_formatted = sprintf "[@%s]" attribute in
+    print_token state region attribute_formatted
+  in List.iter apply attributes
+
+let print_pvar state {region; value} =
+  let {variable; attributes} = value in
+  let () = print_attributes state attributes in
+  let line =
+    sprintf "%s: PVar %s\n"
+            (compact state region) variable.value
+  in Buffer.add_string state#buffer line
+
 let print_verbatim state {region; value} =
   let line =
     sprintf "%s: Verbatim %S\n"
@@ -153,13 +167,20 @@ and print_const_decl state {value; _} =
   print_terminator state terminator
 
 and print_type_decl state {value; _} =
-  let {kwd_type; name; kwd_is;
-       type_expr; terminator} = value in
+  let {kwd_type; name; params; kwd_is;
+       type_expr; terminator;_ } = value in
   print_token      state kwd_type "type";
   print_var        state name;
+  print_option     state print_type_vars params;
   print_token      state kwd_is "is";
   print_type_expr  state type_expr;
   print_terminator state terminator
+
+and print_type_vars state (node : type_vars) =
+  let {inside; _} : _ par = node.value in
+  print_nsepseq state "," print_type_var inside
+
+and print_type_var state = print_var state
 
 and print_module_decl state {value; _} =
   let {kwd_module; name; kwd_is;enclosing;
@@ -198,7 +219,6 @@ and print_type_expr state = function
 | TFun    type_fun    -> print_type_fun    state type_fun
 | TPar    par_type    -> print_par_type    state par_type
 | TVar    type_var    -> print_var         state type_var
-| TWild   wild        -> print_token state wild " "
 | TString str         -> print_string      state str
 | TInt    i           -> print_int         state i
 | TModA   ma          -> print_module_access print_type_expr state ma
@@ -273,8 +293,9 @@ and print_fun_decl state {value; _} =
   print_terminator state terminator;
 
 and print_fun_expr state {value; _} =
-  let {kwd_function; param;
+  let {attributes; kwd_function; param;
        ret_type; kwd_is; return} : fun_expr = value in
+  print_attributes state attributes;
   print_token      state kwd_function "function";
   print_parameters state param;
   print_option     state print_type_annot ret_type;
@@ -310,13 +331,13 @@ and print_param_decl state = function
 and print_param_const state {value; _} =
   let {kwd_const; var; param_type} = value in
   print_token  state kwd_const "const";
-  print_var    state var;
+  print_pvar   state var;
   print_option state print_type_annot param_type
 
 and print_param_var state {value; _} =
   let {kwd_var; var; param_type} = value in
   print_token    state kwd_var "var";
-  print_var      state var;
+  print_pvar     state var;
   print_option   state print_type_annot param_type
 
 and print_block state block =
@@ -343,20 +364,15 @@ and print_data_decl state = function
 | LocalModuleAlias decl -> print_module_alias state decl
 
 and print_var_decl state {value; _} =
-  let {kwd_var; pattern; var_type;
+  let {attributes; kwd_var; pattern; var_type;
        assign; init; terminator} = value in
+  print_attributes state attributes;
   print_token      state kwd_var "var";
   print_pattern    state pattern;
   print_option     state print_type_annot var_type;
   print_token      state assign ":=";
   print_expr       state init;
   print_terminator state terminator
-
-and print_attributes state attributes =
-  let apply {value = attribute; region} =
-    let attribute_formatted = sprintf "[@%s]" attribute in
-    print_token state region attribute_formatted
-  in List.iter apply attributes
 
 and print_statements state sequence =
   print_nsepseq state ";" print_statement sequence
@@ -524,7 +540,6 @@ and print_expr state = function
 | EVar     v -> print_var state v
 | ECall    e -> print_fun_call state e
 | EBytes   b -> print_bytes state b
-| EUnit    r -> print_token state r "Unit"
 | ETuple   e -> print_tuple_expr state e
 | EPar     e -> print_par_expr state e
 | EFun     e -> print_fun_expr state e
@@ -604,10 +619,6 @@ and print_bool_expr state = function
 | Not {value = {op; arg}; _} ->
     print_token state op "not";
     print_expr  state arg
-| False region ->
-    print_token state region "False"
-| True region ->
-    print_token state region "True"
 
 and print_comp_expr state = function
   Lt {value = {arg1; op; arg2}; _} ->
@@ -681,10 +692,12 @@ and print_list_expr state = function
 | EListComp e -> print_injection state print_expr e
 | ENil e -> print_nil state e
 
-and print_constr_expr state = function
-  SomeApp e   -> print_some_app   state e
-| NoneExpr e  -> print_none_expr  state e
-| ConstrApp e -> print_constr_app state e
+and print_constr_expr state {value; _} =
+  let constr, arguments = value in
+  print_constr state constr;
+  match arguments with
+    None -> ()
+  | Some arg -> print_tuple_expr state arg
 
 and print_record_expr state =
   print_ne_injection state print_field_assignment
@@ -823,23 +836,9 @@ and print_tuple_expr state {value; _} =
 
 and print_nil state value = print_token state value "nil"
 
-and print_none_expr state value = print_token state value "None"
-
 and print_fun_call state {value; _} =
   let expr, arguments = value in
   print_expr       state expr;
-  print_tuple_expr state arguments
-
-and print_constr_app state {value; _} =
-  let constr, arguments = value in
-  print_constr state constr;
-  match arguments with
-    None -> ()
-  | Some arg -> print_tuple_expr state arg
-
-and print_some_app state {value; _} =
-  let c_Some, arguments = value in
-  print_token      state c_Some "Some";
   print_tuple_expr state arguments
 
 and print_par_expr state {value; _} =
@@ -849,7 +848,7 @@ and print_par_expr state {value; _} =
   print_token state rpar ")"
 
 and print_pattern state = function
-  PVar var         -> print_var state var
+  PVar var         -> print_pvar state var
 | PInt i           -> print_int state i
 | PNat n           -> print_nat state n
 | PBytes b         -> print_bytes state b
@@ -859,7 +858,6 @@ and print_pattern state = function
 | PConstr pattern  -> print_constr_pattern state pattern
 | PRecord record   -> print_record_pattern state record
 
-
 and print_record_pattern state record_pattern =
   print_injection state print_field_pattern record_pattern
 
@@ -868,23 +866,13 @@ and print_field_pattern state {value; _} =
   print_var     state field_name;
   print_token   state eq "=";
   print_pattern state pattern
-and print_constr_pattern state = function
-  PUnit region     -> print_token state region "Unit"
-| PFalse region    -> print_token state region "False"
-| PTrue region     -> print_token state region "True"
-| PNone region     -> print_token state region "None"
-| PSomeApp psome   -> print_psome state psome
-| PConstrApp {value; _} ->
-    let constr, arg = value in
-    print_constr state constr;
-    match arg with
-      None -> ()
-    | Some tuple -> print_ptuple state tuple
 
-and print_psome state {value; _} =
-  let c_Some, pattern = value in
-  print_token    state c_Some "Some";
-  print_pattern state pattern
+and print_constr_pattern state {value; _} =
+  let constr, arg = value in
+  print_constr state constr;
+  match arg with
+    None -> ()
+  | Some tuple -> print_ptuple state tuple
 
 and print_list_pattern state = function
   PListComp comp ->
@@ -1124,12 +1112,18 @@ and pp_type_expr state = function
 | TInt s ->
     pp_node   state "TInt";
     pp_int (state#pad 1 0) s
-| TWild wild ->
-    pp_node  state "TWild";
-    pp_loc_node state "TWild" wild
 | TModA {value; region} ->
     pp_loc_node state "TModA" region;
     pp_module_access pp_type_expr state value
+
+and pp_pvar state {value; _} =
+  let {variable; attributes} = value in
+  if attributes = [] then
+    pp_ident state variable
+  else
+    (pp_node       state "PVar";
+     pp_ident      (state#pad 2 0) variable;
+     pp_attributes (state#pad 2 1) attributes)
 
 and pp_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in
@@ -1235,12 +1229,12 @@ and pp_param_decl state = function
   ParamConst {value; region} ->
     let arity = if value.param_type = None then 1 else 2 in
     pp_loc_node state "ParamConst" region;
-    pp_ident (state#pad arity 0) value.var;
+    pp_pvar (state#pad arity 0) value.var;
     ignore (pp_type_annot (state#pad arity 1) 1 value.param_type)
 | ParamVar {value; region} ->
     let arity = if value.param_type = None then 1 else 2 in
     pp_loc_node state "ParamVar" region;
-    pp_ident (state#pad 2 0) value.var;
+    pp_pvar (state#pad 2 0) value.var;
     ignore (pp_type_annot (state#pad arity 1) 1 value.param_type)
 
 and pp_statements state statements =
@@ -1359,9 +1353,7 @@ and pp_pattern state = function
   PConstr pattern ->
     pp_node state "PConstr";
     pp_constr_pattern (state#pad 1 0) pattern
-| PVar v ->
-    pp_node state "PVar";
-    pp_ident (state#pad 1 0) v
+| PVar p -> pp_pvar state p
 | PInt n ->
     pp_node state "PInt";
     pp_int state n
@@ -1396,23 +1388,8 @@ and pp_int state {value=lexeme,z; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
   pp_node     (state#pad 2 1) (Z.to_string z)
 
-and pp_constr_pattern state = function
-  PNone region ->
-    pp_loc_node state "PNone" region
-| PSomeApp {value=_,pattern; region} ->
-    pp_loc_node state "PSomeApp" region;
-    pp_pattern (state#pad 1 0) pattern
-| PUnit region ->
-    pp_loc_node state "PUnit" region
-| PFalse region ->
-    pp_loc_node state "PFalse" region
-| PTrue region ->
-    pp_loc_node state "PTrue" region
-| PConstrApp {value; region} ->
-    pp_loc_node state "PConstrApp" region;
-    pp_constr_app_pattern (state#pad 1 0) value
-
-and pp_constr_app_pattern state (constr, pat_opt) =
+and pp_constr_pattern state {value; _} =
+  let constr, pat_opt = value in
   pp_ident state constr;
   match pat_opt with
                None -> ()
@@ -1721,8 +1698,6 @@ and pp_expr state = function
 | EBytes b ->
     pp_node state "EBytes";
     pp_bytes state b
-| EUnit region ->
-    pp_loc_node state "EUnit" region
 | ETuple e_tuple ->
     pp_node state "ETuple";
     pp_tuple_expr state e_tuple
@@ -1801,10 +1776,6 @@ and pp_bool_expr state = function
 | Not {value; region} ->
     pp_loc_node state "Not" region;
     pp_expr     (state#pad 1 0) value.arg
-| False region ->
-    pp_loc_node state "False" region
-| True region ->
-    pp_loc_node state "True" region
 
 and pp_comp_expr state = function
   Lt {value; region} ->
@@ -1820,17 +1791,8 @@ and pp_comp_expr state = function
 | Neq {value; region} ->
     pp_bin_op "Neq" region state value
 
-and pp_constr_expr state = function
-  NoneExpr region ->
-    pp_loc_node state "NoneExpr" region
-| SomeApp {value=_,args; region} ->
-    pp_loc_node state "SomeApp" region;
-    pp_tuple_expr state args
-| ConstrApp {value; region} ->
-    pp_loc_node state "ConstrApp" region;
-    pp_constr_app (state#pad 1 0) value
-
-and pp_constr_app state (constr, args_opt) =
+and pp_constr_expr state {value; _} =
+  let constr, args_opt = value in
   pp_ident state constr;
   match args_opt with
          None -> ()

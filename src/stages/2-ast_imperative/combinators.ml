@@ -55,6 +55,7 @@ let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 let t_module_accessor ?loc module_name element = make_t ?loc @@ T_module_accessor {module_name;element}
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
+let t_abstraction ?loc ty_binder kind type_ : type_expression = make_t ?loc @@ T_abstraction { ty_binder ; kind ; type_ }
 let t_map ?loc key value                  : type_expression = t_app ?loc v_map [key; value]
 let t_big_map ?loc key value              : type_expression = t_app ?loc v_big_map [key; value]
 let t_set ?loc key                        : type_expression = t_app ?loc v_set [key]
@@ -63,10 +64,6 @@ let t_michelson_or ?loc l l_ann r r_ann   : type_expression = t_app ?loc v_miche
 let t_michelson_pair ?loc l l_ann r r_ann : type_expression = t_app ?loc v_michelson_pair [t_annoted l l_ann; t_annoted r r_ann]
 let t_sapling_state ?loc a                : type_expression = t_app ?loc v_sapling_state [a]
 let t_sapling_transaction ?loc a                : type_expression = t_app ?loc v_sapling_trasaction [a]
-let t_michelson_pair_right_comb ?loc c    : type_expression = t_app ?loc v_michelson_pair_right_comb [c]
-let t_michelson_pair_left_comb ?loc c     : type_expression = t_app ?loc v_michelson_pair_left_comb [c]
-let t_michelson_or_right_comb ?loc c      : type_expression = t_app ?loc v_michelson_or_right_comb [c]
-let t_michelson_or_left_comb ?loc c       : type_expression = t_app ?loc v_michelson_or_left_comb [c]
 
 let get_t_annoted = fun te ->
   match te.type_content with
@@ -131,8 +128,8 @@ let e_mod_alias ?loc alias binders result = make_e ?loc @@ E_mod_alias { alias; 
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Label s; element = a}
-let e_true  ?loc (): expression = e_constructor ?loc "true"  @@ e_unit ?loc ()
-let e_false ?loc (): expression = e_constructor ?loc "false" @@ e_unit ?loc ()
+let e_true  ?loc (): expression = e_constructor ?loc "True"  @@ e_unit ?loc ()
+let e_false ?loc (): expression = e_constructor ?loc "False" @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
   let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
@@ -161,8 +158,9 @@ let e_while ?loc cond body = make_e ?loc @@ E_while {cond; body}
 let e_for ?loc binder start final incr f_body = make_e ?loc @@ E_for {binder;start;final;incr;f_body}
 let e_for_each ?loc fe_binder collection collection_type fe_body = make_e ?loc @@ E_for_each {fe_binder;collection;collection_type;fe_body}
 
-let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit ())
-
+let e_bool ?loc   b : expression =
+  if b then e_constructor ?loc "True" (e_unit ())
+  else e_constructor ?loc "False" (e_unit ())
 let e_record ?loc map = make_e ?loc @@ E_record map
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
   let map = List.fold_left ~f:(fun m (x, y) -> LMap.add (Label x) y m) ~init:LMap.empty lst in

@@ -1,4 +1,3 @@
-open Trace
 open Test_helpers
 
 let ends_with suffix str =
@@ -16,10 +15,10 @@ let positive_contract_tests =
   List.filter ~f:(fun path -> not (ends_with ".md" path)) |>
   List.map
     ~f:(fun path ->
-      let run () =
-        let* prog = Ligo_compile.Utils.type_file ~options path "auto" Env in
-        let* _michelson = typed_program_to_michelson prog "main" in
-        ok () in
-        test ("src/test/"^path) run)
+      let run ~raise ~add_warning () =
+        let prog = Ligo_compile.Utils.type_file ~raise ~add_warning ~options path "auto" Env in
+        let _michelson = typed_program_to_michelson ~raise prog "main" in
+        () in
+        test_w ("src/test/"^path) run)
 
-let main = test_suite "Positive contracts" positive_contract_tests
+let main = test_suite "Positive contracts" (positive_contract_tests)

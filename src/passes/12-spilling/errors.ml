@@ -11,8 +11,6 @@ type spilling_error = [
   | `Spilling_raw_michelson_must_be_seq of Location.t * (Location.t, string) Tezos_micheline.Micheline.node
   ]
 
-type 'a spilling_result = ('a , spilling_error) Trace.result
-
 let stage = "spilling"
 
 let corner_case ~loc desc = `Spilling_corner_case (loc, desc)

@@ -40,6 +40,7 @@ let rec type_content : formatter -> type_expression -> unit =
   | T_app            app -> type_app      type_expression ppf app
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
+  | T_abstraction     x  -> abstraction   type_expression ppf x           
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te

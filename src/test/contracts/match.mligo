@@ -16,12 +16,12 @@ let main (action, store : parameter * storage) =
 
 let match_bool (b : bool) : int =
   match b with
-    true -> 10
-  | false -> 0
+    True -> 10
+  | False -> 0
 
 let match_list (l : int list) : int =
   match l with
-    hd::tl -> hd
+    hd::_tl -> hd
   | [] -> 10
 
 let match_option (i : int option) : int =

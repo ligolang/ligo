@@ -163,7 +163,7 @@ This LIGO contract accepts the following LIGO expressions:
 ## Runnable code snippets
 
 Some of the sections in this documentation will include runnable code snippets. Sources for those are available at
-the [LIGO Gitlab repository](https://gitlab.com/ligolang/ligo).
+the [LIGO GitLab repository](https://gitlab.com/ligolang/ligo).
 
 ### Snippets
 
@@ -172,9 +172,9 @@ For example **code snippets** for the *Types* subsection of this doc, can be fou
 
 ### Running snippets
 
-In certain cases it makes sense to be able to run/evaluate the given snippet. Usually there'll be an example command which you can use, such as:
+In certain cases it makes sense to be able to run/evaluate the given snippet. Usually there will be an example command which you can use, such as:
 
 ```shell
-ligo evaluate-expr -s pascaligo gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo --entry-point age -s pascaligo
 # Outputs: 25
 ```

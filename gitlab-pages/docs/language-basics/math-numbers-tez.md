@@ -16,7 +16,7 @@ values of type `tez` are units of measure of Tezos tokens.
 
 <Syntax syntax="pascaligo">
 
-  * Natural numbers are written as digits follwed by the suffix `n`,
+  * Natural numbers are written as digits followed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
 
@@ -33,7 +33,7 @@ separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 </Syntax>
 <Syntax syntax="cameligo">
 
-  * Natural numbers are written as digits follwed by the suffix `n`,
+  * Natural numbers are written as digits followed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
 
@@ -50,7 +50,7 @@ separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 </Syntax>
 <Syntax syntax="jsligo">
 
-  * Natural numbers are written as digits follwed by the annotation `as nat`,
+  * Natural numbers are written as digits followed by the annotation `as nat`,
     like so: `12 as nat`, `0 as nat`, and the same restriction on zero as 
     integers applies: `0 as nat` is the only way to specify the natural zero.
 
@@ -426,7 +426,7 @@ let rem4 : nat = a mod d;  // 3
 > operator. In the case of positive numbers everything is the same, but
 > not with negative numbers.
  
-```jsligo group=d
+```jsligo group=e
 let a: int = 120;
 let b: int = 9;
 let rem1: nat = a % b;  // 3
@@ -534,7 +534,7 @@ let b : nat = abs (1);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=e
+```jsligo group=g
 let a: int = int(1 as nat);
 let b: nat = abs(1);
 ```
@@ -573,9 +573,58 @@ let is_a_nat : option (nat) = Michelson.is_nat (1);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=e
+```jsligo group=h
 let is_a_nat: option<nat> = Michelson.is_nat(1);
 ```
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
+## Bitwise operations
+You can perform bitwise operations as follows:
+
+> bitwise operations can be performed mostly with `nat`'s
+>
+> only in case of bitwise and, the first operand can be either `int` or `nat`
+
+```cameligo
+// Bitwise and (first operand can be int or nat)
+let four : nat = 4n land 4n // 4
+let four_ : nat = 7 land 4n // 4
+// Bitwise or 
+let seven : nat = 7n lor 4n // 7
+// Bitwise xor
+let three : nat = 7n lxor 4n // 3
+// Bitwise shift left
+let fourteen : nat = 7n lsl 1n // 14
+// Bitwise shift right
+let seven_ : nat = 14n land 1n // 7
+```
+
+</Syntax>
+
+<Syntax syntax="reasonligo">
+
+## Bitwise operations
+You can perform bitwise operations as follows:
+
+> bitwise operations can be performed mostly with `nat`'s
+>
+> only in case of bitwise and, the first operand can be either `int` or `nat`
+
+```reasonligo
+// Bitwise and (first operand can be int or nat)
+let four : nat = 4n land 4n; // 4
+let four_ : nat = 7 land 4n; // 4
+// Bitwise or
+let seven : nat = 7n lor 4n; // 7
+// Bitwise xor
+let three : nat = 7n lxor 4n; // 3
+// Bitwise shift left
+let fourteen : nat = 7n lsl 1n; // 14
+// Bitwise shift right
+let seven_ : nat = 14n land 1n; // 7
+```
+
+</Syntax>

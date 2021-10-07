@@ -1,43 +1,43 @@
 (* Test a PascaLIGO function which takes another function as an
    argument *)
 
-function foobar (const i : int) : int is
+function foobar (const _i : int) : int is
   block {
-    function foo (const i : int) : int is i;
-    function bar (const f : int -> int) : int is f (i);
+    function foo (const _i : int) : int is _i;
+    function bar (const f : int -> int) : int is f (_i);
   } with bar (foo)
 
 // higher order function with more than one argument
 
-function higher2 (const i : int; const f : int -> int): int is f (i)
+function higher2 (const _i : int; const f : int -> int): int is f (_i)
 
-function foobar2 (const i : int) : int is
+function foobar2 (const _i : int) : int is
   block {
-    function foo2 (const i : int) : int is i
-  } with higher2 (i, foo2)
+    function foo2 (const _i : int) : int is _i
+  } with higher2 (_i, foo2)
 
 const a : int = 0
 
-function foobar3 (const i : int) : int is
+function foobar3 (const _i : int) : int is
   block {
-    function foo2 (const i : int) : int is a+i
-  } with higher2 (i, foo2)
+    function foo2 (const _i : int) : int is a+_i
+  } with higher2 (_i, foo2)
 
-function f (const i : int) : int is i
+function f (const _i : int) : int is _i
 
-function g (const i : int) : int is f (i)
+function g (const _i : int) : int is f (_i)
 
-function foobar4 (const i : int) : int is g (g (i))
+function foobar4 (const _i : int) : int is g (g (_i))
 
-function higher3 (const i : int;
+function higher3 (const _i : int;
                   const f : int -> int;
-                  const g : int -> int) : int is f (g (i))
+                  const g : int -> int) : int is f (g (_i))
 
-function foobar5 (const i : int) : int is
+function foobar5 (const _i : int) : int is
   block {
     const a : int = 0;
-    function foo (const i : int) : int is a+i;
-    function goo (const i : int) : int is foo (i)
-  } with higher3 (i, foo, goo)
+    function foo (const _i : int) : int is a+_i;
+    function goo (const _i : int) : int is foo (_i)
+  } with higher3 (_i, foo, goo)
 
-function foobar6 (const i : int) : int -> int is f
+function foobar6 (const _i : int) : int -> int is f

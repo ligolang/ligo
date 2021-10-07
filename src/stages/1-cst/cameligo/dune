@@ -9,5 +9,4 @@
     ;; Third party
     hex
     zarith)
-  (modules CST Printer)
-)
+  (modules CST Printer))

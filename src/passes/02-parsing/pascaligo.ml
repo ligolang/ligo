@@ -13,7 +13,7 @@ module Token       = Lexing_pascaligo.Token
 module Self_tokens = Lexing_pascaligo.Self_tokens
 module ParErr      = Parsing_pascaligo.ParErr
 module Parser      = Parsing_pascaligo.Parser
-module CST         = Cst.Pascaligo
+module CST         = Cst_pascaligo.CST
 module Pretty      = Parsing_pascaligo.Pretty
 
 (* Making the parsers *)
@@ -32,11 +32,11 @@ include Parsing_shared.Common.MakeTwoParsers
 
 include Parsing_shared.Common.MakePretty (CST) (Pretty)
 
-let pretty_print_file buffer file_path =
-  ContractParser.parse_file buffer file_path |> Trace.map ~f:pretty_print
+let pretty_print_file ~raise buffer file_path =
+  ContractParser.parse_file ~raise buffer file_path |> pretty_print
 
-let pretty_print_cst buffer file_path =
-  let cst = parse_file buffer file_path in
+let pretty_print_cst ~raise buffer file_path =
+  let cst = parse_file ~raise buffer file_path in
   let buffer = Buffer.create 59 in
   let state =
     Cst_pascaligo.Printer.mk_state
@@ -45,4 +45,4 @@ let pretty_print_cst buffer file_path =
       ~buffer in
   let apply tree =
     Cst_pascaligo.Printer.pp_cst state tree; buffer
-  in Trace.map ~f:apply cst
+  in apply cst

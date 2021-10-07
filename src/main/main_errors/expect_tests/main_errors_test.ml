@@ -132,19 +132,6 @@ let%expect_test _ =
   The promise was unexpectedly canceled
   |}]
 
-let%expect_test "main_parser" =
-  let error e = human_readable_error (`Main_parser e) in
-  error (`Parsing_generic {value= "yolo"; region= Region.ghost}) ;
-  [%expect {|
-    yolo|}] ;
-  error (`Parsing_invalid_wild (EVar {value= "yolo"; region= default_region1})) ;
-  [%expect
-    {|
-  File "a dummy file name", line 20, character 5:
-
-  It looks like you are using a catch-all pattern where it cannot be used
-  |}]
-
 let%expect_test "pretty" = () (* not used *)
 
 let%expect_test "self_ast_imperative" =
@@ -233,22 +220,16 @@ let%expect_test "main_cit_pascaligo" =
   let open Location in
   let error e = human_readable_error (`Main_cit_pascaligo e) in
   let lexeme_reg : lexeme reg = {value= "foo"; region= default_region1} in
-  let pvar = PVar lexeme_reg in
+  let pvar = PVar {value = {variable = lexeme_reg ; attributes = []} ; region = default_region1} in
   let type_expr = TString {value= "yolo"; region= default_region1} in
   let location_t = File default_location in
-  error (`Concrete_pascaligo_unknown_predefined_type lexeme_reg) ;
-  [%expect
-    {|
-      File "a dummy file name", line 20, character 5:
-
-      Unknown type "foo".|}] ;
-error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
+  error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid case pattern.
-              Can't match on values.|}] ;
+      Can't match on values.|}] ;
   error (`Concrete_pascaligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -256,22 +237,6 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
 
       Invalid type.
       It's not possible to assign a string to a type.|}] ;
-  error (`Concrete_pascaligo_unsupported_deep_list_pattern pvar) ;
-  [%expect
-    {|
-      File "a dummy file name", line 20, character 5:
-
-      Invalid list pattern in a case clause.
-      At this point, one of the following is expected:
-        * an empty list pattern "nil";
-        * a cons list pattern "head#tail".|}] ;
-  error (`Concrete_pascaligo_unsupported_deep_tuple_pattern { value = { inside = (pvar, []); lpar = Region.ghost; rpar = Region.ghost }; region = default_region1});
-  [%expect
-    {|
-      File "a dummy file name", line 20, character 5:
-
-      Invalid constructor in a case clause.
-      Currently, nested constructor arguments (tuples) are not supported in case clauses.|}] ;
   error (`Concrete_pascaligo_michelson_type_wrong (type_expr, "foo")) ;
   [%expect
     {|
@@ -295,6 +260,7 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   Invalid function declaration.
   Recursive functions are required to have a type annotation (for now).
   |}] ;
+  let pvar : var_pattern = {variable = {value = "foo"; region = Region.ghost} ; attributes = []} in
   error
     (`Concrete_pascaligo_block_attribute
       { value=
@@ -304,11 +270,12 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
                   (LocalVar
                      { value=
                          { kwd_var= Region.ghost;
-                           pattern= PVar {value= "foo"; region= Region.ghost};
+                           pattern= PVar {value= pvar; region= Region.ghost};
                            var_type= None;
                            assign= Region.ghost;
                            init= EVar {value= "xxx"; region= Region.ghost};
-                           terminator= None };
+                           terminator= None;
+                           attributes = []};
                        region= Region.ghost }),
                 [] );
             terminator= None };
@@ -324,7 +291,7 @@ let%expect_test "main_cit_cameligo" =
   let open Location in
   let error e = human_readable_error (`Main_cit_cameligo e) in
   let variable = {value= "dog"; region= default_region1} in
-  let pvar = PVar { var = variable; attributes = []} in
+  let pvar = PVar {value = { variable ; attributes = []} ; region = default_region1} in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
   error (`Concrete_cameligo_recursive_fun default_region1) ;
@@ -340,7 +307,7 @@ let%expect_test "main_cit_cameligo" =
       File "a dummy file name", line 20, character 5:
 
       Invalid pattern.
-              Can't match on values.|}] ;
+      Can't match on values.|}] ;
   error (`Concrete_cameligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -381,15 +348,9 @@ let%expect_test "main_cit_reasonligo" =
   let open Location in
   let error e = human_readable_error (`Main_cit_reasonligo e) in
   let variable = {value= "dog"; region= default_region1} in
-  let pvar = PVar {var = variable; attributes = []} in
+  let pvar = PVar  {value= {variable; attributes = []}; region= default_region1} in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
-  error (`Concrete_reasonligo_unknown_predefined_type variable) ;
-  [%expect
-    {|
-      File "a dummy file name", line 20, character 5:
-
-      Unknown type "dog".|}] ;
   error (`Concrete_reasonligo_recursive_fun default_region1) ;
   [%expect
     {|
@@ -403,7 +364,7 @@ let%expect_test "main_cit_reasonligo" =
       File "a dummy file name", line 20, character 5:
 
       Invalid pattern matching.
-              Can't match on values.|}] ;
+      Can't match on values.|}] ;
   error (`Concrete_reasonligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -954,10 +915,9 @@ let%expect_test "self_ast_typed" =
     {|
     File "a dummy file name", line 20, character 5:
 
-    Invalid entrypoint "foo".
-    One of the following patterns is expected:
-      * "%bar" is expected for entrypoint "Bar"
-      * "%default" when no entrypoint is used. |}] ;
+    Invalid entrypoint "foo". One of the following patterns is expected:
+    * "%bar" is expected for entrypoint "Bar"
+    * "%default" when no entrypoint is used. |}] ;
   error (`Self_ast_typed_entrypoint_ann_not_literal location_t) ;
   [%expect
     {|

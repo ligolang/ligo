@@ -106,13 +106,12 @@ module MakeParser
                                 and type tree = CST.tree) =
   struct
     type file_path = string list
-    type result = (CST.tree, Errors.t) Trace.result
 
-    (* Lifting [Stdlib.result] to [Trace.result]. *)
+    (* Lifting [Stdlib.result] to [Trace]. *)
 
-    let lift = function
-      Stdlib.Ok tree -> Trace.ok tree
-    | Error msg -> Trace.fail @@ Errors.generic msg
+    let lift ~(raise:Errors.t Trace.raise) = function
+      Ok tree -> tree
+    | Error msg -> raise.raise @@ `Parsing msg
 
     (* We always parse a string buffer of type [Buffer.t], but the
        interpretation of its contents depends on the functions
@@ -123,7 +122,7 @@ module MakeParser
 
     (* Parsing a file *)
 
-    let from_file buffer file_path : result =
+    let from_file ~raise buffer file_path : CST.tree =
       let module File =
         struct
           let input     = Some file_path
@@ -145,13 +144,13 @@ module MakeParser
         let     () = MainLexer.clear () in
         let parser = MainParser.incr_from_lexbuf in
         parser (module ParErr: PAR_ERR) lexbuf
-      in lift tree
+      in lift ~raise tree
 
     let parse_file = from_file
 
     (* Parsing a string *)
 
-    let from_string buffer : result =
+    let from_string ~raise buffer : CST.tree =
       let module File =
         struct
           let input     = None
@@ -172,7 +171,7 @@ module MakeParser
         let     () = MainLexer.clear () in
         let parser = MainParser.incr_from_lexbuf in
         parser (module ParErr: PAR_ERR) lexbuf
-      in lift tree
+      in lift ~raise tree
 
     let parse_string = from_string
   end
@@ -240,9 +239,9 @@ module MakeTwoParsers
 
     (* Results *)
 
-    type cst    = (CST.t,    Errors.t) Trace.result
-    type expr   = (CST.expr, Errors.t) Trace.result
-    type buffer = (Buffer.t, Errors.t) Trace.result
+    type cst    = CST.t
+    type expr   = CST.expr
+    type buffer = Buffer.t
 
     module Partial =
       MakeParser (File) (Comments) (Token) (ParErr) (Self_tokens)

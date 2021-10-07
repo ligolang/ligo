@@ -7,10 +7,10 @@ let add4 (x : int) (y : int) (z : int) (w : int) =
   x + y + z + w
 
 (* 2 args uncurried *)
-let weird2 (x : int) (f : int -> int) : int -> int = f
+let weird2 (_x : int) (f : int -> int) : int -> int = f
 
 (* not uncurried because applied to 3 args *)
-let weird2b (x : int) (f : int -> int) : int -> int = f
+let weird2b (_x : int) (f : int -> int) : int -> int = f
 
 (* not uncurried because applied to different numbers of args *)
 let diff (x : int) (y : int) (z : int) =

@@ -8,5 +8,5 @@ type parameter is unit
 type storage is tez
 type return is list (operation) * storage
 
-function main (const param : parameter; const store: storage) : return is
+function main (const _ : parameter; const _ : storage) : return is
   ((nil : list (operation)), Tezos.balance)

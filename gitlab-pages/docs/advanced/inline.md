@@ -64,7 +64,7 @@ let main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
 </Syntax>
 
 Now if we measure the difference between inlining and without inlining, using
-`ligo measure-contract name_of_contract.ligo <entrypoint>`, we see the 
+`ligo info measure-contract name_of_contract.ligo --entry-point <entrypoint>`, we see the 
 following results:
 
 <table>
@@ -77,6 +77,6 @@ following results:
 </table>
 
 :::info
-Note that these results can change due to ongoing work to optimize output of 
+Note that these results can change due to ongoing work to optimise output of 
 the LIGO compiler.
 :::

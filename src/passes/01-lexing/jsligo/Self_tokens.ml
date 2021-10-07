@@ -1,11 +1,15 @@
 (* This module implements a filter on the lexical units of JsLIGO
    and produces tokens to be consumed by the parser. *)
 
+[@@@warning "-42"]
+
 (* Vendor dependencies *)
 
-module Core   = LexerLib.Core
-module Region = Simple_utils.Region
-module Utils  = Simple_utils.Utils
+module Region    = Simple_utils.Region
+module Utils     = Simple_utils.Utils
+module Core      = LexerLib.Core
+module Markup    = LexerLib.Markup
+module Directive = LexerLib.Directive
 
 (* Signature *)
 
@@ -20,9 +24,15 @@ module type S =
       (lex_unit list, message) result -> (token list, message) result
   end
 
-(* Filters *)
+(* Utilities *)
+
+let (<@) = Utils.(<@)
 
 let ok x = Stdlib.Ok x
+
+let apply filter = function
+  Stdlib.Ok tokens -> filter tokens |> ok
+| Error _ as err   -> err
 
 type message = string Region.reg
 
@@ -36,16 +46,17 @@ let tokens_of = function
   Stdlib.Ok lex_units ->
     let apply tokens = function
       Core.Token token -> token::tokens
-    | Core.Markup (BlockCom c) -> Token.BlockCom c :: tokens
-    | Core.Markup (LineCom c) -> Token.LineCom c :: tokens
+    | Core.Markup (Markup.BlockCom c) -> Token.BlockCom c :: tokens
+    | Core.Markup (Markup.LineCom c) -> Token.LineCom c :: tokens
     | Core.Markup _ -> tokens
     | Core.Directive d -> Token.Directive d :: tokens
     in List.fold_left apply [] lex_units |> List.rev |> ok
 | Error _ as err -> err
 
+(* Automatic Semicolon Insertion *)
 
-let automatic_semicolon_insertion tokens = 
-  let open Token in
+let automatic_semicolon_insertion tokens =
+  let open! Token in
   let rec inner result = function
     (Directive _ as t) :: rest ->
     inner (t :: result) rest
@@ -62,7 +73,7 @@ let automatic_semicolon_insertion tokens =
   | (LBRACE _ as semi) :: (Let _ as t)  :: rest
   | (LBRACE _ as semi) :: (Const _ as t)  :: rest
   | (LBRACE _ as semi) :: (Type _ as t)  :: rest
-  | (LBRACE _ as semi) :: (Return _ as t)  :: rest -> 
+  | (LBRACE _ as semi) :: (Return _ as t)  :: rest ->
     inner (t:: semi :: result) rest
   | token :: (Const _ as t) :: rest
   | token :: (Type _ as t) :: rest
@@ -71,28 +82,29 @@ let automatic_semicolon_insertion tokens =
     let (r, _) = Token.proj_token token in
     let (r2, _) = Token.proj_token t in
     if r#stop#line < r2#start#line  then (
-      inner (t :: SEMI Region.ghost :: token :: result) rest 
+      inner (t :: SEMI (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop) :: token :: result) rest 
     )
     else (
       match token with 
         RBRACE _ as t -> 
-        inner (t :: SEMI Region.ghost :: token :: result) rest 
+        inner (t :: SEMI (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop) :: token :: result) rest 
       | _ ->
-        inner (t :: token :: result) rest 
+        inner (t :: token :: result) rest
     )
   | hd :: tl -> inner (hd :: result) tl
   | [] -> List.rev result
-  in 
+  in
   inner [] tokens
 
-let automatic_semicolon_insertion = function
-  Stdlib.Ok tokens -> automatic_semicolon_insertion tokens |> ok
-| Error _ as err -> err
+let automatic_semicolon_insertion units =
+  apply automatic_semicolon_insertion units
 
-let attribute_regexp = Str.regexp "@\\([a-zA-Z:0-9_]*\\)"
+(* Attributes *)
+
+let attribute_regexp = Str.regexp "@\\([a-zA-Z:0-9_]+\\)"
 
 let collect_attributes str =
-  let rec inner result str = 
+  let rec inner result str =
     try (
       let r = Str.search_forward attribute_regexp str 0 in
       let s = Str.matched_group 0 str in
@@ -102,28 +114,68 @@ let collect_attributes str =
     )
     with
     | Not_found -> result
-  in 
-  inner [] str 
+  in
+  inner [] str
 
-let attributes tokens = 
-  let open Token in
+let attributes tokens =
+  let open! Token in
   let rec inner result = function
     LineCom c :: tl
   | BlockCom c :: tl ->
-      let attributes = collect_attributes c.value in
-      let attributes = List.map (fun e -> 
-        Attr {value = e; region = c.region}) attributes in
+      let attributes = collect_attributes c.Region.value in
+      let attributes = List.map (fun e ->
+        Attr Region.{value = e; region = c.region}) attributes in
       inner (attributes @ result) tl
   | hd :: tl -> inner (hd :: result) tl
   | [] -> List.rev result
-  in 
+  in
   inner [] tokens
 
-let attributes = function
-  Stdlib.Ok tokens -> attributes tokens |> ok
-| Error _ as err -> err
+let attributes units = apply attributes units
 
-(* Exported *)
+(* Injection of Zero-Width Spaces *)
 
-let filter = Utils.(attributes <@ automatic_semicolon_insertion <@ tokens_of <@ Style.check)
+let inject_zwsp lex_units =
+  let open! Token in
+  let rec aux acc = function
+    [] -> List.rev acc
+  | (Core.Token GT _ as gt1)::(Core.Token GT reg :: _ as units) ->
+      aux (Core.Token (ZWSP reg) :: gt1 :: acc) units
+  | unit::units -> aux (unit::acc) units
+  in aux [] lex_units
 
+let inject_zwsp units = apply inject_zwsp units
+
+(* DEBUG *)
+
+(* Printing lexical units *)
+
+let print_unit = function
+  Core.Token t ->
+    Printf.printf "%s\n" (Token.to_string ~offsets:true `Point t)
+| Core.Markup m ->
+    Printf.printf "%s\n" (Markup.to_string ~offsets:true `Point m)
+| Core.Directive d ->
+    Printf.printf "%s\n" (Directive.to_string ~offsets:true `Point d)
+
+let print_units units =
+  apply (fun units -> List.iter print_unit units; units) units
+
+(* Printing tokens *)
+
+let print_token token =
+  Printf.printf "%s\n" (Token.to_string ~offsets:true `Point token)
+
+let print_tokens tokens =
+  apply (fun tokens -> List.iter print_token tokens; tokens) tokens
+
+(* COMPOSING FILTERS (exported) *)
+
+let filter =
+  attributes
+  <@ automatic_semicolon_insertion
+  (*  <@ print_tokens*)
+  <@ tokens_of
+  (*  <@ print_units*)
+  <@ inject_zwsp
+  <@ Style.check

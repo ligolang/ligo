@@ -8,7 +8,7 @@ module Set = RedBlackTrees.PolySet
 
 (* TODO: move this to a separate file, it has little to do with compare_renaming *)
 (* TODO: use the rope from the heuristic instead *)
-type 'a tree = Leaf of 'a | List of 'a tree list
+type 'a tree = Leaf of 'a | Node of 'a tree list
 
 (* For comparisons, None means different, Some tree means equality
    modulo variables and flattening the tree gives the pairs of type
@@ -18,28 +18,28 @@ let (<?) ca cb =
   match ca with
   | Some t1 ->
     (match cb () with
-     | Some t2 -> Some ((List [t1; t2]) : _ tree)
+     | Some t2 -> Some ((Node [t1; t2]) : _ tree)
      | None -> None)
   | None -> None
 
 type 'a cmp = 'a -> 'a -> (type_variable * type_variable) tree option
 
 let use_generated g : 'a cmp = fun expected actual ->
-  if g expected actual = 0 then Some (List []) else None
+  if g expected actual = 0 then Some (Node []) else None
 
 let list : compare:('a cmp) -> ('a list) cmp = fun ~compare  expected actual ->
   let aux = fun tree (exp, act) ->
     match tree with
     | None -> None
-    | Some tree1 -> ( 
+    | Some tree1 -> (
       match compare exp act with
       | None -> None
-      | Some tree2 -> Some ((List [tree1; tree2]) : _ tree)
+      | Some tree2 -> Some ((Node [tree1; tree2]) : _ tree)
     )
   in
   if Int.compare (List.length expected) (List.length actual) != 0
   then None
-  else List.fold_left ~f:aux ~init:(Some (List [])) (List.zip_exn expected actual)
+  else List.fold_left ~f:aux ~init:(Some (Node [])) (List.zip_exn expected actual)
 
 let lmap : compare:('a cmp) -> ('a LMap.t) cmp = fun ~compare expected actual ->
   if List.compare Ast_core.Compare.label (LMap.keys expected) (LMap.keys actual) != 0 then
@@ -132,7 +132,7 @@ and row_value : row_value cmp = fun expected actual ->
   use_generated Ast_core.Compare.row_value expected actual
 
 and p_constraint { pc = a } { pc = b } = type_constraint a b
-  
+
 and type_value_ : type_value_ cmp = fun expected actual ->
   match expected, actual with
   | (Ast_core.Types.P_forall   a , Ast_core.Types.P_forall   b) -> p_forall a b
@@ -195,22 +195,22 @@ and constructor_or_row_list : constructor_or_row list cmp = fun expected actual 
 
 let rec flatten_tree : _ tree -> _ list -> _ list = fun t acc ->
   match t with
-  | List (Leaf a        :: rest) -> flatten_tree (List rest)                    (a :: acc)
-  | List ((List [])     :: rest) -> flatten_tree (List rest)                          acc
-  | List (List (hd::tl) :: rest) -> flatten_tree (List (hd :: List tl :: rest))       acc
+  | Node (Leaf a        :: rest) -> flatten_tree (Node rest)                    (a :: acc)
+  | Node ((Node [])     :: rest) -> flatten_tree (Node rest)                          acc
+  | Node (Node (hd::tl) :: rest) -> flatten_tree (Node (hd :: Node tl :: rest))       acc
   | Leaf a                  ->                                                   a :: acc
-  | List []                 ->                                                        acc
+  | Node []                 ->                                                        acc
 
 let flatten_tree : _ tree -> _ list = fun t -> List.rev @@ flatten_tree t []
 
-let compare_and_check_vars = fun ~(compare : 'a cmp) ~print_whole whole_expected whole_actual ->
+let compare_and_check_vars ~raise = fun ~(compare : 'a cmp) ~print_whole whole_expected whole_actual ->
   let aux seen (expected,actual) =
     match Map.find_opt expected seen with
-      None -> ok @@ Map.add expected actual seen
+      None -> Map.add expected actual seen
     | Some substitution ->
       if Ast_core.Compare.type_variable actual substitution = 0
-      then ok seen            (* we saw the same substitution for the same expected variable, all fine  *)
-      else fail (Typer_common.Errors.corner_case
+      then seen            (* we saw the same substitution for the same expected variable, all fine  *)
+      else raise.raise (Typer_common.Errors.corner_case
                  @@ Format.asprintf "%s expected (unification?) type variable %a but got %a, while comparing the expected %a with the actual %a"
                    __LOC__
                    Ast_core.PP.type_variable substitution
@@ -221,13 +221,13 @@ let compare_and_check_vars = fun ~(compare : 'a cmp) ~print_whole whole_expected
   in
   match compare whole_expected whole_actual with
   | None ->
-    fail (Typer_common.Errors.corner_case
+    raise.raise (Typer_common.Errors.corner_case
           @@ Format.asprintf "%s expected \n%a\nbut got actual\n%a\n"
-            __LOC__  
+            __LOC__
             print_whole whole_expected
             print_whole whole_actual)
   | Some t ->
-    let* _seen = bind_fold_list aux
-        (RedBlackTrees.PolyMap.create ~cmp:Ast_core.Compare.type_variable)
+    let _seen = List.fold ~f:aux
+        ~init:(RedBlackTrees.PolyMap.create ~cmp:Ast_core.Compare.type_variable)
         (flatten_tree t)
-    in ok ()
+    in ()

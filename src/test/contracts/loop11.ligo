@@ -1,6 +1,6 @@
 // Test while loops in PascaLIGO
 
-function for_collection_if_and_local_var (var nee : unit) : int is
+function for_collection_if_and_local_var (var _ : unit) : int is
   block {
     var acc : int := 0;
     const theone : int = 1;
