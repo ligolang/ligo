@@ -1,6 +1,9 @@
 -- | Code folding utilities
 
-module AST.Capabilities.Folding where
+module AST.Capabilities.Folding
+  ( foldingAST
+  , toFoldingRange
+  ) where
 
 import Language.LSP.Types qualified as J
 
@@ -42,8 +45,8 @@ foldingAST = execWriterT . visit handlers
 
 toFoldingRange :: Range -> J.FoldingRange
 toFoldingRange Range
-  { rStart  = (_startLine, Just -> _startCharacter, _)
-  , rFinish = (_endLine, Just -> _endCharacter, _)
+  { _rStart  = (_startLine, Just -> _startCharacter, _)
+  , _rFinish = (_endLine, Just -> _endCharacter, _)
   } = J.FoldingRange
   { _startLine = _startLine - 1
   , _startCharacter = pred <$> _startCharacter

@@ -5,7 +5,14 @@
   The heterogeneous list.
 -}
 
-module Product where
+module Product
+  ( Product (..)
+  , Contains (..)
+  , (:=) (..)
+  , putElem
+  , getTag
+  , modTag
+  ) where
 
 import GHC.Types
 
@@ -33,18 +40,6 @@ instance {-# OVERLAPS #-} Contains x (x : xs) where
 instance Contains x xs => Contains x (y : xs) where
   getElem   (_ :> xs) = getElem xs
   modElem f (x :> xs) = x :> modElem f xs
-
-traverseElem
-  :: forall a xs m
-  .  ( Contains a xs
-     , Applicative m
-     )
-  => (a -> m a)
-  -> Product xs
-  -> m (Product xs)
-traverseElem f xs = do
-  x' <- f (getElem xs)
-  return $ putElem x' xs
 
 putElem :: Contains x xs => x -> Product xs -> Product xs
 putElem = modElem . const

@@ -1,6 +1,10 @@
 module Test.Common.Capabilities.CodeAction.ExtractTypeAlias
   ( extractTypeAliasDriver
+  , extractTextEdits
   , testCases
+  , constructExpectedWorkspaceEdit
+  , testInfos
+  , TestInfo (..)
   ) where
 
 import Control.Lens
@@ -33,13 +37,13 @@ testInfos :: [TestInfo]
 testInfos =
   [ TestInfo
     { tiContract = "simple.ligo"
-    , tiCursor = point 6 24
+    , tiCursor = point 2 24
     , tiExpectedEdits =
-        [ (mkr 5 29 5 32 , extractedTypeNameAlias)
-        , (mkr 6 23 6 26 , extractedTypeNameAlias)
-        , (mkr 6 29 6 32 , extractedTypeNameAlias)
-        , (mkr 7 13 7 16 , extractedTypeNameAlias)
-        , (mkr 5  1 5  1 , "type " <> extractedTypeNameAlias <> " is nat\n")
+        [ (mkr 1 29 1 32 , extractedTypeNameAlias)
+        , (mkr 2 23 2 26 , extractedTypeNameAlias)
+        , (mkr 2 29 2 32 , extractedTypeNameAlias)
+        , (mkr 3 13 3 16 , extractedTypeNameAlias)
+        , (mkr 1  1 1  1 , "type " <> extractedTypeNameAlias <> " is nat\n")
         ]
     }
   ]

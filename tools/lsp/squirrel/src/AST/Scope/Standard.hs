@@ -1,13 +1,16 @@
-module AST.Scope.Standard where
+module AST.Scope.Standard
+  ( Standard
+  ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Exception.Safe
 import Control.Lens ((%~))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 
 import AST.Scope.Common
   ( pattern FindContract, FindFilepath (..), ContractNotFoundException (..)
   , HasScopeForest (..) , ParsedContract (..), MergeStrategy (..), cMsgs
-  , getContract, lookupContract, mergeScopeForest, traverseAM
+  , getContract, lookupContract, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
 import AST.Scope.FromCompiler (FromCompiler)
@@ -21,10 +24,11 @@ import Duplo.Lattice (Lattice (leq))
 import Parser (Msg)
 import ParseTree (srcPath)
 import Range (point)
+import Util.Graph (traverseAMConcurrently)
 
 data Standard
 
-instance HasLigoClient m => HasScopeForest Standard m where
+instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
   scopeForest pc = do
     lgForest <- scopeForest @FromCompiler pc `catches`
       [ Handler \case
@@ -43,11 +47,14 @@ instance HasLigoClient m => HasScopeForest Standard m where
 
       addLigoErrToMsg err = G.gmap (getContract . cMsgs %~ (`rewriteAt` err)) <$> fallbackForest
 
-      merge l f = flip traverseAM l \(FindFilepath lf) -> do
+      merge l f = flip traverseAMConcurrently l \(FindFilepath lf) -> do
         let src = _cFile lf
         let fp = srcPath src
         FindFilepath ff <- maybe (throwM $ ContractNotFoundException fp f) pure (lookupContract fp f)
-        pure $ FindContract src (mergeScopeForest OnUnion (_cTree ff) (_cTree lf)) (_cMsgs ff <> _cMsgs lf)
+        pure $ FindContract
+          src
+          (mergeScopeForest OnUnion (_cTree ff) (_cTree lf))
+          (_cMsgs ff <> _cMsgs lf)
 
       -- | Rewrite error message at the most local scope or append it to the end.
       rewriteAt :: [Msg] -> Msg -> [Msg]

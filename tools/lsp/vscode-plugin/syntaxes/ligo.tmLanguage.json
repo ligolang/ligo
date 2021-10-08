@@ -49,7 +49,7 @@
         },
 
         "macro": {
-            "begin": "^\\s*((#)\\w+)",
+            "begin": "^((#)\\s*\\w+)",
             "beginCaptures": {
                 "1": { "name": "meta.preprocessor.ligo" },
                 "2": { "name": "punctuation.definition.directive.ligo" }

@@ -28,7 +28,7 @@ unit_selectionRangeInsideCase :: Assertion
 unit_selectionRangeInsideCase = do
   let filepath = contractsDir </> "heap.ligo"
   tree <- readContract filepath
-  let position = (point 16 8){rFile = filepath}
+  let position = (point 16 8){_rFile = filepath}
       results = findCoveringRanges (tree ^. nestedLIGO) position
               & map simplify
   results `shouldBe` [ SimpleRange (16, 8) ( 16, 12) filepath

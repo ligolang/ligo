@@ -50,5 +50,16 @@ highlight link ligoParenTypeExpr Type
 " a higher precedence
 syntax match ligoOperator "::"
 
+" Macros
+syntax match p_include "#\s*include"
+syntax match p_define  "#\s*\(define\|undef\)"
+syntax match p_if      "#\s*\(if\|elif\|else\|endif\)\(n\?def\)\?"
+syntax match p_message "#\s*\(error\|warning\)"
+
+highlight link p_include Include
+highlight link p_define  Define
+highlight link p_if      PreCondit
+highlight link p_message Macro
+
 let b:current_syntax = "mligo"
 

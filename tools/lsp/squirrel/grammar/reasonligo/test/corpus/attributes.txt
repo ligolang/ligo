@@ -150,7 +150,7 @@ let bar = (b : int) : int => {
   (let_decl
     (var_pattern (NameDecl))
     (lambda
-      (annot_pattern (var_pattern (NameDecl)) (TypeName))
+      (fun_arg (var_pattern (NameDecl)) (TypeName))
       (TypeName)
       (block
         (let_decl

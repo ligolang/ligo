@@ -1,5 +1,7 @@
 -- | Parser for a PascaLigo contract.
-module AST.Parser.Pascaligo where
+module AST.Parser.Pascaligo
+  ( recognise
+  ) where
 
 import AST.Skeleton
 
@@ -8,7 +10,6 @@ import Duplo.Tree
 import ParseTree
 import Parser
 import Product (Product (Nil, (:>)))
-
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -62,6 +63,14 @@ recognise (SomeRawTree dialect rawTree)
         "paren_expr"        -> Paren     <$> field  "expr"
         _                   -> fallthrough
 
+    -- Collection
+  , Descent do
+      boilerplate' \case
+        ("collection", "map")  -> pure CMap
+        ("collection", "set")  -> pure CSet
+        ("collection", "list") -> pure CList
+        _                      -> fallthrough
+
     -- Pattern
   , Descent do
       boilerplate \case
@@ -72,6 +81,7 @@ recognise (SomeRawTree dialect rawTree)
         "cons_pattern"        -> IsCons   <$> field  "head"   <*> field "tail"
         "var_pattern"         -> IsVar    <$> field  "name"
         "record_pattern"      -> IsRecord <$> fields "field"
+        "wildcard_pattern"    -> pure IsWildcard
         _                     -> fallthrough
 
     -- Irrefutable tuple
@@ -155,13 +165,14 @@ recognise (SomeRawTree dialect rawTree)
         "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> field "typeValue"
-        "include"    -> BInclude  <$>             field    "filename"
+        "p_include"  -> BInclude  <$>             field    "filename"
+        "p_import"   -> BImport   <$>             field    "filename" <*> field "alias"
         _            -> fallthrough
 
     -- VarDecl
   , Descent do
       boilerplate \case
-        "param_decl" -> BParameter <$> field "name" <*> field "type"
+        "param_decl" -> BParameter <$> field "name" <*> fieldOpt "type"
         _            -> fallthrough
 
   --   -- Mutable
@@ -257,7 +268,7 @@ recognise (SomeRawTree dialect rawTree)
 
     -- Err
   , Descent do
-      \(r :> _, ParseTree _ children source) -> do
+      \(r :> _, ParseTree _ children source) ->
         withComments do
-          return (r :> N :> CodeSource source :> Nil, Error source children)
+          return ([] :> r :> N :> CodeSource source :> Nil, Error source children)
   ]

@@ -51,7 +51,7 @@ import Duplo.Pretty
 import Duplo.Tree
 import Parser
 import Product
-import Range
+import Range hiding (startLine)
 
 ----------------------------------------------------------------------------
 -- Types
@@ -133,9 +133,13 @@ data LigoDefinitionScope = LigoDefinitionScope
     -- | The type itself
     -- `"t"`
   , _ldsT :: Maybe LigoTypeFull
-    -- | `Value` for now since they are always `null` by now
+    -- | We parse it in chunks of 2, each odd element of the array is a name for
+    -- the corresponding element which is `LigoRangeInner`.
+    -- ```
+    -- { "references": [ ["<scope>", LigoRangeInner] ] }
+    -- ```
     -- `"references"`
-  , _ldsReferences :: Value
+  , _ldsReferences :: [LigoRange]
   }
   deriving stock (Generic, Show)
 
@@ -336,7 +340,7 @@ instance FromJSON LigoDefinitionScope where
     _ldsRange <- parseLigoRange "scope_range" =<< o .: "range"
     _ldsBodyRange <- parseLigoRange "scope_body_range" =<< o .: "body_range"
     _ldsT <- o .:? "t"
-    _ldsReferences <- o .: "references"
+    _ldsReferences <- traverse (parseLigoRangeArray "scope_references_ranges") =<< o .: "references"
     return $ LigoDefinitionScope {..}
 
 instance ToJSON LigoDefinitionScope where
@@ -547,7 +551,7 @@ parseLigoRangeString = flip withText safeExtract
 
     matchRange :: String -> [String]
     matchRange str =
-      getAllTextSubmatches (str =~ ("in file \"(.*)\", line ([0-9]+), characters ([0-9]+)-([0-9]+)" :: Text))
+      getAllTextSubmatches (str =~ ("\"(.*)\", line ([0-9]+), characters ([0-9]+)-([0-9]+)" :: Text))
 
 -- | Construct a parser of ligo type content that is represented in pairs
 -- ```
@@ -629,9 +633,9 @@ mbFromLigoRange
   )
   | startFilePath /= endFilePath = error "start file of a range does not equal to its end file"
   | otherwise = Just Range
-      { rStart = (startLine, abs (startCNum - startBol) + 1, 0)
-      , rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
-      , rFile = startFilePath
+      { _rStart = (startLine, abs (startCNum - startBol) + 1, 0)
+      , _rFinish = (endLine, abs (endCNum - endBol) + 1, 0)
+      , _rFile = startFilePath
       }
 
 fromLigoRangeOrDef :: LigoRange -> Range
@@ -741,7 +745,7 @@ fromLigoTypeFull = enclose . \case
     enclose = flip evalState defaultState
 
     defaultState :: Product Info
-    defaultState = [] :> point 1 1 :> N :> CodeSource "" :> Nil
+    defaultState = [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
 
 mkLigoError :: Product Info -> Text -> LIGO Info
 mkLigoError p msg = make' . (p,) $ Error msg [p :< inject (Name "ligo error")]

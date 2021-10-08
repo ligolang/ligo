@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module AST.Scope.ScopedDecl
   ( Scope
   , ScopedDecl (..)
@@ -27,6 +25,12 @@ module AST.Scope.ScopedDecl
   , vdsTspec
   , Parameter (..)
 
+  , Constant (..)
+  , Pattern (..)
+  , RecordFieldPattern (..)
+
+  , IsLIGO (..)
+
   , Accessor
   , accessField
   , lppDeclCategory
@@ -46,7 +50,6 @@ import Duplo.Tree (Cofree ((:<)), Element)
 import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr)
 import AST.Skeleton (LIGO, Lang, RawLigoList)
 import AST.Skeleton qualified as LIGO
-  (Ctor (..), FieldName (..), TField (..), Type (..), TypeName (..), Variant (..))
 import Parser (fillInfo)
 import Product (Product (Nil))
 import Range (Range)
@@ -77,7 +80,9 @@ data Type
   = RecordType [TypeField]
   | VariantType [TypeConstructor]
   | TupleType [TypeDeclSpecifics]
+  | ApplyType Type [Type]
   | AliasType Text
+  | ArrowType Type Type
   deriving stock (Eq, Show)
 
 data TypeField = TypeField
@@ -98,11 +103,38 @@ data ValueDeclSpecifics = ValueDeclSpecifics
   }
   deriving stock (Eq, Show)
 
-newtype Parameter = Parameter
-  { parPresentation :: Text
-  }
+data Parameter
+  = ParameterPattern Pattern
+  | ParameterBinding Pattern (Maybe Type)
   deriving stock (Eq, Show)
-  deriving newtype Pretty
+
+data Constant
+  = Int    Text
+  | Nat    Text
+  | String Text
+  | Float  Text
+  | Bytes  Text
+  | Tez    Text
+  deriving stock (Eq, Show)
+
+data Pattern
+  = IsConstr     Text (Maybe Pattern)
+  | IsConstant   Constant
+  | IsVar        Text
+  | IsCons       Pattern Pattern
+  | IsAnnot      Pattern Type  -- Semantically `Var`
+  | IsWildcard
+  | IsSpread     Pattern
+  | IsList       [Pattern]
+  | IsTuple      [Pattern]
+  | IsRecord     [RecordFieldPattern]
+  | IsParen      Pattern
+  deriving stock (Eq, Show)
+
+data RecordFieldPattern
+  = IsRecordField Text Pattern
+  | IsRecordCapture Text
+  deriving stock (Eq, Show)
 
 instance Eq ScopedDecl where
   sd1 == sd2 =
@@ -120,7 +152,7 @@ instance Pretty ScopedDecl where
 
 lppDeclCategory :: ScopedDecl -> Doc
 lppDeclCategory decl = case _sdSpec decl of
-  TypeSpec{} -> pp @Text "TYPE"
+  TypeSpec tspec -> lppLigoLike (_sdDialect decl) tspec
   ValueSpec vspec -> case _vdsTspec vspec of
     Nothing -> pp @Text "unknown"
     Just tspec -> lppLigoLike (_sdDialect decl) tspec
@@ -139,6 +171,8 @@ instance IsLIGO Type where
   toLIGO (VariantType cons) = node (LIGO.TSum (map toLIGO cons))
   toLIGO (TupleType typs) = node (LIGO.TProduct (map toLIGO typs))
   toLIGO (AliasType typ) = node (LIGO.TypeName typ)
+  toLIGO (ApplyType name types) = node (LIGO.TApply (toLIGO name) (map toLIGO types))
+  toLIGO (ArrowType left right) = node (LIGO.TArrow (toLIGO left) (toLIGO right))
 
 instance IsLIGO TypeField where
   toLIGO TypeField{ .. } = node
@@ -147,6 +181,35 @@ instance IsLIGO TypeField where
 instance IsLIGO TypeConstructor where
   toLIGO TypeConstructor{ .. } = node
     (LIGO.Variant (node (LIGO.Ctor _tcName)) Nothing)
+
+instance IsLIGO Parameter where
+  toLIGO (ParameterPattern pat) = toLIGO pat
+  toLIGO (ParameterBinding pat typM) = node (LIGO.BParameter (toLIGO pat) (toLIGO <$> typM))
+
+instance IsLIGO Constant where
+  toLIGO (Int i) = node (LIGO.Int i)
+  toLIGO (Nat n) = node (LIGO.Nat n)
+  toLIGO (String s) = node (LIGO.String s)
+  toLIGO (Float f) = node (LIGO.Float f)
+  toLIGO (Bytes b) = node (LIGO.Bytes b)
+  toLIGO (Tez t) = node (LIGO.Tez t)
+
+instance IsLIGO Pattern where
+  toLIGO (IsConstr name patM) = node (LIGO.IsConstr (node (LIGO.Ctor name)) (toLIGO <$> patM))
+  toLIGO (IsConstant constant) = node (LIGO.IsConstant (toLIGO constant))
+  toLIGO (IsVar name) = node (LIGO.IsVar (node (LIGO.NameDecl name)))
+  toLIGO (IsCons left right) = node (LIGO.IsCons (toLIGO left) (toLIGO right))
+  toLIGO (IsAnnot pat typ) = node (LIGO.IsAnnot (toLIGO pat) (toLIGO typ))
+  toLIGO IsWildcard = node LIGO.IsWildcard
+  toLIGO (IsSpread pat) = node (LIGO.IsSpread (toLIGO pat))
+  toLIGO (IsList pats) = node (LIGO.IsList (toLIGO <$> pats))
+  toLIGO (IsTuple pats) = node (LIGO.IsTuple (toLIGO <$> pats))
+  toLIGO (IsRecord pats) = node (LIGO.IsRecord (toLIGO <$> pats))
+  toLIGO (IsParen pat) = node (LIGO.IsParen (toLIGO pat))
+
+instance IsLIGO RecordFieldPattern where
+  toLIGO (IsRecordField name body) = node (LIGO.IsRecordField (node (LIGO.FieldName name)) (toLIGO body))
+  toLIGO (IsRecordCapture name) = node (LIGO.IsRecordCapture (node (LIGO.NameDecl name)))
 
 node :: Element f RawLigoList => f (LIGO '[]) -> LIGO '[]
 node element = Nil :< inject element

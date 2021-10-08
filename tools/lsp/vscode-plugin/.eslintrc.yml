@@ -10,5 +10,7 @@ parserOptions:
 plugins:
   - '@typescript-eslint'
 rules:
+  import/extensions: off
   import/no-unresolved: off
   no-undef: off
+  semi: off

@@ -91,21 +91,9 @@ type RawInfo = Product [Range, Text]
 -- instance {-# OVERLAPS #-} Modifies RawInfo where
 --   ascribe (r :> n :> _) d = color 3 (pp n) `indent` pp d
 
-data TreeKind
-  = Error
-  | Comment
-  | Field Text
-  deriving stock (Eq, Ord)
-
 -- TODO: move and refactor
 instance (Pretty v) => Pretty (Map k v) where
   pp = pp . fmap snd . toList
-
-instance Pretty TreeKind where
-  pp = \case
-    Error -> "error"
-    Comment -> "comment"
-    Field t -> "field (" PP.<.> pp t PP.<.> ")"
 
 -- | The tree tree-sitter produces.
 data ParseTree self = ParseTree
@@ -113,7 +101,7 @@ data ParseTree self = ParseTree
   , ptChildren :: [self]       -- ^ Subtrees.
   , ptSource   :: ~Text        -- ^ Range of the node.
   }
-  deriving stock (Functor, Foldable, Traversable)
+  deriving stock (Functor, Foldable, Show, Traversable)
 
 instance Pretty1 ParseTree where
   pp1 (ParseTree n forest _) =
@@ -149,9 +137,7 @@ toParseTree dialect input = do
           poke tsNodePtr $ nodeTSNode node
           ts_node_copy_child_nodes tsNodePtr children
           nodes <- for [0.. count - 1] $ \i -> do
-            peekElemOff children i
-
-          trees <- for nodes \node' -> do
+            node' <- peekElemOff children i
             (only -> (r :> _, tree :: ParseTree RawTree)) <- go fin src node'
             field <-
               if   nodeFieldName node' == nullPtr
@@ -176,25 +162,25 @@ toParseTree dialect input = do
 
           let
             range = Range
-              { rStart  =
+              { _rStart  =
                   ( i $ pointRow    start2D + 1
                   , i $ pointColumn start2D + 1
                   , i $ nodeStartByte node
                   )
 
-              , rFinish =
+              , _rFinish =
                   ( i $ pointRow    finish2D + 1
                   , i $ pointColumn finish2D + 1
                   , i $ nodeEndByte node
                   )
-              , rFile = srcPath fin
+              , _rFile = srcPath fin
               }
 
           return $ make
             ( range :> "" :> Nil
             , ParseTree
               { ptName     = name
-              , ptChildren = trees
+              , ptChildren = nodes
               , ptSource   = cutOut range src
               }
             )

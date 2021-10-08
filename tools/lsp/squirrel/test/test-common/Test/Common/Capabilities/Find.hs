@@ -1,7 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Test.Common.Capabilities.Find
-  ( findDefinitionAndGoToReferencesCorrespondence
+  ( DefinitionReferenceInvariant (..)
+
+  , findDefinitionAndGoToReferencesCorrespondence
   , definitionOfId
   , definitionOfLeft
   , referenceOfId
@@ -14,6 +16,9 @@ module Test.Common.Capabilities.Find
   , typeOfLet
   , typeOfPascaligoLambdaArg
   , pascaligoLocalType
+
+  , contractsDir
+  , invariants
   ) where
 
 import Data.Foldable (for_)
@@ -84,8 +89,8 @@ checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = test
 
 label :: FilePath -> Range -> IO Range
 label filepath r
-  | null (rFile r) = pure r{ rFile = filepath }
-  | otherwise      = fmap (\fp -> r{ rFile = fp }) (makeAbsolute $ rFile r)
+  | null (_rFile r) = pure r{ _rFile = filepath }
+  | otherwise      = fmap (\fp -> r{ _rFile = fp }) (makeAbsolute $ _rFile r)
 
 -- | Check if the given range corresponds to a definition of the given
 -- entity in the given file.
@@ -140,20 +145,26 @@ invariants =
                 , interval 12 30 37
                 ]
     }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "heap.ligo"
-    , driDesc = "left, local"
-    , driDef = Just (interval 77 9 13)
-    , driRefs = [ interval 99 15 19
-                , interval 90 13 17
-                , interval 89 30 34
-                , interval 87 22 26
-                , interval 86 36 40
-                , interval 85 10 14
-                , interval 84 16 20
-                , interval 83 7 11
-                ]
-    }
+  -- TODO: There seems to be a bug in `ligo get-scope`'s references where it
+  -- will say the range of one variable is much longer than it should be (one
+  -- expression bigger it seems). For now, I'm separating this into two separate
+  -- tests, for the integration and lsp tests. Once this is fixed, this test and
+  -- its counterpart for `lsp-test` should be deleted and this test should be
+  -- uncommented.
+  --, DefinitionReferenceInvariant
+  --  { driFile = contractsDir </> "heap.ligo"
+  --  , driDesc = "left, local"
+  --  , driDef = Just (interval 77 9 13)
+  --  , driRefs = [ interval 99 15 19
+  --              , interval 90 13 17
+  --              , interval 89 30 34
+  --              , interval 87 22 26
+  --              , interval 86 36 40
+  --              , interval 85 10 14
+  --              , interval 84 16 20
+  --              , interval 83 7 11
+  --              ]
+  --  }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "params.mligo"
     , driDesc = "a, function"
@@ -228,7 +239,6 @@ invariants =
     , driDef = Just (interval 6 9 16)
     , driRefs = []
     }
-
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-attributes.religo"
     , driDesc = "counter, type attribute"
@@ -253,14 +263,12 @@ invariants =
     , driDef = Just (interval 6 9 16)
     , driRefs = []
     }
-
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.ligo"
     , driDesc = "sum"
     , driDef = Just (interval 1 20 23)
     , driRefs = [interval 2 26 29]
     }
-
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.mligo"
     , driDesc = "sum"
@@ -268,6 +276,7 @@ invariants =
     , driRefs = [interval 2 30 33]
     }
 
+  -- FIXME:
   -- * Does not pass because we have troubles with recursive functions
   -- * in ReasonLIGO: https://issues.serokell.io/issue/LIGO-70
   --
@@ -296,59 +305,17 @@ invariants =
     , driDef = Just (interval 2 5 14)
     , driRefs = [interval 5 18 27]
     }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "A1.mligo"
-    , driDesc = "a1, find references in other files"
-    , driDef = Just (interval 1 5 7)
-    , driRefs =
-      [ (interval 3 10 12){rFile = contractsDir </> "includes" </> "A2.mligo"}
-      , (interval 3 10 12){rFile = contractsDir </> "includes" </> "A3.mligo"}
-      ]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "B3.ligo"
-    , driDesc = "b3, relative directories"
-    , driDef = Just (interval 1 7 9)
-    , driRefs =
-      [ (interval 3 21 23){rFile = contractsDir </> "includes" </> "B1.ligo"}
-      , (interval 3 12 14){rFile = contractsDir </> "includes" </> "B2" </> "B2.ligo"}
-      ]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "C2.religo"
-    , driDesc = "c2, find references in other files"
-    , driDef = Just (interval 1 5 7)
-    , driRefs =
-      [ (interval 4 15 17){rFile = contractsDir </> "includes" </> "C1.mligo"}
-      ]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "C3.mligo"
-    , driDesc = "c3, find references in other files"
-    , driDef = Just (interval 1 5 7)
-    , driRefs =
-      [ (interval 4 10 12){rFile = contractsDir </> "includes" </> "C1.mligo"}
-      ]
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "D1.ligo"
-    , driDesc = "d, no references"
-    , driDef = Just (interval 1 7 8)
-    , driRefs = []
-    }
-  , DefinitionReferenceInvariant
-    { driFile = contractsDir </> "includes" </> "D2.ligo"
-    , driDesc = "d, no references"
-    , driDef = Just (interval 1 7 8)
-    , driRefs = []
-    }
   ]
 
-findDefinitionAndGoToReferencesCorrespondence :: forall impl. HasScopeForest impl IO => TestTree
-findDefinitionAndGoToReferencesCorrespondence =
+findDefinitionAndGoToReferencesCorrespondence
+  :: forall impl
+   . HasScopeForest impl IO
+  => [DefinitionReferenceInvariant]
+  -> TestTree
+findDefinitionAndGoToReferencesCorrespondence testInvariants =
   testGroup "Definition and References Correspondence" testCases
   where
-    testCases = map makeTestCase invariants
+    testCases = map makeTestCase testInvariants
     makeTestCase inv = testCase name (checkDefinitionReferenceInvariant @impl inv)
       where name = driFile inv <> ": " <> driDesc inv
 
@@ -400,7 +367,7 @@ typeOf filepath mention definition = do
   tree <- readContractWithScopes @impl filepath
   case typeDefinitionAt mention' tree of
     Nothing -> expectationFailure "Should find type definition"
-    Just range -> range{rFile=rFile mention'} `shouldBe` definition'
+    Just range -> range{_rFile=_rFile mention'} `shouldBe` definition'
 
 typeOfHeapConst :: forall impl. HasScopeForest impl IO => Assertion
 typeOfHeapConst = typeOf @impl (contractsDir </> "heap.ligo") (point 106 8) (interval 4 6 10)

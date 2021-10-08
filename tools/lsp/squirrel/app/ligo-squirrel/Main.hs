@@ -2,12 +2,18 @@
 
 module Main (main) where
 
+import Prelude hiding (log)
+
+import Algebra.Graph.AdjacencyMap qualified as G (empty)
 import Control.Exception.Safe (MonadCatch, catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
+import Control.Monad.Reader (asks, void, when)
 
 import Data.Default
+import Data.Foldable (for_)
+import Data.HashMap.Strict (HashMap)
+import Data.HashMap.Strict qualified as HashMap
 import Data.Maybe (fromMaybe)
 import Data.String.Interpolate (i)
 import Data.Text qualified as T
@@ -16,6 +22,7 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 
+import UnliftIO.MVar
 
 import AST
 import ASTMap qualified
@@ -67,7 +74,6 @@ mainLoop = do
       , S.signatureHelpRetriggerCharacters = Just [',']
       }
 
-
     -- | Handle all uncaught exceptions.
     catchExceptions
       :: forall m config. (MonadCatch m, S.MonadLsp config m)
@@ -90,20 +96,22 @@ mainLoop = do
             Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
 
-
 initialize :: IO RioEnv
 initialize = do
-    astMap <- ASTMap.empty $ RIO.load . J.fromNormalizedUri
-    pure (astMap :> Nil)
+  config <- newEmptyMVar
+  astMap <- ASTMap.empty RIO.load
+  openDocs <- newMVar HashMap.empty
+  includes <- newMVar G.empty
+  pure (config :> astMap :> openDocs :> Tag includes :> Nil)
 
 handlers :: S.Handlers RIO
 handlers = mconcat
-  [ S.notificationHandler J.SInitialized (\_msg -> pure ())
+  [ S.notificationHandler J.SInitialized handleInitialized
 
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
   , S.notificationHandler J.STextDocumentDidSave (\_msg -> pure ())
-  --, S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
+  , S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
 
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
   , S.requestHandler J.STextDocumentTypeDefinition handleTypeDefinitionRequest
@@ -123,22 +131,70 @@ handlers = mconcat
   -- , S.requestHandler J.STextDocumentOnTypeFormatting
 
   , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
-  --, S.requestHandler J.STextDocumentCodeAction _
+  , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
+  , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
   --, S.requestHandler J.SWorkspaceExecuteCommand _
   ]
 
+handleInitialized :: S.Handler RIO 'J.Initialized
+handleInitialized _ = do
+  RIO.registerDidChangeConfiguration
+  void RIO.fetchCustomConfig
+  RIO.registerFileWatcher
+
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
-  let doc = notif^.J.params.J.textDocument.J.uri
+  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   let ver = notif^.J.params.J.textDocument.J.version
-  RIO.collectErrors RIO.forceFetch (J.toNormalizedUri doc) (Just ver)
 
+  openDocsVar <- asks getElem
+  modifyMVar_ openDocsVar \openDocs -> do
+    RIO.collectErrors RIO.forceFetch uri (Just ver)
+    pure $ HashMap.insert uri ver openDocs
+
+-- FIXME: Suppose the following scenario:
+-- * VSCode has `squirrel/test/contracts/` open as folder;
+-- * You open `find/includes/A3.mligo`;
+-- * You quickly edit it to contain some mistake (e.g.: replace 40 with 4f0) so
+-- that `handleDidOpenTextDocument` might be still running when this function is
+-- called.
+-- Now there is something weird going on: VSCode might not put an error on `4f0`
+-- because we got an outdated version (from `fetchBundled`). Even more oddly, if
+-- we now delete the `f`, it might highlight `40` as incorrect from the previous
+-- error.
+-- This can be fixed by opening another contract in WCC or, sometimes, just
+-- closing and opening this document again.
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   tmap <- asks getElem
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+  let ver = notif^.J.params.J.textDocument.J.version
   ASTMap.invalidate uri tmap
-  RIO.collectErrors (`ASTMap.fetchBundled` tmap) uri (Just 0)
+  RIO.Contract doc nuris <- ASTMap.fetchBundled uri tmap
+  -- Clear diagnostics for all contracts in this WCC and then send diagnostics
+  -- collected from this uri.
+  -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
+  -- conditions.
+  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
+  modifyMVar_ openDocsVar \openDocs -> do
+    RIO.clearDiagnostics nuris
+    RIO.collectErrors (const (pure doc)) uri ver
+    pure openDocs
+
+handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
+handleDidCloseTextDocument notif = do
+  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+  tmap <- asks getElem
+  RIO.Contract _ nuris <- ASTMap.fetchCached uri tmap
+
+  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
+  modifyMVar_ openDocsVar \openDocs -> do
+    let openDocs' = HashMap.delete uri openDocs
+    -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
+    let nuriMap = HashMap.fromList ((, ()) <$> nuris)
+    when (HashMap.null $ HashMap.intersection openDocs' nuriMap) $
+      RIO.clearDiagnostics nuris
+    pure openDocs'
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
 handleDefinitionRequest req respond = do
@@ -320,6 +376,27 @@ handlePrepareRenameRequest req respond = do
     tree <- contractTree <$> RIO.fetch nuri
 
     respond . Right . fmap (J.InL . toLspRange) $ prepareRenameDeclarationAt pos tree
+
+handleDidChangeConfiguration :: S.Handler RIO 'J.WorkspaceDidChangeConfiguration
+handleDidChangeConfiguration notif = do
+  let config = notif ^. J.params . J.settings
+  RIO.updateCustomConfig config
+
+handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
+handleDidChangeWatchedFiles notif = do
+  let J.List changes = notif ^. J.params . J.changes
+  for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) -> case change of
+    J.FcCreated -> do
+      log [i|Created #{uri}|]
+      void $ RIO.forceFetch' uri
+    J.FcChanged -> do
+      log [i|Changed #{uri}|]
+      void $ RIO.forceFetch' uri
+    J.FcDeleted -> do
+      log [i|Deleted #{uri}|]
+      RIO.delete uri
+  where
+    log = Log.debug "WorkspaceDidChangeWatchedFiles"
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

@@ -1,8 +1,8 @@
 (contract
   (fun
     main
-    (parameter a bool)
-    (parameter b bool)
+    (parameter (? a) bool)
+    (parameter (? b) bool)
     :
     int
     =

@@ -27,7 +27,7 @@ import Duplo.Tree (Tree)
 
 import AST.Skeleton hiding (Type)
 import AST.Skeleton qualified as AST
-import Parser (ShowRange)
+import Parser (LineMarker (..), LineMarkerType (..), ShowRange)
 import Product (Contains)
 import Range (Range)
 
@@ -59,7 +59,6 @@ instance {-# OVERLAPPABLE #-}
   where
   lpp = lpp1 @d . fmap (lpp @d)
 
-deriving via PP (Contract it) instance Pretty it => Show (Contract it)
 deriving via PP (RawContract it) instance Pretty it => Show (RawContract it)
 deriving via PP (Binding it) instance Pretty it => Show (Binding it)
 deriving via PP (AST.Type it) instance Pretty it => Show (AST.Type it)
@@ -154,11 +153,6 @@ braces p = "{" <+> p <+> "}"
 -- Core sexpr
 ----------------------------------------------------------------------------
 
-instance Pretty1 Contract where
-  pp1 = \case
-    ContractEnd -> "(endtract)"
-    ContractCons x xs -> sexpr "contract" [x, xs]
-
 instance Pretty1 RawContract where
   pp1 = \case
     RawContract xs -> sexpr "contract" xs
@@ -166,11 +160,12 @@ instance Pretty1 RawContract where
 instance Pretty1 Binding where
   pp1 = \case
     BTypeDecl     n    ty       -> sexpr "type_decl"  [n, ty]
-    BParameter    n    ty       -> sexpr "parameter"  [n, ty]
+    BParameter    n    ty       -> sexpr "parameter"  [n, pp ty]
     BVar          name ty value -> sexpr "var"   [name, pp ty, pp value]
     BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
     BAttribute    name          -> sexpr "attr"  [name]
     BInclude      fname         -> sexpr "#include" [fname]
+    BImport       fname alias   -> sexpr "#import" [fname, alias]
 
     BFunction isRec name params ty body ->
       sexpr "fun" $ concat
@@ -234,6 +229,12 @@ instance Pretty1 Expr where
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
     Paren     e          -> "(" <> pp e <> ")"
 
+instance Pretty1 Collection where
+  pp1 = \case
+    CList -> "list"
+    CMap  -> "map"
+    CSet  -> "set"
+
 instance Pretty1 MichelsonCode where
   pp1 = \case
     MichelsonCode _ -> "<SomeMichelsonCode>"
@@ -281,6 +282,7 @@ instance Pretty1 Pattern where
     IsList       l         -> sexpr "list?" l
     IsTuple      t         -> sexpr "tuple?" t
     IsRecord     xs        -> sexpr "record?" xs
+    IsParen      x         -> "(?" <> pp x <> ")"
 
 instance Pretty1 RecordFieldPattern where
   pp1 = \case
@@ -325,7 +327,15 @@ instance Pretty1 TField where
 
 instance Pretty1 Error where
   pp1 = \case
-    Error _src children -> sexpr "ERROR" [pp children]
+    Error src children -> sexpr "ERROR" ["\"" <> pp src <> "\"", pp children]
+
+instance Pretty LineMarker where
+  pp (LineMarker fp f l _) = sexpr "#" [pp l, pp $ Text.pack fp, pp f]
+
+instance Pretty LineMarkerType where
+  pp RootFile     = ""
+  pp IncludedFile = "1"
+  pp ReturnToFile = "2"
 
 ----------------------------------------------------------------------------
 -- Common
@@ -338,11 +348,6 @@ instance LPP1 d ModuleAccess where
 instance LPP1 d QualifiedName where
   lpp1 = \case
     QualifiedName src path -> mconcat $ punctuate "." (src : path)
-
-instance LPP1 d Contract where
-  lpp1 = \case
-    ContractEnd -> ""
-    ContractCons x xs -> x <+> xs -- block' [x, xs]
 
 instance LPP1 d RawContract where
   lpp1 = \case
@@ -381,7 +386,16 @@ instance LPP1 d PreprocessorCommand where
 instance LPP1 d MichelsonCode where
   lpp1 = pp
 
+--instance LPP1 d LineMarker where
+--  lpp1 = pp1
+
 -- instances needed to pass instance resolution during compilation
+
+instance LPP1 d Collection where
+  lpp1 = \case
+    CList -> "list"
+    CMap  -> "map"
+    CSet  -> "set"
 
 instance LPP1 'Caml MapBinding where
   lpp1 = error "unexpected `MapBinding` node"
@@ -398,7 +412,7 @@ instance LPP1 'Pascal AST.Type where
     TProduct  elements  -> parens $ train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("|"<.>) xs
     TSum      []        -> error "looks like you've been given malformed AST" -- never called
-    TApply    f xs      -> f <.> lpp xs
+    TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
@@ -411,6 +425,7 @@ instance LPP1 'Pascal Binding where
     BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    n t           -> "const" <+> n <+> ":" <+> lpp t
 
     BFunction _ name params ty body ->
@@ -505,6 +520,7 @@ instance LPP1 'Pascal Pattern where
     IsList       []        -> "nil"
     IsList       l         -> list l
     IsTuple      t         -> tuple t
+    IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
 
 instance LPP1 'Pascal RecordFieldPattern where
@@ -531,7 +547,7 @@ instance LPP1 'Reason AST.Type where
     TProduct  elements  -> tuple elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
-    TApply    f xs      -> f <+> lpp xs
+    TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
@@ -544,7 +560,9 @@ instance LPP1 'Reason Binding where
       [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
-    node                       -> error "unexpected `Binding` node failed with: " <+> pp node
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
+    BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
+    node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -573,7 +591,7 @@ instance LPP1 'Reason Expr where
       ]
     Seq       es         -> train " " es
     Lambda    ps ty b    -> foldr (<+>) empty
-      [ train "," ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
+      [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
@@ -604,8 +622,9 @@ instance LPP1 'Reason Pattern where
     IsWildcard             -> "_"
     IsSpread     n         -> "..." <.> lpp n
     IsList       l         -> brackets $ train "," l
-    IsTuple      t         -> tuple t
+    IsTuple      t         -> train "," t
     IsRecord     fields    -> "{" <+> train "," fields <+> "}"
+    IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
 
 instance LPP1 'Reason RecordFieldPattern where
@@ -625,6 +644,11 @@ instance LPP1 'Reason MapBinding where
 -- Caml
 ----------------------------------------------------------------------------
 
+tupleCameLIGO :: LPP 'Caml p => [p] -> Doc
+tupleCameLIGO = \case
+  [x] -> lpp @'Caml x
+  xs  -> tuple @'Caml xs
+
 instance LPP1 'Caml AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "->" <+> codom
@@ -632,7 +656,7 @@ instance LPP1 'Caml AST.Type where
     TProduct  elements  -> train " *" elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
-    TApply    f xs      -> f <+> lpp xs
+    TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
     TOr       l n r m   -> tuple [l, n, r, m]
     TAnd      l n r m   -> tuple [l, n, r, m]
@@ -643,6 +667,7 @@ instance LPP1 'Caml Binding where
     BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
     BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
 
     BFunction isRec name params ty body ->
       foldr (<+>) empty $ concat
@@ -716,6 +741,7 @@ instance LPP1 'Caml Pattern where
     IsTuple      t         -> train "," t
     IsCons       h t       -> h <+> "::" <+> t
     IsRecord     fields    -> "{" <+> train "," fields <+> "}"
+    IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with:" <+> pp pat
 
 instance LPP1 'Caml RecordFieldPattern where

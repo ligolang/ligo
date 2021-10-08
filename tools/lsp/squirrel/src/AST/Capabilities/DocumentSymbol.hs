@@ -1,11 +1,8 @@
--- We need this pragma because of the following situation:
--- * If we remove this pragma, GHC will warn that `_deprecated` from the
---   `SymbolInformation` type is deprecated and CI will fail.
--- * If we remove `_deprecated`, it will complain that such strict field was not
---   initialized and build will fail.
 {-# OPTIONS_GHC -Wno-deprecations #-}
 
-module AST.Capabilities.DocumentSymbol where
+module AST.Capabilities.DocumentSymbol
+  ( extractDocumentSymbols
+  ) where
 
 import Control.Lens ((^.))
 import Control.Monad.Catch.Pure (MonadCatch)
@@ -23,6 +20,11 @@ import AST.Skeleton
 import Product
 import Range
 
+-- We need the pragma at the top because of the following situation:
+-- * If we remove this pragma, GHC will warn that `_deprecated` from the
+--   `SymbolInformation` type is deprecated and CI will fail.
+-- * If we remove `_deprecated`, it will complain that such strict field was not
+--   initialized and build will fail.
 
 -- | Extract document symbols for some specific parsed ligo contract which
 -- is realisable by @haskell-lsp@ client.
@@ -38,8 +40,6 @@ extractDocumentSymbols uri tree =
     collectFromContract :: LIGO Info' -> WriterT [SymbolInformation] m ()
     collectFromContract (match @RawContract -> Just (_, RawContract decls))
       = mapM_ collectDecl decls
-    collectFromContract (match @Contract-> Just (_, ContractCons contr contrs))
-      = collectFromContract contr *> collectFromContract contrs
     collectFromContract _
       = pure ()
 
@@ -51,8 +51,14 @@ extractDocumentSymbols uri tree =
               J.SkFunction
               (const Nothing)
 
-          -- TODO: currently we do not count imports as declarations in scopes
+          -- TODO: currently we do not count includes and imports as declarations in scopes
           (BInclude (match @Constant -> Just (getElem @Range -> r, _))) ->
+            tellSymbolInfo
+              r
+              J.SkNamespace
+              ("some include at " <> pack (show r))
+
+          (BImport (match @Constant -> Just (getElem @Range -> r, _)) _) ->
             tellSymbolInfo
               r
               J.SkNamespace
@@ -89,6 +95,7 @@ extractDocumentSymbols uri tree =
               r
               J.SkConstant
               (\ScopedDecl {_sdName} -> Just ("const " <> _sdName))
+          (IsParen x) -> collectDecl x
 
           _ -> pure ()
 
