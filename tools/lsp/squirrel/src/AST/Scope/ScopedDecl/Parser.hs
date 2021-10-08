@@ -1,6 +1,7 @@
 module AST.Scope.ScopedDecl.Parser
   ( parseType
   , parseTypeDeclSpecifics
+  , parseTypeParams
   , parseParameters
   ) where
 
@@ -39,6 +40,7 @@ parseType node =
       , parseTupleType
       , parseApplyType
       , parseArrowType
+      , parseVariableType
       ]
 
 parseArrowType :: PPableLIGO info => LIGO info -> Maybe Type
@@ -86,12 +88,34 @@ parseTupleType node = do
   let elements = map parseTypeDeclSpecifics elementNodes
   pure (TupleType elements)
 
+parseVariableType :: LIGO info -> Maybe Type
+parseVariableType node = do
+  LIGO.TVariable t <- layer node
+  VariableType <$> parseTypeVariable t
+
 -- Since we don't care right now about distinguishing functions or whatever, we
 -- just treat the whole node as a type name. It _is_ possible that the node is
 -- not even a type: it could be an error node. However we choose to fail, we'll
 -- lose the whole type structure instead of this one leaf.
 parseAliasType :: PPableLIGO info => LIGO info -> Type
 parseAliasType node = AliasType (ppToText node)
+
+-- * Parsers for type variables.
+
+parseTypeParams :: LIGO info -> Maybe TypeParams
+parseTypeParams node = asum
+  [ do
+      LIGO.TypeParam t <- layer node
+      TypeParam <$> parseTypeVariable t
+  , do
+      LIGO.TypeParams ts <- layer node
+      pure $ TypeParams $ mapMaybe parseTypeVariable ts
+  ]
+
+parseTypeVariable :: LIGO info -> Maybe TypeVariable
+parseTypeVariable node = do
+  LIGO.TypeVariableName name <- layer node
+  pure $ TypeVariable name
 
 -- * Parsers for parameters.
 

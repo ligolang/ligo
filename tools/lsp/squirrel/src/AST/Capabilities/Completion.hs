@@ -10,7 +10,7 @@ module AST.Capabilities.Completion
 
 import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
-import Control.Lens ((^?))
+import Control.Lens (_2, (^?))
 import Control.Monad (foldM)
 import Data.Foldable (asum)
 import Data.Function (on)
@@ -121,7 +121,7 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
     covers = spineTo (leq pos . getRange) nested
 
     toTspec TypeNotFound = Nothing
-    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec
+    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec . _2  -- TODO
     toTspec (TypeInlined tspec) = Just tspec
 
     accessAndDereference :: TypeDeclSpecifics -> Accessor -> Maybe TypeDeclSpecifics

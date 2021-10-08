@@ -30,9 +30,21 @@ module.exports = grammar({
 
     type_decl: $ => seq(
       "type",
+      optional(field("params", $._type_params)),
       field("name", $.TypeName),
       "=",
       field("type", $._type_def_body)
+    ),
+
+    _type_params: $ => choice(
+      $.type_param,
+      $.type_params,
+    ),
+
+    type_param: $ => field("param", $.var_type),
+
+    type_params: $ => common.par(
+      common.sepBy1(",", field("param", $.var_type)),
     ),
 
     _type_def_body: $ => choice(
@@ -83,6 +95,12 @@ module.exports = grammar({
       $.app_type,
       $.tuple_type,
       $.module_TypeName,
+      $.var_type,
+    ),
+
+    var_type: $ => seq(
+      "'",
+      field("name", $.TypeVariableName),
     ),
 
     // int -> string
@@ -562,6 +580,7 @@ module.exports = grammar({
     TypeName: $ => $._Name,
     Name: $ => $._Name,
     NameDecl: $ => $._Name,
+    TypeVariableName: $ => $._Name,
 
     _till_newline: $ => /[^\n]*\n/,
 

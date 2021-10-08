@@ -154,12 +154,18 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate $ \case
         -- TODO: We forget "rec" field in let
         "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
-        "type_decl" -> BTypeDecl  <$> field "type_name" <*> field "type_value"
+        "type_decl" -> BTypeDecl  <$> field "type_name" <*> fieldOpt "params"  <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
         "p_include" -> BInclude   <$> field "filename"
         "p_import"  -> BImport    <$> field "filename" <*> field "alias"
         "fun_arg"   -> BParameter <$> field "argument" <*> fieldOpt "type"
         _           -> fallthrough
+
+    -- TypeParams
+  , Descent do
+      boilerplate \case
+        "type_params" -> TypeParams <$> fields "param"
+        _             -> fallthrough
 
     -- MichelsonCode
   , Descent do
@@ -197,6 +203,7 @@ recognise (SomeRawTree dialect rawTree)
         "tuple_type"       -> TProduct <$> fields "element"
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
+        "var_type"         -> TVariable <$> field "name"
         _                  -> fallthrough
 
     -- Module access:
@@ -223,6 +230,12 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate' $ \case
         ("TypeName", name) -> return $ TypeName name
         _                  -> fallthrough
+
+    -- TypeVariableName
+  , Descent do
+      boilerplate' \case
+        ("TypeVariableName", name) -> pure $ TypeVariableName name
+        _                          -> fallthrough
 
     -- FieldName
   , Descent do

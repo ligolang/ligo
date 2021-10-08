@@ -55,9 +55,14 @@ module.exports = grammar({
       seq(
         "type",
         field("typeName", $.TypeName),
+        optional(field("params", $.type_params)),
         "is",
         field("typeValue", $._type_expr),
       ),
+
+    type_params: $ => common.par(
+      common.sepBy1(",", field("param", $.var_type)),
+    ),
 
     _type_expr: $ => choice(
       $.sum_type,
@@ -112,6 +117,8 @@ module.exports = grammar({
       $.module_TypeName,
       $.type_group,
     ),
+
+    var_type: $ => field("name", $.TypeVariableName),
 
     module_TypeName: $ =>
       seq(
@@ -809,6 +816,7 @@ module.exports = grammar({
     TypeName: $ => $._Name,
     Name: $ => $._Name,
     NameDecl: $ => $._Name,
+    TypeVariableName: $ => $._Name,
 
     _till_newline: $ => /[^\n]*\n/,
 

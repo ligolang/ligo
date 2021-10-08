@@ -131,11 +131,13 @@ constructTypeAlias dialect alias t Range{_rStart = (sl, sc, _)} =
             defaultState :< inject @Binding
               (BTypeDecl
                 (defaultState :< inject @TypeName (TypeName alias))
+                Nothing  -- TODO
                 (defaultState :< inject @TypeName (TypeName typeName)))
           (Right typeNode) ->
             defaultState :< inject @Binding
               (BTypeDecl
                 (defaultState :< inject @TypeName (TypeName alias))
+                Nothing  -- TODO
                 typeNode)
     }
 

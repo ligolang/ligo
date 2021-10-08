@@ -29,8 +29,15 @@ recognise (SomeRawTree dialect rawTree)
         "let_decl"  -> BConst    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
         "p_include" -> BInclude  <$>                      field "filename"
         "p_import"  -> BImport   <$>                      field "filename" <*> field "alias"
-        "type_decl" -> BTypeDecl <$> field "name" <*> field "type"
+        "type_decl" -> BTypeDecl <$> field "name"     <*> fieldOpt "params" <*> field "type"
         _           -> fallthrough
+
+    -- TypeParams
+  , Descent do
+      boilerplate \case
+        "type_param"  -> TypeParam  <$> field  "param"
+        "type_params" -> TypeParams <$> fields "param"
+        _             -> fallthrough
 
   , Descent do
       boilerplate $ \case
@@ -183,6 +190,7 @@ recognise (SomeRawTree dialect rawTree)
         "tuple_type"   -> TProduct <$> fields "x"
         "sum_type"     -> TSum     <$> fields "variant"
         "TypeWildcard" -> pure TWildcard
+        "var_type"     -> TVariable <$> field "name"
         _              -> fallthrough
 
     -- Module access:
@@ -209,6 +217,12 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate' $ \case
         ("TypeName", name) -> return $ TypeName name
         _                  -> fallthrough
+
+    -- TypeVariableName
+  , Descent do
+      boilerplate' \case
+        ("TypeVariableName", name) -> pure $ TypeVariableName name
+        _                          -> fallthrough
 
     -- Preprocessor
   , Descent do

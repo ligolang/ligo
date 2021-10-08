@@ -15,9 +15,10 @@ module AST.Skeleton
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
-  , RawContract (..), TypeName (..), FieldName (..), MichelsonCode (..)
-  , Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
+  , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
+  , MichelsonCode (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
+  , TypeParams (..)
 
   , getLIGO
   , setLIGO
@@ -65,9 +66,9 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
-  , RawContract, TypeName, FieldName, MichelsonCode
+  , RawContract, TypeName, TypeVariableName, FieldName, MichelsonCode
   , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand
-  , ModuleName, ModuleAccess
+  , ModuleName, ModuleAccess, TypeParams
   ]
 
 -- TODO (LIGO-169): Implement a parser for JsLIGO.
@@ -111,10 +112,15 @@ data Binding it
   | BParameter    it (Maybe it) -- ^ (Name) (Type)
   | BVar          it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
   | BConst        it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
-  | BTypeDecl     it it -- ^ (Name) (Type)
+  | BTypeDecl     it (Maybe it) it -- ^ (Name) (Maybe (TypeParams)) (Type)
   | BAttribute    it -- ^ (Name)
   | BInclude      it
   | BImport       it it
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+
+data TypeParams it
+  = TypeParam it  -- ^ (TypeVariableName)
+  | TypeParams [it]  -- ^ [TypeVariableName]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 type IsRec = Bool
@@ -127,6 +133,7 @@ data Type it
   | TApply    it [it]  -- ^ (Name) [Type]
   | TString   it       -- ^ (TString)
   | TWildcard
+  | TVariable it       -- ^ (TypeVariableName)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Variant it
@@ -266,6 +273,10 @@ newtype TypeName it = TypeName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+newtype TypeVariableName it = TypeVariableName Text
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveForText
+
 newtype Ctor it = Ctor Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
@@ -392,12 +403,19 @@ instance Eq1 Binding where
   -- liftEq _ _ _ = error "Cannot compare `Binding`"
   liftEq _ _ _ = False
 
+instance Eq1 TypeParams where
+  liftEq f (TypeParam a) (TypeParam b) = f a b
+  liftEq f (TypeParams as) (TypeParams bs) = liftEqList f as bs
+  liftEq _ _ _ = False
+
 instance Eq1 Type where
   liftEq f (TArrow a b) (TArrow c d) = f a c && f b d
   liftEq f (TRecord xs) (TRecord ys) = liftEqList f xs ys
   liftEq f (TSum xs) (TSum ys) = liftEqList f xs ys
   liftEq f (TProduct xs) (TProduct ys) = liftEqList f xs ys
   liftEq f (TString x) (TString y) = f x y
+  liftEq _ TWildcard TWildcard = True
+  liftEq f (TVariable a) (TVariable b) = f a b
   liftEq _ _ _ = False
 
 instance Eq1 Variant where

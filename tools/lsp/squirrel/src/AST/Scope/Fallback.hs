@@ -29,7 +29,7 @@ import AST.Scope.ScopedDecl
   ( DeclarationSpecifics (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..)
   , fillTypeIntoCon
   )
-import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics)
+import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics, parseTypeParams)
 import AST.Skeleton hiding (Type)
 import Cli.Types
 import Control.Monad.Except
@@ -307,8 +307,12 @@ typeScopedDecl
      , PPableLIGO info
      , Contains PreprocessedRange info
      )
-  => [Text] -> LIGO info -> LIGO info -> ScopeM ScopedDecl
-typeScopedDecl docs nameNode body = do
+  => [Text]  -- ^ documentation comments
+  -> LIGO info  -- ^ name node
+  -> Maybe (LIGO info)  -- ^ type parameters node
+  -> LIGO info  -- ^ type body node
+  -> ScopeM ScopedDecl
+typeScopedDecl docs nameNode tyVars body = do
   dialect <- lift ask
   (PreprocessedRange origin, name) <- getTypeName nameNode
   pure ScopedDecl
@@ -317,7 +321,7 @@ typeScopedDecl docs nameNode body = do
     , _sdRefs = []
     , _sdDoc = docs
     , _sdDialect = dialect
-    , _sdSpec = TypeSpec (parseTypeDeclSpecifics body)
+    , _sdSpec = TypeSpec (parseTypeParams =<< tyVars) (parseTypeDeclSpecifics body)
     }
 
 -- | Wraps a value into a list. Like 'pure' but perhaps with a more clear intent.
@@ -418,8 +422,8 @@ getImmediateDecls = \case
       BParameter n t ->
         singleton <$> valueScopedDecl (getElem r) n t Nothing
 
-      BTypeDecl t b -> do
-        typeDecl <- typeScopedDecl (getElem r) t b
+      BTypeDecl t tyVars b -> do  -- TODO
+        typeDecl <- typeScopedDecl (getElem r) t tyVars b
         -- Gather all other declarations from the depths of ast, such as type
         -- sum constructors, nested types etc. Then, fill in missing types of
         -- values. It doesn't seem possible that these values will be anything

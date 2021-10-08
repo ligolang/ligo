@@ -8,6 +8,11 @@ module AST.Scope.ScopedDecl
   , sdDialect
   , sdSpec
   , DeclarationSpecifics (..)
+  , TypeVariable (..)
+  , tvName
+  , TypeParams (..)
+  , _TypeParam
+  , _TypeParams
   , _TypeSpec
   , _ValueSpec
   , TypeDeclSpecifics (..)
@@ -47,7 +52,7 @@ import Data.Sum (inject)
 import Data.Text (Text)
 import Duplo.Tree (Cofree ((:<)), Element)
 
-import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr)
+import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr, (<+>))
 import AST.Skeleton (LIGO, Lang, RawLigoList)
 import AST.Skeleton qualified as LIGO
 import Parser (fillInfo)
@@ -67,8 +72,17 @@ data ScopedDecl = ScopedDecl
   }
 
 data DeclarationSpecifics
-  = TypeSpec TypeDeclSpecifics
+  = TypeSpec (Maybe TypeParams) TypeDeclSpecifics
   | ValueSpec ValueDeclSpecifics
+
+data TypeParams
+  = TypeParam TypeVariable
+  | TypeParams [TypeVariable]
+
+newtype TypeVariable = TypeVariable
+  { _tvName :: Text
+  }
+  deriving stock (Eq, Show)
 
 data TypeDeclSpecifics = TypeDeclSpecifics
   { _tdsInitRange :: Range
@@ -83,6 +97,7 @@ data Type
   | ApplyType Type [Type]
   | AliasType Text
   | ArrowType Type Type
+  | VariableType TypeVariable
   deriving stock (Eq, Show)
 
 data TypeField = TypeField
@@ -152,10 +167,13 @@ instance Pretty ScopedDecl where
 
 lppDeclCategory :: ScopedDecl -> Doc
 lppDeclCategory decl = case _sdSpec decl of
-  TypeSpec tspec -> lppLigoLike (_sdDialect decl) tspec
+  TypeSpec tparams tspec ->
+    maybe mempty (lppLigoLike dialect) tparams <+> lppLigoLike dialect tspec
   ValueSpec vspec -> case _vdsTspec vspec of
     Nothing -> pp @Text "unknown"
-    Just tspec -> lppLigoLike (_sdDialect decl) tspec
+    Just tspec -> lppLigoLike dialect tspec
+  where
+    dialect = _sdDialect decl
 
 lppLigoLike :: IsLIGO a => Lang -> a -> Doc
 lppLigoLike dialect ligoLike = lppDialect dialect (fillInfo (toLIGO ligoLike))
@@ -173,6 +191,14 @@ instance IsLIGO Type where
   toLIGO (AliasType typ) = node (LIGO.TypeName typ)
   toLIGO (ApplyType name types) = node (LIGO.TApply (toLIGO name) (map toLIGO types))
   toLIGO (ArrowType left right) = node (LIGO.TArrow (toLIGO left) (toLIGO right))
+  toLIGO (VariableType var) = node (LIGO.TVariable (toLIGO var))
+
+instance IsLIGO TypeParams where
+  toLIGO (TypeParam t) = node (LIGO.TypeParam (toLIGO t))
+  toLIGO (TypeParams ts) = node (LIGO.TypeParams (map toLIGO ts))
+
+instance IsLIGO TypeVariable where
+  toLIGO (TypeVariable t) = node (LIGO.TypeVariableName t)
 
 instance IsLIGO TypeField where
   toLIGO TypeField{ .. } = node
@@ -219,6 +245,8 @@ $(makePrisms ''DeclarationSpecifics)
 $(makeLenses ''TypeDeclSpecifics)
 $(makeLenses ''ValueDeclSpecifics)
 $(makePrisms ''Type)
+$(makePrisms ''TypeParams)
+$(makeLenses ''TypeVariable)
 $(makeLenses ''TypeField)
 
 -- | Assuming that 'typDecl' is a declaration of a type containing a constructor

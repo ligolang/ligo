@@ -11,7 +11,7 @@ module AST.Capabilities.Find
   , referencesOf
   ) where
 
-import Control.Lens (_Just, (^.), (^?))
+import Control.Lens (_Just, _2, (^.), (^?))
 import Control.Monad
 import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Text (Text)
@@ -117,7 +117,7 @@ typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
 dereferenceTspec :: Scope -> TypeDeclSpecifics -> TypeDeclSpecifics
 dereferenceTspec scope tspec = fromMaybe tspec $ do
   refDecl <- findTypeRefDeclaration scope (_tdsInit tspec)
-  refDecl ^? sdSpec . _TypeSpec
+  refDecl ^? sdSpec . _TypeSpec . _2
 
 referencesOf
   :: CanSearch xs
