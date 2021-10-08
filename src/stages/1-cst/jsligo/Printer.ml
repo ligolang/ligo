@@ -445,9 +445,16 @@ and print_object state (node: object_expr) =
   print_nsepseq state "," (fun state property -> print_property state property) inside;
   print_token state rbrace "}"
 
-and print_assignment state (lhs, equals, rhs) =
+and print_assignment state (lhs, op, rhs) =
   print_expr state lhs;
-  print_token state equals "=";
+  print_token state op.region 
+    (match op.value with 
+      Eq -> " = "
+    | Assignment_operator Times_eq ->  " *= "  
+    | Assignment_operator Div_eq ->    " /= "
+    | Assignment_operator Min_eq ->    " -= "
+    | Assignment_operator Plus_eq ->   " += "
+    | Assignment_operator Mod_eq ->    " %= ");
   print_expr state rhs;
 
 and print_expr state = function

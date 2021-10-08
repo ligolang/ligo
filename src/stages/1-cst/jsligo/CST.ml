@@ -334,11 +334,22 @@ and expr =
 | EObject  of object_expr
 | EString  of string_expr
 | EProj    of projection reg
-| EAssign  of expr * equal * expr
+| EAssign  of expr * operator reg * expr
 | EConstr  of (constr * expr option) reg
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
 | ECodeInj of code_inj reg
+
+and assignment_operator = 
+  Times_eq
+| Div_eq
+| Min_eq 
+| Plus_eq
+| Mod_eq
+
+and operator =
+  Eq
+| Assignment_operator of assignment_operator
 
 and object_expr = (property, comma) nsepseq braces reg
 

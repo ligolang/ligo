@@ -186,7 +186,7 @@ module Fold_helpers(M : Monad) = struct
     | EAssign (e1, _, e2) ->
        let* res = self init e1 in
        let* res = self res e2 in
-       self res e1
+       self res e1    
     | EConstr {value;region=_} ->
        let _, expr = value in
        (match expr with

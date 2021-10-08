@@ -3351,6 +3351,14 @@ let block_scope_jsligo ~raise ~add_warning () : unit =
   let _ = expect_eq ~raise program "test_6" (e_unit ()) (e_int 2) in
   ()
 
+let assignment_operators_jsligo ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/assignment_operators.jsligo" in
+  let _ = expect_eq ~raise program "addeq" (e_unit ()) (e_tuple [(e_int 11) ; (e_int 9) ; (e_int 5)  ]) in
+  let _ = expect_eq ~raise program "mineq" (e_unit ()) (e_tuple [(e_int 15) ; (e_int 15) ; (e_int 1)  ]) in
+  let _ = expect_eq ~raise program "diveq" (e_unit ()) (e_tuple [(e_int 5) ; (e_int 4) ; (e_int 3)  ]) in
+  let _ = expect_eq ~raise program "multeq" (e_unit ()) (e_tuple [(e_int 2000) ; (e_int 100) ; (e_int 12)  ]) in
+  let _ = expect_eq ~raise program "resteq" (e_unit ()) (e_tuple [(e_nat 2) ; (e_nat 3) ; (e_nat 1)  ]) in
+  ()
 
 let main = test_suite "Integration (End to End)"
   [
@@ -3634,4 +3642,5 @@ let main = test_suite "Integration (End to End)"
     test_w "chained_assignment (jsligo)" chained_assignment_jsligo;
     test_w "no_arg_func (religo)" no_arg_func_religo;
     test_w "block_scope (jsligo)" block_scope_jsligo;
+    test_w "assignment_operators (jsligo)" assignment_operators_jsligo;
   ]

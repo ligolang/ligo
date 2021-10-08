@@ -178,7 +178,7 @@ and pp_expr = function
 | EObject  e -> group (pp_object_expr e)
 | EString  e -> pp_string_expr e
 | EProj    e -> pp_projection e
-| EAssign  (a,b,c) -> pp_assign (a,b,c)
+| EAssign     (a,b,c) -> pp_assign (a,b,c)
 | EAnnot   e -> pp_annot_expr e
 | EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
@@ -240,8 +240,16 @@ and pp_selection = function
 and pp_projection {value = {expr; selection}; _} =
   pp_expr expr ^^ pp_selection selection
 
-and pp_assign (a, _, b) =
-  pp_expr a ^^ string " = " ^^ pp_expr b
+and pp_assign (a, op, b) =
+  let operator = match op.value with 
+      Eq -> " = "
+    | Assignment_operator Times_eq ->  " *= "
+    | Assignment_operator Div_eq ->    " /= "
+    | Assignment_operator Min_eq ->    " -= "
+    | Assignment_operator Plus_eq ->   " += "
+    | Assignment_operator Mod_eq ->    " %= "
+  in
+  pp_expr a ^^ string operator ^^ pp_expr b
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value in
