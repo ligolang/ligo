@@ -82,12 +82,12 @@ module T =
     | LE       of Region.t  (* "<="   *)
     | GE       of Region.t  (* ">="   *)
 
-    (* | PLUS_EQ  of Region.t  (* "+="   *)
+    | PLUS_EQ  of Region.t  (* "+="   *)
     | MINUS_EQ of Region.t  (* "-="   *)
     | MULT_EQ  of Region.t  (* "*="   *)
     | REM_EQ   of Region.t  (* "%="   *)
     | DIV_EQ   of Region.t  (* "/="   *)
-    | SL_EQ    of Region.t  (* "<<<=" *)
+    (* | SL_EQ    of Region.t  (* "<<<=" *)
     | SR_EQ    of Region.t  (* ">>>=" *)
     | AND_EQ   of Region.t  (* "&="   *)
     | OR_EQ    of Region.t  (* "|="   *)
@@ -199,12 +199,12 @@ module T =
     | "LE"       -> "<="
     | "GE"       -> ">="
 
-    (* | "PLUS_EQ"  -> "+="
+    | "PLUS_EQ"  -> "+="
     | "MINUS_EQ" -> "-="
     | "MULT_EQ"  -> "*="
     | "REM_EQ"   -> "%="
     | "DIV_EQ"   -> "/="
-    | "SL_EQ"    -> "<<<="
+    (* | "SL_EQ"    -> "<<<="
     | "SR_EQ"    -> ">>>="
     | "AND_EQ"   -> "&="
     | "OR_EQ"    -> "|="
@@ -334,12 +334,12 @@ module T =
     | LE       region -> region, "LE"
     | GE       region -> region, "GE"
 
-    (* | PLUS_EQ  region -> region, "PLUS_EQ"
+    | PLUS_EQ  region -> region, "PLUS_EQ"
     | MINUS_EQ region -> region, "MINUS_EQ"
     | MULT_EQ  region -> region, "MULT_EQ"
     | REM_EQ   region -> region, "REM_EQ"
     | DIV_EQ   region -> region, "DIV_EQ"
-    | SL_EQ    region -> region, "SL_EQ"
+    (* | SL_EQ    region -> region, "SL_EQ"
     | SR_EQ    region -> region, "SR_EQ"
     | AND_EQ   region -> region, "AND_EQ"
     | OR_EQ    region -> region, "OR_EQ"
@@ -447,12 +447,12 @@ module T =
     | LE       _ -> "<="
     | GE       _ -> ">="
 
-    (* | PLUS_EQ  _ -> "+="
+    | PLUS_EQ  _ -> "+="
     | MINUS_EQ _ -> "-="
     | MULT_EQ  _ -> "*="
     | REM_EQ   _ -> "%="
     | DIV_EQ   _ -> "/="
-    | SL_EQ    _ -> "<<<="
+    (* | SL_EQ    _ -> "<<<="
     | SR_EQ    _ -> ">>>="
     | AND_EQ   _ -> "&="
     | OR_EQ    _ -> "|="
@@ -646,13 +646,13 @@ module T =
       | "==" -> Ok (EQ2      region)
       | "!=" -> Ok (NE       region)
 
-    (* | "+="  -> Ok (PLUS_EQ  region)
+      | "+="  -> Ok (PLUS_EQ  region)
       | "-="  -> Ok (MINUS_EQ region)
       | "*="  -> Ok (MULT_EQ  region)
       | "%="  -> Ok (REM_EQ   region)
-
       | "/="   -> Ok (DIV_EQ  region)
-      | "<<<=" -> Ok (SL_EQ   region)
+      
+      (* | "<<<=" -> Ok (SL_EQ   region)
       | ">>>=" -> Ok (SR_EQ   region)
       | "&="   -> Ok (AND_EQ  region)
       | "|="   -> Ok (OR_EQ   region)

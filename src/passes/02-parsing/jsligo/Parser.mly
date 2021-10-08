@@ -244,7 +244,12 @@ while_cond:
 (* Expressions as Statements *)
 
 expr_stmt:
-  as_expr_level "=" expr_stmt { EAssign ($1,$2,$3) }
+  as_expr_level "=" expr_stmt  { EAssign     ($1, {value = Eq;       region = $2}, $3) }
+| as_expr_level "*=" expr_stmt { EAssign     ($1, {value = Assignment_operator Times_eq; region = $2}, $3) }
+| as_expr_level "/=" expr_stmt { EAssign     ($1, {value = Assignment_operator Div_eq;   region = $2}, $3) }
+| as_expr_level "%=" expr_stmt { EAssign     ($1, {value = Assignment_operator Mod_eq;   region = $2}, $3) }
+| as_expr_level "+=" expr_stmt { EAssign     ($1, {value = Assignment_operator Plus_eq;  region = $2}, $3) }
+| as_expr_level "-=" expr_stmt { EAssign     ($1, {value = Assignment_operator Min_eq;   region = $2}, $3) }
 | fun_expr                    { EFun    $1         }
 | as_expr_level               { $1 }
 

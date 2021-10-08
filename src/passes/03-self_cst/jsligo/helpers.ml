@@ -181,7 +181,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
       Some inside ->
         fold_npseq fold_array_item init inside
     | None -> init)
-  | EAssign (e1, _, e2) ->
+  | EAssign     (e1, _, e2) ->
     let res = self init e1 in
     let res = self res e2 in
     self res e1
@@ -502,7 +502,7 @@ let rec map_expression : 'err mapper -> expr -> expr = fun f e  ->
     let selection = map_selection value.selection in
     let value = {expr;selection} in
     return @@ EProj {value; region}
-  | EAssign  (a, e, b) ->
+  | EAssign     (a, e, b) ->
     let a = self a in
     let b = self b in
     return @@ EAssign (a, e, b)

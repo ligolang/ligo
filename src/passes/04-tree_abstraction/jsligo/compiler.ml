@@ -752,24 +752,39 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       in
       aux hd @@ tl
   )
-
-  | EAssign (EVar {value; region} (* as e1*), outer_region, (EAssign (EVar _ as ev, _, _) as e2)) ->
-    let loc = Location.lift region in
-    let outer_loc = Location.lift outer_region in
-    let var = compile_expression ~raise ev in
+  | EAssign (EVar {value; region} as e1, op, (EAssign     (EVar _ as ev, _, _) as e2)) ->
     let e2 = compile_expression ~raise e2 in
-    let e1 = e_assign ~loc:outer_loc (Location.wrap ~loc @@ Var.of_name value) [] var in
+    let e1 = compile_expression ~raise (EAssign (e1, op, ev)) in
     e_sequence e2 e1
-  | EAssign (EVar {value; region} (* as e1*), outer_region, e2) ->
-    (*TODO : weird, warning (e1 unused) poped here during rebase *)
-    (* let e1 = compile_expression ~raise e1 in *)
-    let e2 = compile_expression ~raise e2 in
+  | EAssign (EVar {value; region} as e1, op, e2) ->
     let loc = Location.lift region in
-    let outer_loc = Location.lift outer_region in
+    let outer_loc = Location.lift op.region in
+    let e2 = (match op.value with 
+      Eq -> 
+        compile_expression ~raise e2
+    | Assignment_operator ao -> 
+      let ao = (match ao with 
+        Times_eq -> C_MUL
+      | Div_eq -> C_DIV
+      | Plus_eq -> C_POLYMORPHIC_ADD
+      | Min_eq -> C_SUB
+      | Mod_eq -> C_MOD
+      )
+      in
+      compile_bin_op ~raise ao {
+        value = {
+          op   = op.region;
+          arg1 = e1;
+          arg2 = e2;
+        };
+        region = op.region
+      })
+    in
     e_assign ~loc:outer_loc (Location.wrap ~loc @@ Var.of_name value) [] e2
-  | EAssign (EProj {value = {expr = EVar {value = evar_value; _}; selection = Component {value = {inside = EArith (Int _); _}; _} as selection}; region}, outer_region, e2) ->    
+    
+  | EAssign (EProj {value = {expr = EVar {value = evar_value; _}; selection = Component {value = {inside = EArith (Int _); _}; _} as selection}; region}, ({value = Eq; _} as op), e2) ->    
     let e2 = compile_expression ~raise e2 in
-    let outer_loc = Location.lift outer_region in
+    let outer_loc = Location.lift op.region in
     let (sels, _) = compile_selection ~raise selection in
     e_assign_ez ~loc:outer_loc evar_value [sels] e2
   | EAssign _ as e ->

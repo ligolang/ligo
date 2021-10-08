@@ -2379,6 +2379,51 @@ contract: MINUS ZWSP
 ## The known suffix of the stack is as follows:
 ## MINUS
 ##
+contract: WILD REM_EQ ZWSP
+##
+## Ends in an error in state: 224.
+##
+## expr_stmt -> as_expr_level REM_EQ . expr_stmt [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## as_expr_level REM_EQ
+##
+contract: WILD PLUS_EQ ZWSP
+##
+## Ends in an error in state: 226.
+##
+## expr_stmt -> as_expr_level PLUS_EQ . expr_stmt [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## as_expr_level PLUS_EQ
+##
+contract: WILD MULT_EQ ZWSP
+##
+## Ends in an error in state: 228.
+##
+## expr_stmt -> as_expr_level MULT_EQ . expr_stmt [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## as_expr_level MULT_EQ
+##
+contract: WILD MINUS_EQ ZWSP
+##
+## Ends in an error in state: 230.
+##
+## expr_stmt -> as_expr_level MINUS_EQ . expr_stmt [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## as_expr_level MINUS_EQ
+##
+contract: WILD DIV_EQ ZWSP
+##
+## Ends in an error in state: 234.
+##
+## expr_stmt -> as_expr_level DIV_EQ . expr_stmt [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## as_expr_level DIV_EQ
+##
 
 Ill-formed expression.
 At this point, an expression is expected.

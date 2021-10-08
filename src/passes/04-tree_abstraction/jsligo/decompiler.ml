@@ -471,7 +471,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let name = Var.to_name variable.wrap_content in
     let evar = CST.EVar (wrap name) in
     let rhs = decompile_expression_in expression in
-    return_expr @@ [Expr (CST.EAssign (evar, ghost, e_hd rhs))]
+    return_expr @@ [Expr (CST.EAssign (evar, {value = CST.Eq; region = ghost}, e_hd rhs))]
   | E_for_each {fe_binder;collection;fe_body; _} ->
     let var = decompile_variable @@ (fst fe_binder).wrap_content in
     let bind_to = Option.map ~f:(fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
