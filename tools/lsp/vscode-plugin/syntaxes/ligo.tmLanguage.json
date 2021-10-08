@@ -93,11 +93,12 @@
         },
 
         "type-definition": {
-            "begin": "\\b(type)\\s+([a-zA-Z_]\\w*)\\s+(is)\\b",
+            "begin": "\\b(type)\\s+([a-zA-Z_]\\w*)(?:(?:\\s*\\(((?:\\s*[a-zA-Z_]\\w*\\s*,?\\s*)+)\\)\\s*)?|\\s+)(is)\\b",
             "beginCaptures": {
                 "1": { "name": "keyword.other.typedef.ligo" },
                 "2": { "name": "entity.name.type.ligo" },
-                "3": { "name": "keyword.other.is.ligo" }
+                "3": { "name": "entity.name.type.ligo" },
+                "4": { "name": "keyword.other.is.ligo" }
             },
             "end": "(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)",
             "patterns": [
