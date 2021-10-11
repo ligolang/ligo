@@ -1,6 +1,8 @@
 open Tezos_clic
 open Cli_helpers
 
+let is_dev = ref false
+
 let source_file : type a. (a,'ctx) Clic.params -> (string -> a, 'ctx) Clic.params =
   fun a ->
   let name = "SOURCE_FILE" in
@@ -125,10 +127,10 @@ let display_format =
   Clic.parameter @@
   fun _ s -> match s with
     | "human-readable" -> Proto_alpha_utils.Error_monad.return human_readable
-    | "dev"            -> Proto_alpha_utils.Error_monad.return dev
+    | "dev"            -> let () = is_dev := true in Proto_alpha_utils.Error_monad.return dev
     | "json"           -> Proto_alpha_utils.Error_monad.return json
     | _ -> failwith "todo"
-   
+
 let output_file =
   let docv = "OUTPUT_FILE" in
   let doc = "If used, prints the output into the specified file instead of stdout" in
@@ -142,7 +144,7 @@ let michelson_code_format =
   Clic.default_arg ~doc ~long:"michelson-format" ~placeholder:docv ~default:"text" @@
   Clic.parameter @@
   fun _ s -> match s with
-    | "text" -> Proto_alpha_utils.Error_monad.return `Text 
+    | "text" -> Proto_alpha_utils.Error_monad.return `Text
     | "json" -> Proto_alpha_utils.Error_monad.return `Json
     | "hex"  -> Proto_alpha_utils.Error_monad.return `Hex
     | _ -> failwith "todo"
@@ -164,7 +166,7 @@ let warn =
   Clic.default_arg ~doc ~long:"warn" ~placeholder:docv ~default:"true" @@
   Clic.parameter @@
   fun _ s -> match s with
-    | "true"  -> Proto_alpha_utils.Error_monad.return true 
+    | "true"  -> Proto_alpha_utils.Error_monad.return true
     | "false" -> Proto_alpha_utils.Error_monad.return false
     | _ -> failwith "todo"
 
@@ -174,7 +176,7 @@ let werror =
   Clic.default_arg ~doc ~long:"werror" ~placeholder:docv ~default:"false" @@
   Clic.parameter @@
   fun _ s -> match s with
-    | "true"  -> Proto_alpha_utils.Error_monad.return true 
+    | "true"  -> Proto_alpha_utils.Error_monad.return true
     | "false" -> Proto_alpha_utils.Error_monad.return false
     | _ -> failwith "todo"
 
@@ -183,7 +185,7 @@ let seed =
   let doc = "Is the seed or counter used for generation." in
   Clic.arg ~doc ~long:"seed" ~placeholder:docv @@
   Clic.parameter @@
-  fun _ s -> 
+  fun _ s ->
     Proto_alpha_utils.Error_monad.return @@
     Base.Int.of_string s
 
@@ -201,7 +203,7 @@ module Api = Ligo_api
 let compile_group = Clic.{name="compile";title="Commands for compiling from Ligo to Michelson"}
 let compile_file =
   let f (entry_point, syntax, infer, protocol_version, display_format, disable_typecheck, michelson_format, output_file, warn, werror) source_file () =
-    return_result ~warn ?output_file @@ 
+    return_result ~warn ?output_file @@
     Api.Compile.contract ~werror source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format in
   let _doc = "Subcommand: Compile a contract." in
   let desc =     "This sub-command compiles a contract to Michelson \
@@ -346,9 +348,9 @@ let test =
                  under development, there are features that are work \
                  in progress and are subject to change. No real test \
                  procedure should rely on this sub-command alone."
-             (* 
+             (*
              TODO: correct text below
-             
+
              `S "EXTRA PRIMITIVES FOR TESTING";
              `P "Test.originate c st : binds contract c with the \
                  address addr which is returned, st as the initial \
@@ -383,7 +385,7 @@ let dry_run =
                  from a source file where the contract is \
                  implemented. The interpretation is done using \
                  Michelson's interpreter." in
-  Clic.command ~group:run_group ~desc 
+  Clic.command ~group:run_group ~desc
     Clic.(args12 entry_point amount balance sender source now syntax infer protocol_version display_format warn werror)
     Clic.(prefixes ["run";"dry-run"] @@ source_file @@ expression "PARAMETER" @@ expression "STORAGE" @@ stop)
     f
@@ -517,7 +519,7 @@ let preprocessed =
 
 let pretty_print =
   let f (syntax, display_format) source_file () =
-    return_result @@ 
+    return_result @@
     Api.Print.pretty_print source_file syntax display_format in
   let _doc = "Subcommand: Pretty-print the source file." in
   let desc =     "This sub-command pretty-prints a source file in \
@@ -671,8 +673,8 @@ let dump_changelog =
     return_result @@ Api.dump_changelog display_format in
   let cmdname = "changelog" in
   let doc = "Dump the LIGO changelog to stdout." in
-  Clic.command 
-    ~desc:doc 
+  Clic.command
+    ~desc:doc
     Clic.(args1 display_format)
     Clic.(prefix cmdname stop)
     f
@@ -735,7 +737,7 @@ let main = [
 let run ?argv () =
   let open Lwt in
   let executable_name = "ligo" in
-  let main_with_man = 
+  let main_with_man =
       Clic.add_manual
         ~executable_name
         ~global_options
@@ -745,20 +747,18 @@ let run ?argv () =
   let arg = match Option.map ~f:Array.to_list @@ argv with
   | Some(_ :: argv) -> argv
   | _ -> [] in
-  let run () = 
+  let run () =
     (* When fixing tezos-clic, only use dispatch *)
     let version_flag = Clic.args1 @@ Clic.switch ~doc:"" ~long:"version" () in
     Clic.parse_global_options version_flag () arg >>= function
       Ok (v,argv) ->
         if v then (Format.printf "%s\n" Version.version;Lwt.return_ok ())
-        else 
+        else
           Clic.dispatch main_with_man () @@ argv
     | Error err -> Lwt.return_error err
   in
   (Lwt_main.run
-  (( (Lwt.catch run) (function
-          | Failure msg -> failwith msg
-          | exn -> failwith (Printexc.to_string exn))
+  (Lwt.catch (fun () -> run ()
       >>= function
       | Ok () -> Lwt.return 0
       | Error [Clic.Help command] ->
@@ -788,7 +788,7 @@ let run ?argv () =
           | _ ->
           let result = Old_cli.run ?argv () in
           match result with
-            `Ok () -> 
+            `Ok () ->
               if List.mem ~equal:String.equal arg "--format=json" then () else
               Format.eprintf "Warning: The old cli is deprecated, use `ligo --help` or `ligo man` to consult the new command syntax\n";
               Lwt.return 0
@@ -805,8 +805,17 @@ let run ?argv () =
                 errs
               ;
           (* This is to compensate that ligo compile contract --help throw an error (missing positional argument)  *)
-            Lwt.return 0))
+            Lwt.return 0)
   >>= fun retcode ->
       Format.pp_print_flush Format.err_formatter () ;
       Format.pp_print_flush Format.std_formatter () ;
-      Lwt.return retcode ))
+      Lwt.return retcode)
+     (fun v ->
+       let message msg = Format.eprintf "An internal error ocurred. Please, contact the developers.@.";
+                         if !is_dev then
+                           Format.eprintf "%s.@." msg;
+                         Format.pp_print_flush Format.err_formatter () ;
+                         Lwt.return 1 in
+       match v with
+       | Failure msg -> message msg
+       | exn -> message (Printexc.to_string exn))))
