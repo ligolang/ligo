@@ -71,7 +71,7 @@ module Fold_helpers(M : Monad) = struct
     fun f init v ->
     let self_type = fold_type_expression f in
     let component = v.value.tuple.value.inside in
-    let {params; _} = component in
+    let ({params; _}:variant_comp) = component in
     match params with 
        Some params -> bind_fold_ne_list self_type init (npseq_to_ne_list (snd params))
     | None         -> ok init
