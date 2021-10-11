@@ -1,5 +1,6 @@
 module Test.Capabilities.Find
   ( test_findDefinitionAndGoToReferencesCorrespondence
+  , test_heapLeftLocal
   , unit_definitionOfId
   , unit_definitionOfLeft
   , unit_referenceOfId
@@ -14,14 +15,39 @@ module Test.Capabilities.Find
   , unit_pascaligo_local_type
   ) where
 
+import System.FilePath ((</>))
+
 import AST.Scope (Fallback)
 
 import Test.Common.Capabilities.Find
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (Assertion)
 
+import Range (interval)
+
 test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
-test_findDefinitionAndGoToReferencesCorrespondence = findDefinitionAndGoToReferencesCorrespondence @Fallback
+test_findDefinitionAndGoToReferencesCorrespondence =
+  findDefinitionAndGoToReferencesCorrespondence @Fallback invariants
+
+-- TODO: See the note for `left, local` in common Find test.
+test_heapLeftLocal :: TestTree
+test_heapLeftLocal =
+  findDefinitionAndGoToReferencesCorrespondence @Fallback [test]
+  where
+    test = DefinitionReferenceInvariant
+      { driFile = contractsDir </> "heap.ligo"
+      , driDesc = "left, local"
+      , driDef = Just (interval 77 9 13)
+      , driRefs = [ interval 99 15 19
+                  , interval 90 13 17
+                  , interval 89 30 34
+                  , interval 87 22 26
+                  , interval 86 36 40
+                  , interval 85 10 14
+                  , interval 84 16 20
+                  , interval 83 7 11
+                  ]
+      }
 
 unit_definitionOfId :: Assertion
 unit_definitionOfId = definitionOfId @Fallback

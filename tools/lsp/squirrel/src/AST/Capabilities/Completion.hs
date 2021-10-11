@@ -1,4 +1,12 @@
-module AST.Capabilities.Completion where
+module AST.Capabilities.Completion
+  ( Completion (..)
+  , NameCompletion (..)
+  , TypeCompletion (..)
+  , DocCompletion (..)
+  , completionName
+  , complete
+  , toCompletionItem
+  ) where
 
 import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
@@ -8,6 +16,8 @@ import Data.Foldable (asum)
 import Data.Function (on)
 import Data.Functor ((<&>))
 import Data.List (isSubsequenceOf, nubBy)
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HashSet (filter, toList)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Duplo.Lattice
@@ -27,12 +37,18 @@ import Product
 import Range
 import Util (unconsFromEnd)
 
-data Completion = Completion
-  { cName :: Text
-  , cType :: Text
-  , cDoc  :: Text
-  }
+newtype NameCompletion = NameCompletion { getNameCompletion :: Text } deriving newtype (Eq, Show)
+newtype TypeCompletion = TypeCompletion { getTypeCompletion :: Text } deriving newtype (Eq, Show)
+newtype DocCompletion  = DocCompletion  { getDocCompletion  :: Text } deriving newtype (Eq, Show)
+
+data Completion
+  = Completion NameCompletion TypeCompletion DocCompletion
+  | CompletionKeyword NameCompletion
   deriving stock (Eq, Show)
+
+completionName :: Completion -> NameCompletion
+completionName (Completion name _ _) = name
+completionName (CompletionKeyword name) = name
 
 type CompletionLIGO info =
   ( Eq (Product info)
@@ -49,13 +65,16 @@ complete pos tree = do
   let scope = getElem (extract node)
   let nameLevel = getElem (extract node)
   getPossibleCompletions scope nameLevel pos tree
-    <&> nubBy ((==) `on` cName)
-    <&> filter (isSubseqOf (ppToText node) . cName)
+    <&> nubBy ((==) `on` getNameCompletion . completionName)
+    <&> filter (isSubseqOf (ppToText node) . getNameCompletion . completionName)
 
 getPossibleCompletions
   :: CompletionLIGO xs
   => Scope -> Maybe Level -> Range -> SomeLIGO xs -> Maybe [Completion]
-getPossibleCompletions scope level pos tree = asum completers
+getPossibleCompletions scope level pos tree = mconcat
+  [ asum completers
+  , completeKeyword pos tree
+  ]
   where
     completers =
       [ completeField scope pos tree
@@ -68,6 +87,20 @@ parseAccessor node = case reads (Text.unpack textValue) of
   _ -> Right textValue
   where
     textValue = ppToText node
+
+completeKeyword :: CompletionLIGO xs => Range -> SomeLIGO xs -> Maybe [Completion]
+completeKeyword pos tree@(SomeLIGO dialect _) = do
+  cover <- findNodeAtPoint pos tree
+  let completions = HashSet.filter (ppToText cover `isSubseqOf`) keywords
+  case HashSet.toList completions of
+    [] -> Nothing
+    completions' -> Just $ CompletionKeyword . NameCompletion <$> completions'
+  where
+    keywords :: HashSet Text
+    keywords = case dialect of
+      Caml   -> cameLIGOKeywords
+      Pascal -> pascaLIGOKeywords
+      Reason -> reasonLIGOKeywords
 
 completeField
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
@@ -96,25 +129,41 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
       dereferenceTspec scope <$> accessField tspec accessor
 
     mkCompletion field = Completion
-      { cName = _tfName field
-      , cType = docToText (lppLigoLike dialect (_tfTspec field))
-      , cDoc = ""
-      }
+      (NameCompletion $ _tfName field)
+      (TypeCompletion $ docToText (lppLigoLike dialect (_tfTspec field)))
+      (DocCompletion "")
 
 completeFromScope :: Scope -> Maybe Level -> Maybe [Completion]
 completeFromScope scope level
   = Just [asCompletion decl | decl <- scope, decl `fitsLevel` level]
 
 toCompletionItem :: Completion -> CompletionItem
-toCompletionItem c@Completion
-  { cName = cName
-  , cType = cType
-  , cDoc  = _cDoc
-  } = CompletionItem
+toCompletionItem c@(Completion (NameCompletion cName) (TypeCompletion cType) _) =
+  CompletionItem
   { _label = cName
-  , _kind = Just CiFunction -- TODO
-  , _detail = Just $ ":: " <> cType -- TODO: more elaborate info
-  , _documentation = Just $ mkDoc c
+  , _kind = Just CiFunction -- TODO (LIGO-226)
+  , _detail = Just $ ": " <> cType -- TODO (LIGO-227): more elaborate info
+  , _documentation = mkDoc c
+  , _deprecated = Nothing
+  , _preselect = Nothing
+  , _sortText = Nothing
+  , _filterText = Nothing
+  , _insertTextFormat = Nothing
+  , _textEdit = Nothing
+  , _insertText = Nothing
+  , _additionalTextEdits = Nothing
+  , _commitCharacters = Nothing
+  , _command = Nothing
+  , _xdata = Nothing
+  , _tags = Nothing
+  , _insertTextMode = Nothing
+  }
+toCompletionItem (CompletionKeyword (NameCompletion cName)) =
+  CompletionItem
+  { _label = cName
+  , _kind = Just CiKeyword
+  , _detail = Nothing
+  , _documentation = Nothing
   , _deprecated = Nothing
   , _preselect = Nothing
   , _sortText = Nothing
@@ -130,20 +179,17 @@ toCompletionItem c@Completion
   , _insertTextMode = Nothing
   }
 
-mkDoc :: Completion -> CompletionDoc
-mkDoc Completion
-  { cName = cName
-  , cType = cType
-  , cDoc  = cDoc
-  } = CompletionDocString $
-  cName <> " is of type " <> cType <> ". " <> cDoc
+mkDoc :: Completion -> Maybe CompletionDoc
+mkDoc (CompletionKeyword (NameCompletion _cName)) = Nothing
+mkDoc (Completion (NameCompletion cName) (TypeCompletion cType) (DocCompletion cDoc)) =
+  Just . CompletionDocString $
+    cName <> " is of type " <> cType <> ". " <> cDoc
 
 asCompletion :: ScopedDecl -> Completion
 asCompletion sd = Completion
-  { cName = ppToText (_sdName sd)
-  , cType = docToText (lppDeclCategory sd)
-  , cDoc  = ppToText (fsep $ map pp $ _sdDoc sd)
-  }
+  (NameCompletion $ ppToText (_sdName sd))
+  (TypeCompletion $ docToText (lppDeclCategory sd))
+  (DocCompletion  $ ppToText (fsep $ map pp $ _sdDoc sd))
 
 isSubseqOf :: Text -> Text -> Bool
 isSubseqOf l r = isSubsequenceOf (Text.unpack l) (Text.unpack r)

@@ -1,7 +1,7 @@
 (contract
   (fun
     main
-    (parameter p key_hash)
+    (parameter (? p) key_hash)
     :
     address
     =

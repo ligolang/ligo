@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: ec56a9a20c7c868c19e197ca00e42ac0691bc34e3e88a9010ae837bbfed1d699
 
 name:           ligo-squirrel
 version:        0.0.0
@@ -25,6 +23,7 @@ library
       AST.Capabilities.SelectionRange
       AST.Capabilities.SignatureHelp
       AST.CodeAction
+      AST.Includes
       AST.Parser
       AST.Parser.Camligo
       AST.Parser.Pascaligo
@@ -38,21 +37,21 @@ library
       AST.Scope.ScopedDecl.Parser
       AST.Scope.Standard
       AST.Skeleton
-      AST.StubErrors
       Cli
       Cli.Impl
       Cli.Json
       Cli.Types
-      Comment
       Config
       Debouncer
       Extension
+      ListZipper
       Log
       Parser
       ParseTree
       Product
       Range
       Util
+      Util.Graph
   other-modules:
       Paths_ligo_squirrel
   hs-source-dirs:
@@ -90,6 +89,7 @@ library
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -97,7 +97,7 @@ library
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   include-dirs:
       grammar/pascaligo/src
       grammar/reasonligo/src
@@ -117,6 +117,7 @@ library
     , containers
     , data-default
     , directory
+    , dlist
     , duplo
     , exceptions
     , fastsum
@@ -134,7 +135,10 @@ library
     , text
     , transformers
     , tree-sitter
+    , unliftio
+    , unliftio-core
     , unordered-containers
+    , witherable
   default-language: Haskell2010
 
 executable ligo-squirrel
@@ -179,6 +183,7 @@ executable ligo-squirrel
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -186,11 +191,13 @@ executable ligo-squirrel
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts "-with-rtsopts=-N -A64m -AL256m -I10 -Iw60"
   build-depends:
-      algebraic-graphs
+      aeson
+    , algebraic-graphs
     , base
     , clock
+    , containers
     , data-default
     , duplo
     , exceptions
@@ -210,6 +217,8 @@ executable ligo-squirrel
     , transformers
     , unliftio
     , unliftio-core
+    , unordered-containers
+    , witherable
   default-language: Haskell2010
 
 executable ligo-vet
@@ -249,6 +258,7 @@ executable ligo-vet
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -256,7 +266,7 @@ executable ligo-vet
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -threaded -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-depends:
       base
     , duplo
@@ -274,16 +284,20 @@ test-suite integration-test
       Test.Integrational.Capabilities.Completion
       Test.Integrational.Capabilities.DocumentSymbol
       Test.Integrational.Capabilities.Find
+      Test.Integrational.Capabilities.Hover
       Test.Integrational.Capabilities.Rename
       Test.Integrational.Capabilities.SignatureHelp
       Test.Integrational.Cli
+      Test.Integrational.Diagnostics
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
       Test.Common.FixedExpectations
       Test.Common.Util
       Test.Common.Util.Parsers
@@ -324,6 +338,7 @@ test-suite integration-test
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -331,7 +346,7 @@ test-suite integration-test
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
@@ -344,6 +359,7 @@ test-suite integration-test
     , hspec-expectations
     , lens
     , ligo-squirrel
+    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty
@@ -362,9 +378,11 @@ test-suite ligo-contracts-test
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
       Test.Common.FixedExpectations
       Test.Common.Util
       Test.Common.Util.Parsers
@@ -405,6 +423,7 @@ test-suite ligo-contracts-test
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -412,7 +431,7 @@ test-suite ligo-contracts-test
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
@@ -425,6 +444,105 @@ test-suite ligo-contracts-test
     , hspec-expectations
     , lens
     , ligo-squirrel
+    , lsp-test
+    , lsp-types
+    , safe-exceptions
+    , tasty
+    , tasty-hunit
+    , template-haskell
+    , text
+    , unordered-containers
+  default-language: Haskell2010
+
+test-suite lsp-handlers-test
+  type: exitcode-stdio-1.0
+  main-is: Driver.hs
+  other-modules:
+      Test.Capabilities.CodeAction
+      Test.Capabilities.Completion
+      Test.Capabilities.Definition
+      Test.Capabilities.DocumentFormatting
+      Test.Capabilities.DocumentSymbol
+      Test.Capabilities.Folding
+      Test.Capabilities.Hover
+      Test.Capabilities.PrepareRename
+      Test.Capabilities.RangeFormatting
+      Test.Capabilities.References
+      Test.Capabilities.Rename
+      Test.Capabilities.SelectionRange
+      Test.Capabilities.SignatureHelp
+      Test.Capabilities.TypeDefinition
+      Test.Common.Capabilities.CodeAction.ExtractTypeAlias
+      Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentSymbol
+      Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
+      Test.Common.Capabilities.Rename
+      Test.Common.Capabilities.SignatureHelp
+      Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
+      Test.Common.FixedExpectations
+      Test.Common.Util
+      Test.Common.Util.Parsers
+      Paths_ligo_squirrel
+  hs-source-dirs:
+      test/lsp-handlers-test/
+      test/test-common/
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      StrictData
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      UndecidableInstances
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  build-tool-depends:
+      tasty-discover:tasty-discover
+  build-depends:
+      HUnit
+    , base
+    , directory
+    , duplo
+    , filepath
+    , ghc-prim
+    , hspec-expectations
+    , lens
+    , ligo-squirrel
+    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty
@@ -442,18 +560,22 @@ test-suite lsp-test
       Test.Capabilities.Completion
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Find
+      Test.Capabilities.Hover
       Test.Capabilities.Rename
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
+      Test.Diagnostics
       Test.Parsers
       Test.Scope.ScopedDecl
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
+      Test.Common.Capabilities.Hover
       Test.Common.Capabilities.Rename
       Test.Common.Capabilities.SignatureHelp
       Test.Common.Capabilities.Util
+      Test.Common.Diagnostics
       Test.Common.FixedExpectations
       Test.Common.Util
       Test.Common.Util.Parsers
@@ -494,6 +616,7 @@ test-suite lsp-test
       RecordWildCards
       ScopedTypeVariables
       StandaloneDeriving
+      StrictData
       TemplateHaskell
       TupleSections
       TypeApplications
@@ -501,7 +624,7 @@ test-suite lsp-test
       TypeOperators
       UndecidableInstances
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-export-lists -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
       tasty-discover:tasty-discover
   build-depends:
@@ -514,6 +637,7 @@ test-suite lsp-test
     , hspec-expectations
     , lens
     , ligo-squirrel
+    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty

@@ -3,5 +3,5 @@
   (const
     (? main)
     (lam
-      (type? (tuple? (? a) (? b)) (PROD bool bool))
+      (parameter (?(tuple? (? a) (? b))) (PROD bool bool))
       : => (if ((a == b)) (seq 999) (seq 1)))))

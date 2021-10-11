@@ -5,10 +5,30 @@
 
 {-# LANGUAGE DeriveGeneric #-}
 
-module AST.Skeleton where
+module AST.Skeleton
+  ( SomeLIGO (..)
+  , LIGO
+  , Tree'
+  , RawLigoList
+  , Lang (..)
+  , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords
+  , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
+  , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
+  , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
+  , RawContract (..), TypeName (..), FieldName (..), MichelsonCode (..)
+  , Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
+  , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
+
+  , getLIGO
+  , setLIGO
+  , nestedLIGO
+  , withNestedLIGO
+  ) where
 
 import Control.Lens.Lens (Lens, lens)
 import Data.Functor.Classes
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HashSet
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
@@ -38,17 +58,15 @@ instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
 
 -- | The AST for Pascali... wait. It is, em, universal one.
 --
---   TODO: Rename; add stuff if CamlLIGO/ReasonLIGO needs something.
---
--- type LIGO        = Tree RawLigoList
-type LIGO xs = Tree RawLigoList (Product xs)
+--   TODO: Rename; add stuff if CamelLIGO/ReasonLIGO needs something.
+type LIGO xs = Tree' RawLigoList xs
 type Tree' fs xs = Tree fs (Product xs)
 
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
-  , MapBinding, Alt, Expr, TField, Variant, Type, Binding
+  , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
   , RawContract, TypeName, FieldName, MichelsonCode
-  , Error, Ctor, Contract, NameDecl, Preprocessor, PreprocessorCommand
+  , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand
   , ModuleName, ModuleAccess
   ]
 
@@ -59,13 +77,29 @@ data Lang
   | Reason
   deriving stock Show
 
+pascaLIGOKeywords :: HashSet Text
+pascaLIGOKeywords = HashSet.fromList
+  [ "is", "begin", "end", "function", "var", "const", "recursive", "type", "set"
+  , "map", "list", "big_map", "module", "type", "case", "of", "block", "from"
+  , "step", "skip", "if", "then", "else", "record", "remove", "patch", "while"
+  , "for", "to", "in", "or", "and", "contains", "mod", "not", "nil"
+  ]
+
+cameLIGOKeywords :: HashSet Text
+cameLIGOKeywords = HashSet.fromList
+  [ "in", "struct", "begin", "end", "match", "with", "rec", "if", "then", "else"
+  , "let", "module", "type", "of", "fun", "or", "mod", "land", "lor", "lxor"
+  , "lsl", "lsr", "not"
+  ]
+
+reasonLIGOKeywords :: HashSet Text
+reasonLIGOKeywords = HashSet.fromList
+  [ "rec", "if", "else", "switch", "let", "module", "type", "or", "mod", "land"
+  , "lor", "lxor", "lsl", "lsr"
+  ]
+
 -- Let 'Accessor' be either 'FieldName' or a 'Text'ual representation of an
 -- index (a number).
-
-data Contract it
-  = ContractEnd
-  | ContractCons it it -- ^ Declaration
-  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 newtype RawContract it
   = RawContract [it] -- ^ [Declaration]
@@ -74,12 +108,13 @@ newtype RawContract it
 
 data Binding it
   = BFunction     IsRec it [it] (Maybe it) it -- ^ (Name) (Parameters) (Type) (Expr)
-  | BParameter it it -- ^ (Name) (Type)
+  | BParameter    it (Maybe it) -- ^ (Name) (Type)
   | BVar          it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
   | BConst        it (Maybe it) (Maybe it) -- ^ (Name) (Type) (Expr)
   | BTypeDecl     it it -- ^ (Name) (Type)
   | BAttribute    it -- ^ (Name)
   | BInclude      it
+  | BImport       it it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 type IsRec = Bool
@@ -133,12 +168,18 @@ data Expr it
   | Seq       [it]                     -- [Declaration]
   | Block     [it]                     -- [Declaration]
   | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
-  | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
+  | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
   | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
   | Paren     it -- (Expr)
+  deriving stock (Generic, Functor, Foldable, Traversable)
+
+data Collection it
+  = CList
+  | CMap
+  | CSet
   deriving stock (Generic, Functor, Foldable, Traversable)
 
 newtype MichelsonCode it
@@ -185,6 +226,7 @@ data Pattern it
   | IsList       [it] -- [Pattern]
   | IsTuple      [it] -- [Pattern]
   | IsRecord     [it] -- [RecordFieldPattern]
+  | IsParen      it   -- (Pattern)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 -- Used specifically in record destructuring
@@ -251,6 +293,11 @@ liftEqList _ []       []       = True
 liftEqList f (x : xs) (y : ys) = f x y && liftEqList f xs ys
 liftEqList _ _        _        = False
 
+liftEqMaybe :: (a -> b -> Bool) -> Maybe a -> Maybe b -> Bool
+liftEqMaybe _ Nothing  Nothing  = True
+liftEqMaybe f (Just x) (Just y) = f x y
+liftEqMaybe _ _        _        = False
+
 -- TODO
 -- class GEq1 f where
 --   gLiftEq :: (a -> b -> Bool) -> f a -> f b -> Bool
@@ -271,28 +318,25 @@ liftEqList _ _        _        = False
 --   liftEq = liftEq'
 
 newtype DefaultEq1DeriveForText it =
-  DefaultEq1DeriveForText { unDefaultEq1DeriveForText :: Text }
+  DefaultEq1DeriveForText Text
 
 instance Eq1 DefaultEq1DeriveForText where
   liftEq _ (DefaultEq1DeriveForText a) (DefaultEq1DeriveForText b) = a == b
 
 newtype DefaultEq1DeriveFor1Field it =
-  DefaultEq1DeriveFor1Field { unDefaultEq1DeriveFor1Field :: it }
+  DefaultEq1DeriveFor1Field it
 
 instance Eq1 DefaultEq1DeriveFor1Field where
   liftEq f (DefaultEq1DeriveFor1Field a) (DefaultEq1DeriveFor1Field b) = f a b
 
 data DefaultEq1DeriveFor2Field it =
-  DefaultEq1DeriveFor2Field
-    { unDefaultEq1DeriveFor2FieldA :: it
-    , unDefaultEq1DeriveFor2FieldB :: it
-    }
+  DefaultEq1DeriveFor2Field it it
 
 instance Eq1 DefaultEq1DeriveFor2Field where
   liftEq f (DefaultEq1DeriveFor2Field a b) (DefaultEq1DeriveFor2Field c d) = f a c && f b d
 
 newtype DefaultEq1DeriveFor1List it =
-  DefaultEq1DeriveFor1List { unDefaultEq1DeriveFor1List :: [it] }
+  DefaultEq1DeriveFor1List [it]
 
 instance Eq1 DefaultEq1DeriveFor1List where
   liftEq f (DefaultEq1DeriveFor1List a) (DefaultEq1DeriveFor1List b) = liftEqList f a b
@@ -324,6 +368,7 @@ instance Eq1 Constant where
   liftEq _ (Tez a) (Tez b) = a == b
   liftEq _ _ _ = False
 
+-- FIXME: Missing a lot of comparisons!
 instance Eq1 Expr where
   liftEq f (Constant a) (Constant b) = f a b
   liftEq f (Ident a) (Ident b) = f a b
@@ -335,10 +380,11 @@ instance Eq1 Expr where
   liftEq f (BigMap xs) (BigMap ys) = liftEqList f xs ys
   liftEq _ _ _ = False
 
-instance Eq1 Contract where
-  liftEq f (ContractCons a as) (ContractCons b bs) = f a b && f as bs
-  liftEq _ ContractEnd ContractEnd = True
-  liftEq _ _ _ = False
+instance Eq1 Collection where
+  liftEq _ CList    CList   = True
+  liftEq _ CMap     CMap    = True
+  liftEq _ CSet     CSet    = True
+  liftEq _ _        _       = False
 
 instance Eq1 Error where
   -- liftEq _ _ _ = error "Cannot compare `Error` nodes"
@@ -374,9 +420,7 @@ instance Eq1 QualifiedName where
 
 instance Eq1 Pattern where
   liftEq f (IsConstr na mbpa) (IsConstr nb mbpb) =
-    f na nb && case (mbpa, mbpb) of
-      (Just a, Just b) -> f a b
-      (_, _) -> False
+    f na nb && liftEqMaybe f mbpa mbpb
   liftEq f (IsConstant a) (IsConstant b) = f a b
   liftEq f (IsVar a) (IsVar b) = f a b
   liftEq f (IsCons ha ta) (IsCons hb tb) = f ha hb && f ta tb

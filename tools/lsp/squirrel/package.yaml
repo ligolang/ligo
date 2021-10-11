@@ -38,6 +38,7 @@ default-extensions:
   - RecordWildCards
   - ScopedTypeVariables
   - StandaloneDeriving
+  - StrictData
   - TemplateHaskell
   - TupleSections
   - TypeApplications
@@ -58,7 +59,6 @@ ghc-options:
   - -Wno-monomorphism-restriction
   - -Wno-implicit-prelude
   - -Wno-partial-fields
-  - -Wno-missing-export-lists  # FIXME
   - -Wno-missing-safe-haskell-mode
   - -Wno-prepositive-qualified-module
 
@@ -80,13 +80,13 @@ library:
     - grammar/camligo/src/scanner.c
 
   dependencies:
-    - algebraic-graphs
     - aeson
+    - algebraic-graphs
     - bytestring
     - containers
-    - bytestring
     - data-default
     - directory
+    - dlist
     - exceptions
     - fastsum
     - filepath
@@ -102,15 +102,20 @@ library:
     - text
     - transformers
     - tree-sitter
+    - unliftio
+    - unliftio-core
     - unordered-containers
+    - witherable
 
 executables:
   ligo-squirrel:
     main: Main.hs
 
     dependencies:
+      - aeson
       - algebraic-graphs
       - clock
+      - containers
       - data-default
       - exceptions
       - focus
@@ -128,11 +133,20 @@ executables:
       - transformers
       - unliftio
       - unliftio-core
+      - unordered-containers
+      - witherable
 
     source-dirs:
       - app/ligo-squirrel
 
-    ghc-options: -threaded
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      # Run the idle GC if the application has been idle for at least 10 seconds
+      # but ensure it runs at last once per minute.
+      # Weird quoting is required for cabal to correctly pass this as _one_
+      # option, otherwise it splits by spaces.  :facepalm:
+      - '"-with-rtsopts=-N -A64m -AL256m -I10 -Iw60"'
 
   ligo-vet:
     main: Main.hs
@@ -147,7 +161,45 @@ executables:
       - optparse-applicative
       - with-utf8
 
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - '"-with-rtsopts=-N -A64m -AL256m"'
+
 tests:
+  lsp-handlers-test:
+    main: Driver.hs
+
+    source-dirs:
+      - test/lsp-handlers-test/
+      - test/test-common/
+
+    dependencies:
+      - ligo-squirrel
+      - lsp-test
+      - tasty
+      - HUnit
+      - hspec-expectations
+      - tasty-hunit
+      - safe-exceptions
+      - filepath
+      - directory
+      - lsp-types
+      - text
+      - lens
+      - template-haskell
+      - unordered-containers
+
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+      - -threaded
+      - -eventlog
+      - -rtsopts
+      - '"-with-rtsopts=-N -A64m -AL256m"'
+
+    build-tools:
+      - tasty-discover:tasty-discover
+
   lsp-test:
     main: Driver.hs
 
@@ -160,9 +212,6 @@ tests:
       - -threaded
       - -eventlog
       - -rtsopts
-        # Weird quoting is required for cabal to correctly pass this as _one_ option,
-        # otherwise it splits by spaces.
-        # :facepalm:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
@@ -172,6 +221,7 @@ tests:
       - hspec-expectations
       - lens
       - ligo-squirrel
+      - lsp-test
       - lsp-types
       - safe-exceptions
       - tasty
@@ -195,9 +245,6 @@ tests:
       - -threaded
       - -eventlog
       - -rtsopts
-        # Weird quoting is required for cabal to correctly pass this as _one_ option,
-        # otherwise it splits by spaces.
-        # :facepalm:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
@@ -207,6 +254,7 @@ tests:
       - hspec-expectations
       - lens
       - ligo-squirrel
+      - lsp-test
       - lsp-types
       - safe-exceptions
       - tasty
@@ -226,9 +274,6 @@ tests:
       - -threaded
       - -eventlog
       - -rtsopts
-        # Weird quoting is required for cabal to correctly pass this as _one_ option,
-        # otherwise it splits by spaces.
-        # :facepalm:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     source-dirs:
@@ -242,6 +287,7 @@ tests:
       - hspec-expectations
       - lens
       - ligo-squirrel
+      - lsp-test
       - lsp-types
       - safe-exceptions
       - tasty

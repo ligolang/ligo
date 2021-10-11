@@ -34,8 +34,8 @@ module.exports = grammar({
   name: 'PascaLigo',
 
   word: $ => $.Keyword,
-  externals: $ => [$.ocaml_comment, $.comment],
-  extras: $ => [$.ocaml_comment, $.comment, /\s/],
+  externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
+  extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
   inline: $ => [$.parameters, $.arguments],
 
   rules: {
@@ -200,10 +200,15 @@ module.exports = grammar({
 
     parameters: $ => common.par(common.sepBy(';', field("parameter", $.param_decl))),
 
+    _param_pattern: $ => choice(
+      $.var_pattern,
+      $.wildcard_pattern,
+    ),
+
     param_decl: $ =>
       seq(
         field("access", $._access),
-        field("name", choice($.NameDecl, $.NameWildcard)),
+        field("name", $._param_pattern),
         ':',
         field("type", $._param_type),
       ),
@@ -352,12 +357,12 @@ module.exports = grammar({
         field("key", $.Name),
         optional(seq('->', field("value", $.Name))),
         'in',
-        field("kind", $._collection),
+        field("kind", $.collection),
         field("collection", $._expr),
         field("body", $.block),
       ),
 
-    _collection: $ => choice('map', 'set', 'list'),
+    collection: $ => choice('map', 'set', 'list'),
 
     // Function call
     fun_call: $ =>
@@ -434,9 +439,11 @@ module.exports = grammar({
         field("tail", $._pattern),
       ),
 
+    wildcard_pattern: $ => "_",
+
     _core_pattern: $ =>
       choice(
-        '_',
+        $.wildcard_pattern,
         $.Int,
         $.Nat,
         $.String,
@@ -749,30 +756,42 @@ module.exports = grammar({
 
     /// PREPROCESSOR
 
+    // I (@heitor.toledo) decided to keep the preprocessors here since we still
+    // attempt to parse the contract even if `ligo preprocess` failed.
     preprocessor: $ => field("preprocessor_command", choice(
-      $.include,
+      $.p_include,
       $.p_if,
       $.p_error,
-      $.p_warning,
       $.p_define,
     )),
 
-    include: $ => seq(
-      '#include',
+    p_include: $ => seq(
+      '#',
+      'include',
       field("filename", $.String)
+    ),
+
+    p_import: $ => seq(
+      '#',
+      'import',
+      field("filename", $.String),
+      field("alias", $.String),
     ),
 
     p_if: $ => choice(
       seq(
-        choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
+        '#',
+        choice('if', 'elif', 'else'),
         field("rest", $._till_newline),
       ),
-      '#endif',
+      seq(
+        '#',
+        'endif',
+      ),
     ),
 
-    p_error: $ => seq('#error', field("message", $._till_newline)),
-    p_warning: $ => seq('#warning', field("message", $._till_newline)),
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
+    p_error: $ => seq('#', 'error', field("message", $._till_newline)),
+    p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
 
     /// MISCELLANEOUS UTILITIES
 

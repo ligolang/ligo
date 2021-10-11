@@ -6,7 +6,7 @@ const PREC = {
   PLUS: 6,
   MINUS: 6,
   MUL: 7,
-  DIV: 7,
+  SHIFT: 8,
   TYPE: 101,
   LET: 100,
 };
@@ -14,9 +14,14 @@ const PREC = {
 const OPS = [
   ['+', PREC.PLUS],
   ['-', PREC.MINUS],
-  ['mod', PREC.DIV],
-  ['/', PREC.DIV],
+  ['mod', PREC.MUL],
+  ['/', PREC.MUL],
   ['*', PREC.MUL],
+  ['land', PREC.MUL],
+  ['lor', PREC.MUL],
+  ['lxor', PREC.MUL],
+  ['lsl', PREC.SHIFT],
+  ['lsr', PREC.SHIFT],
   ['++', PREC.CONCAT],
   ['<', PREC.COMPARE],
   ['>', PREC.COMPARE],
@@ -34,28 +39,47 @@ module.exports = grammar({
   name: 'ReasonLigo',
 
   word: $ => $.Keyword,
-  externals: $ => [$.ocaml_comment, $.comment],
-  extras: $ => [$.ocaml_comment, $.comment, /\s/],
+  externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
+  extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
+
+  // This grammar is not LR(1), thus it has a bunch of conflicts.
+  // There are two major non-LR(1)-ities.
+  // The first one is Expr/Pattern conflict at the beginning of expression.
+  // For example, in ((x . , ... x might be an expression in case of ((x, y))
+  // and x might be a pattern in case of ((x, y) => x * y).
+  // The second one is Expr/Type conflict in lambda type annotation.
+  // For example, in (x) : y => z . ( z might be an expression in case of (x) : y => z (w)
+  // and z might be a type in case of (x) : y => z (w) => v where
+  // y => z (w) is lambda type annotation and v is lambda body.
+  // Those major conflicts lead to a bunch of conflicts in grammar.
+  // For example, [] might be an expression or a pattern.
+  // In case of expression, the parser follows list rule.
+  // In case of pattern, the parser follows list_pattern rule.
+  // As a result we get list/list_pattern conflict.
+  // In {x, ... x might be either FieldName in record expression or
+  // NameDecl in record pattern, so we get FieldName/NameDecl conflict.
+  // It is possible to combine several conflicts into one
+  // by combining conflicting rules together, but it leads to problems in Reasonligo.hs.
+  // Also, there is a combination of two major conflicts, for example for z in (x) : y => (z . )
 
   conflicts: $ =>
-    [[$._expr_term, $._pattern]
-      , [$.Name, $.TypeName]
-      , [$.annot_pattern, $.let_decl]
-      , [$.lambda, $.tuple_pattern]
-      , [$._expr_term, $.nullary_constr_pattern]
-      , [$._expr_term, $.FieldName]
-      , [$._expr_term, $.TypeName]
-      , [$.FieldName, $.TypeName]
-      , [$.FieldName, $.NameDecl]
-      , [$.string_type, $._literal]
-      , [$.Name, $.NameDecl]
-      , [$.NameDecl, $.TypeName]
-      , [$.Name, $.NameDecl, $.TypeName]
-      , [$.list_pattern, $.Nil, $.list]
-      , [$.list, $.Nil]
-      , [$.list_pattern, $.Nil]
-      , [$.TypeWildcard, $.wildcard]
-      , [$._core_type, $._literal]
+    [ // Pattern/Expr conflicts
+      [$._expr_term, $._unannotated_pattern]
+    , [$._pattern, $.fun_arg]
+    , [$.FieldName, $.NameDecl]
+    , [$.Name, $.NameDecl]
+    , [$.list, $.list_pattern]
+
+      // Type/Expr conflicts
+    , [$.Name, $.TypeName]
+    , [$.FieldName, $.TypeName]
+    , [$.string_type, $._literal]
+    , [$.TypeWildcard, $.wildcard]
+    , [$._core_type, $._literal]
+
+      // Pattern/Expr + Type/Expr conflicts
+    , [$.Name, $.NameDecl, $.TypeName]
+    , [$.NameDecl, $.TypeName]
     ],
 
   rules: {
@@ -171,7 +195,7 @@ module.exports = grammar({
     let_decl: $ => prec.left(PREC.LET, common.withAttrs($, seq(
       'let',
       optional(field("rec", $.rec)),
-      common.sepBy1(',', field("binding", $._pattern)),
+      field("binding", $._pattern),
       optional(seq(
         ':',
         field("type", $._type_expr)
@@ -192,16 +216,25 @@ module.exports = grammar({
 
     _pattern: $ =>
       choice(
+        $._unannotated_pattern,
+        $.tuple_pattern,
+      ),
+
+    _unannotated_pattern: $ =>
+      choice(
         $.wildcard,
         $._literal,
-        $.tuple_pattern,
+        $.paren_pattern,
         $.var_pattern,
-        $.annot_pattern,
-        $.unary_constr_pattern,
-        $.nullary_constr_pattern,
+        $.constr_pattern,
         $.list_pattern,
         $.record_pattern,
       ),
+
+    _closed_pattern: $ => choice(
+      $._pattern,
+      $.annot_pattern,
+    ),
 
     _literal: $ =>
       choice(
@@ -212,13 +245,18 @@ module.exports = grammar({
         $.String,
         $.Bytes,
         $.Unit,
-        $.Nil,
         $.None,
       ),
 
-    tuple_pattern: $ => prec(13, common.par(
+    tuple_pattern: $ => prec.left(13, seq(
+      field("pattern", $._pattern),
+      ',',
       common.sepBy1(',', field("pattern", $._pattern)),
     )),
+
+    paren_pattern: $ => common.par(
+      field("pattern", $._closed_pattern),
+    ),
 
     var_pattern: $ => field("var", $.NameDecl),
 
@@ -228,27 +266,23 @@ module.exports = grammar({
       field("type", $._type_expr),
     ),
 
-    unary_constr_pattern: $ => prec(1, seq(
+    constr_pattern: $ => prec(1, seq(
       field("constructor", $.ConstrName),
-      field("arg", $._pattern),
+      optional(field("arg", $._pattern)),
     )),
 
-    nullary_constr_pattern: $ => seq(
-      field("constructor", $.ConstrName),
-    ),
-
     list_pattern: $ => common.brackets(
-      common.sepBy(',', field("pattern", $._spread_pattern)),
+      common.sepEndBy(',', field("pattern", $._spread_pattern)),
     ),
 
     _spread_pattern: $ => choice(
       $.spread_pattern,
-      $._pattern,
+      $._unannotated_pattern,
     ),
 
     spread_pattern: $ => seq(
       '...',
-      field("expr", $._pattern),
+      field("expr", $._unannotated_pattern),
     ),
 
     record_pattern: $ => common.withAttrs($, common.block(
@@ -263,7 +297,7 @@ module.exports = grammar({
     record_field_pattern: $ => common.withAttrs($, prec(9, seq(
       field("name", $.FieldName),
       ":",
-      field("body", $._pattern),
+      field("body", $._unannotated_pattern),
     ))),
 
     record_capture_pattern: $ => common.withAttrs($, prec(9, field("name", $.NameDecl))),
@@ -294,8 +328,16 @@ module.exports = grammar({
       $._expr_term,
     ),
 
+    fun_arg: $ => seq(
+      field("argument", $._unannotated_pattern),
+      optional(seq(
+        ':',
+        field("type", $._type_expr),
+      )),
+    ),
+
     lambda: $ => prec.right(12, seq(
-      common.par(common.sepBy(',', field("argument", $._pattern))),
+      common.par(common.sepBy(',', field("argument", $.fun_arg))),
       optional(seq(
         ':',
         field("type", $._type_expr),
@@ -314,7 +356,7 @@ module.exports = grammar({
     binary_call: $ => choice(
       ...OPS
         .map(([op, precendence]) =>
-          prec.right(precendence, seq(
+          prec.left(precendence, seq(
             field("left", $._expr),
             field("op", $[op]),
             field("right", $._expr),
@@ -382,7 +424,7 @@ module.exports = grammar({
     ),
 
     list: $ => common.brackets(
-      common.sepBy(',', field("element", $._spread_expr)),
+      common.sepEndBy(',', field("element", $._spread_expr)),
     ),
 
     _spread_expr: $ => choice(
@@ -503,30 +545,42 @@ module.exports = grammar({
 
     /// PREPROCESSOR
 
+    // I (@heitor.toledo) decided to keep the preprocessors here since we still
+    // attempt to parse the contract even if `ligo preprocess` failed.
     preprocessor: $ => field("preprocessor_command", choice(
-      $.include,
+      $.p_include,
       $.p_if,
       $.p_error,
-      $.p_warning,
       $.p_define,
     )),
 
-    include: $ => seq(
-      '#include',
+    p_include: $ => seq(
+      '#',
+      'include',
       field("filename", $.String)
+    ),
+
+    p_import: $ => seq(
+      '#',
+      'import',
+      field("filename", $.String),
+      field("alias", $.String),
     ),
 
     p_if: $ => choice(
       seq(
-        choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
+        '#',
+        choice('if', 'elif', 'else'),
         field("rest", $._till_newline),
       ),
-      '#endif',
+      seq(
+        '#',
+        'endif',
+      ),
     ),
 
-    p_error: $ => seq('#error', field("message", $._till_newline)),
-    p_warning: $ => seq('#warning', field("message", $._till_newline)),
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
+    p_error: $ => seq('#', 'error', field("message", $._till_newline)),
+    p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
 
     /// MISCELLANEOUS UTILITIES
 
@@ -564,7 +618,6 @@ module.exports = grammar({
     False: $ => 'false',
     True: $ => 'true',
     Unit: $ => seq('(', ')'),
-    Nil: $ => seq('[', ']'),
     None: $ => 'None',
     Some: $ => 'Some',
     skip: $ => 'skip',

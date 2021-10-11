@@ -3,6 +3,7 @@ module Test.Common.Capabilities.Rename
   , renameId
   , renameParam
   , renameInIncludedFile
+  , renameNestedInclude
   ) where
 
 import Control.Arrow ((***))
@@ -34,7 +35,7 @@ testRenameOk
   -> [(FilePath, [Range])]  -- ^ Expected map with edits
   -> Assertion
 testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected = do
-    let fp = rFile pos
+    let fp = _rFile pos
     tree <- readContractWithScopes @impl fp
 
     let expected' =
@@ -44,7 +45,7 @@ testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected
     case prepareRenameDeclarationAt pos tree of
       Nothing -> expectationFailure "Should be able to rename"
       Just decl -> do
-        rFile decl `shouldBe` declFile
+        _rFile decl `shouldBe` declFile
         toLspRange decl `shouldBe`
           J.Range
             (J.Position (declLine - 1) (declCol - 1))
@@ -79,18 +80,29 @@ renameFail =
 renameId :: forall impl. HasScopeForest impl IO => Assertion
 renameId = do
   fp <- makeAbsolute (contractsDir </> "id.ligo")
-  testRenameOk @impl (point 1 11){rFile = fp} "id" (point 1 10){rFile = fp} "very_id"
-    [(fp, [(interval 1 10 12){rFile = fp}])]
+  testRenameOk @impl (point 1 11){_rFile = fp} "id" (point 1 10){_rFile = fp} "very_id"
+    [(fp, [(interval 1 10 12){_rFile = fp}])]
 
 renameParam :: forall impl. HasScopeForest impl IO => Assertion
 renameParam = do
   fp <- makeAbsolute (contractsDir </> "params.mligo")
-  testRenameOk @impl (point 3 11){rFile = fp} "a" (point 3 11){rFile = fp} "aa"
-    [(fp, [(interval 3 36 37){rFile = fp}, (interval 3 11 12){rFile = fp}])]
+  testRenameOk @impl (point 3 11){_rFile = fp} "a" (point 3 11){_rFile = fp} "aa"
+    [(fp, [(interval 3 36 37){_rFile = fp}, (interval 3 11 12){_rFile = fp}])]
 
 renameInIncludedFile :: forall impl. HasScopeForest impl IO => Assertion
 renameInIncludedFile = do
   fp1 <- makeAbsolute (contractsDir </> "LIGO-104-A1.mligo")
   fp2 <- makeAbsolute (contractsDir </> "LIGO-104-A2.mligo")
-  testRenameOk @impl (point 1 5){rFile = fp2} "rename_me" (point 1 5){rFile = fp2} "renamed"
-    [(fp1, [(interval 3 11 20){rFile = fp1}]), (fp2, [(interval 1 5 14){rFile = fp2}])]
+  testRenameOk @impl (point 1 5){_rFile = fp2} "rename_me" (point 1 5){_rFile = fp2} "renamed"
+    [(fp1, [(interval 3 11 20){_rFile = fp1}]), (fp2, [(interval 1 5 14){_rFile = fp2}])]
+
+-- Regression test for LIGO-260
+renameNestedInclude :: forall impl. HasScopeForest impl IO => Assertion
+renameNestedInclude = do
+  func  <- makeAbsolute (contractsDir </> "LIGO-260" </> "Func.mligo")
+  param <- makeAbsolute (contractsDir </> "LIGO-260" </> "Param.mligo")
+  let def = (interval 1 5 6){_rFile = func}
+  testRenameOk @impl def "f" def "func"
+    [ (param, [(interval 1 2 3){_rFile = param}])
+    , (func, [(interval 4 3 4){_rFile = func}, def])
+    ]

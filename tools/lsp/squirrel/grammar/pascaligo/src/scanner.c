@@ -7,7 +7,12 @@
 enum TokenType {
   OCAML_COMMENT,
   COMMENT,
+  LINE_MARKER,
 };
+
+#define TAKE_WHILE_1(predicate) \
+  if (!predicate(lexer->lookahead)) return false; \
+  while (predicate(lexer->lookahead)) lexer->advance(lexer, false);
 
 void *tree_sitter_PascaLigo_external_scanner_create() { return NULL; }
 void tree_sitter_PascaLigo_external_scanner_destroy(void *p) {}
@@ -82,6 +87,27 @@ bool tree_sitter_PascaLigo_external_scanner_scan(
         break;
       }
     }
+  } else if (lexer->lookahead == '#' && !lexer->get_column(lexer)) {
+    // For PascaLIGO, we need to disambiguate between a cons expression and a
+    // line marker.
+    // Besides that, we also do this so our comment lexer is happy.
+    lexer->advance(lexer, false);
+    TAKE_WHILE_1(iswspace);
+    TAKE_WHILE_1(iswdigit); // linenum
+    TAKE_WHILE_1(iswspace);
+    if (lexer->lookahead != '"') return false; // filename
+    lexer->advance(lexer, false);
+    while (lexer->lookahead != '"') lexer->advance(lexer, false);
+    if (lexer->lookahead != '"') return false;
+    lexer->advance(lexer, false);
+    if (lexer->lookahead != '\n') {
+      TAKE_WHILE_1(iswspace);
+      TAKE_WHILE_1(iswdigit); // flag
+    }
+    if (lexer->lookahead != '\n') return false;
+    lexer->advance(lexer, false);
+    lexer->result_symbol = LINE_MARKER;
+    return true;
   }
 
   return false;

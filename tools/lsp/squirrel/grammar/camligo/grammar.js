@@ -12,8 +12,8 @@ module.exports = grammar({
   name: 'CameLigo',
 
   word: $ => $.Keyword,
-  externals: $ => [$.ocaml_comment, $.comment],
-  extras: $ => [$.ocaml_comment, $.comment, /\s/],
+  externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
+  extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
   rules: {
     source_file: $ => repeat(field("declaration", $._declaration)),
@@ -188,7 +188,7 @@ module.exports = grammar({
     // [1;2]
     list_pattern: $ => seq(
       "[",
-      common.sepBy(';', field("item", $._pattern)),
+      common.sepEndBy(';', field("item", $._pattern)),
       "]"
     ),
 
@@ -314,18 +314,19 @@ module.exports = grammar({
 
     // - a
     unary_op_app: $ => prec(19, seq(
-      field("negate", "-"),
+      field("negate", choice("-", "not")),
       field("arg", $._expr)
     )),
 
     binary_op_app: $ => choice(
-      prec.left(16, mkOp($, "mod")),
-      prec.left(15, mkOp($, choice("/", "*"))),
-      prec.left(14, mkOp($, choice("-", "+"))),
-      prec.right(13, mkOp($, "::")),
-      prec.right(12, mkOp($, "^")),
-      prec.left(11, mkOp($, choice("&&", "||"))),
-      prec.left(10, mkOp($, choice("=", "<>", "==", "<", "<=", ">", ">="))),
+      prec.right(17, mkOp($, choice("lsl", "lsr"))),
+      prec.left(16, mkOp($, choice("/", "*", "mod", "land", "lor", "lxor"))),
+      prec.left(15, mkOp($, choice("-", "+"))),
+      prec.right(14, mkOp($, "::")),
+      prec.right(13, mkOp($, "^")),
+      prec.left(12, mkOp($, choice("=", "<>", "<", "<=", ">", ">="))),
+      prec.left(11, mkOp($, "&&")),
+      prec.left(10, mkOp($, choice("or", "||"))),
     ),
 
     tup_expr: $ => prec.right(9, seq(
@@ -337,17 +338,21 @@ module.exports = grammar({
     )),
 
     _sub_expr: $ => choice(
+      $._core_expr,
+      $.fun_app,
+      $.if_expr,
+      $.lambda_expr,
+      $.match_expr,
+    ),
+
+    _core_expr: $ => choice(
       $.ConstrName,
       $.Name,
       $._literal,
-      $.fun_app,
       $.paren_expr,
       $.annot_expr,
       $.record_expr,
       $.record_literal,
-      $.if_expr,
-      $.lambda_expr,
-      $.match_expr,
       $.list_expr,
       $.data_projection,
       $.module_access,
@@ -357,8 +362,8 @@ module.exports = grammar({
 
     // f a
     fun_app: $ => prec.left(20, seq(
-      field("f", $._sub_expr),
-      field("x", $._sub_expr)
+      field("f", $._core_expr),
+      repeat1(field("x", $._core_expr))
     )),
 
     paren_expr: $ => seq(
@@ -445,7 +450,7 @@ module.exports = grammar({
 
     list_expr: $ => seq(
       "[",
-      common.sepBy(";", field("item", $._expr)),
+      common.sepEndBy(";", field("item", $._expr)),
       "]"
     ),
 
@@ -494,30 +499,42 @@ module.exports = grammar({
 
     /// PREPROCESSOR
 
+    // I (@heitor.toledo) decided to keep the preprocessors here since we still
+    // attempt to parse the contract even if `ligo preprocess` failed.
     preprocessor: $ => field("preprocessor_command", choice(
-      $.include,
+      $.p_include,
       $.p_if,
       $.p_error,
-      $.p_warning,
       $.p_define,
     )),
 
-    include: $ => seq(
-      '#include',
+    p_include: $ => seq(
+      '#',
+      'include',
       field("filename", $.String)
+    ),
+
+    p_import: $ => seq(
+      '#',
+      'import',
+      field("filename", $.String),
+      field("alias", $.String),
     ),
 
     p_if: $ => choice(
       seq(
-        choice('#if', '#ifdef', '#ifndef', '#elif', '#else'),
+        '#',
+        choice('if', 'elif', 'else'),
         field("rest", $._till_newline),
       ),
-      '#endif',
+      seq(
+        '#',
+        'endif',
+      ),
     ),
 
-    p_error: $ => seq('#error', field("message", $._till_newline)),
-    p_warning: $ => seq('#warning', field("message", $._till_newline)),
-    p_define: $ => seq(choice('#define', '#undef'), field("definition", $._till_newline)),
+    p_error: $ => seq('#', 'error', field("message", $._till_newline)),
+    p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
 
     /// MISCELLANEOUS UTILITIES
 

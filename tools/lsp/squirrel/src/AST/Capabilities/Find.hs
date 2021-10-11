@@ -1,4 +1,15 @@
-module AST.Capabilities.Find where
+module AST.Capabilities.Find
+  ( CanSearch
+  , TypeDefinitionRes (..)
+  , findScopedDecl
+  , findNodeAtPoint
+  , rangeOf
+  , definitionOf
+  , typeDefinitionOf
+  , typeDefinitionAt
+  , dereferenceTspec
+  , referencesOf
+  ) where
 
 import Control.Lens (_Just, (^.), (^?))
 import Control.Monad
@@ -10,15 +21,15 @@ import Duplo.Tree
 
 import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  (DeclarationSpecifics (..), Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..),
-  ValueDeclSpecifics (..), _TypeSpec, _ValueSpec, extractRefName, sdSpec, vdsTspec)
+  (Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec,
+   _ValueSpec, extractRefName, sdSpec, vdsTspec)
 import AST.Skeleton (LIGO, SomeLIGO, nestedLIGO)
 
 import Product
 import Range
 
 type CanSearch xs =
-  ( Contains [ScopedDecl] xs
+  ( Contains Scope xs
   , Contains Range xs
   , Contains (Maybe Level) xs
   , Contains [Text] xs
@@ -107,17 +118,6 @@ dereferenceTspec :: Scope -> TypeDeclSpecifics -> TypeDeclSpecifics
 dereferenceTspec scope tspec = fromMaybe tspec $ do
   refDecl <- findTypeRefDeclaration scope (_tdsInit tspec)
   refDecl ^? sdSpec . _TypeSpec
-
-implementationOf
-  :: CanSearch xs
-  => Range
-  -> SomeLIGO xs
-  -> Maybe Range
-implementationOf pos tree = do
-  decl <- findScopedDecl pos tree
-  case _sdSpec decl of
-    ValueSpec vspec -> _vdsInitRange vspec
-    TypeSpec tspec -> pure (_tdsInitRange tspec)
 
 referencesOf
   :: CanSearch xs

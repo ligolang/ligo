@@ -1,6 +1,8 @@
 -- | Parser for ReasonLigo contract
 
-module AST.Parser.Reasonligo where
+module AST.Parser.Reasonligo
+  ( recognise
+  ) where
 
 import AST.Skeleton
 
@@ -8,10 +10,7 @@ import Duplo.Tree
 
 import ParseTree
 import Parser
-  (CodeSource (CodeSource), Info, ParserM, ShowRange (N), boilerplate, boilerplate', fallthrough,
-  field, fieldOpt, fields, withComments)
 import Product
-
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -54,10 +53,10 @@ recognise (SomeRawTree dialect rawTree)
         "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field "type"
         "list_pattern"           -> IsList   <$> fields "pattern"
         "var_pattern"            -> IsVar    <$> field  "var"
-        "nullary_constr_pattern" -> IsConstr <$> field  "constructor" <*> return Nothing
-        "unary_constr_pattern"   -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
+        "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
         "spread_pattern"         -> IsSpread <$> field  "expr"
         "record_pattern"         -> IsRecord <$> fields "field"
+        "paren_pattern"          -> IsParen  <$> field  "pattern"
         "wildcard"               -> return IsWildcard
         _                        -> fallthrough
 
@@ -118,6 +117,11 @@ recognise (SomeRawTree dialect rawTree)
         ("mod", _)    -> return $ Op "mod"
         ("/", _)      -> return $ Op "/"
         ("*", _)      -> return $ Op "*"
+        ("land", _)   -> return $ Op "land"
+        ("lor", _)    -> return $ Op "lor"
+        ("lxor", _)   -> return $ Op "lxor"
+        ("lsl", _)    -> return $ Op "lsl"
+        ("lsr", _)    -> return $ Op "lsr"
         (">", _)      -> return $ Op ">"
         ("<", _)      -> return $ Op "<"
         (">=", _)     -> return $ Op ">="
@@ -151,7 +155,9 @@ recognise (SomeRawTree dialect rawTree)
         "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
         "type_decl" -> BTypeDecl  <$> field "type_name" <*> field "type_value"
         "attr_decl" -> BAttribute <$> field "name"
-        "include"   -> BInclude   <$> field "filename"
+        "p_include" -> BInclude   <$> field "filename"
+        "p_import"  -> BImport    <$> field "filename" <*> field "alias"
+        "fun_arg"   -> BParameter <$> field "argument" <*> fieldOpt "type"
         _           -> fallthrough
 
     -- MichelsonCode
@@ -237,12 +243,11 @@ recognise (SomeRawTree dialect rawTree)
         ("None", _)            -> return $ Ctor "None"
         ("Bool", b)            -> return $ Ctor b
         ("Unit", _)            -> return $ Ctor "Unit"
-        ("Nil", _)             -> return $ Ctor "Nil"
         _                      -> fallthrough
 
   -- Err
   , Descent do
-      \(r :> _, ParseTree _ children source) -> do
+      \(r :> _, ParseTree _ children source) ->
         withComments do
-          return (r :> N :> CodeSource source :> Nil, Error source children)
+          return ([] :> r :> N :> CodeSource source :> Nil, Error source children)
   ]

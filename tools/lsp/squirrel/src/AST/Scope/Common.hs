@@ -1,37 +1,73 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module AST.Scope.Common where
+module AST.Scope.Common
+  ( MarkerInfo (..)
+  , ParsedContract (..)
+  , FindFilepath (..)
+  , HasScopeForest (..)
+  , Level (..)
+  , ScopeError (..)
+  , ScopeM
+  , Info'
+  , ScopeForest (..)
+  , ScopeInfo
+  , ScopeTree
+  , DeclRef (..)
+  , MergeStrategy (..)
+  , ContractInfo
+  , ParsedContractInfo
+  , ContractInfo'
+  , ContractNotFoundException (..)
+
+  , pattern FindContract
+
+  , contractFile
+  , contractTree
+  , contractMsgs
+
+  , cFile
+  , cTree
+  , cMsgs
+  , getContract
+
+  , emptyScopeForest
+  , ofLevel
+  , mergeScopeForest
+  , withScopeForest
+  , lookupEnv
+  , spine
+  , addScopes
+  , lookupContract
+  ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
-import Algebra.Graph.AdjacencyMap.Algorithm (Cycle)
 import Algebra.Graph.Export qualified as G (export, literal, render)
-import Control.Arrow ((&&&), second)
+import Control.Arrow ((&&&))
 import Control.Exception.Safe
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
-import Control.Monad.State
 import Control.Monad.Trans.Except
+import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
 import Data.List (sortOn)
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.List.NonEmpty qualified as NE
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text, pack)
-import Data.Tuple (swap)
+import Witherable (ordNub)
 
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
 
 import AST.Pretty
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..))
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
   (Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..),
   withNestedLIGO)
@@ -40,7 +76,16 @@ import ParseTree
 import Parser
 import Product
 import Range
-import Util (findKey, nubOrd, unionOrd)
+import Util (findKey, unionOrd)
+import Util.Graph (traverseAMConcurrently)
+
+-- TODO: Many of these datatypes don't make sense to be defined here. Consider
+-- moving into different or new modules.
+data MarkerInfo = MarkerInfo
+  { miMarker    :: LineMarker
+  , miLastRange :: Range
+  , miDepth     :: Int
+  } deriving stock (Show)
 
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
@@ -73,38 +118,17 @@ makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: AdjacencyMap ContractInfo -> m (AdjacencyMap (FindFilepath ScopeForest))
+  scopeForest :: AdjacencyMap ParsedContractInfo -> m (AdjacencyMap (FindFilepath ScopeForest))
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
 
-type FullEnv = Product ["vars" := Env, "types" := Env]
-type Env     = Map Range [ScopedDecl]
-
 data Level = TermLevel | TypeLevel
   deriving stock Eq
-
-instance {-# OVERLAPS #-} Pretty FullEnv where
-  pp = block . map aux . Map.toList . mergeFE
-    where
-      aux (r, fe) =
-        pp r `indent` block fe
-
-      mergeFE fe = getTag @"vars" @Env fe Prelude.<> getTag @"types" fe
 
 instance Pretty Level where
   pp TermLevel = "TermLevel"
   pp TypeLevel = "TypeLevel"
-
-void' :: Functor f => f a -> f (Product '[])
-void' = fmap $ const Nil
-
-emptyEnv :: FullEnv
-emptyEnv = Tag Map.empty :> Tag Map.empty :> Nil
-
-with :: Level -> FullEnv -> (Env -> Env) -> FullEnv
-with TermLevel env f = modTag @"vars"  f env
-with TypeLevel env f = modTag @"types" f env
 
 ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of
@@ -121,21 +145,14 @@ data ScopeError =
   deriving Show via PP ScopeError
 
 instance Pretty ScopeError where
-  pp = \case
-    (TreeDoesNotContainName tree _ name) -> "Given tree: " <> tree <> " does not contain name: " <> pp name
+  pp (TreeDoesNotContainName tree range name) =
+    "Given tree does not contain " <> pp name <> ": " <> tree <> " (" <> pp range <> ")"
 
 instance Exception ScopeError
 
-type ScopeM = ExceptT ScopeError (Reader (Lang, [ScopeForest]))
+type ScopeM = ExceptT ScopeError (Reader Lang)
 
-type Info' =
-  [ [ScopedDecl]
-  , Maybe Level
-  , [Text]
-  , Range
-  , ShowRange
-  , CodeSource
-  ]
+type Info' = Scope ': Maybe Level ': ParsedInfo
 
 data ScopeForest = ScopeForest
   { sfScopes :: [ScopeTree]
@@ -256,52 +273,54 @@ instance Pretty ScopeForest where
 
       decls' = sexpr "decls" . map pp . Map.toList
 
-lookupEnv :: Text -> [ScopedDecl] -> Maybe ScopedDecl
+lookupEnv :: Text -> Scope -> Maybe ScopedDecl
 lookupEnv name = getFirst . foldMap \decl ->
   First do
     guard (_sdName decl == name)
     return decl
 
-envAtPoint :: Range -> ScopeForest -> [ScopedDecl]
+envAtPoint :: Range -> ScopeForest -> Scope
 envAtPoint r (ScopeForest sf ds) = do
-  let sp = sf >>= spine r >>= Set.toList
+  let sp = sf >>= toList . spine r >>= Set.toList
   map (ds Map.!) sp
 
-spine :: Range -> ScopeTree -> [Set DeclRef]
+spine :: Range -> ScopeTree -> DList (Set DeclRef)
 spine r (only -> (i, trees))
-  | leq r (getRange i) = foldMap (spine r) trees <> [getElem @(Set DeclRef) i]
-  | otherwise = []
+  | leq r (getRange i) = foldMap (spine r) trees `snoc` getElem @(Set DeclRef) i
+  | otherwise = mempty
 
-addLocalScopes :: MonadCatch m => SomeLIGO Info -> ScopeForest -> m (SomeLIGO Info')
+addLocalScopes :: MonadCatch m => SomeLIGO ParsedInfo -> ScopeForest -> m (SomeLIGO Info')
 addLocalScopes tree forest =
   let
+    getPreRange xs = let PreprocessedRange r = getElem xs in r
     defaultHandler f (i :< fs) = do
       fs' <- traverse f fs
-      let env = envAtPoint (getRange i) forest
+      let env = envAtPoint (getPreRange i) forest
       return ((env :> Nothing :> i) :< fs')
   in
   withNestedLIGO tree $
-    descent @(Product Info) @(Product Info') @RawLigoList @RawLigoList defaultHandler
+    descent @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \(i, Name t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Name t)
 
     , Descent \(i, NameDecl t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, NameDecl t)
 
     , Descent \(i, Ctor t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Ctor t)
 
     , Descent \(i, TypeName t) -> do
-        let env = envAtPoint (getRange i) forest
+        let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeName t)
     ]
 
 addScopes
-  :: forall impl m. HasScopeForest impl m
-  => AdjacencyMap ContractInfo
+  :: forall impl m
+   . (HasScopeForest impl m, MonadUnliftIO m)
+  => AdjacencyMap ParsedContractInfo
   -> m (AdjacencyMap ContractInfo')
 addScopes graph = do
   -- Bottom-up: add children forests into their parents
@@ -317,24 +336,16 @@ addScopes graph = do
       FindContract src
         <$> addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe)
         <*> pure (_cMsgs sf)
-  traverseAM addScope forestGraph
+  traverseAMConcurrently addScope forestGraph
   where
     nubRef sd = sd
-      { _sdRefs = nubOrd (_sdRefs sd)
-      , _sdDoc  = nubOrd (_sdDoc  sd)
+      { _sdRefs = ordNub (_sdRefs sd)
+      , _sdDoc  = ordNub (_sdDoc  sd)
       }
     nubForest f = f
-      { sfScopes = nubOrd (sfScopes f)
+      { sfScopes = ordNub (sfScopes f)
       , sfDecls  = Map.map nubRef (sfDecls f)
       }
-
--- | Traverse an adjacency map.
-traverseAM :: (Monad m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
-traverseAM f g = do
-  let adj = G.adjacencyMap g
-  keysList <- traverse (sequenceA . (id &&& f)) (G.vertexList g)
-  let keys = Map.fromList keysList
-  pure $ G.fromAdjacencySets $ map (second (Set.map (keys Map.!) . (adj Map.!)) . swap) keysList
 
 -- | Attempt to find a contract in some adjacency map. O(log n)
 lookupContract :: FilePath -> AdjacencyMap (FindFilepath a) -> Maybe (FindFilepath a)
@@ -344,8 +355,9 @@ pattern FindContract :: Source -> info -> [Msg] -> FindFilepath info
 pattern FindContract f t m = FindFilepath (ParsedContract f t m)
 {-# COMPLETE FindContract #-}
 
-type ContractInfo  = FindFilepath (SomeLIGO Info)
-type ContractInfo' = FindFilepath (SomeLIGO Info')
+type ContractInfo       = FindFilepath (SomeLIGO Info)
+type ParsedContractInfo = FindFilepath (SomeLIGO ParsedInfo)
+type ContractInfo'      = FindFilepath (SomeLIGO Info')
 
 data ContractNotFoundException where
   ContractNotFoundException :: FilePath -> AdjacencyMap (FindFilepath info) -> ContractNotFoundException
@@ -360,32 +372,3 @@ instance Pretty ContractNotFoundException where
       eDoc x y = G.literal (contractFile x) <> " -> " <> G.literal (contractFile y) <> "\n"
 
 instance Exception ContractNotFoundException
-
-data Vis = Visiting | Visited
-
--- | Find all cycles in some graph. This is an implementation of
--- https://www.baeldung.com/cs/detecting-cycles-in-directed-graph#pseudocode
--- which states to be O(|V|+|E|), but I (@h) believe it is O((|V|+|E|)²) in the
--- worst case.
-findCycles :: forall a. Ord a => AdjacencyMap a -> [Cycle a]
-findCycles graph = concat $ flip evalState Map.empty $
-  forM (G.vertexList graph) \v -> do
-    visited <- get
-    if Map.member v visited
-      then pure []
-      else do
-        modify $ Map.insert v Visiting
-        proccessDfsTree (v :| [])
-  where
-    proccessDfsTree :: Cycle a -> State (Map a Vis) [Cycle a]
-    proccessDfsTree stack@(top :| _) = do
-      stacks <- forM (toList $ G.postSet top graph) \v -> do
-        visited <- get
-        case Map.lookup v visited of
-          Nothing       -> pure []
-          Just Visiting -> pure [NE.reverse stack]
-          Just Visited  -> do
-            put $ Map.insert v Visiting visited
-            proccessDfsTree (v NE.<| stack)
-      modify $ Map.insert top Visited
-      pure $ concat stacks

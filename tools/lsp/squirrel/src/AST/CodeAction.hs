@@ -1,4 +1,6 @@
-module AST.CodeAction where
+module AST.CodeAction
+  ( collectCodeActions
+  ) where
 
 import Control.Exception.Safe (MonadCatch)
 

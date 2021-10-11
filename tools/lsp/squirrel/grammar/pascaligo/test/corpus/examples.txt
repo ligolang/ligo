@@ -1,23 +1,4 @@
 =========
-Includes
-=========
-
-#include "foo.bar"
-#include "qux.ligo"
-
----
-
-(source_file
-  (preprocessor
-    (include
-      (String)))
-  (preprocessor
-    (include
-      (String)))
-)
-
-
-=========
 Function add
 =========
 
@@ -29,8 +10,8 @@ function add (const a : int ; const b : int) : int is
 (source_file
   (fun_decl
     (NameDecl)
-    (param_decl (NameDecl) (TypeName))
-    (param_decl (NameDecl) (TypeName))
+    (param_decl (var_pattern (NameDecl)) (TypeName))
+    (param_decl (var_pattern (NameDecl)) (TypeName))
     (TypeName)
     (let_expr
       (block (skip))

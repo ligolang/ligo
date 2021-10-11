@@ -3,4 +3,4 @@
   (fun
     main
     (type? (tuple? (? a) (? b)) (PROD bool bool))
-    : = (if (a == b) 999 1)))
+    : = (if (a = b) 999 1)))
