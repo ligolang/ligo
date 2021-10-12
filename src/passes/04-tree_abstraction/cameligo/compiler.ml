@@ -520,7 +520,10 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
     Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b =
       let (var, loc) = r_split pvar.variable in
-      let var = Location.wrap ~loc @@ Var.of_name var in
+      let var = Location.wrap ~loc @@ match var with
+        | "_" -> Var.fresh ()
+        | _ -> Var.of_name var
+      in
       { var ; ascr = None ; attributes }
     in
     Location.wrap ~loc @@ P_var b

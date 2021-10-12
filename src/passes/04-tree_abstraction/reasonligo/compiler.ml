@@ -519,7 +519,10 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b =
-      let var = Location.wrap ~loc @@ Var.of_name var in
+      let var = Location.wrap ~loc @@ match var with
+        | "_" -> Var.fresh ()
+        | var -> Var.of_name var
+      in
       { var ; ascr = None ; attributes }
     in
     Location.wrap ~loc @@ P_var b
