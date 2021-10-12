@@ -1015,7 +1015,11 @@ and compile_pattern ~raise : const:bool -> CST.pattern -> type_expression binder
     PVar var ->
     let (var,loc) = r_split var in
     let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
-    return_1 loc (Var.of_name var.variable.value) attributes
+    let var = match var.variable.value with
+      | "_" -> Var.fresh ()
+      | var -> Var.of_name var
+    in
+    return_1 loc var attributes
   | PArray tuple ->
     let (tuple, loc) = r_split tuple in
     let var = Var.fresh () in

@@ -394,7 +394,7 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | _ -> 3 |}]
+        | #1 -> 3 |}]
 
 
 (* REASONLIGO LEFTOVER: for now, we only type the test file *)

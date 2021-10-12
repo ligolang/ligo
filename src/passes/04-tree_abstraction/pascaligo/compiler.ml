@@ -508,7 +508,10 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
      let (var,loc) = r_split var in
      let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
     let b =
-      let var = Location.wrap ~loc @@ Var.of_name var.variable.value in
+      let var = Location.wrap ~loc @@ match var.variable.value with
+        | "_" -> Var.fresh ()
+        | var -> Var.of_name var
+      in
       { var ; ascr = None ; attributes }
     in
     Location.wrap ~loc @@ P_var b
