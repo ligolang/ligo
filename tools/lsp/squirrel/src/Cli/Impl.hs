@@ -3,6 +3,7 @@
 -- | Module that handles ligo binary execution.
 module Cli.Impl
   ( SomeLigoException (..)
+  , LigoErrorNodeParseErrorException  (..)
   , LigoExpectedClientFailureException (..)
   , LigoDecodedExpectedClientFailureException (..)
   , LigoUnexpectedCrashException (..)
@@ -11,7 +12,6 @@ module Cli.Impl
   , getLigoDefinitions
   , parseLigoDefinitions
   , parseLigoOutput
-  , getLigoDefinitionsFrom
   ) where
 
 import Control.Exception.Safe (Exception (..), SomeException (..), try, tryAny)
@@ -228,15 +228,6 @@ preprocess contract = do
     Left LigoExpectedClientFailureException {ecfeStderr} ->
       handleLigoError sys ecfeStderr
 
--- | Get ligo definitions from a contract by calling ligo binary.
-getLigoDefinitionsFrom
-  :: HasLigoClient m
-  => FilePath
-  -> m (LigoDefinitions, Text)
-getLigoDefinitionsFrom contractPath = do
-  contents <- liftIO $ S8L.readFile contractPath
-  getLigoDefinitions $ ByteString contractPath (S8L.toStrict contents)
-
 -- | Get ligo definitions from raw contract.
 getLigoDefinitions
   :: HasLigoClient m
@@ -255,7 +246,7 @@ getLigoDefinitions contract = do
   mbOut <- tryAny $
     -- HACK: We forget the parsed contract since we still want LIGO to read the
     -- unpreprocessed version.
-    callLigo ["info", "get-scope", path, "--format", "json", "--with-types", "--syntax", syntax] (Path path)
+    callLigo ["info", "get-scope", path, "--format", "json", "--infer", "--with-types", "--syntax", syntax] (Path path)
   case mbOut of
     Right (output, errs) ->
       --Log.debug sys [i|Successfully called ligo with #{output}|]

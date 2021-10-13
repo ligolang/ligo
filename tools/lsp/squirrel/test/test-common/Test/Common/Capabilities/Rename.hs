@@ -8,6 +8,7 @@ module Test.Common.Capabilities.Rename
 
 import Control.Arrow ((***))
 import Data.HashMap.Strict qualified as HM
+import Data.List (sort)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Language.LSP.Types qualified as J
@@ -53,9 +54,12 @@ testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected
 
     case renameDeclarationAt pos tree newName of
       NotFound -> expectationFailure "Should return edits"
-      Ok results -> results `shouldBe` expected'
+      Ok results -> sortWSMap results `shouldBe` sortWSMap expected'
   where
     len = T.length name
+
+    sortWSMap :: J.WorkspaceEditMap -> HM.HashMap J.Uri [(J.Range, Text)]
+    sortWSMap = fmap (\(J.List xs) -> sort $ fmap (\(J.TextEdit r t) -> (r, t)) xs)
 
 testRenameFail
   :: forall impl. HasScopeForest impl IO

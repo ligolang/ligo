@@ -13,6 +13,7 @@ module Cli.Json
   , LigoTypeFull (..)
   , LigoTypeContent (..)
   , LigoTypeContentInner (..)
+  , LigoTypeExpression (..)
   , LigoRecordField (..)
   , LigoRange (..)
   , LigoRangeInner (..)
@@ -156,7 +157,7 @@ data LigoTypeParameter
         -- ```
         _ltpTypeContent :: [LigoTypeContent]
         -- | `"type_meta"`
-      , _ltpTypeMeta :: Value -- Maybe LigoTypeFull
+      , _ltpTypeMeta :: Maybe LigoTypeExpression
         -- | `"location"`
       , _ltpLocation :: LigoRange
         -- | `"orig_var"`
@@ -185,7 +186,7 @@ data LigoTypeFull
         _ltfrLocation :: LigoRange
       , -- | *Some* meta constructors (e.g. `Some`).
         -- `"type_meta"`
-        _ltfrTypeMeta :: Value
+        _ltfrTypeMeta :: Maybe LigoTypeExpression
       , -- | `"orig_var"`
         _ltfrOrigVar :: Maybe Text
       , -- | We parse it by a chunks of 2, each odd element of array is a name for
@@ -196,6 +197,15 @@ data LigoTypeFull
         _ltfrTypeContent :: [LigoTypeContent]
       }
   | LigoTypeFullUnresolved Value -- TODO
+  deriving stock (Generic, Show)
+
+data LigoTypeExpression
+  = LigoTypeExpression
+      { _lteTypeContent :: [LigoTypeContent]
+      , _lteSugar :: Value  -- TODO: Sugar is not necessary at the moment, but may
+                            -- be useful to parse in the future.
+      , _lteLocation :: LigoRange
+      }
   deriving stock (Generic, Show)
 
 -- | A pair in "type_content" array `[name, content]`.
@@ -362,7 +372,7 @@ instance FromJSON LigoTypeFull where
           _ltfcLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
           type_content <- o' .: "type_content"
           _ltfcTypeContent <-
-            withArray "type_content" (mapM parseLigoTypeContent . group 2 . toList) type_content
+            withArray "type_content" parseManyLigoTypeContent type_content
           return $ LigoTypeFullCore {..}
 
       parseAsResolvedType :: Value -> Parser LigoTypeFull
@@ -371,8 +381,9 @@ instance FromJSON LigoTypeFull where
           _ltfrLocation <- parseLigoRange "ligo_type_core_range" =<< o' .: "location"
           type_content <- o' .: "type_content"
           _ltfrTypeContent <-
-            withArray "type_content" (mapM parseLigoTypeContent . group 2 . toList) type_content
-          _ltfrTypeMeta <- o' .: "type_meta"
+            withArray "type_content" parseManyLigoTypeContent type_content
+          type_meta <- o' .: "type_meta"
+          _ltfrTypeMeta <- parseLigoTypeMeta type_meta
           _ltfrOrigVar <- o' .: "orig_var" >>= parseOrigVar
           return $ LigoTypeFullResolved {..}
 
@@ -394,11 +405,24 @@ instance FromJSON LigoTypeParameter where
   parseJSON = withObject "type_parameter" $ \o -> do
     type_content <- o .: "type_content"
     _ltpTypeContent <-
-      withArray "type_content" (mapM parseLigoTypeContent . group 2 . toList) type_content
-    _ltpTypeMeta <- o .: "type_meta"
+      withArray "type_content" parseManyLigoTypeContent type_content
+    type_meta <- o .: "type_meta"
+    _ltpTypeMeta <- parseLigoTypeMeta type_meta
     _ltpLocation <- parseLigoRange "type_parameter_range" =<< o .: "location"
     _ltpOrigVar <- o .: "orig_var" >>= parseOrigVar
     return LigoTypeParameter {..}
+
+instance ToJSON LigoTypeExpression where
+  toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
+
+instance FromJSON LigoTypeExpression where
+  parseJSON = withObject "type_expression" $ \o -> do
+    type_content <- o .: "type_content"
+    _lteTypeContent <-
+      withArray "type_content" parseManyLigoTypeContent type_content
+    _lteSugar <- o .: "sugar"
+    _lteLocation <- parseLigoRange "type_expression_range" =<< o .: "location"
+    return LigoTypeExpression {..}
 
 instance ToJSON LigoTypeParameter where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
@@ -478,20 +502,13 @@ parseOrigVar = \case
     return $ Just name'
   _ -> return Nothing
 
-_parseTypeMeta :: [Value] -> Parser (Maybe LigoTypeFull)
-_parseTypeMeta = \case
-  [_, o] -> do
-    tm <- parseTypeInner o
-    return $ Just tm
-  _ -> return Nothing
-
 -- A workaround since function types are not separated to "core" | "resolved" | "unresolved" and lets consider these as "core" ones
 parseTypeInner :: Value -> Parser LigoTypeFull
 parseTypeInner = withObject "type_inner" $ \o -> do
   _ltfcLocation <- parseLigoRange "ligo_type_core_range" =<< o .: "location"
   type_content <- o .: "type_content"
   _ltfcTypeContent <-
-    withArray "type_content" (mapM parseLigoTypeContent . group 2 . toList) type_content
+    withArray "type_content" parseManyLigoTypeContent type_content
   return $ LigoTypeFullCore {..}
 
 -- | Construct a parser for ligo ranges that are represented in pairs
@@ -563,6 +580,15 @@ parseLigoTypeContent [name, value] = do
   _ltcContentInner <- parseJSON @LigoTypeContentInner value
   return $ LigoTypeContent {..}
 parseLigoTypeContent _ = error "number of type content elements is not even and cannot be grouped"
+
+parseManyLigoTypeContent :: Array -> Parser [LigoTypeContent]
+parseManyLigoTypeContent = mapM parseLigoTypeContent . group 2 . toList
+
+parseLigoTypeMeta :: [Value] -> Parser (Maybe LigoTypeExpression)
+parseLigoTypeMeta [String "None", Null] = pure Nothing
+parseLigoTypeMeta [String "Some", value] = Just <$> parseJSON @LigoTypeExpression value
+parseLigoTypeMeta _ = do
+  parseFail "number of type meta elements is not 2 and cannot be parsed"
 
 ----------------------------------------------------------------------------
 -- Pretty
@@ -652,6 +678,13 @@ fromLigoTypeFull = enclose . \case
         fromLigoType tc
 
   LigoTypeFullResolved
+    { _ltfrLocation
+    , _ltfrTypeMeta = Just LigoTypeExpression {_lteTypeContent = [tc]}
+    } -> do
+        modify . putElem . fromLigoRangeOrDef $ _ltfrLocation
+        fromLigoType tc
+
+  LigoTypeFullResolved
     { _ltfrTypeContent = [tc]
     , _ltfrLocation
     } -> do
@@ -674,7 +707,13 @@ fromLigoTypeFull = enclose . \case
       st <- get
       return $ make' (st, TypeName p)
 
-    -- TODO: parse type meta
+    fromLigoParameter
+      LigoTypeParameter
+        { _ltpTypeMeta = Just LigoTypeExpression { _lteTypeContent = [t] }
+        , _ltpLocation
+        } = do
+          modify . putElem . fromLigoRangeOrDef $ _ltpLocation
+          fromLigoType t
     fromLigoParameter
       LigoTypeParameter
         { _ltpTypeContent = [t]

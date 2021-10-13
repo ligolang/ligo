@@ -233,13 +233,13 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       where
         sortMap = sortOn fst . map (scopeRange &&& id)
 
-    -- Merges the references of two 'ScopedDecl's in a left-biased fashion.
+    -- Merges the references of two 'ScopedDecl's in a right-biased fashion.
     -- In the current implementation, the compiler's scopes will be on the right
     -- and the fallback ones will be on the left.
     mergeRefs :: ScopedDecl -> ScopedDecl -> ScopedDecl
-    mergeRefs l r = l
-      { _sdRefs = unionOrd (_sdRefs l) (_sdRefs r)
-      , _sdDoc  = unionOrd (_sdDoc  l) (_sdDoc  r)
+    mergeRefs l r = r
+      { _sdRefs = unionOrd (_sdRefs r) (_sdRefs l)
+      , _sdDoc  = unionOrd (_sdDoc  r) (_sdDoc  l)
       }
 
     -- Merge two sets of DeclRefs preferring decls that have a smaller range
