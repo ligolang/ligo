@@ -95,6 +95,9 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
     | I.T_abstraction x ->
       let type_ = self x.type_ in
       return @@ O.T_abstraction { x with type_ }
+    | I.T_for_all x ->
+      let type_ = self x.type_ in
+      return @@ O.T_for_all { x with type_ }
 
 let compile_binder = binder compile_type_expression
 

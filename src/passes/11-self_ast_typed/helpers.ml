@@ -21,6 +21,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
     let res = Pair.fold ~f:self ~init ab in
     res
   )
+  | E_type_inst { forall = e; type_ = _}
   | E_lambda { binder = _ ; result = e }
   | E_recursive {lambda= {result=e}}
   | E_constructor {element=e} -> (
@@ -153,6 +154,10 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let result = self result in
     return @@ E_lambda { binder ; result }
   )
+  | E_type_inst { forall ; type_ } -> (
+    let forall = self forall in
+    return @@ E_type_inst { forall ; type_ }
+  )
   | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
     let result = self result in
     return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}
@@ -252,6 +257,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
       let (res,result) = self init result in
       (res, return @@ E_mod_alias { alias ; binders ; result })
     )
+  | E_type_inst { forall ; type_ } -> (
+    let (res, forall) = self init forall in
+    ( res, return @@ E_type_inst { forall ; type_ })
+  )
   | E_lambda { binder ; result } -> (
       let (res,result) = self init result in
       ( res, return @@ E_lambda { binder ; result })
@@ -268,7 +277,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
     let (res,element) = self init element in
     (res, return @@ E_module_accessor { module_name; element })
   )
-  | E_literal _ | E_variable _ | E_raw_code _ as e' -> (init, return e')
+  | E_raw_code {language;code} -> (
+    let (res,code) = self init code in
+    (res, return @@ E_raw_code { language ; code }))
+  | E_literal _ | E_variable _ as e' -> (init, return e')
 
 and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
   match m with
@@ -387,7 +399,7 @@ module Free_variables :
   module ModVarSet = Set.Make(ModVar)
 
   let unions : (ModVarSet.t * VarSet.t) list -> (ModVarSet.t * VarSet.t) =
-    fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty) 
+    fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty)
       ~f:(fun (x1, y1) (x2, y2) -> (ModVarSet.union x1 x2, VarSet.union y1 y2))
 
   let rec get_fv_expr : expression -> (ModVarSet.t * VarSet.t) = fun e ->
@@ -401,14 +413,16 @@ module Free_variables :
       unions @@ List.map ~f:self arguments
     | E_application {lamb; args} ->
       let fmv1, fv1 = (self lamb) in
-      let fmv2, fv2 = (self args) in 
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)  
+      let fmv2, fv2 = (self args) in
+      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
+    | E_type_inst {forall} ->
+      self forall
     | E_lambda {binder ; result} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove binder @@ fv)
     | E_recursive {fun_name; lambda = {binder; result}} ->
       let fmv, fv = self result in
-      (fmv, VarSet.remove fun_name @@ VarSet.remove binder @@ fv) 
+      (fmv, VarSet.remove fun_name @@ VarSet.remove binder @@ fv)
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -421,7 +435,7 @@ module Free_variables :
       unions res
     | E_record_update {record;update} ->
       let fmv1, fv1 = (self record) in
-      let fmv2, fv2 = (self update) in 
+      let fmv2, fv2 = (self update) in
       (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
     | E_record_accessor {record} ->
       self record
@@ -434,7 +448,7 @@ module Free_variables :
       self let_result
     | E_mod_in { module_binder; rhs ; let_result } ->
       let fmv1, fv1 = (get_fv_module rhs) in
-      let fmv2, fv2 = (self let_result) in 
+      let fmv2, fv2 = (self let_result) in
       let fmv2 = ModVarSet.remove module_binder fmv2 in
       (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
     | E_mod_alias { alias = _ ; binders = _ ; result } ->
@@ -469,7 +483,7 @@ module Free_variables :
     in
     unions @@ List.map ~f:aux p
 
-  let expression e = 
+  let expression e =
     let fmv, fv = get_fv_expr e in
     let fmv = ModVarSet.fold (fun v r -> v :: r) fmv [] in
     let fv = VarSet.fold (fun v r -> v :: r) fv [] in
@@ -497,7 +511,7 @@ module Free_module_variables :
   module VarSet = Set.Make(Var)
 
   let unions : (ModVarSet.t * VarSet.t) list -> (ModVarSet.t * VarSet.t) =
-    fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty) 
+    fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty)
       ~f:(fun (x1, y1) (x2, y2) -> (ModVarSet.union x1 x2, VarSet.union y1 y2))
 
   let rec get_fv_expr : expression -> (ModVarSet.t * VarSet.t) = fun e ->
@@ -512,13 +526,15 @@ module Free_module_variables :
     | E_application {lamb; args} ->
       let fmv1, fv1 = (self lamb) in
       let fmv2, fv2 = (self args) in
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)  
+      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
     | E_lambda {binder; result} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove binder fv)
     | E_recursive {fun_name; lambda = {binder;result}} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove fun_name @@ VarSet.remove binder fv)
+    | E_type_inst {forall} ->
+      self forall
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -532,7 +548,7 @@ module Free_module_variables :
     | E_record_update {record;update} ->
       let (fmv1, fv1) = (self record) in
       let (fmv2, fv2) = (self update) in
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)  
+      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
     | E_record_accessor {record} ->
       self record
     | E_let_in { let_binder; rhs ; let_result } ->
@@ -551,7 +567,7 @@ module Free_module_variables :
       self result
     | E_module_accessor { module_name ; element } ->
       let fmv, fv = (self element) in
-      (ModVarSet.union fmv (ModVarSet.singleton module_name), fv)   
+      (ModVarSet.union fmv (ModVarSet.singleton module_name), fv)
 
   and get_fv_cases : matching_expr -> (ModVarSet.t * VarSet.t) = fun m ->
     match m with
@@ -576,13 +592,13 @@ module Free_module_variables :
     in
     unions @@ List.map ~f:aux p
 
-  let expression e = 
-    let fmvs, fvs = get_fv_expr e in   
+  let expression e =
+    let fmvs, fvs = get_fv_expr e in
     let fmvs = ModVarSet.fold (fun v r -> v :: r) fmvs [] in
     let fvs = VarSet.fold (fun v r -> v :: r) fvs [] in
     (fmvs, fvs)
-  let module' m = 
-    let fmvs, fvs = get_fv_module m in   
+  let module' m =
+    let fmvs, fvs = get_fv_module m in
     let fmvs = ModVarSet.fold (fun v r -> v :: r) fmvs [] in
     let fvs = VarSet.fold (fun v r -> v :: r) fvs [] in
     (fmvs, fvs)

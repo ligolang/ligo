@@ -15,6 +15,7 @@ type abs_error = [
   | `Concrete_cameligo_recursion_on_non_function of Location.t
   | `Concrete_cameligo_missing_funarg_annotation of Raw.variable
   | `Concrete_cameligo_funarg_tuple_type_mismatch of Region.t * Raw.pattern * Raw.type_expr
+  | `Concrete_cameligo_type_params_not_annotated of Region.t
   ]
 
 let untyped_recursive_fun reg : abs_error =
@@ -42,6 +43,9 @@ let missing_funarg_annotation v : abs_error =
 
 let funarg_tuple_type_mismatch r p t : abs_error =
   `Concrete_cameligo_funarg_tuple_type_mismatch (r, p, t)
+
+let type_params_not_annotated r : abs_error =
+  `Concrete_cameligo_type_params_not_annotated r
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -93,6 +97,10 @@ let error_ppformat : display_format:string display_format ->
         p
         t
     )
+    | `Concrete_cameligo_type_params_not_annotated reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Functions with type parameters need to be annotated. @]"
+        Snippet.pp_lift reg
   )
 
 
@@ -164,6 +172,14 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_cameligo_funarg_tuple_type_mismatch (r, _, _) ->
     let message = Format.asprintf "The tuple does not match the type." in
+    let loc = Format.asprintf "%a" Location.pp_lift r in
+    let content = `Assoc [
+      ("message", `String message );
+      ("location", `String loc);
+    ] in
+    json_error ~stage ~content
+  | `Concrete_cameligo_type_params_not_annotated r ->
+    let message = Format.asprintf "Functions with type parameters need to be annotated." in
     let loc = Format.asprintf "%a" Location.pp_lift r in
     let content = `Assoc [
       ("message", `String message );

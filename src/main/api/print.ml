@@ -78,6 +78,7 @@ let ast_typed source_file syntax infer protocol_version display_format =
         Compiler_options.make ~infer ~init_env ()
       in
       let typed,_ = Build.type_contract ~raise ~add_warning ~options syntax Env source_file in
+      let typed = Self_ast_typed.monomorphise_module typed in
       typed
 
 let ast_combined  source_file syntax infer protocol_version display_format =

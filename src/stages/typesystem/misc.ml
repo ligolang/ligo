@@ -98,6 +98,9 @@ module Substitution = struct
         | T.T_abstraction x ->
           let type_ = s_type_expression ~substs x.type_ in
           T.T_abstraction {x with type_}
+        | T.T_for_all x ->
+          let type_ = s_type_expression ~substs x.type_ in
+          T.T_for_all {x with type_}
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
       let type_content = s_type_content ~substs type_content in

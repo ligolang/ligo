@@ -42,6 +42,9 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   | O.T_abstraction x ->
     let type_ = self x.type_ in
     return @@ I.T_abstraction {x with type_}
+  | O.T_for_all x ->
+    let type_ = self x.type_ in
+    return @@ I.T_for_all {x with type_}
 
 (*
   Transform a Ast_inferred expression into an ast_core expression

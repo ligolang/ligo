@@ -28,6 +28,7 @@ let map_module_environment : _ -> t -> t = fun f { expression_environment ; type
 let add_expr   : expression_variable -> element -> t -> t = fun expr_var env_elt -> map_expr_environment (fun x -> {expr_var ; env_elt} :: x)
 let add_type   : type_variable -> type_expression -> t -> t = fun type_variable type_ -> map_type_environment (fun x -> { type_variable ; type_ = Ty { type_ with orig_var = Some type_variable } } :: x)
 let add_kind   : type_variable -> unit -> t -> t = fun type_variable () -> map_type_environment (fun x -> { type_variable ; type_ = Kind () } :: x)
+let add_type_var : type_variable -> unit -> t -> t = fun type_variable () -> map_type_environment (fun x -> { type_variable ; type_ = Ty (t_variable type_variable) } :: x)
 let add_module : module_variable -> environment -> t -> t = fun module_variable module_ -> map_module_environment (fun x -> { module_variable ; module_ } :: x)
 (* TODO: generate : these are now messy, clean them up. *)
 
@@ -65,6 +66,31 @@ let get_constructor : label -> t -> (type_expression * type_expression) option =
             | None -> None)
         | _ -> None
     in
+    match List.find_map ~f:aux (get_type_environment e) with
+      Some _ as s -> s
+    | None ->
+      let modules = get_module_environment e in
+      List.fold_left ~f:(fun res {module_variable=_;module_} ->
+        match res with Some _ as s -> s | None -> rec_aux module_
+      ) ~init:None modules
+  in rec_aux x
+
+let get_constructor_parametric : label -> t -> (type_variable list * type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
+  let rec rec_aux e =
+    let rec aux av = fun type_ ->
+      match type_.type_content with
+      | T_sum m ->
+         (match LMap.find_opt k m.content with
+            Some {associated_type ; _} -> Some (av, associated_type , type_)
+          | None -> None)
+      | T_abstraction { ty_binder ; kind = _ ; type_ } ->
+         aux (Location.unwrap ty_binder :: av) type_
+      | _ -> None in
+    let aux = fun {type_variable=_ ; type_} ->
+      match type_ with
+      | Kind () -> None
+      | Ty type_ ->
+         aux [] type_ in
     match List.find_map ~f:aux (get_type_environment e) with
       Some _ as s -> s
     | None ->

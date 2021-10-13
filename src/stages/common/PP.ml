@@ -21,6 +21,7 @@ let label ppf (l:label) : unit =
 let expression_variable ppf (t : expression_variable) : unit = fprintf ppf "%a" Var.pp t.wrap_content
 let type_variable       ppf (t : type_variable)       : unit = fprintf ppf "%a" Var.pp t
 let module_variable     ppf (t : module_variable)     : unit = pp_print_string ppf t
+let kind_               ppf (_ : kind)                : unit = fprintf ppf "*"
 
 and access f ppf a =
   match a with
@@ -87,7 +88,11 @@ let attributes ppf attributes =
 
 let module_access f ppf = fun {module_name;element} ->
   fprintf ppf "%a.%a" module_variable module_name f element
+
 (* Types *)
+let for_all type_expression ppf ({ty_binder ; kind ; type_}) : unit =
+  fprintf ppf "∀ (%a : %a) . %a" type_variable ty_binder.wrap_content kind_ kind type_expression type_
+
 let abstraction type_expression ppf ({ty_binder ; kind = _ ; type_}) : unit =
   fprintf ppf "fun %a . %a" type_variable ty_binder.wrap_content type_expression type_
 

@@ -766,8 +766,9 @@ let%expect_test "typer" =
     {|
     File "a dummy file name", line 20, character 5:
 
-    These types are not matching: - foo
-    - bar|}] ;
+    These types are not matching:
+     - foo
+     - bar|}] ;
   error (`Typer_not_annotated location_t);
   [%expect {|
     File "a dummy file name", line 20, character 5:

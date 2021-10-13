@@ -36,6 +36,7 @@ module Free_variables = struct
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
     | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
+    | E_type_inst {type_=_;forall} -> self forall
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
@@ -131,7 +132,9 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     let* _ = assert_type_expression_eq (type1, type1') in
     assert_type_expression_eq (type2, type2')
   | T_arrow _, _ -> None
-  | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
+  | T_variable x, T_variable y ->
+     (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
+     if Var.equal x y then Some () else None
   | T_variable _, _ -> None
   | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when String.equal mna mnb ->
     assert_type_expression_eq (ea, eb)
@@ -139,10 +142,13 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
   | T_abstraction a , T_abstraction b ->
-    let compare_kind ka kb = (ka = kb) in
     assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
-    Some (assert (compare_kind a.kind b.kind))
+    Some (assert (equal_kind a.kind b.kind))
+  | T_for_all a , T_for_all b ->
+    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
+    Some (assert (equal_kind a.kind b.kind))
   | T_abstraction _ , _ -> None
+  | T_for_all _ , _ -> None
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
@@ -222,7 +228,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
   | (E_type_in _, _)| (E_mod_in _, _) | (E_mod_alias _,_)
-  | (E_record_accessor _, _) | (E_record_update _,_)
+  | (E_record_accessor _, _) | (E_record_update _,_) | (E_type_inst _, _)
   | (E_matching _, _)
   | E_module_accessor _, _
   -> None

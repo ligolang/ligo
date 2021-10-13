@@ -12,6 +12,8 @@ let make_e ?(location = Location.generated) expression_content type_expression =
 let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
 let t_abstraction ?loc ?core ty_binder kind type_ =
   make_t ?loc (T_abstraction {ty_binder ; kind ; type_}) core
+let t_for_all ?loc ?core ty_binder kind type_ =
+  make_t ?loc (T_for_all {ty_binder ; kind ; type_}) core
 
 let t_constant ?loc ?core injection parameters : type_expression =
   make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
@@ -191,6 +193,11 @@ let get_t_function (t:type_expression) : (type_expression * type_expression) opt
 let get_t_function_exn t = match get_t_function t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
+let get_t_for_all (t : type_expression) : (type_variable Location.wrap * type_expression) option =
+  match t.type_content with
+  | T_for_all { ty_binder ; type_ ; _ } -> Some (ty_binder, type_)
+  | _ -> None
 
 let get_t_sum (t:type_expression) : rows option = match t.type_content with
   | T_sum m -> Some m

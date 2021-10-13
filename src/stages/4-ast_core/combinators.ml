@@ -14,7 +14,9 @@ let t_constant ?loc ?sugar type_operator arguments : type_expression =
   make_t ?loc ?sugar (T_app {type_operator=Var.of_name type_operator;arguments})
 let t_abstraction ?loc ?sugar ty_binder kind type_ =
   make_t ?loc ?sugar (T_abstraction {ty_binder ; kind ; type_})
-  
+let t_for_all ?loc ?sugar ty_binder kind type_ =
+  make_t ?loc ?sugar (T_for_all {ty_binder ; kind ; type_})
+
   (*X_name here should be replaced by X_injection*)
 let t_signature  ?loc ?sugar () : type_expression = t_constant ?loc ?sugar signature_name []
 let t_chain_id   ?loc ?sugar () : type_expression = t_constant ?loc ?sugar chain_id_name []

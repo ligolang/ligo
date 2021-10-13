@@ -43,6 +43,7 @@ and type_content = function
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
   | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t]
+  | T_for_all         t -> `List [ `String "t_for_all" ; for_all type_expression t]
 
 and type_injection {language;injection;parameters} =
   `Assoc [
@@ -97,11 +98,18 @@ and expression_content = function
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
   | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access expression e]
+  | E_type_inst       e -> `List [ `String "E_type_inst"; type_inst e ]
 
 and constant {cons_name;arguments} =
   `Assoc [
     ("cons_name", constant' cons_name);
     ("arguments", list expression arguments);
+  ]
+
+and type_inst {forall;type_} =
+  `Assoc [
+    ("forall", expression forall);
+    ("type_", type_expression type_);
   ]
 
 and application {lamb;args} =

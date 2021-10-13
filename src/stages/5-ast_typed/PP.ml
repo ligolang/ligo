@@ -103,6 +103,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression ppf x
+  | T_for_all         x  -> for_all       type_expression ppf x
 
 and row : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos=_ } ->
@@ -169,6 +170,8 @@ and expression_content ppf (ec: expression_content) =
   | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
+  | E_type_inst {forall;type_} ->
+      fprintf ppf "%a@@{%a}" expression forall type_expression type_
   | E_recursive { fun_name;fun_type; lambda} ->
       fprintf ppf "rec (%a:%a => %a )"
         expression_variable fun_name

@@ -46,6 +46,8 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
     check_recursive_call ~raise n false update
   | E_module_accessor _ ->
     ()
+  | E_type_inst _ ->
+    ()
 
 and check_recursive_call_in_matching ~raise = fun n final_path c ->
   match c with

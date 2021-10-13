@@ -53,7 +53,8 @@ let type_expression_tag ty_cont =
   | T_app             _ -> 5
   | T_module_accessor _ -> 6
   | T_singleton       _ -> 7
-  | T_abstraction         _ -> 8
+  | T_abstraction     _ -> 8
+  | T_for_all         _ -> 8
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -95,8 +96,9 @@ and type_content a b =
   | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
   | T_singleton a , T_singleton b -> literal a b
   | T_abstraction a , T_abstraction b -> for_all a b
-  | (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _),
-    (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _) ->
+  | T_for_all a , T_for_all b -> for_all a b
+  | (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _| T_for_all _),
+    (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _| T_for_all _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 

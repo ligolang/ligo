@@ -305,6 +305,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   | T_singleton _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "Singleton uncaught"
   | T_abstraction _ ->
+    raise.raise @@ corner_case ~loc:__LOC__ "Abstraction type uncaught"
+  | T_for_all _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
 (* probably should use result monad for conformity? but these errors
@@ -397,6 +399,8 @@ and compile_expression ~raise ?(module_env = SMap.empty) (ae:AST.expression) : e
   let return ?(tv = tv) expr =
     Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
   match ae.expression_content with
+  | E_type_inst _ ->
+    raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
   | E_let_in {let_binder; rhs; let_result; attr = { inline } } ->
     let rhs' = self rhs in
     let result' = self let_result in
@@ -739,7 +743,7 @@ and compile_expression ~raise ?(module_env = SMap.empty) (ae:AST.expression) : e
         let module_names = aux element in
         (module_var :: module_names)
       | E_variable var ->
-        [Var.to_name @@ Location.unwrap @@ var]
+        [Format.asprintf "%a" Var.pp @@ Location.unwrap var]
       | E_record_accessor {record; path} ->
         let module_names = aux record in
         let Label module_var = path in
@@ -947,7 +951,7 @@ and compile_module_as_record ~raise module_name (module_env : _ SMap.t) (lst : A
     let aux (r,env) (cur : AST.declaration ) =
       match cur with
       | Declaration_constant { binder ; expr; attr=_ } ->
-        let l = Var.to_name @@ Location.unwrap binder in
+        let l = Format.asprintf "%a" Var.pp @@ Location.unwrap binder in
         let attr : AST.attribute = { inline = false ; no_mutation = false } in
         ((Label l,(expr,attr))::r,env)
       | Declaration_type _ty -> (r,env)
