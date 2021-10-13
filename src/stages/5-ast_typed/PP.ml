@@ -120,7 +120,11 @@ and record ppf {content; layout=_} =
     (tuple_or_record_sep_type type_expression) content
 
 and type_expression ppf (te : type_expression) : unit =
-  fprintf ppf "%a" type_content te.type_content
+  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
+  if Option.is_some (Combinators.get_t_bool te) then
+    fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+  else
+    fprintf ppf "%a" type_content te.type_content
 
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev.wrap_content

@@ -70,7 +70,11 @@ let list_sep_d_par f ppf lst =
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
 
 let rec type_expression ppf (te : type_expression) : unit =
-  fprintf ppf "%a" type_content te.type_content
+  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
+  if Option.is_some (Combinators.get_t_bool te) then
+    fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+  else
+    fprintf ppf "%a" type_content te.type_content
 and type_content : formatter -> type_content -> unit =
   fun ppf te ->
   match te with
