@@ -98,3 +98,60 @@ let get_entrypoint (entrypoint : string) (t : type_expression) : type_expression
                   |> LMap.to_kv_list |> List.map ~f in
      List.Assoc.find annots ~equal:String.equal entrypoint
   | _ -> None
+
+let rec subst_type v t (u : type_expression) =
+  let self = subst_type in
+  match u.type_content with
+  | T_variable v' when Var.equal v v' -> t
+  | T_arrow {type1;type2} ->
+     let type1 = self v t type1 in
+     let type2 = self v t type2 in
+     { u with type_content = T_arrow {type1;type2} }
+  | T_abstraction {ty_binder;kind;type_} when not (Var.equal (Location.unwrap ty_binder) v) ->
+     let type_ = self v t type_ in
+     { u with type_content = T_abstraction {ty_binder;kind;type_} }
+  | T_for_all {ty_binder;kind;type_} when not (Var.equal (Location.unwrap ty_binder) v) ->
+     let type_ = self v t type_ in
+     { u with type_content = T_for_all {ty_binder;kind;type_} }
+  | T_constant {language;injection;parameters} ->
+     let parameters = List.map ~f:(self v t) parameters in
+     { u with type_content = T_constant {language;injection;parameters} }
+  | T_sum {content; layout} ->
+     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
+     { u with type_content = T_sum {content; layout} }
+  | T_record {content; layout} ->
+     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
+     { u with type_content = T_record {content; layout} }
+  | _ -> u
+
+(* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
+let destruct_for_alls (t : type_expression) =
+  let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
+    | T_for_all { ty_binder ; type_ ; _ } ->
+       destruct_for_alls (Location.unwrap ty_binder :: type_vars) type_
+    | _ -> (type_vars, t)
+  in destruct_for_alls [] t
+
+(* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
+let destruct_arrows (t : type_expression) =
+  let rec destruct_arrows type_vars (t : type_expression) = match t.type_content with
+    | T_arrow { type1 ; type2 } ->
+       destruct_arrows (type1 :: type_vars) type2
+    | _ -> (type_vars, t)
+  in destruct_arrows [] t
+
+(* This function takes an expression l and a list of arguments [e1; ...; en] and constructs `l e1 ... en`,
+   but it checks that types make sense (i.e. l has a function type with enough arguments) *)
+let build_applications_opt (lamb : expression) (args : expression list) =
+  let rec aux lamb' (args : expression list) (t : type_expression) = match args, t.type_content with
+    | arg :: args', T_arrow { type1 = _; type2 }  ->
+       aux (Combinators.make_e (E_application {lamb=lamb';args=arg}) type2) args' type2
+    | [], _ ->
+       Some {lamb' with type_expression = t}
+    | _, _ ->
+       None in
+  aux lamb args lamb.type_expression
+
+let is_generalizable_variable name = String.equal (String.sub (Var.to_name name) 0 1) "_"

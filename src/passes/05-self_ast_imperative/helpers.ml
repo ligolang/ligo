@@ -170,7 +170,6 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expression = fun f te ->
-  let module SSet = Set.Make (String) in
   let self = map_type_expression f in
   let te' = f te in
   let return type_content = { type_content; location=te.location } in
@@ -201,6 +200,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
   | T_abstraction x ->
     let x = Maps.for_all self x in
     return @@ T_abstraction x
+  | T_for_all x ->
+    let x = Maps.for_all self x in
+    return @@ T_for_all x
 
 and map_module_ : 'err mod_mapper -> module_ -> module_ = fun f m ->
   let m' = f m in

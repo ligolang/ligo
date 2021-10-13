@@ -21,14 +21,7 @@ let expression expression syntax infer protocol_version init_file display_format
       fun ~raise ->
       let init_env   = Helpers.get_initial_env ~raise protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let (decl_list,env) = match init_file with
-        | Some init_file ->
-           let mini_c_prg,env  = Build.build_mini_c ~raise ~add_warning ~options syntax Env init_file  in
-           (mini_c_prg,env)
-        | None -> ([],init_env) in
-
-      let typed_exp,_    = Ligo_compile.Utils.type_expression ~raise ~options init_file syntax expression env in
-      let mini_c_exp     = Ligo_compile.Of_typed.compile_expression ~raise typed_exp in
+      let mini_c_exp, decl_list = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options decl_list mini_c_exp in
       if without_run then
         Run.clean_expression compiled_exp.expr

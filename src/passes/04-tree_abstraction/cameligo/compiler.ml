@@ -446,19 +446,39 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       return @@ e_list ~loc lst
   )
   | ELetIn li -> (
+    let region = li.region in
     let (li, loc) = r_split li in
     let ({kwd_rec;binding;body;attributes;_} : CST.let_in) = li in
     let body = self body in
     match binding with
-    | { binders ; let_rhs ; lhs_type } -> (
+    | { binders ; let_rhs ; lhs_type ; type_params } -> (
+      (* We compile doing case analysis on the form of the binders,
+         and on whether we have type parameters or not (i.e. `a` in `let
+         binders (type a) = ... in ...`) *)
+      let type_params = Option.map ~f:(fun {value = {inside = { type_vars = (v, vs) }}} -> v :: vs) type_params in
       let (pattern,_) = binders in
-      match (unepar pattern) with
-      | CST.PVar _ -> (
+      match (unepar pattern), type_params with
+      | CST.PVar _, None -> (
         let lst = compile_let_binding ~raise ?kwd_rec attributes binding in
         let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
-        return @@ List.fold_right ~f:aux lst ~init:body
+        return @@ aux lst body
       )
-      | pattern -> (
+      | CST.PVar _, Some type_params -> (
+        (* In case that we have a pattern variable defined (`foo`) and type parameters are present,
+           i.e., we have `let foo (type a ... z) = RHS in BODY`, then we use `T_for_all` to quantify
+           over type parameters in the annotation (required) of the binder (`t = binder.ascr`):
+           `let foo : ∀ a . ... . ∀ z. t = RHS in BODY` *)
+        let (name, binder, attr, expr) = compile_let_binding ~raise ?kwd_rec attributes binding in
+        let ascr = trace_option ~raise (type_params_not_annotated region) binder.ascr in
+        let rec add_type_params = function
+          | [] -> ascr
+          | ({ value } : CST.variable) :: vs -> t_for_all (Location.wrap @@ Var.of_name value) () (add_type_params vs) in
+        let ascr = Some (add_type_params type_params) in
+        let binder = { binder with ascr } in
+        let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
+        return @@ aux (name, binder, attr, expr) body
+      )
+      | pattern, _ -> (
         (* let destructuring happens here *)
         let type_ = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
         let matchee' = self let_rhs in
@@ -627,8 +647,7 @@ and check_annotation ~raise = function
 | _ -> ()
 
 and compile_let_binding ~raise ?kwd_rec attributes binding =
-  let return lst = lst in
-  let return_1 a = return [a] in
+  let return_1 a = a in
   let ({binders; lhs_type; let_rhs; _} : CST.let_binding) = binding in
   let attributes = compile_attributes attributes in
   let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
@@ -749,10 +768,11 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
     return_1 region @@ AST.Module_alias {alias; binders}
   | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     match let_binding with
-    | { binders ; let_rhs } -> (
+    | { binders ; let_rhs ; type_params } -> (
       let (pattern,arg) = binders in
-      match (unepar pattern,arg) with
-      | CST.PTuple tuple , [] ->
+      let type_params = Option.map ~f:(fun {value = {inside = { type_vars = (v, vs) }}} -> v :: vs) type_params in
+      match (unepar pattern,arg,type_params) with
+      | CST.PTuple tuple , [], None ->
         let attributes = compile_attributes attributes in
         let matchee = compile_expression ~raise let_rhs in
         let tuple,_loc = r_split tuple in
@@ -763,7 +783,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let lst = snd @@ List.fold_map ~f:aux ~init:Z.zero @@ lst in
         let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
         return region @@ List.map ~f:aux lst
-      | CST.PRecord record , [] ->
+      | CST.PRecord record , [] , None ->
         let attributes = compile_attributes attributes in
         let matchee = compile_expression ~raise let_rhs in
         let record,_loc = r_split record in
@@ -779,11 +799,28 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let lst = List.map ~f:aux @@ lst in
         let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
         return region @@ List.map ~f:aux lst
-      | _ -> (
-        let lst = compile_let_binding ~raise ?kwd_rec attributes let_binding in
-        let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
-        return region @@ List.map ~f:aux lst
+      | _, _, None -> (
+        let (name, binder,attr, expr) = compile_let_binding ~raise ?kwd_rec attributes let_binding in
+        return region @@ [AST.Declaration_constant {name; binder; attr; expr}]
       )
+      | CST.PVar _, _, Some type_params -> (
+        (* In case that we have a pattern variable defined (`foo`) and type parameters are present,
+           i.e., we have `let foo (type a ... z) = RHS`, then we use `T_for_all` to quantify
+           over type parameters in the annotation (required) of the binder (`t = binder.ascr`):
+           `let foo : ∀ a . ... . ∀ z. t = RHS` *)
+        let (name, binder,attr, expr) = compile_let_binding ~raise ?kwd_rec attributes let_binding in
+        let ascr = trace_option ~raise (type_params_not_annotated region) binder.ascr in
+        let rec add_type_params = function
+          | [] -> ascr
+          | ({ value } : CST.variable) :: vs -> t_for_all (Location.wrap @@ Var.of_name value) () (add_type_params vs) in
+        let ascr = Some (add_type_params type_params) in
+        let binder = { binder with ascr } in
+        return region @@ [AST.Declaration_constant {name; binder; attr; expr}]
+      )
+      | p, _, Some _ ->
+         (* In case that we have a non-variable pattern with type parameters, we fail. E.g.,
+            `let (a, b) (type c d) = ...` is a bit broken, it shouldn't even parse. *)
+         raise.raise @@ unsupported_pattern_type [p]
     )
 
 and compile_module ~raise : CST.ast -> _  =

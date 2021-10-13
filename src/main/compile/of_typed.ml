@@ -9,6 +9,7 @@ let compile_with_modules ~raise ?(module_env = SMap.empty) : Ast_typed.module_fu
   trace ~raise spilling_tracer @@ compile_module ~module_env:module_env p
 
 let compile ~raise ?(module_env = SMap.empty) : Ast_typed.module_fully_typed -> Mini_c.program = fun p ->
+  let p = Self_ast_typed.monomorphise_module p in
   let mini_c,_ = compile_with_modules ~raise ~module_env:module_env p in
   mini_c
 

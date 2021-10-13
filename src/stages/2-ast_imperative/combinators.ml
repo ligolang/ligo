@@ -56,6 +56,7 @@ let t_module_accessor ?loc module_name element = make_t ?loc @@ T_module_accesso
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
 let t_abstraction ?loc ty_binder kind type_ : type_expression = make_t ?loc @@ T_abstraction { ty_binder ; kind ; type_ }
+let t_for_all ?loc ty_binder kind type_ : type_expression   = make_t ?loc @@ T_for_all { ty_binder ; kind ; type_ }
 let t_map ?loc key value                  : type_expression = t_app ?loc v_map [key; value]
 let t_big_map ?loc key value              : type_expression = t_app ?loc v_big_map [key; value]
 let t_set ?loc key                        : type_expression = t_app ?loc v_set [key]
@@ -242,3 +243,11 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
   match e.expression_content with
   | E_map lst -> Some lst
   | _ -> None
+
+(* This function takes a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
+let destruct_for_alls (t : type_expression) =
+  let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
+    | T_for_all { ty_binder ; type_ ; _ } ->
+       destruct_for_alls (Location.unwrap ty_binder :: type_vars) type_
+    | _ -> (type_vars, t)
+  in destruct_for_alls [] t

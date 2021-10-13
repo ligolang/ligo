@@ -162,6 +162,20 @@ let build_mini_c ~raise ~add_warning : options:Compiler_options.t -> _ -> _ -> f
     let mini_c       = trace ~raise build_error_tracer @@ Ligo_compile.Of_typed.compile contract in
     (mini_c,env)
 
+let build_expression ~raise ~add_warning : options:Compiler_options.t -> string -> _ -> file_name option -> _ =
+  fun ~options syntax expression file_name ->
+    let (module_,env) = match file_name with
+      | Some init_file ->
+         let contract, env = combined_contract ~raise ~add_warning ~options syntax Env init_file in
+         (contract, env)
+      | None -> (Module_Fully_Typed [],options.init_env) in
+    let typed_exp,_     = Ligo_compile.Utils.type_expression ~raise ~options file_name syntax expression env in
+    let data, typed_exp = Self_ast_typed.monomorphise_expression typed_exp in
+    let _, module_      = Self_ast_typed.monomorphise_module_data data module_ in
+    let decl_list       = trace ~raise build_error_tracer @@ Ligo_compile.Of_typed.compile module_ in
+    let mini_c_exp      = Ligo_compile.Of_typed.compile_expression ~raise typed_exp in
+    mini_c_exp, decl_list
+
 let build_contract ~raise ~add_warning : options:Compiler_options.t -> string -> _ -> file_name -> _ =
   fun ~options syntax entry_point file_name ->
     let mini_c,_   = build_mini_c ~raise ~add_warning ~options syntax (Contract entry_point) file_name in

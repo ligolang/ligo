@@ -270,6 +270,7 @@ module Mutator = struct
       e, Option.some_if (b && not (Location.is_dummy_or_generated e.location)) (e.location, e)
     )
     | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
+    | E_type_inst _ as e' -> [ (return e'), None ]
 
   and mutate_cases : matching_expr -> (matching_expr * mutation option) list = fun m ->
     match m with

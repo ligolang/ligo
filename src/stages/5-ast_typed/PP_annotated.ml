@@ -71,6 +71,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression ppf x
+  | T_for_all         x  -> for_all       type_expression ppf x
 
 and row_element : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos } ->
@@ -140,6 +141,8 @@ and expression_content ppf (ec: expression_content) =
         type_expression fun_type
         expression_content (E_lambda lambda)
   | E_module_accessor ma -> module_access expression ppf ma
+  | E_type_inst {forall;type_} ->
+      fprintf ppf "%a@[%a]" expression forall type_expression type_
 
 and assoc_expression ppf : map_kv -> unit =
  fun {key ; value} -> fprintf ppf "%a -> %a" expression key expression value

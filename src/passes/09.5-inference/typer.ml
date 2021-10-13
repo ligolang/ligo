@@ -72,6 +72,7 @@ end = struct
     | O.T_module_accessor {module_name=_; element} -> te where element
     | O.T_singleton _ -> failwith "TODO: singleton?"
     | O.T_abstraction x -> te where x.type_
+    | O.T_for_all x -> te where x.type_
   and te where : O.type_expression -> _ = function { type_content; sugar=_; location=_ } -> tc where type_content
 
   let check_expression_has_no_unification_vars (expr : O.expression) =
@@ -197,6 +198,9 @@ and evaluate_type ~raise : environment -> I.type_expression -> O.type_expression
   | T_abstraction x ->
     let type_ = evaluate_type ~raise e x.type_ in
     return (T_abstraction {x with type_})
+  | T_for_all x ->
+    let type_ = evaluate_type ~raise e x.type_ in
+    return (T_for_all {x with type_})
 
 
 and type_expression ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> environment * _ O'.typer_state * O.expression * O.type_expression = fun ?tv_opt e state ae ->
