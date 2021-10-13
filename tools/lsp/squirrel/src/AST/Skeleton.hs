@@ -125,9 +125,7 @@ data Type it
   | TSum      [it]     -- ^ [Variant]
   | TProduct  [it]     -- ^ [Type]
   | TApply    it [it]  -- ^ (Name) [Type]
-  | TString   Text     -- ^ (TString)
-  | TOr       it it it it
-  | TAnd      it it it it
+  | TString   it       -- ^ (TString)
   | TWildcard
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
@@ -399,7 +397,7 @@ instance Eq1 Type where
   liftEq f (TRecord xs) (TRecord ys) = liftEqList f xs ys
   liftEq f (TSum xs) (TSum ys) = liftEqList f xs ys
   liftEq f (TProduct xs) (TProduct ys) = liftEqList f xs ys
-  liftEq _ (TString xs) (TString ys) = xs == ys
+  liftEq f (TString x) (TString y) = f x y
   liftEq _ _ _ = False
 
 instance Eq1 Variant where

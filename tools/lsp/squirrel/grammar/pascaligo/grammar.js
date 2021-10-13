@@ -105,11 +105,10 @@ module.exports = grammar({
       $.Int,
       $.TypeName,
       $.TypeWildcard,
+      $.string_type,
       $.fun_type,
       $.prod_type,
       $.app_type,
-      $.michelsonTypeOr,
-      $.michelsonTypeAnd,
       $.module_TypeName,
       $.type_group,
     ),
@@ -135,39 +134,13 @@ module.exports = grammar({
       )
     ),
 
+    string_type: $ => field("value", $.String),
+
     type_group: $ => common.par(field("type", $._type_expr)),
 
     app_type: $ => prec.left(8, seq(field("name", $._simple_type), $._type_arg)),
 
     _type_arg: $ => common.par(common.sepBy1(',', field("arg", $._type_expr))),
-
-    michelsonTypeOr: $ =>
-      seq(
-        "michelson_or",
-        "(",
-        field("left_type", $._type_expr),
-        ",",
-        field("left_type_name", $.String),
-        ",",
-        field("right_type", $._type_expr),
-        ",",
-        field("right_type_name", $.String),
-        ")",
-      ),
-
-    michelsonTypeAnd: $ =>
-      seq(
-        "michelson_pair",
-        "(",
-        field("left_type", $._type_expr),
-        ",",
-        field("left_type_name", $.String),
-        ",",
-        field("right_type", $._type_expr),
-        ",",
-        field("right_type_name", $.String),
-        ")",
-      ),
 
     /// CONSTANT DECLARATION
 

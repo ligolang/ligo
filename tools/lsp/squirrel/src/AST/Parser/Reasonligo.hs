@@ -122,6 +122,7 @@ recognise (SomeRawTree dialect rawTree)
         ("lxor", _)   -> return $ Op "lxor"
         ("lsl", _)    -> return $ Op "lsl"
         ("lsr", _)    -> return $ Op "lsr"
+        ("++", _)     -> return $ Op "++"
         (">", _)      -> return $ Op ">"
         ("<", _)      -> return $ Op "<"
         (">=", _)     -> return $ Op ">="
@@ -189,6 +190,7 @@ recognise (SomeRawTree dialect rawTree)
     -- Type
   , Descent do
       boilerplate $ \case
+        "string_type"      -> TString  <$> field  "value"
         "fun_type"         -> TArrow   <$> field  "domain"  <*> field "codomain"
         "app_type"         -> TApply   <$> field  "functor" <*> fields "argument"
         "record_type"      -> TRecord  <$> fields "field"
@@ -203,13 +205,6 @@ recognise (SomeRawTree dialect rawTree)
         "module_TypeName" -> ModuleAccess <$> fields "path" <*> field "type"
         "module_access"   -> ModuleAccess <$> fields "path" <*> field "field"
         _                 -> fallthrough
-
-   -- Michelson pair types
-  , Descent do
-      boilerplate' $ \case
-        ("type_string", i) -> return $ TString i
-        _                  -> fallthrough
-
 
     -- Variant
   , Descent do

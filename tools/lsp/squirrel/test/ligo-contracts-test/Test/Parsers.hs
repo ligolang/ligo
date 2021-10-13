@@ -31,11 +31,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "modules_and_free_vars/simple.mligo"
       , "remove_unused_module.mligo"
 
-        -- LIGO-281
-      , "michelson_pair_tree.religo"
-      , "tuples_sequences_functions.religo"
-      , "string_arithmetic.religo"
-
         -- LIGO-306
       , "parametric_types.ligo"
       , "parametric_types.mligo"

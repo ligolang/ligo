@@ -76,6 +76,7 @@ module.exports = grammar({
     _type_expr: $ => choice(
       $.Int,
       $.TypeWildcard,
+      $.string_type,
       $.TypeName,
       $.fun_type,
       $.prod_type,
@@ -108,9 +109,11 @@ module.exports = grammar({
 
     tuple_type: $ => seq(
       "(",
-      common.sepBy1(",", field("x", choice($._type_expr, $.String))),
+      common.sepBy1(",", field("x", $._type_expr)),
       ")"
     ),
+
+    string_type: $ => field("value", $.String),
 
     module_TypeName: $ =>
       seq(

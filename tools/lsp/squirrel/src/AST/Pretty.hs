@@ -184,8 +184,6 @@ instance Pretty1 AST.Type where
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" xs
     TString   t         -> sexpr "TSTRING" [pp t]
-    TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
-    TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
     TWildcard           -> "_"
 
 instance Pretty1 Variant where
@@ -414,8 +412,6 @@ instance LPP1 'Pascal AST.Type where
     TSum      []        -> error "looks like you've been given malformed AST" -- never called
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
-    TOr       l n r m   -> tuple [l, n, r, m]
-    TAnd      l n r m   -> tuple [l, n, r, m]
     TWildcard           -> "_"
 
 instance LPP1 'Pascal Binding where
@@ -549,8 +545,6 @@ instance LPP1 'Reason AST.Type where
     TSum      []        -> error "malformed TSum type" -- never called
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
-    TOr       l n r m   -> tuple [l, n, r, m]
-    TAnd      l n r m   -> tuple [l, n, r, m]
     TWildcard           -> "_"
 
 instance LPP1 'Reason Binding where
@@ -658,8 +652,6 @@ instance LPP1 'Caml AST.Type where
     TSum      []        -> error "malformed TSum type" -- never called
     TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
-    TOr       l n r m   -> tuple [l, n, r, m]
-    TAnd      l n r m   -> tuple [l, n, r, m]
     TWildcard           -> "_"
 
 instance LPP1 'Caml Binding where

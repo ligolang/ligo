@@ -161,22 +161,7 @@ module.exports = grammar({
         field("arguments", $._type_arguments),
       ),
 
-    _type_arguments: $ => choice(
-      // $.michelson_tuple,
-      common.par(common.sepBy(',', field("argument", $._type_expr))),
-    ),
-
-    michelson_tuple: $ => seq(
-      '(',
-      field("arg1", $._type_expr),
-      ',',
-      field("label1", $.String),
-      ',',
-      field("arg2", $._type_expr),
-      ',',
-      field("label2", $.String),
-      ')',
-    ),
+    _type_arguments: $ => common.par(common.sepBy(',', field("argument", $._type_expr))),
 
     module_TypeName: $ =>
       seq(
@@ -188,7 +173,7 @@ module.exports = grammar({
     tuple_type: $ =>
       common.par(common.sepBy1(',', field("element", $._type_expr))),
 
-    string_type: $ => $.String,
+    string_type: $ => field("value", $.String),
 
     /// LET DECLARATIONS
 
