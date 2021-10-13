@@ -11,7 +11,6 @@ buildNpmPackage {
   npmBuild = ''
     mkdir bin
     cp -Lr ${ligo-squirrel}/* .
-    npm run compile
     npm run package
     npm run lint
   '';

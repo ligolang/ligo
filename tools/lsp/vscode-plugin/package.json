@@ -93,8 +93,9 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -b",
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "compile": "npm run esbuild-base -- --sourcemap",
+        "esbuild-base": "esbuild ./client/src/extension.ts --bundle --outfile=./client/out/extension.js --external:vscode --format=cjs --platform=node",
         "watch": "tsc -b -w",
         "package": "vsce package",
         "lint": "eslint client/src/*.ts"
@@ -109,6 +110,7 @@
         "@types/vscode": "^1.57.0",
         "@typescript-eslint/eslint-plugin": "^4.27.0",
         "@typescript-eslint/parser": "^4.27.0",
+        "esbuild": "^0.13.4",
         "eslint": "^7.28.0",
         "eslint-config-airbnb-base": "^14.2.1",
         "eslint-plugin-import": "^2.23.4",
