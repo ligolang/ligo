@@ -28,7 +28,7 @@ unit_signature_help = do
   signatureHelp <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename
     getSignatureHelp doc (Position 2 43)
-  signatureHelp ^. signatures`shouldBe` List [SignatureInformation
+  signatureHelp ^. signatures `shouldBe` List [SignatureInformation
     { _label = "function bar (const i : int)"
     , _documentation = Just (SignatureHelpDocString "")
     , _parameters = Just (List [ParameterInformation {_label = ParameterLabelString "const i : int", _documentation = Nothing}])
