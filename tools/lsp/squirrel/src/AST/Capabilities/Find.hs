@@ -88,7 +88,7 @@ definitionOf pos tree =
 data TypeDefinitionRes
   = TypeNotFound
   | TypeDeclared ScopedDecl
-  | TypeInlined TypeDeclSpecifics
+  | TypeInlined (TypeDeclSpecifics Type)
 
 typeDefinitionOf :: CanSearch xs => Range -> SomeLIGO xs -> TypeDefinitionRes
 typeDefinitionOf pos tree = fromMaybe TypeNotFound $ do
@@ -114,7 +114,7 @@ typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
 -- aliased type. Otherwise, leave it be.
 --
 -- If the aliased name is undeclared, leave the type be.
-dereferenceTspec :: Scope -> TypeDeclSpecifics -> TypeDeclSpecifics
+dereferenceTspec :: Scope -> TypeDeclSpecifics Type -> TypeDeclSpecifics Type
 dereferenceTspec scope tspec = fromMaybe tspec $ do
   refDecl <- findTypeRefDeclaration scope (_tdsInit tspec)
   refDecl ^? sdSpec . _TypeSpec . _2

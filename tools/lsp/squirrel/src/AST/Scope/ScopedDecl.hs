@@ -41,6 +41,7 @@ module AST.Scope.ScopedDecl
   , lppDeclCategory
   , lppLigoLike
   , fillTypeIntoCon
+  , fillTypeParams
   , extractRefName
   ) where
 
@@ -72,28 +73,28 @@ data ScopedDecl = ScopedDecl
   }
 
 data DeclarationSpecifics
-  = TypeSpec (Maybe TypeParams) TypeDeclSpecifics
+  = TypeSpec (Maybe TypeParams) (TypeDeclSpecifics Type)
   | ValueSpec ValueDeclSpecifics
 
 data TypeParams
-  = TypeParam TypeVariable
-  | TypeParams [TypeVariable]
+  = TypeParam (TypeDeclSpecifics TypeVariable)
+  | TypeParams [TypeDeclSpecifics TypeVariable]
 
 newtype TypeVariable = TypeVariable
   { _tvName :: Text
   }
   deriving stock (Eq, Show)
 
-data TypeDeclSpecifics = TypeDeclSpecifics
+data TypeDeclSpecifics init = TypeDeclSpecifics
   { _tdsInitRange :: Range
-  , _tdsInit :: Type
+  , _tdsInit :: init
   }
   deriving stock (Eq, Show)
 
 data Type
   = RecordType [TypeField]
   | VariantType [TypeConstructor]
-  | TupleType [TypeDeclSpecifics]
+  | TupleType [TypeDeclSpecifics Type]
   | ApplyType Type [Type]
   | AliasType Text
   | ArrowType Type Type
@@ -102,7 +103,7 @@ data Type
 
 data TypeField = TypeField
   { _tfName :: Text
-  , _tfTspec :: TypeDeclSpecifics
+  , _tfTspec :: TypeDeclSpecifics Type
   }
   deriving stock (Eq, Show)
 
@@ -114,7 +115,7 @@ newtype TypeConstructor = TypeConstructor
 data ValueDeclSpecifics = ValueDeclSpecifics
   { _vdsInitRange :: Maybe Range
   , _vdsParams :: Maybe [Parameter] -- if there are any, it's a function
-  , _vdsTspec :: Maybe TypeDeclSpecifics
+  , _vdsTspec :: Maybe (TypeDeclSpecifics Type)
   }
   deriving stock (Eq, Show)
 
@@ -181,7 +182,7 @@ lppLigoLike dialect ligoLike = lppDialect dialect (fillInfo (toLIGO ligoLike))
 class IsLIGO a where
   toLIGO :: a -> LIGO '[]
 
-instance IsLIGO TypeDeclSpecifics where
+instance IsLIGO init => IsLIGO (TypeDeclSpecifics init) where
   toLIGO tspec = toLIGO (_tdsInit tspec)
 
 instance IsLIGO Type where
@@ -262,6 +263,15 @@ fillTypeIntoCon typDecl conDecl
       , _tdsInit = typ
       }
 
+-- | Assuming that 'typeDecl' contains a '_sdSpec' which is a 'TypeSpec', try to
+-- fill its field with the provided params, if they are not filled already.
+fillTypeParams :: TypeParams -> ScopedDecl -> ScopedDecl
+fillTypeParams newParams typeDecl = typeDecl
+  { _sdSpec = case _sdSpec typeDecl of
+      TypeSpec oldParams tspec -> TypeSpec (oldParams <|> Just newParams) tspec
+      spec                     -> spec
+  }
+
 -- | If the type is just a reference to another type, extract a name of that
 -- reference.
 extractRefName :: Type -> Maybe Text
@@ -269,7 +279,7 @@ extractRefName typ = typ ^? _AliasType
 
 type Accessor = Either Int Text
 
-accessField :: TypeDeclSpecifics -> Accessor -> Maybe TypeDeclSpecifics
+accessField :: TypeDeclSpecifics Type -> Accessor -> Maybe (TypeDeclSpecifics Type)
 accessField tspec (Left num) = do
   tupleTspecs <- tspec ^? tdsInit . _TupleType
   safeIndex tupleTspecs num

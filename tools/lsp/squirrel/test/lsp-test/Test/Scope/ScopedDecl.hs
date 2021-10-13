@@ -12,7 +12,7 @@ import Test.Common.FixedExpectations (shouldBe)
 stubRange :: Range
 stubRange = point (-1) (-1)
 
-stubTspec :: TypeDeclSpecifics
+stubTspec :: TypeDeclSpecifics Type
 stubTspec = TypeDeclSpecifics stubRange (AliasType "stupid-type")
 
 unit_access_field :: Assertion

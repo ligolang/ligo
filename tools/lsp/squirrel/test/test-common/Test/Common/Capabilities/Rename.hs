@@ -4,6 +4,7 @@ module Test.Common.Capabilities.Rename
   , renameParam
   , renameInIncludedFile
   , renameNestedInclude
+  , renameTypeVariable
   ) where
 
 import Control.Arrow ((***))
@@ -109,4 +110,11 @@ renameNestedInclude = do
   testRenameOk @impl def "f" def "func"
     [ (param, [(interval 1 2 3){_rFile = param}])
     , (func, [(interval 4 3 4){_rFile = func}, def])
+    ]
+
+renameTypeVariable :: forall impl. HasScopeForest impl IO => Assertion
+renameTypeVariable = do
+  fp <- makeAbsolute (contractsDir </> "parametric.religo")
+  testRenameOk @impl (point 1 36){_rFile = fp} "a" (point 1 36){_rFile = fp} "key"
+    [ (fp, [(interval 1 36 37){_rFile = fp}, (interval 1 11 12){_rFile = fp}])
     ]
