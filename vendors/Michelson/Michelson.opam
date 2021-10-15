@@ -11,7 +11,7 @@ license      : "MIT"
 homepage     : "https://gitlab.com/ligolang/Michelson"
 bug-reports  : "https://gitlab.com/ligolang/Michelson/issues"
 # If you change the dependencies, run `opam lock` in the root
-depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx"
+depends      : ["dune" "base" "ocaml" "simple-utils"
                 "getopt" "LexerLib" "Preprocessor" "ParserLib"]
 build        : [
                 [ "sh" "-c" "printf 'let version = \"%s\"' \"$(git describe --always --dirty)\" > version.ml" ]

@@ -31,7 +31,7 @@ depends: [
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # work around tezos' failure to constrain
   "lwt" { = "5.4.2" }
-  "bisect_ppx" {dev & >= "2.5.0"}
+  "bisect_ppx" {>= "2.3"}
   # dependencies of vendored dependencies
   "tezos-base"
   "tezos-crypto"

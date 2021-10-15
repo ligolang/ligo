@@ -10,9 +10,7 @@
     ;; Third party
     getopt
     str)
-  (modules Version CLI E_Parser E_Lexer E_AST API PreprocMainGen)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+  (modules Version CLI E_Parser E_Lexer E_AST API PreprocMainGen))
 
 ;; Building the lexers of the preprocessor
 
@@ -28,9 +26,7 @@
 (executable
   (name PreprocMain)
   (modules PreprocMain)
-  (libraries Preprocessor)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+  (libraries Preprocessor))
 
 ;; Building E_LexerMain.exe for a standalone lexer of boolean
 ;; expressions
@@ -39,9 +35,7 @@
   (name E_LexerMain)
   (modules
     E_LexerMain)
-  (libraries Preprocessor)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+  (libraries Preprocessor))
 
 ;; Building E_ParserMain.exe for a standalone parser of boolean
 ;; expressions
@@ -50,9 +44,7 @@
   (name E_ParserMain)
   (modules
     E_ParserMain)
-  (libraries Preprocessor)
-  (preprocess
-    (pps bisect_ppx --conditional)))
+  (libraries Preprocessor))
 
 ;; Building the version source (for the user, as a CLI option)
 
