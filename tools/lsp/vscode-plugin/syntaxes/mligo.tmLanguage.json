@@ -104,7 +104,7 @@
             "beginCaptures": {
                 "1": { "name": "keyword.operator.type.mligo" }
             },
-            "end": "(?:[;|]|(?=[)=}])|$)",
+            "end": "[;|]|(?=[)=}])",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
@@ -122,9 +122,9 @@
                     ]
                 },
                 {
-                    "match": "([^=()|;}/]+)",
+                    "match": "(?:(?!\\bin\\b|[=()|;}/])[^=()|;}/])+",
                     "captures": {
-                        "1": { "name": "entity.name.type.mligo" }
+                        "0": { "name": "entity.name.type.mligo" }
                     }
                 }
             ]
@@ -162,7 +162,7 @@
                 "1": { "name": "keyword.other.typedef.mligo" },
                 "2": { "name": "entity.name.type.mligo" }
             },
-            "end": "(?=(?:\\blet\\b|\\btype\\b|^\\s*#\\w+))",
+            "end": "(?=(?:\\bin\\b|\\blet\\b|\\btype\\b|^\\s*#\\w+))",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#struct-type" },
@@ -187,7 +187,7 @@
                 "1": { "name": "entity.name.function.mligo" },
                 "2": { "name": "keyword.other.of.mligo" }
             },
-            "end": "(\\||(?=\\blet\\b|\\btype\\b|^\\s*#\\w+))",
+            "end": "\\||(?=\\bin\\b|\\blet\\b|\\btype\\b|^\\s*#\\w+)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
@@ -196,7 +196,7 @@
 
         "type-alias": {
             "begin": "\\G\\s*=\\s*(?=[(a-z])",
-            "end": "(?=\\blet\\b|\\btype\\b|^\\s*#\\w+)",
+            "end": "(?=\\bin\\b|\\blet\\b|\\btype\\b|^\\s*#\\w+)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
