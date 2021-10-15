@@ -64,4 +64,7 @@ let%expect_test _ =
       4 |   var record [ a = a ; f = b ] := record [ a = 1 ; b = 1n ] ;
       5 | } with (a,b)
 
-    Pattern do not conform type record[a -> int , b -> nat] |}]
+    Pattern do not conform type record[a -> int , b -> nat] |}];
+  run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a} = x in a" ; "--syntax" ; "cameligo" ] ;
+  [%expect{|
+    Pattern do not conform type record[a -> int , b -> int] |}]
