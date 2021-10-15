@@ -118,11 +118,11 @@ let type_matchee ~raise : equations -> O.type_expression =
       )
       | (P_record (lst,_)) , O.T_record record_type -> (
         List.iter
-          ~f:(fun label ->
-            if O.LMap.mem label record_type.content then ()
+          ~f:(fun (label,_t) ->
+            if List.exists ~f:(fun x -> O.Compare.label x label = 0) lst then ()
             else raise.raise @@ pattern_do_not_conform_type p t
           )
-          lst
+          (O.LMap.to_kv_list record_type.content)
       )
       | I.P_unit , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.unit_name -> ()
       | I.P_list _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> ()
