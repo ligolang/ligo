@@ -117,12 +117,19 @@ let type_matchee ~raise : equations -> O.type_expression =
         else ()
       )
       | (P_record (lst,_)) , O.T_record record_type -> (
-        List.iter
-          ~f:(fun (label,_t) ->
-            if List.exists ~f:(fun x -> O.Compare.label x label = 0) lst then ()
+        let compare = O.Compare.label in
+        let sorted_p = List.sort ~compare lst in
+        let sorted_l = List.sort ~compare (O.LMap.keys record_type.content) in
+        let open! List.Or_unequal_lengths in
+        let x = List.iter2 sorted_p sorted_l
+          ~f:(fun la lb ->
+            if O.Compare.label la lb = 0 then ()
             else raise.raise @@ pattern_do_not_conform_type p t
           )
-          (O.LMap.to_kv_list record_type.content)
+        in
+        match x with
+        | Ok () -> ()
+        | Unequal_lengths -> raise.raise @@ pattern_do_not_conform_type p t
       )
       | I.P_unit , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.unit_name -> ()
       | I.P_list _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> ()
