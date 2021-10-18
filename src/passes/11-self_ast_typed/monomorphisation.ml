@@ -285,7 +285,7 @@ and mono_polymorphic_module : _ -> data -> module_fully_typed -> data * module_f
           let data, expr = mono_polymorphic_expression path data expr in
           let declaration = Declaration_constant { name ; binder ; expr ; attr } in
           data, (Location.wrap ~loc declaration) :: decls
-       | Declaration_module { module_binder ; module_ } ->
+       | Declaration_module { module_binder ; module_ ; module_attr } ->
           let data, decls = aux data decls in
           let instances, data = instances_of_module_lookup_and_remove module_binder data in
           let instances = List.map instances ~f:(fun (lid, instances) ->
@@ -296,7 +296,7 @@ and mono_polymorphic_module : _ -> data -> module_fully_typed -> data * module_f
                             (lid, List.map instances ~f)) in
           let data = List.fold_left instances ~init:data ~f:(fun data (lid, instances) -> instances_add lid instances data) in
           let data, module_ = self path data module_ in
-          data, (Location.wrap ~loc (Declaration_module { module_binder ; module_ })) :: decls
+          data, (Location.wrap ~loc (Declaration_module { module_binder ; module_; module_attr })) :: decls
        | Module_alias { alias ; binders } ->
           let data, decls = aux data decls in
           let instances, data = instances_of_path_lookup_and_remove [alias] data in

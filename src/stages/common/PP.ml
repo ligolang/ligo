@@ -15,6 +15,13 @@ let option_no_mutation ppf no_mutation =
   else
     fprintf ppf ""
 
+let option_public ppf public =
+  if not public then
+    fprintf ppf "[@@private]"
+  else
+    fprintf ppf ""
+
+
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
@@ -190,7 +197,7 @@ let let_in expression type_expression ppf = fun {let_binder; rhs; let_result; at
     attributes attr
     expression let_result
 
-let type_in expression type_expression ppf = fun {type_binder; rhs; let_result;} ->
+let type_in expression type_expression ppf = fun {type_binder; rhs; let_result} ->
   fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
     type_variable type_binder
     type_expression rhs
@@ -290,8 +297,11 @@ let match_exp expression type_expression ppf = fun {matchee ; cases} ->
   fprintf ppf "@[<v 2> match %a with@,%a@]" expression matchee (list_sep (match_case expression type_expression) (tag "@ ")) cases
 
 (* Declaration *)
-let declaration_type type_expression ppf = fun {type_binder;type_expr} ->
-  fprintf ppf "@[<2>type %a =@ %a@]" type_variable type_binder type_expression type_expr
+let declaration_type type_expression ppf = fun {type_binder;type_expr; type_attr} ->
+  fprintf ppf "@[<2>type %a =@ %a%a@]" 
+    type_variable type_binder 
+    type_expression type_expr 
+    attributes type_attr
 
 let declaration_constant expression type_expression ppf = fun {name = _; binder=binder'; attr ; expr} ->
   fprintf ppf "@[<2>const %a =@ %a%a@]"
@@ -299,8 +309,11 @@ let declaration_constant expression type_expression ppf = fun {name = _; binder=
     expression expr
     attributes attr
 
-let rec declaration_module expression type_expression ppf = fun {module_binder;module_} ->
-  fprintf ppf "@[<2>module %a =@ %a@]" module_variable module_binder (module' expression type_expression) module_
+let rec declaration_module expression type_expression ppf = fun {module_binder;module_;module_attr} ->
+  fprintf ppf "@[<2>module %a =@ %a%a@]" 
+    module_variable module_binder 
+    (module' expression type_expression) module_ 
+    attributes module_attr
 
 and module_alias ppf = fun ({alias;binders} : module_alias) ->
   fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders 

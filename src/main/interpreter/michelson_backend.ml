@@ -283,11 +283,11 @@ and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env ->
        let name = None in
        let expr = val_to_ast ~raise ~toplevel:false ~loc:binder.location item.eval_term item.ast_type in
        let inline = false in
-       Ast_typed.Declaration_constant { name ; binder ; expr ; attr = { inline ; no_mutation } } :: aux tl
+       Ast_typed.Declaration_constant { name ; binder ; expr ; attr = { inline ; no_mutation; public = true} } :: aux tl
     | Module { name; item } :: tl ->
        let module_binder = name in
        let module_ = env_to_ast ~raise ~loc item in
-       Ast_typed.Declaration_module { module_binder ; module_ } :: aux tl in
+       Ast_typed.Declaration_module { module_binder ; module_; module_attr = {public = true} } :: aux tl in
   Module_Fully_Typed (List.map (aux env) ~f:Location.wrap)
 
 and make_ast_func ~raise ?(toplevel = true) ?name env arg body orig =
@@ -370,7 +370,7 @@ and make_subst_ast_env_exp ~raise ?(toplevel = true) env expr =
          let expr_fv = get_fv expr in
          let fv = List.remove_element ~compare:Var.compare binder fv in
          let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
-         aux (fv, fmv) (Declaration_constant { binder = name ; name = None ; expr ; attr = { inline = false ; no_mutation } } :: acc) tl
+         aux (fv, fmv) (Declaration_constant { binder = name ; name = None ; expr ; attr = { inline = false ; no_mutation; public = true } } :: acc) tl
        else
          aux (fv, fmv) acc tl
     | Module { name; item } :: tl ->
@@ -379,7 +379,7 @@ and make_subst_ast_env_exp ~raise ?(toplevel = true) env expr =
          let expr_fv = get_fmv_mod module_ in
          let fmv = List.remove_element ~compare:compare_module_variable name fmv in
          let fmv = List.dedup_and_sort ~compare:compare_module_variable (fmv @ expr_fv) in
-         aux (fv, fmv) (Declaration_module { module_binder = name ; module_ } :: acc) tl
+         aux (fv, fmv) (Declaration_module { module_binder = name ; module_; module_attr={public=true} } :: acc) tl
        else
          aux (fv, fmv) acc tl in
   aux (get_fv expr, get_fmv_expr expr) [] lst

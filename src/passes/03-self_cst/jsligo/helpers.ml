@@ -243,7 +243,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a =
     in
     List.Ne.fold_left fold_case res cases
   | SBreak _ -> init
-  | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> fold_npseq self init inside
+  | SNamespace {value = (_, _, {value = {inside; _}; _}, _ ); _} -> fold_npseq self init inside
   | SExport {value = (_, s); _} -> self init s
   | SImport _ -> init
   | SForOf {value = {expr; statement; _}; _}
@@ -610,7 +610,7 @@ and map_statement : ('err) mapper -> statement -> statement =
   | SBreak b ->
     return @@ SBreak b
   | SNamespace {value; region} ->
-    let (kwd_namespace, name, statements) = value in
+    let (kwd_namespace, name, statements, attributes) = value in
     let ({value = statements_value; region = statements_region}: statements braces reg) = statements in
     let inside = map_npseq self statements_value.inside in
     let statements: statements braces reg = {
@@ -620,7 +620,7 @@ and map_statement : ('err) mapper -> statement -> statement =
       };
       region = statements_region
     } in
-    let value = (kwd_namespace, name, statements) in
+    let value = (kwd_namespace, name, statements, attributes) in
     return @@ SNamespace {
       value;
       region

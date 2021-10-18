@@ -502,7 +502,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
-    Declaration_type {type_binder;type_expr} -> (
+    Declaration_type {type_binder;type_expr; type_attr=_} -> (
     let name = decompile_variable type_binder in
     let params =  
       match type_expr.type_content with

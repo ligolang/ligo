@@ -57,6 +57,9 @@ let brackets x = CST.{lbracket=ghost;inside=x;rbracket=ghost}
 let fun_type_arg x = CST.{ name = wrap "_" ; colon = ghost ; type_expr = x }
 let braced d = CST.{lbrace=ghost; rbrace=ghost; inside=d}
 
+let filter_private (attributes: CST.attributes) = 
+  List.filter ~f:(fun v -> not (v.value = "private")) attributes
+
 (* Decompiler *)
 
 let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
@@ -287,6 +290,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     return_expr @@ [Expr (CST.EFun (wrap @@ fun_expr))]
   | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
+    let attributes = filter_private attributes in
     let var = CST.PVar (decompile_variable2 @@ var.wrap_content) in
     let binders = var in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) ascr in
@@ -308,7 +312,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_type_in {type_binder;rhs;let_result} ->
     let name = wrap @@ Var.to_name type_binder in
     let type_expr = decompile_type_expr rhs in
-    let type_decl : CST.type_decl = {kwd_type=ghost;name;params=None;eq=ghost;type_expr} in
+    let type_decl : CST.type_decl = {kwd_type=ghost;name;params=None;eq=ghost;type_expr;attributes=[]} in
     let body = decompile_expression_in let_result in
     return_expr @@ Statement (CST.SType (wrap type_decl)) :: body
   | E_mod_in {module_binder;rhs;let_result} ->
@@ -322,7 +326,8 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
     let statements: CST.statements CST.braces Region.reg = wrap @@ braced statements in
     let body = decompile_expression_in let_result in
-    [Statement (CST.SNamespace (wrap (ghost, name, statements)))] @ body
+    let attributes = [] in
+    [Statement (CST.SNamespace (wrap (ghost, name, statements, attributes)))] @ body
   | E_mod_alias {alias; binders; result} ->
     let alias   = wrap alias in
     let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
@@ -650,7 +655,11 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
-    Declaration_type {type_binder;type_expr} ->
+    Declaration_type {type_binder;type_expr;type_attr} ->
+    let attr = type_attr in
+    let is_private = List.mem ~equal:Caml.(=) attr "private" in
+    let attributes : CST.attributes = decompile_attributes attr in
+    let attributes = filter_private attributes in
     let name = decompile_variable type_binder in
     let (params : CST.type_vars option) =
       match type_expr.type_content with
@@ -670,8 +679,13 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
       | _ -> None
     in
     let type_expr = decompile_type_expr type_expr in
-    CST.SType (wrap (CST.{kwd_type=ghost; name; params;eq=ghost; type_expr}))
+    let type_ = CST.SType (wrap (CST.{attributes;kwd_type=ghost; name; params;eq=ghost; type_expr})) in
+    if is_private then 
+      type_
+    else
+      CST.SExport (wrap (ghost, type_))
   | Declaration_constant {binder; attr; expr; } ->
+    let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable2 binder.var.wrap_content) in
     let binders = var in
@@ -684,10 +698,18 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
       eq = Region.ghost;
       expr
     }) in
-    CST.SConst (wrap (CST.{kwd_const=ghost; bindings = (wrap binding, []); attributes = []}))
-  | Declaration_module {module_binder; module_} ->
+    let const = CST.SConst (wrap (CST.{kwd_const=ghost; bindings = (wrap binding, []); attributes})) in
+    if is_private then
+      const
+    else 
+      CST.SExport (wrap (ghost, const))
+  | Declaration_module {module_binder; module_; module_attr} ->
+    let attr = module_attr in
+    let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let name = wrap module_binder in
     let module_ = decompile_module module_ in
+    let attributes = decompile_attributes module_attr in
+    let attributes = filter_private attributes in
     let toplevel_to_statement = function
         CST.TopLevel (s, _) -> s
       | _ -> failwith "not implemented"
@@ -695,7 +717,11 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
     let a = (fst module_.statements) in
     let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
     let statements: CST.statements CST.braces Region.reg = wrap @@ braced statements in
-    CST.SNamespace (wrap (ghost, name, statements))
+    let ns = CST.SNamespace (wrap (ghost, name, statements, attributes)) in
+    if is_private then
+      ns
+    else 
+      CST.SExport (wrap (ghost, ns))
   | Module_alias {alias; binders} ->
     let alias = wrap alias in
     let binders = nelist_to_npseq @@ List.Ne.map wrap binders in

@@ -222,13 +222,14 @@ and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb
     type_expression     fta ftb
     lambda               la  lb
 
-and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nma }} {let_binder=bb;rhs=rb;let_result=lb;attr = { inline=ab;no_mutation=nmb}} =
-  cmp5
+and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nma;public=pua}} {let_binder=bb;rhs=rb;let_result=lb;attr = { inline=ab;no_mutation=nmb;public=pub}} =
+  cmp6
     expression_variable ba bb
     expression ra rb
     expression la lb
     bool  aa ab
     bool  nma nmb
+    bool  pua pub
 
 and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_result=lb} =
   cmp3
@@ -311,23 +312,26 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb}} =
-  cmp5
+and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;public=pua}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;public=pub}} =
+  cmp6
     (Option.compare String.compare) na nb
     expression_variable ba bb
     expression ea eb
     bool ia ib
     bool nma nmb
+    bool pua pub
 
-and declaration_type {type_binder=tba;type_expr=tea} {type_binder=tbb;type_expr=teb} =
-  cmp2
+and declaration_type {type_binder=tba;type_expr=tea;type_attr={public=pua}} {type_binder=tbb;type_expr=teb;type_attr={public=pub}} =
+  cmp3
     type_variable tba tbb
     type_expression tea teb
+    bool pua pub
 
-and declaration_module {module_binder=mba;module_= Module_Fully_Typed ma} {module_binder=mbb;module_= Module_Fully_Typed mb} =
- cmp2
+and declaration_module {module_binder=mba;module_= Module_Fully_Typed ma; module_attr={public=pua}} {module_binder=mbb;module_= Module_Fully_Typed mb; module_attr={public=pub}} =
+ cmp3
     module_variable mba mbb
     module_ ma mb
+    bool pua pub
 
 and module_alias : module_alias -> module_alias -> int
 = fun {alias = aa; binders = ba} {alias = ab; binders = bb} ->
@@ -358,10 +362,11 @@ let type_or_kind x y =
     let tag = function Ty _ -> 1 | Kind () -> 2 in
     Int.compare (tag x) (tag y)
 
-let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_=tb} =
-  cmp2
+let type_environment_binding {type_variable=va;type_=ta;public=pua} {type_variable=vb;type_=tb;public=pub} =
+  cmp3
     type_variable va vb
     type_or_kind ta tb
+    bool pua pub
 
 let type_environment = List.compare type_environment_binding
 
@@ -381,18 +386,20 @@ let rec environment_element {type_value=ta;definition=da} {type_value=tb;definit
     type_expression ta tb
     environment_element_definition da db
 
-and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
-  cmp2
+and environment_binding {expr_var=eva;env_elt=eea;public=pua} {expr_var=evb;env_elt=eeb;public=pub} =
+  cmp3
     expression_variable eva evb
     environment_element eea eeb
+    bool pua pub
 
 and expression_environment a b = List.compare environment_binding a b
 
-and module_environment_binding {module_variable=mva;module_=ma}
-                               {module_variable=mvb;module_=mb} =
-  cmp2
+and module_environment_binding {module_variable=mva;module_=ma;public=pua}
+                               {module_variable=mvb;module_=mb;public=pub} =
+  cmp3
     module_variable mva mvb
     environment    ma  mb
+    bool pua pub
 
 and module_environment a b = List.compare module_environment_binding a b
 

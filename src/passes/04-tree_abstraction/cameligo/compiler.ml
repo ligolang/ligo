@@ -751,7 +751,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration_type  {type_binder=Var.of_name name; type_expr}
+    return_1 region @@ AST.Declaration_type  {type_binder=Var.of_name name; type_expr; type_attr=[]}
   )
 
   | Directive _ -> []
@@ -759,7 +759,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
   | ModuleDecl {value={name; module_; _};region} ->
       let name, _ = r_split name in
       let module_ = compile_module ~raise module_ in
-      let ast = AST.Declaration_module  {module_binder=name; module_}
+      let ast = AST.Declaration_module  {module_binder=name; module_; module_attr=[]}
       in return_1 region ast
 
   | ModuleAlias {value={alias; binders; _};region} ->

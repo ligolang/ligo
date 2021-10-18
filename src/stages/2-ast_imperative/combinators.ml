@@ -122,7 +122,7 @@ let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_
 let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; attributes }
 let e_let_in_ez ?loc var ?ascr ?const_or_var attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder={var;ascr;attributes={const_or_var}}; rhs ; let_result; attributes }
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
-let e_type_in   ?loc type_binder   rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result }
+let e_type_in   ?loc type_binder rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result}
 let e_mod_in    ?loc module_binder rhs let_result = make_e ?loc @@ E_mod_in  { module_binder; rhs ; let_result }
 let e_mod_alias ?loc alias binders result = make_e ?loc @@ E_mod_alias { alias; binders ; result }
 

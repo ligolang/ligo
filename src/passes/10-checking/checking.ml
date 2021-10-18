@@ -126,21 +126,21 @@ let return ?(loc = d.location) e (d : O.declaration) = e,Location.wrap ~loc d in
 match Location.unwrap d with
   | Declaration_type {type_binder ; _} when Ast_core.Helpers.is_generalizable_variable type_binder ->
     raise.raise (wrong_generalizable d.location type_binder)
-  | Declaration_type {type_binder ; type_expr} -> (
+  | Declaration_type {type_binder ; type_expr; type_attr={public}} -> (
     let type_binder = Var.todo_cast type_binder in
-    let tv = evaluate_type ~raise env type_expr in
-    let env' = Environment.add_type type_binder tv env in
-    return env' @@ Declaration_type { type_binder ; type_expr = tv }
+    let tv = evaluate_type ~raise ~other_module:false env type_expr in
+    let env' = Environment.add_type ~public type_binder tv env in
+    return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public} }
   )
-  | Declaration_constant {name ; binder = { ascr = None ; var } ; attr = { inline ; no_mutation } ; expr} -> (
+  | Declaration_constant {name ; binder = { ascr = None ; var } ; attr = { inline ; no_mutation ; public} ; expr} -> (
     let expr =
       trace ~raise (constant_declaration_error_tracer var expr None) @@
       type_expression' ~test env expr in
     let binder : O.expression_variable = cast_var var in
-    let post_env = Environment.add_ez_declaration binder expr env in
-    return post_env @@ Declaration_constant { name ; binder ; expr ; attr = {inline ; no_mutation} }
+    let post_env = Environment.add_ez_declaration ~public binder expr env in
+    return post_env @@ Declaration_constant { name ; binder ; expr ; attr = {inline ; no_mutation ; public} }
   )
-  | Declaration_constant {name ; binder = { ascr = Some tv ; var } ; attr = { inline ; no_mutation } ; expr } ->
+  | Declaration_constant {name ; binder = { ascr = Some tv ; var } ; attr = { inline ; no_mutation ; public} ; expr } ->
     let type_env = List.map env.type_environment ~f:(fun { type_variable ; type_ = _ } -> type_variable) in
     let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
@@ -156,26 +156,32 @@ match Location.unwrap d with
     let type_expression = aux expr.type_expression (List.rev av) in
     let expr = { expr with type_expression } in
     let binder : O.expression_variable = cast_var var in
-    let post_env = Environment.add_ez_declaration binder expr pre_env in
-    return post_env @@ Declaration_constant { name ; binder ; expr ; attr = { inline ; no_mutation } }
-  | Declaration_module {module_binder;module_} -> (
+    let post_env = Environment.add_ez_declaration ~public binder expr pre_env in
+    return post_env @@ Declaration_constant { name ; binder ; expr ; attr = { inline ; no_mutation ; public} }
+  | Declaration_module {module_binder;module_; module_attr = {public}} -> (
     let e,module_ = type_module ~raise ~test ~init_env:env module_ in
-    let post_env = Environment.add_module module_binder e env in
-    return post_env @@ Declaration_module { module_binder; module_}
+    let post_env = Environment.add_module ~public module_binder e env in
+    return post_env @@ Declaration_module { module_binder; module_; module_attr = {public}}
   )
   | Module_alias {alias;binders} -> (
-    let aux env binder =
+    let aux other_module env binder =
       trace_option ~raise (unbound_module_variable env binder d.location)
-      @@ Environment.get_module_opt binder env in
-    let e = List.Ne.fold_left aux env binders in
-    let post_env = Environment.add_module alias e env in
+      @@ Environment.get_module_opt ?other_module:(Some other_module) binder env 
+    in
+    let (hd, tl) = binders in
+    let e = List.fold_left ~f:(aux true) ~init:(aux false env hd) tl in
+    let post_env = Environment.add_module ~public:true alias e env in
     return post_env @@ Module_alias { alias; binders}
   )
 
-and evaluate_otype ~raise (e:environment) (t:O.type_expression) : O.type_expression =
+and evaluate_otype ~raise ?other_module (e:environment) (t:O.type_expression) : O.type_expression =
   (* NOTE: this is similar to evaluate_type, but just look up for variables in environment
     feels wrong, but that's to allow re-evaluate body of T_abstractions *)
   let return tv' = make_t ~loc:t.location tv' t.type_meta in
+  let other_module = match other_module with 
+      Some true -> true
+    | _ -> false 
+  in
   match t.type_content with
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:(evaluate_otype ~raise e) parameters in
@@ -226,7 +232,7 @@ and evaluate_otype ~raise (e:environment) (t:O.type_expression) : O.type_express
   )
   | T_variable variable -> (
     let name : O.type_variable = Var.todo_cast variable in
-    match Environment.get_type_opt name e with
+    match Environment.get_type_opt ~other_module name e with
     | Some x -> x
     | None -> (
       match Environment.get_kind_opt name e with
@@ -239,10 +245,10 @@ and evaluate_otype ~raise (e:environment) (t:O.type_expression) : O.type_express
       Some m -> m
     | None   -> raise.raise @@ unbound_module_variable e module_name t.location
     in
-    evaluate_otype ~raise module_ element
+    evaluate_otype ~raise ?other_module:(Some true) module_ element
   | T_singleton x -> return (T_singleton x)
   | T_abstraction x ->
-    let env' = Environment.add_kind x.ty_binder.wrap_content () e in
+    let env' = Environment.add_kind   x.ty_binder.wrap_content () e in
     let type_ = evaluate_otype ~raise env' x.type_ in
     return (T_abstraction {x with type_})
   | T_for_all x ->
@@ -250,8 +256,12 @@ and evaluate_otype ~raise (e:environment) (t:O.type_expression) : O.type_express
     let type_ = evaluate_otype ~raise env' x.type_ in
     return (T_for_all {x with type_})
 
-and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expression =
+and evaluate_type ~raise ?other_module (e:environment) (t:I.type_expression) : O.type_expression =
   let return tv' = make_t ~loc:t.location tv' (Some t) in
+  let other_module = match other_module with 
+      Some true -> true
+    | _ -> false 
+    in
   match t.type_content with
   | T_arrow {type1;type2} ->
       let type1 = evaluate_type ~raise e type1 in
@@ -299,7 +309,7 @@ and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expressi
   )
   | T_variable variable -> (
     let name : O.type_variable = Var.todo_cast variable in
-    match Environment.get_type_opt name e with
+    match Environment.get_type_opt ~other_module name e with
     | Some x -> x
     | None when Ast_typed.Helpers.is_generalizable_variable name ->
        (* Case happening when trying to use a variable that is not in
@@ -316,7 +326,7 @@ and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expressi
   | T_app {type_operator;arguments} -> (
     let name : O.type_variable = Var.todo_cast type_operator in
     let operator = trace_option ~raise (unbound_type_variable e name t.location) @@
-      Environment.get_type_opt name e
+      Environment.get_type_opt ~other_module name e
     in
     let is_fully_applied location (t:O.type_expression) =
       match t.type_content with
@@ -350,7 +360,7 @@ and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expressi
         let arg' = evaluate_type ~raise e arg in
         let () = is_fully_applied arg.location arg' in
         let ty_binder : O.type_variable = Var.todo_cast ty_binder.wrap_content in
-        Environment.add_type ty_binder arg' env'
+        Environment.add_type ~public:true ty_binder arg' env'
     in
     let env' = List.fold_left ~f:aux ~init:e vargs in
     match ty_body.type_content with
@@ -370,7 +380,7 @@ and evaluate_type ~raise (e:environment) (t:I.type_expression) : O.type_expressi
       Some m -> m
     | None   -> raise.raise @@ unbound_module_variable e module_name t.location
     in
-    evaluate_type ~raise module_ element
+    evaluate_type ~raise ?other_module:(Some true) module_ element
   | T_singleton x -> return (T_singleton x)
   | T_abstraction x ->
     let env' = Environment.add_kind x.ty_binder.wrap_content () e in
@@ -386,7 +396,7 @@ and type_expression ~raise ~test : environment -> ?tv_opt:O.type_expression -> I
     let res = type_expression' ~raise ~test e ?tv_opt ae in
     (e, res)
 
-and type_expression' ~raise ~test ?(args = []) ?last : environment -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun e ?tv_opt ae ->
+and type_expression' ~raise ~test ?(args = []) ?last : environment -> ?tv_opt:O.type_expression -> ?other_module:bool -> I.expression -> O.expression = fun e ?tv_opt ?other_module ae ->
   let module L = Logger.Stateful() in
   let return expr tv =
     let () =
@@ -403,7 +413,7 @@ and type_expression' ~raise ~test ?(args = []) ?last : environment -> ?tv_opt:O.
       let name = cast_var name' in
       let tv' =
         trace_option ~raise (unbound_variable e name ae.location)
-        @@ Environment.get_opt name e in
+        @@ Environment.get_opt ?other_module name e in
       (match tv'.type_value with
        | { type_content = T_for_all _ } ->
           (* TODO: This is some inference, and we should reconcile it with the inference pass. *)
@@ -680,18 +690,18 @@ and type_expression' ~raise ~test ?(args = []) ?last : environment -> ?tv_opt:O.
       fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,e))
     in
     let eqs = List.map ~f:aux cases in
-    let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:ae.location ~type_f:(type_expression' ~test ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
+    let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:ae.location ~type_f:(type_expression' ~test ?other_module ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
     let case_exp = { case_exp with location = ae.location } in
-    let x = O.e_let_in matcheevar matchee' case_exp {inline = false; no_mutation = false} in
+    let x = O.e_let_in matcheevar matchee' case_exp {inline = false; no_mutation = false; public = true} in
     return x case_exp.type_expression
   )
-  | E_let_in {let_binder = {var ; ascr = None} ; rhs ; let_result; attr = { inline ; no_mutation } } ->
+  | E_let_in {let_binder = {var ; ascr = None} ; rhs ; let_result; attr = { inline ; no_mutation ; public } } ->
      let rhs = type_expression' ~raise ~test e rhs in
      let binder = cast_var var in
-     let e' = Environment.add_ez_declaration binder rhs e in
+     let e' = Environment.add_ez_declaration ~public binder rhs e in
      let let_result = type_expression' ~raise ~test e' let_result in
-     return (E_let_in {let_binder = binder; rhs; let_result; attr = { inline ; no_mutation } }) let_result.type_expression
-  | E_let_in {let_binder = {var ; ascr = Some tv} ; rhs ; let_result; attr = { inline ; no_mutation } } ->
+     return (E_let_in {let_binder = binder; rhs; let_result; attr = { inline ; no_mutation ; public } }) let_result.type_expression
+  | E_let_in {let_binder = {var ; ascr = Some tv} ; rhs ; let_result; attr = { inline ; no_mutation ; public } } ->
     let type_env = List.map e.type_environment ~f:(fun { type_variable ; type_ = _ } -> type_variable) in
     let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
@@ -705,19 +715,19 @@ and type_expression' ~raise ~test ?(args = []) ?last : environment -> ?tv_opt:O.
     let type_expression = aux rhs.type_expression (List.rev av) in
     let rhs = { rhs with type_expression } in
     let binder = cast_var var in
-    let e' = Environment.add_ez_declaration binder rhs pre_env in
+    let e' = Environment.add_ez_declaration ~public binder rhs pre_env in
     let let_result = type_expression' ~raise ~test e' let_result in
-    return (E_let_in {let_binder = binder; rhs; let_result; attr = { inline ; no_mutation } }) let_result.type_expression
+    return (E_let_in {let_binder = binder; rhs; let_result; attr = { inline ; no_mutation ; public } }) let_result.type_expression
   | E_type_in {type_binder; _} when Ast_core.Helpers.is_generalizable_variable type_binder ->
     raise.raise (wrong_generalizable ae.location type_binder)
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise e rhs in
-    let e' = Environment.add_type type_binder rhs e in
+    let e' = Environment.add_type ~public:true type_binder rhs e in
     let let_result = type_expression' ~raise ~test e' let_result in
     return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
   | E_mod_in {module_binder; rhs; let_result} ->
     let env,rhs = type_module ~raise ~test ~init_env:e rhs in
-    let e' = Environment.add_module module_binder env e in
+    let e' = Environment.add_module ~public:true module_binder env e in
     let let_result = type_expression' ~raise ~test e' let_result in
     return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
   | E_mod_alias {alias; binders; result} ->
@@ -725,7 +735,7 @@ and type_expression' ~raise ~test ?(args = []) ?last : environment -> ?tv_opt:O.
       trace_option ~raise (unbound_module_variable e binder ae.location) @@
       Environment.get_module_opt binder e in
     let env = List.Ne.fold_left aux e binders in
-    let e' = Environment.add_module alias env e in
+    let e' = Environment.add_module ~public:true alias env e in
     let result = type_expression' ~raise ~test e' result in
     return (E_mod_alias {alias; binders; result}) result.type_expression
   | E_raw_code {language;code} ->
@@ -764,7 +774,7 @@ and type_expression' ~raise ~test ?(args = []) ?last : environment -> ?tv_opt:O.
       Some m -> m
     | None   -> raise.raise @@ unbound_module_variable e module_name ae.location
     in
-    let element = type_expression' ~raise ~test ~args ?last ?tv_opt module_env element in
+    let element = type_expression' ~raise ~test ~args ?last ?tv_opt ?other_module:(Some true) module_env element in
     return (E_module_accessor {module_name; element}) element.type_expression
 
 
@@ -933,15 +943,16 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       return (e_matching matchee [case])
     )
   )
-  | E_let_in {let_binder;rhs;let_result; attr={inline;no_mutation}} ->
+  | E_let_in {let_binder;rhs;let_result; attr={inline;no_mutation;public}} ->
       let let_binder = cast_var let_binder in
       let tv = Untyper.untype_type_expression rhs.type_expression in
       let rhs = untype_expression rhs in
       let result = untype_expression let_result in
-      return (e_let_in {var=let_binder ; ascr=(Some tv) ; attributes = Stage_common.Helpers.empty_attribute} rhs result {inline;no_mutation})
-  | E_type_in ti ->
-    let ti = Stage_common.Maps.type_in untype_expression Untyper.untype_type_expression ti in
-    return @@ make_e @@ E_type_in ti
+      return (e_let_in {var=let_binder ; ascr=(Some tv) ; attributes = Stage_common.Helpers.empty_attribute} rhs result {inline;no_mutation;public})
+  | E_type_in {type_binder;rhs;let_result} ->
+      let rhs = Untyper.untype_type_expression rhs in
+      let let_result = untype_expression let_result in
+      return @@ make_e @@ E_type_in {type_binder; rhs; let_result }
   | E_mod_in {module_binder;rhs;let_result} ->
       let rhs = untype_module_fully_typed rhs in
       let result = untype_expression let_result in
@@ -973,17 +984,17 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
 and untype_declaration : O.declaration -> I.declaration =
 let return (d: I.declaration) = d in
 function
-  Declaration_type {type_binder; type_expr} ->
+  Declaration_type {type_binder; type_expr;type_attr={public}} ->
   let type_expr = untype_type_expression type_expr in
-  return @@ Declaration_type {type_binder; type_expr}
-| Declaration_constant {name; binder;expr;attr={inline;no_mutation}} ->
+  return @@ Declaration_type {type_binder; type_expr;type_attr={public}}
+| Declaration_constant {name; binder;expr;attr={inline;no_mutation;public}} ->
   let ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let expr = untype_expression expr in
-  return @@ Declaration_constant {name; binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation}}
-| Declaration_module {module_binder;module_} ->
+  return @@ Declaration_constant {name; binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation;public}}
+| Declaration_module {module_binder;module_;module_attr={public}} ->
   let module_ = untype_module_fully_typed module_ in
-  return @@ Declaration_module {module_binder;module_}
+  return @@ Declaration_module {module_binder;module_; module_attr={public}}
 | Module_alias ma ->
   return @@ Module_alias ma
 

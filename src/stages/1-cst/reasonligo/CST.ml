@@ -161,11 +161,11 @@ and let_binding = {
 (* Type declarations *)
 
 and type_decl = {
-  kwd_type  : kwd_type;
-  name      : type_name;
-  params    : type_vars option;
-  eq        : equal;
-  type_expr : type_expr
+  kwd_type   : kwd_type;
+  name       : type_name;
+  params     : type_vars option;
+  eq         : equal;
+  type_expr  : type_expr
 }
 
 and type_vars = (type_var reg, comma) nsepseq par reg
