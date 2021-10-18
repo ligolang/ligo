@@ -100,9 +100,20 @@ module type S =
 
     val recovery : bool (* --recovery *)
 
+    (* Enable tracing of error recovery (debug option) *)
+
+    val trace_recovery : bool (* --trace_recovery *)
+
+    (* File path where tracing will be printed ([None] means STDOUT) *)
+
+    val trace_recovery_output : string option
+
     (* Status *)
 
-    type status = Lexer_CLI.status
+    type status = [
+      Lexer_CLI.status
+    | `DependsOnOtherOption of string * string
+    ]
 
     val status : status
   end

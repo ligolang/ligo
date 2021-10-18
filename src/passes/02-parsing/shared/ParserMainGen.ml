@@ -91,6 +91,8 @@ module Make
       | `Version      ver -> print_and_quit (ver ^ "\n")
       | `Conflict (o1,o2) ->
            cli_error (Printf.sprintf "Choose either %s or %s." o1 o2)
+      | `DependsOnOtherOption (o1, o2) ->
+           cli_error (Printf.sprintf "Option %s requires option %s" o1 o2)
       | `Done ->
            match Preprocessor_CLI.extension with
              Some ext when ext <> File.extension ->
@@ -101,7 +103,11 @@ module Make
 
     (* Main *)
 
-    module MainParser = ParserLib.API.Make (MainLexer) (Parser)
+    module MainParser = ParserLib.API.MakeWithDebug (MainLexer) (Parser)
+                            (struct
+                                let error_recovery_tracing = CLI.trace_recovery
+                                let tracing_output         = CLI.trace_recovery_output
+                             end)
 
     let show_error_message : MainParser.message -> unit =
       function Region.{value; region} ->

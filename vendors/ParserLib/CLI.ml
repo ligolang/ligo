@@ -68,8 +68,14 @@ module type S =
     val cst        : bool
     val cst_tokens : bool
     val recovery   : bool
+    (* debug options *)
+    val trace_recovery        : bool
+    val trace_recovery_output : string option
 
-    type status = Lexer_CLI.status
+    type status = [
+       Lexer_CLI.status
+    | `DependsOnOtherOption of string * string
+    ]
 
     val status : status
   end
@@ -92,7 +98,11 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
         "      --cst        Print the CST";
         "      --cst-tokens Print tokens from the CST";
         "      --pretty     Pretty-print the input";
-        "      --recovery   enable error recovery"
+        "      --recovery   Enable error recovery";
+        "      debug options:";
+        "      --trace-recovery [output_file]";
+        "                   Enable verbose printing of intermediate steps of error recovery algorithm to";
+        "                   output_file if it is passed or stdout otherwise"
       ] in
       begin
         Buffer.add_string buffer (String.concat "\n" options);
@@ -107,6 +117,9 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
     and cst        = ref false
     and cst_tokens = ref false
     and recovery   = ref false
+    (* debug options *)
+    and trace_recovery        = ref false
+    and trace_recovery_output = ref None
 
     and help       = ref false
     and version    = ref false
@@ -186,6 +199,9 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
         noshort, "cst",        set cst true, None;
         noshort, "cst-tokens", set cst_tokens true, None;
         noshort, "recovery",   set recovery true, None;
+        noshort, "trace-recovery", set trace_recovery true,
+          Some (fun path -> trace_recovery := true;
+                            trace_recovery_output := Some path);
 
         noshort, "cli",        set cli true, None;
         'h',     "help",       set help true, None;
@@ -228,6 +244,7 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
       |> add "--cst"
       |> add "--cst-tokens"
       |> add "--recovery"
+      |> add "--trace-recovery"
 
       (* The following options are present in all CLI *)
       |> add "--cli"
@@ -235,14 +252,18 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
       |> add "--version" |> add "-v"
 
     let opt_with_arg = SSet.empty
+                       |> SSet.add "--trace-recovery"
 
     let argv_copy = Array.copy Sys.argv
 
     let () = Argv.filter ~opt_wo_arg ~opt_with_arg
 
-    type status = Lexer_CLI.status
+    type status = [
+      Lexer_CLI.status
+    | `DependsOnOtherOption of string * string
+    ]
 
-    let status = Lexer_CLI.status
+    let status = (Lexer_CLI.status :> status)
 
     let status =
       try
@@ -261,6 +282,9 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
     and cst        = !cst
     and cst_tokens = !cst_tokens
     and recovery   = !recovery
+    (* Debug options *)
+    and trace_recovery        = !trace_recovery
+    and trace_recovery_output = !trace_recovery_output
 
     (* Re-exporting and printing on stdout the CLI options *)
 
@@ -271,7 +295,10 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
         sprintf "pretty     = %b" pretty;
         sprintf "cst        = %b" cst;
         sprintf "cst_tokens = %b" cst_tokens;
-        sprintf "recovery   = %b" recovery] in
+        sprintf "recovery   = %b" recovery;
+        sprintf "trace_recovery = %b" trace_recovery;
+        sprintf "trace_recovery_output = %s" @@
+            Option.value trace_recovery_output ~default:"None"] in
     begin
       Buffer.add_string buffer (String.concat "\n" options);
       Buffer.add_char   buffer '\n';
@@ -281,12 +308,14 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
     (* Checking combinations of options *)
 
     let status =
-      match mono, pretty, cst, cst_tokens, recovery with
-      |     _,  true,  true,     _,     _ -> `Conflict ("--pretty", "--cst")
-      |     _,  true,     _,  true,     _ -> `Conflict ("--pretty", "--cst-tokens")
-      |     _,     _,  true,  true,     _ -> `Conflict ("--cst", "--cst-tokens")
-      |  true,     _,     _,     _,  true -> `Conflict ("--mono", "--recovery")
-      |     _,     _,     _,     _,     _ -> status
+      match mono, pretty, cst, cst_tokens, recovery, trace_recovery with
+      |     _,  true,  true,     _,     _,     _ -> `Conflict ("--pretty", "--cst")
+      |     _,  true,     _,  true,     _,     _ -> `Conflict ("--pretty", "--cst-tokens")
+      |     _,     _,  true,  true,     _,     _ -> `Conflict ("--cst", "--cst-tokens")
+      |  true,     _,     _,     _,  true,     _ -> `Conflict ("--mono", "--recovery")
+      |     _,     _,     _,     _, false,  true -> `DependsOnOtherOption
+                                                      ("--trace-recovery", "--recovery")
+      |     _,     _,     _,     _,     _,     _ -> status
 
 
     (* Status *)

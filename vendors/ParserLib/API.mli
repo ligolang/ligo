@@ -77,10 +77,23 @@ module type PAR_ERR =
     val message : int -> string
   end
 
+(* Debug setting *)
+
+module type DEBUG_CONFIG =
+  sig
+      val error_recovery_tracing : bool
+      val tracing_output         : string option
+  end
+
+(* Default debug setting when all options are disabled *)
+
+module Default_debug_config : DEBUG_CONFIG
+
 (* The functor integrating the parser with its errors *)
 
-module Make (Lexer  : LEXER)
-            (Parser : PARSER with type token = Lexer.token) :
+module MakeWithDebug (Lexer  : LEXER)
+                     (Parser : PARSER with type token = Lexer.token)
+                     (Debug  : DEBUG_CONFIG) :
   sig
     type token = Lexer.token
 
@@ -119,3 +132,9 @@ module Make (Lexer  : LEXER)
     val recov_from_string  : (module PAR_ERR) -> string        recovery_parser
     val recov_from_file    : (module PAR_ERR) -> file_path     recovery_parser
   end
+
+(* Version with disabled debug *)
+
+module Make (Lexer : LEXER)
+            (Parser : PARSER with type token = Lexer.token)
+       : module type of MakeWithDebug (Lexer) (Parser) (Default_debug_config)

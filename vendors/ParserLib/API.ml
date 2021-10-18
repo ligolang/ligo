@@ -76,11 +76,27 @@ module type PAR_ERR =
     val message : int -> string
   end
 
+(* Debug setting *)
+
+module type DEBUG_CONFIG =
+  sig
+      val error_recovery_tracing : bool
+      val tracing_output         : string option
+  end
+
+(* Default debug setting when all options are disabled *)
+
+module Default_debug_config : DEBUG_CONFIG =
+  struct
+      let error_recovery_tracing = false
+      let tracing_output         = None
+  end
 
 (* The functor integrating the parser with its errors *)
 
-module Make (Lexer: LEXER)
-            (Parser: PARSER with type token = Lexer.Token.token) =
+module MakeWithDebug (Lexer: LEXER)
+                     (Parser: PARSER with type token = Lexer.Token.token)
+                     (Debug: DEBUG_CONFIG) =
   struct
     module Token = Lexer.Token
     type token = Lexer.token
@@ -234,6 +250,29 @@ module Make (Lexer: LEXER)
 
     (* Incremental parsing with recovery *)
 
+    let tracing_channel =
+      match Debug.tracing_output with
+      | None      -> stdout
+      | Some path -> open_out path
+
+    (* Debug printer *)
+    module TracingPrinter : Merlin_recovery.PRINTER with module I = Inter
+      = Merlin_recovery.MakePrinter
+            (struct
+                module I = Inter
+                let print str =
+                  if Debug.error_recovery_tracing then
+                      Printf.fprintf tracing_channel "%s" str
+
+                let print_symbol = function
+                  | Inter.X s -> print @@ Parser.Recovery.print_symbol s
+
+                let print_element = None
+
+                let print_token t = print @@ Lexer.Token.to_lexeme t
+            end)
+
+
     module R = Merlin_recovery.Make
                    (Inter)
                    (struct
@@ -244,7 +283,8 @@ module Make (Lexer: LEXER)
                        (* TODO *)
 
                        let guide _ = false
-                   end)
+                    end)
+                   (TracingPrinter)
 
     module Recover =
       struct
@@ -273,7 +313,8 @@ module Make (Lexer: LEXER)
         let step parser failure token : 'a step * message option =
           let try_recovery failure_cp candidates: 'a step =
             begin match R.attempt candidates token with
-            | `Ok (Inter.InputNeeded _ as cp, _) -> Intermediate (Correct cp)
+            | `Ok (Inter.InputNeeded _ as cp, _) ->
+               Intermediate (Correct cp)
             | `Ok _     -> failwith "Impossible"
             | `Accept x -> Success x
             | `Fail ->
@@ -284,7 +325,8 @@ module Make (Lexer: LEXER)
                   | None -> Error failure_cp (* Fatal error *)
                   end
                (* If recovering fails skip token and try again. *)
-               | _ -> Intermediate (Recovering (failure_cp, candidates))
+               | _ ->
+                  Intermediate (Recovering (failure_cp, candidates))
                end
             end in
           match parser with
@@ -293,6 +335,7 @@ module Make (Lexer: LEXER)
              | Intermediate _ | Success _ as s -> (s, None)
              | Error failure_cp ->
                 let error = failure failure_cp in
+                TracingPrinter.print @@ Printf.sprintf "Error %s\n" error.Region.value;
                 let env = recovery_env cp in
                 let candidates = R.generate env in
                 (try_recovery failure_cp candidates, Some error)
@@ -346,3 +389,8 @@ module Make (Lexer: LEXER)
     let recov_from_file    = from_file recov_from_lexbuf
   end
 
+(* Version with disabled debug *)
+
+module Make (Lexer: LEXER)
+            (Parser: PARSER with type token = Lexer.Token.token)
+  = MakeWithDebug (Lexer) (Parser) (Default_debug_config)
