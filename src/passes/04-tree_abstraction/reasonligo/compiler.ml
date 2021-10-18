@@ -738,11 +738,11 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
+    return_1 region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr; type_attr=[]}
   | ModuleDecl {value={name; module_; _};region} ->
     let (name,_) = r_split name in
     let module_ = compile_module ~raise module_ in
-    return_1 region @@ AST.Declaration_module  {module_binder=name; module_}
+    return_1 region @@ AST.Declaration_module  {module_binder=name; module_; module_attr=[]}
   | ModuleAlias {value={alias; binders; _};region} ->
     let (alias,_) = r_split alias in
     let binders,_ = List.Ne.unzip @@ List.Ne.map r_split @@ npseq_to_ne_list binders in

@@ -298,9 +298,9 @@ module Mutator = struct
           ({location; wrap_content = Declaration_constant {name; binder; expr ; attr}} : declaration location_wrap), mutation
       )
       | Declaration_type t -> [ ({location; wrap_content = Declaration_type t} : declaration location_wrap), None ]
-      | Declaration_module {module_binder;module_} ->
+      | Declaration_module {module_binder;module_; module_attr} ->
          let+ module_, mutation = mutate_module module_ in
-         ({location; wrap_content = Declaration_module {module_binder; module_}} : declaration location_wrap), mutation
+         ({location; wrap_content = Declaration_module {module_binder; module_; module_attr}} : declaration location_wrap), mutation
       | Module_alias _ -> [ ({location; wrap_content = x} : declaration location_wrap), None ]
     in
     let* p, mutation = combine_list p (List.map ~f:aux p) in

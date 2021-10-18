@@ -246,7 +246,7 @@ module Fold_helpers(M : Monad) = struct
        in
        bind_fold_ne_list fold_case res cases
     | SBreak _ -> ok init
-    | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> bind_fold_npseq self init inside
+    | SNamespace {value = (_, _, {value = {inside; _}; _}, _); _} -> bind_fold_npseq self init inside
     | SExport {value = (_, s); _} -> self init s 
     | SImport _ -> ok init
     | SForOf {value = {expr; statement; _}; _}
@@ -612,7 +612,7 @@ module Fold_helpers(M : Monad) = struct
     | SBreak b ->
        return @@ SBreak b
     | SNamespace {value; region} -> 
-      let (kwd_namespace, name, statements) = value in
+      let (kwd_namespace, name, statements, attributes) = value in
       let ({value = statements_value; region = statements_region}: statements braces reg) = statements in
       let* inside = bind_map_npseq self statements_value.inside in
       let statements: statements braces reg = {
@@ -622,7 +622,7 @@ module Fold_helpers(M : Monad) = struct
         };
         region = statements_region
       } in
-      let value = (kwd_namespace, name, statements) in
+      let value = (kwd_namespace, name, statements, attributes) in
       return @@ SNamespace {
         value;
         region

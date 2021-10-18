@@ -42,7 +42,7 @@ let get_layout : (string list) -> O.layout option = fun attributes ->
 
 let get_inline : (string list) -> bool = List.exists ~f:is_inline
 let get_no_mutation : (string list) -> bool = List.exists ~f:is_no_mutation
-
+let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal)
 
 let rec compile_type_expression : I.type_expression -> O.type_expression =
   fun te ->
@@ -127,10 +127,12 @@ let rec compile_expression : I.expression -> O.expression =
       let let_result = self let_result in
       let inline = get_inline attributes in
       let no_mutation = get_no_mutation attributes in
-      return @@ O.E_let_in {let_binder;attr = {inline; no_mutation};rhs;let_result}
-    | I.E_type_in ti ->
-      let ti = type_in self self_type ti in
-      return @@ O.E_type_in ti
+      let public = get_public attributes in
+      return @@ O.E_let_in {let_binder;attr = {inline; no_mutation;public};rhs;let_result}
+    | I.E_type_in {type_binder; rhs; let_result} ->
+      let rhs = self_type rhs in
+      let let_result = self let_result in
+      return @@ O.E_type_in {type_binder; rhs; let_result}
     | I.E_mod_in {module_binder;rhs;let_result} ->
       let rhs = compile_module rhs in
       let let_result = self let_result in
@@ -253,7 +255,7 @@ let rec compile_expression : I.expression -> O.expression =
       let expr1 = self expr1 in
       let expr2 = self expr2 in
       let let_binder : _ O.binder = {var = Location.wrap @@ Var.of_name "_" ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
-      return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false}}
+      return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false;public=true}}
     | I.E_skip -> O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->
       let aux (i,acc) el =
@@ -267,18 +269,21 @@ and compile_declaration : I.declaration -> O.declaration =
   fun declaration ->
   let return (decl: O.declaration) = decl in
   match declaration with
-  | I.Declaration_type dt ->
-    let dt = declaration_type compile_type_expression dt in
-    return @@ O.Declaration_type dt
+  | I.Declaration_type {type_binder; type_expr; type_attr} ->
+    let type_expr = compile_type_expression type_expr in
+    let public = get_public type_attr in
+    return @@ O.Declaration_type {type_binder; type_expr; type_attr = {public}}
   | I.Declaration_constant {name; binder;attr;expr} ->
     let binder = compile_binder binder in
     let expr = compile_expression expr in
     let inline = get_inline attr in
     let no_mutation = get_no_mutation attr in
-    return @@ O.Declaration_constant {name; binder; attr={inline;no_mutation}; expr}
-  | I.Declaration_module {module_binder;module_} ->
+    let public = get_public attr in
+    return @@ O.Declaration_constant {name; binder; attr={inline;no_mutation;public}; expr}
+  | I.Declaration_module {module_binder;module_;module_attr} ->
     let module_ = compile_module module_ in
-    return @@ O.Declaration_module {module_binder;module_}
+    let public = get_public module_attr in
+    return @@ O.Declaration_module {module_binder;module_;module_attr={public}}
   | I.Module_alias ma ->
     let ma = module_alias ma in
     return @@ O.Module_alias ma

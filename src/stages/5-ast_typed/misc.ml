@@ -32,7 +32,7 @@ module Free_variables = struct
       union
         (expression b' let_result)
         (self rhs)
-    | E_type_in { type_binder=_; rhs=_; let_result} -> self let_result
+    | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
     | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
@@ -248,7 +248,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
 let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _}} -> (
+    | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _; public = _}} -> (
       if match name' with None -> false | Some name' -> String.equal name name'
       then Some expr
       else None

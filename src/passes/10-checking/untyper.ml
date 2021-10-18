@@ -46,8 +46,8 @@ let rec untype_type_expression_nofail (t:O.type_expression) : I.type_expression 
 let untype_type_expression (t:O.type_expression) : I.type_expression =
   untype_type_expression_nofail t
 
-let untype_declaration_constant untype_expression O.{name;binder;expr;attr={inline;no_mutation}} =
-  let attr = I.{inline;no_mutation} in
+let untype_declaration_constant untype_expression O.{name;binder;expr;attr={inline;no_mutation;public}} =
+  let attr = I.{inline;no_mutation;public} in
   let ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
   let binder = ({var;ascr= Some ty;attributes=Stage_common.Helpers.empty_attribute}: _ I.binder) in
@@ -55,14 +55,16 @@ let untype_declaration_constant untype_expression O.{name;binder;expr;attr={inli
   let expr = I.e_ascription expr ty in
   I.{name;binder;attr;expr;}
 
-let untype_declaration_type O.{type_binder; type_expr} =
+let untype_declaration_type O.{type_binder; type_expr; type_attr={public}} =
   let type_expr = untype_type_expression type_expr in
   let type_binder = Var.todo_cast type_binder in
-  I.{type_binder; type_expr}
+  let type_attr = (I.{public}: I.type_attribute) in
+  I.{type_binder; type_expr; type_attr}
 
-let rec untype_declaration_module untype_expression O.{module_binder; module_} =
+let rec untype_declaration_module untype_expression O.{module_binder; module_; module_attr={public}} =
   let module_ = untype_module untype_expression module_ in
-  I.{module_binder; module_ = module_}
+  let module_attr = (I.{public}: I.module_attribute) in
+  I.{module_binder; module_ = module_; module_attr}
 
 and untype_declaration untype_expression =
   let return (d: I.declaration) = d in

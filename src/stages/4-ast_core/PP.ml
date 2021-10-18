@@ -113,9 +113,13 @@ and expression_content ppf (ec : expression_content) =
   | E_lambda    l -> lambda expression type_expression ppf l
   | E_recursive r -> recursive expression type_expression ppf r
   | E_matching x -> fprintf ppf "%a" (match_exp expression type_expression) x
-  | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation }} ->
+  | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation ; _ }} ->
     fprintf ppf "@[let %a =@;<1 2>%a%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_type_in   ti -> type_in expression type_expression ppf ti
+  | E_type_in   {type_binder; rhs; let_result} -> 
+    fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
+      type_variable type_binder
+      type_expression rhs
+      expression let_result
   | E_mod_in {module_binder; rhs; let_result;} ->
     fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]" module_variable module_binder module_ rhs expression let_result
   | E_mod_alias ma -> mod_alias expression ppf ma
@@ -125,17 +129,20 @@ and expression_content ppf (ec : expression_content) =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_type     dt -> declaration_type                type_expression ppf dt
-  | Declaration_constant {name = _ ; binder=b ; attr = { inline ; no_mutation } ; expr} ->
-      fprintf ppf "@[<2>const %a =@ %a%a%a@]"
+  | Declaration_type     {type_binder;type_expr;type_attr={public}} -> 
+    fprintf ppf "@[<2>type %a =@ %a%a@]" type_variable type_binder type_expression type_expr option_public public
+  | Declaration_constant {name = _ ; binder=b ; attr = { inline ; no_mutation ; public } ; expr} ->
+      fprintf ppf "@[<2>const %a =@ %a%a%a%a@]"
         (binder type_expression) b
         expression expr
         option_inline inline
         option_no_mutation no_mutation
-  | Declaration_module {module_binder;module_=m} ->
-      fprintf ppf "@[<2>module %a =@ %a@]"
+        option_public public
+  | Declaration_module {module_binder;module_=m;module_attr={public}} ->
+      fprintf ppf "@[<2>module %a =@ %a%a@]"
         module_variable module_binder
         module_ m
+        option_public public
   | Module_alias {alias;binders} ->
     fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
 

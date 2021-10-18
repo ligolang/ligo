@@ -1032,6 +1032,9 @@ and compile_pattern ~raise : const:bool -> CST.pattern -> type_expression binder
     return loc expr var Stage_common.Helpers.empty_attribute
   | _ -> raise.raise @@ unsupported_pattern_type pattern
 
+and filter_private (attributes: CST.attributes) = 
+  List.filter ~f:(fun v -> not (v.value = "private")) attributes
+
 and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (Region.t * CST.type_expr) option -> CST.pattern -> Region.t -> (module_variable option * type_expression binder * Ast_imperative__.Types.attributes * expression) list =
   fun ~const attributes let_rhs type_expr binders region ->
   let attributes = compile_attributes attributes in
@@ -1218,12 +1221,12 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result =
     let rhs = compile_type_expression ~raise type_expr in
     binding (e_type_in ~loc type_binder rhs)
   | SNamespace n ->
-    let ((m, name, rhs), loc) = r_split n in
+    let ((m, name, rhs, attributes), loc) = r_split n in
+    ignore attributes;
     let module_binder = name.value in
     let rhs = compile_namespace ~raise rhs.value.inside in
     binding (e_mod_in ~loc module_binder rhs)
   | SExport e ->
-    let ((_, statement), _) = r_split e in
     compile_statement ~raise statement
   | SImport i ->
     let (({alias; module_path; _}: CST.import), loc) = r_split i in
@@ -1260,10 +1263,17 @@ and compile_statements_to_expression ~raise : CST.statements -> AST.expression =
   let statement_result = compile_statements ~raise statements in
   statement_result_to_expression statement_result
 
-and compile_statement_to_declaration ~raise : CST.statement -> AST.declaration list = fun statement ->
+and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.declaration list = fun statement ->
   match statement with
   | SType {value; region} ->
     let name = value.name.value in
+    let attributes = 
+      if export then 
+        filter_private value.attributes
+      else 
+        value.attributes
+    in
+    let attributes = compile_attributes attributes in
     let type_expr =
       let rhs = compile_type_expression ~raise value.type_expr in
       match value.params with
@@ -1278,8 +1288,14 @@ and compile_statement_to_declaration ~raise : CST.statement -> AST.declaration l
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    [AST.Declaration_type {type_binder = Var.of_name name; type_expr}]
+    [AST.Declaration_type {type_binder = Var.of_name name; type_expr; type_attr=attributes}]
   | SLet {value = {bindings; attributes; _ }; _} -> (
+    let attributes = 
+      if export then 
+        filter_private attributes
+      else 
+        attributes
+    in
     let fst_binding = fst bindings in
     let fst_binding = compile_let_to_declaration ~raise ~const:false attributes fst_binding in
     let bindings = List.map ~f:(fun (_, b) -> b) @@ snd bindings in
@@ -1292,6 +1308,12 @@ and compile_statement_to_declaration ~raise : CST.statement -> AST.declaration l
     aux fst_binding bindings
   )
   | SConst {value = {bindings; attributes; _}; _} -> (
+    let attributes = 
+      if export then 
+        filter_private attributes
+      else 
+        attributes
+    in
     let fst_binding = fst bindings in
     let fst_binding = compile_let_to_declaration ~raise ~const:true attributes fst_binding in
     let bindings = List.map ~f:(fun (_, b) -> b) @@ snd bindings in
@@ -1303,15 +1325,22 @@ and compile_statement_to_declaration ~raise : CST.statement -> AST.declaration l
     in
     aux fst_binding bindings
   )
-  | SNamespace {value = (_, ident, {value = {inside = statements; _}; _}); _} ->
+  | SNamespace {value = (_, ident, {value = {inside = statements; _}; _}, attributes); _} ->
+    let attributes = 
+      if export then 
+        filter_private attributes
+      else 
+        attributes
+    in
     let (name,_) = r_split ident in
+    let attributes = compile_attributes attributes in
     let module_ = compile_namespace ~raise statements in
-    [AST.Declaration_module  {module_binder=name; module_}]
+    [AST.Declaration_module  {module_binder=name; module_; module_attr=attributes}]
   | SImport {value = {alias; module_path; _}; _} ->
     let (alias,_)   = r_split alias in
     let binders,_ = List.Ne.unzip @@ List.Ne.map r_split @@ npseq_to_ne_list module_path in
     [AST.Module_alias {alias; binders}]
-  | SExport {value = (_, s); _} -> compile_statement_to_declaration ~raise s
+  | SExport {value = (_, s); _} -> compile_statement_to_declaration ~raise ~export:true s
   | _ ->
     raise.raise @@ statement_not_supported_at_toplevel statement
 
@@ -1319,7 +1348,7 @@ and compile_statements_to_program ~raise : CST.ast -> AST.module_ = fun ast ->
   let aux : CST.toplevel_statement -> declaration location_wrap list = fun statement ->
     match statement with
       TopLevel (statement, _) ->
-        let declarations = compile_statement_to_declaration ~raise statement in
+        let declarations = compile_statement_to_declaration ~raise ~export:false statement in
         List.map ~f:(fun d ->
           let loc = Location.lift @@ CST.statement_to_region statement in
           Location.wrap ~loc d
@@ -1335,7 +1364,7 @@ and compile_statements_to_program ~raise : CST.ast -> AST.module_ = fun ast ->
 
 and compile_namespace ~raise : CST.statements -> AST.module_ = fun statements ->
   let aux : CST.statement -> declaration location_wrap list = fun statement ->
-    let declarations = compile_statement_to_declaration ~raise statement in
+    let declarations = compile_statement_to_declaration ~raise ~export:false statement in
     List.map ~f:(fun d -> 
       let loc = Location.lift @@ CST.statement_to_region statement in
       Location.wrap ~loc d

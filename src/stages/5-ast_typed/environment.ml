@@ -25,37 +25,51 @@ let map_expr_environment : _ -> t -> t = fun f { expression_environment ; type_e
 let map_type_environment : _ -> t -> t = fun f { expression_environment ; type_environment ; module_environment } -> { expression_environment ; type_environment = f type_environment ; module_environment }
 let map_module_environment : _ -> t -> t = fun f { expression_environment ; type_environment ; module_environment } -> { expression_environment ; type_environment ; module_environment = f module_environment }
 
-let add_expr   : expression_variable -> element -> t -> t = fun expr_var env_elt -> map_expr_environment (fun x -> {expr_var ; env_elt} :: x)
-let add_type   : type_variable -> type_expression -> t -> t = fun type_variable type_ -> map_type_environment (fun x -> { type_variable ; type_ = Ty { type_ with orig_var = Some type_variable } } :: x)
-let add_kind   : type_variable -> unit -> t -> t = fun type_variable () -> map_type_environment (fun x -> { type_variable ; type_ = Kind () } :: x)
-let add_type_var : type_variable -> unit -> t -> t = fun type_variable () -> map_type_environment (fun x -> { type_variable ; type_ = Ty (t_variable type_variable) } :: x)
-let add_module : module_variable -> environment -> t -> t = fun module_variable module_ -> map_module_environment (fun x -> { module_variable ; module_ } :: x)
+let add_expr ~public : expression_variable -> element -> t -> t = fun expr_var env_elt -> 
+  map_expr_environment (fun x -> {expr_var ; env_elt; public} :: x)
+let add_type ~public : type_variable -> type_expression -> t -> t = fun type_variable type_ -> 
+  map_type_environment (fun x -> { type_variable ; type_ = Ty { type_ with orig_var = Some type_variable }; public } :: x)
+let add_kind : type_variable -> unit -> t -> t = fun type_variable () -> map_type_environment (fun x -> { type_variable ; type_ = Kind (); public=true } :: x)
+let add_type_var : type_variable -> unit -> t -> t = fun type_variable () -> map_type_environment (fun x -> { type_variable ; type_ = Ty (t_variable type_variable); public=true } :: x)
+let add_module ~public : module_variable -> environment -> t -> t = fun module_variable module_ -> map_module_environment (fun x -> { module_variable ; module_; public } :: x)
 (* TODO: generate : these are now messy, clean them up. *)
 
-let of_list_type : (type_variable * type_expression) list -> t = fun tvlist -> List.fold_left ~f:(fun acc (t,v) -> add_type t v acc) ~init:empty tvlist
+let of_list_type : (type_variable * type_expression) list -> t = fun tvlist -> List.fold_left ~f:(fun acc (t,v) -> add_type ~public:true t v acc) ~init:empty tvlist
 
-let get_opt : expression_variable -> t -> element option = fun k x ->
-  Option.bind ~f: (fun {expr_var=_ ; env_elt} -> Some env_elt) @@
-    List.find ~f:(fun {expr_var ; env_elt=_} -> Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
-let get_type_opt : type_variable -> t -> type_expression option = fun k x ->
-  Option.bind ~f:(fun {type_variable=_ ; type_} -> match type_ with Ty type_ -> Some type_ | Kind () -> None) @@
-    List.find ~f:(fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)
+let get_opt : ?other_module:bool -> expression_variable -> t -> element option = fun ?other_module k x ->
+  let other_module = match other_module with 
+    Some s -> s
+  | None -> false
+  in
+  Option.bind ~f: (fun {expr_var=_ ; env_elt; public=_} -> Some env_elt) @@
+    List.find ~f:(fun {expr_var ; env_elt=_; public} -> (public = true || not other_module) && Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
+let get_type_opt : ?other_module:bool -> type_variable -> t -> type_expression option = fun ?other_module k x ->
+  let other_module = match other_module with 
+    Some s -> s
+  | None -> false
+  in
+  Option.bind ~f:(fun {type_variable=_ ; type_; public=_} -> match type_ with Ty type_ -> Some type_ | Kind () -> None) @@
+    List.find ~f:(fun {type_variable ; type_=_; public} -> (public = true || not other_module) && Var.equal type_variable k) (get_type_environment x)
 let get_kind_opt : type_variable -> t -> unit option = fun k x ->
-  Option.bind ~f:(fun {type_variable=_ ; type_} -> match type_ with Ty _ -> None | Kind x -> Some x) @@
-    List.find ~f:(fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)
-let get_module_opt : module_variable -> t -> environment option = fun k x ->
-  Option.bind ~f: (fun {module_variable=_ ; module_} -> Some module_) @@
-    List.find ~f:(fun {module_variable; module_=_} -> String.equal module_variable k) (get_module_environment x)
+  Option.bind ~f:(fun {type_variable=_ ; type_; public=_} -> match type_ with Ty _ -> None | Kind x -> Some x) @@
+    List.find ~f:(fun {type_variable ; type_=_; public=_} -> Var.equal type_variable k) (get_type_environment x)
+let get_module_opt : ?other_module:bool -> module_variable -> t -> environment option = fun ?other_module k x ->
+  let other_module = match other_module with 
+    Some s -> s
+  | None -> false
+  in
+  Option.bind ~f: (fun {module_variable=_ ; module_; public=_} -> Some module_) @@
+    List.find ~f:(fun {module_variable; module_=_; public} -> (public = true || not other_module) && String.equal module_variable k) (get_module_environment x)
 
 let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e ->
-  add_expr k (make_element_binder v) e
+  add_expr ~public:true k (make_element_binder v) e
 
-let add_ez_declaration : expression_variable -> expression -> t -> t = fun k ae e ->
-  add_expr k (make_element_declaration ae) e
+let add_ez_declaration ~public : expression_variable -> expression -> t -> t = fun k ae e ->
+  add_expr ~public k (make_element_declaration ae) e
 
 let get_constructor : label -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
   let rec rec_aux e =
-    let aux = fun {type_variable=_ ; type_} ->
+    let aux = fun {type_variable=_ ; type_; public=_} ->
       match type_ with
       | Kind () -> None
       | Ty type_ ->
@@ -70,7 +84,7 @@ let get_constructor : label -> t -> (type_expression * type_expression) option =
       Some _ as s -> s
     | None ->
       let modules = get_module_environment e in
-      List.fold_left ~f:(fun res {module_variable=_;module_} ->
+      List.fold_left ~f:(fun res {module_variable=_;module_; public=_} ->
         match res with Some _ as s -> s | None -> rec_aux module_
       ) ~init:None modules
   in rec_aux x
@@ -86,7 +100,7 @@ let get_constructor_parametric : label -> t -> (type_variable list * type_expres
       | T_abstraction { ty_binder ; kind = _ ; type_ } ->
          aux (Location.unwrap ty_binder :: av) type_
       | _ -> None in
-    let aux = fun {type_variable=_ ; type_} ->
+    let aux = fun {type_variable=_ ; type_; public=_} ->
       match type_ with
       | Kind () -> None
       | Ty type_ ->
@@ -95,14 +109,14 @@ let get_constructor_parametric : label -> t -> (type_variable list * type_expres
       Some _ as s -> s
     | None ->
       let modules = get_module_environment e in
-      List.fold_left ~f:(fun res {module_variable=_;module_} ->
+      List.fold_left ~f:(fun res {module_variable=_;module_;public=_} ->
         match res with Some _ as s -> s | None -> rec_aux module_
       ) ~init:None modules
   in rec_aux x
 
 let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
   let rec rec_aux e =
-    let aux = fun {type_variable=_ ; type_} ->
+    let aux = fun {type_variable=_ ; type_ ; public=_} ->
       match type_ with
       | Kind () -> None
       | Ty type_ ->
@@ -125,7 +139,7 @@ let get_record : _ label_map -> t -> (type_variable option * rows) option = fun 
       Some _ as s -> s
     | None ->
       let modules = get_module_environment e in
-      List.fold_left ~f:(fun res {module_variable=_;module_} ->
+      List.fold_left ~f:(fun res {module_variable=_;module_; public=_} ->
         match res with Some _ as s -> s | None -> rec_aux module_
       ) ~init:None modules
   in rec_aux e
@@ -133,7 +147,7 @@ let get_record : _ label_map -> t -> (type_variable option * rows) option = fun 
 
 let get_sum : _ label_map -> t -> rows option = fun lmap e ->
   let rec rec_aux e =
-    let aux = fun {type_variable=_ ; type_} ->
+    let aux = fun {type_variable=_ ; type_ ; public=_} ->
       match type_ with
       | Kind () -> None
       | Ty type_ ->
@@ -155,7 +169,7 @@ let get_sum : _ label_map -> t -> rows option = fun lmap e ->
       Some _ as s -> s
     | None ->
       let modules = get_module_environment e in
-      List.fold_left ~f:(fun res {module_variable=_;module_} ->
+      List.fold_left ~f:(fun res {module_variable=_;module_;public=_} ->
         match res with Some _ as s -> s | None -> rec_aux module_
       ) ~init:None modules
   in rec_aux e
@@ -168,10 +182,10 @@ module PP = struct
 
   let list_sep_scope x = list_sep x (const " | ")
 
-  let rec environment_element = fun ppf {expr_var ; env_elt} ->
+  let rec environment_element = fun ppf {expr_var ; env_elt; public=_} ->
     fprintf ppf "%a -> %a \n" PP.expression_variable expr_var PP.type_expression env_elt.type_value
 
-  and type_environment_element = fun ppf {type_variable ; type_} ->
+  and type_environment_element = fun ppf {type_variable ; type_; public=_} ->
     fprintf ppf "%a -> %a" PP.type_variable type_variable PP.type_or_kind type_
 
   and expr_environment : _ -> expression_environment -> unit = fun ppf lst ->

@@ -220,7 +220,7 @@ let rec peephole_statement ~raise : unit -> statement -> unit = fun _ s ->
     SExpr e -> 
     let () = peephole_expression () e in
     ()
-  | SNamespace {value = (_, name, _); _} ->
+  | SNamespace {value = (_, name, _, _); _} ->
     let () = check_reserved_name ~raise name in 
     ()
   | SExport {value = (_, e); _} -> 

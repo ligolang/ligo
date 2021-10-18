@@ -30,20 +30,20 @@ let rec print ast =
   in separate_map (hardline ^^ hardline) app stmt
 
 and pp_toplevel_statement = function
-  TopLevel (stmt, _) -> Some (pp_statement stmt)
+  TopLevel (stmt, _) -> Some (pp_statement ?top:(Some true) stmt)
 | Directive _   -> None
 
-and pp_statement = function
+and pp_statement ?top = function
   SBlock      s -> pp_SBlock s
 | SExpr       s -> pp_expr s
 | SCond       s -> group (pp_cond_expr s)
 | SReturn     s -> pp_return s
-| SLet        s -> pp_let s
+| SLet        s -> pp_let ?top s
 | SConst      s -> pp_const s
 | SType       s -> pp_type s
 | SSwitch     s -> pp_switch s
 | SBreak      _ -> string "break" ^^ hardline
-| SNamespace  s -> pp_namespace s
+| SNamespace  s -> pp_namespace ?top s
 | SExport     s -> pp_export s
 | SImport     s -> pp_import s
 | SForOf      s -> pp_for_of s
@@ -76,11 +76,19 @@ and pp_import (node : CST.import Region.reg) =
   ^^ pp_nsepseq "." (fun a -> string a.Region.value) value.module_path
 
 and pp_export {value = (_, statement); _} =
-  string "export" ^^ pp_statement statement
+  string "export " ^^ pp_statement statement
 
-and pp_namespace {value = (_, name, statements); _} =
+and pp_namespace ?top {value = (_, name, statements, attributes); _} =
+  let top = match top with
+    Some true -> true
+  | _ -> false
+  in
+  let is_private = List.exists (fun a -> a.value = "private") attributes in
+  let attributes  = filter_private attributes in
   let pp_statements = pp_nsepseq ";" pp_statement in
-  string "namespace" ^^ string name.value
+  (if attributes = [] then empty else pp_attributes attributes) ^^ 
+  string "namespace " ^^ string name.value
+  ^^ (if ((top && is_private) || not top) then string "" else string "export ") 
   ^^ group (pp_braces pp_statements statements)
 
 and pp_cond_expr {value; _} =
@@ -96,9 +104,19 @@ and pp_return {value = {expr; _}; _} =
     Some s -> string "return " ^^ pp_expr s
   | None -> string "return"
 
-and pp_let (node : let_decl reg) =
-  let {attributes; bindings; _} : let_decl = node.value
-  in (if attributes = [] then empty else pp_attributes attributes)
+and filter_private (attributes: CST.attributes) : CST.attributes = 
+  List.filter (fun (v: CST.attribute) -> not (v.value = "private")) attributes
+
+and pp_let ?top (node : let_decl reg) =
+  let {attributes; bindings; _} : let_decl = node.value in
+  let top = match top with
+    Some true -> true
+  | _ -> false
+  in
+  let is_private = List.exists (fun a -> a.value = "private") attributes in
+  let attributes  = filter_private attributes in
+  (if attributes = [] then empty else pp_attributes attributes)
+     ^^ (if ((top && is_private) || not top) then string "" else string "export ") 
      ^^ string "let " ^^ pp_nsepseq "," pp_val_binding bindings
 
 and pp_const {value = {bindings; _}; _} =

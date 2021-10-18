@@ -214,7 +214,8 @@ open_type_decl:
   "type" type_name type_params? "is" type_expr {
     let stop   = type_expr_to_region $5 in
     let region = cover $1 stop in
-    let value  = {kwd_type   = $1;
+    let value  = {
+                  kwd_type   = $1;
                   name       = $2;
                   params     = $3;
                   kwd_is     = $4;

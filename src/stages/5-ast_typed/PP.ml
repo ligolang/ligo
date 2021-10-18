@@ -159,10 +159,14 @@ and expression_content ppf (ec: expression_content) =
         expression result
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation } } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ } } ->
       fprintf ppf "let %a = %a%a%a in %a" expression_variable let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_type_in   ti -> type_in expression type_expression ppf ti
+  | E_type_in   {type_binder; rhs; let_result} -> 
+      fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
+        type_variable type_binder
+        type_expression rhs
+        expression let_result
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let %a = %a in %a" module_variable module_binder 
         module_fully_typed rhs 
@@ -202,12 +206,12 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant {name = _; binder; expr; attr = { inline; no_mutation } } ->
-      fprintf ppf "const %a = %a%a%a" expression_variable binder expression expr option_inline inline option_no_mutation no_mutation
-  | Declaration_type {type_binder; type_expr} ->
-      fprintf ppf "type %a = %a" type_variable type_binder type_expression type_expr
-  | Declaration_module {module_binder; module_} ->
-      fprintf ppf "module %a = %a" module_variable module_binder module_fully_typed module_
+  | Declaration_constant {name = _; binder; expr; attr = { inline; no_mutation; public } } ->
+      fprintf ppf "const %a = %a%a%a%a" expression_variable binder expression expr option_inline inline option_no_mutation no_mutation option_public public
+  | Declaration_type {type_binder; type_expr; type_attr = { public }} ->
+      fprintf ppf "type %a = %a%a" type_variable type_binder type_expression type_expr option_public public
+  | Declaration_module {module_binder; module_; module_attr = {public}} ->
+      fprintf ppf "module %a = %a%a" module_variable module_binder module_fully_typed module_ option_public public
   | Module_alias {alias; binders} ->
       fprintf ppf "module %a = %a" module_variable alias (list_sep module_variable (tag ".")) @@ List.Ne.to_list binders
 
@@ -295,9 +299,10 @@ let rec environment_element ppf ({type_value;definition} : environment_element) 
     type_expression type_value
     environment_element_definition definition
 
-and environment_binding ppf ({expr_var;env_elt} : environment_binding) =
-  fprintf ppf "{@[<hv 2> @ expr_var : %a;@ env_elt : %a;@]@ }"
+and environment_binding ppf ({expr_var;env_elt;public} : environment_binding) =
+  fprintf ppf "{@[<hv 2> @ expr_var : %a%a;@ env_elt : %a;@]@ }"
     expression_variable expr_var
+    option_public public
     environment_element env_elt
 
 and type_or_kind ppf x =
@@ -305,12 +310,12 @@ and type_or_kind ppf x =
   | Ty x -> type_expression ppf x
   | Kind () -> fprintf ppf "*"
 
-and type_environment_binding ppf ({type_variable=tv;type_} : type_environment_binding) =
+and type_environment_binding ppf ({type_variable=tv;type_;public=_} : type_environment_binding) =
   fprintf ppf "{@[<hv 2> @ type_variable : %a;@ type_ : %a;@]@ }"
     type_variable tv
     type_or_kind type_
 
-and module_environment_binding ppf ({module_variable;module_} : module_environment_binding) =
+and module_environment_binding ppf ({module_variable;module_;public=_} : module_environment_binding) =
   fprintf ppf "{@[<hv 2> @ odule_variable : %s ;@ module_ : %a;@]@ }"
     module_variable
     environment module_

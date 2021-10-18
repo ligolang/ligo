@@ -182,7 +182,8 @@ type_decl:
                   params    = $2;
                   name      = $3;
                   eq        = $4;
-                  type_expr = $5}
+                  type_expr = $5;
+                  }
     in {region; value} }
 
 quoted_type_params:

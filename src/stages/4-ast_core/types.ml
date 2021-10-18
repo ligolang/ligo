@@ -14,8 +14,16 @@ let location_to_yojson loc = Location.to_yojson loc
 type attribute = {
   inline: bool ;
   no_mutation: bool;
+  public: bool;
 }
 
+and type_attribute = {
+  public: bool;
+}
+
+and module_attribute = {
+  public: bool;
+}
 
 and module_ = declaration Location.wrap list
 
@@ -24,13 +32,21 @@ and declaration_constant = {
     binder : ty_expr binder;
     attr : attribute ;
     expr : expression ;
-  }
+}
+
+and declaration_type = {
+  type_binder : type_variable ;
+  type_expr   : ty_expr ;
+  type_attr   : type_attribute
+}
+
 and declaration_module = {
   module_binder : module_variable ;
   module_       : module_ ;
+  module_attr   : module_attribute
 }
 and declaration =
-  | Declaration_type of ty_expr declaration_type
+  | Declaration_type     of declaration_type
   (* A Declaration_constant is described by
    *   a name
    *   an optional type annotation

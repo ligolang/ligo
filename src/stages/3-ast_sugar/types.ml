@@ -69,6 +69,6 @@ and let_in = {
   let_result: expression ;
   attributes : attributes ;
   mut: bool;
-  }
+}
 
 and matching = (expression , type_expression) match_exp

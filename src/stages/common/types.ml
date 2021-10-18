@@ -222,6 +222,7 @@ type ('exp , 'ty_exp) match_exp = {
 type 'ty_exp declaration_type = {
     type_binder : type_variable ;
     type_expr : 'ty_exp ;
+    type_attr : attributes ;
   }
 
 and ('exp,'ty_exp) declaration_constant = {
@@ -234,6 +235,7 @@ and ('exp,'ty_exp) declaration_constant = {
 and ('exp,'ty_expr) declaration_module = {
     module_binder : module_variable ;
     module_ : ('exp,'ty_expr) module' ;
+    module_attr : attributes
   }
 
 and module_alias = {

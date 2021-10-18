@@ -157,11 +157,11 @@ module_:
 type_decl:
   "type" type_name type_params? "=" type_expr {
     let region = cover $1 (type_expr_to_region $5) in
-    let value  = {kwd_type  = $1;
-                  name      = $2;
-                  params    = $3;
-                  eq        = $4;
-                  type_expr = $5}
+    let value  = {kwd_type   = $1;
+                  name       = $2;
+                  params     = $3;
+                  eq         = $4;
+                  type_expr  = $5}
     in {region; value} }
 
 type_params:

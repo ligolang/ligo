@@ -952,14 +952,14 @@ and compile_module_as_record ~raise module_name (module_env : _ SMap.t) (lst : A
       match cur with
       | Declaration_constant { binder ; expr; attr=_ } ->
         let l = Format.asprintf "%a" Var.pp @@ Location.unwrap binder in
-        let attr : AST.attribute = { inline = false ; no_mutation = false } in
+        let attr : AST.attribute = { inline = false ; no_mutation = false; public = true } in
         ((Label l,(expr,attr))::r,env)
       | Declaration_type _ty -> (r,env)
       | Declaration_module {module_binder; module_} ->
         let l = module_binder in
         let r',_ = module_as_record env ~raise module_ in
         let env = SMap.add l (get_type_expression r') env in
-        let attr : AST.attribute = { inline = false ; no_mutation = false } in
+        let attr : AST.attribute = { inline = false ; no_mutation = false; public = true } in
         ((Label l,(r',attr))::r,env)
       | Module_alias {alias; binders} ->
         let l = alias in
@@ -972,7 +972,7 @@ and compile_module_as_record ~raise module_name (module_env : _ SMap.t) (lst : A
         let module_type = get_type_expression module_expr in
         let env = SMap.add l module_type env in
         let r' = module_expr in
-        let attr : AST.attribute = { inline = true ; no_mutation = false } in
+        let attr : AST.attribute = { inline = true ; no_mutation = false ; public = true } in
         ((Label l,(r',attr))::r,env)
 
     in

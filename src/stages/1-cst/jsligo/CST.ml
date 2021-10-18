@@ -163,6 +163,7 @@ and val_binding = {
 (* Type declarations *)
 
 and type_decl = {
+  attributes : attributes;
   kwd_type   : kwd_type;
   name       : type_name;
   params     : type_vars option;
@@ -370,7 +371,7 @@ and statement =
 | SForOf      of for_of reg
 
 and namespace_statement =
-  (kwd_namespace * module_name * statements braces reg) reg
+  (kwd_namespace * module_name * statements braces reg * attributes) reg
 
 and while_stmt = {
   kwd_while: kwd_while;

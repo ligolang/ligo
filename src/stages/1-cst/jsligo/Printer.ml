@@ -162,7 +162,8 @@ and print_statement state = function
     print_let_decl state decl
 | SConst decl ->
     print_const_decl state decl
-| SType { value = {kwd_type; name; params; eq; type_expr}; _ } ->
+| SType { value = {attributes; kwd_type; name; params; eq; type_expr}; _ } ->
+    print_attributes  state attributes;
     print_token       state kwd_type "type";
     print_var         state name;
     print_type_params state params;
@@ -187,7 +188,8 @@ and print_statement state = function
     print_cases state cases;
     print_token state rbrace    "}"
 | SBreak b -> print_token state b "break"
-| SNamespace { value = (kwd_namespace, name, {value = {lbrace; inside; rbrace}; _}); _} ->
+| SNamespace { value = (kwd_namespace, name, {value = {lbrace; inside; rbrace}; _}, attributes); _} ->
+    print_attributes state attributes;
     print_token   state kwd_namespace "namespace";
     print_var     state name;
     print_token   state lbrace    "{";
@@ -799,8 +801,9 @@ and pp_import state  {alias; module_path; _} =
   let aux p = pp_ident state p in
   List.iter aux items
 
-and pp_namespace state (n, name, {value = {inside = statements;_}; _}) =
+and pp_namespace state (n, name, {value = {inside = statements;_}; _}, attributes) =
   pp_loc_node state "<namespace>" n;
+  pp_attributes state attributes;
   pp_ident    state name;
   let statements = Utils.nsepseq_to_list statements in
   let apply len rank = pp_statement (state#pad len rank) in

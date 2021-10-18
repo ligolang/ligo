@@ -57,7 +57,7 @@ let solve_graph ~raise : graph -> file_name -> _ list =
 
 let add_modules_in_env env deps =
   let aux env (module_name, (_,ast_typed_env)) = Ast_typed.(
-    let env = Environment.add_module module_name ast_typed_env env in
+    let env = Environment.add_module ~public:true module_name ast_typed_env env in
     env
   )
   in
@@ -92,7 +92,7 @@ let aggregate_contract ~raise order_deps asts_typed =
     let ast_typed =
       trace_option ~raise (build_corner_case __LOC__ "raise.raise to find typed module") @@
       SMap.find_opt file_name asts_typed in
-    (dep_types,Some (Location.wrap @@ (Ast_typed.Declaration_module {module_binder;module_=Ast_typed.Module_Fully_Typed ast_typed}: Ast_typed.declaration)))
+    (dep_types,Some (Location.wrap @@ (Ast_typed.Declaration_module {module_binder;module_=(Ast_typed.Module_Fully_Typed ast_typed);module_attr={public=true}}: Ast_typed.declaration)))
   in
   let _,header_list = List.fold_map_right ~f:add_modules ~init:(SMap.empty) @@ order_deps in
   let contract = List.fold_left ~f:(fun c a -> match a with Some a -> a::c | None -> c)
@@ -196,7 +196,8 @@ let build_contract_module ~raise ~add_warning : options:Compiler_options.t -> st
   let _, env = SMap.find file_name asts_typed in
   let contract = aggregate_contract ~raise order_deps asts_typed in
   let module_contract = Ast_typed.Declaration_module { module_binder = module_name;
-                                                       module_ = contract } in
+                                                       module_ = contract;
+                                                       module_attr = {public = true} } in
   let contract = Ast_typed.Module_Fully_Typed [Location.wrap module_contract] in
   let mini_c,map = trace ~raise build_error_tracer @@ Ligo_compile.Of_typed.compile_with_modules contract in
   (mini_c, map, contract, env)

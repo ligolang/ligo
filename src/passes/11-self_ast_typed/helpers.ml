@@ -2,13 +2,11 @@ open Errors
 open Ast_typed
 open Trace
 open Ast_typed.Helpers
-open Stage_common
 
 type ('a ,'err) decl_folder = 'a -> declaration -> 'a
 type ('a ,'err) folder = 'a -> expression -> 'a
 let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression f in
-  let idle = fun acc _ -> acc in
   let init = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ -> init
@@ -55,7 +53,9 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
       let res = self res let_result in
       res
     )
-  | E_type_in ti -> Folds.type_in self idle init ti
+  | E_type_in { type_binder=_; rhs = _ ; let_result} -> 
+    let res = self init let_result in 
+    res
   | E_mod_in { module_binder = _ ; rhs ; let_result } -> (
       let res = fold_module f init rhs in
       let res = self res let_result in
@@ -137,9 +137,9 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let let_result = self let_result in
     return @@ E_let_in { let_binder ; rhs ; let_result; attr }
   )
-  | E_type_in ti -> (
-    let ti = Maps.type_in self (fun x -> x) ti in
-    return @@ E_type_in ti
+  | E_type_in {type_binder; rhs; let_result} -> (
+    let let_result = self let_result in 
+    return @@ E_type_in {type_binder; rhs; let_result}
   )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
     let rhs = map_module f rhs in
@@ -196,9 +196,9 @@ and map_module : 'err mapper -> module_fully_typed -> module_fully_typed = fun m
         return @@ Declaration_constant {name; binder; expr ; attr}
     )
     | Declaration_type t -> return @@ Declaration_type t
-    | Declaration_module {module_binder;module_} ->
+    | Declaration_module {module_binder;module_;module_attr} ->
       let module_ = map_module m module_ in
-      return @@ Declaration_module {module_binder; module_}
+      return @@ Declaration_module {module_binder; module_; module_attr}
     | Module_alias _ -> return x
   in
   let p = List.map ~f:(Location.map aux) p in
@@ -244,7 +244,7 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
     )
-  | E_type_in { type_binder ; rhs ; let_result } -> (
+  | E_type_in { type_binder ; rhs ; let_result} -> (
       let (res,let_result) = self init let_result in
       (res, return @@ E_type_in { type_binder ; rhs ; let_result })
     )
@@ -308,9 +308,9 @@ and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> 'a *
       let wrap_content : declaration = Declaration_type t in
       (acc, {x with wrap_content})
     )
-    | Declaration_module {module_binder; module_} -> (
+    | Declaration_module {module_binder; module_; module_attr} -> (
       let (acc', module_) = fold_map_module m acc module_ in
-      let wrap_content : declaration = Declaration_module {module_binder; module_} in
+      let wrap_content : declaration = Declaration_module {module_binder; module_; module_attr} in
       (acc', {x with wrap_content})
     )
     | Module_alias _ -> (acc,x)

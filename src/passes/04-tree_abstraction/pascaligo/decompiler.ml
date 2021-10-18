@@ -714,7 +714,7 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
-    Declaration_type {type_binder;type_expr} ->
+    Declaration_type {type_binder;type_expr; type_attr=_} ->
     let kwd_type = Region.ghost
     and name = decompile_variable type_binder
     and kwd_is = Region.ghost in

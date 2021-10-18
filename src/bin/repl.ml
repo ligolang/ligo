@@ -128,7 +128,7 @@ let try_contract ~raise state s =
 let import_file ~raise state file_name module_name =
   let options = Compiler_options.make ~init_env:state.env ~infer:state.infer ~protocol_version:state.protocol () in
   let mini_c,mod_types,_,env = Build.build_contract_module ~raise ~add_warning ~options (variant_to_syntax state.syntax) Ligo_compile.Of_core.Env file_name module_name in
-  let env = Ast_typed.Environment.add_module module_name env state.env in
+  let env = Ast_typed.Environment.add_module ~public:true module_name env state.env in
   let mod_env = Ast_core.SMap.find module_name mod_types in
   let mod_types = Ast_core.SMap.add module_name mod_env state.mod_types in
   let state = { state with env = env; decl_list = state.decl_list @ mini_c; mod_types = mod_types } in

@@ -172,11 +172,11 @@ and print_statement state = function
     print_token_opt    state kwd_rec "rec";
     print_let_binding  state let_binding;
 | TypeDecl {value={kwd_type; params; name; eq; type_expr}; _} ->
-    print_token     state kwd_type "type";
-    print_option    state print_quoted_params params;
-    print_var       state name;
-    print_token     state eq "=";
-    print_type_expr state type_expr
+    print_token      state kwd_type "type";
+    print_option     state print_quoted_params params;
+    print_var        state name;
+    print_token      state eq "=";
+    print_type_expr  state type_expr
 | ModuleDecl {value={kwd_module; name; eq; kwd_struct; module_; kwd_end}; _} ->
     print_token  state kwd_module "module";
     print_var    state name;

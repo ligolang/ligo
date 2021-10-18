@@ -93,7 +93,11 @@ and module_with_unification_vars = Module_With_Unification_Vars of module'
 
 and module_fully_typed = Module_Fully_Typed of module'
 
-and attribute = { inline: bool ; no_mutation: bool }
+and attribute = { inline: bool ; no_mutation: bool; public : bool }
+
+and type_attribute = { public : bool }
+
+and module_attribute = { public : bool }
 
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression
@@ -110,11 +114,13 @@ and declaration_constant = {
 and declaration_type = {
     type_binder : type_variable ;
     type_expr   : type_expression ;
+    type_attr   : type_attribute
   }
 
 and declaration_module = {
     module_binder : module_variable ;
     module_       : module_fully_typed ;
+    module_attr   : module_attribute
   }
 
 and declaration' =
@@ -260,6 +266,7 @@ and expression_environment = environment_binding list
 and environment_binding = {
     expr_var: expression_variable ;
     env_elt: environment_element ;
+    public: bool;
   }
 
 and type_environment = type_environment_binding list
@@ -269,6 +276,7 @@ and type_or_kind = Ty of type_expression | Kind of unit
 and type_environment_binding = {
     type_variable: type_variable ;
     type_: type_or_kind ;
+    public: bool;
   }
 
 and module_environment = module_environment_binding list
@@ -276,6 +284,7 @@ and module_environment = module_environment_binding list
 and module_environment_binding = {
   module_variable : module_variable ;
   module_ : environment ;
+  public: bool;
 }
 and environment = {
   expression_environment: expression_environment ;

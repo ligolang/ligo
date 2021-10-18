@@ -18,6 +18,11 @@ let list_of_option = function
        None -> []
 | Some list -> list
 
+let private_attribute = {
+  value="private"; 
+  region=Region.ghost
+}
+
 (* END HEADER *)
 %}
 
@@ -178,6 +183,11 @@ toplevel_stmts:
 stmt_or_namespace:
   statement | namespace_stmt { $1 }
 
+(* Attributes *)
+
+%inline attributes:
+  ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) { list_of_option $1 }
+
 (* Namespace Statement *)
 
 namespace_stmt:
@@ -189,7 +199,7 @@ namespace_stmt:
 namespace:
  "namespace" module_name braces(stmts_or_namespace) {
     let region = cover $1 $3.region
-    in SNamespace {region; value=$1,$2,$3} }
+    in SNamespace {region; value=$1,$2,$3, [private_attribute]} }
 
 stmts_or_namespace: (* TODO: Keep terminator *)
   sep_or_term_list(stmt_or_namespace,";") { fst $1 }
@@ -532,11 +542,6 @@ array_rest_pattern:
 type_annotation:
   ":" type_expr { $1, $2 }
 
-(* Attributes *)
-
-%inline attributes:
-  ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) { list_of_option $1 }
-
 (* DECLARATIONS *)
 
 declaration:
@@ -546,7 +551,7 @@ let_decl:
   attributes "let" binding_list {
     let stop   = nsepseq_to_region (fun e -> e.region) $3 in
     let region = cover $2 stop
-    and value  = {kwd_let=$2; bindings=$3; attributes=$1}
+    and value  = {kwd_let=$2; bindings=$3; attributes=private_attribute::$1}
     in SLet {region; value} }
 
 const_decl:
@@ -619,7 +624,7 @@ object_rest_pattern:
 type_decl:
   "type" type_name ioption(type_params) "=" type_expr {
     let region = cover $1 (type_expr_to_region $5) in
-    let value  = {kwd_type=$1; name=$2; params=$3; eq=$4; type_expr=$5}
+    let value  = {kwd_type=$1; name=$2; params=$3; eq=$4; type_expr=$5; attributes=[private_attribute]}
     in SType {region; value} }
 
 type_params:

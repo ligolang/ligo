@@ -115,13 +115,13 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
   if Ast_core.Debug.debug_new_typer then Format.eprintf "Type_declaration : %a\n%!" I.PP.declaration (Location.unwrap d);
   if Ast_core.Debug.debug_new_typer then Format.eprintf "env : %a\n" O.PP.environment env ;
   match Location.unwrap d with
-  | Declaration_type {type_binder; type_expr} ->
+  | Declaration_type {type_binder; type_expr; type_attr} ->
     let type_binder = Var.todo_cast type_binder in
     let type_expr = evaluate_type ~raise env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     let c = Wrap.type_decl () in
-    return (O.Declaration_type {type_binder; type_expr}) type_expr env' state c
-  | Declaration_constant {name; binder; attr={inline;no_mutation}; expr} -> (
+    return (O.Declaration_type {type_binder; type_expr; type_attr}) type_expr env' state c
+  | Declaration_constant {name; binder; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
@@ -133,12 +133,12 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
     let binder = Stage_common.Maps.binder (evaluate_type ~raise env)  binder in
     let post_env = Environment.add_ez_declaration binder.var expr t e in
     let c = Wrap.const_decl t tv_opt in
-    return (Declaration_constant { name; binder ; expr ; attr={inline;no_mutation}}) t post_env state' (constraints@c)
+    return (Declaration_constant { name; binder ; expr ; attr}) t post_env state' (constraints@c)
     )
-  | Declaration_module {module_binder;module_} -> (
+  | Declaration_module {module_binder;module_;module_attr} -> (
     let (e,module_,t,state) = type_module ~raise ~init_env:env module_ in
     let post_env = Environment.add_module module_binder e env in
-    return (Declaration_module { module_binder; module_}) t post_env state @@ Wrap.mod_decl ()
+    return (Declaration_module { module_binder; module_; module_attr}) t post_env state @@ Wrap.mod_decl ()
   )
   | Module_alias {alias;binders} -> (
     let aux env binder =
