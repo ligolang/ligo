@@ -59,6 +59,11 @@ let insert_es6fun_token tokens =
 
     | (DOT _ as dot) :: (UIdent _ as hd) :: rest ->
       inner (hd :: dot :: result) open_parentheses rest
+
+    (* let a : (A|B) => int = (_a:(|A|B)) => 3 *)
+    | (UIdent _ as c) :: (VBAR _ as vbar) ::  rest ->
+      inner (vbar :: c :: result) open_parentheses rest
+    
     | (_ as hd) :: (UIdent _ as c) :: rest ->
       List.rev_append (c :: hd :: result) rest
 
