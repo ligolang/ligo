@@ -11,6 +11,7 @@ import {
   ServerOptions,
 } from 'vscode-languageclient/node';
 
+import { registerCommands } from './command'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
@@ -48,6 +49,9 @@ export async function activate(context: ExtensionContext) {
     serverOptions,
     clientOptions,
   );
+
+  // Register VSC-specific server commands
+  registerCommands(client)
 
   // Start the client. This will also launch the server
   client.start();

@@ -90,7 +90,24 @@
                     "description": "Path to the ligo binary, default one is extracted from $PATH variable."
                 }
             }
-        }
+        },
+        "commands": [
+            {
+                "command": "ligo.startServer",
+                "title": "LIGO: Start LIGO LSP server",
+                "description": "Starts the LIGO LSP server"
+            },
+            {
+                "command": "ligo.stopServer",
+                "title": "LIGO: Stop LIGO LSP server",
+                "description": "Stops the LIGO LSP server"
+            },
+            {
+                "command": "ligo.restartServer",
+                "title": "LIGO: Restart LIGO LSP server",
+                "description": "Stops then starts the LIGO LSP server"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run esbuild-base -- --minify",
