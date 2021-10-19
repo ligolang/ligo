@@ -34,14 +34,9 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
         -- LIGO-309
       , "parametric_types.ligo"
 
-        -- LIGO-308
+        -- LIGO-204
       , "build/C_test.mligo"
       , "build/b.mligo"
-
-        -- Uncategorized
-      , "heap.ligo"
-      , "heap-instance.ligo"
-      , "vars_consts/multiple_vars.ligo"
       , "build/B.mligo"
       , "build/C.mligo"
       , "build/D.mligo"
@@ -50,10 +45,17 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "build/cycle_B.mligo"
       , "build/cycle_C.mligo"
       , "build/type_B.mligo"
-      , "interpreter_tests/test_subst_with_storage_from_file.mligo"
-      , "interpreter_tests/test_now_from_file.mligo"
-      , "interpreter_tests/test_fail_from_file.mligo"
-      , "interpreter_tests/test_example_from_file.mligo"
+
+        -- LIGO-309
+      , "vars_consts/multiple_vars.ligo"
+
+        -- LIGO-322
+      , "heap.ligo"
+
+        -- LIGO-323
+      , "heap-instance.ligo"
+
+        -- LIGO-324
       , "interpreter_tests/compile_expr_from_file.mligo"
       ]
 
