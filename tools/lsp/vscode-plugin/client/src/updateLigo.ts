@@ -248,6 +248,6 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
 
     promptLigoUpdate(ligoPath, date)
   } else {
-    vscode.window.showErrorMessage(`Could not identity the installed LIGO version: ${data}`)
+    vscode.window.showErrorMessage(`Could not identify the installed LIGO version: ${data}`)
   }
 }
