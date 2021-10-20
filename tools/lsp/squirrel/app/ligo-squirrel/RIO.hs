@@ -16,11 +16,14 @@ module RIO
 
   , Contract (..)
   , delete
+  , invalidate
   , preload
   , load
   , collectErrors
+  , FetchEffort (..)
   , forceFetch
   , fetch
+  , forceFetchAndNotify
   , forceFetch'
   , fetch'
 
@@ -214,16 +217,44 @@ source = Just "ligo-lsp"
 run :: (J.LanguageContextEnv Config, RioEnv) -> RIO a -> IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
-fetch, forceFetch :: J.NormalizedUri -> RIO ContractInfo'
-fetch = fmap cTree . fetch'
-forceFetch = fmap cTree . forceFetch'
+-- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
+-- to load a contract.
+data FetchEffort
+  = LeastEffort
+  -- ^ Return whatever is available even if it's invalid. Fast but may be
+  -- innacurate.
+  | NormalEffort
+  -- ^ Return a reasonably up-to-date document, but does some effort in loading
+  -- if it's invalid. Tries to balance on being fast and accurate.
+  | BestEffort
+  -- ^ Fetch the latest possible document, avoiding invalid documents as much as
+  -- possible. Slow but accurate.
 
-fetch', forceFetch' :: J.NormalizedUri -> RIO Contract
-fetch' uri = asks getElem >>= ASTMap.fetchCurrent uri
-forceFetch' uri = do
+fetch, forceFetch :: FetchEffort -> J.NormalizedUri -> RIO ContractInfo'
+fetch effort = fmap cTree . fetch' effort
+forceFetch effort = fmap cTree . forceFetch' effort
+
+fetch', forceFetch' :: FetchEffort -> J.NormalizedUri -> RIO Contract
+fetch' effort uri = do
+  tmap <- asks getElem
+  case effort of
+    LeastEffort  -> ASTMap.fetchFast uri tmap
+    NormalEffort -> ASTMap.fetchCurrent uri tmap
+    BestEffort   -> ASTMap.fetchLatest uri tmap
+forceFetch' = forceFetchAndNotify (const $ pure ())
+
+forceFetchAndNotify :: (Contract -> RIO ()) -> FetchEffort -> J.NormalizedUri -> RIO Contract
+forceFetchAndNotify notify effort uri = do
   tmap <- asks getElem
   ASTMap.invalidate uri tmap
-  ASTMap.fetchCurrent uri tmap
+  case effort of
+    LeastEffort  -> ASTMap.fetchFastAndNotify notify uri tmap
+    NormalEffort -> do
+      v <- ASTMap.fetchCurrent uri tmap
+      v <$ notify v
+    BestEffort   -> do
+      v <- ASTMap.fetchLatest uri tmap
+      v <$ notify v
 
 diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
 diagnostic ver = traverse_ \(nuri, diags) -> do
@@ -256,6 +287,10 @@ delete uri = do
     forM_ deps
       (`ASTMap.invalidate` tmap)
 
+invalidate :: J.NormalizedUri -> RIO ()
+invalidate uri =
+  ASTMap.invalidate uri =<< asks (getElem @(ASTMap J.NormalizedUri Contract RIO))
+
 preload
   :: J.NormalizedUri
   -> RIO Source
@@ -280,20 +315,21 @@ loadWithoutScopes uri = do
 tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
 tryLoadWithoutScopes uri = (Just . insertPreprocessorRanges <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
 
-load
-  :: J.NormalizedUri
-  -> RIO Contract
-load uri = J.getRootPath >>= \case
-  Nothing -> Contract <$> loadDefault <*> pure [uri]
-  Just root -> asks (getTag @"includes") >>= flip modifyMVar \includes -> do
-    tmap <- asks getElem
-
-    rootContract <- loadWithoutScopes uri
+getInclusionsGraph
+  :: FilePath  -- ^ Directory to look for contracts
+  -> J.NormalizedUri  -- ^ Open contract to be loaded
+  -> RIO (AdjacencyMap ParsedContractInfo)
+getInclusionsGraph root uri = do
+  rootContract <- loadWithoutScopes uri
+  includesVar <- asks (getTag @"includes")
+  modifyMVar includesVar \includes -> do
     let rootFileName = contractFile rootContract
     let groups = wcc includes
-    rawGraph <- case find (isJust . lookupContract rootFileName) groups of
+    join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
-      Nothing -> parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
+      Nothing -> do
+        Log.debug "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
+        parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
       Just oldIncludes -> do
         let (rootContract', includeEdges) = extractIncludedFiles True rootContract
         let lookupOrLoad fp = maybe
@@ -314,33 +350,45 @@ load uri = J.getRootPath >>= \case
             $ G.replaceVertex rootContract' rootContract'
             $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
         pure $ G.overlays (newGroup : groups')
+  where
+    normalizeFilePath = J.toNormalizedUri . J.filePathToUri
+    sourceToUri = normalizeFilePath . srcPath
+
+load
+  :: forall parser
+   . HasScopeForest parser RIO
+  => J.NormalizedUri
+  -> RIO Contract
+load uri = J.getRootPath >>= \case
+  Nothing -> Contract <$> loadDefault <*> pure [uri]
+  Just root -> do
+    time <- ASTMap.getTimestamp
+
+    rawGraph <- getInclusionsGraph root uri
 
     (graph, result) <- case J.uriToFilePath $ J.fromNormalizedUri uri of
-      Nothing -> (,) <$> addScopes @Fallback rawGraph <*> loadDefault
+      Nothing -> (,) <$> addScopes @parser rawGraph <*> loadDefault
       Just fp -> case find (isJust . lookupContract fp) (wcc rawGraph) of
-        Nothing -> (,) <$> addScopes @Fallback rawGraph <*> loadDefault
+        Nothing -> (,) <$> addScopes @parser rawGraph <*> loadDefault
         Just graph' -> do
-          scoped <- addScopes @Fallback graph'
+          scoped <- addScopes @parser graph'
           (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
-    let contracts = (id &&& normalizeFilePath . contractFile) <$> G.vertexList graph
+    let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
     let nuris = snd <$> contracts
+    tmap <- asks getElem
     forM_ contracts \(contract, nuri) ->
-      ASTMap.insert nuri (Contract contract nuris) tmap
+      ASTMap.insert nuri (Contract contract nuris) time tmap
 
-    pure (rawGraph, Contract result nuris)
-
+    pure $ Contract result nuris
   where
-    sourceToUri = normalizeFilePath . srcPath
-    normalizeFilePath = J.toNormalizedUri . J.filePathToUri
-    loadDefault = addShallowScopes @Fallback =<< loadWithoutScopes uri
+    loadDefault = addShallowScopes @parser =<< loadWithoutScopes uri
 
 collectErrors
-  :: (J.NormalizedUri -> RIO ContractInfo')
-  -> J.NormalizedUri
+  :: ContractInfo'
   -> Maybe Int
   -> RIO ()
-collectErrors fetcher uri version = fetcher uri >>= \contract -> do
+collectErrors contract version = do
   -- Correct the ranges of the error messages to correspond to real locations
   -- instead of locations after preprocessing.
   let errs' = nubBy (leq `on` fst) $ collectAllErrors contract
