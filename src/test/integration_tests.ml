@@ -3360,6 +3360,13 @@ let assignment_operators_jsligo ~raise ~add_warning () : unit =
   let _ = expect_eq ~raise program "resteq" (e_unit ()) (e_tuple [(e_nat 2) ; (e_nat 3) ; (e_nat 1)  ]) in
   ()
 
+let if_if_return_jsligo ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/if_if_return.jsligo" in
+  let _ = expect_eq ~raise program "foo" (e_int 1001) (e_int 1000) in
+  let _ = expect_eq ~raise program "foo" (e_int 101) (e_int 100) in
+  let _ = expect_eq ~raise program "foo" (e_int 1) (e_int 0) in
+  let _ = expect_eq ~raise program "foo" (e_int 0) (e_int 2) in
+  ()
 let tuple_fun_religo ~raise ~add_warning () : unit =
  let _ = type_file ~raise ~add_warning "./contracts/tuple_fun.religo" in
  ()
@@ -3647,5 +3654,6 @@ let main = test_suite "Integration (End to End)"
     test_w "no_arg_func (religo)" no_arg_func_religo;
     test_w "block_scope (jsligo)" block_scope_jsligo;
     test_w "assignment_operators (jsligo)" assignment_operators_jsligo;
+    test_w "if_if_return (jsligo)" if_if_return_jsligo;
     test_w "tuple fun (religo)" tuple_fun_religo
   ]
