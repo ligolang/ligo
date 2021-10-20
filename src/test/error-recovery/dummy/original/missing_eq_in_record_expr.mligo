@@ -9,7 +9,7 @@ type s = {
   d : int list list list
 }
 
-let s_a = { a 42; b = false }
+let s_a = { a = 42; b = false }
 
 let s_b = {s with a = 32}
 
