@@ -66,7 +66,7 @@
             "beginCaptures": {
                 "1": { "name": "keyword.operator.type.ligo" }
             },
-            "end": "(?:\\||(?=[;)=}\\]]|\\bis\\b|:=)|$)",
+            "end": "\\||(?=[;)=}\\]]|\\bis\\b|\\bend\\b|:=)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
@@ -84,9 +84,9 @@
                     ]
                 },
                 {
-                    "match": "((?:(?!\\bis\\b|:=)[^=()|;}/\\]])*)",
+                    "match": "(?:(?!\\bis\\b|\\bend\\b|:=)[^=()|}/\\];])+",
                     "captures": {
-                        "1": { "name": "entity.name.type.ligo" }
+                        "0": { "name": "entity.name.type.ligo" }
                     }
                 }
             ]
@@ -99,7 +99,7 @@
                 "2": { "name": "entity.name.type.ligo" },
                 "3": { "name": "keyword.other.is.ligo" }
             },
-            "end": "(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)",
+            "end": "(?=\\b(?:function|type|const|var)\\b|;|^\\s*#\\w+)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#struct-type" },
@@ -114,9 +114,9 @@
                 "1": { "name": "keyword.other.record.ligo" },
                 "2": { "name": "keyword.other.begin.ligo" }
             },
-            "end": "(\\]|\\bend\\b)",
+            "end": "\\]|\\bend\\b",
             "endCaptures": {
-                "1": { "name": "keyword.other.end.ligo" }
+                "0": { "name": "keyword.other.end.ligo" }
             },
             "patterns": [
                 { "include": "#comment" },
@@ -131,7 +131,7 @@
                 "1": { "name": "entity.name.function.ligo" },
                 "2": { "name": "keyword.other.of.ligo" }
             },
-            "end": "(\\||(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+))",
+            "end": "(\\||(?=\\b(?:function|type|const|var)\\b|;|^\\s*#\\w+))",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
@@ -140,7 +140,7 @@
 
         "type-alias": {
             "begin": "\\G\\s*(?!record\\b)(?=[(a-z])",
-            "end": "(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)",
+            "end": "(?=\\b(?:function|type|const|var|end)\\b|;|^\\s*#\\w+)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }

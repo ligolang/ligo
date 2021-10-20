@@ -91,12 +91,24 @@
 (defun ligo-type-matcher (type-start-matcher type-end-re)
   "Matches type annotations that possibly include braces"
   `(lambda (limit)
+    ;; Found the start of the match
     (unless (null (,type-start-matcher limit))
       (let* ((colon-group (match-data))
              (begin (nth 1 colon-group))
              (end (ligo--type-end ,type-end-re limit)))
+        ;; Found the end of the match
         (unless (null end)
           (progn
+            ;; Set multiline font so that types spanning multiple lines don't
+            ;; break, e.g., a type after :. If we don't put this, breaking a
+            ;; type into multiple lines may disable its highlighting and only
+            ;; update other lines.
+            ;; TODO: Emacs docs recommend not using it for large ranges of text
+            ;; as it may make highlighting slow, besides not being an universal
+            ;; solution but for now it will do. See
+            ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Font-Lock-Multiline.html
+            ;; for information.
+            (setq font-lock-multiline t)
             (set-match-data (list begin end))
             t))))))
 
@@ -143,7 +155,7 @@
 ;; ------------------------------------------------
 
 (rx-define ligo-pascal-type-end
-  (or "," ";" "=" ":=" (: symbol-start "is" symbol-end) eol))
+  (or "," ";" "=" ":=" (: symbol-start "is" symbol-end)))
 
 (rx-define ligo-pascal-variable-def
   (: symbol-start (group (or "const" "var")) symbol-end (* space)
@@ -220,7 +232,7 @@
 ;; ------------------------------------------------
 
 (rx-define ligo-caml-type-end
-  (or "," ";" "=" eol))
+  (or "," ";" "="))
 
 ;; Doesn't support "let a: int, b: string" for now
 (rx-define ligo-caml-variable-def
@@ -288,7 +300,7 @@
 ;; ------------------------------------------------
 
 (rx-define ligo-reason-type-end
-  (or "," "=" eol))
+  (or "," "="))
 
 ;; Doesn't support "let a: int, b: string" for now
 (rx-define ligo-reason-variable-def
