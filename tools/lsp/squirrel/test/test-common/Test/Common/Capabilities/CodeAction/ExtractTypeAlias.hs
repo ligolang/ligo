@@ -46,6 +46,22 @@ testInfos =
         , (mkr 1  1 1  1 , "type " <> extractedTypeNameAlias <> " is nat\n")
         ]
     }
+  , TestInfo
+    { tiContract = "parametric.mligo"
+    , tiCursor = interval 1 22 35
+    , tiExpectedEdits =
+        [ (mkr 1 22 1 35 , extractedTypeNameAlias)
+        , (mkr 1  1 1  1 , "type ('a, 'b) " <> extractedTypeNameAlias <> " = int * 'a * 'b\n")
+        ]
+    }
+  , TestInfo
+    { tiContract = "existential.mligo"
+    , tiCursor = interval 1 9 17
+    , tiExpectedEdits =
+        [ (mkr 1 9 1 17 , extractedTypeNameAlias)
+        , (mkr 1 1 1  1 , "type ('a, 'b) " <> extractedTypeNameAlias <> " = 'a -> 'b\n")
+        ]
+    }
   ]
 
 constructExpectedWorkspaceEdit :: [(Range, String)] -> [J.TextEdit]

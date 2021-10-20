@@ -1,6 +1,7 @@
 module AST.Scope.ScopedDecl.Parser
   ( parseType
   , parseTypeDeclSpecifics
+  , parseTypeParams
   , parseParameters
   ) where
 
@@ -8,17 +9,18 @@ import Control.Lens ((??))
 import Data.Foldable (asum)
 import Data.Functor ((<&>))
 import Data.Maybe (fromMaybe, mapMaybe)
-import Duplo.Tree (layer)
+import Duplo.Tree (layer, match)
 
 import AST.Pretty (PPableLIGO, ppToText)
 import AST.Scope.ScopedDecl
 import AST.Skeleton (LIGO)
 import AST.Skeleton qualified as LIGO
-import Range (getRange)
+import Product (Contains)
+import Range (Range, getRange)
 
 -- * Parsers for type.
 
-parseTypeDeclSpecifics :: PPableLIGO info => LIGO info -> TypeDeclSpecifics
+parseTypeDeclSpecifics :: PPableLIGO info => LIGO info -> TypeDeclSpecifics Type
 parseTypeDeclSpecifics node = TypeDeclSpecifics
   { _tdsInitRange = getRange node
   , _tdsInit = parseType node
@@ -39,6 +41,7 @@ parseType node =
       , parseTupleType
       , parseApplyType
       , parseArrowType
+      , parseVariableType
       ]
 
 parseArrowType :: PPableLIGO info => LIGO info -> Maybe Type
@@ -86,12 +89,44 @@ parseTupleType node = do
   let elements = map parseTypeDeclSpecifics elementNodes
   pure (TupleType elements)
 
+parseVariableType :: Contains Range info => LIGO info -> Maybe Type
+parseVariableType node = do
+  LIGO.TVariable t <- layer node
+  VariableType <$> parseTypeVariable t
+
 -- Since we don't care right now about distinguishing functions or whatever, we
 -- just treat the whole node as a type name. It _is_ possible that the node is
 -- not even a type: it could be an error node. However we choose to fail, we'll
 -- lose the whole type structure instead of this one leaf.
 parseAliasType :: PPableLIGO info => LIGO info -> Type
 parseAliasType node = AliasType (ppToText node)
+
+-- * Parsers for type variables.
+
+parseTypeParams :: Contains Range info => LIGO info -> Maybe TypeParams
+parseTypeParams node = asum
+  [ do
+      LIGO.TypeParam t <- layer node
+      TypeParam <$> parseTypeVariableSpecifics t
+  , do
+      LIGO.TypeParams ts <- layer node
+      pure $ TypeParams $ mapMaybe parseTypeVariableSpecifics ts
+  ]
+
+parseTypeVariableSpecifics
+  :: Contains Range info
+  => LIGO info
+  -> Maybe (TypeDeclSpecifics TypeVariable)
+parseTypeVariableSpecifics node = do
+  LIGO.TVariable var <- layer node
+  (r, LIGO.TypeVariableName name) <- match var
+  pure TypeDeclSpecifics
+    { _tdsInitRange = getRange r
+    , _tdsInit = TypeVariable name
+    }
+
+parseTypeVariable :: Contains Range info => LIGO info -> Maybe TypeVariable
+parseTypeVariable = fmap _tdsInit . parseTypeVariableSpecifics
 
 -- * Parsers for parameters.
 

@@ -69,8 +69,9 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
-  (Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..),
-  withNestedLIGO)
+  ( Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
+  , TypeVariableName (..), withNestedLIGO
+  )
 import Cli.Types
 import ParseTree
 import Parser
@@ -315,6 +316,10 @@ addLocalScopes tree forest =
     , Descent \(i, TypeName t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeName t)
+
+    , Descent \(i, TypeVariableName t) -> do
+        let env = envAtPoint (getPreRange i) forest
+        return (env :> Just TypeLevel :> i, TypeVariableName t)
     ]
 
 addScopes

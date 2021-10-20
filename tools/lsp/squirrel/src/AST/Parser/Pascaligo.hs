@@ -164,10 +164,16 @@ recognise (SomeRawTree dialect rawTree)
         "fun_decl"   -> BFunction <$> flag "recursive" <*> field "name" <*> fields "parameter" <*> fieldOpt "type" <*> field "body"
         "const_decl" -> BConst    <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
         "var_decl"   -> BVar      <$>             field    "name"       <*> fieldOpt "type" <*> fieldOpt "value"
-        "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> field "typeValue"
+        "type_decl"  -> BTypeDecl <$>             field    "typeName"   <*> fieldOpt "params" <*> field "typeValue"
         "p_include"  -> BInclude  <$>             field    "filename"
         "p_import"   -> BImport   <$>             field    "filename" <*> field "alias"
         _            -> fallthrough
+
+    -- TypeParams
+  , Descent do
+      boilerplate \case
+        "type_params" -> TypeParams <$> fields "param"
+        _             -> fallthrough
 
     -- VarDecl
   , Descent do
@@ -214,6 +220,7 @@ recognise (SomeRawTree dialect rawTree)
         "sum_type"         -> TSum     <$> fields "variant"
         "type_group"       -> TProduct <$> (pure <$> field "type")
         "TypeWildcard"     -> pure TWildcard
+        "var_type"         -> TVariable <$> field "name"
         _                  -> fallthrough
 
     -- Module access:
@@ -246,6 +253,12 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate' \case
         ("TypeName", name) -> return $ TypeName name
         _                  -> fallthrough
+
+    -- TypeVariableName
+  , Descent do
+      boilerplate' \case
+        ("TypeVariableName", name) -> pure $ TypeVariableName name
+        _                          -> fallthrough
 
     -- Ctor
   , Descent do

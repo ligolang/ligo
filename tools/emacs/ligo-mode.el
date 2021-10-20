@@ -64,13 +64,12 @@
 (rx-define ligo-upper-qname
   (: (group ligo-upper-ident) (1+ (: "." (group ligo-lower-ident)))))
 
-(rx-define ligo-typedef
-  (: symbol-start (group "type") symbol-end (* space)
-     (group ligo-lower-ident)))
-
 (rx-define ligo-common-constants
   ; numbers: 0n, 5mutez, 0x100
   (: (1+ digit) (0+ ligo-ident-symbol) (0+ digit)))
+
+;; For CameLIGO and ReasonLIGO
+(rx-define ligo-type-variable (: "'" ligo-lower-ident))
 
 (defun ligo--type-end (type-end-re limit)
   "Finds the end of a type annotation"
@@ -134,7 +133,6 @@
   (let ((st (make-syntax-table)))
     ;; Identifiers
     (modify-syntax-entry ?_ "_" st)
-    (modify-syntax-entry ?' "_" st)
     (modify-syntax-entry ?. "'" st)
 
     ;; Punctuation
@@ -149,10 +147,20 @@
     ;; by dialect-specific syntax tables
     st))
 
-
 ;; ------------------------------------------------
 ;;     PascaLIGO-specific variables and regexes
 ;; ------------------------------------------------
+
+(rx-define ligo-pascal-type-variable ligo-lower-ident)
+
+(rx-define ligo-pascal-type-args
+  (: "(" (* space) ligo-pascal-type-variable (* (: (* space) "," (* space) ligo-pascal-type-variable)) (* space) ")"))
+
+(rx-define ligo-pascal-typedef
+  (: symbol-start (group "type") symbol-end (* space)
+    (? ligo-pascal-type-args)
+    (* space)
+    (group ligo-lower-ident)))
 
 (rx-define ligo-pascal-type-end
   (or "," ";" "=" ":=" (: symbol-start "is" symbol-end)))
@@ -183,8 +191,13 @@
      . ((1 font-lock-preprocessor-face) (2 font-lock-string-face)))
 
     ;; Type definitions ("type foo")
-    (,(rx ligo-typedef)
+    (,(rx ligo-pascal-typedef)
      . ((1 font-lock-keyword-face) (2 font-lock-type-face)))
+
+    ;; Type variables ("a")
+    ;; Does nothing for PascaLIGO as there is no easy way to distinguish type
+    ;; variables from types.
+    ;(,(rx ligo-pascal-type-variable) . font-lock-variable-name-face)
 
     ;; Variable definitions ("const x", "var y")
     (,(rx ligo-pascal-variable-def)
@@ -204,10 +217,10 @@
     ;; ": type" annotations
     (,(ligo-type-matcher 'ligo-colon-matcher (rx ligo-pascal-type-end))
      . font-lock-type-face)
-    
+
     ;; Unqualified builtin functions like "list" in PascaLIGO
     (,(regexp-opt ligo-pascal-builtins 'symbols) . font-lock-builtin-face)
-    
+
     ;; Constructors
     (,(rx ligo-upper-ident) . 'ligo-constructor-face)
 
@@ -230,6 +243,17 @@
 ;; ------------------------------------------------
 ;;     CameLIGO-specific variables and regexes
 ;; ------------------------------------------------
+
+(rx-define ligo-caml-type-args
+  (or
+    ligo-type-variable
+    (: "(" (* space) ligo-type-variable (* (: (* space) "," (* space) ligo-type-variable)) (* space) ")")))
+
+(rx-define ligo-caml-typedef
+  (: symbol-start (group "type") symbol-end (* space)
+    (? ligo-caml-type-args)
+    (* space)
+    (group ligo-lower-ident)))
 
 (rx-define ligo-caml-type-end
   (or "," ";" "="))
@@ -257,8 +281,11 @@
      . ((1 font-lock-preprocessor-face) (2 font-lock-string-face)))
 
     ;; Type definitions ("type foo")
-    (,(rx ligo-typedef)
+    (,(rx ligo-caml-typedef)
      . ((1 font-lock-keyword-face) (2 font-lock-type-face)))
+
+    ;; Type variables ("'a")
+    (,(rx ligo-type-variable) . font-lock-variable-name-face)
 
     ;; Function definitions ("function bar")
     ;;(,(rx ligo-caml-function-def)
@@ -281,7 +308,7 @@
 
     ;; Unqualified builtin functions
     (,(regexp-opt ligo-caml-builtins 'symbols) . font-lock-builtin-face)
-    
+
     ;; Constructors
     (,(rx ligo-upper-ident) . 'ligo-constructor-face)
 
@@ -298,6 +325,15 @@
 ;; ------------------------------------------------
 ;;     ReasonLIGO-specific variables and regexes
 ;; ------------------------------------------------
+
+(rx-define ligo-reason-type-args
+  (: "(" (* space) ligo-type-variable (* (: (* space) "," (* space) ligo-type-variable)) (* space) ")"))
+
+(rx-define ligo-reason-typedef
+  (: symbol-start (group "type") symbol-end (* space)
+    (? ligo-reason-type-args)
+    (* space)
+    (group ligo-lower-ident)))
 
 (rx-define ligo-reason-type-end
   (or "," "="))
@@ -331,7 +367,7 @@
     ((looking-at "{")
       (let ((maybe-type
               (re-search-backward
-                (rx (or ligo-typedef (: symbol-start "let" symbol-end) ";"))
+                (rx (or ligo-reason-typedef (: symbol-start "let" symbol-end) ";"))
                 nil t)))
         ; Assume type context if either:
         ;   1. There are no "type", "let", and ";", just a bare `x: y`
@@ -368,8 +404,11 @@
      . ((1 font-lock-preprocessor-face) (2 font-lock-string-face)))
 
     ;; Type definitions ("type foo")
-    (,(rx ligo-typedef)
+    (,(rx ligo-reason-typedef)
      . ((1 font-lock-keyword-face) (2 font-lock-type-face)))
+
+    ;; Type variables ("'a")
+    (,(rx ligo-type-variable) . font-lock-variable-name-face)
 
     ;; Variable definitions ("const x", "var y")
     (,(rx ligo-reason-variable-def)
@@ -388,7 +427,7 @@
 
     ;; Unqualified builtin functions
     (,(regexp-opt ligo-reason-builtins 'symbols) . font-lock-builtin-face)
-    
+
     ;; Constructors
     (,(rx ligo-upper-ident) . 'ligo-constructor-face)
 

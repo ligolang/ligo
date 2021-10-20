@@ -157,7 +157,7 @@
         },
 
         "type-definition": {
-            "begin": "\\b(type)\\s+([a-zA-Z_]\\w*)\\b",
+            "begin": "\\b(type)\\b",
             "beginCaptures": {
                 "1": { "name": "keyword.other.typedef.mligo" },
                 "2": { "name": "entity.name.type.mligo" }
@@ -165,6 +165,7 @@
             "end": "(?=(?:\\bin\\b|\\blet\\b|\\btype\\b|^\\s*#\\w+))",
             "patterns": [
                 { "include": "#comment" },
+                { "include": "#type-identifier" },
                 { "include": "#struct-type" },
                 { "include": "#sum-type" },
                 { "include": "#type-alias" }
@@ -258,6 +259,13 @@
         "operators": {
             "name": "keyword.operator.other.mligo",
             "match": "([-+*/])"
+        },
+
+        "type-identifier": {
+            "match": "\\b([a-z_]\\w*)\\b",
+            "captures": {
+                "1": { "name": "entity.name.type.mligo" }
+            }
         },
 
         "identifier-lower": {
