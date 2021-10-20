@@ -1088,27 +1088,8 @@ and compile_statements ?(wrap=false) ~raise : CST.statements -> statement_result
   in
   let hd  = fst statements in
   let snd_ = snd statements in
-  match hd, snd_ with 
-    CST.SCond {value = {ifnot = None; _}; region}, (other :: tl) -> 
-      let init = compile_statement ~wrap:false ~raise hd in 
-      (match init with 
-        Return {expression_content = E_cond e; location} -> 
-          let else_clause_hd = compile_statement ~wrap:false ~raise (snd other) in
-          let else_clause = aux else_clause_hd tl in
-          let compile_clause = function 
-            Binding e -> (e @@ e_unit ())
-          | Expr e -> (e_sequence e (e_unit ()))    
-          | Break b -> (e_sequence b (e_unit ()))
-          | Return r -> r
-          in
-          let else_clause = compile_clause else_clause in
-          Return {expression_content = E_cond {e with else_clause}; location}
-      | _ -> 
-        aux init snd_
-      )
-  | _, _ -> 
-    let init = compile_statement ~wrap ~raise hd in
-    aux init snd_
+  let init = compile_statement ~wrap ~raise hd in
+  aux init snd_
 
 
 and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result = fun statement ->
@@ -1181,12 +1162,18 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result =
     | Break b -> return, (e_sequence b (e_unit ()))
     | Return r -> return, r
     in
+    let then_clause_orig = then_clause in
     let (m, then_clause) = compile_clause then_clause in
-    let (m, else_clause) = (match else_clause with
-        Some s -> let a, b = compile_clause s in (a, b)
-      | None -> m, e_unit ()
-    ) in
-    m (e_cond ~loc test then_clause else_clause)
+    (match else_clause with
+        Some s ->
+        let (m, else_clause) = compile_clause s in 
+        m (e_cond ~loc test then_clause else_clause)
+      | None -> 
+        (match then_clause_orig with 
+          Return _ -> Binding (fun else_clause -> (e_cond ~loc test then_clause else_clause))
+        | _ -> (Expr (e_cond ~loc test then_clause (e_unit ())))
+        )
+    )
   | SReturn {value = {expr; _}; region} -> (
     match expr with 
       Some v -> 
