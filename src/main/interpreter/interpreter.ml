@@ -879,7 +879,16 @@ and eval_ligo ~raise ~steps : Ast_typed.expression -> calltrace -> env -> value 
                              body = lambda.result ;
                              env = env }
     | E_raw_code {language ; code} -> (
+      let open Ast_typed in
       match code.expression_content with
+      | E_literal (Literal_string _) when String.equal language Stage_common.Backends.michelson &&
+                                           is_t_function (get_type_expression code) ->
+        let in_type, out_type = trace_option ~raise (Errors.generic_error term.location "Expected function") @@
+                                   get_t_function (get_type_expression code) in
+        let arg_binder = Location.wrap @@ Var.fresh () in
+        let body = e_a_application term (e_a_variable arg_binder in_type) out_type in
+        let orig_lambda = e_a_lambda { binder = arg_binder ; result = body } in_type out_type in
+        return @@ V_Func_val { rec_name = None ; orig_lambda ; body ; env ; arg_binder }
       | E_literal (Literal_string x) ->
         let exp_as_string = Ligo_string.extract x in
         return @@ V_Ligo (language , exp_as_string)

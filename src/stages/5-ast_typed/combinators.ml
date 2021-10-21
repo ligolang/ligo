@@ -267,6 +267,7 @@ let is_t_big_map t = Option.is_some (get_t_big_map t)
 let is_t_record t = Option.is_some (get_t_record t)
 let is_t_option t = Option.is_some (get_t_option t)
 let is_t_sum t = Option.is_some (get_t_sum t)
+let is_t_function t = Option.is_some (get_t_function t)
 
 let is_e_matching e = match e.expression_content with | E_matching _ -> true | _ -> false
 let assert_t_mutez : type_expression -> unit option = get_t_mutez
