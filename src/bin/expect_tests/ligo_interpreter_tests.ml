@@ -245,6 +245,13 @@ let%expect_test _ =
     - test_set exited with value 3.
     - test_list exited with value 3. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "func_michelson.mligo" ] ;
+  [%expect {|
+    42
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
