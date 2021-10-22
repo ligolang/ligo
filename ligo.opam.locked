@@ -64,6 +64,7 @@ depends: [
   "ezjsonm" {= "1.2.0"}
   "ff-sig" {= "0.6.2"}
   "fmt" {= "0.8.9"}
+  "fix" {= "20201120"}
   "fpath" {= "0.7.3"}
   "getopt" {= "20120615"}
   "gmap" {= "0.3.0"}
@@ -108,6 +109,7 @@ depends: [
   "ocaml-compiler-libs" {= "v0.12.4"}
   "ocaml-config" {= "1"}
   "ocaml-migrate-parsetree" {= "2.1.0"}
+  "ocaml-recovery-parser" {= "0.1"}
   "ocaml-syntax-shims" {= "1.0.0"}
   "ocamlbuild" {= "0.14.0"}
   "ocamlfind" {= "1.9.1"}
@@ -217,6 +219,9 @@ depends: [
   "x509" {= "0.14.1"}
   "yojson" {= "1.7.0"}
   "zarith" {= "1.11"}
+]
+pin-depends: [
+  [ "ocaml-recovery-parser.0.1" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.1" ]
 ]
 build: ["dune" "build" "-p" name "-j" jobs]
 dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
