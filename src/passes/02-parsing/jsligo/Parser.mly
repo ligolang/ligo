@@ -482,7 +482,8 @@ case_statements:
     fst $1 : (statement, semi) Utils.nsepseq }
 
 case_statement:
-  statement { $1 }
+    statement { $1 }
+  | "break"   { SBreak $1 }
 
 (* Return Statements *)
 

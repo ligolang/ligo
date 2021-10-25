@@ -30,8 +30,6 @@ type abs_error = [
   | `Concrete_jsligo_expected_a_function of Raw.expr
   | `Concrete_jsligo_not_supported_assignment of Raw.expr
   | `Concrete_jsligo_array_rest_not_supported of Raw.array_item
-  | `Concrete_jsligo_switch_not_supported of Raw.switch Region.reg
-  | `Concrete_jsligo_break_not_implemented of Region.t
   | `Concrete_jsligo_expected_a_variable of Raw.expr
   | `Concrete_jsligo_expected_a_field_name of Raw.selection
   | `Concrete_jsligo_expected_an_int of Raw.expr
@@ -62,8 +60,6 @@ let unsupported_match_object_property o = `Concrete_jsligo_unsupported_match_obj
 let expected_a_function e = `Concrete_jsligo_expected_a_function e
 let not_supported_assignment e = `Concrete_jsligo_not_supported_assignment e
 let array_rest_not_supported p = `Concrete_jsligo_array_rest_not_supported p
-let switch_not_supported s = `Concrete_jsligo_switch_not_supported s
-let break_not_implemented b = `Concrete_jsligo_break_not_implemented b
 let expected_a_variable e = `Concrete_jsligo_expected_a_variable e
 let expected_a_field_name f = `Concrete_jsligo_expected_a_field_name f
 let expected_an_int e = `Concrete_jsligo_expected_an_int e
@@ -185,14 +181,6 @@ let error_ppformat : display_format:string display_format ->
     | `Concrete_jsligo_array_rest_not_supported e -> (
       Format.fprintf f "@[<hv>%a@.Rest property not supported here.@]"
           Snippet.pp_lift (Raw.array_item_to_region e)
-    )
-    | `Concrete_jsligo_switch_not_supported s -> (
-      Format.fprintf f "@[<hv>%a@.Switch statement is not supported.@]"
-          Snippet.pp_lift s.region
-    )
-    | `Concrete_jsligo_break_not_implemented b -> (
-      Format.fprintf f "@[<hv>%a@.Break statement is not supported.@]"
-          Snippet.pp_lift b
     )
     | `Concrete_jsligo_expected_a_variable e -> (
       Format.fprintf f "@[<hv>%a@.Expected a variable.@]"
@@ -387,20 +375,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
   | `Concrete_jsligo_array_rest_not_supported e ->
     let message = `String "Rest property not supported here." in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.array_item_to_region e) in
-    let content = `Assoc [
-      ("message", message);
-      ("location", `String loc);] in
-    json_error ~stage ~content
-  | `Concrete_jsligo_switch_not_supported s ->
-    let message = `String "Switch statement not supported." in
-    let loc = Format.asprintf "%a" Location.pp_lift s.region in
-    let content = `Assoc [
-      ("message", message);
-      ("location", `String loc);] in
-    json_error ~stage ~content
-  | `Concrete_jsligo_break_not_implemented b ->
-    let message = `String "Break statement not supported." in
-    let loc = Format.asprintf "%a" Location.pp_lift b in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);] in

@@ -3359,6 +3359,125 @@ let assignment_operators_jsligo ~raise ~add_warning () : unit =
   let _ = expect_eq ~raise program "multeq" (e_unit ()) (e_tuple [(e_int 2000) ; (e_int 100) ; (e_int 12)  ]) in
   let _ = expect_eq ~raise program "resteq" (e_unit ()) (e_tuple [(e_nat 2) ; (e_nat 3) ; (e_nat 1)  ]) in
   ()
+let switch_cases_jsligo ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/switch_statement.jsligo" in
+  let _ = expect_eq ~raise program "single_default_return"        (e_int 5) (e_string "Hello!!") in
+  let _ = expect_eq ~raise program "single_default_no_statements" (e_int 5) (e_string "Hello") in
+  let _ = expect_eq ~raise program "single_default_break_1"       (e_int 5) (e_string "HelloWorld") in
+  let _ = expect_eq ~raise program "single_default_break_2"       (e_int 5) (e_string "Hello World") in
+
+  let _ = expect_eq ~raise program "single_case_no_statements"    (e_int 1) (e_string "Hello") in
+  let _ = expect_eq ~raise program "single_case_no_statements"    (e_int 2) (e_string "Hello") in
+  let _ = expect_eq ~raise program "single_case_return"           (e_int 1) (e_string "World") in
+  let _ = expect_eq ~raise program "single_case_return"           (e_int 2) (e_string "Hello") in
+  let _ = expect_eq ~raise program "single_case_fallthrough"      (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "single_case_fallthrough"      (e_int 2) (e_string "Hello ") in
+  let _ = expect_eq ~raise program "single_case_break"            (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "single_case_break"            (e_int 2) (e_string "Hello ") in
+
+  let _ = expect_eq ~raise program "case_default_fallthrough_break" (e_int 1) (e_string "Hello World!!!") in
+  let _ = expect_eq ~raise program "case_default_fallthrough_break" (e_int 2) (e_string "Hello !!!") in
+
+  let _ = expect_eq ~raise program "case_default_break_break" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_default_break_break" (e_int 2) (e_string "Hello !!!") in
+
+  let _ = expect_eq ~raise program "case_default_return_break" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_default_return_break" (e_int 2) (e_string "Hello !!! ???") in
+
+  let _ = expect_eq ~raise program "case_default_fallthrough_return" (e_int 1) (e_string "Hello World!!!") in
+  let _ = expect_eq ~raise program "case_default_fallthrough_return" (e_int 2) (e_string "Hello !!!") in
+
+  let _ = expect_eq ~raise program "case_default_break_return" (e_int 1) (e_string "Hello World ???") in
+  let _ = expect_eq ~raise program "case_default_break_return" (e_int 2) (e_string "Hello !!!") in
+
+  let _ = expect_eq ~raise program "case_default_return_return" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_default_return_return" (e_int 2) (e_string "Hello !!!") in
+
+  let _ = expect_eq ~raise program "case_case_fallthrough" (e_int 1) (e_string "Hello World!!! ???") in
+  let _ = expect_eq ~raise program "case_case_fallthrough" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_case_fallthrough" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_case_break" (e_int 1) (e_string "Hello World ???") in
+  let _ = expect_eq ~raise program "case_case_break" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_case_break" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_case_return" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_case_return" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_case_return" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_case_fallthrough_break" (e_int 1) (e_string "Hello World!!! ???") in
+  let _ = expect_eq ~raise program "case_case_fallthrough_break" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_case_fallthrough_break" (e_int 3) (e_string "Hello  ???") in
+  
+  let _ = expect_eq ~raise program "case_case_break_break" (e_int 1) (e_string "Hello World ???") in
+  let _ = expect_eq ~raise program "case_case_break_break" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_case_break_break" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_case_return_break" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_case_return_break" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_case_return_break" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_case_fallthrough_return" (e_int 1) (e_string "Hello World!!!") in
+  let _ = expect_eq ~raise program "case_case_fallthrough_return" (e_int 2) (e_string "Hello !!!") in
+  let _ = expect_eq ~raise program "case_case_fallthrough_return" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_case_break_return" (e_int 1) (e_string "Hello World ???") in
+  let _ = expect_eq ~raise program "case_case_break_return" (e_int 2) (e_string "Hello !!!") in
+  let _ = expect_eq ~raise program "case_case_break_return" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_case_return_return" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_case_return_return" (e_int 2) (e_string "Hello !!!") in
+  let _ = expect_eq ~raise program "case_case_return_return" (e_int 3) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_all_fallthrough" (e_int 1) (e_string "Hello World!!!@@@ ???") in
+  let _ = expect_eq ~raise program "case_all_fallthrough" (e_int 2) (e_string "Hello !!!@@@ ???") in
+  let _ = expect_eq ~raise program "case_all_fallthrough" (e_int 3) (e_string "Hello @@@ ???") in
+  let _ = expect_eq ~raise program "case_all_fallthrough" (e_int 4) (e_string "Hello  ???") in
+  
+  let _ = expect_eq ~raise program "case_all_break" (e_int 1) (e_string "Hello World ???") in
+  let _ = expect_eq ~raise program "case_all_break" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_all_break" (e_int 3) (e_string "Hello @@@ ???") in
+  let _ = expect_eq ~raise program "case_all_break" (e_int 4) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_all_return" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_all_return" (e_int 2) (e_string "Hello !!!") in
+  let _ = expect_eq ~raise program "case_all_return" (e_int 3) (e_string "Hello @@@") in
+  let _ = expect_eq ~raise program "case_all_return" (e_int 4) (e_string "Hello  ???") in
+
+  let _ = expect_eq ~raise program "case_default_all_fallthrough" (e_int 1) (e_string "Hello World!!!@@@### ???") in
+  let _ = expect_eq ~raise program "case_default_all_fallthrough" (e_int 2) (e_string "Hello !!!@@@### ???") in
+  let _ = expect_eq ~raise program "case_default_all_fallthrough" (e_int 3) (e_string "Hello @@@### ???") in
+  let _ = expect_eq ~raise program "case_default_all_fallthrough" (e_int 4) (e_string "Hello ### ???") in
+
+  let _ = expect_eq ~raise program "case_default_all_break" (e_int 1) (e_string "Hello World ???") in
+  let _ = expect_eq ~raise program "case_default_all_break" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_default_all_break" (e_int 3) (e_string "Hello @@@ ???") in
+  let _ = expect_eq ~raise program "case_default_all_break" (e_int 4) (e_string "Hello ### ???") in
+
+  let _ = expect_eq ~raise program "case_default_all_return" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_default_all_return" (e_int 2) (e_string "Hello !!!") in
+  let _ = expect_eq ~raise program "case_default_all_return" (e_int 3) (e_string "Hello @@@") in
+  let _ = expect_eq ~raise program "case_default_all_return" (e_int 4) (e_string "Hello ###") in
+
+  let _ = expect_eq ~raise program "case_default_all_fallthrough_4" (e_int 1) (e_string "Hello World!!!@@@^^^### ???") in
+  let _ = expect_eq ~raise program "case_default_all_fallthrough_4" (e_int 2) (e_string "Hello !!!@@@^^^### ???") in
+  let _ = expect_eq ~raise program "case_default_all_fallthrough_4" (e_int 3) (e_string "Hello @@@^^^### ???") in
+  let _ = expect_eq ~raise program "case_default_all_fallthrough_4" (e_int 4) (e_string "Hello ^^^### ???") in
+  let _ = expect_eq ~raise program "case_default_all_fallthrough_4" (e_int 5) (e_string "Hello ### ???") in
+
+  let _ = expect_eq ~raise program "case_default_all_break_4" (e_int 1) (e_string "Hello World ???") in
+  let _ = expect_eq ~raise program "case_default_all_break_4" (e_int 2) (e_string "Hello !!! ???") in
+  let _ = expect_eq ~raise program "case_default_all_break_4" (e_int 3) (e_string "Hello @@@ ???") in
+  let _ = expect_eq ~raise program "case_default_all_break_4" (e_int 4) (e_string "Hello ^^^ ???") in
+  let _ = expect_eq ~raise program "case_default_all_break_4" (e_int 5) (e_string "Hello ### ???") in
+
+  let _ = expect_eq ~raise program "case_default_all_return_4" (e_int 1) (e_string "Hello World") in
+  let _ = expect_eq ~raise program "case_default_all_return_4" (e_int 2) (e_string "Hello !!!") in
+  let _ = expect_eq ~raise program "case_default_all_return_4" (e_int 3) (e_string "Hello @@@") in
+  let _ = expect_eq ~raise program "case_default_all_return_4" (e_int 4) (e_string "Hello ^^^") in
+  let _ = expect_eq ~raise program "case_default_all_return_4" (e_int 5) (e_string "Hello ###") in
+
+  ()
 
 let if_if_return_jsligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/if_if_return.jsligo" in
@@ -3655,5 +3774,6 @@ let main = test_suite "Integration (End to End)"
     test_w "block_scope (jsligo)" block_scope_jsligo;
     test_w "assignment_operators (jsligo)" assignment_operators_jsligo;
     test_w "if_if_return (jsligo)" if_if_return_jsligo;
+    test_w "switch case (jsligo)" switch_cases_jsligo;
     test_w "tuple fun (religo)" tuple_fun_religo
   ]

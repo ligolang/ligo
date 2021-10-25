@@ -258,6 +258,122 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "switch_case_part_1.jsligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test1 exited with value ().
+    - test2 exited with value ().
+    - test3 exited with value ().
+    - test4 exited with value ().
+    - test5 exited with value ().
+    - test6 exited with value ().
+    - test7 exited with value ().
+    - test8 exited with value ().
+    - test9 exited with value ().
+    - test10 exited with value ().
+    - test11 exited with value ().
+    - test12 exited with value ().
+    - test13 exited with value ().
+    - test14 exited with value ().
+    - test15 exited with value ().
+    - test16 exited with value ().
+    - test17 exited with value ().
+    - test18 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "switch_case_part_2.jsligo" ] ;
+    [%expect{|
+      Everything at the top-level was executed.
+      - test1 exited with value ().
+      - test2 exited with value ().
+      - test3 exited with value ().
+      - test4 exited with value ().
+      - test5 exited with value ().
+      - test6 exited with value ().
+      - test7 exited with value ().
+      - test8 exited with value ().
+      - test9 exited with value ().
+      - test10 exited with value ().
+      - test11 exited with value ().
+      - test12 exited with value ().
+      - test13 exited with value ().
+      - test14 exited with value ().
+      - test15 exited with value ().
+      - test16 exited with value ().
+      - test17 exited with value ().
+      - test18 exited with value ().
+      - test19 exited with value ().
+      - test20 exited with value ().
+      - test21 exited with value ().
+      - test22 exited with value ().
+      - test23 exited with value ().
+      - test24 exited with value ().
+      - test25 exited with value ().
+      - test26 exited with value ().
+      - test27 exited with value ().
+      - test28 exited with value ().
+      - test29 exited with value ().
+      - test30 exited with value ().
+      - test31 exited with value ().
+      - test32 exited with value ().
+      - test33 exited with value ().
+      - test34 exited with value ().
+      - test35 exited with value ().
+      - test36 exited with value ().
+      - test37 exited with value ().
+      - test38 exited with value ().
+      - test39 exited with value ().
+      - test40 exited with value ().
+      - test41 exited with value ().
+      - test42 exited with value ().
+      - test43 exited with value ().
+      - test44 exited with value ().
+      - test45 exited with value ().
+      - test46 exited with value ().
+      - test47 exited with value ().
+      - test48 exited with value ().
+      - test49 exited with value ().
+      - test50 exited with value ().
+      - test51 exited with value ().
+      - test52 exited with value ().
+      - test53 exited with value ().
+      - test54 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "switch_case_part_3.jsligo" ] ;
+    [%expect{|
+      Everything at the top-level was executed.
+      - test1 exited with value ().
+      - test2 exited with value ().
+      - test3 exited with value ().
+      - test4 exited with value ().
+      - test5 exited with value ().
+      - test6 exited with value ().
+      - test7 exited with value ().
+      - test8 exited with value ().
+      - test9 exited with value ().
+      - test10 exited with value ().
+      - test11 exited with value ().
+      - test12 exited with value ().
+      - test13 exited with value ().
+      - test14 exited with value ().
+      - test15 exited with value ().
+      - test16 exited with value ().
+      - test17 exited with value ().
+      - test18 exited with value ().
+      - test19 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "switch_case_if_else.jsligo" ] ;
+    [%expect{|
+      Everything at the top-level was executed.
+      - test_if_switch_break exited with value ().
+      - test_if_switch_return exited with value ().
+      - test_switch_if_break exited with value ().
+      - test_switch_if_return exited with value ().
+      - test_switch_switch_break exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
