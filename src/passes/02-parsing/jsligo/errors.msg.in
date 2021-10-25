@@ -672,7 +672,6 @@ contract: Switch LPAR Ident RPAR LBRACE Case ZWSP
 Ill-formed switch statement.
 At this point, an expression is expected, whose value is used to
 select the case to be executed first.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident ZWSP
 ##
@@ -704,7 +703,6 @@ contract: Switch LPAR Ident ZWSP
 Ill-formed switch statement.
 At this point, if the expression is complete, a closing parenthesis
 ')' is expected.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident RPAR LBRACE Case Ident COLON ZWSP
 ##
@@ -722,8 +720,8 @@ At this point, one of the following is expected:
   * case statements separated by semicolons ';';
   * a new case starting with the keyword 'case';
   * the default case starting with the keyword 'default';
+  * a `break` to terminate the current switch;
   * a closing brace '}' if the switch is complete.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident RPAR LBRACE Default COLON ZWSP
 ##
@@ -739,8 +737,8 @@ contract: Switch LPAR Ident RPAR LBRACE Default COLON ZWSP
 Ill-formed switch statement.
 At this point, one of the following is expected:
   * case statements separated by semicolons ';';
+  * a `break` to terminate the current switch;
   * a closing brace '}' if the switch is complete.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident RPAR LBRACE Case Ident ZWSP
 ##
@@ -772,7 +770,6 @@ contract: Switch LPAR Ident RPAR LBRACE Case Ident ZWSP
 Ill-formed switch statement.
 At this point, if the case expression is complete, a colon ':' is
 expected.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident RPAR LBRACE Default ZWSP
 ##
@@ -787,7 +784,6 @@ contract: Switch LPAR Ident RPAR LBRACE Default ZWSP
 
 Ill-formed switch statement.
 At this point, a colon ':' for the default case is expected.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident RPAR LBRACE ZWSP
 ##
@@ -801,7 +797,6 @@ contract: Switch LPAR Ident RPAR LBRACE ZWSP
 
 Ill-formed switch statement.
 At this point, a case starting with the keyword 'case' is expected.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident RPAR ZWSP
 ##
@@ -815,7 +810,6 @@ contract: Switch LPAR Ident RPAR ZWSP
 
 Ill-formed switch statement.
 At this point, cases are expected between braces '{' '}'.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch ZWSP
 ##
@@ -829,7 +823,6 @@ contract: Switch ZWSP
 
 Ill-formed switch statement.
 At this point, an expression between parentheses is expected.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR ZWSP
 ##
@@ -843,7 +836,6 @@ contract: Switch LPAR ZWSP
 
 Ill-formed switch statement.
 At this point, the expression evaluated against the cases is expected.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Ident ZWSP
 ##
@@ -883,7 +875,6 @@ is expected:
   * a new case starting with the keyword 'case';
   * the default case starting with the keyword 'default';
   * a closing brace '}' if the switch is complete.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Ident RPAR LBRACE Default COLON Ident SEMI ZWSP
 ##
@@ -902,8 +893,8 @@ At this point, one of the following is expected:
   * another statement for the current case;
   * a new case starting with the keyword 'case';
   * the default case starting with the keyword 'default';
+  * a `break` to terminate the current switch;
   * a closing brace '}' if the switch is complete.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Bytes Default
 ##
@@ -940,7 +931,6 @@ contract: Switch LPAR Bytes RPAR LBRACE Default COLON Bytes Default
 Ill-formed switch statement.
 At this point, if the last case is complete, a closing brace '}' is
 expected.
-Note: Switch statements are currently not supported by JsLIGO.
 
 contract: LBRACE ZWSP
 ##

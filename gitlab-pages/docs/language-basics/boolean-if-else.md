@@ -802,3 +802,62 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo '21n' --entry-
 </Syntax>
 
 
+
+<Syntax syntax="jsligo">
+
+## Switch Statement
+
+JsLIGO also supports branching of control flow via the switch statement.
+
+```jsligo group=switch
+let quarter = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1:
+    case 2:
+    case 3:
+      output = "Q1";
+      break;
+    case 4:
+    case 5:
+    case 6:
+      output = "Q2";
+      break;
+    case 7:
+    case 8:
+    case 9:
+      output = "Q3";
+      break;
+    case 10:
+    case 11:
+    case 12:
+      output = "Q4";
+      break;
+    default:
+      output = "Invalid month."
+  };
+  return output;
+}
+```
+
+The switch statement takes an expression and tries to find a `case` which matches the switch expression,
+If a matching `case` is found, the statements of the matching case are executed untill a `break;` statement.
+If no `break` is found the control falls through to the next `case` or `default`. If no matching case is found
+the statements of the `default` case are executed.
+
+> A few gotcha's about the switch statement
+> 1. A switch should have at-least one `case` or `default`.
+> 2. If a `default` case is provided, It should be the last case.
+> 3. Conditional `break`'s are not supported i.e. `break` inside a `if-then-else`.
+> 4. In case of nested `switch` statements, the inner `switch` should not contain a `return`.
+
+You can run the `quarter` function defined above using the LIGO compiler
+like this:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/boolean-if-else/switch.jsligo '5' --entry-point quarter
+# Outputs: "Q2"
+```
+
+
+</Syntax>

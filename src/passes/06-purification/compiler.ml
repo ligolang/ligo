@@ -281,13 +281,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
         return' @@ O.e_cond ~loc:e.location condition then_clause' else_clause'
     | I.E_sequence {expr1; expr2} ->
       let expr1 = compile_expression' ~raise ~last:false expr1 in
-      let expr2 = (match expr2.expression_content with
-      | I.E_sequence _ -> 
-        compile_expression' ~raise ~last:false expr2
-      | _ -> 
-        compile_expression' ~raise ~last expr2
-      )
-      in 
+      let expr2 = compile_expression' ~raise ~last expr2 in 
       fun e -> expr1 (Some (expr2 e))
     | I.E_skip -> return @@ O.E_skip
     | I.E_tuple tuple ->

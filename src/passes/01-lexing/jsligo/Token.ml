@@ -112,6 +112,7 @@ module T =
     | Let      of Region.t  (* let      *)
     | Of       of Region.t  (* of       *)
     | Return   of Region.t  (* return   *)
+    | Break    of Region.t  (* break    *)
     | Switch   of Region.t  (* switch   *)
     (* | This     of Region.t  (* this     *) *)
     (* | Void     of Region.t  (* void     *) *)
@@ -229,6 +230,7 @@ module T =
     | "Let"      -> "let"
     | "Of"       -> "of"
     | "Return"   -> "return"
+    | "Break"    -> "break"
     | "Switch"   -> "switch"
     (* | "This"     -> "this" *)
     (* | "Void"     -> "void" *)
@@ -364,6 +366,7 @@ module T =
     | Let      region -> region, "Let"
     | Of       region -> region, "Of"
     | Return   region -> region, "Return"
+    | Break    region -> region, "Break"
     | Switch   region -> region, "Switch"
     (* | This     region -> region, "This" *)
     (* | Void     region -> region, "Void" *)
@@ -477,6 +480,7 @@ module T =
     | Let      _ -> "let"
     | Of       _ -> "of"
     | Return   _ -> "return"
+    | Break    _ -> "break"
     | Switch   _ -> "switch"
     (* | This     _ -> "this" *)
     (* | Void     _ -> "void" *)
@@ -526,6 +530,7 @@ module T =
        (fun reg -> Let     reg);
        (fun reg -> Of     reg);
        (fun reg -> Return  reg);
+       (fun reg -> Break   reg);
        (fun reg -> Switch  reg);
        (* (fun reg -> This    reg); *)
        (* (fun reg -> Void    reg); *)

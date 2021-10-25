@@ -91,6 +91,7 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> Let      "let"
 %token <Region.t> Of       "of"
 %token <Region.t> Return   "return"
+%token <Region.t> Break    "break"
 %token <Region.t> Switch   "switch"
 %token <Region.t> While    "while"
 
