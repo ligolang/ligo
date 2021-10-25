@@ -49,14 +49,14 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
         -- LIGO-309
       , "vars_consts/multiple_vars.ligo"
 
-        -- LIGO-322
-      , "heap.ligo"
-
         -- LIGO-323
       , "heap-instance.ligo"
 
         -- LIGO-324
       , "interpreter_tests/compile_expr_from_file.mligo"
+
+        -- Bad
+      , "heap.ligo"  -- There is an accidental extra closing parenthesis.
       ]
 
 okayIgnoreDirs :: [FilePath]
