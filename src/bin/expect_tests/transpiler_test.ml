@@ -655,8 +655,8 @@ let nested_record: nested_record_t => string =
          ((failwith(("Should not happen."))) : string)
      }); |}]
 
-let%expect_test _ =
 (*
+let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/double_fold_converter.religo" ; "pascaligo" ] ;
   [%expect{|
 type tokenId is nat
@@ -775,7 +775,7 @@ block {
     case parameter of [
       Transfer (transferParameter) ->
         transfer (transferParameter, storage)
-    ] |}]; *)
+    ] |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/double_fold_converter.religo" ; "cameligo" ] ;
   [%expect.unreachable];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/double_fold_converter.religo" ; "reasonligo" ] ;
@@ -798,6 +798,7 @@ block {
    32 |     let tokenOwner: option(tokenOwner) = Map.find_opt(transferContents.token_id, storage);
 
   Unknown constant: Layout.convert_from_right_comb |}]
+*)
 
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "pascaligo" ] ;

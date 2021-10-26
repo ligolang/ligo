@@ -33,6 +33,14 @@ let entry_point n =
     info ~docv ~doc [] in
   required @@ pos n (some string) (Some "main") info
 
+let on_chain_views =
+  let open Arg in
+  let info =
+    let docv = "ON_CHAIN_VIEWS" in
+    let doc = "$(docv) is a declaration name list that will be compiled as on-chain views" in
+    info ~docv ~doc ["views" ; "v"] in
+  value @@ opt (list string) [] info
+
 let expression purpose n =
   let open Arg in
   let docv = purpose ^ "_EXPRESSION" in
@@ -193,7 +201,7 @@ let michelson_code_format =
 
 let optimize =
   let open Arg in
-  let docv = "ENTRY_POINT" in
+  let docv = "OPTIMIZE" in
   let doc = "Apply Mini-C optimizations as if compiling $(docv)" in
   let info =
     info ~docv ~doc ["optimize"] in
@@ -240,10 +248,10 @@ let generator =
 
 module Api = Ligo_api
 let compile_file =
-  let f source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format output_file warn werror =
+  let f source_file entry_point oc_views syntax infer protocol_version display_format disable_typecheck michelson_format output_file warn werror =
     return_result ~warn ?output_file @@
-    Api.Compile.contract ~werror source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format in
-  let term = Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ infer $ protocol_version $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file $ warn $ werror) in
+    Api.Compile.contract ~werror source_file entry_point oc_views syntax infer protocol_version display_format disable_typecheck michelson_format in
+  let term = Term.(const f $ source_file 0 $ entry_point 1 $ on_chain_views $ syntax $ infer $ protocol_version $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file $ warn $ werror) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: Compile a contract." in
   let man = [`S Manpage.s_description;
@@ -397,12 +405,12 @@ let print_mini_c =
   in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let measure_contract =
-  let f source_file entry_point syntax infer protocol_version display_format warn werror =
+  let f source_file entry_point oc_views syntax infer protocol_version display_format warn werror =
     return_result ~warn @@
-    Api.Info.measure_contract source_file entry_point syntax infer protocol_version display_format werror
+    Api.Info.measure_contract source_file entry_point oc_views syntax infer protocol_version display_format werror
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1  $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ on_chain_views $ syntax $ infer $ protocol_version $ display_format $ warn $ werror) in
   let cmdname = "measure-contract" in
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   let man = [`S Manpage.s_description;
@@ -620,30 +628,10 @@ let test =
   let doc = "Subcommand: Test a contract with the LIGO test framework (BETA)." in
   let man = [`S Manpage.s_description;
              `P "This sub-command tests a LIGO contract using a LIGO \
-                 interpreter, no Michelson code is evaluated. Still \
+                 interpreter. Still \
                  under development, there are features that are work \
                  in progress and are subject to change. No real test \
                  procedure should rely on this sub-command alone.";
-             (* 
-             TODO: correct text below
-             
-             `S "EXTRA PRIMITIVES FOR TESTING";
-             `P "Test.originate c st : binds contract c with the \
-                 address addr which is returned, st as the initial \
-                 storage.";
-             `P "Test.set_now t : sets the current time to t.";
-             `P "Test.set_balance addr b : sets the balance of \
-                 contract bound to address addr (returns unit).";
-             `P "Test.external_call addr p amt : performs a call to \
-                 contract bound to addr with parameter p and amount \
-                 amt (returns unit).";
-             `P "Test.get_storage addr : returns current storage bound \
-                 to address addr.";
-             `P "Test.get_balance : returns current balance bound to \
-                 address addr.";
-             `P "Test.assert_failure (f : unit -> _) : returns true if \
-                 f () fails.";
-             `P "Test.log x : prints x into the console." *)
             ]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 

@@ -1,7 +1,7 @@
 open Trace
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
-let string_of_contract t = Format.asprintf "%a" Tezos_protocol_010_PtGRANAD.Protocol.Alpha_context.Contract.pp t
+let string_of_contract t = Format.asprintf "%a" Tezos_protocol_011_PtHangzH.Protocol.Alpha_context.Contract.pp t
 let string_of_key_hash t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 
 module Tezos_eq = struct
@@ -65,12 +65,26 @@ module Tezos_eq = struct
       Z.Overflow -> None
 
 end
-let compile_contract ~raise ~add_warning source_file entry_point =
+
+let create_chest_key (chest:bytes) (time:int) : bytes =
+  let open Tezos_crypto in
+  let chest = Data_encoding.Binary.of_bytes_exn Timelock.chest_encoding chest in
+  Data_encoding.Binary.to_bytes_exn Timelock.chest_key_encoding @@ Timelock.create_chest_key chest ~time
+
+let create_chest (payload:Bytes.t) (time:int) : _ =
+  let open Tezos_crypto in
+  let (chest, chest_key) = Timelock.create_chest_and_chest_key ~payload ~time in
+  let chest_key_bytes =  Data_encoding.Binary.to_bytes_exn Timelock.chest_key_encoding chest_key in
+  let chest_bytes = Data_encoding.Binary.to_bytes_exn Timelock.chest_encoding chest in
+  (chest_bytes, chest_key_bytes)
+
+let compile_contract ~raise ~add_warning ~protocol_version source_file entry_point declared_views =
   let open Ligo_compile in
   let syntax = "auto" in
-  let options = Compiler_options.make () in
-  let michelson = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
-  Of_michelson.build_contract ~raise ~disable_typecheck:false michelson
+  let options = Compiler_options.make ~protocol_version () in
+  let michelson,env = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
+  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file in
+  Of_michelson.build_contract ~raise ~disable_typecheck:false michelson views
 
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in
@@ -144,9 +158,9 @@ let compile_type ~raise type_exp =
   let compiled_exp   = Of_mini_c.compile_type mini_c_exp in
   compiled_exp
 
-let compile_contract_ ~raise subst_lst arg_binder rec_name in_ty out_ty typed_exp =
+let compile_contract_ ~raise ~protocol_version subst_lst arg_binder rec_name in_ty out_ty typed_exp =
   let open Ligo_compile in
-  let options = Compiler_options.make () in
+  let options = Compiler_options.make ~protocol_version () in
   let typed_exp' = add_ast_env ~raise subst_lst arg_binder typed_exp in
   let typed_exp = match rec_name with
     | None -> Ast_typed.e_a_lambda { result = typed_exp'; binder = arg_binder } in_ty out_ty
@@ -194,10 +208,19 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      let () = trace_option ~raise (Errors.generic_error loc "Expected string")
                  (get_t_string ty) in
      e_a_string (Simple_utils.Ligo_string.standard s)
-  | V_Ct (C_bytes b) ->
-     let () = trace_option ~raise (Errors.generic_error loc "Expected bytes")
-                 (get_t_bytes ty) in
-     e_a_bytes b
+  | V_Ct (C_bytes b) -> (
+    match get_t_bytes ty with
+    | Some () -> e_a_bytes b
+    | None -> (
+      match get_t_chest ty with
+      | Some () -> e_a_bytes b
+      | None -> (
+        match get_t_chest_key ty with
+        | Some () -> e_a_bytes b
+        | None -> raise.raise (Errors.generic_error loc "Expected bytes, chest or chest_key")
+        )
+    )
+  )
   | V_Ct (C_address a) when is_t_address ty ->
      let () = trace_option ~raise (Errors.generic_error loc "Expected address")
                  (get_t_address ty) in
@@ -283,7 +306,8 @@ and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env ->
        let name = None in
        let expr = val_to_ast ~raise ~loc:binder.location item.eval_term item.ast_type in
        let inline = false in
-       Ast_typed.Declaration_constant { name ; binder ; expr ; attr = { inline ; no_mutation; public = true} } :: aux tl
+       let view = false in
+       Ast_typed.Declaration_constant { name ; binder ; expr ; attr = { inline ; no_mutation; view ; public = true} } :: aux tl
     | Module { name; item } :: tl ->
        let module_binder = name in
        let module_ = env_to_ast ~raise ~loc item in
@@ -366,7 +390,7 @@ and make_subst_ast_env_exp ~raise env expr =
          let expr_fv = get_fv expr in
          let fv = List.remove_element ~compare:Var.compare binder fv in
          let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
-         aux (fv, fmv) (Declaration_constant { binder = name ; name = None ; expr ; attr = { inline = false ; no_mutation; public = true } } :: acc) tl
+         aux (fv, fmv) (Declaration_constant { binder = name ; name = None ; expr ; attr = { inline = false ; view = false ; no_mutation; public = true } } :: acc) tl
        else
          aux (fv, fmv) acc tl
     | Module { name; item } :: tl ->

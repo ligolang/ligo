@@ -64,6 +64,18 @@ let%expect_test _ =
     - test_list_fold_left_sum exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good ["run"; "test" ; test "views_test.mligo" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "interpret_test_log.mligo" ] ;
   [%expect {|
     {a = 1 ; b = 2n ; c = "aaa"}
@@ -207,15 +219,6 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
-
-(* DEPRECATED
-let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "test_bigmap_set.mligo" ] ;
-  [%expect {|
-    9n
-    0n
-    Everything at the top-level was executed.
-    - test exited with value (). |}] *)
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_module.mligo" ] ;
@@ -422,7 +425,6 @@ let%expect_test _ =
         [ pair (list operation) unit ],
       - actual stack type:
         [ unit ].
-    Type unit is not compatible with type pair (list operation) unit.
     Type unit is not compatible with type pair (list operation) unit. |}]
 
 let%expect_test _ =

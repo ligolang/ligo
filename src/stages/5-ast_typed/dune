@@ -8,6 +8,7 @@
     stage_common
     UnionFind
   )
-;;  (modules_without_implementation generated_fold_x)
-  (flags (:standard -open Simple_utils))
+  (flags (:standard -open Simple_utils
+           ;; SOMEDAY remove this
+           -w -9))
 )

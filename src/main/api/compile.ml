@@ -1,9 +1,10 @@
 
 open Api_helpers
+open Simple_utils
 module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
-let contract ?werror source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format =
+let contract ?werror source_file entry_point declared_views syntax infer protocol_version display_format disable_typecheck michelson_format =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ?werror ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) get_warnings @@
       fun ~raise ->
@@ -12,15 +13,21 @@ let contract ?werror source_file entry_point syntax infer protocol_version displ
           let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
           Compiler_options.make  ~init_env ~infer ~protocol_version ()
       in
-      let michelson =  Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
-      Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck michelson
+      let code,env = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
+      let views =
+        Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file
+      in
+      Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck code views
 
 let expression expression syntax infer protocol_version init_file display_format without_run michelson_format werror =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) get_warnings @@
       fun ~raise ->
-      let init_env   = Helpers.get_initial_env ~raise protocol_version in
-      let options = Compiler_options.make ~infer ~init_env () in
+      let options =
+        let init_env   = Helpers.get_initial_env ~raise protocol_version in
+        let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
+        Compiler_options.make ~infer ~init_env ~protocol_version ()
+      in
       let mini_c_exp, decl_list = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options decl_list mini_c_exp in
       if without_run then

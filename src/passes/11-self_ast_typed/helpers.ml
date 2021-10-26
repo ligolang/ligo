@@ -99,6 +99,23 @@ and fold_module : ('a,'err) folder -> 'a -> module_fully_typed -> 'a = fun f ini
   let res = List.fold ~f:aux ~init p in
   res
 
+type ty_mapper = type_expression -> unit
+let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
+  let self = iter_type_expression f in
+  let () = f t in
+  match t.type_content with
+  | T_variable _ -> ()
+  | T_constant x -> List.iter ~f:self x.parameters
+  | T_sum x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
+  | T_record x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
+  | T_arrow x ->
+    let () = self x.type1 in
+    self x.type2
+  | T_module_accessor x -> self x.element
+  | T_singleton _ -> ()
+  | T_abstraction x -> self x.type_
+  | T_for_all x -> self x.type_
+
 type 'err mapper = expression -> expression
 let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
   let self = map_expression f in
@@ -204,8 +221,8 @@ and map_module : 'err mapper -> module_fully_typed -> module_fully_typed = fun m
   let p = List.map ~f:(Location.map aux) p in
   Module_Fully_Typed p
 
-type ('a , 'err) fold_mapper = 'a -> expression -> bool * 'a * expression
-let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
+type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
+let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
   let self = fold_map_expression f in
   let (continue, init,e') = f a e in
   if (not continue) then (init,e')
@@ -282,7 +299,7 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
     (res, return @@ E_raw_code { language ; code }))
   | E_literal _ | E_variable _ as e' -> (init, return e')
 
-and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
+and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
   match m with
   | Match_variant {cases ; tv} -> (
       let aux init {constructor ; pattern ; body} =
@@ -296,7 +313,7 @@ and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> 'a * matc
       let (init, body) = fold_map_expression f init body in
       (init, Match_record { fields ; body ; tv })
 
-and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> 'a * module_fully_typed = fun m init (Module_Fully_Typed p) ->
+and fold_map_module : 'a fold_mapper -> 'a -> module_fully_typed -> 'a * module_fully_typed = fun m init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant {name; binder ; expr ; attr } -> (
@@ -347,7 +364,7 @@ let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type =
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let main_decl =
-    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
+    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@ (* Better error maybe ? *)
       main_decl_opt
     in
   let { binder=_ ; expr ; attr=_ } = main_decl in
@@ -355,22 +372,47 @@ let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type =
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
     | T_record tin , T_record tout when (is_tuple_lmap tin.content) && (is_tuple_lmap tout.content) ->
-       let (parameter,storage) = trace_option ~raise (expected_pair_in expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
-       let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
-       let () = trace_option ~raise (expected_list_operation main_fname listop expr) @@
-                       Ast_typed.assert_t_list_operation listop in
-       let () = trace_option ~raise (expected_same main_fname storage storage' expr) @@
-                       Ast_typed.assert_type_expression_eq (storage,storage') in
-       (* TODO: on storage/parameter : a| Some (typed_prg,_,_) ->
-        let b = extract_variable_types typed_prg in
-        let () = Format.printf "\n EXTRACT \n" in
-        let () = List.iter ~f: (fun (v,te) -> Format.printf "%a  --  %a\n" Ast_typed.PP.expression_variable v Ast_typed.PP.type_expression te) b in
-        let () = Format.printf "length : %d\n" (List.length b) in
-      ssert_storable, assert_passable ? *)
-       { parameter ; storage }
+      let (parameter,storage) = trace_option ~raise (expected_pair_in_contract expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
+      let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
+      let () = trace_option ~raise (expected_list_operation main_fname listop expr) @@
+        Ast_typed.assert_t_list_operation listop in
+      let () = trace_option ~raise (expected_same main_fname storage storage' expr) @@
+        Ast_typed.assert_type_expression_eq (storage,storage') in
+      (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
+      { parameter ; storage }
     |  _ -> raise.raise @@ bad_contract_io main_fname expr
   )
   | _ -> raise.raise @@ bad_contract_io main_fname expr
+
+type view_type = {
+  arg : Ast_typed.type_expression ;
+  storage : Ast_typed.type_expression ;
+  return : Ast_typed.type_expression ;
+}
+
+let fetch_view_type ~raise : string -> module_fully_typed -> (view_type * Location.t) = fun main_fname (Module_Fully_Typed m) ->
+  let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
+    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
+        if Var.equal binder.wrap_content (Var.of_name main_fname)
+        then Some p
+        else None
+    | Declaration_type   _
+    | Declaration_module _
+    | Module_alias _ -> None
+  in
+  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
+  let main_decl =
+    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
+      main_decl_opt
+    in
+  let { binder=_ ; expr ; attr=_ } = main_decl in
+  match get_lambda_with_type expr with
+  | Some ({binder; result=_} , (tin,return))-> (
+    match get_t_tuple tin with
+    | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
+    | _ -> raise.raise (expected_pair_in_view binder.location)
+  )
+  | None -> raise.raise @@ bad_contract_io main_fname expr
 
 let get_pattern ?(pred = fun _ -> true) pattern =
   Stage_common.Helpers.fold_pattern (fun vars p ->

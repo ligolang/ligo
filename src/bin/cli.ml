@@ -35,6 +35,17 @@ let syntax =
   Clic.parameter @@
   fun _ s -> Proto_alpha_utils.Error_monad.return s
 
+let on_chain_views : (string list, _) Clic.arg =
+  let docv = "ON_CHAIN_VIEWS" in
+  let doc = "A list of declaration name that will be compiled as on-chain views, separated by ','" in
+  Clic.default_arg ~doc ~short:'v' ~long:"views" ~placeholder:docv ~default:"" @@
+  Clic.parameter @@
+  fun _ s -> Proto_alpha_utils.Error_monad.return (
+    match s with
+    | "" -> []
+    | _ -> Base.String.split ~on:',' s
+  )
+
 let steps =
   let docv = "STEPS" in
   let doc = "a bound in the number of steps to be done by the interpreter." in
@@ -202,9 +213,9 @@ module Api = Ligo_api
 
 let compile_group = Clic.{name="compile";title="Commands for compiling from Ligo to Michelson"}
 let compile_file =
-  let f (entry_point, syntax, infer, protocol_version, display_format, disable_typecheck, michelson_format, output_file, warn, werror) source_file () =
+  let f (entry_point, oc_views, syntax, infer, protocol_version, display_format, disable_typecheck, michelson_format, output_file, warn, werror) source_file () =
     return_result ~warn ?output_file @@
-    Api.Compile.contract ~werror source_file entry_point syntax infer protocol_version display_format disable_typecheck michelson_format in
+    Api.Compile.contract ~werror source_file entry_point oc_views syntax infer protocol_version display_format disable_typecheck michelson_format in
   let _doc = "Subcommand: Compile a contract." in
   let desc =     "This sub-command compiles a contract to Michelson \
                  code. It expects a source file and an entrypoint \
@@ -214,7 +225,7 @@ let compile_file =
 
     ~group:compile_group
     ~desc
-    Clic.(args10 entry_point syntax infer protocol_version display_format disable_michelson_typechecking michelson_code_format output_file warn werror)
+    Clic.(args11 entry_point on_chain_views syntax infer protocol_version display_format disable_michelson_typechecking michelson_code_format output_file warn werror)
     Clic.(prefixes ["compile"; "contract"] @@ source_file @@ stop)
     f
 
@@ -344,30 +355,9 @@ let test =
   in
   let _doc = "Subcommand: Test a contract with the LIGO test framework (BETA)." in
   let desc =    "This sub-command tests a LIGO contract using a LIGO \
-                 interpreter, no Michelson code is evaluated. Still \
-                 under development, there are features that are work \
+                 interpreter. Still under development, there are features that are work \
                  in progress and are subject to change. No real test \
                  procedure should rely on this sub-command alone."
-             (*
-             TODO: correct text below
-
-             `S "EXTRA PRIMITIVES FOR TESTING";
-             `P "Test.originate c st : binds contract c with the \
-                 address addr which is returned, st as the initial \
-                 storage.";
-             `P "Test.set_now t : sets the current time to t.";
-             `P "Test.set_balance addr b : sets the balance of \
-                 contract bound to address addr (returns unit).";
-             `P "Test.external_call addr p amt : performs a call to \
-                 contract bound to addr with parameter p and amount \
-                 amt (returns unit).";
-             `P "Test.get_storage addr : returns current storage bound \
-                 to address addr.";
-             `P "Test.get_balance : returns current balance bound to \
-                 address addr.";
-             `P "Test.assert_failure (f : unit -> _) : returns true if \
-                 f () fails.";
-             `P "Test.log x : prints x into the console." *)
   in
   Clic.command ~group:run_group ~desc
     Clic.(args5 syntax steps infer protocol_version display_format)
@@ -467,17 +457,16 @@ let list_declarations =
     Clic.(prefixes ["info"; "list-declarations"] @@ source_file @@ stop)
     f
 
-
 let measure_contract =
-  let f (entry_point, syntax, infer, protocol_version, display_format, warn, werror) source_file () =
+  let f (entry_point, oc_views, syntax, infer, protocol_version, display_format, warn, werror) source_file () =
     return_result ~warn @@
-    Api.Info.measure_contract source_file entry_point syntax infer protocol_version display_format werror
+    Api.Info.measure_contract source_file entry_point oc_views syntax infer protocol_version display_format werror
   in
   let _doc = "Subcommand: Measure a contract's compiled size in bytes." in
   let desc =    "This sub-command compiles a source file and measures \
                  the contract's compiled size in bytes." in
   Clic.command ~group:info_group ~desc
-    Clic.(args7 entry_point syntax infer protocol_version display_format warn werror)
+    Clic.(args8 entry_point on_chain_views syntax infer protocol_version display_format warn werror)
     Clic.(prefixes ["info";"measure-contract"] @@ source_file @@ stop)
     f
 

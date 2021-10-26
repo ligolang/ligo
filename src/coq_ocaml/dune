@@ -7,22 +7,24 @@
   zarith
   tezos-micheline))
 
-(coq.extraction
- (prelude extraction)
- (extracted_modules
-  Datatypes
-  Nat
-  PeanoNat
-  List
-  BinInt
-  BinPos
-  Specif
+;; TODO removed temporarily due to dune race condition bug. extracted
+;; files have been committed here.
+; (coq.extraction
+;  (prelude extraction)
+;  (extracted_modules
+;   Datatypes
+;   Nat
+;   PeanoNat
+;   List
+;   BinInt
+;   BinPos
+;   Specif
 
-  co_de_bruijn
-  ligo
-  compiler)
- (theories ligo_coq)
- (libraries
-  simple-utils
-  zarith
-  tezos-micheline))
+;   co_de_bruijn
+;   ligo
+;   compiler)
+;  (theories ligo_coq)
+;  (libraries
+;   simple-utils
+;   zarith
+;   tezos-micheline))

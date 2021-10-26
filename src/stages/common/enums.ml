@@ -165,6 +165,8 @@ type constant' =
   | C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE
   | C_CREATE_CONTRACT
+  | C_OPEN_CHEST
+  | C_VIEW
   (* Tests - ligo interpreter only *)
   | C_TEST_ORIGINATE [@only_interpreter]
   | C_TEST_GET_STORAGE [@only_interpreter]
@@ -198,7 +200,10 @@ type constant' =
   | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]
   | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
-  | C_TEST_SET_BIG_MAP
+  | C_TEST_SET_BIG_MAP [@only_interpreter]
+  | C_TEST_CAST_ADDRESS [@only_interpreter]
+  | C_TEST_CREATE_CHEST [@only_interpreter]
+  | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK

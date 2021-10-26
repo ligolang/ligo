@@ -123,9 +123,9 @@ let pack_payload ~raise (env:Ast_typed.environment) (payload:Ast_imperative.expr
   let code =
     let sugar     = Ligo_compile.Of_imperative.compile_expression ~raise payload in
     let core      = Ligo_compile.Of_sugar.compile_expression sugar in
-    let typed,_ = Ligo_compile.Of_core.compile_expression ~raise ~infer:options.infer ~env core in
+    let typed,_ = Ligo_compile.Of_core.compile_expression ~raise ~options ~env core in
     let mini_c = Ligo_compile.Of_typed.compile_expression ~raise typed in
-    Ligo_compile.Of_mini_c.compile_expression ~options mini_c in
+    Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let payload_ty = code.expr_ty in
   let (payload : _ Tezos_utils.Michelson.michelson) =
     Ligo_run.Of_michelson.evaluate_expression ~raise code.expr code.expr_ty in
@@ -175,7 +175,7 @@ let typed_program_with_imperative_input_to_michelson ~raise ((program , env): As
   let sugar            = Ligo_compile.Of_imperative.compile_expression ~raise input in
   let core             = Ligo_compile.Of_sugar.compile_expression sugar in
   let app              = Ligo_compile.Of_core.apply entry_point core in
-  let (typed_app,_env) = Ligo_compile.Of_core.compile_expression ~raise ~infer:options.infer ~env app in
+  let (typed_app,_env) = Ligo_compile.Of_core.compile_expression ~raise ~options ~env app in
   let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in
   let mini_c_prg       = Ligo_compile.Of_typed.compile ~raise program in
   Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c_prg compiled_applied

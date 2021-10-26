@@ -21,21 +21,30 @@ let get_loc : 'l michelson -> 'l = function
   | String (l, _) -> l
   | Bytes (l, _) -> l
 
-let contract parameter storage code =
-  seq [
-    prim ~children:[parameter] "parameter" ;
-    prim ~children:[storage] "storage" ;
-    prim ~children:[code] "code" ;
-  ]
-
 let int n : unit michelson = Int ((), n)
 let string s : unit michelson = String ((), s)
 let bytes s : unit michelson = Bytes ((), s)
 
+let contract parameter storage code views =
+  let views = List.map
+    ~f:(fun (name, t_arg, t_ret, code) -> 
+      prim ~children:[string name ; t_arg ; t_ret ; code] "view"
+    )
+    views
+  in
+  seq (
+    [ prim ~children:[parameter] "parameter" ;
+      prim ~children:[storage] "storage" ;
+      prim ~children:[code] "code" ;
+    ] @ views
+  )
+
 let t_unit = prim "unit"
 let t_string = prim "string"
+let t_bytes = prim "bytes"
 let t_pair a b = prim ~children:[a;b] "pair"
 let t_lambda a b = prim ~children:[a;b] "lambda"
+let t_or a b = prim ~children:[a;b] "or"
 
 let d_unit = prim "Unit"
 let d_pair a b = prim ~children:[a;b] "Pair"
