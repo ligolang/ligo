@@ -22,13 +22,14 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-To use it, get it [here](https://ligolang.org/bin/linux/ligo), make it executable, and you're done!
+You can get the rolling release [here](https://ligolang.org/bin/linux/ligo), make it executable, and you are done!
 
 ```zsh
 wget https://ligolang.org/bin/linux/ligo
 chmod +x ./ligo
 ```
 
+For a specific version, you can visit our [release page](https://gitlab.com/ligolang/ligo/-/releases/).  
 Optionally, you can put it somewhere in your `PATH` for easy access:
 
 ```zsh
