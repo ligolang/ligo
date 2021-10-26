@@ -44,5 +44,5 @@ suite('LIGO: Rename directory', () => {
         assert.fail("Directory for test doesn't exist")
       }
     }
-  })
+  }).timeout(5000) // 2000 is not enough
 })

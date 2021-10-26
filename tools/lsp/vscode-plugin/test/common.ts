@@ -13,4 +13,4 @@ export default async function activate(uri: vscode.Uri) {
 }
 
 // TIHI
-export const contractsDir: string = path.join(__dirname, '..', '..', '..', '..', 'squirrel', 'test', 'contracts')
+export const contractsDir: string = process.env.CONTRACTS_DIR || path.join(__dirname, '..', '..', '..', '..', 'squirrel', 'test', 'contracts')
