@@ -25,7 +25,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
     | E_mod_in { module_binder; rhs; let_result } -> (
-      let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration i rhs in
+      let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~options i rhs in
       let def = make_m_def module_binder e.location new_outer_def_map in
       let env = Def_map.add module_binder def env in
       let all_defs = merge_defs env all_defs in
@@ -125,9 +125,9 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     let (i,defs,_,scopes) = find_scopes' (i,top_lvl_defs,top_lvl_defs,scopes,loc) bindings e in
     (i,defs,scopes)
 
-  and declaration i core_prg =
+  and declaration ~options i core_prg =
     let test = options.test in
-    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test env decl in
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
         if with_types then Trace.to_option (compile_declaration partials.type_env decl ())
@@ -153,7 +153,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         ( i, top_def_map, inner_def_map, scopes, partials )
       )
       | Declaration_module {module_binder; module_} -> (
-        let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration i module_ in
+        let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~options i module_ in
         let def = make_m_def module_binder decl.location new_outer_def_map in
         let top_def_map = Def_map.add module_binder def top_def_map in
         ( i, top_def_map, inner_def_map, scopes, partials )
@@ -175,6 +175,6 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in
     List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg 
   in
-  let (_,top_d,inner_d,s,_) = declaration 0 core_prg in
+  let (_,top_d,inner_d,s,_) = declaration ~options 0 core_prg in
   let d = Def_map.union merge_refs top_d inner_d in
   (d,s)

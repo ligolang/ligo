@@ -9,9 +9,9 @@ let make_element : type_expression -> environment_element_definition -> element 
 
 let make_element_binder = fun t -> make_element t ED_binder
 
-let make_element_declaration = fun (expr : expression) ->
+let make_element_declaration = fun (expr : expression) (attr: known_attributes) ->
   let free_variables = Misc.Free_variables.(expression empty expr) in
-  make_element (get_type_expression expr) (ED_declaration {expression=expr ; free_variables})
+  make_element (get_type_expression expr) (ED_declaration {expression=expr ; free_variables ; attr })
 
 let empty : t = { expression_environment = [] ; type_environment = [] ; module_environment = [] }
 
@@ -64,8 +64,8 @@ let get_module_opt : ?other_module:bool -> module_variable -> t -> environment o
 let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e ->
   add_expr ~public:true k (make_element_binder v) e
 
-let add_ez_declaration ~public : expression_variable -> expression -> t -> t = fun k ae e ->
-  add_expr ~public k (make_element_declaration ae) e
+let add_ez_declaration ~public : expression_variable -> expression -> known_attributes -> t -> t = fun k ae attr e ->
+  add_expr ~public k (make_element_declaration ae attr) e
 
 let get_constructor : label -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
   let rec rec_aux e =

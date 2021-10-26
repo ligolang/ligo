@@ -10,11 +10,12 @@ let test source_file syntax steps infer protocol_version display_format =
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) get_warnings @@
       fun ~raise ->
       let init_env   = Helpers.get_initial_env ~raise ~test_env:true protocol_version in
-      let options = Compiler_options.make ~infer ~init_env ~test:true () in
+      let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
+      let options = Compiler_options.make ~infer ~init_env ~test:true ~protocol_version () in
       let typed,_    = Build.combined_contract ~raise ~add_warning ~options syntax Env source_file in
       let typed = Self_ast_typed.monomorphise_module typed in
       let steps = int_of_string steps in
-      Interpreter.eval_test ~raise ~steps typed
+      Interpreter.eval_test ~raise ~steps ~protocol_version typed
 
 let dry_run source_file entry_point input storage amount balance sender source now syntax infer protocol_version display_format werror =
     Trace.warning_with @@ fun add_warning get_warnings ->
@@ -27,7 +28,7 @@ let dry_run source_file entry_point input storage amount balance sender source n
       let parameter_ty =
         (* fails if the given entry point is not a valid contract *)
         let _contract = Compile.Of_michelson.build_contract ~raise michelson_prg in
-        Option.map ~f:fst @@ Self_michelson.fetch_contract_inputs michelson_prg.expr_ty
+        Option.map ~f:fst @@ Self_michelson.fetch_contract_ty_inputs michelson_prg.expr_ty
       in
 
       let compiled_params   = Compile.Utils.compile_storage ~raise ~options input storage source_file syntax env mini_c_prg in
@@ -70,7 +71,7 @@ let evaluate_call source_file entry_point parameter amount balance sender source
       let sugar_param      = Compile.Of_imperative.compile_expression ~raise imperative_param in
       let core_param       = Compile.Of_sugar.compile_expression sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in
-      let typed_app,_      = Compile.Of_core.compile_expression ~raise ~infer ~env app in
+      let typed_app,_      = Compile.Of_core.compile_expression ~raise ~options ~env app in
       let compiled_applied = Compile.Of_typed.compile_expression ~raise ~module_env:mods typed_app in
 
       let michelson        = Compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c_prg compiled_applied in

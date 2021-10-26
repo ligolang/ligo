@@ -38,6 +38,17 @@ let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type ->
     | _ -> raise.raise @@ entrypoint_not_a_function
   )
 
+let rec get_views : Ast_typed.environment -> (string * location) list = fun e ->
+  let f : (string * location) list -> environment_binding -> (string * location) list =
+    fun acc {expr_var ; env_elt } ->
+      match env_elt.definition with
+      | ED_declaration { attr ; _ } when attr.view -> (Var.to_name expr_var.wrap_content, expr_var.location)::acc
+      | _ -> acc
+  in 
+  let x = List.fold e.expression_environment ~init:[] ~f in
+  let y = List.fold e.module_environment ~init:[] ~f:(fun acc x -> List.append acc (get_views x.module_)) in
+  List.append x y
+
 let decompile_env e = Checking.decompile_env e
 let list_declarations (m : Ast_typed.module') : string list =
   List.fold_left

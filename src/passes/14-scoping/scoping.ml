@@ -50,6 +50,8 @@ let rec translate_type : I.type_expression -> (meta, string) node =
   | I.T_base I.TB_bls12_381_g2 -> Prim (nil, "bls12_381_g2", [], [])
   | I.T_base I.TB_bls12_381_fr -> Prim (nil, "bls12_381_fr", [], [])
   | I.T_base I.TB_never -> Prim (nil, "never", [], [])
+  | I.T_base I.TB_chest -> Prim (nil, "chest", [], [])
+  | I.T_base I.TB_chest_key -> Prim (nil, "chest_key", [], [])
   | I.T_ticket x -> Prim (nil, "ticket", [translate_type x], [])
   | I.T_sapling_transaction memo_size -> Prim (nil, "sapling_transaction", [Int (nil, memo_size)], [])
   | I.T_sapling_state memo_size -> Prim (nil, "sapling_state", [Int (nil, memo_size)], [])
@@ -273,12 +275,21 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   let special : (_ O.static_args * I.expression list) option =
     let return (x : _ O.static_args * I.expression list) : _ = Some x in
     match expr.cons_name with
-    | C_SELF ->
-      (match expr.arguments with
-       | { content = E_literal (Literal_string annot) ; _ } :: arguments ->
-         let annot = Ligo_string.extract annot in
-         return (Type_args (Some annot, []), arguments)
-       | _ -> None)
+    | C_VIEW -> (
+      match expr.arguments with
+      | { content = E_literal (Literal_string view_name); type_expression = _ } :: arguments ->
+        let* view_ret_t = Mini_c.get_t_option ty in
+        let view_name = Ligo_string.extract view_name in
+        return (Type_args (None, [String (nil, view_name) ; translate_type view_ret_t]), arguments)
+      | _ -> None
+    )
+    | C_SELF -> (
+      match expr.arguments with
+      | { content = E_literal (Literal_string annot) ; _ } :: arguments ->
+        let annot = Ligo_string.extract annot in
+        return (Type_args (Some annot, []), arguments)
+      | _ -> None
+    )
     | C_NONE | C_BYTES_UNPACK ->
       let* a = Mini_c.get_t_option ty in
       return (Type_args (None, [translate_type a]), expr.arguments)

@@ -1,4 +1,5 @@
 module H=Helpers
+module Ligo_proto = Environment.Protocols
 open Trace
 open Errors
 open Ast_typed
@@ -935,6 +936,12 @@ let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE
 let sapling_empty_state ~raise loc = typer_0 ~raise loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
   trace_option ~raise (not_annotated loc) @@ tv_opt
 
+let open_chest ~raise loc = typer_3 ~raise loc "OPEN_CHEST" @@ fun key chest n ->
+  let () = assert_eq_1 ~raise ~loc key (t_chest_key ()) in
+  let () = assert_eq_1 ~raise ~loc chest (t_chest ()) in
+  let () = trace_option ~raise (expected_nat loc n) @@ get_t_nat n in
+  t_chest_opening_result ()
+
 let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main storage balance ->
   let in_ty,_ = trace_option ~raise (expected_function loc main) @@ get_t_function main in
   let param_ty,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
@@ -996,7 +1003,7 @@ let test_external_call_to_address ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL
   (t_test_exec_result ())
 
 let test_get_storage ~raise loc = typer_1 ~raise loc "TEST_GET_STORAGE" @@ fun c ->
-  let (_, storage_ty) = trace_option ~raise (expected_contract loc c) @@ get_t_typed_address c in
+  let (_, storage_ty) = trace_option ~raise (expected_typed_address loc c) @@ get_t_typed_address c in
   storage_ty
 
 let test_get_storage_of_address ~raise loc = typer_1 ~raise loc "TEST_GET_STORAGE_OF_ADDRESS" @@ fun addr ->
@@ -1080,17 +1087,52 @@ let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun i
   let _ = trace_option ~raise (expected_big_map loc bm) @@ get_t_big_map bm in
   t_unit ()
 
-let test_originate_from_file ~raise loc = typer_4 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
-  let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-  let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-  let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-  let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-  (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+let test_originate_from_file ~protocol_version ~raise loc =
+  match (protocol_version : Ligo_proto.t) with
+  | Edo ->
+    typer_4 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
+      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
+      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
+      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
+      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
+      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+  | Hangzhou ->
+    typer_5 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint views storage balance ->
+      let tlist = trace_option ~raise (expected_list loc views) @@ get_t_list views in
+      let () = trace_option ~raise (expected_string loc tlist) @@ assert_t_string tlist in
+      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
+      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
+      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
+      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
+      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
 let test_compile_contract ~raise loc = typer_1 ~raise loc "TEST_COMPILE_CONTRACT" @@ fun _ ->
   (t_michelson_code ())
 
-let constant_typers ~raise ~test loc c : typer = match c with
+let test_cast_address ~raise loc = typer_1_opt ~raise loc "TEST_CAST_ADDRESS" @@ fun addr tv_opt ->
+  let cast_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
+  let (pty,sty) = trace_option ~raise (expected_typed_address loc cast_t) @@ get_t_typed_address cast_t in
+  let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
+  t_typed_address pty sty
+
+let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
+  let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
+  let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
+  t_pair (t_chest ()) (t_chest_key ())
+
+let test_create_chest_key ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST_KEY" @@ fun chest time ->
+  let () = assert_eq_1 ~raise ~loc (t_chest ()) chest in
+  let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
+  (t_chest_key ())
+
+let view ~raise loc = typer_3_opt ~raise loc "TEST_VIEW" @@ fun name _arg addr tv_opt ->
+  let () = trace_option ~raise (expected_string loc name) @@ get_t_string name in
+  let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
+  let view_ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
+  let _ : type_expression = trace_option ~raise (expected_option loc view_ret_t) @@ get_t_option view_ret_t in
+  view_ret_t
+
+let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_INT                 -> int ~raise loc ;
   | C_UNIT                -> unit ~raise loc ;
   | C_NEVER               -> never ~raise loc ;
@@ -1211,6 +1253,8 @@ let constant_typers ~raise ~test loc c : typer = match c with
   | C_PAIRING_CHECK -> pairing_check ~raise loc ;
   | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
   | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
+  | C_OPEN_CHEST -> open_chest ~raise loc ;
+  | C_VIEW -> view ~raise loc ;
   (* TEST *)
   | C_TEST_ORIGINATE -> test_originate ~raise loc ;
   | C_TEST_SET_NOW -> test_set_now ~raise loc ;
@@ -1242,8 +1286,29 @@ let constant_typers ~raise ~test loc c : typer = match c with
   | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
   | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
   | C_TEST_SET_BIG_MAP -> test_set_big_map ~raise loc ;
-  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~raise loc ;
+  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
   | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
+  | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
+  | C_TEST_CREATE_CHEST -> (
+    match protocol_version with
+    | Ligo_proto.Hangzhou -> test_create_chest ~raise loc ;
+    | Ligo_proto.Edo ->
+      raise.raise @@ corner_case (
+        Format.asprintf "Unsupported constant %a in protocol %s"
+        PP.constant' c
+        (Ligo_proto.variant_to_string protocol_version)
+      )
+  )
+  | C_TEST_CREATE_CHEST_KEY -> (
+    match protocol_version with
+    | Ligo_proto.Hangzhou -> test_create_chest_key ~raise loc ;
+    | Ligo_proto.Edo ->
+      raise.raise @@ corner_case (
+        Format.asprintf "Unsupported constant %a in protocol %s"
+          PP.constant' c
+          (Ligo_proto.variant_to_string protocol_version)
+      )
+  )
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

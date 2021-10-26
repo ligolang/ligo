@@ -15,6 +15,12 @@ let option_no_mutation ppf no_mutation =
   else
     fprintf ppf ""
 
+let option_view ppf no_mutation =
+  if no_mutation then
+    fprintf ppf "[@@view]"
+  else
+    fprintf ppf ""
+
 let option_public ppf public =
   if not public then
     fprintf ppf "[@@private]"

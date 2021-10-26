@@ -131,11 +131,12 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and attribute {inline;no_mutation;public} =
+and attribute {inline;no_mutation;public;view} =
   `Assoc [
     ("inline", `Bool inline);
     ("no_mutation", `Bool no_mutation);
-    ("public", `Bool public)
+    ("view", `Bool view);
+    ("public", `Bool public);
   ]
 
 and type_attribute ({public}: type_attribute) =
@@ -268,7 +269,7 @@ let module_with_unification_vars (Module_With_Unification_Vars p) = list (Locati
 
 (* Environment *)
 
-let environment_element_definition_declaration {expression=e; free_variables} =
+let environment_element_definition_declaration {expression=e; free_variables ; attr = _} =
   `Assoc [
     ("expression", expression e);
     ("free_variables", list expression_variable_to_yojson free_variables);

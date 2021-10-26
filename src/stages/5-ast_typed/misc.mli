@@ -22,10 +22,6 @@ module Free_variables : sig
   val singleton : expression_variable -> bindings
 end
 
-(*
-val assert_literal_eq : ( literal * literal ) -> unit result
-*)
-
 val get_entry : module_fully_typed -> string -> expression option
 
 val layout_eq : layout -> layout -> bool

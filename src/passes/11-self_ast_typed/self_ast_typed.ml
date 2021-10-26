@@ -43,6 +43,12 @@ let all_contract ~raise main_name prg =
   let prg = module_obj ~raise prg in
   prg
 
+let all_view ~raise main_name view_name prg =
+  let view_type,view_loc = Helpers.fetch_view_type ~raise view_name prg in
+  let contract_type = Helpers.fetch_contract_type ~raise main_name prg in
+  let () = View_passes.check_view_type ~raise ~err_data:(view_loc,main_name,view_name) contract_type view_type in
+  prg
+
 let all = [
   Recursion.check_tail_expression
 ]

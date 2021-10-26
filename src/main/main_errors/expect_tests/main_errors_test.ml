@@ -957,7 +957,8 @@ let%expect_test "self_ast_typed" =
     File "a dummy file name", line 20, character 5:
 
     Invalid type for entrypoint "foo".
-    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+    An entrypoint must of type "parameter * storage -> operations list * storage".
+    We expected a list of operations but we got foo |}] ;
   error
     (`Self_ast_typed_expected_same_entry
       ("foo", type_expression, type_expression2, expression)) ;
@@ -967,12 +968,12 @@ let%expect_test "self_ast_typed" =
 
     Invalid type for entrypoint "foo".
     The storage type "foo" of the function parameter must be the same as the storage type "bar" of the return value. |}] ;
-  error (`Self_ast_typed_pair_in location_t) ;
+  error (`Self_ast_typed_pair_in (location_t, `Contract)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
 
-    Invalid entrypoint.
+    Invalid contract.
     Expected a tuple as argument. |}] ;
   error (`Self_ast_typed_pair_out location_t) ;
   [%expect

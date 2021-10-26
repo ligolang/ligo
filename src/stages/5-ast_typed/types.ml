@@ -93,8 +93,6 @@ and module_with_unification_vars = Module_With_Unification_Vars of module'
 
 and module_fully_typed = Module_Fully_Typed of module'
 
-and attribute = { inline: bool ; no_mutation: bool; public : bool }
-
 and type_attribute = { public : bool }
 
 and module_attribute = { public : bool }
@@ -108,7 +106,7 @@ and declaration_constant = {
     name : string option ;
     binder : expression_variable ;
     expr : expression ;
-    attr : attribute ;
+    attr : known_attributes ;
   }
 
 and declaration_type = {
@@ -199,7 +197,7 @@ and let_in = {
     let_binder: expression_variable ;
     rhs: expression ;
     let_result: expression ;
-    attr: attribute ;
+    attr: known_attributes ;
   }
 
 and mod_in = {
@@ -252,6 +250,7 @@ and environment_element_definition =
 and environment_element_definition_declaration = {
     expression: expression ;
     free_variables: free_variables ;
+    attr : known_attributes ;
   }
 
 and free_variables = expression_variable list

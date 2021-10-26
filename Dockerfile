@@ -27,6 +27,10 @@ COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh
 COPY ligo.opam /ligo
 COPY ligo.opam.locked /ligo
 COPY vendors /ligo/vendors
+# TEMPORARY PROTOCOL Fix mistake in upstream file
+RUN sed -i 's/"ppx_inline_test" {with-test}/"ppx_inline_test"/' vendors/tezos/src/lib_stdlib/tezos-stdlib.opam
+RUN sed -i 's/"tezos-stdlib"/"tezos-stdlib"\n  "bls12-381-legacy"/' vendors/tezos/src/lib_protocol_environment/tezos-protocol-environment-structs.opam
+RUN sed -i 's/{ >= "2.7.2" }/{ >= "2.7.2" \& < "2.8.0" }/' vendors/tezos/src/lib_context/tezos-context.opam
 # install all transitive deps
 RUN opam update && sh scripts/install_opam_deps.sh
 
@@ -44,7 +48,7 @@ ENV CI_COMMIT_SHA=$ci_commit_sha
 ENV CI_COMMIT_TIMESTAMP=$ci_commit_timestamp
 COPY changelog.txt /ligo/changelog.txt
 ENV CHANGELOG_PATH=/ligo/changelog.txt
-RUN eval $(opam env) && LIGO_VERSION=$(/ligo/scripts/version.sh) dune build -p ligo --profile static
+RUN LIGO_VERSION=$(/ligo/scripts/version.sh) opam exec -- dune build -p ligo --profile static
 
 # Copy binary now to avoid problems with BISECT_ENABLE below
 RUN cp /ligo/_build/install/default/bin/ligo /tmp/ligo

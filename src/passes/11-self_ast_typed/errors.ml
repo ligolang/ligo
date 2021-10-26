@@ -14,10 +14,12 @@ type self_ast_typed_error = [
   | `Self_ast_typed_contract_list_ops of string * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
     string * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
-  | `Self_ast_typed_pair_in of Location.t
+  | `Self_ast_typed_pair_in of Location.t * [`View | `Contract]
   | `Self_ast_typed_pair_out of Location.t
   | `Self_ast_typed_match_anomaly of Location.t
   | `Self_ast_typed_obj_ligo of Location.t
+  | `Self_ast_typed_view_contract of Location.t * string * string * Ast_typed.type_expression * Ast_typed.type_expression
+  | `Self_ast_typed_view_io of Location.t * Ast_typed.type_expression * [`In | `Out]
 ]
 
 let pattern_matching_anomaly (loc:Location.t) : self_ast_typed_error = `Self_ast_typed_match_anomaly loc
@@ -38,9 +40,13 @@ let expected_list_operation entrypoint got e =
   `Self_ast_typed_contract_list_ops (entrypoint, got, e)
 let expected_same entrypoint t1 t2 e =
   `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e)
-let expected_pair_in loc = `Self_ast_typed_pair_in loc
+let expected_pair_in_contract loc = `Self_ast_typed_pair_in (loc , `Contract)
+let expected_pair_in_view loc = `Self_ast_typed_pair_in (loc, `View)
 let expected_pair_out loc = `Self_ast_typed_pair_out loc
 let expected_obj_ligo loc = `Self_ast_typed_obj_ligo loc
+let storage_view_contract loc main_name view_name ct vt = `Self_ast_typed_view_contract (loc,main_name,view_name,ct,vt)
+let type_view_io_in loc got = `Self_ast_typed_view_io (loc,got,`In)
+let type_view_io_out loc got = `Self_ast_typed_view_io (loc,got,`Out)
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> self_ast_typed_error -> unit =
@@ -48,6 +54,24 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Self_ast_typed_view_contract (loc,main_name,view_name,ct,vt) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid view argument.@.View '%s' has storage type '%a' and contract '%s' has storage type '%a'.@]"
+        Snippet.pp loc
+        view_name
+        Ast_typed.PP.type_expression vt
+        main_name
+        Ast_typed.PP.type_expression ct
+    | `Self_ast_typed_view_io (loc,got,arg) ->
+      let s = match arg with
+        | `In -> "input"
+        | `Out -> "output"
+      in
+      Format.fprintf f
+        "@[<hv>%a@.Invalid view.@.Type '%a' is forbidden as %s argument.@]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression got
+        s
     | `Self_ast_typed_match_anomaly loc ->
       Format.fprintf f
         "@[<hv>%a@.Pattern matching anomaly (redundant, or non exhaustive). @]"
@@ -88,11 +112,13 @@ let error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
         Snippet.pp e.location
         entrypoint
-    | `Self_ast_typed_contract_list_ops (entrypoint, _got, e) ->
+    | `Self_ast_typed_contract_list_ops (entrypoint, got, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\".@.\
+        We expected a list of operations but we got %a@]"
         Snippet.pp e.location
         entrypoint
+        Ast_typed.PP.type_expression got
     | `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.The storage type \"%a\" of the function parameter must be the same as the storage type \"%a\" of the return value.@]"
@@ -100,10 +126,12 @@ let error_ppformat : display_format:string display_format ->
         entrypoint
         Ast_typed.PP.type_expression t1
         Ast_typed.PP.type_expression t2
-    | `Self_ast_typed_pair_in loc ->
+    | `Self_ast_typed_pair_in (loc,t) ->
+      let ep = match t with `View -> "view" | `Contract -> "contract" in
       Format.fprintf f
-        "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple as argument.@]"
+        "@[<hv>%a@.Invalid %s.@.Expected a tuple as argument.@]"
         Snippet.pp loc
+        ep
     | `Self_ast_typed_pair_out loc ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]"
@@ -122,6 +150,24 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Self_ast_typed_view_contract (loc,main_name,view_name,_,_) ->
+    let message = `String "Invalid view argument" in
+    let content = `Assoc [
+      ("message", message);
+      ("loc", Location.to_yojson loc);
+      ("main_name", `String main_name);
+      ("view_name", `String view_name);
+      ]
+    in
+    json_error ~stage ~content
+  | `Self_ast_typed_view_io (loc,_,_) ->
+    let message = `String "Invalid view argument" in
+    let content = `Assoc [
+      ("message", message);
+      ("loc", Location.to_yojson loc);
+      ]
+    in
+    json_error ~stage ~content
   | `Self_ast_typed_match_anomaly loc ->
     let message = `String "pattern matching anomaly" in
     let content = `Assoc [
@@ -242,8 +288,9 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
-  | `Self_ast_typed_pair_in loc ->
-    let message = `String "badly typed contract" in
+  | `Self_ast_typed_pair_in (loc,t) ->
+    let ep = match t with `View -> "badly typed view" | `Contract -> "badly typed contract" in
+    let message = `String ep in
     let description = `String "expected a pair as parameter" in
     let content = `Assoc [
        ("message", message);
