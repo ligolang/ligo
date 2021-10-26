@@ -98,7 +98,6 @@ library:
     - process
     - regex-tdfa
     - safe-exceptions
-    - template-haskell
     - text
     - transformers
     - tree-sitter
@@ -168,7 +167,7 @@ executables:
 
 tests:
   lsp-handlers-test:
-    main: Driver.hs
+    main: Main.hs
 
     source-dirs:
       - test/lsp-handlers-test/
@@ -201,7 +200,7 @@ tests:
       - tasty-discover:tasty-discover
 
   lsp-test:
-    main: Driver.hs
+    main: Main.hs
 
     source-dirs:
       - test/lsp-test/
@@ -234,7 +233,7 @@ tests:
       - tasty-discover:tasty-discover
 
   ligo-contracts-test:
-    main: Driver.hs
+    main: Main.hs
 
     source-dirs:
       - test/ligo-contracts-test/
@@ -267,7 +266,7 @@ tests:
       - tasty-discover:tasty-discover
 
   integration-test:
-    main: Driver.hs
+    main: Main.hs
 
     ghc-options:
       - -Wno-incomplete-uni-patterns

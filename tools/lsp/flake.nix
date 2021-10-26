@@ -97,6 +97,8 @@
                 + "touch $out";
         };
 
+        # n.b.: If the dependency on ligo is changed for any test, remember to
+        # also update the main functions of the respective tests.
         integration-test = squirrel.checks.integration-test.overrideAttrs (oldAttrs: {
           buildInputs = [ ligo-bin ] ++ oldAttrs.buildInputs;
         });
