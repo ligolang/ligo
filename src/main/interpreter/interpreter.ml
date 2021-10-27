@@ -775,16 +775,17 @@ and eval_ligo ~raise ~steps ~protocol_version : Ast_typed.expression -> calltrac
     )
     | E_mod_in {module_binder; rhs; let_result} ->
        let>> state = Get_state () in
-       let (module_env, state) = eval_module ~raise ~steps ~protocol_version (rhs, state, env) in
+       let (item, state) = eval_module ~raise ~steps ~protocol_version (rhs, state, env) in
        let>> () = Put_state state in
-       eval_ligo (let_result) calltrace (Env.extend_mod env module_binder module_env)
+       let env = Env.extend_mod env module_binder item in
+       eval_ligo (let_result) calltrace env
     | E_mod_alias {alias;binders;result} ->
        let module_env = resolve_module_path ~raise ~loc:term.location binders env in
        eval_ligo (result) calltrace (Env.extend_mod env alias module_env)
     | E_literal l ->
       eval_literal l
     | E_variable var ->
-      let {eval_term=v} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith "unbound variable") in
+      let {eval_term=v} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" Ast_typed.PP.expression_variable var)) in
       return v
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
@@ -927,10 +928,10 @@ and eval_ligo ~raise ~steps ~protocol_version : Ast_typed.expression -> calltrac
              | V_Record recmap ->
                 let a = LMap.find path recmap in
                 return a
-             | _ -> raise.raise @@ Errors.generic_error term.location "Error resolving module path")
+             | _ -> raise.raise @@ Errors.generic_error term.location @@ "Error resolving module path")
          | E_module_accessor {module_name;element} ->
             let module_env =  match List.Assoc.find (Ligo_interpreter.Environment.modules env) ~equal:String.equal module_name with
-              | None -> raise.raise @@ Errors.generic_error term.location "Error resolving module path"
+              | None -> raise.raise @@ Errors.generic_error term.location @@ "Error resolving module path"
               | Some e -> e in
             aux module_env element
          | _ -> raise.raise @@ Errors.generic_error term.location "Unsupported module path"
@@ -947,28 +948,31 @@ and resolve_module_path ~raise ~loc binders env =
 
 and eval_module ~raise ~steps ~protocol_version : Ast_typed.module_fully_typed * Tezos_state.context * env -> env * Tezos_state.context =
   fun (Module_Fully_Typed prg, initial_state, env) ->
-    let aux : env * Tezos_state.context -> declaration location_wrap -> env * Tezos_state.context =
-      fun (top_env,state) el ->
+    let aux : env * env * Tezos_state.context -> declaration location_wrap -> env * env * Tezos_state.context =
+      fun (top_env,curr_env,state) el ->
         match Location.unwrap el with
         | Ast_typed.Declaration_type _ ->
-           (top_env,state)
+           (top_env,curr_env,state)
         | Ast_typed.Declaration_constant {binder; expr ; attr = { inline=_ ; no_mutation }} ->
           let (v,state) = try_eval ~raise ~steps ~protocol_version expr top_env state None in
+          let curr_env' = Env.extend curr_env binder ~no_mutation (expr.type_expression, v) in
           let top_env' = Env.extend top_env binder ~no_mutation (expr.type_expression, v) in
-          (top_env',state)
+          (top_env', curr_env',state)
         | Ast_typed.Declaration_module {module_binder; module_} ->
-          let (module_env, state) = eval_module ~raise ~steps ~protocol_version (module_, state, top_env) in
-          let top_env' = Env.extend_mod top_env module_binder module_env in
-          (top_env',state)
+          let (inner_curr_env, state) = eval_module ~raise ~steps ~protocol_version (module_, state, top_env) in
+          let curr_env' = Env.extend_mod curr_env module_binder inner_curr_env in
+          let top_env' = Env.extend_mod top_env module_binder inner_curr_env in
+          (top_env', curr_env',state)
         | Ast_typed.Module_alias {alias;binders} ->
           let module_env = resolve_module_path ~raise ~loc:el.location binders top_env in
           let top_env' = Env.extend_mod top_env alias module_env in
-          (top_env',state)
+          let curr_env' = Env.extend_mod curr_env alias module_env in
+          (top_env', curr_env',state)
     in
-    let (env,state) = List.fold ~f:aux ~init:(env, initial_state) prg in
-    (env, state)
+    let (_, curr_env, state) = List.fold ~f:aux ~init:(env,[], initial_state) prg in
+    (curr_env, state)
 
-let eval_test ~raise ~steps ~protocol_version : Ast_typed.module_fully_typed -> (string * value) list =
+let eval_test ~raise ~steps ~protocol_version : Ast_typed.module_fully_typed -> (env * (string * value) list) =
   fun prg ->
     let initial_state = Tezos_state.init_ctxt ~raise protocol_version [] in
     let (env, _state) = eval_module ~raise ~steps ~protocol_version (prg, initial_state, Env.empty_env) in
@@ -980,6 +984,7 @@ let eval_test ~raise ~steps ~protocol_version : Ast_typed.module_fully_typed -> 
       else
         None
     in
-    List.filter_map ~f:aux v
+    (* NOTE: The environment is returned so that it can be used in tests *)
+    (env , List.filter_map ~f:aux v)
 
 let () = Printexc.record_backtrace true

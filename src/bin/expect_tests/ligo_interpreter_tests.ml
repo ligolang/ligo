@@ -64,6 +64,14 @@ let%expect_test _ =
     - test_list_fold_left_sum exited with value (). |}]
 
 let%expect_test _ =
+  (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
+  run_ligo_good ["run"; "test" ; test "imported_modules/test.mligo" ; "--format" ; "dev" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test1 exited with value ().
+    Number of elements in environment: 37 |}]
+
+let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "views_test.mligo" ; "--protocol" ; "hangzhou" ] ;
   [%expect {|
     Everything at the top-level was executed.
@@ -160,6 +168,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage_from_file.mligo" ] ;
   [%expect {|
+  Everything at the top-level was executed.
+  - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "nesting_modules.mligo" ] ;
+  [%expect {|
+  111
   Everything at the top-level was executed.
   - test exited with value (). |}]
 
