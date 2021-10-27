@@ -49,9 +49,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
         -- LIGO-309
       , "vars_consts/multiple_vars.ligo"
 
-        -- LIGO-322
-      , "heap.ligo"
-
         -- LIGO-323
       , "heap-instance.ligo"
 
