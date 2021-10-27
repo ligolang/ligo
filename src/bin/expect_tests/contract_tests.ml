@@ -1013,7 +1013,7 @@ Hint: replace it by "_ticket" to prevent this warning.
              PUSH mutez 0 ;
              DIG 2 ;
              CDR ;
-             PUSH unit Unit ;
+             UNIT ;
              TICKET ;
              TRANSFER_TOKENS ;
              SWAP ;
@@ -1721,12 +1721,12 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage unit ;
-      code { LAMBDA
-               (pair unit (pair unit (pair unit unit)))
-               unit
-               { UNPAIR 4 ; DROP 4 ; PUSH unit Unit } ;
+      code { LAMBDA (pair unit (pair unit (pair unit unit))) unit { UNPAIR 4 ; DROP 4 ; UNIT } ;
              LAMBDA (pair nat nat) nat { UNPAIR ; MUL } ;
-             DIG 2 ; |}]
+             DIG 2 ;
+             UNPAIR ;
+             PUSH nat 0 ;
+             PUSH nat 0 ; |}]
 
 (* old uncurry bugs: *)
 let%expect_test _ =
@@ -1906,9 +1906,9 @@ let%expect_test _ =
       code { DROP ;
              SELF %foo ;
              PUSH mutez 0 ;
-             PUSH unit Unit ;
+             UNIT ;
              TRANSFER_TOKENS ;
-             PUSH unit Unit ;
+             UNIT ;
              NIL operation ;
              DIG 2 ;
              CONS ;
@@ -1955,7 +1955,7 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage unit ;
-      code { DROP ; PUSH unit Unit ; NIL operation ; PAIR } } |}]
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "remove_unused_toptup.mligo" ] ;
@@ -1980,14 +1980,14 @@ let%expect_test _ =
   [%expect {|
     { parameter (pair (pair (nat %AAA) (nat %fooB)) (nat %cCC)) ;
       storage unit ;
-      code { DROP ; PUSH unit Unit ; NIL operation ; PAIR } } |}]
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "annotation_cases.mligo" ; "-e" ; "main2" ] ;
   [%expect {|
     { parameter (or (or (nat %AAA) (nat %fooB)) (nat %cCC)) ;
       storage unit ;
-      code { DROP ; PUSH unit Unit ; NIL operation ; PAIR } } |}]
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 (* remove recursion *)
 let%expect_test _ =

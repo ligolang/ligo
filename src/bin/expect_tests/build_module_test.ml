@@ -171,7 +171,7 @@ let%expect_test _ =
              DUP 3 ;
              ADD ;
              PUSH int 3 ;
-             PUSH unit Unit ;
+             UNIT ;
              PAIR ;
              DUP 3 ;
              CAR ;

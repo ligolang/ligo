@@ -515,6 +515,14 @@ let opt_get () : _ peep =
     else No_change
   | _ -> No_change
 
+(* PUSH unit Unit  ↦  UNIT *)
+let opt_push () : _ peep =
+  let* x = peep in
+  match x with
+  | Prim (l, "PUSH", [Prim (_, "unit", [], _); Prim (_, "Unit", [], _)], _) ->
+    Changed [Prim (l, "UNIT", [], [])]
+  | _ -> No_change
+
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
    thwarting the intent of the Michelson tail fail restriction -- the
@@ -647,6 +655,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ opt_unpair2 () ;
                      peephole @@ opt_digdug_drop () ;
                      peephole @@ opt_get () ;
+                     peephole @@ opt_push () ;
                    ] in
   let optimizers = List.map ~f:on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
