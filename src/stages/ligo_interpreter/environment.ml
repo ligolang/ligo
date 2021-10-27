@@ -27,6 +27,13 @@ let lookup :
   let equal a b = Var.compare a.wrap_content b.wrap_content = 0 in
   List.Assoc.find (expressions env) ~equal var
 
+let rec count_recursive : env -> int =
+  fun env ->
+    List.fold env ~init:0
+      ~f:(fun acc x -> match x with
+      | Expression _ -> acc + 1
+      | Module x -> acc + count_recursive x.item
+      )
 let empty_env = []
 
 let to_kv_list v = v
