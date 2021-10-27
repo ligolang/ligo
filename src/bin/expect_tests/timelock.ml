@@ -12,8 +12,7 @@ let%expect_test _ =
              OPEN_CHEST ;
              IF_LEFT
                { RIGHT (or unit unit) }
-               { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes }
-                    { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } ;
+               { IF { UNIT ; LEFT unit ; LEFT bytes } { UNIT ; RIGHT unit ; LEFT bytes } } ;
              IF_LEFT
                { IF_LEFT { DROP ; PUSH bytes 0x01 } { DROP ; PUSH bytes 0x00 } }
                {} ;
@@ -28,8 +27,8 @@ let%expect_test _ =
       code { CAR ;
              IF_LEFT
                { IF_LEFT
-                   { DROP ; PUSH unit Unit ; LEFT unit ; LEFT bytes }
-                   { DROP ; PUSH unit Unit ; RIGHT unit ; LEFT bytes } }
+                   { DROP ; UNIT ; LEFT unit ; LEFT bytes }
+                   { DROP ; UNIT ; RIGHT unit ; LEFT bytes } }
                { RIGHT (or unit unit) } ;
              NIL operation ;
              PAIR } } |}]
