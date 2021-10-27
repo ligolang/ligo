@@ -3,6 +3,7 @@
 (* Vendor dependencies *)
 
 module Region = Simple_utils.Region
+module Utils  = Simple_utils.Utils
 
 (* Generic signature of tokens *)
 
@@ -238,24 +239,34 @@ module MakeWithDebug (Lexer: LEXER)
     let incr_from_channel = incr_menhir Lexing.from_channel
     let incr_from_string  = incr_menhir Lexing.from_string
 
-    let from_file (from_lexbuf : (module PAR_ERR) -> Lexing.lexbuf -> 'a)
-            (module ParErr : PAR_ERR) path =
+    let incr_from_file (module ParErr : PAR_ERR) path =
       match lexbuf_from_file path with
-        Stdlib.Error err -> Stdlib.Error err
+        Stdlib.Error _ as err -> err
       | Ok (lexbuf, close) ->
-         let r = from_lexbuf (module ParErr) lexbuf
-         in close (); r
+         let tree = incr_from_lexbuf (module ParErr) lexbuf
+         in close (); tree
 
-    let incr_from_file     = from_file incr_from_lexbuf
 
     (* Incremental parsing with recovery *)
+
+    type 'src recovery_parser =
+      'src -> (Parser.tree * message list, message Utils.nseq) Stdlib.result
+    (* returns [Ok (tree, [])] if ['src] contains correct contract
+            or [Ok (repaired_tree, errors)] if any syntax error was encountered
+            or [Error (errors)] if non-syntax error happened and we cannot
+               return any tree (e. g. file does not found or lexer error) *)
+
+     let extract_recovery_results = function
+       | Ok (tree, msgs) -> Some tree, msgs
+       | Error (msgs)    -> None,      Utils.nseq_to_list msgs
+
+    (* Debug printer *)
 
     let tracing_channel =
       match Debug.tracing_output with
       | None      -> stdout
       | Some path -> open_out path
 
-    (* Debug printer *)
     module TracingPrinter : Merlin_recovery.PRINTER with module I = Inter
       = Merlin_recovery.MakePrinter
             (struct
@@ -343,23 +354,27 @@ module MakeWithDebug (Lexer: LEXER)
           | Recovering (failure_cp, candidates) ->
              (try_recovery failure_cp candidates, None)
 
-        let loop_handle success (failure : 'a Inter.checkpoint -> message) supplier initial =
+        let loop_handle
+                (success : 'a -> 'a) (failure : 'a Inter.checkpoint -> message)
+                (supplier : unit -> token * Lexing.position * Lexing.position)
+                (initial : 'a Inter.checkpoint) =
           let initial = Correct initial in
           let errors = ref [] in
           let rec loop parser =
-            let token = supplier () in
-            let (s, error) = (step parser failure token) in
-            begin match error with
-            | Some error -> errors := error :: !errors;
-            | None       -> ()
-            end;
-            match s with
-            | Success x             -> success x
-            | Intermediate (parser) -> loop parser
-            (* Fatal recovery error !!! *)
-            | Error cp -> raise (ParsingError (failure cp).value) in
-        let tree = loop initial
-          in (tree, !errors)
+            match supplier () with
+            | exception LexingError msg -> Stdlib.Error (msg, !errors)
+            | token ->
+               let (s, error) = (step parser failure token) in
+               begin match error with
+               | Some error -> errors := error :: !errors;
+               | None       -> ()
+               end;
+               match s with
+               | Success x              -> Stdlib.Ok (success x, !errors)
+               | Intermediate (parser)  -> loop parser
+               (* Fatal recovery error !!! *)
+               | Error cp               -> Stdlib.Error (failure cp, !errors)
+          in loop initial
       end
 
     let get_message_on_failure (module ParErr : PAR_ERR) checkpoint =
@@ -376,17 +391,19 @@ module MakeWithDebug (Lexer: LEXER)
       let interpreter  = Recover.loop_handle success failure supplier in
       let module Incr  = Parser.Incremental in
       let parser       = Incr.main lexbuf.Lexing.lex_curr_p in
-      let (tree, msgs) = interpreter parser
-      in flush_all (); Ok (tree, msgs)
-
-    type 'src recovery_parser =
-      'src -> (Parser.tree * message list, message) Stdlib.result
+      let result       = interpreter parser
+      in flush_all (); result
 
     let recov_from_lexbuf  = incr_menhir_recovery (fun x -> x)
     let recov_from_channel = incr_menhir_recovery Lexing.from_channel
     let recov_from_string  = incr_menhir_recovery Lexing.from_string
 
-    let recov_from_file    = from_file recov_from_lexbuf
+    let recov_from_file (module ParErr : PAR_ERR) path =
+      match lexbuf_from_file path with
+        Stdlib.Error err   -> Stdlib.Error (err, [])
+      | Ok (lexbuf, close) ->
+         let r = recov_from_lexbuf (module ParErr) lexbuf
+         in close (); r
   end
 
 (* Version with disabled debug *)

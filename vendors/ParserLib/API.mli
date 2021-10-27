@@ -3,6 +3,7 @@
 (* Vendor dependencies *)
 
 module Region = Simple_utils.Region
+module Utils  = Simple_utils.Utils
 
 (* Generic signature of tokens *)
 
@@ -123,9 +124,16 @@ module MakeWithDebug (Lexer  : LEXER)
     (* Incremental API with recovery *)
 
     type 'src recovery_parser =
-      'src -> (Parser.tree * message list, message) Stdlib.result
-    (* Contains a tree with list errors that happened but parser recovered
-       or a fatal error (e. g. FileNotFound) *)
+      'src -> (Parser.tree * message list, message Utils.nseq) Stdlib.result
+    (* returns [Ok (tree, [])] if ['src] contains correct contract
+            or [Ok (repaired_tree, errors)] if any syntax error was encountered
+            or [Error (errors)] if non-syntax error happened and we cannot
+               return any tree (e. g. file does not found or lexer error) *)
+
+    val extract_recovery_results
+        :  (Parser.tree * message list, message Utils.nseq) Stdlib.result
+        -> Parser.tree option * message list
+    (* helper function that converts original type to weaker one *)
 
     val recov_from_lexbuf  : (module PAR_ERR) -> Lexing.lexbuf recovery_parser
     val recov_from_channel : (module PAR_ERR) -> in_channel    recovery_parser

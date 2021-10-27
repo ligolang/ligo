@@ -151,14 +151,12 @@ module Make
         Stdlib.Ok tree -> show_tree tree
       | Stdlib.Error message -> show_error_message message
 
-    let wrap_recovery =
-      function
-        Stdlib.Ok (tree, messages) ->
-         List.iter (fun msg -> show_error_message msg;
-                               Printf.eprintf "\n")
-             (List.rev messages);
-         show_tree tree
-      | Stdlib.Error message -> show_error_message message
+    let wrap_recovery result =
+      let tree, messages = MainParser.extract_recovery_results (result) in
+      List.iter
+          (fun msg -> show_error_message msg; Printf.eprintf "\n")
+          (List.rev messages);
+      Option.iter show_tree tree
 
     let config =
       object
