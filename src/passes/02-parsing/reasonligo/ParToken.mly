@@ -1,10 +1,10 @@
-(* Note: All external symbols here should be unqualified because it file is used
-         by [menhir] that not always insert the [%{..%}] header. So we work
+(* Note: All external symbols here should be unqualified because this file is used
+         by [menhir] that does not always insert the [%{..%}] header. So we work
          around it by the [-open Module] option in [dune] but symbols should be
          unqualified.
 
          Also, keep in mind that [ParToken.mly] and [Parser.mly] are merging into
-         one file and header of [Parser.mly] affect on this code.
+         one file and the header of [Parser.mly] affects this code.
          For example: [lexeme] type comes from [open CST] *)
 
 %[@recover.prelude

@@ -208,7 +208,6 @@ module T =
 
     | _  -> "\\Unknown" (* Backslash meant to trigger an error *)
 
-
     (* Projections *)
 
     let sprintf = Printf.sprintf

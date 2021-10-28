@@ -73,7 +73,7 @@ module type S =
     val trace_recovery_output : string option
 
     type status = [
-       Lexer_CLI.status
+      Lexer_CLI.status
     | `DependsOnOtherOption of string * string
     ]
 

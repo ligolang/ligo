@@ -49,7 +49,6 @@ module Printer =
     type tree = CST.t
   end
 
-
 (* Finally... *)
 
 module Main = ParserMainGen.Make
