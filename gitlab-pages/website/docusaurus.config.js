@@ -149,6 +149,7 @@ const siteConfig = {
           { from: ["/docs/next/manpages/test"                 ], to: "/docs/next/manpages/run test"               },
           { from: ["/docs/next/manpages/transpile-contract"   ], to: "/docs/next/manpages/transpile contract"     },
           { from: ["/docs/next/manpages/transpile-expression" ], to: "/docs/next/manpages/transpile expression"   },
+          { from: ["/docs/next/language-basics/strings"       ], to: "/docs/next/language-basics/strings-bytes"        },
         ],      
       }
     ]
