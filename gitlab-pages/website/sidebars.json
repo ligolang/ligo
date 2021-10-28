@@ -78,7 +78,8 @@
       "reference/set-reference",
       "reference/string-reference",
       "reference/current-reference",
-      "reference/test"
+      "reference/test",
+      "reference/hangzhou"
     ]
   },
   "contributors-docs": {

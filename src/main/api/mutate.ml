@@ -21,8 +21,8 @@ let mutate_ast source_file syntax infer protocol_version libs display_format see
       | `Generator_random -> (module Fuzz.Rnd : Fuzz.Monad) in
     let module Gen : Fuzz.Monad = (val get_module : Fuzz.Monad) in
     let module Fuzzer = Fuzz.Ast_imperative.Mutator(Gen) in
-    let init_env   = Helpers.get_initial_env ~raise protocol_version in
-    let options       = Compiler_options.make ~infer ~init_env ~libs () in
+    let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
+    let options       = Compiler_options.make ~infer ~protocol_version ~libs () in
     let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
     let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
     let imperative_prg = Compile.Utils.to_imperative ~raise ~add_warning ~options ~meta c_unit source_file in
@@ -41,8 +41,8 @@ let mutate_cst source_file syntax infer protocol_version libs display_format see
       | `Generator_list -> (module Fuzz.Lst : Fuzz.Monad)
       | `Generator_random -> (module Fuzz.Rnd : Fuzz.Monad) in
     let module Gen : Fuzz.Monad = (val get_module : Fuzz.Monad) in
-    let init_env = Helpers.get_initial_env ~raise protocol_version in
-    let options   = Compiler_options.make ~infer ~init_env ~libs () in
+    let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
+    let options   = Compiler_options.make ~infer ~protocol_version ~libs () in
     let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
     let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
     match meta with

@@ -56,9 +56,9 @@ let ast_core source_file syntax infer protocol_version display_format =
     if infer then
       (* Do the same thing as for print_ast_typed, but only infer the main module
          (it still needs to infer+typecheck the dependencies) *)
-        let options =
-          let init_env = Helpers.get_initial_env ~raise protocol_version in
-          Compiler_options.make ~infer ~init_env ()
+        let options = (* TODO: options should be computed outside of the API *)
+          let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
+          Compiler_options.make ~infer ~protocol_version ()
         in
         let _,inferred_core,_,_ = Build.infer_contract ~raise ~add_warning ~options syntax Env source_file in
         inferred_core
@@ -73,9 +73,9 @@ let ast_typed source_file syntax infer protocol_version display_format =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Ast_typed.Formatter.module_format_fully_typed) get_warnings @@
     fun ~raise ->
-      let options =
-        let init_env = Helpers.get_initial_env ~raise protocol_version in
-        Compiler_options.make ~infer ~init_env ()
+      let options = (* TODO: options should be computed outside of the API *)
+        let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
+        Compiler_options.make ~infer ~protocol_version ()
       in
       let typed,_ = Build.type_contract ~raise ~add_warning ~options syntax Env source_file in
       let typed = Self_ast_typed.monomorphise_module typed in
@@ -85,10 +85,9 @@ let ast_combined  source_file syntax infer protocol_version display_format =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Ast_typed.Formatter.module_format_fully_typed) get_warnings @@
     fun ~raise ->
-      let options =
-        let init_env = Helpers.get_initial_env ~raise protocol_version in
+      let options = (* TODO: options should be computed outside of the API *)
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-        Compiler_options.make ~infer ~init_env ~protocol_version ()
+        Compiler_options.make ~infer ~protocol_version ()
       in
       let typed,_ = Build.combined_contract ~raise ~add_warning ~options syntax Env source_file in
       typed
@@ -97,10 +96,9 @@ let mini_c source_file syntax infer protocol_version display_format optimize =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Mini_c.Formatter.program_format) get_warnings @@
     fun ~raise ->
-      let options =
-        let init_env   = Helpers.get_initial_env ~raise protocol_version in
+      let options = (* TODO: options should be computed outside of the API *)
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-        Compiler_options.make ~infer ~init_env ~protocol_version ()
+        Compiler_options.make ~infer ~protocol_version ()
       in
       let mini_c,_ = Build.build_mini_c ~raise ~add_warning ~options syntax Env source_file in
       match optimize with
