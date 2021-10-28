@@ -777,7 +777,7 @@ module Stacking = struct
     | C_MAP_FIND_OPT       , _   -> Some ( simple_binary @@ prim "GET")
     | C_MAP_ADD            , _   -> Some ( simple_ternary @@ seq [dip (i_some) ; prim "UPDATE"])
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
-    | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , Edo ->
+    | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
     | C_FOLD_WHILE         , _   ->
       Some ( simple_binary @@ seq [i_swap ; (i_push (prim "bool") (prim "True"));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] "LOOP" ;i_swap ; i_drop])
