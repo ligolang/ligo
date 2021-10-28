@@ -2,16 +2,16 @@ type storage = int
 
 type parameter = int list
 
-type s {
+type s = {
   a : int;
   b : bool;
   c : string;
-  d : int list list list
+  d : int list list list;
 }
 
 let s_a = { a 42; b = false }
 
-let s_b = {s with a = 32}
+let s_b = { s_a with a = 32 }
 
 type return = operation list * storage
 

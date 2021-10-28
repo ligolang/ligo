@@ -4,7 +4,7 @@ type parameter = int list
 
 type return = operation list * storage
 
-let hd (x : int list) :: int = 
+let hd (x : int list) :: int =
   match x with
   | [] -> -1
   | x :: xs -> x
