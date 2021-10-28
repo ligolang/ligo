@@ -154,7 +154,7 @@ module.exports = grammar({
     const_decl: $ => common.withAttrs($,
       seq(
         'const',
-        field("name", $.NameDecl),
+        field("name", $._core_pattern),
         optional(seq(
           ':',
           field("type", $._type_expr),
@@ -201,13 +201,14 @@ module.exports = grammar({
 
     _statement: $ =>
       choice(
-        $.type_decl,
         $._open_data_decl,
         $._instruction,
       ),
 
     _open_data_decl: $ =>
       choice(
+        // TODO (LIGO-217): support module decl and module alias
+        $.type_decl,
         $.const_decl,
         $.var_decl,
         $.fun_decl,
