@@ -103,7 +103,7 @@ module Make
 
     (* Main *)
 
-    module MainParser = ParserLib.API.MakeWithDebug (MainLexer) (Parser)
+    module MainParser = ParserLib.API.Make (MainLexer) (Parser)
                             (struct
                                 let error_recovery_tracing = CLI.trace_recovery
                                 let tracing_output         = CLI.trace_recovery_output

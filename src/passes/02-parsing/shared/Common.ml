@@ -113,6 +113,13 @@ module MakeParser
       Ok tree -> tree
     | Error msg -> raise.raise @@ `Parsing msg
 
+    (* Disable all debug options for the parser *)
+    module ParserDebugConfig : ParserLib.API.DEBUG_CONFIG =
+      struct
+        let error_recovery_tracing = false
+        let tracing_output         = None
+      end
+
     (* We always parse a string buffer of type [Buffer.t], but the
        interpretation of its contents depends on the functions
        below. In [parse_file buffer file_path], the argument [buffer]
@@ -134,7 +141,7 @@ module MakeParser
         LexerMainGen.Make
           (File) (Token) (CLI.Lexer_CLI) (Self_tokens) in
       let module MainParser =
-        ParserLib.API.Make (MainLexer) (Parser) in
+        ParserLib.API.Make (MainLexer) (Parser) (ParserDebugConfig) in
       let tree =
         let string = Buffer.contents buffer in
         if CLI.Preprocessor_CLI.show_pp then
@@ -162,7 +169,7 @@ module MakeParser
         LexerMainGen.Make
           (File) (Token) (CLI.Lexer_CLI) (Self_tokens) in
       let module MainParser =
-        ParserLib.API.Make (MainLexer) (Parser) in
+        ParserLib.API.Make (MainLexer) (Parser) (ParserDebugConfig) in
       let tree =
         let string = Buffer.contents buffer in
         if CLI.Preprocessor_CLI.show_pp then
