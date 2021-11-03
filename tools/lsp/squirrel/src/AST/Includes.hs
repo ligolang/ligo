@@ -4,6 +4,8 @@ module AST.Includes
   ( extractIncludedFiles
   , includesGraph
   , insertPreprocessorRanges
+  , getMarkers
+  , getMarkerInfos
   , MarkerInfo (..)
   ) where
 
@@ -35,7 +37,7 @@ import Parser
   , ShowRange (N)
   )
 import ParseTree (Source (..))
-import Product (Product (..), getElem, modElem, putElem)
+import Product (Contains, Product (..), getElem, modElem, putElem)
 import Range
   ( PreprocessedRange (..), Range, getRange, point, rangeLines, rFile, rFinish
   , rStart, startLine, finishLine
@@ -47,6 +49,45 @@ fromOriginalPoint infos = PreprocessedRange (getRange infos) :> infos
 
 insertPreprocessorRanges :: ContractInfo -> ParsedContractInfo
 insertPreprocessorRanges = fst . extractIncludedFiles False
+
+getMarkers :: forall xs. Contains [LineMarker] xs => LIGO xs -> [LineMarker]
+getMarkers ligo = toList $ snd $ execRWS (loopM_ collectMarkers ligo) () ()
+  where
+    collectMarkers :: LIGO xs -> RWS () (DList LineMarker) () ()
+    collectMarkers (info :< _) = for_ (getElem @[LineMarker] info) (tell . pure)
+
+getMarkerInfos :: Bool -> FilePath -> [LineMarker] -> (IntMap MarkerInfo, DList (FilePath, FilePath))
+getMarkerInfos directIncludes pwd markers = execRWS (collectMarkerInfos directIncludes pwd markers) () mempty
+
+collectMarkerInfos :: Bool -> FilePath -> [LineMarker] -> RWS () (DList (FilePath, FilePath)) (IntMap MarkerInfo) ()
+collectMarkerInfos directIncludes pwd markers =
+  -- For the actual ranges, we pretend everything is fused into the line
+  -- where the include would be located.
+  -- For the preprocessed ranges, we use the line markers to map the range
+  -- to the file and line they represent.
+  for_ (sortOn (view startLine . lmLoc) markers) \lm@(LineMarker (withPwd pwd -> n) f _ r) ->
+    let line = r ^. startLine in
+    case f of
+      RootFile     -> modify $ IntMap.insert line $ MarkerInfo lm r 0
+      IncludedFile -> gets (IntMap.lookupLT line) >>= \case
+        Nothing -> pure ()
+        Just (_, MarkerInfo prev lr d) -> do
+          modify $ IntMap.insert
+            line
+            (MarkerInfo lm (bool lr (r & startLine -~ lmLoc prev ^. finishLine - lmLine prev) $ d == 0) (d + 1))
+          when (directIncludes `implies` d == 0) $
+            tell [(withPwd pwd $ lmFile prev, n)]
+      ReturnToFile -> modify $ IntMap.lookupLT line >>= \case
+        Nothing -> id
+        Just (_, MarkerInfo _ lr d) -> IntMap.insert line $ MarkerInfo lm lr (d - 1)
+
+  where
+    implies :: Bool -> Bool -> Bool
+    prerequisite `implies` conclusion = not prerequisite || conclusion
+    infixr 1 `implies`
+
+withPwd :: FilePath -> FilePath -> FilePath
+withPwd pwd = removeDots . (pwd </>)
 
 -- | Given some contract A, returns a new version of that contract such that:
 -- * When a line marker is found, all 'Range's will be adjusted in a manner such
@@ -67,8 +108,8 @@ extractIncludedFiles
   -> (ParsedContractInfo, DList (FilePath, FilePath))
 extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) msgs) =
   let
-    ((), toList -> markers) = execRWS (loopM_ collectMarkers ligo) () ()
-    (markerInfos, edges) = execRWS (collectMarkerInfos markers) () mempty
+    markers = getMarkers ligo
+    (markerInfos, edges) = getMarkerInfos directIncludes pwd markers
     (info :< tree) = loop (go markerInfos) $ fromOriginalPoint <$> ligo
     -- We still want RawContract to start at line 1:
     ligo' = bool (modElem (startLine +~ 1) info :< tree) (info :< tree) (IntMap.null markerInfos)
@@ -78,38 +119,6 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
   where
     pwd :: FilePath
     pwd = takeDirectory $ srcPath file
-
-    withPwd :: FilePath -> FilePath
-    withPwd = removeDots . (pwd </>)
-
-    implies :: Bool -> Bool -> Bool
-    prerequisite `implies` conclusion = not prerequisite || conclusion
-    infixr 1 `implies`
-
-    collectMarkers :: LIGO Info -> RWS () (DList LineMarker) () ()
-    collectMarkers (info :< _) = for_ (getElem @[LineMarker] info) (tell . pure)
-
-    collectMarkerInfos :: [LineMarker] -> RWS () (DList (FilePath, FilePath)) (IntMap MarkerInfo) ()
-    collectMarkerInfos markers =
-      -- For the actual ranges, we pretend everything is fused into the line
-      -- where the include would be located.
-      -- For the preprocessed ranges, we use the line markers to map the range
-      -- to the file and line they represent.
-      for_ (sortOn (view startLine . lmLoc) markers) \lm@(LineMarker (withPwd -> n) f _ r) ->
-        let line = r ^. startLine in
-        case f of
-          RootFile     -> modify $ IntMap.insert line $ MarkerInfo lm r 0
-          IncludedFile -> gets (IntMap.lookupLT line) >>= \case
-            Nothing -> pure ()
-            Just (_, MarkerInfo prev lr d) -> do
-              modify $ IntMap.insert
-                line
-                (MarkerInfo lm (bool lr (r & startLine -~ lmLoc prev ^. finishLine - lmLine prev) $ d == 0) (d + 1))
-              when (directIncludes `implies` d == 0) $
-                tell [(withPwd $ lmFile prev, n)]
-          ReturnToFile -> modify $ IntMap.lookupLT line >>= \case
-            Nothing -> id
-            Just (_, MarkerInfo _ lr d) -> IntMap.insert line $ MarkerInfo lm lr (d - 1)
 
     go :: IntMap MarkerInfo -> LIGO ParsedInfo -> LIGO ParsedInfo
     go markers (info :< tree) = info' :< tree
@@ -124,7 +133,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
       Just (_, MarkerInfo marker _ _) ->
         let preRange = range
               & rangeLines -~ (lmLoc marker ^. finishLine - lmLine marker)
-              & rFile .~ withPwd (lmFile marker)
+              & rFile .~ withPwd pwd (lmFile marker)
          in putElem (PreprocessedRange preRange) i
       where
         prev = IntMap.lookupLE (range ^. startLine) markers

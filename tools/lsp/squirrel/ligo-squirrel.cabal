@@ -14,6 +14,7 @@ library
       AST.Capabilities
       AST.Capabilities.CodeAction.ExtractTypeAlias
       AST.Capabilities.Completion
+      AST.Capabilities.DocumentLink
       AST.Capabilities.DocumentSymbol
       AST.Capabilities.Find
       AST.Capabilities.Folding
@@ -282,6 +283,7 @@ test-suite integration-test
       Driver
       Test.Integrational.Capabilities.CodeAction.ExtractTypeAlias
       Test.Integrational.Capabilities.Completion
+      Test.Integrational.Capabilities.DocumentLink
       Test.Integrational.Capabilities.DocumentSymbol
       Test.Integrational.Capabilities.Find
       Test.Integrational.Capabilities.Hover
@@ -291,6 +293,7 @@ test-suite integration-test
       Test.Integrational.Diagnostics
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
@@ -378,6 +381,7 @@ test-suite ligo-contracts-test
       Test.Parsers
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
@@ -466,6 +470,7 @@ test-suite lsp-handlers-test
       Test.Capabilities.Completion
       Test.Capabilities.Definition
       Test.Capabilities.DocumentFormatting
+      Test.Capabilities.DocumentLink
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Folding
       Test.Capabilities.Hover
@@ -478,6 +483,7 @@ test-suite lsp-handlers-test
       Test.Capabilities.TypeDefinition
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
@@ -564,6 +570,7 @@ test-suite lsp-test
       Driver
       Test.Capabilities.CodeAction.ExtractTypeAlias
       Test.Capabilities.Completion
+      Test.Capabilities.DocumentLink
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Find
       Test.Capabilities.Hover
@@ -575,6 +582,7 @@ test-suite lsp-test
       Test.Scope.ScopedDecl
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
