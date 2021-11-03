@@ -31,9 +31,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "modules_and_free_vars/simple.mligo"
       , "remove_unused_module.mligo"
 
-        -- LIGO-309
-      , "parametric_types.ligo"
-
         -- LIGO-204
       , "build/C_test.mligo"
       , "build/b.mligo"
@@ -45,9 +42,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "build/cycle_B.mligo"
       , "build/cycle_C.mligo"
       , "build/type_B.mligo"
-
-        -- LIGO-309
-      , "vars_consts/multiple_vars.ligo"
 
         -- LIGO-323
       , "heap-instance.ligo"

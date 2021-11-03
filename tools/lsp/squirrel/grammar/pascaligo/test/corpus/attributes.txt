@@ -116,7 +116,7 @@ function
     (TypeName)
     (let_expr
       (block
-        (const_decl (NameDecl) (TypeName) (Int))
+        (const_decl (var_pattern (NameDecl)) (TypeName) (Int))
       )
       (Name)
     )
@@ -135,7 +135,7 @@ const
 (source_file
   (const_decl
     (attr)
-    (NameDecl)
+    (var_pattern (NameDecl))
     (TypeName)
     (Int)
   )
@@ -153,7 +153,7 @@ const twice
 (source_file
   (const_decl
     (attr) (attr)
-    (NameDecl)
+    (var_pattern (NameDecl))
     (TypeName)
     (Int)
   )
@@ -178,7 +178,7 @@ function foo (const a : int) : int is
     (TypeName)
     (let_expr
       (block
-        (const_decl (attr) (NameDecl) (TypeName) (Int))
+        (const_decl (attr) (var_pattern (NameDecl)) (TypeName) (Int))
       )
       (Name)
     )

@@ -14,15 +14,15 @@
         { "include": "#other-keywords" },
         { "include": "#operators" },
         { "include": "#function-application" },
+        { "include": "#numeric-literals" },
         { "include": "#identifiers" }
     ],
     "repository": {
         "function": {
-            "begin": "\\b(recursive\\s+)?(function)\\s+([a-zA-Z_]\\w*)\\b",
+            "begin": "\\b(recursive\\s+)?(function)\\b",
             "beginCaptures": {
                 "1": { "name": "keyword.other.recursive.ligo" },
-                "2": { "name": "keyword.other.function.ligo" },
-                "3": { "name": "entity.name.function" }
+                "2": { "name": "keyword.other.function.ligo" }
             },
             "end": "\\b(is)\\b",
             "endCaptures": {
@@ -30,21 +30,32 @@
             },
             "patterns": [
                 { "include": "#comment" },
+                { "include": "#identifiers" },
+                { "include": "#parameters" },
                 { "include": "#type-annotation" },
                 { "include": "#binding" }
             ]
         },
 
         "binding": {
-            "begin": "\\b(var|const)\\s+([a-zA-Z_]\\w*)\\b",
+            "begin": "\\b(var|const)\\b",
             "end": "(?=[=),;]|:=)",
             "beginCaptures": {
-                "1": { "name": "keyword.other.binding.ligo" },
-                "2": { "name": "entity.name.variable"}
+                "1": { "name": "keyword.other.binding.ligo" }
             },
             "patterns": [
                 { "include": "#comment" },
+                { "include": "#identifiers" },
                 { "include": "#type-annotation" }
+            ]
+        },
+
+        "parameters": {
+            "begin": "\\(",
+            "end": "\\)",
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#binding" }
             ]
         },
 
@@ -66,7 +77,7 @@
             "beginCaptures": {
                 "1": { "name": "keyword.operator.type.ligo" }
             },
-            "end": "\\||(?=[;)=}\\]]|\\bis\\b|\\bend\\b|:=)",
+            "end": "\\||(?=[,;)=}\\]]|\\bis\\b|\\bend\\b|:=)",
             "patterns": [
                 { "include": "#comment" },
                 { "include": "#type-expression" }
@@ -84,7 +95,7 @@
                     ]
                 },
                 {
-                    "match": "(?:(?!\\bis\\b|\\bend\\b|:=)[^=()|}/\\];])+",
+                    "match": "(?:(?!\\bis\\b|\\bend\\b|:=)[^=,()|}/\\];])+",
                     "captures": {
                         "0": { "name": "entity.name.type.ligo" }
                     }
