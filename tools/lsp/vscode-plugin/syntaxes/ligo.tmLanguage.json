@@ -91,6 +91,7 @@
                     "end": "\\)",
                     "patterns": [
                         { "include": "#comment" },
+                        { "include": "#sum-type" },
                         { "include": "#type-expression" }
                     ]
                 },
@@ -138,14 +139,15 @@
         },
 
         "sum-type": {
-            "begin": "\\b([A-Z]\\w*)\\s+(of)?",
+            "begin": "(?:\\|\\s*)?\\b([A-Z]\\w*)(\\s+of)?",
             "beginCaptures": {
                 "1": { "name": "entity.name.function.ligo" },
                 "2": { "name": "keyword.other.of.ligo" }
             },
-            "end": "(\\||(?=\\b(?:function|type|const|var)\\b|;|^\\s*#\\w+))",
+            "end": "((?=\\)|\\b(?:function|type|const|var)\\b|;|^\\s*#\\w+))",
             "patterns": [
                 { "include": "#comment" },
+                { "include": "#sum-type" },
                 { "include": "#type-expression" }
             ]
         },

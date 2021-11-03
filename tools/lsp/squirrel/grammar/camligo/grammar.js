@@ -48,17 +48,16 @@ module.exports = grammar({
     ),
 
     _type_def_body: $ => choice(
-      $.sum_type,
       $.record_type,
       $._type_expr,
     ),
 
     sum_type: $ =>
       prec.left(10,
-        seq(choice(
+        choice(
           common.sepBy1('|', field("variant", $.variant)),
           common.withAttrs($, seq('|', common.sepBy1('|', field("variant", $.variant)))),
-        ))
+        )
       ),
 
     // Cat of string, Person of string * string
@@ -96,6 +95,7 @@ module.exports = grammar({
       $.tuple_type,
       $.module_TypeName,
       $.var_type,
+      $.sum_type,
     ),
 
     var_type: $ => seq(
