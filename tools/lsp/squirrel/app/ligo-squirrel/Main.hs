@@ -121,6 +121,7 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentSignatureHelp handleSignatureHelpRequest
   , S.requestHandler J.STextDocumentFoldingRange handleFoldingRangeRequest
   , S.requestHandler J.STextDocumentSelectionRange handleSelectionRangeRequest
+  , S.requestHandler J.STextDocumentDocumentLink handleDocumentLinkRequest
   , S.requestHandler J.STextDocumentDocumentSymbol handleDocumentSymbolsRequest
   , S.requestHandler J.STextDocumentHover handleHoverRequest
   , S.requestHandler J.STextDocumentRename handleRenameRequest
@@ -320,6 +321,18 @@ handleSelectionRangeRequest req respond = do
     tree <- contractTree <$> RIO.fetch RIO.NormalEffort uri
     let results = map (findSelectionRange (tree ^. nestedLIGO)) positions
     respond . Right . J.List $ results
+
+handleDocumentLinkRequest :: S.Handler RIO 'J.TextDocumentDocumentLink
+handleDocumentLinkRequest req respond = do
+  Log.debug "Document link" [i|Request: #{show req}|]
+
+  let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
+  contractInfo <- RIO.fetch RIO.LeastEffort uri
+  let collected =
+        getDocumentLinks
+          (contractFile contractInfo)
+          (getLIGO (contractTree contractInfo))
+  respond . Right . J.List $ collected
 
 handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol
 handleDocumentSymbolsRequest req respond = do
