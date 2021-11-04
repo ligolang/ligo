@@ -94,7 +94,7 @@ let get_contract_rejection_data :
     | _ -> None
 
 let get_big_map ~raise (ctxt : context) id key key_ty  =
-  let data = List.Assoc.find_exn ctxt.transduced.bigmaps ~equal:(=) id in
+  let data = List.Assoc.find_exn ctxt.transduced.bigmaps ~equal:Int.equal id in
   let key_value = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps key_ty key in
   let state = data.version in
   List.Assoc.find state ~equal:equal_value key_value
@@ -110,7 +110,7 @@ let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
                      (fun _ -> generic_error Location.generated "Cannot extract value type") @@
                      Tezos_protocol.Protocol.Michelson_v1_primitives.prims_of_strings value_type in
   let data : Ligo_interpreter.Types.bigmap_data = { key_type ; value_type ; version } in
-  let transduced = { ctxt.transduced with bigmaps = List.Assoc.add ctxt.transduced.bigmaps ~equal:(=) id data } in
+  let transduced = { ctxt.transduced with bigmaps = List.Assoc.add ctxt.transduced.bigmaps ~equal:Int.equal id data } in
   { ctxt with transduced }
 
 let get_storage ~raise ~loc ~calltrace ctxt addr =
@@ -260,13 +260,13 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
   let lazy_storage_diffs = List.concat @@ List.filter_opt lazy_storage_diffs in
   let lazy_storage_diffs = convert_lazy_storage_diffs lazy_storage_diffs in
   let get_id id = Z.to_int (Tezos_raw_protocol.Lazy_storage_kind.Big_map.Id.unparse_to_z id) in
-  List.fold lazy_storage_diffs
+  List.fold_right lazy_storage_diffs
     ~init:bigmaps
     ~f:(
-      fun bigmaps ->
-        function
+      fun it bigmaps ->
+        match it with
         | Item (Big_map, id, Remove) ->
-            List.Assoc.remove bigmaps ~equal:(=) (get_id id)
+            List.Assoc.remove bigmaps ~equal:Int.equal (get_id id)
         | Item (Big_map, id, Update {init=Alloc {key_type;value_type};updates}) ->
             let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
             let aux (kv : (value * value) list) (key, value) =
@@ -278,10 +278,10 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
                 List.Assoc.add kv ~equal:equal_value key_value value_value in
             let state = List.fold kv_diff ~init:[] ~f:aux in
             let data = {key_type;value_type;version = state} in
-            List.Assoc.add bigmaps ~equal:(=) (get_id id) data
+            List.Assoc.add bigmaps ~equal:Int.equal (get_id id) data
         | Item (Big_map, id, Update {init=Copy {src};updates}) ->
             let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
-            let data = List.Assoc.find_exn bigmaps ~equal:(=) (get_id src) in
+            let data = List.Assoc.find_exn bigmaps ~equal:Int.equal (get_id src) in
             let state = data.version in
             let aux (kv : (value * value) list) (key, value) =
               let key_value = Michelson_to_value.conv ~raise ~bigmaps data.key_type key in
@@ -292,10 +292,10 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
                 List.Assoc.add kv ~equal:equal_value key_value value_value in
             let state = List.fold kv_diff ~init:state ~f:aux in
             let data = { data with version = state } in
-            List.Assoc.add bigmaps ~equal:(=) (get_id id) data
+            List.Assoc.add bigmaps ~equal:Int.equal (get_id id) data
         | Item (Big_map, id, Update {init=Existing;updates}) ->
             let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
-            let data = List.Assoc.find_exn bigmaps ~equal:(=) (get_id id) in
+            let data = List.Assoc.find_exn bigmaps ~equal:Int.equal (get_id id) in
             let state = data.version in
             let aux (kv : (value * value) list) (key, value) =
               let key_value = Michelson_to_value.conv ~raise ~bigmaps data.key_type key in
@@ -306,7 +306,7 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
                 List.Assoc.add kv ~equal:equal_value key_value value_value in
             let state = List.fold kv_diff ~init:state ~f:aux in
             let data = { data with version = state } in
-            List.Assoc.add bigmaps ~equal:(=) (get_id id) data
+            List.Assoc.add bigmaps ~equal:Int.equal (get_id id) data
         | _  -> bigmaps
     )
 
