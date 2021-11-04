@@ -39,7 +39,7 @@ let parameter source_file entry_point expression syntax infer protocol_version a
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
       let options = Compiler_options.make ~infer ~protocol_version () in
-      let typed_prg,env   = Build.combined_contract ~raise ~add_warning ~options syntax Env source_file in
+      let typed_prg,env   = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
       let mini_c_prg      = Ligo_compile.Of_typed.compile ~raise typed_prg in
       let michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg entry_point in
       let _contract =
@@ -59,7 +59,7 @@ let storage source_file entry_point expression syntax infer protocol_version amo
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
       let options = Compiler_options.make ~infer ~protocol_version () in
-      let typed_prg,env       = Build.combined_contract ~raise ~add_warning ~options syntax Env source_file in
+      let typed_prg,env       = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
       let mini_c_prg          = Ligo_compile.Of_typed.compile ~raise typed_prg in
       let michelson_prg       = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options  mini_c_prg entry_point in
       let _contract =

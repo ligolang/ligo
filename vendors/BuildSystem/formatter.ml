@@ -1,4 +1,4 @@
-open Display
+open Simple_utils.Display
 
 let graph_ppformat ~display_format f g =
   match display_format with

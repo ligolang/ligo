@@ -7,6 +7,7 @@ end
 
 module G = Graph.Persistent.Digraph.Concrete(Node)
 module Dfs = Graph.Traverse.Dfs(G)
+module TopSort = Graph.Topological.Make(G)
 
-module SMap = Map.String
+module SMap = Map.Make(String)
 module SSet = Set.Make(String)
