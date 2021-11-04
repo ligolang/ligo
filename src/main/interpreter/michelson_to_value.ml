@@ -149,7 +149,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       in
       V_Map lst'
   | Prim (_, "big_map", [_; _], _), Int (_, v) ->
-     let data : Ligo_interpreter.Types.bigmap_data = List.Assoc.find_exn bigmaps ~equal:(=) (Z.to_int v) in
+     let data : Ligo_interpreter.Types.bigmap_data = List.Assoc.find_exn bigmaps ~equal:Int.equal (Z.to_int v) in
      let lst = data.version in
      V_Map lst
   | Prim (_, "list", [ty], _), Seq (_, lst) ->

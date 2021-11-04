@@ -236,6 +236,14 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_bigmap_set.mligo" ] ;
+  [%expect {|
+    9n
+    0n
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_module.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
@@ -391,6 +399,12 @@ let%expect_test _ =
       - test_switch_if_break exited with value ().
       - test_switch_if_return exited with value ().
       - test_switch_switch_break exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_negative_big_map_id.mligo" ] ;
+    [%expect{|
+      Everything at the top-level was executed.
+      - test_main exited with value (). |}]
 
 (* do not remove that :) *)
 let () = Sys.chdir pwd
