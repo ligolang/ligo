@@ -18,7 +18,6 @@ let rows : ('a -> unit) -> rows -> unit
   ()
 
 let rec traverse_type_expression : 'err ty_exp_mapper -> type_expression -> unit  = fun f te ->
-  let module SSet = Set.Make (String) in
   let open Stage_common in
   let self = traverse_type_expression f in
   let () = f te in

@@ -10,10 +10,11 @@ let pretty_print ?werror source_file syntax display_format =
     Compile.Utils.pretty_print ~raise ~options ~meta source_file
 
 let dependency_graph source_file syntax display_format =
-    format_result ~display_format (Build.Formatter.graph_format) (fun _ -> []) @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~display_format (BuildSystem.Formatter.graph_format) get_warnings @@
       fun ~raise ->
       let options = Compiler_options.make () in
-      let g,_ = Build.dependency_graph ~raise ~options syntax Env source_file in
+      let g,_ = Build.dependency_graph ~raise ~add_warning ~options syntax Env source_file in
       (g,source_file)
 
 let preprocess source_file syntax display_format =
@@ -60,7 +61,7 @@ let ast_core source_file syntax infer protocol_version display_format =
           let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
           Compiler_options.make ~infer ~protocol_version ()
         in
-        let _,inferred_core,_,_ = Build.infer_contract ~raise ~add_warning ~options syntax Env source_file in
+        let inferred_core = Build.infer_contract ~raise ~add_warning ~options syntax Env source_file in
         inferred_core
     else
       (* Print the ast as-is without inferring and typechecking dependencies *)
@@ -89,7 +90,7 @@ let ast_combined  source_file syntax infer protocol_version display_format =
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~infer ~protocol_version ()
       in
-      let typed,_ = Build.combined_contract ~raise ~add_warning ~options syntax Env source_file in
+      let typed,_ = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
       typed
 
 let mini_c source_file syntax infer protocol_version display_format optimize =
@@ -100,7 +101,7 @@ let mini_c source_file syntax infer protocol_version display_format optimize =
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~infer ~protocol_version ()
       in
-      let mini_c,_ = Build.build_mini_c ~raise ~add_warning ~options syntax Env source_file in
+      let mini_c,_ = Build.build_mini_c ~raise ~add_warning ~options syntax Ligo_compile.Of_core.Env source_file in
       match optimize with
         | None -> Mini_c.Formatter.Raw mini_c
         | Some entry_point ->
