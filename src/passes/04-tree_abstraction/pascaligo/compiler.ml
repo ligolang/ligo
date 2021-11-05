@@ -7,6 +7,13 @@ module AST = Ast_imperative
 
 open AST
 
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
+
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
 let npseq_to_ne_list (hd, tl) = (hd, List.map ~f:snd tl)
@@ -435,8 +442,8 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       in
       let lst = List.map ~f:self lst in
       return @@ e_list ~loc lst
-    | ENil nil ->
-      let loc = Location.lift nil in
+    | ENil kwd_nil ->
+      let loc = Location.lift kwd_nil#region in
       return @@ e_list ~loc []
       (* Is seems that either ENil is redondant or EListComp should be an nsepseq and not a sepseq  *)
   )
@@ -568,8 +575,8 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
         Location.wrap ~loc @@ P_list (Cons (hd,tl))
       | _ -> raise.raise @@ unsupported_pattern_type p
     )
-    | PNil n ->
-      let loc = Location.lift n in
+    | PNil kwd_nil ->
+      let loc = Location.lift kwd_nil#region in
       Location.wrap ~loc @@ P_list (List [])
     in
     repr
@@ -650,7 +657,7 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> _  
       (* This looks like it should be the job of the parser *)
       let CST.{lbrace; inside; rbrace} = block.value in
       let region = block.region in
-      let enclosing = CST.Block (Region.ghost, lbrace, rbrace)
+      let enclosing = CST.Block (ghost, lbrace, rbrace)
       and (statements,terminator) = inside in
       let value = CST.{enclosing;statements;terminator} in
       let block : _ CST.reg = {value; region} in
@@ -771,8 +778,8 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> _  
     let func = compile_expression ~raise func in
     let args = compile_tuple_expression args in
     return @@ e_application ~loc func args
-  | Skip s ->
-    let loc = Location.lift s in
+  | Skip kwd_skip ->
+    let loc = Location.lift kwd_skip#region in
     return @@ e_skip ~loc ()
   | RecordPatch rp ->
     let (rp, loc) = r_split rp in
@@ -957,7 +964,7 @@ and compile_fun_decl ~raise : CST.fun_decl -> string * expression_variable * typ
     Some reg ->
       let fun_type =
         trace_option ~raise (untyped_recursive_fun loc) @@ fun_type in
-      return @@ e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
+      return @@ e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
   | None   ->
       return @@ make_e ~loc @@ E_lambda lambda
   in

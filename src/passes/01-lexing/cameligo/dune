@@ -3,7 +3,7 @@
 (library
   (name lexing_cameligo)
   (public_name ligo.lexing.cameligo)
-  (modules Token Self_tokens Style AttachComments)
+  (modules Token Self_tokens Style)
   (libraries
     ;; LIGO
     lexing_shared

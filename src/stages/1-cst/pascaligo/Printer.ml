@@ -49,18 +49,18 @@ let compact state (region: Region.t) =
 
 let print_nsepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.nsepseq -> unit =
+  ('a, _ Token.wrap) Utils.nsepseq -> unit =
   fun state sep print (head, tail) ->
     let print_aux (sep_reg, item) =
       let sep_line =
-        sprintf "%s: %s\n" (compact state sep_reg) sep in
+        sprintf "%s: %s\n" (compact state sep_reg#region) sep in
       Buffer.add_string state#buffer sep_line;
       print state item
     in print state head; List.iter print_aux tail
 
 let print_sepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.sepseq -> unit =
+  ('a, _ Token.wrap) Utils.sepseq -> unit =
   fun state sep print -> function
         None -> ()
   | Some seq -> print_nsepseq state sep print seq
@@ -70,9 +70,9 @@ let print_option : state -> (state -> 'a -> unit) -> 'a option -> unit =
     None -> ()
   | Some opt -> print state opt
 
-let print_token state region lexeme =
+let print_token state token _lexeme =
   let line =
-    sprintf "%s: %s\n"(compact state region) lexeme
+    sprintf "%s: %s\n"(compact state token#region) token#payload
   in Buffer.add_string state#buffer line
 
 let print_var state {region; value} =
@@ -96,7 +96,8 @@ let print_string state {region; value} =
 let print_attributes state attributes =
   let apply {value = attribute; region} =
     let attribute_formatted = sprintf "[@%s]" attribute in
-    print_token state region attribute_formatted
+    let token = Token.wrap attribute_formatted region in
+    print_token state token attribute_formatted
   in List.iter apply attributes
 
 let print_pvar state {region; value} =
@@ -307,7 +308,8 @@ and print_code_inj state {value; _} =
   let {value=lang; region} = language in
   let header_stop = region#start#shift_bytes 1 in
   let header_reg  = Region.make ~start:region#start ~stop:header_stop in
-  print_token  state header_reg "[%";
+  let header_t = Token.wrap "[%" header_reg in
+  print_token  state header_t "[%";
   print_string state lang;
   print_expr   state code;
   print_token  state rbracket "]"
@@ -1266,8 +1268,8 @@ and pp_instruction state = function
 | ProcCall {value; region} ->
     pp_loc_node state "ProcCall" region;
     pp_fun_call state value
-| Skip region ->
-    pp_loc_node state "Skip" region
+| Skip kwd_skip ->
+    pp_loc_node state "Skip" kwd_skip#region
 | RecordPatch {value; region} ->
     pp_loc_node state "RecordPatch" region;
     pp_record_patch state value
@@ -1399,8 +1401,8 @@ and pp_list_pattern state = function
   PListComp {value; region} ->
     pp_loc_node state "PListComp" region;
     pp_injection pp_pattern (state#pad 1 0) value
-| PNil region ->
-    pp_loc_node state "PNil" region
+| PNil kwd_nil ->
+    pp_loc_node state "PNil" kwd_nil#region
 | PParCons {value; region} ->
     pp_loc_node state "PParCons" region;
     pp_bin_cons (state#pad 1 0) value.inside
@@ -1565,9 +1567,9 @@ and pp_for_collect state collect =
   in ()
 
 and pp_collection state = function
-  Map  region -> pp_loc_node state "map"  region
-| Set  region -> pp_loc_node state "set"  region
-| List region -> pp_loc_node state "list" region
+  Map  kwd_map -> pp_loc_node state "map"   kwd_map#region
+| Set  kwd_set -> pp_loc_node state "set"   kwd_set#region
+| List kwd_list -> pp_loc_node state "list" kwd_list#region
 
 and pp_var_binding state (source, image) =
   pp_node  state "<binding>";
@@ -1719,8 +1721,8 @@ and pp_list_expr state = function
     pp_loc_node state "ECons" region;
     pp_expr (state#pad 2 0) value.arg1;
     pp_expr (state#pad 2 1) value.arg2
-| ENil region ->
-    pp_loc_node state "ENil" region
+| ENil kwd_nil ->
+    pp_loc_node state "ENil" kwd_nil#region
 | EListComp {value; region} ->
     pp_loc_node state "EListComp" region;
     if value.elements = None then

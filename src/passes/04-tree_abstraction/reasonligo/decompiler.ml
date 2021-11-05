@@ -1,12 +1,18 @@
 module AST = Ast_imperative
 module CST = Cst.Reasonligo
 module Predefined = Predefined.Tree_abstraction.Reasonligo
+module Token = Lexing_reasonligo.Token
 
 open Function
 
 (* Utils *)
 
-let ghost = Region.ghost
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
 
 let wrap = Region.wrap_ghost
 

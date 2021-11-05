@@ -16,7 +16,7 @@ let pp_brackets printer (node : 'a brackets reg) =
   in string "[" ^^ nest 1 (printer inside ^^ string "]")
 
 let pp_nsepseq :
-  'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
+  'a. string -> ('a -> document) -> ('a, _ Token.wrap) Utils.nsepseq -> document =
   fun sep printer elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1

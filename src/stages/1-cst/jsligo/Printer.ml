@@ -10,6 +10,13 @@ module Utils = Simple_utils.Utils
 
 let sprintf = Printf.sprintf
 
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
+
 type state = <
   offsets  : bool;
   mode     : [`Point | `Byte];
@@ -50,11 +57,11 @@ let compact state (region: Region.t) =
 
 let print_nsepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.nsepseq -> unit =
+  ('a, _ Token.wrap) Utils.nsepseq -> unit =
   fun state sep print (head, tail) ->
     let print_aux (sep_reg, item) =
       let sep_line =
-        sprintf "%s: %s\n" (compact state sep_reg) sep in
+        sprintf "%s: %s\n" (compact state sep_reg#region) sep in
       Buffer.add_string state#buffer sep_line;
       print state item
     in print state head; List.iter print_aux tail
@@ -67,9 +74,9 @@ let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
 let print_csv state print (node : _ Region.reg) =
   print_nsepseq state "," print node.value
 
-let print_token state region lexeme =
+let print_token state token _lexeme =
   let line =
-    sprintf "%s: %s\n" (compact state region) lexeme
+    sprintf "%s: %s\n" (compact state token#region) token#payload
   in Buffer.add_string state#buffer line
 
 let print_var state {region; value} =
@@ -93,7 +100,8 @@ let print_pconstr state {region; value} =
 let print_attributes state attributes =
   let apply {value = attribute; region} =
     let attribute_formatted = sprintf "[@%s]" attribute in
-    print_token state region attribute_formatted
+    let token = Token.wrap attribute_formatted region in
+    print_token state token attribute_formatted
   in List.iter apply attributes
 
 let print_pvar state {region; value} =
@@ -449,14 +457,16 @@ and print_object state (node: object_expr) =
 
 and print_assignment state (lhs, op, rhs) =
   print_expr state lhs;
-  print_token state op.region 
-    (match op.value with 
-      Eq -> " = "
-    | Assignment_operator Times_eq ->  " *= "  
-    | Assignment_operator Div_eq ->    " /= "
-    | Assignment_operator Min_eq ->    " -= "
-    | Assignment_operator Plus_eq ->   " += "
-    | Assignment_operator Mod_eq ->    " %= ");
+  let lexeme = match op.value with 
+    Eq -> " = "
+  | Assignment_operator Times_eq ->  " *= "  
+  | Assignment_operator Div_eq ->    " /= "
+  | Assignment_operator Min_eq ->    " -= "
+  | Assignment_operator Plus_eq ->   " += "
+  | Assignment_operator Mod_eq ->    " %= "
+  in
+  let token = Token.wrap lexeme op.region in
+  print_token state token lexeme;
   print_expr state rhs;
 
 and print_expr state = function
@@ -550,8 +560,9 @@ and print_arith_expr state = function
     print_token state op "-";
     print_expr  state arg
 | Int {region; value=lex,z} ->
-    let line = sprintf "Int %s (%s)" lex (Z.to_string z)
-    in print_token state region line
+    let line = sprintf "Int %s (%s)" lex (Z.to_string z) in 
+    let token = Token.wrap line region in
+    print_token state token line
 
 and print_string_expr state = function
   String s ->
@@ -749,8 +760,8 @@ and pp_statement state = function
 | SSwitch {value; region} ->
     pp_loc_node state "SSwitch" region;
     pp_switch_statement state value
-| SBreak b ->
-    pp_loc_node state "SBreak" b
+| SBreak kwd_break ->
+    pp_loc_node state "SBreak" kwd_break#region
 | SNamespace {value; region} ->
     pp_loc_node  state "SNamespace" region;
     pp_namespace state value
@@ -802,7 +813,7 @@ and pp_import state  {alias; module_path; _} =
   List.iter aux items
 
 and pp_namespace state (n, name, {value = {inside = statements;_}; _}, attributes) =
-  pp_loc_node state "<namespace>" n;
+  pp_loc_node state "<namespace>" n#region;
   pp_attributes state attributes;
   pp_ident    state name;
   let statements = Utils.nsepseq_to_list statements in

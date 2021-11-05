@@ -7,10 +7,18 @@ open Function
 
 module CST = Cst.Jsligo
 module AST = Ast_imperative
+module Token = Lexing_jsligo.Token
 
 open AST
 
 (* type nonrec 'a result = 'a  *)
+
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
 
 type nested_match_repr = (*TODO  , move that in AST. (see !909) *)
   | PatternVar of AST.ty_expr binder
@@ -762,6 +770,14 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       Eq -> 
         compile_expression ~raise e2
     | Assignment_operator ao -> 
+      let lexeme = (match ao with 
+        Times_eq -> "*="
+      | Div_eq -> "/="
+      | Plus_eq -> "+="
+      | Min_eq -> "-="
+      | Mod_eq -> "%="
+      )
+      in
       let ao = (match ao with 
         Times_eq -> C_MUL
       | Div_eq -> C_DIV
@@ -772,7 +788,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       in
       compile_bin_op ~raise ao {
         value = {
-          op   = op.region;
+          op   = Token.wrap lexeme op.region;
           arg1 = e1;
           arg2 = e2;
         };
@@ -863,7 +879,7 @@ and nestrec : AST.expression -> (AST.expression -> AST.expression) -> nested_mat
       nestrec res f'' tl
     | [] -> f res
 
-and compile_array_let_destructuring ~raise : const:bool -> AST.expression -> (CST.pattern, Region.t) Utils.nsepseq CST.brackets Region.reg -> AST.expression -> AST.expression =
+and compile_array_let_destructuring ~raise : const:bool -> AST.expression -> (CST.pattern, _ Token.wrap) Utils.nsepseq CST.brackets Region.reg -> AST.expression -> AST.expression =
   fun ~const matchee tuple ->
     let (tuple, loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple.inside in
@@ -874,7 +890,7 @@ and compile_array_let_destructuring ~raise : const:bool -> AST.expression -> (CS
     let f = fun body -> e_matching ~loc matchee [{pattern ; body}] in
     (fun let_result -> nestrec let_result f patterns)
 
-and compile_object_let_destructuring ~raise : const:bool -> AST.expression -> (CST.pattern, Region.t) Utils.nsepseq CST.braces CST.reg -> (AST.expression -> AST.expression) =
+and compile_object_let_destructuring ~raise : const:bool -> AST.expression -> (CST.pattern, _ Token.wrap) Utils.nsepseq CST.braces CST.reg -> (AST.expression -> AST.expression) =
   fun ~const matchee record ->
     let (record, loc) = r_split record in
     let aux : CST.pattern -> label * CST.pattern = fun field ->
@@ -1034,7 +1050,7 @@ and compile_pattern ~raise : const:bool -> CST.pattern -> type_expression binder
 and filter_private (attributes: CST.attributes) = 
   List.filter ~f:(fun v -> not (v.value = "private")) attributes
 
-and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (Region.t * CST.type_expr) option -> CST.pattern -> Region.t -> (module_variable option * type_expression binder * Ast_imperative__.Types.attributes * expression) list =
+and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (_ Token.wrap * CST.type_expr) option -> CST.pattern -> Region.t -> (module_variable option * type_expression binder * Ast_imperative__.Types.attributes * expression) list =
   fun ~const attributes let_rhs type_expr binders region ->
   let attributes = compile_attributes attributes in
   let expr = compile_expression ~raise let_rhs in
@@ -1078,8 +1094,8 @@ and compile_statements ?(wrap=false) ~raise : CST.statements -> statement_result
       let wrapper = CST.SBlock {
         value = {
           inside = (hd, tl);
-          lbrace = Region.ghost;
-          rbrace = Region.ghost};
+          lbrace = ghost;
+          rbrace = ghost};
           region = Region.ghost
       } in
       let block = compile_statement ~wrap:false ~raise wrapper in
@@ -1122,7 +1138,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
         in
       fun init -> List.fold_right ~f:aux ~init lst
   in
-  let rec initializers ~const (result: expression -> expression) (rem: (Region.t * CST.val_binding Region.reg) list) : expression -> expression =
+  let rec initializers ~const (result: expression -> expression) (rem: (_ Token.wrap * CST.val_binding Region.reg) list) : expression -> expression =
     match rem with
     | (_, hd) :: tl -> 
       let init = compile_initializer ~const [] hd in
@@ -1249,13 +1265,13 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
     let process_case case =
       (match case with
           CST.Switch_case { kwd_case; expr; statements=None } ->
-            let loc = Location.lift kwd_case in
+            let loc = Location.lift kwd_case#region in
             let case_expr = compile_expression ~raise expr in
             let test = case_cond case_expr in
             let update_vars = e_sequence fallthrough_assign_true found_case_assign_true in
             (Binding (fun x -> e_sequence (e_cond ~loc test update_vars (e_unit ())) x))
         | Switch_case { kwd_case; expr; statements=Some statements } ->
-          let loc = Location.lift kwd_case in
+          let loc = Location.lift kwd_case#region in
           let case_expr = compile_expression ~raise expr in
           let test      = case_cond case_expr in
           let update_vars_fallthrough = e_sequence fallthrough_assign_true found_case_assign_true in
@@ -1283,7 +1299,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
             e_sequence (e_unit ()) x)
           )
         | Switch_default_case { kwd_default; statements=Some statements } ->
-          let loc = Location.lift kwd_default in
+          let loc = Location.lift kwd_default#region in
           let default_cond = 
             or_expr 
               fallthrough_eq_true 
@@ -1313,7 +1329,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
             merge_statement_results acc (process_case case))
         
   | SBreak b -> 
-    Break (e_unit ~loc:(Location.lift b) ())
+    Break (e_unit ~loc:(Location.lift b#region) ())
   | SType ti -> 
     let (ti, loc) = r_split ti in
     let ({name;type_expr;_}: CST.type_decl) = ti in

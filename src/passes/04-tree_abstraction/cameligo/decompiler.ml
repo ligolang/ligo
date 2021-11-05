@@ -6,7 +6,12 @@ open Function
 
 (* Utils *)
 
-let ghost = Region.ghost
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
 
 let wrap = Region.wrap_ghost
 

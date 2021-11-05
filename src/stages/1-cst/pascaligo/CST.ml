@@ -9,6 +9,7 @@
 module Directive = LexerLib.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
+module Token     = Lexing_pascaligo.Token
 
 open Utils
 type 'a reg = 'a Region.reg
@@ -17,78 +18,80 @@ type 'a reg = 'a Region.reg
 
 type lexeme = string
 
+type 'payload wrap = 'payload Token.wrap 
+
 (* Keywords of LIGO *)
 
-type keyword        = Region.t
-type kwd_and        = Region.t
-type kwd_attributes = Region.t
-type kwd_begin      = Region.t
-type kwd_block      = Region.t
-type kwd_case       = Region.t
-type kwd_const      = Region.t
-type kwd_contains   = Region.t
-type kwd_down       = Region.t
-type kwd_else       = Region.t
-type kwd_end        = Region.t
-type kwd_for        = Region.t
-type kwd_from       = Region.t
-type kwd_function   = Region.t
-type kwd_recursive  = Region.t
-type kwd_if         = Region.t
-type kwd_in         = Region.t
-type kwd_is         = Region.t
-type kwd_list       = Region.t
-type kwd_map        = Region.t
-type kwd_mod        = Region.t
-type kwd_nil        = Region.t
-type kwd_not        = Region.t
-type kwd_of         = Region.t
-type kwd_or         = Region.t
-type kwd_patch      = Region.t
-type kwd_record     = Region.t
-type kwd_remove     = Region.t
-type kwd_set        = Region.t
-type kwd_skip       = Region.t
-type kwd_step       = Region.t
-type kwd_then       = Region.t
-type kwd_to         = Region.t
-type kwd_type       = Region.t
-type kwd_var        = Region.t
-type kwd_while      = Region.t
-type kwd_with       = Region.t
-type kwd_module    = Region.t
+type keyword        = lexeme wrap
+type kwd_and        = lexeme wrap
+type kwd_attributes = lexeme wrap
+type kwd_begin      = lexeme wrap
+type kwd_block      = lexeme wrap
+type kwd_case       = lexeme wrap
+type kwd_const      = lexeme wrap
+type kwd_contains   = lexeme wrap
+type kwd_down       = lexeme wrap
+type kwd_else       = lexeme wrap
+type kwd_end        = lexeme wrap
+type kwd_for        = lexeme wrap
+type kwd_from       = lexeme wrap
+type kwd_function   = lexeme wrap
+type kwd_recursive  = lexeme wrap
+type kwd_if         = lexeme wrap
+type kwd_in         = lexeme wrap
+type kwd_is         = lexeme wrap
+type kwd_list       = lexeme wrap
+type kwd_map        = lexeme wrap
+type kwd_mod        = lexeme wrap
+type kwd_nil        = lexeme wrap
+type kwd_not        = lexeme wrap
+type kwd_of         = lexeme wrap
+type kwd_or         = lexeme wrap
+type kwd_patch      = lexeme wrap
+type kwd_record     = lexeme wrap
+type kwd_remove     = lexeme wrap
+type kwd_set        = lexeme wrap
+type kwd_skip       = lexeme wrap
+type kwd_step       = lexeme wrap
+type kwd_then       = lexeme wrap
+type kwd_to         = lexeme wrap
+type kwd_type       = lexeme wrap
+type kwd_var        = lexeme wrap
+type kwd_while      = lexeme wrap
+type kwd_with       = lexeme wrap
+type kwd_module    = lexeme wrap
 
 (* Symbols *)
 
-type semi     = Region.t  (* ";"   *)
-type comma    = Region.t  (* ","   *)
-type lpar     = Region.t  (* "("   *)
-type rpar     = Region.t  (* ")"   *)
-type lbrace   = Region.t  (* "{"   *)
-type rbrace   = Region.t  (* "}"   *)
-type lbracket = Region.t  (* "["   *)
-type rbracket = Region.t  (* "]"   *)
-type cons     = Region.t  (* "#"   *)
-type vbar     = Region.t  (* "|"   *)
-type arrow    = Region.t  (* "->"  *)
-type assign   = Region.t  (* ":="  *)
-type equal    = Region.t  (* "="   *)
-type colon    = Region.t  (* ":"   *)
-type lt       = Region.t  (* "<"   *)
-type leq      = Region.t  (* "<="  *)
-type gt       = Region.t  (* ">"   *)
-type geq      = Region.t  (* ">="  *)
-type neq      = Region.t  (* "=/=" *)
-type plus     = Region.t  (* "+"   *)
-type minus    = Region.t  (* "-"   *)
-type slash    = Region.t  (* "/"   *)
-type times    = Region.t  (* "*"   *)
-type dot      = Region.t  (* "."   *)
-type cat      = Region.t  (* "^"   *)
+type semi     = lexeme wrap  (* ";"   *)
+type comma    = lexeme wrap  (* ","   *)
+type lpar     = lexeme wrap  (* "("   *)
+type rpar     = lexeme wrap  (* ")"   *)
+type lbrace   = lexeme wrap  (* "{"   *)
+type rbrace   = lexeme wrap  (* "}"   *)
+type lbracket = lexeme wrap  (* "["   *)
+type rbracket = lexeme wrap  (* "]"   *)
+type cons     = lexeme wrap  (* "#"   *)
+type vbar     = lexeme wrap  (* "|"   *)
+type arrow    = lexeme wrap  (* "->"  *)
+type assign   = lexeme wrap  (* ":="  *)
+type equal    = lexeme wrap  (* "="   *)
+type colon    = lexeme wrap  (* ":"   *)
+type lt       = lexeme wrap  (* "<"   *)
+type leq      = lexeme wrap  (* "<="  *)
+type gt       = lexeme wrap  (* ">"   *)
+type geq      = lexeme wrap  (* ">="  *)
+type neq      = lexeme wrap  (* "=/=" *)
+type plus     = lexeme wrap  (* "+"   *)
+type minus    = lexeme wrap  (* "-"   *)
+type slash    = lexeme wrap  (* "/"   *)
+type times    = lexeme wrap  (* "*"   *)
+type dot      = lexeme wrap  (* "."   *)
+type cat      = lexeme wrap  (* "^"   *)
 
 (* Virtual tokens *)
 
-type eof = Region.t
+type eof = lexeme wrap
 
 (* Literals *)
 
@@ -772,8 +775,8 @@ and annot_expr_to_region {region; _} = region
 
 and list_expr_to_region = function
   ECons {region; _}
-| EListComp {region; _}
-| ENil region -> region
+| EListComp {region; _} -> region
+| ENil t -> t#region
 
 and record_expr_to_region {region; _} = region
 
@@ -782,14 +785,14 @@ let path_to_region = function
 | Path {region; _} -> region
 
 let instr_to_region = function
-  Cond                {region; _}
+ Skip                t -> t#region
+| Cond                {region; _}
 | CaseInstr           {region; _}
 | Assign              {region; _}
 | Loop While          {region; _}
 | Loop For ForInt     {region; _}
 | Loop For ForCollect {region; _}
 | ProcCall            {region; _}
-| Skip                region
 | RecordPatch         {region; _}
 | MapPatch            {region; _}
 | SetPatch            {region; _}
@@ -812,11 +815,11 @@ let pattern_to_region = function
 | PString     {region; _}
 | PConstr     {region; _}
 | PList PListComp  {region; _}
-| PList PNil  region
 | PList PParCons {region; _}
 | PList PCons {region; _}
 | PTuple      {region; _}
 | PRecord     {region; _} -> region
+| PList PNil t -> t#region
 
 let declaration_to_region = function
   TypeDecl    {region;_}
