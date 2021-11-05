@@ -9,6 +9,7 @@
 module Directive = LexerLib.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
+module Token     = Lexing_jsligo.Token
 
 open Utils
 type 'a reg = 'a Region.reg
@@ -17,81 +18,83 @@ type 'a reg = 'a Region.reg
 
 type lexeme       = string
 
+type 'payload wrap = 'payload Token.wrap 
+
 (* Keywords of JsLIGO *)
 
-type kwd_else      = Region.t
-type kwd_if        = Region.t
-type kwd_let       = Region.t
-type kwd_const     = Region.t
-type kwd_or        = Region.t
-type kwd_then      = Region.t
-type kwd_type      = Region.t
-type kwd_return    = Region.t
-type kwd_switch    = Region.t
-type kwd_case      = Region.t
-type kwd_default   = Region.t
-type kwd_as        = Region.t
-type kwd_break     = Region.t
-type kwd_namespace = Region.t
-type kwd_export    = Region.t
-type kwd_import    = Region.t
-type kwd_while     = Region.t
-type kwd_for       = Region.t
-type kwd_of        = Region.t
+type kwd_else      = lexeme wrap
+type kwd_if        = lexeme wrap
+type kwd_let       = lexeme wrap
+type kwd_const     = lexeme wrap
+type kwd_or        = lexeme wrap
+type kwd_then      = lexeme wrap
+type kwd_type      = lexeme wrap
+type kwd_return    = lexeme wrap
+type kwd_switch    = lexeme wrap
+type kwd_case      = lexeme wrap
+type kwd_default   = lexeme wrap
+type kwd_as        = lexeme wrap
+type kwd_break     = lexeme wrap
+type kwd_namespace = lexeme wrap
+type kwd_export    = lexeme wrap
+type kwd_import    = lexeme wrap
+type kwd_while     = lexeme wrap
+type kwd_for       = lexeme wrap
+type kwd_of        = lexeme wrap
 
 (* Symbols *)
 
-type arrow    = Region.t  (* "=>"  *)
-type dot      = Region.t  (* "."   *)
-type ellipsis = Region.t  (* "..." *)
-type equal    = Region.t  (* "="   *)
+type arrow    = lexeme wrap  (* "=>"  *)
+type dot      = lexeme wrap  (* "."   *)
+type ellipsis = lexeme wrap  (* "..." *)
+type equal    = lexeme wrap  (* "="   *)
 
 (* Arithmetic operators *)
 
-type minus      = Region.t  (* "-" *)
-type plus       = Region.t  (* "+" *)
-type slash      = Region.t  (* "/" *)
-type modulo     = Region.t  (* "%" *)
-type times      = Region.t  (* "*" *)
+type minus      = lexeme wrap  (* "-" *)
+type plus       = lexeme wrap  (* "+" *)
+type slash      = lexeme wrap  (* "/" *)
+type modulo     = lexeme wrap  (* "%" *)
+type times      = lexeme wrap  (* "*" *)
 
 (* Boolean operators *)
 
-type bool_or  = Region.t  (* "||" *)
-type bool_and = Region.t  (* "&&" *)
+type bool_or  = lexeme wrap  (* "||" *)
+type bool_and = lexeme wrap  (* "&&" *)
 
 (* Comparisons *)
 
-type negate    = Region.t  (* "!"  *)
-type equal_cmp = Region.t  (* "=="  *)
-type neq       = Region.t  (* "!=" *)
-type lt        = Region.t  (* "<"  *)
-type gt        = Region.t  (* ">"  *)
-type leq       = Region.t  (* "<=" *)
-type geq       = Region.t  (* ">=" *)
+type negate    = lexeme wrap  (* "!"  *)
+type equal_cmp = lexeme wrap  (* "=="  *)
+type neq       = lexeme wrap  (* "!=" *)
+type lt        = lexeme wrap  (* "<"  *)
+type gt        = lexeme wrap  (* ">"  *)
+type leq       = lexeme wrap  (* "<=" *)
+type geq       = lexeme wrap  (* ">=" *)
 
 (* Compounds *)
 
-type lpar     = Region.t  (* "(" *)
-type rpar     = Region.t  (* ")" *)
-type lbracket = Region.t  (* "[" *)
-type rbracket = Region.t  (* "]" *)
-type lbrace   = Region.t  (* "{" *)
-type rbrace   = Region.t  (* "}" *)
+type lpar     = lexeme wrap  (* "(" *)
+type rpar     = lexeme wrap  (* ")" *)
+type lbracket = lexeme wrap  (* "[" *)
+type rbracket = lexeme wrap  (* "]" *)
+type lbrace   = lexeme wrap  (* "{" *)
+type rbrace   = lexeme wrap  (* "}" *)
 
 (* Separators *)
 
-type comma = Region.t  (* "," *)
-type semi  = Region.t  (* ";" *)
-type vbar  = Region.t  (* "|" *)
-type colon = Region.t  (* ":" *)
+type comma = lexeme wrap  (* "," *)
+type semi  = lexeme wrap  (* ";" *)
+type vbar  = lexeme wrap  (* "|" *)
+type colon = lexeme wrap  (* ":" *)
 
 (* Wildcard *)
 
-type wild = Region.t  (* "_" *)
+type wild = lexeme wrap  (* "_" *)
 
 (* Virtual tokens *)
 
-type eof = Region.t
+type eof = lexeme wrap
 
 (* Literals *)
 
@@ -585,7 +588,7 @@ let rec expr_to_region = function
 | ECodeInj {region; _} | EModA { region; _} -> region
 
 let statement_to_region = function
-  SBreak b -> b
+  SBreak b -> b#region
 | SExpr e -> expr_to_region e
 | SBlock {region; _ }
 | SCond {region; _}

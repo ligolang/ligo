@@ -9,6 +9,7 @@
 module Directive = LexerLib.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
+module Token     = Lexing_cameligo.Token
 
 open Utils
 type 'a reg = 'a Region.reg
@@ -17,96 +18,98 @@ type 'a reg = 'a Region.reg
 
 type lexeme = string
 
+type 'payload wrap = 'payload Token.wrap 
+
 (* Keywords of OCaml *)
 
-type keyword       = Region.t
-type kwd_and       = Region.t
-type kwd_begin     = Region.t
-type kwd_else      = Region.t
-type kwd_end       = Region.t
-type kwd_false     = Region.t
-type kwd_fun       = Region.t
-type kwd_rec       = Region.t
-type kwd_if        = Region.t
-type kwd_in        = Region.t
-type kwd_let       = Region.t
-type kwd_match     = Region.t
-type kwd_mod       = Region.t
-type kwd_land      = Region.t
-type kwd_lor       = Region.t
-type kwd_lxor      = Region.t
-type kwd_lsl       = Region.t
-type kwd_lsr       = Region.t
-type kwd_not       = Region.t
-type kwd_of        = Region.t
-type kwd_or        = Region.t
-type kwd_then      = Region.t
-type kwd_true      = Region.t
-type kwd_type      = Region.t
-type kwd_with      = Region.t
-type kwd_let_entry = Region.t
-type kwd_module    = Region.t
-type kwd_struct    = Region.t
+type keyword       = lexeme wrap
+type kwd_and       = lexeme wrap
+type kwd_begin     = lexeme wrap
+type kwd_else      = lexeme wrap
+type kwd_end       = lexeme wrap
+type kwd_false     = lexeme wrap
+type kwd_fun       = lexeme wrap
+type kwd_rec       = lexeme wrap
+type kwd_if        = lexeme wrap
+type kwd_in        = lexeme wrap
+type kwd_let       = lexeme wrap
+type kwd_match     = lexeme wrap
+type kwd_mod       = lexeme wrap
+type kwd_land      = lexeme wrap
+type kwd_lor       = lexeme wrap
+type kwd_lxor      = lexeme wrap
+type kwd_lsl       = lexeme wrap
+type kwd_lsr       = lexeme wrap
+type kwd_not       = lexeme wrap
+type kwd_of        = lexeme wrap
+type kwd_or        = lexeme wrap
+type kwd_then      = lexeme wrap
+type kwd_true      = lexeme wrap
+type kwd_type      = lexeme wrap
+type kwd_with      = lexeme wrap
+type kwd_let_entry = lexeme wrap
+type kwd_module    = lexeme wrap
+type kwd_struct    = lexeme wrap
 
 (* Data constructors *)
 
-type c_None  = Region.t
-type c_Some  = Region.t
+type c_None  = lexeme wrap
+type c_Some  = lexeme wrap
 
 (* Symbols *)
 
-type arrow    = Region.t  (* "->" *)
-type cons     = Region.t  (* "::" *)
-type cat      = Region.t  (* "^"  *)
-type append   = Region.t  (* "@"  *)
-type dot      = Region.t  (* "."  *)
+type arrow    = lexeme wrap  (* "->" *)
+type cons     = lexeme wrap  (* "::" *)
+type cat      = lexeme wrap  (* "^"  *)
+type append   = lexeme wrap  (* "@"  *)
+type dot      = lexeme wrap  (* "."  *)
 
 (* Arithmetic operators *)
 
-type minus    = Region.t  (* "-" *)
-type plus     = Region.t  (* "+" *)
-type slash    = Region.t  (* "/" *)
-type times    = Region.t  (* "*" *)
+type minus    = lexeme wrap  (* "-" *)
+type plus     = lexeme wrap  (* "+" *)
+type slash    = lexeme wrap  (* "/" *)
+type times    = lexeme wrap  (* "*" *)
 
 (* Boolean operators *)
 
-type bool_or  = Region.t  (* "||" *)
-type bool_and = Region.t  (* "&&" *)
+type bool_or  = lexeme wrap  (* "||" *)
+type bool_and = lexeme wrap  (* "&&" *)
 
 (* Comparisons *)
 
-type equal = Region.t  (* "="  *)
-type neq   = Region.t  (* "<>" *)
-type lt    = Region.t  (* "<"  *)
-type gt    = Region.t  (* ">"  *)
-type leq   = Region.t  (* "=<" *)
-type geq   = Region.t  (* ">=" *)
+type equal = lexeme wrap  (* "="  *)
+type neq   = lexeme wrap  (* "<>" *)
+type lt    = lexeme wrap  (* "<"  *)
+type gt    = lexeme wrap  (* ">"  *)
+type leq   = lexeme wrap  (* "=<" *)
+type geq   = lexeme wrap  (* ">=" *)
 
 (* Compounds *)
 
-type lpar     = Region.t  (* "(" *)
-type rpar     = Region.t  (* ")" *)
-type lbracket = Region.t  (* "[" *)
-type rbracket = Region.t  (* "]" *)
-type lbrace   = Region.t  (* "{" *)
-type rbrace   = Region.t  (* "}" *)
+type lpar     = lexeme wrap  (* "(" *)
+type rpar     = lexeme wrap  (* ")" *)
+type lbracket = lexeme wrap  (* "[" *)
+type rbracket = lexeme wrap  (* "]" *)
+type lbrace   = lexeme wrap  (* "{" *)
+type rbrace   = lexeme wrap  (* "}" *)
 
 (* Separators *)
 
-type comma = Region.t  (* "," *)
-type semi  = Region.t  (* ";" *)
-type vbar  = Region.t  (* "|" *)
-type colon = Region.t  (* ":" *)
+type comma = lexeme wrap  (* "," *)
+type semi  = lexeme wrap  (* ";" *)
+type vbar  = lexeme wrap  (* "|" *)
+type colon = lexeme wrap  (* ":" *)
 
-type quote = Region.t  (* "'" *)
+type quote = lexeme wrap  (* "'" *)
 
 (* Wildcard *)
 
-type wild = Region.t  (* "_" *)
+type wild = lexeme wrap  (* "_" *)
 
 (* Virtual tokens *)
 
-type eof = Region.t
+type eof = lexeme wrap
 
 (* Literals *)
 

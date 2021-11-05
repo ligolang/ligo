@@ -3,6 +3,8 @@
   (public_name ligo.cst.pascaligo)
   (instrumentation (backend bisect_ppx))
   (libraries
+    ;; Input 
+    lexing_pascaligo
     ;; Vendors
     LexerLib
     simple-utils

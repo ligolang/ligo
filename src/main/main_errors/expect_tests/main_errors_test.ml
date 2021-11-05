@@ -218,6 +218,13 @@ let%expect_test "sugaring" = ()
 let%expect_test "main_cit_pascaligo" =
   let open Cst.Pascaligo in
   let open Location in
+  let ghost = 
+    object 
+      method region = Region.ghost 
+      method attributes = []
+      method payload = ""
+    end 
+  in
   let error e = human_readable_error (`Main_cit_pascaligo e) in
   let lexeme_reg : lexeme reg = {value= "foo"; region= default_region1} in
   let pvar = PVar {value = {variable = lexeme_reg ; attributes = []} ; region = default_region1} in
@@ -264,15 +271,15 @@ let%expect_test "main_cit_pascaligo" =
   error
     (`Concrete_pascaligo_block_attribute
       { value=
-          { enclosing= BeginEnd (Region.ghost, Region.ghost);
+          { enclosing= BeginEnd (ghost, ghost);
             statements=
               ( Data
                   (LocalVar
                      { value=
-                         { kwd_var= Region.ghost;
+                         { kwd_var= ghost;
                            pattern= PVar {value= pvar; region= Region.ghost};
                            var_type= None;
-                           assign= Region.ghost;
+                           assign= ghost;
                            init= EVar {value= "xxx"; region= Region.ghost};
                            terminator= None;
                            attributes = []};

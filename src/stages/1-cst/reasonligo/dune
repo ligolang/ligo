@@ -3,6 +3,8 @@
   (public_name ligo.cst.reasonligo)
   (instrumentation (backend bisect_ppx))
   (libraries
+    ;; Input 
+    lexing_reasonligo
     ;; Vendors
     LexerLib
     simple-utils

@@ -670,8 +670,8 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
       Some reg ->
         let lambda = trace_option ~raise (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
         let lhs_type = Option.map ~f:(Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
-        let fun_type = trace_option ~raise (untyped_recursive_fun reg) @@ lhs_type in
-        e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
+        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
+        e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None   ->
         expr
     in

@@ -38,14 +38,16 @@ let fail region error =
 
 (* Predicates on the tokens *)
 
-let is_int    = function Token.Int _ -> true | _ -> false
+let is_int    = function Token.Int _    -> true | _ -> false
 let is_string = function Token.String _ -> true | _ -> false
-let is_bytes  = function Token.Bytes _ -> true | _ -> false
+let is_bytes  = function Token.Bytes _  -> true | _ -> false
 
 let is_hexa = function
-  Token.UIdent
-    Region.{value="A"|"a"|"B"|"b"|"C"|"c"
-                 |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
+  Token.UIdent t -> 
+    if t#payload = "A" || t#payload = "a"|| t#payload = "B"|| t#payload = "b"|| t#payload = "C"|| t#payload = "c"
+                 || t#payload = "D"|| t#payload = "d"|| t#payload = "E"|| t#payload = "e"|| t#payload = "F"|| t#payload = "f" then true
+    else 
+      false
   | _ -> false
 
 let is_sym =

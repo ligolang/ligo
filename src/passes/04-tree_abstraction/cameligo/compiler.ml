@@ -678,9 +678,9 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
     (* This handle the recursion *)
     let expr = match kwd_rec with
       Some reg ->
-        let fun_type = trace_option ~raise (untyped_recursive_fun reg) @@ lhs_type in
+        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
         let lambda = trace_option ~raise (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
-        e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
+        e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None   ->
         expr
     in

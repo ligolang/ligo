@@ -10,7 +10,12 @@ open Function
 
 (* Utils *)
 
-let ghost = Region.ghost
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
 
 let wrap = Region.wrap_ghost
 
@@ -132,7 +137,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
     let tuple = List.map ~f:decompile_type_expr tuple in
     let tuple = list_to_nsepseq tuple in
     let tuple = brackets tuple in
-    return @@ CST.TProd {inside = {value = tuple; region = ghost}; attributes = []}
+    return @@ CST.TProd {inside = {value = tuple; region = Region.ghost}; attributes = []}
   | T_arrow {type1;type2} ->
     let type1 = decompile_type_expr type1 in
     let type_arg = fun_type_arg type1 in
@@ -229,7 +234,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       (match literal with
           Literal_unit  ->  return_expr @@ [Expr (CST.EUnit (wrap (ghost,ghost)))]
         | Literal_int i ->  return_expr @@ [Expr (CST.EArith (Int (wrap ("",i))))]
-        | Literal_nat n ->  return_expr @@ [Expr (CST.EAnnot {value = CST.EArith (Int (wrap ("",n))), ghost, CST.TVar {value = "nat"; region = ghost}; region = ghost })]
+        | Literal_nat n ->  return_expr @@ [Expr (CST.EAnnot {value = CST.EArith (Int (wrap ("",n))), ghost, CST.TVar {value = "nat"; region = Region.ghost}; region = Region.ghost })]
         | Literal_timestamp time ->
           let time = Tezos_utils.Time.Protocol.to_notation @@
             Tezos_utils.Time.Protocol.of_seconds @@ Z.to_int64 time in
@@ -237,7 +242,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
           let ty = decompile_type_expr @@ AST.t_timestamp () in
           let time = CST.EString (String (wrap time)) in
           return_expr @@ [Expr (CST.EAnnot (wrap @@ (time, ghost, ty)))]
-        | Literal_mutez mtez -> return_expr @@ [Expr (CST.EAnnot {value = CST.EArith (Int (wrap ("", mtez))), ghost, CST.TVar {value = "mutez"; region = ghost}; region = ghost })]
+        | Literal_mutez mtez -> return_expr @@ [Expr (CST.EAnnot {value = CST.EArith (Int (wrap ("", mtez))), ghost, CST.TVar {value = "mutez"; region = Region.ghost}; region = Region.ghost })]
         | Literal_string (Standard str) -> return_expr @@ [Expr (CST.EString (String   (wrap str)))]
         | Literal_string (Verbatim ver) -> return_expr @@ [Expr (CST.EString (Verbatim (wrap ver)))]
         | Literal_bytes b ->
@@ -341,7 +346,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       [Expr (CST.EAnnot {value = hd; _})] -> hd
     | _ -> failwith "not implemented"
     in
-    return_expr @@ [Expr (CST.EAnnot {value = CST.ECodeInj (wrap CST.{language; code}), kwd_as,type_expr; region = ghost })]
+    return_expr @@ [Expr (CST.EAnnot {value = CST.ECodeInj (wrap CST.{language; code}), kwd_as,type_expr; region = Region.ghost })]
   | E_constructor {constructor;element} ->
     let Label constr = constructor in
     let constr = wrap constr in
@@ -477,7 +482,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let name = Var.to_name variable.wrap_content in
     let evar = CST.EVar (wrap name) in
     let rhs = decompile_expression_in expression in
-    return_expr @@ [Expr (CST.EAssign (evar, {value = CST.Eq; region = ghost}, e_hd rhs))]
+    return_expr @@ [Expr (CST.EAssign (evar, {value = CST.Eq; region = Region.ghost}, e_hd rhs))]
   | E_for_each {fe_binder;collection;fe_body; _} ->
     let var = decompile_variable @@ (fst fe_binder).wrap_content in
     let bind_to = Option.map ~f:(fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
@@ -577,7 +582,7 @@ and function_body body =
 and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
     let type_expr = Option.map ~f:decompile_type_expr binder.ascr in
-    let type_expr = Option.value ~default:(TVar {value = "_"; region = ghost}) type_expr in
+    let type_expr = Option.value ~default:(TVar {value = "_"; region = Region.ghost}) type_expr in
     let v = decompile_variable binder.var.wrap_content in
     let seq = CST.ESeq (wrap (CST.EAnnot (wrap (CST.EVar v,ghost,type_expr)), [])) in
     let parameters = CST.EPar (wrap @@ par seq ) in
@@ -695,7 +700,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
     let binding = CST.({
       binders;
       lhs_type;
-      eq = Region.ghost;
+      eq = ghost;
       expr
     }) in
     let const = CST.SConst (wrap (CST.{kwd_const=ghost; bindings = (wrap binding, []); attributes})) in

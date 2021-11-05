@@ -53,18 +53,18 @@ let compact state (region: Region.t) =
 
 let print_nsepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.nsepseq -> unit =
+  ('a, _ Token.wrap) Utils.nsepseq -> unit =
   fun state sep print (head, tail) ->
     let print_aux (sep_reg, item) =
       let sep_line =
-        sprintf "%s: %s\n" (compact state sep_reg) sep in
+        sprintf "%s: %s\n" (compact state sep_reg#region) sep in
       Buffer.add_string state#buffer sep_line;
       print state item
     in print state head; List.iter print_aux tail
 
 let print_sepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.sepseq -> unit =
+  ('a, _ Token.wrap) Utils.sepseq -> unit =
   fun state sep print -> function
         None -> ()
   | Some seq -> print_nsepseq state sep print seq
@@ -77,27 +77,16 @@ let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
 let print_csv state print {value; _} =
   print_nsepseq state "," print value
 
-let print_markup state c =
-  let markup = match c with
-    LineCom (c, _) -> sprintf "// %s" c.value
-  | BlockCom (c, _) -> sprintf "(* %s *)" c.value
-  in
-  Buffer.add_string state#buffer markup
-
-let print_markup state comments =
-  List.iter (print_markup state) comments
-
-let print_token state region lexeme =
-  print_markup state region#markup;
+let print_token state token =
   let line =
-    sprintf "%s: %s\n" (compact state region) lexeme
+    sprintf "%s: %s\n" (compact state token#region) token#payload
   in Buffer.add_string state#buffer line
 
 let print_par : state -> (state -> 'a -> unit) -> 'a par -> unit =
   fun state print {lpar; inside; rpar} ->
-    print_token state lpar "(";
+    print_token state lpar;
     print state inside;
-    print_token state rpar ")"
+    print_token state rpar
 
 let print_var state {region; value} =
   let line =
@@ -114,7 +103,8 @@ let print_constr state {region; value} =
 let print_attributes state attributes =
   let apply {value = attribute; region} =
     let attribute_formatted = sprintf "[@%s]" attribute in
-    print_token state region attribute_formatted
+    let token = Token.wrap attribute_formatted region in
+    print_token state token
   in List.iter apply attributes
 
 let print_pvar state {region; value} =
@@ -163,31 +153,31 @@ let print_nat state {region; value} =
 
 let rec print_tokens state {decl;eof} =
   Utils.nseq_iter (print_statement state) decl;
-  print_token state eof "EOF"
+  print_token state eof
 
 and print_statement state = function
   Let {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
     print_attributes   state attributes;
-    print_token        state kwd_let "let";
-    print_token_opt    state kwd_rec "rec";
+    print_token        state kwd_let;
+    print_token_opt    state kwd_rec;
     print_let_binding  state let_binding;
 | TypeDecl {value={kwd_type; params; name; eq; type_expr}; _} ->
-    print_token      state kwd_type "type";
+    print_token      state kwd_type;
     print_option     state print_quoted_params params;
     print_var        state name;
-    print_token      state eq "=";
+    print_token      state eq;
     print_type_expr  state type_expr
 | ModuleDecl {value={kwd_module; name; eq; kwd_struct; module_; kwd_end}; _} ->
-    print_token  state kwd_module "module";
+    print_token  state kwd_module;
     print_var    state name;
-    print_token  state eq "=";
-    print_token  state kwd_struct "struct";
+    print_token  state eq;
+    print_token  state kwd_struct;
     print_tokens state module_;
-    print_token  state kwd_end "end";
+    print_token  state kwd_end;
 | ModuleAlias {value={kwd_module; alias; eq; binders}; _} ->
-    print_token   state kwd_module "module";
+    print_token   state kwd_module;
     print_var     state alias;
-    print_token   state eq "=";
+    print_token   state eq;
     print_nsepseq state "." print_var binders;
 | Directive dir -> print_directive state dir
 
@@ -200,7 +190,7 @@ and print_quoted_params state = function
 
 and print_quoted_param state node =
   let {quote; name} = node.value in
-  print_token state quote "'";
+  print_token state quote;
   print_var   state name
 
 and print_directive state dir =
@@ -224,13 +214,13 @@ and print_type_expr state = function
 and print_sum_type state {value; _} =
   let {variants; attributes; lead_vbar} = value in
   print_attributes state attributes;
-  print_token_opt  state lead_vbar "|";
+  print_token_opt  state lead_vbar;
   print_nsepseq    state "|" print_variant variants
 
 and print_fun_type state {value; _} =
   let domain, arrow, range = value in
   print_type_expr state domain;
-  print_token     state arrow "->";
+  print_token     state arrow;
   print_type_expr state range
 
 and print_type_app state {value; _} =
@@ -244,36 +234,36 @@ and print_type_constr_arg state = function
 
 and print_type_tuple state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token   state lpar "(";
+  print_token   state lpar;
   print_nsepseq state "," print_type_expr inside;
-  print_token   state rpar ")"
+  print_token   state rpar
 
 and print_type_par state {value; _} =
   let {lpar; inside=t; rpar} = value in
-  print_token     state lpar "(";
+  print_token     state lpar;
   print_type_expr state t;
-  print_token     state rpar ")"
+  print_token     state rpar
 
 and print_projection state {value; _} =
   let {struct_name; selector; field_path} = value in
   print_var     state struct_name;
-  print_token   state selector ".";
+  print_token   state selector;
   print_nsepseq state "." print_selection field_path
 
 and print_module_access : type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
 fun f state {value; _} ->
   let {module_name; selector; field} = value in
   print_var     state module_name;
-  print_token   state selector ".";
+  print_token   state selector;
   f             state field;
 
 and print_update state {value; _} =
  let {lbrace; record; kwd_with; updates; rbrace} = value in
- print_token state lbrace "{";
+ print_token state lbrace;
  print_path   state record;
- print_token state kwd_with "with";
+ print_token state kwd_with;
  print_ne_injection state print_field_path_assign updates;
- print_token state rbrace "}"
+ print_token state rbrace
 
 and print_path state = function
   Name var  -> print_var        state var
@@ -293,14 +283,14 @@ and print_variant state {value; _} =
   match arg with
     None -> ()
   | Some (kwd_of, t_expr) ->
-      print_token     state kwd_of "of";
+      print_token     state kwd_of;
       print_type_expr state t_expr
 
 and print_field_decl state {value; _} =
   let {field_name; colon; field_type; attributes} = value
   in print_attributes state attributes;
      print_var        state field_name;
-     print_token      state colon ":";
+     print_token      state colon;
      print_type_expr  state field_type
 
 and print_injection :
@@ -328,19 +318,19 @@ and print_record_type state =
 and print_open_compound state = function
   None -> ()
 | Some compound -> match compound with
-    BeginEnd (kwd_begin,_) -> print_token state kwd_begin "begin"
-  | Braces   (lbrace,_)    -> print_token state lbrace    "{"
-  | Brackets (lbracket,_)  -> print_token state lbracket  "["
+    BeginEnd (kwd_begin,_) -> print_token state kwd_begin
+  | Braces   (lbrace,_)    -> print_token state lbrace
+  | Brackets (lbracket,_)  -> print_token state lbracket
 
 and print_close_compound state = function
   None -> ()
 | Some compound -> match compound with
-    BeginEnd (_,kwd_end)  -> print_token state kwd_end  "end"
-  | Braces   (_,rbrace)   -> print_token state rbrace   "}"
-  | Brackets (_,rbracket) -> print_token state rbracket "]"
+    BeginEnd (_,kwd_end)  -> print_token state kwd_end
+  | Braces   (_,rbrace)   -> print_token state rbrace
+  | Brackets (_,rbracket) -> print_token state rbracket
 
 and print_terminator state = function
-  Some semi -> print_token state semi ";"
+  Some semi -> print_token state semi
 | None -> ()
 
 and print_let_binding state {binders; type_params; lhs_type; eq; let_rhs} =
@@ -350,16 +340,16 @@ and print_let_binding state {binders; type_params; lhs_type; eq; let_rhs} =
     match lhs_type with
       None -> ()
     | Some (colon, type_expr) ->
-        print_token     state colon ":";
+        print_token     state colon;
         print_type_expr state type_expr in
-  let () = print_token state eq "="
+  let () = print_token state eq
   in print_expr state let_rhs
 
 and print_type_params_par state node =
   print_par state print_type_binders node.value
 
 and print_type_binders state {kwd_type; type_vars} =
-  print_token state kwd_type "type";
+  print_token state kwd_type;
   Utils.nseq_iter (print_type_name state) type_vars
 
 and print_type_name state = print_var state
@@ -377,9 +367,9 @@ and print_pattern state = function
 | PString s -> print_string state s
 | PVerbatim v -> print_verbatim state v
 | PPar {value={lpar;inside=p;rpar}; _} ->
-    print_token   state lpar "(";
+    print_token   state lpar;
     print_pattern state p;
-    print_token   state rpar ")"
+    print_token   state rpar
 | PConstr p -> print_constr_pattern state p
 | PRecord r ->
     print_record_pattern state r
@@ -393,13 +383,13 @@ and print_list_pattern state = function
 
 and print_raw state {value=p1,c,p2; _} =
   print_pattern state p1;
-  print_token   state c "::";
+  print_token   state c;
   print_pattern state p2
 
 and print_typed_pattern state {value; _} =
   let {pattern; colon; type_expr} = value in
   print_pattern   state pattern;
-  print_token     state colon ":";
+  print_token     state colon;
   print_type_expr state type_expr
 
 and print_record_pattern state record_pattern =
@@ -408,7 +398,7 @@ and print_record_pattern state record_pattern =
 and print_field_pattern state {value; _} =
   let {field_name; eq; pattern} = value in
   print_var     state field_name;
-  print_token   state eq "=";
+  print_token   state eq;
   print_pattern state pattern
 
 and print_constr_pattern state node =
@@ -454,13 +444,13 @@ and print_constr_expr state {value; _} =
 
 and print_expr_par state {value; _} =
   let {lpar;inside=e;rpar} = value in
-  print_token state lpar "(";
+  print_token state lpar;
   print_expr  state e;
-  print_token state rpar ")"
+  print_token state rpar
 
 and print_unit state {value=lpar,rpar; _} =
-  print_token state lpar "(";
-  print_token state rpar ")"
+  print_token state lpar;
+  print_token state rpar
 
 and print_fun_call state {value=f,l; _} =
   print_expr state f;
@@ -468,86 +458,91 @@ and print_fun_call state {value=f,l; _} =
 
 and print_annot_expr state {value; _} =
   let {lpar; inside=e,colon,t; rpar} = value in
-  print_token state lpar "(";
+  print_token state lpar;
   print_expr  state e;
-  print_token state colon ":";
+  print_token state colon;
   print_type_expr state t;
-  print_token state rpar ")"
+  print_token state rpar
 
 and print_list_expr state = function
   ECons {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "::";
+    print_token state op;
     print_expr  state arg2
 | EListComp e ->
    if e.value.elements = None
-   then print_token state e.region "[]"
+   then 
+    let token = Token.wrap "[]" e.region in
+    print_token state token
    else print_injection state print_expr e
 (*
 | Append {value=e1,append,e2; _} ->
     print_expr  state e1;
-    print_token state append "@";
+    print_token state append;
     print_expr  state e2
 *)
 
 and print_arith_expr state = function
   Add {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "+";
+    print_token state op;
     print_expr  state arg2
 | Sub {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "-";
+    print_token state op;
     print_expr  state arg2
 | Mult {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "*";
+    print_token state op;
     print_expr  state arg2
 | Div {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "/";
+    print_token state op;
     print_expr  state arg2
 | Mod {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "mod";
+    print_token state op;
     print_expr  state arg2
 | Land {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "land";
+    print_token state op;
     print_expr  state arg2
 | Lor {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "lor";
+    print_token state op;
     print_expr  state arg2
 | Lxor {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "lxor";
+    print_token state op;
     print_expr  state arg2
 | Lsl {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "lsl";
+    print_token state op;
     print_expr  state arg2
 | Lsr {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "lsr";
+    print_token state op;
     print_expr  state arg2
 | Neg {value={op;arg}; _} ->
-    print_token state op "-";
+    print_token state op;
     print_expr  state arg
 | Int {region; value=lex,z} ->
-    let line = sprintf "Int %s (%s)" lex (Z.to_string z)
-    in print_token state region line
+    let line = sprintf "Int %s (%s)" lex (Z.to_string z) in 
+    let token = Token.wrap line region in
+    print_token state token
 | Mutez {region; value=lex,z} ->
-    let line = sprintf "Mutez %s (%s)" lex (Z.to_string z)
-    in print_token state region line
+    let line = sprintf "Mutez %s (%s)" lex (Z.to_string z) in
+    let token = Token.wrap line region in
+    print_token state token
 | Nat {region; value=lex,z} ->
-    let line = sprintf "Nat %s (%s)" lex (Z.to_string z)
-    in print_token state region line
+    let line = sprintf "Nat %s (%s)" lex (Z.to_string z) in
+    let token = Token.wrap line region in
+    print_token state token
 
 and print_string_expr state = function
   Cat {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "^";
+    print_token state op;
     print_expr  state arg2
 | String s ->
     print_string state s
@@ -561,40 +556,40 @@ and print_logic_expr state = function
 and print_bool_expr state = function
   Or {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "||";
+    print_token state op;
     print_expr  state arg2
 | And {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "&&";
+    print_token state op;
     print_expr  state arg2
 | Not {value={op;arg}; _} ->
-    print_token state op "not";
+    print_token state op;
     print_expr  state arg
 
 and print_comp_expr state = function
   Lt {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "<";
+    print_token state op;
     print_expr  state arg2
 | Leq {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "<=";
+    print_token state op;
     print_expr  state arg2
 | Gt {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op ">";
+    print_token state op;
     print_expr  state arg2
 | Geq {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op ">=";
+    print_token state op;
     print_expr  state arg2
 | Neq {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "<>";
+    print_token state op;
     print_expr  state arg2
 | Equal {value={arg1;op;arg2}; _} ->
     print_expr  state arg1;
-    print_token state op "=";
+    print_token state op;
     print_expr  state arg2
 
 and print_record_expr state e =
@@ -605,21 +600,22 @@ and print_code_inj state {value; _} =
   let {value=lang; region} = language in
   let header_stop = region#start#shift_bytes 1 in
   let header_reg  = Region.make ~start:region#start ~stop:header_stop in
-  print_token  state header_reg "[%";
+  let header_t = Token.wrap "[%" header_reg in
+  print_token  state header_t;
   print_string state lang;
   print_expr   state code;
-  print_token  state rbracket "]"
+  print_token  state rbracket
 
 and print_field_assign state {value; _} =
   let {field_name; assignment; field_expr} = value in
   print_var   state field_name;
-  print_token state assignment "=";
+  print_token state assignment;
   print_expr  state field_expr
 
 and print_field_path_assign state {value; _} =
   let {field_path; assignment; field_expr} = value in
   print_path  state field_path;
-  print_token state assignment "=";
+  print_token state assignment;
   print_expr  state field_expr
 
 and print_sequence state seq =
@@ -627,14 +623,14 @@ and print_sequence state seq =
 
 and print_match_expr state {value; _} =
   let {kwd_match; expr; kwd_with; lead_vbar; cases} = value in
-  print_token     state kwd_match "match";
+  print_token     state kwd_match;
   print_expr      state expr;
-  print_token     state kwd_with "with";
-  print_token_opt state lead_vbar "|";
+  print_token     state kwd_with;
+  print_token_opt state lead_vbar;
   print_cases     state cases
 
 and print_token_opt state = function
-         None -> fun _ -> ()
+         None -> ()
 | Some region -> print_token state region
 
 and print_cases state {value; _} =
@@ -643,77 +639,77 @@ and print_cases state {value; _} =
 and print_case_clause state {value; _} =
   let {pattern; arrow; rhs} = value in
   print_pattern state pattern;
-  print_token   state arrow "->";
+  print_token   state arrow;
   print_expr    state rhs
 
 and print_let_in state {value; _} =
   let {kwd_let; kwd_rec; binding; kwd_in; body; attributes} = value in
   print_attributes   state attributes;
-  print_token        state kwd_let "let";
-  print_token_opt    state kwd_rec "rec";
+  print_token        state kwd_let;
+  print_token_opt    state kwd_rec;
   print_let_binding  state binding;
-  print_token        state kwd_in "in";
+  print_token        state kwd_in;
   print_expr         state body
 
 and print_type_in state {value; _} =
   let {type_decl; kwd_in; body} = value in
   let {kwd_type; params; name; eq; type_expr} = type_decl in
-  print_token        state kwd_type "type";
+  print_token        state kwd_type;
   print_option       state print_quoted_params params;
   print_var          state name;
-  print_token        state eq     "eq";
+  print_token        state eq;
   print_type_expr    state type_expr;
-  print_token        state kwd_in "in";
+  print_token        state kwd_in;
   print_expr         state body
 
 and print_mod_in state {value; _} =
   let {mod_decl; kwd_in; body} = value in
   let {kwd_module; name; eq; kwd_struct; module_; kwd_end} = mod_decl in
-  print_token        state kwd_module "module";
+  print_token        state kwd_module;
   print_var          state name;
-  print_token        state eq     "eq";
-  print_token        state kwd_struct "struct";
+  print_token        state eq;
+  print_token        state kwd_struct;
   print_tokens       state module_;
-  print_token        state kwd_end "end";
-  print_token        state kwd_in "in";
+  print_token        state kwd_end;
+  print_token        state kwd_in;
   print_expr         state body
 
 and print_mod_alias state {value; _} =
   let {mod_alias; kwd_in; body} = value in
   let {kwd_module; alias; eq; binders} = mod_alias in
-  print_token        state kwd_module "module";
+  print_token        state kwd_module;
   print_var          state alias;
-  print_token        state eq     "eq";
+  print_token        state eq;
   print_nsepseq      state "." print_var binders;
-  print_token        state kwd_in "in";
+  print_token        state kwd_in;
   print_expr         state body
 
 and print_fun_expr state {value; _} =
   let {kwd_fun; type_params; binders;
        lhs_type; arrow; body; attributes} = value in
   print_attributes state attributes;
-  print_token      state kwd_fun "fun";
+  print_token      state kwd_fun;
   Utils.nseq_iter (print_pattern state) binders;
   print_option    state print_type_params_par type_params;
   let () =
     match lhs_type with
       None -> ()
     | Some (colon, type_expr) ->
-        print_token     state colon ":";
+        print_token     state colon;
         print_type_expr state type_expr in
   let () =
-    print_token state arrow "->"
+    print_token state arrow
   in print_expr state body
 
 and print_conditional state {value; _} =
   let {kwd_if; test; kwd_then; ifso; ifnot} = value in
-  print_token  state kwd_if "if";
+  print_token  state kwd_if;
   print_expr   state test;
-  print_token  state kwd_then "then";
+  print_token  state kwd_then;
   print_expr   state ifso;
   print_option state
     (fun state (kwd_else,ifnot) ->
-      print_token state kwd_else "else";
+      print_token state kwd_else;
       print_expr  state ifnot) ifnot
 
 (* Conversion to string *)

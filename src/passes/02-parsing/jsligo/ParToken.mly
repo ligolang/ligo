@@ -7,106 +7,106 @@ module Token = Lexing_jsligo.Token
   (* Literals *)
 
 %token               <LexerLib.Directive.t> Directive "<directive>"
-%token                  <string Region.reg> BlockCom "<block_comment>"
-%token                  <string Region.reg> LineCom  "<line_comment>"
-%token                  <string Region.reg> String   "<string>"
-%token                  <string Region.reg> Verbatim "<verbatim>"
-%token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
-%token          <(string * Z.t) Region.reg> Int      "<int>"
-(* %token          <(string * Z.t) Region.reg> Nat      "<nat>"*)
-(* %token          <(string * Z.t) Region.reg> Mutez    "<mutez>"*)
-%token                  <string Region.reg> Ident    "<ident>"
-%token                  <string Region.reg> UIdent   "<uident>"
-%token                  <string Region.reg> Attr     "[@attr]"
-// %token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
+%token                  <string Token.wrap> BlockCom "<block_comment>"
+%token                  <string Token.wrap> LineCom  "<line_comment>"
+%token                  <string Token.wrap> String   "<string>"
+%token                  <string Token.wrap> Verbatim "<verbatim>"
+%token  <(Token.lexeme * Hex.t) Token.wrap> Bytes    "<bytes>"
+%token          <(string * Z.t) Token.wrap> Int      "<int>"
+(* %token          <(string * Z.t) Token.wrap> Nat      "<nat>"*)
+(* %token          <(string * Z.t) Token.wrap> Mutez    "<mutez>"*)
+%token                  <string Token.wrap> Ident    "<ident>"
+%token                  <string Token.wrap> UIdent   "<uident>"
+%token                  <string Token.wrap> Attr     "[@attr]"
+// %token <Token.lexeme Region.reg Token.wrap> Lang     "[%lang"
 
   (* Symbols *)
 
-%token <Region.t> MINUS   "-"
-%token <Region.t> PLUS    "+"
-%token <Region.t> SLASH   "/"
-%token <Region.t> TIMES   "*"
-%token <Region.t> REM     "%"
-(* %token <Region.t> PLUS2   "++"*)
-(* %token <Region.t> MINUS2  "--"*)
+%token <Token.lexeme Token.wrap> MINUS   "-"
+%token <Token.lexeme Token.wrap> PLUS    "+"
+%token <Token.lexeme Token.wrap> SLASH   "/"
+%token <Token.lexeme Token.wrap> TIMES   "*"
+%token <Token.lexeme Token.wrap> REM     "%"
+(* %token <Token.lexeme Token.wrap> PLUS2   "++"*)
+(* %token <Token.lexeme Token.wrap> MINUS2  "--"*)
 
-%token <Region.t> LPAR     "("
-%token <Region.t> RPAR     ")"
-%token <Region.t> LBRACKET "["
-%token <Region.t> RBRACKET "]"
-%token <Region.t> LBRACE   "{"
-%token <Region.t> RBRACE   "}"
+%token <Token.lexeme Token.wrap> LPAR     "("
+%token <Token.lexeme Token.wrap> RPAR     ")"
+%token <Token.lexeme Token.wrap> LBRACKET "["
+%token <Token.lexeme Token.wrap> RBRACKET "]"
+%token <Token.lexeme Token.wrap> LBRACE   "{"
+%token <Token.lexeme Token.wrap> RBRACE   "}"
 
-%token <Region.t> COMMA     ","
-%token <Region.t> SEMI      ";"
-%token <Region.t> COLON     ":"
-%token <Region.t> DOT       "."
-%token <Region.t> ELLIPSIS  "..."
+%token <Token.lexeme Token.wrap> COMMA     ","
+%token <Token.lexeme Token.wrap> SEMI      ";"
+%token <Token.lexeme Token.wrap> COLON     ":"
+%token <Token.lexeme Token.wrap> DOT       "."
+%token <Token.lexeme Token.wrap> ELLIPSIS  "..."
 
-%token <Region.t> BOOL_OR  "||"
-%token <Region.t> BOOL_AND "&&"
-%token <Region.t> BOOL_NOT "!"
+%token <Token.lexeme Token.wrap> BOOL_OR  "||"
+%token <Token.lexeme Token.wrap> BOOL_AND "&&"
+%token <Token.lexeme Token.wrap> BOOL_NOT "!"
 
-// %token <Region.t> BIT_AND  "&"
-// %token <Region.t> BIT_NOT  "~"
-// %token <Region.t> BIT_XOR  "^"
-// %token <Region.t> SHIFT_L  "<<<"
-// %token <Region.t> SHIFT_R  ">>>"
+// %token <Token.lexeme Token.wrap> BIT_AND  "&"
+// %token <Token.lexeme Token.wrap> BIT_NOT  "~"
+// %token <Token.lexeme Token.wrap> BIT_XOR  "^"
+// %token <Token.lexeme Token.wrap> SHIFT_L  "<<<"
+// %token <Token.lexeme Token.wrap> SHIFT_R  ">>>"
 
-%token <Region.t> EQ    "="
-%token <Region.t> EQ2   "=="
-%token <Region.t> NE    "!="
+%token <Token.lexeme Token.wrap> EQ    "="
+%token <Token.lexeme Token.wrap> EQ2   "=="
+%token <Token.lexeme Token.wrap> NE    "!="
 
-%token <Region.t> LT    "<"
-%token <Region.t> GT    ">"
-%token <Region.t> LE    "<="
-%token <Region.t> GE    ">="
+%token <Token.lexeme Token.wrap> LT    "<"
+%token <Token.lexeme Token.wrap> GT    ">"
+%token <Token.lexeme Token.wrap> LE    "<="
+%token <Token.lexeme Token.wrap> GE    ">="
 
-%token <Region.t> PLUS_EQ  "+="
-%token <Region.t> MINUS_EQ "-="
-%token <Region.t> MULT_EQ  "*="
-%token <Region.t> REM_EQ   "%="
-%token <Region.t> DIV_EQ   "/="
-// %token <Region.t> SL_EQ    "<<<="
-// %token <Region.t> SR_EQ    ">>>="
-// %token <Region.t> AND_EQ   "&="
-// %token <Region.t> OR_EQ    "|="
-// %token <Region.t> XOR_EQ   "^="
+%token <Token.lexeme Token.wrap> PLUS_EQ  "+="
+%token <Token.lexeme Token.wrap> MINUS_EQ "-="
+%token <Token.lexeme Token.wrap> MULT_EQ  "*="
+%token <Token.lexeme Token.wrap> REM_EQ   "%="
+%token <Token.lexeme Token.wrap> DIV_EQ   "/="
+// %token <Token.lexeme Token.wrap> SL_EQ    "<<<="
+// %token <Token.lexeme Token.wrap> SR_EQ    ">>>="
+// %token <Token.lexeme Token.wrap> AND_EQ   "&="
+// %token <Token.lexeme Token.wrap> OR_EQ    "|="
+// %token <Token.lexeme Token.wrap> XOR_EQ   "^="
 
-%token <Region.t> VBAR   "|"
-%token <Region.t> ARROW  "=>"
-%token <Region.t> WILD   "_"
+%token <Token.lexeme Token.wrap> VBAR   "|"
+%token <Token.lexeme Token.wrap> ARROW  "=>"
+%token <Token.lexeme Token.wrap> WILD   "_"
 
 
 (* JavaScript Keywords *)
 
-%token <Region.t> Case     "case"
-%token <Region.t> Const    "const"
-%token <Region.t> Default  "default"
-%token <Region.t> Else     "else"
-%token <Region.t> Export   "export"
-%token <Region.t> For      "for"
-%token <Region.t> If       "if"
-%token <Region.t> Import   "import"
-%token <Region.t> Let      "let"
-%token <Region.t> Of       "of"
-%token <Region.t> Return   "return"
-%token <Region.t> Break    "break"
-%token <Region.t> Switch   "switch"
-%token <Region.t> While    "while"
+%token <Token.lexeme Token.wrap> Case     "case"
+%token <Token.lexeme Token.wrap> Const    "const"
+%token <Token.lexeme Token.wrap> Default  "default"
+%token <Token.lexeme Token.wrap> Else     "else"
+%token <Token.lexeme Token.wrap> Export   "export"
+%token <Token.lexeme Token.wrap> For      "for"
+%token <Token.lexeme Token.wrap> If       "if"
+%token <Token.lexeme Token.wrap> Import   "import"
+%token <Token.lexeme Token.wrap> Let      "let"
+%token <Token.lexeme Token.wrap> Of       "of"
+%token <Token.lexeme Token.wrap> Return   "return"
+%token <Token.lexeme Token.wrap> Break    "break"
+%token <Token.lexeme Token.wrap> Switch   "switch"
+%token <Token.lexeme Token.wrap> While    "while"
 
 (* TypeScript keywords *)
 
-%token <Region.t> As        "as"
-%token <Region.t> Namespace "namespace"
-%token <Region.t> Type      "type"
+%token <Token.lexeme Token.wrap> As        "as"
+%token <Token.lexeme Token.wrap> Namespace "namespace"
+%token <Token.lexeme Token.wrap> Type      "type"
 
 (* Virtual tokens *)
 
-%token <Region.t> ZWSP
+%token <Token.lexeme Token.wrap> ZWSP
 
 (* End of File *)
 
-%token <Region.t> EOF
+%token <Token.lexeme Token.wrap> EOF
 
 %%
