@@ -3,8 +3,16 @@
 (menhir
   (merge_into Parser)
   (modules ParToken Parser)
-  (flags -la 1 --table --strict --explain
+  (flags -la 1 --table --strict --explain --inspection --cmly
          --external-tokens Lexing_pascaligo.Token))
+
+(rule
+ (targets RecoverParser.ml)
+ (deps Parser.cmly)
+ (action
+   (with-stdout-to
+     %{targets}
+    (run menhir-recover --external-tokens Lexing_pascaligo.Token Parser.cmly))))
 
 ;; Build of the PascaLIGO parser as a library
 
@@ -13,10 +21,11 @@
   (public_name ligo.parsing.pascaligo)
   (instrumentation (backend bisect_ppx))
   (modules
-    Parser ParErr Pretty)
+    Parser ParErr Pretty RecoverParser)
   (libraries
     ;; LIGO
     lexing_pascaligo
+    lexing_shared
     cst_pascaligo
     ;; Vendors
     simple-utils
@@ -26,7 +35,8 @@
     terminal_size
     menhirLib
     hex)
-  (flags (:standard -open Cst_pascaligo))) ;; For CST in Parser.mli
+  (flags (:standard -open Cst_pascaligo    ;; for CST
+                    -open Lexing_shared))) ;; and Wrap in Parser.mli
 
 ;; Local build of a standalone parser for PascaLIGO
 

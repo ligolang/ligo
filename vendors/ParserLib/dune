@@ -8,6 +8,7 @@
   (libraries
     ;; Vendors
     simple-utils
+    ocaml-recovery-parser
     ;; Third party
     getopt
     menhirLib))
