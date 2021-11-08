@@ -128,23 +128,16 @@ module Context_init = struct
     return (context, shell, hash)
 
   let init
-        ?(slow=false)
         ?commitments
         n =
     let open Error_monad in
     let accounts = generate_accounts n in
     let contracts = List.map ~f:(fun (a, _) ->
                         Alpha_context.Contract.implicit_contract (a.pkh)) accounts in
-    begin
-      if slow then
-        genesis
-          ?commitments
-          accounts
-      else
-        genesis
-          ?commitments
-          accounts
-    end >>=? fun ctxt ->
+    genesis
+      ?commitments
+      accounts
+    >>=? fun ctxt ->
     return (ctxt, accounts, contracts)
 
   let contents
@@ -222,6 +215,16 @@ let contextualize ~msg ?environment f =
   in
   force_ok ~msg @@ Lwt_main.run lwt
 
-let dummy_environment =
-  X_error_monad.force_lwt ~msg:"Init_proto_alpha : initing dummy environment" @@
-  init_environment ()
+let dummy_environment () =
+  (X_error_monad.force_lwt ~msg:"Init_proto_alpha : initing dummy environment" @@
+          init_environment ())
+
+let dummy_environment_ : environment option ref = ref None
+
+let dummy_environment () : environment =
+  match ! dummy_environment_ with
+  | None ->
+     let dummy_environment = dummy_environment () in
+     dummy_environment_ := Some dummy_environment ;
+     dummy_environment
+  | Some dummy_environment -> dummy_environment
