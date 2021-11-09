@@ -45,9 +45,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
 
         -- LIGO-323
       , "heap-instance.ligo"
-
-        -- LIGO-324
-      , "interpreter_tests/compile_expr_from_file.mligo"
       ]
 
 okayIgnoreDirs :: [FilePath]
