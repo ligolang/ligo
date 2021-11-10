@@ -20,10 +20,15 @@ module.exports = grammar({
 
     _declaration: $ =>
       choice(
+        $._decl,
+        $.preprocessor,
+      ),
+
+    _decl: $ =>
+      choice(
         $.type_decl,
         $.let_decl,
         $.fun_decl,
-        $.preprocessor,
       ),
 
     /// TYPE DECLARATION
@@ -175,12 +180,11 @@ module.exports = grammar({
 
     _program: $ => choice(
       $.let_in,
-      $.type_decl,
       $._expr
     ),
 
     let_in: $ => seq(
-      field("decl", choice($.let_decl, $.fun_decl)),
+      field("decl", $._decl),
       "in",
       field("body", $._program)
     ),
