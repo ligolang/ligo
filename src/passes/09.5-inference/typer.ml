@@ -448,7 +448,11 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     in
     let (e,state',constraints), m' = O.LMap.fold_map ~f:aux ~init:(e,state,[]) m in
     (* Do we need row_element for Ast_core ? *)
-    let lmap = O.LMap.map (fun (_e,t) -> ({associated_type = t ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m' in
+    let _,lmap = O.LMap.fold_map ~f:(
+      fun (Label k) (_e,t) i -> 
+        let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
+        i+1,({associated_type = t ; michelson_annotation = None ; decl_pos}: O.row_element)
+      ) m' ~init:0 in
     let record_type = match Environment.get_record lmap e with
       | None -> O.{fields=lmap;layout= Some default_layout}
       | Some r -> r

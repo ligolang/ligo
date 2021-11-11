@@ -398,7 +398,6 @@ and type_expression ~raise ~test ~protocol_version : environment -> ?tv_opt:O.ty
     (e, res)
 
 and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : environment -> ?tv_opt:O.type_expression -> ?other_module:bool -> I.expression -> O.expression = fun e ?tv_opt ?other_module ae ->
-  let module L = Logger.Stateful() in
   let return expr tv =
     let () =
       match tv_opt with
@@ -499,7 +498,11 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : environ
   (* Record *)
   | E_record m ->
       let m' = O.LMap.map (type_expression' ~raise ~test ~protocol_version e) m in
-      let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e; michelson_annotation = None; decl_pos=0}:O.row_element)) m' in
+      let _,lmap = O.LMap.fold_map ~f:(
+        fun (Label k) e i -> 
+          let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
+          i+1,({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos}: O.row_element)
+        ) m' ~init:0 in
       let record_type = match Environment.get_record lmap e with
         | None -> t_record ~layout:default_layout lmap
         | Some (orig_var,r) -> make_t_orig_var (T_record r) None orig_var
