@@ -33,6 +33,6 @@ test_ligo_159 = testGroup "Contracts should throw errors" $ checkFile <$> files
   where
     files :: [FilePath]
     files = (\f -> "test" </> "contracts" </> "json-bugs" </> f) <$>
-      [ "LIGO-159_2.mligo"
-      , "LIGO-159_3.mligo"
+      [ -- TODO: "LIGO-159_2.mligo"
+        "LIGO-159_3.mligo"
       ]
