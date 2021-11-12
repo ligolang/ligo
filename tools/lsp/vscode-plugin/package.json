@@ -88,6 +88,12 @@
                     "type": "string",
                     "default": "ligo",
                     "description": "Path to the ligo binary, default one is extracted from $PATH variable."
+                },
+                "ligoLanguageServer.disabledFeatures": {
+                    "scope": "resource",
+                    "type": "array",
+                    "default": [],
+                    "description": "Disable specific LIGO LSP features. For a list of features, see [the README.md](https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/tools/lsp/vscode-plugin/README.md)."
                 }
             }
         },

@@ -5,7 +5,7 @@ module Main (main) where
 import Prelude hiding (log)
 
 import Algebra.Graph.AdjacencyMap qualified as G (empty)
-import Control.Exception.Safe (MonadCatch, catchAny, displayException)
+import Control.Exception.Safe (catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
@@ -15,6 +15,7 @@ import Data.Foldable (for_)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Maybe (fromMaybe)
+import Data.Set qualified as Set
 import Data.String.Interpolate (i)
 import Data.Text qualified as T
 
@@ -26,6 +27,7 @@ import UnliftIO.MVar
 
 import AST
 import ASTMap qualified
+import Config (Config (..))
 import Config qualified
 import Language.LSP.Util (sendError)
 import Log qualified
@@ -75,14 +77,12 @@ mainLoop = do
       }
 
     -- | Handle all uncaught exceptions.
-    catchExceptions
-      :: forall m config. (MonadCatch m, S.MonadLsp config m)
-      => S.Handlers m -> S.Handlers m
-    catchExceptions = S.mapHandlers wrapReq wrapNotif
+    catchExceptions :: S.Handlers RIO -> S.Handlers RIO
+    catchExceptions = S.mapHandlers (wrapReq . handleDisabledReq) wrapNotif
       where
         wrapReq
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
-             S.Handler m meth -> S.Handler m meth
+             S.Handler RIO meth -> S.Handler RIO meth
         wrapReq handler msg@J.RequestMessage{_method} resp =
           handler msg resp `catchAny` \e -> do
             Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
@@ -90,11 +90,21 @@ mainLoop = do
 
         wrapNotif
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
-             S.Handler m meth -> S.Handler m meth
+             S.Handler RIO meth -> S.Handler RIO meth
         wrapNotif handler msg@J.NotificationMessage{_method} =
           handler msg `catchAny` \e -> do
             Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
+
+        handleDisabledReq
+          :: forall (meth :: J.Method 'J.FromClient 'J.Request).
+             S.Handler RIO meth -> S.Handler RIO meth
+        handleDisabledReq handler msg@J.RequestMessage{_method} resp = do
+          Config {_cDisabledFeatures} <- RIO.getCustomConfig
+          let err = T.pack [i|Cannot handle #{_method}: disabled by user.|]
+          if Set.member (J.SomeClientMethod _method) _cDisabledFeatures
+            then resp $ Left $ J.ResponseError J.RequestCancelled err Nothing
+            else handler msg resp
 
 initialize :: IO RioEnv
 initialize = do
@@ -117,7 +127,6 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentTypeDefinition handleTypeDefinitionRequest
   , S.requestHandler J.STextDocumentReferences handleFindReferencesRequest
   , S.requestHandler J.STextDocumentCompletion handleCompletionRequest
-  --, S.requestHandler J.SCompletionItemResolve handleCompletionItemResolveRequest
   , S.requestHandler J.STextDocumentSignatureHelp handleSignatureHelpRequest
   , S.requestHandler J.STextDocumentFoldingRange handleFoldingRangeRequest
   , S.requestHandler J.STextDocumentSelectionRange handleSelectionRangeRequest
