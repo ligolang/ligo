@@ -100,10 +100,6 @@ namespace EURO {
 In this example you will also notice the `export` keyword. A statement within a
 module can be accessed from outside the module if it is exported.
 
-> In the experimental version of JsLIGO everything is public by default, so 
-> also the statements that are not exported. This will change in the future to
-> match JavaScript's behaviour.
-
 </Syntax>
 
 ## Using Modules
