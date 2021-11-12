@@ -11,7 +11,7 @@ import Test.HUnit (Assertion)
 import Test.Common.Capabilities.DocumentLink
   (contractsDir, simplifiedBLinks, simplifiedCLinks, simplifyDocumentLink)
 import Test.Common.FixedExpectations (shouldBe)
-import Test.Common.Util (getResponseResult, openLigoDoc, runHandlersTest)
+import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
 -- lsp-test doesn't provide a function for testing signature help
 getDocumentLinks :: TextDocumentIdentifier -> Session (List DocumentLink)
