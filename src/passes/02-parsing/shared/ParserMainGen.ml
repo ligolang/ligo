@@ -91,6 +91,8 @@ module Make
       | `Version      ver -> print_and_quit (ver ^ "\n")
       | `Conflict (o1,o2) ->
            cli_error (Printf.sprintf "Choose either %s or %s." o1 o2)
+      | `DependsOnOtherOption (o1, o2) ->
+           cli_error (Printf.sprintf "Option %s requires option %s" o1 o2)
       | `Done ->
            match Preprocessor_CLI.extension with
              Some ext when ext <> File.extension ->
@@ -102,43 +104,59 @@ module Make
     (* Main *)
 
     module MainParser = ParserLib.API.Make (MainLexer) (Parser)
+                            (struct
+                                let error_recovery_tracing = CLI.trace_recovery
+                                let tracing_output         = CLI.trace_recovery_output
+                             end)
 
-    let wrap : (Parser.tree, MainParser.message) result -> unit =
-      function
-        Stdlib.Ok tree ->
-          if CLI.pretty then
-            let doc = Pretty.print tree in
-            let width =
-              match Terminal_size.get_columns () with
-                None -> 60
-              | Some c -> c in
+    let show_error_message : MainParser.message -> unit =
+      function Region.{value; region} ->
+        let reg = region#to_string ~file:true ~offsets:true `Point in
+        let msg = Printf.sprintf "Parse error %s:\n%s" reg value
+        in (flush_all (); print_in_red msg)
+
+    let show_tree (tree : Parser.tree) : unit =
+      if CLI.pretty then
+        let doc = Pretty.print tree in
+        let width =
+          match Terminal_size.get_columns () with
+            None -> 60
+          | Some c -> c in
+        begin
+            PPrint.ToChannel.pretty 1.0 width stdout doc;
+            print_newline ()
+        end
+      else
+        let buffer = Buffer.create 231 in
+        let state  = Printer.mk_state
+                       ~offsets:Preprocessor_CLI.offsets
+                       ~mode:Lexer_CLI.mode
+                       ~buffer in
+        if CLI.cst then
             begin
-              PPrint.ToChannel.pretty 1.0 width stdout doc;
-              print_newline ()
+              Printer.pp_cst state tree;
+              Printf.printf "%s%!" (Buffer.contents buffer)
             end
-          else
-            let buffer = Buffer.create 231 in
-            let state  = Printer.mk_state
-                           ~offsets:Preprocessor_CLI.offsets
-                           ~mode:Lexer_CLI.mode
-                           ~buffer in
-            if CLI.cst then
-              begin
-                Printer.pp_cst state tree;
-                Printf.printf "%s%!" (Buffer.contents buffer)
-              end
-            else
-              if CLI.cst_tokens then
-                begin
-                  Printer.print_tokens state tree;
-                  Printf.printf "%s%!" (Buffer.contents buffer);
-                end
-              else ();
-            flush_all ()
-      | Error Region.{value; region} ->
-         let reg = region#to_string ~file:true ~offsets:true `Point in
-         let msg = Printf.sprintf "Parse error %s:\n%s" reg value
-         in (flush_all (); print_in_red msg)
+        else
+          if CLI.cst_tokens then
+            begin
+              Printer.print_tokens state tree;
+              Printf.printf "%s%!" (Buffer.contents buffer);
+            end
+          else ();
+        flush_all ()
+
+    let wrap =
+      function
+        Stdlib.Ok tree -> show_tree tree
+      | Stdlib.Error message -> show_error_message message
+
+    let wrap_recovery result =
+      let tree, messages = MainParser.extract_recovery_results (result) in
+      List.iter
+          (fun msg -> show_error_message msg; Printf.eprintf "\n")
+          (List.rev messages);
+      Option.iter show_tree tree
 
     let config =
       object
@@ -165,15 +183,21 @@ module Make
               incr_from_lexbuf (module ParErr) lexbuf |> wrap
       else
         let open MainParser in
-        match Preprocessor_CLI.input with
-          None ->
-            if CLI.mono then
+        let stdin_writer () =
+          if CLI.mono then
               mono_from_channel stdin |> wrap
-            else
+          else if not CLI.recovery then
               incr_from_channel (module ParErr) stdin |> wrap
-        | Some file_path ->
-            if CLI.mono then
+          else
+              recov_from_channel (module ParErr) stdin |> wrap_recovery in
+        let file_writer file_path =
+          if CLI.mono then
               mono_from_file file_path |> wrap
-            else
+          else if not CLI.recovery then
               incr_from_file (module ParErr) file_path |> wrap
+          else
+              recov_from_file (module ParErr) file_path |> wrap_recovery in
+        match Preprocessor_CLI.input with
+          None           -> stdin_writer ()
+        | Some file_path -> file_writer file_path
   end

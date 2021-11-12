@@ -53,7 +53,8 @@ let type_expression_tag ty_cont =
   | T_app             _ -> 5
   | T_module_accessor _ -> 6
   | T_singleton       _ -> 7
-  | T_abstraction         _ -> 8
+  | T_abstraction     _ -> 8
+  | T_for_all         _ -> 8
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -95,8 +96,9 @@ and type_content a b =
   | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
   | T_singleton a , T_singleton b -> literal a b
   | T_abstraction a , T_abstraction b -> for_all a b
-  | (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _),
-    (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _) ->
+  | T_for_all a , T_for_all b -> for_all a b
+  | (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _| T_for_all _),
+    (T_variable _| T_sum _| T_record _| T_arrow _ | T_app _ | T_module_accessor _ | T_singleton _ | T_abstraction _| T_for_all _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 
@@ -228,13 +230,15 @@ and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb
     type_expression     fta ftb
     lambda               la  lb
 
-and let_in {let_binder=ba;rhs=ra;let_result=la;attr={inline=aa;no_mutation=nma }} {let_binder=bb;rhs=rb;let_result=lb;attr={inline=ab;no_mutation=nmb}} =
-  cmp5
+and let_in {let_binder=ba;rhs=ra;let_result=la;attr={inline=aa;no_mutation=nma;view=va;public=pua }} {let_binder=bb;rhs=rb;let_result=lb;attr={inline=ab;no_mutation=nmb;view=vb;public=pub}} =
+  cmp7
     (binder type_expression) ba bb
     expression ra rb
     expression la lb
     bool  aa ab
     bool  nma nmb
+    bool  va vb
+    bool  pua pub
 
 and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_result=lb} =
   cmp3
@@ -317,23 +321,27 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb}} =
-  cmp5
+and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
+  cmp7
     (Option.compare String.compare) na nb
     (binder type_expression) ba bb
     expression ea eb
     bool ia ib
     bool nma nmb
+    bool va vb
+    bool pua pub
 
-and declaration_type {type_binder=tba;type_expr=tea} {type_binder=tbb;type_expr=teb} =
-  cmp2
+and declaration_type {type_binder=tba;type_expr=tea;type_attr={public=pua}} {type_binder=tbb;type_expr=teb;type_attr={public=pub}} =
+  cmp3
     type_variable tba tbb
     type_expression tea teb
+    bool pua pub
 
-and declaration_module {module_binder=mba;module_=ma} {module_binder=mbb;module_=mb} =
- cmp2
+and declaration_module {module_binder=mba;module_=ma;module_attr={public=pua}} {module_binder=mbb;module_=mb;module_attr={public=pub}} =
+ cmp3
     module_variable mba mbb
     module_ ma mb
+    bool pua pub
 
 and module_alias : module_alias -> module_alias -> int
 = fun {alias = aa; binders = ba} {alias = ab; binders = bb} ->

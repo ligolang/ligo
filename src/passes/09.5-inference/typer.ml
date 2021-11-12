@@ -72,6 +72,7 @@ end = struct
     | O.T_module_accessor {module_name=_; element} -> te where element
     | O.T_singleton _ -> failwith "TODO: singleton?"
     | O.T_abstraction x -> te where x.type_
+    | O.T_for_all x -> te where x.type_
   and te where : O.type_expression -> _ = function { type_content; sugar=_; location=_ } -> tc where type_content
 
   let check_expression_has_no_unification_vars (expr : O.expression) =
@@ -114,13 +115,13 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
   if Ast_core.Debug.debug_new_typer then Format.eprintf "Type_declaration : %a\n%!" I.PP.declaration (Location.unwrap d);
   if Ast_core.Debug.debug_new_typer then Format.eprintf "env : %a\n" O.PP.environment env ;
   match Location.unwrap d with
-  | Declaration_type {type_binder; type_expr} ->
+  | Declaration_type {type_binder; type_expr; type_attr} ->
     let type_binder = Var.todo_cast type_binder in
     let type_expr = evaluate_type ~raise env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     let c = Wrap.type_decl () in
-    return (O.Declaration_type {type_binder; type_expr}) type_expr env' state c
-  | Declaration_constant {name; binder; attr={inline;no_mutation}; expr} -> (
+    return (O.Declaration_type {type_binder; type_expr; type_attr}) type_expr env' state c
+  | Declaration_constant {name; binder; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
@@ -132,12 +133,12 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
     let binder = Stage_common.Maps.binder (evaluate_type ~raise env)  binder in
     let post_env = Environment.add_ez_declaration binder.var expr t e in
     let c = Wrap.const_decl t tv_opt in
-    return (Declaration_constant { name; binder ; expr ; attr={inline;no_mutation}}) t post_env state' (constraints@c)
+    return (Declaration_constant { name; binder ; expr ; attr}) t post_env state' (constraints@c)
     )
-  | Declaration_module {module_binder;module_} -> (
+  | Declaration_module {module_binder;module_;module_attr} -> (
     let (e,module_,t,state) = type_module ~raise ~init_env:env module_ in
     let post_env = Environment.add_module module_binder e env in
-    return (Declaration_module { module_binder; module_}) t post_env state @@ Wrap.mod_decl ()
+    return (Declaration_module { module_binder; module_; module_attr}) t post_env state @@ Wrap.mod_decl ()
   )
   | Module_alias {alias;binders} -> (
     let aux env binder =
@@ -197,6 +198,9 @@ and evaluate_type ~raise : environment -> I.type_expression -> O.type_expression
   | T_abstraction x ->
     let type_ = evaluate_type ~raise e x.type_ in
     return (T_abstraction {x with type_})
+  | T_for_all x ->
+    let type_ = evaluate_type ~raise e x.type_ in
+    return (T_for_all {x with type_})
 
 
 and type_expression ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> environment * _ O'.typer_state * O.expression * O.type_expression = fun ?tv_opt e state ae ->
@@ -444,7 +448,11 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     in
     let (e,state',constraints), m' = O.LMap.fold_map ~f:aux ~init:(e,state,[]) m in
     (* Do we need row_element for Ast_core ? *)
-    let lmap = O.LMap.map (fun (_e,t) -> ({associated_type = t ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m' in
+    let _,lmap = O.LMap.fold_map ~f:(
+      fun (Label k) (_e,t) i -> 
+        let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
+        i+1,({associated_type = t ; michelson_annotation = None ; decl_pos}: O.row_element)
+      ) m' ~init:0 in
     let record_type = match Environment.get_record lmap e with
       | None -> O.{fields=lmap;layout= Some default_layout}
       | Some r -> r

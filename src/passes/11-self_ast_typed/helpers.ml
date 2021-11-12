@@ -2,13 +2,11 @@ open Errors
 open Ast_typed
 open Trace
 open Ast_typed.Helpers
-open Stage_common
 
 type ('a ,'err) decl_folder = 'a -> declaration -> 'a
 type ('a ,'err) folder = 'a -> expression -> 'a
 let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression f in
-  let idle = fun acc _ -> acc in
   let init = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ -> init
@@ -21,6 +19,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
     let res = Pair.fold ~f:self ~init ab in
     res
   )
+  | E_type_inst { forall = e; type_ = _}
   | E_lambda { binder = _ ; result = e }
   | E_recursive {lambda= {result=e}}
   | E_constructor {element=e} -> (
@@ -54,7 +53,9 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
       let res = self res let_result in
       res
     )
-  | E_type_in ti -> Folds.type_in self idle init ti
+  | E_type_in { type_binder=_; rhs = _ ; let_result} -> 
+    let res = self init let_result in 
+    res
   | E_mod_in { module_binder = _ ; rhs ; let_result } -> (
       let res = fold_module f init rhs in
       let res = self res let_result in
@@ -98,6 +99,23 @@ and fold_module : ('a,'err) folder -> 'a -> module_fully_typed -> 'a = fun f ini
   let res = List.fold ~f:aux ~init p in
   res
 
+type ty_mapper = type_expression -> unit
+let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
+  let self = iter_type_expression f in
+  let () = f t in
+  match t.type_content with
+  | T_variable _ -> ()
+  | T_constant x -> List.iter ~f:self x.parameters
+  | T_sum x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
+  | T_record x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
+  | T_arrow x ->
+    let () = self x.type1 in
+    self x.type2
+  | T_module_accessor x -> self x.element
+  | T_singleton _ -> ()
+  | T_abstraction x -> self x.type_
+  | T_for_all x -> self x.type_
+
 type 'err mapper = expression -> expression
 let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
   let self = map_expression f in
@@ -136,9 +154,9 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let let_result = self let_result in
     return @@ E_let_in { let_binder ; rhs ; let_result; attr }
   )
-  | E_type_in ti -> (
-    let ti = Maps.type_in self (fun x -> x) ti in
-    return @@ E_type_in ti
+  | E_type_in {type_binder; rhs; let_result} -> (
+    let let_result = self let_result in 
+    return @@ E_type_in {type_binder; rhs; let_result}
   )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
     let rhs = map_module f rhs in
@@ -152,6 +170,10 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
   | E_lambda { binder ; result } -> (
     let result = self result in
     return @@ E_lambda { binder ; result }
+  )
+  | E_type_inst { forall ; type_ } -> (
+    let forall = self forall in
+    return @@ E_type_inst { forall ; type_ }
   )
   | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
     let result = self result in
@@ -191,16 +213,16 @@ and map_module : 'err mapper -> module_fully_typed -> module_fully_typed = fun m
         return @@ Declaration_constant {name; binder; expr ; attr}
     )
     | Declaration_type t -> return @@ Declaration_type t
-    | Declaration_module {module_binder;module_} ->
+    | Declaration_module {module_binder;module_;module_attr} ->
       let module_ = map_module m module_ in
-      return @@ Declaration_module {module_binder; module_}
+      return @@ Declaration_module {module_binder; module_; module_attr}
     | Module_alias _ -> return x
   in
   let p = List.map ~f:(Location.map aux) p in
   Module_Fully_Typed p
 
-type ('a , 'err) fold_mapper = 'a -> expression -> bool * 'a * expression
-let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
+type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
+let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
   let self = fold_map_expression f in
   let (continue, init,e') = f a e in
   if (not continue) then (init,e')
@@ -239,7 +261,7 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
     )
-  | E_type_in { type_binder ; rhs ; let_result } -> (
+  | E_type_in { type_binder ; rhs ; let_result} -> (
       let (res,let_result) = self init let_result in
       (res, return @@ E_type_in { type_binder ; rhs ; let_result })
     )
@@ -252,6 +274,10 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
       let (res,result) = self init result in
       (res, return @@ E_mod_alias { alias ; binders ; result })
     )
+  | E_type_inst { forall ; type_ } -> (
+    let (res, forall) = self init forall in
+    ( res, return @@ E_type_inst { forall ; type_ })
+  )
   | E_lambda { binder ; result } -> (
       let (res,result) = self init result in
       ( res, return @@ E_lambda { binder ; result })
@@ -268,9 +294,12 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> 'a 
     let (res,element) = self init element in
     (res, return @@ E_module_accessor { module_name; element })
   )
-  | E_literal _ | E_variable _ | E_raw_code _ as e' -> (init, return e')
+  | E_raw_code {language;code} -> (
+    let (res,code) = self init code in
+    (res, return @@ E_raw_code { language ; code }))
+  | E_literal _ | E_variable _ as e' -> (init, return e')
 
-and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
+and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
   match m with
   | Match_variant {cases ; tv} -> (
       let aux init {constructor ; pattern ; body} =
@@ -284,7 +313,7 @@ and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> 'a * matc
       let (init, body) = fold_map_expression f init body in
       (init, Match_record { fields ; body ; tv })
 
-and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> 'a * module_fully_typed = fun m init (Module_Fully_Typed p) ->
+and fold_map_module : 'a fold_mapper -> 'a -> module_fully_typed -> 'a * module_fully_typed = fun m init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant {name; binder ; expr ; attr } -> (
@@ -296,9 +325,9 @@ and fold_map_module : ('a, 'err) fold_mapper -> 'a -> module_fully_typed -> 'a *
       let wrap_content : declaration = Declaration_type t in
       (acc, {x with wrap_content})
     )
-    | Declaration_module {module_binder; module_} -> (
+    | Declaration_module {module_binder; module_; module_attr} -> (
       let (acc', module_) = fold_map_module m acc module_ in
-      let wrap_content : declaration = Declaration_module {module_binder; module_} in
+      let wrap_content : declaration = Declaration_module {module_binder; module_; module_attr} in
       (acc', {x with wrap_content})
     )
     | Module_alias _ -> (acc,x)
@@ -335,7 +364,7 @@ let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type =
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let main_decl =
-    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
+    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@ (* Better error maybe ? *)
       main_decl_opt
     in
   let { binder=_ ; expr ; attr=_ } = main_decl in
@@ -343,22 +372,47 @@ let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type =
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
     | T_record tin , T_record tout when (is_tuple_lmap tin.content) && (is_tuple_lmap tout.content) ->
-       let (parameter,storage) = trace_option ~raise (expected_pair_in expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
-       let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
-       let () = trace_option ~raise (expected_list_operation main_fname listop expr) @@
-                       Ast_typed.assert_t_list_operation listop in
-       let () = trace_option ~raise (expected_same main_fname storage storage' expr) @@
-                       Ast_typed.assert_type_expression_eq (storage,storage') in
-       (* TODO: on storage/parameter : a| Some (typed_prg,_,_) ->
-        let b = extract_variable_types typed_prg in
-        let () = Format.printf "\n EXTRACT \n" in
-        let () = List.iter ~f: (fun (v,te) -> Format.printf "%a  --  %a\n" Ast_typed.PP.expression_variable v Ast_typed.PP.type_expression te) b in
-        let () = Format.printf "length : %d\n" (List.length b) in
-      ssert_storable, assert_passable ? *)
-       { parameter ; storage }
+      let (parameter,storage) = trace_option ~raise (expected_pair_in_contract expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
+      let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
+      let () = trace_option ~raise (expected_list_operation main_fname listop expr) @@
+        Ast_typed.assert_t_list_operation listop in
+      let () = trace_option ~raise (expected_same main_fname storage storage' expr) @@
+        Ast_typed.assert_type_expression_eq (storage,storage') in
+      (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
+      { parameter ; storage }
     |  _ -> raise.raise @@ bad_contract_io main_fname expr
   )
   | _ -> raise.raise @@ bad_contract_io main_fname expr
+
+type view_type = {
+  arg : Ast_typed.type_expression ;
+  storage : Ast_typed.type_expression ;
+  return : Ast_typed.type_expression ;
+}
+
+let fetch_view_type ~raise : string -> module_fully_typed -> (view_type * Location.t) = fun main_fname (Module_Fully_Typed m) ->
+  let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
+    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
+        if Var.equal binder.wrap_content (Var.of_name main_fname)
+        then Some p
+        else None
+    | Declaration_type   _
+    | Declaration_module _
+    | Module_alias _ -> None
+  in
+  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
+  let main_decl =
+    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
+      main_decl_opt
+    in
+  let { binder=_ ; expr ; attr=_ } = main_decl in
+  match get_lambda_with_type expr with
+  | Some ({binder; result=_} , (tin,return))-> (
+    match get_t_tuple tin with
+    | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
+    | _ -> raise.raise (expected_pair_in_view binder.location)
+  )
+  | None -> raise.raise @@ bad_contract_io main_fname expr
 
 let get_pattern ?(pred = fun _ -> true) pattern =
   Stage_common.Helpers.fold_pattern (fun vars p ->
@@ -385,77 +439,78 @@ module Free_variables :
   end
 
   module ModVarSet = Set.Make(ModVar)
+  type moduleEnv' = {modVarSet : ModVarSet.t; moduleEnv: moduleEnv; varSet: VarSet.t}
+  and moduleEnv = moduleEnv' SMap.t
 
-  let unions : (ModVarSet.t * VarSet.t) list -> (ModVarSet.t * VarSet.t) =
-    fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty) 
-      ~f:(fun (x1, y1) (x2, y2) -> (ModVarSet.union x1 x2, VarSet.union y1 y2))
+  let rec merge =fun {modVarSet=x1;moduleEnv=y1;varSet=z1} {modVarSet=x2;moduleEnv=y2;varSet=z2} ->
+    let aux : module_variable -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
+      fun _ a b -> Some (merge a b)
+    in
+      {modVarSet=ModVarSet.union x1 x2;moduleEnv=SMap.union aux y1 y2;varSet=VarSet.union z1 z2}
 
-  let rec get_fv_expr : expression -> (ModVarSet.t * VarSet.t) = fun e ->
+  let unions : moduleEnv' list -> moduleEnv' =
+    fun l -> List.fold l ~init:{modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
+    ~f:merge
+  let rec get_fv_expr : expression -> moduleEnv' = fun e ->
     let self = get_fv_expr in
     match e.expression_content with
     | E_variable v ->
-      (ModVarSet.empty, VarSet.singleton v)
+      {modVarSet=ModVarSet.empty; moduleEnv=SMap.empty ;varSet=VarSet.singleton v}
     | E_literal _ | E_raw_code _ ->
-      (ModVarSet.empty, VarSet.empty)
+      {modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
     | E_constant {arguments} ->
       unions @@ List.map ~f:self arguments
     | E_application {lamb; args} ->
-      let fmv1, fv1 = (self lamb) in
-      let fmv2, fv2 = (self args) in 
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)  
+      merge (self lamb) (self args)
+    | E_type_inst {forall} ->
+      self forall
     | E_lambda {binder ; result} ->
-      let fmv, fv = self result in
-      (fmv, VarSet.remove binder @@ fv)
+      let {modVarSet=fmv;moduleEnv;varSet=fv} = self result in
+      {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder @@ fv}
     | E_recursive {fun_name; lambda = {binder; result}} ->
-      let fmv, fv = self result in
-      (fmv, VarSet.remove fun_name @@ VarSet.remove binder @@ fv) 
+      let {modVarSet;moduleEnv;varSet=fv} = self result in
+      {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder @@ fv}
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
-      let fmv1, fv1 = (self matchee) in
-      let fmv2, fv2 = (get_fv_cases cases) in
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
+      merge (self matchee)(get_fv_cases cases)
     | E_record m ->
       let res = LMap.map self m in
       let res = LMap.to_list res in
       unions res
     | E_record_update {record;update} ->
-      let fmv1, fv1 = (self record) in
-      let fmv2, fv2 = (self update) in 
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
+      merge (self record) (self update)
     | E_record_accessor {record} ->
       self record
     | E_let_in { let_binder ; rhs ; let_result } ->
-      let fmv1, fv1 = (self rhs) in
-      let fmv2, fv2 = (self let_result) in
+      let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
       let fv2 = VarSet.remove let_binder fv2 in
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
+      merge (self rhs) {modVarSet;moduleEnv;varSet=fv2}
     | E_type_in {let_result} ->
       self let_result
     | E_mod_in { module_binder; rhs ; let_result } ->
-      let fmv1, fv1 = (get_fv_module rhs) in
-      let fmv2, fv2 = (self let_result) in 
-      let fmv2 = ModVarSet.remove module_binder fmv2 in
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
+      let {modVarSet;moduleEnv;varSet} = (self let_result) in
+      let modVarSet = ModVarSet.remove module_binder modVarSet in
+      merge (get_fv_module rhs) {modVarSet;moduleEnv;varSet}
     | E_mod_alias { alias = _ ; binders = _ ; result } ->
       self result
     | E_module_accessor { module_name; element } ->
-      let fmv, fv = self element in
-      (ModVarSet.union fmv (ModVarSet.singleton module_name), fv)
+      let env = self element in
+      {modVarSet=ModVarSet.union env.modVarSet (ModVarSet.singleton module_name);moduleEnv=SMap.singleton module_name env;varSet=VarSet.empty}
 
-  and get_fv_cases : matching_expr -> (ModVarSet.t * VarSet.t) = fun m ->
+  and get_fv_cases : matching_expr -> moduleEnv' = fun m ->
     match m with
     | Match_variant {cases;tv=_} ->
       let aux {constructor=_; pattern ; body} =
-        let fmv, fv = get_fv_expr body in
-        (fmv, VarSet.remove pattern @@ fv) in
+        let {modVarSet;moduleEnv;varSet} = get_fv_expr body in
+        {modVarSet;moduleEnv;varSet=VarSet.remove pattern @@ varSet} in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
       let pattern = LMap.values fields |> List.map ~f:fst in
-      let fmv, fv = get_fv_expr body in
-      (fmv, List.fold_right pattern ~f:VarSet.remove ~init:fv)
+      let {modVarSet;moduleEnv;varSet} = get_fv_expr body in
+      {modVarSet;moduleEnv;varSet=List.fold_right pattern ~f:VarSet.remove ~init:varSet}
 
-  and get_fv_module : module_fully_typed -> (ModVarSet.t * VarSet.t) = fun (Module_Fully_Typed p) ->
+  and get_fv_module : module_fully_typed -> moduleEnv' = fun (Module_Fully_Typed p) ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
       | Declaration_constant {binder=_; expr ; attr=_} ->
@@ -463,16 +518,16 @@ module Free_variables :
       | Declaration_module {module_binder=_;module_} ->
         get_fv_module module_
       | Declaration_type _t ->
-        (ModVarSet.empty, VarSet.empty)
-      | Module_alias _ ->
-        (ModVarSet.empty, VarSet.empty)
+        {modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
+      | Module_alias {alias=_;binders} ->
+        {modVarSet=ModVarSet.singleton @@ fst binders;moduleEnv=SMap.empty;varSet=VarSet.empty}
     in
     unions @@ List.map ~f:aux p
 
-  let expression e = 
-    let fmv, fv = get_fv_expr e in
-    let fmv = ModVarSet.fold (fun v r -> v :: r) fmv [] in
-    let fv = VarSet.fold (fun v r -> v :: r) fv [] in
+  let expression e =
+    let {modVarSet;moduleEnv=_;varSet} = get_fv_expr e in
+    let fmv = ModVarSet.fold (fun v r -> v :: r) modVarSet [] in
+    let fv = VarSet.fold (fun v r -> v :: r) varSet [] in
     (fmv, fv)
 end
 
@@ -497,7 +552,7 @@ module Free_module_variables :
   module VarSet = Set.Make(Var)
 
   let unions : (ModVarSet.t * VarSet.t) list -> (ModVarSet.t * VarSet.t) =
-    fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty) 
+    fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty)
       ~f:(fun (x1, y1) (x2, y2) -> (ModVarSet.union x1 x2, VarSet.union y1 y2))
 
   let rec get_fv_expr : expression -> (ModVarSet.t * VarSet.t) = fun e ->
@@ -512,13 +567,15 @@ module Free_module_variables :
     | E_application {lamb; args} ->
       let fmv1, fv1 = (self lamb) in
       let fmv2, fv2 = (self args) in
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)  
+      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
     | E_lambda {binder; result} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove binder fv)
     | E_recursive {fun_name; lambda = {binder;result}} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove fun_name @@ VarSet.remove binder fv)
+    | E_type_inst {forall} ->
+      self forall
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -532,7 +589,7 @@ module Free_module_variables :
     | E_record_update {record;update} ->
       let (fmv1, fv1) = (self record) in
       let (fmv2, fv2) = (self update) in
-      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)  
+      (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
     | E_record_accessor {record} ->
       self record
     | E_let_in { let_binder; rhs ; let_result } ->
@@ -551,7 +608,7 @@ module Free_module_variables :
       self result
     | E_module_accessor { module_name ; element } ->
       let fmv, fv = (self element) in
-      (ModVarSet.union fmv (ModVarSet.singleton module_name), fv)   
+      (ModVarSet.union fmv (ModVarSet.singleton module_name), fv)
 
   and get_fv_cases : matching_expr -> (ModVarSet.t * VarSet.t) = fun m ->
     match m with
@@ -571,18 +628,18 @@ module Free_module_variables :
         get_fv_module module_
       | Declaration_type _t ->
         (ModVarSet.empty, VarSet.empty)
-      | Module_alias _ ->
-        (ModVarSet.empty, VarSet.empty)
+      | Module_alias {alias=_;binders} ->
+        (ModVarSet.singleton @@ fst binders, VarSet.empty)
     in
     unions @@ List.map ~f:aux p
 
-  let expression e = 
-    let fmvs, fvs = get_fv_expr e in   
+  let expression e =
+    let fmvs, fvs = get_fv_expr e in
     let fmvs = ModVarSet.fold (fun v r -> v :: r) fmvs [] in
     let fvs = VarSet.fold (fun v r -> v :: r) fvs [] in
     (fmvs, fvs)
-  let module' m = 
-    let fmvs, fvs = get_fv_module m in   
+  let module' m =
+    let fmvs, fvs = get_fv_module m in
     let fmvs = ModVarSet.fold (fun v r -> v :: r) fmvs [] in
     let fvs = VarSet.fold (fun v r -> v :: r) fvs [] in
     (fmvs, fvs)

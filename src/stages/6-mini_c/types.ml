@@ -44,6 +44,8 @@ and type_base =
   | TB_bls12_381_g2
   | TB_bls12_381_fr
   | TB_never
+  | TB_chest
+  | TB_chest_key
 
 and environment_element = expression_variable * type_expression
 

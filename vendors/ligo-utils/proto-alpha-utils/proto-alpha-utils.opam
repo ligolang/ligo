@@ -42,9 +42,9 @@ depends: [
   "tezos-crypto"
   "tezos-error-monad"
   "tezos-stdlib-unix"
-  "tezos-protocol-environment" {= "10.2"}
-  "tezos-protocol-010-PtGRANAD" {= "10.2"}
-  "tezos-client-010-PtGRANAD"
+  "tezos-protocol-environment"
+  "tezos-protocol-011-PtHangzH"
+  "tezos-client-011-PtHangzH"
   "tezos-memory-proto-alpha"
   "simple-utils"
   "tezos-utils"

@@ -30,19 +30,14 @@ type getTotalSupply =  {callback: contract<nat>};
 
 type action = 
   
-  | 
   ["Transfer",
-   transfer]
-  | 
+   transfer]|
   ["Approve",
-   approve]
-  | 
+   approve]|
   ["GetAllowance",
-   getAllowance]
-  | 
+   getAllowance]|
   ["GetBalance",
-   getBalance]
-  | 
+   getBalance]|
   ["GetTotalSupply",
    getTotalSupply];
 
@@ -58,9 +53,9 @@ let transfer =
       match(opt, {Some: (value: nat) => value,
        None: () => (0 as nat)});
     if(authorized_value < p.value) {(failwith("Not Enough Allowance")
-       as allowances)} else {new_allowances = Big_map.update((Tezos.
+       as allowances)} else {new_allowances = Big_map.update([Tezos.
       sender,
-      p.address_from), (Some
+      p.address_from], (Some
         (abs(authorized_value - p.value))), s.allowances)}};
    let opt = Big_map.find_opt(p.address_from, s.tokens);
    let sender_balance: nat = 

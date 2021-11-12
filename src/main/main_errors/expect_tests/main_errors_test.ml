@@ -218,6 +218,13 @@ let%expect_test "sugaring" = ()
 let%expect_test "main_cit_pascaligo" =
   let open Cst.Pascaligo in
   let open Location in
+  let ghost = 
+    object 
+      method region = Region.ghost 
+      method attributes = []
+      method payload = ""
+    end 
+  in
   let error e = human_readable_error (`Main_cit_pascaligo e) in
   let lexeme_reg : lexeme reg = {value= "foo"; region= default_region1} in
   let pvar = PVar {value = {variable = lexeme_reg ; attributes = []} ; region = default_region1} in
@@ -264,15 +271,15 @@ let%expect_test "main_cit_pascaligo" =
   error
     (`Concrete_pascaligo_block_attribute
       { value=
-          { enclosing= BeginEnd (Region.ghost, Region.ghost);
+          { enclosing= BeginEnd (ghost, ghost);
             statements=
               ( Data
                   (LocalVar
                      { value=
-                         { kwd_var= Region.ghost;
+                         { kwd_var= ghost;
                            pattern= PVar {value= pvar; region= Region.ghost};
                            var_type= None;
-                           assign= Region.ghost;
+                           assign= ghost;
                            init= EVar {value= "xxx"; region= Region.ghost};
                            terminator= None;
                            attributes = []};
@@ -766,8 +773,9 @@ let%expect_test "typer" =
     {|
     File "a dummy file name", line 20, character 5:
 
-    These types are not matching: - foo
-    - bar|}] ;
+    These types are not matching:
+     - foo
+     - bar|}] ;
   error (`Typer_not_annotated location_t);
   [%expect {|
     File "a dummy file name", line 20, character 5:
@@ -956,7 +964,8 @@ let%expect_test "self_ast_typed" =
     File "a dummy file name", line 20, character 5:
 
     Invalid type for entrypoint "foo".
-    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+    An entrypoint must of type "parameter * storage -> operations list * storage".
+    We expected a list of operations but we got foo |}] ;
   error
     (`Self_ast_typed_expected_same_entry
       ("foo", type_expression, type_expression2, expression)) ;
@@ -966,12 +975,12 @@ let%expect_test "self_ast_typed" =
 
     Invalid type for entrypoint "foo".
     The storage type "foo" of the function parameter must be the same as the storage type "bar" of the return value. |}] ;
-  error (`Self_ast_typed_pair_in location_t) ;
+  error (`Self_ast_typed_pair_in (location_t, `Contract)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
 
-    Invalid entrypoint.
+    Invalid contract.
     Expected a tuple as argument. |}] ;
   error (`Self_ast_typed_pair_out location_t) ;
   [%expect

@@ -32,7 +32,7 @@ module Free_variables = struct
       union
         (expression b' let_result)
         (self rhs)
-    | E_type_in { type_binder=_; rhs=_; let_result} -> self let_result
+    | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
     | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
@@ -129,10 +129,13 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
   | T_abstraction a , T_abstraction b ->
-    let compare_kind ka kb = (ka = kb) in
     assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
-    Some (assert (compare_kind a.kind b.kind))
+    Some (assert (equal_kind a.kind b.kind))
+  | T_for_all a , T_for_all b ->
+    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
+    Some (assert (equal_kind a.kind b.kind))
   | T_abstraction _ , _ -> None
+  | T_for_all _ , _ -> None
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 

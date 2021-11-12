@@ -43,6 +43,7 @@ and type_content = function
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
   | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t]
+  | T_for_all         t -> `List [ `String "t_for_all" ; for_all type_expression t]
 
 and type_injection {language;injection;parameters} =
   `Assoc [
@@ -85,7 +86,7 @@ and expression_content = function
   | E_lambda      e -> `List [ `String "E_lambda"; lambda e ]
   | E_recursive   e -> `List [ `String "E_recursive"; recursive e ]
   | E_let_in      e -> `List [ `String "E_let_in"; let_in e ]
-  | E_type_in     e -> `List [ `String "E_type_in"; type_in   expression type_expression e ]
+  | E_type_in     e -> `List [ `String "E_type_in"; type_in e ]
   | E_mod_in      e -> `List [ `String "E_mod_in"; mod_in e ]
   | E_mod_alias   e -> `List [ `String "E_mod_alias"; mod_alias expression e ]
   | E_raw_code    e -> `List [ `String "E_raw_code"; raw_code e ]
@@ -97,11 +98,18 @@ and expression_content = function
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
   | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access expression e]
+  | E_type_inst       e -> `List [ `String "E_type_inst"; type_inst e ]
 
 and constant {cons_name;arguments} =
   `Assoc [
     ("cons_name", constant' cons_name);
     ("arguments", list expression arguments);
+  ]
+
+and type_inst {forall;type_} =
+  `Assoc [
+    ("forall", expression forall);
+    ("type_", type_expression type_);
   ]
 
 and application {lamb;args} =
@@ -123,11 +131,24 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and attribute {inline;no_mutation} =
+and attribute {inline;no_mutation;public;view} =
   `Assoc [
     ("inline", `Bool inline);
     ("no_mutation", `Bool no_mutation);
+    ("view", `Bool view);
+    ("public", `Bool public);
   ]
+
+and type_attribute ({public}: type_attribute) =
+  `Assoc [
+    ("public", `Bool public)
+  ]
+
+and module_attribute ({public}: module_attribute) =
+  `Assoc [
+    ("public", `Bool public)
+  ]
+
 
 and let_in {let_binder;rhs;let_result;attr} =
   `Assoc [
@@ -136,6 +157,14 @@ and let_in {let_binder;rhs;let_result;attr} =
     ("let_result", expression let_result);
     ("attr", attribute attr);
   ]
+
+and type_in {type_binder;rhs;let_result} =
+  `Assoc [
+    ("let_binder", type_variable_to_yojson type_binder );
+    ("rhs", type_expression rhs);
+    ("let_result", expression let_result)
+  ]
+
 
 and mod_in {module_binder;rhs;let_result} =
   `Assoc [
@@ -201,10 +230,11 @@ and matching_content_record {fields; body; tv} =
     ("record_type", type_expression tv);
   ]
 
-and declaration_type {type_binder;type_expr} =
+and declaration_type {type_binder;type_expr; type_attr} =
   `Assoc [
     ("type_binder", type_variable_to_yojson type_binder);
     ("type_expr", type_expression type_expr);
+    ("type_attr", type_attribute type_attr);
   ]
 
 and declaration_constant {name; binder;expr;attr} =
@@ -215,10 +245,11 @@ and declaration_constant {name; binder;expr;attr} =
     ("attr", attribute attr);
   ]
 
-and declaration_module {module_binder;module_} =
+and declaration_module {module_binder;module_; module_attr} =
   `Assoc [
     ("module_binder",module_variable_to_yojson module_binder);
     ("module_", module_fully_typed module_);
+    ("module_attr", module_attribute module_attr)
   ]
 
 and module_alias ({alias ; binders} : module_alias) =
@@ -238,7 +269,7 @@ let module_with_unification_vars (Module_With_Unification_Vars p) = list (Locati
 
 (* Environment *)
 
-let environment_element_definition_declaration {expression=e; free_variables} =
+let environment_element_definition_declaration {expression=e; free_variables ; attr = _} =
   `Assoc [
     ("expression", expression e);
     ("free_variables", list expression_variable_to_yojson free_variables);
@@ -254,10 +285,11 @@ let rec environment_element {type_value;definition} =
     ("definition", environment_element_definition definition);
   ]
 
-and environment_binding {expr_var;env_elt} =
+and environment_binding {expr_var;env_elt;public} =
   `Assoc [
     ("expr_var", expression_variable_to_yojson expr_var);
     ("env_elt", environment_element env_elt);
+    ("public", `Bool public)
   ]
 and expression_environment e = list environment_binding e
 
@@ -266,17 +298,19 @@ and type_or_kind x =
   | Ty ty -> `List [ `String "Ty"; type_expression ty]
   | Kind () -> `List [ `String "Kind"; `Null ]
 
-and type_environment_binding {type_variable;type_} =
+and type_environment_binding {type_variable;type_;public} =
   `Assoc [
     ("type_variable", type_variable_to_yojson type_variable);
     ("type_", type_or_kind type_);
+    ("public", `Bool public)
   ]
 and type_environment e = list type_environment_binding e
 
-and module_environment_binding {module_variable; module_} =
+and module_environment_binding {module_variable; module_; public} =
   `Assoc [
     ("module_name", module_variable_to_yojson module_variable);
-    ("module_", environment module_)
+    ("module_", environment module_);
+    ("public", `Bool public)
   ]
 
 and module_environment e = list module_environment_binding e

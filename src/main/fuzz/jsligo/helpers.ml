@@ -37,13 +37,14 @@ module Fold_helpers(M : Monad) = struct
 
   let rec fold_type_expression : 'a folder -> 'a -> type_expr -> 'a monad = fun f init t ->
     let self = fold_type_expression f in
+    let self_variant = fold_variant f in
     let* init = f.t init t in
     match t with
     | TProd  {inside={value={inside; _}; _}; _} ->
       bind_fold_ne_list self init @@ npseq_to_ne_list inside
     | TSum    {value;region=_} ->
-       let {lead_vbar=_;variants;attributes=_} = value in
-       bind_fold_ne_list self init @@ npseq_to_ne_list variants
+      let {variants; attributes=_} = value in
+      bind_fold_ne_list self_variant init @@ npseq_to_ne_list variants.value
     | TObject {value;region=_} ->
        let aux init ({value;region=_} : _ reg) =
          let {field_name=_;colon=_;field_type;attributes=_} = value in
@@ -65,6 +66,15 @@ module Fold_helpers(M : Monad) = struct
     | TModA _
     | TInt _
     | TString _ -> ok @@ init
+
+  and fold_variant : 'a folder -> 'a -> variant reg -> 'a monad =
+    fun f init v ->
+    let self_type = fold_type_expression f in
+    let component = v.value.tuple.value.inside in
+    let ({params; _}:variant_comp) = component in
+    match params with 
+       Some params -> bind_fold_ne_list self_type init (npseq_to_ne_list (snd params))
+    | None         -> ok init
 
   let rec fold_expression : 'a folder -> 'a -> expr -> 'a monad = fun f init e  ->
     let self = fold_expression f in
@@ -167,15 +177,16 @@ module Fold_helpers(M : Monad) = struct
        ok @@ init
     | EArray {value = {inside; _}; _} ->
        let fold_array_item init = function
-           Empty_entry _ -> ok init
-         | Expr_entry e -> self init e
+           Expr_entry e -> self init e
          | Rest_entry {value = {expr; _}; _} -> self init expr
        in
-       bind_fold_npseq fold_array_item init inside
+       (match inside with 
+          Some inside -> bind_fold_npseq fold_array_item init inside
+        | None -> ok init)
     | EAssign (e1, _, e2) ->
        let* res = self init e1 in
        let* res = self res e2 in
-       self res e1
+       self res e1    
     | EConstr {value;region=_} ->
        let _, expr = value in
        (match expr with
@@ -235,7 +246,7 @@ module Fold_helpers(M : Monad) = struct
        in
        bind_fold_ne_list fold_case res cases
     | SBreak _ -> ok init
-    | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> bind_fold_npseq self init inside
+    | SNamespace {value = (_, _, {value = {inside; _}; _}, _); _} -> bind_fold_npseq self init inside
     | SExport {value = (_, s); _} -> self init s 
     | SImport _ -> ok init
     | SForOf {value = {expr; statement; _}; _}
@@ -264,6 +275,7 @@ module Fold_helpers(M : Monad) = struct
 
   let rec map_type_expression : mapper -> type_expr -> 'b monad = fun f t ->
     let self = map_type_expression f in
+    let self_variant = map_variant f in
     let* t = f.t t in
     let return = ok in
     match t with
@@ -272,8 +284,8 @@ module Fold_helpers(M : Monad) = struct
       let value = {value with inside} in
       return @@ TProd {inside = {value;region}; attributes}
     | TSum {value;region} ->
-       let* variants = bind_map_npseq self value.variants in
-       let value = {value with variants} in
+       let* variants = bind_map_npseq self_variant value.variants.value in
+       let value = {value with variants = {value.variants with value=variants}} in
        return @@ TSum {value; region}
     | TObject {value;region} ->
        let aux (element : _ reg ) =
@@ -311,6 +323,27 @@ module Fold_helpers(M : Monad) = struct
       | TModA _
       | TInt _
       | TString _ as e) -> ok e
+
+  and map_variant :  mapper -> variant reg -> variant reg monad =
+    fun f (v: variant reg) : (variant reg monad) -> 
+      let self_type = map_type_expression f in
+      let value = v.value in
+      let tuple = value.tuple in
+      let tuple_value = tuple.value in
+      let inside = tuple_value.inside in
+      let params = v.value.tuple.value.inside.params in
+      let* params = match params with 
+        Some (comma, params) ->
+          let* params = bind_map_npseq self_type params in
+          ok @@ Some (comma, params)
+      | None -> ok params
+      in
+      let inside = {inside with params} in
+      let tuple_value = {tuple_value with inside} in
+      let tuple = {tuple with value = tuple_value} in
+      let value = {value with tuple} in
+      let variant_reg = {v with value} in
+      ok variant_reg
 
   let rec map_expression : mapper -> expr -> expr monad = fun f e  ->
     let self_type = map_type_expression f in
@@ -426,15 +459,21 @@ module Fold_helpers(M : Monad) = struct
     | EBytes _ as e -> return @@ e
     | EArray {value;region} ->
        let map_array_item = function
-           Empty_entry r -> ok @@ Empty_entry r
-         | Expr_entry e ->
+           Expr_entry e ->
             let* e = self e in
             ok @@ Expr_entry e
          | Rest_entry {value; region} ->
             let* expr = self value.expr in
             ok @@ Rest_entry {value = {value with expr}; region}
        in
-       let* inside = bind_map_npseq map_array_item value.inside in
+       let* inside = 
+        (match value.inside with 
+          Some inside -> 
+            let* inside = bind_map_npseq map_array_item inside in 
+            ok @@ Some inside
+        | None -> 
+            ok None)
+        in
        let value = {value with inside} in
        return @@ EArray {value; region}
     | EObject {value;region} ->
@@ -573,7 +612,7 @@ module Fold_helpers(M : Monad) = struct
     | SBreak b ->
        return @@ SBreak b
     | SNamespace {value; region} -> 
-      let (kwd_namespace, name, statements) = value in
+      let (kwd_namespace, name, statements, attributes) = value in
       let ({value = statements_value; region = statements_region}: statements braces reg) = statements in
       let* inside = bind_map_npseq self statements_value.inside in
       let statements: statements braces reg = {
@@ -583,7 +622,7 @@ module Fold_helpers(M : Monad) = struct
         };
         region = statements_region
       } in
-      let value = (kwd_namespace, name, statements) in
+      let value = (kwd_namespace, name, statements, attributes) in
       return @@ SNamespace {
         value;
         region

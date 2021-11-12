@@ -19,7 +19,7 @@
      zarith
      str)
   (modules
-     Errors Formatter Token Common
+     Errors Formatter Token Common Wrap
      Lexer Self_tokens LexerMainGen UnlexerGen)
   (modules_without_implementation
      Token Self_tokens))

@@ -22,6 +22,8 @@ module PascaligoParser =
   struct
     module CST = CST
     include Parser
+
+    module Recovery = Parsing_pascaligo.RecoverParser
   end
 
 include Parsing_shared.Common.MakeTwoParsers

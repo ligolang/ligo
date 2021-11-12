@@ -34,6 +34,9 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
     | O.T_abstraction x ->
       let type_ = self x.type_ in
       return @@ I.T_abstraction {x with type_}
+    | O.T_for_all x ->
+      let type_ = self x.type_ in
+      return @@ I.T_for_all {x with type_}
 
 let rec decompile_expression : O.expression -> I.expression =
   fun e ->

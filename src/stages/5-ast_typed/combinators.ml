@@ -12,6 +12,8 @@ let make_e ?(location = Location.generated) expression_content type_expression =
 let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
 let t_abstraction ?loc ?core ty_binder kind type_ =
   make_t ?loc (T_abstraction {ty_binder ; kind ; type_}) core
+let t_for_all ?loc ?core ty_binder kind type_ =
+  make_t ?loc (T_for_all {ty_binder ; kind ; type_}) core
 
 let t_constant ?loc ?core injection parameters : type_expression =
   make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
@@ -34,6 +36,10 @@ let t_bls12_381_g1 ?loc ?core () : type_expression = t_constant ?loc ?core bls12
 let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g2_name []
 let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
 let t_never       ?loc ?core () : type_expression = t_constant ?loc ?core never_name []
+let t_pvss_key ?loc ?core () : type_expression = t_constant ?loc ?core pvss_key_name []
+let t_baker_hash ?loc ?core () : type_expression = t_constant ?loc ?core baker_hash_name []
+let t_chest_key ?loc ?core () : type_expression = t_constant ?loc ?core chest_key_name []
+let t_chest ?loc ?core () : type_expression = t_constant ?loc ?core chest_name []
 
 let t_abstraction1 ?loc name kind : type_expression = 
   let ty_binder = Location.wrap @@ Var.fresh () in
@@ -99,6 +105,12 @@ let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
+let t_chest_opening_result ?loc ?core () : type_expression =
+  t_sum_ez ?loc ?core [
+    ("Ok_opening", t_bytes ()) ;
+    ("Fail_decrypt", t_unit ());
+    ("Fail_timelock", t_unit ())
+  ]
 
 let get_type_expression (x:expression) = x.type_expression
 let get_type' (x:type_expression) = x.type_content
@@ -149,6 +161,8 @@ let get_t_mutez (t:type_expression) : unit option = get_t_base_inj t tez_name
 let get_t_timestamp (t:type_expression) : unit option = get_t_base_inj t timestamp_name
 let get_t_address (t:type_expression) : unit option = get_t_base_inj t address_name
 let get_t_bytes (t:type_expression) : unit option = get_t_base_inj t bytes_name
+let get_t_chest (t:type_expression) : unit option = get_t_base_inj t chest_name
+let get_t_chest_key (t:type_expression) : unit option = get_t_base_inj t chest_key_name
 let get_t_michelson_code (t:type_expression) : unit option = get_t_base_inj t test_michelson_name
 let get_t_string (t:type_expression) : unit option = get_t_base_inj t string_name
 let get_t_contract (t:type_expression) : type_expression option = get_t_unary_inj t contract_name
@@ -191,6 +205,11 @@ let get_t_function (t:type_expression) : (type_expression * type_expression) opt
 let get_t_function_exn t = match get_t_function t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
+let get_t_for_all (t : type_expression) : (type_variable Location.wrap * type_expression) option =
+  match t.type_content with
+  | T_for_all { ty_binder ; type_ ; _ } -> Some (ty_binder, type_)
+  | _ -> None
 
 let get_t_sum (t:type_expression) : rows option = match t.type_content with
   | T_sum m -> Some m
@@ -260,6 +279,7 @@ let is_t_big_map t = Option.is_some (get_t_big_map t)
 let is_t_record t = Option.is_some (get_t_record t)
 let is_t_option t = Option.is_some (get_t_option t)
 let is_t_sum t = Option.is_some (get_t_sum t)
+let is_t_function t = Option.is_some (get_t_function t)
 
 let is_e_matching e = match e.expression_content with | E_matching _ -> true | _ -> false
 let assert_t_mutez : type_expression -> unit option = get_t_mutez

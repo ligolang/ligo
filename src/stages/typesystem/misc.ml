@@ -98,6 +98,9 @@ module Substitution = struct
         | T.T_abstraction x ->
           let type_ = s_type_expression ~substs x.type_ in
           T.T_abstraction {x with type_}
+        | T.T_for_all x ->
+          let type_ = s_type_expression ~substs x.type_ in
+          T.T_for_all {x with type_}
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
       let type_content = s_type_content ~substs type_content in
@@ -149,11 +152,11 @@ module Substitution = struct
         let output_type = Option.map ~f:(s_type_expression ~substs) output_type in
         let result = s_expression ~substs result in
         T.E_lambda { binder; output_type; result }
-      | T.E_let_in          { let_binder; rhs; let_result; attr = {inline; no_mutation}} ->
+      | T.E_let_in          { let_binder; rhs; let_result; attr} ->
         let let_binder = s_binder ~substs let_binder in
         let rhs = s_expression ~substs rhs in
         let let_result = s_expression ~substs let_result in
-        T.E_let_in { let_binder; rhs; let_result; attr = {inline; no_mutation}}
+        T.E_let_in { let_binder; rhs; let_result; attr}
       | T.E_type_in          { type_binder; rhs; let_result} ->
         let type_binder = s_type_variable ~substs type_binder in
         let rhs = s_type_expression ~substs rhs in
@@ -214,14 +217,14 @@ module Substitution = struct
     let return (d : T.declaration) = d in
     fun ~substs ->
       function
-      | T.Declaration_constant {name ; binder ; expr ; attr={inline;no_mutation}} ->
+      | T.Declaration_constant {name ; binder ; expr ; attr} ->
         let binder = s_binder ~substs binder in
         let expr = s_expression ~substs expr in
-        return @@ Declaration_constant {name; binder; expr; attr={inline;no_mutation}}
+        return @@ Declaration_constant {name; binder; expr; attr}
       | T.Declaration_type t -> return @@ Declaration_type t
-      | T.Declaration_module {module_binder;module_} ->
+      | T.Declaration_module {module_binder;module_;module_attr} ->
         let module_       = s_module' ~substs module_ in
-        return @@ Declaration_module {module_binder;module_}
+        return @@ Declaration_module {module_binder;module_;module_attr}
       | T.Module_alias {alias;binders} ->
         return @@ Module_alias {alias; binders}
 

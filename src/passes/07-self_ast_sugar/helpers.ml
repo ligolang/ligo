@@ -177,6 +177,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
   | T_abstraction x ->
     let x = Maps.for_all self x in
     return @@ T_abstraction x
+  | T_for_all x ->
+    let x = Maps.for_all self x in
+    return @@ T_for_all x
 
 and map_module : 'err abs_mapper -> module_ -> module_ = fun m p ->
   let aux = fun (x : declaration) ->

@@ -6,11 +6,7 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Build_error_tracer err -> error_ppformat ~display_format f err
-    | `Build_dependency_cycle trace ->
-      Format.fprintf f "@[<hv>Dependency cycle detected :@, %s@]" trace
-    | `Build_corner_case (loc,msg) ->
-      Format.fprintf f "@[<hv>Building corner case at %s : %s@]" loc msg
+    | `Build_error_tracer err -> BuildSystem.Errors.error_ppformat ~display_format f err
     | `Test_err_tracer (name,err) ->
       Format.fprintf f "@[<hv>Test '%s'@ %a@]"
         name (error_ppformat ~display_format) err
@@ -87,17 +83,17 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unparse_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[Error(s) occurred while translating to Michelson:@.%a@]"
-      (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_typecheck_contract_tracer (_c,err_l) ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) err_l in
       Format.fprintf f "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-      (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_could_not_serialize errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while serializing Michelson code:@.%a @]"
-      (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided parameter does not have the correct type for the given entrypoint.@ %a@]"
@@ -132,24 +128,24 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unparse_michelson_result errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while unparsing the Michelson result:@.%a @]"
-      (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_parse_payload _ -> Format.fprintf f "@[<hv>Error parsing message. @]" (* internal testing *)
     | `Main_pack_payload _ -> Format.fprintf f "@[<hv>Error packing message. @]" (* internal testing *)
     | `Main_parse_michelson_input errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while parsing the Michelson input:@.%a @]"
-      (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_parse_michelson_code errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while checking the contract:@.%a @]"
-        (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_michelson_execution_error errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while executing the contract:@.%a @]"
-      (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_preproc e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Main_parser e -> Parsing.Errors.error_ppformat ~display_format f e
@@ -183,11 +179,11 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_interpret_target_lang_error (loc, [], errs) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@]"
         Snippet.pp loc
-        (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
     | `Main_interpret_target_lang_error (loc, calltrace, errs) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@]"
         Snippet.pp loc
-        (Tezos_client_010_PtGRANAD.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_011_PtHangzH.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
         (PP_helpers.list_sep_d Location.pp) calltrace
     | `Main_interpret_target_lang_failwith (loc, Failwith_int n) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (int): %d@]"
@@ -271,18 +267,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   -> `Null
 
   (* Top-level errors *)
-  | `Build_error_tracer e -> json_error ~stage:"build system" ~content:(error_jsonformat e)
-  | `Build_dependency_cycle trace ->
-    let content = `Assoc [
-      ("message", `String "dependency cycle detected") ;
-      ("cycle",    `String trace) ; ] in
-    json_error ~stage:"build system" ~content
-  | `Build_corner_case (loc,msg) ->
-    let content = `Assoc [
-      ("message", `String msg) ;
-      ("loc", `String loc) ]
-    in
-    json_error ~stage:"build system" ~content
+  | `Build_error_tracer e -> json_error ~stage:"build system" ~content:(BuildSystem.Errors.error_jsonformat e)
   | `Main_invalid_generator_name _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad generator name")
   | `Main_invalid_syntax_name _ ->

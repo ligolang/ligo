@@ -38,13 +38,12 @@ let compile_file ~raise ~add_warning ~options f stx ep =
   contract
 
 let type_expression_string ~raise ~options syntax expression env =
-  let {infer ; _} : Compiler_options.t = options in
   let meta              = Of_source.make_meta_from_syntax syntax in
   let c_unit_exp, _     = Of_source.compile_string_without_preproc expression in
   let imperative_exp    = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
   let core_exp          = Of_sugar.compile_expression sugar_exp in
-  let typed_exp,e       = Of_core.compile_expression ~raise ~infer ~env core_exp in
+  let typed_exp,e       = Of_core.compile_expression ~raise ~options ~env core_exp in
   (typed_exp,e)
 
 let type_contract_string ~raise ~add_warning ~options syntax expression env =
@@ -63,7 +62,7 @@ let type_expression ~raise ~options source_file syntax expression env =
   let imperative_exp    = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
   let core_exp          = Of_sugar.compile_expression sugar_exp in
-  let typed_exp,e       = Of_core.compile_expression ~raise ~env core_exp in
+  let typed_exp,e       = Of_core.compile_expression ~raise ~options ~env core_exp in
   (typed_exp,e)
 
 let expression_to_mini_c ~raise ~options source_file syntax expression env =
@@ -87,7 +86,7 @@ let compile_storage ~raise ~options storage input source_file syntax env mini_c_
   let imperative = Of_c_unit.compile_contract_input ~raise ~meta storage input in
   let sugar      = Of_imperative.compile_expression ~raise imperative in
   let core       = Of_sugar.compile_expression sugar in
-  let typed,_    = Of_core.compile_expression ~raise ~env core in
+  let typed,_    = Of_core.compile_expression ~raise ~options ~env core in
   let mini_c     = Of_typed.compile_expression ~raise typed in
   let compiled   = Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c_prg mini_c in
   compiled

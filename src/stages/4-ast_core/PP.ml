@@ -70,7 +70,11 @@ let list_sep_d_par f ppf lst =
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
 
 let rec type_expression ppf (te : type_expression) : unit =
-  fprintf ppf "%a" type_content te.type_content
+  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
+  if Option.is_some (Combinators.get_t_bool te) then
+    fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+  else
+    fprintf ppf "%a" type_content te.type_content
 and type_content : formatter -> type_content -> unit =
   fun ppf te ->
   match te with
@@ -82,6 +86,7 @@ and type_content : formatter -> type_content -> unit =
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression ppf x
+  | T_for_all         x  -> for_all       type_expression ppf x
 
 and row : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos=_ } ->
@@ -108,9 +113,13 @@ and expression_content ppf (ec : expression_content) =
   | E_lambda    l -> lambda expression type_expression ppf l
   | E_recursive r -> recursive expression type_expression ppf r
   | E_matching x -> fprintf ppf "%a" (match_exp expression type_expression) x
-  | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation }} ->
-    fprintf ppf "@[let %a =@;<1 2>%a%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_type_in   ti -> type_in expression type_expression ppf ti
+  | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation ; view; _ }} ->
+    fprintf ppf "@[let %a =@;<1 2>%a%a%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline option_no_mutation no_mutation option_view view expression let_result
+  | E_type_in   {type_binder; rhs; let_result} -> 
+    fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
+      type_variable type_binder
+      type_expression rhs
+      expression let_result
   | E_mod_in {module_binder; rhs; let_result;} ->
     fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]" module_variable module_binder module_ rhs expression let_result
   | E_mod_alias ma -> mod_alias expression ppf ma
@@ -120,17 +129,21 @@ and expression_content ppf (ec : expression_content) =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_type     dt -> declaration_type                type_expression ppf dt
-  | Declaration_constant {name = _ ; binder=b ; attr = { inline ; no_mutation } ; expr} ->
-      fprintf ppf "@[<2>const %a =@ %a%a%a@]"
+  | Declaration_type     {type_binder;type_expr;type_attr={public}} -> 
+    fprintf ppf "@[<2>type %a =@ %a%a@]" type_variable type_binder type_expression type_expr option_public public
+  | Declaration_constant {name = _ ; binder=b ; attr = { inline ; no_mutation ; view ; public } ; expr} ->
+      fprintf ppf "@[<2>const %a =@ %a%a%a%a%a@]"
         (binder type_expression) b
         expression expr
         option_inline inline
         option_no_mutation no_mutation
-  | Declaration_module {module_binder;module_=m} ->
-      fprintf ppf "@[<2>module %a =@ %a@]"
+        option_view view
+        option_public public
+  | Declaration_module {module_binder;module_=m;module_attr={public}} ->
+      fprintf ppf "@[<2>module %a =@ %a%a@]"
         module_variable module_binder
         module_ m
+        option_public public
   | Module_alias {alias;binders} ->
     fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
 

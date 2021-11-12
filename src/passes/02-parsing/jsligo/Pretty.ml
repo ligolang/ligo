@@ -16,7 +16,7 @@ let pp_brackets printer (node : 'a brackets reg) =
   in string "[" ^^ nest 1 (printer inside ^^ string "]")
 
 let pp_nsepseq :
-  'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
+  'a. string -> ('a -> document) -> ('a, _ Token.wrap) Utils.nsepseq -> document =
   fun sep printer elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1
@@ -30,20 +30,20 @@ let rec print ast =
   in separate_map (hardline ^^ hardline) app stmt
 
 and pp_toplevel_statement = function
-  TopLevel (stmt, _) -> Some (pp_statement stmt)
+  TopLevel (stmt, _) -> Some (pp_statement ?top:(Some true) stmt)
 | Directive _   -> None
 
-and pp_statement = function
+and pp_statement ?top = function
   SBlock      s -> pp_SBlock s
 | SExpr       s -> pp_expr s
 | SCond       s -> group (pp_cond_expr s)
 | SReturn     s -> pp_return s
-| SLet        s -> pp_let s
+| SLet        s -> pp_let ?top s
 | SConst      s -> pp_const s
 | SType       s -> pp_type s
 | SSwitch     s -> pp_switch s
 | SBreak      _ -> string "break" ^^ hardline
-| SNamespace  s -> pp_namespace s
+| SNamespace  s -> pp_namespace ?top s
 | SExport     s -> pp_export s
 | SImport     s -> pp_import s
 | SForOf      s -> pp_for_of s
@@ -76,11 +76,19 @@ and pp_import (node : CST.import Region.reg) =
   ^^ pp_nsepseq "." (fun a -> string a.Region.value) value.module_path
 
 and pp_export {value = (_, statement); _} =
-  string "export" ^^ pp_statement statement
+  string "export " ^^ pp_statement statement
 
-and pp_namespace {value = (_, name, statements); _} =
+and pp_namespace ?top {value = (_, name, statements, attributes); _} =
+  let top = match top with
+    Some true -> true
+  | _ -> false
+  in
+  let is_private = List.exists (fun a -> a.value = "private") attributes in
+  let attributes  = filter_private attributes in
   let pp_statements = pp_nsepseq ";" pp_statement in
-  string "namespace" ^^ string name.value
+  (if attributes = [] then empty else pp_attributes attributes) ^^ 
+  string "namespace " ^^ string name.value
+  ^^ (if ((top && is_private) || not top) then string "" else string "export ") 
   ^^ group (pp_braces pp_statements statements)
 
 and pp_cond_expr {value; _} =
@@ -96,9 +104,19 @@ and pp_return {value = {expr; _}; _} =
     Some s -> string "return " ^^ pp_expr s
   | None -> string "return"
 
-and pp_let (node : let_decl reg) =
-  let {attributes; bindings; _} : let_decl = node.value
-  in (if attributes = [] then empty else pp_attributes attributes)
+and filter_private (attributes: CST.attributes) : CST.attributes = 
+  List.filter (fun (v: CST.attribute) -> not (v.value = "private")) attributes
+
+and pp_let ?top (node : let_decl reg) =
+  let {attributes; bindings; _} : let_decl = node.value in
+  let top = match top with
+    Some true -> true
+  | _ -> false
+  in
+  let is_private = List.exists (fun a -> a.value = "private") attributes in
+  let attributes  = filter_private attributes in
+  (if attributes = [] then empty else pp_attributes attributes)
+     ^^ (if ((top && is_private) || not top) then string "" else string "export ") 
      ^^ string "let " ^^ pp_nsepseq "," pp_val_binding bindings
 
 and pp_const {value = {bindings; _}; _} =
@@ -178,15 +196,21 @@ and pp_expr = function
 | EObject  e -> group (pp_object_expr e)
 | EString  e -> pp_string_expr e
 | EProj    e -> pp_projection e
-| EAssign  (a,b,c) -> pp_assign (a,b,c)
+| EAssign     (a,b,c) -> pp_assign (a,b,c)
 | EAnnot   e -> pp_annot_expr e
 | EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
 
-and pp_array (node: (array_item, comma) Utils.nsepseq brackets reg) =
-  let pp_items = pp_nsepseq "," pp_array_item
-  in group (pp_brackets pp_items node)
+and pp_array (node: (array_item, comma) Utils.sepseq brackets reg) =
+  match node.value.inside with 
+    Some node -> 
+      let pp_items = pp_nsepseq "," pp_array_item in
+      let result = string "[" ^^ nest 1 (pp_items node ^^ string "]") in
+      group result
+      (* pp_brackets (fun _ -> empty) node *)
+  | None -> 
+      pp_brackets (fun _ -> empty) node
 
 and pp_call_expr {value; _} =
   let lambda, arguments = value in
@@ -194,12 +218,14 @@ and pp_call_expr {value; _} =
     match arguments with
     | Unit _ -> []
     | Multiple xs -> Utils.nsepseq_to_list xs.value.inside in
-  let arguments = string "(" ^^ group (separate_map (string ", ") pp_expr arguments) ^^ string ")" in
-  pp_expr lambda ^^ arguments
+  let arguments =
+    string "("
+    ^^ group (separate_map (string ", ") pp_expr arguments)
+    ^^ string ")"
+  in pp_expr lambda ^^ arguments
 
 and pp_array_item = function
-  Empty_entry _ -> empty
-| Expr_entry e -> pp_expr e
+  Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
 and pp_constr_expr {value; _} =
@@ -232,8 +258,16 @@ and pp_selection = function
 and pp_projection {value = {expr; selection}; _} =
   pp_expr expr ^^ pp_selection selection
 
-and pp_assign (a, _, b) =
-  pp_expr a ^^ string " = " ^^ pp_expr b
+and pp_assign (a, op, b) =
+  let operator = match op.value with 
+      Eq -> " = "
+    | Assignment_operator Times_eq ->  " *= "
+    | Assignment_operator Div_eq ->    " /= "
+    | Assignment_operator Min_eq ->    " -= "
+    | Assignment_operator Plus_eq ->   " += "
+    | Assignment_operator Mod_eq ->    " %= "
+  in
+  pp_expr a ^^ string operator ^^ pp_expr b
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value in
@@ -333,22 +367,32 @@ and pp_module_access : type a.(a -> document) -> a module_access reg -> document
  and pp_cartesian (node: CST.cartesian) =
   let pp_type_exprs = pp_nsepseq "," pp_type_expr
   in group (
-    pp_attributes node.attributes ^^ hardline ^^ 
-    pp_brackets pp_type_exprs node.inside
-  )
+    pp_attributes node.attributes ^^ hardline ^^
+    pp_brackets pp_type_exprs node.inside)
 
-and pp_sum_type {value; _} =
-  let {variants; attributes; _} = value in
-  let head, tail = variants in
-  let head = pp_type_expr head in
-  let head =
-    if tail = [] then string "|" ^^ head
-    else ifflat (string "| " ^^ head) (string "| " ^^ head) in
-  let rest = List.map snd tail in
-  let app variant = break 1 ^^ string "| " ^^ pp_type_expr variant in
-  let whole = head ^^ concat_map app rest in
-  if attributes = [] then whole
-  else pp_attributes attributes ^/^ whole
+ and pp_sum_type (node : sum_type reg) =
+  let {variants; attributes; _} = node.value in
+  let variants = pp_nsepseq "|" pp_variant variants.value in
+  if attributes = [] then variants
+  else group (pp_attributes attributes ^/^ variants)
+
+and pp_variant (node : variant reg) =
+  let {tuple; attributes; _} = node.value in
+  let comp = tuple.value.inside in
+  let tuple =
+    string "[" ^^ nest 1 (pp_variant_comp comp ^^ string "]") in
+  if attributes = [] then tuple
+  else group (pp_attributes attributes ^/^ tuple)
+
+and pp_variant_comp (node: variant_comp) =
+  let {constr; params} = node in
+  let constr, params =
+    match params with
+      None -> pp_string constr, []
+    | Some (_comma, params) ->
+       pp_string constr , Utils.nsepseq_to_list params in
+  let sep = string "," ^^ break 1
+  in constr ^^ sep ^^ separate_map sep pp_type_expr params
 
 and pp_attributes = function
   [] -> empty
@@ -424,7 +468,6 @@ and pp_pattern = function
 | PConstr   p -> pp_ident p
 | PDestruct p -> pp_destruct p
 | PObject   p -> pp_pobject p
-| PWild     _ -> string "_"
 | PArray    p -> pp_parray p
 
 and pp_parray (node:  (pattern, comma) Utils.nsepseq brackets reg) =

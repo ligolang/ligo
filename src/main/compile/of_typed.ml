@@ -9,6 +9,7 @@ let compile_with_modules ~raise ?(module_env = SMap.empty) : Ast_typed.module_fu
   trace ~raise spilling_tracer @@ compile_module ~module_env:module_env p
 
 let compile ~raise ?(module_env = SMap.empty) : Ast_typed.module_fully_typed -> Mini_c.program = fun p ->
+  let p = Self_ast_typed.monomorphise_module p in
   let mini_c,_ = compile_with_modules ~raise ~module_env:module_env p in
   mini_c
 
@@ -36,6 +37,17 @@ let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type ->
         | _ -> raise.raise @@ entrypoint_not_a_function )
     | _ -> raise.raise @@ entrypoint_not_a_function
   )
+
+let rec get_views : Ast_typed.environment -> (string * location) list = fun e ->
+  let f : (string * location) list -> environment_binding -> (string * location) list =
+    fun acc {expr_var ; env_elt } ->
+      match env_elt.definition with
+      | ED_declaration { attr ; _ } when attr.view -> (Var.to_name expr_var.wrap_content, expr_var.location)::acc
+      | _ -> acc
+  in 
+  let x = List.fold e.expression_environment ~init:[] ~f in
+  let y = List.fold e.module_environment ~init:[] ~f:(fun acc x -> List.append acc (get_views x.module_)) in
+  List.append x y
 
 let decompile_env e = Checking.decompile_env e
 let list_declarations (m : Ast_typed.module') : string list =

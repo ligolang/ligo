@@ -33,6 +33,8 @@ module Parser =
       struct
         let main = Incremental.contract
       end
+
+    module Recovery = Parsing_pascaligo.RecoverParser
   end
 
 module Pretty =

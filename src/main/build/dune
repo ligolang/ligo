@@ -8,7 +8,7 @@
     simple-utils
     tezos-utils
     ligo_compile
-    ocamlgraph
+    BuildSystem
   )
   (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils -open Tezos_utils ))
 )

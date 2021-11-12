@@ -63,4 +63,4 @@ let%expect_test _ =
 
   run_ligo_bad ["run" ; "interpret" ; "1" ; "--syntax"; "cameligo" ; "--protocol"; "do_not_exist" ] ;
   [%expect {|
-    Invalid protocol version 'do_not_exist'. Available versions: edo |}] ;
+    Invalid protocol version 'do_not_exist'. Available versions: edo , hangzhou |}] ;

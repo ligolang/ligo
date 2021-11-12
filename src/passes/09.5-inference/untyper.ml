@@ -42,6 +42,9 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   | O.T_abstraction x ->
     let type_ = self x.type_ in
     return @@ I.T_abstraction {x with type_}
+  | O.T_for_all x ->
+    let type_ = self x.type_ in
+    return @@ I.T_for_all {x with type_}
 
 (*
   Transform a Ast_inferred expression into an ast_core expression
@@ -78,14 +81,15 @@ let rec untype_expression (e:O.expression) : I.expression =
   | E_matching {matchee;cases} -> (
     return @@ E_matching {matchee;cases}
   )
-  | E_let_in {let_binder; rhs;let_result;attr} ->
+  | E_let_in {let_binder; rhs; let_result; attr} ->
     let rhs        = untype_expression rhs in
     let let_result = untype_expression let_result in
     let let_binder = Stage_common.Maps.binder untype_type_expression let_binder in
     return @@ E_let_in {let_binder; rhs; let_result; attr}
-  | E_type_in ti ->
-    let ti = Stage_common.Maps.type_in untype_expression untype_type_expression ti in
-    return @@ E_type_in ti
+  | E_type_in {type_binder; rhs; let_result} ->
+    let rhs = untype_type_expression rhs in
+    let let_result = untype_expression let_result in
+    return @@ E_type_in {type_binder; rhs; let_result}
   | E_mod_in {module_binder; rhs;let_result} ->
     let rhs        = untype_module_fully_inferred rhs in
     let let_result = untype_expression let_result in
@@ -122,16 +126,16 @@ and untype_lambda {binder; output_type; result} : _ O.lambda =
 and untype_declaration : O.declaration -> I.declaration =
 let return (d: I.declaration) = d in
 function
-  Declaration_type {type_binder; type_expr} ->
+  Declaration_type {type_binder; type_expr; type_attr} ->
   let type_expr = untype_type_expression type_expr in
-  return @@ Declaration_type {type_binder; type_expr}
-| Declaration_constant {name; binder;expr;attr={inline;no_mutation}} ->
+  return @@ Declaration_type {type_binder; type_expr; type_attr}
+| Declaration_constant {name; binder;expr;attr} ->
   let binder = Stage_common.Maps.binder untype_type_expression binder in
   let expr = untype_expression expr in
-  return @@ Declaration_constant {name; binder;expr;attr={inline;no_mutation}}
-| Declaration_module {module_binder;module_} ->
+  return @@ Declaration_constant {name; binder;expr;attr}
+| Declaration_module {module_binder;module_;module_attr} ->
   let module_ = untype_module_fully_inferred module_ in
-  return @@ Declaration_module {module_binder;module_}
+  return @@ Declaration_module {module_binder;module_;module_attr}
 | Module_alias ma ->
   return @@ Module_alias ma
 

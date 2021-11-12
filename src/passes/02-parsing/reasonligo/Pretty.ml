@@ -59,7 +59,7 @@ and pp_attributes = function
    let make s = string "[@" ^^ string s.value ^^ string "]"
    in concat_map make attr
 
-and pp_ident {value; _} = string value
+and pp_ident t = string t.value
 
 and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
 
@@ -349,7 +349,7 @@ and pp_ne_injection :
     in inj
 
 and pp_nsepseq :
-  'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
+  'a.string -> ('a -> document) -> ('a, _ Token.wrap) Utils.nsepseq -> document =
   fun sep printer elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1

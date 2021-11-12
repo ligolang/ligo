@@ -3,6 +3,8 @@
   (public_name ligo.cst.cameligo)
   (instrumentation (backend bisect_ppx))
   (libraries
+    ;; Input 
+    lexing_cameligo
     ;; Vendors
     LexerLib
     simple-utils

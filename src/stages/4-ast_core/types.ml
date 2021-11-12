@@ -11,26 +11,36 @@ type string_option = string option
 let location_of_yojson loc = Location.of_yojson loc
 let location_to_yojson loc = Location.to_yojson loc
 
-type attribute = {
-  inline: bool ;
-  no_mutation: bool;
+type type_attribute = {
+  public: bool;
 }
 
+and module_attribute = {
+  public: bool;
+}
 
 and module_ = declaration Location.wrap list
 
 and declaration_constant = {
     name : string option ;
     binder : ty_expr binder;
-    attr : attribute ;
+    attr : known_attributes ;
     expr : expression ;
-  }
+}
+
+and declaration_type = {
+  type_binder : type_variable ;
+  type_expr   : ty_expr ;
+  type_attr   : type_attribute
+}
+
 and declaration_module = {
   module_binder : module_variable ;
   module_       : module_ ;
+  module_attr   : module_attribute
 }
 and declaration =
-  | Declaration_type of ty_expr declaration_type
+  | Declaration_type     of declaration_type
   (* A Declaration_constant is described by
    *   a name
    *   an optional type annotation
@@ -49,6 +59,7 @@ and type_content =
   | T_module_accessor of ty_expr module_access
   | T_singleton       of literal
   | T_abstraction     of ty_expr abstraction
+  | T_for_all         of ty_expr abstraction
 
 and rows = { fields : row_element label_map ; layout : layout option }
 
@@ -95,7 +106,7 @@ and let_in = {
     let_binder: ty_expr binder ;
     rhs: expression ;
     let_result: expression ;
-    attr: attribute ;
+    attr: known_attributes ;
   }
 
 and mod_in = {

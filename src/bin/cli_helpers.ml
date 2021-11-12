@@ -7,9 +7,8 @@ let return_bad v : unit Proto_alpha_utils.Error_monad.tzresult Lwt.t = (
     Format.eprintf "%s" v
   else
     Format.eprintf "%s\n" v;
-  Format.pp_print_flush Format.err_formatter ();
-  Lwt.return @@
-  Proto_alpha_utils.Error_monad.error_exn Error_compilation
+    Format.pp_print_flush Format.err_formatter ();
+    Proto_alpha_utils.Error_monad.fail_with_exn Error_compilation
   )
 
 

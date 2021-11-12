@@ -61,6 +61,8 @@ module Tree_abstraction = struct
     | "Tezos.level"              -> some_const C_LEVEL
     | "Tezos.pairing_check"      -> some_const C_PAIRING_CHECK
     | "Tezos.never"              -> some_const C_NEVER
+    | "Tezos.open_chest"         -> some_const C_OPEN_CHEST
+    | "Tezos.call_view"          -> some_const C_VIEW
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -200,6 +202,9 @@ module Tree_abstraction = struct
     | "Test.to_entrypoint" -> some_const C_TEST_TO_ENTRYPOINT
     | "Test.to_typed_address" -> some_const C_TEST_TO_TYPED_ADDRESS
     | "Test.set_big_map" -> some_const C_TEST_SET_BIG_MAP
+    | "Test.cast_address" -> some_const C_TEST_CAST_ADDRESS
+    | "Test.create_chest" -> some_const C_TEST_CREATE_CHEST
+    | "Test.create_chest_key" -> some_const C_TEST_CREATE_CHEST_KEY
 
     (* Operator module *)
 
@@ -244,6 +249,8 @@ module Tree_abstraction = struct
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
     | C_NEVER                   -> "Tezos.never"
+    | C_OPEN_CHEST              -> "Tezos.open_chest" 
+    | C_VIEW                    -> "Tezos.call_view" 
 
     (* Operator module *)
 
@@ -382,6 +389,9 @@ module Tree_abstraction = struct
     | C_TEST_TO_ENTRYPOINT -> "Test.to_entrypoint"
     | C_TEST_TO_TYPED_ADDRESS -> "Test.to_typed_address"
     | C_TEST_SET_BIG_MAP -> "Test.set_big_map"
+    | C_TEST_CAST_ADDRESS -> "Test.cast_address"
+    | C_TEST_CREATE_CHEST -> "Test.create_chest"
+
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
@@ -767,7 +777,7 @@ module Stacking = struct
     | C_MAP_FIND_OPT       , _   -> Some ( simple_binary @@ prim "GET")
     | C_MAP_ADD            , _   -> Some ( simple_ternary @@ seq [dip (i_some) ; prim "UPDATE"])
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
-    | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , Edo ->
+    | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
     | C_FOLD_WHILE         , _   ->
       Some ( simple_binary @@ seq [i_swap ; (i_push (prim "bool") (prim "True"));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] "LOOP" ;i_swap ; i_drop])
@@ -832,12 +842,12 @@ module Stacking = struct
     | C_MAP_REMOVE         , _   -> Some (special (fun with_args -> seq [dip (with_args "NONE"); prim "UPDATE"]))
     | C_LEFT               , _   -> Some (trivial_special "LEFT")
     | C_RIGHT              , _   -> Some (trivial_special "RIGHT")
-    | C_TICKET             , Edo -> Some ( simple_binary @@ prim "TICKET" )
-    | C_READ_TICKET        , Edo -> Some ( simple_unary @@ seq [ prim "READ_TICKET" ; prim "PAIR" ] )
-    | C_SPLIT_TICKET       , Edo -> Some ( simple_binary @@ prim "SPLIT_TICKET" )
-    | C_JOIN_TICKET        , Edo -> Some ( simple_unary @@ prim "JOIN_TICKETS" )
-    | C_SAPLING_EMPTY_STATE, Edo -> Some (trivial_special "SAPLING_EMPTY_STATE")
-    | C_SAPLING_VERIFY_UPDATE , Edo -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
+    | C_TICKET             , _ -> Some ( simple_binary @@ prim "TICKET" )
+    | C_READ_TICKET        , _ -> Some ( simple_unary @@ seq [ prim "READ_TICKET" ; prim "PAIR" ] )
+    | C_SPLIT_TICKET       , _ -> Some ( simple_binary @@ prim "SPLIT_TICKET" )
+    | C_JOIN_TICKET        , _ -> Some ( simple_unary @@ prim "JOIN_TICKETS" )
+    | C_SAPLING_EMPTY_STATE, _ -> Some (trivial_special "SAPLING_EMPTY_STATE")
+    | C_SAPLING_VERIFY_UPDATE , _ -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
     | C_PAIRING_CHECK , _ -> Some (simple_binary @@ prim "PAIRING_CHECK")
     | C_CONTRACT           , _   ->
       Some (special
@@ -861,7 +871,18 @@ module Stacking = struct
               (fun with_args ->
                  seq [with_args "CREATE_CONTRACT";
                       i_pair]))
-
+    | C_OPEN_CHEST , Hangzhou -> (
+      Some (simple_ternary @@ seq [
+        prim "OPEN_CHEST" ;
+        i_if_left
+          ( prim "RIGHT" ~children:[t_or t_unit t_unit])
+          ( i_if
+            (seq [ i_push_unit ; prim "LEFT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
+            (seq [ i_push_unit ; prim "RIGHT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
+          ) 
+      ])
+    )
+    | C_VIEW , Hangzhou -> Some (trivial_special "VIEW")
     | _ -> None
 
 end
