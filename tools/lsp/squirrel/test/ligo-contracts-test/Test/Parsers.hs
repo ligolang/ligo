@@ -24,17 +24,21 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "modules.mligo"
       , "modules.ligo"
       , "warning_duplicate.mligo"
+      , "interpreter_tests/nesting_modules.mligo"
       , "interpreter_tests/test_imported.mligo"
       , "interpreter_tests/test_importer.mligo" -- Also needs LIGO-204
       , "interpreter_tests/test_module.mligo"
       , "modules_and_free_vars/nested_modules.mligo"
       , "modules_and_free_vars/simple.mligo"
+      , "polymorphism/modules.mligo"
+      , "polymorphism/modules.religo"
       , "remove_unused_module.mligo"
 
         -- LIGO-204
       , "build/C_test.mligo"
       , "build/b.mligo"
       , "build/B.mligo"
+      , "build/B1.mligo"
       , "build/C.mligo"
       , "build/D.mligo"
       , "build/E.mligo"
@@ -42,9 +46,37 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "build/cycle_B.mligo"
       , "build/cycle_C.mligo"
       , "build/type_B.mligo"
+      , "build/Xfoo.mligo"
+      , "build/Xmain.mligo"
+      , "interpreter_tests/A.mligo"
+      , "interpreter_tests/C.mligo"
+      , "interpreter_tests/imported_modules/a.mligo"
+      , "interpreter_tests/imported_modules/b.mligo"
+      , "interpreter_tests/imported_modules/main.mligo"
+      , "interpreter_tests/imported_modules/test.mligo"
+      , "interpreter_tests/test_many_imports.mligo"
+      , "polymorphism/use_error.mligo" -- polymorphism/* tests also depend on
+      , "polymorphism/use_monad.mligo" --   LIGO-331
+      , "polymorphism/use_monad_set.mligo"
+      , "polymorphism/use_nelist.mligo"
 
         -- LIGO-323
       , "heap-instance.ligo"
+
+        -- LIGO-331
+      , "polymorphism/cases_annotation1.mligo"
+      , "polymorphism/cases_annotation2.mligo"
+      , "polymorphism/comb.mligo"
+      , "polymorphism/ctrct.mligo"
+      , "polymorphism/error_monad.mligo"
+      , "polymorphism/list_monad.mligo"
+      , "polymorphism/map.mligo"
+      , "polymorphism/nelist.mligo"
+      , "polymorphism/set_monad.mligo"
+      , "polymorphism/test.mligo"
+
+        -- LIGO-358
+      , "interpreter_tests/test_negative_big_map_id.mligo"
       ]
 
 okayIgnoreDirs :: [FilePath]
