@@ -45,7 +45,7 @@ import Focus qualified
 import StmContainers.Map (Map)
 import StmContainers.Map qualified as Map
 import System.Clock (Clock (Monotonic), TimeSpec, getTime)
-import UnliftIO (Async, MonadUnliftIO, async, atomically, cancel, link)
+import UnliftIO (Async, MonadUnliftIO, async, atomically, cancel)
 
 ----
 ---- Implementation notes:
@@ -392,7 +392,6 @@ fetchFastAndNotify notify k tmap@ASTMap{amInvalid, amLoadStarted, amValues, amWo
       mWorker <- atomically $ Map.focus Focus.lookupAndDelete k amWorkers
       maybe (pure ()) cancel mWorker
       worker <- async load
-      link worker
       atomically $ Map.insert worker k amWorkers
 
 -- | A 'Focus' that will insert a value if none was present or use the
