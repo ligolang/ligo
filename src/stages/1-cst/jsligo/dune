@@ -3,6 +3,8 @@
   (public_name ligo.cst.jsligo)
   (instrumentation (backend bisect_ppx))
   (libraries
+    ;; Input 
+    lexing_jsligo
     ;; Vendors
     LexerLib
     simple-utils

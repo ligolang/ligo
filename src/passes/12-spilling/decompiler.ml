@@ -215,3 +215,5 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     raise.raise @@ corner_case ~loc:__LOC__ "no value is of type singleton"
   | T_abstraction _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "trying to decompile a quantified type (no such thing ?)"
+  | T_for_all _ ->
+    raise.raise @@ corner_case ~loc:__LOC__ "trying to decompile a quantified type (no such thing ?)"

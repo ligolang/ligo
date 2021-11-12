@@ -13,8 +13,6 @@ $HOME/git/OCaml-build/Makefile
 $HOME/git/ligo/src/stages/1-cst/jsligo/CST.ml
 $HOME/git/ligo/src/stages/1-cst/jsligo/Printer.mli
 $HOME/git/ligo/src/stages/1-cst/jsligo/Printer.ml
-$HOME/git/ligo/src/passes/00-preprocessing/jsligo/Comments.ml
-$HOME/git/ligo/src/passes/00-preprocessing/jsligo/File.ml
 $HOME/git/ligo/src/passes/01-lexing/jsligo/Self_tokens.ml
 $HOME/git/ligo/src/passes/01-lexing/jsligo/Token.ml
 $HOME/git/ligo/src/passes/01-lexing/jsligo/Style.ml

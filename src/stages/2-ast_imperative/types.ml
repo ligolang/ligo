@@ -15,6 +15,7 @@ type type_content =
   | T_singleton       of literal
   | T_module_accessor of ty_expr module_access
   | T_abstraction     of ty_expr abstraction
+  | T_for_all         of ty_expr abstraction
 
 and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression

@@ -1,1 +1,1 @@
-let toto = 1
+export let toto = 1

@@ -58,6 +58,10 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
     let body = type_expression_to_type_value type_ in
     p_for_all ty_binder.wrap_content [] body
   )
+  | T_for_all { ty_binder ; kind = _ ; type_ } -> (
+    let body = type_expression_to_type_value type_ in
+    p_for_all ty_binder.wrap_content [] body
+  )
 
 let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun name expr ->
   let pattern = type_expression_to_type_value expr in
@@ -304,10 +308,11 @@ let match_variant : T.label -> case:T.type_expression -> T.type_value -> T.type_
 let match_record : T.type_expression T.label_map -> T.type_expression -> constraints =
   fun row t ->
     let t = type_expression_to_type_value t in
-    let row = T.LMap.map (fun v ->
+    let _,row = T.LMap.fold_map ~f:(fun (Label k) v i -> 
       let v = type_expression_to_type_value v in
-      T.{associated_value=v;michelson_annotation=None;decl_pos=0}
-      ) row in
+      let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
+      i+1,T.{associated_value=v;michelson_annotation=None;decl_pos}
+      ) row ~init:0 in
   [
     c_equation t (T.p_row T.C_record row) "wrap: match_record"
   ]

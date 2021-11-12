@@ -53,7 +53,8 @@ let type_expression_tag ty_cont =
   | T_arrow           _ -> 5
   | T_module_accessor _ -> 6
   | T_singleton       _ -> 7
-  | T_abstraction         _ -> 8
+  | T_abstraction     _ -> 8
+  | T_for_all         _ -> 9
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -94,8 +95,9 @@ and type_content a b =
   | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
   | T_singleton a , T_singleton b -> literal a b
   | T_abstraction a , T_abstraction b -> for_all a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _) ->
+  | T_for_all a , T_for_all b -> for_all a b
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
@@ -158,14 +160,15 @@ let expression_tag expr =
   | E_mod_in          _ -> 9
   | E_mod_alias       _ -> 10
   | E_raw_code        _ -> 11
+  | E_type_inst       _ -> 12
   (* Variant *)
-  | E_constructor     _ -> 12
-  | E_matching        _ -> 13
+  | E_constructor     _ -> 13
+  | E_matching        _ -> 14
   (* Record *)
-  | E_record          _ -> 14
-  | E_record_accessor _ -> 15
-  | E_record_update   _ -> 16
-  | E_module_accessor _ -> 17
+  | E_record          _ -> 15
+  | E_record_accessor _ -> 16
+  | E_record_update   _ -> 17
+  | E_module_accessor _ -> 18
 
 and declaration_tag = function
   | Declaration_constant _ -> 1
@@ -187,19 +190,23 @@ let rec expression a b =
   | E_mod_alias a, E_mod_alias b -> mod_alias a b
   | E_raw_code a, E_raw_code b -> raw_code a b
   | E_constructor a, E_constructor b -> constructor a b
+  | E_type_inst a, E_type_inst b -> type_inst a b
   | E_matching a, E_matching b -> matching a b
   | E_record a, E_record b -> record a b
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
   | E_module_accessor a, E_module_accessor b -> module_access expression a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _) ->
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _ | E_type_inst _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _ | E_type_inst _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
   cmp2 constant' ca cb (List.compare expression) a b
 
 and constant' = Compare_enum.constant'
+
+and type_inst ({forall=la;type_=a}) ({forall=lb;type_=b}) =
+  cmp2 expression la lb type_expression a b
 
 and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
@@ -215,13 +222,15 @@ and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb
     type_expression     fta ftb
     lambda               la  lb
 
-and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nma }} {let_binder=bb;rhs=rb;let_result=lb;attr = { inline=ab;no_mutation=nmb}} =
-  cmp5
+and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nma;view=va;public=pua }} {let_binder=bb;rhs=rb;let_result=lb;attr = { inline=ab;no_mutation=nmb;view=vb;public=pub}} =
+  cmp7
     expression_variable ba bb
     expression ra rb
     expression la lb
     bool  aa ab
     bool  nma nmb
+    bool  va vb
+    bool  pua pub
 
 and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_result=lb} =
   cmp3
@@ -304,23 +313,27 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb}} =
-  cmp5
+and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
+  cmp7
     (Option.compare String.compare) na nb
     expression_variable ba bb
     expression ea eb
     bool ia ib
     bool nma nmb
+    bool va vb
+    bool pua pub
 
-and declaration_type {type_binder=tba;type_expr=tea} {type_binder=tbb;type_expr=teb} =
-  cmp2
+and declaration_type {type_binder=tba;type_expr=tea;type_attr={public=pua}} {type_binder=tbb;type_expr=teb;type_attr={public=pub}} =
+  cmp3
     type_variable tba tbb
     type_expression tea teb
+    bool pua pub
 
-and declaration_module {module_binder=mba;module_= Module_Fully_Typed ma} {module_binder=mbb;module_= Module_Fully_Typed mb} =
- cmp2
+and declaration_module {module_binder=mba;module_= Module_Fully_Typed ma; module_attr={public=pua}} {module_binder=mbb;module_= Module_Fully_Typed mb; module_attr={public=pub}} =
+ cmp3
     module_variable mba mbb
     module_ ma mb
+    bool pua pub
 
 and module_alias : module_alias -> module_alias -> int
 = fun {alias = aa; binders = ba} {alias = ab; binders = bb} ->
@@ -351,14 +364,16 @@ let type_or_kind x y =
     let tag = function Ty _ -> 1 | Kind () -> 2 in
     Int.compare (tag x) (tag y)
 
-let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_=tb} =
-  cmp2
+let type_environment_binding {type_variable=va;type_=ta;public=pua} {type_variable=vb;type_=tb;public=pub} =
+  cmp3
     type_variable va vb
     type_or_kind ta tb
+    bool pua pub
 
 let type_environment = List.compare type_environment_binding
 
-let environment_element_definition_declaration {expression=ea;free_variables=fa} {expression=eb;free_variables=fb} =
+(* TODO: should the attributes be compared ? *)
+let environment_element_definition_declaration {expression=ea;free_variables=fa;attr=_} {expression=eb;free_variables=fb;attr=_} =
   cmp2
     expression ea eb
     free_variables fa fb
@@ -374,18 +389,20 @@ let rec environment_element {type_value=ta;definition=da} {type_value=tb;definit
     type_expression ta tb
     environment_element_definition da db
 
-and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
-  cmp2
+and environment_binding {expr_var=eva;env_elt=eea;public=pua} {expr_var=evb;env_elt=eeb;public=pub} =
+  cmp3
     expression_variable eva evb
     environment_element eea eeb
+    bool pua pub
 
 and expression_environment a b = List.compare environment_binding a b
 
-and module_environment_binding {module_variable=mva;module_=ma}
-                               {module_variable=mvb;module_=mb} =
-  cmp2
+and module_environment_binding {module_variable=mva;module_=ma;public=pua}
+                               {module_variable=mvb;module_=mb;public=pub} =
+  cmp3
     module_variable mva mvb
     environment    ma  mb
+    bool pua pub
 
 and module_environment a b = List.compare module_environment_binding a b
 

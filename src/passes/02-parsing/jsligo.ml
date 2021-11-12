@@ -22,6 +22,8 @@ module JsligoParser =
   struct
     module CST = CST
     include Parser
+
+    module Recovery = Parsing_jsligo.RecoverParser
   end
 
 include Parsing_shared.Common.MakeTwoParsers

@@ -46,8 +46,8 @@ let tokens_of = function
   Stdlib.Ok lex_units ->
     let apply tokens = function
       Core.Token token -> token::tokens
-    | Core.Markup (Markup.BlockCom c) -> Token.BlockCom c :: tokens
-    | Core.Markup (Markup.LineCom c) -> Token.LineCom c :: tokens
+    | Core.Markup (Markup.BlockCom {value; region}) -> Token.BlockCom (Token.wrap value region) :: tokens
+    | Core.Markup (Markup.LineCom {value; region}) -> Token.LineCom (Token.wrap value region) :: tokens
     | Core.Markup _ -> tokens
     | Core.Directive d -> Token.Directive d :: tokens
     in List.fold_left apply [] lex_units |> List.rev |> ok
@@ -82,12 +82,12 @@ let automatic_semicolon_insertion tokens =
     let (r, _) = Token.proj_token token in
     let (r2, _) = Token.proj_token t in
     if r#stop#line < r2#start#line  then (
-      inner (t :: SEMI (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop) :: token :: result) rest 
+      inner (t :: SEMI (Token.wrap ";" (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop)) :: token :: result) rest 
     )
     else (
       match token with 
         RBRACE _ as t -> 
-        inner (t :: SEMI (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop) :: token :: result) rest 
+        inner (t :: SEMI (Token.wrap ";" (Region.make ~start:(r#shift_one_uchar (-1))#stop ~stop:r#stop)) :: token :: result) rest 
       | _ ->
         inner (t :: token :: result) rest
     )
@@ -122,9 +122,10 @@ let attributes tokens =
   let rec inner result = function
     LineCom c :: tl
   | BlockCom c :: tl ->
-      let attributes = collect_attributes c.Region.value in
+      let attributes = collect_attributes c#payload in
       let attributes = List.map (fun e ->
-        Attr Region.{value = e; region = c.region}) attributes in
+        Attr (Token.wrap e c#region)
+      ) attributes in
       inner (attributes @ result) tl
   | hd :: tl -> inner (hd :: result) tl
   | [] -> List.rev result
@@ -139,7 +140,7 @@ let inject_zwsp lex_units =
   let open! Token in
   let rec aux acc = function
     [] -> List.rev acc
-  | (Core.Token GT _ as gt1)::(Core.Token GT reg :: _ as units) ->
+  | (Core.Token GT _ as gt1) :: (Core.Token GT reg :: _ as units) ->
       aux (Core.Token (ZWSP reg) :: gt1 :: acc) units
   | unit::units -> aux (unit::acc) units
   in aux [] lex_units
@@ -169,11 +170,47 @@ let print_token token =
 let print_tokens tokens =
   apply (fun tokens -> List.iter print_token tokens; tokens) tokens
 
+
+(* insert vertical bar for sum type *)
+
+let vertical_bar_insert tokens =
+  let open! Token in
+  let rec aux acc insert_token = function
+    (VBAR _ as hd) :: tl ->
+    aux (hd::acc) false tl
+  | (EQ _ as hd) :: tl ->
+    if insert_token then (
+      List.rev_append (hd :: VBAR (Token.wrap "|" Region.ghost) :: acc) tl
+    )
+    else (
+      List.rev_append (hd :: acc) tl
+    )
+  | (RBRACKET _ as hd) :: tl -> 
+    aux (hd::acc) true tl
+  | hd :: tl ->
+    aux (hd::acc) insert_token tl
+  | [] ->
+    List.rev acc
+  in
+  aux [] false tokens
+
+let vertical_bar_insert tokens =
+  let open! Token in
+  let rec aux acc = function 
+    (VBAR _ as hd) :: tl ->
+      aux (vertical_bar_insert (hd::acc)) tl
+  | hd :: tl -> aux (hd::acc) tl
+  | [] -> List.rev acc
+  in aux [] tokens
+
+let vertical_bar_insert units = apply vertical_bar_insert units
+
 (* COMPOSING FILTERS (exported) *)
 
 let filter =
   attributes
   <@ automatic_semicolon_insertion
+  <@ vertical_bar_insert
   (*  <@ print_tokens*)
   <@ tokens_of
   (*  <@ print_units*)

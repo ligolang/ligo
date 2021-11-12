@@ -104,6 +104,8 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_of_expr defuse result
   | E_module_accessor _ ->
      defuse, []
+  | E_type_inst {forall;_} ->
+     defuse_of_expr defuse forall
 
 and defuse_of_lambda defuse {binder; result} =
   remove_defined_var_after defuse binder defuse_of_expr result

@@ -21,7 +21,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_michelson_insertion_2.ligo" ] ;
   [%expect{xxx|
-File "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, characters 34-40:
+File "../../test/contracts/negative/bad_michelson_insertion_2.ligo", line 5, characters 32-40:
   4 |   const f : (nat -> nat -> nat)= [%Michelson ({| ADD |} : nat -> nat -> nat)];
   5 | } with ((nil: list(operation)), f (p, s))
 

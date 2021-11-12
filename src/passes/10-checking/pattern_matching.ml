@@ -106,9 +106,31 @@ let type_matchee ~raise : equations -> O.type_expression =
     let conforms : typed_pattern -> unit = fun (p,t) ->
       match p.wrap_content , t.type_content with
       | I.P_var _ , _ -> ()
-      | I.P_variant _ , O.T_sum _ -> ()
+      | I.P_variant (label,_) , O.T_sum sum_type -> (
+        if O.LMap.mem label sum_type.content then ()
+        else raise.raise @@ pattern_do_not_conform_type p t
+      )
       | I.P_variant _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> ()
-      | (P_tuple _ | P_record _) , O.T_record _ -> ()
+      | P_tuple tupl , O.T_record record_type -> (
+        if (List.length tupl) != (O.LMap.cardinal record_type.content) then
+          raise.raise @@ pattern_do_not_conform_type p t
+        else ()
+      )
+      | (P_record (lst,_)) , O.T_record record_type -> (
+        let compare = O.Compare.label in
+        let sorted_p = List.sort ~compare lst in
+        let sorted_l = List.sort ~compare (O.LMap.keys record_type.content) in
+        let open! List.Or_unequal_lengths in
+        let x = List.iter2 sorted_p sorted_l
+          ~f:(fun la lb ->
+            if O.Compare.label la lb = 0 then ()
+            else raise.raise @@ pattern_do_not_conform_type p t
+          )
+        in
+        match x with
+        | Ok () -> ()
+        | Unequal_lengths -> raise.raise @@ pattern_do_not_conform_type p t
+      )
       | I.P_unit , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.unit_name -> ()
       | I.P_list _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> ()
       | _ -> raise.raise @@ pattern_do_not_conform_type p t

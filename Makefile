@@ -17,6 +17,10 @@ build-deps:
 	then scripts/setup_switch.sh;
 	fi
 	eval $$(opam config env)
+# NEW-PROTOCOL-TEMPORARY
+	git submodule init
+	git pull --recurse
+# NEW-PROTOCOL-TEMPORARY
 #	Install OCaml build dependencies for Ligo
 	scripts/install_vendors_deps.sh
 

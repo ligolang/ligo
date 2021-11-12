@@ -104,14 +104,14 @@ let%expect_test _ =
          let #2 = #10 in
          let x = #11 in let x = ADD(ADD(x , A) , titi) in PAIR(LIST_EMPTY() , x)) in
       PAIR(PAIR(A , f) , PAIR(titi , toto))
+    let ../../test/contracts/build/F.mligo = let toto = L(44) in toto
+    let ../../test/contracts/build/G.mligo = let toto = L(43) in toto
     let ../../test/contracts/build/C.mligo =
       let A = ../../test/contracts/build/A.mligo[@inline] in
       let B = ../../test/contracts/build/B.mligo[@inline] in
       let tata = ADD(A , CAR(CDR(B))) in
       let foo = (CDR(CAR(B)))@(PAIR(L(unit) , L(3))) in
       PAIR(PAIR(A , B) , PAIR(foo , tata))
-    let ../../test/contracts/build/F.mligo = let toto = L(44) in toto
-    let ../../test/contracts/build/G.mligo = let toto = L(43) in toto
     let ../../test/contracts/build/E.mligo =
       let F = ../../test/contracts/build/F.mligo[@inline] in
       let G = ../../test/contracts/build/G.mligo[@inline] in
@@ -133,60 +133,12 @@ let%expect_test _ =
   [%expect{|
     { parameter int ;
       storage int ;
-      code { PUSH int 1 ;
-             PUSH int 42 ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+      code { PUSH int 42 ;
+             PUSH int 1 ;
              ADD ;
-             PUSH int 32 ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             PUSH int 1 ;
              PAIR ;
-             DUP 3 ;
-             DIG 2 ;
-             PAIR ;
-             LAMBDA
-               (pair (pair int int) (pair unit int))
-               (pair (list operation) int)
-               { UNPAIR ;
-                 UNPAIR ;
-                 DIG 2 ;
-                 CDR ;
-                 SWAP ;
-                 DUG 2 ;
-                 ADD ;
-                 ADD ;
-                 NIL operation ;
-                 PAIR } ;
-             SWAP ;
-             APPLY ;
-             DUP 3 ;
-             PAIR ;
-             PAIR ;
-             DUP ;
              CDR ;
-             CAR ;
-             DUP 3 ;
-             ADD ;
-             PUSH int 3 ;
-             PUSH unit Unit ;
-             PAIR ;
-             DUP 3 ;
-             CAR ;
-             CDR ;
-             SWAP ;
-             EXEC ;
-             PAIR ;
-             SWAP ;
-             DIG 2 ;
-             PAIR ;
-             PAIR ;
-             CAR ;
-             CDR ;
-             CDR ;
-             CAR ;
              PUSH int 10 ;
              ADD ;
              SWAP ;
@@ -225,7 +177,7 @@ let%expect_test _ =
   [%expect {| 44 |}]
 
 let%expect_test _ = 
-  run_ligo_good [ "run" ; "test" ;  contract "c.mligo" ] ;
+  run_ligo_good [ "run" ; "test" ;  contract "C1.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value (). |}]
@@ -235,3 +187,9 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "Xmain.mligo" ] ;
+  [%expect {|
+    { 1 ; 2 ; 3 } |}]
+    

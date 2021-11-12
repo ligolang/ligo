@@ -170,7 +170,6 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expression = fun f te ->
-  let module SSet = Set.Make (String) in
   let self = map_type_expression f in
   let te' = f te in
   let return type_content = { type_content; location=te.location } in
@@ -201,6 +200,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
   | T_abstraction x ->
     let x = Maps.for_all self x in
     return @@ T_abstraction x
+  | T_for_all x ->
+    let x = Maps.for_all self x in
+    return @@ T_for_all x
 
 and map_module_ : 'err mod_mapper -> module_ -> module_ = fun f m ->
   let m' = f m in
@@ -221,11 +223,15 @@ and map_module : 'err abs_mapper -> module_ -> module_ = fun m p ->
         let dm = { dm with module_ = map_module_ m' dm.module_} in
         (Declaration_module dm)
       )
+    | (Declaration_module dm, Expression m') -> (
+        let dm = Maps.declaration_module (map_expression m') (fun a -> a) dm in
+        (Declaration_module dm)
+      )
     | decl,_ -> decl
   in
-  let p = match m with 
-     Module m' -> map_module_ m' p 
-  | _ -> p 
+  let p = match m with
+     Module m' -> map_module_ m' p
+  | _ -> p
   in
   List.map ~f:(Location.map aux) p
 

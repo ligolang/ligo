@@ -6,8 +6,16 @@ open CST
 module Directive = LexerLib.Directive
 module Region = Simple_utils.Region
 open! Region
+module Utils = Simple_utils.Utils
 
 let sprintf = Printf.sprintf
+
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
 
 type state = <
   offsets  : bool;
@@ -49,11 +57,11 @@ let compact state (region: Region.t) =
 
 let print_nsepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.nsepseq -> unit =
+  ('a, _ Token.wrap) Utils.nsepseq -> unit =
   fun state sep print (head, tail) ->
     let print_aux (sep_reg, item) =
       let sep_line =
-        sprintf "%s: %s\n" (compact state sep_reg) sep in
+        sprintf "%s: %s\n" (compact state sep_reg#region) sep in
       Buffer.add_string state#buffer sep_line;
       print state item
     in print state head; List.iter print_aux tail
@@ -66,9 +74,9 @@ let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
 let print_csv state print (node : _ Region.reg) =
   print_nsepseq state "," print node.value
 
-let print_token state region lexeme =
+let print_token state token _lexeme =
   let line =
-    sprintf "%s: %s\n" (compact state region) lexeme
+    sprintf "%s: %s\n" (compact state token#region) token#payload
   in Buffer.add_string state#buffer line
 
 let print_var state {region; value} =
@@ -92,7 +100,8 @@ let print_pconstr state {region; value} =
 let print_attributes state attributes =
   let apply {value = attribute; region} =
     let attribute_formatted = sprintf "[@%s]" attribute in
-    print_token state region attribute_formatted
+    let token = Token.wrap attribute_formatted region in
+    print_token state token attribute_formatted
   in List.iter apply attributes
 
 let print_pvar state {region; value} =
@@ -161,7 +170,8 @@ and print_statement state = function
     print_let_decl state decl
 | SConst decl ->
     print_const_decl state decl
-| SType { value = {kwd_type; name; params; eq; type_expr}; _ } ->
+| SType { value = {attributes; kwd_type; name; params; eq; type_expr}; _ } ->
+    print_attributes  state attributes;
     print_token       state kwd_type "type";
     print_var         state name;
     print_type_params state params;
@@ -186,7 +196,8 @@ and print_statement state = function
     print_cases state cases;
     print_token state rbrace    "}"
 | SBreak b -> print_token state b "break"
-| SNamespace { value = (kwd_namespace, name, {value = {lbrace; inside; rbrace}; _}); _} ->
+| SNamespace { value = (kwd_namespace, name, {value = {lbrace; inside; rbrace}; _}, attributes); _} ->
+    print_attributes state attributes;
     print_token   state kwd_namespace "namespace";
     print_var     state name;
     print_token   state lbrace    "{";
@@ -258,23 +269,45 @@ and print_type_expr state = function
 | TString s       -> print_string state s
 | TModA ma        -> print_module_access print_type_expr state ma
 
-and print_module_access : type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
-fun f state {value; _} ->
+and print_module_access :
+type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
+  fun f state {value; _} ->
   let {module_name; selector; field} = value in
   print_var   state module_name;
   print_token   state selector ".";
-  f             state field;
+  f             state field
 
-and print_sum_type state {value; _} =
-  let {variants; attributes; lead_vbar} = value in
+and print_sum_type state (node : sum_type reg) =
+  let {variants; attributes; leading_vbar} : sum_type = node.value in
   print_attributes state attributes;
-  print_option state (fun state lead_vbar ->
-    print_token      state lead_vbar "|";
-  ) lead_vbar;
-  print_nsepseq    state "|" print_type_expr variants
+  (match leading_vbar with 
+    Some leading_vbar ->
+      print_token state leading_vbar "|"
+  | None -> ());
+  print_nsepseq state "|" print_variant variants.value
+  
+and print_variant state (node : variant reg) =
+  let {attributes; tuple} = node.value in
+  print_attributes    state attributes;
+  print_variant_tuple state tuple
+
+and print_variant_tuple state {value; _} =
+  let {lbracket; inside; rbracket} = value in
+  print_token        state lbracket "[";
+  print_variant_comp state inside;
+  print_token        state rbracket "]"
+
+and print_variant_comp state (node : variant_comp) =
+  let {constr; params} = node in
+  let () = print_var state constr in
+  match params with
+    None -> ()
+  | Some (comma, seq) ->
+     (print_token state comma ",";
+      print_nsepseq state "," print_type_expr seq)
 
 and print_fun_type_arg state {name; colon; type_expr} =
-  print_var     state name;
+  print_var       state name;
   print_token     state colon ":";
   print_type_expr state type_expr
 
@@ -314,7 +347,7 @@ and print_projection state (node: projection reg) =
       print_var   state value
   | Component { value = {lbracket; inside; rbracket}; _} ->
       print_token state lbracket "[";
-      print_expr state inside;
+      print_expr  state inside;
       print_token state rbracket "]"
 
 and print_cartesian state (node : cartesian) =
@@ -404,7 +437,6 @@ and print_pattern state = function
 | PConstr v ->   print_pconstr          state v
 | PDestruct d -> print_destruct_pattern state d
 | PObject o ->   print_object_pattern   state o
-| PWild w ->     print_token            state w "<wild>"
 | PArray a ->    print_array_pattern    state a
 
 and print_property state = function
@@ -423,9 +455,18 @@ and print_object state (node: object_expr) =
   print_nsepseq state "," (fun state property -> print_property state property) inside;
   print_token state rbrace "}"
 
-and print_assignment state (lhs, equals, rhs) =
+and print_assignment state (lhs, op, rhs) =
   print_expr state lhs;
-  print_token state equals "=";
+  let lexeme = match op.value with 
+    Eq -> " = "
+  | Assignment_operator Times_eq ->  " *= "  
+  | Assignment_operator Div_eq ->    " /= "
+  | Assignment_operator Min_eq ->    " -= "
+  | Assignment_operator Plus_eq ->   " += "
+  | Assignment_operator Mod_eq ->    " %= "
+  in
+  let token = Token.wrap lexeme op.region in
+  print_token state token lexeme;
   print_expr state rhs;
 
 and print_expr state = function
@@ -456,15 +497,17 @@ and print_constr_expr state {value; _} =
   | Some arg -> print_expr state arg
 
 and print_array_item state = function
-  Empty_entry r -> print_token state r "<empty>"
-| Expr_entry expr -> print_expr state expr
+  Expr_entry expr -> print_expr state expr
 | Rest_entry {value = {ellipsis; expr}; _} ->
   print_token state ellipsis "...";
   print_expr state expr
 
 and print_array state {value = {lbracket; inside; rbracket};_ } =
   print_token state lbracket "[";
-  print_nsepseq state "," print_array_item inside;
+  (match inside with 
+    Some inside -> 
+      print_nsepseq state "," print_array_item inside;
+  | None -> ());
   print_token state rbracket "]"
 
 and print_expr_par state {value; _} =
@@ -517,8 +560,9 @@ and print_arith_expr state = function
     print_token state op "-";
     print_expr  state arg
 | Int {region; value=lex,z} ->
-    let line = sprintf "Int %s (%s)" lex (Z.to_string z)
-    in print_token state region line
+    let line = sprintf "Int %s (%s)" lex (Z.to_string z) in 
+    let token = Token.wrap line region in
+    print_token state token line
 
 and print_string_expr state = function
   String s ->
@@ -716,8 +760,8 @@ and pp_statement state = function
 | SSwitch {value; region} ->
     pp_loc_node state "SSwitch" region;
     pp_switch_statement state value
-| SBreak b ->
-    pp_loc_node state "SBreak" b
+| SBreak kwd_break ->
+    pp_loc_node state "SBreak" kwd_break#region
 | SNamespace {value; region} ->
     pp_loc_node  state "SNamespace" region;
     pp_namespace state value
@@ -768,8 +812,9 @@ and pp_import state  {alias; module_path; _} =
   let aux p = pp_ident state p in
   List.iter aux items
 
-and pp_namespace state (n, name, {value = {inside = statements;_}; _}) =
-  pp_loc_node state "<namespace>" n;
+and pp_namespace state (n, name, {value = {inside = statements;_}; _}, attributes) =
+  pp_loc_node state "<namespace>" n#region;
+  pp_attributes state attributes;
   pp_ident    state name;
   let statements = Utils.nsepseq_to_list statements in
   let apply len rank = pp_statement (state#pad len rank) in
@@ -851,8 +896,6 @@ and pp_pattern state = function
     let properties = Utils.nsepseq_to_list inside in
     let apply len rank = pp_pattern (state#pad len rank) in
     List.iteri (List.length properties |> apply) properties
-| PWild r ->
-    pp_loc_node state "<wild>" r;
 | PArray {value = {inside; _}; region} ->
     pp_loc_node state "<array>" region;
     let items = Utils.nsepseq_to_list inside in
@@ -917,9 +960,13 @@ and pp_expr state = function
     pp_bytes state b
 | EArray {value = {inside; _}; region} ->
     pp_loc_node state "EArray" region;
-    let items  = Utils.nsepseq_to_list inside in
-    let apply len rank = pp_array_item (state#pad len rank) in
-    List.iteri (List.length items |> apply) items
+    (match inside with 
+      Some inside ->
+        let items  = Utils.nsepseq_to_list inside in
+        let apply len rank = pp_array_item (state#pad len rank) in
+        List.iteri (List.length items |> apply) items
+    | None -> 
+        pp_loc_node state "<empty>" region)
 | EConstr e_constr ->
     pp_node state "EConstr";
     pp_constr_expr (state#pad 1 0) e_constr
@@ -966,8 +1013,7 @@ and pp_constr_expr state (node: (constr * expr option) reg) =
      pp_expr  (state#pad 2 1) expr
 
 and pp_array_item state = function
-  Empty_entry _ -> pp_node state "<empty>"
-| Expr_entry e ->
+  Expr_entry e ->
     pp_node state "<expr>";
     pp_expr (state#pad 1 0) e
 | Rest_entry {value; region} ->
@@ -1189,16 +1235,37 @@ and pp_fun_type_args state {inside; _} =
   List.iteri (List.length fun_type_args |> apply) fun_type_args
 
 and pp_sum_type state {variants; attributes; _} =
-  let variants = Utils.nsepseq_to_list variants in
+  let variants = Utils.nsepseq_to_list variants.value in
   let arity    = List.length variants in
   let arity    = if attributes = [] then arity else arity+1 in
   let apply arity rank variant =
-    let state = state#pad arity rank in
-    pp_type_expr state variant in
+    let state = state#pad arity rank
+    in pp_variant state variant in
   let () = List.iteri (apply arity) variants in
   if attributes <> [] then
     let state = state#pad arity (arity-1)
     in pp_attributes state attributes
+
+and pp_variant state (node : variant reg) =
+  let {attributes; tuple; _} = node.value in
+  let arity = if attributes = [] then 0 else 1 in
+  let {constr; params} = tuple.value.inside in
+  let params =
+    match params with
+      None -> []
+    | Some (_, seq) -> Utils.nsepseq_to_list seq in
+  let arity = if params = [] then arity else arity+1 in
+  let rank = 0 in
+  let () = pp_ident state constr in
+  let rank =
+    match params with
+      [] -> rank
+    | components ->
+        let apply len rank = pp_type_expr (state#pad len rank)
+        in List.iteri (List.length components |> apply) components; rank+1 in
+  let () = if attributes <> [] then
+             pp_attributes (state#pad arity rank) attributes
+  in ()
 
 and pp_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in

@@ -6,7 +6,12 @@ open Function
 
 (* Utils *)
 
-let ghost = Region.ghost
+let ghost = 
+  object 
+    method region = Region.ghost 
+    method attributes = []
+    method payload = ""
+  end 
 
 let wrap = Region.wrap_ghost
 
@@ -149,6 +154,7 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> CST.type_expr = 
     | _ -> failwith "unsupported singleton"
   )
   | T_abstraction x -> decompile_type_expr dialect x.type_
+  | T_for_all x -> decompile_type_expr dialect x.type_
 
 let get_e_variable : AST.expression -> _ = fun expr ->
   match expr.expression_content with
@@ -363,9 +369,9 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     in
     return @@ (Some lst, expr)
   | E_type_in {type_binder;rhs;let_result} ->
-    let kwd_type = Region.ghost
+    let kwd_type = ghost
     and name = decompile_variable type_binder
-    and kwd_is = Region.ghost in
+    and kwd_is = ghost in
     let type_expr = decompile_type_expr dialect rhs in
     let terminator = terminator dialect in
     let tin = wrap @@ (CST.{kwd_type; name; kwd_is; type_expr; terminator ; params = None}) in
@@ -376,9 +382,9 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     in
     return @@ (Some lst, expr)
   | E_mod_in {module_binder;rhs;let_result} ->
-    let kwd_module = Region.ghost
+    let kwd_module = ghost
     and name = wrap module_binder
-    and kwd_is = Region.ghost in
+    and kwd_is = ghost in
     let module_ = decompile_module ~dialect rhs in
     let terminator = terminator dialect in
     let enclosing  = module_enclosing dialect in
@@ -713,10 +719,10 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
-    Declaration_type {type_binder;type_expr} ->
-    let kwd_type = Region.ghost
+    Declaration_type {type_binder;type_expr; type_attr=_} ->
+    let kwd_type = ghost
     and name = decompile_variable type_binder
-    and kwd_is = Region.ghost in
+    and kwd_is = ghost in
     let (params : CST.type_vars option) =
       match type_expr.type_content with
       | T_abstraction _ -> (
@@ -759,18 +765,18 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
       CST.ConstDecl (wrap const_decl)
   )
   | Declaration_module {module_binder;module_} ->
-    let kwd_module = Region.ghost
+    let kwd_module = ghost
     and name = wrap module_binder
-    and kwd_is = Region.ghost in
+    and kwd_is = ghost in
     let module_ = decompile_module ~dialect module_ in
     let terminator = terminator dialect in
     let enclosing = module_enclosing dialect in
     CST.ModuleDecl (wrap (CST.{kwd_module; name; kwd_is; enclosing; module_; terminator}))
   | Module_alias {alias;binders} ->
-    let kwd_module = Region.ghost
+    let kwd_module = ghost
     and alias   = wrap alias
     and binders = nelist_to_npseq @@ List.Ne.map wrap binders
-    and kwd_is = Region.ghost in
+    and kwd_is = ghost in
     let terminator = terminator dialect in
     CST.ModuleAlias (wrap (CST.{kwd_module; alias; kwd_is; binders; terminator}))
   

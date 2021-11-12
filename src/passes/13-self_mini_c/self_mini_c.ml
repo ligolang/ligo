@@ -52,6 +52,7 @@ let is_pure_constant : constant' -> bool =
   | C_PAIRING_CHECK
   | C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE
+  | C_OPEN_CHEST
     -> true
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
@@ -102,6 +103,7 @@ let is_pure_constant : constant' -> bool =
   | C_SELF
   | C_SELF_ADDRESS
   | C_IMPLICIT_ACCOUNT
+  | C_VIEW
   (* Test - ligo interpreter, should never end up here *)
   | C_TEST_ORIGINATE
   | C_TEST_GET_STORAGE
@@ -136,6 +138,9 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
   | C_TEST_ORIGINATE_FROM_FILE
   | C_TEST_SET_BIG_MAP
+  | C_TEST_CAST_ADDRESS
+  | C_TEST_CREATE_CHEST
+  | C_TEST_CREATE_CHEST_KEY
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

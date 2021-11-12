@@ -71,6 +71,7 @@ let rec assert_type_expression_eq ~raise (a, b: (type_expression * type_expressi
     let () = assert_type_expression_eq ~raise (x.type_, y.type_) in
     ()
   | T_abstraction _, _ -> raise.raise @@ different_types a b
+  | T_for_all _, _ -> raise.raise @@ different_types a b
   | T_singleton _ , _ -> failwith "TODO: mmmh, not sure comparing singleton should happen (?)"
 
 (* No information about what made it fail *)

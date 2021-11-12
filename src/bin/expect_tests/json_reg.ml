@@ -37,7 +37,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -98,7 +99,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -159,7 +161,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -220,7 +223,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -318,7 +322,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -446,7 +451,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -574,7 +580,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -890,7 +897,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -1051,7 +1059,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -1112,7 +1121,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -1173,7 +1183,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -1234,7 +1245,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -1395,7 +1407,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [
@@ -1563,7 +1576,8 @@ let%expect_test _ =
               }
             }
           ]
-        }
+        },
+        "type_attr": { "attributes": [] }
       }
     ],
     "location": [

@@ -73,6 +73,9 @@ let rec is_dup (t : type_expression) =
                      |> List.filter ~f:(fun v -> not (is_dup v)) in
      List.is_empty row_types
   | T_arrow _ -> true
+  | T_variable _ -> true
+  | T_abstraction {type_} -> is_dup type_
+  | T_for_all {type_} -> is_dup type_
   | _ -> false
 
 let muchuse_union (x,a) (y,b) =
@@ -144,6 +147,8 @@ let rec muchuse_of_expr expr : muchuse =
      muchuse_of_expr let_result
   | E_mod_alias {result;_} ->
      muchuse_of_expr result
+  | E_type_inst {forall;_} ->
+     muchuse_of_expr forall
   | E_module_accessor {element;module_name} ->
      match element.expression_content with
      | E_variable v ->

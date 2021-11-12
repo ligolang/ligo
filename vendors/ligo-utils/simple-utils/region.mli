@@ -80,17 +80,7 @@ type t = <
 
   to_string : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
   compact   : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
-  markup    : markup list
 >
-
-and markup = 
-  BlockCom of string reg * comment_position
-| LineCom of string reg * comment_position
-
-and comment_position = 
-  Before
-| After
-| Inline
 
 (** The type [region] is a synonym of [t] to use after [open Region].
  *)
@@ -111,10 +101,6 @@ exception Invalid
     @raise [Invalid]
  *)
 val make : start:Pos.t -> stop:Pos.t -> t
-
-
-(** Set markup of a Region *)
-val set_markup : t -> markup list -> t
 
 (** {1 Special regions} *)
 

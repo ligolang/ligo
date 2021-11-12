@@ -2,9 +2,7 @@ type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.e
 
 type all =
 [
- | `Build_error_tracer of all
- | `Build_dependency_cycle of string
- | `Build_corner_case of string * string (* TO REMOVE *)
+ | `Build_error_tracer of BuildSystem.Errors.t
 
  | `Main_invalid_generator_name of string
  | `Main_invalid_syntax_name of string

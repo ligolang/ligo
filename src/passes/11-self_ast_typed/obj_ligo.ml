@@ -18,13 +18,13 @@ let rows : ('a -> unit) -> rows -> unit
   ()
 
 let rec traverse_type_expression : 'err ty_exp_mapper -> type_expression -> unit  = fun f te ->
-  let module SSet = Set.Make (String) in
   let open Stage_common in
   let self = traverse_type_expression f in
   let () = f te in
   match te.type_content with
   | T_sum temap -> rows self temap
   | T_abstraction x -> self x.type_
+  | T_for_all x -> self x.type_
   | T_record temap -> rows self temap
   | T_arrow arr ->
      let _ = Maps.arrow self arr in

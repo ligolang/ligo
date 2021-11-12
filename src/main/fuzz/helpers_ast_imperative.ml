@@ -152,9 +152,9 @@ module Fold_helpers(M : Monad) = struct
 
   (* Declaration *)
   let declaration_type : ('a -> 'b monad) -> 'a declaration_type -> ('b declaration_type) monad
-    = fun g {type_binder; type_expr} ->
+    = fun g {type_binder; type_expr; type_attr} ->
     let* type_expr = g type_expr in
-    ok @@ {type_binder; type_expr}
+    ok @@ {type_binder; type_expr; type_attr}
 
   let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) declaration_constant -> (('b,'d) declaration_constant) monad
     = fun f g {name; binder=b; attr; expr} ->
@@ -163,9 +163,9 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {name;binder;attr;expr}
 
   let rec declaration_module : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) declaration_module -> (('b,'d) declaration_module) monad
-    = fun f g {module_binder; module_} ->
+    = fun f g {module_binder; module_;module_attr} ->
     let* module_ = module' f g module_ in
-    ok @@ {module_binder;module_}
+    ok @@ {module_binder;module_;module_attr}
 
   and module_alias
     = fun ma ->

@@ -135,6 +135,8 @@ let constant' = function
   | C_IMPLICIT_ACCOUNT         -> `List [`String "C_IMPLICIT_ACCOUNT"; `Null ]
   | C_SET_DELEGATE             -> `List [`String "C_SET_DELEGATE"; `Null ]
   | C_CREATE_CONTRACT          -> `List [`String "C_CREATE_CONTRACT"; `Null ]
+  | C_OPEN_CHEST               -> `List [`String "C_OPEN_CHEST"; `Null ]
+  | C_VIEW                     -> `List [`String "C_VIEW"; `Null ]
   | C_TEST_ORIGINATE           -> `List [`String "TEST_ORIGINATE"; `Null ]
   | C_TEST_ORIGINATE_FROM_FILE -> `List [`String "TEST_ORIGINATE_FROM_FILE"; `Null ]
   | C_TEST_SET_NOW             -> `List [`String "TEST_SET_NOW"; `Null ]
@@ -168,6 +170,9 @@ let constant' = function
   | C_TEST_TO_ENTRYPOINT       -> `List [`String "TEST_TO_ENTRYPOINT"; `Null ]
   | C_TEST_TO_TYPED_ADDRESS    -> `List [`String "TEST_TO_TYPED_ADDRESS"; `Null ]
   | C_TEST_SET_BIG_MAP         -> `List [`String "TEST_SET_BIG_MAP"; `Null ]
+  | C_TEST_CAST_ADDRESS        -> `List [`String "C_TEST_CAST_ADDRESS"; `Null ]
+  | C_TEST_CREATE_CHEST        -> `List [`String "C_TEST_CREATE_CHEST"; `Null ]
+  | C_TEST_CREATE_CHEST_KEY    -> `List [`String "C_TEST_CREATE_CHEST_KEY"; `Null ]
   | C_SHA3                     -> `List [`String "SHA3"; `Null ]
   | C_KECCAK                   -> `List [`String "KECCAK"; `Null ]
   | C_LEVEL                    -> `List [`String "LEVEL"; `Null ]
@@ -304,7 +309,7 @@ let type_in expression type_expression {type_binder;rhs;let_result} =
   `Assoc [
     ("let_binder", type_variable_to_yojson type_binder );
     ("rhs", type_expression rhs);
-    ("let_result", expression let_result);
+    ("let_result", expression let_result)
   ]
 
 let raw_code expression {language;code} =
@@ -431,10 +436,11 @@ let match_exp expression type_expression {matchee ; cases} =
     ("cases", list (match_case expression type_expression) cases) ;
   ]
 
-let declaration_type type_expression {type_binder; type_expr} =
+let declaration_type type_expression {type_binder; type_expr; type_attr} =
   `Assoc [
     ("type_binder", type_variable_to_yojson type_binder);
     ("type_expr", type_expression type_expr);
+    ("type_attr", attributes type_attr)
   ]
 
 let declaration_constant expression type_expression {name; binder=b;attr;expr} =
@@ -445,10 +451,11 @@ let declaration_constant expression type_expression {name; binder=b;attr;expr} =
     ("attribute", attributes attr);
   ]
 
-let rec declaration_module expression type_expression {module_binder;module_} =
+let rec declaration_module expression type_expression {module_binder;module_;module_attr} =
   `Assoc [
     ("module_binder", module_variable_to_yojson module_binder);
     ("module_", (module' expression type_expression) module_);
+    ("module_attr", attributes module_attr);
   ]
 
 and module_alias ({alias;binders} : module_alias) =

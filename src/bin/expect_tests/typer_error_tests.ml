@@ -56,7 +56,7 @@ let%expect_test _ =
       7 |   42
 
     Invalid type(s).
-    Expected: "sum[False -> unit , True -> unit]", but got: "int". |} ] ;
+    Expected: "bool", but got: "int". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_type_record_update.mligo" ] ;
   [%expect {|
@@ -66,7 +66,7 @@ let%expect_test _ =
       8 |   x
 
     Invalid type(s).
-    Expected: "int", but got: "sum[False -> unit , True -> unit]". |} ] ;
+    Expected: "int", but got: "bool". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.mligo" ] ;
   [%expect {|
@@ -96,8 +96,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s).
-    Expected: "( int * string * sum[False -> unit , True -> unit] )", but got: "
-    ( int * string )". |} ] ;
+    Expected: "( int * string * bool )", but got: "( int * string )". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|
@@ -107,8 +106,7 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , c -> sum[False -> unit , True -> unit] , d -> string]", but got: "
-    record[a -> int , b -> string , c -> sum[False -> unit , True -> unit]]". |} ] ;
+    Expected: "record[a -> int , c -> bool , d -> string]", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_5.mligo" ] ;
   [%expect {|
@@ -126,7 +124,7 @@ let%expect_test _ =
 
     Invalid type(s).
     Expected: "map (int , string)", but got: "map (int ,
-    sum[False -> unit , True -> unit])". |} ] ;
+    bool)". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_7.mligo" ] ;
   [%expect {|
@@ -136,11 +134,11 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> sum[False -> unit , True -> unit]]". |} ] ;
+    Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 38-60:
+    File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 31-60:
       9 | let main = ([param, oldStorage] : [action, storage]) : [list<operation>, storage] => {
      10 |     let newStorage : storage = addone (oldStorage, 1 as nat);
      11 |     return [list([]) as list<operation>, newStorage];

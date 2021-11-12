@@ -169,7 +169,7 @@ let while_loop : ('acc -> 'a -> 'b) -> 'acc -> 'a while_loop -> 'acc
 
 (* Declaration *)
 let declaration_type : ('acc -> 'a -> 'acc) -> 'acc -> 'a declaration_type -> 'acc
-= fun g acc {type_binder=_; type_expr} ->
+= fun g acc {type_binder=_; type_expr; type_attr=_} ->
   let acc = g acc type_expr in
   acc
 
@@ -180,7 +180,7 @@ let declaration_constant : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc 
   acc
 
 let rec declaration_module : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) declaration_module -> 'acc
-= fun f g acc {module_binder=_;module_} ->
+= fun f g acc {module_binder=_;module_;module_attr=_} ->
   let acc = module' f g acc module_ in
    acc
 

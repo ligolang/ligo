@@ -1,90 +1,99 @@
-%{
-module Token = Lexing_cameligo.Token
-%}
+(* Note: All external symbols here should be unqualified because this file is used
+         by [menhir] that does not always insert the [%{..%}] header. So we work
+         around it by the [-open Module] option in [dune] but symbols should be
+         unqualified.
 
+         Also, keep in mind that [ParToken.mly] and [Parser.mly] are merging into
+         one file and the header of [Parser.mly] affects this code.
+         For example: [lexeme] type comes from [open CST] *)
+
+%[@recover.prelude
+  open Lexing_shared.Wrap
+  module Region = Simple_utils.Region
+ ]
 (* Tokens (mirroring thise defined in module Token) *)
 
   (* Literals *)
 
-%token               <LexerLib.Directive.t> Directive "<directive>"
-%token                  <string Region.reg> String    "<string>"
-%token                  <string Region.reg> Verbatim  "<verbatim>"
-%token  <(Token.lexeme * Hex.t) Region.reg> Bytes     "<bytes>"
-%token          <(string * Z.t) Region.reg> Int       "<int>"
-%token          <(string * Z.t) Region.reg> Nat       "<nat>"
-%token          <(string * Z.t) Region.reg> Mutez     "<mutez>"
-%token                  <string Region.reg> Ident     "<ident>"
-%token                  <string Region.reg> UIdent    "<uident>"
-%token                  <string Region.reg> Attr      "[@attr]"
-%token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
+%token               <LexerLib.Directive.t> Directive "<directive>" [@recover.expr Linemarker (Region.wrap_ghost (0, "<invalid-path>", None)) ]
+%token                  <string Wrap.wrap> String    "<string>" [@recover.expr wrap_ghost "<invalid-string-literal>"]
+%token                  <string Wrap.wrap> Verbatim  "<verbatim>" [@recover.expr wrap_ghost "<invalid-verbatim-literal>"]
+%token        <(lexeme * Hex.t) Wrap.wrap> Bytes     "<bytes>" [@recover.expr wrap_ghost ("<invalid-bytes-literal>", `Hex "")]
+%token          <(string * Z.t) Wrap.wrap> Int       "<int>" [@recover.expr wrap_ghost ("<invalid-int-literal>", Z.zero)]
+%token          <(string * Z.t) Wrap.wrap> Nat       "<nat>" [@recover.expr wrap_ghost ("<invalid-nat-literal>", Z.zero)]
+%token          <(string * Z.t) Wrap.wrap> Mutez     "<mutez>" [@recover.expr wrap_ghost ("<invalid-mutez-literal>", Z.zero)]
+%token                  <string Wrap.wrap> Ident     "<ident>" [@recover.expr wrap_ghost "<invalid-ident>"]
+%token                  <string Wrap.wrap> UIdent    "<uident>" [@recover.expr wrap_ghost "<invalid-uident>"]
+%token                  <string Wrap.wrap> Attr      "[@attr]" [@recover.expr wrap_ghost "<invalid-attr-literal>"]
+%token      <lexeme Region.reg Region.reg> Lang      "[%lang" [@recover.expr Region.wrap_ghost @@ Region.wrap_ghost "<invalid-lang-literal>"]
 
   (* Symbols *)
 
-%token <Region.t> MINUS   "-"
-%token <Region.t> PLUS    "+"
-%token <Region.t> SLASH   "/"
-%token <Region.t> TIMES   "*"
+%token <lexeme Wrap.wrap> MINUS   "-" [@recover.expr wrap_ghost "-"]
+%token <lexeme Wrap.wrap> PLUS    "+" [@recover.expr wrap_ghost "+"]
+%token <lexeme Wrap.wrap> SLASH   "/" [@recover.expr wrap_ghost "/"]
+%token <lexeme Wrap.wrap> TIMES   "*" [@recover.expr wrap_ghost "*"]
 
-%token <Region.t> LPAR     "("
-%token <Region.t> RPAR     ")"
-%token <Region.t> LBRACKET "["
-%token <Region.t> RBRACKET "]"
-%token <Region.t> LBRACE   "{"
-%token <Region.t> RBRACE   "}"
+%token <lexeme Wrap.wrap> LPAR     "(" [@recover.expr wrap_ghost "("]
+%token <lexeme Wrap.wrap> RPAR     ")" [@recover.expr wrap_ghost ")"]
+%token <lexeme Wrap.wrap> LBRACKET "[" [@recover.expr wrap_ghost "["]
+%token <lexeme Wrap.wrap> RBRACKET "]" [@recover.expr wrap_ghost "]"]
+%token <lexeme Wrap.wrap> LBRACE   "{" [@recover.expr wrap_ghost "{"]
+%token <lexeme Wrap.wrap> RBRACE   "}" [@recover.expr wrap_ghost "}"]
 
-%token <Region.t> ARROW "->"
-%token <Region.t> CONS  "::"
-%token <Region.t> CARET "^"
-(*%token <Region.t> APPEND "@" *)
-%token <Region.t> DOT   "."
+%token <lexeme Wrap.wrap> ARROW "->" [@recover.expr wrap_ghost "->"]
+%token <lexeme Wrap.wrap> CONS  "::" [@recover.expr wrap_ghost "::"]
+%token <lexeme Wrap.wrap> CARET "^" [@recover.expr wrap_ghost "^"]
+(*%token <lexeme Wrap.wrap> APPEND "@" *)
+%token <lexeme Wrap.wrap> DOT   "." [@recover.expr wrap_ghost "."]
 
-%token <Region.t> COMMA ","
-%token <Region.t> SEMI  ";"
-%token <Region.t> COLON ":"
-%token <Region.t> VBAR  "|"
+%token <lexeme Wrap.wrap> COMMA "," [@recover.expr wrap_ghost ","]
+%token <lexeme Wrap.wrap> SEMI  ";" [@recover.expr wrap_ghost ";"]
+%token <lexeme Wrap.wrap> COLON ":" [@recover.expr wrap_ghost ":"]
+%token <lexeme Wrap.wrap> VBAR  "|" [@recover.expr wrap_ghost "|"]
 
-%token <Region.t> WILD  "_"
+%token <lexeme Wrap.wrap> WILD  "_" [@recover.expr wrap_ghost "_"]
 
-%token <Region.t> EQ "="
-%token <Region.t> NE "<>"
-%token <Region.t> LT "<"
-%token <Region.t> GT ">"
-%token <Region.t> LE "<="
-%token <Region.t> GE ">="
+%token <lexeme Wrap.wrap> EQ "=" [@recover.expr wrap_ghost "="]
+%token <lexeme Wrap.wrap> NE "<>" [@recover.expr wrap_ghost "<>"]
+%token <lexeme Wrap.wrap> LT "<" [@recover.expr wrap_ghost "<"]
+%token <lexeme Wrap.wrap> GT ">" [@recover.expr wrap_ghost ">"]
+%token <lexeme Wrap.wrap> LE "<=" [@recover.expr wrap_ghost "<="]
+%token <lexeme Wrap.wrap> GE ">=" [@recover.expr wrap_ghost ">="]
 
-%token <Region.t> BOOL_OR  "||"
-%token <Region.t> BOOL_AND "&&"
-%token <Region.t> QUOTE    "'"
+%token <lexeme Wrap.wrap> BOOL_OR  "||" [@recover.expr wrap_ghost "||"]
+%token <lexeme Wrap.wrap> BOOL_AND "&&" [@recover.expr wrap_ghost "&&"]
+%token <lexeme Wrap.wrap> QUOTE    "'" [@recover.expr wrap_ghost "'"]
 
  (* Keywords *)
 
 (*%token And*)
-%token <Region.t> Begin  "begin"
-%token <Region.t> Else   "else"
-%token <Region.t> End    "end"
-%token <Region.t> Fun    "fun"
-%token <Region.t> Rec    "rec"
-%token <Region.t> If     "if"
-%token <Region.t> In     "in"
-%token <Region.t> Let    "let"
-%token <Region.t> Match  "match"
-%token <Region.t> Mod    "mod"
-%token <Region.t> Land   "land"
-%token <Region.t> Lor    "lor"
-%token <Region.t> Lxor   "lxor"
-%token <Region.t> Lsl    "lsl"
-%token <Region.t> Lsr    "lsr"
-%token <Region.t> Not    "not"
-%token <Region.t> Of     "of"
-%token <Region.t> Or     "or"
-%token <Region.t> Then   "then"
-%token <Region.t> Type   "type"
-%token <Region.t> With   "with"
-%token <Region.t> Module "module"
-%token <Region.t> Struct "struct"
+%token <lexeme Wrap.wrap> Begin  "begin" [@recover.expr wrap_ghost "begin"]
+%token <lexeme Wrap.wrap> Else   "else" [@recover.expr wrap_ghost "else"]
+%token <lexeme Wrap.wrap> End    "end" [@recover.expr wrap_ghost "end"]
+%token <lexeme Wrap.wrap> Fun    "fun" [@recover.expr wrap_ghost "fun"]
+%token <lexeme Wrap.wrap> Rec    "rec" [@recover.expr wrap_ghost "rec"]
+%token <lexeme Wrap.wrap> If     "if" [@recover.expr wrap_ghost "if"]
+%token <lexeme Wrap.wrap> In     "in" [@recover.expr wrap_ghost "in"]
+%token <lexeme Wrap.wrap> Let    "let" [@recover.expr wrap_ghost "let"]
+%token <lexeme Wrap.wrap> Match  "match" [@recover.expr wrap_ghost "match"]
+%token <lexeme Wrap.wrap> Mod    "mod" [@recover.expr wrap_ghost "mod"]
+%token <lexeme Wrap.wrap> Land   "land" [@recover.expr wrap_ghost "land"]
+%token <lexeme Wrap.wrap> Lor    "lor" [@recover.expr wrap_ghost "lor"]
+%token <lexeme Wrap.wrap> Lxor   "lxor" [@recover.expr wrap_ghost "lxor"]
+%token <lexeme Wrap.wrap> Lsl    "lsl" [@recover.expr wrap_ghost "lsl"]
+%token <lexeme Wrap.wrap> Lsr    "lsr" [@recover.expr wrap_ghost "lsr"]
+%token <lexeme Wrap.wrap> Not    "not" [@recover.expr wrap_ghost "not"]
+%token <lexeme Wrap.wrap> Of     "of" [@recover.expr wrap_ghost "of"]
+%token <lexeme Wrap.wrap> Or     "or" [@recover.expr wrap_ghost "or"]
+%token <lexeme Wrap.wrap> Then   "then" [@recover.expr wrap_ghost "then"]
+%token <lexeme Wrap.wrap> Type   "type" [@recover.expr wrap_ghost "type"]
+%token <lexeme Wrap.wrap> With   "with" [@recover.expr wrap_ghost "with"]
+%token <lexeme Wrap.wrap> Module "module" [@recover.expr wrap_ghost "module"]
+%token <lexeme Wrap.wrap> Struct "struct" [@recover.expr wrap_ghost "struct"]
 
   (* Virtual tokens *)
 
-%token <Region.t> EOF
+%token <lexeme Wrap.wrap> EOF [@recover.expr wrap_ghost ""]
 
 %%

@@ -135,7 +135,6 @@ let rec vars_of_pattern ~raise env = function
     if VarSet.mem property env then
       raise.raise (non_linear_pattern property)
     else VarSet.add property env
-| PWild _
 | PRest _ ->
     env
 
@@ -154,38 +153,23 @@ and check_patterns ~raise patterns =
 
 (* Checking variants for duplicates *)
 
-let check_variants ~raise variants =
-  let rec add acc = function
-    TString value
-  | TVar value ->
-      if VarSet.mem value acc then
-        raise.raise @@ duplicate_variant value
-      else VarSet.add value acc
-  | TProd {inside = {value = {inside; _}; _}; _ } as t -> (
-    let items = Utils.nsepseq_to_list inside in
-    match items with
-      hd :: [] -> add acc hd
-    | TString _ as hd :: _ -> add acc hd
-    | _ -> 
-      raise.raise @@ not_supported_variant t
-      )
-  | _ as t -> 
-    raise.raise @@ not_supported_variant t
-  in
+let check_variants ~raise (variants: variant reg list) =
+  let add acc (variant: variant reg) =
+    let constr = variant.value.tuple.value.inside.constr in
+    if VarSet.mem constr acc then
+      raise.raise @@ duplicate_variant constr
+    else VarSet.add constr acc in
   let variants =
     List.fold ~f:add ~init:VarSet.empty variants
   in ignore variants
 
 (* Checking variants for reserved constructor *)
 
-let check_reserved_constructors ~raise (vars : type_expr list) =
-  let f = fun  x ->
-    match x with
-    | TString x
-    | TProd {inside = {value = {inside = (TString x, _); _}; _}; _} ->
-      if SSet.mem x.value reserved_ctors then
-        raise.raise @@ reserved_name x
-    | _ -> ()
+let check_reserved_constructors ~raise (vars : variant reg list) =
+  let f = fun (variant: variant reg) ->
+    let constr = variant.value.tuple.value.inside.constr in
+    if SSet.mem constr.value reserved_ctors then
+      raise.raise @@ reserved_name constr
   in
   List.iter ~f vars
 
@@ -203,7 +187,7 @@ let check_fields ~raise fields =
 let peephole_type ~raise : unit -> type_expr -> unit = fun _ t ->
   match t with
     TSum {value; _} ->
-      let lst = Utils.nsepseq_to_list value.variants in
+      let lst = Utils.nsepseq_to_list value.variants.value in
       let () = check_variants ~raise lst in
       let () = check_reserved_constructors ~raise lst in
     ()
@@ -236,7 +220,7 @@ let rec peephole_statement ~raise : unit -> statement -> unit = fun _ s ->
     SExpr e -> 
     let () = peephole_expression () e in
     ()
-  | SNamespace {value = (_, name, _); _} ->
+  | SNamespace {value = (_, name, _, _); _} ->
     let () = check_reserved_name ~raise name in 
     ()
   | SExport {value = (_, e); _} -> 

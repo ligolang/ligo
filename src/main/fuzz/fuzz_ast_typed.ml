@@ -270,6 +270,7 @@ module Mutator = struct
       e, Option.some_if (b && not (Location.is_dummy_or_generated e.location)) (e.location, e)
     )
     | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
+    | E_type_inst _ as e' -> [ (return e'), None ]
 
   and mutate_cases : matching_expr -> (matching_expr * mutation option) list = fun m ->
     match m with
@@ -297,9 +298,9 @@ module Mutator = struct
           ({location; wrap_content = Declaration_constant {name; binder; expr ; attr}} : declaration location_wrap), mutation
       )
       | Declaration_type t -> [ ({location; wrap_content = Declaration_type t} : declaration location_wrap), None ]
-      | Declaration_module {module_binder;module_} ->
+      | Declaration_module {module_binder;module_; module_attr} ->
          let+ module_, mutation = mutate_module module_ in
-         ({location; wrap_content = Declaration_module {module_binder; module_}} : declaration location_wrap), mutation
+         ({location; wrap_content = Declaration_module {module_binder; module_; module_attr}} : declaration location_wrap), mutation
       | Module_alias _ -> [ ({location; wrap_content = x} : declaration location_wrap), None ]
     in
     let* p, mutation = combine_list p (List.map ~f:aux p) in

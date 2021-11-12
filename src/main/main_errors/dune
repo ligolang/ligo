@@ -4,6 +4,7 @@
   (instrumentation (backend bisect_ppx))
   (libraries
     simple-utils
+    BuildSystem
     preprocessing
     parsing
     self_cst

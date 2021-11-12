@@ -12,17 +12,17 @@ let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (Location.t, 'p) Micheli
 let compile_contract ~raise : options:Compiler_options.t -> expression -> Stacking.compiled_expression  = fun ~options e ->
   let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.contract_check e in
   let (input_ty , _) = trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression in
-  let body = trace ~raise self_mini_c_tracer @@ Self_mini_c. get_function e in
+  let body = trace ~raise self_mini_c_tracer @@ Self_mini_c.get_function e in
   let body = Scoping.translate_closed_function body input_ty in
-  let body = Stacking.Program.compile_function_body options.protocol_version body in
+  let body = trace ~raise stacking_tracer @@ Stacking.Program.compile_function_body options.protocol_version body in
   let expr = Self_michelson.optimize options.protocol_version body in
   let expr_ty = Scoping.translate_type e.type_expression in
   let expr_ty = dummy_locations expr_ty in
   ({ expr_ty ; expr } : Stacking.Program.compiled_expression)
 
-let compile_expression : options:Compiler_options.t -> expression -> compiled_expression = fun ~options e ->
+let compile_expression ~raise : options:Compiler_options.t -> expression -> compiled_expression = fun ~options e ->
   let (expr, _) = Scoping.translate_expression e [] in
-  let expr = Stacking.Program.compile_expr options.protocol_version [] [] expr in
+  let expr = trace ~raise stacking_tracer @@ Stacking.Program.compile_expr options.protocol_version [] [] expr in
   let expr = Self_michelson.optimize options.protocol_version expr in
   let expr_ty = Scoping.translate_type e.type_expression in
   let expr_ty = dummy_locations expr_ty in
@@ -38,7 +38,7 @@ let aggregate_and_compile ~raise : options:Compiler_options.t -> program -> form
   let aggregated' = Self_mini_c.all_expression ~raise aggregated in
   match form with
   | ContractForm _ -> compile_contract ~raise ~options aggregated'
-  | ExpressionForm _ -> compile_expression ~options aggregated'
+  | ExpressionForm _ -> compile_expression ~raise ~options aggregated'
 
 let aggregate_and_compile_contract ~raise : options:Compiler_options.t ->  program -> string -> Stacking.compiled_expression =
     fun ~options program name ->

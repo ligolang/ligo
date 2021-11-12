@@ -2,6 +2,10 @@
 
 module type COMMENTS = Preprocessing_shared.Comments.S
 
+(* Common type definition *)
+
+type lexeme = string
+
 (* Making lexers *)
 
 module Make (Comments : COMMENTS) (Token : Token.S) :

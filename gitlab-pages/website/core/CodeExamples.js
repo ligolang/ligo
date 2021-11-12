@@ -204,7 +204,7 @@ function CodeExamples (props) {
 <Tabs
   defaultValue="jsligo"
   values={[
-    { label: 'JsLIGO (experimental)', value: 'jsligo', },
+    { label: 'JsLIGO', value: 'jsligo', },
     { label: 'CameLIGO', value: 'cameligo', },
     { label: 'PascaLIGO', value: 'pascaligo', },
     { label: 'ReasonLIGO', value: 'reasonligo', },

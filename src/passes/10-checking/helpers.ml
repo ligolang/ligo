@@ -38,6 +38,11 @@ let typer_3 ~raise : Location.t -> string -> (type_expression -> type_expression
   | [ a ; b ; c ] -> f a b c
   | _ -> raise.raise @@ wrong_param_number l s 3 lst
 
+let typer_3_opt ~raise : Location.t -> string -> (type_expression -> type_expression -> type_expression -> type_expression option -> type_expression) -> typer = fun l s f lst tv_opt ->
+  match lst with
+  | [ a ; b ; c ] -> f a b c tv_opt
+  | _ -> raise.raise @@ wrong_param_number l s 3 lst
+
 let typer_4 ~raise : Location.t -> string -> (type_expression -> type_expression -> type_expression -> type_expression -> type_expression) -> typer = fun l s f lst _ ->
   match lst with
   | [ a ; b ; c ; d ] -> f a b c d

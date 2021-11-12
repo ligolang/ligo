@@ -519,7 +519,10 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b =
-      let var = Location.wrap ~loc @@ Var.of_name var in
+      let var = Location.wrap ~loc @@ match var with
+        | "_" -> Var.fresh ()
+        | var -> Var.of_name var
+      in
       { var ; ascr = None ; attributes }
     in
     Location.wrap ~loc @@ P_var b
@@ -667,8 +670,8 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
       Some reg ->
         let lambda = trace_option ~raise (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
         let lhs_type = Option.map ~f:(Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
-        let fun_type = trace_option ~raise (untyped_recursive_fun reg) @@ lhs_type in
-        e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
+        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
+        e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None   ->
         expr
     in
@@ -735,11 +738,11 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
+    return_1 region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr; type_attr=[]}
   | ModuleDecl {value={name; module_; _};region} ->
     let (name,_) = r_split name in
     let module_ = compile_module ~raise module_ in
-    return_1 region @@ AST.Declaration_module  {module_binder=name; module_}
+    return_1 region @@ AST.Declaration_module  {module_binder=name; module_; module_attr=[]}
   | ModuleAlias {value={alias; binders; _};region} ->
     let (alias,_) = r_split alias in
     let binders,_ = List.Ne.unzip @@ List.Ne.map r_split @@ npseq_to_ne_list binders in

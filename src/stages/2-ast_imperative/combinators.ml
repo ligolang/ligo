@@ -56,6 +56,7 @@ let t_module_accessor ?loc module_name element = make_t ?loc @@ T_module_accesso
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
 let t_abstraction ?loc ty_binder kind type_ : type_expression = make_t ?loc @@ T_abstraction { ty_binder ; kind ; type_ }
+let t_for_all ?loc ty_binder kind type_ : type_expression   = make_t ?loc @@ T_for_all { ty_binder ; kind ; type_ }
 let t_map ?loc key value                  : type_expression = t_app ?loc v_map [key; value]
 let t_big_map ?loc key value              : type_expression = t_app ?loc v_big_map [key; value]
 let t_set ?loc key                        : type_expression = t_app ?loc v_set [key]
@@ -121,7 +122,7 @@ let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_
 let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; attributes }
 let e_let_in_ez ?loc var ?ascr ?const_or_var attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder={var;ascr;attributes={const_or_var}}; rhs ; let_result; attributes }
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
-let e_type_in   ?loc type_binder   rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result }
+let e_type_in   ?loc type_binder rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result}
 let e_mod_in    ?loc module_binder rhs let_result = make_e ?loc @@ E_mod_in  { module_binder; rhs ; let_result }
 let e_mod_alias ?loc alias binders result = make_e ?loc @@ E_mod_alias { alias; binders ; result }
 
@@ -242,3 +243,11 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
   match e.expression_content with
   | E_map lst -> Some lst
   | _ -> None
+
+(* This function takes a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
+let destruct_for_alls (t : type_expression) =
+  let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
+    | T_for_all { ty_binder ; type_ ; _ } ->
+       destruct_for_alls (Location.unwrap ty_binder :: type_vars) type_
+    | _ -> (type_vars, t)
+  in destruct_for_alls [] t
