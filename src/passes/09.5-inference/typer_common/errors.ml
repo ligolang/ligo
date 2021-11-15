@@ -1,6 +1,6 @@
 open Simple_utils.Display
 
-let stage = "typer"
+let stage = "inferer"
 
 type typer_error = [
   | `Typer_missing_funarg_annotation of Ast_core.expression_variable
@@ -641,7 +641,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_unbound_variable (env,v,loc) ->
-    let message = `String "unbound type variable" in
+    let message = `String "unbound variable" in
     let loc = Format.asprintf "%a" Location.pp loc in
     let value = Format.asprintf "%a" Ast_core.PP.expression_variable v in
     let env = Format.asprintf "%a" Ast_core.Environment.PP.environment env in
