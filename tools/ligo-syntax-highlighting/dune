@@ -1,0 +1,15 @@
+(executable
+ (name LigoSyntaxHighlighting)
+ ; (link_flags (-ccopt -static))
+ (modules
+  regexp
+  CameLIGO
+  LigoSyntaxHighlighting
+ )
+ (libraries 
+  ligo
+  ligo.lexing.cameligo
+  SyntaxHighlighting
+  cmdliner
+ )
+)
