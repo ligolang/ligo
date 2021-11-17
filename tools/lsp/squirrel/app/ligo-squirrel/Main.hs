@@ -337,10 +337,10 @@ handleDocumentLinkRequest req respond = do
 
   let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
   contractInfo <- RIO.fetch RIO.LeastEffort uri
-  let collected =
-        getDocumentLinks
-          (contractFile contractInfo)
-          (getLIGO (contractTree contractInfo))
+  collected <-
+    getDocumentLinks
+      (contractFile contractInfo)
+      (getLIGO (contractTree contractInfo))
   respond . Right . J.List $ collected
 
 handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol

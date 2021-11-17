@@ -1,6 +1,7 @@
 module AST.Scope.Fallback
   ( Fallback
   , loop
+  , loopM
   , loopM_
   ) where
 

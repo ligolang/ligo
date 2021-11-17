@@ -9,7 +9,7 @@ import Language.LSP.Types
 import Test.HUnit (Assertion)
 
 import Test.Common.Capabilities.DocumentLink
-  (contractsDir, simplifiedBLinks, simplifiedCLinks, simplifyDocumentLink)
+  (getContractsDir, simplifiedBLinks, simplifiedCLinks, simplifyDocumentLink)
 import Test.Common.FixedExpectations (shouldBe)
 import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
@@ -22,15 +22,19 @@ getDocumentLinks doc =
 unit_document_link_b :: Assertion
 unit_document_link_b = do
   let filename = "B1.ligo"
+  contractsDir <- getContractsDir
   documentLinks <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename
     getDocumentLinks doc
-  fmap simplifyDocumentLink documentLinks `shouldBe` List simplifiedBLinks
+  target <- List <$> simplifiedBLinks
+  fmap simplifyDocumentLink documentLinks `shouldBe` target
 
 unit_document_link_c :: Assertion
 unit_document_link_c = do
   let filename = "C1.mligo"
+  contractsDir <- getContractsDir
   documentLinks <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename
     getDocumentLinks doc
-  fmap simplifyDocumentLink documentLinks `shouldBe` List simplifiedCLinks
+  target <- List <$> simplifiedCLinks
+  fmap simplifyDocumentLink documentLinks `shouldBe` target

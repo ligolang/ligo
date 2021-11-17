@@ -6,7 +6,6 @@ module Util
   , toLocation
   , unionOrd
   , findKey
-  , removeDots
 
   -- * Debugging utilities
   , validate
@@ -15,8 +14,6 @@ module Util
 import Data.Foldable (foldlM)
 import Data.Map.Internal qualified as MI
 import Language.LSP.Types qualified as J
-import System.Directory (canonicalizePath)
-import System.IO.Unsafe (unsafePerformIO)
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -65,10 +62,6 @@ findKey f x (MI.Bin _ k v l r) = case compare x (f k) of
   LT -> findKey f x l
   EQ -> Just (k, v)
   GT -> findKey f x r
-
-removeDots :: FilePath -> FilePath
-{-# NOINLINE removeDots #-}
-removeDots = unsafePerformIO . canonicalizePath
 
 -- | Throws an error if the tree contains any subtrees such that the ranges are
 -- not smaller than its parent nodes, or returns the tree unmodified, otherwise.

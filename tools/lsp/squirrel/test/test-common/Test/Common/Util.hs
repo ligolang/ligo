@@ -45,12 +45,14 @@ getContractsWithExtension ext ignore dir = listDirectory dir
                                 <&> filter (`notElem` ignore)
 
 readContract :: FilePath -> IO (SomeLIGO ParsedInfo)
-readContract filepath =
-  contractTree . insertPreprocessorRanges <$> parsePreprocessed (Path filepath)
+readContract filepath = do
+  pp <- parsePreprocessed (Path filepath)
+  ppRanges <- insertPreprocessorRanges pp
+  pure (contractTree ppRanges)
 
 readContractWithMessages :: FilePath -> IO (SomeLIGO ParsedInfo, [Msg])
 readContractWithMessages filepath =
-  (_cTree &&& _cMsgs) . _getContract . insertPreprocessorRanges <$> parsePreprocessed (Path filepath)
+  (_cTree &&& _cMsgs) . _getContract <$> (insertPreprocessorRanges =<< parsePreprocessed (Path filepath))
 
 readContractWithScopes
   :: forall parser. HasScopeForest parser IO

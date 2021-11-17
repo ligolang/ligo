@@ -116,7 +116,7 @@ parseContractsWithDependencies
   => (Source -> m ContractInfo)
   -> FilePath
   -> m (AdjacencyMap ParsedContractInfo)
-parseContractsWithDependencies parser = fmap includesGraph . parseContracts parser
+parseContractsWithDependencies parser = includesGraph <=< parseContracts parser
 
 parseContractsWithDependenciesScopes
   :: forall impl m

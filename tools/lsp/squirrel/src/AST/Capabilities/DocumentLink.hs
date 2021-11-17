@@ -2,10 +2,13 @@ module AST.Capabilities.DocumentLink
   ( getDocumentLinks
   ) where
 
+import Control.Monad (zipWithM)
+import Control.Monad.IO.Class (MonadIO)
 import Data.IntMap.Strict qualified as IntMap
-import Data.Maybe (mapMaybe)
+import Data.Maybe (catMaybes)
 import Data.Text qualified as T
 import System.FilePath (takeDirectory, (</>))
+import UnliftIO.Directory (canonicalizePath)
 
 import Duplo (collect, match)
 import Language.LSP.Types qualified as J (DocumentLink (..), Uri, filePathToUri)
@@ -16,41 +19,40 @@ import AST.Skeleton (Binding (..), Constant (..), LIGO)
 import Parser (LineMarker (..), LineMarkerType (..))
 import Product (Contains)
 import Range (Range (..), getRange, toLspRange)
-import Util (removeDots)
 
 getDocumentLinks
-  :: forall xs. (Contains Range xs, Contains [LineMarker] xs)
+  :: forall xs m. (Contains Range xs, Contains [LineMarker] xs, MonadIO m)
   => FilePath
   -> LIGO xs
-  -> [J.DocumentLink]
-getDocumentLinks source ligo =
-  getUnprocessedDocumentLinks source ligo
-  ++ getPreprocessedDocumentLinks source ligo
+  -> m [J.DocumentLink]
+getDocumentLinks source ligo = do
+  (++) <$> getUnprocessedDocumentLinks source ligo
+       <*> getPreprocessedDocumentLinks source ligo
 
 getUnprocessedDocumentLinks
-  :: forall xs. Contains Range xs
+  :: forall xs m. (Contains Range xs, MonadIO m)
   => FilePath
   -> LIGO xs
-  -> [J.DocumentLink]
+  -> m [J.DocumentLink]
 getUnprocessedDocumentLinks source ligo =
-  mapMaybe (processBinding . snd) $ collect ligo
+  fmap catMaybes $ mapM (processBinding . snd) $ collect ligo
   where
-    processBinding :: Binding (LIGO xs) -> Maybe J.DocumentLink
+    processBinding :: Binding (LIGO xs) -> m (Maybe J.DocumentLink)
     processBinding = \case
       -- TODO (LIGO-204): Add a case match for BInclude as well.
       BInclude (match @Constant -> Just (r, String n))
-        -> let uri = toJUri n
-               range = toLspRange $ fillLine $ getRange r
-               fillLine (Range (rsl, _, _) _ f) =
-                 Range (rsl, 1, 0) (rsl+1, 1, 0) f
-            in Just (J.DocumentLink range (Just uri) Nothing Nothing)
-      _ -> Nothing
+        -> do uri <- toJUri n
+              let range = toLspRange $ fillLine $ getRange r
+                  fillLine (Range (rsl, _, _) _ f) =
+                    Range (rsl, 1, 0) (rsl+1, 1, 0) f
+              pure (Just (J.DocumentLink range (Just uri) Nothing Nothing))
+      _ -> pure Nothing
 
-    toJUri :: T.Text -> J.Uri
-    toJUri = J.filePathToUri . withPwd . T.unpack . stripQuotes
+    toJUri :: T.Text -> m J.Uri
+    toJUri = fmap J.filePathToUri . withPwd . T.unpack . stripQuotes
 
-    withPwd :: FilePath -> FilePath
-    withPwd = removeDots . (pwd </>)
+    withPwd :: FilePath -> m FilePath
+    withPwd = canonicalizePath . (pwd </>)
 
     pwd :: FilePath
     pwd = takeDirectory source
@@ -59,28 +61,25 @@ getUnprocessedDocumentLinks source ligo =
     stripQuotes = T.tail . T.init
 
 getPreprocessedDocumentLinks
-  :: forall xs. Contains [LineMarker] xs
+  :: forall xs m. (Contains [LineMarker] xs, MonadIO m)
   => FilePath
   -> LIGO xs
-  -> [J.DocumentLink]
-getPreprocessedDocumentLinks source ligo = documentLinks
-  where
-    includes = flip filter markerInfos $ \mi ->
-      lmFlag (miMarker mi) == IncludedFile
-      && miDepth mi == 1
-    returns = flip filter markerInfos $ \mi ->
-      lmFlag (miMarker mi) == ReturnToFile
-      && miDepth mi == 0
+  -> m [J.DocumentLink]
+getPreprocessedDocumentLinks source ligo = do
+  let markers = getMarkers ligo
+  markerInfos <- IntMap.elems . fst <$> getMarkerInfos True source markers
+  let includes = flip filter markerInfos $ \mi ->
+        lmFlag (miMarker mi) == IncludedFile
+        && miDepth mi == 1
+  let returns = flip filter markerInfos $ \mi ->
+        lmFlag (miMarker mi) == ReturnToFile
+        && miDepth mi == 0
 
-    documentLinks :: [J.DocumentLink]
-    documentLinks = zipWith mkLink includes returns
-      where
-        mkLink inc ret = J.DocumentLink range (Just uri) Nothing Nothing
-          where
-            range = toLspRange (Range (line, 1, 0) (line + 1, 1, 0) source)
+  zipWithM mkLink includes returns
+    where
+      mkLink :: MarkerInfo -> MarkerInfo -> m J.DocumentLink
+      mkLink inc ret = do
+        let range = toLspRange (Range (line, 1, 0) (line + 1, 1, 0) source)
             line = lmLine (miMarker ret) - 1
-
-            uri = J.filePathToUri . removeDots . lmFile . miMarker $ inc
-
-    markers = getMarkers ligo
-    markerInfos = IntMap.elems $ fst $ getMarkerInfos True source markers
+        uri <- fmap J.filePathToUri . canonicalizePath . lmFile . miMarker $ inc
+        pure (J.DocumentLink range (Just uri) Nothing Nothing)

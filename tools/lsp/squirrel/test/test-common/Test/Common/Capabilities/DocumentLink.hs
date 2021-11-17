@@ -4,14 +4,14 @@ module Test.Common.Capabilities.DocumentLink
   , simplifyDocumentLink
   , simplifiedBLinks
   , simplifiedCLinks
-  , contractsDir
+  , getContractsDir
   ) where
 
 import Control.Lens ((^.))
 import Language.LSP.Types (DocumentLink (..), uriToFilePath)
 import Language.LSP.Types.Lens (character, end, line, start)
+import System.Directory (canonicalizePath)
 import System.FilePath ((</>))
-import Util (removeDots)
 
 import Test.HUnit (Assertion)
 
@@ -23,8 +23,8 @@ import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
 import Test.Common.Util (readContractWithScopes)
 
-contractsDir :: FilePath
-contractsDir = Common.contractsDir </> "find" </> "includes"
+getContractsDir :: IO FilePath
+getContractsDir = canonicalizePath (Common.contractsDir </> "find" </> "includes")
 
 type SimpleDocumentLink = ((Int, Int), (Int, Int), Maybe FilePath)
 
@@ -35,27 +35,33 @@ simplifyDocumentLink (DocumentLink _range _uri _ _) =
   , _uri >>= uriToFilePath
   )
 
-simplifiedBLinks :: [SimpleDocumentLink]
-simplifiedBLinks =
-  [ ((0, 0), (1, 0), Just (removeDots $ contractsDir </> "B2/B2.ligo"))
-  ]
+simplifiedBLinks :: IO [SimpleDocumentLink]
+simplifiedBLinks = do
+  contractsDir <- getContractsDir
+  pure [ ((0, 0), (1, 0), Just (contractsDir </> "B2/B2.ligo"))
+       ]
 
-simplifiedCLinks :: [SimpleDocumentLink]
-simplifiedCLinks =
-  [ ((0, 0), (1, 0), Just (removeDots $ contractsDir </> "C2.religo"))
-  , ((1, 0), (2, 0), Just (removeDots $ contractsDir </> "C3.mligo"))
-  ]
+simplifiedCLinks :: IO [SimpleDocumentLink]
+simplifiedCLinks = do
+  contractsDir <- getContractsDir
+  pure [ ((0, 0), (1, 0), Just (contractsDir </> "C2.religo"))
+       , ((1, 0), (2, 0), Just (contractsDir </> "C3.mligo"))
+       ]
 
 documentLinkBDriver :: forall impl. HasScopeForest impl IO => Assertion
 documentLinkBDriver = do
+  contractsDir <- getContractsDir
   let inputFile = contractsDir </> "B1.ligo"
   tree <- readContractWithScopes @impl inputFile
-  let symbols = getDocumentLinks inputFile (getLIGO tree)
-  fmap simplifyDocumentLink symbols `shouldBe` simplifiedBLinks
+  symbols <- getDocumentLinks inputFile (getLIGO tree)
+  target <- simplifiedBLinks
+  fmap simplifyDocumentLink symbols `shouldBe` target
 
 documentLinkCDriver :: forall impl. HasScopeForest impl IO => Assertion
 documentLinkCDriver = do
+  contractsDir <- getContractsDir
   let inputFile = contractsDir </> "C1.mligo"
   tree <- readContractWithScopes @impl inputFile
-  let symbols = getDocumentLinks inputFile (getLIGO tree)
-  fmap simplifyDocumentLink symbols `shouldBe` simplifiedCLinks
+  symbols <- getDocumentLinks inputFile (getLIGO tree)
+  target <- simplifiedCLinks
+  fmap simplifyDocumentLink symbols `shouldBe` target
