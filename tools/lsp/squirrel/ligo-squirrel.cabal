@@ -363,7 +363,6 @@ test-suite integration-test
     , hspec-expectations
     , lens
     , ligo-squirrel
-    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty
@@ -451,7 +450,6 @@ test-suite ligo-contracts-test
     , hspec-expectations
     , lens
     , ligo-squirrel
-    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty
@@ -481,6 +479,8 @@ test-suite lsp-handlers-test
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
       Test.Capabilities.TypeDefinition
+      Test.Common.LSP
+      Test.DisabledFeatures
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentLink
@@ -545,7 +545,9 @@ test-suite lsp-handlers-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , aeson
     , base
+    , data-default
     , directory
     , duplo
     , filepath
@@ -652,7 +654,6 @@ test-suite lsp-test
     , hspec-expectations
     , lens
     , ligo-squirrel
-    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty

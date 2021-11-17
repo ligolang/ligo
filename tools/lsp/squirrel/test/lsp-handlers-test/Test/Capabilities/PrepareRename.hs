@@ -15,7 +15,7 @@ import Test.HUnit (Assertion)
 
 import qualified Test.Common.Capabilities.Util as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)
-import Test.Common.Util (getResponseResult, openLigoDoc, runHandlersTest)
+import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "rename"
