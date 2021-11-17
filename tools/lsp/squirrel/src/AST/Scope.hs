@@ -8,6 +8,7 @@ module AST.Scope
   where
 
 import Algebra.Graph.AdjacencyMap qualified as G (vertex, vertexList)
+import Control.Monad ((<=<))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 
 import AST.Includes (insertPreprocessorRanges)
@@ -24,4 +25,4 @@ addShallowScopes
   => ContractInfo
   -> m ContractInfo'
 addShallowScopes =
-  fmap (head . G.vertexList) . addScopes @parser . G.vertex . insertPreprocessorRanges
+  (fmap (head . G.vertexList) . addScopes @parser . G.vertex) <=< insertPreprocessorRanges

@@ -313,7 +313,9 @@ loadWithoutScopes uri = do
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
 -- return 'Nothing'.
 tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
-tryLoadWithoutScopes uri = (Just . insertPreprocessorRanges <$> loadWithoutScopes uri) `catchIO` const (pure Nothing)
+tryLoadWithoutScopes uri =
+  (Just <$> (insertPreprocessorRanges =<< loadWithoutScopes uri))
+  `catchIO` const (pure Nothing)
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -331,7 +333,7 @@ getInclusionsGraph root uri = do
         Log.debug "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
         parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
       Just oldIncludes -> do
-        let (rootContract', includeEdges) = extractIncludedFiles True rootContract
+        (rootContract', includeEdges) <- extractIncludedFiles True rootContract
         let lookupOrLoad fp = maybe
               (tryLoadWithoutScopes (normalizeFilePath fp))
               (pure . Just)
