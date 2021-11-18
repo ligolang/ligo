@@ -36,11 +36,24 @@ let control_keywords_match: Core.regexp = {
   vim      = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\)\\>"
 }
 
+let control_keywords_match_reasonligo: Core.regexp = {
+  emacs    = "\\\\b\\\\(switch\\\\|if\\\\|else\\\\|assert\\\\|failwith\\\\)\\\\b";
+  textmate = "\\b(switch|if|else|assert|failwith)\\b";
+  vim      = "\\<\\(switch\\|if\\|else\\|assert\\|failwith\\)\\>"
+}
+
 let operators_match: Core.regexp = {
   emacs    = "[ ]*\\\\(::\\\\|-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=\\\\)[ ]*";
   textmate = "\\s+(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\s+";
   vim      = "\\<\\(::\\|-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\)\\>"
 }
+
+let operators_match_reasonligo: Core.regexp = {
+  emacs    = "[ ]*\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|!=\\\\|<=\\\\|>=\\\\)[ ]*";
+  textmate = "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+";
+  vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|!=\\|<=\\|>=\\)\\>"
+}
+
 
 let module_match1: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\.";
@@ -69,6 +82,12 @@ let type_definition_match: Core.regexp = {
 
 let type_annotation_match: Core.regexp = {
   emacs    = "\\\\(:[ ]*[^]=;\\\\):]*\\\\)";
+  textmate = "(:[ ]*[^\\]=;\\):]*)";
+  vim      = "\\(:[^]=;\\):]*\\)"
+}
+
+let type_annotation_match_reasonligo: Core.regexp = {
+  emacs    = "\\\\(:[ ]*[^,=\n]*\\\\)";
   textmate = "(:[ ]*[^\\]=;\\):]*)";
   vim      = "\\(:[^]=;\\):]*\\)"
 }

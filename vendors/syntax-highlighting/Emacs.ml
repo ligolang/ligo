@@ -182,7 +182,7 @@ let highlight_to_opt = function
   | Number           -> Some LigoFontLock.number.name
   | Boolean          -> Some "font-lock-constant-face"
   | Float            -> Some LigoFontLock.float_.name
-  | FunctionName     -> Some "font-lock-function-name-face"
+  | FunctionName     -> Some "font-lock-variable-name-face"
   | Identifier       -> Some "font-lock-variable-name-face" 
   | Builtin_function -> Some LigoFontLock.builtin_function.name
   | Function         -> Some "font-lock-function-name-face"
