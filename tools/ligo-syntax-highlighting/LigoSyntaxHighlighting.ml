@@ -1,6 +1,5 @@
 open Cmdliner
 
-
 let vscode_directory =
   let doc = "Output VSCode files at given directory." in
   Arg.(required & opt (some string) None & info ["vscode"] ~doc)
@@ -49,10 +48,10 @@ let ( let* ) o f : string Term.ret  =
   | `Help _ as h -> h
   | `Ok x -> f x
 
-let output: string -> string -> _ Term.ret = fun vim_directory emacs_directory ->
-  (* if not (Sys.is_directory vscode_directory) then 
-    `Error (false, "Not a valid directory to output VSCode files") *)
-  if not (Sys.is_directory vim_directory) then
+let output: string -> string -> string -> _ Term.ret = fun vscode_directory vim_directory emacs_directory ->
+  if not (Sys.is_directory vscode_directory) then 
+    `Error (false, "Not a valid directory to output VSCode files")
+  else if not (Sys.is_directory vim_directory) then
     `Error (false, "Not a valid directory to output VIM files")
   else if not (Sys.is_directory emacs_directory) then
     `Error (false, "Not a valid directory to output EMacs files")
@@ -61,7 +60,7 @@ let output: string -> string -> _ Term.ret = fun vim_directory emacs_directory -
     let* _ = vim_syntax_highlighting vim_directory "ligo.vim" PascaLIGO.syntax_highlighting in
     let* _ = emacs_syntax_highlighting emacs_directory "ligo-mode.el" PascaLIGO.syntax_highlighting in
      *)
-    (* let* _ = vscode_syntax_highlighting vscode_directory "mligo.tmLanguage.json"  "mligo.configuration.json" "mligo" CameLIGO.syntax_highlighting in *)
+    let* _ = vscode_syntax_highlighting vscode_directory "mligo.tmLanguage.json"  "mligo.configuration.json" "mligo" CameLIGO.syntax_highlighting in
     let* _ = vim_syntax_highlighting vim_directory "mligo.vim" CameLIGO.syntax_highlighting in
     let* _ = emacs_syntax_highlighting emacs_directory "mligo-mode.el" CameLIGO.syntax_highlighting in
     (* let* _ = vscode_syntax_highlighting vscode_directory "religo.tmLanguage.json" "religo.configuration.json" "religo" ReasonLIGO.syntax_highlighting in
@@ -73,7 +72,6 @@ let output: string -> string -> _ Term.ret = fun vim_directory emacs_directory -
 let generate_syntax_highlighting =
   let doc = "generate syntax highlighting" in
   let exits = Term.default_exits in
-   (* $ vscode_directory *)
-  Term.(ret (const output $ vim_directory $ emacs_directory)), Term.info "LigoSyntaxHighlighting" ~exits ~doc
+  Term.(ret (const output $ vscode_directory $ vim_directory $ emacs_directory)), Term.info "LigoSyntaxHighlighting" ~exits ~doc
 
 let () = Term.(exit @@ eval generate_syntax_highlighting)

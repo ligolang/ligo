@@ -43,7 +43,7 @@ syntax match operators "\<\(::\|-\|+\|/\|mod\|land\|lor\|lxor\|lsl\|lsr\|&&\|||\
 highlight link operators Operator 
 
 " numericliterals
-syntax match numericliterals "\<[0-9]+\(n\|	z\|tez\|mutez\|\)\>" 
+syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>" 
 highlight link numericliterals Number 
 
 " letbinding

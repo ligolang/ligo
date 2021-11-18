@@ -89,6 +89,5 @@ and begin_end_pattern = {
 
 and match_pattern = {
   match_:   (regexp * highlight_name option) list;
-  match_name: highlight_name option;
-  (* captures: (int * highlight_name) list *)
+  match_name: highlight_name option
 }
