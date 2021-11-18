@@ -13,7 +13,7 @@
   )
   (inline_tests)
   (preprocess
-    (pps ppx_expect ppx_only_interpreter_tags)
+    (pps ppx_expect ppx_deriving.enum ppx_print_constant ppx_deriving_yojson  ppx_only_interpreter_tags)
   )
   (flags (:standard -open Simple_utils))
 )
@@ -24,3 +24,12 @@
  (modules ppx_only_interpreter_tags)
  (preprocess (pps ppxlib.metaquot))
  (libraries ppxlib))
+
+(library
+ (name ppx_print_constant)
+ (kind ppx_deriver)
+ (modules ppx_print_constant)
+ (preprocess (pps ppxlib.metaquot))
+ (libraries simple-utils ppxlib)
+ (flags (:standard -open Simple_utils))
+)
