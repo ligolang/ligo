@@ -11,7 +11,7 @@ type s = {
 
 let s_a = { a = 42; b = false }
 
-let s_b = {s with a = 32}
+let s_b = { s_a iwth a = 32 }
 
 type return = operation list * storage
 

@@ -26,6 +26,9 @@ for f in $1; do
                  | sed 's/\x1b\[[0-9;]*m//g' > recovered/"$f.errors"
     # NOTE: original/*.errors contains errors that is returned by parser in general mode (without recovery)
 
+    # formate original/ to reduce diff
+    $PARSER --pretty -- original/"$f" > original/"$f".formatted
+
     # compare string representation of CST
     $PARSER --cst -- original/"$f"                | sed 's/([^()]*)$//' > original/"$f".cst
 
@@ -48,8 +51,8 @@ for f in $1; do
     DF="--suppress-common-lines --side-by-side --minimal"
 
     # echo "original vs recovery"
-    LOC_DIFF=$(    diff $DF --ignore-all-space --ignore-blank-lines \
-                            original/"$f"              recovered/"$f"             | wc -l | sed 's/ //g')
+    LOC_DIFF=$(    diff $DF --ignore-blank-lines \
+                            original/"$f".formatted    recovered/"$f"             | wc -l | sed 's/ //g')
     CST_DIFF=$(    diff $DF original/"$f".cst          recovered/"$f".cst         | wc -l | sed 's/ //g')
     SYMBOLS_DIFF=$(diff $DF original/"$f".cst_symbols  recovered/"$f".cst_symbols | wc -l | sed 's/ //g')
     TOKENS_DIFF=$( diff $DF original/"$f".tokens       recovered/"$f".tokens      | wc -l | sed 's/ //g')
@@ -68,18 +71,18 @@ for f in $1; do
         echo "original vs recovery"
         echo ">>> LOC"
         diff --color original/"$f" recovered/"$f"
-        echo ">>> CST"
-        diff --color original/"$f".cst recovered/"$f".cst
-        echo ">>> CST symbols"
-        diff --color original/"$f".cst_symbols recovered/"$f".cst_symbols
-        echo ">>> Tokens"
-        diff --color original/"$f".tokens recovered/"$f".tokens
+        # echo ">>> CST"
+        # diff --color original/"$f".cst recovered/"$f".cst
+        # echo ">>> CST symbols"
+        # diff --color original/"$f".cst_symbols recovered/"$f".cst_symbols
+        # echo ">>> Tokens"
+        # diff --color original/"$f".tokens recovered/"$f".tokens
 
         # echo "original vs test"
         # diff --color original/"$f" "$f"
 
-        # echo "test vs recovery"
-        # diff --color "$f" recovered/"$f"
+        echo "test vs recovery"
+        diff --color "$f" recovered/"$f"
     fi
 done
 
