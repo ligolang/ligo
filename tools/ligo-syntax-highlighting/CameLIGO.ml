@@ -11,7 +11,6 @@ module Name = struct
   let numeric_literals          = "numericliterals"
   let operators                 = "operators"
   let identifier_constructor    = "identifierconstructor"
-  let identifier_lower          = "identifierlower"
   let multiplication            = "multiplication"
   let module_                   = "module"
   let attribute                 = "attribute"
@@ -49,25 +48,25 @@ let syntax_highlighting =
       string_delimiters = [
         {
           emacs    = "\\\"";
-          textmate = "";
+          textmate = "\\\"";
           vim      = "\\\""
         }
       ];
       comments = {
         line_comment = {
           emacs    = "//";
-          textmate = "";
+          textmate = "\\/\\/.*$";
           vim      = "\\/\\/.*$"
         };
         block_comment = (
           {
             emacs    = "(*";
-            textmate = "";
+            textmate = "\\(\\*";
             vim      = "(\\*"
           },
           {
             emacs    = "*)";
-            textmate = "";
+            textmate = "\\*\\)";
             vim      = "\\*)"
           }
         );
@@ -110,7 +109,6 @@ let syntax_highlighting =
       Name.numeric_literals;
       Name.operators;
       Name.identifier_constructor;
-      Name.identifier_lower;
       Name.module_
     ];
     repository = [

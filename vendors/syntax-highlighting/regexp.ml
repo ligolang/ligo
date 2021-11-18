@@ -1,6 +1,6 @@
 let macro_match: Core.regexp = {
   emacs    = "^\\\\(#[a-zA-Z]+\\\\)";
-  textmate = "";
+  textmate = "^\\#[a-zA-Z]+";
   vim      = "^\\#[a-zA-Z]\\+"
 }
 
@@ -60,12 +60,12 @@ let c_block_comment_end: Core.regexp = {
 
 let numeric_literals_match: Core.regexp = {
   emacs    = "\\\\b[-+]?\\\\([0-9]+\\\\)\\\\(n\\\\|\\\\tz\\\\|tez\\\\|mutez\\\\|\\\\)\\\\b";
-  textmate = "";
-  vim      = "\\<[0-9]+\\(n\\|\tz\\|tez\\|mutez\\|\\)\\>"
+  textmate = "(\\+|\\-)?[0-9]+(n|tz|tez|mutez|)\\b";
+  vim      = "\\<[0-9]+\\(n\\|tz\\|tez\\|mutez\\|\\)\\>"
 }
 
 let attributes_match: Core.regexp = {
   emacs    = "\\\\[@.*\\\\]";
-  textmate = "";
+  textmate = "\\[@.*\\]";
   vim      = "\\[@.*\\]"
 }

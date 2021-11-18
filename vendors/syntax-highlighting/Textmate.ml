@@ -6,6 +6,7 @@ module JSON = struct
  
   let highlight_to_textmate:string -> Core.highlight_name -> string = fun syntax -> function
     Comment           -> "comment.block." ^ syntax
+  | Attribute         -> "keyword.control.attribute." ^ syntax
   | Constant          -> "constant.language." ^ syntax
   | String            -> "string.quoted.double." ^ syntax
   | Character         -> "constant.character." ^ syntax
@@ -36,6 +37,8 @@ module JSON = struct
   | Builtin_module    -> "support.class." ^ syntax
   | Builtin_function  -> "support.function." ^ syntax 
   | FunctionName      -> "entity.name.function." ^ syntax
+
+
   
   let rec capture syntax (i: int * Core.highlight_name) = 
     (string_of_int (fst i), `Assoc [("name", `String (highlight_to_textmate syntax (snd i)))])
@@ -86,14 +89,22 @@ module JSON = struct
         ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String ("#" ^ reference))]) patterns))
       ]
   | Match {match_; match_name} -> 
+    let match_, regexps  = List.split match_ in
+    let match_ = List.map (fun f -> f.Core.textmate) match_ in
+    let match_ = String.concat "" match_ in
+    let _, captures_ = List.fold_left (fun (count, captures) cur ->
+      match cur with 
+        Some c -> (count + 1, (count + 1, c) :: captures)
+      | None -> (count + 1, captures)
+    ) (0, []) regexps in
     (match match_name with 
       Some s -> [("name", `String (highlight_to_textmate syntax s))]
     | None -> [])
-    (* @
+    @
     [
-      ("match", `String (match_.Core.textmate));      
-      ("captures", captures syntax c)
-    ]  *)
+      ("match", `String match_);      
+      ("captures", captures syntax captures_)
+    ] 
   
   and pattern syntax ({name; kind}: Core.pattern) = 
     `Assoc ([
@@ -175,6 +186,56 @@ module Validate = struct
 
 end
 
+let add_comments s =
+  let language_features = s.Core.language_features in
+  let comments = language_features.comments in
+  let line_comment = comments.line_comment in
+  let block_comment = comments.block_comment in
+  {s with 
+    syntax_patterns = "block_comment" :: "line_comment" :: s.syntax_patterns;
+    repository = 
+      {
+        name = "block_comment";
+        kind = Begin_end {
+          meta_name =      Some Core.Comment;
+          begin_ =         [((fst block_comment), None)];
+          end_ =           [((snd block_comment), None)];
+          patterns =       [];
+        }
+      }
+      ::
+      {
+        name = "line_comment";
+        kind = Match {
+          match_name = Some Core.Comment;
+          match_ = [(line_comment, None)]
+        }
+      }
+      :: s.repository
+  }
+
+let add_string s = 
+  let language_features = s.Core.language_features in
+  let string_delimiters = language_features.string_delimiters in
+  let strings = List.map (fun d -> 
+    Core.{
+      name = "string";
+      kind = Core.Begin_end {
+        meta_name =      Some Core.String;
+        begin_ =         [(d, None)];
+        end_ =           [(d, None)];
+        patterns =       [];
+      }
+    }
+  ) string_delimiters 
+  in
+  {s with 
+    syntax_patterns = "string" :: s.syntax_patterns;
+    repository = strings @ s.repository
+  }
+
 let to_jsons: string -> Core.t -> (Yojson.Safe.t * Yojson.Safe.t, Core.error) result = fun syntax s ->
   let* _ = Validate.syntax s in
+  let s = add_comments s in
+  let s = add_string s in
   JSON.to_yojson syntax s
