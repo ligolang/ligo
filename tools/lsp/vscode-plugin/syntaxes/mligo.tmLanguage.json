@@ -11,7 +11,6 @@
     { "include": "#letbinding" },
     { "include": "#lambda" },
     { "include": "#typedefinition" },
-    { "include": "#typeannotation" },
     { "include": "#controlkeywords" },
     { "include": "#numericliterals" },
     { "include": "#operators" },
@@ -72,16 +71,6 @@
       "name": "keyword.operator.mligo",
       "match":
         "\\s+(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\s+",
-      "captures": {}
-    },
-    "typeannotation": {
-      "name": "entity.name.type.mligo",
-      "match": "(:[ ]*[^\\]=;\\):]*)",
-      "captures": {}
-    },
-    "multiplication": {
-      "name": "keyword.operator.mligo",
-      "match": "(*)",
       "captures": {}
     },
     "lambda": {

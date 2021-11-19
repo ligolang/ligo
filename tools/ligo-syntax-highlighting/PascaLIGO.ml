@@ -1,32 +1,21 @@
-module Textmate = SyntaxHighlighting.Textmate
-module Helpers = Textmate.Helpers
-
-let re = Rex.Pcre.re
+module Core     = SyntaxHighlighting.Core
+module Helpers  = SyntaxHighlighting.Helpers
 
 module Name = struct
-  let string                = "string"
-  let single_quotes         = "single-quotes"
-  let line_comment          = "line_comment"
-  let block_comment         = "block_comment"
-  let macro                 = "macro"
-  let function_             = "function"
-  let binding               = "binding"
-  let type_annotation       = "type-annotation"
-  let type_definition       = "type-definition"
-  let control_keywords      = "control-keywords"
-  let other_keywords        = "other-keywords"
-  let operators             = "operators"
-  let function_application  = "function-application"
-  let identifiers           = "identifiers"
-  let struct_type           = "struct-type"
-  let sum_type              = "sum-type"
-  let type_alias            = "type-alias"
-  let type_par              = "type-par"
-  (* let type_equals           = "type-equals" *)
+  let attribute              = "attribute"
+  let macro                  = "macro"
+  let control_keywords       = "controlkeywords"
+  let function_              = "function"
+  let operators              = "operators"
+  let type_definition        = "typedefinition"
+  let module_                = "module"
+  let identifier_constructor = "identifierconstructor"
+  let const_or_var           = "constorvar"
+  let numeric_literals       = "numericliterals"
 end
 
 let syntax_highlighting = 
-  let open Textmate in
+  let open Core in
   {
     syntax_name          = "ligo";
     alt_name             = "pascal";
@@ -55,11 +44,30 @@ let syntax_highlighting =
         "^"
       ];
       string_delimiters = [
-        "\""
+        {
+          emacs    = "\\\"";
+          textmate = "\\\"";
+          vim      = "\\\""
+        }
       ];
       comments = {
-        line_comment = Some "//";
-        block_comment = Some ("(*", "*)");
+        line_comment = {
+          emacs    = "//";
+          textmate = "\\/\\/.*$";
+          vim      = "\\/\\/.*$"
+        };
+        block_comment = (
+          {
+            emacs    = "(*";
+            textmate = "\\(\\*";
+            vim      = "(\\*"
+          },
+          {
+            emacs    = "*)";
+            textmate = "\\*\\)";
+            vim      = "\\*)"
+          }
+        );
       };
       brackets = [
         ("{", "}");
@@ -93,221 +101,74 @@ let syntax_highlighting =
       ]
     };
     syntax_patterns = [
-      Name.string;
-      Name.single_quotes;
-      Name.line_comment;
-      Name.block_comment;
+      Name.attribute;
       Name.macro;
-      Name.function_;
-      Name.binding;
-      Name.type_annotation;
-      Name.type_definition;
       Name.control_keywords;
-      Name.other_keywords;
+      Name.function_;
       Name.operators;
-      Name.function_application;
-      Name.identifiers;
+      Name.type_definition;
+      Name.module_;
+      Name.identifier_constructor;
+      Name.const_or_var;
+      Name.numeric_literals;
     ];
     repository = [
+      Helpers.attribute;
       Helpers.macro;
       {
-        name = Name.function_;
-        kind = Begin_end {
-          meta_name = None;
-          begin_ = [
-            (* \\b(recursive)?\\s+(function)\\s+[a-zA-Z]+\\b *)
-            ("\\b(recursive)?\\s+", Some StorageClass);
-            ("(function)\\s+", Some Function); 
-            ("([a-zA-Z_])\\b", Some FunctionName)];
-          end_ = [("\\b(is)\\b", Some Operator)];
-          patterns = [
-            Name.line_comment;
-            Name.block_comment;
-            Name.type_annotation;
-            Name.binding;
-          ]
-        }
-      };
-      { 
-        name = Name.binding;
-        kind = Begin_end {
-          meta_name = None;
-          begin_ = [
-            ("\\b(var|const)\\s+", Some Statement);
-            ("([a-zA-Z_]\\w*)\\b", Some Identifier)];
-          end_ = [
-            ("(?=[=),;]|:=)", None)
-          ];
-          patterns = [
-            Name.line_comment;
-            Name.block_comment;
-            Name.type_annotation
-        ]}
-      };
-      {
-        name = Name.type_annotation;
-        kind = Begin_end {
-          meta_name = None;
-          begin_ = [("(:(?!=))\\s*", Some Operator)];
-          end_ = [("(?:\\||(?=[;)=}\\]]|\\bis\\b|:=)|$)", None)];
-          patterns = [
-              Name.line_comment;
-              Name.block_comment;
-              Name.type_par;
-              (* Name.type_equals *)
-          ]
-        }
-      };
-      { name = Name.type_par;
-        kind = Begin_end {
-            meta_name = None;
-            begin_ = [("\\(", None)];
-            end_ = [("\\)", None)];
-            patterns = [
-                Name.line_comment;
-                Name.block_comment;
-                Name.type_par;
-                (* Name.type_equals *)
-            ]
-          }
-      };
-      (* { name = Name.type_equals;
-        kind = Match {
-            match_name = None;
-            match_ = re "((?:(?!\\bis\\b|:=)[^=()|;}\\/\\]])*)";
-            captures = [
-                (1, Type)
-            ]
-          }
-      }; *)
-      
-      {
-        name = Name.type_definition;
-        kind = Begin_end {
-          meta_name = None;
-          begin_ = 
-            [("\\b(type)", Some Keyword);
-            ("\\s+([a-zA-Z_]\\w*)", Some Type);
-            ("\\s+(is)\\b", Some Statement);
-            ];
-          end_ = [("(?=\\b(?:function|type|const|var|recursive)\\b|^\\s*#\\w+)", None)];
-          patterns = [
-              Name.line_comment;
-              Name.block_comment;
-              Name.struct_type;
-              Name.sum_type;
-              Name.type_alias
-          ]
-        }
-      };
-      {
-        name = Name.struct_type;
-        kind = Begin_end {
-          meta_name = None;
-          begin_ = [
-            ("\\b(record)\\s*", Some Statement);
-            ("(\\[?)", Some Statement)
-          ];
-          end_ = [("(\\]|\\bend\\b)", Some Statement)];
-          patterns = [
-              Name.line_comment;
-              Name.block_comment;
-              Name.identifiers;
-              Name.type_annotation
-          ]
-        }
-      };
-      {
-        name = Name.sum_type;
-        kind = Begin_end {
-          meta_name = None;
-          begin_ = [
-            ("\\b([A-Z]\\w*)\\s+", Some Label); 
-            ("(of)?", Some Statement)
-          ];
-          end_ = [
-            ("(\\||(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+))", None)
-          ];
-          patterns = [
-              Name.line_comment;
-              Name.block_comment;
-              Name.type_par;
-              (* Name.type_equals *)
-          ]
-        }
-      };
-      {
-        name = Name.type_alias;
-        kind = Begin_end {
-          meta_name = None;
-          begin_ = [("\\G\\s*(?!record\\b)(?=[(a-z])", None)];
-          end_ = [("(?=\\b(?:function|type|const|var)\\b|^\\s*#\\w+)", None)];
-          patterns = [
-              Name.line_comment;
-              Name.block_comment;
-              Name.type_par;
-              (* Name.type_equals *)
-          ]
-        }
-      };
-      ]
-      @
-      Helpers.string
-      @
-      [
-      {
-        name = Name.single_quotes;
-        kind = Begin_end {
-          meta_name = Some String;
-          begin_ = [("\\'", None)];
-          end_ = [("\\'", None)];
-          patterns = []
-        }
-      }] @
-      Helpers.ocaml_comment
-      @
-      [{
         name = Name.control_keywords;
         kind = Match {
           match_name = Some Conditional;
-          match_ = re "\\b(case|of|if|then|else|for|in|step|to|skip|assert|failwith|begin|end|contains)\\b";
-          captures = []
+          match_ = [(Regexp.control_keywords_match_ligo, None)]
         }
       };
       {
-        name = Name.other_keywords;
+        name = Name.function_;
         kind = Match {
-          match_name = Some Statement;
-          match_ = re "\\b(block|with|record|set|map|list)\\b";
-          captures = []
+          match_ = [
+            (Regexp.let_binding_match1_ligo, Some Keyword);
+            (Regexp.let_binding_match2_ligo, Some FunctionName)
+          ];
+          match_name = None
         }
       };
+      Helpers.numeric_literals;
       {
         name = Name.operators;
         kind = Match {
           match_name = Some Operator;
-          match_ = re "([-+*/=]|->|:=)";
-          captures = []
+          match_ = [(Regexp.operators_match_ligo, None)]
         }
       };
       {
-        name = Name.function_application;
+        name = Name.type_definition;
         kind = Match {
-          match_name = None;
-          match_ = re "\\b([a-zA-Z_]\\w*)\\s+\\(";
-          captures = [
-              (1, Identifier)
-          ]
+          match_ = [(Regexp.type_definition_match, None)];
+          match_name = Some Type
         }
       };
       {
-        name = Name.identifiers;
+        name = Name.module_;
+        kind = Match {
+          match_     = [
+            (Regexp.module_match1, Some Structure);
+            (Regexp.module_match2, Some Identifier)
+          ];
+          match_name = None
+        }
+      };
+      {
+        name = Name.identifier_constructor;
         kind = Match {
           match_name = None;
-          match_ = re "\\b([a-zA-Z_]\\w*)\\b";
-          captures = [
-              (1, Identifier)
-          ]
+          match_     = [(Regexp.identifier_constructor_match, Some Label)]
+        }
+      };
+      {
+        name = Name.const_or_var;
+        kind = Match { 
+          match_name = None;
+          match_     = [(Regexp.const_or_var, Some Keyword)]
         }
       }
     ]

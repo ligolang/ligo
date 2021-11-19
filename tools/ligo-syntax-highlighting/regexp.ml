@@ -17,6 +17,17 @@ let let_binding_match3: Core.regexp = {
   textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
   vim      = "[a-zA-Z$_][a-zA-Z0-9$_]*";
 }
+let let_binding_match1_ligo: Core.regexp = {
+  emacs    = "\\\\b\\\\(function\\\\)\\\\b[ ]*"; 
+  textmate = "\\b(function)\\b\\s*";
+  vim      = "\\(function\\)\\W";
+}
+
+let let_binding_match2_ligo: Core.regexp = {
+  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\|\\\\)"; 
+  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
+  vim      = "[a-zA-Z$_][a-zA-Z0-9$_]*";
+}
 
 let lambda_begin: Core.regexp = {
   emacs    = "\\\\b\\\\(fun\\\\)\\\\b";
@@ -42,6 +53,12 @@ let control_keywords_match_reasonligo: Core.regexp = {
   vim      = "\\<\\(switch\\|if\\|else\\|assert\\|failwith\\)\\>"
 }
 
+let control_keywords_match_ligo: Core.regexp = {
+  emacs    = "\\\\b\\\\(case\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\|end\\\\|in\\\\|is\\\\|from\\\\|skip\\\\|block\\\\|contains\\\\|to\\\\|step\\\\|of\\\\|while\\\\|for\\\\|remove\\\\)\\\\b";
+  textmate = "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\\b";
+  vim      = "\\<\\(case\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\|is\\|from\\|skip\\|block\\|contains\\|to\\|step\\|of\\|while\\|for\\|remove\\)\\>"
+}
+
 let operators_match: Core.regexp = {
   emacs    = "[ ]*\\\\(::\\\\|-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=\\\\)[ ]*";
   textmate = "\\s+(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\s+";
@@ -52,6 +69,12 @@ let operators_match_reasonligo: Core.regexp = {
   emacs    = "[ ]*\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|!=\\\\|<=\\\\|>=\\\\)[ ]*";
   textmate = "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+";
   vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|!=\\|<=\\|>=\\)\\>"
+}
+
+let operators_match_ligo: Core.regexp = {
+  emacs    = "[ ]*\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|=/=\\\\|<=\\\\|>=\\\\)[ ]*";
+  textmate = "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\s+";
+  vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\>"
 }
 
 
@@ -96,4 +119,11 @@ let multiplication_match: Core.regexp = {
   emacs    = "\\\\(*\\\\)";
   textmate = "(*)";
   vim      = "\\(*\\)"
+}
+
+let const_or_var: Core.regexp = {
+  emacs    = "\\\\b\\\\(const\\\\|var\\\\)\\\\b";
+  textmate = "\\b(const|var)\\b";
+  vim      = "\\<\\(const\\|var\\)\\>"
+
 }
