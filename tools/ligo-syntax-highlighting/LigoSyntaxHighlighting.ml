@@ -56,10 +56,9 @@ let output: string -> string -> string -> _ Term.ret = fun vscode_directory vim_
   else if not (Sys.is_directory emacs_directory) then
     `Error (false, "Not a valid directory to output EMacs files")
   else (
-    (* let* _ = vscode_syntax_highlighting vscode_directory "ligo.tmLanguage.json" "ligo.configuration.json" "ligo" PascaLIGO.syntax_highlighting in
+    let* _ = vscode_syntax_highlighting vscode_directory "ligo.tmLanguage.json" "ligo.configuration.json" "ligo" PascaLIGO.syntax_highlighting in
     let* _ = vim_syntax_highlighting vim_directory "ligo.vim" PascaLIGO.syntax_highlighting in
     let* _ = emacs_syntax_highlighting emacs_directory "ligo-mode.el" PascaLIGO.syntax_highlighting in
-     *)
     let* _ = vscode_syntax_highlighting vscode_directory "mligo.tmLanguage.json"  "mligo.configuration.json" "mligo" CameLIGO.syntax_highlighting in
     let* _ = vim_syntax_highlighting vim_directory "mligo.vim" CameLIGO.syntax_highlighting in
     let* _ = emacs_syntax_highlighting emacs_directory "mligo-mode.el" CameLIGO.syntax_highlighting in

@@ -74,11 +74,6 @@
         "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+",
       "captures": {}
     },
-    "multiplication": {
-      "name": "keyword.operator.religo",
-      "match": "(*)",
-      "captures": {}
-    },
     "typedefinition": {
       "name": "entity.name.type.religo",
       "match": "\\b(type)\\b",

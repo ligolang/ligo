@@ -30,14 +30,6 @@ syntax region lambda matchgroup=lambda_ start="\(fun\)\W" matchgroup=lambda__ en
 highlight link lambda_ Statement 
 highlight link lambda__ Operator 
 
-" multiplication
-syntax match multiplication "\(*\)" contained 
-highlight link multiplication Operator 
-
-" typeannotation
-syntax match typeannotation "\(:[^]=;\):]*\)" 
-highlight link typeannotation Type 
-
 " operators
 syntax match operators "\<\(::\|-\|+\|/\|mod\|land\|lor\|lxor\|lsl\|lsr\|&&\|||\|<\|>\|<>\|<=\|>=\)\>" 
 highlight link operators Operator 

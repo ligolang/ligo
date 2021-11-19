@@ -25,10 +25,6 @@ highlight link module Structure
 syntax match typedefinition "\(type\)\>" 
 highlight link typedefinition Type 
 
-" multiplication
-syntax match multiplication "\(*\)" contained 
-highlight link multiplication Operator 
-
 " operators
 syntax match operators "\<\(-\|+\|/\|mod\|land\|lor\|lxor\|lsl\|lsr\|&&\|||\|<\|>\|!=\|<=\|>=\)\>" 
 highlight link operators Operator 

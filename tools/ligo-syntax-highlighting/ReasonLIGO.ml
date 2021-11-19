@@ -11,7 +11,6 @@ module Name = struct
   let numeric_literals          = "numericliterals"
   let operators                 = "operators"
   let identifier_constructor    = "identifierconstructor"
-  let multiplication            = "multiplication"
   let module_                   = "module"
   let attribute                 = "attribute"
 end
@@ -148,13 +147,7 @@ let syntax_highlighting =
           match_name = Some Type
         }
       }; *)
-      {
-        name = Name.multiplication;
-        kind = Match { 
-          match_ = [(Regexp.multiplication_match, None)];
-          match_name = Some Operator
-        }
-      };
+      
       (* {
         name = Name.lambda;
         kind = Begin_end {
