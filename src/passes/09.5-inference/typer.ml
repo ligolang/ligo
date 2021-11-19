@@ -577,7 +577,7 @@ and type_module_returns_env ~raise ((env, state, p) : environment * _ O'.typer_s
     (e , s' , ds', tys')
   in
   let (env' , state , declarations, types) =
-    trace ~raise (module_error_tracer p) @@
+    trace ~raise (module_tracer p) @@
     fun ~raise:_ -> List.fold ~f:aux ~init:(env , state , [],[]) p in
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
   let ty = make_t_ez_record types in
