@@ -12,7 +12,7 @@ depends: [
   "odoc" { build }
   "ocamlfind" { build }
   "dune" { build & >= "2.7.1" & < "2.9" }
-  "menhir" { = "20200624" }
+  "menhir" { = "20211012" }
   "ocamlgraph"
   "coq" { build & >= "8.12" & < "8.14" }
   "ppx_deriving"
