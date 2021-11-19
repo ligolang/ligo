@@ -10,9 +10,7 @@ type reveal =
 
 type parameter = Commit of bytes | Reveal of reveal
 
-type return =
-operation list *
-storage
+type return = operation list * storage
 (* We use hash-commit so that a baker can not steal *)
 
 let commit (p, s : bytes * storage) : return =
