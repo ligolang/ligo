@@ -26,7 +26,7 @@ let expression expression syntax infer protocol_version init_file display_format
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~infer ~protocol_version ()
       in
-      let mini_c_exp, decl_list = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
+      let (mini_c_exp,_), decl_list = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options decl_list mini_c_exp in
       if without_run then
         Run.clean_expression compiled_exp.expr
