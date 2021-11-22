@@ -41,20 +41,15 @@ let interpret expression init_file syntax infer protocol_version amount balance 
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
-      let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-      let options = Compiler_options.make ~infer ~protocol_version () in
-      let (decl_list,mods,env) = match init_file with
-        | Some init_file ->
-           let mini_c_prg,mods,_,env = Build.build_contract_use ~raise ~add_warning ~options syntax init_file in
-           (mini_c_prg,mods,env)
-        | None -> ([],Ast_core.SMap.empty,options.init_env) in
-      let typed_exp,_    = Compile.Utils.type_expression ~raise ~options init_file syntax expression env in
-      let mini_c_exp     = Compile.Of_typed.compile_expression ~raise ~module_env:mods typed_exp in
-      let compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options decl_list mini_c_exp in
-      let options        = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
-      let runres         = Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty in
+      let options =
+        let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
+        Compiler_options.make ~infer ~protocol_version ()
+      in
+      let (mini_c_exp, typed_exp), decl_list = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
+      let compiled_exp   = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options decl_list mini_c_exp in
+      let options           = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
+      let runres  = Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty in
       Decompile.Of_michelson.decompile_expression ~raise typed_exp.type_expression runres
-
 
 let evaluate_call source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format werror =
     Trace.warning_with @@ fun add_warning get_warnings ->

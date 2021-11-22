@@ -125,6 +125,11 @@ let%expect_test _ =
   [%expect{|
     1 |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "List.map (fun (x : int) -> x + 1) [1;2]" ; "--init-file" ; (test "map.mligo") ] ;
+  [%expect{|
+    CONS(2 , CONS(3 , LIST_EMPTY())) |}]
+
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"
 
