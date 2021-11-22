@@ -9,7 +9,7 @@ function counter (const n: int) : int is
     const initial : sum_aggregator = record [counter = 0; sum = 0];
     function aggregate (const _: sum_aggregator) : int is
       function (const prev : sum_aggregator) is prev.sum
-  } with aggregate (initial)
+  } aggregate (initial)
     
 type sum_aggregator is 
   record [
