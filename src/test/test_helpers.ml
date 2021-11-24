@@ -37,11 +37,20 @@ let wrap_test_w name f =
      raise Alcotest.Test_error
   )
 
-let test_w name f =
+let test_w name test =
   Test (
     Alcotest.test_case name `Quick @@ fun () ->
-    wrap_test_w name f
+    wrap_test_w name test
   )
+
+let test_w_all name test =
+  List.map ~f:(fun s ->
+  let file = "./contracts/" ^ Str.(global_replace (regexp " ") "_" name) ^ "." ^ s in
+  let name = Format.asprintf "%s (%s)" name s in
+  let f ~raise ~add_warning () = test ~raise ~add_warning file in
+  test_w name f
+  ) ["ligo";"mligo";"religo";"jsligo"]
+
 let wrap_test name f =
     try_with (fun ~raise -> f ~raise ()) 
     (fun error ->
