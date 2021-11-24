@@ -677,7 +677,7 @@ For that, we will have another file in which will describe our test:
 <Syntax syntax="pascaligo">
 
 ```pascaligo test-ligo group=test
-#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.ligo"
+#include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.ligo"
 
 function assert_string_failure (const res : test_exec_result ; const expected : string) : unit is
   block {
@@ -737,7 +737,7 @@ const test = block {
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test
-#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.mligo"
+#include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.mligo"
 
 let assert_string_failure (res : test_exec_result) (expected : string) : unit =
   let expected = Test.eval expected in
@@ -792,7 +792,7 @@ let test =
 <Syntax syntax="reasonligo">
 
 ```reasonligo test-ligo group=test
-#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.religo"
+#include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.religo"
 
 let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit => {
   let expected = Test.eval (expected) ;
@@ -849,7 +849,7 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test
-#include "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.jsligo"
+#include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.jsligo"
 
 let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit => {
   let expected = Test.eval (expected) ;
