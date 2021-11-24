@@ -144,8 +144,10 @@ let rec mono_polymorphic_expression : _ -> data -> expression -> data * expressi
      let data, args = self data args in
      data, return (E_application { lamb; args })
   | E_lambda { binder ; result } ->
+     let binder_instances, data = instances_lookup_and_remove { variable = binder ; path } data in
      let data, result = self data result in
      let _, data = instances_lookup_and_remove { variable = binder ; path } data in
+     let data = instances_add  { variable = binder ; path } binder_instances data in
      data, return (E_lambda { binder ; result })
   | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
      let data, result = self data result in
