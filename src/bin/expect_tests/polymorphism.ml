@@ -130,6 +130,11 @@ let%expect_test _ =
   [%expect{|
     CONS(2 , CONS(3 , LIST_EMPTY())) |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "lambda.mligo") ] ;
+  [%expect{|
+    1 |}]
+
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"
 
