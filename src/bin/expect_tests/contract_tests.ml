@@ -2186,3 +2186,10 @@ let%expect_test _ =
                      const foo = let #13 = (c)@(unit) in  match #13 with
                                                            | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
                                                            unit |} ]
+
+(* Module being defined does not type with its own type *)
+let%expect_test _ =
+  run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
+  [%expect {|
+    let Foo = let x = L(54)[@inline] in x
+    let Foo = let y = Foo[@inline] in y |}]
