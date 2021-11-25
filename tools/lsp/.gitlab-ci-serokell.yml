@@ -88,7 +88,7 @@ vscode-extension-linux:
   stage: lsp
   only: [merge_requests]
   script:
-    - NIXPKGS_ALLOW_UNFREE=1 nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
+    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
 
 vscode-extension:
   stage: lsp

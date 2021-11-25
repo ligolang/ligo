@@ -53,6 +53,7 @@
               inherit grammars;
             }) # We don't want any overlays (static, cross, etc) applied to grammars
           ];
+          config = { allowUnfree = true; };
           localSystem = system;
         };
 
