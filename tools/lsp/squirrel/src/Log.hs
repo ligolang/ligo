@@ -6,7 +6,7 @@ import Control.Monad.IO.Class
 import Control.Monad.Catch
 import Control.Monad
 import Data.IORef
-import Data.String.Interpolate (i)
+import Data.String.Interpolate.IsString (i)
 
 import System.IO.Unsafe
 

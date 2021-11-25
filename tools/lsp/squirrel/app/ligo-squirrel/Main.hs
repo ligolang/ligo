@@ -23,7 +23,9 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 
-import UnliftIO.MVar
+import StmContainers.Map (newIO)
+
+import UnliftIO.MVar (MVar, modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST
 import ASTMap qualified
@@ -112,7 +114,8 @@ initialize = do
   astMap <- ASTMap.empty $ RIO.load @Fallback
   openDocs <- newMVar HashMap.empty
   includes <- newMVar G.empty
-  pure (config :> astMap :> openDocs :> Tag includes :> Nil)
+  tempMap <- newIO
+  pure (config :> astMap :> openDocs :> Tag includes :> Tag tempMap :> Nil)
 
 handlers :: S.Handlers RIO
 handlers = mconcat

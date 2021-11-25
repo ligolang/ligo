@@ -32,8 +32,10 @@ import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
 import AST.Scope
 import AST.Skeleton
-import Cli (HasLigoClient, LigoDecodedExpectedClientFailureException (..), fromLigoErrorToMsg, preprocess)
-
+import Cli
+  ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
+  , LigoErrorNodeParseErrorException (..), fromLigoErrorToMsg, preprocess
+  )
 import Extension
 import ParseTree (Source (..), srcToText, toParseTree)
 import Parser
@@ -48,12 +50,14 @@ parse src = liftIO do
     } (srcPath src)
   uncurry (FindContract src) <$> (runParserM . recogniser =<< toParseTree dialect src)
 
-parsePreprocessed :: HasLigoClient m => Source -> m ContractInfo
+parsePreprocessed :: forall m. HasLigoClient m => Source -> m ContractInfo
 parsePreprocessed src = do
   src' <- liftIO $ deleteExtraMarkers <$> srcToText src
   (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
     [ Handler \(LigoDecodedExpectedClientFailureException err) ->
       pure (src', Just $ fromLigoErrorToMsg err)
+    , Handler \(LigoErrorNodeParseErrorException _) ->
+      pure (src', Nothing)
     , Handler \(_ :: IOError) ->
       pure (src', Nothing)
     ]
