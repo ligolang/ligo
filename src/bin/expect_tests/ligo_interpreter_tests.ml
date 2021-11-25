@@ -420,6 +420,21 @@ let%expect_test _ =
     - test_get_balance exited with value ().
     - test_get_total_supply exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "pack_unpack.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_string exited with value ().
+    - test_int exited with value ().
+    - test_string_int exited with value ().
+    - test_string_string exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_pack_unpack.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
