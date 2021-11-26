@@ -2034,6 +2034,10 @@ let%expect_test _ =
   [%expect {| failwith("my custom error") |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "run-function"; contract "assert.mligo"; "(Some (): unit option)"; "-e"; "none_with_error"];
+  [%expect {| failwith("my custom error") |}]
+
+let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "attributes.jsligo" ] ;
   [%expect {|
     const x = 1[@inline][@private]
