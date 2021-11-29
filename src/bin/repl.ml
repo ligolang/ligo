@@ -117,11 +117,11 @@ let try_contract ~raise state s =
                                } in
       (state, Defined_values_core core_prg))
     (function
-        (`Main_parser _ : Main_errors.all)
-      | (`Main_cit_jsligo _ : Main_errors.all)
-      | (`Main_cit_pascaligo _ : Main_errors.all)
-      | (`Main_cit_cameligo _ : Main_errors.all)
-      | (`Main_cit_reasonligo _ : Main_errors.all) ->
+        (`Parser_tracer _ : Main_errors.all)
+      | (`Cit_jsligo_tracer _ : Main_errors.all)
+      | (`Cit_pascaligo_tracer _ : Main_errors.all)
+      | (`Cit_cameligo_tracer _ : Main_errors.all)
+      | (`Cit_reasonligo_tracer _ : Main_errors.all) ->
          try_eval ~raise state s
       | e -> raise.raise e)
   with

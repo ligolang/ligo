@@ -13,7 +13,7 @@ let build_contract ~raise :
       let views =
         List.map
           ~f:(fun (name, view) ->
-            let (view_param_ty, ret_ty) = trace_option ~raise (entrypoint_not_a_function) @@ (* remitodo error specific to views*)
+            let (view_param_ty, ret_ty) = trace_option ~raise (main_entrypoint_not_a_function) @@ (* remitodo error specific to views*)
               Self_michelson.fetch_views_ty view.expr_ty
             in
             let view_param_ty = inject_locations (fun _ -> ()) (strip_locations view_param_ty) in
@@ -23,7 +23,7 @@ let build_contract ~raise :
           )
           views
       in
-      let (param_ty, storage_ty) = trace_option ~raise (entrypoint_not_a_function) @@
+      let (param_ty, storage_ty) = trace_option ~raise (main_entrypoint_not_a_function) @@
         Self_michelson.fetch_contract_ty_inputs compiled.expr_ty in
       let param_ty = inject_locations (fun _ -> ()) (strip_locations param_ty) in
       let storage_ty = inject_locations (fun _ -> ()) (strip_locations storage_ty) in
@@ -40,5 +40,5 @@ let build_contract ~raise :
         contract
 
 let measure ~raise = fun m ->
-  Trace.trace_tzresult_lwt ~raise (could_not_serialize) @@
+  Trace.trace_tzresult_lwt ~raise (main_could_not_serialize) @@
     Proto_alpha_utils.Measure.measure m
