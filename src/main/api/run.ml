@@ -85,7 +85,7 @@ let evaluate_expr source_file entry_point amount balance sender source now synta
         Compiler_options.make ~infer ~protocol_version ()
       in
       let mini_c,typed_prg,_ = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
-      let (exp,_)       = trace_option ~raise Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
+      let (exp,_)       = trace_option ~raise Main_errors.main_entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
       let exp = Mini_c.e_var ~loc:exp.location (Location.wrap @@ Var.of_name entry_point) exp.type_expression in
       let compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c exp in
       let options       = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None} in

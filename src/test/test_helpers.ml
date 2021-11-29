@@ -26,7 +26,7 @@ let wrap_test_w name f =
     ) @@ get_warning () ;
   )
   (fun error ->
-    let value = Error (test_tracer name error) in
+    let value = Error (test_err_tracer name error) in
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value ; format} in
      let s = Simple_utils.Display.convert ~display_format:(Dev) disp in
@@ -54,7 +54,7 @@ let test_w_all name test =
 let wrap_test name f =
     try_with (fun ~raise -> f ~raise ()) 
     (fun error ->
-    let value = Error (test_tracer name error) in
+    let value = Error (test_err_tracer name error) in
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value ; format} in
      let s = Simple_utils.Display.convert ~display_format:(Dev) disp in
@@ -219,20 +219,20 @@ let expect_string_failwith ~raise ?options program entry_point input expected_fa
 let expect_eq ~raise ?options program entry_point input expected =
   let expected = expression_to_core ~raise expected in
   let expecter = fun result ->
-    trace_option ~raise (test_expect expected result) @@
+    trace_option ~raise (test_expect_tracer expected result) @@
     Ast_core.Misc.assert_value_eq (expected,result) in
   expect ~raise ?options program entry_point input expecter
 
 let expect_eq_core ~raise ?options program entry_point input expected =
   let expecter = fun result ->
-    trace_option ~raise (test_expect expected result) @@
+    trace_option ~raise (test_expect_tracer expected result) @@
     Ast_core.Misc.assert_value_eq (expected,result) in
   expect ~raise ?options program entry_point input expecter
 
 let expect_evaluate ~raise (program, _env) entry_point expecter =
   trace ~raise (test_run_tracer entry_point) @@
   let mini_c          = Ligo_compile.Of_typed.compile ~raise program in
-  let (exp,_)         = trace_option ~raise unknown @@ Mini_c.get_entry mini_c entry_point in
+  let (exp,_)         = trace_option ~raise main_unknown @@ Mini_c.get_entry mini_c entry_point in
   let michelson_value = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c exp in
   let res_michelson   = Ligo_run.Of_michelson.run_no_failwith ~raise michelson_value.expr michelson_value.expr_ty in
   let res             = Decompile.Of_michelson.decompile_typed_program_entry_expression_result ~raise program entry_point (Success res_michelson) in
@@ -244,7 +244,7 @@ let expect_evaluate ~raise (program, _env) entry_point expecter =
 let expect_eq_evaluate ~raise ((program , env) : Ast_typed.module_fully_typed * Ast_typed.environment) entry_point expected =
   let expected  = expression_to_core ~raise expected in
   let expecter = fun result ~raise ->
-    trace_option ~raise (test_expect expected result) @@
+    trace_option ~raise (test_expect_tracer expected result) @@
     Ast_core.Misc.assert_value_eq (expected , result) in
   expect_evaluate ~raise (program, env) entry_point expecter
 
