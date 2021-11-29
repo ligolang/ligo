@@ -24,6 +24,7 @@ module Parser
   , boilerplate
   , boilerplate'
   , fallthrough
+  , noMatch
   ) where
 
 import Control.Arrow
@@ -259,3 +260,11 @@ boilerplate' f (r :> _, ParseTree ty cs src) =
 
 fallthrough :: MonadThrow m => m a
 fallthrough = throwM HandlerFailed
+
+noMatch
+  :: (Product (Range : xs), ParseTree it)
+  -> ParserM (Product Info, Error it)
+noMatch (r :> _, ParseTree _ children source) = withComments $ pure
+  ( [] :> r :> N :> CodeSource source :> Nil
+  , Error ("Unrecognized: " <> source) children
+  )

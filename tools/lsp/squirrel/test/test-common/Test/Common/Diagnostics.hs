@@ -13,7 +13,7 @@ import AST.Scope (HasScopeForest, addScopes, lookupContract)
 import AST.Skeleton (Error (..))
 
 import qualified Test.Common.Capabilities.Util as Util (contractsDir)
-import Test.Common.FixedExpectations (expectationFailure, shouldMatchList)
+import Test.Common.FixedExpectations (HasCallStack, expectationFailure, shouldMatchList)
 import Test.Tasty.HUnit (Assertion)
 
 inputDir :: FilePath
@@ -27,7 +27,8 @@ simplifyError (range, Error t _) = (range, t)
 
 -- Try to parse a file, and check that the proper error messages are generated
 parseDiagnosticsDriver
-  :: forall impl. HasScopeForest impl IO
+  :: forall impl
+   . (HasCallStack, HasScopeForest impl IO)
   => [(Range, Text)]
   -> Assertion
 parseDiagnosticsDriver expectedMsgs = do
