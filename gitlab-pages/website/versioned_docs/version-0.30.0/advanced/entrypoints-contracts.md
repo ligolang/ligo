@@ -415,7 +415,7 @@ function "calls". Indeed, the control flow returns to the site of a
 function call, and composed function calls therefore are *stacked*,
 that is, they follow a last in, first out ordering. This is not what
 happens when a contract invokes another: the invocation is *queued*,
-that is, follows a first in, first our ordering, and the dequeuing
+that is, follows a first in, first out ordering, and the dequeuing
 only starts at the normal end of a contract (no failure). That is why
 we speak of "contract invocations" instead of "calls".
 
