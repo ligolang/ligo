@@ -6,13 +6,13 @@ title: Installation
 There are currently three ways to get started with LIGO. You can choose to use a Docker image, a static Linux binary or to install packages for your Debian Linux distribution.
 
 ## Dockerised installation (recommended)
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.29.0](./changelog.md):
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.30.0](./changelog.md):
 
 Linux or OSX:
-> `docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0`
+> `docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.30.0`
 
 Windows:
-> `docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.29.0`
+> `docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.30.0`
 
 Or if you want the development version, replace the version above with `next`.
 
@@ -22,13 +22,14 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-To use it, get it [here](https://ligolang.org/bin/linux/ligo), make it executable, and you're done!
+You can get the rolling release [here](https://ligolang.org/bin/linux/ligo), make it executable, and you are done!
 
 ```zsh
 wget https://ligolang.org/bin/linux/ligo
 chmod +x ./ligo
 ```
 
+For a specific version, you can visit our [release page](https://gitlab.com/ligolang/ligo/-/releases/).  
 Optionally, you can put it somewhere in your `PATH` for easy access:
 
 ```zsh

@@ -133,7 +133,7 @@ let originate_from_file : string => string => michelson_program => tez => (addre
 let originate_from_file = (filepath: string, entrypoint: string, init: michelson_program, balance: tez) => [address, michelson_program, int]
 </SyntaxTitle>
 
-Originate a contract with an entrypoint, initial storage and initial balance.
+Originate a contract with a path to the contract file, an entrypoint, an initial storage and an initial balance.
 
 <Syntax syntax="pascaligo">
 
@@ -610,3 +610,37 @@ This function reconstructs a file from a mutation (second argument),
 and saves it to a file in the directory path (first argument). It
 returns an optional string indicating the filename where the mutation
 was saved, or `None` if there was an error.
+
+<SyntaxTitle syntax="pascaligo">
+function cast_address : address -> typed_address ('p,'s)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val cast_address : address -> ('p,'s) typed_address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let cast_address : address => typed_address (p,s)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let save_mutation : adress => typed_address &lt;&apos;p, &apos;s&gt
+</SyntaxTitle>
+
+This function casts an address to a typed address. You will need to annotate the result with the type you expect.
+
+<SyntaxTitle syntax="pascaligo">
+function set_big_map : int -> big_map ('key, 'value) -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val set_big_map : int -> ('key, 'value) big_map  -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let set_big_map: (int, big_map('key, 'value)) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let set_big_map: (id: &apos;int, big_map: big_map&lt;&apos;key, &apos;value&gt;) => unit
+</SyntaxTitle>
+
+The testing framework keeps an internal reference to the values
+corresponding to big map identifiers. This function allows to override
+the value of a particular big map identifier. It should not be
+normally needed, except in particular circumstances such as using
+custom bootstrap contracts that initialize big maps.
