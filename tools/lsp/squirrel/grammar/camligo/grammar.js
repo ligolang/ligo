@@ -8,6 +8,27 @@ function mkOp($, opExpr) {
   );
 }
 
+// These rules were extracted as they require a function argument
+// Thanks, I hate it
+const sum_type_rules = suffix => ({
+  // Cat of string | Person of string * string
+  ['sum_type' + suffix]: $ => prec.left(10,
+    choice(
+      common.sepBy1('|', field("variant", $['variant' + suffix])),
+      common.withAttrs($, seq('|', common.sepBy1('|', field("variant", $['variant' + suffix])))),
+    )
+  ),
+
+  // Person of string * string
+  ['variant' + suffix]: $ => common.withAttrs($, seq(
+    field("constructor", $.ConstrName),
+    optional(seq(
+      "of",
+      field("type", $[suffix])
+    ))
+  )),
+})
+
 module.exports = grammar({
   name: 'CameLigo',
 
@@ -38,7 +59,7 @@ module.exports = grammar({
       optional(field("params", $._type_params)),
       field("name", $.TypeName),
       "=",
-      field("type", $._type_def_body)
+      field("type", $._type_expr)
     ),
 
     _type_params: $ => choice(
@@ -51,28 +72,6 @@ module.exports = grammar({
     type_params: $ => common.par(
       common.sepBy1(",", field("param", $.var_type)),
     ),
-
-    _type_def_body: $ => choice(
-      $.record_type,
-      $._type_expr,
-    ),
-
-    sum_type: $ =>
-      prec.left(10,
-        choice(
-          common.sepBy1('|', field("variant", $.variant)),
-          common.withAttrs($, seq('|', common.sepBy1('|', field("variant", $.variant)))),
-        )
-      ),
-
-    // Cat of string, Person of string * string
-    variant: $ => common.withAttrs($, seq(
-      field("constructor", $.ConstrName),
-      optional(seq(
-        "of",
-        field("type", $._type_expr)
-      ))
-    )),
 
     // { field1 : a; field2 : b }
     record_type: $ => common.withAttrs($, seq(
@@ -89,18 +88,40 @@ module.exports = grammar({
       field("type", $._type_expr)
     )),
 
-    _type_expr: $ => choice(
+    ...sum_type_rules('_prod_type_level'),
+
+    _lambda_app_type: $ => choice(
+      $._prod_type_level,
+      $.sum_type_prod_type_level,
+    ),
+
+    _prod_type_level: $ => choice(
+      $.prod_type,
+      $._type_core,
+    ),
+
+    _fun_type_level: $ => choice(
+      $.fun_type,
+      $._prod_type_level,
+    ),
+
+    _type_core: $ => choice(
       $.Int,
       $.TypeWildcard,
       $.string_type,
       $.TypeName,
-      $.fun_type,
-      $.prod_type,
-      $.app_type,
       $.tuple_type,
+      $.app_type,
+      $.record_type,
       $.module_TypeName,
       $.var_type,
-      $.sum_type,
+    ),
+
+    ...sum_type_rules('_fun_type_level'),
+
+    _type_expr: $ => choice(
+      $._fun_type_level,
+      $.sum_type_fun_type_level,
     ),
 
     var_type: $ => seq(
@@ -110,31 +131,31 @@ module.exports = grammar({
 
     // int -> string
     fun_type: $ => prec.right(8, seq(
-      field("domain", $._type_expr),
+      field("domain", $._prod_type_level),
       "->",
-      field("codomain", $._type_expr)
+      field("codomain", $._fun_type_level)
     )),
 
     // string * integer
     prod_type: $ => prec.right(5, seq(
-      field("x", $._type_expr),
+      field("x", $._type_core),
       common.some(seq(
         "*",
-        field("x", $._type_expr)
+        field("x", $._type_core)
       ))
     )),
 
     // a t, (a, b) t
     app_type: $ => prec(10, seq(
-      field("x", $._type_expr),
+      field("x", choice(
+        $._type_core,
+      )),
       field("f", $.TypeName)
     )),
 
-    tuple_type: $ => seq(
-      "(",
+    tuple_type: $ => common.par(seq(
       common.sepBy1(",", field("x", $._type_expr)),
-      ")"
-    ),
+    )),
 
     string_type: $ => field("value", $.String),
 
@@ -450,12 +471,16 @@ module.exports = grammar({
       ))
     )),
 
-    lambda_expr: $ => seq(
+    lambda_expr: $ => common.withAttrs($, seq(
       "fun",
-      repeat1(field("arg", $._irrefutable)),
+      repeat1(field("arg", $._sub_irrefutable)),
+      optional(seq(
+        ":",
+        field("type", $._lambda_app_type),
+      )),
       "->",
       field("body", $._program)
-    ),
+    )),
 
     // match x with ...
     match_expr: $ => prec.right(1, seq(
