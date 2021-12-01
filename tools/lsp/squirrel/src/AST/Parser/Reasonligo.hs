@@ -10,7 +10,6 @@ import Duplo.Tree
 
 import ParseTree
 import Parser
-import Product
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -254,8 +253,5 @@ recognise (SomeRawTree dialect rawTree)
         _                      -> fallthrough
 
   -- Err
-  , Descent do
-      \(r :> _, ParseTree _ children source) ->
-        withComments do
-          return ([] :> r :> N :> CodeSource source :> Nil, Error source children)
+  , Descent noMatch
   ]
