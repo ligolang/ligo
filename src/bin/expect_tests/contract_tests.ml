@@ -2172,6 +2172,59 @@ let%expect_test _ =
                      CONS ;
                      PAIR } } } } } |} ]
 
+(* source location comments *)
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "noop.mligo";
+                  "--michelson-comments"; "location" ];
+  [%expect {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             UNIT ;
+             NIL operation
+                 /* File "../../test/contracts/noop.mligo", line 2, characters 4-6 */
+             /* File "../../test/contracts/noop.mligo", line 2, characters 4-6 */ ;
+             PAIR
+             /* File "../../test/contracts/noop.mligo", line 2, characters 3-28 */ } } |}]
+
+(* JSON source location comments *)
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "noop.mligo";
+                  "--michelson-format"; "json";
+                  "--michelson-comments"; "location" ];
+  [%expect {|
+    { "expression":
+        [ { "prim": "parameter", "args": [ { "prim": "unit" } ] },
+          { "prim": "storage", "args": [ { "prim": "unit" } ] },
+          { "prim": "code",
+            "args":
+              [ [ { "prim": "DROP" }, { "prim": "UNIT" },
+                  { "prim": "NIL", "args": [ { "prim": "operation" } ] },
+                  { "prim": "PAIR" } ] ] } ],
+      "locations":
+        [ null, null, null, null, null, null, null, null, null,
+          { "location":
+              { "start":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "4" },
+                "stop":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "6" } } },
+          { "location":
+              { "start":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "4" },
+                "stop":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "6" } } },
+          { "location":
+              { "start":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "3" },
+                "stop":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "28" } } } ] } |}]
+
 (* Check that decl_pos is not taken into account when "inferring" about tuples (including long tuples) *)
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
