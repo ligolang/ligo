@@ -98,6 +98,7 @@ library:
     - process
     - regex-tdfa
     - safe-exceptions
+    - template-haskell
     - text
     - transformers
     - tree-sitter
