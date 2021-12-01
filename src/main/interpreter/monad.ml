@@ -205,6 +205,7 @@ module Command = struct
         let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
         LT.V_Ct (C_int (Z.of_int s))
       in
+      let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
       let contract = LT.V_Michelson (LT.Contract contract_code) in
       ((contract,size), ctxt)
     | Run (loc, f, v) ->
