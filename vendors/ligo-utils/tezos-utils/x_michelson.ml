@@ -136,7 +136,7 @@ let pp_comment ?comment ppf michelson =
 let pp ppf michelson = pp_comment ?comment:None ppf michelson
 
 let get_json ?(comment : 'meta Data_encoding.t option) (michelson : ('meta, string) node) =
-  let open Micheline in
+  let open Micheline_encoding in
   let open Micheline_printer in
   let open Data_encoding in
   (* Micheline exposes two JSON encodings:
