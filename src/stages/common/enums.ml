@@ -222,7 +222,6 @@ type constant' =
   | C_TEST_CAST_ADDRESS [@only_interpreter]
   | C_TEST_CREATE_CHEST [@only_interpreter]
   | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
-  (* New with EDO*)
   | C_SHA3
   | C_KECCAK
   | C_LEVEL
@@ -235,6 +234,8 @@ type constant' =
   | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
+  | C_GLOBAL_CONSTANT
+  | C_GLOBAL_CONSTANTIZE
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
 [@@deriving enum, yojson, print_constant, only_interpreter_tags ]

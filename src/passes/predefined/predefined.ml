@@ -63,6 +63,8 @@ module Tree_abstraction = struct
     | "Tezos.never"              -> some_const C_NEVER
     | "Tezos.open_chest"         -> some_const C_OPEN_CHEST
     | "Tezos.call_view"          -> some_const C_VIEW
+    | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
+    | "Tezos.constantize"           -> some_const C_GLOBAL_CONSTANTIZE
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -251,6 +253,8 @@ module Tree_abstraction = struct
     | C_NEVER                   -> "Tezos.never"
     | C_OPEN_CHEST              -> "Tezos.open_chest" 
     | C_VIEW                    -> "Tezos.call_view" 
+    | C_GLOBAL_CONSTANT         -> "Tezos.constant"
+    | C_GLOBAL_CONSTANTIZE      -> "Tezos.constantize"
 
     (* Operator module *)
 
@@ -891,6 +895,11 @@ module Stacking = struct
       ])
     )
     | C_VIEW , Hangzhou -> Some (trivial_special "VIEW")
+    | C_GLOBAL_CONSTANT , Hangzhou
+    | C_GLOBAL_CONSTANTIZE , Hangzhou ->
+      Some (special
+        (fun with_args ->  with_args "PUSH")
+        )
     | _ -> None
 
 end

@@ -3,7 +3,7 @@
  (public_name ligo.stacking)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils ligo_coq_ocaml predefined self_michelson
+ (libraries simple-utils tezos-utils proto-alpha-utils ligo_coq_ocaml predefined self_michelson
    environment tezos-hacl-glue-unix bls12-381-unix)
  (inline_tests)
  (preprocess

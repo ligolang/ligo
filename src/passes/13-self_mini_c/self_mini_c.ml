@@ -53,6 +53,7 @@ let is_pure_constant : constant' -> bool =
   | C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE
   | C_OPEN_CHEST
+  | C_GLOBAL_CONSTANT
     -> true
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID

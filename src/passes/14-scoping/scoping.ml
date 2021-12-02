@@ -275,6 +275,20 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   let special : (_ O.static_args * I.expression list) option =
     let return (x : _ O.static_args * I.expression list) : _ = Some x in
     match expr.cons_name with
+    | C_GLOBAL_CONSTANT -> (
+      match expr.arguments with
+      | { content = E_literal (Literal_string hash); type_expression = _ } :: arguments ->
+        let hash = Ligo_string.extract hash in
+        return (O.Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
+      | _ -> None
+    )
+    | C_GLOBAL_CONSTANTIZE -> (
+      match expr.arguments with
+      | expr :: arguments ->
+        let expr : (meta, I.constant', I.literal) O.expr = fst @@ translate_expression expr env in
+        ignore (arguments,expr) ; failwith "Ugh.. can't get michelson repr of the argument here :0 "
+      | _ -> None
+    )
     | C_VIEW -> (
       match expr.arguments with
       | { content = E_literal (Literal_string view_name); type_expression = _ } :: arguments ->
