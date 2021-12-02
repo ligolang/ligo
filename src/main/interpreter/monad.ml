@@ -8,7 +8,7 @@ open Trace
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
-module Tezos_protocol = Tezos_protocol_011_PtHangzH
+module Tezos_protocol = Tezos_protocol_011_PtHangz2
 
 open Errors
 
