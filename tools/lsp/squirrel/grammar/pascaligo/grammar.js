@@ -741,38 +741,33 @@ module.exports = grammar({
     // attempt to parse the contract even if `ligo preprocess` failed.
     preprocessor: $ => field("preprocessor_command", choice(
       $.p_include,
+      $.p_import,
       $.p_if,
       $.p_error,
       $.p_define,
     )),
 
     p_include: $ => seq(
-      '#',
-      'include',
+      /#\s*include/,
       field("filename", $.String)
     ),
 
     p_import: $ => seq(
-      '#',
-      'import',
+      /#\s*import/,
       field("filename", $.String),
       field("alias", $.String),
     ),
 
     p_if: $ => choice(
       seq(
-        '#',
-        choice('if', 'elif', 'else'),
+        /#\s*(if|elif|else)/,
         field("rest", $._till_newline),
       ),
-      seq(
-        '#',
-        'endif',
-      ),
+      /#\s*endif/,
     ),
 
-    p_error: $ => seq('#', 'error', field("message", $._till_newline)),
-    p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
+    p_error: $ => seq(/#\s*error/, field("message", $._till_newline)),
+    p_define: $ => seq(/#\s*(define|undef)/, field("definition", $._till_newline)),
 
     /// MISCELLANEOUS UTILITIES
 
