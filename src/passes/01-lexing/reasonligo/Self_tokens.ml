@@ -95,6 +95,11 @@ let insert_es6fun_token tokens =
     | (VBAR _ as hd) :: rest ->
         List.rev_append (hd :: result) rest
 
+    (* let rec foo : int => int = (i: int) => ...  *)
+    | (COLON _ as hd)::(Ident _ as i)::(Rec _ as r)::rest
+        when open_parentheses = 0 ->
+        List.rev_append (r::i::hd::es6fun::result) rest
+
       (* let foo : int => int = (i: int) => ...  *)
     | (COLON _ as hd)::(Ident _ as i)::(Let _ as l)::rest
          when open_parentheses = 0 ->
