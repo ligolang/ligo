@@ -1326,3 +1326,8 @@ let main = ((p,storage): (parameter, storage)) => {
 };
 
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */
+
+let y = (n : int) : int =>
+  let a : int = 7;
+  let rec b : int => int = (c : int): int => c;
+  z
