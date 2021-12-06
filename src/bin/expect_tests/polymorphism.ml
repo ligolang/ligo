@@ -141,6 +141,13 @@ let%expect_test _ =
   [%expect{|
     1 |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; (test "record_sapling.mligo") ] ;
+  [%expect{|
+    { parameter string ;
+      storage (pair (string %name) (pair %state int (sapling_state 8))) ;
+      code { UNPAIR ; SWAP ; CDR ; SWAP ; PAIR ; NIL operation ; PAIR } } |}]
+
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"
 
