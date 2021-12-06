@@ -1,5 +1,5 @@
-type z = Z.t
-type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson]
+type z = Z.t [@@deriving ord]
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord]
 
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
@@ -31,7 +31,7 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_operation of bytes
-[@@deriving yojson]
+[@@deriving yojson, ord]
 
 let literal_to_enum = function
   | Literal_unit        ->  1

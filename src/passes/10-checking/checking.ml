@@ -70,6 +70,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
        table
      else
        raise.raise default_error
+  | T_singleton l, T_singleton l' when Int.equal 0 (Stage_common.Enums.compare_literal l l') -> table 
   | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _),
     (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _)
     -> raise.raise default_error
