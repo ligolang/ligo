@@ -202,7 +202,6 @@ executable ligo-squirrel
     , data-default
     , duplo
     , exceptions
-    , filepath
     , focus
     , ghc-prim
     , hashable

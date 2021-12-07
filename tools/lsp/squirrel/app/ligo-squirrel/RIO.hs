@@ -65,11 +65,9 @@ import Language.LSP.VFS qualified as V
 
 import StmContainers.Map qualified as StmMap
 
-import System.FilePath (replaceExtension, takeExtension)
-
 import UnliftIO.Directory
   ( Permissions (writable), doesDirectoryExist, doesFileExist, getPermissions
-  , renameFile, setPermissions
+  , setPermissions
   )
 import UnliftIO.MVar (MVar, modifyMVar, modifyMVar_, tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.STM (atomically)
@@ -308,23 +306,20 @@ preload uri = do
     mkReadOnly path = do
       p <- getPermissions path
       setPermissions path p { writable = False }
-    -- HACK: See https://github.com/haskell/lsp/issues/357
-    fixExt broken = do
-      let fixed = replaceExtension broken (takeExtension fin)
-      Log.debug "preload" [i|#{fin} not found. Creating temp file #{fixed}|]
-      renameFile broken fixed
+    createTemp new = do
+      Log.debug "preload" [i|#{fin} not found. Creating temp file: #{new}|]
       -- We make the file read-only so the user is aware that it should not be
       -- changed. Note we can't make fin read-only, since it doesn't exist in
       -- the disk anymore, and also because LSP has no such request.
       sendWarning
-        [i|File #{fin} was removed. The LIGO LSP server may not work as expected. Creating temporary file: #{fixed}|]
-      fixed <$ mkReadOnly fixed
+        [i|File #{fin} was removed. The LIGO LSP server may not work as expected. Creating temporary file: #{new}|]
+      new <$ mkReadOnly new
     handlePersistedFile = do
       tempMap <- asks $ getTag @"temp files"
       let nFin = J.toNormalizedFilePath fin
       atomically (StmMap.lookup nFin tempMap) >>= \case
         Nothing -> do
-          tempFile <- maybe (pure fin) fixExt =<< J.persistVirtualFile uri
+          tempFile <- maybe (pure fin) createTemp =<< J.persistVirtualFile uri
           let nTempFile = J.toNormalizedFilePath tempFile
           tempFile <$ atomically (StmMap.insert nTempFile nFin tempMap)
         Just nTempFile -> pure $ J.fromNormalizedFilePath nTempFile
