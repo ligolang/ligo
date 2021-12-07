@@ -1146,7 +1146,7 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
   ret_t
 
-let test_global_constant ~raise loc = typer_1 ~raise loc "TEST_GLOBAL_CONSTANTIZE" @@ fun a ->
+let test_global_constantize ~raise loc = typer_1 ~raise loc "TEST_GLOBAL_CONSTANTIZE" @@ fun a ->
   a
 
 let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with

@@ -49,6 +49,7 @@ Inductive expr : Set :=
 | E_failwith : A -> expr -> expr
 
 | E_raw_michelson : A -> node A string -> node A string -> list (node A string) -> expr
+| E_constantize : A -> expr -> expr
 
 with args : Set :=
 | Args_nil : args

@@ -34,6 +34,7 @@ type ('a, 'op, 'lit) expr =
 | E_raw_michelson of 'a * ('a, string) Tezos_micheline.Micheline.node
    * ('a, string) Tezos_micheline.Micheline.node
    * ('a, string) Tezos_micheline.Micheline.node list
+| E_constantize of 'a * ('a, 'op, 'lit) expr
 and ('a, 'op, 'lit) args =
 | Args_nil
 | Args_cons of splitting * ('a, 'op, 'lit) expr * ('a, 'op, 'lit) args

@@ -167,6 +167,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_OPEN_CHEST -> C_OPEN_CHEST
   | C_VIEW -> C_VIEW
   | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT
+  | C_GLOBAL_CONSTANTIZE -> C_GLOBAL_CONSTANTIZE
   | (   C_TEST_ORIGINATE
       | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
@@ -593,6 +594,10 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       | (C_LIST_FOLD_LEFT, lst) -> fold_left lst
       | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
       | (C_SET_FOLD_DESC , lst) -> fold_right lst
+      (* Transform C_GLOBAL_CONSTANTIZE to a special control structure E_constantize *)
+      | (C_GLOBAL_CONSTANTIZE, [expr]) ->
+        let expr = self expr in
+        return @@ E_constantize expr
       | _ -> (
           let lst' = List.map ~f:(self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}

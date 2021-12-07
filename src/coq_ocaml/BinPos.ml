@@ -11,7 +11,8 @@ module Pos =
       (fun p ->
       (fun x -> Zarith.add Zarith.one (Zarith.mul (Zarith.add Zarith.one Zarith.one) x))
       p)
-      (fun _ -> (fun x -> Zarith.mul (Zarith.add Zarith.one Zarith.one) x) Zarith.one)
+      (fun _ -> (fun x -> Zarith.mul (Zarith.add Zarith.one Zarith.one) x)
+      Zarith.one)
       x
 
   (** val of_succ_nat : nat -> Zarith.t **)

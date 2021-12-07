@@ -218,6 +218,9 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
       | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
       | Some (a, b) -> (a, b) in
     (E_raw_michelson (meta, translate_type a, translate_type b, code), use_nothing env)
+  | E_constantize e ->
+    let (e, us) = translate_expression e env in
+    (E_constantize (meta, e), us)
 
 and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in
@@ -282,13 +285,8 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
         return (O.Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
       | _ -> None
     )
-    | C_GLOBAL_CONSTANTIZE -> (
-      match expr.arguments with
-      | expr :: arguments ->
-        let expr : (meta, I.constant', I.literal) O.expr = fst @@ translate_expression expr env in
-        ignore (arguments,expr) ; failwith "Ugh.. can't get michelson repr of the argument here :0 "
-      | _ -> None
-    )
+    (* C_GLOBAL_CONSTANTIZE should have been converted to E_constantize by this point :( *)
+    | C_GLOBAL_CONSTANTIZE -> None
     | C_VIEW -> (
       match expr.arguments with
       | { content = E_literal (Literal_string view_name); type_expression = _ } :: arguments ->

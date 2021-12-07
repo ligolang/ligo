@@ -68,6 +68,7 @@ module Free_variables = struct
     | E_update (expr, _i, update, _n) ->
       unions [ self expr; self update ]
     | E_raw_michelson _ -> empty
+    | E_constantize expr -> self expr
 
   and var_name : bindings -> var_name -> bindings = fun b n ->
     if mem b n
