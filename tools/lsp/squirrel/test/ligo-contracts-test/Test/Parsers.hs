@@ -4,6 +4,7 @@ module Test.Parsers
   ) where
 
 import AST (Fallback, parseContracts, srcPath)
+import Progress (noProgress)
 
 import Data.List (isPrefixOf)
 import System.FilePath ((</>))
@@ -91,7 +92,7 @@ getBadContractsWithExtension ext
 
 getOkayContracts :: IO [FilePath]
 getOkayContracts = do
-  allContracts <- parseContracts (pure . srcPath) contractsDir
+  allContracts <- parseContracts (pure . srcPath) noProgress contractsDir
   pure $ filter (\x -> not $ any (`isPrefixOf` x) okayIgnoreDirs)
        $ filter (`notElem` okayIgnoreContracts)
          allContracts

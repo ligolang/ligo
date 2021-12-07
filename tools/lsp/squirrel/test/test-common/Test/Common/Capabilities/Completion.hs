@@ -12,6 +12,7 @@ import Test.Tasty.HUnit (testCase)
 import AST.Capabilities.Completion
 import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
 import AST.Scope (HasScopeForest, contractTree, lookupContract)
+import Progress (noProgress)
 import Range (point)
 
 import Test.Common.Capabilities.Util qualified (contractsDir)
@@ -173,7 +174,7 @@ caseInfos =
 
 completionDriver :: forall parser. HasScopeForest parser IO => [TestInfo] -> IO TestTree
 completionDriver testInfos = do
-  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed contractsDir
+  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress contractsDir
   pure $ testGroup "Completion" $ map (makeTestCase graph) testInfos
   where
     makeTestCase graph info =

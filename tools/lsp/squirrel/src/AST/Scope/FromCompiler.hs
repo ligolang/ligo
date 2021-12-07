@@ -4,6 +4,8 @@ module AST.Scope.FromCompiler
   ( FromCompiler
   ) where
 
+import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
+import Control.Arrow ((&&&))
 import Control.Category ((>>>))
 import Control.Monad.IO.Unlift (MonadIO, MonadUnliftIO)
 import Data.Foldable (foldrM)
@@ -14,6 +16,7 @@ import Data.Map qualified as Map
 import Duplo.Lattice
 import Duplo.Tree (make, only)
 import UnliftIO.Directory (canonicalizePath)
+import UnliftIO.MVar (modifyMVar, newMVar)
 
 import AST.Scope.Common
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
@@ -21,19 +24,29 @@ import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import ListZipper (atLocus, find, withListZipper)
+import Log (i)
+import ParseTree (srcPath)
 import Product
+import Progress (Progress (..), (%))
 import Range
-import Util.Graph (traverseAMConcurrently)
+import Util.Graph (forAMConcurrently)
 
 data FromCompiler
 
 -- FIXME: If one contract throws an exception, the entire thing will fail. Standard
 -- scopes will use Fallback.
 instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest FromCompiler m where
-  scopeForest = traverseAMConcurrently \(FindContract ast (SomeLIGO dialect _) msg) -> do
-    (defs, _) <- getLigoDefinitions ast
-    forest <- fromCompiler dialect defs
-    pure $ FindContract ast forest msg
+  scopeForest reportProgress graph = do
+    let nContracts = G.vertexCount graph
+    -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
+    -- 'StateT'. It's best to avoid using this class for stateful monads.
+    counter <- newMVar 0
+    forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msg) -> do
+      n <- modifyMVar counter (pure . (succ &&& id))
+      reportProgress $ Progress (n % nContracts) [i|Fetching LIGO scopes for #{srcPath src}|]
+      (defs, _) <- getLigoDefinitions src
+      forest <- fromCompiler dialect defs
+      pure $ FindContract src forest msg
 
 -- | Extract `ScopeForest` from LIGO scope dump.
 fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m ScopeForest

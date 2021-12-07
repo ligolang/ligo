@@ -1,5 +1,7 @@
 module AST.Parser
   ( Source (..)
+  , Progress (..)
+  , ParserCallback
   , parsePreprocessed
   , parseWithScopes
   , parseContracts
@@ -37,9 +39,13 @@ import Cli
   , LigoErrorNodeParseErrorException (..), fromLigoErrorToMsg, preprocess
   )
 import Extension
+import Log (i)
 import ParseTree (Source (..), srcToText, toParseTree)
 import Parser
+import Progress (Progress (..), ProgressCallback, noProgress, (%))
 import Util.Graph (wcc)
+
+type ParserCallback m contract = Source -> m contract
 
 parse :: MonadIO m => Source -> m ContractInfo
 parse src = liftIO do
@@ -80,20 +86,28 @@ parseWithScopes
   -> m ContractInfo'
 parseWithScopes src = do
   let fp = srcPath src
-  graph <- parseContractsWithDependencies parsePreprocessed (takeDirectory fp)
-  scoped <- addScopes @impl $ fromMaybe graph $ find (isJust . lookupContract fp) (wcc graph)
+  graph <- parseContractsWithDependencies parsePreprocessed noProgress (takeDirectory fp)
+  scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (wcc graph)
   maybe (throwM $ ContractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.
 -- This ignores every other file which is not a contract.
 parseContracts
   :: MonadUnliftIO m
-  => (Source -> m contract)
+  => ParserCallback m contract
+  -> ProgressCallback m
   -> FilePath
   -> m [contract]
-parseContracts parser top = do
+parseContracts parser reportProgress top = do
   input <- scanContracts top
-  pooledMapConcurrently (parser . Path) input
+  let
+    numContracts = length input
+    mkMsg contract = [i|Parsing #{contract}|]
+  pooledMapConcurrently
+    (\(n, c) -> do
+      reportProgress (Progress (n % numContracts) (mkMsg c))
+      parser (Path c))
+    (zip [(0 :: Int) ..] input)
 
 -- | Scan the whole directory for LIGO contracts.
 -- This ignores every other file which is not a contract.
@@ -114,22 +128,24 @@ scanContracts top = do
         else pure []
   pure $ concat contracts
 
--- TODO: Use FilePath
 parseContractsWithDependencies
   :: MonadUnliftIO m
-  => (Source -> m ContractInfo)
+  => ParserCallback m ContractInfo
+  -> ProgressCallback m
   -> FilePath
   -> m (AdjacencyMap ParsedContractInfo)
-parseContractsWithDependencies parser = includesGraph <=< parseContracts parser
+parseContractsWithDependencies parser reportProgress =
+  includesGraph <=< parseContracts parser reportProgress
 
 parseContractsWithDependenciesScopes
   :: forall impl m
    . (HasScopeForest impl m, MonadUnliftIO m)
-  => (Source -> m ContractInfo)
+  => ParserCallback m ContractInfo
+  -> ProgressCallback m
   -> FilePath
   -> m (AdjacencyMap ContractInfo')
-parseContractsWithDependenciesScopes parser =
-  addScopes @impl <=< parseContractsWithDependencies parser
+parseContractsWithDependenciesScopes parser reportProgress =
+  addScopes @impl reportProgress <=< parseContractsWithDependencies parser reportProgress
 
 collectAllErrors :: ContractInfo' -> [Msg]
 collectAllErrors (FindContract _ tree errs) =
