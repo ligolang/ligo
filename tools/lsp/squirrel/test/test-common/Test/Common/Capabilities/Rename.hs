@@ -12,6 +12,7 @@ import Data.HashMap.Strict qualified as HM
 import Data.List (sort)
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Word (Word32)
 import Language.LSP.Types qualified as J
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
@@ -57,7 +58,7 @@ testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected
       NotFound -> expectationFailure "Should return edits"
       Ok results -> sortWSMap results `shouldBe` sortWSMap expected'
   where
-    len = T.length name
+    len = fromIntegral $ T.length name
 
     sortWSMap :: J.WorkspaceEditMap -> HM.HashMap J.Uri [(J.Range, Text)]
     sortWSMap = fmap (\(J.List xs) -> sort $ fmap (\(J.TextEdit r t) -> (r, t)) xs)
@@ -65,7 +66,7 @@ testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected
 testRenameFail
   :: forall impl. HasScopeForest impl IO
   => FilePath  -- ^ Contract path
-  -> (Int, Int)  -- ^ Rename location
+  -> (Word32, Word32)  -- ^ Rename location
   -> Assertion
 testRenameFail fp pos = do
     tree <- readContractWithScopes @impl fp

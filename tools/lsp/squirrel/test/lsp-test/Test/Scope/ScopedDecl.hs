@@ -10,7 +10,7 @@ import Range (Range, point)
 import Test.Common.FixedExpectations (shouldBe)
 
 stubRange :: Range
-stubRange = point (-1) (-1)
+stubRange = point 0 0
 
 stubTspec :: TypeDeclSpecifics Type
 stubTspec = TypeDeclSpecifics stubRange (AliasType "stupid-type")

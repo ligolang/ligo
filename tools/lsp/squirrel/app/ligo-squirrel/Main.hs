@@ -14,6 +14,7 @@ import Data.Default
 import Data.Foldable (for_)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
+import Data.Int (Int32)
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Data.String.Interpolate (i)
@@ -190,7 +191,7 @@ handleDidChangeTextDocument notif = do
     -- conditions.
     notify (RIO.Contract doc nuris) = do
       let ver = notif^.J.params.J.textDocument.J.version
-      openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
+      openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int32)))
       modifyMVar_ openDocsVar \openDocs -> do
         RIO.clearDiagnostics nuris
         RIO.collectErrors doc ver
@@ -201,7 +202,7 @@ handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   RIO.Contract _ nuris <- RIO.fetch' RIO.LeastEffort uri
 
-  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int)))
+  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int32)))
   modifyMVar_ openDocsVar \openDocs -> do
     let openDocs' = HashMap.delete uri openDocs
     -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
@@ -428,7 +429,7 @@ handleDidChangeWatchedFiles notif = do
       log [i|Created #{uri}|]
       void $ RIO.forceFetch' RIO.BestEffort uri
     J.FcChanged -> do
-      openDocsVar <- asks $ getElem @(MVar (HashMap J.NormalizedUri Int))
+      openDocsVar <- asks $ getElem @(MVar (HashMap J.NormalizedUri Int32))
       mOpenDocs <- tryReadMVar openDocsVar
       case mOpenDocs of
         Just openDocs | not $ HashMap.member uri openDocs -> do

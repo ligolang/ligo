@@ -19,6 +19,7 @@ import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
 import Data.Text qualified as Text (pack)
+import Data.Word (Word32)
 import Duplo (Cofree ((:<)), Layers)
 import Duplo.Pretty as Exports
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
@@ -344,6 +345,10 @@ instance Pretty LineMarkerType where
   pp RootFile     = ""
   pp IncludedFile = "1"
   pp ReturnToFile = "2"
+
+-- Orphans
+instance Pretty Word32 where
+  pp = pp . Text.pack . show
 
 ----------------------------------------------------------------------------
 -- Common

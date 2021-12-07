@@ -35,6 +35,7 @@ import Data.Maybe (fromJust, isJust, mapMaybe)
 import Data.String.Interpolate (i)
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Word (Word32)
 import Text.Read (readMaybe)
 
 import Duplo.Pretty
@@ -82,11 +83,11 @@ data LineMarkerType
 data LineMarker = LineMarker
   { lmFile :: FilePath  -- ^ The file that was included.
   , lmFlag :: LineMarkerType  -- ^ The "parsed" flag of the line marker.
-  , lmLine :: Int  -- ^ The line number that should be used after the inclusion.
+  , lmLine :: Word32  -- ^ The line number that should be used after the inclusion.
   , lmLoc  :: Range  -- ^ The location in the preprocessed file where the line marker was added.
   } deriving stock (Eq, Show)
 
-parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, Int)
+parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, Word32)
 parseLineMarkerText marker = do
   "#" : lineStr : fileText : flags <- Just $ Text.words marker
   line <- readMaybe $ Text.unpack lineStr
@@ -201,7 +202,7 @@ emptyParsedInfo :: Product ParsedInfo
 emptyParsedInfo =
   PreprocessedRange emptyPoint :> [] :> [] :> emptyPoint :> N :> CodeSource "" :> Nil
   where
-    emptyPoint = point (-1) (-1)
+    emptyPoint = point 0 0
 
 instance
   ( Contains Range xs
@@ -215,7 +216,7 @@ instance
       . ascribeComms (getElem xs)
 
 fillInfo :: Functor f => f (Product xs) -> f (Product ([Text] : Range : ShowRange : xs))
-fillInfo = fmap \it -> [] :> point (-1) (-1) :> N :> it
+fillInfo = fmap \it -> [] :> point 0 0 :> N :> it
 
 ascribeComms :: [Text] -> Doc -> Doc
 ascribeComms comms

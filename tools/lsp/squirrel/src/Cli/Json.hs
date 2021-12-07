@@ -40,6 +40,7 @@ import Data.List qualified as List
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text (unpack)
+import Data.Word (Word32)
 import GHC.Generics
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
@@ -282,8 +283,8 @@ data LigoRange
 -- ```
 data LigoRangeInner = LigoRangeInner
   { _lriByte :: LigoByte
-  , _lriPointNum :: Int
-  , _lriPointBol :: Int
+  , _lriPointNum :: Word32
+  , _lriPointBol :: Word32
   }
   deriving stock (Eq, Generic, Show)
 
@@ -293,9 +294,9 @@ data LigoRangeInner = LigoRangeInner
 -- ```
 data LigoByte = LigoByte
   { _lbPosFname :: FilePath
-  , _lbPosLnum :: Int
-  , _lbPosBol :: Int
-  , _lbPosCnum :: Int
+  , _lbPosLnum :: Word32
+  , _lbPosBol :: Word32
+  , _lbPosCnum :: Word32
   }
   deriving stock (Eq, Generic, Show)
 
@@ -556,7 +557,7 @@ parseLigoRangeString = flip withText safeExtract
           }
         }
 
-    parseRange :: [String] -> Either String (FilePath, Int, Int, Int)
+    parseRange :: [String] -> Either String (FilePath, Word32, Word32, Word32)
     parseRange = \case
         [_, file, line, colStart, colStop] -> do
           let fp = file
@@ -665,7 +666,7 @@ mbFromLigoRange
       }
 
 fromLigoRangeOrDef :: LigoRange -> Range
-fromLigoRangeOrDef = fromMaybe (point (-1) (-1)) . mbFromLigoRange
+fromLigoRangeOrDef = fromMaybe (point 0 0) . mbFromLigoRange
 
 -- | Reconstruct `LIGO` tree out of `LigoTypeFull`.
 fromLigoTypeFull :: LigoTypeFull -> LIGO Info

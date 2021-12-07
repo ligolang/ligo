@@ -158,20 +158,18 @@ toParseTree dialect input = do
             -- https://github.com/tree-sitter/tree-sitter-bash/issues/27#issuecomment-410865045
             -- we can check for this by testing whether we have an empty node.
             name     = if start2D == finish2D then "ERROR" else Text.pack ty
-            i        = fromIntegral
 
           let
             range = Range
               { _rStart  =
-                  ( i $ pointRow    start2D + 1
-                  , i $ pointColumn start2D + 1
-                  , i $ nodeStartByte node
+                  ( pointRow    start2D + 1
+                  , pointColumn start2D + 1
+                  , nodeStartByte node
                   )
-
               , _rFinish =
-                  ( i $ pointRow    finish2D + 1
-                  , i $ pointColumn finish2D + 1
-                  , i $ nodeEndByte node
+                  ( pointRow    finish2D + 1
+                  , pointColumn finish2D + 1
+                  , nodeEndByte node
                   )
               , _rFile = srcPath fin
               }

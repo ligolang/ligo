@@ -3,7 +3,7 @@ module Test.Capabilities.CodeAction (unit_code_action) where
 import Data.List (find)
 import Data.Maybe (fromJust)
 import Language.LSP.Test
-import Language.LSP.Types
+import Language.LSP.Types (CodeAction, Command, Position (..), Range (..), type (|?) (..))
 import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-incomplete-uni-patterns -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 
 module RIO
   ( RIO
@@ -51,6 +51,7 @@ import Data.Default (def)
 import Data.Foldable (find, toList, traverse_)
 import Data.Function ((&), on)
 import Data.HashMap.Strict (HashMap)
+import Data.Int (Int32)
 import Data.List (groupBy, nubBy, sortOn)
 import Data.Map qualified as Map
 import Data.Maybe (isJust, isNothing)
@@ -100,7 +101,7 @@ type RioEnv =
   Product
     '[ MVar Config
      , ASTMap J.NormalizedUri Contract RIO
-     , MVar (HashMap J.NormalizedUri Int)
+     , MVar (HashMap J.NormalizedUri Int32)
      , "includes" := MVar (AdjacencyMap ParsedContractInfo)
      , "temp files" := StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
      ]
@@ -119,11 +120,6 @@ newtype RIO a = RIO
     , MonadUnliftIO
     , J.MonadLsp Config.Config
     )
-
--- FIXME: LspT does not provide these instances, even though it is just a ReaderT.
--- (Do not forget to remove -Wno-orphans.)
-deriving newtype instance MonadThrow m => MonadThrow (J.LspT config m)
-deriving newtype instance MonadCatch m => MonadCatch (J.LspT config m)
 
 instance HasLigoClient RIO where
   getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) getCustomConfig
@@ -443,7 +439,7 @@ load uri = do
 
 collectErrors
   :: ContractInfo'
-  -> Maybe Int
+  -> J.TextDocumentVersion
   -> RIO ()
 collectErrors contract version = do
   -- Correct the ranges of the error messages to correspond to real locations
