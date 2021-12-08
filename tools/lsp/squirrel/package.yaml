@@ -98,7 +98,7 @@ library:
     - process
     - regex-tdfa
     - safe-exceptions
-    - template-haskell
+    - th-compat
     - text
     - transformers
     - tree-sitter

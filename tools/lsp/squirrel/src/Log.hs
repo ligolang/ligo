@@ -13,7 +13,7 @@ import Control.Monad.Catch
 import Control.Monad
 import Data.IORef
 import Data.String.Interpolate.IsString (i)
-import Language.Haskell.TH (Exp (ConE), Q)
+import Language.Haskell.TH.Syntax.Compat (SpliceQ, examineSplice, liftSplice)
 import System.Environment (lookupEnv)
 import System.IO (hFlush, hPutStrLn, stderr)
 import System.IO.Unsafe (unsafePerformIO)
@@ -53,14 +53,13 @@ synchronized = bracket_
   do liftIO $ takeMVar logLock
   do liftIO $ putMVar  logLock ()
 
-flagBasedLogLevel :: Q Exp
-flagBasedLogLevel = do
+flagBasedLogLevel :: SpliceQ Level
+flagBasedLogLevel = liftSplice do
   let flagName = "LIGO_LOG_LEVEL"
-  ConE <$> liftIO do
-    lookupEnv flagName >>= maybe
-      (pure 'ERROR)
-      (\case
-        "DEBUG" -> pure 'DEBUG
-        "ERROR" -> pure 'ERROR
-        "CRASH" -> pure 'CRASH
-        other -> fail $ "Unrecognized " <> flagName <> " flag: " <> other)
+  liftIO (lookupEnv flagName) >>= maybe
+    (examineSplice [|| ERROR ||])
+    (\case
+      "DEBUG" -> examineSplice [|| DEBUG ||]
+      "ERROR" -> examineSplice [|| ERROR ||]
+      "CRASH" -> examineSplice [|| CRASH ||]
+      other -> fail $ "Unrecognized " <> flagName <> " flag: " <> other)

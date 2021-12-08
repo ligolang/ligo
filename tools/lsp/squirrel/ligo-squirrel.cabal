@@ -132,8 +132,8 @@ library
     , process
     , regex-tdfa
     , safe-exceptions
-    , template-haskell
     , text
+    , th-compat
     , transformers
     , tree-sitter
     , unliftio

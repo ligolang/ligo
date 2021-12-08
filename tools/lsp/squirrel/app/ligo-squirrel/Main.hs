@@ -43,7 +43,7 @@ import Util (toLocation)
 
 main :: IO ()
 main = do
-  Log.setLogLevel $(Log.flagBasedLogLevel)
+  Log.setLogLevel $$(Log.flagBasedLogLevel)
   exit =<< mainLoop
 
 mainLoop :: IO Int
