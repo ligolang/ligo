@@ -10,6 +10,7 @@ let get_entry ~raise l n = trace_option ~raise could_not_aggregate_entry @@ Mini
 
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression = Helpers.map_expression
+let fold_map_expression = Helpers.fold_map_expression
 
 (* Conservative purity test: ok to treat pure things as impure, must
    not treat impure things as pure. *)
@@ -219,22 +220,21 @@ let should_inline : expression_variable -> expression -> expression -> bool =
   fun x e1 e2 ->
   occurs_count x e2 <= 1 || is_variable e1
 
-let inline_let : bool ref -> expression -> expression =
-  fun changed e ->
+let inline_let : bool ref -> unit -> expression -> bool * unit * expression =
+  fun changed () e ->
   match e.content with
   | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
     if is_pure e1 && (should_inline_here || should_inline x e1 e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
-      (changed := true ; e2')
+      (changed := true ; (false, (), e2'))
     else
-      e
-  | _ -> e
+      (true, (), e)
+  | _ -> (true, (), e)
 
-let inline_lets ~raise : bool ref -> expression -> expression =
-  fun changed ->
-  map_expression ~raise (fun ~raise:_ -> inline_let changed)
-
+let inline_lets : bool ref -> expression -> expression =
+  fun changed e ->
+  snd @@ fold_map_expression (inline_let changed) () e
 
 (* Let "beta" mean transforming the code:
 
@@ -368,7 +368,7 @@ let contract_check ~raise init =
 let rec all_expression ~raise : expression -> expression =
   fun e ->
   let changed = ref false in
-  let e = inline_lets ~raise changed e in
+  let e = inline_lets changed e in
   let e = betas ~raise changed e in
   let e = etas ~raise changed e in
   if !changed

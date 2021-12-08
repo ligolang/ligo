@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1446'
+title: 'Self mini_c optimizations: apply a single inline per round'
+type: performance
