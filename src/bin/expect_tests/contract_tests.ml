@@ -1806,7 +1806,7 @@ let%expect_test _ =
 
 (* warning non-duplicable variable used examples *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
   [%expect {|
     File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-50:
       1 | module Foo = struct
@@ -1815,10 +1815,8 @@ let%expect_test _ =
     :
     Warning: variable "Foo.x" cannot be used more than once.
 
-    Error(s) occurred while checking the contract:
-    At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-    At (unshown) location 8, Ticket in unauthorized position (type error).
-  |}]
+    (Pair (Pair "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG" 42 42)
+          (Pair "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG" 42 42)) |}]
 
 
 let%expect_test _ =
@@ -2248,5 +2246,5 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let Foo = let x = L(54)[@inline] in x
-    let Foo = let y = Foo[@inline] in y |}]
+    let Foo = let x = L(54)[@inline] in (x)[@inline]
+    let Foo = let y = (Foo).(0)[@inline] in (y)[@inline] |}]

@@ -1,0 +1,4 @@
+author: tomjack
+merge_request: '1444'
+title: Re-do some reverted module inlining changes
+type: internal
