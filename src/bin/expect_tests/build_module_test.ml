@@ -92,34 +92,37 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
-let ../../test/contracts/build/A.mligo = let toto = L(1)[@inline] in toto
+let ../../test/contracts/build/A.mligo =
+  let toto = L(1)[@inline] in (toto)[@inline]
 let ../../test/contracts/build/B.mligo =
   let A = ../../test/contracts/build/A.mligo[@inline] in
   let toto = L(32)[@inline] in
-  let titi = ADD(A , L(42))[@inline] in
+  let titi = ADD((A).(0) , L(42))[@inline] in
   let f =
     fun #1 ->
     (let #6 = #1 in
      let (#10, #11) = #6 in
      let #2 = #10 in
-     let x = #11 in let x = ADD(ADD(x , A) , titi) in PAIR(LIST_EMPTY() , x))[@inline] in
-  PAIR(PAIR(A , f) , PAIR(titi , toto))
-let ../../test/contracts/build/F.mligo = let toto = L(44)[@inline] in toto
-let ../../test/contracts/build/G.mligo = let toto = L(43)[@inline] in toto
+     let x = #11 in
+     let x = ADD(ADD(x , (A).(0)) , titi) in PAIR(LIST_EMPTY() , x))[@inline] in
+  (A, f, titi, toto)[@inline]
+let ../../test/contracts/build/F.mligo =
+  let toto = L(44)[@inline] in (toto)[@inline]
+let ../../test/contracts/build/G.mligo =
+  let toto = L(43)[@inline] in (toto)[@inline]
 let ../../test/contracts/build/C.mligo =
   let A = ../../test/contracts/build/A.mligo[@inline] in
   let B = ../../test/contracts/build/B.mligo[@inline] in
-  let tata = ADD(A , CAR(CDR(B)))[@inline] in
-  let foo = (CDR(CAR(B)))@(PAIR(L(unit) , L(3)))[@inline] in
-  PAIR(PAIR(A , B) , PAIR(foo , tata))
+  let tata = ADD((A).(0) , (B).(2))[@inline] in
+  let foo = ((B).(1))@(PAIR(L(unit) , L(3)))[@inline] in (A, B, foo, tata)[@inline]
 let ../../test/contracts/build/E.mligo =
   let F = ../../test/contracts/build/F.mligo[@inline] in
   let G = ../../test/contracts/build/G.mligo[@inline] in
   let toto = L(10)[@inline] in
-  let foo = L("bar")[@inline] in PAIR(PAIR(F , G) , PAIR(foo , toto))
+  let foo = L("bar")[@inline] in (F, G, foo, toto)[@inline]
 let C = ../../test/contracts/build/C.mligo[@inline]
 let E = ../../test/contracts/build/E.mligo[@inline]
-let toto = ADD(CDR(CDR(E)) , CAR(CDR(CDR(CAR(C)))))
+let toto = ADD((E).(3) , ((C).(1)).(2))
 let fb = (L(1), toto, L(2), L(3))
 let main =
   fun #4 ->
