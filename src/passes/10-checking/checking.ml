@@ -23,6 +23,17 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
   let open O in
   let self = infer_type_application ~raise ~loc ~default_error in
   let default_error = default_error loc type_matched type_ in
+  let inj_mod_equal a b = (* TODO: cleanup with polymorphic functions in value env *)
+    let a = Ligo_string.extract a in
+    let b = Ligo_string.extract b in
+    let ad_hoc_maps_unification a b = match a,b with
+      | "map_or_big_map", x -> (x,x)
+      | x, "map_or_big_map" -> (x,x)
+      | _ -> a,b
+    in
+    let (a,b) = ad_hoc_maps_unification a b in
+    String.equal a b
+  in
   match type_matched.type_content, type_.type_content with
   | T_variable v, _ -> (
      match TMap.find_opt v table with
@@ -34,7 +45,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
      let table = self table type2 type2_ in
      table
   | T_constant {language;injection;parameters}, T_constant {language=language';injection=injection';parameters=parameters'} ->
-     if String.equal language language' && String.equal (Ligo_string.extract injection) (Ligo_string.extract injection') && Int.equal (List.length parameters) (List.length parameters') then
+     if String.equal language language' && inj_mod_equal injection injection' && Int.equal (List.length parameters) (List.length parameters') then
        let table = List.fold_right (List.zip_exn parameters parameters') ~f:(fun (t, t') table ->
                        self table t t') ~init:table in
        table

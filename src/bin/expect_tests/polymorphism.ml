@@ -148,6 +148,11 @@ let%expect_test _ =
       storage (pair (string %name) (pair %state int (sapling_state 8))) ;
       code { UNPAIR ; SWAP ; CDR ; SWAP ; PAIR ; NIL operation ; PAIR } } |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "try_transfer (\"tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx\" : address) 0 (Build_state (Map.empty :(address, tokenValue) map))" ; "--init-file" ; (test "map_or_big_map.mligo") ] ;
+  [%expect{|
+    (Some { Elt "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" 0 }) |}]
+
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"
 
