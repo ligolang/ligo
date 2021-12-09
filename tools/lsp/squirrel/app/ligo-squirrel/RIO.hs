@@ -51,8 +51,7 @@ import Data.Bool (bool)
 import Data.Default (def)
 import Data.Foldable (find, toList, traverse_)
 import Data.Function (on)
-import Data.HashMap.Strict (HashMap)
-import Data.Int (Int32)
+import Data.HashSet (HashSet)
 import Data.List (groupBy, nubBy, sortOn)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe, isJust, isNothing)
@@ -104,7 +103,7 @@ type RioEnv =
   Product
     '[ MVar Config
      , ASTMap J.NormalizedUri Contract RIO
-     , MVar (HashMap J.NormalizedUri Int32)
+     , MVar (HashSet J.NormalizedUri)
      , "includes" := MVar (Includes ParsedContractInfo)
      , "temp files" := StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
      ]
@@ -492,10 +491,10 @@ clearDiagnostics uris = do
     J.publishDiagnostics maxDiagnostics nuri Nothing mempty
 
 errorToDiag :: (Range, Error a) -> (J.NormalizedUri, J.Diagnostic)
-errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =
-  ( J.toNormalizedUri $ J.filePathToUri f
+errorToDiag (getRange -> r, Error what _) =
+  ( J.toNormalizedUri $ J.filePathToUri $ _rFile r
   , J.Diagnostic
-    (J.Range begin end)
+    (toLspRange r)
     (Just J.DsError)
     Nothing
     source
@@ -503,6 +502,3 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =
     (Just $ J.List [])
     Nothing
   )
-  where
-    begin = J.Position (sl - 1) (sc - 1)
-    end   = J.Position (el - 1) (ec - 1)

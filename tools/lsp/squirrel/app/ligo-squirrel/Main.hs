@@ -9,9 +9,8 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
 import Data.Default
 import Data.Foldable (for_)
-import Data.HashMap.Strict (HashMap)
-import Data.HashMap.Strict qualified as HashMap
-import Data.Int (Int32)
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HashSet
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Data.Text qualified as T
@@ -123,7 +122,7 @@ initialize :: IO RioEnv
 initialize = do
   config <- newEmptyMVar
   astMap <- ASTMap.empty $ RIO.load @Fallback
-  openDocs <- newMVar HashMap.empty
+  openDocs <- newMVar HashSet.empty
   includes <- newMVar G.empty
   tempMap <- newIO
   pure (config :> astMap :> openDocs :> Tag includes :> Tag tempMap :> Nil)
@@ -175,20 +174,8 @@ handleDidOpenTextDocument notif = do
   openDocsVar <- asks getElem
   modifyMVar_ openDocsVar \openDocs -> do
     RIO.collectErrors doc (Just ver)
-    pure $ HashMap.insert uri ver openDocs
+    pure $ HashSet.insert uri openDocs
 
--- FIXME: Suppose the following scenario:
--- * VSCode has `squirrel/test/contracts/` open as folder;
--- * You open `find/includes/A3.mligo`;
--- * You quickly edit it to contain some mistake (e.g.: replace 40 with 4f0) so
--- that `handleDidOpenTextDocument` might be still running when this function is
--- called.
--- Now there is something weird going on: VSCode might not put an error on `4f0`
--- because we got an outdated version (from `fetchBundled`). Even more oddly, if
--- we now delete the `f`, it might highlight `40` as incorrect from the previous
--- error.
--- This can be fixed by opening another contract in WCC or, sometimes, just
--- closing and opening this document again.
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
@@ -201,7 +188,7 @@ handleDidChangeTextDocument notif = do
     -- conditions.
     notify (RIO.Contract doc nuris) = do
       let ver = notif^.J.params.J.textDocument.J.version
-      openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int32)))
+      openDocsVar <- asks (getElem @(MVar (HashSet J.NormalizedUri)))
       modifyMVar_ openDocsVar \openDocs -> do
         RIO.clearDiagnostics nuris
         RIO.collectErrors doc ver
@@ -212,12 +199,12 @@ handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   RIO.Contract _ nuris <- RIO.fetch' RIO.LeastEffort uri
 
-  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int32)))
+  openDocsVar <- asks getElem
   modifyMVar_ openDocsVar \openDocs -> do
-    let openDocs' = HashMap.delete uri openDocs
+    let openDocs' = HashSet.delete uri openDocs
     -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
-    let nuriMap = HashMap.fromList ((, ()) <$> nuris)
-    when (HashMap.null $ HashMap.intersection openDocs' nuriMap) $
+    let nuriMap = HashSet.fromList nuris
+    when (HashSet.null $ HashSet.intersection openDocs' nuriMap) $
       RIO.clearDiagnostics nuris
     pure openDocs'
 
@@ -420,10 +407,10 @@ handleDidChangeWatchedFiles notif = do
       $(Log.debug) [i|Created #{uri}|]
       void $ RIO.forceFetch' RIO.BestEffort uri
     J.FcChanged -> do
-      openDocsVar <- asks $ getElem @(MVar (HashMap J.NormalizedUri Int32))
+      openDocsVar <- asks getElem
       mOpenDocs <- tryReadMVar openDocsVar
       case mOpenDocs of
-        Just openDocs | not $ HashMap.member uri openDocs -> do
+        Just openDocs | not $ HashSet.member uri openDocs -> do
           $(Log.debug) [i|Changed #{uri}|]
           void $ RIO.forceFetch' RIO.BestEffort uri
         _ -> pure ()
