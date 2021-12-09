@@ -133,6 +133,7 @@ library
     , regex-tdfa
     , safe-exceptions
     , text
+    , th-compat
     , transformers
     , tree-sitter
     , unliftio
