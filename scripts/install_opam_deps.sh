@@ -12,4 +12,4 @@ export PATH=~/.cargo/bin:$PATH
 # PROTOCOL TEMPORARY
 opam install -y bisect_ppx
 # PROTOCOL TEMPORARY
-opam install -y --deps-only --with-test --locked ./ligo.opam
+BLST_PORTABLE=y opam install -y --deps-only --with-test --locked ./ligo.opam
