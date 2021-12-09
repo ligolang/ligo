@@ -60,9 +60,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/use_monad_set.mligo"
       , "polymorphism/use_nelist.mligo"
 
-        -- LIGO-323
-      , "heap-instance.ligo"
-
         -- LIGO-331
       , "polymorphism/cases_annotation1.mligo"
       , "polymorphism/cases_annotation2.mligo"
