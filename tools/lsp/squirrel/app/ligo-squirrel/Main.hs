@@ -183,9 +183,10 @@ handleDidChangeTextDocument notif = do
   void $ RIO.forceFetchAndNotify notify RIO.LeastEffort uri
   where
     -- Clear diagnostics for all contracts in this WCC and then send diagnostics
-    -- collected from this uri.
+    -- collected from this URI.
     -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
     -- conditions.
+    notify :: RIO.Contract -> RIO ()
     notify (RIO.Contract doc nuris) = do
       let ver = notif^.J.params.J.textDocument.J.version
       openDocsVar <- asks (getElem @(MVar (HashSet J.NormalizedUri)))
@@ -197,6 +198,7 @@ handleDidChangeTextDocument notif = do
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+
   RIO.Contract _ nuris <- RIO.fetch' RIO.LeastEffort uri
 
   openDocsVar <- asks getElem

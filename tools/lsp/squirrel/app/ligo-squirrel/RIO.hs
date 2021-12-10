@@ -488,7 +488,7 @@ clearDiagnostics :: Foldable f => f J.NormalizedUri -> RIO ()
 clearDiagnostics uris = do
   maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
   forM_ uris $ \nuri ->
-    J.publishDiagnostics maxDiagnostics nuri Nothing mempty
+    J.publishDiagnostics maxDiagnostics nuri Nothing (Map.singleton source mempty)
 
 errorToDiag :: (Range, Error a) -> (J.NormalizedUri, J.Diagnostic)
 errorToDiag (getRange -> r, Error what _) =
