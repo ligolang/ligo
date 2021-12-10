@@ -708,6 +708,10 @@ let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace
       let* () = monad_option (Errors.generic_error loc "Storage in bootstrap contract does not match") @@
                    Ast_typed.assert_type_expression_eq (storage_ty, storage_ty') in
       return_ct (C_address address)
+    | ( C_TEST_RANDOM , [ V_Ct (C_unit) ] ) ->
+      let expr_gen = QCheck.Gen.generate1 (Mutation.expr_gen ~raise expr_ty)  in
+      let* value = eval_ligo expr_gen calltrace env in
+      return value
     | ( C_TEST_SET_BIG_MAP , [ V_Ct (C_int n) ; V_Map kv ] ) ->
       let bigmap_ty = List.nth_exn types 1 in
       let>> () = Set_big_map (n, kv, bigmap_ty) in

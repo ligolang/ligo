@@ -222,6 +222,7 @@ type constant' =
   | C_TEST_CAST_ADDRESS [@only_interpreter]
   | C_TEST_CREATE_CHEST [@only_interpreter]
   | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
+  | C_TEST_RANDOM [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
