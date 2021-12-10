@@ -2248,3 +2248,19 @@ let%expect_test _ =
   [%expect {|
     let Foo = let x = L(54)[@inline] in (x)[@inline]
     let Foo = let y = (Foo).(0)[@inline] in (y)[@inline] |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
+  [%expect{| 999 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_simple.mligo" ; "Add 999" ] ;
+  [%expect{| (Left (Left 999)) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ; contract "module_contract_complex.mligo" ; "{ number = 999 ; previous_action = Reset }" ] ;
+  [%expect{| (Pair 999 (Left (Right Unit))) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_complex.mligo" ; "Add 999" ] ;
+  [%expect{| (Left (Left 999)) |}]
