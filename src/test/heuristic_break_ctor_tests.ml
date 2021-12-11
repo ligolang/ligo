@@ -1,9 +1,9 @@
 open Test_helpers
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Ast_core.Types
 open Solver_types
 open Typer_common.Errors
-open Trace
+open Simple_utils.Trace
 open Heuristic_common
 
 open Inference.Heuristic_break_ctor

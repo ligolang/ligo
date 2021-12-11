@@ -128,6 +128,7 @@ val min : file:string -> t
     equal. See {! Pos.equal}. Note that [r1] and [r2] can be
     ghosts.  *)
 val equal : t -> t -> bool
+val reg_equal : ('a -> 'a -> bool) -> 'a reg -> 'a reg -> bool
 
 (** The call [lt r1 r2] ("lower than") has the value [true] if, and
     only if, regions [r1] and [r2] refer to the same file, none is a
@@ -150,5 +151,5 @@ val compare : t -> t -> int
 val cover : t -> t -> t
 
 val to_yojson : t -> Yojson.Safe.t
-val of_yojson : Yojson.Safe.t -> (t,string) Result.result
+val of_yojson : Yojson.Safe.t -> (t,string) Result.t
 val to_human_yojson : t -> Yojson.Safe.t

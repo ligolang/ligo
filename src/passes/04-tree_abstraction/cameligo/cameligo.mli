@@ -1,6 +1,6 @@
 [@@@warning "-45"]
 
-open Trace
+open Simple_utils.Trace
 
 module CST = Cst.Cameligo
 module AST = Ast_imperative

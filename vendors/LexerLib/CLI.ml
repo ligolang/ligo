@@ -78,7 +78,7 @@ module Make (Preprocessor_CLI: PREPROCESSOR_CLI) : S =
         "      --preprocess Run the preprocessor"
       ] in
       begin
-        Buffer.add_string buffer (String.concat "\n" options);
+        Buffer.add_string buffer (String.concat ~sep:"\n" options);
         Buffer.add_char   buffer '\n';
         buffer
       end
@@ -202,7 +202,7 @@ module Make (Preprocessor_CLI: PREPROCESSOR_CLI) : S =
        status of the previous CLI (here,
        [Preprocessor_CLI.status]). *)
 
-    module SSet = Set.Make (String)
+    module SSet = Argv.SSet
 
     let opt_wo_arg =
       let open SSet in
@@ -259,7 +259,7 @@ module Make (Preprocessor_CLI: PREPROCESSOR_CLI) : S =
         sprintf "bytes      = %b" !bytes;
         sprintf "preprocess = %b" preprocess] in
     begin
-      Buffer.add_string buffer (String.concat "\n" options);
+      Buffer.add_string buffer (String.concat ~sep:"\n" options);
       Buffer.add_char   buffer '\n';
       buffer
     end

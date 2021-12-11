@@ -1,12 +1,12 @@
-open Trace
+open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
-let () = Unix.putenv "LIGO_FORCE_NEW_TYPER" "false"
+let () = Unix.putenv ~key:"LIGO_FORCE_NEW_TYPER" ~data:"false"
 type syntax = string
 type group_name = string
 type lang = Meta | Object (* Object = normal LIGO code ; Meta = ligo test framework code *)
-module SnippetsGroup = Map.Make(struct type t = (syntax * group_name * Environment.Protocols.t) let compare a b = compare a b end)
+module SnippetsGroup = Caml.Map.Make(struct type t = (syntax * group_name * Environment.Protocols.t) let compare a b = Caml.compare a b end)
 
 
 type snippetsmap = (lang * string) SnippetsGroup.t
@@ -28,7 +28,7 @@ let current_proto = get_proto "current"
     ```
 *)
 let get_groups md_file : snippetsmap =
-  let channel = open_in md_file in
+  let channel = In_channel.create md_file in
   let lexbuf = Lexing.from_channel channel in
   let code_blocks = Md.token lexbuf in
   let aux : snippetsmap -> Md.block -> snippetsmap =
@@ -49,8 +49,8 @@ let get_groups md_file : snippetsmap =
           SnippetsGroup.update (s,"ungrouped",current_proto)
             (fun arg_content ->
               match arg_content with
-              | Some (lang,ct) -> Some (lang, String.concat "\n" (ct::el.contents))
-              | None -> Some (Object, String.concat "\n" el.contents)
+              | Some (lang,ct) -> Some (lang, String.concat ~sep:"\n" (ct::el.contents))
+              | None -> Some (Object, String.concat ~sep:"\n" el.contents)
             )
             grp_map
         )
@@ -60,8 +60,8 @@ let get_groups md_file : snippetsmap =
           SnippetsGroup.update (s,name,get_proto x)
             (fun arg_content ->
               match arg_content with
-              | Some (lang',ct) when lang = lang' -> Some (lang, String.concat "\n" (ct::el.contents))
-              | _ -> Some (lang, String.concat "\n" el.contents)
+              | Some (lang',ct) when Caml.(=) lang lang' -> Some (lang, String.concat ~sep:"\n" (ct::el.contents))
+              | _ -> Some (lang, String.concat ~sep:"\n" el.contents)
             )
             grp_map
         )
@@ -70,8 +70,8 @@ let get_groups md_file : snippetsmap =
           SnippetsGroup.update (s,name,current_proto)
             (fun arg_content ->
               match arg_content with
-              | Some (lang',ct) when lang = lang' -> Some (lang, String.concat "\n" (ct::el.contents))
-              | _ -> Some (lang, String.concat "\n" el.contents)
+              | Some (lang',ct) when Caml.(=) lang lang' -> Some (lang, String.concat ~sep:"\n" (ct::el.contents))
+              | _ -> Some (lang, String.concat ~sep:"\n" el.contents)
             )
             grp_map
         )
@@ -80,8 +80,8 @@ let get_groups md_file : snippetsmap =
           SnippetsGroup.update (s,name,get_proto x)
             (fun arg_content ->
               match arg_content with
-              | Some (lang',ct) when lang = lang' -> Some (lang, String.concat "\n" (ct::el.contents))
-              | _ -> Some (lang, String.concat "\n" el.contents)
+              | Some (lang',ct) when Caml.(=) lang lang' -> Some (lang, String.concat ~sep:"\n" (ct::el.contents))
+              | _ -> Some (lang, String.concat ~sep:"\n" el.contents)
             )
             grp_map
         )
@@ -90,8 +90,8 @@ let get_groups md_file : snippetsmap =
           SnippetsGroup.update (s,name,current_proto)
             (fun arg_content ->
               match arg_content with
-              | Some (lang',ct) when lang = lang' -> Some (lang, String.concat "\n" (ct::el.contents))
-              | _ -> Some (lang, String.concat "\n" el.contents)
+              | Some (lang',ct) when Caml.(=) lang lang' -> Some (lang, String.concat ~sep:"\n" (ct::el.contents))
+              | _ -> Some (lang, String.concat ~sep:"\n" el.contents)
             )
             grp_map
         )
@@ -157,7 +157,7 @@ let get_all_md_files () =
   let () =
     try
       while true do
-        let md_file = input_line ic in
+        let md_file = In_channel.input_line_exn ic in
         if not (List.exists ~f:(String.equal md_file) exclude_files) then
           let grp = get_groups md_file in
           if not (SnippetsGroup.is_empty grp) then
@@ -165,7 +165,7 @@ let get_all_md_files () =
       done
     with
       End_of_file ->
-      close_in ic
+      In_channel.close ic
   in
   !all_input
 

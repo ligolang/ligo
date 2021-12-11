@@ -7,7 +7,7 @@ module V = struct
   let compare x y = Var.compare (Location.unwrap x) (Location.unwrap y)
 end
 
-module M = Map.Make(V)
+module M = Simple_utils.Map.Make(V)
 
 type muchuse = int M.t * V.t list
 
@@ -74,8 +74,8 @@ let rec is_dup (t : type_expression) =
      List.is_empty row_types
   | T_arrow _ -> true
   | T_variable _ -> true
-  | T_abstraction {type_} -> is_dup type_
-  | T_for_all {type_} -> is_dup type_
+  | T_abstraction {type_;ty_binder=_;kind=_} -> is_dup type_
+  | T_for_all {type_;ty_binder=_;kind=_} -> is_dup type_
   | _ -> false
 
 let muchuse_union (x,a) (y,b) =
@@ -211,7 +211,7 @@ let rec get_all_declarations (module_name : module_variable) : module_fully_type
       | Declaration_constant {binder;expr;_} ->
          let name = module_name ^ "." ^ Var.to_name (Location.unwrap binder) in
          [(Location.wrap ~loc:expr.location (Var.of_name name), expr.type_expression)]
-      | Declaration_module {module_binder;module_} ->
+      | Declaration_module {module_binder;module_;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
            let name = module_name ^ "." ^ Var.to_name (Location.unwrap v) in
@@ -227,7 +227,7 @@ let rec muchused_helper (muchuse : muchuse) : module_fully_typed -> muchuse =
     | Declaration_constant {expr ; binder; _} ->
        muchuse_union (muchuse_of_expr expr)
          (muchuse_of_binder binder expr.type_expression s)
-    | Declaration_module {module_;module_binder} ->
+    | Declaration_module {module_;module_binder;module_attr=_} ->
        let decls = get_all_declarations module_binder module_ in
        List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
          decls ~init:(muchused_helper s module_)

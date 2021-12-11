@@ -169,7 +169,7 @@ let now =
 
 let display_format =
   let open Arg in
-  let open Display in
+  let open Simple_utils.Display in
   let info  =
     let docv = "DISPLAY_FORMAT" in
     let doc = "$(docv) is the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
@@ -641,7 +641,7 @@ let repl =
     (let protocol = Environment.Protocols.protocols_to_variant protocol_version in
     let syntax = Ligo_compile.Helpers.syntax_to_variant (Syntax_name syntax_name) None in
     let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
-    match protocol, Trace.to_option syntax, Trace.to_option dry_run_opts with
+    match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
     | _, None, _ -> `Error (false, "Please check syntax name.")
     | None, _, _ -> `Error (false, "Please check protocol name.")
     | _, _, None -> `Error (false, "Please check run options.")

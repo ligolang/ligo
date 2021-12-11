@@ -1,6 +1,6 @@
 open Errors
 open Mini_c
-open Trace
+open Simple_utils.Trace
 
 let self_in_lambdas ~raise : expression -> expression = 
   fun e ->

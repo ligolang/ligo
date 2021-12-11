@@ -131,7 +131,7 @@ let now =
   fun _ s -> Proto_alpha_utils.Error_monad.return s
 
 let display_format =
-  let open Display in
+  let open Simple_utils.Display in
   let docv = "DISPLAY-FORMAT" in
   let doc = "The format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
   Clic.default_arg ~doc ~long:"format" ~placeholder:docv ~default:"human-readable" @@
@@ -175,7 +175,7 @@ let michelson_comments =
            | s -> failwith "unexpected value for --%s: %s" long s in
          match s with
          | "" -> return []
-         | _ -> all_ep (List.map ~f (String.split_on_char ',' s))))
+         | _ -> all_ep (List.map ~f (String.split ~on:',' s))))
 
 let optimize =
   let docv = "ENTRY_POINT" in
@@ -691,7 +691,7 @@ let repl =
     (let protocol = Environment.Protocols.protocols_to_variant protocol_version in
     let syntax = Ligo_compile.Helpers.syntax_to_variant (Syntax_name syntax_name) None in
     let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
-    match protocol, Trace.to_option syntax, Trace.to_option dry_run_opts with
+    match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
     | _, None, _ -> Error ("", "Please check syntax name.")
     | None, _, _ -> Error ("", "Please check protocol name.")
     | _, _, None -> Error ("", "Please check run options.")
@@ -800,7 +800,7 @@ let run ?argv () =
               Lwt.return 0
           | _ -> (
             let buffer = Buffer.contents Old_cli.buffer in
-            if buffer = "ligo: \n" || buffer = "" then
+            if String.(buffer = "ligo: \n" || buffer = "") then
               Format.eprintf "Warning: The old cli is deprecated, use `ligo --help` or `ligo man` to consult the new command syntax\n"
             else
             Clic.pp_cli_errors
@@ -824,4 +824,4 @@ let run ?argv () =
                          Lwt.return 1 in
        match v with
        | Failure msg -> message msg
-       | exn -> message (Printexc.to_string exn))))
+       | exn -> message (Exn.to_string exn))))

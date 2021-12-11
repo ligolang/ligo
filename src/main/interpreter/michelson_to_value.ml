@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 open Ligo_interpreter.Types
 open Tezos_micheline.Micheline
 
@@ -274,11 +274,11 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_typ
       (V_Record m')
   | T_arrow {type1;type2} ->
       (* We now patch the types *)
-      let {arg_binder;body} = trace_option ~raise (wrong_mini_c_value t v) @@ get_func v in
+      let {arg_binder;body;rec_name=_;orig_lambda=_;env=_} = trace_option ~raise (wrong_mini_c_value t v) @@ get_func v in
       (match body.expression_content with
-       | E_application {lamb} ->
+       | E_application {lamb;args=_} ->
           (match lamb.expression_content with
-           | E_raw_code {code} ->
+           | E_raw_code {code;language=_} ->
               let insertion = e_a_raw_code Stage_common.Backends.michelson code (t_function type1 type2 ()) in
               let body = e_a_application insertion (e_a_variable arg_binder type1) type2 in
               let orig_lambda = e_a_lambda {binder=arg_binder; result=body} type1 type2 in

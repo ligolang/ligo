@@ -42,14 +42,14 @@ let get_opt : ?other_module:bool -> expression_variable -> t -> element option =
   | None -> false
   in
   Option.bind ~f: (fun {expr_var=_ ; env_elt; public=_} -> Some env_elt) @@
-    List.find ~f:(fun {expr_var ; env_elt=_; public} -> (public = true || not other_module) && Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
+    List.find ~f:(fun {expr_var ; env_elt=_; public} -> (public || not other_module) && Var.equal expr_var.wrap_content k.wrap_content) (get_expr_environment x)
 let get_type_opt : ?other_module:bool -> type_variable -> t -> type_expression option = fun ?other_module k x ->
   let other_module = match other_module with 
     Some s -> s
   | None -> false
   in
   Option.bind ~f:(fun {type_variable=_ ; type_; public=_} -> match type_ with Ty type_ -> Some type_ | Kind () -> None) @@
-    List.find ~f:(fun {type_variable ; type_=_; public} -> (public = true || not other_module) && Var.equal type_variable k) (get_type_environment x)
+    List.find ~f:(fun {type_variable ; type_=_; public} -> (public || not other_module) && Var.equal type_variable k) (get_type_environment x)
 let get_kind_opt : type_variable -> t -> unit option = fun k x ->
   Option.bind ~f:(fun {type_variable=_ ; type_; public=_} -> match type_ with Ty _ -> None | Kind x -> Some x) @@
     List.find ~f:(fun {type_variable ; type_=_; public=_} -> Var.equal type_variable k) (get_type_environment x)
@@ -59,7 +59,7 @@ let get_module_opt : ?other_module:bool -> module_variable -> t -> environment o
   | None -> false
   in
   Option.bind ~f: (fun {module_variable=_ ; module_; public=_} -> Some module_) @@
-    List.find ~f:(fun {module_variable; module_=_; public} -> (public = true || not other_module) && String.equal module_variable k) (get_module_environment x)
+    List.find ~f:(fun {module_variable; module_=_; public} -> (public || not other_module) && String.equal module_variable k) (get_module_environment x)
 
 let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e ->
   add_expr ~public:true k (make_element_binder v) e
@@ -115,6 +115,7 @@ let get_constructor_parametric : label -> t -> (type_variable list * type_expres
   in rec_aux x
 
 let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
+  let open Simple_utils.Option in
   let rec rec_aux e =
     let aux = fun {type_variable=_ ; type_ ; public=_} ->
       match type_ with
@@ -146,6 +147,7 @@ let get_record : _ label_map -> t -> (type_variable option * rows) option = fun 
 
 
 let get_sum : _ label_map -> t -> rows option = fun lmap e ->
+  let open Simple_utils.Option in
   let rec rec_aux e =
     let aux = fun {type_variable=_ ; type_ ; public=_} ->
       match type_ with
@@ -178,7 +180,7 @@ let get_sum : _ label_map -> t -> rows option = fun lmap e ->
 module PP = struct
   open Format
   include PP
-  open PP_helpers
+  open Simple_utils.PP_helpers
 
   let list_sep_scope x = list_sep x (const " | ")
 

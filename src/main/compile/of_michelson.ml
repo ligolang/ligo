@@ -48,7 +48,7 @@ let measure ~raise = fun m ->
 let source_map contract =
   let open Tezos_micheline in
   let (_, locs) = Micheline.extract_locations contract in
-  let module LocSet = Set.Make(struct type t = Location.t ;; let compare = Location.compare end) in
+  let module LocSet = Caml.Set.Make(struct type t = Location.t ;; let compare = Location.compare end) in
   let ignored = LocSet.of_list [Location.dummy; Location.generated] in
   List.filter ~f:(fun (_, loc) -> not (LocSet.mem loc ignored)) locs
 

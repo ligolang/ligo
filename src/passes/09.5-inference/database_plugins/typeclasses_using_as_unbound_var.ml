@@ -1,4 +1,5 @@
 open Solver_types
+open Simple_utils
 
 module M = functor
   (Type_variable : sig type t end)
@@ -22,7 +23,7 @@ struct
     ReprMap.monotonic_update repr_tv add_to_set state
 
   let p_variable_cells c = List.filter_map
-      ~f:(function { Location.wrap_content = P_variable v } -> Some v | _ -> None)
+      ~f:(function { location = _ ;wrap_content = P_variable v } -> Some v | _ -> None)
       (List.concat c.tc)
 
   let register_typeclasses_using_as_unbound_var : _ -> c_typeclass_simpl -> _ t -> _ t = fun repr c state ->

@@ -1,19 +1,17 @@
 module I = Ast_sugar
 module O = Ast_core
 
+module Location = Simple_utils.Location
+module Var      = Simple_utils.Var
+module Pair     = Simple_utils.Pair
+
 open Stage_common.Maps
 
 let cast_var = Location.map Var.todo_cast
 
-let is_michelson_annotation attr =
-  if String.length attr > 6 && String.sub attr 0 6 = "annot:" then
-    Some (String.sub attr 6 ((String.length attr)-6))
-  else None
+let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
 
-let is_layout attr =
-  if String.length attr > 7 && String.sub attr 0 7 = "layout:" then
-    Some (String.sub attr 7 ((String.length attr)-7))
-  else None
+let is_layout = String.chop_prefix ~prefix:"layout:"
 
 let get_michelson_annotation : (string list) -> string option = fun attributes ->
   let rec aux lst = match lst with
@@ -123,7 +121,7 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_recursive recs ->
       let recs = recursive self self_type recs in
       return @@ O.E_recursive recs
-    | I.E_let_in {let_binder;attributes;rhs;let_result} ->
+    | I.E_let_in {let_binder;attributes;rhs;let_result;mut=_} ->
       let let_binder = binder self_type let_binder in
       let rhs = self rhs in
       let let_result = self let_result in
@@ -206,7 +204,7 @@ let rec compile_expression : I.expression -> O.expression =
       let (_,rhs) = List.fold ~f:aux ~init:(record, fun e -> e) path in
       rhs @@ update
     | I.E_map map -> (
-      let map = List.dedup_and_sort ~compare map in
+      let map = List.dedup_and_sort ~compare:Caml.compare map in
       let aux = fun (k, v) prev ->
         let (k', v') = Pair.map ~f:(self) (k, v) in
         return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
@@ -215,7 +213,7 @@ let rec compile_expression : I.expression -> O.expression =
       List.fold_right ~f:aux ~init map
     )
     | I.E_big_map big_map -> (
-      let big_map = List.dedup_and_sort ~compare big_map in
+      let big_map = List.dedup_and_sort ~compare:Caml.compare big_map in
       let aux = fun (k, v) prev ->
         let (k', v') = Pair.map ~f:(self) (k, v) in
         return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
@@ -231,7 +229,7 @@ let rec compile_expression : I.expression -> O.expression =
       List.fold_right ~f:aux ~init lst'
     | I.E_set set -> (
       let lst' = List.map ~f:(self) set in
-      let lst' = List.dedup_and_sort ~compare lst' in
+      let lst' = List.dedup_and_sort ~compare:Caml.compare lst' in
       let aux = fun prev cur ->
         return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
       let init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in

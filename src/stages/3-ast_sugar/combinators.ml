@@ -1,7 +1,7 @@
 open Types
 module Option = Simple_utils.Option
 
-module SMap = Map.String
+module SMap = Simple_utils.Map.String
 open Stage_common.Constant
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}

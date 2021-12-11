@@ -1,5 +1,6 @@
 include Simple_utils.Trace
 
+module List = Simple_utils.List
 module AE = Memory_proto_alpha.Alpha_environment
 module TP = Tezos_error_monad.Error_monad
 

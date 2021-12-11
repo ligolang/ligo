@@ -4,6 +4,7 @@ open Proto_alpha_utils
 open Trace
 open! Stacking
 open Tezos_micheline
+open Simple_utils
 
 let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (Location.t, 'p) Micheline.node =
   fun e ->

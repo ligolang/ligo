@@ -1,6 +1,6 @@
 module AST = Ast_typed
-module Append_tree = Tree.Append
-open Trace
+module Append_tree = Simple_utils.Tree.Append
+open Simple_utils.Trace
 open Ligo_interpreter.Types
 
 let extract_record ~raise ~(layout:layout) (v : value) (lst : (AST.label * AST.type_expression) list) : _ list =
@@ -13,7 +13,7 @@ let extract_record ~raise ~(layout:layout) (v : value) (lst : (AST.label * AST.t
     let rec aux tv : (AST.label * (value * AST.type_expression)) list =
       match tv with
       | Leaf (s, t), v -> [s, (v, t)]
-      | Node {a;b}, v when Option.is_some (Ligo_interpreter.Combinators.get_pair v) ->
+      | Node {a;b;size=_;full=_}, v when Option.is_some (Ligo_interpreter.Combinators.get_pair v) ->
           let (va, vb) = trace_option ~raise (Errors.generic_error Location.generated "Expected pair") @@
                            Ligo_interpreter.Combinators.get_pair v in
           let a' = aux (a, va) in
@@ -54,8 +54,8 @@ let extract_constructor ~raise ~(layout:layout) (v : value) (lst : (AST.label * 
     let rec aux tv : (label * value * AST.type_expression) =
       match tv with
       | Leaf (k, t), v -> (k, v, t)
-      | Node {a}, V_Construct ("Left", v) -> aux (a, v)
-      | Node {b}, V_Construct ("Right", v) -> aux (b, v)
+      | Node {a;b=_;size=_;full=_}, V_Construct ("Left", v) -> aux (a, v)
+      | Node {a=_;b;size=_;full=_}, V_Construct ("Right", v) -> aux (b, v)
       | _ -> raise.raise @@ Errors.generic_error Location.generated "bad constructor path"
     in
     let (s, v, t) = aux (tree, v) in

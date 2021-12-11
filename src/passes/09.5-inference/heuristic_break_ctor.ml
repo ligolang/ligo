@@ -11,7 +11,7 @@ module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstrac
   end
 end
 
-open Trace
+open Simple_utils.Trace
 open Typer_common.Errors
 
 module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
@@ -160,8 +160,8 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
   let eqs3 =
     match a , b with
     | `Row a , `Row b ->
-      let aux = fun ((la,{associated_variable=aa;_}),(lb,{associated_variable=bb;})) ->
-        let () = Trace.Assert.assert_true ~raise (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
+      let aux = fun ((la,{associated_variable=aa;_}),(lb,{associated_variable=bb;michelson_annotation=_;decl_pos=_})) ->
+        let () = Simple_utils.Trace.Assert.assert_true ~raise (corner_case "TODO: different labels la lb") (Type_variable_abstraction.Compare.label la lb = 0) in
         c_equation
           (wrap (Propagator_break_ctor "a") @@ P_variable (repr aa))
           (wrap (Propagator_break_ctor "b") @@ P_variable (repr bb))

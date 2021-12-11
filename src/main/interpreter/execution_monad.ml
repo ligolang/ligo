@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 (*
   That monad do not seem very useful now,
   but it could become useful if we want to support multiple testing mode (against node, or memory)
@@ -9,6 +9,7 @@ module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
 module Tezos_protocol = Tezos_protocol_011_PtHangz2
+module Location = Simple_utils.Location
 
 open Errors
 
@@ -300,7 +301,7 @@ module Command = struct
         LC.get_michelson_expr a in
       let (b,_,_) = trace_option ~raise (Errors.generic_error loc "Can't compare contracts") @@
         LC.get_michelson_expr b in
-      ((a=b), ctxt)
+      (Caml.(=) a b, ctxt)
     | Get_last_originations () ->
       let aux (src, lst) =
         let src = LC.v_address src in

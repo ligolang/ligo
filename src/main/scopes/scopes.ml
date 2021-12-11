@@ -11,7 +11,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.expression_content with
-    | E_let_in { let_binder = {var ; ascr} ; rhs ; let_result } -> (
+    | E_let_in { let_binder = {var ; ascr ; attributes=_} ; rhs ; let_result ; attr=_} -> (
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) bindings rhs in
       let def = make_v_def_option_type bindings var ascr var.location rhs.location in
       let (i,env) = add_shadowing_def (i,var.wrap_content) def env in
@@ -51,7 +51,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       let (i,env) = add_shadowing_def (i,fun_name.wrap_content) def env in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
-    | E_lambda { binder={var;ascr=input_type} ; output_type = _ ; result } -> (
+    | E_lambda { binder={var;ascr=input_type; attributes=_} ; output_type = _ ; result } -> (
       let def = make_v_def_option_type bindings var input_type var.location result.location in
       let (i,env) = add_shadowing_def (i,var.wrap_content) def env in
       let all_defs = merge_defs env all_defs in
@@ -130,7 +130,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
-        if with_types then Trace.to_option (compile_declaration partials.type_env decl ())
+        if with_types then Simple_utils.Trace.to_option (compile_declaration partials.type_env decl ())
         else None
       in
       let partials = match typed_prg with
@@ -140,19 +140,19 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         | None -> partials
       in
       match decl.wrap_content with
-      | Declaration_constant { binder= { var ; ascr } ; expr ; _ } -> (
+      | Declaration_constant { binder= { var ; ascr ; attributes=_ } ; expr ; _ } -> (
         let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,decl.location) partials.bindings expr in
         let inner_def_map = merge_defs new_inner_def_map inner_def_map in
         let def = make_v_def_option_type partials.bindings var ascr var.location expr.location in
         let (i,top_def_map) = add_shadowing_def (i,var.wrap_content) def top_def_map in
         ( i, top_def_map, inner_def_map, scopes , partials )
       )
-      | Declaration_type {type_binder; type_expr} -> (
+      | Declaration_type {type_binder; type_expr ; type_attr=_} -> (
         let def = make_t_def (get_binder_name type_binder) decl.location type_expr in
         let (i,top_def_map) = add_shadowing_def (i,type_binder) def top_def_map in
         ( i, top_def_map, inner_def_map, scopes, partials )
       )
-      | Declaration_module {module_binder; module_} -> (
+      | Declaration_module {module_binder; module_ ; module_attr=_} -> (
         let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~options i module_ in
         let def = make_m_def module_binder decl.location new_outer_def_map in
         let top_def_map = Def_map.add module_binder def top_def_map in

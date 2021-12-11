@@ -171,7 +171,7 @@ module_:
 %inline attributes:
   ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) {
     let l = list_of_option $1 in
-    List.map unwrap l
+    List.map ~f:unwrap l
   }
 
 (* Type declarations *)

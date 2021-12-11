@@ -18,7 +18,7 @@ let pp_braces printer (node : 'a braces reg) =
 
 let rec print ast =
   let decl = Utils.nseq_to_list ast.decl in
-  let decl = List.filter_map pp_declaration decl
+  let decl = List.filter_map ~f:pp_declaration decl
   in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
@@ -49,7 +49,7 @@ and pp_const_decl = function
         None -> "let "
     | Some _ -> "let rec " in
   let bindings = pp_let_binding let_str binding in
-  let bindings = if attr = [] then bindings
+  let bindings = if List.is_empty attr then bindings
                  else pp_attributes attr ^/^ bindings
   in group (bindings ^^ string ";")
 
@@ -100,7 +100,7 @@ and pp_pattern = function
 and pp_pvar {value; _} =
   let {variable; attributes} = value in
   let v = pp_ident variable in
-  if attributes = [] then v
+  if List.is_empty attributes then v
   else group (pp_attributes attributes ^/^ v)
 
 and pp_pconstr {value; _} =
@@ -140,9 +140,9 @@ and pp_ptuple {value; _} =
   | [p] -> group (break 1 ^^ pp_pattern p)
   | p::items ->
       group (break 1 ^^ pp_pattern p ^^ string ",") ^^ app items
-  in if tail = []
+  in if List.is_empty tail
      then nest 1 (pp_pattern head)
-     else nest 1 (pp_pattern head ^^ string "," ^^ app (List.map snd tail))
+     else nest 1 (pp_pattern head ^^ string "," ^^ app (List.map ~f:snd tail))
 
 and pp_precord fields = pp_ne_injection pp_field_pattern fields
 
@@ -219,7 +219,7 @@ and pp_case_expr {value; _} =
 
 and pp_cases {value; _} =
   let head, tail = value in
-  let rest = List.map snd tail in
+  let rest = List.map ~f:snd tail in
   let app clause = break 1 ^^ string "| " ^^ pp_clause clause
   in  concat_map app (head :: rest)
 
@@ -344,7 +344,7 @@ and pp_ne_injection :
       | Some (opening, closing) ->
           string opening ^^ nest 2 (break 0 ^^ elements)
           ^^ break 1 ^^ string closing in
-    let inj = if attributes = [] then inj
+    let inj = if List.is_empty attributes then inj
               else break 0 ^^ pp_attributes attributes ^/^ inj
     in inj
 
@@ -409,9 +409,9 @@ and pp_tuple_expr {value; _} =
   | [e] -> group (break 1 ^^ pp_expr e)
   | e::items ->
       group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items
-  in if tail = []
+  in if List.is_empty tail
      then nest 1 (pp_expr head)
-     else nest 1 (pp_expr head ^^ string "," ^^ app (List.map snd tail))
+     else nest 1 (pp_expr head ^^ string "," ^^ app (List.map ~f:snd tail))
 
 and pp_let_in {value; _} =
   let {binding; kwd_rec; body; attributes; _} = value in
@@ -496,28 +496,28 @@ and pp_cartesian {value; _} =
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string ",") ^^ app items
   in
-  string "(" ^^ nest 1 (pp_type_expr head ^^ (if tail <> [] then string "," else empty) ^^ app (List.map snd tail)) ^^ string ")"
+  string "(" ^^ nest 1 (pp_type_expr head ^^ (if not @@ List.is_empty tail then string "," else empty) ^^ app (List.map ~f:snd tail)) ^^ string ")"
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in
   let head, tail = variants in
   let head = pp_variant head in
   let padding_flat =
-    if attributes = [] then empty else string "| " in
+    if List.is_empty attributes then empty else string "| " in
   let padding_non_flat =
-    if attributes = [] then blank 2 else string "| " in
+    if List.is_empty attributes then blank 2 else string "| " in
   let head =
-    if tail = [] then head
+    if List.is_empty tail then head
     else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head) in
-  let rest = List.map snd tail in
+  let rest = List.map ~f:snd tail in
   let app variant = break 1 ^^ string "| " ^^ pp_variant variant in
   let whole = head ^^ concat_map app rest in
-  if attributes = [] then whole
+  if List.is_empty attributes then whole
   else pp_attributes attributes ^/^ whole
 
 and pp_variant {value; _} =
   let {constr; args; attributes=attr} = value in
-  let pre = if attr = [] then pp_ident constr
+  let pre = if List.is_empty attr then pp_ident constr
             else group (pp_attributes attr ^/^ pp_ident constr) in
   match args with
     None -> pre
@@ -529,10 +529,10 @@ and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 and pp_field_decl {value; _} =
   let {field_name; field_type; attributes; _} = value in
   let attr = pp_attributes attributes in
-  let name = if attributes = [] then pp_ident field_name
+  let name = if List.is_empty attributes then pp_ident field_name
              else attr ^/^ pp_ident field_name in
   match field_type with
-    TVar v when v = field_name -> name
+    TVar v when Caml.(=) v field_name -> name
   | _ -> let t_expr = pp_type_expr field_type
         in prefix 2 1 (name ^^ string ":") t_expr
 
@@ -547,11 +547,11 @@ and pp_type_tuple {value; _} =
   | [e] -> group (break 1 ^^ pp_type_expr e)
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string ",") ^^ app items in
-  if tail = []
+  if List.is_empty tail
   then pp_type_expr head
   else
     let components =
-      pp_type_expr head ^^ string "," ^^ app (List.map snd tail)
+      pp_type_expr head ^^ string "," ^^ app (List.map ~f:snd tail)
     in components
 
 and pp_type_constr ctor = string ctor.value

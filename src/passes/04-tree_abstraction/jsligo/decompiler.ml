@@ -5,8 +5,14 @@
 module AST = Ast_imperative
 module CST = Cst.Jsligo
 module Predefined = Predefined.Tree_abstraction.Jsligo
+module Region     = Simple_utils.Region
+module Var        = Simple_utils.Var
+module Location   = Simple_utils.Location
+module List       = Simple_utils.List
+module Pair       = Simple_utils.Pair
+module Utils      = Simple_utils.Utils
 
-open Function
+open Simple_utils.Function
 
 (* Utils *)
 
@@ -63,17 +69,17 @@ let fun_type_arg x = CST.{ name = wrap "_" ; colon = ghost ; type_expr = x }
 let braced d = CST.{lbrace=ghost; rbrace=ghost; inside=d}
 
 let filter_private (attributes: CST.attributes) = 
-  List.filter ~f:(fun v -> not (v.value = "private")) attributes
+  List.filter ~f:(fun v -> not (String.equal v.value "private")) attributes
 
 (* Decompiler *)
 
 let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
   let var = Format.asprintf "%a" Var.pp var in
   if String.contains var '#' then
-    let var = String.split_on_char '#' var in
-    wrap @@ "gen__" ^ (String.concat "" var)
+    let var = String.split ~on:'#' var in
+    wrap @@ "gen__" ^ (String.concat var)
   else
-    if String.length var > 4 && String.equal "gen__" @@ String.sub var 0 5 then
+    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
       wrap @@ "user__" ^ var
     else
       wrap @@ var
@@ -81,10 +87,10 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
 let decompile_variable2 : type a. a Var.t -> CST.var_pattern Region.reg = fun var ->
   let var = Format.asprintf "%a" Var.pp var in
   if String.contains var '#' then
-    let var = String.split_on_char '#' var in
-    wrap @@ CST.{variable = wrap ("gen__" ^ (String.concat "" var)); attributes = []}
+    let var = String.split ~on:'#' var in
+    wrap @@ CST.{variable = wrap ("gen__" ^ (String.concat var)); attributes = []}
   else
-    if String.length var > 4 && String.equal "gen__" @@ String.sub var 0 5 then
+    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
       wrap @@ CST.{variable = wrap ("user__" ^ var); attributes = []}
     else
       wrap @@ CST.{variable = wrap var; attributes = []}
@@ -293,7 +299,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let (parameters,lhs_type,body) = decompile_lambda lambda in
     let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=ghost;body} in
     return_expr @@ [Expr (CST.EFun (wrap @@ fun_expr))]
-  | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
+  | E_let_in {let_binder={var;ascr;attributes=_};rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
     let attributes = filter_private attributes in
     let var = CST.PVar (decompile_variable2 @@ var.wrap_content) in
@@ -689,7 +695,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
       type_
     else
       CST.SExport (wrap (ghost, type_))
-  | Declaration_constant {binder; attr; expr; } ->
+  | Declaration_constant {binder; attr; expr; name=_ } ->
     let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable2 binder.var.wrap_content) in

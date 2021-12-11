@@ -1,3 +1,5 @@
+module Snippet = Simple_utils.Snippet
+module PP_helpers = Simple_utils.PP_helpers
 open Simple_utils.Display
 open Ast_imperative
 

@@ -1,4 +1,5 @@
-open Trace
+module Var = Simple_utils.Var
+open Simple_utils.Trace
 open Test_helpers
 open Ast_imperative
 open Main_errors
@@ -47,7 +48,7 @@ let commit ~raise ~add_warning () =
   let test_hash = e_bytes_raw test_hash_raw in
   let packed_sender = pack_payload ~raise env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
-                                   (Bytes.concat Bytes.empty [test_hash_raw;
+                                   (BytesLabels.concat ~sep:BytesLabels.empty [test_hash_raw;
                                                               packed_sender]))
 
   in
@@ -102,7 +103,7 @@ let reveal_young_commit ~raise ~add_warning () =
   let test_hash = e_bytes_raw test_hash_raw in
   let packed_sender = pack_payload ~raise env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
-                                   (Bytes.concat Bytes.empty [test_hash_raw;
+                                   (BytesLabels.concat ~sep:BytesLabels.empty [test_hash_raw;
                                                               packed_sender])) in
   let commit =
     e_record_ez [("date", e_timestamp_z (to_sec lock_time));
@@ -134,7 +135,7 @@ let reveal_breaks_commit ~raise ~add_warning () =
   let test_hash = e_bytes_raw test_hash_raw in
   let packed_sender = pack_payload ~raise env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
-                                   (Bytes.concat Bytes.empty [Bytes.of_string "hello";
+                                   (BytesLabels.concat ~sep:BytesLabels.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
     e_record_ez [("date", e_timestamp_z (to_sec now));
@@ -166,7 +167,7 @@ let reveal_wrong_commit ~raise ~add_warning () =
   let test_hash = e_bytes_raw test_hash_raw in
   let packed_sender = pack_payload ~raise env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
-                                   (Bytes.concat Bytes.empty [Bytes.of_string "hello";
+                                   (BytesLabels.concat ~sep:BytesLabels.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
     e_record_ez [("date", e_timestamp_z (to_sec now));
@@ -198,7 +199,7 @@ let reveal_no_reuse ~raise ~add_warning () =
   let test_hash = e_bytes_raw test_hash_raw in
   let packed_sender = pack_payload ~raise env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
-                                   (Bytes.concat Bytes.empty [Bytes.of_string "hello";
+                                   (BytesLabels.concat ~sep:BytesLabels.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
     e_record_ez [("date", e_timestamp_z (to_sec now));
@@ -230,7 +231,7 @@ let reveal ~raise ~add_warning () =
   let test_hash = e_bytes_raw test_hash_raw in
   let packed_sender = pack_payload ~raise env (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
-                                   (Bytes.concat Bytes.empty [Bytes.of_string "hello world";
+                                   (BytesLabels.concat ~sep:BytesLabels.empty [Bytes.of_string "hello world";
                                                               packed_sender])) in
   let commit =
     e_record_ez [("date", e_timestamp_z (to_sec now));

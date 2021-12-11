@@ -118,8 +118,8 @@ let coq_GET nil i n =
     then mul (S (S O)) i
     else add (mul (S (S O)) i) (S O)
   in
-  (Tezos_micheline.Micheline.Prim (nil, "GET", ((Tezos_micheline.Micheline.Int
-  (nil, (Z.of_nat i0))) :: []), [])) :: []
+  (Tezos_micheline.Micheline.Prim (nil, "GET",
+  ((Tezos_micheline.Micheline.Int (nil, (Z.of_nat i0))) :: []), [])) :: []
 
 (** val coq_UPDATE :
     'a1 -> nat -> nat -> ('a1, string) Tezos_micheline.Micheline.node list **)
@@ -172,9 +172,9 @@ let compile_expr nil op_code lit_type lit_value =
       (nil, (coq_UPDATE nil i n))) :: [])
   | E_app (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "EXEC", [],
-      [])) :: []))
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+      "EXEC", [], [])) :: []))
   | E_lam (_, e0, b) ->
     let a =
       let Binds (_, l0, _) = e0 in
@@ -257,9 +257,10 @@ let compile_expr nil op_code lit_type lit_value =
                   (Tezos_micheline.Micheline.Seq (nil,
                     ((Tezos_micheline.Micheline.Prim (nil, "DUP", [],
                     [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CDR", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR", [],
-                    [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq (nil,
+                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP",
+                    [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR",
+                    [], [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq
+                    (nil,
                     (coq_UNPAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
                     (nil, "DIG", ((Tezos_micheline.Micheline.Int (nil,
                     (Z.of_nat (length env)))) :: []),
@@ -282,7 +283,8 @@ let compile_expr nil op_code lit_type lit_value =
        in
        (Tezos_micheline.Micheline.Seq (nil,
        (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Seq
-       (nil, (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
+       (nil,
+       (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
        (nil, "LAMBDA", ((Tezos_micheline.Micheline.Prim (nil, "pair",
        ((comb nil env) :: (a :: [])),
        [])) :: (b :: ((Tezos_micheline.Micheline.Seq (nil, body)) :: []))),
@@ -298,28 +300,28 @@ let compile_expr nil op_code lit_type lit_value =
       ((lit_type lit) :: ((lit_value lit) :: [])), [])) :: []
   | E_pair (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "PAIR", [], [])) :: [])
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "PAIR", [], [])) :: [])
   | E_car (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CAR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CAR", [], [])) :: [])
   | E_cdr (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CDR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CDR", [], [])) :: [])
   | E_unit _ ->
     (Tezos_micheline.Micheline.Seq (nil,
       (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Prim
       (nil, "UNIT", [], [])) :: [])
   | E_left (_, b, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "LEFT", (b :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "LEFT", (b :: []), [])) :: [])
   | E_right (_, a, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "RIGHT", (a :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "RIGHT", (a :: []), [])) :: [])
   | E_if_left (_, e0) ->
     let (p, e3) = compile_cond0 env outer e0 in
     let (e1, e2) = p in
@@ -353,8 +355,8 @@ let compile_expr nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "ITER", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "ITER", ((Tezos_micheline.Micheline.Seq (nil,
     ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: ((Tezos_micheline.Micheline.Prim
@@ -367,8 +369,8 @@ let compile_expr nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "MAP", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "MAP", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),
     [])) :: ((Tezos_micheline.Micheline.Seq (nil,
@@ -378,8 +380,8 @@ let compile_expr nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
     "LOOP_LEFT", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),
@@ -495,9 +497,9 @@ let compile_args nil op_code lit_type lit_value =
       (nil, (coq_UPDATE nil i n))) :: [])
   | E_app (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "EXEC", [],
-      [])) :: []))
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+      "EXEC", [], [])) :: []))
   | E_lam (_, e0, b) ->
     let a =
       let Binds (_, l0, _) = e0 in
@@ -580,9 +582,10 @@ let compile_args nil op_code lit_type lit_value =
                   (Tezos_micheline.Micheline.Seq (nil,
                     ((Tezos_micheline.Micheline.Prim (nil, "DUP", [],
                     [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CDR", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR", [],
-                    [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq (nil,
+                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP",
+                    [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR",
+                    [], [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq
+                    (nil,
                     (coq_UNPAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
                     (nil, "DIG", ((Tezos_micheline.Micheline.Int (nil,
                     (Z.of_nat (length env)))) :: []),
@@ -605,7 +608,8 @@ let compile_args nil op_code lit_type lit_value =
        in
        (Tezos_micheline.Micheline.Seq (nil,
        (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Seq
-       (nil, (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
+       (nil,
+       (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
        (nil, "LAMBDA", ((Tezos_micheline.Micheline.Prim (nil, "pair",
        ((comb nil env) :: (a :: [])),
        [])) :: (b :: ((Tezos_micheline.Micheline.Seq (nil, body)) :: []))),
@@ -621,28 +625,28 @@ let compile_args nil op_code lit_type lit_value =
       ((lit_type lit) :: ((lit_value lit) :: [])), [])) :: []
   | E_pair (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "PAIR", [], [])) :: [])
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "PAIR", [], [])) :: [])
   | E_car (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CAR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CAR", [], [])) :: [])
   | E_cdr (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CDR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CDR", [], [])) :: [])
   | E_unit _ ->
     (Tezos_micheline.Micheline.Seq (nil,
       (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Prim
       (nil, "UNIT", [], [])) :: [])
   | E_left (_, b, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "LEFT", (b :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "LEFT", (b :: []), [])) :: [])
   | E_right (_, a, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "RIGHT", (a :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "RIGHT", (a :: []), [])) :: [])
   | E_if_left (_, e0) ->
     let (p, e3) = compile_cond0 env outer e0 in
     let (e1, e2) = p in
@@ -676,8 +680,8 @@ let compile_args nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "ITER", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "ITER", ((Tezos_micheline.Micheline.Seq (nil,
     ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: ((Tezos_micheline.Micheline.Prim
@@ -690,8 +694,8 @@ let compile_args nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "MAP", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "MAP", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),
     [])) :: ((Tezos_micheline.Micheline.Seq (nil,
@@ -701,8 +705,8 @@ let compile_args nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
     "LOOP_LEFT", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),
@@ -818,9 +822,9 @@ let compile_binds nil op_code lit_type lit_value =
       (nil, (coq_UPDATE nil i n))) :: [])
   | E_app (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "EXEC", [],
-      [])) :: []))
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+      "EXEC", [], [])) :: []))
   | E_lam (_, e0, b) ->
     let a =
       let Binds (_, l0, _) = e0 in
@@ -903,9 +907,10 @@ let compile_binds nil op_code lit_type lit_value =
                   (Tezos_micheline.Micheline.Seq (nil,
                     ((Tezos_micheline.Micheline.Prim (nil, "DUP", [],
                     [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CDR", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR", [],
-                    [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq (nil,
+                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP",
+                    [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR",
+                    [], [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq
+                    (nil,
                     (coq_UNPAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
                     (nil, "DIG", ((Tezos_micheline.Micheline.Int (nil,
                     (Z.of_nat (length env)))) :: []),
@@ -928,7 +933,8 @@ let compile_binds nil op_code lit_type lit_value =
        in
        (Tezos_micheline.Micheline.Seq (nil,
        (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Seq
-       (nil, (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
+       (nil,
+       (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
        (nil, "LAMBDA", ((Tezos_micheline.Micheline.Prim (nil, "pair",
        ((comb nil env) :: (a :: [])),
        [])) :: (b :: ((Tezos_micheline.Micheline.Seq (nil, body)) :: []))),
@@ -944,28 +950,28 @@ let compile_binds nil op_code lit_type lit_value =
       ((lit_type lit) :: ((lit_value lit) :: [])), [])) :: []
   | E_pair (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "PAIR", [], [])) :: [])
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "PAIR", [], [])) :: [])
   | E_car (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CAR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CAR", [], [])) :: [])
   | E_cdr (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CDR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CDR", [], [])) :: [])
   | E_unit _ ->
     (Tezos_micheline.Micheline.Seq (nil,
       (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Prim
       (nil, "UNIT", [], [])) :: [])
   | E_left (_, b, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "LEFT", (b :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "LEFT", (b :: []), [])) :: [])
   | E_right (_, a, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "RIGHT", (a :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "RIGHT", (a :: []), [])) :: [])
   | E_if_left (_, e0) ->
     let (p, e3) = compile_cond0 env outer e0 in
     let (e1, e2) = p in
@@ -999,8 +1005,8 @@ let compile_binds nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "ITER", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "ITER", ((Tezos_micheline.Micheline.Seq (nil,
     ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: ((Tezos_micheline.Micheline.Prim
@@ -1013,8 +1019,8 @@ let compile_binds nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "MAP", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "MAP", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),
     [])) :: ((Tezos_micheline.Micheline.Seq (nil,
@@ -1024,8 +1030,8 @@ let compile_binds nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
     "LOOP_LEFT", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),
@@ -1143,9 +1149,9 @@ let compile_cond nil op_code lit_type lit_value =
       (nil, (coq_UPDATE nil i n))) :: [])
   | E_app (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "EXEC", [],
-      [])) :: []))
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "SWAP", [], [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+      "EXEC", [], [])) :: []))
   | E_lam (_, e0, b) ->
     let a =
       let Binds (_, l0, _) = e0 in
@@ -1228,9 +1234,10 @@ let compile_cond nil op_code lit_type lit_value =
                   (Tezos_micheline.Micheline.Seq (nil,
                     ((Tezos_micheline.Micheline.Prim (nil, "DUP", [],
                     [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CDR", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP", [],
-                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR", [],
-                    [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq (nil,
+                    [])) :: ((Tezos_micheline.Micheline.Prim (nil, "SWAP",
+                    [], [])) :: ((Tezos_micheline.Micheline.Prim (nil, "CAR",
+                    [], [])) :: [])))))) :: ((Tezos_micheline.Micheline.Seq
+                    (nil,
                     (coq_UNPAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
                     (nil, "DIG", ((Tezos_micheline.Micheline.Int (nil,
                     (Z.of_nat (length env)))) :: []),
@@ -1253,7 +1260,8 @@ let compile_cond nil op_code lit_type lit_value =
        in
        (Tezos_micheline.Micheline.Seq (nil,
        (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Seq
-       (nil, (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
+       (nil,
+       (coq_PAIR nil (length env)))) :: ((Tezos_micheline.Micheline.Prim
        (nil, "LAMBDA", ((Tezos_micheline.Micheline.Prim (nil, "pair",
        ((comb nil env) :: (a :: [])),
        [])) :: (b :: ((Tezos_micheline.Micheline.Seq (nil, body)) :: []))),
@@ -1269,28 +1277,28 @@ let compile_cond nil op_code lit_type lit_value =
       ((lit_type lit) :: ((lit_value lit) :: [])), [])) :: []
   | E_pair (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "PAIR", [], [])) :: [])
+      (compile_args0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "PAIR", [], [])) :: [])
   | E_car (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CAR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CAR", [], [])) :: [])
   | E_cdr (_, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "CDR", [], [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "CDR", [], [])) :: [])
   | E_unit _ ->
     (Tezos_micheline.Micheline.Seq (nil,
       (compile_splitting nil outer))) :: ((Tezos_micheline.Micheline.Prim
       (nil, "UNIT", [], [])) :: [])
   | E_left (_, b, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "LEFT", (b :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "LEFT", (b :: []), [])) :: [])
   | E_right (_, a, e0) ->
     (Tezos_micheline.Micheline.Seq (nil,
-      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim (nil,
-      "RIGHT", (a :: []), [])) :: [])
+      (compile_expr0 env outer e0))) :: ((Tezos_micheline.Micheline.Prim
+      (nil, "RIGHT", (a :: []), [])) :: [])
   | E_if_left (_, e0) ->
     let (p, e3) = compile_cond0 env outer e0 in
     let (e1, e2) = p in
@@ -1324,8 +1332,8 @@ let compile_cond nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "ITER", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "ITER", ((Tezos_micheline.Micheline.Seq (nil,
     ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: ((Tezos_micheline.Micheline.Prim
@@ -1338,8 +1346,8 @@ let compile_cond nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "MAP", ((Tezos_micheline.Micheline.Seq (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "MAP", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),
     [])) :: ((Tezos_micheline.Micheline.Seq (nil,
@@ -1349,8 +1357,8 @@ let compile_cond nil op_code lit_type lit_value =
     let inner0 = flip_splitting inner in
     let (outer0, inner1) = assoc_splitting outer inner0 in
     (Tezos_micheline.Micheline.Seq (nil,
-    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim (nil,
-    "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
+    (compile_expr0 env2 outer0 e2))) :: ((Tezos_micheline.Micheline.Prim
+    (nil, "LEFT", (b :: []), [])) :: ((Tezos_micheline.Micheline.Prim (nil,
     "LOOP_LEFT", ((Tezos_micheline.Micheline.Seq (nil,
     (compile_binds0 env1 (keep_rights (left_usages inner1))
       (filter_keeps (right_usages outer0)) e1))) :: []),

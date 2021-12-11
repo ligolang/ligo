@@ -1,7 +1,10 @@
 open Simple_utils.Display
 
 module Raw = Cst.Cameligo
-module Parsing = Parsing.Cameligo
+module Parsing  = Parsing.Cameligo
+module Region   = Simple_utils.Region
+module Snippet  = Simple_utils.Snippet
+module Location = Simple_utils.Location
 
 let stage = "abstracter"
 

@@ -1,5 +1,7 @@
+module Michelson = Tezos_utils.Michelson
+module Location  = Simple_utils.Location
 open Proto_alpha_utils
-open Trace
+open Simple_utils.Trace
 open Memory_proto_alpha.Protocol.Script_ir_translator
 open Memory_proto_alpha.X
 open Simple_utils.Runned_result

@@ -41,9 +41,9 @@ let fold_map_expression = Helpers.fold_map_expression
 let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
 open Ast_typed
-open Trace
+open Simple_utils.Trace
 
-module SimplMap = Map.Make( struct type t = expression_variable let compare (a:expression_variable) (b:expression_variable) = Var.compare a.wrap_content b.wrap_content end)
+module SimplMap = Simple_utils.Map.Make( struct type t = expression_variable let compare (a:expression_variable) (b:expression_variable) = Var.compare a.wrap_content b.wrap_content end)
 
 type simpl_map = ((label * expression_variable) list) SimplMap.t
 

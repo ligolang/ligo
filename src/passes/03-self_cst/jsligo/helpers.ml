@@ -1,6 +1,7 @@
 [@@@warning "-26"]
 
 open Cst.Jsligo
+module List = Simple_utils.List
 
 let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
 
@@ -39,7 +40,7 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> 'a =
     TProd  {inside = {value = { inside ;_};_} ; _} ->
       List.Ne.fold_left self init @@ npseq_to_ne_list inside
   | TSum {value;region=_} ->
-     let {variants; attributes=_} = value in
+     let {variants; attributes=_;leading_vbar=_} = value in
      List.Ne.fold_left self_variant init @@ npseq_to_ne_list variants.value
 
   | TObject {value;region=_} ->
@@ -202,7 +203,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a =
   match d with
     SBlock {value = {inside; _}; _} -> fold_npseq self init inside
   | SExpr e -> self_expr init e
-  | SCond {value = {test; ifso; ifnot}; _} ->
+  | SCond {value = {kwd_if=_;test; ifso; ifnot}; _} ->
     let res = self_expr init test.inside in
     let res = self res ifso in
     (match ifnot with

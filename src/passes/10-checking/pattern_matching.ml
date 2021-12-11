@@ -13,8 +13,9 @@ Option patterns are treated as the variant type `Some a | None` would be
 
 module I = Ast_core
 module O = Ast_typed
+module Ligo_string = Simple_utils.Ligo_string
 
-open Trace
+open Simple_utils.Trace
 open Errors
 
 type matchees = O.expression_variable list
@@ -74,13 +75,13 @@ let extract_variant_type ~raise : pattern -> O.label -> O.type_expression -> O.t
     | Some t -> t.associated_type
     | None -> raise.raise @@ pattern_do_not_conform_type p t
   )
-  | O.T_constant { injection ; parameters = [proj_t] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> (
+  | O.T_constant { injection ; parameters = [proj_t] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> (
     match label with
     | Label "Some" -> proj_t
     | Label "None" -> (O.t_unit ())
     | Label _ -> raise.raise @@ pattern_do_not_conform_type p t
   )
-  | O.T_constant { injection ; parameters = [proj_t] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> (
+  | O.T_constant { injection ; parameters = [proj_t] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> (
     match label with
     | Label "Cons" -> O.make_t_ez_record [("0",proj_t);("1",t)]
     | Label "Nil" -> (O.t_unit ())
@@ -120,7 +121,7 @@ let type_matchee ~raise : equations -> O.type_expression =
       )
       | I.P_variant _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> ()
       | P_tuple tupl , O.T_record record_type -> (
-        if (List.length tupl) != (O.LMap.cardinal record_type.content) then
+        if (List.length tupl) <> (O.LMap.cardinal record_type.content) then
           raise.raise @@ pattern_do_not_conform_type p t
         else ()
       )
@@ -212,7 +213,7 @@ let rec partition : ('a -> bool) -> 'a list -> 'a list list =
     | [] -> []
     | [x] -> [[x]]
     | x::x'::tl ->
-      if f x = f x' then add_inner x (partition f (x'::tl))
+      if Bool.(=) (f x) (f x') then add_inner x (partition f (x'::tl))
       else [x] :: (partition f (x'::tl))
 
 (**

@@ -1,4 +1,5 @@
 open! Memory_proto_alpha
+module List = Core.List
 module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes

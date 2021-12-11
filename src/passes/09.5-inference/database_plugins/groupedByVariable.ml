@@ -16,7 +16,7 @@ struct
   (* TODO: replace (did this to avoid merge conflict) *)
 open Solver_types
 open UnionFind
-open Trace
+open Simple_utils.Trace
 
 (* the state is 3 maps from (unionfind) variables to constraints containing them *)
 
@@ -29,7 +29,7 @@ type 'typeVariable t = {
   access_label_by_record_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
 }
 let pp type_variable ppf (state : _ t) =
-  let open PP_helpers in
+  let open Simple_utils.PP_helpers in
   Format.fprintf ppf "{ constructor = %a ; row = %a ; poly = %a }"
   (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_constructor_simpl_short))) (ReprMap.bindings state.constructor)
   (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_row_simpl_short))) (ReprMap.bindings state.row)
@@ -72,7 +72,7 @@ let update_remove_constraint_from_set tcs c = function
   | Some s -> MultiSet.remove c s
 
 
-let remove_constraint ~(raise:Type_variable_abstraction.Errors.typer_error Trace.raise) _ repr (state : _ t) constraint_to_rm : _ =
+let remove_constraint ~(raise:Type_variable_abstraction.Errors.typer_error Simple_utils.Trace.raise) _ repr (state : _ t) constraint_to_rm : _ =
   (* This update is "monotonic" as required by ReprMap + the solver.
      The `add` function of this indexer is only called once per
      constraint, and constraints are indexed by their lhs variable.

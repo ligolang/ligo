@@ -1,5 +1,9 @@
-open Types
+module Location    = Simple_utils.Location
+module Var         = Simple_utils.Var
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
 module S = Ast_core
+open Types
 open Stage_common.Constant
 
 let make_t_orig_var ?(loc = Location.generated) type_content core orig_var = {type_content; location=loc; type_meta = core ; orig_var}
@@ -130,7 +134,7 @@ let get_lambda_with_type e =
   | _ -> None
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
-  | t when (compare t (t_bool ()).type_content) = 0-> Some ()
+  | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
 
 let get_param_inj (t:type_expression) : (string * Ligo_string.t * type_expression list) option =
@@ -445,11 +449,11 @@ let get_a_bool (t:expression) =
   match t.expression_content with
   | E_constructor {constructor=Label name;element} when
     (String.equal name "True")
-    && element.expression_content = e_unit () ->
+    && Compare.expression_content element.expression_content @@ e_unit () = 0 ->
       Some true
   | E_constructor {constructor=Label name;element} when
     (String.equal name "False")
-    && element.expression_content = e_unit () ->
+    && Compare.expression_content element.expression_content @@ e_unit () = 0 ->
       Some false
   | _ -> None
 

@@ -1,7 +1,8 @@
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Ast_core.Types
 open Ast_core.Reasons
-open Trace
+open Simple_utils.Trace
+module PP_helpers = Simple_utils.PP_helpers
 let test_err s = Main_errors.test_internal s
 let tst_assert s p = Assert.assert_true (test_err s) p
 
@@ -55,7 +56,7 @@ let check_list_of_equalities ~raise (la : update list) (_lb : (type_variable * t
       raise.raise (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_access_label constraint.")
     | Ast_core.Types.C_apply _ ->
       raise.raise (test_err "bad result from heuristic_break_ctor, expected equation constraints but got got a c_apply.") in
-  let aux ({ remove_constraints; add_constraints; proof_trace } : update) =
+  let aux ({ remove_constraints; add_constraints; proof_trace ; add_constraints_simpl = _} : update) =
     let () = tst_assert ~raise "bad result from heuristic_break_ctor, expected no constraints to remove but got some." (List.length remove_constraints = 0) in
     ignore proof_trace;
     List.map ~f:aux' add_constraints in

@@ -1,7 +1,12 @@
 [@@@coverage exclude_file]
+module Location    = Simple_utils.Location
+module Var         = Simple_utils.Var
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
+module Int64       = Caml.Int64
 open Types
 open Format
-open PP_helpers
+open Simple_utils.PP_helpers
 include Stage_common.PP
 
 type 'a pretty_printer = Format.formatter -> 'a -> unit
@@ -80,7 +85,7 @@ let rec constraint_identifier_unicode (ci : Int64.t) =
     | a when Int64.equal a 9L -> "₉"
     | _ -> failwith (Format.asprintf "internal error: couldn't pretty-print int64: %Li (is it a negative number?)" ci)
   in
-  if ci = 0L then "" else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
+  if Int64.equal ci 0L then "" else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
 
 let constraint_identifier_short ppf x =
   if Int64.equal x 0L

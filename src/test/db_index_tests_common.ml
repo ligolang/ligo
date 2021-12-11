@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 
 (* module Core = Typesystem.Core *)
 open Ast_core.Types

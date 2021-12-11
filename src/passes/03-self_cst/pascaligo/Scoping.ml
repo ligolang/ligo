@@ -4,12 +4,15 @@
 
 (* Dependencies *)
 
-module Region = Simple_utils.Region
-module CST    = Cst.Pascaligo
+module Region   = Simple_utils.Region
+module CST      = Cst.Pascaligo
+module Var      = Simple_utils.Var
+module Utils    = Simple_utils.Utils
+module Function = Simple_utils.Function
 
 open Region
 open Errors
-open Trace
+open Simple_utils.Trace
 
 (* TODO don't *)
 let ignore x =
@@ -18,7 +21,7 @@ let ignore x =
 
 (* Useful modules *)
 
-module SSet = Set.Make (String)
+module SSet = Caml.Set.Make (String)
 
 module Ord =
   struct
@@ -27,7 +30,7 @@ module Ord =
       String.compare v1.value v2.value
   end
 
-module VarSet = Set.Make (Ord)
+module VarSet = Caml.Set.Make (Ord)
 
 (* Checking the definition of reserved names (shadowing) *)
 
@@ -316,7 +319,7 @@ let peephole_statement ~raise : unit -> statement -> unit = fun _ s ->
     let () = check_pattern ~raise pattern in
     ()
   | Data LocalVar {value;region=_} ->
-    let {kwd_var=_;pattern;var_type=_;assign=_;init=_;terminator=_} = value in
+    let {kwd_var=_;pattern;var_type=_;assign=_;init=_;terminator=_;attributes=_} = value in
     let () = check_pattern ~raise pattern in
     ()
   | Data LocalFun {value;region=_}  ->
@@ -325,7 +328,7 @@ let peephole_statement ~raise : unit -> statement -> unit = fun _ s ->
     let () = check_reserved_name ~raise fun_name in
     ()
   | Data LocalType  {value;region=_} ->
-    let {kwd_type=_;name;kwd_is=_;type_expr=_;terminator=_} = value in
+    let {kwd_type=_;name;kwd_is=_;type_expr=_;terminator=_;params=_} = value in
     let () = check_reserved_name ~raise name in
     ()
   | Data LocalModule {value;region=_} ->

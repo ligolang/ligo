@@ -1,4 +1,4 @@
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Ast_core.Types
 (* open Typesystem.Solver_types *)
 open Trace
@@ -37,12 +37,12 @@ let list : compare:('a cmp) -> ('a list) cmp = fun ~compare  expected actual ->
       | Some tree2 -> Some ((Node [tree1; tree2]) : _ tree)
     )
   in
-  if Int.compare (List.length expected) (List.length actual) != 0
+  if Int.compare (List.length expected) (List.length actual) <> 0
   then None
   else List.fold_left ~f:aux ~init:(Some (Node [])) (List.zip_exn expected actual)
 
 let lmap : compare:('a cmp) -> ('a LMap.t) cmp = fun ~compare expected actual ->
-  if List.compare Ast_core.Compare.label (LMap.keys expected) (LMap.keys actual) != 0 then
+  if List.compare Ast_core.Compare.label (LMap.keys expected) (LMap.keys actual) <> 0 then
     None
   else
     list ~compare (LMap.values expected) (LMap.values actual)

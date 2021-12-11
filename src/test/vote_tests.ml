@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 

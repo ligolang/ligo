@@ -1,6 +1,8 @@
 open Simple_utils.Display
 open Cst.Pascaligo
 
+module Snippet = Simple_utils.Snippet
+
 let stage = "self_cst_pascaligo"
 
 type self_cst_pascaligo_error = [

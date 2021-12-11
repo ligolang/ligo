@@ -4,7 +4,7 @@ let contract = test
 let bad_contract = bad_test
 
 (* avoid pretty printing *)
-let () = Unix.putenv "TERM" "dumb"
+let () = Unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good [ "info" ; "measure-contract" ; contract "coase.ligo" ] ;
@@ -1714,9 +1714,9 @@ Missing a type annotation for argument "b". |}];
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "uncurry_contract.mligo" ] ;
   let output = [%expect.output] in
-  let lines = String.split_on_char '\n' output in
+  let lines = String.split_lines output in
   let lines = List.take lines 8 in
-  let output = String.concat "\n" lines in
+  let output = String.concat ~sep:"\n" lines in
   print_string output;
   [%expect {|
     { parameter unit ;

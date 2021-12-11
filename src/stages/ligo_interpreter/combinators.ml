@@ -220,9 +220,9 @@ let rec compare_value (v : value) (v' : value) : int =
   | V_Michelson m, V_Michelson m' -> (
     match m, m' with
       Contract _, Ty_code _ -> -1
-    | Contract c, Contract c' -> compare c c'
+    | Contract c, Contract c' -> Caml.compare c c'
     | Ty_code _, Contract _ -> 1
-    | Ty_code t, Ty_code t' -> compare t t'
+    | Ty_code t, Ty_code t' -> Caml.compare t t'
   )
   | V_Michelson _, (V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
   | V_Ligo _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _) -> -1
@@ -235,15 +235,15 @@ let rec compare_value (v : value) (v' : value) : int =
   | V_Mutation _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _) -> -1
   | V_Mutation (l, e), V_Mutation (l', e') -> (
     match Location.compare l l' with
-      0 -> compare e e'
+      0 -> Caml.compare e e'
     | c -> c
   )
   | V_Mutation _, (V_Failure _ | V_Func_val _) -> 1
   | V_Failure _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _) -> -1
-  | V_Failure e, V_Failure e' -> compare e e'
+  | V_Failure e, V_Failure e' -> Caml.compare e e'
   | V_Failure _, V_Func_val _ -> 1
   | V_Func_val _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _) -> -1
-  | V_Func_val f, V_Func_val f' -> compare f f'
+  | V_Func_val f, V_Func_val f' -> Caml.compare f f'
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

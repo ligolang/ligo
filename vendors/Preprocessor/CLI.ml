@@ -200,10 +200,10 @@ module Make (Comments: COMMENTS) : S =
        backup after parsing the command-line: another parse is now
        possible by another client. *)
 
-    module SSet = Set.Make (String)
+    module SSet = Argv.SSet
 
     let opt_wo_arg =
-      let open SSet in
+      let open Argv.SSet in
       empty
       |> add "--show-pp"
       |> add "--columns"
@@ -214,7 +214,7 @@ module Make (Comments: COMMENTS) : S =
       |> add "--version" |> add "-v"
 
     let opt_with_arg =
-      let open SSet in
+      let open Argv.SSet in
       empty
       |> add "-I"
 

@@ -25,7 +25,7 @@ Require Import ZArith NArith.
 Extract Inductive positive =>
 "Zarith.t"
   [ "(fun x -> Zarith.add Zarith.one (Zarith.mul (Zarith.add Zarith.one Zarith.one) x))" "(fun x -> Zarith.mul (Zarith.add Zarith.one Zarith.one) x)" "Zarith.one" ]
-  "(fun b1 b2 b3 x -> Zarith.(if x = one then b3 () else let (q, r) = ediv_rem x (of_int 2) in if r = zero then b2 q else b1 q))".
+  "(fun b1 b2 b3 x -> Zarith.(if equal x one then b3 () else let (q, r) = ediv_rem x (of_int 2) in if equal r zero then b2 q else b1 q))".
 
 Extract Inductive Z =>
 "Zarith.t"

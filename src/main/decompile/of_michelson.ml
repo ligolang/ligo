@@ -1,7 +1,7 @@
 module Formatter = Formatter
 
 open Main_errors
-open Trace
+open Simple_utils.Trace
 open Simple_utils.Runned_result
 
 type ret_type = Function | Expression

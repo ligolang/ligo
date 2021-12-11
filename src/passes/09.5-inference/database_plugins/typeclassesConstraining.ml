@@ -61,7 +61,7 @@ let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) ->
     state
 
 let pp type_variable ppf state =
-  let open PP_helpers in
+  let open Simple_utils.PP_helpers in
   list_sep_d
     (pair
        type_variable

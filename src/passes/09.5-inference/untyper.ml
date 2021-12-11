@@ -1,6 +1,8 @@
 module I = Ast_core
 module O = Ast_core
 open Stage_common.Maps
+module Var      = Simple_utils.Var
+module Location = Simple_utils.Location
 
 let untype_type_value (t:O.type_expression) : I.type_expression =
   t

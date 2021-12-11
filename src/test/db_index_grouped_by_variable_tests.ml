@@ -1,4 +1,5 @@
-open Trace
+module Pair = Simple_utils.Pair
+open Simple_utils.Trace
 open Ast_core.Types
 open Solver_types
 open Database_plugins.All_plugins
@@ -8,7 +9,7 @@ open Db_index_tests_common
 let multiset_compare a b =
   let ab = List.compare (MultiSet.get_compare a) (MultiSet.elements a) (MultiSet.elements b) in
   let ba = List.compare (MultiSet.get_compare b) (MultiSet.elements a) (MultiSet.elements b) in
-  if ab != ba
+  if ab <> ba
   then failwith "Internal error: bad test: sets being compared have different comparison functions!"
   else ab
 
@@ -28,7 +29,7 @@ module Grouped_by_variable_tests = struct
       (List.filter ~f:(fun (_,s) -> not (MultiSet.is_empty s)) y)
   let same_state' ~raise loc (expected : _ t_for_tests) (actual : _ t_for_tests) =
     let expected_actual_str =
-      let open PP_helpers in
+      let open Simple_utils.PP_helpers in
       let pp' pp x = (list_sep_d (pair Var.pp (MultiSet.pp pp))) x in
       Format.asprintf "expected=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a;\naccess_result=\n%a;\naccess_record=\n%a}\nactual=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a;\naccess_result=\n%a;\naccess_record=\n%a}"
         (pp' Ast_core.PP.c_constructor_simpl) expected.constructor

@@ -1,4 +1,4 @@
-open Display
+open Simple_utils.Display
 
 let module_ppformat ~display_format f p =
   match display_format with

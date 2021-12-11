@@ -1,7 +1,7 @@
 (* used to show code snippets in error messages *)
 
 let print_code ppf (l:Region.t) (input_line: unit -> string) =
-  let dumb = Unix.getenv "TERM" = "dumb" in
+  let dumb =String.equal (Caml.Unix.getenv "TERM") "dumb" in
   let start = l#start#line in
   let start_column = l#start#offset `Byte in
   let stop = l#stop#line in
@@ -67,7 +67,7 @@ let regexp = Str.regexp "\n"
 let pp ppf (loc: Location.t) =
   match loc with
   | File l -> (
-    if l#file <> "" then
+    if String.(<>) l#file "" then
       Format.fprintf ppf "%s:\n" (l#to_string `Byte);
     try
       let in_ = open_in l#file in

@@ -1,6 +1,6 @@
 open Errors
 open Ast_core
-open Trace
+open Simple_utils.Trace
 
 module Operators_types = struct
   open Typesystem.Shorthands
@@ -321,7 +321,7 @@ tc "arguments for (+)"
   let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
   let t_set_delegate  = tuple1 (option key_hash) --> operation
 
-  let constant_type ~raise : constant' -> Typesystem.Core.type_value = function
+  let constant_type ~raise : constant' -> Typesystem.Types.type_value = function
     | C_INT                 -> t_int ;
     | C_UNIT                -> t_unit ;
     | C_NOW                 -> t_now ;

@@ -1,3 +1,7 @@
+module Location    = Simple_utils.Location
+module Var         = Simple_utils.Var
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
 open Types
 open Stage_common.To_yojson
 type json = Yojson.Safe.t

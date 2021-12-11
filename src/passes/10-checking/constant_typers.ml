@@ -1,6 +1,7 @@
 module H=Helpers
 module Ligo_proto = Environment.Protocols
-open Trace
+module Option = Simple_utils.Option
+open Simple_utils.Trace
 open Errors
 open Ast_typed
 open H

@@ -44,10 +44,10 @@ let is_bytes  = function Token.Bytes _ -> true | _ -> false
 
 let is_hexa = function
   Token.UIdent t -> 
-    if t#payload = "A" || t#payload = "a"|| t#payload = "B"|| t#payload = "b"|| t#payload = "C"|| t#payload = "c"
-                 || t#payload = "D"|| t#payload = "d"|| t#payload = "E"|| t#payload = "e"|| t#payload = "F"|| t#payload = "f" then true
-    else 
-      false
+    (match t#payload with
+      "A"| "a"| "B"| "b"| "C"| "c" | "D"| "d"| "E"| "e"| "F"| "f" -> true
+    | _->  false
+    )
   | _ -> false
 
 let is_sym =

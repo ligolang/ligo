@@ -1,9 +1,14 @@
 module AST = Ast_imperative
 module CST = Cst.Reasonligo
 module Predefined = Predefined.Tree_abstraction.Reasonligo
-module Token = Lexing_reasonligo.Token
+module Token    = Lexing_reasonligo.Token
+module Region   = Simple_utils.Region
+module Var      = Simple_utils.Var
+module Location = Simple_utils.Location
+module List     = Simple_utils.List
+module Pair     = Simple_utils.Pair
 
-open Function
+open Simple_utils.Function
 
 (* Utils *)
 
@@ -37,7 +42,7 @@ let npseq_cons hd lst = hd,(ghost, fst lst)::(snd lst)
 let par a = CST.{lpar=ghost;inside=a;rpar=ghost}
 let type_vars_of_list : string Region.reg list -> CST.type_vars = fun lst ->
   let type_var_of_name : _ -> CST.type_var Region.reg = fun name -> wrap CST.{quote=ghost;name} in
-  let x = Utils.nsepseq_map type_var_of_name (list_to_nsepseq lst) in
+  let x = Simple_utils.Utils.nsepseq_map type_var_of_name (list_to_nsepseq lst) in
   (wrap (par x))
 let inject compound a = CST.{compound;elements=a;terminator=None}
 
@@ -59,10 +64,10 @@ let brackets = Some (`Brackets (ghost,ghost))
 let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
   let var = Format.asprintf "%a" Var.pp var in
   if String.contains var '#' then
-    let var = String.split_on_char '#' var in
-    wrap @@ "gen__" ^ (String.concat "" var)
+    let var = String.split ~on:'#' var in
+    wrap @@ "gen__" ^ (String.concat var)
   else
-    if String.length var > 4 && String.equal "gen__" @@ String.sub var 0 5 then
+    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
       wrap @@ "user__" ^ var
     else
       wrap @@ var
@@ -72,7 +77,7 @@ let rec decompile_type_expr : AST.type_expression -> _ = fun te ->
   match te.type_content with
     T_sum { attributes ; fields } ->
     let lst = AST.LMap.to_kv_list fields in
-    let aux (AST.Label c, AST.{associated_type;attributes}) =
+    let aux (AST.Label c, AST.{associated_type;attributes;decl_pos=_}) =
       let constr = wrap c in
       let args = decompile_type_expr associated_type in
       let args =
@@ -524,7 +529,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
     in
     let type_expr = decompile_type_expr type_expr in
     CST.TypeDecl (wrap (CST.{kwd_type=ghost;params;name; eq=ghost; type_expr}))
-  | Declaration_constant {binder;attr;expr}-> (
+  | Declaration_constant {binder;attr;expr;name=_}-> (
     let attributes : CST.attributes = decompile_attributes attr in
     let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
     let pvar = CST.{variable = decompile_variable binder.var.wrap_content ; attributes = var_attributes} in
@@ -548,7 +553,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
       let let_decl = wrap (ghost,None,let_binding,attributes) in
       CST.ConstDecl let_decl
   )
-  | Declaration_module {module_binder;module_} ->
+  | Declaration_module {module_binder;module_; module_attr=_} ->
     let name = wrap module_binder in
     let module_ = decompile_module module_ in
     CST.ModuleDecl (wrap (CST.{kwd_module=ghost; name; eq=ghost; lbrace=ghost; module_; rbrace=ghost}))

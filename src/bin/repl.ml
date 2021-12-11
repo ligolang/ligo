@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 
 (* Helpers *)
 
@@ -33,7 +33,7 @@ type repl_result =
   | Defined_values_typed of Ast_typed.module'
   | Just_ok
 
-open Display
+open Simple_utils.Display
 
 let repl_result_ppformat ~display_format f = function
     Expression_value expr ->
@@ -69,7 +69,7 @@ let repl_result_jsonformat = function
      `Assoc [("definitions", `List defs)]
   | Just_ok -> `Assoc []
 
-let repl_result_format : 'a Display.format = {
+let repl_result_format : 'a format = {
     pp = repl_result_ppformat ;
     to_json = repl_result_jsonformat ;
 }
@@ -133,7 +133,7 @@ let import_file ~raise state file_name module_name =
   let options = {options with init_env = state.env } in
   let module_,env = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
   let env = Ast_typed.Environment.add_module ~public:true module_name env state.env in
-  let module_ = Ast_typed.(Module_Fully_Typed [Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
+  let module_ = Ast_typed.(Module_Fully_Typed [Simple_utils.Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
   let env,contract = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_module env module_ in
   let mini_c = Ligo_compile.Of_typed.compile_with_modules ~raise contract in
   let state = { state with env = env; decl_list = state.decl_list @ mini_c } in
@@ -170,7 +170,7 @@ let parse s =
 
 let eval display_format state c =
   let (Ex_display_format t) = display_format in
-  match Trace.to_stdlib_result c with
+  match to_stdlib_result c with
     Ok (state, out) ->
      let disp = (Displayable {value = out; format = repl_result_format }) in
      let out : string =
@@ -210,7 +210,7 @@ let make_initial_state syntax protocol infer dry_run_opts =
   }
 
 let rec read_input prompt delim =
-  let open Option in
+  let open Simple_utils.Option in
   match LNoise.linenoise prompt with
   | exception Sys.Break | None -> None
   | Some s -> LNoise.history_add s |> ignore;

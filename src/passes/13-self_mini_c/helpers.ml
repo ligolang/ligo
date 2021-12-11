@@ -1,5 +1,7 @@
+module Pair   = Simple_utils.Pair
+module Triple = Simple_utils.Triple
 open Mini_c
-open Trace
+open Simple_utils.Trace
 
 let rec fold_type_value ~raise : ('a -> type_expression -> 'a) -> 'a -> type_expression -> 'a = fun f init t ->
   let self = fold_type_value ~raise f in

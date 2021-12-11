@@ -1,4 +1,5 @@
 open Solver_types
+open Simple_utils
 
 module M = functor
   (Type_variable : sig type t end)

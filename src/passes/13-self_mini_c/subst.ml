@@ -36,7 +36,7 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let args = List.map ~f:replace c.arguments in
     return @@ E_constant {cons_name = c.cons_name; arguments = args}
   | E_application (f, x) ->
-    let (f, x) = Tuple.map2 replace (f, x) in
+    let (f, x) = Simple_utils.Tuple.map2 replace (f, x) in
     return @@ E_application (f, x)
   | E_variable z ->
     let z = replace_var z in
@@ -241,11 +241,11 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       return @@ E_constant {cons_name; arguments}
   )
   | E_application farg -> (
-      let farg' = Tuple.map2 self farg in
+      let farg' = Simple_utils.Tuple.map2 self farg in
       return @@ E_application farg'
   )
   | E_if_bool cab -> (
-      let cab' = Tuple.map3 self cab in
+      let cab' = Simple_utils.Tuple.map3 self cab in
       return @@ E_if_bool cab'
   )
 

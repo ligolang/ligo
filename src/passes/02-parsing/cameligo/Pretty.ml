@@ -13,7 +13,7 @@ let pp_par printer {value; _} =
 
 let rec print ast =
   let decl = Utils.nseq_to_list ast.decl in
-  let decl = List.filter_map pp_declaration decl
+  let decl = List.filter_map ~f:pp_declaration decl
   in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
@@ -43,7 +43,7 @@ and pp_let_decl {value; _} =
     match rec_opt with
         None -> string "let "
     | Some _ -> string "let rec " in
-  let let_str = if attr = [] then let_str
+  let let_str = if List.is_empty attr then let_str
                 else pp_attributes attr ^/^ let_str
   in let_str ^^ pp_let_binding binding
 
@@ -89,7 +89,7 @@ and pp_pattern = function
 and pp_pvar {value; _} =
   let {variable; attributes} = value in
   let v = pp_ident variable in
-  if attributes = [] then v
+  if List.is_empty attributes then v
   else group (pp_attributes attributes ^/^ v)
 
 and pp_pconstr {value; _} =
@@ -126,9 +126,9 @@ and pp_ptuple {value; _} =
   | [p] -> group (break 1 ^^ pp_pattern p)
   | p::items ->
       group (break 1 ^^ pp_pattern p ^^ string ",") ^^ app items
-  in if tail = []
+  in if List.is_empty tail
      then pp_pattern head
-     else pp_pattern head ^^ string "," ^^ app (List.map snd tail)
+     else pp_pattern head ^^ string "," ^^ app (List.map ~f:snd tail)
 
 and pp_precord fields = pp_ne_injection pp_field_pattern fields
 
@@ -192,8 +192,8 @@ and pp_case_expr {value; _} =
 and pp_cases {value; _} =
   let head, tail = value in
   let head       = pp_clause head in
-  let head       = if tail = [] then head else blank 2 ^^ head in
-  let rest       = List.map snd tail in
+  let head       = if List.is_empty tail then head else blank 2 ^^ head in
+  let rest       = List.map ~f:snd tail in
   let app clause = break 1 ^^ string "| " ^^ pp_clause clause
   in  head ^^ concat_map app rest
 
@@ -310,7 +310,7 @@ and pp_ne_injection :
         None -> elements
       | Some ((opening, _), (closing, _)) ->
          string opening ^^ nest 1 elements ^^ string closing in
-    let inj = if attributes = [] then inj
+    let inj = if List.is_empty attributes then inj
               else pp_attributes attributes ^/^ inj
     in inj
 
@@ -374,9 +374,9 @@ and pp_tuple_expr {value; _} =
   | [e] -> group (break 1 ^^ pp_expr e)
   | e::items ->
       group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items
-  in if tail = []
+  in if List.is_empty tail
      then pp_expr head
-     else pp_expr head ^^ string "," ^^ app (List.map snd tail)
+     else pp_expr head ^^ string "," ^^ app (List.map ~f:snd tail)
 
 and pp_par_expr e = pp_par pp_expr e
 
@@ -386,7 +386,7 @@ and pp_let_in {value; _} =
     match kwd_rec with
         None -> string "let "
     | Some _ -> string "let rec " in
-  let let_str = if attr = [] then let_str
+  let let_str = if List.is_empty attr then let_str
                 else pp_attributes attr ^/^ let_str
   in let_str ^^ pp_let_binding binding
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
@@ -465,29 +465,29 @@ and pp_cartesian {value; _} =
   | [e] -> group (break 1 ^^ pp_type_expr e)
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string " *") ^^ app items
-  in pp_type_expr head ^^ string " *" ^^ app (List.map snd tail)
+  in pp_type_expr head ^^ string " *" ^^ app (List.map ~f:snd tail)
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in
   let head, tail = variants in
   let head = pp_variant head in
   let padding_flat =
-    if attributes = [] then empty else string "| " in
+    if List.is_empty attributes then empty else string "| " in
   let padding_non_flat =
-    if attributes = [] then blank 2 else string "| " in
+    if List.is_empty attributes then blank 2 else string "| " in
   let head =
-    if tail = [] then head
+    if List.is_empty tail then head
     else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head) in
-  let rest = List.map snd tail in
+  let rest = List.map ~f:snd tail in
   let app variant =
     group (break 1 ^^ string "| " ^^ pp_variant variant) in
   let whole = head ^^ concat_map app rest in
-  if attributes = [] then whole
+  if List.is_empty attributes then whole
   else pp_attributes attributes ^/^ whole
 
 and pp_variant {value; _} =
   let {constr; arg; attributes=attr} = value in
-  let pre = if attr = [] then pp_ident constr
+  let pre = if List.is_empty attr then pp_ident constr
             else group (pp_attributes attr ^/^ pp_ident constr) in
   match arg with
     None -> pre
@@ -498,7 +498,7 @@ and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 and pp_field_decl {value; _} =
   let {field_name; field_type; attributes; _} = value in
   let attr   = pp_attributes attributes in
-  let name   = if attributes = [] then pp_ident field_name
+  let name   = if List.is_empty attributes then pp_ident field_name
                else attr ^/^ pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ string " :") t_expr

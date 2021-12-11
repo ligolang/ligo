@@ -1,6 +1,7 @@
 (* Copyright Coase, Inc 2019 *)
+module Function = Simple_utils.Function
 
-open Trace
+open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 

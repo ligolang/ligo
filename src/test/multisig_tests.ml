@@ -1,3 +1,4 @@
+module Var = Simple_utils.Var
 open Test_helpers
 
 let file = "./contracts/multisig.ligo"

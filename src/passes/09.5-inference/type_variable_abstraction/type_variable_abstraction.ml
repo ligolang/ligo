@@ -1,3 +1,6 @@
+module Location = Simple_utils.Location
+module Var      = Simple_utils.Var
+module Trace    = Simple_utils.Trace
 module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> struct
   module type S = sig
     (* this is dangerous, it ignores repr etc. because it works on type_value *)
@@ -14,7 +17,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | C_record    (* ( label , * ) … -> * *)
         | C_variant   (* ( label , * ) … -> * *)
       type label
-      module LMap : Map.S with type key = label
+      module LMap : Simple_utils.Map.S with type key = label
       type 'a label_map = 'a LMap.t
       type typeclass = type_value list list
       and type_value_ =

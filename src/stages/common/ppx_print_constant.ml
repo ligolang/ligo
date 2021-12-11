@@ -1,7 +1,7 @@
 open Ppxlib
 module List = ListLabels
 open Ast_builder.Default
-open Base
+open Core
 
 let ppx_name = "print_constant"
 let func_name = "pp_constant'"
