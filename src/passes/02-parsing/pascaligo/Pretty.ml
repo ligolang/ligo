@@ -25,7 +25,7 @@ let pp_braces : ('a -> document) -> 'a braces reg -> document =
 
 let rec print ast =
   let decl = Utils.nseq_to_list ast.decl in
-  let decl = List.filter_map pp_declaration decl
+  let decl = List.filter_map ~f:pp_declaration decl
   in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
@@ -53,7 +53,7 @@ and pp_dir_decl = function
 and pp_const_decl {value; _} =
   let {pattern; const_type; init; attributes; _} = value in
   let start = string "const " ^^ pp_pattern pattern in
-  let start = if attributes = [] then start
+  let start = if List.is_empty attributes then start
               else pp_attributes attributes ^/^ start in
   let start =
     match const_type with
@@ -106,18 +106,18 @@ and pp_sum_type {value; _} =
   let head, tail = variants in
   let head = pp_variant head in
   let padding_flat =
-    if attributes = [] then empty else string "| " in
+    if List.is_empty attributes then empty else string "| " in
   let padding_non_flat =
-    if attributes = [] then blank 2 else string "| " in
+    if List.is_empty attributes then blank 2 else string "| " in
   let head =
-    if tail = [] then head
+    if List.is_empty tail then head
     else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head) in
-  let rest = List.map snd tail in
+  let rest = List.map ~f:snd tail in
   let app variant =
     group (break 1 ^^ string "| " ^^ pp_variant variant) in
   let whole = head ^^ concat_map app rest in
-  if attributes = [] then whole
-  else group (pp_attributes attributes ^/^ whole)
+  match attributes with [] -> whole
+  | _ -> group (pp_attributes attributes ^/^ whole)
 
 and pp_cartesian {value; _} =
   let head, tail = value in
@@ -126,11 +126,11 @@ and pp_cartesian {value; _} =
   | [e] -> group (break 1 ^^ pp_type_expr e)
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string " *") ^^ app items
-  in pp_type_expr head ^^ string " *" ^^ app (List.map snd tail)
+  in pp_type_expr head ^^ string " *" ^^ app (List.map ~f:snd tail)
 
 and pp_variant {value; _} =
   let {constr; arg; attributes=attr} = value in
-  let pre = if attr = [] then pp_ident constr
+  let pre = if List.is_empty attr then pp_ident constr
             else group (pp_attributes attr ^/^ pp_ident constr) in
   match arg with
     None -> pre
@@ -147,7 +147,7 @@ and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 and pp_field_decl {value; _} =
   let {field_name; field_type; attributes; _} = value in
   let attr = pp_attributes attributes in
-  let name = if attributes = [] then pp_ident field_name
+  let name = if List.is_empty attributes then pp_ident field_name
              else attr ^/^ pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (group (name ^^ string " :")) t_expr
@@ -171,9 +171,9 @@ and pp_type_tuple {value; _} =
   | e::items ->
       group (break 1 ^^ pp_type_expr e ^^ string ",") ^^ app items in
   let components =
-    if tail = []
+    if List.is_empty tail
     then pp_type_expr head
-    else pp_type_expr head ^^ string "," ^^ app (List.map snd tail)
+    else pp_type_expr head ^^ string "," ^^ app (List.map ~f:snd tail)
   in string "(" ^^ nest 1 (components ^^ string ")")
 
 (* Function and procedure declarations *)
@@ -198,7 +198,7 @@ and pp_fun_decl {value; _} =
     match kwd_recursive with
         None -> string "function"
       | Some _ -> string "recursive" ^/^ string "function" in
-  let start = if attributes = [] then start
+  let start = if List.is_empty attributes then start
               else pp_attributes attributes ^/^ start in
   let start = group (start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name)))
   and parameters = pp_par pp_parameters param
@@ -227,7 +227,7 @@ and pp_param_decl = function
 and pp_pvar {value; _} =
   let {variable; attributes} = value in
   let v = pp_ident variable in
-  if attributes = [] then v
+  if List.is_empty attributes then v
   else group (pp_attributes attributes ^/^ v)
 
 and pp_param_const {value; _} =
@@ -380,7 +380,7 @@ and pp_cases :
     let head, tail = value in
     let head       = pp_case_clause printer head in
     let head       = blank 2 ^^ head in
-    let rest       = List.map snd tail in
+    let rest       = List.map ~f:snd tail in
     let app clause = break 1 ^^ string "| " ^^ pp_case_clause printer clause
     in  head ^^ concat_map app rest
 
@@ -598,9 +598,9 @@ and pp_tuple_expr {value; _} =
   | e::items ->
       group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items in
   let components =
-    if tail = []
+    if List.is_empty tail
     then pp_expr head
-    else pp_expr head ^^ string "," ^^ app (List.map snd tail)
+    else pp_expr head ^^ string "," ^^ app (List.map ~f:snd tail)
   in string "(" ^^ nest 1 (components ^^ string ")")
 
 and pp_fun_call {value; _} =
@@ -637,7 +637,7 @@ and pp_ne_injection :
     let inj      = group (string (kwd ^ " [")
                           ^^ group (nest 2 (break 0 ^^ elements ))
                           ^^ break 0 ^^ string "]") in
-    let inj      = if attributes = [] then inj
+    let inj      = if List.is_empty attributes then inj
                    else group (pp_attributes attributes ^/^ inj)
     in inj
 
@@ -695,9 +695,9 @@ and pp_tuple_pattern {value; _} =
   | e::items ->
       group (break 1 ^^ pp_pattern e ^^ string ",") ^^ app items in
   let components =
-    if   tail = []
+    if List.is_empty tail
     then pp_pattern head
-    else pp_pattern head ^^ string "," ^^ app (List.map snd tail)
+    else pp_pattern head ^^ string "," ^^ app (List.map ~f:snd tail)
   in string "(" ^^ nest 1 (components ^^ string ")")
 
 and pp_list_pattern = function

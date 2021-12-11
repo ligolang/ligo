@@ -2,7 +2,13 @@ module AST = Ast_imperative
 module CST = Cst.Cameligo
 module Predefined = Predefined.Tree_abstraction.Cameligo
 
-open Function
+open Simple_utils.Function
+module Region   = Simple_utils.Region
+module Utils    = Simple_utils.Utils
+module Var      = Simple_utils.Var
+module List     = Simple_utils.List
+module Location = Simple_utils.Location
+module Pair     = Simple_utils.Pair
 
 (* Utils *)
 
@@ -63,10 +69,10 @@ let beginEnd = Some (CST.BeginEnd (ghost,ghost))
 let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
   let var = Format.asprintf "%a" Var.pp var in
   if String.contains var '#' then
-    let var = String.split_on_char '#' var in
-    wrap @@ "gen__" ^ (String.concat "" var)
+    let var = String.split ~on:'#' var in
+    wrap @@ "gen__" ^ (String.concat var)
   else
-    if String.length var > 4 && String.equal "gen__" @@ String.sub var 0 5 then
+    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
       wrap @@ "user__" ^ var
     else
       wrap @@ var
@@ -529,7 +535,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
     let type_expr = decompile_type_expr type_expr in
     CST.TypeDecl (wrap (CST.{kwd_type=ghost;params;name; eq=ghost; type_expr}))
   )
-  | Declaration_constant {binder;attr;expr}-> (
+  | Declaration_constant {binder;attr;expr;name=_}-> (
     let attributes : CST.attributes = decompile_attributes attr in
     let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
     let var = CST.PVar (wrap ({variable = decompile_variable binder.var.wrap_content; attributes = var_attributes } : CST.var_pattern)) in
@@ -554,7 +560,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
       let let_decl : CST.let_decl = (ghost,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
   )
-  | Declaration_module {module_binder;module_} ->
+  | Declaration_module {module_binder;module_;module_attr=_} ->
     let name = wrap module_binder in
     let module_ = decompile_module module_ in
     let module_decl :CST.module_decl = {kwd_module=ghost;name;eq=ghost;kwd_struct=ghost;module_;kwd_end=ghost} in

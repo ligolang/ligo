@@ -5,7 +5,8 @@ type ('a, 'op, 'lit) expr =
 | E_var of 'a
 | E_let_in of 'a * splitting * ('a, 'op, 'lit) expr * ('a, 'op, 'lit) binds
 | E_tuple of 'a * ('a, 'op, 'lit) args
-| E_let_tuple of 'a * splitting * ('a, 'op, 'lit) expr * ('a, 'op, 'lit) binds
+| E_let_tuple of 'a * splitting * ('a, 'op, 'lit) expr
+   * ('a, 'op, 'lit) binds
 | E_proj of 'a * ('a, 'op, 'lit) expr * nat * nat
 | E_update of 'a * ('a, 'op, 'lit) args * nat * nat
 | E_app of 'a * ('a, 'op, 'lit) args
@@ -31,8 +32,8 @@ type ('a, 'op, 'lit) expr =
    * ('a, string) Tezos_micheline.Micheline.node * ('a, 'op, 'lit) expr
 | E_fold of 'a * splitting * ('a, 'op, 'lit) expr * splitting
    * ('a, 'op, 'lit) expr * ('a, 'op, 'lit) binds
-| E_fold_right of 'a * ('a, string) Tezos_micheline.Micheline.node * splitting
-   * ('a, 'op, 'lit) expr * splitting * ('a, 'op, 'lit) expr
+| E_fold_right of 'a * ('a, string) Tezos_micheline.Micheline.node
+   * splitting * ('a, 'op, 'lit) expr * splitting * ('a, 'op, 'lit) expr
    * ('a, 'op, 'lit) binds
 | E_failwith of 'a * ('a, 'op, 'lit) expr
 | E_raw_michelson of 'a * ('a, string) Tezos_micheline.Micheline.node
@@ -45,8 +46,8 @@ and ('a, 'op, 'lit) binds =
 | Binds of usage list * ('a, string) Tezos_micheline.Micheline.node list
    * ('a, 'op, 'lit) expr
 and ('a, 'op, 'lit) cond =
-| Cond of splitting * ('a, 'op, 'lit) expr * splitting * ('a, 'op, 'lit) binds
-   * ('a, 'op, 'lit) binds
+| Cond of splitting * ('a, 'op, 'lit) expr * splitting
+   * ('a, 'op, 'lit) binds * ('a, 'op, 'lit) binds
 and ('a, 'op, 'lit) static_args =
 | Type_args of string option
    * ('a, string) Tezos_micheline.Micheline.node list

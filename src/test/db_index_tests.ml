@@ -6,7 +6,7 @@ open Db_index_by_constraint_identifier_tests
 open Db_index_typeclasses_constraining_tests
 
 (* TODO: move this to another file *)
-open Trace
+open Simple_utils.Trace
 open Ast_core.Types
 open Solver_types
 open Ast_core.Combinators

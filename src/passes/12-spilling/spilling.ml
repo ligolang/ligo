@@ -1,5 +1,5 @@
-module AST = Ast_typed
-module Append_tree = Tree.Append
+module AST         = Ast_typed
+module Append_tree = Simple_utils.Tree.Append
 
 module Compiler   = Compiler
 module Decompiler = Decompiler

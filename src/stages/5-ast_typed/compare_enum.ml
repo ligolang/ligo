@@ -1,4 +1,5 @@
 open Stage_common.Enums
+(* This files is broken *)
 
 let constant'_tag = constant'_to_enum
 

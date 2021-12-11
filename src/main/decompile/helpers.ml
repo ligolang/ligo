@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 open Main_errors
 
 type s_syntax = Syntax_name of string
@@ -22,7 +22,7 @@ let dialect_to_variant ~raise dialect =
 let syntax_to_variant ~raise ?dialect (Syntax_name syntax) source =
   match syntax, source with
     "auto", Some sf ->
-      (match Filename.extension sf with
+      (match Caml.Filename.extension sf with
          ".ligo" | ".pligo" ->
                     let dialect = dialect_to_variant ~raise dialect in
                     (PascaLIGO dialect)

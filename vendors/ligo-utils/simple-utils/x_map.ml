@@ -1,7 +1,7 @@
-module type OrderedType = Map.OrderedType
+module type OrderedType = Caml.Map.OrderedType
 
 module type S = sig
-  include Map.S
+  include Caml.Map.S
 
   val of_list : (key * 'a) list -> 'a t
   val to_list_rev : 'a t -> 'a list
@@ -14,12 +14,12 @@ module type S = sig
   val fold_map : f:(key -> 'a -> 'b -> 'b * 'c) -> init:'b -> 'a t -> 'b * 'c t
 end
 
-module Make(Ord : Map.OrderedType) : S with type key = Ord.t = struct
-  include Map.Make(Ord)
+module Make(Ord : Caml.Map.OrderedType) : S with type key = Ord.t = struct
+  include Caml.Map.Make(Ord)
 
   let of_list (lst: (key * 'a) list) : 'a t =
     let aux prev (k, v) = add k v prev in
-    List.fold_left aux empty lst
+    List.fold_left ~f:aux ~init:empty lst
 
   let to_list_rev (t: 'a t) : 'a list =
     let aux _k v prev = v :: prev in
@@ -41,7 +41,7 @@ module Make(Ord : Map.OrderedType) : S with type key = Ord.t = struct
 
   let add_bindings (kvl:(key * 'a) list) (m:'a t) =
     let aux prev (k, v) = add k v prev in
-    List.fold_left aux m kvl
+    List.fold_left ~f:aux ~init:m kvl
 
   let fold_map ~f ~init map =
     let aux k v (init,map) =

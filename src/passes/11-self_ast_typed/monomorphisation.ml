@@ -1,3 +1,5 @@
+module PP_helpers = Simple_utils.PP_helpers
+
 let fold_map_expression = Helpers.fold_map_expression
 
 open Ast_typed
@@ -36,12 +38,12 @@ let pp_instances ppf xs =
   in
   List.iter xs ~f
 
-module LIMap = Map.Make(struct type t = longident let compare x y = compare_longident x y end)
+module LIMap = Simple_utils.Map.Make(struct type t = longident let compare x y = compare_longident x y end)
 
 type data = { env : unit ; instances : (instance list) LIMap.t }
 let empty_data : data = { env = () ; instances = LIMap.empty }
 
-let pp_data ppf { instances } =
+let pp_data ppf { instances ; env=_ } =
   let f (lid, instances_of_lid) =
     Format.fprintf ppf "{ lid = %a ~> %a }"
     pp_longident lid (PP_helpers.list_sep_d pp_instance) instances_of_lid
@@ -60,7 +62,7 @@ let instances_of_path_lookup_and_remove (path : _) (data : data) =
   LIMap.to_kv_list tmap, { data with instances }
 
 let instances_of_module_lookup_and_remove (module_name : _) (data : data) =
-  let tmap, instances = LIMap.partition (fun lid _ -> match lid with { path = module_name' :: _ } -> equal_module_variable module_name' module_name | _ -> false) data.instances in
+  let tmap, instances = LIMap.partition (fun lid _ -> match lid with { path = module_name' :: _ ; variable=_} -> equal_module_variable module_name' module_name | _ -> false) data.instances in
   LIMap.to_kv_list tmap, { data with instances }
 
 let instance_lookup_opt (lid : longident) (type_instances' : type_expression list) (type_' : type_expression) (data : data) =
@@ -289,7 +291,7 @@ and mono_polymorphic_module : _ -> data -> module_fully_typed -> data * module_f
        let loc = Location.get_location declaration in
        let declaration = Location.unwrap declaration in
        match declaration with
-       | Declaration_constant {binder; expr = { type_expression = { type_content = T_for_all _} } as expr ; name ; attr } ->
+       | Declaration_constant {binder; expr = { type_expression = { type_content = T_for_all _; type_meta=_; orig_var=_;location=_}; expression_content=_;location=_ } as expr ; name ; attr } ->
           let type_vars, type_ = Helpers.destruct_for_alls expr.type_expression in
           let build_declaration (lid : longident) { vid ; type_instances ; type_ = typed } (data, decls) =
             let binder = vid.variable in

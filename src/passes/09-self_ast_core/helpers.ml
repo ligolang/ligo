@@ -1,5 +1,5 @@
 open Ast_core
-open Trace
+open Simple_utils.Trace
 open Stage_common
 
 include Ast_core.PP
@@ -32,7 +32,7 @@ let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = f
   | E_record m -> Folds.record self init m
   | E_record_update ru -> Folds.record_update self init ru
   | E_record_accessor ra -> Folds.record_accessor self init ra
-  | E_let_in { let_binder = _ ; rhs ; let_result } -> (
+  | E_let_in { let_binder = _ ; rhs ; let_result ; attr=_ } -> (
       let res = self init rhs in
       let res = self res let_result in
       res

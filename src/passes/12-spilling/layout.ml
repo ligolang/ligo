@@ -3,8 +3,8 @@ open AST
 open Errors
 module Append_tree = Tree.Append
 open! Mini_c
-open Trace
-open Function
+open Simple_utils.Trace
+open Simple_utils.Function
 
 let annotation_or_label annot label = Option.value ~default:label (Helpers.remove_empty_annotation annot)
 
@@ -19,8 +19,8 @@ let t_sum ~raise ~layout return compile_type m =
       (None, t)
     in
     let m' = Append_tree.fold_ne
-      (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
-          let label = String.uncapitalize_ascii label in
+      (fun (Label label, ({associated_type;michelson_annotation;decl_pos=_}: AST.row_element)) ->
+          let label = String.uncapitalize label in
           let a = compile_type associated_type in
           (Some (annotation_or_label michelson_annotation label), a)
       )
@@ -30,7 +30,7 @@ let t_sum ~raise ~layout return compile_type m =
   | L_comb -> (
     (* Right combs *)
     let aux (Label l , (x : _ row_element_mini_c )) =
-      let l = String.uncapitalize_ascii l in
+      let l = String.uncapitalize l in
       let t = compile_type x.associated_type in
       let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
       (annot_opt,t)
@@ -75,7 +75,7 @@ let record_tree ~layout compile_type m =
                     type_ = Expression.make_t (T_tuple [(a_annot, a.type_); (b_annot, b.type_)]) })
       in
       let m' = Append_tree.fold_ne
-          (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
+          (fun (Label label, ({associated_type;michelson_annotation;decl_pos=_}: AST.row_element)) ->
              let a = compile_type associated_type in
              let annot = (if is_tuple_lmap then
                             None
@@ -105,7 +105,7 @@ let t_record_to_pairs ~layout return compile_type m =
         (None, t)
       in
       let m' = Append_tree.fold_ne
-          (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
+          (fun (Label label, ({associated_type;michelson_annotation;decl_pos=_}: AST.row_element)) ->
              let a = compile_type associated_type in
              ((if is_tuple_lmap then
                     None
@@ -171,8 +171,8 @@ let record_access_to_lr ~raise ~layout ty m_ty index =
       in
       let index =
         fst @@
-        Trace.trace_option ~raise (corner_case ~loc:__LOC__ "constructor access") @@
-        (List.findi ~f:(fun _ (label , _) -> label = index) lst)
+        trace_option ~raise (corner_case ~loc:__LOC__ "constructor access") @@
+        (List.findi ~f:(fun _ (label , _) -> Compare.label label index = 0) lst)
       in
       let last = (index + 1 = List.length lst) in
       aux index ty last
@@ -223,8 +223,8 @@ let constructor_to_lr ~raise ~(layout) ty m_ty index =
   | L_comb -> (
     let index =
       fst @@
-      Trace.trace_option ~raise (corner_case ~loc:__LOC__ "constructor access") @@
-      (List.findi ~f:(fun _ (label , _) -> label = index) lst)
+      trace_option ~raise (corner_case ~loc:__LOC__ "constructor access") @@
+      (List.findi ~f:(fun _ (label , _) -> Compare.label label index = 0) lst)
     in
     let last = (index + 1 = List.length lst) in
     let rec aux n ty =
@@ -266,7 +266,7 @@ let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
           | Leaf (name , tv) ->
             let tv' = compile_type tv in
             (`Leaf name , tv')
-          | Node {a ; b} ->
+          | Node {a ; b; size=_;full=_} ->
             let a' = aux a in
             let b' = aux b in
             let tv' = t_union (None, snd a') (None, snd b') in
@@ -305,7 +305,7 @@ let extract_record ~raise ~(layout:layout) (v : value) (lst : (AST.label * AST.t
     let rec aux tv : (AST.label * (value * AST.type_expression)) list =
       match tv with
       | Leaf (s, t), v -> [s, (v, t)]
-      | Node {a;b}, D_pair (va, vb) ->
+      | Node {a;b;size=_;full=_}, D_pair (va, vb) ->
           let a' = aux (a, va) in
           let b' = aux (b, vb) in
           (a' @ b')
@@ -340,8 +340,8 @@ let extract_constructor ~raise ~(layout:layout) (v : value) (lst : (AST.label * 
     let rec aux tv : (label * value * AST.type_expression) =
       match tv with
       | Leaf (k, t), v -> (k, v, t)
-      | Node {a}, D_left v -> aux (a, v)
-      | Node {b}, D_right v -> aux (b, v)
+      | Node {a;b=_;size=_;full=_}, D_left v -> aux (a, v)
+      | Node {a=_;b;size=_;full=_}, D_right v -> aux (b, v)
       | _ -> raise.raise @@ corner_case ~loc:__LOC__ "bad constructor path"
     in
     let (s, v, t) = aux (tree, v) in

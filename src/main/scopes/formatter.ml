@@ -1,4 +1,4 @@
-open Display
+open Simple_utils.Display
 
 let scope_ppformat ~display_format f (d,s) =
   match display_format with

@@ -1,16 +1,16 @@
 (* Filtering the array [Sys.argv]. *)
 
-let argv_list = Array.to_list Sys.argv |> List.tl (* Cannot fail *)
+let argv_list = Array.to_list Sys.argv |> List.tl_exn (* Cannot fail *)
 
-module SSet = Set.Make (String)
+module SSet = Caml.Set.Make (String)
 
 (* Valid options without an argument *)
 
 let filter ~opt_with_arg ~opt_wo_arg : unit =
   let split_by_eq s =
     match String.index s '=' with
-    | i -> (String.sub s 0 i, String.sub s (i+1) (String.length s - i - 1))
-    | exception Not_found -> (s, "") in
+    | Some (i) -> (String.sub s ~pos:0 ~len:i, String.sub s ~pos:(i+1) ~len:(String.length s - i - 1))
+    | None -> (s, "") in
 
   let rec filter acc = function
       [] -> acc (* No more options. *)
@@ -21,7 +21,7 @@ let filter ~opt_with_arg ~opt_wo_arg : unit =
        if SSet.mem opt opt_with_arg then
            match more with
            (* Has [opt] an valid argument ? *)
-           | arg::opts when arg.[0] <> '-' -> (* Yes *)
+           | arg::opts when Char.(<>) arg.[0] '-' -> (* Yes *)
               filter (arg::opt::acc) opts (* We keep both *)
            | _  when SSet.mem opt opt_wo_arg -> (* No, but argument is optional *)
               filter (opt::acc) more (* We keep only [opt] *)
@@ -39,7 +39,7 @@ let filter ~opt_with_arg ~opt_wo_arg : unit =
          match more with
            [] -> acc (* [opt] has no argument and there are no more. *)
          | arg::opts -> (* Has [opt] an argument? *)
-            if arg.[0] = '-' (* Cannot fail. *) then
+            if Char.equal arg.[0] '-' (* Cannot fail. *) then
               (* No argument: [arg] is actually the next option. *)
               filter acc more
             else (* [opt] has an argument [arg]: we skip it too. *)
@@ -48,7 +48,7 @@ let filter ~opt_with_arg ~opt_wo_arg : unit =
     filter [] argv_list |> List.rev |> List.cons Sys.argv.(0) in
   let last =
     let patch i e = Sys.argv.(i) <- e; i+1 in
-    List.fold_left patch 0 filtered
+    List.fold_left ~f:patch ~init:0 filtered
   in for i = last to Array.length Sys.argv - 1 do
        Sys.argv.(i) <- ""
      done

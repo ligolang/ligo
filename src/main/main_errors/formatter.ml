@@ -1,4 +1,7 @@
-open Display
+open Simple_utils.Display
+module Snippet    = Simple_utils.Snippet
+module Location   = Simple_utils.Location
+module PP_helpers = Simple_utils.PP_helpers
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> Types.all -> unit =
@@ -109,7 +112,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unknown ->
       Format.fprintf f "@[<v>An unknown error occurred.@]"
 
-    | `Main_execution_failed (fw:Runned_result.failwith) ->
+    | `Main_execution_failed (fw:Simple_utils.Runned_result.failwith) ->
       let value = match fw with
         | Failwith_int i -> string_of_int i
         | Failwith_string s -> s
@@ -286,7 +289,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
     json_error ~stage:"michelson contract build" ~content
 
   | `Main_typecheck_contract_tracer (c,_) ->
-    let code = Format.asprintf "%a" Michelson.pp c in
+    let code = Format.asprintf "%a" Tezos_utils.Michelson.pp c in
     let content = `Assoc [
       ("message", `String "Could not typecheck michelson code") ;
       ("code",    `String code) ; ] in
@@ -315,7 +318,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_unknown ->
     json_error ~stage:"michelson execution" ~content:(`String "unknown error")
 
-  | `Main_execution_failed (fw:Runned_result.failwith) ->
+  | `Main_execution_failed (fw:Simple_utils.Runned_result.failwith) ->
     let value = match fw with
       | Failwith_int i -> `Assoc [("value", `Int i) ; ("type", `String "int")]
       | Failwith_string s -> `Assoc [("value", `String s) ; ("type", `String "int")]
@@ -416,7 +419,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
      let content = `Assoc [("message", message)] in
      json_error ~stage:"evaluating expression" ~content
 
-let error_format : _ Display.format = {
+let error_format : _ Simple_utils.Display.format = {
   pp = error_ppformat;
   to_json = error_jsonformat;
 }

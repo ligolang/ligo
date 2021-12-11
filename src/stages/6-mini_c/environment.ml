@@ -44,7 +44,7 @@ module Environment (* : ENVIRONMENT *) = struct
         | true -> List.remove_element ~compare:compare_var s selector , keep
         | false -> selector , not keep in
       let e_lst' =
-        if rev = keep
+        if Bool.equal rev keep
         then snd @@ List.fold_map ~f:aux ~init:lst e_lst
         else snd @@ List.fold_map ~f:aux ~init:lst @@ List.rev e_lst
       in

@@ -1,3 +1,5 @@
+module Location = Simple_utils.Location
+
 type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.error]
 
 type all =
@@ -51,7 +53,7 @@ type all =
  (* | `Main_interpreter of Interpreter.interpreter_error *)
  | `Main_interpret_test_entry_not_found of string
  | `Main_interpret_target_lang_error of Location.t * Location.t list * Tezos_error_monad__TzCore.error list
- | `Main_interpret_target_lang_failwith of Location.t * Runned_result.failwith
+ | `Main_interpret_target_lang_failwith of Location.t * Simple_utils.Runned_result.failwith
  | `Main_interpret_boostrap_not_enough of Location.t
  | `Main_interpret_meta_lang_eval of Location.t * Location.t list * string
  | `Main_interpret_meta_lang_failwith of Location.t * Location.t list * Ligo_interpreter.Types.value

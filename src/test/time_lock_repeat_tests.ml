@@ -1,4 +1,5 @@
-open Trace
+module Var = Simple_utils.Var
+open Simple_utils.Trace
 open Test_helpers
 open Ast_imperative
 open Main_errors

@@ -1,9 +1,10 @@
 open Errors
-open Trace
-open Function
+open Simple_utils.Trace
+open Simple_utils.Function
 
 module CST = Cst.Cameligo
 module AST = Ast_imperative
+module Utils = Simple_utils.Utils
 
 open AST
 
@@ -300,7 +301,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
     )
   (*TODO: move to proper module*)
-  | ECall {value=(EModA {value={module_name;field};region=_},args);region} when
+  | ECall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when
     List.mem ~equal:Caml.(=) build_ins module_name.value ->
     let loc = Location.lift region in
     let fun_name = match field with
@@ -387,7 +388,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EFun func ->
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
-    let ({binders; lhs_type; body} : CST.fun_expr) = func in
+    let ({binders; lhs_type; body;kwd_fun=_;type_params=_;arrow=_; attributes=_} : CST.fun_expr) = func in
     let () = check_annotation ~raise (fst binders) in
     let () = List.iter ~f:(check_annotation ~raise) (snd binders) in
     let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
@@ -451,11 +452,11 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let ({kwd_rec;binding;body;attributes;_} : CST.let_in) = li in
     let body = self body in
     match binding with
-    | { binders ; let_rhs ; lhs_type ; type_params } -> (
+    | { binders ; let_rhs ; lhs_type ; type_params ; eq=_} -> (
       (* We compile doing case analysis on the form of the binders,
          and on whether we have type parameters or not (i.e. `a` in `let
          binders (type a) = ... in ...`) *)
-      let type_params = Option.map ~f:(fun {value = {inside = { type_vars = (v, vs) }}} -> v :: vs) type_params in
+      let type_params = Option.map ~f:(fun {value = {inside = { type_vars = (v, vs);kwd_type=_};lpar=_;rpar=_};region=_} -> v :: vs) type_params in
       let (pattern,_) = binders in
       match (unepar pattern), type_params with
       | CST.PVar _, None -> (
@@ -472,7 +473,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         let ascr = trace_option ~raise (type_params_not_annotated region) binder.ascr in
         let rec add_type_params = function
           | [] -> ascr
-          | ({ value } : CST.variable) :: vs -> t_for_all (Location.wrap @@ Var.of_name value) () (add_type_params vs) in
+          | ({ value ; region=_ } : CST.variable) :: vs -> t_for_all (Location.wrap @@ Var.of_name value) () (add_type_params vs) in
         let ascr = Some (add_type_params type_params) in
         let binder = { binder with ascr } in
         let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
@@ -724,7 +725,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
   | PRecord _ -> raise.raise @@ unsupported_pattern_type [pattern]
   | PTyped tp ->
     let (tp, loc) = r_split tp in
-    let {pattern; type_expr} : CST.typed_pattern = tp in
+    let {pattern; type_expr;colon=_} : CST.typed_pattern = tp in
     let ascr = compile_type_expression ~raise type_expr in
     let ({var;attributes;  _}, exprs) = compile_parameter ~raise pattern in
     return ~ascr ~attributes loc exprs @@ Location.unwrap var
@@ -735,7 +736,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
     List.map ~f:(Location.wrap ~loc:(Location.lift reg)) decl in
   let return_1 reg decl = return reg [decl] in
   match decl with
-  | TypeDecl {value={name; type_expr; params};region} -> (
+  | TypeDecl {value={name; type_expr; params;kwd_type=_;eq=_};region} -> (
     let (name,_) = r_split name in
     let type_expr =
       let rhs = compile_type_expression ~raise type_expr in
@@ -768,9 +769,9 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
     return_1 region @@ AST.Module_alias {alias; binders}
   | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     match let_binding with
-    | { binders ; let_rhs ; type_params } -> (
+    | { binders ; let_rhs ; type_params ; lhs_type=_; eq=_ } -> (
       let (pattern,arg) = binders in
-      let type_params = Option.map ~f:(fun {value = {inside = { type_vars = (v, vs) }}} -> v :: vs) type_params in
+      let type_params = Option.map ~f:(fun {value = {inside = { type_vars = (v, vs);kwd_type=_};lpar=_;rpar=_};region=_} -> v :: vs) type_params in
       match (unepar pattern,arg,type_params) with
       | CST.PTuple tuple , [], None ->
         let attributes = compile_attributes attributes in
@@ -812,7 +813,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let ascr = trace_option ~raise (type_params_not_annotated region) binder.ascr in
         let rec add_type_params = function
           | [] -> ascr
-          | ({ value } : CST.variable) :: vs -> t_for_all (Location.wrap @@ Var.of_name value) () (add_type_params vs) in
+          | ({ value ; region=_} : CST.variable) :: vs -> t_for_all (Location.wrap @@ Var.of_name value) () (add_type_params vs) in
         let ascr = Some (add_type_params type_params) in
         let binder = { binder with ascr } in
         return region @@ [AST.Declaration_constant {name; binder; attr; expr}]

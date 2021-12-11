@@ -1,3 +1,4 @@
+module Michelson = Tezos_utils.Michelson
 open Simple_utils.Display
 
 type stacking_error = [

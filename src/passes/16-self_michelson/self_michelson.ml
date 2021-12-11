@@ -131,16 +131,16 @@ let get_arity (op : _ node) : int option =
   | _ -> None
 
 let is_nullary_op op : bool =
-  get_arity op = Some 0
+  get_arity op |> Option.exists ~f:((=) 0)
 
 let is_unary_op op : bool =
-  get_arity op = Some 1
+  get_arity op |> Option.exists ~f:((=) 1)
 
 let is_binary_op op : bool =
-  get_arity op = Some 2
+  get_arity op |> Option.exists ~f:((=) 2)
 
 let is_ternary_op op : bool =
-  get_arity op = Some 3
+  get_arity op |> Option.exists ~f:((=) 3)
 
 let unseq : _ michelson -> _ michelson list = function
   | Seq (_, args) -> args

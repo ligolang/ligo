@@ -1,3 +1,7 @@
+module Var      = Simple_utils.Var
+module Tree     = Simple_utils.Tree
+module Snippet  = Simple_utils.Snippet
+module Location = Simple_utils.Location
 open Simple_utils.Display
 
 type spilling_error = [

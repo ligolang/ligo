@@ -1,6 +1,6 @@
 open Errors
 open Ast_typed
-open Trace
+open Simple_utils.Trace
 open Stage_common.Constant
 
 type contract_pass_data = Contract_passes.contract_pass_data

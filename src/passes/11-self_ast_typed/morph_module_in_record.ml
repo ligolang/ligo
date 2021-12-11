@@ -1,5 +1,5 @@
 open Helpers
-open Trace
+open Simple_utils.Trace
 open Ast_typed
 
 let rec declaration_to_expression ~raise : environment -> declaration_loc list -> (string * expression) list = fun env decl ->

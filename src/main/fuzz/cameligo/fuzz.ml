@@ -36,7 +36,7 @@ module Mutator (M : Monad) = struct
     let false_return x = return (false, x) in
     let return x = return (true, x) in
     match expr with
-    | EAnnot {value = {inside = (_, _, TVar {value = "address"})}} ->
+    | EAnnot {value = {inside = (_, _, TVar {value = "address";region=_});lpar=_;rpar=_};region=_} ->
        false_return expr
     | EArith (Add op) | EArith (Sub op) | EArith (Mult op)
     | EArith (Div op) | EArith (Mod op) ->

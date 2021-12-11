@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 open Errors
 module LT = Ligo_interpreter.Types
 

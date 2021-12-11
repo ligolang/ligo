@@ -1,3 +1,4 @@
+module Var = Simple_utils.Var
 (* TODO: remove these and use the proper qualification where needed *)
 type    unionfind             =    Ast_core.unionfind
 type    constant_tag          =    Ast_core.constant_tag
@@ -27,7 +28,7 @@ type type_expression = Ast_core.type_expression
 
 (* generate a new type variable and gave it an id *)
 let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () ->
-  let fresh_name = Var.fresh ?name () in
+  let fresh_name = Simple_utils.Var.fresh ?name () in
   let () = (if Ast_core.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
   fresh_name
 

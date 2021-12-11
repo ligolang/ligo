@@ -1,3 +1,5 @@
+module Var = Simple_utils.Var
+module Trace = Simple_utils.Trace
 open Main_errors
 open Test_helpers
 

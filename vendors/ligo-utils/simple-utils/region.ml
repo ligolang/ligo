@@ -45,7 +45,7 @@ type 'a reg = {region: t; value: 'a}
 exception Invalid
 
 let make ~(start: Pos.t) ~(stop: Pos.t) =
-  if start#file <> stop#file || start#byte_offset > stop#byte_offset
+  if String.(<>) start#file stop#file || start#byte_offset > stop#byte_offset
   then raise Invalid
   else
     object
@@ -109,7 +109,7 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
                           else ""
           and start_str = start#compact ~file:false ~offsets mode
           and stop_str  = stop#compact ~file:false ~offsets mode in
-          if start#file = stop#file then
+          if String.equal start#file stop#file then
             if start#line = stop#line then
               sprintf "%s%s-%i" prefix start_str
                       (if offsets then stop#offset mode
@@ -130,13 +130,16 @@ let min ~file = make ~start:(Pos.min ~file) ~stop:(Pos.min ~file)
 
 (* Comparisons *)
 
-let equal r1 r2 =
-   r1#file = r2#file
+let equal (r1 : t) (r2 :t) =
+  String.equal r1#file r2#file
 && Pos.equal r1#start r2#start
 && Pos.equal r1#stop  r2#stop
 
+let reg_equal eq {region=r1;value=v1} {region=r2;value=v2} =
+  equal r1 r2 && eq v1 v2
+
 let lt r1 r2 =
-  r1#file = r2#file
+  String.equal r1#file r2#file
 && not r1#is_ghost
 && not r2#is_ghost
 && Pos.lt r1#start r2#start

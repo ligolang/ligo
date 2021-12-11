@@ -26,7 +26,7 @@ let all_exp ~raise ~(lang:Syntax.v_syntax) =
   List.map 
     ~f:(fun el -> Helpers.Expression el) 
     (all_expression_mapper ~raise @ 
-      (if lang = JsLIGO then 
+      (if Caml.(=) lang JsLIGO then 
         all_expression_mapper_jsligo ~raise 
       else 
         []))
@@ -37,10 +37,10 @@ let all_module ~raise ~add_warning ~(lang:Syntax.v_syntax) init =
   let all_p  = List.map ~f:Helpers.map_module @@ all_exp ~raise ~lang in
   let all_p2 = List.map ~f:Helpers.map_module @@ all_ty ~raise ~add_warning in
   let all_p3 = List.map ~f:Helpers.map_module @@ all_module ~raise in
-  List.fold ~f:(|>) (all_p @ all_p2 @ (if lang = JsLIGO then all_p3 else [])) ~init
+  List.fold ~f:(|>) (all_p @ all_p2 @ (if Caml.(=) lang JsLIGO then all_p3 else [])) ~init
 
 let all_expression ~raise ~(lang:Syntax.v_syntax) init =
-  let all_p = List.map ~f:Helpers.map_expression @@ (all_expression_mapper ~raise @ (if lang = JsLIGO then all_expression_mapper_jsligo  ~raise else [])) in
+  let all_p = List.map ~f:Helpers.map_expression @@ (all_expression_mapper ~raise @ (if Caml.(=) lang JsLIGO then all_expression_mapper_jsligo  ~raise else [])) in
   List.fold ~f:(|>) all_p ~init
 
 let decompile_imperative init =

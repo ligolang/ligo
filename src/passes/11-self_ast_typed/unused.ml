@@ -14,7 +14,7 @@ module V = struct
   let compare x y = Var.compare (Location.unwrap x) (Location.unwrap y)
 end
 
-module M = Map.Make(V)
+module M = Simple_utils.Map.Make(V)
 
 (* A map recording if a variable is being used * a list of unused variables. *)
 type defuse = bool M.t * V.t list
@@ -40,14 +40,14 @@ let defuse_unions defuse =
   List.fold_left ~f:defuse_union ~init:(defuse,[])
 
 let replace_opt k x m =
-  Stdlib.Option.fold ~none:(M.remove k m) ~some:(fun x -> M.add k x m) x
+  Option.value_map ~default:(M.remove k m) ~f:(fun x -> M.add k x m) x
 
 let add_if_not_generated ?forbidden x xs b =
   let v = Location.unwrap x in
   let sv = Format.asprintf "%a" Var.pp v in
   if not b && not (Var.is_generated v)
-     && (String.get sv 0) <> '_'
-     && Stdlib.Option.fold ~none:true ~some:(fun x -> x <> sv) forbidden
+     && Char.(<>) (String.get sv 0) '_'
+     && Option.value_map ~default:true ~f:(String.(<>) sv) forbidden
   then x::xs else xs
 
 let remove_defined_var_after defuse binder f expr =
@@ -146,7 +146,7 @@ let rec unused_map_module ~add_warning : module_fully_typed -> module_fully_type
       ()
     )
     | Declaration_type _ -> ()
-    | Declaration_module {module_} ->
+    | Declaration_module {module_; module_binder=_;module_attr=_} ->
       let _ = self module_ in
       ()
     | Module_alias _ -> ()

@@ -1,6 +1,6 @@
 open Errors
 open Ast_imperative
-open Trace
+open Simple_utils.Trace
 
 let peephole_type_expression ~raise : type_expression -> type_expression  = fun e ->
   match e.type_content with

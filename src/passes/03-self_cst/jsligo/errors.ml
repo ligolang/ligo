@@ -1,6 +1,8 @@
 open Simple_utils.Display
 open Cst.Jsligo
 
+module Snippet = Simple_utils.Snippet
+
 let stage = "self_cst_jsligo"
 
 type self_cst_jsligo_error = [

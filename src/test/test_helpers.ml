@@ -1,6 +1,7 @@
 (* code quality: medium 2021-05-05 *)
-
-open Trace
+module Display = Simple_utils.Display
+module Runned_result = Simple_utils.Runned_result
+open Simple_utils.Trace
 open Main_errors
 
 type test_case = unit Alcotest.test_case
@@ -106,7 +107,7 @@ let wrap_ref file f =
   let s = ref None in
   fun () -> match !s with
     | Some (a,file') -> 
-      if file' = file then
+      if String.equal file' file then
         a else f s
     | None -> f s
 

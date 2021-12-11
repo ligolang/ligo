@@ -37,7 +37,7 @@ let tokens_of = function
       Core.Token token -> token::tokens
     | Core.Markup    _ -> tokens
     | Core.Directive d -> Token.Directive d :: tokens
-    in List.fold_left apply [] lex_units |> List.rev |> ok
+    in List.fold_left ~f:apply ~init:[] lex_units |> List.rev |> ok
 | Error _ as err -> err
 
 (* Exported *)

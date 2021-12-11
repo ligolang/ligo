@@ -1,5 +1,6 @@
 open Test_helpers
-open Trace
+module Trace = Simple_utils.Trace
+open Simple_utils.Trace
 open Main_errors
 
 type ('a,'err) sdata = {
@@ -46,13 +47,13 @@ let reasonligo_sdata = {
 
 let get_exp_as_string filename =
   let lines = ref [] in
-  let chan = open_in filename in
+  let chan = In_channel.create filename in
   try
     while true; do
-      lines := input_line chan :: !lines
+      lines := In_channel.input_line_exn chan :: !lines
     done; !lines
   with End_of_file ->
-    close_in chan;
+    In_channel.close chan;
     List.rev !lines
 
 let assert_syntax_error ~raise sdata () =

@@ -1,10 +1,10 @@
-open Errors
-open Trace
 
 module I = Ast_core
 module O = Ast_typed
 
 module Errors = Errors
+open Errors
+open Simple_utils.Trace
 
 type environment = O.Environment.t
 

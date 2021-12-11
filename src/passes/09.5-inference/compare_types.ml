@@ -15,10 +15,10 @@ let rec assert_type_expression_eq ~raise (a, b: (type_expression * type_expressi
   | T_sum sa, T_sum sb -> (
       let sa' = LMap.to_kv_list_rev sa.fields in
       let sb' = LMap.to_kv_list_rev sb.fields in
-      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
+      let aux ((Label ka, {associated_type=va;_}), (Label kb, {associated_type=vb;_})) =
         let _ =
           Assert.assert_true ~raise (corner_case "different keys in sum types")
-          @@ (ka = kb) in
+          @@ (String.equal ka kb) in
         assert_type_expression_eq ~raise (va, vb)
       in
       let _ =
@@ -30,7 +30,7 @@ let rec assert_type_expression_eq ~raise (a, b: (type_expression * type_expressi
     )
   | T_sum _, _ -> raise.raise @@ different_types a b
   | T_record ra, T_record rb
-       when Helpers.is_tuple_lmap ra.fields <> Helpers.is_tuple_lmap rb.fields -> (
+       when not @@ Bool.equal (Helpers.is_tuple_lmap ra.fields) (Helpers.is_tuple_lmap rb.fields) -> (
     raise.raise @@ different_types a b
   )
   | T_record ra, T_record rb -> (
@@ -42,7 +42,7 @@ let rec assert_type_expression_eq ~raise (a, b: (type_expression * type_expressi
           trace_strong ~raise (different_types a b) @@
           let Label ka = ka in
           let Label kb = kb in
-          Assert.assert_true (different_types a b) (ka = kb) in
+          Assert.assert_true (different_types a b) (String.equal ka kb) in
         assert_type_expression_eq ~raise (va, vb)
       in
       let () =
@@ -60,7 +60,7 @@ let rec assert_type_expression_eq ~raise (a, b: (type_expression * type_expressi
       let () = assert_type_expression_eq ~raise (type2, type2') in
       ()
   | T_arrow _, _ -> raise.raise @@ different_types a b
-  | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
+  | T_variable x, T_variable y -> let _ = Caml.(x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> raise.raise @@ different_types a b
   | T_module_accessor {module_name=mna;element=a}, T_module_accessor {module_name=mnb;element=b} when String.equal mna mnb -> (
       let () = assert_type_expression_eq ~raise (a, b) in

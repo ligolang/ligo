@@ -173,7 +173,7 @@ let all_equal' : type_constraint_simpl list -> (type_variable -> type_variable) 
         `TODO -> Different
       | `Constructor (hd_ctor_tag, hd_ctor_length, hd_ctor_args) ->
         if List.for_all ~f:(function `Constructor (p_ctor_tag, p_ctor_length, _p_ctor_args)
-              -> Compare.constant_tag p_ctor_tag hd_ctor_tag = 0 && Int.compare p_ctor_length hd_ctor_length == 0 | _ -> false) tl
+              -> Compare.constant_tag p_ctor_tag hd_ctor_tag = 0 && Int.compare p_ctor_length hd_ctor_length = 0 | _ -> false) tl
         then
           let fresh_vars = List.map ~f:(fun _arg -> Core.fresh_type_variable ()) hd_ctor_args in
           let deduced : c_constructor_simpl = {

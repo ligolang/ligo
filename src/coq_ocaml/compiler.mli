@@ -58,8 +58,8 @@ val compile_binds :
   Tezos_micheline.Micheline.node list) -> ('a3 -> ('a1, string)
   Tezos_micheline.Micheline.node) -> ('a3 -> ('a1, string)
   Tezos_micheline.Micheline.node) -> ('a1, string)
-  Tezos_micheline.Micheline.node list -> splitting -> usage list -> ('a1, 'a2,
-  'a3) binds -> ('a1, string) Tezos_micheline.Micheline.node list
+  Tezos_micheline.Micheline.node list -> splitting -> usage list -> ('a1,
+  'a2, 'a3) binds -> ('a1, string) Tezos_micheline.Micheline.node list
 
 val compile_cond :
   'a1 -> ('a1 -> 'a2 -> ('a1, 'a2, 'a3) static_args -> ('a1, string)

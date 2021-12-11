@@ -42,9 +42,6 @@ let with_names_for_print : names_for_print -> (unit -> unit) -> unit = fun names
 
 let rec int_to_unicode (x : Int.t) =
   let digit =
-    let ( - ) = Int.sub in
-    let ( / ) = Int.div in
-    let ( * ) = Int.mul in
     match (x - ((x / 10) * 10)) with
       a when Int.equal a 0 -> "₀"
     | a when Int.equal a 1 -> "₁"
@@ -58,7 +55,7 @@ let rec int_to_unicode (x : Int.t) =
     | a when Int.equal a 9 -> "₉"
     | _ -> failwith (Format.asprintf "internal error: couldn't pretty-print int64: %d (is it a negative number?)" x)
   in
-  if x = 0 then "" else (int_to_unicode (Int.div x 10)) ^ digit
+  if x = 0 then "" else (int_to_unicode (Int.(/) x 10)) ^ digit
 
 let pp ppf v =
   match v.name, v.counter with
@@ -71,8 +68,6 @@ let pp ppf v =
   | _, None -> Format.fprintf ppf "%s" v.name
   | _, Some i -> Format.fprintf ppf "%s#%d" v.name i
 
-module Int = Base.Int
-module Option = Base.Option
 
 let equal v1 v2 =
   String.equal v1.name v2.name

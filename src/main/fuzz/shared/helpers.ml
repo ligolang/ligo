@@ -21,4 +21,4 @@ let transform_string =
   let constn _ = "" in
   let double s = s ^ s in
   let id s = s in
-  [id; String.capitalize_ascii; String.uncapitalize_ascii; String.lowercase_ascii; String.uppercase_ascii; constn; double]
+  [id; String.capitalize; String.uncapitalize; String.lowercase; String.uppercase; constn; double]
