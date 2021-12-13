@@ -10,7 +10,6 @@
    )))
  (release
   (flags (:standard 
-   -O3
    -strict-sequence 
    -strict-formats 
    -short-paths 
