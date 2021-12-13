@@ -1,6 +1,5 @@
 module AST.Parser
   ( Source (..)
-  , Progress (..)
   , ParserCallback
   , parse
   , parsePreprocessed

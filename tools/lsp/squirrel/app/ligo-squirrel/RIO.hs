@@ -90,7 +90,7 @@ import Log (LogT)
 import Log qualified
 import Parser
 import Product
-import Progress ((%))
+import Progress (Progress (..), (%))
 import Range
 import Util.Graph (wcc)
 
