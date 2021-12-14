@@ -361,7 +361,7 @@ Out of curiosity, let's try to use LIGO `compile-expression` command compile thi
 <Syntax syntax="pascaligo">
 
 ```zsh
-ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.ligo init_storage
+ligo compile expression pascaligo --init-file taco-shop.ligo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -371,7 +371,7 @@ ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-st
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.mligo init_storage
+ligo compile expression pascaligo --init-file taco-shop.mligo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -381,7 +381,7 @@ ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-st
 <Syntax syntax="reasonligo">
 
 ```zsh
-ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.religo init_storage
+ligo compile expression pascaligo --init-file taco-shop.religo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -391,7 +391,7 @@ ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-st
 <Syntax syntax="jsligo">
 
 ```zsh
-ligo compile expression pascaligo --init-file gitlab-pages/docs/tutorials/get-started/pre_taco1.jsligo init_storage
+ligo compile expression pascaligo --init-file taco-shop.jsligo init_storage
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
