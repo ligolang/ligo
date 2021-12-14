@@ -322,6 +322,8 @@ module Make (Lexer: LEXER)
                          default_value sym
 
                        let guide _ = false
+
+                       let use_indentation_heuristic = false
                     end)
                    (TracingPrinter)
 
