@@ -103,6 +103,7 @@ docker_extract:
       - ligo
       - ligo.deb
       - coverage
+      - highlighting
       - doc
 
 xrefcheck:
