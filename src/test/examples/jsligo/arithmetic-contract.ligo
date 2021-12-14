@@ -5,7 +5,7 @@
     entrypoint: main
   dryRun:
     entrypoint: main
-    parameters: Increment 1
+    parameters: Increment (1)
     storage: 0
   deploy:
     entrypoint: main
@@ -14,7 +14,8 @@
     entrypoint: ""
   evaluateFunction:
     entrypoint: add
-    parameters: 5, 6
+    parameters: |
+      [5, 6]
   generateDeployScript:
     tool: tezos-client
     entrypoint: main
