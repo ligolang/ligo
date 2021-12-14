@@ -466,7 +466,7 @@ ctor_args:
     in ESeq {region; value=$1} }
 
 ctor_arg:
-  expr_stmt { $1 }
+  expr { $1 }
 
 (* Export Declaration *)
 
