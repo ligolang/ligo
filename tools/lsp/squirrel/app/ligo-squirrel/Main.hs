@@ -9,7 +9,6 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
 import Data.Default
 import Data.Foldable (for_)
-import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
@@ -20,7 +19,7 @@ import Language.LSP.Types.Lens qualified as J
 import StmContainers.Map (newIO)
 import System.Exit
 import System.Log qualified as L
-import UnliftIO.MVar (MVar, modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
+import UnliftIO.MVar (modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST
 import ASTMap qualified
@@ -30,8 +29,7 @@ import Config qualified
 import Language.LSP.Util (sendError)
 import Log (i)
 import Log qualified
-import Product
-import RIO (RIO, RioEnv)
+import RIO (RIO, RioEnv (..))
 import RIO qualified
 import Range
 import Util (toLocation)
@@ -120,12 +118,12 @@ mainLoop =
 
 initialize :: IO RioEnv
 initialize = do
-  config <- newEmptyMVar
-  astMap <- ASTMap.empty $ RIO.load @Fallback
-  openDocs <- newMVar HashSet.empty
-  includes <- newMVar G.empty
-  tempMap <- newIO
-  pure (config :> astMap :> openDocs :> Tag includes :> Tag tempMap :> Nil)
+  reConfig <- newEmptyMVar
+  reCache <- ASTMap.empty $ RIO.load @Fallback
+  reOpenDocs <- newMVar HashSet.empty
+  reIncludes <- newMVar G.empty
+  reTempFiles <- newIO
+  pure RioEnv {..}
 
 handlers :: S.Handlers RIO
 handlers = mconcat
@@ -171,7 +169,7 @@ handleDidOpenTextDocument notif = do
   let ver = notif^.J.params.J.textDocument.J.version
 
   RIO.Contract doc _ <- RIO.forceFetch' RIO.BestEffort uri
-  openDocsVar <- asks getElem
+  openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
     RIO.collectErrors doc (Just ver)
     pure $ HashSet.insert uri openDocs
@@ -189,7 +187,7 @@ handleDidChangeTextDocument notif = do
     notify :: RIO.Contract -> RIO ()
     notify (RIO.Contract doc nuris) = do
       let ver = notif^.J.params.J.textDocument.J.version
-      openDocsVar <- asks (getElem @(MVar (HashSet J.NormalizedUri)))
+      openDocsVar <- asks reOpenDocs
       modifyMVar_ openDocsVar \openDocs -> do
         RIO.clearDiagnostics nuris
         RIO.collectErrors doc ver
@@ -201,7 +199,7 @@ handleDidCloseTextDocument notif = do
 
   RIO.Contract _ nuris <- RIO.fetch' RIO.LeastEffort uri
 
-  openDocsVar <- asks getElem
+  openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
     let openDocs' = HashSet.delete uri openDocs
     -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
@@ -409,7 +407,7 @@ handleDidChangeWatchedFiles notif = do
       $(Log.debug) [i|Created #{uri}|]
       void $ RIO.forceFetch' RIO.BestEffort uri
     J.FcChanged -> do
-      openDocsVar <- asks getElem
+      openDocsVar <- asks reOpenDocs
       mOpenDocs <- tryReadMVar openDocsVar
       case mOpenDocs of
         Just openDocs | not $ HashSet.member uri openDocs -> do

@@ -2,7 +2,7 @@
 
 module RIO
   ( RIO
-  , RioEnv
+  , RioEnv (..)
   , run
 
   , getCustomConfig
@@ -89,7 +89,6 @@ import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log (LogT)
 import Log qualified
 import Parser
-import Product
 import Progress (Progress (..), (%))
 import Range
 import Util.Graph (wcc)
@@ -99,14 +98,13 @@ data Contract = Contract
   , cDeps :: [J.NormalizedUri]
   }
 
-type RioEnv =
-  Product
-    '[ MVar Config
-     , ASTMap J.NormalizedUri Contract RIO
-     , MVar (HashSet J.NormalizedUri)
-     , "includes" := MVar (Includes ParsedContractInfo)
-     , "temp files" := StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
-     ]
+data RioEnv = RioEnv
+  { reConfig :: MVar Config
+  , reCache :: ASTMap J.NormalizedUri Contract RIO
+  , reOpenDocs :: MVar (HashSet J.NormalizedUri)
+  , reIncludes :: MVar (Includes ParsedContractInfo)
+  , reTempFiles :: StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
+  }
 
 newtype RIO a = RIO
   { unRio :: ReaderT RioEnv (J.LspT Config (LogT IO)) a
@@ -142,7 +140,7 @@ instance HasLigoClient RIO where
 -- maintainers, if possible.
 getCustomConfig :: RIO Config
 getCustomConfig = Log.addNamespace "getCustomConfig" do
-  mConfig <- asks getElem
+  mConfig <- asks reConfig
   contents <- tryReadMVar mConfig
   case contents of
     -- TODO: The lsp library only sends the `workspace/configuration` request
@@ -159,7 +157,7 @@ fetchCustomConfig :: RIO (Maybe Config)
 fetchCustomConfig = Log.addNamespace "fetchCustomConfig" do
   void $
     J.sendRequest J.SWorkspaceConfiguration configRequestParams handleResponse
-  tryReadMVar =<< asks getElem
+  tryReadMVar =<< asks reConfig
   where
     configRequestParams =
       J.ConfigurationParams (J.List [J.ConfigurationItem Nothing Nothing])
@@ -169,7 +167,7 @@ fetchCustomConfig = Log.addNamespace "fetchCustomConfig" do
         -> RIO ()
     handleResponse response = do
       config <- parseResponse response
-      mConfig <- asks getElem
+      mConfig <- asks reConfig
       _oldConfig <- tryTakeMVar mConfig
       void $ tryPutMVar mConfig config
 
@@ -190,7 +188,7 @@ fetchCustomConfig = Log.addNamespace "fetchCustomConfig" do
 
 updateCustomConfig :: Aeson.Value -> RIO ()
 updateCustomConfig config = Log.addNamespace "updateCustomConfig" do
-  mConfig <- asks getElem
+  mConfig <- asks reConfig
   tryTakeMVar mConfig >>= \case
     Nothing -> decodeConfig def mConfig
     Just oldConfig -> decodeConfig oldConfig mConfig
@@ -253,7 +251,7 @@ forceFetch effort = fmap cTree . forceFetch' effort
 
 fetch', forceFetch' :: FetchEffort -> J.NormalizedUri -> RIO Contract
 fetch' effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
-  tmap <- asks getElem
+  tmap <- asks reCache
   case effort of
     LeastEffort  -> ASTMap.fetchFast uri tmap
     NormalEffort -> ASTMap.fetchCurrent uri tmap
@@ -262,7 +260,7 @@ forceFetch' = forceFetchAndNotify (const $ pure ())
 
 forceFetchAndNotify :: (Contract -> RIO ()) -> FetchEffort -> J.NormalizedUri -> RIO Contract
 forceFetchAndNotify notify effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
-  tmap <- asks getElem
+  tmap <- asks reCache
   ASTMap.invalidate uri tmap
   case effort of
     LeastEffort  -> ASTMap.fetchFastAndNotify notify uri tmap
@@ -282,7 +280,7 @@ diagnostic ver = Log.addNamespace "diagnostic" . traverse_ \(nuri, diags) -> do
 
 delete :: J.NormalizedUri -> RIO ()
 delete uri = do
-  imap <- asks $ getTag @"includes"
+  imap <- asks reIncludes
   let fpM = J.uriToFilePath $ J.fromNormalizedUri uri
   case fpM of
     Nothing -> pure ()
@@ -295,7 +293,7 @@ delete uri = do
           []
       modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
 
-  tmap <- asks $ getElem @(ASTMap J.NormalizedUri Contract RIO)
+  tmap <- asks reCache
   deleted <- ASTMap.delete uri tmap
 
   -- Invalidate contracts that are in the same group as the deleted one, as
@@ -305,8 +303,7 @@ delete uri = do
       (`ASTMap.invalidate` tmap)
 
 invalidate :: J.NormalizedUri -> RIO ()
-invalidate uri =
-  ASTMap.invalidate uri =<< asks (getElem @(ASTMap J.NormalizedUri Contract RIO))
+invalidate uri = ASTMap.invalidate uri =<< asks reCache
 
 preload
   :: J.NormalizedUri
@@ -326,7 +323,7 @@ preload uri = Log.addNamespace "preload" do
         [i|File #{fin} was removed. The LIGO LSP server may not work as expected. Creating temporary file: #{new}|]
       new <$ mkReadOnly new
     handlePersistedFile = do
-      tempMap <- asks $ getTag @"temp files"
+      tempMap <- asks reTempFiles
       let nFin = J.toNormalizedFilePath fin
       atomically (StmMap.lookup nFin tempMap) >>= \case
         Nothing -> do
@@ -375,7 +372,7 @@ getInclusionsGraph
   -> RIO (Includes ParsedContractInfo)
 getInclusionsGraph root uri = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes uri
-  includesVar <- asks (getTag @"includes")
+  includesVar <- asks reIncludes
   modifyMVar includesVar \includes -> do
     let rootFileName = contractFile rootContract
     let groups = Includes <$> wcc (getIncludes includes)
@@ -459,7 +456,7 @@ load uri = Log.addNamespace "load" do
 
       let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
       let nuris = snd <$> contracts
-      tmap <- asks getElem
+      tmap <- asks reCache
       forM_ contracts \(contract, nuri) ->
         ASTMap.insert nuri (Contract contract nuris) time tmap
 
