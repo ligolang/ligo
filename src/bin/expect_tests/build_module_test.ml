@@ -6,10 +6,10 @@ let contract basename =
 let%expect_test _ =
   run_ligo_good [ "print" ; "dependency-graph" ; contract "cycle_A.mligo" ] ;
   [%expect {|
-    `-- ../../test/contracts/build/cycle_A.mligo
-        `-- ../../test/contracts/build/cycle_B.mligo
-            `-- ../../test/contracts/build/cycle_C.mligo
-                `-- ../../test/contracts/build/cycle_A.mligo |}]
+    `-- 3 -- ../../test/contracts/build/cycle_A.mligo
+        `-- 2 -- ../../test/contracts/build/cycle_B.mligo
+            `-- 1 -- ../../test/contracts/build/cycle_C.mligo
+                `-- 3 -- ../../test/contracts/build/cycle_A.mligo |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "dependency-graph" ; contract "cycle_A.mligo"; "--format" ; "json" ] ;
@@ -31,14 +31,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "dependency-graph" ; contract "D.mligo" ] ;
   [%expect {|
-    `-- ../../test/contracts/build/D.mligo
-        |-- ../../test/contracts/build/C.mligo
-        |   |-- ../../test/contracts/build/A.mligo
-        |   `-- ../../test/contracts/build/B.mligo
-        |       `-- ../../test/contracts/build/A.mligo
-        `-- ../../test/contracts/build/E.mligo
-            |-- ../../test/contracts/build/F.mligo
-            `-- ../../test/contracts/build/G.mligo |}]
+    `-- 7 -- ../../test/contracts/build/D.mligo
+        |-- 5 -- ../../test/contracts/build/C.mligo
+        |   |-- 1 -- ../../test/contracts/build/A.mligo
+        |   `-- 2 -- ../../test/contracts/build/B.mligo
+        |       `-- 1 -- ../../test/contracts/build/A.mligo
+        `-- 6 -- ../../test/contracts/build/E.mligo
+            |-- 3 -- ../../test/contracts/build/F.mligo
+            `-- 4 -- ../../test/contracts/build/G.mligo |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "dependency-graph" ; contract "D.mligo"; "--format" ; "json" ] ;
@@ -152,10 +152,10 @@ let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; contract "cycle_A.mligo" ] ;
   [%expect {|
     Dependency cycle detected :
-     `-- ../../test/contracts/build/cycle_A.mligo
-        `-- ../../test/contracts/build/cycle_B.mligo
-            `-- ../../test/contracts/build/cycle_C.mligo
-                `-- ../../test/contracts/build/cycle_A.mligo |}]
+     `-- 3 -- ../../test/contracts/build/cycle_A.mligo
+        `-- 2 -- ../../test/contracts/build/cycle_B.mligo
+            `-- 1 -- ../../test/contracts/build/cycle_C.mligo
+                `-- 3 -- ../../test/contracts/build/cycle_A.mligo |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "type_B.mligo" ] ;
@@ -192,3 +192,12 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "Xmain.mligo" ] ;
   [%expect {|
     { 1 ; 2 ; 3 } |}]
+    
+let%expect_test _ =
+  run_ligo_good [ "print" ; "dependency-graph" ; contract "Xmain.mligo"; "--format" ; "dev" ] ;
+  [%expect {|
+    `-- 4 -- ../../test/contracts/build/Xmain.mligo
+        |-- 3 -- ../../test/contracts/build/Xfoo.mligo
+        |   |-- 1 -- ../../test/contracts/build/Xlist.mligo
+        |   `-- 2 -- ../../test/contracts/build/Xset.mligo
+        `-- 1 -- ../../test/contracts/build/Xlist.mligo |}]
