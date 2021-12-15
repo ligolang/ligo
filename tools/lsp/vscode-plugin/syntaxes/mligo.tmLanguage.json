@@ -111,6 +111,53 @@
             ]
         },
 
+        "type-annotation-lambda": {
+            "patterns": [
+                {
+                    "begin": "(:)\\s*",
+                    "beginCaptures": {
+                        "1": { "name": "keyword.operator.type.mligo" }
+                    },
+                    "end": "(?=->)",
+                    "patterns": [
+                        { "include": "#comment" },
+                        { "include": "#type-expression-lambda" }
+                    ]
+                },
+                {
+                    "begin": "\\(",
+                    "beginCaptures": {
+                        "1": { "name": "keyword.operator.type.mligo" }
+                    },
+                    "end": "\\)",
+                    "patterns": [
+                        { "include": "#comment" },
+                        { "include": "#type-expression" }
+                    ]
+                }
+            ]
+        },
+
+        "type-expression-lambda": {
+            "patterns": [
+                {
+                    "begin": "\\(",
+                    "end": "\\)",
+                    "patterns": [
+                        { "include": "#comment" },
+                        { "include": "#sum-type" },
+                        { "include": "#type-expression" }
+                    ]
+                },
+                {
+                    "match": "(?:(?!->|\\bin\\b|[=()|;}/])[^=()|;}/])+",
+                    "captures": {
+                        "0": { "name": "entity.name.type.mligo" }
+                    }
+                }
+            ]
+        },
+
         "type-expression": {
             "patterns": [
                 {
@@ -153,7 +200,8 @@
             },
             "patterns": [
                 { "include": "#comment" },
-                { "include": "#parameter-list" }
+                { "include": "#parameter-list" },
+                { "include": "#type-annotation-lambda" }
             ]
         },
 

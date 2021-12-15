@@ -5,10 +5,9 @@ endif
 " Keywords
 syntax keyword ligoKeyword begin end
 syntax keyword ligoKeyword in of
-syntax keyword ligoKeyword fun let rec type
+syntax keyword ligoKeyword let rec type
 syntax keyword ligoConditional if then else match with
 syntax match ligoOperator "\v[-+*/=]"
-syntax match ligoOperator "->"
 syntax match ligoParens "("
 syntax match ligoParens ")"
 
@@ -36,7 +35,7 @@ highlight link ligoComment Comment
 syntax region ligoParenTypeExpr start=/\v\(/ end=/\v\)/
             \ contains=ligoParenTypeExpr,ligoComment
             \ contained
-syntax region ligoTypeAnnotation 
+syntax region ligoTypeAnnotation
             \ matchgroup=ligoKeyword start=/:/
             \ matchgroup=ligoKeyword end=/=/
             \ matchgroup=ligoKeyword end=/:=/
@@ -45,6 +44,22 @@ syntax region ligoTypeAnnotation
             \ contains=ligoParenTypeExpr
 highlight link ligoTypeAnnotation Type
 highlight link ligoParenTypeExpr Type
+
+" Lambda
+syntax region ligoLambdaTypeAnnotation
+  \ matchgroup=ligoKeyword start=/:/
+  \ matchgroup=ligoParens end=/->/
+  \ contains=ligoParenTypeExpr
+  \ contained
+highlight link ligoLambdaTypeAnnotation Type
+
+syntax region arguments start=/(/ end=/):/
+  \ contained
+  \ contains=ligoTypeAnnotation
+
+syntax region lambda matchgroup=ligoKeyword start=/\<fun\>/ matchgroup=ligoOperator end=/->/
+  \ contains=ligoLambdaTypeAnnotation,arguments
+  \ keepend
 
 " We need to match :: after type annotations so that it has
 " a higher precedence
