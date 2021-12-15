@@ -960,8 +960,8 @@ let%expect_test _ =
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;
-                     DUG 2 ;
                      SWAP ;
+                     DIG 2 ;
                      PAIR ;
                      NIL operation ;
                      DIG 2 ;
@@ -1726,7 +1726,7 @@ let%expect_test _ =
              DIG 2 ;
              UNPAIR ;
              PUSH nat 0 ;
-             PUSH nat 0 ; |}]
+             PUSH nat 2 ; |}]
 
 (* old uncurry bugs: *)
 let%expect_test _ =
@@ -2162,8 +2162,8 @@ let%expect_test _ =
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;
-                     DUG 2 ;
                      SWAP ;
+                     DIG 2 ;
                      PAIR ;
                      NIL operation ;
                      DIG 2 ;
