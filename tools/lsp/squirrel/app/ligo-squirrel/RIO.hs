@@ -39,7 +39,7 @@ import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 
 import Control.Arrow
-import Control.Exception.Safe (MonadCatch, MonadThrow, catch, catchIO)
+import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
 import Control.Lens ((??))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
@@ -69,7 +69,7 @@ import UnliftIO.Directory
   ( Permissions (writable), doesDirectoryExist, doesFileExist, getPermissions
   , setPermissions
   )
-import UnliftIO.MVar (MVar, modifyMVar, modifyMVar_, newMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
+import UnliftIO.MVar (MVar, modifyMVar, modifyMVar_, tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.STM (atomically)
 
 import Witherable (iwither)
@@ -353,17 +353,11 @@ normalizeFilePath = J.toNormalizedUri . J.filePathToUri
 
 loadDirectory :: FilePath -> RIO (AdjacencyMap ParsedContractInfo)
 loadDirectory root = do
-  loadedContractsVar <- newMVar []
-  J.withProgress "Indexing directory" J.Cancellable (\reportProgress ->
+  J.withProgress "Indexing directory" J.NotCancellable \reportProgress ->
     parseContractsWithDependencies
-      (\src -> do
-        contract <- loadWithoutScopes $ normalizeFilePath $ srcPath src
-        modifyMVar_ loadedContractsVar (pure . (contract :))
-        pure contract)
+      (loadWithoutScopes . normalizeFilePath . srcPath)
       (\Progress {..} -> reportProgress $ J.ProgressAmount (Just pTotal) (Just pMessage))
       root
-    ) `catch` \(_ :: J.ProgressCancelledException) ->
-      includesGraph . fromMaybe [] =<< tryTakeMVar loadedContractsVar
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -389,18 +383,12 @@ getInclusionsGraph root uri = do
             (pure . Just)
             (lookupContract fp oldIncludes)
 
-        loadedContractsVar <- newMVar []
-        newIncludes <- J.withProgress "Indexing new files" J.Cancellable (\reportProgress ->
+        newIncludes <- J.withProgress "Indexing new files" J.NotCancellable \reportProgress ->
           iwither
             (\n (_, fp) -> do
               reportProgress $ J.ProgressAmount (Just $ n % numNewContracts) (Just [i|Loading #{fp}|])
-              contractM <- lookupOrLoad fp
-              forM_ contractM \contract ->
-                modifyMVar_ loadedContractsVar (pure . (contract :))
-              pure contractM)
+              lookupOrLoad fp)
             includeEdges
-          ) `catch` \(_ :: J.ProgressCancelledException) ->
-            fromMaybe [] <$> tryTakeMVar loadedContractsVar
         let
           newSet = Set.fromList newIncludes
           oldSet = Map.keysSet $ G.adjacencyMap oldIncludes
@@ -445,7 +433,7 @@ load uri = do
 
       rawGraph <- getInclusionsGraph revRoot revUri
 
-      (graph, result) <- J.withProgress "Scoping project" J.Cancellable (\reportProgress -> do
+      (graph, result) <- J.withProgress "Scoping project" J.NotCancellable \reportProgress -> do
         let
           addScopesWithProgress = addScopes @parser
             (\Progress {..} -> reportProgress $ J.ProgressAmount (Just pTotal) (Just pMessage))
@@ -456,10 +444,6 @@ load uri = do
               raw = fromMaybe rawGraph $ find (isJust . lookupContract fp) (wcc rawGraph)
             scoped <- addScopesWithProgress raw
             (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
-        ) `catch` \(_ :: J.ProgressCancelledException) ->
-          -- We currently have no wait to signalize that `load` failed, so let's
-          -- at least load the default contract...
-          (G.vertex &&& id) <$> loadDefault
 
       let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
       let nuris = snd <$> contracts
