@@ -1,11 +1,12 @@
 module I = Mini_c
 module O = Ligo_coq_ocaml.Ligo
 open Ligo_coq_ocaml.Co_de_bruijn
-open Tezos_micheline.Micheline
 module Location    = Simple_utils.Location
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Option      = Simple_utils.Option
+open Ligo_coq_ocaml.Micheline
+open Ligo_coq_ocaml.Micheline_wrapper
 
 type meta = Location.t
 
@@ -221,7 +222,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (a, b) = match Mini_c.get_t_function ty with
       | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
       | Some (a, b) -> (a, b) in
-    (E_raw_michelson (meta, translate_type a, translate_type b, code), use_nothing env)
+    (E_raw_michelson (meta, translate_type a, translate_type b, List.map ~f:backward code), use_nothing env)
 
 and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in

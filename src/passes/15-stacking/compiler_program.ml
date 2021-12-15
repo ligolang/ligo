@@ -53,23 +53,43 @@ let literal_value (l : literal) : (Location.t, string) node =
 let compile_binds' = compile_binds
 let compile_expr' = compile_expr
 
+open Ligo_coq_ocaml.Micheline_wrapper
+
 let rec compile_binds ~raise protocol_version env outer proj binds =
-  compile_binds' generated (compile_operator ~raise protocol_version) literal_type literal_value env outer proj binds
+  List.map ~f:forward
+    (compile_binds'
+       generated
+       (fun x y z ->
+          List.map ~f:backward
+            (compile_operator ~raise protocol_version x y z))
+       (fun x -> backward (literal_type x))
+       (fun x -> backward (literal_value x))
+       env outer proj binds)
 
 and compile_expr ~raise protocol_version env outer expr =
-  compile_expr' generated (compile_operator ~raise protocol_version) literal_type literal_value env outer expr
-
+  List.map ~f:forward
+    (compile_expr'
+       generated
+       (fun x y z ->
+          List.map ~f:backward
+            (compile_operator ~raise protocol_version x y z))
+       (fun x -> backward (literal_type x))
+       (fun x -> backward (literal_value x))
+       (List.map ~f:backward env)
+       outer
+       expr)
+       
 and apply_static_args ~raise : Environment.Protocols.t -> string -> (_, constant', literal) static_args -> _ node =
   fun protocol_version prim args ->
   match args with
   | Type_args (annot, types) ->
-    Prim (generated, prim, types, Option.to_list annot)
+    Prim (generated, prim, List.map ~f:forward types, Option.to_list annot)
   | Script_arg (Script (p, s, e)) ->
     (* prim will always be CREATE_CONTRACT, recursively compile the
        contract here *)
     let e = compile_binds ~raise protocol_version [] [] [] e in
-    let parameter = Prim (generated, "parameter", [p], []) in
-    let storage = Prim (generated, "storage", [s], []) in
+    let parameter = Prim (generated, "parameter", [forward p], []) in
+    let storage = Prim (generated, "storage", [forward s], []) in
     let code = Prim (generated, "code", [Seq (generated, e)], []) in
     Prim (generated, prim, [Seq (generated, [parameter; storage; code])], [])
 
