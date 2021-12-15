@@ -75,17 +75,6 @@ Definition PAIR (n : nat) : list (node A string) :=
   | _ => [Prim nil "PAIR" [Int nil (Z.of_nat n)] []]
   end.
 
-(* Unfortunately there is a bug in the typechecking of `PAIR k` which
-   makes it difficult to use in general. This is a workaround.
-
-   Note that it takes its arguments in reverse order. *)
-Definition REV_PAIR (n : nat) : list (node A string) :=
-  match n with
-  | 0 => [Prim nil "UNIT" [] []]
-  | 1 => []
-  | _ => List.concat (repeat [Prim nil "SWAP" [] []; Prim nil "PAIR" [] []] (n - 1))
-  end.
-
 Definition UNPAIR (n : nat) : list (node A string) :=
   match n with
   | 0 => [Prim nil "DROP" [] []]
@@ -115,10 +104,9 @@ Fixpoint compile_expr
     let (outer, inner) := assoc_splitting outer inner in
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (compile_binds env2 inner (filter_keeps (right_usages outer)) e2)]
-  (* TODO use PAIR instead of REV_PAIR when possible *)
   | E_tuple _ args =>
     [Seq nil (compile_args env outer args);
-     Seq nil (REV_PAIR (args_length args))]
+     Seq nil (PAIR (args_length args))]
   | E_let_tuple _ inner e1 e2 =>
     let (env1, env2) := split inner env in
     let (outer, inner) := assoc_splitting outer inner in

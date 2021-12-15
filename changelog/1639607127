@@ -1,0 +1,4 @@
+author: tomjack
+title: Emit `PAIR k` for comb record construction
+type: performance
+merge_request: '1371'

@@ -203,8 +203,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (ss, us) = union us1 us2 in
     (E_let_in (meta, ss, e1, e2), us)
   | E_tuple exprs ->
-    (* arguments are in reverse order for REV_PAIR for now *)
-    let (exprs, us) = translate_args (List.rev exprs) env in
+    let (exprs, us) = translate_args exprs env in
     (E_tuple (meta, exprs), us)
   | E_let_tuple (e1, e2) ->
     let (e1, us1) = translate_expression e1 env in
