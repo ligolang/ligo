@@ -37,9 +37,20 @@ let vscode_syntax_highlighting: string -> string -> string -> string -> SyntaxHi
   | Error Begin_cant_be_empty s -> `Error (false, Format.sprintf  "%s.begin_ can't be empty." s)
   | Error End_cant_be_empty s -> `Error (false, Format.sprintf  "%s.end_ can't be empty" s)
 
-let emacs_syntax_highlighting dir file textmate =
-  let emacs_output = SyntaxHighlighting.Emacs.to_emacs textmate in
-  output_file dir file emacs_output;
+let emacs_syntax_highlighting dir syntaxes = 
+  let buffer = Buffer.create 1000 in
+  let open Format in
+  let module Print = SyntaxHighlighting.Emacs.Print in
+  let fmt = formatter_of_buffer buffer in
+  Print.print_pre fmt;
+  Print.print_faces fmt;
+  Print.print_customatizable_options fmt;
+  Print.print_lsp fmt;
+  List.iter (fun ((name, t): (string * SyntaxHighlighting.Core.t)) ->
+    Print.print fmt name t.alt_name t;
+  ) syntaxes;
+  let emacs_output = Buffer.contents buffer in
+  output_file dir "ligo-mode.el" emacs_output;
   `Ok "Success"
 
 let ( let* ) o f : string Term.ret  =
@@ -57,14 +68,15 @@ let output: string -> string -> string -> _ Term.ret = fun vscode_directory vim_
     `Error (false, "Not a valid directory to output EMacs files")
   else (
     let* _ = vscode_syntax_highlighting vscode_directory "ligo.tmLanguage.json" "ligo.configuration.json" "ligo" PascaLIGO.syntax_highlighting in
-    let* _ = vim_syntax_highlighting vim_directory "ligo.vim" PascaLIGO.syntax_highlighting in
-    let* _ = emacs_syntax_highlighting emacs_directory "ligo-mode.el" PascaLIGO.syntax_highlighting in
+    let* _ = vim_syntax_highlighting vim_directory "ligo.vim" PascaLIGO.syntax_highlighting in 
     let* _ = vscode_syntax_highlighting vscode_directory "mligo.tmLanguage.json"  "mligo.configuration.json" "mligo" CameLIGO.syntax_highlighting in
     let* _ = vim_syntax_highlighting vim_directory "mligo.vim" CameLIGO.syntax_highlighting in
-    let* _ = emacs_syntax_highlighting emacs_directory "mligo-mode.el" CameLIGO.syntax_highlighting in
     let* _ = vscode_syntax_highlighting vscode_directory "religo.tmLanguage.json" "religo.configuration.json" "religo" ReasonLIGO.syntax_highlighting in
     let* _ = vim_syntax_highlighting vim_directory "religo.vim" ReasonLIGO.syntax_highlighting in
-    let* _ = emacs_syntax_highlighting emacs_directory "religo-mode.el" ReasonLIGO.syntax_highlighting in
+    let* _ = emacs_syntax_highlighting emacs_directory [("ligo", PascaLIGO.syntax_highlighting);
+                                                        ("mligo", CameLIGO.syntax_highlighting);
+                                                        ("religo", ReasonLIGO.syntax_highlighting)]
+    in
     `Ok "Successfully generated syntaxes"  
   )
 

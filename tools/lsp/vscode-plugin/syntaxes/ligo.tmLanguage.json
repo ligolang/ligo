@@ -52,7 +52,7 @@
     "controlkeywords": {
       "name": "keyword.control.ligo",
       "match":
-        "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for)\\b",
+        "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\\b",
       "captures": {}
     },
     "function": {
