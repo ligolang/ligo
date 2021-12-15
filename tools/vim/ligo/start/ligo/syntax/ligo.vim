@@ -44,7 +44,7 @@ syntax match function "\(function\)\W" nextgroup=function_
 highlight link function Keyword 
 
 " controlkeywords
-syntax match controlkeywords "\<\(case\|with\|if\|then\|else\|assert\|failwith\|begin\|end\|in\|is\|from\|skip\|block\|contains\|to\|step\|of\|while\|for\)\>" 
+syntax match controlkeywords "\<\(case\|with\|if\|then\|else\|assert\|failwith\|begin\|end\|in\|is\|from\|skip\|block\|contains\|to\|step\|of\|while\|for\|remove\)\>" 
 highlight link controlkeywords Conditional 
 
 " macro
