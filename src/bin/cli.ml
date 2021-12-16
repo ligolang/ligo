@@ -131,7 +131,7 @@ let now =
   fun _ s -> Proto_alpha_utils.Error_monad.return s
 
 let display_format =
-  let open Display in
+  let open Simple_utils.Display in
   let docv = "DISPLAY-FORMAT" in
   let doc = "The format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
   Clic.default_arg ~doc ~long:"format" ~placeholder:docv ~default:"human-readable" @@
@@ -159,6 +159,23 @@ let michelson_code_format =
     | "json" -> Proto_alpha_utils.Error_monad.return `Json
     | "hex"  -> Proto_alpha_utils.Error_monad.return `Hex
     | _ -> failwith "todo"
+
+let michelson_comments =
+  let doc = "Selects kinds of comments to be added to the Michelson output. Currently only 'location' is supported, which propagates original source locations (line/col)." in
+  let long = "michelson-comments" in
+  let placeholder = "MICHELSON_COMMENTS" in
+  let default = "" in
+  let open Proto_alpha_utils.Error_monad in
+  Clic.default_arg ~doc ~long ~placeholder ~default
+    (Clic.parameter
+      ~autocomplete:(fun _ -> return ["location"])
+      (fun _cctxt s ->
+         let f = function
+           | "location" -> return `Location
+           | s -> failwith "unexpected value for --%s: %s" long s in
+         match s with
+         | "" -> return []
+         | _ -> all_ep (List.map ~f (String.split ~on:',' s))))
 
 let optimize =
   let docv = "ENTRY_POINT" in
@@ -213,9 +230,9 @@ module Api = Ligo_api
 
 let compile_group = Clic.{name="compile";title="Commands for compiling from Ligo to Michelson"}
 let compile_file =
-  let f (entry_point, oc_views, syntax, infer, protocol_version, display_format, disable_typecheck, michelson_format, output_file, warn, werror) source_file () =
+  let f (entry_point, oc_views, syntax, infer, protocol_version, display_format, disable_typecheck, michelson_format, output_file, warn, werror, michelson_comments) source_file () =
     return_result ~warn ?output_file @@
-    Api.Compile.contract ~werror source_file entry_point oc_views syntax infer protocol_version display_format disable_typecheck michelson_format in
+    Api.Compile.contract ~werror source_file entry_point oc_views syntax infer protocol_version display_format disable_typecheck michelson_format michelson_comments in
   let _doc = "Subcommand: Compile a contract." in
   let desc =     "This sub-command compiles a contract to Michelson \
                  code. It expects a source file and an entrypoint \
@@ -225,7 +242,7 @@ let compile_file =
 
     ~group:compile_group
     ~desc
-    Clic.(args11 entry_point on_chain_views syntax infer protocol_version display_format disable_michelson_typechecking michelson_code_format output_file warn werror)
+    Clic.(args12 entry_point on_chain_views syntax infer protocol_version display_format disable_michelson_typechecking michelson_code_format output_file warn werror michelson_comments)
     Clic.(prefixes ["compile"; "contract"] @@ source_file @@ stop)
     f
 
@@ -674,7 +691,7 @@ let repl =
     (let protocol = Environment.Protocols.protocols_to_variant protocol_version in
     let syntax = Ligo_compile.Helpers.syntax_to_variant (Syntax_name syntax_name) None in
     let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
-    match protocol, Trace.to_option syntax, Trace.to_option dry_run_opts with
+    match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
     | _, None, _ -> Error ("", "Please check syntax name.")
     | None, _, _ -> Error ("", "Please check protocol name.")
     | _, _, None -> Error ("", "Please check run options.")
@@ -783,7 +800,7 @@ let run ?argv () =
               Lwt.return 0
           | _ -> (
             let buffer = Buffer.contents Old_cli.buffer in
-            if buffer = "ligo: \n" || buffer = "" then
+            if String.(buffer = "ligo: \n" || buffer = "") then
               Format.eprintf "Warning: The old cli is deprecated, use `ligo --help` or `ligo man` to consult the new command syntax\n"
             else
             Clic.pp_cli_errors
@@ -807,4 +824,4 @@ let run ?argv () =
                          Lwt.return 1 in
        match v with
        | Failure msg -> message msg
-       | exn -> message (Printexc.to_string exn))))
+       | exn -> message (Exn.to_string exn))))

@@ -1,4 +1,5 @@
 open! Memory_proto_alpha
+module List = Core.List
 module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
@@ -66,8 +67,8 @@ module Context_init = struct
     =
     let open Tezos_base.TzPervasives.Error_monad in
     let bootstrap_accounts =
-      List.map ~f:(fun ({ pk ; pkh ; _ }, amount) ->
-          Alpha_context.Parameters.{ public_key_hash = pkh ; public_key = Some pk ; amount }
+      List.mapi ~f:(fun i ({ pk ; pkh ; _ }, amount) ->
+          Alpha_context.Parameters.{ public_key_hash = pkh ; public_key = if i > 0 then None else Some pk ; amount }
         ) initial_accounts
     in
     let json =
@@ -105,7 +106,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Alpha_context.Constants.parametric = Tezos_protocol_011_PtHangzH_parameters.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.parametric = Tezos_protocol_011_PtHangz2_parameters.Default_parameters.constants_test in
     check_constants_consistency constants >>=? fun () ->
 
     let hash =
@@ -191,8 +192,8 @@ type environment = {
     identities : identity list ;
   }
 
-let init_environment () =
-  Context_init.main 10 >>=? fun (tezos_context, accounts, contracts) ->
+let init_environment ?(n = 2) () =
+  Context_init.main n >>=? fun (tezos_context, accounts, contracts) ->
   let accounts = List.map ~f:fst accounts in
   let x = Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.(integral_of_int_exn 800000) in
   let tezos_context = Alpha_context.Gas.set_limit tezos_context x in
@@ -215,16 +216,24 @@ let contextualize ~msg ?environment f =
   in
   force_ok ~msg @@ Lwt_main.run lwt
 
-let dummy_environment () =
-  (X_error_monad.force_lwt ~msg:"Init_proto_alpha : initing dummy environment" @@
-          init_environment ())
-
 let dummy_environment_ : environment option ref = ref None
 
 let dummy_environment () : environment =
   match ! dummy_environment_ with
   | None ->
-     let dummy_environment = dummy_environment () in
+     let dummy_environment = (X_error_monad.force_lwt ~msg:"Init_proto_alpha : initing dummy environment" @@
+                                init_environment ()) in
      dummy_environment_ := Some dummy_environment ;
      dummy_environment
   | Some dummy_environment -> dummy_environment
+
+let test_environment_ : environment option ref = ref None
+
+let test_environment () =
+  match ! test_environment_ with
+  | None ->
+     let test_environment = (X_error_monad.force_lwt ~msg:"Init_proto_alpha : initing dummy environment" @@
+                               init_environment ~n:6 ()) in
+     test_environment_ := Some test_environment ;
+     test_environment
+  | Some test_environment -> test_environment

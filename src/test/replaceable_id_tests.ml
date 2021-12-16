@@ -1,3 +1,4 @@
+module Var = Simple_utils.Var
 open Test_helpers
 
 let get_program = get_program "./contracts/replaceable_id.ligo" (Contract "main")
@@ -31,7 +32,7 @@ let change_addr_success ~raise ~add_warning () =
   let param = entry_change_addr 2 in
   let options =
     let sender = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
+    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   expect_eq ~raise ~options (program,env) "main"
     (e_pair param init_storage) (e_pair empty_op_list (storage 2))
 
@@ -41,7 +42,7 @@ let change_addr_fail ~raise ~add_warning () =
   let param = entry_change_addr 2 in
   let options =
     let sender = contract 3 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
+    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let exp_failwith = "Unauthorized sender" in
   expect_string_failwith ~raise ~options (program,env) "main"
     (e_pair param init_storage) exp_failwith
@@ -52,7 +53,7 @@ let pass_message_success ~raise ~add_warning () =
   let param = entry_pass_message in
   let options =
     let sender = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
+    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   expect_eq ~raise ~options (program,env) "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
@@ -62,7 +63,7 @@ let pass_message_fail ~raise ~add_warning () =
   let param = entry_pass_message in
   let options =
     let sender = contract 2 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
+    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let exp_failwith = "Unauthorized sender" in
   expect_string_failwith ~raise ~options (program,env) "main"
     (e_pair param init_storage) exp_failwith

@@ -1,7 +1,7 @@
 [@@@coverage exclude_file]
 open Types
 open Format
-open PP_helpers
+open Simple_utils.PP_helpers
 
 include Stage_common.PP
 
@@ -15,10 +15,10 @@ let lmap_sep value sep ppf m =
 let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 
 let attributes_2 (attr: string list) : string =
-  List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat ""
+  List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat
 
 let attributes_1 (attr: string list) : string =
-  List.map ~f:(fun s -> "[@" ^ s ^ "]") attr |> String.concat ""
+  List.map ~f:(fun s -> "[@" ^ s ^ "]") attr |> String.concat
 
 
 let record_sep_t value sep ppf (m : 'a label_map) =
@@ -34,18 +34,15 @@ let rec type_content : formatter -> type_expression -> unit =
   match te.type_content with
   | T_sum m ->
     let s ppf = fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) in
-    if m.attributes = [] then
-      fprintf ppf "%a" s m.fields
-    else
+    (match m.attributes with [] -> fprintf ppf "%a" s m.fields
+    |_ ->
       let attr = attributes_1 m.attributes in
-      fprintf ppf "(%a %s)" s m.fields attr
+      fprintf ppf "(%a %s)" s m.fields attr)
   | T_record m ->
     let r = record_sep_t type_expression (const ";") in
-    if m.attributes = [] then
-      fprintf ppf "{%a}" r m.fields
-    else
-      let attr : string = attributes_1 m.attributes in
-      fprintf ppf "({%a} %s)" r m.fields attr
+    (match m.attributes with [] -> fprintf ppf "{%a}" r m.fields
+    | _ -> let attr : string = attributes_1 m.attributes in
+      fprintf ppf "({%a} %s)" r m.fields attr)
 
   | T_variable        tv -> type_variable ppf tv
   | T_tuple            t -> type_tuple    type_expression ppf t
@@ -100,7 +97,7 @@ and expression_content ppf (ec : expression_content) =
 
 and attributes ppf attributes =
   let attr =
-    List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
+    List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat
   in fprintf ppf "%s" attr
 
 let declaration ppf (d : declaration) = declaration expression type_expression ppf d

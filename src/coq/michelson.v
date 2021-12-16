@@ -134,7 +134,7 @@ Qed.
 
 End instr.
 
-Hint Constructors comb_ty.
-Hint Constructors instr_typed.
-Hint Constructors prog_typed.
-Hint Resolve weak_prog.
+#[export] Hint Constructors comb_ty.
+#[export] Hint Constructors instr_typed.
+#[export] Hint Constructors prog_typed.
+#[export] Hint Resolve weak_prog.

@@ -17,7 +17,7 @@
 
 type 'a t
 val to_yojson : 'a t -> Yojson.Safe.t
-val of_yojson : Yojson.Safe.t -> ('a t, string) Result.result
+val of_yojson : Yojson.Safe.t -> ('a t, string) Result.t
 
 val equal : 'a t -> 'a t -> bool
 val compare : 'a t -> 'a t -> int

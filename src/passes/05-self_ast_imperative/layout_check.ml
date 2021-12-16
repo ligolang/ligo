@@ -1,9 +1,6 @@
 open Ast_imperative
 
-let is_layout attr =
-  if String.length attr > 7 && String.sub attr 0 7 = "layout:" then
-    Some (String.sub attr 7 ((String.length attr)-7))
-  else None
+let is_layout attr = String.chop_prefix ~prefix:"layout:" attr
 
 let layout_type_expression ~add_warning : type_expression -> type_expression  = fun e ->
   let return type_content = {type_content; location=e.location } in

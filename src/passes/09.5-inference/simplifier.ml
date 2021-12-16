@@ -1,5 +1,6 @@
-module Core = Typesystem.Core
-module Map = RedBlackTrees.PolyMap
+module Core  = Typesystem.Types
+module Map   = RedBlackTrees.PolyMap
+module Int64 = Caml.Int64
 open Ast_core.Misc
 open Ast_core.Types
 open Ast_core.Reasons

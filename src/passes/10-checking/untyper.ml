@@ -1,3 +1,6 @@
+module Var         = Simple_utils.Var
+module Ligo_string = Simple_utils.Ligo_string
+module Location    = Simple_utils.Location
 module I = Ast_core
 module O = Ast_typed
 

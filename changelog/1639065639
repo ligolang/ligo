@@ -1,0 +1,5 @@
+author: Rémi Lesénéchal
+title: fixing the "ad-hoc polymorphism" for pseudo-modules Map (working on maps and
+  big maps)
+type: fixed
+merge_request: '1452'

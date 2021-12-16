@@ -1,6 +1,6 @@
 (* Patching [Sys.argv] *)
 
-module SSet : Set.S with type elt = string and type t = Set.Make(String).t
+module SSet : Caml.Set.S with type elt = string and type t = Caml.Set.Make(String).t
 
 (* The effect of the call [filter ~opt_with_arg ~opt_wo_arg] is a side
    effect on the contents of the array [Sys.argv] so only options

@@ -12,7 +12,9 @@
     simple-utils
     ;; Third party
     getopt
-    uutf))
+    uutf)
+  (flags (:standard -open Core))
+)
 
 ;; Build of the version source (for the user, as a CLI option)
 

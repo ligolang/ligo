@@ -67,6 +67,7 @@ let get_constructor : label -> t -> (type_expression * type_expression) option =
   in rec_aux x
 
 let get_record : _ label_map -> t -> (rows) option = fun lmap e ->
+  let open Simple_utils.Option in
   let rec rec_aux e =
     let aux = fun {type_variable=_ ; type_} ->
       match type_.type_content with
@@ -95,6 +96,7 @@ let get_record : _ label_map -> t -> (rows) option = fun lmap e ->
 
 
 let get_sum : _ label_map -> t -> rows option = fun lmap e ->
+  let open Simple_utils.Option in
   let rec rec_aux e =
     let aux = fun {type_variable=_ ; type_} ->
       match type_.type_content with
@@ -123,7 +125,7 @@ let get_sum : _ label_map -> t -> rows option = fun lmap e ->
 module PP = struct
   open Format
   include PP
-  open PP_helpers
+  open Simple_utils.PP_helpers
 
   let list_sep_scope x = list_sep x (const " | ")
 

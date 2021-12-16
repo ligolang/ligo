@@ -1,3 +1,4 @@
+module List = Simple_utils.List
 open Cst.Pascaligo
 
 let nseq_to_list (hd, tl) = hd :: tl
@@ -80,12 +81,12 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
   in
   match e with
     ECase    {value;region=_} ->
-    let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases} = value in
+    let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases;enclosing=_} = value in
     let res = self init expr in
     let res = matching_cases self res cases in
     res
   | ECond    {value;region=_} ->
-    let ({kwd_if=_;test;kwd_then=_;ifso;ifnot} : cond_expr) = value in
+    let ({kwd_else=_;kwd_if=_;test;kwd_then=_;ifso;ifnot;terminator=_} : cond_expr) = value in
     let res = self init test in
     let res = self res ifso in
     let res = self res ifnot in
@@ -162,7 +163,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> 'a = fun f init e  
   | EPar     {value;region=_} ->
     self init value.inside
   | EFun     {value;region=_} ->
-    let ({kwd_function=_; param=_; ret_type; kwd_is=_; return}: fun_expr) = value in
+    let ({kwd_function=_; param=_; ret_type; kwd_is=_; return;attributes=_}: fun_expr) = value in
     let res = self init return in
     (match ret_type with
       Some (_, ty) -> self_type res ty
@@ -315,7 +316,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a = fun f init s  
     | None ->    res
     )
   | Data LocalVar     {value;region=_} ->
-    let {kwd_var=_;pattern=_;var_type;assign=_;init=expr;terminator=_} = value in
+    let {kwd_var=_;pattern=_;var_type;assign=_;init=expr;terminator=_;attributes=_} = value in
     let res = self_expr init expr in
     (match var_type with
       Some (_, ty) -> self_type res ty
@@ -329,7 +330,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> 'a = fun f init s  
     | None ->    res
     )
   | Data LocalType {value;region=_} ->
-    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_;params=_} = value in
     let res = self_type init type_expr in
     res
   | Data LocalModule {value;region=_} ->
@@ -371,7 +372,7 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> 'a =
     | None ->    res
     )
   | TypeDecl {value;region=_} ->
-    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_;params=_} = value in
     let res = self_type init type_expr in
     res
   | ModuleDecl {value;region=_} ->
@@ -379,7 +380,7 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> 'a =
     let res = self_module init module_ in
     res
   | ModuleAlias {value;region=_} ->
-    let {kwd_module=_;alias=_;kwd_is=_;binders=_;} = value in
+    let {kwd_module=_;alias=_;kwd_is=_;binders=_;terminator=_} = value in
     init
   | Directive _ -> init
 
@@ -458,13 +459,13 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
   in
   match e with
     ECase    {value;region} ->
-    let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases} = value in
+    let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases;enclosing=_} = value in
     let expr = self expr in
     let cases = matching_cases self cases in
     let value = {value with expr;cases} in
     return @@ ECase {value;region}
   | ECond    {value;region} ->
-    let ({kwd_if=_;test;kwd_then=_;ifso;ifnot} : cond_expr) = value in
+    let ({kwd_if=_;test;kwd_then=_;ifso;kwd_else=_;ifnot;terminator=_} : cond_expr) = value in
     let test = self test in
     let ifso = self ifso in
     let ifnot = self ifnot in
@@ -590,7 +591,7 @@ let rec map_expression : ('err) mapper -> expr -> expr = fun f e  ->
     let value = {value with inside} in
     return @@ EPar {value;region}
   | EFun     {value;region} ->
-    let ({kwd_function=_; param=_; ret_type; kwd_is=_; return=body}: fun_expr) = value in
+    let ({kwd_function=_; param=_; ret_type; kwd_is=_; return=body;attributes=_}: fun_expr) = value in
     let body = self body in
     let ret_type = Option.map ~f:(fun (a,b) ->
       let b = self_type b in (a,b)) ret_type in
@@ -667,7 +668,7 @@ and map_statement : 'err mapper -> statement -> statement = fun f s  ->
     let value = {value with init;const_type} in
     Data (LocalConst {value;region})
   | Data LocalVar     {value;region} ->
-    let {kwd_var=_;pattern=_;var_type;assign=_;init;terminator=_} = value in
+    let {kwd_var=_;pattern=_;var_type;assign=_;init;terminator=_;attributes=_} = value in
     let var_type = Option.map ~f:(fun (w, ty)
       -> let ty = self_type ty in (w,ty)) var_type in
     let value = {value with init;var_type} in
@@ -680,7 +681,7 @@ and map_statement : 'err mapper -> statement -> statement = fun f s  ->
     let value = {value with return;ret_type} in
     Data (LocalFun {value;region})
   | Data LocalType {value;region} ->
-    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_;params=_} = value in
     let type_expr = self_type type_expr in
     let value = {value with type_expr} in
     Data (LocalType {value;region})
@@ -859,7 +860,7 @@ and map_declaration : 'err mapper -> declaration -> declaration =
     let value = {value with return=expr;ret_type} in
     return @@ FunDecl {value;region}
   | TypeDecl {value;region} ->
-    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+    let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_;params=_} = value in
     let type_expr = self_type type_expr in
     let value = {value with type_expr} in
     return @@ TypeDecl {value;region}
@@ -869,7 +870,7 @@ and map_declaration : 'err mapper -> declaration -> declaration =
     let value = {value with module_} in
     return @@ ModuleDecl {value;region}
   | ModuleAlias {value;region} ->
-    let {kwd_module=_;alias=_;kwd_is=_;binders=_} = value in
+    let {kwd_module=_;alias=_;kwd_is=_;binders=_;terminator=_} = value in
     return @@ ModuleAlias {value;region}
   | Directive _ as d -> return d
 

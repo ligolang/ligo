@@ -1,6 +1,8 @@
 open Errors
-open Trace
-open Function
+open Simple_utils.Trace
+open Simple_utils.Function
+
+module Utils = Simple_utils.Utils
 
 module CST = Cst.Pascaligo
 module AST = Ast_imperative
@@ -280,7 +282,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       return @@ e_application ~loc func args
     )
   (*TODO: move to proper module*)
-  | ECall {value=(EModA {value={module_name;field};region=_},args);region} when
+  | ECall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when
     List.mem ~equal:Caml.(=) build_ins module_name.value ->
     let loc = Location.lift region in
     let fun_name = match field with
@@ -753,7 +755,7 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> _  
       return @@ e_application ~loc func args
     )
   (*TODO: move to proper module*)
-  | ProcCall {value=(EModA {value={module_name;field};region=_},args);region} when
+  | ProcCall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when
     List.mem ~equal:Caml.(=) build_ins module_name.value ->
     let loc = Location.lift region in
     let fun_name = match field with
@@ -929,7 +931,7 @@ and compile_block ~raise : ?next:AST.expression -> CST.block CST.reg -> _ =
   | None -> raise.raise @@ block_start_with_attribute block
 
 and compile_fun_decl ~raise : CST.fun_decl -> string * expression_variable * type_expression option * AST.attributes * expression =
-  fun ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) ->
+  fun ({kwd_recursive; fun_name; param; ret_type; return=r; attributes; kwd_function=_;kwd_is=_;terminator=_}: CST.fun_decl) ->
   let return a = a in
   let (fun_name, loc) = r_split fun_name in
   let fun_binder = Location.wrap ~loc @@ Var.of_name fun_name in
@@ -976,7 +978,7 @@ and compile_declaration ~raise : CST.declaration -> _ =
   let return reg decl =
     [Location.wrap ~loc:(Location.lift reg) decl] in
   match decl with
-    TypeDecl {value={name; type_expr; params}; region} ->
+    TypeDecl {value={name; type_expr; params; kwd_type=_;kwd_is=_; terminator=_}; region} ->
     let name, _ = r_split name in
     let type_expr =
       let rhs = compile_type_expression ~raise type_expr in

@@ -40,7 +40,7 @@ module Append = struct
     | Empty -> None
     | Full x -> exists_path' f x
 
-  let exists_path_to index = exists_path (fun (i,_) -> i = index)
+  let exists_path_to index = exists_path (fun (i,_) -> Caml.(=) i index)
 
   let empty : 'a t = Empty
 

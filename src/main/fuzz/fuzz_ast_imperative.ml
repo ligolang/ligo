@@ -10,7 +10,7 @@ let cmp_constants = [C_EQ; C_NEQ; C_LT; C_GT; C_LE; C_GE]
 let op_class = [binary_num_constants; binary_bool_constants; cmp_constants]
 
 let rec find_class op = function
-  | [] -> raise Not_found
+  | [] -> raise Caml.Not_found
   | x :: _ when List.mem x op ~equal:Caml.(=) -> x
   | _ :: xs -> find_class op xs
 
@@ -36,7 +36,7 @@ let transform_string =
   let constn _ = "" in
   let double s = s ^ s in
   let id s = s in
-  [id; String.capitalize_ascii; String.uncapitalize_ascii; String.lowercase_ascii; String.uppercase_ascii; constn; double]
+  [id; String.capitalize; String.uncapitalize; String.lowercase; String.uppercase; constn; double]
 
 module Mutator (M : Monad) = struct
   open Monad_context(M)
@@ -66,7 +66,7 @@ module Mutator (M : Monad) = struct
     | l ->
        return l
 
-  let mutate_constant ({cons_name} as const) =
+  let mutate_constant ({cons_name; arguments=_} as const) =
     match cons_name with
     | Const c when List.exists ~f:(fun l -> List.mem l c ~equal:Caml.(=)) op_class  ->
        let ops = find_class c op_class in

@@ -1,6 +1,6 @@
 open Types
 open Format
-open PP_helpers
+open Simple_utils.PP_helpers
 include PP_enums
 
 let option_inline ppf inline =
@@ -96,7 +96,7 @@ let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record
 
 let attributes ppf attributes =
   let attr =
-    List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
+    List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat
   in fprintf ppf "%s" attr
 
 let module_access f ppf = fun {module_name;element} ->

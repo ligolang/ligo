@@ -1,5 +1,5 @@
 open Ast_core.Misc
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 
 module I = Ast_core
 module T = Ast_core

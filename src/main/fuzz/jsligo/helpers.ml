@@ -43,7 +43,7 @@ module Fold_helpers(M : Monad) = struct
     | TProd  {inside={value={inside; _}; _}; _} ->
       bind_fold_ne_list self init @@ npseq_to_ne_list inside
     | TSum    {value;region=_} ->
-      let {variants; attributes=_} = value in
+      let {variants; attributes=_;leading_vbar=_} = value in
       bind_fold_ne_list self_variant init @@ npseq_to_ne_list variants.value
     | TObject {value;region=_} ->
        let aux init ({value;region=_} : _ reg) =
@@ -204,7 +204,7 @@ module Fold_helpers(M : Monad) = struct
     match d with
       SBlock {value = {inside; _}; _} -> bind_fold_npseq self init inside
     | SExpr e -> self_expr init e
-    | SCond {value = {test; ifso; ifnot}; _} ->
+    | SCond {value = {kwd_if=_; test; ifso; ifnot}; _} ->
        let* res = self_expr init test.inside in
        let* res = self res ifso in
        (match ifnot with

@@ -1,7 +1,7 @@
 open Test_helpers
 
 let uniq lst =
-  let module Set = Set.Make (struct type t = int let compare = compare end) in
+  let module Set = Caml.Set.Make (struct type t = int let compare = compare end) in
   let s = Set.empty in
   let aux (s,lst) e =
     if Set.mem e s then (s,lst)

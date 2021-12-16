@@ -95,6 +95,11 @@ let insert_es6fun_token tokens =
     | (VBAR _ as hd) :: rest ->
         List.rev_append (hd :: result) rest
 
+    (* let rec foo : int => int = (i: int) => ...  *)
+    | (COLON _ as hd)::(Ident _ as i)::(Rec _ as r)::rest
+        when open_parentheses = 0 ->
+        List.rev_append (r::i::hd::es6fun::result) rest
+
       (* let foo : int => int = (i: int) => ...  *)
     | (COLON _ as hd)::(Ident _ as i)::(Let _ as l)::rest
          when open_parentheses = 0 ->
@@ -132,7 +137,7 @@ let tokens_of = function
       Core.Token token -> token::tokens
     | Core.Markup _ -> tokens
     | Core.Directive d -> Token.Directive d :: tokens
-    in List.fold_left apply [] lex_units |> List.rev |> ok
+    in List.fold_left ~f:apply ~init:[] lex_units |> List.rev |> ok
 | Error _ as err -> err
 
 (* Exported *)

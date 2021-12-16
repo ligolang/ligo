@@ -211,7 +211,7 @@ declaration:
 
 %inline attributes:
   ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) {
-    List.map unwrap (list_of_option $1)
+    List.map ~f:unwrap (list_of_option $1)
   }
 
 (* Type declarations *)

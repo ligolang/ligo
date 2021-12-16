@@ -1,6 +1,6 @@
 open Helpers
 open Ast_typed
-open Trace
+open Simple_utils.Trace
 
 let type_constants =
   let open Stage_common.Constant in
@@ -32,13 +32,13 @@ let rec traverse_type_expression : 'err ty_exp_mapper -> type_expression -> unit
   | T_variable _ -> ()
   | T_module_accessor _ -> ()
   | T_singleton _ -> ()
-  | T_constant { parameters } ->
+  | T_constant { parameters ; language=_;injection=_ } ->
      let _ = List.map ~f:self parameters in
      ()
 
 let check_obj_ligo ~raise (t : Ast_typed.expression) =
   let folder_constant () expr = match expr.expression_content with
-    | E_constant {cons_name}
+    | E_constant {cons_name;arguments=_}
          when ppx_is_only_interpreter cons_name ->
        raise.raise @@ Errors.expected_obj_ligo expr.location
     | _ -> () in

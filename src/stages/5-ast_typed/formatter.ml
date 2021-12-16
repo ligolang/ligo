@@ -1,4 +1,4 @@
-open Display
+open Simple_utils.Display
 
 let module_ppformat_fully_typed ~display_format f typed =
   match display_format with

@@ -77,7 +77,7 @@ module Make
     let cli_error msg =
       red_exit (Printf.sprintf "Command-line error: %s\n" msg)
 
-    let print_and_quit msg = print_string msg; flush stdout; exit 0
+    let print_and_quit msg = print_string msg; Out_channel.flush stdout; exit 0
 
     (* Checking for errors and valid exits *)
 
@@ -95,7 +95,7 @@ module Make
            cli_error (Printf.sprintf "Option %s requires option %s" o1 o2)
       | `Done ->
            match Preprocessor_CLI.extension with
-             Some ext when ext <> File.extension ->
+             Some ext when String.(<>) ext File.extension ->
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
                in cli_error msg
@@ -113,7 +113,7 @@ module Make
       function Region.{value; region} ->
         let reg = region#to_string ~file:true ~offsets:true `Point in
         let msg = Printf.sprintf "Parse error %s:\n%s" reg value
-        in (flush_all (); print_in_red msg)
+        in (Out_channel.flush stdout; print_in_red msg)
 
     let show_tree (tree : Parser.tree) : unit =
       if CLI.pretty then
@@ -124,7 +124,7 @@ module Make
           | Some c -> c in
         begin
             PPrint.ToChannel.pretty 1.0 width stdout doc;
-            print_newline ()
+            Out_channel.newline stdout
         end
       else
         let buffer = Buffer.create 231 in
@@ -144,7 +144,7 @@ module Make
               Printf.printf "%s%!" (Buffer.contents buffer);
             end
           else ();
-        flush_all ()
+         Out_channel.flush stdout
 
     let wrap =
       function
@@ -154,9 +154,9 @@ module Make
     let wrap_recovery result =
       let tree, messages = MainParser.extract_recovery_results (result) in
       List.iter
-          (fun msg -> show_error_message msg; Printf.eprintf "\n")
+          ~f:(fun msg -> show_error_message msg; Printf.eprintf "\n")
           (List.rev messages);
-      Option.iter show_tree tree
+      Option.iter ~f:show_tree tree
 
     let config =
       object
@@ -185,11 +185,11 @@ module Make
         let open MainParser in
         let stdin_writer () =
           if CLI.mono then
-              mono_from_channel stdin |> wrap
+              mono_from_channel In_channel.stdin |> wrap
           else if not CLI.recovery then
-              incr_from_channel (module ParErr) stdin |> wrap
+              incr_from_channel (module ParErr) In_channel.stdin |> wrap
           else
-              recov_from_channel (module ParErr) stdin |> wrap_recovery in
+              recov_from_channel (module ParErr) In_channel.stdin |> wrap_recovery in
         let file_writer file_path =
           if CLI.mono then
               mono_from_file file_path |> wrap

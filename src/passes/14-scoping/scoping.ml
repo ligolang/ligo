@@ -1,7 +1,12 @@
 module I = Mini_c
 module O = Ligo_coq_ocaml.Ligo
 open Ligo_coq_ocaml.Co_de_bruijn
-open Tezos_micheline.Micheline
+module Location    = Simple_utils.Location
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
+module Option      = Simple_utils.Option
+open Ligo_coq_ocaml.Micheline
+open Ligo_coq_ocaml.Micheline_wrapper
 
 type meta = Location.t
 
@@ -83,7 +88,7 @@ and tuple_comb ts =
   snd (tuple_comb_ann ts)
 
 let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
-  let (_, idx) = I.Environment.Environment.get_i x env in
+  let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Ast_typed.PP.expression_variable x in
   let usages = List.repeat idx Drop
                @ [ Keep ]
                @ List.repeat (List.length env - idx - 1) Drop in
@@ -198,8 +203,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (ss, us) = union us1 us2 in
     (E_let_in (meta, ss, e1, e2), us)
   | E_tuple exprs ->
-    (* arguments are in reverse order for REV_PAIR for now *)
-    let (exprs, us) = translate_args (List.rev exprs) env in
+    let (exprs, us) = translate_args exprs env in
     (E_tuple (meta, exprs), us)
   | E_let_tuple (e1, e2) ->
     let (e1, us1) = translate_expression e1 env in
@@ -217,7 +221,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (a, b) = match Mini_c.get_t_function ty with
       | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
       | Some (a, b) -> (a, b) in
-    (E_raw_michelson (meta, translate_type a, translate_type b, code), use_nothing env)
+    (E_raw_michelson (meta, translate_type a, translate_type b, List.map ~f:backward code), use_nothing env)
 
 and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in
@@ -277,7 +281,7 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
     match expr.cons_name with
     | C_VIEW -> (
       match expr.arguments with
-      | { content = E_literal (Literal_string view_name); type_expression = _ } :: arguments ->
+      | { content = E_literal (Literal_string view_name); type_expression = _; location=_} :: arguments ->
         let* view_ret_t = Mini_c.get_t_option ty in
         let view_name = Ligo_string.extract view_name in
         return (Type_args (None, [String (nil, view_name) ; translate_type view_ret_t]), arguments)
@@ -326,7 +330,7 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
     | C_CONTRACT_ENTRYPOINT ->
       let* a = Mini_c.get_t_contract ty in
       (match expr.arguments with
-       | { content = E_literal (Literal_string annot); type_expression = _ } :: arguments ->
+       | { content = E_literal (Literal_string annot); type_expression = _; location = _ } :: arguments ->
          let annot = Ligo_string.extract annot in
          return (O.Type_args (Some annot, [translate_type a]), arguments)
        | _ -> None)
@@ -334,13 +338,13 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
       let* a = Mini_c.get_t_option ty in
       let* a = Mini_c.get_t_contract a in
       (match expr.arguments with
-       | { content = E_literal (Literal_string annot); type_expression = _ } :: arguments ->
+       | { content = E_literal (Literal_string annot); type_expression = _ ; location = _} :: arguments ->
          let annot = Ligo_string.extract annot in
          return (O.Type_args (Some annot, [translate_type a]), arguments)
        | _ -> None)
     | C_CREATE_CONTRACT ->
       (match expr.arguments with
-       | { content= E_closure body ; type_expression = closure_ty } :: arguments ->
+       | { content= E_closure body ; type_expression = closure_ty ; location =_ } :: arguments ->
          let* (input_ty, _) = Mini_c.get_t_function closure_ty in
          let* (p, s) = Mini_c.get_t_pair input_ty in
          let body = translate_closed_function body input_ty in

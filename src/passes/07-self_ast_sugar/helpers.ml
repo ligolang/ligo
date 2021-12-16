@@ -1,3 +1,4 @@
+module Pair = Simple_utils.Pair
 open Ast_sugar
 open Stage_common
 
@@ -30,7 +31,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   | E_update u -> Folds.update self init u
   | E_accessor a -> Folds.accessor self init a
   | E_tuple t -> Folds.tuple self init t
-  | E_let_in { let_binder = _ ; rhs ; let_result } -> (
+  | E_let_in { let_binder = _ ; rhs ; let_result ; mut = _; attributes = _} -> (
       let res = self init rhs in
       let res = self res let_result in
       res

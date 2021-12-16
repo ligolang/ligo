@@ -23,13 +23,13 @@ module Make (File : File.S) (Comments : Comments.S) :
 
     val from_file    : dirs -> file_path  -> result
     val from_string  : dirs -> string     -> result
-    val from_channel : dirs -> in_channel -> result
+    val from_channel : dirs -> In_channel.t -> result
 
     (* Aliases *)
 
     val preprocess_file    : dirs -> file_path  -> result
     val preprocess_string  : dirs -> string     -> result
-    val preprocess_channel : dirs -> in_channel -> result
+    val preprocess_channel : dirs -> In_channel.t -> result
   end
 
 (* For further passes *)

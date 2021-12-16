@@ -1,7 +1,7 @@
 open Helpers
 open Errors
 open Ast_imperative
-open Trace
+open Simple_utils.Trace
 
 let get_of m l =
   List.filter_map ~f:(fun v ->
@@ -22,7 +22,7 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
   let _ = fold_map_expression
                  (fun (vars : expression_variable list) expr ->
                    match expr.expression_content with
-                   | E_lambda {binder={var;attributes}} ->
+                   | E_lambda {binder={var;ascr=_;attributes};output_type=_;result=_} ->
                       let fv_expr = Free_variables.expression expr in
                       let fv_expr = get_of fv_expr vars in
                       if not (List.is_empty fv_expr) then
@@ -30,7 +30,7 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
                       else
                         let vars = add_binder (is_var attributes) var vars in
                         (true, vars, expr)
-                   | E_let_in {let_binder={var;attributes};rhs;let_result} ->
+                   | E_let_in {let_binder={var;ascr=_;attributes};rhs;let_result;attributes=_} ->
                       let _ = self ~vars rhs in
                       let vars = add_binder (is_var attributes) var vars in
                       let _ = self ~vars let_result in
@@ -46,7 +46,7 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
                       let _ = self ~vars matchee in
                       let _ = List.map ~f:f cases in
                       (false, vars, expr)
-                   | E_recursive {lambda={binder={var;attributes}}} ->
+                   | E_recursive {fun_name=_;fun_type=_;lambda={binder={var;ascr=_;attributes};output_type=_;result=_}} ->
                       let fv_expr = Free_variables.expression expr in
                       let fv_expr = get_of fv_expr vars in
                       if not (List.is_empty fv_expr) then

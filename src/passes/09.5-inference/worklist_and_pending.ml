@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 open Typer_common.Errors
 open Ast_core.Types
 open Solver_types

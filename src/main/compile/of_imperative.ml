@@ -1,5 +1,5 @@
 open Main_errors
-open Trace
+open Simple_utils.Trace
 open Ast_imperative
 open Purification
 
@@ -17,6 +17,6 @@ let list_declarations (m : module_) : string list =
     ~f:(fun prev el ->
       let open Location in
       match el.wrap_content with
-      | Declaration_constant {binder;_} -> (Var.to_name binder.var.wrap_content)::prev
+      | Declaration_constant {binder;_} -> (Simple_utils.Var.to_name binder.var.wrap_content)::prev
       | _ -> prev)
     ~init:[] m

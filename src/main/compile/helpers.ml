@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 open Main_errors
 
 type s_syntax = Syntax_name of string
@@ -8,7 +8,7 @@ type meta = Self_ast_imperative.Syntax.meta
 
 let protocol_to_variant ~raise : string -> Environment.Protocols.t =
   fun s ->
-  trace_option ~raise (invalid_protocol_version Environment.Protocols.protocols_str s)
+  trace_option ~raise (main_invalid_protocol_version Environment.Protocols.protocols_str s)
   @@ Environment.Protocols.protocols_to_variant s
 
 (*TODO : move this function to src/helpers so that src/build/.. can use it *)
@@ -23,14 +23,14 @@ let file_extension_to_variant sf : v_syntax option =
 let syntax_to_variant ~raise (Syntax_name syntax) source =
   match syntax, source with
   | "auto", Some sf ->
-    let sf = Filename.extension sf in
-    trace_option ~raise (syntax_auto_detection sf) @@
+    let sf = Caml.Filename.extension sf in
+    trace_option ~raise (main_invalid_extension sf) @@
       file_extension_to_variant sf
   | ("pascaligo" | "PascaLIGO"),   _ -> PascaLIGO
   | ("cameligo" | "CameLIGO"),     _ -> CameLIGO
   | ("reasonligo" | "ReasonLIGO"), _ -> ReasonLIGO
   | ("jsligo" | "JsLIGO"),         _ -> JsLIGO
-  | _ -> raise.raise (invalid_syntax syntax)
+  | _ -> raise.raise (main_invalid_syntax_name syntax)
 
 let variant_to_syntax (v: v_syntax) =
   match v with
@@ -53,7 +53,7 @@ let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
     | ReasonLIGO -> Reasonligo.preprocess_file
     | JsLIGO     -> Jsligo.preprocess_file
   in trace ~raise preproc_tracer @@
-      Trace.from_result (preprocess_file options.libs file_path)
+      Simple_utils.Trace.from_result (preprocess_file options.libs file_path)
 
 let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
   let open Preprocessing in

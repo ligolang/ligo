@@ -20,7 +20,7 @@ module Make (Comments : Comments.S) (File : File.S) =
     let preproc () : unit =
       let () =
         match Preproc_CLI.extension with
-          Some ext when ext <> File.extension ->
+          Some ext when String.equal ext File.extension ->
             let msg =
               Printf.sprintf "Expected extension %s." File.extension
             in cli_error msg

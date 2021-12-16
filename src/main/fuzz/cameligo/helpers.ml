@@ -179,7 +179,7 @@ module Fold_helpers(M : Monad) = struct
        self init value.inside
     | ELetIn   {value;region=_} ->
        let {kwd_let=_;kwd_rec=_;binding;kwd_in=_;body;attributes=_} = value in
-       let {binders=_;lhs_type;eq=_;let_rhs} = binding in
+       let {binders=_;lhs_type;eq=_;let_rhs;type_params=_} = binding in
        let* res = self init let_rhs in
        let* res = self res body in
        (match lhs_type with
@@ -188,7 +188,7 @@ module Fold_helpers(M : Monad) = struct
        )
     | ETypeIn  {value;region=_} ->
        let {type_decl;kwd_in=_;body} = value in
-       let {kwd_type=_;name=_;eq=_;type_expr} = type_decl in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = type_decl in
        let* res = self_type init type_expr in
        let* res = self res body in
        ok @@ res
@@ -204,7 +204,7 @@ module Fold_helpers(M : Monad) = struct
        let* res = self init body in
        ok @@ res
     | EFun     {value;region=_} ->
-       let {kwd_fun=_; binders=_; lhs_type; arrow=_; body} = value in
+       let {kwd_fun=_; binders=_; lhs_type; arrow=_; body; type_params=_; attributes=_} = value in
        let* res = self init body in
        (match lhs_type with
           Some (_, ty) -> self_type res ty
@@ -232,14 +232,14 @@ module Fold_helpers(M : Monad) = struct
     match d with
       Let {value;region=_} ->
        let (_,_,let_binding,_) = value in
-       let {binders=_;lhs_type;eq=_;let_rhs} = let_binding in
+       let {binders=_;lhs_type;eq=_;let_rhs; type_params=_} = let_binding in
        let* res = self_expr init let_rhs in
        (match lhs_type with
           Some (_, ty) -> self_type res ty
         | None ->    ok res
        )
     | TypeDecl {value;region=_} ->
-       let {kwd_type=_;name=_;eq=_;type_expr} = value in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = value in
        let* res = self_type init type_expr in
        ok res
 
@@ -486,7 +486,7 @@ module Fold_helpers(M : Monad) = struct
        return @@ ELetIn {value;region}
     | ETypeIn  {value;region} ->
        let {type_decl;kwd_in;body} = value in
-       let {kwd_type=_;name=_;eq=_;type_expr} = type_decl in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = type_decl in
        let* type_expr = self_type type_expr in
        let* body = self body in
        let type_decl = {type_decl with type_expr} in
@@ -507,7 +507,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {mod_alias;kwd_in;body} in
        return @@ EModAlias {value;region}
     | EFun     {value;region} ->
-       let {kwd_fun=_; binders=_; lhs_type; arrow=_; body} = value in
+       let {kwd_fun=_; binders=_; lhs_type; arrow=_; body; type_params=_;attributes=_} = value in
        let* body = self body in
        let* lhs_type = bind_map_option (fun (a,b) ->
                            let* b = self_type b in ok (a,b)) lhs_type in
@@ -550,7 +550,7 @@ module Fold_helpers(M : Monad) = struct
        let value = (kwd_let,kwd_rec,let_binding,attr) in
        return @@ Let {value;region}
     | TypeDecl {value;region} ->
-       let {kwd_type=_;name=_;eq=_;type_expr} = value in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = value in
        let* type_expr = self_type type_expr in
        let value = {value with type_expr} in
        return @@ TypeDecl {value;region}

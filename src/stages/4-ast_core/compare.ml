@@ -152,7 +152,7 @@ let binder ty_expr {var=va;ascr=aa;_} {var=vb;ascr=ab;_} =
     (option ty_expr) aa ab
 
 let expression_tag expr =
-  match expr.expression_content with
+  match expr with
     E_literal         _ -> 1
   | E_constant        _ -> 2
   | E_variable        _ -> 3
@@ -189,8 +189,11 @@ and declaration_tag = function
   | Module_alias         _ -> 4
 
 let rec expression a b =
-  match a.expression_content,b.expression_content with
-    E_literal  a, E_literal  b -> compare a b
+  expression_content a.expression_content b.expression_content
+
+and expression_content a b = 
+  match a,b with
+    E_literal  a, E_literal  b -> literal a b
   | E_constant a, E_constant b -> constant a b
   | E_variable a, E_variable b -> expression_variable a b
   | E_application a, E_application b -> application a b

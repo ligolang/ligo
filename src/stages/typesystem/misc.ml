@@ -1,4 +1,5 @@
-open Core
+module Location = Simple_utils.Location
+open Types
 
 let pair_map = fun f (x , y) -> (f x , f y)
 
@@ -47,7 +48,7 @@ module Substitution = struct
       let () = ignore @@ substs in
       var
 
-    and s_binder : (_ T.binder,_) w = fun ~substs {var;ascr} ->
+    and s_binder : (_ T.binder,_) w = fun ~substs {var;ascr;attributes=_} ->
       let var = s_variable ~substs var in
       let ascr = Option.map ~f:(s_type_expression ~substs) ascr in
       T.{var;ascr;attributes=Stage_common.Helpers.empty_attribute}

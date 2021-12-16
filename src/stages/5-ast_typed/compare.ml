@@ -1,3 +1,7 @@
+module Location    = Simple_utils.Location
+module Var         = Simple_utils.Var
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
 open Types
 open Compare_enum
 
@@ -148,7 +152,7 @@ let binder ty_expr {var=va;ascr=aa;_} {var=vb;ascr=ab;_} =
     (option ty_expr) aa ab
 
 let expression_tag expr =
-  match expr.expression_content with
+  match expr with
     E_literal         _ -> 1
   | E_constant        _ -> 2
   | E_variable        _ -> 3
@@ -177,8 +181,11 @@ and declaration_tag = function
   | Module_alias         _ -> 4
 
 let rec expression a b =
-  match a.expression_content,b.expression_content with
-    E_literal  a, E_literal  b -> compare a b
+  expression_content a.expression_content b.expression_content
+
+and expression_content a b = 
+  match a,b with
+    E_literal  a, E_literal  b -> literal a b
   | E_constant a, E_constant b -> constant a b
   | E_variable a, E_variable b -> expression_variable a b
   | E_application a, E_application b -> application a b
@@ -296,6 +303,11 @@ and matching_content_record
     expression body1 body2
     type_expression t1 t2
 and record ra rb = label_map ~compare:expression ra rb
+
+and map_kv {key=ka;value=va} {key=kb;value=vb} =
+  cmp2
+    expression ka kb
+    expression va vb
 
 and record_accessor {record=ra;path=pa} {record=rb;path=pb} =
   cmp2

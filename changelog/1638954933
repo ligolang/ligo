@@ -1,0 +1,6 @@
+---
+  title: "Fix compile storage & compile parameter (apply module morphing)"
+  merge_request: "1448"
+  author: "melwyn95"
+  type: "fixed"
+

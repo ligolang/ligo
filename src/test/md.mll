@@ -1,4 +1,5 @@
 {
+module Array = Caml.Array
 (* initial version taken from https://github.com/realworldocaml/mdx *)
 type arg = 
   | Field of string
@@ -28,12 +29,12 @@ rule text = parse
   | eof { [] }
   | "```" ([^' ' '\n']* as h) ws* ([^'\n']* as l) eol
       { 
-        let header = if h = "" then None else Some h in
+        let header = if String.equal h "" then None else Some h in
         let contents = block lexbuf in
-        let arguments = String.split_on_char ' ' l in
+        let arguments = String.split ~on:' ' l in
         let arguments = List.map ~f:(fun a -> 
           if (String.contains a '=') then
-            ( let a = String.split_on_char '=' a in
+            ( let a = String.split ~on:'=' a in
             NameValue (List.nth_exn a 0, List.nth_exn a 1))
           else 
             Field a
