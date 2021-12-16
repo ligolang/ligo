@@ -176,8 +176,9 @@ let rec is_pure : expression -> bool = fun e ->
   | E_constant (c)
     -> is_pure_constant c.cons_name && List.for_all ~f:is_pure c.arguments
 
-  | E_constantize e ->
-    is_pure e
+  | E_global_constant (_hash, _args) ->
+    (* hashed code can be impure :( *)
+    false
 
   (* I'm not sure about these. Maybe can be tested better? *)
   | E_application _

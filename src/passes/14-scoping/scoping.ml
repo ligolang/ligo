@@ -218,9 +218,10 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
       | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
       | Some (a, b) -> (a, b) in
     (E_raw_michelson (meta, translate_type a, translate_type b, code), use_nothing env)
-  | E_constantize e ->
-    let (e, us) = translate_expression e env in
-    (E_constantize (meta, e), us)
+  | E_global_constant (hash, args) ->
+    let (args, us) = translate_args args env in
+    let output_ty = translate_type ty in
+    (E_global_constant (meta, output_ty, hash, args), us)
 
 and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in

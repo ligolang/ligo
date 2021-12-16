@@ -85,8 +85,8 @@ let rec fold_expression ~raise : ('a,'err) folder -> 'a -> expression -> 'a = fu
       self init expr
   | E_update (expr, _i, update, _n) ->
       Pair.fold ~f:self ~init (expr, update)
-  | E_constantize expr ->
-    self init expr
+  | E_global_constant (_hash, args) ->
+    List.fold ~f:self ~init args
 
 type 'err mapper = raise:'err raise -> expression -> expression
 
@@ -155,9 +155,9 @@ let rec map_expression ~raise : 'err mapper -> expression -> expression = fun f 
       let expr = self expr in
       let update = self update in
       return @@ E_update (expr, i, update, n)
-  | E_constantize expr ->
-      let expr = self expr in
-      return @@ E_constantize expr
+  | E_global_constant (hash, args) ->
+      let args = List.map ~f:self args in
+      return @@ E_global_constant (hash, args)
 
 let map_sub_level_expression ~raise : 'err mapper -> expression -> expression = fun f e ->
   match e.content with

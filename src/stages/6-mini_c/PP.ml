@@ -160,8 +160,10 @@ and expression_content ppf (e:expression_content) = match e with
     let code = Micheline.strip_locations code in
     let code = Micheline_printer.printable (fun prim -> prim) code in
     fprintf ppf "%a" Micheline_printer.print_expr code
-  | E_constantize expr ->
-    fprintf ppf "@[constant(%a)@]" expression expr
+  | E_global_constant (hash, args) ->
+    fprintf ppf "@[constant(%s)( %a )@]"
+      hash
+      Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"

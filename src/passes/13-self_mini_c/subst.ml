@@ -104,9 +104,9 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let update = replace update in
     return @@ E_update (expr, i, update, n)
   | E_raw_michelson _ -> e
-  | E_constantize e ->
-    let e = replace e in
-    return @@ E_constantize e
+  | E_global_constant (hash, args) ->
+    let args = List.map ~f:replace args in
+    return @@ E_global_constant (hash, args)
 
 (* Given an implementation of substitution on an arbitary type of
    body, implements substitution on a binder (pair of bound variable
@@ -251,9 +251,9 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       let cab' = Tuple.map3 self cab in
       return @@ E_if_bool cab'
   )
-  | E_constantize e ->
-    let e = self e in
-    return @@ E_constantize e
+  | E_global_constant (hash, args) ->
+    let args = List.map ~f:self args in
+    return @@ E_global_constant (hash, args)
 
 let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in
