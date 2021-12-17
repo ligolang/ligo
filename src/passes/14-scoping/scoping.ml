@@ -285,7 +285,7 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
     match expr.cons_name with
     | C_GLOBAL_CONSTANT -> (
       match expr.arguments with
-      | { content = E_literal (Literal_string hash); type_expression = _ } :: arguments ->
+      | { content = E_literal (Literal_string hash); type_expression = _ ; _} :: arguments ->
         let hash = Ligo_string.extract hash in
         return (O.Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
       | _ -> None

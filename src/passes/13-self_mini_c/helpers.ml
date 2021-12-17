@@ -238,3 +238,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let (res, expr) = self init expr in
       let (res, update) = self res update in
       (res, return @@ E_update (expr, i, update, n))
+  | E_global_constant (hash,args) ->
+    let (res, args) = List.fold_map ~f:self ~init args in
+    (res, return @@ E_global_constant (hash,args))

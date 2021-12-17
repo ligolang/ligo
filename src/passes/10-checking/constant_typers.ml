@@ -1152,9 +1152,6 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
   ret_t
 
-let test_global_constantize ~raise loc = typer_1 ~raise loc "TEST_GLOBAL_CONSTANTIZE" @@ fun a ->
-  a
-
 let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_INT                 -> int ~raise loc ;
   | C_UNIT                -> unit ~raise loc ;
@@ -1318,7 +1315,6 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
   | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
   | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
-  | C_GLOBAL_CONSTANTIZE -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constantize ~raise loc
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
