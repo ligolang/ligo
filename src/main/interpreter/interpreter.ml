@@ -488,6 +488,13 @@ let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace
       let>> typed_exp = Unpack (loc, bytes, value_ty) in
       let* value = eval_ligo typed_exp calltrace env in
       return value
+    | ( C_SLICE , [ V_Ct (C_nat start) ; V_Ct (C_nat length) ; V_Ct (C_bytes bytes) ] ) ->
+      let start = Z.to_int start in
+      let length = Z.to_int length in
+      if (start > Bytes.length bytes) || (start + length > Bytes.length bytes) then
+        fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
+      else
+        return @@ V_Ct (C_bytes (Bytes.sub bytes ~pos:start ~len:length))
     (*
     >>>>>>>>
       Test operators
