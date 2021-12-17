@@ -1,0 +1,6 @@
+---
+  title: "Fix type error for sapling_state inside a record"
+  merge_request: "1443"
+  author: "melwyn95"
+  type: "fixed"
+

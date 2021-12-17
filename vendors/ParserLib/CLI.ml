@@ -234,8 +234,7 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
        Before parsing the command-line, we assign the status with the
        status of the previous CLI (here, [Lexer_CLI.status]). *)
 
-    module SSet = Set.Make (String)
-
+    module SSet = Argv.SSet
     let opt_wo_arg =
       let open SSet in
       empty

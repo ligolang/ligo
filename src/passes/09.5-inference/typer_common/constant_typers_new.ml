@@ -1,6 +1,6 @@
 open Errors
 open Ast_core
-open Trace
+open Simple_utils.Trace
 
 module Operators_types = struct
   open Typesystem.Shorthands
@@ -279,6 +279,8 @@ tc "arguments for (+)"
   let t_assertion_with_error = tuple2 bool string --> unit
   let t_assert_some  = forall "a" @@ fun a -> tuple1 (option a) --> unit
   let t_assert_some_with_error  = forall "a" @@ fun a -> tuple2 (option a) string --> unit
+  let t_assert_none  = forall "a" @@ fun a -> tuple1 (option a) --> unit
+  let t_assert_none_with_error  = forall "a" @@ fun a -> tuple2 (option a) string --> unit
   let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_ediv         = forall4_tc "a" "b" "c" "d" @@ fun a b c d -> [tc_edivargs a b c d] => tuple2 a b --> (option @@ tuple2 c d) (* TYPECLASS *)
   let t_div          = forall4_tc "a" "b" "c" "d" @@ fun a b c d -> [tc_edivargs a b c d] => tuple2 a b --> c (* TYPECLASS *)
@@ -319,7 +321,7 @@ tc "arguments for (+)"
   let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
   let t_set_delegate  = tuple1 (option key_hash) --> operation
 
-  let constant_type ~raise : constant' -> Typesystem.Core.type_value = function
+  let constant_type ~raise : constant' -> Typesystem.Types.type_value = function
     | C_INT                 -> t_int ;
     | C_UNIT                -> t_unit ;
     | C_NOW                 -> t_now ;
@@ -332,6 +334,8 @@ tc "arguments for (+)"
     | C_ASSERTION_WITH_ERROR -> t_assertion_with_error ;
     | C_ASSERT_SOME         -> t_assert_some ;
     | C_ASSERT_SOME_WITH_ERROR -> t_assert_some_with_error ;
+    | C_ASSERT_NONE         -> t_assert_none ;
+    | C_ASSERT_NONE_WITH_ERROR -> t_assert_none_with_error ;
     | C_FAILWITH            -> t_failwith ;
     | C_NEVER               -> t_never ;
     (* LOOPS *)

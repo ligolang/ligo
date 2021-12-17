@@ -30,7 +30,7 @@ module Environment (* : ENVIRONMENT *) = struct
     match get_opt s t with
     | None -> false
     | Some _ -> true
-  let get_i : expression_variable -> t -> (type_expression * int) =fun x lst -> List.find_mapi_exn ~f:(fun i (e,t) -> if var_equal e x then Some (t,i) else None) lst
+  let get_i_opt : expression_variable -> t -> (type_expression * int) option =fun x lst -> List.find_mapi ~f:(fun i (e,t) -> if var_equal e x then Some (t,i) else None) lst
   let of_list : element list -> t = fun x -> x
   let to_list : t -> element list = fun x -> x
   let get_names : t -> expression_variable list = List.map ~f:fst
@@ -44,7 +44,7 @@ module Environment (* : ENVIRONMENT *) = struct
         | true -> List.remove_element ~compare:compare_var s selector , keep
         | false -> selector , not keep in
       let e_lst' =
-        if rev = keep
+        if Bool.equal rev keep
         then snd @@ List.fold_map ~f:aux ~init:lst e_lst
         else snd @@ List.fold_map ~f:aux ~init:lst @@ List.rev e_lst
       in

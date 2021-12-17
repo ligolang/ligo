@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1456'
+title: 'Build: remove -O3 from dune file'
+type: internal

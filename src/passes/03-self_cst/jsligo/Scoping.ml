@@ -4,14 +4,15 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Jsligo
+module Utils  = Simple_utils.Utils
 
 open Region
 open Errors
-open Trace
+open Simple_utils.Trace
 
 (* Useful modules *)
 
-module SSet = Set.Make (String)
+module SSet = Caml.Set.Make (String)
 
 module Ord =
   struct
@@ -20,7 +21,7 @@ module Ord =
       String.compare v1.value v2.value
   end
 
-module VarSet = Set.Make (Ord)
+module VarSet = Caml.Set.Make (Ord)
 
 (* Checking the definition of reserved names (shadowing) *)
 

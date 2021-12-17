@@ -5,6 +5,8 @@
 
 [@@@warning "-42"]
 
+module Array = Caml.Array
+
 (* VENDOR DEPENDENCIES *)
 
 module Region = Simple_utils.Region
@@ -124,7 +126,7 @@ module Make (Token : Token.S) =
 
     let mk_tez state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
-      let lexeme = Str.string_before lexeme (String.index lexeme 't') in
+      let lexeme = Str.string_before lexeme (String.index_exn lexeme 't') in
       let lexeme = Z.mul (Z.of_int 1_000_000) (Z.of_string lexeme) in
       match Token.mk_mutez (Z.to_string lexeme ^ "mutez") region with
         Ok token ->
@@ -136,7 +138,7 @@ module Make (Token : Token.S) =
 
     let format_tez s =
       match String.index s '.' with
-        index ->
+        Some (index) ->
           let len         = String.length s in
           let integral    = Str.first_chars s index
           and fractional  = Str.last_chars s (len-index-1) in
@@ -146,12 +148,12 @@ module Make (Token : Token.S) =
           let mutez       = Q.make num den |> Q.mul million in
           let should_be_1 = Q.den mutez in
           if Z.equal Z.one should_be_1 then Some (Q.num mutez) else None
-      | exception Not_found -> assert false
+      | None -> assert false
 
     let mk_tez_dec state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       let lexeme = Str.(global_replace (regexp "_") "" lexeme) in
-      let lexeme = Str.string_before lexeme (String.index lexeme 't') in
+      let lexeme = Str.string_before lexeme (String.index_exn lexeme 't') in
       match format_tez lexeme with
         None -> assert false
       | Some tz ->
@@ -270,7 +272,7 @@ rule scan state = parse
 | "[%" (attr as l)       { mk_lang  l state lexbuf }
 
 | "`" | "{|" as lexeme {
-    if lexeme = fst Token.verbatim_delimiters then
+    if String.equal lexeme @@ fst Token.verbatim_delimiters then
       let Core.{region; state; _} = state#sync lexbuf in
       let thread = Core.mk_thread region in
       let verb_end = snd Token.verbatim_delimiters
@@ -297,7 +299,7 @@ and scan_verbatim verbatim_end thread state = parse
 | eof      { fail thread#opening Unterminated_verbatim }
 | "`"
 | "|}" as lexeme  {
-  if verbatim_end = lexeme then
+  if String.equal verbatim_end lexeme then
     Core.(thread, (state#sync lexbuf).state)
   else
     let Core.{state; _} = state#sync lexbuf in

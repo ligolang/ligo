@@ -1,9 +1,9 @@
-open Trace
+open Simple_utils.Trace
 open Ligo_interpreter.Types
 open Tezos_micheline.Micheline
 
 let contract_of_string ~raise s =
-  Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_protocol_011_PtHangzH.Protocol.Alpha_context.Contract.of_b58check s
+  Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_protocol_011_PtHangz2.Protocol.Alpha_context.Contract.of_b58check s
 let key_hash_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_crypto.Signature.Public_key_hash.of_b58check s
 
@@ -179,9 +179,9 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let t_input = t_unit () in
       let t_output = t_unit () in
       let c = Tezos_micheline.Micheline.strip_locations c in
-      let c = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot get instructions") @@ Tezos_protocol_011_PtHangzH.Protocol.Michelson_v1_primitives.prims_of_strings c in
+      let c = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot get instructions") @@ Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.prims_of_strings c in
       let u = Format.asprintf "%a" Tezos_micheline.Micheline_printer.print_expr
-            (Tezos_micheline.Micheline_printer.printable Tezos_protocol_011_PtHangzH.Protocol.Michelson_v1_primitives.string_of_prim c)
+            (Tezos_micheline.Micheline_printer.printable Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.string_of_prim c)
       in
       let code_block = make_e (e_string (Ligo_string.verbatim u)) (t_string ()) in
       let insertion = e_a_raw_code Stage_common.Backends.michelson code_block (t_function t_input t_output ()) in
@@ -274,11 +274,11 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_typ
       (V_Record m')
   | T_arrow {type1;type2} ->
       (* We now patch the types *)
-      let {arg_binder;body} = trace_option ~raise (wrong_mini_c_value t v) @@ get_func v in
+      let {arg_binder;body;rec_name=_;orig_lambda=_;env=_} = trace_option ~raise (wrong_mini_c_value t v) @@ get_func v in
       (match body.expression_content with
-       | E_application {lamb} ->
+       | E_application {lamb;args=_} ->
           (match lamb.expression_content with
-           | E_raw_code {code} ->
+           | E_raw_code {code;language=_} ->
               let insertion = e_a_raw_code Stage_common.Backends.michelson code (t_function type1 type2 ()) in
               let body = e_a_application insertion (e_a_variable arg_binder type1) type2 in
               let orig_lambda = e_a_lambda {binder=arg_binder; result=body} type1 type2 in
@@ -288,9 +288,9 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_typ
   | _ ->
     v
 
-let conv ~raise ~bigmaps (t : Tezos_raw_protocol_011_PtHangzH.Script_repr.expr) (v : Tezos_raw_protocol_011_PtHangzH.Script_repr.expr) =
-  let v = v |> Tezos_protocol_011_PtHangzH.Protocol.Michelson_v1_primitives.strings_of_prims
+let conv ~raise ~bigmaps (t : Tezos_raw_protocol_011_PtHangz2.Script_repr.expr) (v : Tezos_raw_protocol_011_PtHangz2.Script_repr.expr) =
+  let v = v |> Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims
           |> Tezos_micheline.Micheline.inject_locations (fun _ -> ()) in
-  let t = t |> Tezos_protocol_011_PtHangzH.Protocol.Michelson_v1_primitives.strings_of_prims
+  let t = t |> Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims
           |> Tezos_micheline.Micheline.inject_locations (fun _ -> ()) in
   decompile_to_untyped_value ~raise ~bigmaps t v

@@ -16,7 +16,7 @@ interface DeployBody {
 }
 
 const Tezos = (network: string) =>
-  new TezosToolkit(`https://api.tez.ie/rpc/${network}`);
+  new TezosToolkit(`https://${network}.api.tez.ie`);
 
 const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi
@@ -67,8 +67,8 @@ export async function deployHandler(req: Request, res: Response) {
       if (ex instanceof CompilerError) {
         res.status(400).json({ error: ex.message });
       } else {
-        logger.error(ex);
-        res.status(500).json({ error: ex.message });
+        logger.error((ex as Error).message);
+        res.status(500).json({ error: (ex as Error).message });
       }
     }
   }

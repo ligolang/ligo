@@ -30,4 +30,4 @@ let compile_string_without_preproc source : c_unit  =
 
 let compile_contract_input ~raise : options:Compiler_options.t -> meta:meta -> string -> string -> c_unit * c_unit =
     fun ~options ~meta parameter storage ->
-  Pair.map ~f:(compile_string ~raise ~options ~meta) (parameter,storage)
+  Simple_utils.Pair.map ~f:(compile_string ~raise ~options ~meta) (parameter,storage)

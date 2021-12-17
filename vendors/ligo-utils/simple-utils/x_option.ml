@@ -1,4 +1,4 @@
-open Base
+open Core
 include Option
 
 (* Syntax *)

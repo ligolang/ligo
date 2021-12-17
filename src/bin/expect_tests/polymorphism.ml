@@ -125,6 +125,34 @@ let%expect_test _ =
   [%expect{|
     1 |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "List.map (fun (x : int) -> x + 1) [1;2]" ; "--init-file" ; (test "map.mligo") ] ;
+  [%expect{|
+    CONS(2 , CONS(3 , LIST_EMPTY())) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; (test "module_k.mligo") ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test_helpers exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "lambda.mligo") ] ;
+  [%expect{|
+    1 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; (test "record_sapling.mligo") ] ;
+  [%expect{|
+    { parameter string ;
+      storage (pair (string %name) (pair %state int (sapling_state 8))) ;
+      code { UNPAIR ; SWAP ; CDR ; SWAP ; PAIR ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "try_transfer (\"tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx\" : address) 0 (Build_state (Map.empty :(address, tokenValue) map))" ; "--init-file" ; (test "map_or_big_map.mligo") ] ;
+  [%expect{|
+    (Some { Elt "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" 0 }) |}]
+
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"
 

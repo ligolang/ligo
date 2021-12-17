@@ -1,9 +1,9 @@
 module AST = Ast_typed
-module Append_tree = Tree.Append
+module Append_tree = Simple_utils.Tree.Append
 module Errors = Errors
 open Errors
 open Mini_c
-open Trace
+open Simple_utils.Trace
 open Stage_common.Constant
 
 let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression =
@@ -122,7 +122,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
             let value = self v v_ty in
             ({key; value} : AST.map_kv) in
           List.map ~f:aux map in
-        let map' = List.dedup_and_sort ~compare map' in
+        let map' = List.dedup_and_sort ~compare:Caml.compare map' in (* AST.Compare.map_kbv is broken because of expression and litteral being broken *)
         let aux = fun ({ key ; value } : AST.map_kv) prev ->
           return @@ E_constant {cons_name=C_MAP_ADD;arguments=[key ; value ; prev]}
         in
@@ -139,7 +139,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
             let value = self v v_ty in
             ({key; value} : AST.map_kv) in
           List.map ~f:aux big_map in
-        let big_map' = List.dedup_and_sort ~compare big_map' in
+        let big_map' = List.dedup_and_sort ~compare:Caml.compare big_map' in
         let aux = fun ({ key ; value } : AST.map_kv) prev ->
           return @@ E_constant {cons_name=C_MAP_ADD;arguments=[key ; value ; prev]}
         in
@@ -166,7 +166,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let lst' =
           let aux = fun e -> self e ty in
           List.map ~f:aux lst in
-        let lst' = List.dedup_and_sort ~compare lst' in
+        let lst' = List.dedup_and_sort ~compare:Caml.compare lst' in
         let aux = fun prev cur ->
           return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
         let init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in

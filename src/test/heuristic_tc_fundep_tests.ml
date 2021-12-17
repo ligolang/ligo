@@ -2,11 +2,11 @@ open Test_helpers
 open Main_errors
 
 open Ast_core.Combinators
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Ast_core.Types
 open Ast_core.Reasons
 (* open Typesystem.Solver_types *)
-open Trace
+open Simple_utils.Trace
 (* open Typer_common.Errors *)
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet

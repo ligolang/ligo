@@ -1,11 +1,11 @@
-type z = Z.t
-type ligo_string = Simple_utils.Ligo_string.t
+type z = Z.t [@@deriving ord]
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord]
 
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
   try match x with
     | `String s -> Ok (Z.of_string s)
-    | _ -> Utils.error_yojson_format "JSON string"
+    | _ -> Simple_utils.Utils.error_yojson_format "JSON string"
   with
   | Invalid_argument _ ->
     Error "Invalid formatting.
@@ -31,6 +31,22 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_operation of bytes
+[@@deriving yojson, ord]
+
+let literal_to_enum = function
+  | Literal_unit        ->  1
+  | Literal_int _       ->  2
+  | Literal_nat _       ->  3
+  | Literal_timestamp _ ->  4
+  | Literal_mutez _     ->  5
+  | Literal_string _    ->  6
+  | Literal_bytes _     ->  7
+  | Literal_address _   ->  8
+  | Literal_signature _ ->  9
+  | Literal_key _       -> 10
+  | Literal_key_hash _  -> 11
+  | Literal_chain_id _  -> 12
+  | Literal_operation _ -> 13
 
 type constant' =
   | C_INT
@@ -47,14 +63,16 @@ type constant' =
   | C_ASSERTION_WITH_ERROR
   | C_ASSERT_SOME
   | C_ASSERT_SOME_WITH_ERROR
+  | C_ASSERT_NONE
+  | C_ASSERT_NONE_WITH_ERROR
   | C_ASSERT_INFERRED
   | C_FAILWITH
   | C_UPDATE
   (* Loops *)
   | C_ITER
   | C_FOLD_WHILE
-  | C_FOLD_CONTINUE
-  | C_FOLD_STOP
+  | C_FOLD_CONTINUE [@print "CONTINUE"]
+  | C_FOLD_STOP [@print "STOP"]
   | C_LOOP_LEFT
   | C_LOOP_CONTINUE
   | C_LOOP_STOP
@@ -204,6 +222,7 @@ type constant' =
   | C_TEST_CAST_ADDRESS [@only_interpreter]
   | C_TEST_CREATE_CHEST [@only_interpreter]
   | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
+  | C_TEST_RANDOM [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
@@ -218,8 +237,8 @@ type constant' =
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
   (* JsLIGO *)
-  | C_POLYMORPHIC_ADD
-[@@deriving only_interpreter_tags]
+  | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
+[@@deriving enum, yojson, print_constant, only_interpreter_tags ]
 
 type deprecated = {
   name : string ;

@@ -29,7 +29,7 @@ module Make (File        : FILE)
       let msg = Printf.sprintf "Command-line error: %s\n" msg
       in Printf.eprintf "\027[31m%s\027[0m%!" msg
 
-    let print_and_quit msg = print_string msg; flush stdout; exit 0
+    let print_and_quit msg = print_string msg; Out_channel.flush stdout; exit 0
 
     (* Checking for errors and valid exits *)
 
@@ -44,7 +44,7 @@ module Make (File        : FILE)
            cli_error (Printf.sprintf "Choose either %s or %s." o1 o2)
       | `Done ->
            match CLI.Preprocessor_CLI.extension with
-             Some ext when ext <> File.extension ->
+             Some ext when String.equal ext File.extension ->
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
                in cli_error msg
@@ -178,7 +178,7 @@ module Make (File        : FILE)
         else
           match config#input with
             Some path -> Scan.LexUnits.from_file config path
-          |      None -> Scan.LexUnits.from_channel config stdin
+          |      None -> Scan.LexUnits.from_channel config In_channel.stdin
       in match Self_tokens.filter lex_units with
            Stdlib.Error msg -> print_in_red msg
          | Ok _ -> ()

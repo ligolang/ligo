@@ -6,12 +6,12 @@ let ends_with suffix str =
   if str_len < suffix_len
   then false
   else
-    String.equal suffix (String.sub str (str_len - suffix_len) suffix_len)
+    String.equal suffix (String.sub str ~pos:(str_len - suffix_len) ~len:suffix_len)
 
 (* test that everything in src/test/contracts/positive typechecks and
    compiles (assuming entry point "main") *)
 let positive_contract_tests =
-  String.split_on_char ' ' (match Sys.getenv_opt "POSITIVE_CONTRACTS" with Some e -> e | None -> "") |>
+  String.split ~on:' ' (match Sys.getenv "POSITIVE_CONTRACTS" with Some e -> e | None -> "") |>
   List.filter ~f:(fun path -> not (ends_with ".md" path)) |>
   List.map
     ~f:(fun path ->

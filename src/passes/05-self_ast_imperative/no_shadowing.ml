@@ -1,6 +1,7 @@
+module Var = Simple_utils.Var
 open Ast_imperative
 open Errors
-open Trace
+open Simple_utils.Trace
 
 (* Prevents shadowing in the same scope. Needed for JsLIGO. *)
 

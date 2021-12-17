@@ -1,4 +1,5 @@
 [@@@warning "-30-32"]
+module Ligo_string = Simple_utils.Ligo_string
 
 open Simple_utils.Function
 include Stage_common.Types
@@ -7,9 +8,6 @@ type sugar_type_expression_option = Ast_sugar.type_expression option [@@deriving
 type sugar_expression_option = Ast_sugar.expression option [@@deriving yojson]
 
 type string_option = string option
-
-let location_of_yojson loc = Location.of_yojson loc
-let location_to_yojson loc = Location.to_yojson loc
 
 type type_attribute = {
   public: bool;
@@ -329,8 +327,8 @@ let typeVariableMap_to_yojson f tvmap =
   bindings_to_yojson type_variable_to_yojson f @@ RedBlackTrees.PolyMap.bindings tvmap
 
 let typeVariableMap_of_yojson f tvmap =
-  Stdlib.Result.bind (Stage_common.Of_yojson.bindings type_variable_of_yojson f tvmap)
-    (Stdlib.Option.to_result ~none:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:compare)
+  Result.bind (Stage_common.Of_yojson.bindings type_variable_of_yojson f tvmap)
+    ~f:(Result.of_option ~error:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:Var.compare)
 
 (* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
 type unionfind = type_variable poly_unionfind

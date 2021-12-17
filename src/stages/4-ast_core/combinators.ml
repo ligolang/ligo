@@ -91,7 +91,7 @@ let get_lambda e : (_,_) lambda option = match e.expression_content with
   | _ -> None
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
-  | t when (compare t (t_bool ()).type_content) = 0-> Some ()
+  | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
 
 
@@ -228,10 +228,10 @@ let get_e_unit (t:expression) =
 let get_e_bool (t:expression) =
   match t.expression_content with
   | E_constructor {constructor=Label name;element} when (String.equal name "True")
-    && element.expression_content = (e_unit ()).expression_content ->
+    && Compare.expression_content element.expression_content (e_unit ()).expression_content = 0 ->
       Some true
   | E_constructor {constructor=Label name;element} when (String.equal name "False")
-    && element.expression_content = (e_unit ()).expression_content ->
+    && Compare.expression_content element.expression_content (e_unit ()).expression_content = 0 ->
       Some false
   | _ -> None
 

@@ -201,6 +201,7 @@ module Tree_abstraction = struct
     | "Test.nth_bootstrap_typed_address" -> some_const C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
     | "Test.to_entrypoint" -> some_const C_TEST_TO_ENTRYPOINT
     | "Test.to_typed_address" -> some_const C_TEST_TO_TYPED_ADDRESS
+    | "Test.random" -> some_const C_TEST_RANDOM
     | "Test.set_big_map" -> some_const C_TEST_SET_BIG_MAP
     | "Test.cast_address" -> some_const C_TEST_CAST_ADDRESS
     | "Test.create_chest" -> some_const C_TEST_CREATE_CHEST
@@ -388,6 +389,7 @@ module Tree_abstraction = struct
     | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> "Test.nth_bootstrap_typed_address"
     | C_TEST_TO_ENTRYPOINT -> "Test.to_entrypoint"
     | C_TEST_TO_TYPED_ADDRESS -> "Test.to_typed_address"
+    | C_TEST_RANDOM -> "Test.random"
     | C_TEST_SET_BIG_MAP -> "Test.set_big_map"
     | C_TEST_CAST_ADDRESS -> "Test.cast_address"
     | C_TEST_CREATE_CHEST -> "Test.create_chest"
@@ -496,6 +498,8 @@ module Tree_abstraction = struct
       | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
       | "assert_some"            -> some_const C_ASSERT_SOME
       | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
+      | "assert_none"            -> some_const C_ASSERT_NONE
+      | "assert_none_with_error" -> some_const C_ASSERT_NONE_WITH_ERROR
       | "size"                   -> some_deprecated C_SIZE (* Deprecated *)
 
       | _ as c                   -> pseudo_modules c
@@ -592,6 +596,8 @@ module Tree_abstraction = struct
       | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
       | "assert_some"            -> some_const C_ASSERT_SOME
       | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
+      | "assert_none"            -> some_const C_ASSERT_NONE
+      | "assert_none_with_error" -> some_const C_ASSERT_NONE_WITH_ERROR
       | "true"         -> some_const C_TRUE
       | "false"        -> some_const C_FALSE
 
@@ -691,6 +697,8 @@ module Tree_abstraction = struct
       | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
       | "assert_some"            -> some_const C_ASSERT_SOME
       | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
+      | "assert_none"            -> some_const C_ASSERT_NONE
+      | "assert_none_with_error" -> some_const C_ASSERT_NONE_WITH_ERROR
       | "true"         -> some_const C_TRUE
       | "false"        -> some_const C_FALSE
 
@@ -790,6 +798,8 @@ module Stacking = struct
     | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
     | C_ASSERT_SOME           , _   -> Some ( simple_unary @@ i_if_none (seq [i_push_string "failed assert some" ; i_failwith]) (seq [i_drop; i_push_unit]))
     | C_ASSERT_SOME_WITH_ERROR, _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [i_dropn 2; i_push_unit]))
+    | C_ASSERT_NONE           , _   -> Some ( simple_unary @@ i_if_none (seq [i_push_unit]) (seq [i_push_string "failed assert none" ; i_failwith]))
+    | C_ASSERT_NONE_WITH_ERROR, _   -> Some ( simple_binary @@ i_if_none (seq [i_drop; i_push_unit]) (seq[i_drop;i_failwith]))
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
     | C_ASSERTION          , _   -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
     | C_ASSERTION_WITH_ERROR, _  -> Some ( simple_binary @@ i_if (seq [i_drop; i_push_unit]) (i_failwith))

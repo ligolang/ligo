@@ -1,5 +1,9 @@
-open Types
+module Location    = Simple_utils.Location
+module Var         = Simple_utils.Var
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
 module S = Ast_core
+open Types
 open Stage_common.Constant
 
 let make_t_orig_var ?(loc = Location.generated) type_content core orig_var = {type_content; location=loc; type_meta = core ; orig_var}
@@ -130,7 +134,7 @@ let get_lambda_with_type e =
   | _ -> None
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
-  | t when (compare t (t_bool ()).type_content) = 0-> Some ()
+  | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
 
 let get_param_inj (t:type_expression) : (string * Ligo_string.t * type_expression list) option =
@@ -337,6 +341,8 @@ let e_contract_opt v : expression_content = E_constant {cons_name=C_CONTRACT_OPT
 let e_contract v : expression_content = E_constant {cons_name=C_CONTRACT; arguments=[v]}
 let e_contract_entrypoint e v : expression_content = E_constant {cons_name=C_CONTRACT_ENTRYPOINT; arguments=[e; v]}
 let e_contract_entrypoint_opt e v : expression_content = E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT; arguments=[e; v]}
+let e_pack e : expression_content = E_constant {cons_name=C_BYTES_PACK; arguments=[e]}
+let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e_failwith e : expression_content = E_constant {cons_name=C_FAILWITH ; arguments=[e]}
 
@@ -384,6 +390,7 @@ let e_a_bytes b = make_e (e_bytes b) (t_bytes ())
 let e_a_address s = make_e (e_address s) (t_address ())
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
+let e_a_constructor' ?(layout=default_layout) m l v = make_e (e_constructor l v) (t_sum ~layout:layout m)
 let e_a_constructor c e t = make_e (e_constructor (Label c) e) t
 let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
 
@@ -415,7 +422,8 @@ let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
 let e_a_contract a t = make_e (e_contract a) (t_contract t)
 let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
 let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
-
+let e_a_pack e = make_e (e_pack e) (t_bytes ())
+let e_a_unpack e t = make_e (e_unpack e) (t_option t)
 
 let get_a_int (t:expression) =
   match t.expression_content with
@@ -441,11 +449,11 @@ let get_a_bool (t:expression) =
   match t.expression_content with
   | E_constructor {constructor=Label name;element} when
     (String.equal name "True")
-    && element.expression_content = e_unit () ->
+    && Compare.expression_content element.expression_content @@ e_unit () = 0 ->
       Some true
   | E_constructor {constructor=Label name;element} when
     (String.equal name "False")
-    && element.expression_content = e_unit () ->
+    && Compare.expression_content element.expression_content @@ e_unit () = 0 ->
       Some false
   | _ -> None
 

@@ -23,6 +23,6 @@ let pp : Format.formatter -> t -> unit = fun ppf r ->
   | Propagator_specialize_targ -> Format.fprintf ppf "propagator specialize targ"
   | Propagator_specialize_eq -> Format.fprintf ppf "propagator specialize equation"
 
-let wrap : t -> 'v -> 'v Location.wrap = fun reason v ->
-  let loc = Location.virtual_location @@ Format.asprintf "%a" pp reason in
-  Location.wrap ~loc @@ v
+let wrap : t -> 'v -> 'v Simple_utils.Location.wrap = fun reason v ->
+  let loc = Simple_utils.Location.virtual_location @@ Format.asprintf "%a" pp reason in
+  Simple_utils.Location.wrap ~loc @@ v

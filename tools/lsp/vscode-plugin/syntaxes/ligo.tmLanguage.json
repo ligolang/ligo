@@ -1,237 +1,97 @@
 {
-    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-    "name": "ligo",
-    "patterns": [
-        { "include": "#string" },
-        { "include": "#single-quotes" },
-        { "include": "#comment" },
-        { "include": "#macro" },
-        { "include": "#function" },
-        { "include": "#binding" },
-        { "include": "#type-annotation" },
-        { "include": "#type-definition" },
-        { "include": "#control-keywords" },
-        { "include": "#other-keywords" },
-        { "include": "#operators" },
-        { "include": "#function-application" },
-        { "include": "#numeric-literals" },
-        { "include": "#identifiers" }
-    ],
-    "repository": {
-        "function": {
-            "begin": "\\b(recursive\\s+)?(function)\\b",
-            "beginCaptures": {
-                "1": { "name": "keyword.other.recursive.ligo" },
-                "2": { "name": "keyword.other.function.ligo" }
-            },
-            "end": "\\b(is)\\b",
-            "endCaptures": {
-                "1": { "name": "keyword.other.is.ligo"}
-            },
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#identifiers" },
-                { "include": "#parameters" },
-                { "include": "#type-annotation" },
-                { "include": "#binding" }
-            ]
-        },
-
-        "binding": {
-            "begin": "\\b(var|const)\\b",
-            "end": "(?=[=),;]|:=)",
-            "beginCaptures": {
-                "1": { "name": "keyword.other.binding.ligo" }
-            },
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#identifiers" },
-                { "include": "#type-annotation" }
-            ]
-        },
-
-        "parameters": {
-            "begin": "\\(",
-            "end": "\\)",
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#binding" }
-            ]
-        },
-
-        "macro": {
-            "begin": "^((#)\\s*\\w+)",
-            "beginCaptures": {
-                "1": { "name": "meta.preprocessor.ligo" },
-                "2": { "name": "punctuation.definition.directive.ligo" }
-            },
-            "end": "$",
-            "patterns": [
-                { "include": "#string" },
-                { "include": "#comment" }
-            ]
-        },
-
-        "type-annotation": {
-            "begin": "(:(?!=))\\s*",
-            "beginCaptures": {
-                "1": { "name": "keyword.operator.type.ligo" }
-            },
-            "end": "\\||(?=[,;)=}\\]]|\\bis\\b|\\bend\\b|:=)",
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#type-expression" }
-            ]
-        },
-
-        "type-expression": {
-            "patterns": [
-                {
-                    "begin": "\\(",
-                    "end": "\\)",
-                    "patterns": [
-                        { "include": "#comment" },
-                        { "include": "#sum-type" },
-                        { "include": "#type-expression" }
-                    ]
-                },
-                {
-                    "match": "(?:(?!\\bis\\b|\\bend\\b|:=)[^=,()|}/\\];])+",
-                    "captures": {
-                        "0": { "name": "entity.name.type.ligo" }
-                    }
-                }
-            ]
-        },
-
-        "type-definition": {
-            "begin": "\\b(type)\\s+([a-zA-Z_]\\w*)(?:(?:\\s*\\(((?:\\s*[a-zA-Z_]\\w*\\s*,?\\s*)+)\\)\\s*)?|\\s+)(is)\\b",
-            "beginCaptures": {
-                "1": { "name": "keyword.other.typedef.ligo" },
-                "2": { "name": "entity.name.type.ligo" },
-                "3": { "name": "entity.name.type.ligo" },
-                "4": { "name": "keyword.other.is.ligo" }
-            },
-            "end": "(?=\\b(?:function|type|const|var)\\b|;|^\\s*#\\w+)",
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#struct-type" },
-                { "include": "#sum-type" },
-                { "include": "#type-alias" }
-            ]
-        },
-
-        "struct-type": {
-            "begin": "\\b(record)\\s*(\\[?)",
-            "beginCaptures": {
-                "1": { "name": "keyword.other.record.ligo" },
-                "2": { "name": "keyword.other.begin.ligo" }
-            },
-            "end": "\\]|\\bend\\b",
-            "endCaptures": {
-                "0": { "name": "keyword.other.end.ligo" }
-            },
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#identifiers" },
-                { "include": "#type-annotation" }
-            ]
-        },
-
-        "sum-type": {
-            "begin": "(?:\\|\\s*)?\\b([A-Z]\\w*)(\\s+of)?",
-            "beginCaptures": {
-                "1": { "name": "entity.name.function.ligo" },
-                "2": { "name": "keyword.other.of.ligo" }
-            },
-            "end": "((?=\\)|\\b(?:function|type|const|var)\\b|;|^\\s*#\\w+))",
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#sum-type" },
-                { "include": "#type-expression" }
-            ]
-        },
-
-        "type-alias": {
-            "begin": "\\G\\s*(?!record\\b)(?=[(a-z])",
-            "end": "(?=\\b(?:function|type|const|var|end)\\b|;|^\\s*#\\w+)",
-            "patterns": [
-                { "include": "#comment" },
-                { "include": "#type-expression" }
-            ]
-        },
-
-        "string": {
-            "name": "string.quoted.double.ligo",
-            "begin": "\"",
-            "end": "\"",
-            "patterns": [{
-                    "name": "constant.character.escape.ligo",
-                    "match": "\\\\."
-            }]
-        },
-
-        "single-quotes" : {
-            "name": "string.quoted.single.ligo",
-            "begin": "\\'",
-            "end": "\\'",
-            "patterns" : []
-        },
-
-
-        "comment": {
-            "patterns": [
-                {
-                    "name": "comment.line.double-slash.ligo",
-                    "match": "(//.*)"
-                },
-                {
-                    "name" : "comment.block.ligo",
-                    "begin" : "\\(\\*",
-                    "end" : "\\*\\)",
-                    "patterns" : []
-                }
-            ]
-        },
-
-        "list-cons": {
-            "match": "::",
-            "name": "keyword.operator.cons.ligo"
-        },
-
-        "control-keywords": {
-            "name": "keyword.control.ligo",
-            "match": "\\b(case|of|if|then|else|for|in|step|to|skip|assert|failwith|begin|end|contains)\\b"
-        },
-
-        "other-keywords": {
-            "name": "keyword.other.ligo",
-            "match": "\\b(block|with|record|set|map|list)\\b"
-        },
-
-        "numeric-literals": {
-            "name": "constant.numeric.ligo",
-            "match": "\\b\\d+"
-        },
-
-        "operators": {
-            "name": "keyword.operator.other.ligo",
-            "match": "([-+*/=]|->|:=)"
-        },
-
-        "function-application": {
-            "match": "\\b([a-zA-Z_]\\w*)\\s+\\(",
-            "captures": {
-                "1": { "name": "entity.name.function" }
-            }
-        },
-
-        "identifiers": {
-            "match": "\\b([a-zA-Z_]\\w*)\\b",
-            "captures": {
-                "1": { "name": "entity.name.variable" }
-            }
-        }
+  "name": "ligo",
+  "scopeName": "source.ligo",
+  "fileTypes": [],
+  "patterns": [
+    { "include": "#string" },
+    { "include": "#block_comment" },
+    { "include": "#line_comment" },
+    { "include": "#attribute" },
+    { "include": "#macro" },
+    { "include": "#controlkeywords" },
+    { "include": "#function" },
+    { "include": "#operators" },
+    { "include": "#typedefinition" },
+    { "include": "#module" },
+    { "include": "#identifierconstructor" },
+    { "include": "#constorvar" },
+    { "include": "#numericliterals" }
+  ],
+  "repository": {
+    "string": {
+      "name": "string.quoted.double.ligo",
+      "begin": "\\\"",
+      "end": "\\\"",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
     },
-    "scopeName": "source.ligo"
+    "block_comment": {
+      "name": "comment.block.ligo",
+      "begin": "\\(\\*",
+      "end": "\\*\\)",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
+    },
+    "line_comment": {
+      "name": "comment.block.ligo",
+      "match": "\\/\\/.*$",
+      "captures": {}
+    },
+    "attribute": {
+      "name": "keyword.control.attribute.ligo",
+      "match": "\\[@.*\\]",
+      "captures": {}
+    },
+    "macro": {
+      "name": "meta.preprocessor.ligo",
+      "match": "^\\#[a-zA-Z]+",
+      "captures": {}
+    },
+    "controlkeywords": {
+      "name": "keyword.control.ligo",
+      "match":
+        "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\\b",
+      "captures": {}
+    },
+    "function": {
+      "match": "\\b(function)\\b\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
+      "captures": {
+        "2": { "name": "entity.name.function.ligo" },
+        "1": { "name": "keyword.other.ligo" }
+      }
+    },
+    "numericliterals": {
+      "name": "constant.numeric.ligo",
+      "match": "(\\+|\\-)?[0-9]+(n|tz|tez|mutez|)\\b",
+      "captures": {}
+    },
+    "operators": {
+      "name": "keyword.operator.ligo",
+      "match":
+        "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\s+",
+      "captures": {}
+    },
+    "typedefinition": {
+      "name": "entity.name.type.ligo",
+      "match": "\\b(type)\\b",
+      "captures": {}
+    },
+    "module": {
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
+      "captures": {
+        "2": { "name": "storage.var.ligo" },
+        "1": { "name": "storage.class.ligo" }
+      }
+    },
+    "identifierconstructor": {
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\s+",
+      "captures": { "1": { "name": "variable.other.enummember.ligo" } }
+    },
+    "constorvar": {
+      "match": "\\b(const|var)\\b",
+      "captures": { "1": { "name": "keyword.other.ligo" } }
+    }
+  }
 }

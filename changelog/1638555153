@@ -1,0 +1,6 @@
+---
+  title: "ReasonLIGO: Improve handling of recursive arrows functions."
+  merge_request: "1442"
+  author: "@SanderSpies"
+  type: "fixed"
+

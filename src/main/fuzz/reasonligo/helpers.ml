@@ -198,7 +198,7 @@ module Fold_helpers(M : Monad) = struct
        )
     | ETypeIn  {value;region=_} ->
        let {type_decl;semi=_;body} = value in
-       let {kwd_type=_;name=_;eq=_;type_expr} = type_decl in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = type_decl in
        let* res = self_type init type_expr in
        let* res = self res body in
        ok @@ res
@@ -214,7 +214,7 @@ module Fold_helpers(M : Monad) = struct
        let* res = self init body in
        ok @@ res
     | EFun     {value;region=_} ->
-       let {binders=_; lhs_type; arrow=_; body} = value in
+       let {binders=_; lhs_type; arrow=_; body;attributes=_} = value in
        let* res = self init body in
        (match lhs_type with
           Some (_, ty) -> self_type res ty
@@ -230,7 +230,7 @@ module Fold_helpers(M : Monad) = struct
     bind_fold_ne_list (case_clause self) init @@ npseq_to_ne_list value
 
   and case_clause self init ({value;region=_}: _ case_clause reg) =
-    let {pattern=_;arrow=_;rhs} = value in
+    let {pattern=_;arrow=_;rhs;terminator=_} = value in
     self init rhs
 
   and fold_declaration : 'a folder -> 'a -> declaration -> 'a monad =
@@ -249,7 +249,7 @@ module Fold_helpers(M : Monad) = struct
         | None -> ok res
        )
     | TypeDecl {value;region=_} ->
-       let {kwd_type=_;name=_;eq=_;type_expr} = value in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = value in
        let* res = self_type init type_expr in
        ok res
 
@@ -518,7 +518,7 @@ module Fold_helpers(M : Monad) = struct
        return @@ ELetIn {value;region}
     | ETypeIn  {value;region} ->
        let {type_decl;semi;body} = value in
-       let {kwd_type=_;name=_;eq=_;type_expr} = type_decl in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = type_decl in
        let* type_expr = self_type type_expr in
        let* body = self body in
        let type_decl = {type_decl with type_expr} in
@@ -539,7 +539,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {mod_alias;semi;body} in
        return @@ EModAlias {value;region}
     | EFun     {value;region} ->
-       let {binders=_; lhs_type; arrow=_; body} = value in
+       let {binders=_; lhs_type; arrow=_; body;attributes=_} = value in
        let* body = self body in
        let* lhs_type = bind_map_option (fun (a,b) ->
                            let* b = self_type b in ok (a,b)) lhs_type in
@@ -559,7 +559,7 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {cases with value}
 
   and case_clause self (case_clause: _ case_clause reg) =
-    let {pattern=_;arrow=_;rhs} = case_clause.value in
+    let {pattern=_;arrow=_;rhs;terminator=_} = case_clause.value in
     let* rhs = self rhs in
     let value = {case_clause.value with rhs} in
     ok @@ {case_clause with value}
@@ -581,7 +581,7 @@ module Fold_helpers(M : Monad) = struct
        let value = (kwd_let,kwd_rec,let_binding,attr) in
        return @@ ConstDecl {value;region}
     | TypeDecl {value;region} ->
-       let {kwd_type=_;name=_;eq=_;type_expr} = value in
+       let {kwd_type=_;name=_;eq=_;type_expr;params=_} = value in
        let* type_expr = self_type type_expr in
        let value = {value with type_expr} in
        return @@ TypeDecl {value;region}

@@ -87,12 +87,12 @@ module Fold_helpers(M : Monad) = struct
     in
     match e with
       ECase    {value;region=_} ->
-       let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases} = value in
+       let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases;enclosing=_} = value in
        let* res = self init expr in
        let* res = matching_cases self res cases in
        ok @@ res
     | ECond    {value;region=_} ->
-       let ({kwd_if=_;test;kwd_then=_;ifso;ifnot} : cond_expr) = value in
+       let ({kwd_if=_;test;kwd_then=_;ifso;kwd_else=_;ifnot;terminator=_} : cond_expr) = value in
        let* res = self init test in
        let* res = self res ifso in
        let* res = self res ifnot in
@@ -169,7 +169,7 @@ module Fold_helpers(M : Monad) = struct
     | EPar     {value;region=_} ->
        self init value.inside
     | EFun     {value;region=_} ->
-       let ({kwd_function=_; param=_; ret_type; kwd_is=_; return}: fun_expr) = value in
+       let ({kwd_function=_; param=_; ret_type; kwd_is=_; return;attributes=_}: fun_expr) = value in
        let* res = self init return in
        (match ret_type with
           Some (_, ty) -> self_type res ty
@@ -322,7 +322,7 @@ module Fold_helpers(M : Monad) = struct
         | None ->    ok @@ res
        )
     | Data LocalVar     {value;region=_} ->
-       let {kwd_var=_;pattern=_;var_type;assign=_;init=expr;terminator=_} = value in
+       let {kwd_var=_;pattern=_;var_type;assign=_;init=expr;terminator=_;attributes=_} = value in
        let* res = self_expr init expr in
        (match var_type with
           Some (_, ty) -> self_type res ty
@@ -336,7 +336,7 @@ module Fold_helpers(M : Monad) = struct
         | None ->    ok @@ res
        )
     | Data LocalType {value;region=_} ->
-       let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+       let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_;params=_} = value in
        let* res = self_type init type_expr in
        ok @@ res
     | Data LocalModule {value;region=_} ->
@@ -378,7 +378,7 @@ module Fold_helpers(M : Monad) = struct
         | None ->    ok res
        )
     | TypeDecl {value;region=_} ->
-       let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+       let {kwd_type=_;name=_;kwd_is=_;type_expr;params=_;terminator=_} = value in
        let* res = self_type init type_expr in
        ok @@ res
     | ModuleDecl {value;region=_} ->
@@ -386,7 +386,7 @@ module Fold_helpers(M : Monad) = struct
        let* res = self_module init module_ in
        ok @@ res
     | ModuleAlias {value;region=_} ->
-       let {kwd_module=_;alias=_;kwd_is=_;binders=_;} = value in
+       let {kwd_module=_;alias=_;kwd_is=_;binders=_;terminator=_} = value in
        ok @@ init
     | Directive _ -> ok init
 
@@ -465,13 +465,13 @@ module Fold_helpers(M : Monad) = struct
     in
     match e with
       ECase    {value;region} ->
-       let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases} = value in
+       let {kwd_case=_;expr;kwd_of=_;lead_vbar=_;cases;enclosing=_} = value in
        let* expr = self expr in
        let* cases = matching_cases self cases in
        let value = {value with expr;cases} in
        return @@ ECase {value;region}
     | ECond    {value;region} ->
-       let ({kwd_if=_;test;kwd_then=_;ifso;ifnot} : cond_expr) = value in
+       let ({kwd_if=_;test;kwd_then=_;ifso;kwd_else=_;ifnot;terminator=_} : cond_expr) = value in
        let* test = self test in
        let* ifso = self ifso in
        let* ifnot = self ifnot in
@@ -594,7 +594,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {value with inside} in
        return @@ EPar {value;region}
     | EFun     {value;region} ->
-       let ({kwd_function=_; param=_; ret_type; kwd_is=_; return=body}: fun_expr) = value in
+       let ({kwd_function=_; param=_; ret_type; kwd_is=_; return=body;attributes=_}: fun_expr) = value in
        let* body = self body in
        let* ret_type = bind_map_option (fun (a,b) ->
                            let* b = self_type b in ok (a,b)) ret_type in
@@ -671,7 +671,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {value with init;const_type} in
        ok @@ Data (LocalConst {value;region})
     | Data LocalVar     {value;region} ->
-       let {kwd_var=_;pattern=_;var_type;assign=_;init;terminator=_} = value in
+       let {kwd_var=_;pattern=_;var_type;assign=_;init;terminator=_;attributes=_} = value in
        let* init = self_expr init in
        let* var_type = bind_map_option (fun (w, ty)
                                         -> let* ty = self_type ty in ok @@ (w,ty)) var_type in
@@ -685,7 +685,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {value with return;ret_type} in
        ok @@ Data (LocalFun {value;region})
     | Data LocalType {value;region} ->
-       let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+       let {kwd_type=_;name=_;kwd_is=_;type_expr;params=_;terminator=_} = value in
        let* type_expr = self_type type_expr in
        let value = {value with type_expr} in
        ok @@ Data (LocalType {value;region})
@@ -864,7 +864,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {value with return=expr;ret_type} in
        return @@ FunDecl {value;region}
     | TypeDecl {value;region} ->
-       let {kwd_type=_;name=_;kwd_is=_;type_expr;terminator=_} = value in
+       let {kwd_type=_;name=_;kwd_is=_;type_expr;params=_;terminator=_} = value in
        let* type_expr = self_type type_expr in
        let value = {value with type_expr} in
        return @@ TypeDecl {value;region}
@@ -874,7 +874,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {value with module_} in
        return @@ ModuleDecl {value;region}
     | ModuleAlias {value;region} ->
-       let {kwd_module=_;alias=_;kwd_is=_;binders=_} = value in
+       let {kwd_module=_;alias=_;kwd_is=_;binders=_;terminator=_} = value in
        return @@ ModuleAlias {value;region}
     | Directive _ as d -> return d
 

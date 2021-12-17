@@ -6,5 +6,5 @@ module Main  = Lexing_shared.UnlexerGen.Make (Token)
 
 (* Reading one line from the standard input channel and unlex it. *)
 
-let out = Main.unlex (input_line stdin) |> Buffer.contents
+let out = Main.unlex In_channel.(input_line_exn stdin) |> Buffer.contents
 let ()  = Printf.printf "%s\n" out

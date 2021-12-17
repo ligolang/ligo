@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1244'
+title: 'Testing framework: add Test.random for generating values using QCheck'
+type: added

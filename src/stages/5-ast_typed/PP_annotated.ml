@@ -1,7 +1,11 @@
 [@@@coverage exclude_file]
+module Location    = Simple_utils.Location
+module Var         = Simple_utils.Var
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
 open Types
 open Format
-open PP_helpers
+open Simple_utils.PP_helpers
 include Stage_common.PP
 
 let lmap_sep value sep ppf m =

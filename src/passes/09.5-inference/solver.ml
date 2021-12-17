@@ -1,6 +1,6 @@
 open Trace
 open Typer_common.Errors
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
@@ -176,7 +176,7 @@ end = struct
   and get_alias ~raise variable aliases =
     trace_option ~raise (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
     (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
-    try Some (UF.repr variable aliases) with Not_found -> None
+    try Some (UF.repr variable aliases) with Caml.Not_found -> None
 
   and aux_heuristic ~raise:_ (state, (constraint_, (Heuristic_state heuristic), set_heuristic_state)) =
     let repr = mk_repr state in

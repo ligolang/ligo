@@ -41,20 +41,12 @@ export class DeployAction extends CancellableAction {
     beaconWallet: any,
     launchNetwork: string
   ): Promise<void> => {
-    if (launchNetwork === NetworkType.GRANADANET) {
+    if (launchNetwork === NetworkType.HANGZHOUNET) {
       await beaconWallet.requestPermissions({
         network: {
-          type: NetworkType.GRANADANET,
-          name: 'Granadanet',
-          rpcUrl: `https://api.tez.ie/rpc/granadanet`,
-        },
-      });
-    } else if (launchNetwork === NetworkType.FLORENCENET) {
-      await beaconWallet.requestPermissions({
-        network: {
-          type: NetworkType.FLORENCENET,
-          name: 'Florencenet',
-          rpcUrl: `https://api.tez.ie/rpc/florencenet`,
+          type: NetworkType.HANGZHOUNET,
+          name: 'Hangzhounet',
+          rpcUrl: `https://hangzhounet.api.tez.ie`,
         },
       });
     } else if (launchNetwork === NetworkType.MAINNET) {
@@ -62,7 +54,7 @@ export class DeployAction extends CancellableAction {
         network: {
           type: NetworkType.MAINNET,
           name: 'Mainnet',
-          rpcUrl: `https://api.tez.ie/rpc/mainnet`,
+          rpcUrl: `https://mainnet.api.tez.ie`,
         },
       });
     }
@@ -88,14 +80,14 @@ export class DeployAction extends CancellableAction {
       MichelsonFormat.Json
     );
 
-    let networkURL = 'https://api.tez.ie/rpc/florencenet';
-    let network = { type: NetworkType.FLORENCENET };
+    let networkURL = 'https://hangzhounet.api.tez.ie';
+    let network = { type: NetworkType.HANGZHOUNET };
 
-    if (deployState.network === 'granadanet') {
-      networkURL = 'https://api.tez.ie/rpc/granadanet';
-      network = { type: NetworkType.GRANADANET };
+    if (deployState.network === 'hangzhounet') {
+      networkURL = 'https://hangzhounet.api.tez.ie';
+      network = { type: NetworkType.HANGZHOUNET };
     } else if (deployState.network === NetworkType.MAINNET) {
-      networkURL = 'https://api.tez.ie/rpc/mainnet';
+      networkURL = 'https://mainnet.api.tez.ie';
       network = { type: NetworkType.MAINNET };
     }
 

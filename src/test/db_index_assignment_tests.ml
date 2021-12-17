@@ -1,4 +1,5 @@
-open Trace
+module PP_helpers = Simple_utils.PP_helpers
+open Simple_utils.Trace
 
 (* module Core = Typesystem.Core *)
 open Ast_core.Types

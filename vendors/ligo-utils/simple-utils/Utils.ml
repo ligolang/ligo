@@ -32,18 +32,18 @@ let sepseq_cons x sep = function
 
 (* Rightwards iterators *)
 
-let nseq_foldl f a (hd,tl) = List.fold_left f a (hd::tl)
+let nseq_foldl f a (hd,tl) = List.fold_left ~f ~init:a (hd::tl)
 
 let nsepseq_foldl f a (hd,tl) =
-  List.fold_left (fun a (_,e) -> f a e) (f a hd) tl
+  List.fold_left ~f:(fun a (_,e) -> f a e) ~init:(f a hd) tl
 
 let sepseq_foldl f a = function
     None -> a
 | Some s -> nsepseq_foldl f a s
 
-let nseq_iter f (hd,tl) = List.iter f (hd::tl)
+let nseq_iter f (hd,tl) = List.iter ~f (hd::tl)
 
-let nsepseq_iter f (hd,tl) = f hd; List.iter (f <@ snd) tl
+let nsepseq_iter f (hd,tl) = f hd; List.iter ~f:(f <@ snd) tl
 
 let sepseq_iter f = function
     None -> ()
@@ -71,9 +71,9 @@ let sepseq_rev = function
 
 (* Leftwards iterators *)
 
-let nseq_foldr f (hd,tl) = List.fold_right f (hd::tl)
+let nseq_foldr f (hd,tl) init = List.fold_right ~f (hd::tl) ~init
 
-let nsepseq_foldr f (hd,tl) a = f hd (List.fold_right (f <@ snd) tl a)
+let nsepseq_foldr f (hd,tl) a = f hd (List.fold_right ~f:(f <@ snd) tl ~init:a)
 
 let sepseq_foldr f = function
     None -> fun a -> a
@@ -81,10 +81,10 @@ let sepseq_foldr f = function
 
 (* Maps *)
 
-let nseq_map f (hd,tl) = f hd, List.map f tl
+let nseq_map f (hd,tl) = f hd, List.map ~f tl
 
 let nsepseq_map f (hd,tl) =
-  f hd, List.map (fun (sep,item) -> (sep, f item)) tl
+  f hd, List.map ~f:(fun (sep,item) -> (sep, f item)) tl
 
 let sepseq_map f = function
       None -> None
@@ -94,7 +94,7 @@ let sepseq_map f = function
 
 let nseq_to_list (x,y) = x::y
 
-let nsepseq_to_list (x,y) = x :: List.map snd y
+let nsepseq_to_list (x,y) = x :: List.map ~f:snd y
 
 let sepseq_to_list = function
     None -> []
@@ -131,8 +131,8 @@ module String =
         let compare = compare
       end
 
-    module Map = Map.Make (Ord)
-    module Set = Set.Make (Ord)
+    module Map = Caml.Map.Make (Ord)
+    module Set = Caml.Set.Make (Ord)
   end
 
 (* Integers *)
@@ -147,8 +147,8 @@ module Int =
         let compare = compare
       end
 
-    module Map = Map.Make (Ord)
-    module Set = Set.Make (Ord)
+    module Map = Caml.Map.Make (Ord)
+    module Set = Caml.Set.Make (Ord)
   end
 
 (* Effectful symbol generator *)

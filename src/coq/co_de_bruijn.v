@@ -12,7 +12,7 @@ Inductive used {A : Type} : list usage -> list A -> list A -> Prop :=
 | Used_keep {us y xs ys} : used us xs ys -> used (Keep :: us) (y :: xs) (y :: ys)
 .
 
-Hint Constructors used.
+#[export] Hint Constructors used.
 
 Lemma used_app {A : Type} {us1 us2 : list usage} {xs1 xs2 ys1 ys2 : list A} :
   used us1 xs1 ys1 ->
@@ -35,9 +35,9 @@ Proof.
   induction xs; simpl; auto.
 Qed.
 
-Hint Resolve used_app.
-Hint Resolve used_drops.
-Hint Resolve used_keeps.
+#[export] Hint Resolve used_app.
+#[export] Hint Resolve used_drops.
+#[export] Hint Resolve used_keeps.
 
 Definition filter_keeps (us : list usage) : list usage :=
   filter (fun u => match u with | Keep => true | Drop => false end) us.
@@ -72,7 +72,7 @@ Inductive splits {A : Type} : list side -> list A -> list A -> list A -> Prop :=
 | Splits_both {ss z zs xs ys} : splits ss zs xs ys -> splits (Both :: ss) (z :: zs) (z :: xs) (z :: ys)
 .
 
-Hint Constructors splits.
+#[export] Hint Constructors splits.
 
 Lemma splits_right {A : Type} :
   forall (outer : splitting) (d1 d2 : list A),
@@ -104,7 +104,7 @@ Proof.
     apply IHg' in H; simpl; auto.
 Qed.
 
-Hint Resolve splits_lefts.
+#[export] Hint Resolve splits_lefts.
 
 Lemma splits_lefts' {A : Type} :
   forall (g : list A),
@@ -116,7 +116,7 @@ Proof.
     eapply splits_lefts; auto.
 Qed.
 
-Hint Resolve splits_lefts'.
+#[export] Hint Resolve splits_lefts'.
 
 Definition keep_right (u : usage) : side :=
   match u with
@@ -181,7 +181,7 @@ Lemma used_splits_right {A : Type} {ss : splitting} {xs ys zs : list A} :
   used (right_usages ss) ys zs.
 Proof. intros; induction H; simpl; auto. Qed.
 
-Hint Resolve used_splits_right.
+#[export] Hint Resolve used_splits_right.
 
 Lemma splits_keep_rights_left_usages {A : Type} {ss : list side} {g g1 g2 : list A} :
   splits ss g g1 g2 ->
@@ -221,7 +221,7 @@ Lemma used_select :
     used us (select us xs) xs.
 Proof. intros; rewrite <- select_iff_used; auto. Qed.
 
-Hint Resolve used_select.
+#[export] Hint Resolve used_select.
 
 Lemma select_iff_splits :
   forall {A : Type} (ss : splitting) (zs xs ys : list A),
@@ -249,7 +249,7 @@ Lemma splits_select :
     splits ss zs (select (left_usages ss) zs) (select (right_usages ss) zs).
 Proof. intros; rewrite <- select_iff_splits; auto. Qed.
 
-Hint Resolve splits_select.
+#[export] Hint Resolve splits_select.
 
 Fixpoint assoc_splitting1 (outer inner : splitting) : splitting :=
   match (outer, inner) with
@@ -261,7 +261,7 @@ Fixpoint assoc_splitting1 (outer inner : splitting) : splitting :=
   | (Both  :: outer, Right :: inner) => Right :: assoc_splitting1 outer inner
   | (Both  :: outer, Both  :: inner) => Both  :: assoc_splitting1 outer inner
   | ([], inner) => []
-  | (outer, []) => []
+  | (_, []) => []
   end.
 
 Fixpoint assoc_splitting2 (outer inner : splitting) : splitting :=
@@ -274,7 +274,7 @@ Fixpoint assoc_splitting2 (outer inner : splitting) : splitting :=
   | (Both  :: outer, Right :: inner) => Both  :: assoc_splitting2 outer inner
   | (Both  :: outer, Both  :: inner) => Both  :: assoc_splitting2 outer inner
   | ([], inner) => []
-  | (outer, []) => []
+  | (_, []) => []
   end.
 
 Definition assoc_splitting (outer inner : splitting) : splitting * splitting :=
@@ -322,7 +322,7 @@ Proof.
   intros; apply flip_splits, splits_select; assumption.
 Qed.
 
-Hint Resolve splits_flip_select.
+#[export] Hint Resolve splits_flip_select.
 
 
 (* currently only used by uncertified OCaml code at

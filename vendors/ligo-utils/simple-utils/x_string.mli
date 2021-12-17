@@ -11,6 +11,7 @@ val standard : string -> t
 val verbatim : string -> t
 
 val compare : ?compare:(string->string->int) -> t -> t -> int
+val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
 val extract : t -> string
 

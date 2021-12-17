@@ -1,4 +1,4 @@
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2

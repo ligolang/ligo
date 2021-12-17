@@ -1,3 +1,7 @@
+module Location    = Simple_utils.Location
+module Var         = Simple_utils.Var
+module List        = Simple_utils.List
+module Ligo_string = Simple_utils.Ligo_string
 open Types
 
 let range i j =
@@ -56,7 +60,7 @@ let kv_list_of_record_or_tuple ~layout record_t_content record =
   | L_comb -> (
     let types = LMap.to_kv_list record_t_content in
     let te = List.map ~f:(fun ((label_t,t),(label_e,e)) ->
-      assert (label_t = label_e) ; (*TODO TEST*)
+      assert (Compare.label label_t label_e = 0) ; (*TODO TEST*)
       (t,e)) (List.zip_exn types exps) in
     let s = List.sort ~compare:(fun ({ associated_type = _ ; decl_pos = a ; _ },_) ({ associated_type = _ ; decl_pos = b ; _ },_) -> Int.compare a b) te in
     List.map ~f:snd s
@@ -91,8 +95,8 @@ let get_entrypoint (entrypoint : string) (t : type_expression) : type_expression
   match t.type_content with
   | T_sum {content;_} ->
      let f (Label n, (v, t)) = match v with
-         | None -> (String.lowercase_ascii n, t)
-         | Some n -> (String.lowercase_ascii n, t) in
+         | None -> (String.lowercase n, t)
+         | Some n -> (String.lowercase n, t) in
      let annots = content
                   |> LMap.map (fun x -> (x.michelson_annotation, x.associated_type))
                   |> LMap.to_kv_list |> List.map ~f in
@@ -154,4 +158,4 @@ let build_applications_opt (lamb : expression) (args : expression list) =
        None in
   aux lamb args lamb.type_expression
 
-let is_generalizable_variable name = String.equal (String.sub (Var.to_name name) 0 1) "_"
+let is_generalizable_variable name = String.equal (String.sub (Var.to_name name) ~pos:0 ~len:1) "_"

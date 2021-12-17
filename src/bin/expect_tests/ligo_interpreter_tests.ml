@@ -69,7 +69,7 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test1 exited with value ().
-    Number of elements in environment: 37 |}]
+    Number of elements in environment: 7 |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "views_test.mligo" ; "--protocol" ; "hangzhou" ] ;
@@ -215,6 +215,7 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_importer.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
+    - test_imported.mligo exited with value {D = {default = {final = false ; initial = true}} ; main = <fun>}.
     - test exited with value (). |}]
 
 let%expect_test _ =
@@ -405,6 +406,34 @@ let%expect_test _ =
     [%expect{|
       Everything at the top-level was executed.
       - test_main exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_FA12.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_transfer exited with value ().
+    - test_transfer_not_e_allowance exited with value ().
+    - test_transfer_not_e_balance exited with value ().
+    - test_approve exited with value ().
+    - test_approve_unsafe exited with value ().
+    - test_get_allowance exited with value ().
+    - test_get_balance exited with value ().
+    - test_get_total_supply exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "pack_unpack.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_string exited with value ().
+    - test_int exited with value ().
+    - test_string_int exited with value ().
+    - test_string_string exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_pack_unpack.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
 
 (* do not remove that :) *)
 let () = Sys.chdir pwd

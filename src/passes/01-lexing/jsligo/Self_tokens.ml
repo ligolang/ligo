@@ -50,7 +50,7 @@ let tokens_of = function
     | Core.Markup (Markup.LineCom {value; region}) -> Token.LineCom (Token.wrap value region) :: tokens
     | Core.Markup _ -> tokens
     | Core.Directive d -> Token.Directive d :: tokens
-    in List.fold_left apply [] lex_units |> List.rev |> ok
+    in List.fold_left ~f:apply ~init:[] lex_units |> List.rev |> ok
 | Error _ as err -> err
 
 (* Automatic Semicolon Insertion *)
@@ -108,12 +108,12 @@ let collect_attributes str =
     try (
       let r = Str.search_forward attribute_regexp str 0 in
       let s = Str.matched_group 0 str in
-      let s = String.sub s 1 (String.length s - 1) in
-      let next = (String.sub str (r + String.length s) (String.length str - (r + + String.length s))) in
+      let s = String.sub s ~pos:1 ~len:(String.length s - 1) in
+      let next = (String.sub str ~pos:(r + String.length s) ~len:(String.length str - (r + + String.length s))) in
       inner (s :: result) next
     )
     with
-    | Not_found -> result
+    | Caml.Not_found -> result
   in
   inner [] str
 
@@ -123,7 +123,7 @@ let attributes tokens =
     LineCom c :: tl
   | BlockCom c :: tl ->
       let attributes = collect_attributes c#payload in
-      let attributes = List.map (fun e ->
+      let attributes = List.map ~f:(fun e ->
         Attr (Token.wrap e c#region)
       ) attributes in
       inner (attributes @ result) tl
@@ -160,7 +160,7 @@ let print_unit = function
     Printf.printf "%s\n" (Directive.to_string ~offsets:true `Point d)
 
 let print_units units =
-  apply (fun units -> List.iter print_unit units; units) units
+  apply (fun units -> List.iter ~f:print_unit units; units) units
 
 (* Printing tokens *)
 
@@ -168,7 +168,7 @@ let print_token token =
   Printf.printf "%s\n" (Token.to_string ~offsets:true `Point token)
 
 let print_tokens tokens =
-  apply (fun tokens -> List.iter print_token tokens; tokens) tokens
+  apply (fun tokens -> List.iter ~f:print_token tokens; tokens) tokens
 
 
 (* insert vertical bar for sum type *)

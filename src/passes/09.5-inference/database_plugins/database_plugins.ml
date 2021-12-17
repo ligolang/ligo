@@ -1,4 +1,5 @@
 open Solver_types
+open Simple_utils
 
 (* data Indexers_plugins_fields (Ppt :: PerPluginType) = Indexers_plugins_fields {
      assignments       :: Ppt Assignments,

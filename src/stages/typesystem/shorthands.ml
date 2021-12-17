@@ -1,7 +1,7 @@
 open Ast_core.Types
-open Core
 open Ast_core.Misc
 open Ast_core.Reasons
+open Types
 
 (* TODO: remove this () argument, it is just here to make sure that
    the ~bound and ~constraints arguments are given (while adding the

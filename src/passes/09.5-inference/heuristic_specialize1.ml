@@ -13,7 +13,7 @@ module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstrac
   end
 end
 
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Solver_types
 open Typer_common.Errors
 open Ast_core.Reasons

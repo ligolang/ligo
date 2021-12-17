@@ -13,7 +13,7 @@ let compile_expression = parse_and_abstract_expression
 
 let compile_contract_input ~raise : meta:meta -> c_unit -> c_unit -> Ast_imperative.expression  =
     fun ~meta storage parameter ->
-  let (storage,parameter) = Pair.map ~f:(compile_expression ~raise ~meta) (storage,parameter) in
+  let (storage,parameter) = Simple_utils.Pair.map ~f:(compile_expression ~raise ~meta) (storage,parameter) in
   Ast_imperative.e_pair storage parameter
 
 let pretty_print_cst = pretty_print_cst

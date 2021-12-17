@@ -1,5 +1,7 @@
 open Main_errors
-open Trace
+open Simple_utils.Trace
+module Var = Simple_utils.Var
+module Location = Simple_utils.Location
 
 type form =
   | Contract of string

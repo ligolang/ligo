@@ -29,7 +29,7 @@ let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) ->
   fun ?debug:_ _merge_keys state -> state
 
 let pp _type_variable ppf state =
-  let open PP_helpers in
+  let open Simple_utils.PP_helpers in
   list_sep_d (pair Type_variable_abstraction.PP.constraint_identifier Type_variable_abstraction.PP.c_typeclass_simpl_short) ppf (PolyMap.bindings state)
 
 let name = "by_constraint_identifier"
