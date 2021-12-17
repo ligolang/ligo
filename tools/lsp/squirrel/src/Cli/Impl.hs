@@ -21,14 +21,19 @@ import Control.Monad
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.Reader
 import Data.Aeson (ToJSON (..), eitherDecodeStrict', object, (.=))
+import Data.Bifunctor (bimap)
 import Data.Foldable (asum)
 import Data.Text (Text, pack, unpack)
 import Data.Text qualified as Text
 import Data.Text.Encoding (encodeUtf8)
+import Data.Text.IO qualified as Text
 import Data.Typeable (cast)
 import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
 import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
+import System.FilePath (takeDirectory, takeFileName)
+import System.IO (Handle, hFlush)
+import System.IO.Temp (withSystemTempFile)
 import System.Process
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
@@ -203,6 +208,17 @@ deriving anyclass instance ToObject Version
 instance LogItem Version where
   payloadKeys = const $ const AllKeys
 
+usingTemporaryDir :: MonadIO m => Source -> (FilePath -> Handle -> IO a) -> m a
+usingTemporaryDir src action =
+  liftIO $ withSystemTempFile (takeFileName $ srcPath src) \tempFp handle -> do
+    contents <- srcToText src
+    Text.hPutStr handle contents
+    hFlush handle
+    action tempFp handle
+
+fixMarkers :: FilePath -> FilePath -> Text -> Text
+fixMarkers tempFp fp = Text.replace (pack tempFp) (pack fp)
+
 ----------------------------------------------------------------------------
 -- Execute ligo binary itself
 
@@ -226,8 +242,12 @@ getLigoVersion = Log.addNamespace "getLigoVersion" do
 
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
 --
+-- This function will call the contract with a temporary file path, dumping the
+-- contents of the given source so LIGO reads the contents. This allows us to
+-- continue using the preprocessor even if it's an unsaved LSP buffer.
+--
 -- ```
--- ligo print preprocessed ${contract_path} --format json
+-- ligo print preprocessed ${temp_file_name} --lib ${contract_dir} --format json
 -- ```
 preprocess
   :: (HasLigoClient m, Log m)
@@ -235,9 +255,12 @@ preprocess
   -> m (Source, Text)
 preprocess contract = Log.addNamespace "preprocess" $ Log.addContext contract do
   $(Log.debug) [i|preprocessing the following contract:\n #{contract}|]
-  let fp = srcPath contract
-  mbOut <- try $ callLigo ["print", "preprocessed", fp, "--format", "json"] contract
-  case mbOut of
+  (mbOut, tempFp) <- usingTemporaryDir contract \tempFp _ -> do
+    mbOut <- try $ callLigo
+      ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"]
+      contract
+    pure (mbOut, tempFp)
+  case join bimap (fixMarkers tempFp fp) <$> mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @Text . encodeUtf8 $ output of
         Left err -> do
@@ -249,6 +272,10 @@ preprocess contract = Log.addNamespace "preprocess" $ Log.addContext contract do
           ByteString path _ -> ByteString path $ encodeUtf8 newContract
     Left LigoExpectedClientFailureException {ecfeStderr} ->
       handleLigoError fp ecfeStderr
+  where
+    fp, dir :: FilePath
+    fp = srcPath contract
+    dir = takeDirectory fp
 
 -- | Get ligo definitions from raw contract.
 getLigoDefinitions
@@ -258,11 +285,11 @@ getLigoDefinitions
 getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
   $(Log.debug) [i|parsing the following contract:\n#{contract}|]
   let path = srcPath contract
-  mbOut <- tryAny $
-    -- HACK: We forget the parsed contract since we still want LIGO to read the
-    -- unpreprocessed version.
-    callLigo ["info", "get-scope", path, "--format", "json", "--with-types"] (Path path)
-  case mbOut of
+  (mbOut, tempFp) <- usingTemporaryDir contract \tempFp _ ->
+    fmap (, tempFp) $ tryAny $ callLigo
+      ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir]
+      contract
+  case join bimap (fixMarkers tempFp fp) <$> mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
@@ -276,6 +303,10 @@ getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addCon
         Just LigoUnexpectedClientFailureException {ucfeStderr} ->
           handleLigoError path ucfeStderr
         Nothing -> throwM e
+  where
+    fp, dir :: FilePath
+    fp = srcPath contract
+    dir = takeDirectory fp
 
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
