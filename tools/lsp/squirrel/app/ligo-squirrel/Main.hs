@@ -64,8 +64,7 @@ mainLoop =
 
     lspOptions :: S.Options
     lspOptions = def
-      { S.textDocumentSync       = Just syncOptions
-      , S.executeCommandCommands = Just ["lsp-hello-command"]
+      { S.textDocumentSync = Just syncOptions
       , S.signatureHelpTriggerCharacters = Just ['(', ' ']
       , S.signatureHelpRetriggerCharacters = Just [',']
       }
