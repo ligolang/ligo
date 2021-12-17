@@ -1,4 +1,6 @@
 # This file contains pipeline configuration used by Serokell at https://gitlab.com/serokell/ligo/ligo
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
   - ligo
