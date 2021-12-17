@@ -1,3 +1,9 @@
+open Main_errors
+module Region  = Simple_utils.Region
+module Pos     = Simple_utils.Pos
+module Display = Simple_utils.Display
+module Michelson = Tezos_utils.Michelson
+module Location = Simple_utils.Location
 open Region
 
 let byte =

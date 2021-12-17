@@ -16,7 +16,7 @@ interface DeployBody {
 }
 
 const Tezos = (network: string) =>
-  new TezosToolkit(`https://api.tez.ie/rpc/${network}`);
+  new TezosToolkit(`https://${network}.api.tez.ie`);
 
 const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi

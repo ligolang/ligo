@@ -1,5 +1,6 @@
+module Trace = Simple_utils.Trace
 open Test_helpers
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Ast_core.Types
 open Ast_core.Reasons
 open Ast_core.Combinators

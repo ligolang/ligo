@@ -1,7 +1,10 @@
 open Simple_utils.Display
 
 module Raw = Cst.Jsligo
-module Parsing = Parsing.Jsligo
+module Parsing  = Parsing.Jsligo
+module Region   = Simple_utils.Region
+module Location = Simple_utils.Location
+module Snippet  = Simple_utils.Snippet
 
 let stage = "abstracter"
 

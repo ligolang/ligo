@@ -7,5 +7,4 @@
    (source_tree ../../test/lexer)))
  (preprocess
   (pps ppx_expect))
- (flags
-  (:standard -open Simple_utils)))
+)

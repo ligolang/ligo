@@ -1,7 +1,7 @@
 open Test_helpers
 (* open Main_errors *)
 
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Ast_core.Types
 open Ast_core.Reasons
 

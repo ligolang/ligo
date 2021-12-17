@@ -1,4 +1,4 @@
-open Display
+open Simple_utils.Display
 open Types
 
 (*  this type is not necessary if the output of CLI command 'print-mini-c' have the

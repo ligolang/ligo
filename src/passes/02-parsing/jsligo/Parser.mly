@@ -207,7 +207,7 @@ stmt_or_namespace:
 %inline attributes:
   ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) {
     let l = list_of_option $1 in
-    List.map unwrap l
+    List.map ~f:unwrap l
   }
 
 (* Namespace Statement *)
@@ -466,7 +466,7 @@ ctor_args:
     in ESeq {region; value=$1} }
 
 ctor_arg:
-  expr_stmt { $1 }
+  expr { $1 }
 
 (* Export Declaration *)
 

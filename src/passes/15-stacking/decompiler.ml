@@ -1,7 +1,7 @@
 open Errors
 open Mini_c.Types
 open Tezos_micheline.Micheline
-open Trace
+open Simple_utils.Trace
 
 let rec comb prim loc xs =
   match xs with

@@ -8,6 +8,4 @@
  (inline_tests)
  (preprocess
   (pps ppx_inline_test ppx_expect ppx_poly_constructor))
- (flags
-  (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils -open
-    Tezos_utils)))
+)

@@ -1,9 +1,9 @@
 open Test_helpers
-module Core = Typesystem.Core
+module Core = Typesystem.Types
 open Ast_core.Types
 (* open Solver_types *)
 (* open Typer_common.Errors *)
-open Trace
+open Simple_utils.Trace
 open Heuristic_common
 
 open Inference.Heuristic_specialize1
@@ -21,7 +21,7 @@ let c6 = constraint_ 6L n == ctor C_arrow[o; n']
 
 let check_specialize1_result fresh (actual : update list) expected =
   match actual with
-    [{add_constraints=[added_constraint]; remove_constraints = []; proof_trace = _}] ->
+    [{add_constraints=[added_constraint]; remove_constraints = []; proof_trace = _; add_constraints_simpl=_}] ->
     let _ = fresh, expected, added_constraint in
     (failwith "TODO: compare added_constraint and expected, and check that all instances of fresh in expected are matched with the same variable in added_constraint")
   | _ -> (failwith "test failed for specialize1 expected …expected but got …actual")

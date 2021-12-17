@@ -564,15 +564,15 @@ module T =
     ]
 
     let keywords =
-      let add map (key, value) = SMap.add key value map in
+      let add map (key, value) = SMap.add_exn ~key ~data:value map in
       let apply map mk_kwd =
         add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
-      in List.fold_left apply SMap.empty keywords
+      in List.fold_left ~f:apply ~init:SMap.empty keywords
 
     type kwd_err = Invalid_keyword
 
     let mk_kwd ident region =
-      match SMap.find_opt ident keywords with
+      match SMap.find keywords ident with
         Some mk_kwd -> Ok (mk_kwd region)
       |        None -> Error Invalid_keyword
 
@@ -598,7 +598,7 @@ module T =
     let mk_int lexeme region =
       let z =
         Str.(global_replace (regexp "_") "" lexeme) |> Z.of_string
-      in if   Z.equal z Z.zero && lexeme <> "0"
+      in if   Z.equal z Z.zero && String.(<>) lexeme "0"
          then Error Non_canonical_zero
          else Ok (Int (wrap (lexeme,z) region))
 
@@ -692,7 +692,7 @@ module T =
     (* Identifiers *)
 
     let mk_ident value region =
-      match SMap.find_opt value keywords with
+      match SMap.find keywords value with
         Some mk_kwd -> mk_kwd region
       |        None -> Ident (wrap value region)
 
@@ -716,7 +716,7 @@ module T =
 
     let is_eof = function EOF _ -> true | _ -> false
 
-    let support_string_delimiter c = (c = '"' || c = '\'')
+    let support_string_delimiter c = Char.(c = '"' || c = '\'')
 
     let verbatim_delimiters = ("`", "`")
   end

@@ -4,7 +4,7 @@ let contract = test
 let bad_contract = bad_test
 
 (* avoid pretty printing *)
-let () = Unix.putenv "TERM" "dumb"
+let () = Unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good [ "info" ; "measure-contract" ; contract "coase.ligo" ] ;
@@ -960,8 +960,8 @@ let%expect_test _ =
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;
-                     DUG 2 ;
                      SWAP ;
+                     DIG 2 ;
                      PAIR ;
                      NIL operation ;
                      DIG 2 ;
@@ -1714,9 +1714,9 @@ Missing a type annotation for argument "b". |}];
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "uncurry_contract.mligo" ] ;
   let output = [%expect.output] in
-  let lines = String.split_on_char '\n' output in
+  let lines = String.split_lines output in
   let lines = List.take lines 8 in
-  let output = String.concat "\n" lines in
+  let output = String.concat ~sep:"\n" lines in
   print_string output;
   [%expect {|
     { parameter unit ;
@@ -1726,7 +1726,7 @@ let%expect_test _ =
              DIG 2 ;
              UNPAIR ;
              PUSH nat 0 ;
-             PUSH nat 0 ; |}]
+             PUSH nat 2 ; |}]
 
 (* old uncurry bugs: *)
 let%expect_test _ =
@@ -1806,7 +1806,7 @@ let%expect_test _ =
 
 (* warning non-duplicable variable used examples *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
   [%expect {|
     File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-50:
       1 | module Foo = struct
@@ -1815,10 +1815,8 @@ let%expect_test _ =
     :
     Warning: variable "Foo.x" cannot be used more than once.
 
-    Error(s) occurred while checking the contract:
-    At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-    At (unshown) location 8, Ticket in unauthorized position (type error).
-  |}]
+    (Pair (Pair "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG" 42 42)
+          (Pair "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG" 42 42)) |}]
 
 
 let%expect_test _ =
@@ -2164,13 +2162,66 @@ let%expect_test _ =
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;
-                     DUG 2 ;
                      SWAP ;
+                     DIG 2 ;
                      PAIR ;
                      NIL operation ;
                      DIG 2 ;
                      CONS ;
                      PAIR } } } } } |} ]
+
+(* source location comments *)
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "noop.mligo";
+                  "--michelson-comments"; "location" ];
+  [%expect {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             UNIT ;
+             NIL operation
+                 /* File "../../test/contracts/noop.mligo", line 2, characters 4-6 */
+             /* File "../../test/contracts/noop.mligo", line 2, characters 4-6 */ ;
+             PAIR
+             /* File "../../test/contracts/noop.mligo", line 2, characters 3-28 */ } } |}]
+
+(* JSON source location comments *)
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "noop.mligo";
+                  "--michelson-format"; "json";
+                  "--michelson-comments"; "location" ];
+  [%expect {|
+    { "expression":
+        [ { "prim": "parameter", "args": [ { "prim": "unit" } ] },
+          { "prim": "storage", "args": [ { "prim": "unit" } ] },
+          { "prim": "code",
+            "args":
+              [ [ { "prim": "DROP" }, { "prim": "UNIT" },
+                  { "prim": "NIL", "args": [ { "prim": "operation" } ] },
+                  { "prim": "PAIR" } ] ] } ],
+      "locations":
+        [ null, null, null, null, null, null, null, null, null,
+          { "location":
+              { "start":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "4" },
+                "stop":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "6" } } },
+          { "location":
+              { "start":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "4" },
+                "stop":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "6" } } },
+          { "location":
+              { "start":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "3" },
+                "stop":
+                  { "file": "../../test/contracts/noop.mligo", "line": "2",
+                    "col": "28" } } } ] } |}]
 
 (* Check that decl_pos is not taken into account when "inferring" about tuples (including long tuples) *)
 let%expect_test _ =
@@ -2195,5 +2246,21 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let Foo = let x = L(54)[@inline] in x
-    let Foo = let y = Foo[@inline] in y |}]
+    let Foo = let x = L(54)[@inline] in (x)[@inline]
+    let Foo = let y = (Foo).(0)[@inline] in (y)[@inline] |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
+  [%expect{| 999 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_simple.mligo" ; "Add 999" ] ;
+  [%expect{| (Left (Left 999)) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ; contract "module_contract_complex.mligo" ; "{ number = 999 ; previous_action = Reset }" ] ;
+  [%expect{| (Pair 999 (Left (Right Unit))) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_complex.mligo" ; "Add 999" ] ;
+  [%expect{| (Left (Left 999)) |}]

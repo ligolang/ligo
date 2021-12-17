@@ -1,7 +1,10 @@
-open Trace
+module Location = Simple_utils.Location
+module Var      = Simple_utils.Var
+open Simple_utils.Trace
+open Simple_utils.Option
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
-let string_of_contract t = Format.asprintf "%a" Tezos_protocol_011_PtHangzH.Protocol.Alpha_context.Contract.pp t
+let string_of_contract t = Format.asprintf "%a" Tezos_protocol_011_PtHangz2.Protocol.Alpha_context.Contract.pp t
 let string_of_key_hash t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 
 module Tezos_eq = struct
@@ -97,12 +100,12 @@ let add_ast_env ~raise ?(name = Location.wrap (Var.fresh ())) env binder body =
   let open Ast_typed in
   let aux (ei : declaration) (e : expression) =
     match ei with
-    | Declaration_constant { binder = let_binder ; expr ; attr } ->
+    | Declaration_constant { binder = let_binder ; expr ; attr ; name=_} ->
        if Var.compare let_binder.wrap_content binder.Location.wrap_content <> 0 && Var.compare let_binder.wrap_content name.wrap_content <> 0 then
          e_a_let_in let_binder expr e attr
        else
          e
-    | Declaration_module { module_binder ; module_ } ->
+    | Declaration_module { module_binder ; module_ ; module_attr=_} ->
        e_a_mod_in module_binder module_ e
     | _ -> raise.raise (Errors.generic_error binder.location "Cannot re-construct module") in
     let typed_exp' = List.fold_right ~f:aux ~init:body env in
@@ -257,7 +260,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
        raise.raise @@ Errors.generic_error loc "Expected either None or Some"
   | V_Construct (ctor, arg) when is_t_sum ty ->
      let map_ty = trace_option ~raise (Errors.generic_error loc "Expected sum") @@ get_t_sum ty in
-     let {associated_type=ty'} = LMap.find (Label ctor) map_ty.content in
+     let {associated_type=ty';michelson_annotation=_;decl_pos=_} = LMap.find (Label ctor) map_ty.content in
      let arg = val_to_ast ~raise ~loc arg ty' in
      e_a_constructor ctor arg ty
   | V_Construct _ ->
@@ -343,7 +346,7 @@ and make_ast_list ~raise ~loc ty l =
 
 and make_ast_set ~raise ~loc ty l =
   let l = List.map ~f:(fun v -> val_to_ast ~raise ~loc v ty) l in
-  let l = List.dedup_and_sort ~compare l in
+  let l = List.dedup_and_sort ~compare:Caml.compare l in
   List.fold_right l ~f:Ast_typed.e_a_set_add ~init:(Ast_typed.e_a_set_empty ty)
 
 and make_ast_big_map ~raise ~loc key_ty value_ty kv =
@@ -351,7 +354,7 @@ and make_ast_big_map ~raise ~loc key_ty value_ty kv =
                 let k = val_to_ast ~raise ~loc k key_ty in
                 let v = val_to_ast ~raise ~loc v value_ty in
                 (k, v)) kv in
-  let kv = List.dedup_and_sort ~compare kv in
+  let kv = List.dedup_and_sort ~compare:Caml.compare kv in
   List.fold_right kv ~f:(fun (k, v) r -> Ast_typed.e_a_big_map_add k v r) ~init:(Ast_typed.e_a_big_map_empty key_ty value_ty)
 
 and make_ast_map ~raise ~loc key_ty value_ty kv =
@@ -359,7 +362,7 @@ and make_ast_map ~raise ~loc key_ty value_ty kv =
                 let k = val_to_ast ~raise ~loc k key_ty in
                 let v = val_to_ast ~raise ~loc v value_ty in
                 (k, v)) kv in
-  let kv = List.dedup_and_sort ~compare kv in
+  let kv = List.dedup_and_sort ~compare:Caml.compare kv in
   List.fold_right kv ~f:(fun (k, v) r -> Ast_typed.e_a_map_add k v r) ~init:(Ast_typed.e_a_map_empty key_ty value_ty)
 
 and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->

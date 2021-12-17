@@ -1,5 +1,5 @@
 open Helpers
-open Trace
+open Simple_utils.Trace
 open Ast_typed
 
 let rec declaration_to_expression ~raise : environment -> declaration_loc list -> (string * expression) list = fun env decl ->
@@ -47,7 +47,7 @@ and module_to_record ~raise : environment -> module_fully_typed -> expression = 
     (expr, (Label binder, e_a_variable var ex.type_expression))
   in
   let expr, record = List.fold_map ~f ~init:(fun e -> e) lst in
-  expr @@ e_a_record @@ LMap.of_list record
+  expr @@ e_a_record ~layout:L_comb @@ LMap.of_list record
 
 and peephole_expression ~raise : environment -> expression -> bool * environment * expression = fun e expr ->
   match expr.expression_content with
@@ -55,7 +55,7 @@ and peephole_expression ~raise : environment -> expression -> bool * environment
     let let_binder = Location.wrap @@ Var.of_name module_binder in
     let rhs = module_to_record ~raise e rhs in
     let e = Environment.add_ez_binder let_binder rhs.type_expression e in
-    true,e,{ expr with expression_content=E_let_in {let_binder; rhs;let_result; attr={inline=false;no_mutation=false;view=false;public=false}}}
+    true,e,{ expr with expression_content=E_let_in {let_binder; rhs;let_result; attr={inline=true;no_mutation=false;view=false;public=false}}}
   | E_mod_alias {alias;binders;result} ->
     let let_binder = Location.wrap @@ Var.of_name alias in
     let (init,nexts) = binders in
@@ -68,7 +68,7 @@ and peephole_expression ~raise : environment -> expression -> bool * environment
             | Some (r) -> r.associated_type in
           { expr with expression_content = E_record_accessor {record;path}; type_expression}) 
           ~init:(e_a_variable (Location.wrap @@ Var.of_name init) @@ record_type) @@ List.map ~f:(fun x -> Label x) nexts in
-        let attr = { inline = false;no_mutation=false;view=false;public=false } in
+        let attr = { inline = true;no_mutation=false;view=false;public=false } in
         let e = Environment.add_ez_binder let_binder rhs.type_expression e in
         true,e,{expr with expression_content=E_let_in {let_binder;rhs;let_result=result;attr}}
     )
@@ -103,7 +103,7 @@ let peephole_declaration ~raise : environment -> declaration_loc -> environment 
     Declaration_module {module_binder;module_;module_attr} ->
     let binder = Location.wrap @@ Var.of_name @@ module_binder in
     let expr = module_to_record ~raise e module_ in
-    let attr = {inline=false; no_mutation=false;view=false;public=module_attr.public} in
+    let attr = {inline=true; no_mutation=false;view=false;public=module_attr.public} in
     let e = Environment.add_ez_binder binder expr.type_expression e in
     e,{ m with wrap_content=Declaration_constant {name=None;binder;expr;attr}}
   | Module_alias {alias;binders} ->

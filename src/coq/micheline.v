@@ -26,9 +26,16 @@ Definition annotate {l p} (x : node l p) (ann : string) : node l p :=
     | _ => x
   end.
 
+(* In order to avoid a dune/coq bug, this development currently does
+   not depend on Tezos. Instead, this file will define a new copy of
+   Micheline's node type, and we will convert back and forth between
+   the two types outside of the extracted code. See also
+   src/coq_ocaml/micheline_wrapper.ml *)
+(*
 Extract Inductive node => "Tezos_micheline.Micheline.node"
   ["Tezos_micheline.Micheline.Int"
    "Tezos_micheline.Micheline.String"
    "Tezos_micheline.Micheline.Bytes"
    "Tezos_micheline.Micheline.Prim"
    "Tezos_micheline.Micheline.Seq"].
+*)

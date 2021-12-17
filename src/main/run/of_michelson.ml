@@ -1,5 +1,7 @@
+module Michelson = Tezos_utils.Michelson
+module Location  = Simple_utils.Location
 open Proto_alpha_utils
-open Trace
+open Simple_utils.Trace
 open Memory_proto_alpha.Protocol.Script_ir_translator
 open Memory_proto_alpha.X
 open Simple_utils.Runned_result
@@ -96,7 +98,7 @@ let fetch_lambda_types ~raise (contract_ty : _ Michelson.t) =
   | _ -> raise.raise Errors.main_unknown (*TODO*)
 
 let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_011_PtHangzH in
+  let open! Tezos_raw_protocol_011_PtHangz2 in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -150,7 +152,7 @@ let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     | _              -> raise.raise @@ Errors.main_unknown_failwith_type )
 
 let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_011_PtHangzH in
+  let open! Tezos_raw_protocol_011_PtHangz2 in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -195,7 +197,7 @@ let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     | _              -> raise.raise @@ Errors.main_unknown_failwith_type )
 
 let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
-  let open! Tezos_raw_protocol_011_PtHangzH in
+  let open! Tezos_raw_protocol_011_PtHangz2 in
   let exp_type =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings exp_type in

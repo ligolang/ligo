@@ -1,12 +1,12 @@
-open Trace
+open Simple_utils.Trace
 open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Tezos_011_PtHangzH_test_helpers
+module Tezos_alpha_test_helpers = Tezos_011_PtHangz2_test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-module Tezos_protocol = Tezos_protocol_011_PtHangzH
-module Tezos_raw_protocol = Tezos_raw_protocol_011_PtHangzH
+module Tezos_protocol = Tezos_protocol_011_PtHangz2
+module Tezos_raw_protocol = Tezos_raw_protocol_011_PtHangz2
 
 type r = Errors.interpreter_error raise
 
@@ -135,7 +135,7 @@ let get_storage ~raise ~loc ~calltrace ctxt addr =
           ~fitness:ctxt.raw.header.shell.fitness
           ctxt.raw.context
     in
-    fst @@ Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@
+    fst @@ Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ 
       Tezos_protocol.Protocol.Script_ir_translator.parse_toplevel alpha_context ~legacy:false x
   in
   let storage_type = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations storage_type)) in
@@ -190,14 +190,14 @@ let extract_origination_from_result :
   fun src x ->
   let open Tezos_raw_protocol in
   match x with
-  | Manager_operation_result { operation_result = Applied (Transaction_result _) ; internal_operation_results } ->
+  | Manager_operation_result { operation_result = Applied (Transaction_result _) ; internal_operation_results ; balance_updates=_ } ->
     let aux (x:Apply_results.packed_internal_operation_result) =
       match x with
       | Internal_operation_result ({source ; _},Applied (Origination_result x)) -> [(source, x.originated_contracts)]
       | _ -> []
     in
     List.concat @@ List.map ~f:aux internal_operation_results
-  | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ } ->
+  | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ ; balance_updates=_} ->
     [(src, x.originated_contracts)]
   | _ -> []
 
@@ -208,7 +208,7 @@ let extract_lazy_storage_diff_from_result :
   fun x ->
   let open Tezos_raw_protocol in
   match x with
-  | Manager_operation_result { operation_result = Applied (Transaction_result y) ; internal_operation_results } ->
+  | Manager_operation_result { operation_result = Applied (Transaction_result y) ; internal_operation_results ; balance_updates=_ } ->
     let aux (x:Apply_results.packed_internal_operation_result) =
       match x with
       | Internal_operation_result ({source = _ ; _},Applied (Origination_result x)) -> [x.lazy_storage_diff]
@@ -216,7 +216,7 @@ let extract_lazy_storage_diff_from_result :
       | _ -> []
     in
     (List.concat @@ List.map ~f:aux internal_operation_results) @ [y.lazy_storage_diff]
-  | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ } ->
+  | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ ; balance_updates=_ } ->
     [x.lazy_storage_diff]
   | _ -> []
 
@@ -280,7 +280,7 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
         | Item (Big_map, id, Remove) ->
             List.Assoc.remove bigmaps ~equal:Int.equal (get_id id)
         | Item (Big_map, id, Update {init=Alloc {key_type;value_type};updates}) ->
-            let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
+            let kv_diff = List.map ~f:(fun {key;value;key_hash=_} -> (key, value)) updates in
             let aux (kv : (value * value) list) (key, value) =
               let key_value = Michelson_to_value.conv ~raise ~bigmaps key_type key in
               match value with
@@ -292,7 +292,7 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
             let data = {key_type;value_type;version = state} in
             List.Assoc.add bigmaps ~equal:Int.equal (get_id id) data
         | Item (Big_map, id, Update {init=Copy {src};updates}) ->
-            let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
+            let kv_diff = List.map ~f:(fun {key;value;key_hash=_} -> (key, value)) updates in
             let data = List.Assoc.find_exn bigmaps ~equal:Int.equal (get_id src) in
             let state = data.version in
             let aux (kv : (value * value) list) (key, value) =
@@ -306,7 +306,7 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
             let data = { data with version = state } in
             List.Assoc.add bigmaps ~equal:Int.equal (get_id id) data
         | Item (Big_map, id, Update {init=Existing;updates}) ->
-            let kv_diff = List.map ~f:(fun {key;value} -> (key, value)) updates in
+            let kv_diff = List.map ~f:(fun {key;value;key_hash=_} -> (key, value)) updates in
             let data = List.Assoc.find_exn bigmaps ~equal:Int.equal (get_id id) in
             let state = data.version in
             let aux (kv : (value * value) list) (key, value) =
@@ -402,13 +402,13 @@ let get_bootstrapped_contract ~raise (n : int) =
 
 let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balances=[]) ?(n=2) protocol_version bootstrapped_contracts =
   let open Tezos_raw_protocol in
-  let rng_state = Random.State.make (Array.make 1 0) in
+  let rng_state = Caml.Random.State.make (Caml.Array.make 1 0) in
   let () = (* check baker initial balance if the default amount is changed *)
     match initial_balances with
     | [] -> () (* if empty list: will be defaulted with coherent values*)
     | baker::_ -> (
-      let max = Tezos_protocol_011_PtHangzH_parameters.Default_parameters.constants_test.tokens_per_roll in
-      if (Alpha_context.Tez.of_mutez_exn baker < max) then raise.raise (Errors.not_enough_initial_accounts loc max) else ()
+      let max = Tezos_protocol_011_PtHangz2_parameters.Default_parameters.constants_test.tokens_per_roll in
+      if (Tez.(<) (Alpha_context.Tez.of_mutez_exn baker) max) then raise.raise (Errors.not_enough_initial_accounts loc max) else ()
     )
   in
   (* DEPRECATED FOR NOW, delegate should become optional and this argument must be passed to init

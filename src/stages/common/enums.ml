@@ -1,11 +1,11 @@
-type z = Z.t
-type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson]
+type z = Z.t [@@deriving ord]
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord]
 
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
   try match x with
     | `String s -> Ok (Z.of_string s)
-    | _ -> Utils.error_yojson_format "JSON string"
+    | _ -> Simple_utils.Utils.error_yojson_format "JSON string"
   with
   | Invalid_argument _ ->
     Error "Invalid formatting.
@@ -31,7 +31,7 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_operation of bytes
-[@@deriving yojson]
+[@@deriving yojson, ord]
 
 let literal_to_enum = function
   | Literal_unit        ->  1
@@ -222,6 +222,8 @@ type constant' =
   | C_TEST_CAST_ADDRESS [@only_interpreter]
   | C_TEST_CREATE_CHEST [@only_interpreter]
   | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
+  | C_TEST_RANDOM [@only_interpreter]
+  (* New with EDO*)
   | C_SHA3
   | C_KECCAK
   | C_LEVEL

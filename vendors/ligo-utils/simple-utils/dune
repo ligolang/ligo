@@ -5,9 +5,10 @@
   (public_name simple-utils)
   (libraries
     ;; Third party
-   base
+   core
    yojson
    result
    unix
    str)
+  (flags (:standard -open Core))
 )

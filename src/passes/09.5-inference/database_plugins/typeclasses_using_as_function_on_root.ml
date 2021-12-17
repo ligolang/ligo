@@ -22,7 +22,7 @@ struct
     ReprMap.monotonic_update repr_tv add_to_set state
 
   let p_variable_cells : c_typeclass_simpl -> Type_variable.t list = fun c -> List.filter_map
-      ~f:(function { Location.wrap_content = P_variable v } -> Some v | _ -> None)
+      ~f:(function { location = _ ; wrap_content = P_variable v } -> Some v | _ -> None)
       (List.concat c.tc)
 
   let functions_on_roots : 'type_variable . (Type_variable.t -> 'type_variable) -> c_typeclass_simpl -> 'type_variable list = fun repr c ->
@@ -73,7 +73,7 @@ struct
     state
 
   let pp type_variable ppf state =
-    let open PP_helpers in
+    let open Simple_utils.PP_helpers in
     list_sep_d
       (pair
          type_variable

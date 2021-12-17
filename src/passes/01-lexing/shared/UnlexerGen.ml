@@ -5,7 +5,7 @@ module Make (Token : Token.S) =
   struct
     let unlex (sentence: string) : Buffer.t =
       let tokens  = Str.split (Str.regexp " ") sentence in
-      let lexemes = List.map Token.concrete tokens in
+      let lexemes = List.map ~f:Token.concrete tokens in
       let buffer  = Buffer.create 31 in
 
       let rec trans = function

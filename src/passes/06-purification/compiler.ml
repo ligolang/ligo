@@ -1,7 +1,10 @@
+module Location = Simple_utils.Location
+module Var      = Simple_utils.Var
+module Pair     = Simple_utils.Pair
 module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
-open Trace
+open Simple_utils.Trace
 open Stage_common.Maps
 
 let equal_var = Location.equal_content ~equal:Var.equal
@@ -22,9 +25,9 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
     (* TODO : these should use Variables sets *)
     (fun (decl_var,free_var : O.expression_variable list * O.expression_variable list) (ass_exp : O.expression) ->
       match ass_exp.expression_content with
-        | E_let_in {let_binder;mut=false;rhs;let_result} ->
+        | E_let_in {let_binder;mut=false;rhs;let_result;attributes=_} ->
           (true,(let_binder.var::decl_var, free_var),O.e_let_in let_binder false [] rhs let_result)
-        | E_let_in {let_binder;mut=true; rhs;let_result} ->
+        | E_let_in {let_binder;mut=true; rhs;let_result;attributes=_} ->
           let name = let_binder.var in
           if List.mem ~equal:equal_var decl_var name then
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
@@ -64,10 +67,10 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
         O.PP.expression ass_exp
       ;*)
       match ass_exp.expression_content with
-        | E_let_in {let_binder;mut=false;} ->
-          let {var;ascr=_} : _ O.binder = let_binder in
+        | E_let_in {let_binder;rhs=_;let_result=_;mut=false;attributes=_} ->
+          let {var;ascr=_;attributes=_} : _ O.binder = let_binder in
           (true,(var::decl_var, free_var),ass_exp)
-        | E_let_in {let_binder;mut=true; rhs;let_result} ->
+        | E_let_in {let_binder;mut=true; rhs;let_result;attributes=_} ->
           let name = let_binder.var in
           if List.mem ~equal:equal_var decl_var name then
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
@@ -104,7 +107,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
   ((dv,fv),fb)
 
 and store_mutable_variable (free_vars : I.expression_variable list) =
-  if (List.length free_vars == 0) then
+  if (List.is_empty free_vars) then
     O.e_unit ()
   else
     let aux (var:I.expression_variable) = (O.Label (Var.to_name var.wrap_content), O.e_variable var) in
@@ -269,7 +272,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let else_clause = add_to_end else_clause (O.e_variable env) in
 
       let free_vars = List.dedup_and_sort ~compare:compare_var @@ free_vars_true @ free_vars_false in
-      if (List.length free_vars != 0 && last = false) then
+      if (List.length free_vars <> 0 && not last) then
         let cond_expr  = O.e_cond condition then_clause else_clause in
         let return_expr = fun expr ->
           O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@

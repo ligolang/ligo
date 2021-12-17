@@ -1,6 +1,6 @@
 open Ast_core
 open Errors
-open Trace
+open Simple_utils.Trace
 
 let assert_type_expression_eq ~raise (loc:Location.t) ((tv',tv):type_expression * type_expression) : unit = 
   trace_option ~raise (assert_equal loc tv' tv) @@

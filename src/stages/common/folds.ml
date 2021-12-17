@@ -1,5 +1,5 @@
 open Types
-open Function
+open Simple_utils.Function
 
 (* Types level *)
 

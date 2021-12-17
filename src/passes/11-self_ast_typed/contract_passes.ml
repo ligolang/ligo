@@ -1,17 +1,18 @@
 open Ast_typed.Types
-open Trace
+open Simple_utils.Trace
+module Ligo_string = Simple_utils.Ligo_string
 
 type contract_pass_data = {
   contract_type : Helpers.contract_type ;
   main_name : string ;
 }
 
-let annotation_or_label annot label = String.capitalize_ascii (Option.value ~default:label (Ast_typed.Helpers.remove_empty_annotation annot))
+let annotation_or_label annot label = String.capitalize (Option.value ~default:label (Ast_typed.Helpers.remove_empty_annotation annot))
 
 let check_entrypoint_annotation_format ~raise ep (exp: expression) =
-  match String.split_on_char '%' ep with
+  match String.split ~on:'%' ep with
     | [ "" ; ep'] ->
-      let cap = String.capitalize_ascii ep' in
+      let cap = String.capitalize ep' in
       if String.equal cap ep' then raise.raise @@ Errors.bad_format_entrypoint_ann ep exp.location
       else cap
     | _ -> raise.raise @@ Errors.bad_format_entrypoint_ann ep exp.location 
@@ -66,7 +67,7 @@ let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contra
     (true, dat, e)
   | _ -> (true,dat,e)
 
-module VSet = Set.Make(struct
+module VSet = Caml.Set.Make(struct
   type t = expression_ Var.t
   let compare = Var.compare
 end)
@@ -78,8 +79,8 @@ end)*)
 type env = {env:env SMap.t;used_var:VSet.t}
 let rec pp_env ppf env = 
   Format.fprintf ppf "{env: %a;used_var: %a}"
-    (PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%s,%a)" k pp_env v)) (SMap.to_kv_list env.env)
-    (PP_helpers.list_sep_d Var.pp) (VSet.elements env.used_var)
+    (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%s,%a)" k pp_env v)) (SMap.to_kv_list env.env)
+    (Simple_utils.PP_helpers.list_sep_d Var.pp) (VSet.elements env.used_var)
 
 let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = fun main_name prg ->
   let Module_Fully_Typed module' = prg in

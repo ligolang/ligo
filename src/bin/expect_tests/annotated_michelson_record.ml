@@ -79,13 +79,10 @@ let%expect_test _ =
              { parameter unit ;
                storage (pair (int %ana) (pair (string %anb) (nat %anc))) ;
                code { DROP ;
-                      PUSH int 1 ;
-                      PUSH string "" ;
                       PUSH nat 1 ;
-                      SWAP ;
-                      PAIR ;
-                      SWAP ;
-                      PAIR ;
+                      PUSH string "" ;
+                      PUSH int 1 ;
+                      PAIR 3 ;
                       NIL operation ;
                       PAIR } } |}];
   run_ligo_good [ "compile" ; "contract" ; contract "annotated_michelson_record_comb.mligo" ; "--entry-point" ; "main_comb_five" ] ;

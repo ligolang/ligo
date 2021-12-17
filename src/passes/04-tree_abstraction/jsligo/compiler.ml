@@ -2,8 +2,9 @@
 [@@@warning "-39"]
 
 open Errors
-open Trace
-open Function
+open Simple_utils.Trace
+open Simple_utils.Function
+module Utils = Simple_utils.Utils
 
 module CST = Cst.Jsligo
 module AST = Ast_imperative
@@ -464,7 +465,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let a = self e in
     let b = self expr in
     return @@ e_constant ~loc (Const C_CONS) [a; b]
-  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside}}, []); _}; _}); region } -> (
+  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside;lbracket=_;rbracket=_};region=_}, []); _}; _}); region } -> (
     let loc = Location.lift region in
     let items = (match inside with 
       Some items -> Utils.nsepseq_to_list items
@@ -608,7 +609,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let args_o = Option.map ~f:(compile_tuple_expression ~raise <@ List.Ne.singleton) args_o in
     let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
-  | ECall {value=(EModA {value={module_name;field};region=_},args);region} when List.mem ~equal:Caml.(=) build_ins module_name.value -> (
+  | ECall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when List.mem ~equal:Caml.(=) build_ins module_name.value -> (
     let args,args_loc = arguments_to_expr_nseq args in
     let loc = Location.lift region in
     let fun_name = match field with
@@ -709,7 +710,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       return @@ e_module_accessor ~loc module_name element
   | EFun func ->
     let (func, loc) = r_split func in
-    let ({parameters; lhs_type; body} : CST.fun_expr) = func in
+    let ({parameters; lhs_type; body;arrow=_} : CST.fun_expr) = func in
     let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
     let (binder,exprs) = compile_parameter ~raise parameters in
     let body = compile_function_body_to_expression ~raise body in
@@ -934,7 +935,7 @@ and compile_parameter ~raise : CST.expr ->
             let lst = List.Ne.map array_item @@ npseq_to_ne_list array_items in
             let (lst,exprs) = List.Ne.unzip lst in
             let var, expr = match lst with
-              {var;ascr}, [] ->
+              {var;ascr;attributes=_}, [] ->
               Location.unwrap var, []
             | var, lst ->
               let binder = Var.fresh () in
@@ -955,7 +956,7 @@ and compile_parameter ~raise : CST.expr ->
     let (lst,exprs) = List.Ne.unzip lst in
     let loc = Location.lift region in
     let var, ascr, expr = match lst with
-      {var;ascr}, [] ->
+      {var;ascr;attributes=_}, [] ->
       Location.unwrap var, ascr, []
     | var, lst ->
       let binder = Var.fresh () in
@@ -1015,7 +1016,7 @@ and merge_statement_results : statement_result -> statement_result -> statement_
   | Return  a, _ ->         Return a
 
 and is_failwith_call = function
-  {expression_content = E_constant {cons_name;_}; _} -> constant_to_string cons_name = "failwith"
+  {expression_content = E_constant {cons_name;_}; _} -> String.equal "failwith" @@ constant_to_string cons_name
 | {expression_content = E_ascription {anno_expr; _}; _} -> 
   is_failwith_call anno_expr
 | _ -> 
@@ -1048,7 +1049,7 @@ and compile_pattern ~raise : const:bool -> CST.pattern -> type_expression binder
   | _ -> raise.raise @@ unsupported_pattern_type pattern
 
 and filter_private (attributes: CST.attributes) = 
-  List.filter ~f:(fun v -> not (v.value = "private")) attributes
+  List.filter ~f:(fun v -> not @@ String.equal v.value "private") attributes
 
 and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (_ Token.wrap * CST.type_expr) option -> CST.pattern -> Region.t -> (module_variable option * type_expression binder * Ast_imperative__.Types.attributes * expression) list =
   fun ~const attributes let_rhs type_expr binders region ->
@@ -1117,7 +1118,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
   let expr e = Expr e in
   let return r = (Return r : statement_result) in
   
-  let compile_initializer ~const attributes ({value = {binders; lhs_type; expr = let_rhs}; region} : CST.val_binding Region.reg) : expression -> expression =
+  let compile_initializer ~const attributes ({value = {binders; lhs_type; expr = let_rhs;eq=_}; region} : CST.val_binding Region.reg) : expression -> expression =
     match binders with
       PArray array ->
       let matchee = compile_expression ~raise let_rhs in
@@ -1150,7 +1151,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
   | SExpr e -> 
     let e = self_expr e in
     expr e
-  | SBlock {value = {inside; _}; region} when wrap = false ->
+  | SBlock {value = {inside; _}; region} when not wrap ->
     let statements = self_statements ~wrap:true inside in
     statements
   | SBlock {value = {inside; _}; region} -> 
@@ -1264,13 +1265,13 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
 
     let process_case case =
       (match case with
-          CST.Switch_case { kwd_case; expr; statements=None } ->
+          CST.Switch_case { kwd_case; expr; statements=None ; colon=_} ->
             let loc = Location.lift kwd_case#region in
             let case_expr = compile_expression ~raise expr in
             let test = case_cond case_expr in
             let update_vars = e_sequence fallthrough_assign_true found_case_assign_true in
             (Binding (fun x -> e_sequence (e_cond ~loc test update_vars (e_unit ())) x))
-        | Switch_case { kwd_case; expr; statements=Some statements } ->
+        | Switch_case { kwd_case; expr; statements=Some statements ; colon=_} ->
           let loc = Location.lift kwd_case#region in
           let case_expr = compile_expression ~raise expr in
           let test      = case_cond case_expr in
@@ -1294,11 +1295,11 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
               Binding (fun x -> (e_cond ~loc test e x)))
           in
           statements
-        | Switch_default_case { statements=None } ->
+        | Switch_default_case { statements=None ; kwd_default=_; colon=_} ->
           (Binding (fun x -> 
             e_sequence (e_unit ()) x)
           )
-        | Switch_default_case { kwd_default; statements=Some statements } ->
+        | Switch_default_case { kwd_default; statements=Some statements ; colon=_} ->
           let loc = Location.lift kwd_default#region in
           let default_cond = 
             or_expr 

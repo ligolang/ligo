@@ -24,6 +24,12 @@ let compare ?(compare=String.compare) a b = match a,b with
   | (Verbatim _, Standard _) -> 1
   | (Verbatim a, Verbatim b) -> compare a b
 
+let equal a b = match a,b with
+    (Standard a, Standard b) 
+  | (Verbatim a, Verbatim b) -> String.equal a b
+  | (Standard _, Verbatim _) 
+  | (Verbatim _, Standard _) -> false
+
 let extract = function
     Standard s -> s
   | Verbatim v -> v

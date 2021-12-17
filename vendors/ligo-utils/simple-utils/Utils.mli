@@ -93,8 +93,8 @@ module Option :
 module String :
   sig
     include module type of String
-    module Map : Map.S with type key = t
-    module Set : Set.S with type elt = t
+    module Map : Caml.Map.S with type key = t
+    module Set : Caml.Set.S with type elt = t
   end
 
 (* Integer maps *)
@@ -102,6 +102,6 @@ module String :
 module Int :
   sig
     type t = int
-    module Map : Map.S with type key = t
-    module Set : Set.S with type elt = t
+    module Map : Caml.Map.S with type key = t
+    module Set : Caml.Set.S with type elt = t
   end

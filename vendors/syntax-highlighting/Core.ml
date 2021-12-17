@@ -3,13 +3,17 @@ type t = {
   alt_name:                   string;
   file_types:                 string list;
   scope_name:                 string;
-  folding_start_marker:       string option; (* todo string -> regexp *)
-  folding_stop_marker:        string option; (* todo string -> regexp *)
+  folding_start_marker:       string option;
+  folding_stop_marker:        string option;
   language_features:          language_features;
   syntax_patterns:            string list;
   repository:                 pattern list
 }
 
+(*
+  a temporary solution, as we currently don't have a way to target these 
+  regexp enginges via one regexp.
+*)
 and regexp = {
   emacs:    string;
   textmate: string;
@@ -17,12 +21,12 @@ and regexp = {
 }
 
 and language_features = {
-  operators: string list;
-  string_delimiters: regexp list;
-  comments: language_features_comments;
-  brackets: (string * string) list;
-  auto_closing_pairs: (string * string) list;
-  surrounding_pairs: (string * string) list;
+  operators: string list; (* currently only used by EMacs, but ideally also for all the other editors *)
+  string_delimiters: regexp list; (* used by all editors *)
+  comments: language_features_comments; (* used by all editors *)
+  brackets: (string * string) list; (* currently not used *)
+  auto_closing_pairs: (string * string) list; (* used by VS Code *)
+  surrounding_pairs: (string * string) list; (* used by VS Code *)
   syntax_table: (string * string) list; (* for Emacs *)
 }
 
@@ -31,6 +35,7 @@ and language_features_comments = {
   block_comment: (regexp * regexp)
 }
 
+(* Shared syntax highlighting names for all editors. *)
 and highlight_name = 
   Comment
 | Attribute
@@ -77,17 +82,21 @@ and pattern = {
 }
 
 and pattern_kind = 
-  Begin_end of begin_end_pattern
-| Match     of match_pattern
+  Begin_end of begin_end_pattern (* currently doesn't work well in EMacs *)
+| Match     of match_pattern (* preferred for now due to EMacs *)
 
 and begin_end_pattern = {
   meta_name:      highlight_name option;
+  (* If multiple parts need to be highlighted in a regexp, the regexp should 
+     be split. This is because of VIM. *)
   begin_:         (regexp * highlight_name option) list;
   end_:           (regexp * highlight_name option) list;
   patterns:       string list;
 }
 
 and match_pattern = {
+  (* If multiple parts need to be highlighted in a regexp, the regexp should 
+     be split. This is because of VIM. *)
   match_:   (regexp * highlight_name option) list;
   match_name: highlight_name option
 }

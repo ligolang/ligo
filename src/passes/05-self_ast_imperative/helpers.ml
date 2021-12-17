@@ -1,3 +1,5 @@
+module Pair = Simple_utils.Pair
+module Var  = Simple_utils.Var
 open Ast_imperative
 open Stage_common
 
@@ -14,7 +16,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   let init = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip -> init
-  | E_list lst | E_set lst | E_constant {arguments=lst} -> (
+  | E_list lst | E_set lst | E_constant {arguments=lst;cons_name=_} -> (
     let res = List.fold ~f:self ~init lst in
     res
   )
@@ -364,7 +366,7 @@ let remove_from var vars =
 let get_pattern ?(pred = fun _ -> true) pattern =
   Stage_common.Helpers.fold_pattern (fun vars p ->
       match p.wrap_content with
-      | P_var {var;attributes} when pred attributes ->
+      | P_var {var;attributes;_} when pred attributes ->
          var :: vars
       | _ -> vars) [] pattern
 
@@ -378,7 +380,7 @@ module Free_variables :
     let compare e e' = Location.compare_content ~compare:Var.compare e e'
   end
 
-  module VarSet = Set.Make(Var)
+  module VarSet = Caml.Set.Make(Var)
 
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty ~f:VarSet.union
@@ -398,7 +400,7 @@ module Free_variables :
       unions @@ List.map ~f:(fun (l, r) -> VarSet.union (self l) (self r)) lst
     | E_big_map lst ->
       unions @@ List.map ~f:(fun (l, r) -> VarSet.union (self l) (self r)) lst
-    | E_ascription {anno_expr} ->
+    | E_ascription {anno_expr;_} ->
       self anno_expr
     | E_matching {matchee;cases} ->
       let aux { pattern ; body } =
@@ -422,23 +424,23 @@ module Free_variables :
       unions ([self record; self update] @ List.map ~f:aux path)
     | E_tuple t ->
       unions @@ List.map ~f:self t
-    | E_constructor {element} ->
+    | E_constructor {element;_} ->
       self element
     | E_application {lamb; args} ->
       VarSet.union (self lamb) (self args)
-    | E_let_in {let_binder = {var}; rhs; let_result} ->
+    | E_let_in {let_binder = {var;ascr=_;attributes=_}; rhs; let_result;_} ->
       VarSet.union (self rhs) (VarSet.remove var (self let_result))
-    | E_type_in {let_result} ->
+    | E_type_in {let_result;type_binder=_;rhs=_} ->
       self let_result
-    | E_mod_in {rhs;let_result} ->
+    | E_mod_in {rhs;let_result;module_binder=_} ->
       VarSet.union (get_fv_module rhs) (self let_result)
-    | E_mod_alias {result} ->
+    | E_mod_alias {result;alias=_;binders=_} ->
       self result
-    | E_lambda {binder = {var}; result} ->
+    | E_lambda {binder = {var;ascr=_;attributes=_}; result;output_type=_} ->
       VarSet.remove var @@ self result
-    | E_recursive {fun_name; lambda = {binder = {var}; result}} ->
+    | E_recursive {fun_name; lambda = {binder = {var;ascr=_;attributes=_}; result;_};fun_type=_} ->
       VarSet.remove fun_name @@ VarSet.remove var @@ self result
-    | E_constant {arguments} ->
+    | E_constant {arguments;cons_name=_} ->
       unions @@ List.map ~f:self arguments
     | E_cond {condition; then_clause; else_clause} ->
       unions @@ [self condition; self then_clause; self else_clause]
@@ -451,21 +453,21 @@ module Free_variables :
       unions @@ [VarSet.singleton variable; self expression] @ List.map ~f:aux access_path
     | E_for {binder; start; final; incr; f_body} ->
       VarSet.remove binder @@ unions [self start; self final; self incr; self f_body]
-    | E_for_each {fe_binder = (binder, None); collection; fe_body} ->
+    | E_for_each {fe_binder = (binder, None); collection; fe_body;collection_type=_} ->
       unions [self collection; VarSet.remove binder @@ self fe_body]
-    | E_for_each {fe_binder = (binder, Some binder'); collection; fe_body} ->
+    | E_for_each {fe_binder = (binder, Some binder'); collection; fe_body;_} ->
       unions [self collection; VarSet.remove binder @@ VarSet.remove binder' @@ self fe_body]
     | E_while {cond; body} ->
       unions [self cond; self body]
-    | E_module_accessor {element} ->
+    | E_module_accessor {element;module_name=_} ->
       self element
 
   and get_fv_module : module_ -> VarSet.t = fun p ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr} ->
+      | Declaration_constant {binder=_; expr;name=_;attr=_} ->
         get_fv_expr expr
-      | Declaration_module {module_binder=_;module_} ->
+      | Declaration_module {module_binder=_;module_;module_attr=_} ->
         get_fv_module module_
       | Declaration_type _t ->
         VarSet.empty

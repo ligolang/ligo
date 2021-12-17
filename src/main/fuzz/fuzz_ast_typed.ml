@@ -1,3 +1,5 @@
+module Trace    = Simple_utils.Trace
+module Ligo_string = Simple_utils.Ligo_string
 open Ast_typed
 include Fuzz_shared.Monad
 
@@ -6,38 +8,38 @@ type mutation = Location.t * expression
 let get_mutation_id (loc, expr) =
   let s = Format.asprintf  "%a%a" Location.pp loc Ast_typed.PP.expression expr in
   let hash = Tezos_crypto.Base58.raw_encode @@ Bytes.to_string @@ Tezos_crypto.Hacl.Hash.Keccak_256.digest (Bytes.of_string s) in
-  String.sub hash 0 8
+  String.sub hash ~pos:0 ~len:8
 
 let add_line : Buffer.t -> string -> unit = fun buffer s ->
   Buffer.add_string buffer (Format.asprintf "%s\n" s)
 
-let consume_lines : in_channel -> int -> string =
+let consume_lines : In_channel.t -> int -> string =
   fun in_chan stop ->
   let rec loop_lines curr line =
     if curr >= stop then
       line
     else
       let curr = curr + 1 in
-      let line = input_line in_chan in
+      let line = In_channel.input_line_exn in_chan in
       loop_lines curr line in
   loop_lines 0 ""
 
-let add_lines_to_buffer : in_channel -> int -> Buffer.t -> unit =
+let add_lines_to_buffer : In_channel.t -> int -> Buffer.t -> unit =
   fun in_chan stop buffer ->
   let rec loop_lines curr =
     if curr >= stop then
       ()
     else
       let curr = curr + 1 in
-      let line = input_line in_chan in
+      let line = In_channel.input_line_exn in_chan in
       let () = add_line buffer line in
       loop_lines curr in
   loop_lines 0
 
-let add_all_lines_to_buffer : in_channel -> Buffer.t -> unit =
+let add_all_lines_to_buffer : In_channel.t -> Buffer.t -> unit =
   fun in_chan buffer ->
   let rec loop_lines () =
-    try (let line = input_line in_chan in
+    try (let line = In_channel.input_line_exn in_chan in
          let () = add_line buffer line in
          loop_lines ()) with
     | _ -> () in
@@ -48,7 +50,7 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
   | Some r ->
      (* Open file *)
      let file = r # file in
-     let ic = open_in_bin file in
+     let ic = In_channel.create ~binary:true file in
      (* Decompile expression *)
      let n_syntax     = Trace.to_stdlib_result (Decompile.Helpers.syntax_to_variant (Syntax_name "auto") (Some file)) in
      let n_syntax     = match n_syntax with
@@ -63,15 +65,15 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
      (* Read first lines *)
      let () = add_lines_to_buffer ic (r # start # line - 1) output_buffer in
      let s = if (r # start # line = r # stop # line) then
-               let line = input_line ic in
-               let prefix = String.sub line 0 (r # start # offset `Byte) in
-               let postfix = String.sub line (r # stop # offset `Byte) (String.length line - r # stop # offset `Byte) in
+               let line = In_channel.input_line_exn ic in
+               let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Byte) in
+               let postfix = String.sub line ~pos:(r # stop # offset `Byte) ~len:(String.length line - r # stop # offset `Byte) in
                prefix ^ Buffer.contents buffer ^ postfix
              else
-               let line = input_line ic in
-               let prefix = String.sub line 0 (r # start # offset `Byte) in
+               let line = In_channel.input_line_exn ic in
+               let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Byte) in
                let line = consume_lines ic (r # stop # line - r # start # line) in
-               let postfix = String.sub line (r # stop # offset `Byte) (String.length line - r # stop # offset `Byte) in
+               let postfix = String.sub line ~pos:(r # stop # offset `Byte) ~len:(String.length line - r # stop # offset `Byte) in
                prefix ^ Buffer.contents buffer ^ postfix in
      let () = add_line output_buffer s in
      (* Read rest of lines *)
@@ -143,7 +145,7 @@ let transform_nat =
 let transform_string =
   let constn _ = "" in
   let double s = s ^ s in
-  [String.capitalize_ascii; String.uncapitalize_ascii; String.lowercase_ascii; String.uppercase_ascii; constn; double]
+  [String.capitalize; String.uncapitalize; String.lowercase; String.uppercase; constn; double]
 
 module Mutator = struct
   let combine : 'a -> ('a * mutation option) list -> 'b -> ('b * mutation option) list -> ('a * 'b * mutation option) list =
@@ -183,7 +185,7 @@ module Mutator = struct
        return (l, false)
 
   let mutate_constant ({cons_name; arguments} as const) final_type =
-    let ops = List.remove_element ~compare:(fun c1 c2 -> Ast_typed.Compare.constant' c1 c2) cons_name @@
+    let ops = Simple_utils.List.remove_element ~compare:(fun c1 c2 -> Ast_typed.Compare.constant' c1 c2) cons_name @@
                 map_constant cons_name arguments final_type in
     let mapper x =
         ({ const with cons_name = x }), true in

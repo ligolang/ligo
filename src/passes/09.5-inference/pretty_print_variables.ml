@@ -1,3 +1,6 @@
+module Pair = Simple_utils.Pair
+module Var  = Simple_utils.Var
+
 let global_mutable_pending_prints : (unit -> unit) list ref = ref []
 
 let queue_print (print_thunk : unit -> unit) = global_mutable_pending_prints := print_thunk :: !global_mutable_pending_prints

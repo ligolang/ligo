@@ -1,6 +1,7 @@
 module H=Helpers
 module Ligo_proto = Environment.Protocols
-open Trace
+module Option = Simple_utils.Option
+open Simple_utils.Trace
 open Errors
 open Ast_typed
 open H
@@ -1091,6 +1092,11 @@ let test_to_typed_address ~raise loc = typer_1_opt ~raise loc "TEST_TO_TYPED_ADD
   let () = assert_eq_1 ~raise ~loc parameter_ty parameter_ty' in
   t_typed_address parameter_ty storage_ty
 
+let test_random ~raise loc = typer_1_opt ~raise loc "TEST_RANDOM" @@ fun unit tv_opt ->
+  let () = assert_eq_1 ~raise ~loc unit (t_unit ()) in
+  let tv = trace_option ~raise (not_annotated loc) tv_opt in
+  tv
+
 let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun id bm ->
   let () = assert_eq_1 ~raise ~loc id (t_int ()) in
   let _ = trace_option ~raise (expected_big_map loc bm) @@ get_t_big_map bm in
@@ -1304,6 +1310,7 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
   | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
   | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
+  | C_TEST_RANDOM -> test_random ~raise loc ;
   | C_TEST_SET_BIG_MAP -> test_set_big_map ~raise loc ;
   | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
   | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;

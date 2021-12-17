@@ -23,7 +23,7 @@ let tuple_of_record (m: _ LMap.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
-let is_generalizable_variable name = String.equal (String.sub (Var.to_name name) 0 1) "_"
+let is_generalizable_variable name = String.equal (String.sub (Var.to_name name) ~pos:0 ~len:1) "_"
 
 (* This function transforms an application expression `l e1 ... en` into the pair `([ e1 ; ... ; en ] , l)` *)
 let destruct_applications (e : expression) =
@@ -50,7 +50,7 @@ module Free_type_variables = struct
     let compare e e' = Var.compare e e'
   end
 
-  module VarSet = Set.Make(Var)
+  module VarSet = Caml.Set.Make(Var)
 
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty

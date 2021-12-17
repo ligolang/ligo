@@ -1474,3 +1474,8 @@ let main = ((p, storage): (parameter, storage)) => {
     };
   ([] : list(operation), storage)
 };
+
+let y = (n: int): int => 
+  let a: int = 7;
+  let rec b: int => int = (c: int): int => c;
+  z;

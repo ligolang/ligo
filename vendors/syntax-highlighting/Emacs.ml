@@ -274,7 +274,7 @@ module Print = struct
       LigoFontLock.todo
     ]
     in
-    List.iter (fun f -> print_face fmt f) faces
+    List.iter (print_face fmt) faces
 
   let print_syntax_table fmt syntax syntax_table = 
     fprintf fmt "(defun %s-syntax-table ()\n" syntax;
@@ -355,10 +355,62 @@ For debugging.
     
     fprintf fmt ")\n" *)
   
+  let print_pre fmt = 
+    fprintf fmt ";;; ligo-mode.el --- A major mode for editing LIGO source code\n\n";
+
+    fprintf fmt ";; Version: 0.2.0\n";
+    fprintf fmt ";; Author: LigoLang SASU\n";
+    fprintf fmt ";; Url: https://gitlab.com/ligolang/ligo/-/tree/dev/tools/emacs\n";
+    fprintf fmt ";; Keywords: languages\n";
+    fprintf fmt ";; Package-Requires: ((emacs \"27.1\"))\n\n";
+
+    fprintf fmt ";; This file is distributed under the terms of the MIT license.\n\n";
+
+    fprintf fmt ";;; Commentary:\n\n";
+
+    fprintf fmt ";; This provides font lock and other support for the three dialects of\n";
+    fprintf fmt ";; the Ligo smart contract language for the Tezos blockchain.\n\n";
+
+    fprintf fmt ";; For users of `lsp-mode', setup can be performed automatically by\n";
+    fprintf fmt ";; calling the command `ligo-setup-lsp', or with the following snippet\n";
+    fprintf fmt ";; in an init file:\n\n";
+
+    fprintf fmt ";;   (with-eval-after-load 'lsp-mode\n";
+    fprintf fmt ";;     (with-eval-after-load 'ligo-mode\n";
+    fprintf fmt ";;       (ligo-setup-lsp)))\n"
+
+  let print_customatizable_options fmt = 
+    fprintf fmt "(defgroup ligo nil\n";
+    fprintf fmt "  \"Support for LIGO code.\";";
+    fprintf fmt "  :link '(url-link \"https://www.ligolang.org/\")\n";
+    fprintf fmt "  :group 'languages)\n\n";
+
+    fprintf fmt "(defcustom ligo-squirrel-bin \"ligo-squirrel\"\n";
+    fprintf fmt "  \"Path to LIGO language server executable.\"\n";
+    fprintf fmt "  :type 'string\n";
+    fprintf fmt "   :group 'ligo)\n"
+
+  let print_lsp fmt = 
+    fprintf fmt ";; Forward declarations for byte compiler\n";
+    fprintf fmt "(defvar lsp-language-id-configuration)\n";
+    fprintf fmt "(declare-function lsp-register-client 'lsp-mode)\n";
+    fprintf fmt "(declare-function make-lsp-client 'lsp-mode)\n";
+    fprintf fmt "(declare-function lsp-stdio-connection 'lsp-mode)\n\n";
+
+    fprintf fmt ";;;###autoload\n";
+    fprintf fmt "(defun ligo-setup-lsp ()\n";
+    fprintf fmt "  \"Set up an LSP backend for ligo that will use `ligo-squirrel-bin'.\"\n";
+    fprintf fmt "  (interactive)\n";
+    fprintf fmt "  (add-to-list 'lsp-language-id-configuration '(ligo-pascal-mode . \"ligo\"))\n";
+    fprintf fmt "  (add-to-list 'lsp-language-id-configuration '(ligo-caml-mode . \"ligo\"))\n";
+    fprintf fmt "  (add-to-list 'lsp-language-id-configuration '(ligo-reason-mode . \"ligo\"))\n";
+    fprintf fmt "  (lsp-register-client\n";
+    fprintf fmt "   (make-lsp-client\n";
+    fprintf fmt "    :new-connection (lsp-stdio-connection `(,ligo-squirrel-bin))\n";
+    fprintf fmt "    :major-modes '(ligo-pascal-mode ligo-caml-mode ligo-reason-mode)\n";
+    fprintf fmt "    :server-id 'ligo)))\n"
 
   let print fmt syntax alt_name (t: Core.t) =
-    (* print_custom_faces fmt; *)
-    print_faces fmt;
     let Core.{operators; string_delimiters; syntax_table; _} = t.language_features in
     let syntax_table = [
       ("_", "w");
@@ -389,17 +441,5 @@ For debugging.
 
     
     fprintf fmt "(add-to-list 'auto-mode-alist '(\"\\\\.%s\\\\'\" . ligo-%s-mode))\n" syntax alt_name;
-    fprintf fmt "(provide '%s-mode)\n" syntax;
+    fprintf fmt "(provide '%s-mode)\n" syntax
 end
-
-
-let to_emacs t =
-  let buffer = Buffer.create 100 in
-  let open Format in
-  let fmt = formatter_of_buffer buffer in
-  let name = match Filename.extension t.Core.scope_name with 
-      "" -> t.scope_name
-    | a -> String.sub a 1 (String.length a - 1)
-  in
-  Print.print fmt name t.alt_name t;
-  Buffer.contents buffer

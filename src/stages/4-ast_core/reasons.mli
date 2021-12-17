@@ -11,4 +11,4 @@ type t =
   | Todo of string
 
 val pp : Format.formatter -> t -> unit
-val wrap : t -> 'v -> 'v Location.wrap
+val wrap : t -> 'v -> 'v Simple_utils.Location.wrap

@@ -1,3 +1,4 @@
+module PP_helpers = Simple_utils.PP_helpers
 open Types
 
 let scopes : Format.formatter -> scopes -> unit = fun f s ->

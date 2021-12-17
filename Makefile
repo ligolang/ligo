@@ -31,6 +31,7 @@ build: build-deps
 	scripts/build_ligo_local.sh
 
 test: build
+	scripts/check_duplicate_filenames.sh || exit
 	export PATH="/usr/local/bin$${PATH:+:}$${PATH:-}"
 	eval $$(opam config env)
 	scripts/test_ligo.sh

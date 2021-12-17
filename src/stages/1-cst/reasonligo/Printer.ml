@@ -58,7 +58,7 @@ let print_nsepseq :
         sprintf "%s: %s\n" (compact state sep_reg#region) sep in
       Buffer.add_string state#buffer sep_line;
       print state item
-    in print state head; List.iter print_aux tail
+    in print state head; List.iter ~f:print_aux tail
 
 let print_sepseq :
   state -> string -> (state -> 'a -> unit) ->
@@ -108,7 +108,7 @@ let print_attributes state attributes =
     let attribute_formatted = sprintf "[@%s]" attribute in
     let token = Token.wrap attribute_formatted region in
     print_token state token
-  in List.iter apply attributes
+  in List.iter ~f:apply attributes
 
 let print_pvar state {region; value} =
   let {variable; attributes} = value in
@@ -468,7 +468,7 @@ and print_list_expr state = function
    print_expr state rexpr;
    print_token state rbracket
 | EListComp e ->
-   if e.value.elements = None
+   if Option.is_none e.value.elements
    then 
     let token = Token.wrap "[]" e.region in
     print_token state token
@@ -769,12 +769,12 @@ let rec pp_cst state {decl; _} =
     pp_declaration (state#pad len rank) in
   let decls = Utils.nseq_to_list decl in
   pp_node state "<ast>";
-  List.iteri (List.length decls |> apply) decls
+  List.iteri ~f:(List.length decls |> apply) decls
 
 and pp_declaration state = function
   ConstDecl {value = (_, kwd_rec, let_binding, attr); region} ->
     pp_loc_node state "ConstDecl" region;
-    (if kwd_rec <> None then pp_node (state#pad 0 0) "rec"); (* Hack *)
+    (if Option.is_some kwd_rec then pp_node (state#pad 0 0) "rec"); (* Hack *)
     pp_let_binding state let_binding attr
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
@@ -792,8 +792,8 @@ and pp_declaration state = function
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in
-  let fields = if lhs_type = None then 2 else 3 in
-  let fields = if attr = [] then fields else fields+1 in
+  let fields = if Option.is_none lhs_type then 2 else 3 in
+  let fields = if List.is_empty attr then fields else fields+1 in
   let arity =
     let state = state#pad fields 0 in
     pp_node    state "<binders>";
@@ -812,12 +812,12 @@ and pp_let_binding state node attr =
     pp_expr (state#pad 1 0) let_rhs;
     arity+1 in
   let () =
-    if attr <> [] then
+    if not @@ List.is_empty attr then
       let state = state#pad fields (arity+1) in
       pp_node state "<attributes>";
       let length         = List.length attr in
       let apply len rank = pp_ident (state#pad len rank)
-      in List.iteri (apply length) attr
+      in List.iteri ~f:(apply length) attr
   in ()
 
 and pp_type_decl state decl =
@@ -833,7 +833,7 @@ and pp_module_alias state decl =
   let len            = List.length binders in
   let apply len rank = pp_ident (state#pad len rank) in
   pp_ident (state#pad (1+len) 0) decl.alias;
-  List.iteri (apply len) binders
+  List.iteri ~f:(apply len) binders
 
 
 and pp_pattern state = function
@@ -876,7 +876,7 @@ and pp_pattern state = function
 
 and pp_pvar state {value; _} =
   let {variable; attributes} = value in
-  if attributes = [] then
+  if List.is_empty attributes then
     pp_ident state variable
   else
     (pp_node       state "PVar";
@@ -895,7 +895,7 @@ and pp_tuple_pattern state tuple =
   let patterns       = Utils.nsepseq_to_list tuple in
   let length         = List.length patterns in
   let apply len rank = pp_pattern (state#pad len rank)
-  in List.iteri (apply length) patterns
+  in List.iteri ~f:(apply length) patterns
 
 and pp_list_pattern state = function
   PCons {value; region} ->
@@ -905,7 +905,7 @@ and pp_list_pattern state = function
     pp_pattern  (state#pad 2 1) rpattern
 | PListComp {value; region} ->
     pp_loc_node state "PListComp" region;
-    if value.elements = None
+    if Option.is_none value.elements
     then pp_node (state#pad 1 0) "<nil>"
     else pp_injection pp_pattern state value
 
@@ -915,17 +915,17 @@ and pp_injection :
   let elements       = Utils.sepseq_to_list inj.elements in
   let length         = List.length elements in
   let apply len rank = printer (state#pad len rank)
-  in List.iteri (apply length) elements
+  in List.iteri ~f:(apply length) elements
 
 and pp_ne_injection :
   'a.(state -> 'a -> unit) -> state -> 'a ne_injection -> unit =
   fun printer state inj ->
     let ne_elements = Utils.nsepseq_to_list inj.ne_elements in
     let length      = List.length ne_elements in
-    let arity       = if inj.attributes = [] then length else length + 1
+    let arity       = if List.is_empty inj.attributes then length else length + 1
     and apply len rank = printer (state#pad len rank)
-    in List.iteri (apply arity) ne_elements;
-       if inj.attributes <> [] then
+    in List.iteri ~f:(apply arity) ne_elements;
+       if not @@ List.is_empty inj.attributes then
          let state = state#pad arity (arity-1)
          in pp_attributes state inj.attributes
 
@@ -1022,7 +1022,7 @@ and pp_expr state = function
 
 and pp_fun_expr state node =
   let {binders; lhs_type; body; _} = node in
-  let fields = if lhs_type = None then 2 else 3 in
+  let fields = if Option.is_none lhs_type then 2 else 3 in
   let () =
     let state = state#pad fields 0 in
     pp_node state "<parameters>";
@@ -1054,9 +1054,9 @@ and pp_code_inj state rc =
 and pp_let_in state node =
   let {binding; body; attributes; kwd_rec; _} = node in
   let {binders; lhs_type; let_rhs; _} = binding in
-  let fields = if lhs_type = None then 3 else 4 in
-  let fields = if kwd_rec = None then fields else fields+1 in
-  let fields = if attributes = [] then fields else fields+1 in
+  let fields = if Option.is_none lhs_type  then 3 else 4 in
+  let fields = if Option.is_none kwd_rec then fields else fields+1 in
+  let fields = if List.is_empty attributes then fields else fields+1 in
   let arity =
     match kwd_rec with
       None -> 0
@@ -1084,12 +1084,12 @@ and pp_let_in state node =
     pp_expr (state#pad 1 0) body;
     arity+1 in
   let () =
-    if attributes <> [] then
+    if not @@ List.is_empty attributes then
       let state = state#pad fields (arity+1) in
       pp_node state "<attributes>";
       let length         = List.length attributes in
       let apply len rank = pp_ident (state#pad len rank)
-      in List.iteri (apply length) attributes
+      in List.iteri ~f:(apply length) attributes
   in ()
 
 and pp_type_in state node =
@@ -1139,7 +1139,7 @@ and pp_mod_alias state node =
     let len            = List.length binders in
     let apply len rank = pp_ident (state#pad len rank) in
     pp_node state "<module>";
-    List.iteri (apply len) binders in
+    List.iteri ~f:(apply len) binders in
   let () =
     let state = state#pad 3 2 in
     pp_node state "<body>";
@@ -1150,7 +1150,7 @@ and pp_tuple_expr state {value; _} =
   let exprs          = Utils.nsepseq_to_list value in
   let length         = List.length exprs in
   let apply len rank = pp_expr (state#pad len rank)
-  in List.iteri (apply length) exprs
+  in List.iteri ~f:(apply length) exprs
 
 and pp_arguments state = function
   Multiple {value; region} ->
@@ -1170,7 +1170,7 @@ and pp_projection state proj =
   let len            = List.length selections in
   let apply len rank = pp_selection (state#pad len rank) in
   pp_ident (state#pad (1+len) 0) proj.struct_name;
-  List.iteri (apply len) selections
+  List.iteri ~f:(apply len) selections
 
 and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
 = fun f state ma ->
@@ -1224,7 +1224,7 @@ and pp_list_expr state = function
     pp_expr (state#pad 2 1) value.rexpr;
 | EListComp {value; region} ->
     pp_loc_node state "EListComp" region;
-    if   value.elements = None
+    if   Option.is_none value.elements
     then pp_node (state#pad 1 0) "<nil>"
     else pp_injection pp_expr state value
 
@@ -1340,12 +1340,12 @@ and pp_case :
   'a.(state -> 'a -> unit) -> state -> 'a case -> unit =
   fun printer state case ->
   let clauses = Utils.nsepseq_to_list case.cases.value in
-  let clauses = List.map (fun {value; _} -> value) clauses in
+  let clauses = List.map ~f:(fun {value; _} -> value) clauses in
   let length  = List.length clauses + 1 in
   let apply len rank =
     pp_case_clause printer (state#pad len (rank+1))
   in pp_expr (state#pad length 0) case.expr;
-     List.iteri (apply length) clauses
+     List.iteri ~f:(apply length) clauses
 
 and pp_case_clause :
   'a.(state -> 'a -> unit) -> state -> 'a case_clause -> unit =
@@ -1373,7 +1373,7 @@ and pp_type_expr state = function
     let apply len rank =
       pp_type_expr (state#pad len rank) in
     let domain, _, range = value in
-    List.iteri (apply 2) [domain; range]
+    List.iteri ~f:(apply 2) [domain; range]
 | TPar {value={inside;_}; region} ->
     pp_loc_node  state "TPar" region;
     pp_type_expr (state#pad 1 0) inside
@@ -1399,42 +1399,42 @@ and pp_type_var state (node : type_var reg) =
 and pp_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in
   let arity    = List.length variants in
-  let arity    = if attributes = [] then arity else arity+1 in
+  let arity    = if List.is_empty attributes then arity else arity+1 in
   let apply arity rank variant =
     let state = state#pad arity rank in
     pp_variant state variant.value in
-  let () = List.iteri (apply arity) variants in
-  if attributes <> [] then
+  let () = List.iteri ~f:(apply arity) variants in
+  if not @@ List.is_empty attributes then
     let state = state#pad arity (arity-1)
     in pp_attributes state attributes
 
 and pp_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in
   let apply len rank = pp_type_expr (state#pad len rank)
-  in List.iteri (List.length components |> apply) components
+  in List.iteri ~f:(List.length components |> apply) components
 
 and pp_attributes state attributes =
   pp_node state "<attributes>";
   let length         = List.length attributes in
   let apply len rank = pp_ident (state#pad len rank)
-  in List.iteri (apply length) attributes
+  in List.iteri ~f:(apply length) attributes
 
 and pp_field_decl state {value; _} =
-  let arity = if value.attributes = [] then 1 else 2 in
+  let arity = if List.is_empty value.attributes then 1 else 2 in
   pp_ident      state value.field_name;
   pp_type_expr  (state#pad arity 0) value.field_type;
-  if value.attributes <> [] then
+  if not @@ List.is_empty value.attributes then
     pp_attributes (state#pad arity 1) value.attributes
 
 and pp_cartesian state {inside; _} =
   let t_exprs        = Utils.nsepseq_to_list inside in
   let arity          = List.length t_exprs in
   let apply len rank = pp_type_expr (state#pad len rank)
-  in List.iteri (apply arity) t_exprs
+  in List.iteri ~f:(apply arity) t_exprs
 
 and pp_variant state {constr; args; attributes=attr} =
-  let arity = if attr = [] then 0 else 1 in
-  let arity = if args = None then arity else arity + 1 in
+  let arity = if List.is_empty attr then 0 else 1 in
+  let arity = if Option.is_none args then arity else arity + 1 in
   let rank  = 0 in
   let () = pp_ident state constr in
   let rank =
@@ -1442,6 +1442,6 @@ and pp_variant state {constr; args; attributes=attr} =
       None -> rank
     | Some {value={inside; _}; _} ->
         pp_type_expr (state#pad arity rank) inside; rank+1 in
-  let () = if attr <> [] then
+  let () = if not @@ List.is_empty attr then
             pp_attributes (state#pad arity rank) attr
   in ()

@@ -1,7 +1,8 @@
 open Errors
 open Ast_typed
-open Trace
+open Simple_utils.Trace
 open Ast_typed.Helpers
+module Pair = Simple_utils.Pair
 
 type ('a ,'err) decl_folder = 'a -> declaration -> 'a
 type ('a ,'err) folder = 'a -> expression -> 'a
@@ -10,7 +11,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
   let init = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ -> init
-  | E_constant {arguments=lst} -> (
+  | E_constant {arguments=lst;cons_name=_} -> (
     let res = List.fold ~f:self ~init lst in
     res
   )
@@ -21,8 +22,8 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
   )
   | E_type_inst { forall = e; type_ = _}
   | E_lambda { binder = _ ; result = e }
-  | E_recursive {lambda= {result=e}}
-  | E_constructor {element=e} -> (
+  | E_recursive {lambda= {result=e;binder=_};fun_name=_;fun_type=_}
+  | E_constructor {element=e;constructor=_} -> (
     let res = self init e in
     res
   )
@@ -39,16 +40,16 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
     let res = LMap.fold aux m init in
     res
   )
-  | E_record_update {record;update} -> (
+  | E_record_update {record;update;path=_} -> (
     let res = self init record in
     let res = fold_expression self res update in
     res
   )
-  | E_record_accessor {record} -> (
+  | E_record_accessor {record;path=_} -> (
     let res = self init record in
     res
   )
-  | E_let_in { let_binder = _ ; rhs ; let_result } -> (
+  | E_let_in { let_binder = _ ; rhs ; let_result ; attr=_} -> (
       let res = self init rhs in
       let res = self res let_result in
       res
@@ -86,12 +87,12 @@ and fold_module : ('a,'err) folder -> 'a -> module_fully_typed -> 'a = fun f ini
   let aux = fun acc (x : declaration Location.wrap) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
-    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ }} -> (
+    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view =_ ;public=_};name=_} -> (
         let res = fold_expression f acc expr in
         return @@ res
     )
     | Declaration_type _t -> return @@ acc
-    | Declaration_module {module_binder=_;module_} ->
+    | Declaration_module {module_binder=_;module_ ; module_attr=_} ->
       let res = fold_module f acc module_ in
       return @@ res
     | Module_alias _ -> return @@ acc
@@ -338,7 +339,7 @@ and fold_map_module : 'a fold_mapper -> 'a -> module_fully_typed -> 'a * module_
 and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> module_fully_typed -> 'a = fun m m_decl init (Module_Fully_Typed p) ->
   let aux = fun acc (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_ ; expr ; attr=_} as d ->
+      | Declaration_constant {binder=_ ; expr ; attr=_; name=_} as d ->
         let acc = m_decl acc d in
         fold_expression m acc expr
       | Declaration_type _t -> acc
@@ -354,7 +355,7 @@ type contract_type = {
 
 let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type = fun main_fname (Module_Fully_Typed m) ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
-    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
+    | Declaration_constant ({ binder ; expr=_ ; attr=_ ; name=_} as p) ->
        if Var.equal binder.wrap_content (Var.of_name main_fname)
        then Some p
        else None
@@ -367,7 +368,7 @@ let fetch_contract_type ~raise : string -> module_fully_typed -> contract_type =
     trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@ (* Better error maybe ? *)
       main_decl_opt
     in
-  let { binder=_ ; expr ; attr=_ } = main_decl in
+  let { binder=_ ; expr ; attr=_ ; name=_} = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
@@ -392,7 +393,7 @@ type view_type = {
 
 let fetch_view_type ~raise : string -> module_fully_typed -> (view_type * Location.t) = fun main_fname (Module_Fully_Typed m) ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
-    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
+    | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
         if Var.equal binder.wrap_content (Var.of_name main_fname)
         then Some p
         else None
@@ -405,7 +406,7 @@ let fetch_view_type ~raise : string -> module_fully_typed -> (view_type * Locati
     trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
     in
-  let { binder=_ ; expr ; attr=_ } = main_decl in
+  let { binder=_ ; expr ; attr=_ ; name=_} = main_decl in
   match get_lambda_with_type expr with
   | Some ({binder; result=_} , (tin,return))-> (
     match get_t_tuple tin with
@@ -417,7 +418,7 @@ let fetch_view_type ~raise : string -> module_fully_typed -> (view_type * Locati
 let get_pattern ?(pred = fun _ -> true) pattern =
   Stage_common.Helpers.fold_pattern (fun vars p ->
       match p.wrap_content with
-      | P_var {var;attributes} when pred attributes ->
+      | P_var {var;ascr=_;attributes} when pred attributes ->
          var :: vars
       | _ -> vars) [] pattern
 
@@ -431,14 +432,14 @@ module Free_variables :
     let compare e e' = Location.compare_content ~compare:Var.compare e e'
   end
 
-  module VarSet = Set.Make(Var)
+  module VarSet = Caml.Set.Make(Var)
 
   module ModVar = struct
     type t = module_variable
     let compare e e' = compare_module_variable e e'
   end
 
-  module ModVarSet = Set.Make(ModVar)
+  module ModVarSet = Caml.Set.Make(ModVar)
   type moduleEnv' = {modVarSet : ModVarSet.t; moduleEnv: moduleEnv; varSet: VarSet.t}
   and moduleEnv = moduleEnv' SMap.t
 
@@ -458,19 +459,19 @@ module Free_variables :
       {modVarSet=ModVarSet.empty; moduleEnv=SMap.empty ;varSet=VarSet.singleton v}
     | E_literal _ | E_raw_code _ ->
       {modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
-    | E_constant {arguments} ->
+    | E_constant {cons_name=_;arguments} ->
       unions @@ List.map ~f:self arguments
     | E_application {lamb; args} ->
       merge (self lamb) (self args)
-    | E_type_inst {forall} ->
+    | E_type_inst {forall;type_=_} ->
       self forall
     | E_lambda {binder ; result} ->
       let {modVarSet=fmv;moduleEnv;varSet=fv} = self result in
       {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder @@ fv}
-    | E_recursive {fun_name; lambda = {binder; result}} ->
+    | E_recursive {fun_name; lambda = {binder; result};fun_type=_} ->
       let {modVarSet;moduleEnv;varSet=fv} = self result in
       {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder @@ fv}
-    | E_constructor {element} ->
+    | E_constructor {constructor=_;element} ->
       self element
     | E_matching {matchee; cases} ->
       merge (self matchee)(get_fv_cases cases)
@@ -478,15 +479,15 @@ module Free_variables :
       let res = LMap.map self m in
       let res = LMap.to_list res in
       unions res
-    | E_record_update {record;update} ->
+    | E_record_update {record;update;path=_} ->
       merge (self record) (self update)
-    | E_record_accessor {record} ->
+    | E_record_accessor {record;path=_} ->
       self record
-    | E_let_in { let_binder ; rhs ; let_result } ->
+    | E_let_in { let_binder ; rhs ; let_result ; attr=_} ->
       let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
       let fv2 = VarSet.remove let_binder fv2 in
       merge (self rhs) {modVarSet;moduleEnv;varSet=fv2}
-    | E_type_in {let_result} ->
+    | E_type_in {let_result;type_binder=_;rhs=_} ->
       self let_result
     | E_mod_in { module_binder; rhs ; let_result } ->
       let {modVarSet;moduleEnv;varSet} = (self let_result) in
@@ -513,9 +514,9 @@ module Free_variables :
   and get_fv_module : module_fully_typed -> moduleEnv' = fun (Module_Fully_Typed p) ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr ; attr=_} ->
+      | Declaration_constant {binder=_; expr ; attr=_; name=_} ->
         get_fv_expr expr
-      | Declaration_module {module_binder=_;module_} ->
+      | Declaration_module {module_binder=_;module_; module_attr=_} ->
         get_fv_module module_
       | Declaration_type _t ->
         {modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
@@ -542,14 +543,14 @@ module Free_module_variables :
     let compare e e' = compare_module_variable e e'
   end
 
-  module ModVarSet = Set.Make(ModVar)
+  module ModVarSet = Caml.Set.Make(ModVar)
 
   module Var = struct
     type t = expression_variable
     let compare e e' = Location.compare_content ~compare:Var.compare e e'
   end
 
-  module VarSet = Set.Make(Var)
+  module VarSet = Caml.Set.Make(Var)
 
   let unions : (ModVarSet.t * VarSet.t) list -> (ModVarSet.t * VarSet.t) =
     fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty)
@@ -562,7 +563,7 @@ module Free_module_variables :
       (ModVarSet.empty, VarSet.singleton v)
     | E_literal _ | E_raw_code _ ->
       (ModVarSet.empty, VarSet.empty)
-    | E_constant {arguments} ->
+    | E_constant {cons_name=_;arguments} ->
       unions @@ List.map ~f:self arguments
     | E_application {lamb; args} ->
       let fmv1, fv1 = (self lamb) in
@@ -571,12 +572,12 @@ module Free_module_variables :
     | E_lambda {binder; result} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove binder fv)
-    | E_recursive {fun_name; lambda = {binder;result}} ->
+    | E_recursive {fun_name; fun_type=_; lambda = {binder;result}} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove fun_name @@ VarSet.remove binder fv)
-    | E_type_inst {forall} ->
+    | E_type_inst {forall;type_=_} ->
       self forall
-    | E_constructor {element} ->
+    | E_constructor {constructor=_;element} ->
       self element
     | E_matching {matchee; cases} ->
       let fmv1, fv1 = (self matchee) in
@@ -586,18 +587,18 @@ module Free_module_variables :
       let res = LMap.map self m in
       let res = LMap.to_list res in
       unions res
-    | E_record_update {record;update} ->
+    | E_record_update {record;path=_;update} ->
       let (fmv1, fv1) = (self record) in
       let (fmv2, fv2) = (self update) in
       (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
-    | E_record_accessor {record} ->
+    | E_record_accessor {record;path=_} ->
       self record
-    | E_let_in { let_binder; rhs ; let_result } ->
+    | E_let_in { let_binder; rhs ; let_result ; attr=_ } ->
       let fmv1, fv1 = (self rhs) in
       let fmv2, fv2 = (self let_result) in
       let fv2 = VarSet.remove let_binder fv2 in
       (ModVarSet.union fmv1 fmv2, VarSet.union fv1 fv2)
-    | E_type_in {let_result} ->
+    | E_type_in { type_binder=_;rhs=_ ;let_result} ->
       self let_result
     | E_mod_in { module_binder ; rhs ; let_result } ->
       let fmv1, fv1 = (get_fv_module rhs) in
@@ -622,9 +623,9 @@ module Free_module_variables :
   and get_fv_module : module_fully_typed -> (ModVarSet.t * VarSet.t) = fun (Module_Fully_Typed p) ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr ; attr=_} ->
+      | Declaration_constant {name=_;binder=_; expr ; attr=_} ->
         get_fv_expr expr
-      | Declaration_module {module_binder=_;module_} ->
+      | Declaration_module {module_attr=_;module_binder=_;module_} ->
         get_fv_module module_
       | Declaration_type _t ->
         (ModVarSet.empty, VarSet.empty)

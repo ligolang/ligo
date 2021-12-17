@@ -1,0 +1,4 @@
+author: tomjack
+title: Work around dune/coq bug (delete generated .ml)
+type: internal
+merge_request: '1451'

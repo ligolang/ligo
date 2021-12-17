@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 module Set = RedBlackTrees.PolySet
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
@@ -20,7 +20,7 @@ module Opaque_type_variable = struct
   module Yojson       = Ast_core.Yojson
   module Misc         = Ast_core.Misc
   module Reasons      = Ast_core.Reasons
-  module Core         = Typesystem.Core
+  module Core         = Typesystem.Types
   module Axioms       = Axioms
   module Typelang     = Typelang
   module Errors       = Typer_common.Errors
@@ -265,7 +265,7 @@ type ('plugin_states) typer_state = {
 }
 
 open Format
-open PP_helpers
+open Simple_utils.PP_helpers
 
 let pp_already_selected = fun printer ppf set ->
   let lst = (RedBlackTrees.PolySet.elements set) in

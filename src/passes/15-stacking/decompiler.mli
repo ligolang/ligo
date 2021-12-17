@@ -1,6 +1,6 @@
 open Errors
 open Mini_c.Types
-open Trace
+open Simple_utils.Trace
 
 val decompile_value :
   raise: stacking_error raise ->

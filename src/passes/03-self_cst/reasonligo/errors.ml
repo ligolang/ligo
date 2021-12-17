@@ -1,6 +1,8 @@
 open Simple_utils.Display
 open Cst.Reasonligo
 
+module Snippet = Simple_utils.Snippet
+
 let stage = "self_cst_reasonligo"
 
 type self_cst_reasonligo_error = [

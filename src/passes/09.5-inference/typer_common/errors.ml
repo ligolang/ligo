@@ -1,3 +1,6 @@
+module Snippet   = Simple_utils.Snippet
+module Location  = Simple_utils.Location
+module Region    = Simple_utils.Region
 open Simple_utils.Display
 
 let stage = "inferer"
@@ -131,13 +134,13 @@ let rec error_ppformat : display_format:string display_format ->
         Ast_core.PP.expression_variable v
     | `Typer_match_missing_case (m, v, loc) ->
       let missing = List.fold_left ~f:(fun all o ->
-        match List.find ~f:(fun f -> f = o) v with
+        match List.find ~f:(Caml.(=) o) v with
         | Some _ -> all
         | None ->
           let (Label o) = o in
           o :: all
       ) ~init:[] m in
-      let missing = String.concat ", " missing in
+      let missing = String.concat ~sep:", " missing in
       Format.fprintf f
         "@[<hv>%a@.Pattern matching is not exhaustive.@.Cases that are missing: %s. @]"
         Snippet.pp loc
@@ -146,9 +149,9 @@ let rec error_ppformat : display_format:string display_format ->
       let open Ast_core in
       let rec extra (processed: string list) (redundant: string list) (unknown: string list) = function
       | Label l :: remaining -> (
-        match (List.find ~f:(fun f -> f = Label l) m)  with
+        match (List.find ~f:(Caml.(=) @@ Label l) m)  with
         | Some _ -> (
-          match (List.find ~f:(fun f -> f = l) processed) with
+          match (List.find ~f:(String.equal l) processed) with
           | Some _ -> extra processed (l :: redundant) unknown remaining
           | None -> extra (l :: processed) redundant unknown remaining
         )
@@ -159,13 +162,13 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>%a@.Pattern matching over too many cases.@]"
         Snippet.pp loc;
       if List.length redundant > 0 then (
-        let redundant = String.concat ", " redundant in
+        let redundant = String.concat ~sep:", " redundant in
         Format.fprintf f
           "@[<hv>@.These case(s) are duplicate:@.%s@]"
           redundant
       );
       if List.length unknown > 0 then (
-        let unknown = String.concat ", " unknown in
+        let unknown = String.concat ~sep:", " unknown in
         Format.fprintf f
           "@[<hv>@.These case(s) don't belong to the variant:@.%s@]"
           unknown
@@ -563,7 +566,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_match_missing_case (m, v, loc) ->
     let missing = List.fold_left ~f:(fun all o ->
-      match List.find ~f:(fun f -> f = o) v with
+      match List.find ~f:(Caml.(=) o) v with
       | Some _ -> all
       | None ->
         let (Label o) = o in
@@ -581,9 +584,9 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let open Ast_core in
     let rec extra processed redundant unknown = function
     | Label l :: remaining -> (
-      match (List.find ~f:(fun f -> f = Label l) m)  with
+      match (List.find ~f:(Caml.(=) @@ Label l) m)  with
       | Some _ -> (
-        match (List.find ~f:(fun f -> f = l) processed) with
+        match (List.find ~f:(Caml.(=) l) processed) with
         | Some _ -> extra processed (`String l :: redundant) unknown remaining
         | None -> extra (l :: processed) redundant unknown remaining
       )

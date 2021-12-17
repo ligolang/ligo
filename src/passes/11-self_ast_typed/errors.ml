@@ -1,3 +1,5 @@
+module Snippet  = Simple_utils.Snippet
+module Location = Simple_utils.Location
 open Simple_utils.Display
 
 let stage = "self_ast_typed"
@@ -240,7 +242,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let entrypoint = `String entrypoint in
     let message = `String "badly typed contract" in
     let actual = `String (Format.asprintf "%a"
-      Ast_typed.PP.type_expression {got with type_content= T_constant {language="Michelson";injection=Ligo_string.verbatim Stage_common.Constant.list_name;parameters=[{got with type_content=(Ast_typed.t_operation ()).type_content}]}}) in
+      Ast_typed.PP.type_expression {got with type_content= T_constant {language="Michelson";injection=Simple_utils.Ligo_string.verbatim Stage_common.Constant.list_name;parameters=[{got with type_content=(Ast_typed.t_operation ()).type_content}]}}) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression got) in
     let content = `Assoc [
        ("message", message);

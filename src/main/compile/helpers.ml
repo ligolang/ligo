@@ -1,4 +1,4 @@
-open Trace
+open Simple_utils.Trace
 open Main_errors
 
 type s_syntax = Syntax_name of string
@@ -23,7 +23,7 @@ let file_extension_to_variant sf : v_syntax option =
 let syntax_to_variant ~raise (Syntax_name syntax) source =
   match syntax, source with
   | "auto", Some sf ->
-    let sf = Filename.extension sf in
+    let sf = Caml.Filename.extension sf in
     trace_option ~raise (main_invalid_extension sf) @@
       file_extension_to_variant sf
   | ("pascaligo" | "PascaLIGO"),   _ -> PascaLIGO
@@ -53,7 +53,7 @@ let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
     | ReasonLIGO -> Reasonligo.preprocess_file
     | JsLIGO     -> Jsligo.preprocess_file
   in trace ~raise preproc_tracer @@
-      Trace.from_result (preprocess_file options.libs file_path)
+      Simple_utils.Trace.from_result (preprocess_file options.libs file_path)
 
 let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
   let open Preprocessing in

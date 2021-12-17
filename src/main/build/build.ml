@@ -1,4 +1,5 @@
 
+open Simple_utils
 open Trace
 open Main_errors
 
@@ -153,7 +154,7 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
     let decl_list       = Ligo_compile.Of_typed.compile ~raise module_ in
     let _,typed_exp     = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.morph_expression env typed_exp in
     let mini_c_exp      = Ligo_compile.Of_typed.compile_expression ~raise typed_exp in
-    (mini_c_exp ,typed_exp) , decl_list
+    (mini_c_exp ,typed_exp) ,module_, decl_list
 
 (* TODO: this function could be called build_michelson_code since it does not really reflect a "contract" (no views, parameter/storage types) *)
 let build_contract ~raise ~add_warning : options:Compiler_options.t -> string -> _ -> file_name -> _ =

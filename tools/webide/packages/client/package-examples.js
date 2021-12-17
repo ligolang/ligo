@@ -108,17 +108,20 @@ async function main() {
   // const files = await findFiles(EXAMPLES_GLOB, EXAMPLES_DIR);
 
   const CURATED_EXAMPLES = [
-    // 'pascaligo/arithmetic-contract.ligo',
-    // 'cameligo/arithmetic-contract.ligo',
-    // 'reasonligo/arithmetic-contract.ligo',
     'jsligo/arithmetic-contract.ligo',
+    'cameligo/arithmetic-contract.ligo',
+    'reasonligo/arithmetic-contract.ligo',
+    'pascaligo/arithmetic-contract.ligo',
 
+    'jsligo/id.jsligo',
     'cameligo/id.mligo',
-    'pascaligo/id.ligo',
     'reasonligo/id.religo',
+    'pascaligo/id.ligo',
+
+    'jsligo/hashlock.jsligo',
     'cameligo/hashlock.mligo',
-    'pascaligo/hashlock.ligo',
     'reasonligo/hashlock.religo',
+    'pascaligo/hashlock.ligo',
   ];
   // Disable ID examples pending https://ligo.atlassian.net/browse/LIGO-676
   //'pascaligo/id.ligo',

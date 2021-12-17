@@ -23,7 +23,7 @@ let rec uncurry_app (expr : expression) : expression * expression list =
   | _ -> (expr, [])
 
 let curried_depth_in_lambda (rhs : expression) : int =
-  let (vars, _) = uncurry_lambda max_int rhs in
+  let (vars, _) = uncurry_lambda Int.max_value rhs in
   List.length vars
 
 let eqvar f x : bool =

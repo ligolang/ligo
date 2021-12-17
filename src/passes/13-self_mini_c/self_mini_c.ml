@@ -1,7 +1,7 @@
 module Errors = Errors
 open Errors
 open Mini_c
-open Trace
+open Simple_utils.Trace
 
 let get_t_function ~raise e = trace_option ~raise not_a_function @@ Mini_c.get_t_function e
 let get_function ~raise e = trace_option ~raise not_a_function @@ Mini_c.get_function e
@@ -10,6 +10,7 @@ let get_entry ~raise l n = trace_option ~raise could_not_aggregate_entry @@ Mini
 
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression = Helpers.map_expression
+let fold_map_expression = Helpers.fold_map_expression
 
 (* Conservative purity test: ok to treat pure things as impure, must
    not treat impure things as pure. *)
@@ -139,6 +140,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_TO_CONTRACT
   | C_TEST_TO_ENTRYPOINT
   | C_TEST_TO_TYPED_ADDRESS
+  | C_TEST_RANDOM
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
   | C_TEST_ORIGINATE_FROM_FILE
   | C_TEST_SET_BIG_MAP
@@ -225,22 +227,21 @@ let should_inline : expression_variable -> expression -> expression -> bool =
   fun x e1 e2 ->
   occurs_count x e2 <= 1 || is_variable e1
 
-let inline_let : bool ref -> expression -> expression =
-  fun changed e ->
+let inline_let : bool ref -> unit -> expression -> bool * unit * expression =
+  fun changed () e ->
   match e.content with
   | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
     if is_pure e1 && (should_inline_here || should_inline x e1 e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
-      (changed := true ; e2')
+      (changed := true ; (false, (), e2'))
     else
-      e
-  | _ -> e
+      (true, (), e)
+  | _ -> (true, (), e)
 
-let inline_lets ~raise : bool ref -> expression -> expression =
-  fun changed ->
-  map_expression ~raise (fun ~raise:_ -> inline_let changed)
-
+let inline_lets : bool ref -> expression -> expression =
+  fun changed e ->
+  snd @@ fold_map_expression (inline_let changed) () e
 
 (* Let "beta" mean transforming the code:
 
@@ -258,12 +259,12 @@ let inline_lets ~raise : bool ref -> expression -> expression =
 let beta ~raise:_ : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }}, e2) ->
+  | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }; location = _}, e2) ->
     (changed := true ;
      Expression.make (E_let_in (e2, false,((x, xtv), e1))) tv)
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)
-  | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_expression = _ } ]} ->
+  | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_expression = _ ; location = _} ]} ->
     if is_pure e1 && is_pure e2
     then (changed := true ;
           match const with
@@ -281,7 +282,7 @@ let beta ~raise:_ : bool ref -> expression -> expression =
 
   (** This case shows up in the compilation of modules:
       (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
-  | E_proj ({ content = E_let_in (e1, inline, ((x, a), e2)) } as e_let_in, i, n) ->
+  | E_proj ({ content = E_let_in (e1, inline, ((x, a), e2));type_expression = _; location=_ } as e_let_in, i, n) ->
     changed := true;
     { e_let_in with content = E_let_in (e1, inline, ((x, a), ({ e with content = E_proj (e2, i, n) }))) }
 
@@ -325,8 +326,8 @@ let betas ~raise : bool ref -> expression -> expression =
 let eta ~raise:_ : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_expression = _ } ;
-                                                  { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_expression = _ }]} ->
+  | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_expression = _ ; location = _} ;
+                                                  { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_expression = _ ; location = _}]} ->
     (match (e1.content, e2.content) with
      | E_variable x1, E_variable x2 ->
        if Var.equal x1.wrap_content x2.wrap_content
@@ -374,7 +375,7 @@ let contract_check ~raise init =
 let rec all_expression ~raise : expression -> expression =
   fun e ->
   let changed = ref false in
-  let e = inline_lets ~raise changed e in
+  let e = inline_lets changed e in
   let e = betas ~raise changed e in
   let e = etas ~raise changed e in
   if !changed

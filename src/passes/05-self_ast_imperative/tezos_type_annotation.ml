@@ -1,6 +1,8 @@
+module Var = Simple_utils.Var
+module Ligo_string = Simple_utils.Ligo_string
 open Errors
 open Ast_imperative
-open Trace
+open Simple_utils.Trace
 open Stage_common.Constant
 
 let peephole_expression ~raise : expression -> expression = fun e ->

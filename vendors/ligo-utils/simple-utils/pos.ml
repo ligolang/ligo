@@ -82,7 +82,7 @@ let make ~byte ~point_num ~point_bol =
       let len = String.length string
       in (self#shift_bytes len)#add_nl
 
-    method is_ghost = (byte = Lexing.dummy_pos)
+    method is_ghost = Caml.(byte = Lexing.dummy_pos)
 
     method file = byte.Lexing.pos_fname
 
@@ -108,7 +108,7 @@ let make ~byte ~point_num ~point_bol =
           if offsets then
             "character", offset
           else "column", offset + 1 in
-        if file && self#file <> "" then
+        if file && String.(<>) self#file "" then
           sprintf "File %S, line %i, %s %i"
                   self#file self#line horizontal value
         else sprintf "Line %i, %s %i"
@@ -120,7 +120,7 @@ let make ~byte ~point_num ~point_bol =
         let horizontal =
           if offsets then self#offset mode
           else self#column mode in
-        if file && self#file <> "" then
+        if file && String.(<>) self#file "" then
           sprintf "%s:%i:%i" self#file self#line horizontal
         else
           sprintf "%i:%i" self#line horizontal
@@ -152,6 +152,12 @@ let to_yojson x =
       "point_bol", `Int (x#point_bol)
     ]
 
+let to_human_yojson x =
+  `Assoc
+    [("file", `String x#byte.Lexing.pos_fname);
+     ("line", `Int x#byte.Lexing.pos_lnum);
+     ("col", `Int (x#point_num - x#point_bol))]
+
 let of_yojson x =
   match x with
   | `Assoc ["byte", byte;
@@ -182,7 +188,7 @@ let min ~file =
 (* Comparisons *)
 
 let equal pos1 pos2 =
-  pos1#file = pos2#file && pos1#byte_offset = pos2#byte_offset
+  String.equal pos1#file pos2#file && pos1#byte_offset = pos2#byte_offset
 
 let lt pos1 pos2 =
-  pos1#file = pos2#file && pos1#byte_offset < pos2#byte_offset
+  String.equal pos1#file pos2#file && pos1#byte_offset < pos2#byte_offset

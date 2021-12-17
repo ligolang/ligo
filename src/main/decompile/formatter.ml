@@ -1,4 +1,4 @@
-open Display
+open Simple_utils.Display
 open Simple_utils.Runned_result
 
 let failwith_to_string (f:failwith) : string =
@@ -11,7 +11,7 @@ let failwith_to_string (f:failwith) : string =
 
 let expression_ppformat ~display_format f runned_result =
   match display_format with
-  | Display.Human_readable | Dev -> (
+  | Human_readable | Dev -> (
     match runned_result with
     | Fail fail_res ->
       let failstring = failwith_to_string fail_res in
@@ -20,7 +20,7 @@ let expression_ppformat ~display_format f runned_result =
       Ast_core.PP.expression f typed      
   )
 
-let expression_jsonformat runned_result : Display.json =
+let expression_jsonformat runned_result : json =
   match runned_result with
   | Fail fail_res ->
     let failstring = failwith_to_string fail_res in
@@ -28,7 +28,7 @@ let expression_jsonformat runned_result : Display.json =
   | Success typed ->
     `Assoc [("value", Ast_core.Yojson.expression typed) ; ("failure", `Null)]
 
-let expression_format : 'a Display.format = {
+let expression_format : 'a format = {
   pp = expression_ppformat ;
   to_json = expression_jsonformat ;
 }

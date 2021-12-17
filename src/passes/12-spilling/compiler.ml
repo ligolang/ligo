@@ -2,8 +2,8 @@
 
    For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
 
-open Trace
-module Errors = Errors
+open Simple_utils.Trace
+module Pair = Simple_utils.Pair
 open Errors
 
 module AST = Ast_typed
@@ -192,6 +192,7 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_TO_CONTRACT
       | C_TEST_TO_ENTRYPOINT
       | C_TEST_TO_TYPED_ADDRESS
+      | C_TEST_RANDOM
       | C_TEST_SET_BIG_MAP
       | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
       | C_TEST_ORIGINATE_FROM_FILE
@@ -411,7 +412,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
   match ae.expression_content with
   | E_type_inst _ ->
     raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
-  | E_let_in {let_binder; rhs; let_result; attr = { inline } } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
     return (E_let_in (rhs', inline, ((Location.map Var.todo_cast let_binder, rhs'.type_expression), result')))
@@ -428,9 +429,9 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       let a = self lamb in
       let b = self args in
       return @@ E_application (a, b)
-  | E_constructor {constructor=Label name;element} when String.equal name "True" && element.expression_content = AST.e_unit () ->
+  | E_constructor {constructor=Label name;element} when String.equal name "True" && Ast_typed.Compare.expression_content element.expression_content (AST.e_unit ()) = 0 ->
     return @@ E_constant { cons_name = C_TRUE ; arguments = [] }
-  | E_constructor {constructor=Label name;element} when String.equal name "False" && element.expression_content = AST.e_unit () ->
+  | E_constructor {constructor=Label name;element} when String.equal name "False" && Ast_typed.Compare.expression_content element.expression_content (AST.e_unit ()) = 0 ->
     return @@ E_constant { cons_name = C_FALSE ; arguments = [] }
   | E_constructor {constructor;element} -> (
     let ty' = compile_type ~raise ae.type_expression in
@@ -610,7 +611,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       match m with
       | Match_variant {cases ; tv} -> (
           match expr.type_expression.type_content with
-          | T_constant { injection ; parameters = [list_ty] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+          | T_constant { injection ; parameters = [list_ty];language =_ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
             let list_ty = compile_type ~raise list_ty in
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
@@ -631,7 +632,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
               (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
             in
             return @@ E_if_cons (expr' , nil , cons)
-          | T_constant { injection ; parameters = [opt_tv] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
+          | T_constant { injection ; parameters = [opt_tv]; language=_ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
             let get_case c =
@@ -668,7 +669,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
                     let ({constructor=_ ; pattern ; body} : AST.matching_content_case ) =
                       trace_option ~raise (corner_case ~loc:__LOC__ "missing match clause") @@
                       let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
-                        (c = constructor_name) in
+                        (String.equal c constructor_name) in
                       List.find ~f:aux cases in
                     let body' = self body in
                     return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
@@ -778,7 +779,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
     match m.cases with
     | Match_variant {cases ; tv} -> (
         match m.matchee.type_expression.type_content with
-        | T_constant { injection ; parameters = [list_ty] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+        | T_constant { injection ; parameters = [list_ty];language=_ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
           let list_ty = compile_type ~raise list_ty in
           let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
           let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
@@ -799,7 +800,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
             (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
           in
           return @@ E_if_cons (expr' , nil , cons)
-        | T_constant { injection ; parameters = [opt_tv] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
+        | T_constant { injection ; parameters = [opt_tv] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
           let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
           let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
           let get_case c =
@@ -836,7 +837,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
                   let ({constructor=_ ; pattern ; body} : AST.matching_content_case)=
                     trace_option ~raise (corner_case ~loc:__LOC__ "missing match clause") @@
                     let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
-                      (c = constructor_name) in
+                      (String.equal c constructor_name) in
                     List.find ~f:aux cases in
                   let body' = self body in
                   return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
@@ -876,7 +877,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
 and compile_declaration ~raise env (d:AST.declaration) : toplevel_statement option =
   match d with
   | Declaration_type _ -> None
-  | Declaration_constant { binder ; expr ; attr = { inline } } ->
+  | Declaration_constant { binder ; expr ; attr = { inline; no_mutation=_;view=_;public=_ } ; name = _} ->
     let expression = compile_expression ~raise expr in
     let binder = Location.map Var.todo_cast binder in
     let tv = Combinators.Expression.get_type expression in

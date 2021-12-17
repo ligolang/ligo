@@ -1,7 +1,4 @@
 [@@@warning "-30"]
-
-module Location = Simple_utils.Location
-
 include Stage_common.Types
 
 type type_content =

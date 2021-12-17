@@ -1,9 +1,10 @@
 open Errors
-open Trace
-open Function
+open Simple_utils.Trace
+open Simple_utils.Function
 
-module CST = Cst.Reasonligo
-module AST = Ast_imperative
+module CST   = Cst.Reasonligo
+module AST   = Ast_imperative
+module Utils = Simple_utils.Utils
 
 open AST
 
@@ -303,7 +304,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
       return @@ e_application ~loc func args
     )
   (*TODO: move to proper module*)
-  | ECall {value=(EModA {value={module_name;field};region=_},args);region} when
+  | ECall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when
     List.mem ~equal:Caml.(=) build_ins module_name.value ->
     let args = match args with
       | Unit the_unit -> CST.EUnit the_unit,[]
@@ -399,7 +400,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
   | EFun func ->
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
-    let ({binders; lhs_type; body} : CST.fun_expr) = func in
+    let ({binders; lhs_type; body; arrow=_; attributes=_} : CST.fun_expr) = func in
     let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
     let (binder,fun_) = compile_parameter ~raise binders in
     let body = self body in
@@ -456,7 +457,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
     let ({kwd_rec;binding;body;attributes;_} : CST.let_in) = li in
     let body = self body in
     match binding with
-    | { binders ; let_rhs } -> (
+    | { binders ; let_rhs ; lhs_type=_;eq=_} -> (
       (* let (pattern,arg) = binders in *)
       match unepar binders with
       | CST.PTuple tuple ->
@@ -628,7 +629,7 @@ and untpar = function
 | _ as v -> v
 
 and check_annotation ~raise = function
-| CST.PVar {value={variable;_}} -> raise.raise (missing_funarg_annotation variable)
+| CST.PVar {value={variable;_};region=_} -> raise.raise (missing_funarg_annotation variable)
 | CST.PPar { value = { inside ; _ }; _ } -> check_annotation ~raise inside
 | CST.PTuple { value ; _ } ->
   let l = Utils.nsepseq_to_list value in
@@ -711,7 +712,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
   | PRecord _ ->raise.raise @@ unsupported_pattern_type pattern
   | PTyped tp ->
     let (tp, loc) = r_split tp in
-    let {pattern; type_expr} : CST.typed_pattern = tp in
+    let {pattern; type_expr; colon=_} : CST.typed_pattern = tp in
     let ascr = compile_type_expression ~raise type_expr in
     let ({var;attributes;_}, exprs) = compile_parameter ~raise pattern in
     return ~ascr ~attributes loc exprs @@ Location.unwrap var
@@ -751,7 +752,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
 
   | ConstDecl {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     match let_binding with
-    | { binders ; let_rhs } -> (
+    | { binders ; let_rhs ; lhs_type=_; eq=_} -> (
       match (unepar binders) with
       | CST.PTuple tuple ->
         let attributes = compile_attributes attributes in

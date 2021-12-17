@@ -18,4 +18,4 @@ include Misc
 include Combinators
 module Debug = Stage_common.Debug
 
-module Compare = struct include Compare end
+module Compare = Compare
