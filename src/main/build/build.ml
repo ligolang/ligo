@@ -42,8 +42,7 @@ module M (Params : Params) =
       fun env file_name meta c_unit ->
       let options = {options with init_env = env } in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-      let inferred = Ligo_compile.Of_core.infer ~raise ~options ast_core in
-      let Ast_typed.Module_Fully_Typed ast_typed,ast_typed_env = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env inferred in
+      let Ast_typed.Module_Fully_Typed ast_typed,ast_typed_env = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core in
       (ast_typed,ast_typed_env)
 
   end
@@ -72,8 +71,7 @@ module Infer (Params : Params) = struct
     fun env file_name meta c_unit ->
     let options = {options with init_env = env } in
     let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-    let inferred = Ligo_compile.Of_core.infer ~raise ~options ast_core in
-    (inferred,env)
+    (ast_core,env)
 
 end
 

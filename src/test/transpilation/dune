@@ -5,7 +5,7 @@
  (action
   (with-stdout-to
    all_the_things.religo_output
-   (run ligo "print" "pretty-print" "all_the_things.religo")))
+   (run ligo "print" "pretty" "all_the_things.religo")))
  (deps all_the_things.religo))
 
 (rule
@@ -13,7 +13,7 @@
  (action
   (with-stdout-to
    all_the_things.mligo_output
-   (run ligo "print" "pretty-print" "all_the_things.mligo")))
+   (run ligo "print" "pretty" "all_the_things.mligo")))
  (deps all_the_things.mligo))
 
 (rule
@@ -21,7 +21,7 @@
  (action
   (with-stdout-to
    all_the_things.ligo_output
-   (run ligo "print" "pretty-print" "all_the_things.ligo")))
+   (run ligo "print" "pretty" "all_the_things.ligo")))
  (deps all_the_things.ligo))
 
 (rule
@@ -29,7 +29,7 @@
  (action
   (with-stdout-to
    all_the_things.jsligo_output
-   (run ligo "print" "pretty-print" "all_the_things.jsligo")))
+   (run ligo "print" "pretty" "all_the_things.jsligo")))
  (deps all_the_things.jsligo))
 
 ;; compare the output with the expected result
@@ -91,7 +91,7 @@
  (action
   (with-stdout-to
    all_the_things.religo_output2
-   (run ligo print pretty-print all_the_things.religo_output -s reasonligo)))
+   (run ligo print pretty all_the_things.religo_output -s reasonligo)))
  (deps all_the_things.religo_output))
 
 (rule
@@ -99,7 +99,7 @@
  (action
   (with-stdout-to
    all_the_things.mligo_output2
-   (run ligo print pretty-print all_the_things.mligo_output -s cameligo)))
+   (run ligo print pretty all_the_things.mligo_output -s cameligo)))
  (deps all_the_things.mligo_output))
 
 (rule
@@ -107,7 +107,7 @@
  (action
   (with-stdout-to
    all_the_things.ligo_output2
-   (run ligo print pretty-print all_the_things.ligo_output -s pascaligo)))
+   (run ligo print pretty all_the_things.ligo_output -s pascaligo)))
  (deps all_the_things.ligo_output))
 
 (rule
@@ -115,7 +115,7 @@
  (action
   (with-stdout-to
    all_the_things.jsligo_output2
-   (run ligo print pretty-print all_the_things.jsligo_output -s jsligo)))
+   (run ligo print pretty all_the_things.jsligo_output -s jsligo)))
  (deps all_the_things.jsligo_output))
 
 ;; diff the pretty printed contract with the pretty printed pretty printed contract
@@ -151,7 +151,7 @@
  (action
   (with-stdout-to
    all_the_things.religo_ast
-   (run ligo print ast all_the_things.religo)))
+   (run ligo print ast-imperative all_the_things.religo)))
  (deps all_the_things.religo))
 
 (rule
@@ -159,7 +159,7 @@
  (action
   (with-stdout-to
    all_the_things.mligo_ast
-   (run ligo print ast all_the_things.mligo)))
+   (run ligo print ast-imperative all_the_things.mligo)))
  (deps all_the_things.mligo))
 
 (rule
@@ -167,7 +167,7 @@
  (action
   (with-stdout-to
    all_the_things.ligo_ast
-   (run ligo print ast all_the_things.ligo)))
+   (run ligo print ast-imperative all_the_things.ligo)))
  (deps all_the_things.ligo))
 
 (rule
@@ -175,7 +175,7 @@
  (action
   (with-stdout-to
    all_the_things.jsligo_ast
-   (run ligo print ast all_the_things.jsligo)))
+   (run ligo print ast-imperative all_the_things.jsligo)))
  (deps all_the_things.jsligo))
 
 (rule
@@ -183,7 +183,7 @@
  (action
   (with-stdout-to
    all_the_things.religo_ast_pretty
-   (run ligo print ast all_the_things.religo_output -s reasonligo)))
+   (run ligo print ast-imperative all_the_things.religo_output -s reasonligo)))
  (deps all_the_things.religo_output))
 
 (rule
@@ -191,7 +191,7 @@
  (action
   (with-stdout-to
    all_the_things.mligo_ast_pretty
-   (run ligo print ast all_the_things.mligo_output -s cameligo)))
+   (run ligo print ast-imperative all_the_things.mligo_output -s cameligo)))
  (deps all_the_things.mligo_output))
 
 (rule
@@ -199,7 +199,7 @@
  (action
   (with-stdout-to
    all_the_things.ligo_ast_pretty
-   (run ligo print ast all_the_things.ligo_output -s pascaligo)))
+   (run ligo print ast-imperative all_the_things.ligo_output -s pascaligo)))
  (deps all_the_things.ligo_output))
 
 (rule
@@ -207,7 +207,7 @@
  (action
   (with-stdout-to
    all_the_things.jsligo_ast_pretty
-   (run ligo print ast all_the_things.jsligo_output -s jsligo)))
+   (run ligo print ast-imperative all_the_things.jsligo_output -s jsligo)))
  (deps all_the_things.jsligo_output))
 
 (rule

@@ -1623,7 +1623,7 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
     Invalid big map nesting.
     A big map cannot be nested inside another big map. |}];
 
-  run_ligo_good ["print" ; "ast"; contract "letin.mligo"];
+  run_ligo_good ["print" ; "ast-imperative"; contract "letin.mligo"];
   [%expect {|
 type storage = (int , int)
 const main : (int , storage) -> (list (operation) , storage) =
@@ -1646,7 +1646,7 @@ const x =  match (+1 , (+2 , +3)) with
             | (#2,(x,#3)) -> x
     |}];
 
-  run_ligo_good ["print" ; "ast"; contract "letin.religo"];
+  run_ligo_good ["print" ; "ast-imperative"; contract "letin.religo"];
   [%expect {|
 type storage = (int , int)
 const main = lambda (n : (int , storage)) : (list (operation) ,
@@ -2024,15 +2024,15 @@ let%expect_test _ =
     Cannot redeclare block-scoped variable. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "run-function"; contract "assert.mligo"; "(false, ())"; "-e"; "with_error"];
+  run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(false, ())"; "-e"; "with_error"];
   [%expect {| failwith("my custom error") |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "run-function"; contract "assert.mligo"; "(None: unit option)"; "-e"; "some_with_error"];
+  run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(None: unit option)"; "-e"; "some_with_error"];
   [%expect {| failwith("my custom error") |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "run-function"; contract "assert.mligo"; "(Some (): unit option)"; "-e"; "none_with_error"];
+  run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(Some (): unit option)"; "-e"; "none_with_error"];
   [%expect {| failwith("my custom error") |}]
 
 let%expect_test _ =

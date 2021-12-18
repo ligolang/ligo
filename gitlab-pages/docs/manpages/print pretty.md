@@ -1,10 +1,10 @@
-print the AST with syntatic sugar. Warning: Intended for development of
-LIGO and can break at any time.
+pretty-print the source file.
 
-ligo print ast-sugar SOURCE_FILE
+ligo print pretty SOURCE_FILE
 
-This sub-command prints the source file in the AST stage, after
-desugaring step is applied.
+This sub-command pretty-prints a source file in LIGO. The width of the
+pretty-printed text is adjusted to the number of columns in the terminal
+(or 60 if it cannot be determined).
 
 === flags ===
 

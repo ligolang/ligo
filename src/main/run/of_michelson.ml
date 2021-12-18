@@ -19,6 +19,7 @@ type dry_run_options =
     source : string option ;
   }
 
+(* Shouldn't this be done by the cli parser ? *)
 let make_dry_run_options ~raise ?tezos_context (opts : dry_run_options) : options  =
   let open Proto_alpha_utils.Trace in
   let open Proto_alpha_utils.Memory_proto_alpha in

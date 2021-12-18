@@ -1,79 +1,14 @@
+the LigoLANG compiler
 
-### Usage
+ligo SUBCOMMAND
 
-**ligo** *command*  \[*command options*\]
+=== subcommands ===
 
-
-
-
-
-
-**ligo**   \[*\--help*\]
-
-
-
-
-
-
-**ligo** *command*  \[*\--help*\]
-
-
-
-
-
-
-**ligo**   \[*\--version*\]
-
-
-
-
-
-
-
-
-### To browse the documentation
-
-**ligo** *man*  
-
-
-
-
-
-
-**ligo** *man*  \[*-v 3*\]
-
-
-
-
-
-
-
-
-### Access the documentation
-
-**ligo** *man* *keyword* \[*-v --verbosity &lt;0|1|2|3&gt;*\] \[*\--format &lt;plain|colors|html&gt;*\]
-
-
-#### DESCRIPTION
-
-Print documentation of commands.
-
-
-#### ARGUMENTS
-
-**keyword**
-
-Keyword to search for
-
-
-#### OPTIONS
-
-**-v --verbosity &lt;0|1|2|3&gt;**
-
-Level of details
-
-**--format &lt;plain|colors|html&gt;**
-
-The manual's output format
-
-
+compile compile a ligo program to michelson transpile transpile ligo
+code from a syntax to another (BETA) run compile and interpret ligo code
+info tools to get information from contracts mutate create mutants of a
+ligo file repl interactive ligo interpreter changelog print the ligo
+changelog print print intermediary program representation. Warning:
+Intended for development of LIGO and can break at any time version print
+version information help explain a given subcommand (perhaps
+recursively)

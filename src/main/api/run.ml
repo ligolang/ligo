@@ -5,24 +5,23 @@ module Compile = Ligo_compile
 module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
-let test source_file syntax steps infer protocol_version display_format =
+let test source_file syntax steps protocol_version display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) get_warnings @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-      let options = Compiler_options.make ~infer ~test:true ~protocol_version () in
+      let options = Compiler_options.make ~test:true ~protocol_version () in
       let typed,_ = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
       let typed   = Self_ast_typed.monomorphise_module typed in
       let _,typed = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_module options.init_env typed in
-      let steps = int_of_string steps in
       Interpreter.eval_test ~raise ~steps ~protocol_version typed
 
-let dry_run source_file entry_point input storage amount balance sender source now syntax infer protocol_version display_format werror =
+let dry_run source_file entry_point input storage amount balance sender source now syntax protocol_version display_format werror () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-      let options = Compiler_options.make ~infer ~protocol_version () in
+      let options = Compiler_options.make ~protocol_version () in
       let mini_c_prg,typed_prg,env = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
       let michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg entry_point in
       let parameter_ty =
@@ -38,13 +37,13 @@ let dry_run source_file entry_point input storage amount balance sender source n
       let runres  = Run.run_contract ~raise ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result ~raise typed_prg entry_point runres
 
-let interpret expression init_file syntax infer protocol_version amount balance sender source now display_format =
+let interpret expression init_file syntax protocol_version amount balance sender source now display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-        Compiler_options.make ~infer ~protocol_version ()
+        Compiler_options.make ~protocol_version ()
       in
       let (mini_c_exp, typed_exp), _, decl_list = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options decl_list mini_c_exp in
@@ -52,13 +51,13 @@ let interpret expression init_file syntax infer protocol_version amount balance 
       let runres  = Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty in
       Decompile.Of_michelson.decompile_expression ~raise typed_exp.type_expression runres
 
-let evaluate_call source_file entry_point parameter amount balance sender source now syntax infer protocol_version display_format werror =
+let evaluate_call source_file entry_point parameter amount balance sender source now syntax protocol_version display_format werror () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-        Compiler_options.make ~infer ~protocol_version ()
+        Compiler_options.make ~protocol_version ()
       in
       let mini_c_prg,typed_prg,env = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
       let meta             = Compile.Of_source.extract_meta ~raise syntax source_file in
@@ -76,13 +75,13 @@ let evaluate_call source_file entry_point parameter amount balance sender source
       let runres           = Run.run_expression ~raise ~options michelson.expr michelson.expr_ty in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result ~raise typed_prg entry_point runres
 
-let evaluate_expr source_file entry_point amount balance sender source now syntax infer protocol_version display_format werror =
+let evaluate_expr source_file entry_point amount balance sender source now syntax protocol_version display_format werror () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format Decompile.Formatter.expression_format get_warnings @@
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-        Compiler_options.make ~infer ~protocol_version ()
+        Compiler_options.make ~protocol_version ()
       in
       let mini_c,typed_prg,_ = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
       let (exp,_)       = trace_option ~raise Main_errors.main_entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in

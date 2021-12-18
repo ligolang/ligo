@@ -1,10 +1,10 @@
-print the AST with syntatic sugar. Warning: Intended for development of
-LIGO and can break at any time.
+print the AST with imperative construct. Warning: Intended for
+development of LIGO and can break at any time.
 
-ligo print ast-sugar SOURCE_FILE
+ligo print ast-imperative SOURCE_FILE
 
-This sub-command prints the source file in the AST stage, after
-desugaring step is applied.
+This sub-command prints the source file in the AST imperative stage,
+before desugaring step is applied.
 
 === flags ===
 

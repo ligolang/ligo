@@ -10,24 +10,10 @@ let%expect_test _ =
 
 (* Record_update *)
 let%expect_test _ =
-  run_ligo_bad [ "compile"; "expression" ; "cameligo" ; "let a = {foo = 1} in { a with foo = 1n}" ; "--infer" ] ;
+  run_ligo_bad [ "compile"; "expression" ; "cameligo" ; "let a = {foo = 1} in { a with foo = 1n}" ] ;
   [%expect {|
-             An internal error ocurred. Please, contact the developers.
-             type error: incompatible types, not same ctor {
-                                                              id_constructor_simpl : 0;
-                                                              original_id : null;
-                                                              reason_constr_simpl : simplifier: split constant literal_nat#5 = C_nat ();
-                                                              tv : literal_nat#5;
-                                                              c_tag : C_nat;
-                                                              tv_list : ;
-             } vs. {
-                      id_constructor_simpl : 2;
-                      original_id : null;
-                      reason_constr_simpl : simplifier: split constant literal_int#1 = C_int ();
-                      tv : literal_int#1;
-                      c_tag : C_int;
-                      tv_list : ;
-             } (compare returns -1).
+             Invalid type(s).
+             Expected: "int", but got: "nat".
              |}]
 
 (* Constructor *)
