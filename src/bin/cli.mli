@@ -1,2 +1,2 @@
 
-val run : ?argv:string array -> unit -> int
+val run : ?argv:string list -> unit -> int

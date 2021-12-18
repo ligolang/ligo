@@ -136,7 +136,7 @@ const siteConfig = {
           { from: ["/docs/next/manpages/list-declarations"    ], to: "/docs/next/manpages/info list-declarations" },
           { from: ["/docs/next/manpages/measure-contract"     ], to: "/docs/next/manpages/info measure-contract"  },
           { from: ["/docs/next/manpages/preprocess"           ], to: "/docs/next/manpages/print preprocessed"     },
-          { from: ["/docs/next/manpages/pretty-print"         ], to: "/docs/next/manpages/print pretty-print"     },
+          { from: ["/docs/next/manpages/pretty-print"         ], to: "/docs/next/manpages/print pretty"           },
           { from: ["/docs/next/manpages/print-ast"            ], to: "/docs/next/manpages/print ast"              },
           { from: ["/docs/next/manpages/print-ast-combined"   ], to: "/docs/next/manpages/print ast-combined"     },
           { from: ["/docs/next/manpages/print-ast-core"       ], to: "/docs/next/manpages/print ast-core"         },

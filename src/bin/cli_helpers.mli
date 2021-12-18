@@ -1,3 +1,2 @@
-
-exception Error_compilation
-val return_result : ?warn:bool -> ?output_file:string -> (string*string,string*string) result -> unit Proto_alpha_utils.Error_monad.tzresult Lwt.t
+type return = Done | Compileur_Error | Exception of exn
+val return_result : return:return ref -> ?warn:bool -> ?output_file:string -> (unit -> (string*string,string*string) result) -> unit

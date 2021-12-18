@@ -17,7 +17,7 @@ let test basename =
 (* Temporary breaking *)
 let run_ligo args =
   Simple_utils.Var.reset_counter ();
-  let argv = Array.of_list ("ligo" :: args) in
+  let argv = ("ligo" :: args) in
   let result = Cli.run ~argv () in
   result
 
