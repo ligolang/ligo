@@ -7,5 +7,4 @@
    bls12-381-unix)
  (preprocess
   (pps ppx_expect))
- (inline_tests)
-)
+ (inline_tests))

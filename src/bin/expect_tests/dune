@@ -6,5 +6,4 @@
    (source_tree ../../test/contracts)
    (source_tree ../../test/lexer)))
  (preprocess
-  (pps ppx_expect))
-)
+  (pps ppx_expect)))

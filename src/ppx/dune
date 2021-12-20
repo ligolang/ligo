@@ -4,5 +4,4 @@
  (libraries core ppxlib)
  (modules ppx_poly_constructor)
  (preprocess
-  (pps ppxlib.metaquot))
-)
+  (pps ppxlib.metaquot)))

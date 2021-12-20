@@ -3,5 +3,4 @@
  (public_name ligo.self_ast_sugar)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_sugar)
-)
+ (libraries simple-utils ast_sugar))

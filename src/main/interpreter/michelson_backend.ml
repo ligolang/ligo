@@ -187,7 +187,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
   | V_Ct C_unit ->
      let () = trace_option ~raise (Errors.generic_error loc "Expected unit")
                  (get_t_unit ty) in
-     e_a_unit
+     e_a_unit ()
   | V_Ct (C_bool b) ->
      let () = trace_option ~raise (Errors.generic_error loc "Expected bool")
                  (get_t_bool ty) in

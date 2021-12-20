@@ -3,7 +3,7 @@ module S = Ast_sugar
 open Stage_common.Constant
 
 let make_t ?(loc = Location.generated) ?sugar type_content = {type_content; location=loc; sugar }
-let make_e ?(loc = Location.generated) ?sugar expression_content = {  
+let make_e ?(loc = Location.generated) ?sugar expression_content = {
   expression_content ;
   location = loc ;
   sugar ;
@@ -17,44 +17,27 @@ let t_abstraction ?loc ?sugar ty_binder kind type_ =
 let t_for_all ?loc ?sugar ty_binder kind type_ =
   make_t ?loc ?sugar (T_for_all {ty_binder ; kind ; type_})
 
-  (*X_name here should be replaced by X_injection*)
-let t_signature  ?loc ?sugar () : type_expression = t_constant ?loc ?sugar signature_name []
-let t_chain_id   ?loc ?sugar () : type_expression = t_constant ?loc ?sugar chain_id_name []
-let t_string     ?loc ?sugar () : type_expression = t_constant ?loc ?sugar string_name []
-let t_bytes      ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bytes_name []
-let t_key        ?loc ?sugar () : type_expression = t_constant ?loc ?sugar key_name []
-let t_key_hash   ?loc ?sugar () : type_expression = t_constant ?loc ?sugar key_hash_name []
-let t_int        ?loc ?sugar () : type_expression = t_constant ?loc ?sugar int_name []
-let t_address    ?loc ?sugar () : type_expression = t_constant ?loc ?sugar address_name []
-let t_operation  ?loc ?sugar () : type_expression = t_constant ?loc ?sugar operation_name []
-let t_nat        ?loc ?sugar () : type_expression = t_constant ?loc ?sugar nat_name []
-let t_mutez      ?loc ?sugar () : type_expression = t_constant ?loc ?sugar tez_name []
-let t_timestamp  ?loc ?sugar () : type_expression = t_constant ?loc ?sugar timestamp_name []
-let t_unit       ?loc ?sugar () : type_expression = t_constant ?loc ?sugar unit_name []
-let t_bls12_381_g1 ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls12_381_g1_name []
-let t_bls12_381_g2 ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls12_381_g2_name []
-let t_bls12_381_fr ?loc ?sugar () : type_expression = t_constant ?loc ?sugar bls12_381_fr_name []
-let t_never      ?loc ?sugar () : type_expression = t_constant ?loc ?sugar never_name []
+(* TODO?: X_name here should be replaced by X_injection *)
+let t__type_ ?loc ?sugar () : type_expression = t_constant ?loc ?sugar _type__name []
+[@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
-let t_abstraction1 ?loc ?sugar name kind : type_expression = 
+let t__type_ ?loc ?sugar t : type_expression = t_constant ?loc ?sugar _type__name [t]
+[@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
+
+let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type__name [t; t']
+[@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
+
+let t_mutez = t_tez
+
+let t_abstraction1 ?loc ?sugar name kind : type_expression =
   let ty_binder = Location.wrap @@ Var.fresh () in
   let type_ = t_constant name [t_variable ty_binder.wrap_content] in
   t_abstraction ?loc ?sugar ty_binder kind type_
-let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression = 
+let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression =
   let ty_binder_l = Location.wrap @@ Var.fresh () in
   let ty_binder_r = Location.wrap @@ Var.fresh () in
   let type_ = t_constant name [t_variable ty_binder_l.wrap_content ; t_variable ty_binder_r.wrap_content] in
   t_abstraction ?loc ?sugar ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
-
-let t_option         ?loc ?sugar o   : type_expression = t_constant ?loc ?sugar option_name [o]
-let t_list           ?loc ?sugar t   : type_expression = t_constant ?loc ?sugar list_name [t]
-let t_set            ?loc ?sugar t   : type_expression = t_constant ?loc ?sugar set_name [t]
-let t_contract       ?loc ?sugar t   : type_expression = t_constant ?loc ?sugar contract_name [t]
-let t_ticket         ?loc ?sugar t   : type_expression = t_constant ?loc ?sugar ticket_name [t]
-let t_map            ?loc ?sugar k v : type_expression = t_constant ?loc ?sugar map_name [ k ; v ]
-let t_big_map        ?loc ?sugar k v : type_expression = t_constant ?loc ?sugar big_map_name [ k ; v ]
-let t_map_or_big_map ?loc ?sugar k v : type_expression = t_constant ?loc ?sugar map_or_big_map_name [ k ; v ]
-
 
 let t_record ?loc ?sugar ?layout fields  : type_expression = make_t ?loc ?sugar @@ T_record {fields;layout}
 let default_layout = L_tree
@@ -121,22 +104,18 @@ let get_t_function (t:type_expression) : (type_expression * type_expression) opt
   | T_arrow {type1;type2} -> Some (type1,type2)
   | _ -> None
 
-let get_t_function_exn t = match get_t_function t with
-  | Some x -> x
-  | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-
 let get_t_sum (t:type_expression) : rows option = match t.type_content with
   | T_sum m -> Some m
   | _ -> None
-
-let get_t_sum_exn (t:type_expression) : rows = match t.type_content with
-  | T_sum m -> m
-  | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
 let get_t_record (t:type_expression) : rows option = match t.type_content with
   | T_record m -> Some m
   | _ -> None
 
+let get_t__type__exn t = match get_t__type_ t with
+  | Some x -> x
+  | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+[@@map (_type_, ("function", "sum", "record"))]
 
 
 let e_record map : expression = make_e @@ E_record map
@@ -148,17 +127,10 @@ let ez_e_record (lst : (label * expression) list) : expression =
 let e_var       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_variable (Location.wrap ?loc (Var.of_name n))
 let e_literal   ?loc ?sugar l  : expression = make_e ?loc ?sugar @@ E_literal l
 let e_unit      ?loc ?sugar () : expression = make_e ?loc ?sugar @@ E_literal (Literal_unit)
-let e_int       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_literal (Literal_int n)
-let e_nat       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_literal (Literal_nat n)
-let e_timestamp ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_literal (Literal_timestamp n)
-let e_string    ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_string s)
-let e_address   ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_address s)
-let e_mutez     ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_mutez s)
-let e_signature ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_signature s)
-let e_key       ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_key s)
-let e_key_hash  ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_key_hash s)
-let e_chain_id  ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_chain_id s)
-let e_operation ?loc ?sugar s  : expression = make_e ?loc ?sugar @@ E_literal (Literal_operation s)
+
+let e__type_ ?loc ?sugar p : expression = make_e ?loc ?sugar @@ E_literal (Literal__type_ p)
+[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation"))]
+
 let e'_bytes b : expression_content =
   let bytes = Hex.to_bytes (`Hex b) in
   E_literal (Literal_bytes bytes)
@@ -339,7 +311,7 @@ let make_c_constructor_simpl ?(reason_constr_simpl="") id_constructor_simpl orig
   tv_list
 }
 
-let make_c_row_simpl ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : c_row_simpl = { 
+let make_c_row_simpl ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : c_row_simpl = {
   reason_row_simpl ;
   id_row_simpl = ConstraintIdentifier.T (Int64.of_int id_row_simpl) ;
   original_id = Option.map ~f:(fun i -> ConstraintIdentifier.T (Int64.of_int i)) original_id;

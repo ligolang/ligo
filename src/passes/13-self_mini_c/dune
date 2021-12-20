@@ -7,5 +7,5 @@
  (inline_tests)
  (preprocess
   (pps ppx_expect ppx_poly_constructor))
- (flags (:standard -open Core))
-)
+ (flags
+  (:standard -open Core)))

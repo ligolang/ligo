@@ -7,5 +7,4 @@
    environment tezos-hacl-glue-unix bls12-381-unix)
  (inline_tests)
  (preprocess
-  (pps ppx_inline_test ppx_expect ppx_poly_constructor))
-)
+  (pps ppx_inline_test ppx_expect ppx_poly_constructor)))

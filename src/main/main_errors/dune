@@ -8,5 +8,4 @@
    desugaring self_ast_core inference checking self_ast_typed
    ligo_interpreter spilling self_mini_c stacking self_michelson)
  (preprocess
-  (pps ppx_poly_constructor))
-)
+  (pps ppx_poly_constructor)))

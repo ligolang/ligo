@@ -10,5 +10,4 @@
   UnionFind
   environment)
  (preprocess
-  (pps ppx_poly_constructor))
-)
+  (pps ppx_poly_constructor)))
