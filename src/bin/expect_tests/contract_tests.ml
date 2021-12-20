@@ -2264,3 +2264,15 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_complex.mligo" ; "Add 999" ] ;
   [%expect{| (Left (Left 999)) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--disable-michelson-typechecking" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage int ;
+      code { CDR ;
+             LAMBDA int int (constant "myhash") ;
+             SWAP ;
+             EXEC ;
+             NIL operation ;
+             PAIR } } |}]
