@@ -1,7 +1,7 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast" ; "../../test/contracts/negative/switch_jsligo/empty_switch.jsligo" ] ;
+  run_ligo_bad [ "print" ; "ast-imperative" ; "../../test/contracts/negative/switch_jsligo/empty_switch.jsligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/switch_jsligo/empty_switch.jsligo", line 4, characters 4-5:
       3 |     switch (n) {
@@ -11,7 +11,7 @@ let%expect_test _ =
     At this point, a case starting with the keyword 'case' is expected. |} ]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast" ; "../../test/contracts/negative/switch_jsligo/default_in_between.jsligo" ] ;
+  run_ligo_bad [ "print" ; "ast-imperative" ; "../../test/contracts/negative/switch_jsligo/default_in_between.jsligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/switch_jsligo/default_in_between.jsligo", line 10, characters 6-10:
       9 |         output = output + "###";
@@ -22,7 +22,7 @@ let%expect_test _ =
     expected. |} ]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast" ; "../../test/contracts/negative/switch_jsligo/more_than_one_default.jsligo" ] ;
+  run_ligo_bad [ "print" ; "ast-imperative" ; "../../test/contracts/negative/switch_jsligo/more_than_one_default.jsligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/switch_jsligo/more_than_one_default.jsligo", line 14, characters 6-13:
      13 |         output = output + "###";
@@ -33,7 +33,7 @@ let%expect_test _ =
     expected. |} ]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast" ; "../../test/contracts/negative/switch_jsligo/break_outside_case1.jsligo" ] ;
+  run_ligo_bad [ "print" ; "ast-imperative" ; "../../test/contracts/negative/switch_jsligo/break_outside_case1.jsligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/switch_jsligo/break_outside_case1.jsligo", line 3, characters 4-9:
       2 |     let output = "Hello";
@@ -45,7 +45,7 @@ let%expect_test _ =
       * a closing brace '}' if the block is complete. |} ]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast" ; "../../test/contracts/negative/switch_jsligo/break_outside_case2.jsligo" ] ;
+  run_ligo_bad [ "print" ; "ast-imperative" ; "../../test/contracts/negative/switch_jsligo/break_outside_case2.jsligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/switch_jsligo/break_outside_case2.jsligo", line 4, characters 8-13:
       3 |     if (output == "") {
@@ -55,7 +55,7 @@ let%expect_test _ =
     At this point, the first statement is expected. |} ]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast" ; "../../test/contracts/negative/switch_jsligo/break_outside_case3.jsligo" ] ;
+  run_ligo_bad [ "print" ; "ast-imperative" ; "../../test/contracts/negative/switch_jsligo/break_outside_case3.jsligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/switch_jsligo/break_outside_case3.jsligo", line 6, characters 16-21:
       5 |             if (output == "") {
@@ -65,7 +65,7 @@ let%expect_test _ =
     At this point, the first statement is expected. |} ]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast" ; "../../test/contracts/negative/switch_jsligo/break_outside_case4.jsligo" ] ;
+  run_ligo_bad [ "print" ; "ast-imperative" ; "../../test/contracts/negative/switch_jsligo/break_outside_case4.jsligo" ] ;
   [%expect{|
     File "../../test/contracts/negative/switch_jsligo/break_outside_case4.jsligo", line 7, characters 16-21:
       6 |                 output = output + "World";

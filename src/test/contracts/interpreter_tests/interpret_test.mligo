@@ -334,3 +334,18 @@ let test_bytes_sub =
   let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 3n 0n (Bytes.pack 5)) in
   let () = assert (Bytes.sub 2n 1n (Bytes.pack 5n) = 0x05) in
   assert (Bytes.sub 0n 1n (Bytes.pack 5n) = 0x05)
+
+let test_with_error =
+  assert_with_error true "foo"
+
+let test_some =
+  assert_some (Some 1 : int option)
+
+let test_some_with_error =
+  assert_some_with_error (Some 2 : int option) "bar"
+
+let test_none =
+  assert_none (None : int option)
+
+let test_none_with_error =
+  assert_none_with_error (None : int option) "bar"

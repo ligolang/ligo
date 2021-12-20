@@ -1,10 +1,14 @@
-print the AST with syntatic sugar. Warning: Intended for development of
-LIGO and can break at any time.
+preprocess the source file. Warning: Intended for development of LIGO
+and can break at any time.
 
-ligo print ast-sugar SOURCE_FILE
+ligo print preprocessed SOURCE_FILE
 
-This sub-command prints the source file in the AST stage, after
-desugaring step is applied.
+This sub-command runs the pre-processor on a LIGO source file and
+outputs the result. The directive \`#include\` directly inlines the
+included file and therefore its content appears in the output. In
+contrast, the directive \`#import\` includes the file as a module and
+therefore the content of the imported file is not printed by this
+sub-command.
 
 === flags ===
 
