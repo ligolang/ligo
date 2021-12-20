@@ -4,5 +4,4 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries main_errors preprocessing simple-utils tezos-utils ligo_compile
-   BuildSystem)
-)
+   BuildSystem))

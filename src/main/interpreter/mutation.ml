@@ -19,7 +19,7 @@ let rec expr_gen : raise:interpreter_error raise -> Ast_typed.type_expression ->
   fun ~raise type_expr ->
   let open Ast_typed in
   if is_t_unit type_expr then
-    QCheck.Gen.(unit >>= fun _ -> return e_a_unit)
+    QCheck.Gen.(unit >>= fun _ -> return (e_a_unit ()))
   else if is_t_string type_expr then
     QCheck.Gen.(string >>= fun s -> return (e_a_string (Ligo_string.standard s)))
   else if is_t_address type_expr then

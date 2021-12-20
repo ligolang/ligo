@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1398'
+title: 'Ppx: apply ppx_map in combinators'
+type: internal
