@@ -40,6 +40,7 @@ depends: [
   "ppx_expect"
   "ppx_inline_test"
   # work around tezos' failure to constrain
+  "ctypes-foreign"
   "lwt" { = "5.4.2" }
   "bisect_ppx" {>= "2.3"}
   "irmin" { = "2.8.0" }
