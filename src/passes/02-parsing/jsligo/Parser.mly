@@ -389,7 +389,8 @@ call_expr:
 fun_arg:
   expr { $1 }
 
-lambda:
+(* Note: [cost inf] is needed to avoid cycle in error recovery *)
+lambda [@recover.cost inf]:
   call_expr | member_expr { $1 }
 
 (* General expressions *)
