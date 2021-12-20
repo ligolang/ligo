@@ -199,11 +199,38 @@ let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace
     | ( C_ASSERTION , [ v ] ) ->
       if (is_true v) then return_ct @@ C_unit
       else fail @@ Errors.meta_lang_eval loc calltrace "Failed assertion"
-    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:LC.equal_value l k with
+    | ( C_ASSERTION_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) ->
+      if (is_true v) then return_ct @@ C_unit
+      else fail @@ Errors.meta_lang_eval loc calltrace s
+    | ( C_ASSERT_SOME , [ v ] ) -> (
+      match get_option v with
+      | Some (Some _) -> return_ct @@ C_unit
+      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace "Failed assert some"
+      | None -> fail @@ Errors.generic_error loc "Expected option type"
+    )
+    | ( C_ASSERT_SOME_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) -> (
+      match get_option v with
+      | Some (Some _) -> return_ct @@ C_unit
+      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace s
+      | None -> fail @@ Errors.generic_error loc "Expected option type"
+    )
+    | ( C_ASSERT_NONE , [ v ] ) -> (
+      match get_option v with
+      | Some (Some _) -> fail @@ Errors.meta_lang_eval loc calltrace "Failed assert none"
+      | Some None -> return_ct @@ C_unit
+      | None -> fail @@ Errors.generic_error loc "Expected option type"
+    )
+    | ( C_ASSERT_NONE_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) -> (
+      match get_option v with
+      | Some (Some _) -> fail @@ Errors.meta_lang_eval loc calltrace s
+      | Some None -> return_ct @@ C_unit
+      | None -> fail @@ Errors.generic_error loc "Expected option type"
+    )
+    | ( C_MAP_FIND_OPT , [ k ; V_Map l ] ) -> ( match List.Assoc.find ~equal:LC.equal_value l k with
       | Some v -> return @@ v_some v
       | None -> return @@ v_none ()
     )
-    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.Assoc.find ~equal:LC.equal_value l k with
+    | ( C_MAP_FIND , [ k ; V_Map l ] ) -> ( match List.Assoc.find ~equal:LC.equal_value l k with
       | Some v -> return @@ v
       | None -> fail @@ Errors.meta_lang_eval loc calltrace (Predefined.Tree_abstraction.pseudo_module_to_string c)
     )
