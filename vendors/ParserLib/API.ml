@@ -221,10 +221,23 @@ module Make (Lexer: LEXER)
 
     (* Incremental parsing *)
 
+    let lexer_lexbuf_to_supplier lexer lexbuf = 
+      let to_position (pos : Simple_utils.Pos.t) : Lexing.position = {
+              pos_fname = pos#file;
+              pos_lnum  = pos#line;
+              pos_bol   = pos#point_bol;
+              pos_cnum  = pos#point_num
+          }
+      in
+      fun () ->
+        let token = lexer lexbuf in
+        let (startp, endp) = (Token.to_region token)#pos in
+        token, to_position startp, to_position endp
+
     let incr_menhir lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf       = lexbuf_of source
       and menhir_lexer = mk_menhir_lexer Lexer.scan in
-      let supplier     = Inter.lexer_lexbuf_to_supplier menhir_lexer lexbuf in
+      let supplier     = lexer_lexbuf_to_supplier menhir_lexer lexbuf in
       let failure      = raise_on_failure (module ParErr) in
       let interpreter  = Inter.loop_handle success failure supplier in
       let module Incr  = Parser.Incremental in
@@ -309,6 +322,8 @@ module Make (Lexer: LEXER)
                          default_value sym
 
                        let guide _ = false
+
+                       let use_indentation_heuristic = false
                     end)
                    (TracingPrinter)
 
@@ -421,7 +436,7 @@ module Make (Lexer: LEXER)
     let incr_menhir_recovery lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf       = lexbuf_of source
       and menhir_lexer = mk_menhir_lexer Lexer.scan in
-      let supplier     = Inter.lexer_lexbuf_to_supplier menhir_lexer lexbuf in
+      let supplier     = lexer_lexbuf_to_supplier menhir_lexer lexbuf in
       let failure      = get_message_on_failure (module ParErr) in
       let interpreter  = Recover.loop_handle success failure supplier in
       let module Incr  = Parser.Incremental in
