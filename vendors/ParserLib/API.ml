@@ -287,6 +287,14 @@ module Make (Lexer: LEXER)
                 let print_token t = print @@ Lexer.Token.to_lexeme t
             end)
 
+    let checkpoint_to_string = function
+      | Inter.InputNeeded _   -> "InputNeeded"
+      | Inter.Accepted _      -> "Accepted"
+      | Inter.Rejected        -> "Rejected"
+      | Inter.AboutToReduce _ -> "AboutToReduce"
+      | Inter.HandlingError _ -> "HandlingError"
+      | Inter.Shifting _      -> "Shifting"
+
     (* Remember last consumed token to assign approximate to synthesized token *)
     let last_token_region = ref Region.ghost
 
@@ -320,6 +328,12 @@ module Make (Lexer: LEXER)
           | InternalError of string
             (* returned in impossible match cases or [Merlin_recovery]'s logic error *)
 
+        let inputNeededExpected = function
+          | Inter.InputNeeded _ | Inter.Accepted _      | Inter.HandlingError _
+          | Inter.Shifting _    | Inter.AboutToReduce _ | Inter.Rejected as cp ->
+             Format.sprintf "Expected InputNeeded checkpoint, but actual is %s"
+                 (checkpoint_to_string cp)
+
         (* Moves parser through [Shifting] and [AboutToReduce] checkpoints like
            in simple [loop_handle] from MenhirLib. *)
         let rec check_for_error checkpoint : ('a step, 'a Inter.checkpoint) Stdlib.result =
@@ -335,7 +349,9 @@ module Make (Lexer: LEXER)
         let try_recovery failure_cp candidates token : 'a step =
           begin match R.attempt candidates token with
           | `Ok (Inter.InputNeeded _ as cp, _) -> Intermediate (Correct cp)
-          | `Ok _     -> InternalError "Recovery failed: impossible result of [attempt] function"
+          | `Ok (cp, _) ->
+             InternalError ("Recovery failed due to impossible result of [attempt] function:\n"
+                            ^ (inputNeededExpected cp))
           | `Accept x -> Success x
           | `Fail ->
              begin match token with
@@ -364,7 +380,9 @@ module Make (Lexer: LEXER)
                 let candidates = R.generate env in
                 (try_recovery failure_cp candidates token, Some error)
              end
-          | Correct (_) -> (InternalError "Impossible case", None)
+          | Correct cp ->
+             let msg = "Impossible case:\n" ^ (inputNeededExpected cp)
+             in (InternalError msg, None)
           | Recovering (failure_cp, candidates) ->
              (try_recovery failure_cp candidates token, None)
 
