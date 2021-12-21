@@ -237,7 +237,6 @@ type constant' =
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
   | C_GLOBAL_CONSTANT
-  | C_GLOBAL_CONSTANTIZE
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
 [@@deriving enum, yojson, print_constant, only_interpreter_tags ]

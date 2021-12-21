@@ -167,7 +167,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_OPEN_CHEST -> C_OPEN_CHEST
   | C_VIEW -> C_VIEW
   | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT
-  | C_GLOBAL_CONSTANTIZE -> C_GLOBAL_CONSTANTIZE
   | (   C_TEST_ORIGINATE
       | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE

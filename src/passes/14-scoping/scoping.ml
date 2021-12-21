@@ -290,8 +290,6 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
         return (O.Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
       | _ -> None
     )
-    (* C_GLOBAL_CONSTANTIZE should have been converted to E_constantize by this point :( *)
-    | C_GLOBAL_CONSTANTIZE -> None
     | C_VIEW -> (
       match expr.arguments with
       | { content = E_literal (Literal_string view_name); type_expression = _; location=_} :: arguments ->
