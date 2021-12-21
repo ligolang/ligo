@@ -25,7 +25,7 @@ type typer_error = [
   | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Ast_typed.expression_variable
   | `Typer_create_contract_lambda of Ast_core.constant' * Ast_core.expression
   | `Typer_should_be_a_function_type of Ast_typed.type_expression * Ast_core.expression
-  | `Typer_bad_record_access of Ast_core.label * Ast_core.expression * Ast_typed.type_expression * Location.t
+  | `Typer_bad_record_access of Ast_typed.label * Ast_typed.expression * Location.t
   | `Typer_expression_tracer of Ast_core.expression * typer_error
   | `Typer_record_access_tracer of Ast_typed.expression * typer_error
   | `Typer_assert_equal of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
@@ -242,12 +242,12 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\". @]"
         Snippet.pp e.location
         Ast_typed.PP.type_expression actual
-    | `Typer_bad_record_access (field,ae,_t,loc) ->
+    | `Typer_bad_record_access (field,e,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid record field \"%a\" in record \"%a\". @]"
         Snippet.pp loc
         Ast_core.PP.label field
-        Ast_core.PP.expression ae
+        Ast_typed.PP.expression e
     | `Typer_corner_case desc ->
       Format.fprintf f
         "@[<hv>A type system corner case occurred:@.%s@]"
@@ -808,15 +808,14 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("actual", actual);
     ] in
     json_error ~stage ~content
-  | `Typer_bad_record_access (field,ae,t,loc) ->
+  | `Typer_bad_record_access (field,e,loc) ->
     let message = `String "invalid record field" in
-    let field = `String (Format.asprintf "%a" Ast_core.PP.label field) in
-    let value = `String (Format.asprintf "%a" Ast_core.PP.expression ae) in
-    let value_type = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
+    let field = Ast_typed.Yojson.label field in
+    let value = Ast_typed.Yojson.expression e in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
       ("message", message); ("location", loc);
-      ("value", value); ("value_type", value_type);
+      ("value", value); 
       ("field", field);
     ] in
     json_error ~stage ~content

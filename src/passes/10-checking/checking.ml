@@ -464,24 +464,23 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : environ
       return (e_operation op) (t_operation ())
   | E_record_accessor {record;path} ->
       let e' = type_expression' ~raise ~test ~protocol_version e record in
-      let aux ~raise (prev:O.expression) (a:I.label) : O.expression =
-            let property = a in
-            let r_tv = trace_option ~raise (bad_record_access property ae prev.type_expression ae.location) @@
-             get_t_record prev.type_expression in
-            let tv =
-              trace_option ~raise (bad_record_access property ae prev.type_expression ae.location) @@
-              O.LMap.find_opt property r_tv.content in
-            let location = ae.location in
-            make_e ~location (E_record_accessor {record=prev; path=property}) tv.associated_type
+      let aux (prev:O.expression) (a:I.label) : O.expression =
+          let property = a in
+          let r_tv = trace_option ~raise (expected_record ae.location @@ get_type_expression prev) @@
+            get_t_record prev.type_expression in
+          let tv =
+            trace_option ~raise (bad_record_access property prev ae.location) @@
+            O.LMap.find_opt property r_tv.content in
+          let location = ae.location in
+          make_e ~location (E_record_accessor {record=prev; path=property}) tv.associated_type
       in
-      let ae =
-      trace ~raise (record_access_tracer e') @@ aux e' path in
+      let e = aux e' path in
       (* check type annotation of the final accessed element *)
       let () =
         match tv_opt with
         | None -> ()
-        | Some tv' -> assert_type_expression_eq ~raise ae.location (tv' , ae.type_expression) in
-      (ae)
+        | Some tv' -> assert_type_expression_eq ~raise e.location (tv' , e.type_expression) in
+      e
   | E_constructor {constructor = Label s as constructor ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
     let t = trace_option ~raise (michelson_or_no_annotation constructor ae.location) @@ tv_opt in
     let expr' = type_expression' ~raise ~test ~protocol_version e element in
@@ -528,7 +527,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : environ
     let tv =
       match wrapped.type_content with
       | T_record {content;_} -> (
-          let O.{associated_type;_} = trace_option ~raise (bad_record_access path ae wrapped update.location) @@
+          let O.{associated_type;_} = trace_option ~raise (bad_record_access path record update.location) @@
             O.LMap.find_opt path content in
           associated_type
       )

@@ -568,32 +568,32 @@ let%expect_test "typer" =
   Expected a function type, but got "foo".|}] ;
   error
     (`Typer_bad_record_access
-      (Label "bar", ast_core_expression, type_expression, location_t)) ;
+      (Label "bar", expression, location_t)) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error
     (`Typer_expression_tracer
       ( ast_core_expression,
         `Typer_bad_record_access
-          (Label "bar", ast_core_expression, type_expression, location_t) )) ;
+          (Label "bar", expression, location_t) )) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error
     (`Typer_record_access_tracer
       ( expression,
         `Typer_bad_record_access
-          (Label "bar", ast_core_expression, type_expression, location_t) )) ;
+          (Label "bar", expression, location_t) )) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error (`Typer_assert_equal (location_t, type_expression, type_expression2)) ;
   [%expect {|
     File "a dummy file name", line 20, character 5:
