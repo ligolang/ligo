@@ -27,7 +27,6 @@ module ParseTree
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
-import Data.Map
 import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -98,13 +97,6 @@ data SomeRawTree where
 
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = Product [Range, Text]
-
--- instance {-# OVERLAPS #-} Modifies RawInfo where
---   ascribe (r :> n :> _) d = color 3 (pp n) `indent` pp d
-
--- TODO: move and refactor
-instance (Pretty v) => Pretty (Map k v) where
-  pp = pp . fmap snd . toList
 
 -- | The tree tree-sitter produces.
 data ParseTree self = ParseTree

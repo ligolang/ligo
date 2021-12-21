@@ -283,7 +283,7 @@ instance Pretty ScopeForest where
       go' (only -> (decls :> r :> Nil, list')) =
         sexpr "scope" ([pp r] ++ map pp (Set.toList decls) ++ [go list' | not $ null list'])
 
-      decls' = sexpr "decls" . map pp . Map.toList
+      decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
 
 lookupEnv :: Text -> Scope -> Maybe ScopedDecl
 lookupEnv name = getFirst . foldMap \decl ->
