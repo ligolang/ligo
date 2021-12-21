@@ -573,7 +573,7 @@ let%expect_test "typer" =
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error
     (`Typer_expression_tracer
       ( ast_core_expression,
@@ -583,7 +583,7 @@ let%expect_test "typer" =
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error
     (`Typer_record_access_tracer
       ( expression,
@@ -593,7 +593,7 @@ let%expect_test "typer" =
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error (`Typer_assert_equal (location_t, type_expression, type_expression2)) ;
   [%expect {|
     File "a dummy file name", line 20, character 5:
