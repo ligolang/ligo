@@ -624,7 +624,7 @@ let three : nat = 7n lxor 4n; // 3
 // Bitwise shift left
 let fourteen : nat = 7n lsl 1n; // 14
 // Bitwise shift right
-let seven_ : nat = 14n land 1n; // 7
+let seven_ : nat = 14n lsr 1n; // 7
 ```
 
 </Syntax>

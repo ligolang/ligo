@@ -425,15 +425,15 @@ let measure_contract =
   (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror)
 
 let get_scope =
-  let f source_file syntax protocol_version libs display_format with_types () =
+  let f source_file protocol_version libs display_format with_types () =
     return_result ~return @@
-    Api.Info.get_scope source_file syntax protocol_version libs display_format with_types
+    Api.Info.get_scope source_file protocol_version libs display_format with_types
   in
   let summary   = "return the JSON encoded environment for a given file." in
   let readme () = "This sub-command returns the environment for a given \
                   file in JSON format. It does not use the build system." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> protocol_version <*> libraries <*> display_format <*> with_types)
+  (f <$> source_file <*> protocol_version <*> libraries <*> display_format <*> with_types)
 
 let info_group = 
   let summary = "tools to get information from contracts" in
@@ -444,9 +444,9 @@ let info_group =
 
 (** Print commands *)
 let preprocessed =
-  let f source_file syntax display_format () =
+  let f source_file syntax libraries display_format () =
     return_result ~return @@
-      Api.Print.preprocess source_file syntax display_format in
+      Api.Print.preprocess source_file syntax libraries display_format in
   let summary   = "preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command runs the pre-processor on a LIGO \
                   source file and outputs the result. The directive \
@@ -456,7 +456,7 @@ let preprocessed =
                   as a module and therefore the content of the imported \
                   file is not printed by this sub-command." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> syntax <*> libraries <*> display_format)
 let pretty_print =
   let f source_file syntax display_format () =
     return_result ~return @@

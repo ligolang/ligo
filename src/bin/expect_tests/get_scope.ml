@@ -3,7 +3,7 @@ open Cli_expect
 let gs = fun s -> ("../../test/contracts/get_scope_tests/"^s)
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "get-scope" ; gs "lambda_letin.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "lambda_letin.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect {|
 Scopes:
 [ a#0 f#5 ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 6-7
@@ -56,7 +56,7 @@ Type definitions:
 Module definitions: |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "get-scope" ; gs "letin.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "letin.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect {|
 Scopes:
 [ a#0 c#1 d#4 ] File "../../test/contracts/get_scope_tests/letin.mligo", line 10, characters 10-11
@@ -105,7 +105,7 @@ Type definitions:
 Module definitions: |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "get-scope" ; gs "lambda.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "lambda.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect {|
 Scopes:
 [ a#0 f#3 ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 6-7
@@ -133,7 +133,7 @@ Type definitions:
 Module definitions: |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "get-scope" ; gs "match.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "match.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ a#1 b#5 c#9 mytype#0 ] File "../../test/contracts/get_scope_tests/match.mligo", line 20, characters 12-13
@@ -198,7 +198,7 @@ let%expect_test _ =
     Module definitions: |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "get-scope" ; gs "rec.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "rec.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ a#0 b#6 c#5 ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 8-9
@@ -245,7 +245,7 @@ let%expect_test _ =
     Module definitions: |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "get-scope" ; gs "shadowing.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "shadowing.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ a#0 c#1 d#4 ] File "../../test/contracts/get_scope_tests/shadowing.mligo", line 10, characters 10-11
@@ -292,7 +292,7 @@ let%expect_test _ =
     Module definitions: |} ]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "get-scope" ; gs "records.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "records.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ a#1 b#4 g#5 myrec#0 ] File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 40-41
@@ -334,7 +334,7 @@ let%expect_test _ =
     record[bar -> int , foo -> int]
     Module definitions: |} ] ;
 
-  run_ligo_good [ "info" ; "get-scope" ; gs "constant.mligo" ; "--syntax" ; "cameligo" ; "--format" ; "dev" ; "--with-types" ] ;
+  run_ligo_good [ "info" ; "get-scope" ; gs "constant.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ a#0 e#3 ] File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 29-30
@@ -370,7 +370,7 @@ let%expect_test _ =
     Module definitions: |} ] 
 
 let%expect_test _ =
-  run_ligo_good [ "info"; "get-scope" ; gs "application.mligo" ; "--syntax";"cameligo" ; "--format";"dev" ; "--with-types" ] ;
+  run_ligo_good [ "info"; "get-scope" ; gs "application.mligo" ; "--format";"dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
     [ c#4 f#2 ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 35-36
