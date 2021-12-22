@@ -16,13 +16,18 @@ module type M =
     module AST : sig
       type declaration
       type t = declaration list
+      (* Environment should be a local notion of the BuildSystem *)
       type environment
-      val add_to_env : environment -> module_name -> environment -> environment
+      val add_module_to_env : module_name -> environment -> environment -> environment
+      val add_ast_to_env : t -> environment -> environment
       val init_env : environment
+
+      (* This should probably be taken in charge be the compiler, which should be able to handle "libraries" *)
       val make_module_declaration : module_name -> t -> declaration
       val make_module_alias : module_name -> file_name -> declaration
+
     end
-    val compile : AST.environment -> file_name -> meta_data -> compilation_unit -> (AST.t * AST.environment)
+    val compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t
   end
 
 module Make (M : M) =
@@ -120,12 +125,12 @@ module Make (M : M) =
     aggregated
 
   let add_modules_in_env (env : M.AST.environment) deps =
-    let aux env (module_name, (_,ast_env)) = 
-      M.AST.add_to_env env module_name ast_env
+    let aux env (module_name, (_,ast)) = 
+      M.AST.add_module_to_env module_name ast env
     in
     List.fold_left ~f:aux ~init:env deps
 
-  let add_deps_to_env asts_typed (_file_name, (_meta,_c_unit,deps)) =
+  let add_deps_to_env (asts_typed : (ast * env) SMap.t) (_file_name, (_meta,_c_unit,deps)) =
     let aux (file_name,module_name) =
       let ast_typed =
         match (SMap.find_opt file_name asts_typed) with
@@ -140,31 +145,27 @@ module Make (M : M) =
 
   let compile_file_with_deps asts (file_name, (meta,c_unit,deps)) =
     let env_with_deps = add_deps_to_env asts (file_name, (meta,c_unit,deps)) in
-    let ast,ast_env = M.compile env_with_deps file_name meta c_unit in
+    let ast = M.compile env_with_deps file_name meta c_unit in
+    let ast_env = M.AST.add_ast_to_env ast env_with_deps in
     SMap.add file_name (ast,ast_env) asts
 
-  let compile_separate : file_name -> (ast * env) build_error =
+  let compile_separate : file_name -> ast build_error =
     fun main_file_name ->
       let deps = dependency_graph main_file_name in
       match solve_graph deps main_file_name with
         Ok (ordered_deps) ->
-      (* This assumes that there are no dependency cycles involving the main file.
-          Dependency cycles are not supported anyway. *)
-        let mains, ordered_deps_only = List.partition_tf ~f:(fun (this_file_name, _) -> String.equal this_file_name main_file_name) ordered_deps in
-        let main = assert (List.length mains == 1); List.hd_exn mains in
-        let asts_typed = List.fold ~f:(compile_file_with_deps) ~init:(SMap.empty) ordered_deps_only in
-        let asts_typed = compile_file_with_deps asts_typed main in
-        Ok (SMap.find main_file_name asts_typed)
+        let asts_typed = List.fold ~f:(compile_file_with_deps) ~init:(SMap.empty) ordered_deps in
+        Ok (fst @@ SMap.find main_file_name asts_typed)
       | Error e -> Error e
 
-  let compile_combined : file_name -> (M.AST.declaration list * env) build_error =
+  let compile_combined : file_name -> ast build_error =
     fun file_name ->
       let deps = dependency_graph file_name in
       match solve_graph deps file_name with
-        Ok (order_deps) ->
-        let asts_typed = List.fold ~f:(compile_file_with_deps) ~init:(SMap.empty) order_deps in
-        let contract = aggregate_dependencies_as_headers order_deps asts_typed in
-        Ok(contract, snd @@ SMap.find file_name asts_typed)
+        Ok (ordered_deps) ->
+        let asts_typed = List.fold ~f:(compile_file_with_deps) ~init:(SMap.empty) ordered_deps in
+        let contract = aggregate_dependencies_as_headers ordered_deps asts_typed in
+        Ok(contract)
       | Error e -> Error e
   end    
 

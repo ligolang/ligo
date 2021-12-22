@@ -418,7 +418,6 @@ let%expect_test "typer" =
   let open Location in
   let error e = human_readable_error (checking_tracer e) in
   let location_t = File default_location in
-  let environment = Environment.empty in
   let type_variable = Var.of_name "foo" in
   let expression_variable = Location.wrap (Var.of_name "bar") in
   let ast_core_expression_variable : Ast_core.expression_variable =
@@ -461,14 +460,14 @@ let%expect_test "typer" =
 
       Invalid usage of type "michelson_or".
       The "michelson_or" type expects a variant type as argument.|}] ;
-  error (`Typer_unbound_type_variable (environment, type_variable, location_t)) ;
+  error (`Typer_unbound_type_variable (type_variable, location_t)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
 
     Type "foo" not found.|}] ;
   error
-    (`Typer_unbound_variable (environment, expression_variable, location_t)) ;
+    (`Typer_unbound_variable (expression_variable, location_t)) ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
@@ -491,8 +490,7 @@ let%expect_test "typer" =
     Bar
     Please remove the extra cases.|}] ;
   error
-    (`Typer_unbound_constructor
-      (environment, Label "Some-Constructor", location_t)) ;
+    (`Typer_unbound_constructor (Label "Some-Constructor", location_t)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:

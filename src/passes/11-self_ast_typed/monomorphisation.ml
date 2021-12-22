@@ -282,7 +282,7 @@ and mono_polymorphic_cases : _ -> data -> matching_expr -> data * matching_expr 
                     instances_add (lident_of_variable binder) binder_instances data) in
      data, Match_record { tv ; body ; fields }
 
-and mono_polymorphic_module : _ -> data -> module_fully_typed -> data * module_fully_typed = fun path data (Module_Fully_Typed p) ->
+and mono_polymorphic_module : _ -> data -> module' -> data * module' = fun path data p ->
   let self = mono_polymorphic_module in
   let rec aux data decls =
     match decls with
@@ -338,8 +338,7 @@ and mono_polymorphic_module : _ -> data -> module_fully_typed -> data * module_f
        | _ ->
           let data, decls = aux data decls in
           data, (Location.wrap ~loc declaration) :: decls in
-  let data, p = aux data p in
-  data, Module_Fully_Typed p
+  aux data p
 
 let mono_polymorphic_mod m =
   let _, m = mono_polymorphic_module [] empty_data m in

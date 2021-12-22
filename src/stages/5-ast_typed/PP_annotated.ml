@@ -139,7 +139,7 @@ and expression_content ppf (ec: expression_content) =
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let %a = %a in %a"
         module_variable module_binder
-        module_fully_typed rhs
+        module' rhs
         expression let_result
   | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code {language; code} ->
@@ -185,11 +185,13 @@ and declaration ppf (d : declaration) =
   | Declaration_type {type_binder; type_expr; type_attr = { public }} ->
       fprintf ppf "type %a = %a%a" type_variable type_binder type_expression type_expr option_public public
   | Declaration_module {module_binder; module_; module_attr = { public }} ->
-      fprintf ppf "module %a = %a%a" module_variable module_binder module_fully_typed module_ option_public public
+      fprintf ppf "module %a = %a%a" module_variable module_binder module' module_ option_public public
   | Module_alias {alias; binders} ->
       fprintf ppf "module %a = %a" module_variable alias (list module_variable) @@ List.Ne.to_list binders
 
-and module_fully_typed ppf (Module_Fully_Typed p : module_fully_typed) =
+and module' ppf (m : module') =
   fprintf ppf "@[<v>%a@]"
     (list_sep declaration (tag "@;"))
-    (List.map ~f:Location.unwrap p)
+    (List.map ~f:Location.unwrap m)
+
+let program ppf p = module' ppf p

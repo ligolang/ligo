@@ -144,7 +144,7 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
     let aux env binder =
       trace_option ~raise (unbound_module_variable env binder d.location)
       @@ Environment.get_module_opt binder env in
-    let e = List.Ne.fold_left aux env binders in
+    let e = List.Ne.fold_left ~f:aux ~init:env binders in
     let post_env = Environment.add_module alias e env in
     return (Module_alias { alias; binders}) (t_unit ()) post_env state @@ Wrap.mod_al ()
   )
@@ -503,7 +503,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     let aux e binder =
       trace_option ~raise (unbound_module_variable e binder ae.location) @@
       Environment.get_module_opt binder e in
-    let env = List.Ne.fold_left aux e binders in
+    let env = List.Ne.fold_left ~f:aux ~init:e binders in
     let e = Environment.add_module alias env e in
     let (e,state,result,t),constraints = self e state result in
     let wrapped =
@@ -690,3 +690,26 @@ and type_expression_subst ~raise (env : environment) (state : _ O'.typer_state) 
   let () = (if Ast_core.Debug.json_new_typer then Printf.eprintf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   let () = Pretty_print_variables.flush_pending_print state in
   (env, expr, t, state)
+
+let decompile_env (env : Ast_typed.declaration_loc list) =
+  let rec f env d = match Location.unwrap d with
+    Ast_typed.Declaration_constant {binder;expr;_} -> 
+      let e  = Checking.untype_expression expr in
+      let ty = Checking.untype_type_expression expr.type_expression in
+      I.Environment.add_ez_declaration binder e ty env
+  | Declaration_type {type_binder;type_expr;_} -> 
+      let type_expr = Checking.untype_type_expression type_expr in
+      I.Environment.add_type type_binder type_expr env
+  | Declaration_module {module_binder;module_;_} ->
+      let module_ = List.fold_left ~f ~init:Ast_core.Environment.empty module_ in
+      I.Environment.add_module module_binder (module_) env
+  | Module_alias {alias;binders} -> 
+      let module_ = 
+        List.Ne.fold_left ~f:(fun env binder -> 
+          Option.value_exn
+          (Environment.get_module_opt binder env))
+        ~init:env binders
+      in
+      I.Environment.add_module alias module_ env
+  in
+  List.fold_left ~f ~init:Ast_core.Environment.empty env

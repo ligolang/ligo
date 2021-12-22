@@ -60,33 +60,8 @@ let type_expression_tag ty_cont =
   | T_abstraction     _ -> 8
   | T_for_all         _ -> 9
 
-let rec constant_tag (ct : constant_tag) =
-  match ct with
-    C_arrow        ->  1
-  | C_option       ->  2
-  | C_map          ->  3
-  | C_big_map      ->  4
-  | C_list         ->  5
-  | C_set          ->  6
-  | C_unit         ->  8
-  | C_string       ->  7
-  | C_nat          ->  9
-  | C_mutez        -> 10
-  | C_timestamp    -> 11
-  | C_int          -> 12
-  | C_address      -> 13
-  | C_bytes        -> 14
-  | C_key_hash     -> 15
-  | C_key          -> 16
-  | C_signature    -> 17
-  | C_operation    -> 18
-  | C_contract     -> 19
-  | C_chain_id     -> 20
-  | C_bls12_381_g1 -> 21
-  | C_bls12_381_g2 -> 22
-  | C_bls12_381_fr -> 23
 
-and type_expression a b =
+let rec type_expression a b =
   type_content a.type_content b.type_content
 
 and type_content a b =
@@ -115,11 +90,6 @@ and rows {content=ca; layout=la} {content=cb; layout=lb} =
     (label_map ~compare:row_element) ca cb
     layout la lb
 
-and constraint_identifier (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) =
-  cmp2
-    Int64.compare a b
-    (List.compare type_expression) [] []
-
 and row_element {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
     type_expression aa ab
@@ -136,15 +106,7 @@ and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _
     type_expression ta tb
     type_variable ba.wrap_content bb.wrap_content
 
-let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
-  Int.compare (constant_tag ct ) (constant_tag ct2 )
-
-let option f oa ob =
-  match oa,ob with
-  | None, None -> 0
-  | Some _, None -> 1
-  | None, Some _ -> -1
-  | Some a, Some b -> f a b
+let option = Option.compare
 
 let binder ty_expr {var=va;ascr=aa;_} {var=vb;ascr=ab;_} =
   cmp2
@@ -245,7 +207,7 @@ and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_res
     type_expression ra rb
     expression la lb
 
-and mod_in {module_binder=ba;rhs= Module_Fully_Typed ra;let_result=la} {module_binder=bb;rhs= Module_Fully_Typed rb;let_result=lb} =
+and mod_in {module_binder=ba;rhs=ra;let_result=la} {module_binder=bb;rhs=rb;let_result=lb} =
   cmp3
     module_variable ba bb
     module_ ra rb
@@ -341,7 +303,7 @@ and declaration_type {type_binder=tba;type_expr=tea;type_attr={public=pua}} {typ
     type_expression tea teb
     bool pua pub
 
-and declaration_module {module_binder=mba;module_= Module_Fully_Typed ma; module_attr={public=pua}} {module_binder=mbb;module_= Module_Fully_Typed mb; module_attr={public=pub}} =
+and declaration_module {module_binder=mba;module_= ma; module_attr={public=pua}} {module_binder=mbb;module_= mb; module_attr={public=pub}} =
  cmp3
     module_variable mba mbb
     module_ ma mb
@@ -364,63 +326,3 @@ and declaration a b =
     Int.compare (declaration_tag a) (declaration_tag b)
 
 and module_ m = List.compare (Location.compare_wrap ~compare:declaration) m
-
-(* Environment *)
-let free_variables = List.compare expression_variable
-
-let type_or_kind x y =
-  match x, y with
-  | Ty x , Ty y -> type_expression x y
-  | Kind () , Kind () -> 0
-  | (Ty _ | Kind ()) , (Ty _ | Kind ()) ->
-    let tag = function Ty _ -> 1 | Kind () -> 2 in
-    Int.compare (tag x) (tag y)
-
-let type_environment_binding {type_variable=va;type_=ta;public=pua} {type_variable=vb;type_=tb;public=pub} =
-  cmp3
-    type_variable va vb
-    type_or_kind ta tb
-    bool pua pub
-
-let type_environment = List.compare type_environment_binding
-
-(* TODO: should the attributes be compared ? *)
-let environment_element_definition_declaration {expression=ea;free_variables=fa;attr=_} {expression=eb;free_variables=fb;attr=_} =
-  cmp2
-    expression ea eb
-    free_variables fa fb
-
-let environment_element_definition a b = match a,b with
-  | ED_binder, ED_declaration _ -> -1
-  | ED_binder, ED_binder -> 0
-  | ED_declaration _, ED_binder -> 1
-  | ED_declaration a, ED_declaration b -> environment_element_definition_declaration a b
-
-let rec environment_element {type_value=ta;definition=da} {type_value=tb;definition=db} =
-  cmp2
-    type_expression ta tb
-    environment_element_definition da db
-
-and environment_binding {expr_var=eva;env_elt=eea;public=pua} {expr_var=evb;env_elt=eeb;public=pub} =
-  cmp3
-    expression_variable eva evb
-    environment_element eea eeb
-    bool pua pub
-
-and expression_environment a b = List.compare environment_binding a b
-
-and module_environment_binding {module_variable=mva;module_=ma;public=pua}
-                               {module_variable=mvb;module_=mb;public=pub} =
-  cmp3
-    module_variable mva mvb
-    environment    ma  mb
-    bool pua pub
-
-and module_environment a b = List.compare module_environment_binding a b
-
-and environment {expression_environment=eea;type_environment=tea; module_environment=mea}
-                {expression_environment=eeb;type_environment=teb; module_environment=meb} =
-  cmp3
-   expression_environment eea eeb
-   type_environment       tea teb
-   module_environment     mea meb

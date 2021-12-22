@@ -31,7 +31,7 @@ let rec fold_type_expression : 'a folder -> 'a -> type_expr -> 'a = fun f init t
   let init = f.t init t in
   match t with
     TProd   {value;region=_} ->
-    List.Ne.fold_left self init @@ npseq_to_ne_list value
+    List.Ne.fold_left ~f:self ~init @@ npseq_to_ne_list value
   | TSum    {value;region=_} ->
     let {lead_vbar=_;variants;attributes=_} = value in
     let aux init ({value;region=_} : _ reg) =
@@ -40,17 +40,17 @@ let rec fold_type_expression : 'a folder -> 'a -> type_expr -> 'a = fun f init t
         Some (_,t) -> self init t
       | None -> init
     in
-    List.Ne.fold_left aux init @@ npseq_to_ne_list variants
+    List.Ne.fold_left ~f:aux ~init @@ npseq_to_ne_list variants
   | TRecord {value;region=_} ->
     let aux init ({value;region=_} : _ reg) =
       let {field_name=_;colon=_;field_type;attributes=_} = value in
       self init field_type
     in
-    List.Ne.fold_left aux init @@ npseq_to_ne_list value.ne_elements
+    List.Ne.fold_left ~f:aux ~init @@ npseq_to_ne_list value.ne_elements
   | TApp    {value;region=_} -> (
     let (_, args) = value in
     match args with
-    | CArgTuple x -> List.Ne.fold_left self init @@ npseq_to_ne_list x.value.inside
+    | CArgTuple x -> List.Ne.fold_left ~f:self ~init @@ npseq_to_ne_list x.value.inside
     | CArg x -> self init x
   )
   | TFun    {value;region=_} ->
@@ -146,7 +146,7 @@ let rec fold_expression : 'a folder -> 'a -> expr -> 'a = fun f init e  ->
       let res = self init field_expr in
       res
     in
-    List.Ne.fold_left aux init @@ npseq_to_ne_list value.ne_elements
+    List.Ne.fold_left ~f:aux ~init @@ npseq_to_ne_list value.ne_elements
   | EProj    _ -> init
   | EUpdate  {value;region=_} ->
     let aux init ({value;region=_} : _ reg) =
@@ -154,17 +154,17 @@ let rec fold_expression : 'a folder -> 'a -> expr -> 'a = fun f init e  ->
       let res = self init field_expr in
       res
     in
-    List.Ne.fold_left aux init @@ npseq_to_ne_list value.updates.value.ne_elements
+    List.Ne.fold_left ~f:aux ~init @@ npseq_to_ne_list value.updates.value.ne_elements
   | EModA    {value;region=_} -> self init value.field
   | EVar     _ -> init
   | ECall    {value;region=_} ->
     let (lam, args) = value in
     let res = self init lam in
-    List.Ne.fold_left self res @@ args
+    List.Ne.fold_left ~f:self ~init:res @@ args
   | EBytes   _ -> init
   | EUnit    _ -> init
   | ETuple   {value;region=_} ->
-    List.Ne.fold_left self init @@ npseq_to_ne_list value
+    List.Ne.fold_left ~f:self ~init @@ npseq_to_ne_list value
   | EPar     {value;region=_} ->
     self init value.inside
   | ELetIn   {value;region=_} ->
@@ -207,7 +207,7 @@ let rec fold_expression : 'a folder -> 'a -> expr -> 'a = fun f init e  ->
     self init code
 
 and matching_cases self init ({value;region=_}: _ reg) =
-  List.Ne.fold_left(case_clause self) init @@ npseq_to_ne_list value
+  List.Ne.fold_left ~f:(case_clause self) ~init @@ npseq_to_ne_list value
 
 and case_clause self init ({value;region=_}: _ case_clause reg) =
   let {pattern=_;arrow=_;rhs} = value in
@@ -245,7 +245,7 @@ and fold_declaration : 'a folder -> 'a -> declaration -> 'a =
 and fold_module : 'a folder -> 'a -> t -> 'a =
   fun f init {decl;eof=_} ->
   let self = fold_declaration f in
-  List.Ne.fold_left self init @@ decl
+  List.Ne.fold_left ~f:self ~init @@ decl
 
 type ('err) mapper = {
   e : expr -> expr;

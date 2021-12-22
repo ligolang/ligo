@@ -6,9 +6,9 @@ open Ast_imperative
 let get_program = get_program "./contracts/id.ligo" (Contract "main")
 
 let compile_main ~raise ~add_warning () =
-  let typed_prg,_   = get_program ~raise ~add_warning () in
-  let mini_c_prg      = Ligo_compile.Of_typed.compile ~raise typed_prg in
-  let michelson_prg   = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg "main" in
+  let typed_prg     = get_program ~raise ~add_warning () in
+  let mini_c_prg    = Ligo_compile.Of_typed.compile ~raise typed_prg in
+  let michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg "main" in
   let _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract ~raise michelson_prg in
@@ -21,7 +21,7 @@ let (first_owner , first_contract) =
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let buy_id ~raise ~add_warning () =
-  let program, env = get_program ~raise ~add_warning () in
+  let program    = get_program ~raise ~add_warning () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -53,7 +53,7 @@ let buy_id ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~options (program, env) "buy" 
+  let () = expect_eq ~raise ~options program "buy" 
       (e_pair param storage) 
       (e_pair (e_list []) new_storage)
   in ()

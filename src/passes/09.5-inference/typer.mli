@@ -17,3 +17,5 @@ val type_expression       : raise:typer_error raise -> ?tv_opt:O.type_expression
 val type_expression_subst : raise:typer_error raise -> environment -> typer_error O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> environment * O.expression * O.type_expression * typer_error O'.typer_state
 val type_declaration      : raise:typer_error raise -> environment -> typer_error O'.typer_state -> I.declaration Location.wrap -> environment * typer_error O'.typer_state * O.declaration Location.wrap * O.type_expression
 val type_module           : raise:typer_error raise -> init_env:environment -> I.module_ -> environment * O.module_ * O.type_expression * typer_error O'.typer_state
+
+val decompile_env         : Ast_typed.declaration_loc list -> I.Environment.t
