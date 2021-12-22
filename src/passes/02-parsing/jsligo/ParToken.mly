@@ -26,7 +26,7 @@
 %token                  <string Wrap.wrap> BlockCom "<block_comment>" [@recover.expr mk "<invalid-block-comment>"]
 %token                  <string Wrap.wrap> LineCom  "<line_comment>"  [@recover.expr mk "<invalid-line-comment>"]
 %token                  <string Wrap.wrap> String   "<string>"        [@recover.expr mk "<invalid-string-literal>"]
-%token                  <string Wrap.wrap> Verbatim "<verbatim>"      [@recover.expr mk "<invalid-verbatim-literal>"]
+%token                  <string Wrap.wrap> Verbatim "<verbatim>"
 %token        <(lexeme * Hex.t) Wrap.wrap> Bytes    "<bytes>"         [@recover.expr mk ("<invalid-bytes-literal>", `Hex "")]
 %token          <(string * Z.t) Wrap.wrap> Int      "<int>"           [@recover.expr mk ("<invalid-int-literal>", Z.zero)]
 (* %token          <(string * Z.t) Wrap.wrap> Nat      "<nat>"*)
