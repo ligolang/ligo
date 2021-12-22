@@ -101,5 +101,5 @@ pin-depends: [
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/src/lib_test" ]
   [ "tezos-version.dev" "./vendors/tezos-ligo/src/lib_version" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/src/lib_workers" ]
-  [ "ocaml-recovery-parser.0.1" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.1" ]
+  [ "ocaml-recovery-parser.0.1" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2" ]
 ]
