@@ -7,7 +7,7 @@ let refile = "./contracts/basic_multisig/multisig.religo"
 let get_program f = get_program f (Contract "main")
 
 let compile_main ~raise ~add_warning f () =
-  let typed_prg,_ = get_program ~raise ~add_warning f () in
+  let typed_prg     = get_program ~raise ~add_warning f () in
   let mini_c_prg    = Ligo_compile.Of_typed.compile ~raise typed_prg in
   let michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg "main" in
   let _contract =
@@ -63,7 +63,7 @@ let chain_id_zero =
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params ~raise ~add_warning counter payload keys is_validl f =
-  let _,env   = get_program ~raise ~add_warning f () in
+  let prog = get_program ~raise ~add_warning f () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in
@@ -72,7 +72,7 @@ let params ~raise ~add_warning counter payload keys is_validl f =
         e_nat counter ;
         e_string (if is_valid then "MULTISIG" else "XX") ;
         chain_id_zero ] in
-    let signature = sign_message ~raise env msg sk in
+    let signature = sign_message ~raise prog msg sk in
     (e_pair (e_key_hash pkh) (e_signature signature))::acc in
   let signed_msgs = List.fold ~f:aux ~init:[] (List.rev @@ List.zip_exn keys is_validl) in
   e_record_ez [

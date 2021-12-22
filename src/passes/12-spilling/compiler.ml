@@ -886,7 +886,7 @@ and compile_declaration ~raise env (d:AST.declaration) : toplevel_statement opti
 
 
 
-and compile_module ~raise ((AST.Module_Fully_Typed lst) : AST.module_fully_typed) : program =
+and compile_program ~raise (prg : AST.program) : program =
   let aux (prev:toplevel_statement list * Environment.t) cur =
     let (hds, env) = prev in
     let x = compile_declaration ~raise env cur in
@@ -894,5 +894,5 @@ and compile_module ~raise ((AST.Module_Fully_Typed lst) : AST.module_fully_typed
     | Some ((_ , env') as cur') -> (hds @ [ cur' ] , env'.post_environment)
     | None -> prev
   in
-  let (statements, _) = List.fold_left ~f:aux ~init:([], Environment.empty) (temp_unwrap_loc_list lst) in
+  let (statements, _) = List.fold_left ~f:aux ~init:([], Environment.empty) (temp_unwrap_loc_list prg) in
   statements

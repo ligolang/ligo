@@ -11,9 +11,9 @@ let test source_file syntax steps protocol_version display_format () =
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
       let options = Compiler_options.make ~test:true ~protocol_version () in
-      let typed,_ = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
+      let typed   = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
       let typed   = Self_ast_typed.monomorphise_module typed in
-      let _,typed = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_module options.init_env typed in
+      let typed   = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_program options.init_env typed in
       Interpreter.eval_test ~raise ~steps ~protocol_version typed
 
 let dry_run source_file entry_point input storage amount balance sender source now syntax protocol_version display_format werror () =
@@ -22,7 +22,7 @@ let dry_run source_file entry_point input storage amount balance sender source n
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
       let options = Compiler_options.make ~protocol_version () in
-      let mini_c_prg,typed_prg,env = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
+      let mini_c_prg,typed_prg = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
       let michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg entry_point in
       let parameter_ty =
         (* fails if the given entry point is not a valid contract *)
@@ -30,7 +30,7 @@ let dry_run source_file entry_point input storage amount balance sender source n
         Option.map ~f:fst @@ Self_michelson.fetch_contract_ty_inputs michelson_prg.expr_ty
       in
 
-      let compiled_params   = Compile.Utils.compile_storage ~raise ~options input storage source_file syntax env mini_c_prg in
+      let compiled_params   = Compile.Utils.compile_storage ~raise ~options input storage source_file syntax typed_prg mini_c_prg in
       let args_michelson    = Run.evaluate_expression ~raise compiled_params.expr compiled_params.expr_ty in
 
       let options           = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty } in
@@ -59,15 +59,16 @@ let evaluate_call source_file entry_point parameter amount balance sender source
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~protocol_version ()
       in
-      let mini_c_prg,typed_prg,env = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
+      let mini_c_prg,typed_prg = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
       let meta             = Compile.Of_source.extract_meta ~raise syntax source_file in
       let c_unit_param,_   = Compile.Of_source.compile_string ~raise ~options ~meta parameter in
       let imperative_param = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_param in
       let sugar_param      = Compile.Of_imperative.compile_expression ~raise imperative_param in
       let core_param       = Compile.Of_sugar.compile_expression sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in
-      let typed_app,_      = Compile.Of_core.compile_expression ~raise ~options ~env app in
-      let _,typed_app      = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_expression env typed_app in
+      let typed_app        = Compile.Of_core.compile_expression ~raise ~options ~init_prog:typed_prg app in
+      let env              = Environment.append typed_prg options.init_env in
+      let typed_app        = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_expression env typed_app in
       let compiled_applied = Compile.Of_typed.compile_expression ~raise typed_app in
 
       let michelson        = Compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c_prg compiled_applied in
@@ -83,7 +84,7 @@ let evaluate_expr source_file entry_point amount balance sender source now synta
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~protocol_version ()
       in
-      let mini_c,typed_prg,_ = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
+      let mini_c,typed_prg = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
       let (exp,_)       = trace_option ~raise Main_errors.main_entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
       let exp = Mini_c.e_var ~loc:exp.location (Location.wrap @@ Var.of_name entry_point) exp.type_expression in
       let compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c exp in

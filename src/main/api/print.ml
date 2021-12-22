@@ -61,25 +61,25 @@ let ast_core source_file syntax display_format () =
 
 let ast_typed source_file syntax protocol_version display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~display_format (Ast_typed.Formatter.module_format_fully_typed) get_warnings @@
+    format_result ~display_format (Ast_typed.Formatter.program_format) get_warnings @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~protocol_version ()
       in
-      let typed,_ = Build.type_contract ~raise ~add_warning ~options syntax Env source_file in
+      let typed = Build.type_contract ~raise ~add_warning ~options syntax Env source_file in
       let typed = Self_ast_typed.monomorphise_module typed in
       typed
 
 let ast_combined  source_file syntax protocol_version display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~display_format (Ast_typed.Formatter.module_format_fully_typed) get_warnings @@
+    format_result ~display_format (Ast_typed.Formatter.program_format) get_warnings @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~protocol_version ()
       in
-      let typed,_ = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
+      let typed = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
       typed
 
 let mini_c source_file syntax protocol_version display_format optimize () =

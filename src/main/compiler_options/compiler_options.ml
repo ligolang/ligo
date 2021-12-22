@@ -1,7 +1,7 @@
 open Environment
 
 type t = {
-  init_env : Ast_typed.environment ;
+  init_env : Environment.t ;
   infer : bool ;
   libs : string list ;
   test : bool ;

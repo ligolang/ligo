@@ -85,7 +85,6 @@ and untype_declaration untype_expression =
 
 
 
-and untype_module untype_expression : O.module_fully_typed -> I.module_ =
-  fun (O.Module_Fully_Typed p) ->
+and untype_module untype_expression : O.module' -> I.module_ = fun p ->
   let untype_declaration = untype_declaration untype_expression in
   List.map ~f:(Location.map untype_declaration) p

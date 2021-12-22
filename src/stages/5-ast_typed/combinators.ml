@@ -369,7 +369,7 @@ let get_a_record_accessor = fun t ->
   | E_record_accessor {record; path} -> Some (record, path)
   | _ -> None
 
-let get_declaration_by_name : module_fully_typed -> string -> declaration option = fun (Module_Fully_Typed p) name ->
+let get_declaration_by_name : program -> string -> declaration option = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
     | Declaration_constant { name = name'; binder = _ ; expr = _ ; attr = _ } ->

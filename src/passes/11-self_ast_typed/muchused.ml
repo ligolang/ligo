@@ -203,9 +203,9 @@ and muchuse_of_record {body;fields;_} =
   List.fold_left ~f:(fun (c,m) (v,t) -> muchuse_of_binder v t (c,m))
     ~init:(muchuse_of_expr body) typed_vars
 
-let rec get_all_declarations (module_name : module_variable) : module_fully_typed ->
+let rec get_all_declarations (module_name : module_variable) : module' ->
                                (expression_variable * type_expression) list =
-  function (Module_Fully_Typed p) ->
+  function m ->
     let aux = fun (x : declaration) ->
       match x with
       | Declaration_constant {binder;expr;_} ->
@@ -218,10 +218,10 @@ let rec get_all_declarations (module_name : module_variable) : module_fully_type
            (Location.wrap ~loc:v.location (Var.of_name name), t) in
          recs |> List.map ~f:add_module_name
       | _ -> [] in
-    p |> List.map ~f:Location.unwrap |> List.map ~f:aux |> List.concat
+    m |> List.map ~f:Location.unwrap |> List.map ~f:aux |> List.concat
 
-let rec muchused_helper (muchuse : muchuse) : module_fully_typed -> muchuse =
-  function (Module_Fully_Typed p) ->
+let rec muchused_helper (muchuse : muchuse) : module' -> muchuse =
+  function m ->
   let aux = fun (x : declaration) s ->
     match x with
     | Declaration_constant {expr ; binder; _} ->
@@ -233,9 +233,9 @@ let rec muchused_helper (muchuse : muchuse) : module_fully_typed -> muchuse =
          decls ~init:(muchused_helper s module_)
     | _ -> s
   in
-  List.fold_right ~f:aux (List.map ~f:Location.unwrap p) ~init:muchuse
+  List.fold_right ~f:aux (List.map ~f:Location.unwrap m) ~init:muchuse
 
-let muchused_map_module ~add_warning : module_fully_typed -> module_fully_typed = function module' ->
+let muchused_map_module ~add_warning : module' -> module' = function module' ->
   let update_annotations annots =
     List.iter ~f:(fun a -> add_warning a) annots in
   let _,muchused = muchused_helper muchuse_neutral module' in
@@ -243,4 +243,4 @@ let muchused_map_module ~add_warning : module_fully_typed -> module_fully_typed 
     `Self_ast_typed_warning_muchused
       (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
   let () = update_annotations @@ List.map ~f:warn_var muchused in
-    module'
+  module'

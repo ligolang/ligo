@@ -251,7 +251,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : expression option =
+let get_entry (lst : program) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
     | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (

@@ -63,5 +63,5 @@ let monomorphise_module m = Monomorphisation.mono_polymorphic_mod m
 let monomorphise_module_data data m = Monomorphisation.mono_polymorphic_module [] data m
 let monomorphise_expression e = Monomorphisation.mono_polymorphic_expression [] Monomorphisation.empty_data e
 
-let morph_module ~raise = Morph_module_in_record.peephole_module ~raise
-let morph_expression ~raise = Morph_module_in_record.(fold_map_expression (peephole_expression ~raise))
+let morph_program ~raise = Morph_module_in_record.peephole_program ~raise
+let morph_expression ~raise = Morph_module_in_record.peephole_expression ~raise

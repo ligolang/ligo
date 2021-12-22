@@ -169,8 +169,8 @@ and expression_content ppf (ec: expression_content) =
         type_expression rhs
         expression let_result
   | E_mod_in {module_binder; rhs; let_result} ->
-      fprintf ppf "let %a = %a in %a" module_variable module_binder 
-        module_fully_typed rhs 
+      fprintf ppf "let module %a = struct@;@[<v>%a]@ end in %a" module_variable module_binder 
+        module' rhs 
         expression let_result
   | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code {language; code} ->
@@ -212,121 +212,13 @@ and declaration ppf (d : declaration) =
   | Declaration_type {type_binder; type_expr; type_attr = { public }} ->
     fprintf ppf "type %a = %a%a" type_variable type_binder type_expression type_expr option_public public
   | Declaration_module {module_binder; module_; module_attr = {public}} ->
-      fprintf ppf "module %a = %a%a" module_variable module_binder module_fully_typed module_ option_public public
+      fprintf ppf "module %a = struct@; @[<v>%a@]@;end %a" module_variable module_binder module' module_ option_public public
   | Module_alias {alias; binders} ->
       fprintf ppf "module %a = %a" module_variable alias (list_sep module_variable (tag ".")) @@ List.Ne.to_list binders
 
-and module_fully_typed ppf (Module_Fully_Typed p : module_fully_typed) =
+and module' ppf (m : module') =
   fprintf ppf "@[<v>%a@]"
     (list_sep declaration (tag "@;"))
-    (List.map ~f:Location.unwrap p)
+    (List.map ~f:Location.unwrap m)
 
-let module_with_unification_vars ppf (Module_With_Unification_Vars p : module_with_unification_vars) =
-  fprintf ppf "@[<v>%a@]"
-    (list_sep declaration (tag "@;"))
-    (List.map ~f:Location.unwrap p)
-
-let typeVariableMap = fun f ppf tvmap   ->
-      let lst = List.sort ~compare:(fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
-      let aux ppf (k, v) =
-        fprintf ppf "(Var %a, %a)" Var.pp k f v in
-      fprintf ppf "typeVariableMap [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-
-let typeVariableSet = fun ppf s   ->
-      let lst = List.sort ~compare:(fun (a) (b) -> Var.compare a b) (RedBlackTrees.PolySet.elements s) in
-      let aux ppf (k) =
-        fprintf ppf "(Var %a)" Var.pp k in
-      fprintf ppf "typeVariableSet [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-let constraint_identifier_set = fun ppf s   ->
-      let lst = List.sort ~compare:(fun (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
-      let aux ppf (ConstraintIdentifier.T k) =
-        fprintf ppf "(ConstraintIdentifier %Li)" k in
-      fprintf ppf "constraint_identifier_set [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-
-let identifierMap = fun f ppf idmap ->
-      let lst = List.sort ~compare:(fun (ConstraintIdentifier.T a, _) (ConstraintIdentifier.T b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
-      let aux ppf (ConstraintIdentifier.T k, v) =
-        fprintf ppf "(ConstraintIdentifier %Li, %a)" k f v in
-      fprintf ppf "typeVariableMap [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-
-let biMap = fun fk fv ppf idmap ->
-      let lst = RedBlackTrees.PolyBiMap.bindings idmap in
-      let aux ppf (k, v) =
-        fprintf ppf "(%a, %a)" fk k fv v in
-      fprintf ppf "typeVariableMap [@[<hv 2>@ %a @]@ ]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-let poly_unionfind = (fun f ppf p   ->
-  let lst = (UnionFind.Poly2.partitions p) in
-  let aux1 ppf l = fprintf ppf "[@[<hv 2> (*%a*) %a @]@ ]"
-                  f (UnionFind.Poly2.repr (List.hd_exn l) p)
-                  (list_sep (f) (fun ppf () -> fprintf ppf " ;@ ")) l in
-  let aux2 = list_sep aux1 (fun ppf () -> fprintf ppf " ;@ ") in
-  fprintf ppf "UnionFind [@[<hv 2>@ %a @]@ ]" aux2 lst)
-
-let constant_tag ppf c_tag = match c_tag with
-  | C_arrow        -> fprintf ppf "C_arrow"
-  | C_option       -> fprintf ppf "C_option"
-  | C_map          -> fprintf ppf "C_map"
-  | C_big_map      -> fprintf ppf "C_big_map"
-  | C_list         -> fprintf ppf "C_list"
-  | C_set          -> fprintf ppf "C_set"
-  | C_unit         -> fprintf ppf "C_unit"
-  | C_string       -> fprintf ppf "C_string"
-  | C_nat          -> fprintf ppf "C_nat"
-  | C_mutez        -> fprintf ppf "C_mutez"
-  | C_timestamp    -> fprintf ppf "C_timestamp"
-  | C_int          -> fprintf ppf "C_int"
-  | C_address      -> fprintf ppf "C_address"
-  | C_bytes        -> fprintf ppf "C_bytes"
-  | C_key_hash     -> fprintf ppf "C_key_hash"
-  | C_key          -> fprintf ppf "C_key"
-  | C_signature    -> fprintf ppf "C_signature"
-  | C_operation    -> fprintf ppf "C_operation"
-  | C_contract     -> fprintf ppf "C_contract"
-  | C_chain_id     -> fprintf ppf "C_chain_id"
-  | C_bls12_381_g1 -> fprintf ppf "C_bls12_381_g1"
-  | C_bls12_381_g2 -> fprintf ppf "C_bls12_381_g2"
-  | C_bls12_381_fr -> fprintf ppf "C_bls12_381_fr"
-
-let row_tag ppf = function
-    C_record -> fprintf ppf "C_record"
-  | C_variant -> fprintf ppf "C_variant"
-
-let environment_element_definition ppf = function
-  | ED_binder -> fprintf ppf "Binder"
-  | ED_declaration {expression=e;free_variables=fv;attr=_} ->
-    fprintf ppf "Declaration : {expression : %a ;@ free_variables : %a}" expression e (list expression_variable) fv
-let rec environment_element ppf ({type_value;definition} : environment_element) =
-  fprintf ppf "{@[<hv 2> @ type_value : %a;@ definition : %a;@]@ }"
-    type_expression type_value
-    environment_element_definition definition
-
-and environment_binding ppf ({expr_var;env_elt;public} : environment_binding) =
-  fprintf ppf "{@[<hv 2> @ expr_var : %a%a;@ env_elt : %a;@]@ }"
-    expression_variable expr_var
-    option_public public
-    environment_element env_elt
-
-and type_or_kind ppf x =
-  match x with
-  | Ty x -> type_expression ppf x
-  | Kind () -> fprintf ppf "*"
-
-and type_environment_binding ppf ({type_variable=tv;type_;public=_} : type_environment_binding) =
-  fprintf ppf "{@[<hv 2> @ type_variable : %a;@ type_ : %a;@]@ }"
-    type_variable tv
-    type_or_kind type_
-
-and module_environment_binding ppf ({module_variable;module_;public=_} : module_environment_binding) =
-  fprintf ppf "{@[<hv 2> @ odule_variable : %s ;@ module_ : %a;@]@ }"
-    module_variable
-    environment module_
-
-and environment ppf ({expression_environment;type_environment=_;module_environment=_} : environment) =
-  fprintf ppf "{@[<hv 2> @ expression_environment : (%a);@]@ }"
-    (list_sep_d environment_binding) expression_environment
-    (*
-  fprintf ppf "{@[<hv 2>@ expression_environment : (%a);@ type_environment : (%a);@ module_environment : (%a)]@ }"
-    (list_sep_d environment_binding) expression_environment
-    (list_sep_d type_environment_binding) type_environment
-    (list_sep_d module_environment_binding) module_environment
-    *)
+let program ppf p = module' ppf p

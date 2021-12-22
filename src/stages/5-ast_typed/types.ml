@@ -89,9 +89,7 @@ and declaration_loc = declaration location_wrap
 
 and module' = declaration_loc list
 
-and module_with_unification_vars = Module_With_Unification_Vars of module'
-
-and module_fully_typed = Module_Fully_Typed of module'
+and program = module'
 
 and type_attribute = { public : bool }
 
@@ -117,7 +115,7 @@ and declaration_type = {
 
 and declaration_module = {
     module_binder : module_variable ;
-    module_       : module_fully_typed ;
+    module_       : program ;
     module_attr   : module_attribute
   }
 
@@ -202,7 +200,7 @@ and let_in = {
 
 and mod_in = {
     module_binder: module_variable ;
-    rhs: module_fully_typed ;
+    rhs: program ;
     let_result: expression ;
   }
 
@@ -242,102 +240,3 @@ and ascription = {
     anno_expr: expression ;
     type_annotation: type_expression ;
   }
-
-and environment_element_definition =
-  | ED_binder
-  | ED_declaration of environment_element_definition_declaration
-
-and environment_element_definition_declaration = {
-    expression: expression ;
-    free_variables: free_variables ;
-    attr : known_attributes ;
-  }
-
-and free_variables = expression_variable list
-
-and environment_element = {
-    type_value: type_expression ;
-    definition: environment_element_definition ;
-  }
-
-and expression_environment = environment_binding list
-
-and environment_binding = {
-    expr_var: expression_variable ;
-    env_elt: environment_element ;
-    public: bool;
-  }
-
-and type_environment = type_environment_binding list
-
-and type_or_kind = Ty of type_expression | Kind of unit
-
-and type_environment_binding = {
-    type_variable: type_variable ;
-    type_: type_or_kind ;
-    public: bool;
-  }
-
-and module_environment = module_environment_binding list
-
-and module_environment_binding = {
-  module_variable : module_variable ;
-  module_ : environment ;
-  public: bool;
-}
-and environment = {
-  expression_environment: expression_environment ;
-  type_environment: type_environment ;
-  module_environment : module_environment ;
-  }
-
-(* Solver types
-
-
-   The solver types are not actually part of the AST,
-   so they could be moved to a separate file, but doing so would
-   require updating every use of the Ast_typed.Types module to also
-   include the solver types (a lot of work). Also, there is a lot of
-   semi-duplication between the AST and the solver, so it's best to
-   keep the two together until that gets refactored. *)
-
-(* core *)
-module ConstraintIdentifier = struct
-  type t = T of int64
-  let counter : int64 ref = ref Int64.zero 
-  let fresh () = 
-    let res = !counter in
-    counter := Int64.succ !counter;
-    T res
-
-end
-
-(* add information on the type or the kind for operator *)
-type constant_tag =
-  | C_arrow        (* * -> * -> * *)
-  | C_option       (* * -> * *)
-  | C_map          (* * -> * -> * *)
-  | C_big_map      (* * -> * -> * *)
-  | C_list         (* * -> * *)
-  | C_set          (* * -> * *)
-  | C_unit         (* * *)
-  | C_string       (* * *)
-  | C_nat          (* * *)
-  | C_mutez        (* * *)
-  | C_timestamp    (* * *)
-  | C_int          (* * *)
-  | C_address      (* * *)
-  | C_bytes        (* * *)
-  | C_key_hash     (* * *)
-  | C_key          (* * *)
-  | C_signature    (* * *)
-  | C_operation    (* * *)
-  | C_contract     (* * -> * *)
-  | C_chain_id     (* * *)
-  | C_bls12_381_g1 (* * *)
-  | C_bls12_381_g2 (* * *)
-  | C_bls12_381_fr (* * *)
-
-type row_tag =
-  | C_record    (* ( label , * ) … -> * *)
-  | C_variant   (* ( label , * ) … -> * *)

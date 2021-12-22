@@ -85,8 +85,8 @@ let compile_contract ~raise ~add_warning ~protocol_version source_file entry_poi
   let open Ligo_compile in
   let syntax = "auto" in
   let options = Compiler_options.make ~protocol_version () in
-  let michelson,env = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
-  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file in
+  let michelson,prog_type = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
+  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,prog_type) source_file in
   Of_michelson.build_contract ~raise ~disable_typecheck:false michelson views
 
 let clean_location_with v x =
@@ -298,8 +298,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
   | V_Failure _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: failure"
 
-and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env ->
-                             Ast_typed.module_fully_typed =
+and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env -> Ast_typed.program =
   fun env ->
   let open Ligo_interpreter.Types in
   let open! Ast_typed in
@@ -316,7 +315,7 @@ and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env ->
        let module_binder = name in
        let module_ = env_to_ast ~raise ~loc item in
        Ast_typed.Declaration_module { module_binder ; module_; module_attr = {public = true} } :: aux tl in
-  Module_Fully_Typed (List.map (aux (List.rev env)) ~f:Location.wrap)
+  (List.map (aux (List.rev env)) ~f:Location.wrap)
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_typed in

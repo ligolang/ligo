@@ -6,7 +6,9 @@ let contract basename =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "simple.mligo" ] ;
   [%expect {|
-    module Tezo = const amoun = 1000000mutez
+    module Tezo = struct
+     const amoun = 1000000mutez
+    end
     const balanc = 2000000mutez
     const size = 10
     const bal = ADD(balanc ,
@@ -27,7 +29,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
   [%expect {|
-    module Tezo = module X = module Y = const amoun = 1000000mutez
+    module Tezo = struct
+     module X = struct
+      module Y = struct
+       const amoun = 1000000mutez
+      end
+     end
+    end
     const balanc = 2000000mutez
     const size = 10
     const bal = ADD(balanc ,
@@ -50,7 +58,9 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "module_with_free_vars.mligo" ] ;
   [%expect {|
     const x = 1000000mutez
-    module Tezo = const amoun = x
+    module Tezo = struct
+     const amoun = x
+    end
     const balanc = 2000000mutez
     const size = 10
     const bal = ADD(balanc ,
@@ -74,12 +84,18 @@ run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules_with_free_vars.
 [%expect {|
   const used = 1000000mutez
   const unused = 2000000mutez
-  module Tezo = const used = used
-                const unused = unused
-                module X = const used = used
-                           const unused = unused
-                           module Y = const used = used
-                                      const unused = unused
+  module Tezo = struct
+   const used = used
+   const unused = unused
+   module X = struct
+    const used = used
+    const unused = unused
+    module Y = struct
+     const used = used
+     const unused = unused
+    end
+   end
+  end
   const used = Tezo.X.Y.used
   const unused = Tezo.X.Y.unused
   type parameter = sum[Decrement -> unit , Increment -> unit]

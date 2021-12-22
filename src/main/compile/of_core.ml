@@ -8,15 +8,13 @@ type form =
   | View of string * string
   | Env
 
-let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
+let infer ~raise:_ ~(options: Compiler_options.t) (m : Ast_core.module_) =
   match options.infer with
-    | true  ->
-       let env_inf = Checking.decompile_env options.init_env in
-       let (_,e,_,_) = trace ~raise inference_tracer @@ Inference.type_module ~init_env:env_inf m in e
+    | true  -> m
     | false -> m
 
-let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.module_fully_typed * Ast_typed.environment =
-  let e,typed = trace ~raise checking_tracer @@ Checking.type_module ~test:options.test ~init_env:options.init_env ~protocol_version:options.protocol_version m in
+let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program = 
+  let typed = trace ~raise checking_tracer @@ Checking.type_program ~test:options.test ~env:options.init_env ~protocol_version:options.protocol_version m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
     let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
@@ -24,21 +22,18 @@ let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) 
     | Contract entrypoint -> Self_ast_typed.all_contract ~raise entrypoint selfed
     | View (view_name,main_name) -> Self_ast_typed.all_view ~raise view_name main_name selfed
     | Env -> selfed in
-  (applied,e)
+  applied
 
-let compile_expression ~raise ~(options: Compiler_options.t) ~(env : Ast_typed.environment) (expr : Ast_core.expression)
-    : Ast_typed.expression * Ast_typed.environment =
+let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
+    : Ast_typed.expression =
   let inferred = match options.infer with
-    | true  ->
-      let env_inf = Checking.decompile_env env in
-      let (_,expr,_,_) =
-        trace ~raise inference_tracer @@ Inference.type_expression_subst env_inf Inference.Solver.initial_state expr in
-      expr
+    | true  -> expr
     | false -> expr
   in
-  let env,typed = trace ~raise checking_tracer @@ Checking.type_expression ~test:false ~protocol_version:options.protocol_version env inferred in
+  let env = Environment.append init_prog options.init_env in
+  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~test:false ~protocol_version:options.protocol_version ~env inferred in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
-  (applied, env)
+  applied
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =
   let name = Location.wrap @@ Var.of_name entry_point in
@@ -83,4 +78,3 @@ let list_mod_declarations (m : Ast_core.module_) : string list =
       | _ -> prev)
     ~init:[] m
 
-let evaluate_type ~raise (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace ~raise checking_tracer @@ Checking.evaluate_type env t

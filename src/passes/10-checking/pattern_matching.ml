@@ -21,14 +21,14 @@ open Errors
 type matchees = O.expression_variable list
 type pattern = I.type_expression I.pattern 
 type typed_pattern = pattern * O.type_expression
-type equations = (typed_pattern list * (I.expression * O.environment)) list
-type type_fun = raise:typer_error raise -> O.environment -> ?tv_opt:O.type_expression -> I.expression -> O.expression
+type equations = (typed_pattern list * (I.expression * Context.t)) list
+type type_fun = raise:typer_error raise -> Context.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
 type rest = O.expression_content
 
 module PP_DEBUG = struct
   let pp_typed_pattern ppf ((p,t) : typed_pattern) = Format.fprintf ppf "(%a : %a)" (Stage_common.PP.match_pattern I.PP.type_expression) p O.PP.type_expression t
   let pp_pattern_list ppf (plist : typed_pattern list) = Format.fprintf ppf "[%a]" Simple_utils.PP_helpers.(list_sep pp_typed_pattern (tag "; ")) plist
-  let pp_eq ppf ((plist,(expr,_)):(typed_pattern list * (I.expression * O.environment))) = Format.fprintf ppf "@[%a -> %a]" pp_pattern_list plist I.PP.expression expr
+  let pp_eq ppf ((plist,(expr,_)):(typed_pattern list * (I.expression * Context.t))) = Format.fprintf ppf "@[%a -> %a]" pp_pattern_list plist I.PP.expression expr
   let pp_eqs ppf (eqs:equations) = Format.fprintf ppf "@[<hv>%a@]" Simple_utils.PP_helpers.(list_sep pp_eq (tag "; ")) eqs
   let pp_partition ppf (part: equations list) = Format.fprintf ppf "@[<hv><@.%a@.>@]" Simple_utils.PP_helpers.(list_sep pp_eqs (tag "@.")) part
 end
@@ -221,7 +221,7 @@ let rec partition : ('a -> bool) -> 'a list -> 'a list list =
 **)
 let group_equations ~raise : equations -> equations O.label_map =
   fun eqs ->
-    let aux : typed_pattern list * (I.expression * O.environment) -> equations O.label_map -> equations O.label_map =
+    let aux : typed_pattern list * (I.expression * Context.t) -> equations O.label_map -> equations O.label_map =
       fun (pl , (body , env)) m ->
         let (phd,t) = List.hd_exn pl in
         let ptl = List.tl_exn pl in
@@ -288,7 +288,7 @@ and var_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_exp
     | Some shape ->
       product_rule ~raise ~err_loc ~type_f ~body_t shape ms eqs def
     | None ->
-      let aux : typed_pattern list * (I.expression * O.environment) -> (typed_pattern list * (I.expression * O.environment)) =
+      let aux : typed_pattern list * (I.expression * Context.t) -> (typed_pattern list * (I.expression * Context.t)) =
         fun (pl, (body,env)) ->
         match pl with
         | (phd,t)::ptl -> (
@@ -296,7 +296,7 @@ and var_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_exp
           | (P_var b, t) ->
             let body' = substitute_var_in_body ~raise b.var mhd body in
             (* Is substitution avoidable ? mhd here can be the result of a tuple/record destructuring *)
-            let env' = O.Environment.add_ez_binder mhd t env in
+            let env' = Context.add_value mhd t env in
             (ptl , (body',env'))
           | (P_unit, t) ->
             let () = assert_unit_pattern ~raise phd.location t in
@@ -401,7 +401,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
         List.map ~f:aux (List.zip_exn labels patterns)
       | _ -> raise.raise @@ corner_case __LOC__
     in
-    let aux : typed_pattern list * (I.expression * O.environment) -> (typed_pattern list * (I.expression * O.environment)) =
+    let aux : typed_pattern list * (I.expression * Context.t) -> (typed_pattern list * (I.expression * Context.t)) =
       fun (pl, (body,env)) ->
       match pl with
       | (prod,t)::ptl -> (

@@ -289,7 +289,7 @@ module Mutator = struct
        let+ body, mutation = mutate_expression body in
        Match_record {fields; body; tv}, mutation
 
-  and mutate_module : module_fully_typed -> (module_fully_typed * mutation option) list = fun (Module_Fully_Typed p) ->
+  and mutate_module : module' -> (module' * mutation option) list = fun m ->
     let aux = fun ({location; wrap_content = x} : declaration location_wrap) ->
       match x with
       | Declaration_constant {name; binder; expr ; attr} -> (
@@ -305,8 +305,8 @@ module Mutator = struct
          ({location; wrap_content = Declaration_module {module_binder; module_; module_attr}} : declaration location_wrap), mutation
       | Module_alias _ -> [ ({location; wrap_content = x} : declaration location_wrap), None ]
     in
-    let* p, mutation = combine_list p (List.map ~f:aux p) in
-    [ Module_Fully_Typed p, mutation ]
+    let* p, mutation = combine_list m (List.map ~f:aux m) in
+    [ p, mutation ]
 
   let some_mutate_expression ?(n = 0) (expr : Ast_typed.expression) =
     List.nth (List.filter_map ~f:(fun (v, i) -> Option.map i ~f:(fun m -> (v, m))) (mutate_expression expr))
