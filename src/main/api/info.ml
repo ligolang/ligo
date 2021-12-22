@@ -24,13 +24,11 @@ let list_declarations source_file syntax display_format () =
       let declarations  = Compile.Of_core.list_declarations core_prg in
       (source_file, declarations)
 
-let get_scope source_file syntax protocol_version libs display_format with_types () =
+let get_scope source_file protocol_version libs display_format with_types () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format Scopes.Formatter.scope_format get_warnings @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
       let options = Compiler_options.make ~protocol_version ~libs () in
-      let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
-      let core_prg = Compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit source_file in
+      let core_prg = Build.infer_contract ~raise ~add_warning ~options source_file in
       Scopes.scopes ~options ~with_types core_prg

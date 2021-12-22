@@ -88,8 +88,8 @@ let dependency_graph ~raise ~add_warning : options:Compiler_options.t -> string 
     end) in
     dependency_graph file_name
 
-let infer_contract ~raise ~add_warning : options:Compiler_options.t -> string -> Ligo_compile.Of_core.form -> file_name -> _ =
-  fun ~options _syntax _entry_point main_file_name ->
+let infer_contract ~raise ~add_warning : options:Compiler_options.t -> file_name -> Ast_core.module_ =
+  fun ~options main_file_name ->
     let open BuildSystem.Make(Infer(struct
       let raise = raise
       let add_warning = add_warning

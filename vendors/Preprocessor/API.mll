@@ -85,17 +85,20 @@ type state = {
   trace  : trace;
   out    : Buffer.t;
   chans  : in_channel list;
-  incl   : file_path list;
+  incl   : file_path;
   import : (file_path * module_name) list;
 }
 
 (* Directories *)
 
-let push_dir dir state =
-  if dir = "." then state else {state with incl = dir :: state.incl}
+(* The function call [set_incl_dir dir state] sets the field [state.incl] which is the 
+   directory of the file that is being processed, this is used by
+   the [find] function to search for files required by #include & #import. *)
 
-let mk_path state =
-  String.concat Filename.dir_sep (List.rev state.incl)
+let set_incl_dir dir state =
+  if dir = "." then state else {state with incl = dir}
+
+let get_incl_dir state = state.incl
 
 (* ERRORS *)
 
@@ -227,23 +230,30 @@ let rec last_mode = function
 
 (* Finding a file to #include *)
 
-let rec find file_path = function
+(* The function [find_in_cli_paths file_path dirs] tries to find a valid path
+   by prepending a directory from [dirs] to [file_path], The list [dirs] is a 
+   list of directories passed via the -I CLI option. *)
+
+let rec find_in_cli_paths file_path = function
          [] -> None
 | dir::dirs ->
     let path =
       if dir = "." || dir = "" then file_path
       else dir ^ Filename.dir_sep ^ file_path in
     try Some (path, open_in path) with
-      Sys_error _ -> find file_path dirs
+      Sys_error _ -> find_in_cli_paths file_path dirs
+
+(* The function [find dir file dirs] tries to find [file] in [dir], if it is
+   unable to find such a file then it tries to look for the file
+   in [dirs] using the [find_in_cli_paths] function. *)
 
 let find dir file dirs =
   let path =
     if dir = "." || dir = "" then file
     else dir ^ Filename.dir_sep ^ file in
   try Some (path, open_in path) with
-    Sys_error _ ->
-      let base = Filename.basename file in
-      if base = file then find file dirs else None
+    Sys_error _ -> 
+      find_in_cli_paths file dirs
 
 (* PRINTING *)
 
@@ -485,8 +495,7 @@ rule scan state = parse
         let base = Filename.basename file
         and reg, incl_file = scan_include state lexbuf in
         if state.mode = Copy then
-          let incl_dir = Filename.dirname incl_file in
-          let path = mk_path state in
+          let path = get_incl_dir state in
           let incl_path, incl_chan =
             match find path incl_file state.config#dirs with
               Some p -> p
@@ -499,7 +508,7 @@ rule scan state = parse
               {incl_buf.lex_curr_p with pos_fname = incl_file} in
           let state  = {state with chans = incl_chan::state.chans} in
           let state' = {state with mode=Copy; trace=[]} in
-          let state' = scan (push_dir incl_dir state') incl_buf in
+          let state' = scan (set_incl_dir (Filename.dirname incl_path) state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans;import=state'.import} in
           let path   = if path = "" || path = "." then base
                        else path ^ Filename.dir_sep ^ base in
@@ -509,7 +518,7 @@ rule scan state = parse
     | "import" ->
         let reg, import_file, imported_module = scan_import state lexbuf in
         if state.mode = Copy then
-          let path = mk_path state in
+          let path = get_incl_dir state in
           let import_path =
             match find path import_file state.config#dirs with
               Some p -> fst p
@@ -783,7 +792,7 @@ let from_lexbuf config buffer =
     trace  = [];
     out    = Buffer.create 80;
     chans  = [];
-    incl   = [Filename.dirname path];
+    incl   = Filename.dirname path;
     import = []
   } in
   match preproc state buffer with

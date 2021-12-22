@@ -17,11 +17,11 @@ let dependency_graph source_file syntax display_format () =
       let g,_ = Build.dependency_graph ~raise ~add_warning ~options syntax Env source_file in
       (g,source_file)
 
-let preprocess source_file syntax display_format () =
+let preprocess source_file syntax libs display_format () =
     format_result ~display_format Parsing.Formatter.ppx_format (fun _ -> []) @@
     fun ~raise ->
     fst @@
-    let options   = Compiler_options.make () in
+    let options   = Compiler_options.make ~libs () in
     let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
     Compile.Of_source.compile ~raise ~options ~meta source_file
 
