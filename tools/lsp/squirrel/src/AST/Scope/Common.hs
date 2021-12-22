@@ -76,6 +76,7 @@ import Cli.Types
 import ParseTree
 import Parser
 import Product
+import Progress (ProgressCallback)
 import Range
 import Util (findKey, unionOrd)
 import Util.Graph (traverseAMConcurrently)
@@ -119,7 +120,10 @@ makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: AdjacencyMap ParsedContractInfo -> m (AdjacencyMap (FindFilepath ScopeForest))
+  scopeForest
+    :: ProgressCallback m
+    -> AdjacencyMap ParsedContractInfo
+    -> m (AdjacencyMap (FindFilepath ScopeForest))
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -325,11 +329,12 @@ addLocalScopes tree forest =
 addScopes
   :: forall impl m
    . (HasScopeForest impl m, MonadUnliftIO m)
-  => AdjacencyMap ParsedContractInfo
+  => ProgressCallback m
+  -> AdjacencyMap ParsedContractInfo
   -> m (AdjacencyMap ContractInfo')
-addScopes graph = do
+addScopes reportProgress graph = do
   -- Bottom-up: add children forests into their parents
-  forestGraph <- scopeForest @impl graph
+  forestGraph <- scopeForest @impl reportProgress graph
   let
     universe = nubForest $ foldr (mergeScopeForest OnUnion . contractTree) emptyScopeForest $ G.vertexList forestGraph
     -- Traverse the graph, uniting decls at each intersection, essentially

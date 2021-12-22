@@ -4,6 +4,7 @@ module Test.Common.Capabilities.Completion
   ) where
 
 import Data.Maybe (fromJust)
+import Data.Word (Word32)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
@@ -11,6 +12,7 @@ import Test.Tasty.HUnit (testCase)
 import AST.Capabilities.Completion
 import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
 import AST.Scope (HasScopeForest, contractTree, lookupContract)
+import Progress (noProgress)
 import Range (point)
 
 import Test.Common.Capabilities.Util qualified (contractsDir)
@@ -21,7 +23,7 @@ contractsDir = Test.Common.Capabilities.Util.contractsDir </> "completion"
 
 data TestInfo = TestInfo
   { tiContract :: FilePath
-  , tiPosition :: (Int, Int)
+  , tiPosition :: (Word32, Word32)
   , tiExpected :: [Completion]
   }
 
@@ -172,7 +174,7 @@ caseInfos =
 
 completionDriver :: forall parser. HasScopeForest parser IO => [TestInfo] -> IO TestTree
 completionDriver testInfos = do
-  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed contractsDir
+  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress contractsDir
   pure $ testGroup "Completion" $ map (makeTestCase graph) testInfos
   where
     makeTestCase graph info =

@@ -9,6 +9,13 @@ packages:
 - .
 
 extra-deps:
+- git: https://github.com/haskell/lsp.git
+  commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+  subdirs:
+    - lsp-types
+    - lsp
+    - lsp-test
+
 - git: https://github.com/serokell/haskell-tree-sitter.git
   commit: 27c33c98b00f8961c8619de2e3771a1932501ada
   subdirs:

@@ -5,6 +5,7 @@ module AST.Scope.Fallback
   , loopM_
   ) where
 
+import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&), _Just, _head)
 import Control.Monad.Catch.Pure hiding (throwM)
@@ -23,6 +24,7 @@ import Data.Text (Text)
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
+import UnliftIO.MVar (modifyMVar, newMVar)
 
 import AST.Pretty (PPableLIGO)
 import AST.Scope.Common
@@ -36,26 +38,33 @@ import AST.Skeleton hiding (Type, TypeParams (..))
 import Cli.Types
 import Control.Monad.Except
 import Control.Monad.Trans.Reader
+import Log (i)
 import Parser
+import ParseTree (srcPath)
 import Product
+import Progress (Progress (..), (%))
 import Range
 import Util (foldMapM, unconsFromEnd)
-import Util.Graph (traverseAMConcurrently)
+import Util.Graph (forAMConcurrently)
 
 data Fallback
 
 instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
-  -- TODO: 'mkForest' is pure, so we should find a parallel function and use it
-  -- instead, and then call 'pure'
-  scopeForest = traverseAMConcurrently mkForest
-    where
-      mkForest (FindContract src (SomeLIGO dialect ligo) msg) = do
-        let runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
-            fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
-            sf = case runLigoEnv ligo of
-              Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
-              Right sf' -> FindContract src sf' msg
-        pure sf
+  scopeForest reportProgress graph = do
+    let nContracts = G.vertexCount graph
+    -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
+    -- 'StateT'. It's best to avoid using this class for stateful monads.
+    counter <- newMVar 0
+    forAMConcurrently graph \(FindContract src (SomeLIGO dialect ligo) msg) -> do
+      n <- modifyMVar counter (pure . (succ &&& id))
+      reportProgress $ Progress (n % nContracts) [i|Adding scopes for #{srcPath src}|]
+      let
+        runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
+        fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
+        sf = case runLigoEnv ligo of
+          Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
+          Right sf' -> FindContract src sf' msg
+      pure sf
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo

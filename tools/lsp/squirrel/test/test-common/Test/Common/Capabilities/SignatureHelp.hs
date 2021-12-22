@@ -18,6 +18,7 @@ import AST.Scope.Common (HasScopeForest, contractTree, lookupContract)
 import AST.Scope.ScopedDecl (Parameter (..), Pattern (..), Type (..))
 import AST.Skeleton (nestedLIGO)
 import Extension (getExt)
+import Progress (noProgress)
 import Range (Range, point)
 
 import Test.Common.Capabilities.Util (contractsDir)
@@ -208,7 +209,7 @@ caseInfos =
 
 simpleFunctionCallDriver :: forall parser. HasScopeForest parser IO => IO TestTree
 simpleFunctionCallDriver = do
-  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed (contractsDir </> "signature-help")
+  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress (contractsDir </> "signature-help")
   pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) caseInfos
   where
     makeTestCase graph info = testCase (tiContract info) (makeTest graph info)

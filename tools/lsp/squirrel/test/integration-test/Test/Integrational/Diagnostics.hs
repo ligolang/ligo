@@ -3,6 +3,7 @@ module Test.Integrational.Diagnostics
   ) where
 
 import Data.Text (Text)
+import Data.Word (Word32)
 
 import AST.Scope (Standard)
 import Range (Range (..))
@@ -19,7 +20,7 @@ expectedMsgs =
   , (mkRange (3, 20) (3, 23), "Unrecognized: int")
   ]
   where
-    mkRange :: (Int, Int) -> (Int, Int) -> Range
+    mkRange :: (Word32, Word32) -> (Word32, Word32) -> Range
     mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0) inputFile
 
 -- Try to parse a file, and check that the proper error messages are generated

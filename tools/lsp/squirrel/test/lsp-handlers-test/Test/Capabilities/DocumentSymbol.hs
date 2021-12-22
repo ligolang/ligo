@@ -7,6 +7,7 @@ module Test.Capabilities.DocumentSymbol
 
 import Control.Lens ((^.))
 import Data.Text (Text)
+import Data.Word (Word32)
 import Language.LSP.Test
 import Language.LSP.Types
   (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name),
@@ -23,7 +24,7 @@ import Test.Common.LSP (openLigoDoc, runHandlersTest)
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "document-symbol"
 
-type SimpleSymInfo = (Text, SymbolKind, (Int, Int), (Int, Int))
+type SimpleSymInfo = (Text, SymbolKind, (Word32, Word32), (Word32, Word32))
 
 simplify :: SymbolInformation -> SimpleSymInfo
 simplify SymbolInformation{_name, _kind, _location = Location{_range}} =

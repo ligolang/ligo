@@ -118,7 +118,6 @@ executables:
       - containers
       - data-default
       - exceptions
-      - filepath
       - focus
       - hashable
       - hslogger

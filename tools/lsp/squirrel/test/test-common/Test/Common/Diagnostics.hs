@@ -5,6 +5,7 @@ module Test.Common.Diagnostics
 
 import Data.Text (Text)
 import Parser
+import Progress (noProgress)
 import Range
 import System.FilePath ((</>))
 
@@ -32,8 +33,8 @@ parseDiagnosticsDriver
   => [(Range, Text)]
   -> Assertion
 parseDiagnosticsDriver expectedMsgs = do
-  parsedContracts <- parseContractsWithDependencies parsePreprocessed inputDir
-  contractGraph <- addScopes @impl parsedContracts
+  parsedContracts <- parseContractsWithDependencies parsePreprocessed noProgress inputDir
+  contractGraph <- addScopes @impl noProgress parsedContracts
   let mContract = lookupContract inputFile contractGraph
   case mContract of
     Nothing -> expectationFailure ("Couldn't find " <> inputFile)

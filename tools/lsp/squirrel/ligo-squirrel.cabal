@@ -50,6 +50,7 @@ library
       Parser
       ParseTree
       Product
+      Progress
       Range
       Util
       Util.Graph
@@ -202,7 +203,6 @@ executable ligo-squirrel
     , data-default
     , duplo
     , exceptions
-    , filepath
     , focus
     , ghc-prim
     , hashable

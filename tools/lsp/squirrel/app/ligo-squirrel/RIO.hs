@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-incomplete-uni-patterns -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 
 module RIO
   ( RIO
@@ -49,11 +49,12 @@ import Data.Aeson qualified as Aeson (Result (..), Value, fromJSON)
 import Data.Bool (bool)
 import Data.Default (def)
 import Data.Foldable (find, toList, traverse_)
-import Data.Function ((&), on)
+import Data.Function (on)
 import Data.HashMap.Strict (HashMap)
+import Data.Int (Int32)
 import Data.List (groupBy, nubBy, sortOn)
 import Data.Map qualified as Map
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (fromMaybe, isJust, isNothing)
 import Data.Set qualified as Set
 import Data.String.Interpolate.IsString (i)
 
@@ -64,16 +65,14 @@ import Language.LSP.VFS qualified as V
 
 import StmContainers.Map qualified as StmMap
 
-import System.FilePath (replaceExtension, takeExtension)
-
 import UnliftIO.Directory
   ( Permissions (writable), doesDirectoryExist, doesFileExist, getPermissions
-  , renameFile, setPermissions
+  , setPermissions
   )
 import UnliftIO.MVar (MVar, modifyMVar, modifyMVar_, tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.STM (atomically)
 
-import Witherable (wither)
+import Witherable (iwither)
 
 import Duplo.Tree (make)
 
@@ -88,6 +87,7 @@ import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log qualified
 import Parser
 import Product
+import Progress ((%))
 import Range
 import Util.Graph (wcc)
 
@@ -100,7 +100,7 @@ type RioEnv =
   Product
     '[ MVar Config
      , ASTMap J.NormalizedUri Contract RIO
-     , MVar (HashMap J.NormalizedUri Int)
+     , MVar (HashMap J.NormalizedUri Int32)
      , "includes" := MVar (AdjacencyMap ParsedContractInfo)
      , "temp files" := StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
      ]
@@ -119,11 +119,6 @@ newtype RIO a = RIO
     , MonadUnliftIO
     , J.MonadLsp Config.Config
     )
-
--- FIXME: LspT does not provide these instances, even though it is just a ReaderT.
--- (Do not forget to remove -Wno-orphans.)
-deriving newtype instance MonadThrow m => MonadThrow (J.LspT config m)
-deriving newtype instance MonadCatch m => MonadCatch (J.LspT config m)
 
 instance HasLigoClient RIO where
   getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) getCustomConfig
@@ -312,23 +307,20 @@ preload uri = do
     mkReadOnly path = do
       p <- getPermissions path
       setPermissions path p { writable = False }
-    -- HACK: See https://github.com/haskell/lsp/issues/357
-    fixExt broken = do
-      let fixed = replaceExtension broken (takeExtension fin)
-      Log.debug "preload" [i|#{fin} not found. Creating temp file #{fixed}|]
-      renameFile broken fixed
+    createTemp new = do
+      Log.debug "preload" [i|#{fin} not found. Creating temp file: #{new}|]
       -- We make the file read-only so the user is aware that it should not be
       -- changed. Note we can't make fin read-only, since it doesn't exist in
       -- the disk anymore, and also because LSP has no such request.
       sendWarning
-        [i|File #{fin} was removed. The LIGO LSP server may not work as expected. Creating temporary file: #{fixed}|]
-      fixed <$ mkReadOnly fixed
+        [i|File #{fin} was removed. The LIGO LSP server may not work as expected. Creating temporary file: #{new}|]
+      new <$ mkReadOnly new
     handlePersistedFile = do
       tempMap <- asks $ getTag @"temp files"
       let nFin = J.toNormalizedFilePath fin
       atomically (StmMap.lookup nFin tempMap) >>= \case
         Nothing -> do
-          tempFile <- maybe (pure fin) fixExt =<< J.persistVirtualFile uri
+          tempFile <- maybe (pure fin) createTemp =<< J.persistVirtualFile uri
           let nTempFile = J.toNormalizedFilePath tempFile
           tempFile <$ atomically (StmMap.insert nTempFile nFin tempMap)
         Just nTempFile -> pure $ J.fromNormalizedFilePath nTempFile
@@ -356,6 +348,17 @@ tryLoadWithoutScopes uri =
   (Just <$> (insertPreprocessorRanges =<< loadWithoutScopes uri))
   `catchIO` const (pure Nothing)
 
+normalizeFilePath :: FilePath -> J.NormalizedUri
+normalizeFilePath = J.toNormalizedUri . J.filePathToUri
+
+loadDirectory :: FilePath -> RIO (AdjacencyMap ParsedContractInfo)
+loadDirectory root = do
+  J.withProgress "Indexing directory" J.NotCancellable \reportProgress ->
+    parseContractsWithDependencies
+      (loadWithoutScopes . normalizeFilePath . srcPath)
+      (\Progress {..} -> reportProgress $ J.ProgressAmount (Just pTotal) (Just pMessage))
+      root
+
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
   -> J.NormalizedUri  -- ^ Open contract to be loaded
@@ -370,14 +373,22 @@ getInclusionsGraph root uri = do
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
         Log.debug "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
-        parseContractsWithDependencies (loadWithoutScopes . sourceToUri) root
+        loadDirectory root
       Just oldIncludes -> do
-        (rootContract', includeEdges) <- extractIncludedFiles True rootContract
-        let lookupOrLoad fp = maybe
-              (tryLoadWithoutScopes (normalizeFilePath fp))
-              (pure . Just)
-              (lookupContract fp oldIncludes)
-        newIncludes <- wither (lookupOrLoad . snd) (toList includeEdges)
+        (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
+        let
+          numNewContracts = length includeEdges
+          lookupOrLoad fp = maybe
+            (tryLoadWithoutScopes $ normalizeFilePath fp)
+            (pure . Just)
+            (lookupContract fp oldIncludes)
+
+        newIncludes <- J.withProgress "Indexing new files" J.NotCancellable \reportProgress ->
+          iwither
+            (\n (_, fp) -> do
+              reportProgress $ J.ProgressAmount (Just $ n % numNewContracts) (Just [i|Loading #{fp}|])
+              lookupOrLoad fp)
+            includeEdges
         let
           newSet = Set.fromList newIncludes
           oldSet = Map.keysSet $ G.adjacencyMap oldIncludes
@@ -391,9 +402,6 @@ getInclusionsGraph root uri = do
             $ G.replaceVertex rootContract' rootContract'
             $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
         pure $ G.overlays (newGroup : groups')
-  where
-    normalizeFilePath = J.toNormalizedUri . J.filePathToUri
-    sourceToUri = normalizeFilePath . srcPath
 
 load
   :: forall parser
@@ -412,9 +420,10 @@ load uri = do
   -- Neither exist: something went wrong
   revUri <- reverseUriMap ?? uri
 
-  let loadDefault = addShallowScopes @parser =<< loadWithoutScopes revUri
+  let
+    loadDefault = addShallowScopes @parser (const $ pure ()) =<< loadWithoutScopes revUri
 
-  rootM & \case
+  case rootM of
     Just root | dirExists -> do
       time <- ASTMap.getTimestamp
 
@@ -424,12 +433,16 @@ load uri = do
 
       rawGraph <- getInclusionsGraph revRoot revUri
 
-      (graph, result) <- case J.uriToFilePath $ J.fromNormalizedUri revUri of
-        Nothing -> (,) <$> addScopes @parser rawGraph <*> loadDefault
-        Just fp -> case find (isJust . lookupContract fp) (wcc rawGraph) of
-          Nothing -> (,) <$> addScopes @parser rawGraph <*> loadDefault
-          Just graph' -> do
-            scoped <- addScopes @parser graph'
+      (graph, result) <- J.withProgress "Scoping project" J.NotCancellable \reportProgress -> do
+        let
+          addScopesWithProgress = addScopes @parser
+            (\Progress {..} -> reportProgress $ J.ProgressAmount (Just pTotal) (Just pMessage))
+        case J.uriToFilePath $ J.fromNormalizedUri revUri of
+          Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault
+          Just fp -> do
+            let
+              raw = fromMaybe rawGraph $ find (isJust . lookupContract fp) (wcc rawGraph)
+            scoped <- addScopesWithProgress raw
             (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
       let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
@@ -443,7 +456,7 @@ load uri = do
 
 collectErrors
   :: ContractInfo'
-  -> Maybe Int
+  -> J.TextDocumentVersion
   -> RIO ()
 collectErrors contract version = do
   -- Correct the ranges of the error messages to correspond to real locations

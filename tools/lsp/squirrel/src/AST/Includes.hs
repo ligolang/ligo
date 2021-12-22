@@ -12,7 +12,7 @@ module AST.Includes
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow (first)
-import Control.Lens (Lens', _1, view, (&), (+~), (-~), (.~), (^.))
+import Control.Lens (Lens', _1, to, view, (&), (+~), (-~), (.~), (^.))
 import Control.Monad (forM, join, when)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.RWS.Strict (RWS, RWST, execRWS, execRWST, gets, modify, tell)
@@ -27,6 +27,7 @@ import Data.List (sortOn)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as Text (pack)
+import Data.Word (Word32)
 import Duplo.Tree (Cofree ((:<)), inject)
 import System.FilePath ((</>), takeDirectory)
 import UnliftIO.Directory (canonicalizePath)
@@ -79,7 +80,7 @@ collectMarkerInfos directIncludes pwd markers =
   -- For the preprocessed ranges, we use the line markers to map the range
   -- to the file and line they represent.
   for_ (sortOn (view startLine . lmLoc) markers) \lm@(LineMarker next f _ r) -> do
-    let line = r ^. startLine
+    let line = r ^. startLine . to fromIntegral
     n <- withPwd pwd next
     case f of
       RootFile     -> modify $ IntMap.insert line $ MarkerInfo lm r 0
@@ -152,10 +153,10 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
               & rFile .~ normalized
         pure (putElem (PreprocessedRange preRange) i)
       where
-        prev = IntMap.lookupLE (range ^. startLine) markers
+        prev = IntMap.lookupLE (range ^. startLine . to fromIntegral) markers
         range = getRange i
 
-    adjustSide :: Lens' Range (Int, Int, Int)
+    adjustSide :: Lens' Range (Word32, Word32, Word32)
                -> IntMap MarkerInfo
                -> Range
                -> Range
@@ -172,7 +173,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
                 (side . _1) -~ lmLoc marker ^. finishLine - lmLine marker
          in newRange
       where
-        prev = IntMap.lookupLE (range ^. (side . _1)) markers
+        prev = IntMap.lookupLE (range ^. (side . _1 . to fromIntegral)) markers
 
     adjustRange :: IntMap MarkerInfo -> Range -> Range
     adjustRange markers = adjustSide rFinish markers
@@ -208,7 +209,7 @@ includesGraph contracts = do
     emptyContract :: FilePath -> ParsedContractInfo
     emptyContract name =
       let
-        p = point (-1) (-1)
+        p = point 0 0
         info = PreprocessedRange p :> [] :> [] :> p :> N :> CodeSource "" :> Nil
       in
       FindContract
