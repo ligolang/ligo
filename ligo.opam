@@ -18,7 +18,7 @@ depends: [
   "alcotest" { with-test }
   # Pipelinye
   "ocamlgraph"
-  "menhir" { = "20211012" }
+  "menhir" { = "20211128" }
   "coq" { build & >= "8.12" & < "8.14" }
   # I/O
   "getopt"
