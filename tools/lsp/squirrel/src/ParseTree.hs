@@ -33,8 +33,8 @@ import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Data.Text.IO qualified as Text
 import Data.Traversable (for)
-
 import Control.Monad ((>=>))
+import Control.Monad.IO.Class (MonadIO (..))
 import Foreign.C.String (peekCString)
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)
@@ -49,6 +49,7 @@ import Duplo.Pretty as PP
 import Duplo.Tree
 
 import Extension
+import Log (Log)
 import Log qualified
 import Product
 import Range
@@ -112,22 +113,21 @@ instance Pretty1 ParseTree where
         (pp forest)
       )
 
--- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: Lang -> Source -> IO SomeRawTree
+toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
 toParseTree dialect input = do
-  Log.debug "TS" [Log.i|Reading #{input}|]
+  $(Log.debug) "TS" [Log.i|Reading #{input}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
         Reason -> tree_sitter_ReasonLigo
 
-  SomeRawTree dialect <$> withParser language \parser -> do
+  res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
     src <- srcToBytestring input
-    res <- withParseTree parser src \tree -> do
+    withParseTree parser src \tree ->
       withRootNode tree (peek >=> go input src)
-    Log.debug "TS" [Log.i|Done reading #{input}|]
-    return res
 
+  $(Log.debug) "TS" [Log.i|Done reading #{input}|]
+  pure res
   where
     go :: Source -> ByteString -> Node -> IO RawTree
     go fin src node = do

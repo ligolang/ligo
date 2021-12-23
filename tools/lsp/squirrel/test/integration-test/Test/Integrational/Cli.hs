@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Test.Integrational.Cli
   ( test_ligo_159
   ) where
@@ -12,6 +10,7 @@ import Cli
 import ParseTree (Source (..))
 
 import Test.Common.FixedExpectations (HasCallStack, expectationFailure)
+import Test.Common.Util (withoutLogger)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
@@ -23,8 +22,8 @@ filterException e = asum
   ]
 
 checkFile :: HasCallStack => FilePath -> TestTree
-checkFile path = testCase path $
-  tryJust filterException (getLigoDefinitions $ Path path) >>= \case
+checkFile path = testCase path $ withoutLogger \runLogger ->
+  tryJust filterException (runLogger $ getLigoDefinitions $ Path path) >>= \case
     Left  _ -> pure ()
     Right _ -> expectationFailure "Expected contract to fail, but it has succeeded."
 

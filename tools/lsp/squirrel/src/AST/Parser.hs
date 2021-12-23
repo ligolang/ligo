@@ -2,6 +2,7 @@ module AST.Parser
   ( Source (..)
   , Progress (..)
   , ParserCallback
+  , parse
   , parsePreprocessed
   , parseWithScopes
   , parseContracts
@@ -15,6 +16,7 @@ import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Control.Exception.Safe (Handler (..), catches, throwM)
 import Control.Lens ((%~))
 import Control.Monad ((<=<))
+import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Bifunctor (second)
@@ -39,7 +41,7 @@ import Cli
   , LigoErrorNodeParseErrorException (..), fromLigoErrorToMsg, preprocess
   )
 import Extension
-import Log (i)
+import Log (Log, i)
 import ParseTree (Source (..), srcToText, toParseTree)
 import Parser
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
@@ -47,16 +49,16 @@ import Util.Graph (wcc)
 
 type ParserCallback m contract = Source -> m contract
 
-parse :: MonadIO m => Source -> m ContractInfo
-parse src = liftIO do
+parse :: (Log m, MonadThrow m) => Source -> m ContractInfo
+parse src = do
   (recogniser, dialect) <- onExt ElimExt
     { eePascal = (Pascal.recognise, Pascal)
     , eeCaml   = (Caml.recognise,   Caml)
     , eeReason = (Reason.recognise, Reason)
     } (srcPath src)
-  uncurry (FindContract src) <$> (runParserM . recogniser =<< toParseTree dialect src)
+  uncurry (FindContract src) <$> (liftIO . runParserM . recogniser =<< toParseTree dialect src)
 
-parsePreprocessed :: forall m. HasLigoClient m => Source -> m ContractInfo
+parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
   src' <- liftIO $ deleteExtraMarkers <$> srcToText src
   (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
@@ -81,7 +83,7 @@ parsePreprocessed src = do
 
 parseWithScopes
   :: forall impl m
-   . (HasScopeForest impl m, MonadUnliftIO m)
+   . (HasScopeForest impl m, Log m, MonadUnliftIO m)
   => Source
   -> m ContractInfo'
 parseWithScopes src = do

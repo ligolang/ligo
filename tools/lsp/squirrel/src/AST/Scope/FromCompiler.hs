@@ -24,7 +24,7 @@ import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import ListZipper (atLocus, find, withListZipper)
-import Log (i)
+import Log (Log, i)
 import ParseTree (srcPath)
 import Product
 import Progress (Progress (..), (%))
@@ -35,7 +35,7 @@ data FromCompiler
 
 -- FIXME: If one contract throws an exception, the entire thing will fail. Standard
 -- scopes will use Fallback.
-instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest FromCompiler m where
+instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest FromCompiler m where
   scopeForest reportProgress graph = do
     let nContracts = G.vertexCount graph
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for

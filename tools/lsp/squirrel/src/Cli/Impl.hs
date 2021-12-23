@@ -32,7 +32,7 @@ import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
 import Cli.Json
 import Cli.Types
-import Log (i)
+import Log (Log, Namespace, i)
 import Log qualified
 import ParseTree (Source (..), srcToText)
 
@@ -207,18 +207,18 @@ parseLigoOutput contractPath = do
 -- ligo print preprocessed ${contract_path} --format json
 -- ```
 preprocess
-  :: HasLigoClient m
+  :: (HasLigoClient m, Log m)
   => Source
   -> m (Source, Text)
 preprocess contract = do
   let sys = "LIGO.PREPROCESS"
-  Log.debug sys [i|preprocessing the following contract:\n #{contract}|]
+  $(Log.debug) sys [i|preprocessing the following contract:\n #{contract}|]
   mbOut <- try $ callLigo ["print", "preprocessed", srcPath contract, "--format", "json"] contract
   case mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @Text . encodeUtf8 $ output of
         Left err -> do
-          Log.debug sys [i|Unable to preprocess contract with: #{err}|]
+          $(Log.err) sys [i|Unable to preprocess contract with: #{err}|]
           throwM $ LigoPreprocessFailedException $ pack err
         Right newContract -> pure $ (, errs) case contract of
           Path       path   -> Text path newContract
@@ -229,12 +229,12 @@ preprocess contract = do
 
 -- | Get ligo definitions from raw contract.
 getLigoDefinitions
-  :: HasLigoClient m
+  :: (HasLigoClient m, Log m)
   => Source
   -> m (LigoDefinitions, Text)
 getLigoDefinitions contract = do
   let sys = "LIGO.PARSE"
-  Log.debug sys [i|parsing the following contract:\n#{contract}|]
+  $(Log.debug) sys [i|parsing the following contract:\n#{contract}|]
   let path = srcPath contract
   mbOut <- tryAny $
     -- HACK: We forget the parsed contract since we still want LIGO to read the
@@ -242,10 +242,9 @@ getLigoDefinitions contract = do
     callLigo ["info", "get-scope", path, "--format", "json", "--with-types"] (Path path)
   case mbOut of
     Right (output, errs) ->
-      --Log.debug sys [i|Successfully called ligo with #{output}|]
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
-          Log.debug sys [i|Unable to parse ligo definitions with: #{err}|]
+          $(Log.err) sys [i|Unable to parse ligo definitions with: #{err}|]
           throwM $ LigoDefinitionParseErrorException (pack err)
         Right definitions -> return (definitions, errs)
     Left (SomeException e) -> case cast e of
@@ -258,17 +257,16 @@ getLigoDefinitions contract = do
 
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
-handleLigoError :: HasLigoClient m => String -> Text -> m a
+handleLigoError :: (HasLigoClient m, Log m) => Namespace -> Text -> m a
 handleLigoError subsystem stderr = do
   -- Call ligo with `compile contract` to extract more readable error message
-  Log.debug subsystem [i|decoding ligo error|]
   case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
     Left err -> do
       -- LIGO dumps its crash information on StdOut rather than StdErr.
       let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
       case failureRecovery of
         Left failure -> do
-          Log.debug subsystem [i|ligo error decoding failure: #{failure}|]
+          $(Log.err) subsystem [i|ligo error decoding failure: #{failure}|]
           throwM $ LigoErrorNodeParseErrorException $ pack failure
         Right recovered -> do
           -- LIGO doesn't dump any information we can extract to figure out
@@ -276,10 +274,10 @@ handleLigoError subsystem stderr = do
           -- type-checker error just crashes with "Update an expression which is not a record"
           -- in the old typer. In the new typer, the error is the less
           -- intuitive "type error : break_ctor propagator".
-          Log.debug subsystem [i|ligo crashed with: #{recovered}|]
+          $(Log.err) subsystem [i|ligo crashed: #{recovered}|]
           throwM $ LigoUnexpectedCrashException $ pack recovered
     Right decodedError -> do
-      Log.debug subsystem [i|ligo error decoding successful with:\n#{decodedError}|]
+      $(Log.err) subsystem [i|ligo error decoding successful with:\n#{decodedError}|]
       throwM $ LigoDecodedExpectedClientFailureException decodedError
 
 -- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to

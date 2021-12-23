@@ -40,7 +40,7 @@ getExt path =
     ".mligo"  -> return Caml
     ext       -> throwM $ UnsupportedExtension ext
 
-onExt :: ElimExt a -> FilePath -> IO a
+onExt :: MonadThrow m => ElimExt a -> FilePath -> m a
 onExt ee path =
   getExt path <&> \case
     Pascal -> eePascal ee

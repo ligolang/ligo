@@ -91,6 +91,7 @@ library:
     - fastsum
     - filepath
     - interpolate
+    - katip
     - lens
     - lsp-types
     - mtl
@@ -98,6 +99,7 @@ library:
     - process
     - regex-tdfa
     - safe-exceptions
+    - template-haskell
     - th-compat
     - text
     - transformers
@@ -122,6 +124,7 @@ executables:
       - hashable
       - hslogger
       - interpolate
+      - katip
       - lens
       - ligo-squirrel
       - lsp
@@ -158,6 +161,7 @@ executables:
 
     dependencies:
       - ligo-squirrel
+      - mtl
       - optparse-applicative
       - with-utf8
 

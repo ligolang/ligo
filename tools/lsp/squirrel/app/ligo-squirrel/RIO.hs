@@ -43,7 +43,8 @@ import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
 import Control.Lens ((??))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
+import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, mapReaderT, runReaderT)
+import Control.Monad.Trans (lift)
 
 import Data.Aeson qualified as Aeson (Result (..), Value, fromJSON)
 import Data.Bool (bool)
@@ -57,6 +58,8 @@ import Data.Map qualified as Map
 import Data.Maybe (fromMaybe, isJust, isNothing)
 import Data.Set qualified as Set
 import Data.String.Interpolate.IsString (i)
+
+import Katip (Katip (..), KatipContext (..))
 
 import Language.LSP.Diagnostics qualified as D
 import Language.LSP.Server qualified as J
@@ -84,6 +87,7 @@ import Config (Config (..), getConfigFromNotification)
 import Duplo.Lattice (Lattice (leq))
 import Extension (extGlobs)
 import Language.LSP.Util (sendWarning, reverseUriMap)
+import Log (LogT)
 import Log qualified
 import Parser
 import Product
@@ -106,7 +110,7 @@ type RioEnv =
      ]
 
 newtype RIO a = RIO
-  { _unRio :: ReaderT RioEnv (J.LspM Config) a
+  { unRio :: ReaderT RioEnv (J.LspT Config (LogT IO)) a
   }
   deriving newtype
     ( Functor
@@ -119,6 +123,16 @@ newtype RIO a = RIO
     , MonadUnliftIO
     , J.MonadLsp Config.Config
     )
+
+instance Katip RIO where
+  getLogEnv = RIO $ lift $ lift getLogEnv
+  localLogEnv f = RIO . mapReaderT (J.LspT . localLogEnv f . J.unLspT) . unRio
+
+instance KatipContext RIO where
+  getKatipContext = RIO $ lift $ lift getKatipContext
+  localKatipContext f = RIO . mapReaderT (J.LspT . localKatipContext f . J.unLspT) . unRio
+  getKatipNamespace = RIO $ lift $ lift getKatipNamespace
+  localKatipNamespace f = RIO . mapReaderT (J.LspT . localKatipNamespace f . J.unLspT) . unRio
 
 instance HasLigoClient RIO where
   getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) getCustomConfig
@@ -137,7 +151,7 @@ getCustomConfig = do
     -- way to know the client configuration. We need to get this fixed by the
     -- library maintainers, if possible.
     Nothing -> do
-      Log.debug "getCustomConfig" "No config fetched yet, resorting to default"
+      $(Log.debug) "getCustomConfig" "No config fetched yet, resorting to default"
       pure def
     Just config -> pure config
 
@@ -171,7 +185,7 @@ fetchCustomConfig = do
 
     useDefault :: RIO Config
     useDefault = do
-      Log.debug
+      $(Log.warning)
         "fetchCustomConfig"
         "Couldn't parse config from server, using default"
       pure def
@@ -183,14 +197,14 @@ updateCustomConfig config = do
     Nothing -> decodeConfig def mConfig
     Just oldConfig -> decodeConfig oldConfig mConfig
   where
-    log = Log.debug "updateCustomConfig"
+    sys = "updateCustomConfig"
 
     decodeConfig old mConfig = case getConfigFromNotification old config of
       Left err -> do
-        log [i|Failed to decode configuration: #{err}|]
+        $(Log.err) sys [i|Failed to decode configuration: #{err}|]
         maybe (void $ tryPutMVar mConfig old) (const $ pure ()) =<< fetchCustomConfig
       Right newConfig -> do
-        log [i|Set new configuration: #{newConfig}|]
+        $(Log.debug) sys [i|Set new configuration: #{newConfig}|]
         void $ tryPutMVar mConfig newConfig
 
 registerDidChangeConfiguration :: RIO ()
@@ -221,7 +235,7 @@ registerFileWatcher = do
 source :: Maybe J.DiagnosticSource
 source = Just "ligo-lsp"
 
-run :: (J.LanguageContextEnv Config, RioEnv) -> RIO a -> IO a
+run :: (J.LanguageContextEnv Config, RioEnv) -> RIO a -> LogT IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
 -- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
@@ -267,7 +281,7 @@ diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RI
 diagnostic ver = traverse_ \(nuri, diags) -> do
   let diags' = D.partitionBySource diags
   maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
-  Log.debug "LOOP.DIAG" [i|Diags #{diags'}|]
+  $(Log.debug) "LOOP.DIAG" [i|Diags #{diags'}|]
   J.publishDiagnostics maxDiagnostics nuri ver diags'
 
 delete :: J.NormalizedUri -> RIO ()
@@ -308,7 +322,7 @@ preload uri = do
       p <- getPermissions path
       setPermissions path p { writable = False }
     createTemp new = do
-      Log.debug "preload" [i|#{fin} not found. Creating temp file: #{new}|]
+      $(Log.warning) "preload" [i|#{fin} not found. Creating temp file: #{new}|]
       -- We make the file read-only so the user is aware that it should not be
       -- changed. Note we can't make fin read-only, since it doesn't exist in
       -- the disk anymore, and also because LSP has no such request.
@@ -338,7 +352,7 @@ loadWithoutScopes
 loadWithoutScopes uri = do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
-  Log.debug "LOAD" [i|running with env #{ligoEnv}|]
+  $(Log.debug) "LOAD" [i|running with env #{ligoEnv}|]
   parsePreprocessed src
 
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
@@ -372,7 +386,7 @@ getInclusionsGraph root uri = do
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
-        Log.debug "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
+        $(Log.debug) "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
         loadDirectory root
       Just oldIncludes -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract

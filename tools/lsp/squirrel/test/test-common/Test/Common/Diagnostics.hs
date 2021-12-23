@@ -10,11 +10,12 @@ import Range
 import System.FilePath ((</>))
 
 import AST.Parser (collectAllErrors, parseContractsWithDependencies, parsePreprocessed)
-import AST.Scope (HasScopeForest, addScopes, lookupContract)
+import AST.Scope (addScopes, lookupContract)
 import AST.Skeleton (Error (..))
 
 import qualified Test.Common.Capabilities.Util as Util (contractsDir)
 import Test.Common.FixedExpectations (HasCallStack, expectationFailure, shouldMatchList)
+import Test.Common.Util (ScopeTester, withoutLogger)
 import Test.Tasty.HUnit (Assertion)
 
 inputDir :: FilePath
@@ -29,12 +30,12 @@ simplifyError (range, Error t _) = (range, t)
 -- Try to parse a file, and check that the proper error messages are generated
 parseDiagnosticsDriver
   :: forall impl
-   . (HasCallStack, HasScopeForest impl IO)
+   . (HasCallStack, ScopeTester impl)
   => [(Range, Text)]
   -> Assertion
-parseDiagnosticsDriver expectedMsgs = do
-  parsedContracts <- parseContractsWithDependencies parsePreprocessed noProgress inputDir
-  contractGraph <- addScopes @impl noProgress parsedContracts
+parseDiagnosticsDriver expectedMsgs = withoutLogger \runLogger -> do
+  parsedContracts <- runLogger $ parseContractsWithDependencies parsePreprocessed noProgress inputDir
+  contractGraph <- runLogger $ addScopes @impl noProgress parsedContracts
   let mContract = lookupContract inputFile contractGraph
   case mContract of
     Nothing -> expectationFailure ("Couldn't find " <> inputFile)

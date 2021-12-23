@@ -21,6 +21,7 @@ import Cli.Json (fromLigoErrorToMsg)
 import Cli.Types (HasLigoClient)
 
 import Duplo.Lattice (Lattice (leq))
+import Log (Log)
 import Parser (Msg)
 import ParseTree (srcPath)
 import Range (point)
@@ -28,7 +29,7 @@ import Util.Graph (traverseAMConcurrently)
 
 data Standard
 
-instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
+instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest Standard m where
   scopeForest reportProgress pc = do
     lgForest <- scopeForest @FromCompiler reportProgress pc `catches`
       [ Handler \case

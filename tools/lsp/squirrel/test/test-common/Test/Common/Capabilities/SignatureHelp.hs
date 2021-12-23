@@ -14,7 +14,7 @@ import Test.Tasty.HUnit (testCase)
 
 import AST.Capabilities.SignatureHelp (SignatureInformation (..), findSignature, toLspParameters)
 import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
-import AST.Scope.Common (HasScopeForest, contractTree, lookupContract)
+import AST.Scope.Common (contractTree, lookupContract)
 import AST.Scope.ScopedDecl (Parameter (..), Pattern (..), Type (..))
 import AST.Skeleton (nestedLIGO)
 import Extension (getExt)
@@ -23,6 +23,7 @@ import Range (Range, point)
 
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.Util (ScopeTester, withoutLogger)
 
 data TestInfo = TestInfo
   { tiContract :: String
@@ -207,9 +208,9 @@ caseInfos =
     }
   ]
 
-simpleFunctionCallDriver :: forall parser. HasScopeForest parser IO => IO TestTree
-simpleFunctionCallDriver = do
-  graph <- parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress (contractsDir </> "signature-help")
+simpleFunctionCallDriver :: forall parser. ScopeTester parser => IO TestTree
+simpleFunctionCallDriver = withoutLogger \runLogger -> do
+  graph <- runLogger $ parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress (contractsDir </> "signature-help")
   pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) caseInfos
   where
     makeTestCase graph info = testCase (tiContract info) (makeTest graph info)
