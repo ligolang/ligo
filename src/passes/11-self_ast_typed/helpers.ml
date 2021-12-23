@@ -83,7 +83,7 @@ and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> 'a = fun f init m 
   | Match_record {fields = _; body; tv = _} ->
     fold_expression f init body
 
-and fold_module : ('a,'err) folder -> 'a -> module' -> 'a = fun f init m ->
+and fold_module : ('a,'err) folder -> 'a -> module_ -> 'a = fun f init m ->
   let aux = fun acc (x : declaration Location.wrap) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
@@ -205,7 +205,7 @@ and map_cases : 'err mapper -> matching_expr -> matching_expr = fun f m ->
     let body = map_expression f body in
     Match_record {fields; body; tv}
 
-and map_module : 'err mapper -> module' -> module' = fun m p ->
+and map_module : 'err mapper -> module_ -> module_ = fun m p ->
   let aux = fun (x : declaration) ->
     let return (d : declaration) = d in
     match x with
@@ -313,7 +313,7 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr
       let (init, body) = fold_map_expression f init body in
       (init, Match_record { fields ; body ; tv })
 
-and fold_map_module : 'a fold_mapper -> 'a -> module' -> 'a * module' = fun m init p ->
+and fold_map_module : 'a fold_mapper -> 'a -> module_ -> 'a * module_ = fun m init p ->
   let aux = fun acc (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant {name; binder ; expr ; attr } -> (
@@ -335,7 +335,7 @@ and fold_map_module : 'a fold_mapper -> 'a -> module' -> 'a * module' = fun m in
   let (a,p) = List.fold_map ~f:aux ~init p in
   (a, p)
 
-and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> module' -> 'a = fun m m_decl init p ->
+and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> module_ -> 'a = fun m m_decl init p ->
   let aux = fun acc (x : declaration Location.wrap) ->
       match Location.unwrap x with
       | Declaration_constant {binder=_ ; expr ; attr=_; name=_} as d ->
@@ -352,7 +352,7 @@ type contract_type = {
   storage : Ast_typed.type_expression ;
 }
 
-let fetch_contract_type ~raise : string -> module' -> contract_type = fun main_fname m ->
+let fetch_contract_type ~raise : string -> module_ -> contract_type = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ; name=_} as p) ->
        if Var.equal binder.wrap_content (Var.of_name main_fname)
@@ -390,7 +390,7 @@ type view_type = {
   return : Ast_typed.type_expression ;
 }
 
-let fetch_view_type ~raise : string -> module' -> (view_type * Location.t) = fun main_fname m ->
+let fetch_view_type ~raise : string -> module_ -> (view_type * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
         if Var.equal binder.wrap_content (Var.of_name main_fname)
@@ -510,7 +510,7 @@ module Free_variables :
       let {modVarSet;moduleEnv;varSet} = get_fv_expr body in
       {modVarSet;moduleEnv;varSet=List.fold_right pattern ~f:VarSet.remove ~init:varSet}
 
-  and get_fv_module : module' -> moduleEnv' = fun m ->
+  and get_fv_module : module_ -> moduleEnv' = fun m ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
       | Declaration_constant {binder=_; expr ; attr=_; name=_} ->
@@ -534,7 +534,7 @@ end
 module Free_module_variables :
   sig
     val expression : expression -> (module_variable list * expression_variable list)
-    val module' : module' -> (module_variable list * expression_variable list)
+    val module' : module_ -> (module_variable list * expression_variable list)
   end
   = struct
   module ModVar = struct
@@ -619,7 +619,7 @@ module Free_module_variables :
     | Match_record {fields = _; body; tv = _} ->
       get_fv_expr body
 
-  and get_fv_module : module' -> (ModVarSet.t * VarSet.t) = fun m ->
+  and get_fv_module : module_ -> (ModVarSet.t * VarSet.t) = fun m ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
       | Declaration_constant {name=_;binder=_; expr ; attr=_} ->

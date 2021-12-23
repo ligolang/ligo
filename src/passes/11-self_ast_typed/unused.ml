@@ -130,7 +130,7 @@ and defuse_of_record defuse {body;fields;_} =
   let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse vars' in
   (defuse, unused)
 
-let rec unused_map_module ~add_warning : module' -> module' = function m ->
+let rec unused_map_module ~add_warning : module_ -> module_ = function m ->
   let self = unused_map_module ~add_warning in
   let update_annotations annots =
     List.iter ~f:add_warning annots in

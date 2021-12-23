@@ -53,20 +53,24 @@ let get_modules : t -> Types.modules = fun { values=_ ; types=_ ; modules } -> m
 
 
 (* TODO: generate : these are now messy, clean them up. *)
-let add_value : Ast_typed.expression_variable -> Ast_typed.type_expression -> t -> t = fun ev te e -> 
-  let values = (ev,te)::e.values in
-  {e with values}
+let add_value : t -> Ast_typed.expression_variable -> Ast_typed.type_expression -> t = fun c ev te -> 
+  let values = (ev,te)::c.values in
+  {c with values}
 
-let add_type : Ast_typed.type_variable -> Ast_typed.type_expression -> t -> t = fun tv te e -> 
-  let types = (tv,te)::e.types in
-  {e with types}
+let add_type : t -> Ast_typed.type_variable -> Ast_typed.type_expression -> t = fun c tv te -> 
+  let types = (tv,te)::c.types in
+  {c with types}
 
-(* Im not super happy with the representation of for_all types.. *)
-let add_type_var : Ast_typed.type_variable -> unit -> t -> t = fun tv () e -> 
-  add_type tv (Ast_typed.t_variable tv) e
-let add_module : Ast_typed.module_variable -> t -> t -> t = fun mv te e -> 
-  let modules = (mv,te)::e.modules in
-  {e with modules}
+(* we represent for_all types as themselves because we don't have typechecking yet *)
+let add_type_var : t -> Ast_typed.type_variable -> unit -> t = fun c tv () -> 
+  add_type c tv (Ast_typed.t_variable tv)
+
+(* we use type_var while we don't have kind checking *)
+let add_kind : t -> Ast_typed.type_variable -> unit -> t = fun c tv () -> 
+  add_type_var c tv ()
+let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te -> 
+  let modules = (mv,te)::c.modules in
+  {c with modules}
 
 let get_value (e:t)  = List.Assoc.find ~equal:(Location.equal_content ~equal:Var.equal) e.values
 let get_type (e:t)   = List.Assoc.find ~equal:Var.equal e.types
@@ -75,14 +79,14 @@ let get_module (e:t) = List.Assoc.find ~equal:String.equal e.modules
 let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip types
 
 (* Load context from the outside declarations *)
-let rec add_ez_module : Ast_typed.module_variable -> Ast_typed.module' ->t -> t = fun mv m c ->
+let rec add_ez_module : t -> Ast_typed.module_variable -> Ast_typed.module_ -> t = fun c mv m ->
   let f c d = match Location.unwrap d with
-    Ast_typed.Declaration_constant {name=_;binder;expr;attr={public;_}}  -> if public then add_value binder expr.type_expression c else c
-  | Declaration_type {type_binder;type_expr;type_attr={public}} -> if public then add_type  type_binder type_expr c else c
-  | Declaration_module {module_binder;module_;module_attr={public}} -> if public then add_ez_module module_binder module_ c else c
+    Ast_typed.Declaration_constant {name=_;binder;expr;attr={public;_}}  -> if public then add_value c binder expr.type_expression else c
+  | Declaration_type {type_binder;type_expr;type_attr={public}} -> if public then add_type c type_binder type_expr else c
+  | Declaration_module {module_binder;module_;module_attr={public}} -> if public then add_ez_module c module_binder module_ else c
   | Module_alias {alias;binders} -> 
     let m = Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.bind ~f:(fun c -> get_module c b) c) ~init:(Some c) binders in
-    let c' = Option.map ~f:(fun m -> add_module alias m c) m in
+    let c' = Option.map ~f:(fun m -> add_module c alias m) m in
     Option.value ~default:c c'
   in
   let context = List.fold ~f ~init:c @@ m in
@@ -93,12 +97,12 @@ let init ?env () =
   match env with None -> empty
   | Some (env) ->
     let f c d = match Location.unwrap d with
-      Ast_typed.Declaration_constant {name=_;binder;expr;attr=_}  -> add_value binder expr.type_expression c
-    | Declaration_type {type_binder;type_expr;type_attr=_} -> add_type  type_binder type_expr c
-    | Declaration_module {module_binder;module_;module_attr=_} -> add_ez_module module_binder module_ c
+      Ast_typed.Declaration_constant {name=_;binder;expr;attr=_}  -> add_value c binder expr.type_expression
+    | Declaration_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr
+    | Declaration_module {module_binder;module_;module_attr=_} -> add_ez_module c module_binder module_
     | Module_alias {alias;binders} -> 
       (* value_exn is ok since the env as pass the typer or is written by us *)
-      add_module alias (Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.value_exn (get_module c b)) ~init:c binders) c
+      add_module c alias (Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.value_exn (get_module c b)) ~init:c binders)
     in
     Environment.fold ~f ~init:empty @@ env
   

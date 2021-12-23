@@ -203,7 +203,7 @@ and muchuse_of_record {body;fields;_} =
   List.fold_left ~f:(fun (c,m) (v,t) -> muchuse_of_binder v t (c,m))
     ~init:(muchuse_of_expr body) typed_vars
 
-let rec get_all_declarations (module_name : module_variable) : module' ->
+let rec get_all_declarations (module_name : module_variable) : module_ ->
                                (expression_variable * type_expression) list =
   function m ->
     let aux = fun (x : declaration) ->
@@ -220,7 +220,7 @@ let rec get_all_declarations (module_name : module_variable) : module' ->
       | _ -> [] in
     m |> List.map ~f:Location.unwrap |> List.map ~f:aux |> List.concat
 
-let rec muchused_helper (muchuse : muchuse) : module' -> muchuse =
+let rec muchused_helper (muchuse : muchuse) : module_ -> muchuse =
   function m ->
   let aux = fun (x : declaration) s ->
     match x with
@@ -235,12 +235,12 @@ let rec muchused_helper (muchuse : muchuse) : module' -> muchuse =
   in
   List.fold_right ~f:aux (List.map ~f:Location.unwrap m) ~init:muchuse
 
-let muchused_map_module ~add_warning : module' -> module' = function module' ->
+let muchused_map_module ~add_warning : module_ -> module_ = function module_ ->
   let update_annotations annots =
     List.iter ~f:(fun a -> add_warning a) annots in
-  let _,muchused = muchused_helper muchuse_neutral module' in
+  let _,muchused = muchused_helper muchuse_neutral module_ in
   let warn_var v =
     `Self_ast_typed_warning_muchused
       (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
   let () = update_annotations @@ List.map ~f:warn_var muchused in
-  module'
+  module_

@@ -45,7 +45,7 @@ let rec get_views : Ast_typed.program -> (string * location) list = fun p ->
   in 
   List.fold ~init:[] ~f p
 
-let list_declarations (m : Ast_typed.module') : string list =
+let list_declarations (m : Ast_typed.module_) : string list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
@@ -54,7 +54,7 @@ let list_declarations (m : Ast_typed.module') : string list =
       | _ -> prev)
     ~init:[] m
 
-let list_type_declarations (m : Ast_typed.module') : string list =
+let list_type_declarations (m : Ast_typed.module_) : string list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
@@ -63,7 +63,7 @@ let list_type_declarations (m : Ast_typed.module') : string list =
       | _ -> prev)
     ~init:[] m
 
-let list_mod_declarations (m : Ast_typed.module') : string list =
+let list_mod_declarations (m : Ast_typed.module_) : string list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in

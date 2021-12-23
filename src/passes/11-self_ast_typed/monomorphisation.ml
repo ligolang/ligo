@@ -282,7 +282,7 @@ and mono_polymorphic_cases : _ -> data -> matching_expr -> data * matching_expr 
                     instances_add (lident_of_variable binder) binder_instances data) in
      data, Match_record { tv ; body ; fields }
 
-and mono_polymorphic_module : _ -> data -> module' -> data * module' = fun path data p ->
+and mono_polymorphic_module : _ -> data -> module_ -> data * module_ = fun path data p ->
   let self = mono_polymorphic_module in
   let rec aux data decls =
     match decls with
