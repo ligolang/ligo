@@ -22,8 +22,8 @@ let expression purpose =
 let libraries : string list Command.Param.t =
   let open Command.Param in
   let name = "--library" in
-  let doc  = "LIBS A list of path to a directory containing included files, separated by ',' " in
-  let spec = listed string in
+  let doc  = "LIBS A comma-separated list of paths to directories where to search for files to be included by the preprocessor" in
+  let spec = optional_with_default [] @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
   flag ~doc ~aliases:["l"] name spec
 
 let syntax =
