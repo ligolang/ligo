@@ -289,7 +289,7 @@ module Mutator = struct
        let+ body, mutation = mutate_expression body in
        Match_record {fields; body; tv}, mutation
 
-  and mutate_module : module' -> (module' * mutation option) list = fun m ->
+  and mutate_module : module_ -> (module_ * mutation option) list = fun m ->
     let aux = fun ({location; wrap_content = x} : declaration location_wrap) ->
       match x with
       | Declaration_constant {name; binder; expr ; attr} -> (

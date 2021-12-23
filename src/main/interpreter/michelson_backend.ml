@@ -85,8 +85,8 @@ let compile_contract ~raise ~add_warning ~protocol_version source_file entry_poi
   let open Ligo_compile in
   let syntax = "auto" in
   let options = Compiler_options.make ~protocol_version () in
-  let michelson,prog_type = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
-  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,prog_type) source_file in
+  let michelson,prog_typed = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
+  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,prog_typed) source_file in
   Of_michelson.build_contract ~raise ~disable_typecheck:false michelson views
 
 let clean_location_with v x =

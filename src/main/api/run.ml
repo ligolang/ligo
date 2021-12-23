@@ -60,6 +60,7 @@ let evaluate_call source_file entry_point parameter amount balance sender source
         Compiler_options.make ~protocol_version ()
       in
       let mini_c_prg,typed_prg = Build.build_contract_use ~raise ~add_warning ~options syntax source_file in
+      let env              = Environment.append typed_prg options.init_env in
       let meta             = Compile.Of_source.extract_meta ~raise syntax source_file in
       let c_unit_param,_   = Compile.Of_source.compile_string ~raise ~options ~meta parameter in
       let imperative_param = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_param in
@@ -67,7 +68,6 @@ let evaluate_call source_file entry_point parameter amount balance sender source
       let core_param       = Compile.Of_sugar.compile_expression sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in
       let typed_app        = Compile.Of_core.compile_expression ~raise ~options ~init_prog:typed_prg app in
-      let env              = Environment.append typed_prg options.init_env in
       let typed_app        = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_expression env typed_app in
       let compiled_applied = Compile.Of_typed.compile_expression ~raise typed_app in
 

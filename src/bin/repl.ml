@@ -30,7 +30,7 @@ let add_warning _ = ()
 type repl_result =
     Expression_value of Ast_core.expression
   | Defined_values_core of Ast_core.module_
-  | Defined_values_typed of Ast_typed.module'
+  | Defined_values_typed of Ast_typed.module_
   | Just_ok
 
 open Simple_utils.Display

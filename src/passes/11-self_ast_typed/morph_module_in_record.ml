@@ -50,7 +50,7 @@ let rec declaration_to_expression ~raise : Env.t -> declaration_loc list -> (str
           (alias, rhs) :: self env tl
       )
     
-and module_to_record ~raise : Env.t -> module' -> expression = fun c m ->
+and module_to_record ~raise : Env.t -> module_ -> expression = fun c m ->
   let lst = declaration_to_expression ~raise c m in
   let f = fun expr (binder,ex) ->
     let var = Location.wrap @@ Var.of_name binder in
@@ -144,7 +144,7 @@ let peephole_declaration ~raise : Env.t -> declaration_loc -> Env.t * declaratio
 
   | Declaration_type _ -> e,m
 
-let peephole_module ~raise : Env.t -> module' -> Env.t * module' = fun e m ->
+let peephole_module ~raise : Env.t -> module_ -> Env.t * module_ = fun e m ->
   List.fold_map ~f:(peephole_declaration ~raise) ~init:e m
 
 let peephole_program ~raise : Environment.t -> program -> program = 

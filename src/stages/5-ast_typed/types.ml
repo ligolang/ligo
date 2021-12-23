@@ -87,9 +87,9 @@ and matching_expr =
 
 and declaration_loc = declaration location_wrap
 
-and module' = declaration_loc list
+and module_ = declaration_loc list
 
-and program = module'
+and program = module_
 
 and type_attribute = { public : bool }
 

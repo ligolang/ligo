@@ -5,8 +5,8 @@ module Protocols = Protocols
 
 (* This is an env use by repl and build *)
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
-type t = module' 
-let pp ppf m = PP.module' ppf @@ m
+type t = module_
+let pp ppf m = PP.module_ ppf @@ m
 let add_module ?public module_binder module_ env =
   (Location.wrap @@ Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public}}) :: env
 

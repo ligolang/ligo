@@ -289,18 +289,18 @@ and var_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_exp
       product_rule ~raise ~err_loc ~type_f ~body_t shape ms eqs def
     | None ->
       let aux : typed_pattern list * (I.expression * Context.t) -> (typed_pattern list * (I.expression * Context.t)) =
-        fun (pl, (body,env)) ->
+        fun (pl, (body,context)) ->
         match pl with
         | (phd,t)::ptl -> (
           match phd.wrap_content,t with
           | (P_var b, t) ->
             let body' = substitute_var_in_body ~raise b.var mhd body in
             (* Is substitution avoidable ? mhd here can be the result of a tuple/record destructuring *)
-            let env' = Context.add_value mhd t env in
+            let env' = Context.add_value context mhd t in
             (ptl , (body',env'))
           | (P_unit, t) ->
             let () = assert_unit_pattern ~raise phd.location t in
-            (ptl , (body,env))
+            (ptl , (body,context))
           |  _ -> raise.raise @@ corner_case __LOC__
         )
         | [] -> raise.raise @@ corner_case __LOC__
