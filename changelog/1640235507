@@ -1,0 +1,6 @@
+---
+  title: "Fix CLI flag --library not splitting by comma"
+  merge_request: "1472"
+  author: "melwyn95"
+  type: "fixed"
+
