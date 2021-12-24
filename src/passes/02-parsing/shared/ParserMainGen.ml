@@ -105,13 +105,14 @@ module Make
 
     module MainParser = ParserLib.API.Make (MainLexer) (Parser)
                             (struct
+                                let mode                   = CLI.Lexer_CLI.mode
                                 let error_recovery_tracing = CLI.trace_recovery
                                 let tracing_output         = CLI.trace_recovery_output
                              end)
 
     let show_error_message : MainParser.message -> unit =
       function Region.{value; region} ->
-        let reg = region#to_string ~file:true ~offsets:true `Point in
+        let reg = region#to_string ~file:true ~offsets:true CLI.Lexer_CLI.mode in
         let msg = Printf.sprintf "Parse error %s:\n%s" reg value
         in (Out_channel.flush stdout; print_in_red msg)
 
