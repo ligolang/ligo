@@ -64,7 +64,7 @@ parsePreprocessed src = do
   (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
     [ Handler \(LigoDecodedExpectedClientFailureException err) ->
       pure (src', Just $ fromLigoErrorToMsg err)
-    , Handler \(LigoErrorNodeParseErrorException _) ->
+    , Handler \(LigoErrorNodeParseErrorException _ _) ->
       pure (src', Nothing)
     , Handler \(_ :: IOError) ->
       pure (src', Nothing)
