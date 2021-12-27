@@ -29,6 +29,7 @@ import UnliftIO.MVar (MVar, modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST
 import ASTMap qualified
+import Cli.Impl (getLigoVersion)
 import Config (Config (..))
 import Config qualified
 import Language.LSP.Util (sendError)
@@ -80,7 +81,9 @@ mainLoop =
 
     -- | Handle all uncaught exceptions.
     catchExceptions :: S.Handlers RIO -> S.Handlers RIO
-    catchExceptions = S.mapHandlers (wrapReq . handleDisabledReq) wrapNotif
+    catchExceptions = S.mapHandlers
+      (wrapReq . handleDisabledReq . addLigoVersionToReqLogging)
+      (wrapNotif . addLigoVersionToNotifLogging)
       where
         wrapReq
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
@@ -97,6 +100,20 @@ mainLoop =
           handler msg `catchAny` \e -> do
             $(Log.critical) "Uncaught" [i|Handling `#{_method}`: #{displayException e}|]
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
+
+        addLigoVersionToReqLogging
+          :: forall (meth :: J.Method 'J.FromClient 'J.Request).
+             S.Handler RIO meth -> S.Handler RIO meth
+        addLigoVersionToReqLogging handler msg resp = do
+          version <- getLigoVersion
+          maybe id Log.addContext version $ handler msg resp
+
+        addLigoVersionToNotifLogging
+          :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
+             S.Handler RIO meth -> S.Handler RIO meth
+        addLigoVersionToNotifLogging handler msg = do
+          version <- getLigoVersion
+          maybe id Log.addContext version $ handler msg
 
         handleDisabledReq
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).

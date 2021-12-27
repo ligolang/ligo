@@ -7,7 +7,11 @@ module Cli.Impl
   , LigoExpectedClientFailureException (..)
   , LigoDecodedExpectedClientFailureException (..)
   , LigoUnexpectedCrashException (..)
+
+  , Version (..)
+
   , callLigo
+  , getLigoVersion
   , preprocess
   , getLigoDefinitions
   , parseLigoDefinitions
@@ -18,14 +22,16 @@ import Control.Exception.Safe (Exception (..), SomeException (..), try, tryAny)
 import Control.Monad
 import Control.Monad.Catch (MonadThrow (throwM))
 import Control.Monad.Reader
-import Data.Aeson (eitherDecodeStrict')
+import Data.Aeson (ToJSON (..), eitherDecodeStrict', object, (.=))
 import Data.Aeson.Types (FromJSON)
 import Data.ByteString.Lazy.Char8 qualified as S8L
 import Data.Foldable (asum)
 import Data.Text (Text, pack, unpack)
+import Data.Text qualified as Text
 import Data.Text.Encoding (encodeUtf8)
 import Data.Typeable (cast)
 import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
+import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
 import System.Process
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
@@ -156,20 +162,21 @@ instance Pretty LigoPreprocessFailedException where
 -- Execution
 ----------------------------------------------------------------------------
 
--- | Call ligo binary and return stdin and stderr accordingly.
-callLigo
-  :: HasLigoClient m => [String] -> Source -> m (Text, Text)
-callLigo args con = do
+callLigoImpl :: HasLigoClient m => [String] -> String -> m (Text, Text)
+callLigoImpl args input = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
-    raw <- srcToText con
-    (ec, lo, le) <- readProcessWithExitCode _lceClientPath args (unpack raw)
+    (ec, lo, le) <- readProcessWithExitCode _lceClientPath args input
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
       throwM $ LigoExpectedClientFailureException (pack lo) (pack le)
     unless (le == mempty) $
       let ec' = case ec of { ExitSuccess -> 0; ExitFailure n -> n } in
       throwM $ LigoUnexpectedClientFailureException ec' (pack lo) (pack le)
     return (pack lo, pack le)
+
+-- | Call ligo binary and return stdin and stderr accordingly.
+callLigo :: HasLigoClient m => [String] -> Source -> m (Text, Text)
+callLigo args = callLigoImpl args . unpack <=< liftIO . srcToText
 
 ----------------------------------------------------------------------------
 -- Parse from output file
@@ -198,8 +205,38 @@ parseLigoOutput contractPath = do
     Left err -> throwM $ LigoDefinitionParseErrorException (pack err)
     Right definitions -> return definitions
 
+newtype Version = Version
+  { getVersion :: Text
+  }
+
+instance ToJSON Version where
+  toJSON (Version ver) = object ["version" .= ver]
+
+deriving anyclass instance ToObject Version
+
+instance LogItem Version where
+  payloadKeys = const $ const AllKeys
+
 ----------------------------------------------------------------------------
 -- Execute ligo binary itself
+
+-- | Get the current LIGO version.
+--
+-- ```
+-- ligo --version
+-- ```
+getLigoVersion :: (HasLigoClient m, Log m) => m (Maybe Version)
+getLigoVersion = do
+  mbOut <- try $ callLigoImpl ["--version"] mempty
+  case mbOut of
+    -- We don't want to die if we failed to parse the version...
+    Left (SomeException e) -> do
+      $(Log.err) "LIGO.VERSION" [i|Couldn't get LIGO version with: #{e}|]
+      pure Nothing
+    Right (output, e) -> do
+      unless (Text.null e) $
+        $(Log.warning) "LIGO.VERSION" [i|LIGO produced an error with the output: #{e}|]
+      pure $ Just $ Version $ Text.strip output
 
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
 --
