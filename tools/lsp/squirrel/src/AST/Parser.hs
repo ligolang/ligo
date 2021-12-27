@@ -12,7 +12,6 @@ module AST.Parser
   , collectAllErrors
   ) where
 
-import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Control.Exception.Safe (Handler (..), catches, throwM)
 import Control.Lens ((%~))
 import Control.Monad ((<=<))
@@ -89,7 +88,7 @@ parseWithScopes
 parseWithScopes src = do
   let fp = srcPath src
   graph <- parseContractsWithDependencies parsePreprocessed noProgress (takeDirectory fp)
-  scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (wcc graph)
+  scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (Includes <$> wcc (getIncludes graph))
   maybe (throwM $ ContractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.
@@ -135,7 +134,7 @@ parseContractsWithDependencies
   => ParserCallback m ContractInfo
   -> ProgressCallback m
   -> FilePath
-  -> m (AdjacencyMap ParsedContractInfo)
+  -> m (Includes ParsedContractInfo)
 parseContractsWithDependencies parser reportProgress =
   includesGraph <=< parseContracts parser reportProgress
 
@@ -145,7 +144,7 @@ parseContractsWithDependenciesScopes
   => ParserCallback m ContractInfo
   -> ProgressCallback m
   -> FilePath
-  -> m (AdjacencyMap ContractInfo')
+  -> m (Includes ContractInfo')
 parseContractsWithDependenciesScopes parser reportProgress =
   addScopes @impl reportProgress <=< parseContractsWithDependencies parser reportProgress
 

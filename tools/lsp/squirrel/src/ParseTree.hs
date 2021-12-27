@@ -24,6 +24,7 @@ module ParseTree
   )
   where
 
+import Data.Aeson (ToJSON (..), Value (String))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Map
@@ -40,6 +41,7 @@ import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (peek, peekElemOff, poke)
+import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import TreeSitter.Language
 import TreeSitter.Node
 import TreeSitter.Parser
@@ -63,6 +65,14 @@ data Source
   | Text       { srcPath :: FilePath, srcText :: Text }
   | ByteString { srcPath :: FilePath, srcBS   :: ByteString }
   deriving stock (Eq, Ord)
+
+instance ToJSON Source where
+  toJSON = String . Text.pack . srcPath
+
+deriving anyclass instance ToObject Source
+
+instance LogItem Source where
+  payloadKeys = const $ const AllKeys
 
 instance IsString Source where
   fromString = Path

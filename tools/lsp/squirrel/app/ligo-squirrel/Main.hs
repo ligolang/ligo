@@ -4,7 +4,7 @@ module Main (main) where
 
 import Prelude hiding (log)
 
-import Algebra.Graph.AdjacencyMap qualified as G (empty)
+import Algebra.Graph.Class qualified as G (empty)
 import Control.Exception.Safe (catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)

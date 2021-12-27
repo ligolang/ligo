@@ -9,7 +9,7 @@ import Control.Monad.IO.Unlift (MonadUnliftIO)
 
 import AST.Scope.Common
   ( pattern FindContract, FindFilepath (..), ContractNotFoundException (..)
-  , HasScopeForest (..) , ParsedContract (..), MergeStrategy (..), cMsgs
+  , HasScopeForest (..), Includes (..), ParsedContract (..), MergeStrategy (..), cMsgs
   , getContract, lookupContract, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
@@ -46,9 +46,10 @@ instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest Standard m 
     where
       fallbackForest = scopeForest @Fallback reportProgress pc
 
-      addLigoErrToMsg err = G.gmap (getContract . cMsgs %~ (`rewriteAt` err)) <$> fallbackForest
+      addLigoErrToMsg err =
+        Includes . G.gmap (getContract . cMsgs %~ (`rewriteAt` err)) . getIncludes <$> fallbackForest
 
-      merge l f = flip traverseAMConcurrently l \(FindFilepath lf) -> do
+      merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do
         let src = _cFile lf
         let fp = srcPath src
         FindFilepath ff <- maybe (throwM $ ContractNotFoundException fp f) pure (lookupContract fp f)

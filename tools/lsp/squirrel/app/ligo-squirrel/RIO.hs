@@ -35,8 +35,8 @@ module RIO
 
 import Prelude hiding (log)
 
-import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import Algebra.Graph.AdjacencyMap qualified as G
+import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
+import Algebra.Graph.Class qualified as G hiding (overlay)
 
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
@@ -105,7 +105,7 @@ type RioEnv =
     '[ MVar Config
      , ASTMap J.NormalizedUri Contract RIO
      , MVar (HashMap J.NormalizedUri Int32)
-     , "includes" := MVar (AdjacencyMap ParsedContractInfo)
+     , "includes" := MVar (Includes ParsedContractInfo)
      , "temp files" := StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
      ]
 
@@ -297,7 +297,7 @@ delete uri = do
           (Path fp)
           (SomeLIGO Caml $ make (emptyParsedInfo, Error "Impossible" []))
           []
-      modifyMVar_ imap $ pure . G.removeVertex c
+      modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
 
   tmap <- asks $ getElem @(ASTMap J.NormalizedUri Contract RIO)
   deleted <- ASTMap.delete uri tmap
@@ -365,7 +365,7 @@ tryLoadWithoutScopes uri =
 normalizeFilePath :: FilePath -> J.NormalizedUri
 normalizeFilePath = J.toNormalizedUri . J.filePathToUri
 
-loadDirectory :: FilePath -> RIO (AdjacencyMap ParsedContractInfo)
+loadDirectory :: FilePath -> RIO (Includes ParsedContractInfo)
 loadDirectory root = do
   J.withProgress "Indexing directory" J.NotCancellable \reportProgress ->
     parseContractsWithDependencies
@@ -376,26 +376,26 @@ loadDirectory root = do
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
   -> J.NormalizedUri  -- ^ Open contract to be loaded
-  -> RIO (AdjacencyMap ParsedContractInfo)
+  -> RIO (Includes ParsedContractInfo)
 getInclusionsGraph root uri = do
   rootContract <- loadWithoutScopes uri
   includesVar <- asks (getTag @"includes")
   modifyMVar includesVar \includes -> do
     let rootFileName = contractFile rootContract
-    let groups = wcc includes
+    let groups = Includes <$> wcc (getIncludes includes)
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
         $(Log.debug) "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
         loadDirectory root
-      Just oldIncludes -> do
+      Just (Includes oldIncludes) -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
         let
           numNewContracts = length includeEdges
           lookupOrLoad fp = maybe
             (tryLoadWithoutScopes $ normalizeFilePath fp)
             (pure . Just)
-            (lookupContract fp oldIncludes)
+            (lookupContract fp (Includes oldIncludes))
 
         newIncludes <- J.withProgress "Indexing new files" J.NotCancellable \reportProgress ->
           iwither
@@ -415,7 +415,7 @@ getInclusionsGraph root uri = do
             G.overlay (G.fromAdjacencySets [(rootContract', newVertices)])
             $ G.replaceVertex rootContract' rootContract'
             $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
-        pure $ G.overlays (newGroup : groups')
+        pure $ G.overlays (Includes newGroup : groups')
 
 load
   :: forall parser
@@ -447,7 +447,7 @@ load uri = do
 
       rawGraph <- getInclusionsGraph revRoot revUri
 
-      (graph, result) <- J.withProgress "Scoping project" J.NotCancellable \reportProgress -> do
+      (Includes graph, result) <- J.withProgress "Scoping project" J.NotCancellable \reportProgress -> do
         let
           addScopesWithProgress = addScopes @parser
             (\Progress {..} -> reportProgress $ J.ProgressAmount (Just pTotal) (Just pMessage))
@@ -455,7 +455,9 @@ load uri = do
           Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault
           Just fp -> do
             let
-              raw = fromMaybe rawGraph $ find (isJust . lookupContract fp) (wcc rawGraph)
+              raw = fromMaybe rawGraph $ find
+                (isJust . lookupContract fp)
+                (Includes <$> wcc (getIncludes rawGraph))
             scoped <- addScopesWithProgress raw
             (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
@@ -466,7 +468,9 @@ load uri = do
         ASTMap.insert nuri (Contract contract nuris) time tmap
 
       pure $ Contract result nuris
-    _ -> Contract <$> loadDefault <*> pure [revUri]
+    _ -> do
+      $(Log.warning) "load" [i|Directory to load #{rootM} doesn't exist or was not set.|]
+      Contract <$> loadDefault <*> pure [revUri]
 
 collectErrors
   :: ContractInfo'
