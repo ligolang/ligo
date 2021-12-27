@@ -1,7 +1,7 @@
 ---
 id: hangzhou
 title: Hangzhou
-description: Hangzhou changes 
+description: Hangzhou changes
 ---
 
 import Syntax from '@theme/Syntax';
@@ -131,7 +131,7 @@ let create_chest : bytes => nat => (chest , chest_key)
 let create_chest : bytes => nat => [chest , chest_key]
 </SyntaxTitle>
 
-Generate a locked value, the RSA parameters and encrypt the payload. Also returns the chest key  
+Generate a locked value, the RSA parameters and encrypt the payload. Also returns the chest key
 Exposes tezos timelock library function [create_chest_and_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L197)
 
 <SyntaxTitle syntax="pascaligo">
@@ -147,7 +147,7 @@ let create_chest_key : chest => nat => chest_key
 let create_chest_key : chest => nat => chest_key
 </SyntaxTitle>
 
-Unlock the value and create the time-lock proof.  
+Unlock the value and create the time-lock proof.
 Exposes tezos timelock library function [create_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L201).
 
 ## Examples
@@ -221,9 +221,9 @@ let open_or_fail = ([ck , c , time_] : [chest_key, chest, nat]) : bytes => {
 ```
 
 </Syntax>
-<Syntax syntax="religo">
+<Syntax syntax="reasonligo">
 
-```religo group=timelock protocol=hangzhou
+```reasonligo group=timelock protocol=hangzhou
 let open_or_fail = ((ck , c , time_) : (chest_key, chest, nat)) : bytes => {
   switch (Tezos.open_chest(ck,c,time_)) {
     | Ok_opening b => b
@@ -253,9 +253,9 @@ function open_or_fail (const ck : chest_key ; const c : chest ; const time_ : na
 > Tezos documentation on views can be found [here](https://tezos.gitlab.io/011/michelson.html#operations-on-views)
 
 On-chain views are named routines attached to your contract allowing another contract to call them to
-get a "view" of your contract current storage. It cannot modify your storage nor emit operations.  
+get a "view" of your contract current storage. It cannot modify your storage nor emit operations.
 These routines can either simply return your contract storage or apply some kind of processing to it:
-they take your current storage, a parameter and returns the data of your choice. Note that parameter and return types can be anything except `big_map` ; `sapling_state` ; `operation` and `ticket`.  
+they take your current storage, a parameter and returns the data of your choice. Note that parameter and return types can be anything except `big_map` ; `sapling_state` ; `operation` and `ticket`.
 Views are named after their declaration name and can be compiled in two ways:
 
 1. by passing their names to the command line option `--views` (e.g. `ligo compile contract --views v1,v2,v3`)
@@ -302,9 +302,9 @@ let view3 = ([_ , _s]: [unit , storage]) : int => 42;
 ```
 
 </Syntax>
-<Syntax syntax="religo">
+<Syntax syntax="reasonligo">
 
-```religo group=views protocol=hangzhou
+```reasonligo group=views protocol=hangzhou
 type storage = string
 let main = ((_ , s): (unit , storage)) : (list(operation) , storage) => (([] : list(operation)) , s);
 
@@ -361,9 +361,9 @@ let view_call = ([name,parameter,addr]: [string , int , address]) : option<int> 
 ```
 
 </Syntax>
-<Syntax syntax="religo">
+<Syntax syntax="reasonligo">
 
-```religo group=views protocol=hangzhou
+```reasonligo group=views protocol=hangzhou
 let view_call = ((name,parameter,addr): (string , int , address)) : option(int) => Tezos.call_view ("sto_plus_n", 1, addr)
 ```
 
