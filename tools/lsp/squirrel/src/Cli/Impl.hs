@@ -34,7 +34,7 @@ import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
 import Cli.Json
 import Cli.Types
-import Log (Log, Namespace, i)
+import Log (Log, i)
 import Log qualified
 import ParseTree (Source (..), srcToText)
 
@@ -212,16 +212,16 @@ instance LogItem Version where
 -- ligo --version
 -- ```
 getLigoVersion :: (HasLigoClient m, Log m) => m (Maybe Version)
-getLigoVersion = do
+getLigoVersion = Log.addNamespace "getLigoVersion" do
   mbOut <- try $ callLigoImpl ["--version"] Nothing
   case mbOut of
     -- We don't want to die if we failed to parse the version...
     Left (SomeException e) -> do
-      $(Log.err) "LIGO.VERSION" [i|Couldn't get LIGO version with: #{e}|]
+      $(Log.err) [i|Couldn't get LIGO version with: #{e}|]
       pure Nothing
     Right (output, e) -> do
       unless (Text.null e) $
-        $(Log.warning) "LIGO.VERSION" [i|LIGO produced an error with the output: #{e}|]
+        $(Log.warning) [i|LIGO produced an error with the output: #{e}|]
       pure $ Just $ Version $ Text.strip output
 
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
@@ -233,32 +233,30 @@ preprocess
   :: (HasLigoClient m, Log m)
   => Source
   -> m (Source, Text)
-preprocess contract = Log.addContext contract do
-  let sys = "LIGO.PREPROCESS"
-  $(Log.debug) sys [i|preprocessing the following contract:\n #{contract}|]
+preprocess contract = Log.addNamespace "preprocess" $ Log.addContext contract do
+  $(Log.debug) [i|preprocessing the following contract:\n #{contract}|]
   let fp = srcPath contract
   mbOut <- try $ callLigo ["print", "preprocessed", fp, "--format", "json"] contract
   case mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @Text . encodeUtf8 $ output of
         Left err -> do
-          $(Log.err) sys [i|Unable to preprocess contract with: #{err}|]
+          $(Log.err) [i|Unable to preprocess contract with: #{err}|]
           throwM $ LigoPreprocessFailedException (pack err) fp
         Right newContract -> pure $ (, errs) case contract of
           Path       path   -> Text path newContract
           Text       path _ -> Text path newContract
           ByteString path _ -> ByteString path $ encodeUtf8 newContract
     Left LigoExpectedClientFailureException {ecfeStderr} ->
-      handleLigoError sys fp ecfeStderr
+      handleLigoError fp ecfeStderr
 
 -- | Get ligo definitions from raw contract.
 getLigoDefinitions
   :: (HasLigoClient m, Log m)
   => Source
   -> m (LigoDefinitions, Text)
-getLigoDefinitions contract = Log.addContext contract do
-  let sys = "LIGO.PARSE"
-  $(Log.debug) sys [i|parsing the following contract:\n#{contract}|]
+getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
+  $(Log.debug) [i|parsing the following contract:\n#{contract}|]
   let path = srcPath contract
   mbOut <- tryAny $
     -- HACK: We forget the parsed contract since we still want LIGO to read the
@@ -268,21 +266,21 @@ getLigoDefinitions contract = Log.addContext contract do
     Right (output, errs) ->
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
-          $(Log.err) sys [i|Unable to parse ligo definitions with: #{err}|]
+          $(Log.err) [i|Unable to parse ligo definitions with: #{err}|]
           throwM $ LigoDefinitionParseErrorException (pack err) output path
         Right definitions -> return (definitions, errs)
     Left (SomeException e) -> case cast e of
       Just LigoExpectedClientFailureException {ecfeStderr} ->
-        handleLigoError sys path ecfeStderr
+        handleLigoError path ecfeStderr
       Nothing -> case cast e of
         Just LigoUnexpectedClientFailureException {ucfeStderr} ->
-          handleLigoError sys path ucfeStderr
+          handleLigoError path ucfeStderr
         Nothing -> throwM e
 
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
-handleLigoError :: (HasLigoClient m, Log m) => Namespace -> FilePath -> Text -> m a
-handleLigoError subsystem path stderr = do
+handleLigoError :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
+handleLigoError path stderr = Log.addNamespace "handleLigoError" do
   -- Call ligo with `compile contract` to extract more readable error message
   case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
     Left err -> do
@@ -290,7 +288,7 @@ handleLigoError subsystem path stderr = do
       let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
       case failureRecovery of
         Left failure -> do
-          $(Log.err) subsystem [i|ligo error decoding failure: #{failure}|]
+          $(Log.err) [i|ligo error decoding failure: #{failure}|]
           throwM $ LigoErrorNodeParseErrorException (pack failure) stderr path
         Right recovered -> do
           -- LIGO doesn't dump any information we can extract to figure out
@@ -298,10 +296,10 @@ handleLigoError subsystem path stderr = do
           -- type-checker error just crashes with "Update an expression which is not a record"
           -- in the old typer. In the new typer, the error is the less
           -- intuitive "type error : break_ctor propagator".
-          $(Log.err) subsystem [i|ligo crashed: #{recovered}|]
+          $(Log.err) [i|ligo crashed: #{recovered}|]
           throwM $ LigoUnexpectedCrashException (pack recovered) path
     Right decodedError -> do
-      $(Log.err) subsystem [i|ligo error decoding successful with:\n#{decodedError}|]
+      $(Log.err) [i|ligo error decoding successful with:\n#{decodedError}|]
       throwM $ LigoDecodedExpectedClientFailureException decodedError path
 
 -- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to

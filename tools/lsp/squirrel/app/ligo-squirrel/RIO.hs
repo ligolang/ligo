@@ -142,7 +142,7 @@ instance HasLigoClient RIO where
 -- `workspace/configuration` requests. We should get this fixed by the
 -- maintainers, if possible.
 getCustomConfig :: RIO Config
-getCustomConfig = do
+getCustomConfig = Log.addNamespace "getCustomConfig" do
   mConfig <- asks getElem
   contents <- tryReadMVar mConfig
   case contents of
@@ -151,13 +151,13 @@ getCustomConfig = do
     -- way to know the client configuration. We need to get this fixed by the
     -- library maintainers, if possible.
     Nothing -> do
-      $(Log.debug) "getCustomConfig" "No config fetched yet, resorting to default"
+      $(Log.warning) "No config fetched yet, resorting to default"
       pure def
     Just config -> pure config
 
 -- Fetch the configuration from the server and write it to the Config MVar
 fetchCustomConfig :: RIO (Maybe Config)
-fetchCustomConfig = do
+fetchCustomConfig = Log.addNamespace "fetchCustomConfig" do
   void $
     J.sendRequest J.SWorkspaceConfiguration configRequestParams handleResponse
   tryReadMVar =<< asks getElem
@@ -186,25 +186,22 @@ fetchCustomConfig = do
     useDefault :: RIO Config
     useDefault = do
       $(Log.warning)
-        "fetchCustomConfig"
         "Couldn't parse config from server, using default"
       pure def
 
 updateCustomConfig :: Aeson.Value -> RIO ()
-updateCustomConfig config = do
+updateCustomConfig config = Log.addNamespace "updateCustomConfig" do
   mConfig <- asks getElem
   tryTakeMVar mConfig >>= \case
     Nothing -> decodeConfig def mConfig
     Just oldConfig -> decodeConfig oldConfig mConfig
   where
-    sys = "updateCustomConfig"
-
     decodeConfig old mConfig = case getConfigFromNotification old config of
       Left err -> do
-        $(Log.err) sys [i|Failed to decode configuration: #{err}|]
+        $(Log.err) [i|Failed to decode configuration: #{err}|]
         maybe (void $ tryPutMVar mConfig old) (const $ pure ()) =<< fetchCustomConfig
       Right newConfig -> do
-        $(Log.debug) sys [i|Set new configuration: #{newConfig}|]
+        $(Log.debug) [i|Set new configuration: #{newConfig}|]
         void $ tryPutMVar mConfig newConfig
 
 registerDidChangeConfiguration :: RIO ()
@@ -278,10 +275,10 @@ forceFetchAndNotify notify effort uri = Log.addContext (Log.sl "uri" $ J.fromNor
       v <$ notify v
 
 diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
-diagnostic ver = traverse_ \(nuri, diags) -> do
+diagnostic ver = Log.addNamespace "diagnostic" . traverse_ \(nuri, diags) -> do
   let diags' = D.partitionBySource diags
   maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
-  $(Log.debug) "LOOP.DIAG" [i|Diags #{diags'}|]
+  $(Log.debug) [i|Diags #{diags'}|]
   J.publishDiagnostics maxDiagnostics nuri ver diags'
 
 delete :: J.NormalizedUri -> RIO ()
@@ -315,14 +312,14 @@ invalidate uri =
 preload
   :: J.NormalizedUri
   -> RIO Source
-preload uri = do
+preload uri = Log.addNamespace "preload" do
   let Just fin = J.uriToFilePath $ J.fromNormalizedUri uri  -- FIXME: non-exhaustive
   let
     mkReadOnly path = do
       p <- getPermissions path
       setPermissions path p { writable = False }
     createTemp new = do
-      $(Log.warning) "preload" [i|#{fin} not found. Creating temp file: #{new}|]
+      $(Log.warning) [i|#{fin} not found. Creating temp file: #{new}|]
       -- We make the file read-only so the user is aware that it should not be
       -- changed. Note we can't make fin read-only, since it doesn't exist in
       -- the disk anymore, and also because LSP has no such request.
@@ -349,10 +346,10 @@ preload uri = do
 loadWithoutScopes
   :: J.NormalizedUri
   -> RIO ContractInfo
-loadWithoutScopes uri = do
+loadWithoutScopes uri = Log.addNamespace "loadWithoutScopes" do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
-  $(Log.debug) "LOAD" [i|running with env #{ligoEnv}|]
+  $(Log.debug) [i|running with env #{ligoEnv}|]
   parsePreprocessed src
 
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
@@ -377,7 +374,7 @@ getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
   -> J.NormalizedUri  -- ^ Open contract to be loaded
   -> RIO (Includes ParsedContractInfo)
-getInclusionsGraph root uri = do
+getInclusionsGraph root uri = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes uri
   includesVar <- asks (getTag @"includes")
   modifyMVar includesVar \includes -> do
@@ -386,7 +383,7 @@ getInclusionsGraph root uri = do
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
-        $(Log.debug) "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
+        $(Log.debug) [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
         loadDirectory root
       Just (Includes oldIncludes) -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
@@ -422,7 +419,7 @@ load
    . HasScopeForest parser RIO
   => J.NormalizedUri
   -> RIO Contract
-load uri = do
+load uri = Log.addNamespace "load" do
   rootM <- J.getRootPath
   dirExists <- maybe (pure False) doesDirectoryExist rootM
 
@@ -469,7 +466,7 @@ load uri = do
 
       pure $ Contract result nuris
     _ -> do
-      $(Log.warning) "load" [i|Directory to load #{rootM} doesn't exist or was not set.|]
+      $(Log.warning) [i|Directory to load #{rootM} doesn't exist or was not set.|]
       Contract <$> loadDefault <*> pure [revUri]
 
 collectErrors

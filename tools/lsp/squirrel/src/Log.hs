@@ -1,8 +1,6 @@
 -- | Provides a façade to Katip's logger.
 module Log
   ( Severity (..)
-  , Namespace
-  , Environment
   , NoLoggingT (..)
   , LogT
   , Log
@@ -44,19 +42,19 @@ addNamespace :: Log m => Namespace -> m a -> m a
 addNamespace = katipAddNamespace
 
 debug :: ExpQ
-debug = [| \sys msg -> addNamespace sys $ $logTM DebugS msg |]
+debug = [| $logTM DebugS |]
 {-# INLINE debug #-}
 
 warning :: ExpQ
-warning = [| \sys msg -> addNamespace sys $ $logTM WarningS msg |]
+warning = [| $logTM WarningS |]
 {-# INLINE warning #-}
 
 err :: ExpQ
-err = [| \sys msg -> addNamespace sys $ $logTM ErrorS msg |]
+err = [| $logTM ErrorS |]
 {-# INLINE err #-}
 
 critical :: ExpQ
-critical = [| \sys msg -> addNamespace sys $ $logTM CriticalS msg |]
+critical = [| $logTM CriticalS |]
 {-# INLINE critical #-}
 
 withoutLogger

@@ -124,8 +124,8 @@ instance Pretty1 ParseTree where
       )
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
-toParseTree dialect input = do
-  $(Log.debug) "TS" [Log.i|Reading #{input}|]
+toParseTree dialect input = Log.addNamespace "toParseTree" do
+  $(Log.debug) [Log.i|Reading #{input}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
@@ -136,7 +136,7 @@ toParseTree dialect input = do
     withParseTree parser src \tree ->
       withRootNode tree (peek >=> go input src)
 
-  $(Log.debug) "TS" [Log.i|Done reading #{input}|]
+  $(Log.debug) [Log.i|Done reading #{input}|]
   pure res
   where
     go :: Source -> ByteString -> Node -> IO RawTree
