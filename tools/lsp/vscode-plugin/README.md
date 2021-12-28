@@ -4,6 +4,8 @@ This plugin is an LSP implementation for the LIGO language family.
 
 Currently, it is highly experimental and may contain bugs. Language Server capabilities on Windows are supported only if running in WSL mode.
 
+To report bugs in the LIGO Language Server (LLS), please open an issue in [GitLab](https://gitlab.com/serokell/ligo/ligo/-/issues). Additional information may be found in `/tmp/ligo-language-server.log`.
+
 ## Functionality
 Code navigation
 

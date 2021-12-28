@@ -135,6 +135,7 @@ library
     , regex-tdfa
     , safe-exceptions
     , template-haskell
+    , temporary
     , text
     , th-compat
     , transformers

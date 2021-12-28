@@ -29,7 +29,9 @@ import Katip.Monadic (NoLoggingT (..))
 import Language.Haskell.TH (ExpQ)
 import Language.Haskell.TH.Syntax.Compat (SpliceQ, examineSplice, liftSplice)
 import System.Environment (lookupEnv)
+import System.FilePath ((</>))
 import System.IO (stderr)
+import System.IO.Temp (getCanonicalTemporaryDirectory)
 import UnliftIO.Exception (bracket)
 
 type LogT = KatipContextT
@@ -70,10 +72,15 @@ withLogger
   -> ((forall a. LogT m a -> m a) -> m b)
   -> m b
 withLogger level initNamespace env action = do
-  handleScribe <- liftIO $ mkHandleScribe ColorIfTerminal stderr (permitItem level) V3
   initEnv <- liftIO $ initLogEnv "ligo" env
   let
-    mkLogEnv = liftIO $ registerScribe "stderr" handleScribe defaultScribeSettings initEnv
+    mkLogEnv = liftIO do
+      stderrScribe <- mkHandleScribe ColorIfTerminal stderr (permitItem level) V2
+      le <- registerScribe "stderr" stderrScribe defaultScribeSettings initEnv
+
+      dir <- getCanonicalTemporaryDirectory
+      handleScribe <- mkFileScribe (dir </> "ligo-language-server.log") (permitItem DebugS) V3
+      registerScribe "Log file" handleScribe defaultScribeSettings le
     delLogEnv = liftIO . closeScribes
   bracket mkLogEnv delLogEnv \le ->
     action (runKatipContextT le () initNamespace)

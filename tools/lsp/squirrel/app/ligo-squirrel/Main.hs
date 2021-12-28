@@ -9,7 +9,6 @@ import Control.Exception.Safe (catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
-
 import Data.Default
 import Data.Foldable (for_)
 import Data.HashMap.Strict (HashMap)
@@ -18,13 +17,12 @@ import Data.Int (Int32)
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Data.Text qualified as T
-
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
-
 import StmContainers.Map (newIO)
-
+import System.Exit
+import System.Log qualified as L
 import UnliftIO.MVar (MVar, modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST
@@ -39,8 +37,6 @@ import Product
 import RIO (RIO, RioEnv)
 import RIO qualified
 import Range
-import System.Exit
-import System.Log qualified as L
 import Util (toLocation)
 
 main :: IO ()
