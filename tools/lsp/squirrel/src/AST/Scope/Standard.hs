@@ -34,9 +34,9 @@ instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest Standard m 
     lgForest <- scopeForest @FromCompiler reportProgress pc `catches`
       [ Handler \case
           -- catch only errors that we expect from ligo and try to use fallback parser
-          LigoDecodedExpectedClientFailureException err -> addLigoErrToMsg $ fromLigoErrorToMsg err
+          LigoDecodedExpectedClientFailureException err _ -> addLigoErrToMsg $ fromLigoErrorToMsg err
       , Handler \case
-          LigoUnexpectedCrashException err -> addLigoErrToMsg (point 1 1, Error err [])
+          LigoUnexpectedCrashException err _ -> addLigoErrToMsg (point 1 1, Error err [])
       , Handler \case
           -- all other errors such as "Not found in $PATH" and other exceptions are ignored
           (_ :: SomeException) -> fallbackForest

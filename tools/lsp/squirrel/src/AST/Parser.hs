@@ -61,9 +61,9 @@ parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
   src' <- liftIO $ deleteExtraMarkers <$> srcToText src
   (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
-    [ Handler \(LigoDecodedExpectedClientFailureException err) ->
+    [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
       pure (src', Just $ fromLigoErrorToMsg err)
-    , Handler \(LigoErrorNodeParseErrorException _ _) ->
+    , Handler \LigoErrorNodeParseErrorException {} ->
       pure (src', Nothing)
     , Handler \(_ :: IOError) ->
       pure (src', Nothing)
