@@ -256,7 +256,7 @@ fetch effort = fmap cTree . fetch' effort
 forceFetch effort = fmap cTree . forceFetch' effort
 
 fetch', forceFetch' :: FetchEffort -> J.NormalizedUri -> RIO Contract
-fetch' effort uri = do
+fetch' effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
   tmap <- asks getElem
   case effort of
     LeastEffort  -> ASTMap.fetchFast uri tmap
@@ -265,7 +265,7 @@ fetch' effort uri = do
 forceFetch' = forceFetchAndNotify (const $ pure ())
 
 forceFetchAndNotify :: (Contract -> RIO ()) -> FetchEffort -> J.NormalizedUri -> RIO Contract
-forceFetchAndNotify notify effort uri = do
+forceFetchAndNotify notify effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
   tmap <- asks getElem
   ASTMap.invalidate uri tmap
   case effort of

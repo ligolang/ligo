@@ -299,13 +299,6 @@ handleCompletionRequest req respond = do
     $(Log.debug) "Completion" [i|Completion request returned #{completions}|]
     respond . Right . J.InL . J.List $ completions
 
-{-
-handleCompletionItemResolveRequest :: S.Handler RIO 'J.CompletionItemResolve
-handleCompletionItemResolveRequest req respond = do
-    $(Log.debug) "Completion resolve" [i|Request: #{show req}|]
-    respond . Right $  req ^. J.params
--}
-
 handleSignatureHelpRequest :: S.Handler RIO 'J.TextDocumentSignatureHelp
 handleSignatureHelpRequest req respond = do
   $(Log.debug) "Signature help" [i|Request: #{show req}|]

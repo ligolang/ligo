@@ -9,6 +9,7 @@ module Log
   , i
   , addContext
   , addNamespace
+  , sl
   , debug
   , warning
   , err

@@ -24,7 +24,7 @@ module ParseTree
   )
   where
 
-import Data.Aeson (ToJSON (..), Value (String))
+import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Map
@@ -67,7 +67,7 @@ data Source
   deriving stock (Eq, Ord)
 
 instance ToJSON Source where
-  toJSON = String . Text.pack . srcPath
+  toJSON src = object ["srcPath" .= srcPath src]
 
 deriving anyclass instance ToObject Source
 

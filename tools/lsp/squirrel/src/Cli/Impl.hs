@@ -216,7 +216,7 @@ preprocess
   :: (HasLigoClient m, Log m)
   => Source
   -> m (Source, Text)
-preprocess contract = do
+preprocess contract = Log.addContext contract do
   let sys = "LIGO.PREPROCESS"
   $(Log.debug) sys [i|preprocessing the following contract:\n #{contract}|]
   mbOut <- try $ callLigo ["print", "preprocessed", srcPath contract, "--format", "json"] contract
@@ -238,7 +238,7 @@ getLigoDefinitions
   :: (HasLigoClient m, Log m)
   => Source
   -> m (LigoDefinitions, Text)
-getLigoDefinitions contract = do
+getLigoDefinitions contract = Log.addContext contract do
   let sys = "LIGO.PARSE"
   $(Log.debug) sys [i|parsing the following contract:\n#{contract}|]
   let path = srcPath contract
