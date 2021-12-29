@@ -228,6 +228,24 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
       | Literal_chain_id _
       | Literal_operation _ ->
         failwith "chain_id, operation are not created currently ?"
+      | Literal_bls12_381_g1 b ->
+        let b = Hex.of_bytes b in
+        let s = Hex.to_string b in
+        let b = CST.EBytes (wrap (s, b)) in
+        let ty = decompile_type_expr @@ AST.t_bls12_381_g1 () in
+        return_expr @@ CST.EAnnot (wrap @@ (b,ghost,ty))
+      | Literal_bls12_381_g2 b ->
+        let b = Hex.of_bytes b in
+        let s = Hex.to_string b in
+        let b = CST.EBytes (wrap (s, b)) in
+        let ty = decompile_type_expr @@ AST.t_bls12_381_g2 () in
+        return_expr @@ CST.EAnnot (wrap @@ (b,ghost,ty))
+      | Literal_bls12_381_fr b ->
+        let b = Hex.of_bytes b in
+        let s = Hex.to_string b in
+        let b = CST.EBytes (wrap (s, b)) in
+        let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
+        return_expr @@ CST.EAnnot (wrap @@ (b,ghost,ty))
     )
   | E_application {lamb;args} ->
     let lamb = decompile_expression lamb in

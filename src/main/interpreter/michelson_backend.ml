@@ -424,6 +424,9 @@ let get_literal_type : Ast_typed.literal -> Ast_typed.type_expression =
   | (Literal_key_hash _) -> t_key_hash ()
   | (Literal_chain_id _) -> t_chain_id ()
   | (Literal_operation _) -> t_operation ()
+  | (Literal_bls12_381_g1 _) -> t_bls12_381_g1 ()
+  | (Literal_bls12_381_g2 _) -> t_bls12_381_g2 ()
+  | (Literal_bls12_381_fr _) -> t_bls12_381_fr ()
 
 let compile_literal ~raise ~loc : Ast_typed.literal -> _ =
   fun v ->

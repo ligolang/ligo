@@ -2264,3 +2264,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_complex.mligo" ; "Add 999" ] ;
   [%expect{| (Left (Left 999)) |}]
+
+(* Test pairing_check and bls12_381_g1/g2/fr literals *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "test" ; "--init-file" ; contract "pairing_check.mligo" ] ;
+  [%expect{| Unit |}]

@@ -81,7 +81,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
        table
      else
        raise.raise default_error
-  | T_singleton l, T_singleton l' when Int.equal 0 (Stage_common.Enums.compare_literal l l') -> table 
+  | T_singleton l, T_singleton l' when Int.equal 0 (Stage_common.Enums.compare_literal l l') -> table
   | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _),
     (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _)
     -> raise.raise default_error
@@ -177,7 +177,7 @@ match Location.unwrap d with
   | Module_alias {alias;binders} -> (
     let f context binder =
       trace_option ~raise (unbound_module_variable binder d.location)
-      @@ Context.get_module context binder 
+      @@ Context.get_module context binder
     in
     let (hd, tl) = binders in
     let e = List.fold_left ~f ~init:(f c hd) tl in
@@ -444,6 +444,12 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       return (e_address s) (t_address ())
   | E_literal (Literal_operation op) ->
       return (e_operation op) (t_operation ())
+  | E_literal (Literal_bls12_381_g1 b) ->
+      return (e_bls12_381_g1 b) (t_bls12_381_g1 ())
+  | E_literal (Literal_bls12_381_g2 b) ->
+      return (e_bls12_381_g2 b) (t_bls12_381_g2 ())
+  | E_literal (Literal_bls12_381_fr b) ->
+      return (e_bls12_381_fr b) (t_bls12_381_fr ())
   | E_record_accessor {record;path} ->
       let e' = type_expression' ~raise ~test ~protocol_version context record in
       let aux (prev:O.expression) (a:I.label) : O.expression =
@@ -493,7 +499,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   | E_record m ->
       let m' = O.LMap.map (type_expression' ~raise ~test ~protocol_version context) m in
       let _,lmap = O.LMap.fold_map ~f:(
-        fun (Label k) e i -> 
+        fun (Label k) e i ->
           let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
           i+1,({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos}: O.row_element)
         ) m' ~init:0 in
@@ -819,6 +825,9 @@ let untype_literal (l:O.literal) : I.literal =
   | Literal_bytes b -> (Literal_bytes b)
   | Literal_address s -> (Literal_address s)
   | Literal_operation s -> (Literal_operation s)
+  | Literal_bls12_381_g1 b -> (Literal_bls12_381_g1 b)
+  | Literal_bls12_381_g2 b -> (Literal_bls12_381_g2 b)
+  | Literal_bls12_381_fr b -> (Literal_bls12_381_fr b)
 
 let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   let self = untype_type_expression in

@@ -401,6 +401,9 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_chain_id s -> D_string s
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
+  | Literal_bls12_381_g1 b -> D_bytes b
+  | Literal_bls12_381_g2 b -> D_bytes b
+  | Literal_bls12_381_fr b -> D_bytes b
 
 and compile_expression ~raise (ae:AST.expression) : expression =
   let tv = compile_type ~raise ae.type_expression in

@@ -35,8 +35,9 @@ end = struct
         (O.Literal_bytes _)|O.E_literal (O.Literal_address _)|O.E_literal
         (O.Literal_signature _)|O.E_literal (O.Literal_key _)|O.E_literal
         (O.Literal_key_hash _)|O.E_literal (O.Literal_chain_id _)|O.E_literal
-        (O.Literal_operation _) -> ()
-    | O.E_constant        { cons_name = _; arguments } -> 
+        (O.Literal_operation _)|O.E_literal (O.Literal_bls12_381_g1 _)|O.E_literal
+        (O.Literal_bls12_381_g2 _)|O.E_literal (O.Literal_bls12_381_fr _) -> ()
+    | O.E_constant        { cons_name = _; arguments } ->
       List.fold ~f:(fun () e -> expression e) ~init:() arguments
     | O.E_variable        _ -> ()
     | O.E_application     { lamb; args } -> let () = expression lamb in expression args
@@ -289,6 +290,15 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
   | E_literal (Literal_unit) -> (
       return_wrapped (e_unit ()) e state [] @@ Wrap.literal "unit" (t_unit ())
     )
+  | E_literal (Literal_bls12_381_g1 a) -> (
+      return_wrapped (e_bls12_381_g1 a) e state [] @@ Wrap.literal "bls12_381_g1" (t_bls12_381_g1 ())
+    )
+  | E_literal (Literal_bls12_381_g2 a) -> (
+      return_wrapped (e_bls12_381_g2 a) e state [] @@ Wrap.literal "bls12_381_g2" (t_bls12_381_g2 ())
+    )
+  | E_literal (Literal_bls12_381_fr a) -> (
+      return_wrapped (e_bls12_381_fr a) e state [] @@ Wrap.literal "bls12_381_fr" (t_bls12_381_fr ())
+    )
   | E_constant {cons_name; arguments=lst} ->
     let t = Typer_common.Constant_typers_new.Operators_types.constant_type ~raise cons_name in
     let (e,state,constraints),lst = List.fold_map
@@ -368,7 +378,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
             let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_variant" ()) in
             let (arg_t_env , variant_t_env) =
               (* TODO For row polymorphism or variant inference:
-                delete this and the associated constraint and have a heuristic which infers variants 
+                delete this and the associated constraint and have a heuristic which infers variants
               *)
               match constructor with
               (* TODO: this prevents shadowing *)
@@ -376,7 +386,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
                 let option_content = Location.wrap ~loc:x.location @@ Ast_core.P_variable (Typesystem.Types.fresh_type_variable ~name:"option_content_none (special case)" ()) in
                 let p = Ast_core.Misc.p_constant C_option [option_content] in
                 (Wrap.type_expression_to_type_value (t_unit ()), p)
-              | Label "Some" -> 
+              | Label "Some" ->
                 let option_content = Location.wrap ~loc:x.location @@ Ast_core.P_variable (Typesystem.Types.fresh_type_variable ~name:"option_content_some (special case)" ()) in
                 let p = Ast_core.Misc.p_constant C_option [option_content] in
                 (option_content, p)
@@ -449,7 +459,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     let (e,state',constraints), m' = O.LMap.fold_map ~f:aux ~init:(e,state,[]) m in
     (* Do we need row_element for Ast_core ? *)
     let _,lmap = O.LMap.fold_map ~f:(
-      fun (Label k) (_e,t) i -> 
+      fun (Label k) (_e,t) i ->
         let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
         i+1,({associated_type = t ; michelson_annotation = None ; decl_pos}: O.row_element)
       ) m' ~init:0 in
@@ -653,7 +663,7 @@ and type_and_subst : type a b.
   let () = (if Ast_core.Debug.debug_new_typer && Ast_core.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   (node, ty, state, env)
 
-and type_declaration_subst ~raise env _state decl = 
+and type_declaration_subst ~raise env _state decl =
   let empty_state = Solver.initial_state in
   let (d,t, state, e) = type_and_subst
       (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.declaration\"")
@@ -693,19 +703,19 @@ and type_expression_subst ~raise (env : environment) (state : _ O'.typer_state) 
 
 let decompile_env (env : Ast_typed.declaration_loc list) =
   let rec f env d = match Location.unwrap d with
-    Ast_typed.Declaration_constant {binder;expr;_} -> 
+    Ast_typed.Declaration_constant {binder;expr;_} ->
       let e  = Checking.untype_expression expr in
       let ty = Checking.untype_type_expression expr.type_expression in
       I.Environment.add_ez_declaration binder e ty env
-  | Declaration_type {type_binder;type_expr;_} -> 
+  | Declaration_type {type_binder;type_expr;_} ->
       let type_expr = Checking.untype_type_expression type_expr in
       I.Environment.add_type type_binder type_expr env
   | Declaration_module {module_binder;module_;_} ->
       let module_ = List.fold_left ~f ~init:Ast_core.Environment.empty module_ in
       I.Environment.add_module module_binder (module_) env
-  | Module_alias {alias;binders} -> 
-      let module_ = 
-        List.Ne.fold_left ~f:(fun env binder -> 
+  | Module_alias {alias;binders} ->
+      let module_ =
+        List.Ne.fold_left ~f:(fun env binder ->
           Option.value_exn
           (Environment.get_module_opt binder env))
         ~init:env binders
