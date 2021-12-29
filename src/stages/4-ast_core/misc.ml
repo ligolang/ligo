@@ -178,6 +178,15 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chain_id a, Literal_chain_id b when String.equal a b -> Some ()
   | Literal_chain_id _, Literal_chain_id _ -> None
   | Literal_chain_id _, _ -> None
+  | Literal_bls12_381_g1 a, Literal_bls12_381_g1 b when Bytes.equal a b -> Some ()
+  | Literal_bls12_381_g1 _, Literal_bls12_381_g1 _ -> None
+  | Literal_bls12_381_g1 _, _ -> None
+  | Literal_bls12_381_g2 a, Literal_bls12_381_g2 b when Bytes.equal a b -> Some ()
+  | Literal_bls12_381_g2 _, Literal_bls12_381_g2 _ -> None
+  | Literal_bls12_381_g2 _, _ -> None
+  | Literal_bls12_381_fr a, Literal_bls12_381_fr b when Bytes.equal a b -> Some ()
+  | Literal_bls12_381_fr _, Literal_bls12_381_fr _ -> None
+  | Literal_bls12_381_fr _, _ -> None
 
 (* TODO this was supposed to mean equality of _values_; if
    assert_value_eq (a, b) = Some (), then a and b should be values *)

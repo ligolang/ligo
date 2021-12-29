@@ -31,6 +31,9 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_operation of bytes
+  | Literal_bls12_381_g1 of bytes
+  | Literal_bls12_381_g2 of bytes
+  | Literal_bls12_381_fr of bytes
 [@@deriving yojson, ord]
 
 let literal_to_enum = function
@@ -47,6 +50,9 @@ let literal_to_enum = function
   | Literal_key_hash _  -> 11
   | Literal_chain_id _  -> 12
   | Literal_operation _ -> 13
+  | Literal_bls12_381_g1 _ -> 14
+  | Literal_bls12_381_g2 _ -> 15
+  | Literal_bls12_381_fr _ -> 16
 
 type constant' =
   | C_INT

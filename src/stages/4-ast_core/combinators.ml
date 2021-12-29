@@ -129,7 +129,7 @@ let e_literal   ?loc ?sugar l  : expression = make_e ?loc ?sugar @@ E_literal l
 let e_unit      ?loc ?sugar () : expression = make_e ?loc ?sugar @@ E_literal (Literal_unit)
 
 let e__type_ ?loc ?sugar p : expression = make_e ?loc ?sugar @@ E_literal (Literal__type_ p)
-[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation"))]
+[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let e'_bytes b : expression_content =
   let bytes = Hex.to_bytes (`Hex b) in

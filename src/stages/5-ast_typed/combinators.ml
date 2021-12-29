@@ -266,7 +266,7 @@ let e_pack e : expression_content = E_constant {cons_name=C_BYTES_PACK; argument
 let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
-[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation"))]
+[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 let e_unit () : expression_content = E_literal (Literal_unit)
 
 let e_lambda l : expression_content = E_lambda l

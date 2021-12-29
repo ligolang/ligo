@@ -362,8 +362,27 @@ let is_nat ~raise loc = typer_1 ~raise loc "ISNAT" @@ fun t ->
   t_option (t_nat ())
 
 let neg ~raise loc = typer_1 ~raise loc "NEG" @@ fun t ->
-  let () = Assert.assert_true ~raise (wrong_neg loc t) @@ (eq_1 t (t_nat ()) || eq_1 t (t_int ())) in
-  t_int ()
+  if eq_1 t (t_int ())
+  then (t_int ()) else
+  if eq_1 t (t_nat ())
+  then (t_int ()) else
+  if eq_1 t (t_bls12_381_g1 ())
+  then (t_bls12_381_g1 ()) else
+  if eq_1 t (t_bls12_381_g2 ())
+  then (t_bls12_381_g2 ()) else
+  if eq_1 t (t_bls12_381_fr ())
+  then (t_bls12_381_fr ()) else
+  if eq_1 t (t_bls12_381_fr ())
+  then (t_bls12_381_fr ()) else
+    raise.raise @@ typeclass_error loc
+              [
+                [t_int()] ;
+                [t_nat()] ;
+                [t_bls12_381_g1()] ;
+                [t_bls12_381_g2()] ;
+                [t_bls12_381_fr()] ;
+              ]
+              [t]
 
 let unopt ~raise loc = typer_1 ~raise loc "ASSERT" @@ fun a ->
   let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
