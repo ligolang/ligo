@@ -85,8 +85,8 @@ let compile_contract ~raise ~add_warning ~protocol_version source_file entry_poi
   let open Ligo_compile in
   let syntax = "auto" in
   let options = Compiler_options.make ~protocol_version () in
-  let michelson,env = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
-  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file in
+  let michelson,prog_typed = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
+  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,prog_typed) source_file in
   Of_michelson.build_contract ~raise ~disable_typecheck:false michelson views
 
 let clean_location_with v x =
@@ -187,7 +187,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
   | V_Ct C_unit ->
      let () = trace_option ~raise (Errors.generic_error loc "Expected unit")
                  (get_t_unit ty) in
-     e_a_unit
+     e_a_unit ()
   | V_Ct (C_bool b) ->
      let () = trace_option ~raise (Errors.generic_error loc "Expected bool")
                  (get_t_bool ty) in
@@ -298,8 +298,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
   | V_Failure _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: failure"
 
-and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env ->
-                             Ast_typed.module_fully_typed =
+and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env -> Ast_typed.program =
   fun env ->
   let open Ligo_interpreter.Types in
   let open! Ast_typed in
@@ -316,7 +315,7 @@ and env_to_ast ~raise ~loc : Ligo_interpreter.Types.env ->
        let module_binder = name in
        let module_ = env_to_ast ~raise ~loc item in
        Ast_typed.Declaration_module { module_binder ; module_; module_attr = {public = true} } :: aux tl in
-  Module_Fully_Typed (List.map (aux (List.rev env)) ~f:Location.wrap)
+  (List.map (aux (List.rev env)) ~f:Location.wrap)
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_typed in
@@ -425,6 +424,9 @@ let get_literal_type : Ast_typed.literal -> Ast_typed.type_expression =
   | (Literal_key_hash _) -> t_key_hash ()
   | (Literal_chain_id _) -> t_chain_id ()
   | (Literal_operation _) -> t_operation ()
+  | (Literal_bls12_381_g1 _) -> t_bls12_381_g1 ()
+  | (Literal_bls12_381_g2 _) -> t_bls12_381_g2 ()
+  | (Literal_bls12_381_fr _) -> t_bls12_381_fr ()
 
 let compile_literal ~raise ~loc : Ast_typed.literal -> _ =
   fun v ->

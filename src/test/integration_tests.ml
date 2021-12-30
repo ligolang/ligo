@@ -1318,7 +1318,7 @@ let assert_mligo ~raise ~add_warning () : unit =
   let _ = expect_fail ~raise program "some" (e_none ()) in
   let _ = expect_eq ~raise program "some" (e_some (e_unit ())) (e_unit ()) in
   let _ = expect_fail ~raise program "none" (e_some (e_unit ())) in
-  let _ = expect_eq ~raise program "none" (e_none ()) (e_unit ()) in
+  let _ = expect_eq ~raise program "none" (e_annotation (e_none ()) (t_option (t_unit ()))) (e_unit ()) in
   ()
 
 let assert_religo ~raise ~add_warning () : unit =

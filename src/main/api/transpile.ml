@@ -2,7 +2,7 @@ open Api_helpers
 module Compile = Ligo_compile
 module Helpers   = Ligo_compile.Helpers
 
-let contract source_file new_syntax syntax new_dialect display_format =
+let contract source_file new_syntax syntax new_dialect display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Parsing.Formatter.ppx_format) get_warnings @@
       fun ~raise ->
@@ -17,7 +17,7 @@ let contract source_file new_syntax syntax new_dialect display_format =
         Decompile.Of_imperative.decompile ~raise ~dialect imperative (Syntax_name new_syntax) in
       buffer
 
-let expression expression new_syntax syntax new_dialect display_format =
+let expression expression new_syntax syntax new_dialect display_format () =
     format_result ~display_format (Parsing.Formatter.ppx_format) (fun _ -> []) @@
       fun ~raise ->
       (* Compiling chain *)

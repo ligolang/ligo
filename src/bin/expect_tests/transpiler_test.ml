@@ -375,12 +375,12 @@ let transfer_single
 : (action_transfer_single, storage) => return =
   ((gen__parameters1: (action_transfer_single, storage))
    : return =>
-     switch gen__parameters1{
+     switch  gen__parameters1 {
      | action, [@var] s =>
          let [@var] cards: cards = s.cards;
          let [@var] card: card =
-           switch
-           Map.find_opt(action.card_to_transfer, cards){
+           switch 
+           Map.find_opt(action.card_to_transfer, cards) {
            | Some card => card
            | None() =>
                ((failwith(("transfer_single: No card.")))
@@ -406,10 +406,10 @@ let transfer_single
 
 let sell_single: (action_sell_single, storage) => return =
   ((gen__parameters2: (action_sell_single, storage)): return =>
-     switch gen__parameters2{
+     switch  gen__parameters2 {
      | action, [@var] s =>
          let card: card =
-           switchMap.find_opt(action.card_to_sell, s.cards){
+           switch Map.find_opt(action.card_to_sell, s.cards) {
            | Some card => card
            | None() =>
                ((failwith(("sell_single: No card."))) : card)
@@ -423,8 +423,8 @@ let sell_single: (action_sell_single, storage) => return =
              ()
              };
            let [@var] card_pattern: card_pattern =
-             switch
-             Map.find_opt(card.card_pattern, s.card_patterns){
+             switch 
+             Map.find_opt(card.card_pattern, s.card_patterns) {
              | Some pattern => pattern
              | None() =>
                  ((
@@ -457,8 +457,8 @@ let sell_single: (action_sell_single, storage) => return =
               Operator.times((card_pattern.coefficient),
                  (card_pattern.quantity)));
            let receiver: contract(unit) =
-             switch((Tezos.get_contract_opt((Tezos.sender)))
-               : option(contract(unit))){
+             switch ((Tezos.get_contract_opt((Tezos.sender)))
+               : option(contract(unit))) {
              | Some contract => contract
              | None() =>
                  ((failwith(("sell_single: No contract.")))
@@ -473,11 +473,11 @@ let sell_single: (action_sell_single, storage) => return =
 
 let buy_single: (action_buy_single, storage) => return =
   ((gen__parameters3: (action_buy_single, storage)): return =>
-     switch gen__parameters3{
+     switch  gen__parameters3 {
      | action, [@var] s =>
          let [@var] card_pattern: card_pattern =
-           switch
-           Map.find_opt(action.card_to_buy, s.card_patterns){
+           switch 
+           Map.find_opt(action.card_to_buy, s.card_patterns) {
            | Some pattern => pattern
            | None() =>
                ((failwith(("buy_single: No card pattern.")))
@@ -529,9 +529,9 @@ let buy_single: (action_buy_single, storage) => return =
 
 let main: (parameter, storage) => return =
   ((gen__parameters4: (parameter, storage)): return =>
-     switch gen__parameters4{
+     switch  gen__parameters4 {
      | action, s =>
-         switch action{
+         switch  action {
          | Buy_single bs => buy_single(bs, s)
          | Sell_single as => sell_single(as, s)
          | Transfer_single at => transfer_single(at, s)
@@ -642,7 +642,7 @@ type nested_record_t = {nesty: {mymap: map(int, string) } };
 let nested_record: nested_record_t => string =
   (([@var] nee: nested_record_t): string =>
      let nee = Map.add("one", 1, nesty.mymap);
-     switchMap.find_opt(1, nee.nesty.mymap){
+     switch Map.find_opt(1, nee.nesty.mymap) {
      | Some s => s
      | None() =>
          ((failwith(("Should not happen."))) : string)
@@ -955,10 +955,10 @@ type return = (list(operation), storage);
 
 let main: (parameter, storage) => return =
   ((gen__parameters1: (parameter, storage)): return =>
-     switch gen__parameters1{
+     switch  gen__parameters1 {
      | p, s =>
          {
-           switch p{
+           switch  p {
            | Zero n =>
                if((Operator.gt((n), (0n)))) {
                  (failwith(("fail")))
@@ -1022,7 +1022,7 @@ let foobar: int => int =
        } else {
 
          {
-           switch p{
+           switch  p {
            | Zero gen__4 => (failwith((42n)))
            | Pos gen__5 => ()
            };
@@ -1030,7 +1030,7 @@ let foobar: int => int =
          }
          };
      let i = gen__env12.i;
-     switch p{
+     switch  p {
      | Zero gen__2 => i
      | Pos gen__3 => ((failwith(("waaaa"))) : int)
      });
@@ -1095,7 +1095,7 @@ let%expect_test _ =
   [%expect {|
     let rec sum: (int, int) => int =
       ((gen__parameters1: (int, int)): int =>
-         switch gen__parameters1{
+         switch  gen__parameters1 {
          | n, acc =>
              if((Operator.lt((n), (1)))) {
                acc
@@ -1109,7 +1109,7 @@ let%expect_test _ =
 
     let rec fibo: (int, int, int) => int =
       ((gen__parameters2: (int, int, int)): int =>
-         switch gen__parameters2{
+         switch  gen__parameters2 {
          | n, n_1, n_0 =>
              if((Operator.lt((n), (2)))) {
                n_1

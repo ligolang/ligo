@@ -41,9 +41,9 @@ let transfer = ((p, s): (transfer, storage))
     } else {
 
       let authorized_value = 
-        switch(
+        switch (
          Big_map.find_opt((Tezos.sender, p.address_from),
-            s.allowances)){
+            s.allowances)) {
         | Some value => value
         | None => 0n
         };
@@ -58,7 +58,7 @@ let transfer = ((p, s): (transfer, storage))
         }
       };
   let sender_balance = 
-    switch(Big_map.find_opt(p.address_from, s.tokens)){
+    switch (Big_map.find_opt(p.address_from, s.tokens)) {
     | Some value => value
     | None => 0n
     };
@@ -74,7 +74,7 @@ let transfer = ((p, s): (transfer, storage))
          (Some (abs(sender_balance - p.value))),
          s.tokens);
     let receiver_balance = 
-      switch(Big_map.find_opt(p.address_to, s.tokens)){
+      switch (Big_map.find_opt(p.address_to, s.tokens)) {
       | Some value => value
       | None => 0n
       };
@@ -92,9 +92,9 @@ let transfer = ((p, s): (transfer, storage))
 let approve = ((p, s): (approve, storage))
 : (list(operation), storage) => {
   let previous_value = 
-    switch(
+    switch (
      Big_map.find_opt((p.spender, Tezos.sender),
-        s.allowances)){
+        s.allowances)) {
     | Some value => value
     | None => 0n
     };
@@ -118,8 +118,8 @@ let approve = ((p, s): (approve, storage))
 let getAllowance = ((p, s): (getAllowance, storage))
 : (list(operation), storage) => {
   let value = 
-    switch(
-     Big_map.find_opt((p.owner, p.spender), s.allowances)){
+    switch (
+     Big_map.find_opt((p.owner, p.spender), s.allowances)) {
     | Some value => value
     | None => 0n
     };
@@ -130,7 +130,7 @@ let getAllowance = ((p, s): (getAllowance, storage))
 let getBalance = ((p, s): (getBalance, storage))
 : (list(operation), storage) => {
   let value = 
-    switch(Big_map.find_opt(p.owner, s.tokens)){
+    switch (Big_map.find_opt(p.owner, s.tokens)) {
     | Some value => value
     | None => 0n
     };
@@ -146,7 +146,7 @@ let getTotalSupply = ((p, s): (getTotalSupply, storage))
 };
 
 let main = ((a, s): (action, storage)) => 
-  switch a{
+  switch  a {
   | Transfer p => transfer((p, s))
   | Approve p => approve((p, s))
   | GetAllowance p => getAllowance((p, s))
@@ -414,7 +414,7 @@ let transfer = ((transferParameter, storage): (transferParameter,
 
 let main = ((parameter, storage): entrypointParameter)
 : entrypointReturn => {
-  switch(parameter){
+  switch (parameter) {
   | Transfer(transferParameter) =>
       transfer((transferParameter, storage))
   }
@@ -423,7 +423,7 @@ let main = ((parameter, storage): entrypointParameter)
 type foo = Bar(int) | Baz;
 
 let main = (f: foo): int => 
-  switch(f){
+  switch (f) {
   | Bar(i) => i
   | Baz => (-1)
   };
@@ -473,7 +473,7 @@ type d =
 | Bar((int, string, bool) => string);
 
 let e: string = 
-  switch(a){
+  switch (a) {
   | Pleh => "x"
   | Dog(foo) => "a"
   };
@@ -504,7 +504,7 @@ let main = (kh: key_hash): contract(unit) =>
   Tezos.implicit_account(kh);
 
 let store = 
-  switch(action){
+  switch (action) {
   | Increment(n) => store + n
   | Decrement(n) => store - n
   };
@@ -530,7 +530,7 @@ let dest: address =
 
 let proxy = ((action, store): (parameter, storage)): return => {
   let counter: contract(parameter) = 
-    switch(a : b){
+    switch (a : b) {
     | Some2(contract) => contract
     | None2 =>
         (failwith("Contract not found.")
@@ -642,7 +642,7 @@ let buy = ((parameter, storage): (buy, storage))
   let identities = storage.identities;
   let new_id = storage.next_id;
   let controller: address = 
-    switch(initial_controller){
+    switch (initial_controller) {
     | Some(addr) => addr
     | None => sender
     };
@@ -672,7 +672,7 @@ let update_owner = ((parameter, storage): (update_owner,
   let new_owner = parameter.new_owner;
   let identities = storage.identities;
   let current_id_details: id_details = 
-    switch(Big_map.find_opt(id, identities)){
+    switch (Big_map.find_opt(id, identities)) {
     | Some(id_details) => id_details
     | None =>
         (failwith("This ID does not exist.") : id_details)
@@ -711,7 +711,7 @@ let update_details = ((parameter, storage): (update_details,
   let new_controller = parameter.new_controller;
   let identities = storage.identities;
   let current_id_details: id_details = 
-    switch(Big_map.find_opt(id, identities)){
+    switch (Big_map.find_opt(id, identities)) {
     | Some(id_details) => id_details
     | None =>
         (failwith("This ID does not exist.") : id_details)
@@ -728,12 +728,12 @@ let update_details = ((parameter, storage): (update_details,
       };
   let owner: address = current_id_details.owner;
   let profile: bytes = 
-    switch(new_profile){
+    switch (new_profile) {
     | None => current_id_details.profile
     | Some(new_profile) => new_profile
     };
   let controller: address = 
-    switch(new_controller){
+    switch (new_controller) {
     | None => current_id_details.controller
     | Some new_controller => new_controller
     };
@@ -765,7 +765,7 @@ let skip = ((p, storage): (unit, storage)) => {
 
 let main = ((action, storage): (action, storage))
 : (list(operation), storage) => {
-  switch(action){
+  switch (action) {
   | Buy(b) => buy((b, storage))
   | Update_owner(uo) => update_owner((uo, storage))
   | Update_details ud => update_details((ud, storage))
@@ -882,7 +882,7 @@ let z: list(int) = [2, ...y];
 
 let main = ((action, s): (parameter, storage)): return => {
   let storage = 
-    switch(action){
+    switch (action) {
     | [] => s
     | [hd, ...tl] => (s[0] + hd, tl)
     };
@@ -1033,7 +1033,7 @@ type return = (list(operation), storage);
 
 let main = ((action, store): (parameter, storage)) => {
   let store = 
-    store + (switch(action){
+    store + (switch (action) {
        | Add(n) => n
        | Sub(n) => -n
        });
@@ -1050,7 +1050,7 @@ let sub = ((a: int), (b: int)) => a - b;
 
 let main = ((action, store): (parameter, storage)) => {
   let store = 
-    switch(action){
+    switch (action) {
     | Increment(n) => add(store, n)
     | Decrement(n) => sub(store, n)
     };
@@ -1127,7 +1127,7 @@ let check_message = ((param, s): (check_message_pt, storage))
       let aux = ((vk, pkh_sig): ((nat, authorized_keys),
          (key_hash, signature))): (nat, authorized_keys) => {
         let (valid, keys) = vk;
-        switch(keys){
+        switch (keys) {
         | [] => vk
         | [key, ...keys] =>
             if(pkh_sig[0] == Crypto.hash_key(key)) {
@@ -1165,7 +1165,7 @@ let check_message = ((param, s): (check_message_pt, storage))
 };
 
 let main = ((action, store): (parameter, storage)): return => 
-  switch(action){
+  switch (action) {
   | CheckMessage(p) => check_message((p, store))
   };
 
@@ -1215,7 +1215,7 @@ let distribute = ((p, s): ((unit => list(operation)),
 
 let main = ((p, s): (parameter, storage))
 : (list(operation), storage) => {
-  switch(p){
+  switch (p) {
   | Donate => donate(((), s))
   | Distribute msg => distribute((msg, s))
   }
@@ -1308,7 +1308,7 @@ type return = (list(operation), storage);
 
 let main = ((action, store): (parameter, storage)): return => {
   let store = 
-    switch(action){
+    switch (action) {
     | Increment(n) => store + n
     | Decrement(n) => store - n
     };
@@ -1468,7 +1468,7 @@ let sub = ((a, b): (int, int)): int => a - b;
 
 let main = ((p, storage): (parameter, storage)) => {
   let storage = 
-    switch(p){
+    switch (p) {
     | Increment(n) => add((storage, n))
     | Decrement(n) => sub((storage, n))
     };

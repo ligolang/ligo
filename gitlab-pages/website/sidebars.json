@@ -55,7 +55,7 @@
       "manpages/print dependency-graph",
       "manpages/print mini-c",
       "manpages/print preprocessed",
-      "manpages/print pretty-print",
+      "manpages/print pretty",
       "manpages/repl",
       "manpages/run dry-run",
       "manpages/run evaluate-call",

@@ -30,7 +30,7 @@ let add_warning _ = ()
 type repl_result =
     Expression_value of Ast_core.expression
   | Defined_values_core of Ast_core.module_
-  | Defined_values_typed of Ast_typed.module'
+  | Defined_values_typed of Ast_typed.module_
   | Just_ok
 
 open Simple_utils.Display
@@ -76,7 +76,7 @@ let repl_result_format : 'a format = {
 
 module Run = Ligo_run.Of_michelson
 
-type state = { env : Ast_typed.environment;
+type state = { env : Environment.t; (* The repl should have its own notion of environment *)
                syntax : Ligo_compile.Helpers.v_syntax;
                infer : bool ;
                protocol : Environment.Protocols.t;
@@ -87,8 +87,8 @@ type state = { env : Ast_typed.environment;
 let try_eval ~raise state s =
   let options = Compiler_options.make ~infer:state.infer ~protocol_version:state.protocol () in
   let options = {options with init_env = state.env } in
-  let typed_exp,env = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s state.env in
-  let env,applied = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_expression env typed_exp in
+  let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
+  let applied    = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_expression state.env typed_exp in
   let mini_c_exp = Ligo_compile.Of_typed.compile_expression ~raise applied in
   let compiled_exp = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options:options state.decl_list mini_c_exp in
   let options = state.dry_run_opts in
@@ -96,7 +96,7 @@ let try_eval ~raise state s =
   let x = Decompile.Of_michelson.decompile_expression ~raise applied.type_expression runres in
   match x with
   | Success expr ->
-     let state = { state with env = env; decl_list = state.decl_list } in
+     let state = { state with decl_list = state.decl_list } in
      (state, Expression_value expr)
   | Fail _ ->
     raise.raise `Repl_unexpected
@@ -106,13 +106,15 @@ let try_contract ~raise state s =
   let options = {options with init_env = state.env } in
   try
     try_with (fun ~raise ->
-      let typed_prg,core_prg,env =
+      let typed_prg,core_prg =
         Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s state.env in
-      let env,applied =
-        trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_module env typed_prg in
+      let applied =
+        trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_program state.env typed_prg in
       let mini_c =
-        Ligo_compile.Of_typed.compile_with_modules ~raise applied in
-      let state = { state with env = env;
+        Ligo_compile.Of_typed.compile ~raise applied in
+      let env = Environment.append typed_prg state.env in
+      let env = Environment.append applied env in
+      let state = { state with env;
                                decl_list = state.decl_list @ mini_c;
                                } in
       (state, Defined_values_core core_prg))
@@ -131,19 +133,21 @@ let try_contract ~raise state s =
 let import_file ~raise state file_name module_name =
   let options = Compiler_options.make ~infer:state.infer ~protocol_version:state.protocol () in
   let options = {options with init_env = state.env } in
-  let module_,env = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
-  let env = Ast_typed.Environment.add_module ~public:true module_name env state.env in
-  let module_ = Ast_typed.(Module_Fully_Typed [Simple_utils.Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
-  let env,contract = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_module env module_ in
-  let mini_c = Ligo_compile.Of_typed.compile_with_modules ~raise contract in
-  let state = { state with env = env; decl_list = state.decl_list @ mini_c } in
+  let module_ = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
+  let module_ = [Simple_utils.Location.wrap @@ Ast_typed.Declaration_module {module_binder=module_name;module_;module_attr={public=true}}] in
+  let env     = Environment.append module_ state.env in
+  let contract = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_program env module_ in
+  let env = Environment.append contract env in
+  let mini_c = Ligo_compile.Of_typed.compile ~raise contract in
+  let state = { state with env; decl_list = state.decl_list @ mini_c } in
   (state, Just_ok)
 
 let use_file ~raise state s =
   let options = Compiler_options.make ~infer:state.infer ~protocol_version:state.protocol () in
   let options = {options with init_env = state.env } in
   (* Missing typer environment? *)
-  let mini_c,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~raise ~add_warning ~options (variant_to_syntax state.syntax) s in
+  let mini_c,module' = Build.build_contract_use ~raise ~add_warning ~options (variant_to_syntax state.syntax) s in
+  let env = Environment.append module' state.env in
   let state = { state with env = env;
                            decl_list = state.decl_list @ mini_c;
                           } in
@@ -200,8 +204,9 @@ Included directives:
   #use \"file_path\";;
   #import \"file_path\" \"module_name\";;"
 
-let make_initial_state syntax protocol infer dry_run_opts =
-  { env = Environment.default protocol;
+let make_initial_state syntax protocol infer dry_run_opts = 
+  {
+    env = Environment.default protocol ;
     decl_list = [];
     syntax = syntax;
     infer = infer;

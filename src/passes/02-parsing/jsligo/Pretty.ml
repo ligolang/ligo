@@ -71,8 +71,8 @@ and pp_while {value; _} =
 
 and pp_import (node : CST.import Region.reg) =
   let {value; _} : CST.import Region.reg = node in
-  string "import" ^^ string value.alias.value
-  ^^ string "="
+  string "import " ^^ string value.alias.value
+  ^^ string " = "
   ^^ pp_nsepseq "." (fun a -> string a.Region.value) value.module_path
 
 and pp_export {value = (_, statement); _} =
@@ -148,14 +148,14 @@ and pp_case = function
       (match statements with
          Some s ->
           let app s = group (pp_statement s) in
-          separate_map (hardline ^^ hardline) app (Utils.nsepseq_to_list s)
+          separate_map (string ";" ^^ hardline) app (Utils.nsepseq_to_list s)
        | None -> empty )
 | Switch_default_case {statements; _} ->
     string "default: " ^^
     (match statements with
       Some s ->
       let app s = group (pp_statement s) in
-      separate_map (hardline ^^ hardline) app (Utils.nsepseq_to_list s)
+      separate_map (string ";" ^^ hardline) app (Utils.nsepseq_to_list s)
     | None -> empty)
 
 
@@ -164,7 +164,7 @@ and pp_type {value; _} =
   in
   string "type " ^^ string name.value
   ^^ pp_type_params params
-  ^^ string " = "
+  ^^ string " ="
   ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
 
 and pp_type_params = function

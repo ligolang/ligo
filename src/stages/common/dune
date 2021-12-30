@@ -9,9 +9,8 @@
    bls12-381-unix)
  (inline_tests)
  (preprocess
-  (pps ppx_expect ppx_deriving.enum ppx_deriving.ord ppx_print_constant ppx_deriving_yojson
-    ppx_only_interpreter_tags))
-)
+  (pps ppx_expect ppx_deriving.enum ppx_deriving.ord ppx_print_constant
+    ppx_deriving_yojson ppx_only_interpreter_tags)))
 
 (library
  (name ppx_only_interpreter_tags)
@@ -27,5 +26,12 @@
  (modules ppx_print_constant)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries core simple-utils ppxlib)
-)
+ (libraries core simple-utils ppxlib))
+
+(library
+ (name ppx_map)
+ (kind ppx_rewriter)
+ (libraries base simple-utils ppxlib)
+ (modules ppx_map)
+ (preprocess
+  (pps ppxlib.metaquot)))

@@ -82,10 +82,9 @@ let rec pp_env ppf env =
     (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%s,%a)" k pp_env v)) (SMap.to_kv_list env.env)
     (Simple_utils.PP_helpers.list_sep_d Var.pp) (VSet.elements env.used_var)
 
-let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = fun main_name prg ->
-  let Module_Fully_Typed module' = prg in
+let remove_unused ~raise : string -> program -> program = fun main_name prg ->
   (* Process declaration in reverse order *)
-  let prg_decls = List.rev module' in
+  let prg_decls = List.rev prg in
   let aux = function
       {Location.wrap_content = Declaration_constant {name = Some name;  _}; _} -> not (String.equal name main_name)
     | _ -> true in
@@ -161,9 +160,7 @@ let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = 
       (match SMap.find_opt module_binder env.env with
         Some (env') ->
           let env = {env with env = SMap.remove module_binder env.env} in
-          let Module_Fully_Typed rhs = rhs in
           let env',rhs = get_fv_module env'[] @@ List.rev rhs in
-          let rhs = Module_Fully_Typed rhs in
           return (merge_env env env') @@ E_mod_in {module_binder; rhs; let_result}
       | None ->
         env,let_result
@@ -210,10 +207,8 @@ let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = 
        (match SMap.find_opt module_binder env.env with
         Some (env') ->
           let env = {env with env = SMap.remove module_binder env.env} in
-          let Module_Fully_Typed module_ = module_ in
           let new_env,module_ = get_fv_module env' [] @@ List.rev module_ in
           let env = merge_env env new_env in
-          let module_ = Module_Fully_Typed module_ in
           get_fv_module env ({hd with wrap_content=Declaration_module{module_binder;module_;module_attr}} :: acc) tl
       | None ->
           get_fv_module env acc tl
@@ -238,5 +233,5 @@ let remove_unused ~raise : string -> module_fully_typed -> module_fully_typed = 
   let main_dc = {main_dc with expr = main_expr} in
   let main_decl = {main_decl with wrap_content = Declaration_constant main_dc} in
   let _,module_ = get_fv_module env [main_decl] prg_decls in
-  Module_Fully_Typed module_
+  module_
 

@@ -1,6 +1,32 @@
 open Ast_typed
 open Stage_common.Constant
 module Protocols = Protocols
+
+
+(* This is an env use by repl and build *)
+(* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
+type t = module_
+let pp ppf m = PP.module_ ppf @@ m
+let add_module ?public module_binder module_ env =
+  (Location.wrap @@ Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public}}) :: env
+
+let add_declaration decl env = decl :: env
+let append program env = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
+
+let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
+let init p = append p []
+
+(* Artefact for build system *)
+type core = Ast_core.module'
+let add_core_module ?public : Ast_core.module_variable -> Ast_core.module' -> core -> core = fun module_binder module_ env ->
+  (Location.wrap @@ Ast_core.Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public}}) :: env
+
+let to_program env = List.rev env
+let init_core p = append p []
+let to_core_program env = List.rev env
+let append_core = append
+
+(* This is an stdlib *)
 let star = ()
 (*
   Make sure all the type value laoded in the environment have a `Ast_core` value attached to them (`type_meta` field of `type_expression`)
@@ -66,10 +92,12 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
     (v_failure, t_constant failure_name []);
   ]
 
-let default : Protocols.t -> environment = function
-  | Protocols.Edo -> Environment.of_list_type edo_types
-  | Protocols.Hangzhou -> Environment.of_list_type hangzhou_types
+let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true}})
 
-let default_with_test : Protocols.t -> environment = function
-  | Protocols.Edo -> Environment.of_list_type (meta_ligo_types edo_types)
-  | Protocols.Hangzhou -> Environment.of_list_type (meta_ligo_types hangzhou_types)
+let default : Protocols.t -> t = function
+  | Protocols.Edo -> of_list_type edo_types
+  | Protocols.Hangzhou -> of_list_type hangzhou_types
+
+let default_with_test : Protocols.t -> t = function
+  | Protocols.Edo -> of_list_type (meta_ligo_types edo_types)
+  | Protocols.Hangzhou -> of_list_type (meta_ligo_types hangzhou_types)

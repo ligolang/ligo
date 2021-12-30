@@ -6,5 +6,4 @@
  (libraries simple-utils tezos-utils ast_imperative ast_sugar ast_core
    ast_typed typesystem mini_c environment)
  (flags
-  (:standard -open Core))
-)
+  (:standard -open Core)))

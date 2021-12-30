@@ -61,7 +61,13 @@ let%expect_test _ =
     - test_add_mutez exited with value ().
     - test_sub_mutez exited with value ().
     - test_div_mutez exited with value ().
-    - test_list_fold_left_sum exited with value (). |}]
+    - test_list_fold_left_sum exited with value ().
+    - test_bytes_sub exited with value ().
+    - test_with_error exited with value ().
+    - test_some exited with value ().
+    - test_some_with_error exited with value ().
+    - test_none exited with value ().
+    - test_none_with_error exited with value (). |}]
 
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)

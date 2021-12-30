@@ -9,37 +9,44 @@ dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 license: "MIT"
 # If you change the dependencies, run `opam lock` in the root
 depends: [
+  # Jane Street Core
   "core"
+  # Tooling
   "odoc" { build }
   "ocamlfind" { build }
   "dune" { build & >= "2.7.1" & < "2.9" }
-  "menhir" { = "20211012" }
-  "ocamlgraph"
-  "coq" { build & >= "8.12" & < "8.14" }
-  "ppx_deriving"
-  "ppx_deriving_yojson"
-  "ppx_expect"
-  # "tezos-011-PtHangz2-test-helpers"
-  "yojson"
   "alcotest" { with-test }
+  # Pipelinye
+  "ocamlgraph"
+  "menhir" { = "20211128" }
+  "coq" { build & >= "8.12" & < "8.14" }
+  # I/O
   "getopt"
+  "tezos-clic"
+  "qcheck"
+  "linenoise"
   "terminal_size"
   "pprint"
-  "linenoise"
-  "qcheck"
-  "tezos-clic"
+  "yojson"
   "ocaml-recovery-parser"
-  # work around upstream in-place update
-  "ocaml-migrate-parsetree" { = "2.1.0" }
-  # work around tezos' failure to constrain
-  "lwt" { = "5.4.2" }
-  "bisect_ppx" {>= "2.3"}
-  "irmin" { = "2.8.0" }
-  # dependencies of vendored dependencies
+  # Tezos libs 
   "tezos-base"
   "tezos-crypto"
   "tezos-micheline"
+  # "tezos-011-PtHangz2-test-helpers"
+  # PPXs
+  "ppx_deriving"
+  "ppx_deriving_yojson"
+  "ppx_expect"
   "ppx_inline_test"
+  # work around tezos' failure to constrain
+  "ctypes-foreign"
+  "lwt" { = "5.4.2" }
+  "bisect_ppx" {>= "2.3"}
+  "irmin" { = "2.8.0" }
+  # work around upstream in-place update
+  "ocaml-migrate-parsetree" { = "2.1.0" }
+  # dependencies of vendored dependencies
   "bls12-381-legacy"
   "alcotest-lwt"
   "qcheck-alcotest"
@@ -94,5 +101,5 @@ pin-depends: [
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/src/lib_test" ]
   [ "tezos-version.dev" "./vendors/tezos-ligo/src/lib_version" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/src/lib_workers" ]
-  [ "ocaml-recovery-parser.0.1" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.1" ]
+  [ "ocaml-recovery-parser.0.1" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2" ]
 ]
