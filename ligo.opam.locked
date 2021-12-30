@@ -92,9 +92,9 @@ depends: [
   "lwt_log" {= "1.1.1"}
   "macaddr" {= "5.2.0"}
   "magic-mime" {= "1.2.0"}
-  "menhir" {= "20211012"}
-  "menhirLib" {= "20211012"}
-  "menhirSdk" {= "20211012"}
+  "menhir" {= "20211128"}
+  "menhirLib" {= "20211128"}
+  "menhirSdk" {= "20211128"}
   "mirage-crypto" {= "0.10.3"}
   "mirage-crypto-ec" {= "0.10.3"}
   "mirage-crypto-pk" {= "0.10.3"}

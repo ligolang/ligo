@@ -192,7 +192,7 @@ let%expect_test _ =
       3 | let main (p:int) (storage : abc) =
       4 |   (([] : operation list) , { storage with nofield=2048} )
 
-    Invalid record field "nofield" in record "{ storage with { nofield = 2048 } }". |}]
+    Invalid record field "nofield" in record "storage". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/override_option.mligo" ] ;

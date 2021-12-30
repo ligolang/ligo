@@ -7,12 +7,8 @@ module Var = Simple_utils.Var
 
 module SMap = Map.Make(String)
 
-let compile_with_modules ~raise : Ast_typed.module_fully_typed -> Mini_c.program = fun p ->
-  trace ~raise spilling_tracer @@ compile_module p
-
-let compile ~raise : Ast_typed.module_fully_typed -> Mini_c.program = fun p ->
-  let mini_c = compile_with_modules ~raise p in
-  mini_c
+let compile ~raise : Ast_typed.program -> Mini_c.program = fun p ->
+  trace ~raise spilling_tracer @@ compile_program p
 
 let compile_expression ~raise : expression -> Mini_c.expression = fun e ->
   trace ~raise spilling_tracer @@ compile_expression e
@@ -20,7 +16,7 @@ let compile_expression ~raise : expression -> Mini_c.expression = fun e ->
 let compile_type ~raise : type_expression -> Mini_c.type_expression = fun e ->
   trace ~raise spilling_tracer @@ compile_type e
 
-let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type -> string -> Ast_typed.module_fully_typed -> Ast_typed.expression -> unit  =
+let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type -> string -> Ast_typed.program -> Ast_typed.expression -> unit  =
     fun c entry contract param ->
   let entry_point = trace_option ~raise main_entrypoint_not_found (Ast_typed.get_entry contract entry) in
   trace ~raise (check_typed_arguments_tracer c) (
@@ -39,19 +35,17 @@ let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type ->
     | _ -> raise.raise @@ main_entrypoint_not_a_function
   )
 
-let rec get_views : Ast_typed.environment -> (string * location) list = fun e ->
-  let f : (string * location) list -> environment_binding -> (string * location) list =
-    fun acc {expr_var ; env_elt ; public = _} ->
-      match env_elt.definition with
-      | ED_declaration { attr ; _ } when attr.view -> (Var.to_name expr_var.wrap_content, expr_var.location)::acc
+let rec get_views : Ast_typed.program -> (string * location) list = fun p ->
+  let f : (string * location) list -> declaration_loc -> (string * location) list =
+    fun acc {wrap_content=decl ; location=_ } ->
+      match decl with
+      | Declaration_constant { name=_ ; binder ; expr=_ ; attr } when attr.view -> (Var.to_name binder.wrap_content, binder.location)::acc
+      | Declaration_module { module_binder=_ ; module_ ; module_attr=_} -> get_views module_ @ acc
       | _ -> acc
   in 
-  let x = List.fold e.expression_environment ~init:[] ~f in
-  let y = List.fold e.module_environment ~init:[] ~f:(fun acc x -> List.append acc (get_views x.module_)) in
-  List.append x y
+  List.fold ~init:[] ~f p
 
-let decompile_env e = Checking.decompile_env e
-let list_declarations (m : Ast_typed.module') : string list =
+let list_declarations (m : Ast_typed.module_) : string list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
@@ -60,7 +54,7 @@ let list_declarations (m : Ast_typed.module') : string list =
       | _ -> prev)
     ~init:[] m
 
-let list_type_declarations (m : Ast_typed.module') : string list =
+let list_type_declarations (m : Ast_typed.module_) : string list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
@@ -69,7 +63,7 @@ let list_type_declarations (m : Ast_typed.module') : string list =
       | _ -> prev)
     ~init:[] m
 
-let list_mod_declarations (m : Ast_typed.module') : string list =
+let list_mod_declarations (m : Ast_typed.module_) : string list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in

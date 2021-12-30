@@ -21,3 +21,6 @@ let literal ppf (l : literal) =
   | Literal_key_hash s -> fprintf ppf "key_hash %s" s
   | Literal_signature s -> fprintf ppf "Signature %s" s
   | Literal_chain_id s -> fprintf ppf "Chain_id %s" s
+  | Literal_bls12_381_g1 b -> fprintf ppf "bls12_381_g1 0x%a" Hex.pp (Hex.of_bytes b)
+  | Literal_bls12_381_g2 b -> fprintf ppf "bls12_381_g2 0x%a" Hex.pp (Hex.of_bytes b)
+  | Literal_bls12_381_fr b -> fprintf ppf "bls12_381_fr 0x%a" Hex.pp (Hex.of_bytes b)

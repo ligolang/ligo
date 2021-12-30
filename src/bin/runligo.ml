@@ -1,4 +1,3 @@
 let () = 
-  let argv = Sys.get_argv () in
-  let result = Cli.run ~argv () in
-  Stdlib.exit result
+  let result = Cli.run () in
+  exit result

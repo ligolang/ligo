@@ -172,8 +172,8 @@ and pp_quoted_param param =
 
 and pp_module_decl decl =
   let {name; module_; _} = decl.value in
-  string "module " ^^ pp_ident name ^^ string " = "
-  ^^ group (print module_) ^^ string ";"
+  string "module " ^^ pp_ident name ^^ string " = {" ^^ break 0
+  ^^ group (nest 2 (print module_)) ^^ break 0 ^^ string "};"
 
 and pp_module_alias decl =
   let {alias; binders; _} = decl.value in
@@ -214,7 +214,7 @@ and pp_case_expr_switch s e =
 
 and pp_case_expr {value; _} =
   let {expr; cases; _} = value in
-  group ((pp_case_expr_switch (string "switch") expr) ^^ string "{"
+  group ((pp_case_expr_switch (string "switch ") expr) ^^ string " {"
          ^^ pp_cases cases ^^ hardline ^^ string "}")
 
 and pp_cases {value; _} =

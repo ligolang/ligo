@@ -249,7 +249,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "shadowing.ligo") ] ;
   [%expect{|
     const foo =
-      lambda (toto : int) return let toto[@var] = 2 in let toto = 3 in toto ,
+      lambda (toto : int) return let toto[@var] = 2 in let toto = 3 in toto
     const bar =
       lambda (_u[@var] : unit) return let toto = 1 in
                                       let toto[@var] = 2 in let toto = 3 in toto |}]
@@ -315,7 +315,7 @@ let%expect_test _ =
                                     let i = env_rec#1.i in i |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast" ; (good_test "multiple_vars.ligo") ] ;
+  run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.ligo") ] ;
   [%expect{|
     const foo =
       lambda (_u : unit) return  match (4 , 5) with
@@ -329,7 +329,7 @@ let%expect_test _ =
                                              y) in (add)@(UNIT()) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast" ; (good_test "multiple_vars.jsligo") ] ;
+  run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;
   [%expect{|
     const foo[@var] =
       rec (foo:unit -> int => lambda (_ : unit) : int return  match (4 , 5) with

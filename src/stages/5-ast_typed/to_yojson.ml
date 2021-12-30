@@ -173,7 +173,7 @@ and type_in {type_binder;rhs;let_result} =
 and mod_in {module_binder;rhs;let_result} =
   `Assoc [
     ("module_binder", module_variable_to_yojson module_binder);
-    ("rhs", module_fully_typed rhs);
+    ("rhs", module' rhs);
     ("let_result", expression let_result);
   ]
 
@@ -252,7 +252,7 @@ and declaration_constant {name; binder;expr;attr} =
 and declaration_module {module_binder;module_; module_attr} =
   `Assoc [
     ("module_binder",module_variable_to_yojson module_binder);
-    ("module_", module_fully_typed module_);
+    ("module_", module' module_);
     ("module_attr", module_attribute module_attr)
   ]
 
@@ -267,92 +267,6 @@ and declaration = function
   | Declaration_module   dm -> `List [ `String "Declaration_module";   declaration_module dm]
   | Module_alias         ma -> `List [ `String "Module_alias";         module_alias ma]
 
-and module_fully_typed (Module_Fully_Typed p) = list (Location.wrap_to_yojson declaration) p
-let module_with_unification_vars (Module_With_Unification_Vars p) = list (Location.wrap_to_yojson declaration) p
+and module' m = list (Location.wrap_to_yojson declaration) m
+and program p = module' p
 
-
-(* Environment *)
-
-let environment_element_definition_declaration {expression=e; free_variables ; attr = _} =
-  `Assoc [
-    ("expression", expression e);
-    ("free_variables", list expression_variable_to_yojson free_variables);
-  ]
-
-let environment_element_definition = function
-  | ED_binder  -> `List [ `String "ED_binder"; `Null]
-  | ED_declaration ed -> `List [ `String "ED_declaration"; environment_element_definition_declaration ed]
-
-let rec environment_element {type_value;definition} =
-  `Assoc [
-    ("type_value", type_expression type_value);
-    ("definition", environment_element_definition definition);
-  ]
-
-and environment_binding {expr_var;env_elt;public} =
-  `Assoc [
-    ("expr_var", expression_variable_to_yojson expr_var);
-    ("env_elt", environment_element env_elt);
-    ("public", `Bool public)
-  ]
-and expression_environment e = list environment_binding e
-
-and type_or_kind x =
-  match x with
-  | Ty ty -> `List [ `String "Ty"; type_expression ty]
-  | Kind () -> `List [ `String "Kind"; `Null ]
-
-and type_environment_binding {type_variable;type_;public} =
-  `Assoc [
-    ("type_variable", type_variable_to_yojson type_variable);
-    ("type_", type_or_kind type_);
-    ("public", `Bool public)
-  ]
-and type_environment e = list type_environment_binding e
-
-and module_environment_binding {module_variable; module_; public} =
-  `Assoc [
-    ("module_name", module_variable_to_yojson module_variable);
-    ("module_", environment module_);
-    ("public", `Bool public)
-  ]
-
-and module_environment e = list module_environment_binding e
-
-and environment {expression_environment=ee;type_environment=te;module_environment=me} =
-  `Assoc [
-    ("expression_environment", expression_environment ee);
-    ("type_environment", type_environment te);
-    ("module_environment", module_environment me)
-  ]
-
-(* Solver types *)
-
-let constant_tag : constant_tag -> json = function
-  | C_arrow        -> `List [`String "C_arrow"; `Null]
-  | C_option       -> `List [`String "C_option"; `Null]
-  | C_map          -> `List [`String "C_map"; `Null]
-  | C_big_map      -> `List [`String "C_big_map"; `Null]
-  | C_list         -> `List [`String "C_list"; `Null]
-  | C_set          -> `List [`String "C_set"; `Null]
-  | C_unit         -> `List [`String "C_unit"; `Null]
-  | C_string       -> `List [`String "C_string"; `Null]
-  | C_nat          -> `List [`String "C_nat"; `Null]
-  | C_mutez        -> `List [`String "C_mutez"; `Null]
-  | C_timestamp    -> `List [`String "C_timestamp"; `Null]
-  | C_int          -> `List [`String "C_int"; `Null]
-  | C_address      -> `List [`String "C_address"; `Null]
-  | C_bytes        -> `List [`String "C_bytes"; `Null]
-  | C_key_hash     -> `List [`String "C_key_hash"; `Null]
-  | C_key          -> `List [`String "C_key"; `Null]
-  | C_signature    -> `List [`String "C_signature"; `Null]
-  | C_operation    -> `List [`String "C_operation"; `Null]
-  | C_contract     -> `List [`String "C_contract"; `Null]
-  | C_chain_id     -> `List [`String "C_chain_id"; `Null]
-  | C_bls12_381_g1 -> `List [`String "C_bls12_381_g1"; `Null]
-  | C_bls12_381_g2 -> `List [`String "C_bls12_381_g2"; `Null]
-  | C_bls12_381_fr -> `List [`String "C_bls12_381_fr"; `Null]
-
-let row_tag = function
-  | C_record  -> `List [`String "C_record"; `Null]
-  | C_variant -> `List [`String "C_variant"; `Null]

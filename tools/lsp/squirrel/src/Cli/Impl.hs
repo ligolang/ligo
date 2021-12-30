@@ -32,7 +32,6 @@ import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
 import Cli.Json
 import Cli.Types
-import Extension (Lang (..), getExt)
 import Log (i)
 import Log qualified
 import ParseTree (Source (..), srcToText)
@@ -237,16 +236,10 @@ getLigoDefinitions contract = do
   let sys = "LIGO.PARSE"
   Log.debug sys [i|parsing the following contract:\n#{contract}|]
   let path = srcPath contract
-  ext <- getExt path
-  let
-    syntax = case ext of
-      Reason -> "reasonligo"
-      Pascal -> "pascaligo"
-      Caml   -> "cameligo"
   mbOut <- tryAny $
     -- HACK: We forget the parsed contract since we still want LIGO to read the
     -- unpreprocessed version.
-    callLigo ["info", "get-scope", path, "--format", "json", "--infer", "--with-types", "--syntax", syntax] (Path path)
+    callLigo ["info", "get-scope", path, "--format", "json", "--with-types"] (Path path)
   case mbOut of
     Right (output, errs) ->
       --Log.debug sys [i|Successfully called ligo with #{output}|]

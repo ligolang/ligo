@@ -1,0 +1,4 @@
+author: Pierre-Emmanuel Wulfman
+merge_request: '1461'
+title: Deprecated CLI is now removed. --infer flag has been dropped
+type: changed

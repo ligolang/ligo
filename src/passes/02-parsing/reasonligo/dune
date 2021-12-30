@@ -35,8 +35,10 @@
   terminal_size
   menhirLib
   hex)
- (flags (:standard \ -open Core)
-  (-open Simple_utils
+ (flags
+  (:standard \ -open Core)
+  (-open
+   Simple_utils
    -open
    Cst_reasonligo ;; for CST
    -open
@@ -58,8 +60,10 @@
   ;; Third party
   hex)
  (modules ParserMain Parser_msg)
- (flags (:standard \ -open Core) -open Simple_utils)
-)
+ (flags
+  (:standard \ -open Core)
+  -open
+  Simple_utils))
 
 ;; Build of the covering of error states in the LR automaton
 

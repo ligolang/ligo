@@ -197,7 +197,15 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chain_id _, _ -> None
   | Literal_operation _, Literal_operation _ -> None
   | Literal_operation _, _ -> None
-
+  | Literal_bls12_381_g1 a, Literal_bls12_381_g1 b when Bytes.equal a b -> Some ()
+  | Literal_bls12_381_g1 _, Literal_bls12_381_g1 _ -> None
+  | Literal_bls12_381_g1 _, _ -> None
+  | Literal_bls12_381_g2 a, Literal_bls12_381_g2 b when Bytes.equal a b -> Some ()
+  | Literal_bls12_381_g2 _, Literal_bls12_381_g2 _ -> None
+  | Literal_bls12_381_g2 _, _ -> None
+  | Literal_bls12_381_fr a, Literal_bls12_381_fr b when Bytes.equal a b -> Some ()
+  | Literal_bls12_381_fr _, Literal_bls12_381_fr _ -> None
+  | Literal_bls12_381_fr _, _ -> None
 
 let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   let open Option in
@@ -251,7 +259,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (Module_Fully_Typed lst : module_fully_typed) (name : string) : expression option =
+let get_entry (lst : program) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
     | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (

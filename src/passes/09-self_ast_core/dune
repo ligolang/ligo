@@ -3,5 +3,4 @@
  (public_name ligo.self_ast_core)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_core)
-)
+ (libraries simple-utils ast_core))

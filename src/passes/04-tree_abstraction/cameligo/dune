@@ -6,5 +6,4 @@
  (libraries tree_abstraction_shared simple-utils tezos-utils cst parsing
    ast_imperative predefined)
  (preprocess
-  (pps ppx_poly_constructor))
-)
+  (pps ppx_poly_constructor)))

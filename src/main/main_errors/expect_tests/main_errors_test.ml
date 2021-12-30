@@ -418,7 +418,6 @@ let%expect_test "typer" =
   let open Location in
   let error e = human_readable_error (checking_tracer e) in
   let location_t = File default_location in
-  let environment = Environment.empty in
   let type_variable = Var.of_name "foo" in
   let expression_variable = Location.wrap (Var.of_name "bar") in
   let ast_core_expression_variable : Ast_core.expression_variable =
@@ -461,14 +460,14 @@ let%expect_test "typer" =
 
       Invalid usage of type "michelson_or".
       The "michelson_or" type expects a variant type as argument.|}] ;
-  error (`Typer_unbound_type_variable (environment, type_variable, location_t)) ;
+  error (`Typer_unbound_type_variable (type_variable, location_t)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
 
     Type "foo" not found.|}] ;
   error
-    (`Typer_unbound_variable (environment, expression_variable, location_t)) ;
+    (`Typer_unbound_variable (expression_variable, location_t)) ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
@@ -491,8 +490,7 @@ let%expect_test "typer" =
     Bar
     Please remove the extra cases.|}] ;
   error
-    (`Typer_unbound_constructor
-      (environment, Label "Some-Constructor", location_t)) ;
+    (`Typer_unbound_constructor (Label "Some-Constructor", location_t)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -568,32 +566,32 @@ let%expect_test "typer" =
   Expected a function type, but got "foo".|}] ;
   error
     (`Typer_bad_record_access
-      (Label "bar", ast_core_expression, type_expression, location_t)) ;
+      (Label "bar", expression, location_t)) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error
     (`Typer_expression_tracer
       ( ast_core_expression,
         `Typer_bad_record_access
-          (Label "bar", ast_core_expression, type_expression, location_t) )) ;
+          (Label "bar", expression, location_t) )) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error
     (`Typer_record_access_tracer
       ( expression,
         `Typer_bad_record_access
-          (Label "bar", ast_core_expression, type_expression, location_t) )) ;
+          (Label "bar", expression, location_t) )) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Invalid record field "bar" in record "bar".|}] ;
+  Invalid record field "bar" in record "unit".|}] ;
   error (`Typer_assert_equal (location_t, type_expression, type_expression2)) ;
   [%expect {|
     File "a dummy file name", line 20, character 5:

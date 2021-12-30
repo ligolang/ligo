@@ -108,7 +108,7 @@ module Monad_context (M : Monad) = struct
   let bind_fold_ne_list f init lst =
     let aux x y =
       let* x = x in f x y
-    in Simple_utils.List.Ne.fold_left aux (return init) lst
+    in Simple_utils.List.Ne.fold_left ~f:aux ~init:(return init) lst
 
   let bind_ne_list (hd, tl) =
     let* hd = hd in

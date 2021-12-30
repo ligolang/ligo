@@ -263,7 +263,7 @@ let test_bitwise_module =
             b_shift_left  = 28n &&
             b_shift_right = 3n   )
 
-let concat (xs : nat list) (ys : nat list) = 
+let concat (xs : nat list) (ys : nat list) =
   List.fold_right (fun (x,ys : (nat * nat list)) -> x :: ys) xs ys
 
 let test_list_concat =
@@ -284,26 +284,26 @@ let test_list_tail_opt =
           List.tail_opt ([3n]       : nat list) = (Some ([] : nat list) : nat list option) &&
           List.tail_opt ([]         : nat list) = (None                 : nat list option))
 
-let reverse (xs : nat list) = 
+let reverse (xs : nat list) =
   List.fold_left (fun (ys,x : (nat list * nat)) -> x :: ys) ([] : nat list) xs
 
 let test_list_reverse =
   let xs = [1n;2n;3n] in
   assert (reverse xs = [3n;2n;1n])
 
-let test_set_fold_desc = 
+let test_set_fold_desc =
   let xs = Set.literal [1n;2n;3n] in
   let sum = Set.fold_desc (fun (x,acc : nat * nat) -> acc + x) xs 0n in
   assert (sum = 6n)
 
-let test_set_update = 
+let test_set_update =
   let xs = Set.literal [1n;2n;3n] in
   let xs = Set.update 4n true xs in
   let xs = Set.update 3n false xs in
   let xs = Set.update 5n false xs in
   assert (xs = Set.literal [1n;2n;4n])
 
-let test_map_get_and_update = 
+let test_map_get_and_update =
   let xs = Map.literal [(1n,"Hello");(2n,"World")] in
   let (old,xs) = Map.get_and_update 2n (Some "Foo") xs in
   let ys = Map.literal [(1n,"Hello");(2n,"Foo")] in
@@ -323,7 +323,29 @@ let test_div_mutez =
   let a = 1tez/2tez in
   assert (a = 0n)
 
-let test_list_fold_left_sum = 
+let test_list_fold_left_sum =
   let xs = [1;2;3] in
   let sum = List.fold_left (fun (x,acc : (int * int)) -> x + acc) 0 xs in
   assert (sum = 6)
+
+let test_bytes_sub =
+  let () = assert (Bytes.sub 0n 3n (Bytes.pack 5n) = (Bytes.pack 5)) in
+  let () = assert (Bytes.sub 1n 2n (Bytes.pack 5n) = 0x0005) in
+  let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 3n 0n (Bytes.pack 5)) in
+  let () = assert (Bytes.sub 2n 1n (Bytes.pack 5n) = 0x05) in
+  assert (Bytes.sub 0n 1n (Bytes.pack 5n) = 0x05)
+
+let test_with_error =
+  assert_with_error true "foo"
+
+let test_some =
+  assert_some (Some 1 : int option)
+
+let test_some_with_error =
+  assert_some_with_error (Some 2 : int option) "bar"
+
+let test_none =
+  assert_none (None : int option)
+
+let test_none_with_error =
+  assert_none_with_error (None : int option) "bar"
