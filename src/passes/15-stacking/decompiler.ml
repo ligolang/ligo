@@ -89,6 +89,12 @@ let rec decompile_value ~(raise : stacking_error raise) :
       D_string s
   | Prim (_, "bytes", [], _), Bytes (_, b) ->
       D_bytes b
+  | Prim (_, "bls12_381_g1", [], _), Bytes (_, b) ->
+      D_bytes b
+  | Prim (_, "bls12_381_g2", [], _), Bytes (_, b) ->
+      D_bytes b
+  | Prim (_, "bls12_381_fr", [], _), Bytes (_, b) ->
+      D_bytes b
   | Prim (_, "address", [], _), String (_, s) ->
       D_string s
   | Prim (_, "unit", [], _), Prim (_, "Unit", [], _) ->
