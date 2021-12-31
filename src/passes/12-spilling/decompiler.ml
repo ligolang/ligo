@@ -66,6 +66,24 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
           get_bytes v in
         return (E_literal (Literal_bytes n))
       )
+    | (i, []) when String.equal i bls12_381_g1_name -> (
+        let n =
+          trace_option ~raise (wrong_mini_c_value t v) @@
+          get_bytes v in
+        return (E_literal (Literal_bls12_381_g1 n))
+      )
+    | (i, []) when String.equal i bls12_381_g2_name -> (
+        let n =
+          trace_option ~raise (wrong_mini_c_value t v) @@
+          get_bytes v in
+        return (E_literal (Literal_bls12_381_g2 n))
+      )
+    | (i, []) when String.equal i bls12_381_fr_name -> (
+        let n =
+          trace_option ~raise (wrong_mini_c_value t v) @@
+          get_bytes v in
+        return (E_literal (Literal_bls12_381_fr n))
+      )
     | (i, []) when String.equal i address_name -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
