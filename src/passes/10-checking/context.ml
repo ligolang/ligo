@@ -44,6 +44,9 @@ module PP = struct
 end
 let pp =  PP.context
 
+(* Not commutative as a shadows b*)
+let union : t -> t -> t = fun a b ->
+  {values = a.values @ b.values; types = a.types @ b.types ; modules = a.modules @ b.modules}
 
 let _get_values : t -> Types.values = fun { values ; types=_ ; modules=_ } -> values
 (* TODO: generate *)
@@ -79,19 +82,19 @@ let get_module (e:t) = List.Assoc.find ~equal:String.equal e.modules
 let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip types
 
 (* Load context from the outside declarations *)
-let rec add_ez_module : t -> Ast_typed.module_variable -> Ast_typed.module_ -> t = fun c mv m ->
-  let f c d = match Location.unwrap d with
-    Ast_typed.Declaration_constant {name=_;binder;expr;attr={public;_}}  -> if public then add_value c binder expr.type_expression else c
-  | Declaration_type {type_binder;type_expr;type_attr={public}} -> if public then add_type c type_binder type_expr else c
-  | Declaration_module {module_binder;module_;module_attr={public}} -> if public then add_ez_module c module_binder module_ else c
+let rec add_ez_module : t -> Ast_typed.module_variable -> Ast_typed.module_ -> t = fun outer_context mv m ->
+  let f inner_context d = match Location.unwrap d with
+    Ast_typed.Declaration_constant {name=_;binder;expr;attr={public;_}}  -> if public then add_value inner_context binder expr.type_expression else inner_context
+  | Declaration_type {type_binder;type_expr;type_attr={public}} -> if public then add_type inner_context type_binder type_expr else inner_context
+  | Declaration_module {module_binder;module_;module_attr={public}} -> if public then add_ez_module (union inner_context outer_context) module_binder module_ else inner_context
   | Module_alias {alias;binders} -> 
-    let m = Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.bind ~f:(fun c -> get_module c b) c) ~init:(Some c) binders in
-    let c' = Option.map ~f:(fun m -> add_module c alias m) m in
-    Option.value ~default:c c'
+    let m = Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.bind ~f:(fun c -> get_module c b) c) ~init:(Some (union inner_context outer_context)) binders in
+    let c' = Option.map ~f:(add_module inner_context alias) m in
+    Option.value_exn c' (* The alias exist because the module is out of the type checker *)
   in
-  let context = List.fold ~f ~init:c @@ m in
-  let modules = (mv,context)::c.modules in
-  {c with modules}
+  let context = List.fold ~f ~init:empty @@ m in
+  let modules = (mv,context)::outer_context.modules in
+  {outer_context with modules}
 
 let init ?env () = 
   match env with None -> empty
