@@ -377,7 +377,6 @@ module Tree_abstraction = struct
     | C_TEST_GET_NTH_BS -> "Test.nth_bootstrap_account"
     | C_TEST_LAST_ORIGINATIONS -> "Test.last_originations"
     | C_TEST_COMPILE_META_VALUE -> "Test.compile_value"
-    | C_TEST_MUTATE_COUNT -> "Test.mutate_count"
     | C_TEST_MUTATE_VALUE -> "Test.mutate_value"
     | C_TEST_MUTATION_TEST -> "Test.mutation_test"
     | C_TEST_MUTATION_TEST_ALL -> "Test.mutation_test_all"

@@ -136,7 +136,7 @@ let get_t_binary_inj (t:type_expression) (v:string) : (type_expression * type_ex
   | _ -> None
 
 let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type__name
-[@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "test_michelson"))]
+[@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "test_michelson", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type__name
 [@@map (_type_, ("contract", "option", "list", "set", "ticket", "sapling_state", "sapling_transaction"))]
@@ -288,7 +288,7 @@ let e_bool b : expression_content =
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
-[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address"))]
+[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
