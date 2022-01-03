@@ -82,7 +82,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "D.mligo" ] ;
   [%expect {|
     const toto = ADD(E.toto ,
-    C.B.titi)
+    C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main = lambda (#6) return let #8 = #6 in  match #8 with
                                                      | ( p , s ) ->
@@ -122,7 +122,7 @@ let ../../test/contracts/build/E.mligo =
   let foo = L("bar")[@inline] in (F, G, foo, toto)[@inline]
 let C = ../../test/contracts/build/C.mligo[@inline]
 let E = ../../test/contracts/build/E.mligo[@inline]
-let toto = ADD((E).(3) , ((C).(1)).(2))
+let toto = ADD((E).(3) , (((C).(1)).(0)).(0))
 let fb = (L(1), toto, L(2), L(3))
 let main =
   fun #4 ->
@@ -136,9 +136,7 @@ let%expect_test _ =
   [%expect{|
     { parameter int ;
       storage int ;
-      code { PUSH int 42 ;
-             PUSH int 1 ;
-             ADD ;
+      code { PUSH int 1 ;
              PUSH int 10 ;
              ADD ;
              SWAP ;
@@ -201,3 +199,12 @@ let%expect_test _ =
         |   |-- 1 -- ../../test/contracts/build/Xlist.mligo
         |   `-- 2 -- ../../test/contracts/build/Xset.mligo
         `-- 1 -- ../../test/contracts/build/Xlist.mligo |}]
+
+let%expect_test _ =
+  run_ligo_bad ["run"; "interpret"; "--init-file"; contract "module_scoping_bug.mligo" ; "x"; ] ;
+  [%expect {|
+    File "../../test/contracts/build/module_scoping_bug.mligo", line 24, characters 10-13:
+     23 |
+     24 | let x = B.A.a
+
+    Module "A" not found. |}]

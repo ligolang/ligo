@@ -137,7 +137,7 @@ and expression_content ppf (ec: expression_content) =
         expression let_result
   
   | E_mod_in {module_binder; rhs; let_result} ->
-      fprintf ppf "let %a = %a in %a"
+      fprintf ppf "let module %a = struct @[%a@]@end in@ %a"
         module_variable module_binder
         module_ rhs
         expression let_result
