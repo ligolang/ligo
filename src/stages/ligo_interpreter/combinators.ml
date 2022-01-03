@@ -61,7 +61,7 @@ let get_michelson_contract : value -> unit Tezos_utils.Michelson.michelson optio
   | V_Michelson ( Contract x ) -> Some x
   | _ -> None
 
-let get_michelson_expr : value -> (unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression) option =
+let get_michelson_expr : value -> typed_michelson_code option =
   function
   | V_Michelson ( Ty_code x ) -> Some x
   | _ -> None
@@ -140,45 +140,83 @@ let get_func : value -> func_val option =
     | V_Func_val v -> Some v
     | _ -> None
 
+let get_bls12_381_g1 : value -> Bls12_381.G1.t option =
+  fun value ->
+    match value with
+    | V_Ct (C_bls12_381_g1 v) -> Some v
+    | _ -> None
+
+let get_bls12_381_g2 : value -> Bls12_381.G2.t option =
+  fun value ->
+    match value with
+    | V_Ct (C_bls12_381_g2 v) -> Some v
+    | _ -> None
+
+let get_bls12_381_fr : value -> Bls12_381.Fr.t option =
+  fun value ->
+    match value with
+    | V_Ct (C_bls12_381_fr v) -> Some v
+    | _ -> None
+
 let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   match c, c' with
   | C_unit, C_unit -> Unit.compare () ()
-  | C_unit, (C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> -1
+  | C_unit, (C_bool _ | C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> -1
   | C_bool _, C_unit -> -1
   | C_bool b, C_bool b' -> Bool.compare b b'
-  | C_bool _, (C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_bool _, (C_int _ | C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_int _, (C_unit | C_bool _) -> - 1
   | C_int i, C_int i' -> Z.compare i i'
-  | C_int _, (C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_int _, (C_nat _ | C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_nat _, (C_unit | C_bool _ | C_int _) -> - 1
   | C_nat n, C_nat n' -> Z.compare n n'
-  | C_nat _, (C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_nat _, (C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_timestamp _, (C_unit | C_bool _ | C_int _ | C_nat _) -> - 1
   | C_timestamp t, C_timestamp t' -> Z.compare t t'
-  | C_timestamp _, (C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_timestamp _, (C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_string _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _) -> - 1
   | C_string s, C_string s' -> String.compare s s'
-  | C_string _, (C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_string _, (C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_bytes _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _) -> - 1
   | C_bytes b, C_bytes b' -> Bytes.compare b b'
-  | C_bytes _ , (C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_bytes _ , (C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_mutez _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _) -> - 1
   | C_mutez m, C_mutez m' -> Z.compare m m'
-  | C_mutez _ , (C_address _ | C_contract _ | C_key_hash _) -> 1
+  | C_mutez _ , (C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_address _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _) -> - 1
   | C_address a, C_address a' ->
      Tezos_protocol_011_PtHangz2.Protocol.Alpha_context.Contract.compare a a'
-  | C_address _ , (C_contract _ | C_key_hash _) -> 1
+  | C_address _ , (C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_contract _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _) -> - 1
   | C_contract {address=a;entrypoint=e}, C_contract {address=a';entrypoint=e'} -> (
      match Tezos_protocol_011_PtHangz2.Protocol.Alpha_context.Contract.compare a a' with
        0 -> Option.compare String.compare e e'
      | c -> c
   )
-  | C_contract _ , C_key_hash _ -> 1
+  | C_contract _ , (C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
   | C_key_hash _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _) -> - 1
   | C_key_hash kh, C_key_hash kh' ->
      Tezos_crypto.Signature.Public_key_hash.compare kh kh'
+  | C_key_hash _ , (C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
+  | C_key _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _) -> - 1
+  | C_key k, C_key k' ->
+     Tezos_crypto.Signature.Public_key.compare k k'
+  | C_key _ , (C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _)-> 1
+  | C_signature _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _) -> - 1
+  | C_signature s, C_signature s' ->
+     Tezos_crypto.Signature.compare s s'
+  | C_signature _,  (C_bls12_381_g1 _ | C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
+  | C_bls12_381_g1 _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _) -> - 1
+  | C_bls12_381_g1 b, C_bls12_381_g1 b' ->
+     Bytes.compare (Bls12_381.G1.to_bytes b) (Bls12_381.G1.to_bytes b')
+  | C_bls12_381_g1 _,  (C_bls12_381_g2 _ | C_bls12_381_fr _) -> 1
+  | C_bls12_381_g2 _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _) -> - 1
+  | C_bls12_381_g2 b, C_bls12_381_g2 b' ->
+     Bytes.compare (Bls12_381.G2.to_bytes b) (Bls12_381.G2.to_bytes b')
+  | C_bls12_381_g2 _,  C_bls12_381_fr _ -> 1
+  | C_bls12_381_fr _, (C_unit | C_bool _ | C_int _ | C_nat _| C_timestamp _ | C_string _ | C_bytes _ | C_mutez _ | C_address _ | C_contract _ | C_key_hash _ | C_key _ | C_signature _ | C_bls12_381_g1 _ | C_bls12_381_g2 _) -> - 1
+  | C_bls12_381_fr b, C_bls12_381_fr b' ->
+     Bytes.compare (Bls12_381.Fr.to_bytes b) (Bls12_381.Fr.to_bytes b')
 
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with

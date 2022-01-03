@@ -168,7 +168,6 @@ type constant' =
   | C_SHA256
   | C_SHA512
   | C_BLAKE2b
-  | C_HASH
   | C_HASH_KEY
   | C_CHECK_SIGNATURE
   | C_CHAIN_ID
@@ -211,7 +210,6 @@ type constant' =
   | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
   | C_TEST_COMPILE_META_VALUE [@only_interpreter]
-  | C_TEST_MUTATE_COUNT [@only_interpreter]
   | C_TEST_MUTATE_VALUE [@only_interpreter]
   | C_TEST_MUTATION_TEST [@only_interpreter]
   | C_TEST_MUTATION_TEST_ALL [@only_interpreter]

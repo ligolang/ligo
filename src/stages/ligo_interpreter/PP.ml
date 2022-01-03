@@ -16,6 +16,11 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   | C_contract c -> Format.fprintf ppf "%a(%a)" Tezos_protocol_011_PtHangz2.Protocol.Alpha_context.Contract.pp c.address (PP_helpers.option PP_helpers.string) c.entrypoint
   | C_mutez n -> Format.fprintf ppf "%smutez" (Z.to_string n)
   | C_key_hash c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key_hash.pp c
+  | C_key c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key.pp c
+  | C_signature s -> Format.fprintf ppf "%a" Tezos_crypto.Signature.pp s
+  | C_bls12_381_g1 b -> Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.G1.to_bytes b))
+  | C_bls12_381_g2 b -> Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.G2.to_bytes b))
+  | C_bls12_381_fr b -> Format.fprintf ppf "%s" (Bytes.to_string (Bls12_381.Fr.to_bytes b))
 
 let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
   match v with
@@ -40,7 +45,7 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
         Format.fprintf ppf "%s = %a" l pp_value v
       in
       Format.fprintf ppf "{%a}" (list_sep aux (tag " ; ")) (LMap.to_kv_list recmap)
-  | V_Michelson (Ty_code (code,_,_) | Contract code) ->
+  | V_Michelson (Ty_code { code ; _ } | Contract code) ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Ligo (_syntax , code) ->
      Format.fprintf ppf "%s" code

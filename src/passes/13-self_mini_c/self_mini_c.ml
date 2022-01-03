@@ -97,7 +97,6 @@ let is_pure_constant : constant' -> bool =
   | C_BIG_MAP
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
-  | C_HASH
   | C_CONTRACT
   | C_CONTRACT_WITH_ERROR
   | C_CONTRACT_OPT
@@ -127,7 +126,6 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_NTH_BOOTSTRAP_CONTRACT
   | C_TEST_LAST_ORIGINATIONS
   | C_TEST_COMPILE_META_VALUE
-  | C_TEST_MUTATE_COUNT
   | C_TEST_MUTATE_VALUE
   | C_TEST_MUTATION_TEST
   | C_TEST_MUTATION_TEST_ALL

@@ -47,6 +47,7 @@ let%expect_test _ =
     - test_map_update exited with value ().
     - test_set_add exited with value ().
     - test_set_mem exited with value ().
+    - test_set_remove exited with value ().
     - test_recursion_let_rec_in exited with value ().
     - test_top_level_recursion exited with value ().
     - test_bitwise_ops exited with value ().
@@ -67,7 +68,17 @@ let%expect_test _ =
     - test_some exited with value ().
     - test_some_with_error exited with value ().
     - test_none exited with value ().
-    - test_none_with_error exited with value (). |}]
+    - test_none_with_error exited with value ().
+    - test_unopt exited with value ().
+    - test_unopt_with_error exited with value ().
+    - test_sha256 exited with value ().
+    - test_sha512 exited with value ().
+    - test_blake2b exited with value ().
+    - test_keccak exited with value ().
+    - test_sha3 exited with value ().
+    - test_key_hash exited with value ().
+    - test_check exited with value ().
+    - test_int_bls exited with value (). |}]
 
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
@@ -437,6 +448,12 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_pack_unpack.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "pairing_check.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
