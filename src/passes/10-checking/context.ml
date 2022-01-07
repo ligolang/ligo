@@ -1,11 +1,11 @@
 (* This file represente the context which give the association of values to types *)
 module Location = Simple_utils.Location
 module Var      = Simple_utils.Var
-module Types = struct 
-  open Ast_typed 
+module Types = struct
+  open Ast_typed
 
   (* Use of list to allow type shadowing, which is weird *)
-  (* We should use data structure that are better for lookup but we first need 
+  (* We should use data structure that are better for lookup but we first need
    to agree on typechecker property *)
   type values  = (expression_variable * type_expression) List.t
   type types   = (type_variable       * type_expression) List.t
@@ -27,7 +27,7 @@ module PP = struct
   open Types
 
   let list_sep_scope x = list_sep x (const " | ")
-  let value_binding ppf (ev,te) = 
+  let value_binding ppf (ev,te) =
     fprintf ppf "%a => %a" expression_variable ev type_expression te
   let type_binding ppf (type_var,type_) =
     fprintf ppf "%a => %a" type_variable type_var type_expression type_
@@ -56,22 +56,22 @@ let get_modules : t -> Types.modules = fun { values=_ ; types=_ ; modules } -> m
 
 
 (* TODO: generate : these are now messy, clean them up. *)
-let add_value : t -> Ast_typed.expression_variable -> Ast_typed.type_expression -> t = fun c ev te -> 
+let add_value : t -> Ast_typed.expression_variable -> Ast_typed.type_expression -> t = fun c ev te ->
   let values = (ev,te)::c.values in
   {c with values}
 
-let add_type : t -> Ast_typed.type_variable -> Ast_typed.type_expression -> t = fun c tv te -> 
+let add_type : t -> Ast_typed.type_variable -> Ast_typed.type_expression -> t = fun c tv te ->
   let types = (tv,te)::c.types in
   {c with types}
 
 (* we represent for_all types as themselves because we don't have typechecking yet *)
-let add_type_var : t -> Ast_typed.type_variable -> unit -> t = fun c tv () -> 
+let add_type_var : t -> Ast_typed.type_variable -> unit -> t = fun c tv () ->
   add_type c tv (Ast_typed.t_variable tv)
 
 (* we use type_var while we don't have kind checking *)
-let add_kind : t -> Ast_typed.type_variable -> unit -> t = fun c tv () -> 
+let add_kind : t -> Ast_typed.type_variable -> unit -> t = fun c tv () ->
   add_type_var c tv ()
-let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te -> 
+let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te ->
   let modules = (mv,te)::c.modules in
   {c with modules}
 
@@ -96,19 +96,19 @@ let rec add_ez_module : t -> Ast_typed.module_variable -> Ast_typed.module_ -> t
   let modules = (mv,context)::outer_context.modules in
   {outer_context with modules}
 
-let init ?env () = 
+let init ?env () =
   match env with None -> empty
   | Some (env) ->
     let f c d = match Location.unwrap d with
       Ast_typed.Declaration_constant {name=_;binder;expr;attr=_}  -> add_value c binder expr.type_expression
     | Declaration_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr
     | Declaration_module {module_binder;module_;module_attr=_} -> add_ez_module c module_binder module_
-    | Module_alias {alias;binders} -> 
+    | Module_alias {alias;binders} ->
       (* value_exn is ok since the env as pass the typer or is written by us *)
       add_module c alias (Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.value_exn (get_module c b)) ~init:c binders)
     in
     Environment.fold ~f ~init:empty @@ env
-  
+
 open Ast_typed.Types
 
 
@@ -205,4 +205,3 @@ let get_sum : _ label_map -> t -> rows option = fun lmap e ->
         match res with Some _ as s -> s | None -> rec_aux module_
       ) ~init:None modules
   in rec_aux e
-

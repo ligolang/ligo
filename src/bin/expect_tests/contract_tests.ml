@@ -1227,31 +1227,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_in_lambda.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative/self_in_lambda.mligo", line 4, characters 6-11:
-      3 | let main (ps: unit * address): (operation list * address) =
-      4 |   let dummy = foo () in (* force not to inline foo *)
-      5 |   ( ([] : operation list) , foo ())
-    :
-    Warning: unused variable "dummy".
-    Hint: replace it by "_dummy" to prevent this warning.
-
-    File "../../test/contracts/negative/self_in_lambda.mligo", line 3, characters 9-29:
-      2 |
-      3 | let main (ps: unit * address): (operation list * address) =
-      4 |   let dummy = foo () in (* force not to inline foo *)
-    :
-    Warning: unused variable "ps".
-    Hint: replace it by "_ps" to prevent this warning.
-
-    File "../../test/contracts/negative/self_in_lambda.mligo", line 1, characters 8-18:
-      1 | let foo (u : unit) : address = Tezos.address (Tezos.self "%default" : unit contract)
-      2 |
-    :
-    Warning: unused variable "u".
-    Hint: replace it by "_u" to prevent this warning.
-
-    "Tezos.self" must be used directly and cannot be used via another function. |}]
+  [%expect{| "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "big_map.ligo" ; "(big_map1,unit)" ] ;
@@ -1810,8 +1786,8 @@ let%expect_test _ =
 
 (* warning non-duplicable variable used examples *)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
-  [%expect {|
+  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
+  [%expect{|
     File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-50:
       1 | module Foo = struct
       2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
@@ -1819,13 +1795,14 @@ let%expect_test _ =
     :
     Warning: variable "Foo.x" cannot be used more than once.
 
-    (Pair (Pair "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG" 42 42)
-          (Pair "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG" 42 42)) |}]
+    Error(s) occurred while checking the contract:
+    At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
+    At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate2.mligo" ] ;
-  [%expect {|
+  [%expect{|
     File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
       1 | let x = Tezos.create_ticket 42n 42n
       2 | let x = (x, x)
@@ -1834,8 +1811,7 @@ let%expect_test _ =
 
     Error(s) occurred while checking the contract:
     At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-    At (unshown) location 8, Ticket in unauthorized position (type error).
-  |}]
+    At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
 (* warning layout attribute on constructor *)
 let%expect_test _ =
@@ -2250,8 +2226,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let Foo = let x = L(54)[@inline] in (x)[@inline]
-    let Foo = let y = (Foo).(0)[@inline] in (y)[@inline] |}]
+    let #Foo#x#1 = L(54) in let #Foo#y#2 = #Foo#x#1 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;

@@ -1,4 +1,4 @@
-include Ast_typed.Types
+include Ast_aggregated.Types
 
 module Tezos_protocol = Tezos_protocol_011_PtHangz2
 module Tezos_raw_protocol = Tezos_raw_protocol_011_PtHangz2
@@ -9,23 +9,22 @@ module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
 type mcode = unit Tezos_utils.Michelson.michelson
 type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t
 
-type mutation = Location.t * Ast_typed.expression
+type mutation = Location.t * Ast_aggregated.expression
 
 type env_item =
   | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool }
-  | Module of { name: module_variable ; item: env }
 
 and env = env_item list
 
 and func_val = {
     rec_name : expression_variable option ;
-    orig_lambda : Ast_typed.expression ;
+    orig_lambda : Ast_aggregated.expression ;
     arg_binder : expression_variable ;
-    body : Ast_typed.expression ;
+    body : Ast_aggregated.expression ;
     env : env ;
   }
 
-and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_typed.type_expression }
+and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_aggregated.type_expression }
 
 and michelson_code =
   | Contract of mcode
@@ -56,7 +55,7 @@ and constant_val =
 and micheline_value = (unit, string) Tezos_micheline.Micheline.node *
                         (unit, string) Tezos_micheline.Micheline.node
 
-and value_expr = { ast_type : Ast_typed.type_expression ;
+and value_expr = { ast_type : Ast_aggregated.type_expression ;
                    eval_term : value }
 and value =
   | V_Ct of constant_val

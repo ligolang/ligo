@@ -1,20 +1,56 @@
 open Simple_utils.Trace
 open Ast_typed
-open Spilling
+open Aggregation
 open Main_errors
 
 module Var = Simple_utils.Var
 
 module SMap = Map.Make(String)
 
-let compile ~raise : Ast_typed.program -> Mini_c.program = fun p ->
-  trace ~raise spilling_tracer @@ compile_program p
+let compile_program ~raise : Ast_typed.program -> Ast_typed.expression Ast_aggregated.program = fun p ->
+  trace ~raise aggregation_tracer @@ Aggregation.compile_program p
 
-let compile_expression ~raise : expression -> Mini_c.expression = fun e ->
-  trace ~raise spilling_tracer @@ compile_expression e
+let compile_expression_in_context ~raise : Ast_typed.expression -> Ast_typed.expression Ast_aggregated.program -> Ast_aggregated.expression =
+  fun exp prg ->
+    let x = Aggregation.compile_expression_in_context exp prg in
+    trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression x
 
-let compile_type ~raise : type_expression -> Mini_c.type_expression = fun e ->
-  trace ~raise spilling_tracer @@ compile_type e
+let compile_expression ~raise : Ast_typed.expression -> Ast_aggregated.expression = fun e ->
+  let x = trace ~raise aggregation_tracer @@ compile_expression e in
+  trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression x
+
+let compile_type ~raise : Ast_typed.type_expression -> Ast_aggregated.type_expression = fun e ->
+  trace ~raise aggregation_tracer @@ compile_type e
+
+let apply_to_entrypoint_contract ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
+    fun prg entrypoint ->
+  let aggregated_prg = compile_program ~raise prg in
+  let v = Location.wrap (Var.of_name entrypoint) in
+  let Self_ast_typed.Helpers.{parameter=p_ty ; storage=s_ty} =
+    trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
+  in
+  let ty = t_function (t_pair p_ty s_ty) (t_pair (t_list (t_operation ())) s_ty) () in
+  let var_ep = Ast_typed.(e_a_variable v ty) in
+  compile_expression_in_context ~raise var_ep aggregated_prg
+
+let apply_to_entrypoint_view ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
+    fun prg entrypoint ->
+  let aggregated_prg = compile_program ~raise prg in
+  let v = Location.wrap (Var.of_name entrypoint) in
+  let Self_ast_typed.Helpers.{arg=a_ty ; storage=s_ty ; return=r_ty}, _ =
+    trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_view_type entrypoint prg in
+  let ty = t_function (t_pair a_ty s_ty) r_ty () in
+  let var_ep = Ast_typed.(e_a_variable v ty) in
+  compile_expression_in_context ~raise var_ep aggregated_prg
+
+let apply_to_entrypoint ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
+    fun prg entrypoint ->
+  let aggregated_prg = compile_program ~raise prg in
+  let v = Location.wrap (Var.of_name entrypoint) in
+  let ty, _ =
+    trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_entry_type entrypoint prg in
+  let var_ep = Ast_typed.(e_a_variable v ty) in
+  compile_expression_in_context ~raise var_ep aggregated_prg
 
 let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type -> string -> Ast_typed.program -> Ast_typed.expression -> unit  =
     fun c entry contract param ->
@@ -42,7 +78,7 @@ let rec get_views : Ast_typed.program -> (string * location) list = fun p ->
       | Declaration_constant { name=_ ; binder ; expr=_ ; attr } when attr.view -> (Var.to_name binder.wrap_content, binder.location)::acc
       | Declaration_module { module_binder=_ ; module_ ; module_attr=_} -> get_views module_ @ acc
       | _ -> acc
-  in 
+  in
   List.fold ~init:[] ~f p
 
 let list_declarations (m : Ast_typed.module_) : string list =
