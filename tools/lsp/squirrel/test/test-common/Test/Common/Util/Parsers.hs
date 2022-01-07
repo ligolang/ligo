@@ -9,6 +9,7 @@ import AST.Parser (parsePreprocessed)
 import AST.Scope (pattern FindContract, HasScopeForest, ScopeError, addShallowScopes)
 import Parser (collectTreeErrors)
 import ParseTree (Source (Path))
+import Progress (noProgress)
 
 import Test.Common.FixedExpectations (Expectation, HasCallStack, expectationFailure)
 
@@ -29,7 +30,7 @@ checkFile True (Path -> path) = do
         "Parsing failed, but it shouldn't have. " <>
         "Messages: " <> show msgs' <> "."
       [] -> do
-        res' <- try @_ @ScopeError (addShallowScopes @parser c)
+        res' <- try @_ @ScopeError (addShallowScopes @parser noProgress c)
         case res' of
           Left err -> expectationFailure $
             "Scoping failed, but it shouldn't have. " <>
@@ -49,7 +50,7 @@ checkFile False (Path -> path) = do
     Right c@(FindContract _file tree []) -> case collectTreeErrors tree of
       [] -> expectationFailure "Parsing succeeded, but it shouldn't have."
       _ : _ -> do
-        res' <- try @_ @ScopeError (addShallowScopes @parser c)
+        res' <- try @_ @ScopeError (addShallowScopes @parser noProgress c)
         case res' of
           Right (FindContract _file tree' []) -> case collectTreeErrors tree' of
             [] -> expectationFailure "Scoping succeeded, but it shouldn't have."

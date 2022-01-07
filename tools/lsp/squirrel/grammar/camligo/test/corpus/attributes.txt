@@ -9,10 +9,10 @@ type foo = [@boom] | True | False
 (source_file
   (type_decl
     (TypeName)
-    (sum_type
+    (sum_type_fun_type_level
       (attr)
-      (variant (ConstrName))
-      (variant (ConstrName))
+      (variant_fun_type_level (ConstrName))
+      (variant_fun_type_level (ConstrName))
     )
   )
 )
@@ -29,9 +29,9 @@ type foo = [@boom] True | False
 (source_file
   (type_decl
     (TypeName)
-    (sum_type
-      (variant (attr) (ConstrName))
-      (variant (ConstrName))
+    (sum_type_fun_type_level
+      (variant_fun_type_level (attr) (ConstrName))
+      (variant_fun_type_level (ConstrName))
     )
   )
 )
@@ -48,9 +48,9 @@ type foo = | [@boom] True | False
 (source_file
   (type_decl
     (TypeName)
-    (sum_type
-      (variant (attr) (ConstrName))
-      (variant (ConstrName))
+    (sum_type_fun_type_level
+      (variant_fun_type_level (attr) (ConstrName))
+      (variant_fun_type_level (ConstrName))
     )
   )
 )

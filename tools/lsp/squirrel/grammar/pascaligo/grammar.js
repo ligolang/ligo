@@ -55,9 +55,14 @@ module.exports = grammar({
       seq(
         "type",
         field("typeName", $.TypeName),
+        optional(field("params", $.type_params)),
         "is",
         field("typeValue", $._type_expr),
       ),
+
+    type_params: $ => common.par(
+      common.sepBy1(",", field("param", $.var_type)),
+    ),
 
     _type_expr: $ => choice(
       $.sum_type,
@@ -105,14 +110,15 @@ module.exports = grammar({
       $.Int,
       $.TypeName,
       $.TypeWildcard,
+      $.string_type,
       $.fun_type,
       $.prod_type,
       $.app_type,
-      $.michelsonTypeOr,
-      $.michelsonTypeAnd,
       $.module_TypeName,
       $.type_group,
     ),
+
+    var_type: $ => field("name", $.TypeVariableName),
 
     module_TypeName: $ =>
       seq(
@@ -135,46 +141,20 @@ module.exports = grammar({
       )
     ),
 
+    string_type: $ => field("value", $.String),
+
     type_group: $ => common.par(field("type", $._type_expr)),
 
     app_type: $ => prec.left(8, seq(field("name", $._simple_type), $._type_arg)),
 
     _type_arg: $ => common.par(common.sepBy1(',', field("arg", $._type_expr))),
 
-    michelsonTypeOr: $ =>
-      seq(
-        "michelson_or",
-        "(",
-        field("left_type", $._type_expr),
-        ",",
-        field("left_type_name", $.String),
-        ",",
-        field("right_type", $._type_expr),
-        ",",
-        field("right_type_name", $.String),
-        ")",
-      ),
-
-    michelsonTypeAnd: $ =>
-      seq(
-        "michelson_pair",
-        "(",
-        field("left_type", $._type_expr),
-        ",",
-        field("left_type_name", $.String),
-        ",",
-        field("right_type", $._type_expr),
-        ",",
-        field("right_type_name", $.String),
-        ")",
-      ),
-
     /// CONSTANT DECLARATION
 
     const_decl: $ => common.withAttrs($,
       seq(
         'const',
-        field("name", $.NameDecl),
+        field("name", $._core_pattern),
         optional(seq(
           ':',
           field("type", $._type_expr),
@@ -221,13 +201,14 @@ module.exports = grammar({
 
     _statement: $ =>
       choice(
-        $.type_decl,
         $._open_data_decl,
         $._instruction,
       ),
 
     _open_data_decl: $ =>
       choice(
+        // TODO (LIGO-217): support module decl and module alias
+        $.type_decl,
         $.const_decl,
         $.var_decl,
         $.fun_decl,
@@ -760,38 +741,33 @@ module.exports = grammar({
     // attempt to parse the contract even if `ligo preprocess` failed.
     preprocessor: $ => field("preprocessor_command", choice(
       $.p_include,
+      $.p_import,
       $.p_if,
       $.p_error,
       $.p_define,
     )),
 
     p_include: $ => seq(
-      '#',
-      'include',
+      /#\s*include/,
       field("filename", $.String)
     ),
 
     p_import: $ => seq(
-      '#',
-      'import',
+      /#\s*import/,
       field("filename", $.String),
       field("alias", $.String),
     ),
 
     p_if: $ => choice(
       seq(
-        '#',
-        choice('if', 'elif', 'else'),
+        /#\s*(if|elif|else)/,
         field("rest", $._till_newline),
       ),
-      seq(
-        '#',
-        'endif',
-      ),
+      /#\s*endif/,
     ),
 
-    p_error: $ => seq('#', 'error', field("message", $._till_newline)),
-    p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
+    p_error: $ => seq(/#\s*error/, field("message", $._till_newline)),
+    p_define: $ => seq(/#\s*(define|undef)/, field("definition", $._till_newline)),
 
     /// MISCELLANEOUS UTILITIES
 
@@ -836,6 +812,7 @@ module.exports = grammar({
     TypeName: $ => $._Name,
     Name: $ => $._Name,
     NameDecl: $ => $._Name,
+    TypeVariableName: $ => $._Name,
 
     _till_newline: $ => /[^\n]*\n/,
 

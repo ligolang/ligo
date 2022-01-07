@@ -69,12 +69,14 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
-  (Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..),
-  withNestedLIGO)
+  ( Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
+  , TypeVariableName (..), withNestedLIGO
+  )
 import Cli.Types
 import ParseTree
 import Parser
 import Product
+import Progress (ProgressCallback)
 import Range
 import Util (findKey, unionOrd)
 import Util.Graph (traverseAMConcurrently)
@@ -118,7 +120,10 @@ makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
 class HasLigoClient m => HasScopeForest impl m where
-  scopeForest :: AdjacencyMap ParsedContractInfo -> m (AdjacencyMap (FindFilepath ScopeForest))
+  scopeForest
+    :: ProgressCallback m
+    -> AdjacencyMap ParsedContractInfo
+    -> m (AdjacencyMap (FindFilepath ScopeForest))
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -233,13 +238,13 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       where
         sortMap = sortOn fst . map (scopeRange &&& id)
 
-    -- Merges the references of two 'ScopedDecl's in a left-biased fashion.
+    -- Merges the references of two 'ScopedDecl's in a right-biased fashion.
     -- In the current implementation, the compiler's scopes will be on the right
     -- and the fallback ones will be on the left.
     mergeRefs :: ScopedDecl -> ScopedDecl -> ScopedDecl
-    mergeRefs l r = l
-      { _sdRefs = unionOrd (_sdRefs l) (_sdRefs r)
-      , _sdDoc  = unionOrd (_sdDoc  l) (_sdDoc  r)
+    mergeRefs l r = r
+      { _sdRefs = unionOrd (_sdRefs r) (_sdRefs l)
+      , _sdDoc  = unionOrd (_sdDoc  r) (_sdDoc  l)
       }
 
     -- Merge two sets of DeclRefs preferring decls that have a smaller range
@@ -315,16 +320,21 @@ addLocalScopes tree forest =
     , Descent \(i, TypeName t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeName t)
+
+    , Descent \(i, TypeVariableName t) -> do
+        let env = envAtPoint (getPreRange i) forest
+        return (env :> Just TypeLevel :> i, TypeVariableName t)
     ]
 
 addScopes
   :: forall impl m
    . (HasScopeForest impl m, MonadUnliftIO m)
-  => AdjacencyMap ParsedContractInfo
+  => ProgressCallback m
+  -> AdjacencyMap ParsedContractInfo
   -> m (AdjacencyMap ContractInfo')
-addScopes graph = do
+addScopes reportProgress graph = do
   -- Bottom-up: add children forests into their parents
-  forestGraph <- scopeForest @impl graph
+  forestGraph <- scopeForest @impl reportProgress graph
   let
     universe = nubForest $ foldr (mergeScopeForest OnUnion . contractTree) emptyScopeForest $ G.vertexList forestGraph
     -- Traverse the graph, uniting decls at each intersection, essentially

@@ -10,6 +10,7 @@ module Test.Common.Capabilities.CodeAction.ExtractTypeAlias
 import Control.Lens
 import Data.HashMap.Strict qualified as HM
 import Data.Text qualified as T
+import Data.Word (Word32)
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import System.FilePath ((</>))
@@ -30,7 +31,7 @@ data TestInfo = TestInfo
   , tiExpectedEdits :: [(Range, String)] -- [(range, newText)]
   }
 
-mkr :: Int -> Int -> Int -> Int -> Range
+mkr :: Word32 -> Word32 -> Word32 -> Word32 -> Range
 mkr sl sc rl rc = Range (sl, sc, 0) (rl, rc, 0) ""
 
 testInfos :: [TestInfo]
@@ -44,6 +45,22 @@ testInfos =
         , (mkr 2 29 2 32 , extractedTypeNameAlias)
         , (mkr 3 13 3 16 , extractedTypeNameAlias)
         , (mkr 1  1 1  1 , "type " <> extractedTypeNameAlias <> " is nat\n")
+        ]
+    }
+  , TestInfo
+    { tiContract = "parametric.mligo"
+    , tiCursor = interval 1 22 35
+    , tiExpectedEdits =
+        [ (mkr 1 22 1 35 , extractedTypeNameAlias)
+        , (mkr 1  1 1  1 , "type ('a, 'b) " <> extractedTypeNameAlias <> " = int * 'a * 'b\n")
+        ]
+    }
+  , TestInfo
+    { tiContract = "existential.mligo"
+    , tiCursor = interval 1 9 17
+    , tiExpectedEdits =
+        [ (mkr 1 9 1 17 , extractedTypeNameAlias)
+        , (mkr 1 1 1  1 , "type ('a, 'b) " <> extractedTypeNameAlias <> " = 'a -> 'b\n")
         ]
     }
   ]

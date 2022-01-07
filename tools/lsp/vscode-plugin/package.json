@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.4.5",
+    "version":  "0.4.6",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -31,7 +31,7 @@
                     "PascaLIGO"
                 ],
                 "extensions": [
-                    "ligo"
+                    ".ligo"
                 ],
                 "configuration": "./syntaxes/ligo.configuration.json"
             },
@@ -41,7 +41,7 @@
                     "CameLIGO"
                 ],
                 "extensions": [
-                    "mligo"
+                    ".mligo"
                 ],
                 "configuration": "./syntaxes/mligo.configuration.json"
             },
@@ -51,7 +51,7 @@
                     "ReasonLIGO"
                 ],
                 "extensions": [
-                    "religo"
+                    ".religo"
                 ],
                 "configuration": "./syntaxes/religo.configuration.json"
             }
@@ -88,16 +88,42 @@
                     "type": "string",
                     "default": "ligo",
                     "description": "Path to the ligo binary, default one is extracted from $PATH variable."
+                },
+                "ligoLanguageServer.disabledFeatures": {
+                    "scope": "resource",
+                    "type": "array",
+                    "default": [],
+                    "description": "Disable specific LIGO LSP features. For a list of features, see [the README.md](https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/tools/lsp/vscode-plugin/README.md)."
                 }
             }
-        }
+        },
+        "commands": [
+            {
+                "command": "ligo.startServer",
+                "title": "LIGO: Start LIGO LSP server",
+                "description": "Starts the LIGO LSP server"
+            },
+            {
+                "command": "ligo.stopServer",
+                "title": "LIGO: Stop LIGO LSP server",
+                "description": "Stops the LIGO LSP server"
+            },
+            {
+                "command": "ligo.restartServer",
+                "title": "LIGO: Restart LIGO LSP server",
+                "description": "Stops then starts the LIGO LSP server"
+            }
+        ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -b",
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "compile": "npm run esbuild-base -- --sourcemap",
+        "esbuild-base": "esbuild ./client/src/extension.ts --bundle --outfile=./client/out/extension.js --external:vscode --format=cjs --platform=node",
         "watch": "tsc -b -w",
         "package": "vsce package",
-        "lint": "eslint client/src/*.ts"
+        "lint": "eslint . --ext .ts",
+        "build-tests": "tsc -p ./test/",
+        "test": "npm run build-tests && node client/out/test/driver.js"
     },
     "dependencies": {
         "axios": "^0.21.1",
@@ -105,13 +131,19 @@
         "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
+        "@types/mocha": "^9.0.0",
         "@types/node": "^15.12.2",
         "@types/vscode": "^1.57.0",
         "@typescript-eslint/eslint-plugin": "^4.27.0",
         "@typescript-eslint/parser": "^4.27.0",
+        "@vscode/test-electron": "^1.6.1",
+        "esbuild": "^0.13.4",
         "eslint": "^7.28.0",
         "eslint-config-airbnb-base": "^14.2.1",
         "eslint-plugin-import": "^2.23.4",
+        "glob": "^7.2.0",
+        "mocha": "^9.1.3",
+        "ts-command-line-args": "^2.1.0",
         "typescript": "^4.3.2",
         "vsce": "^1.93.0"
     }

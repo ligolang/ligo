@@ -98,9 +98,14 @@ module.exports = grammar({
       seq(
         'type',
         field("type_name", $.TypeName),
+        optional(field("params", $.type_params)),
         '=',
         field("type_value", $._type_expr),
       ),
+
+    type_params: $ => common.par(
+      common.sepBy1(",", field("param", $.var_type)),
+    ),
 
     _type_expr: $ =>
       choice(
@@ -153,7 +158,13 @@ module.exports = grammar({
         $.TypeName,
         $.app_type,
         $.module_TypeName,
+        $.var_type,
       ),
+
+    var_type: $ => seq(
+      "'",
+      field("name", $.TypeVariableName),
+    ),
 
     app_type: $ =>
       seq(
@@ -161,22 +172,7 @@ module.exports = grammar({
         field("arguments", $._type_arguments),
       ),
 
-    _type_arguments: $ => choice(
-      // $.michelson_tuple,
-      common.par(common.sepBy(',', field("argument", $._type_expr))),
-    ),
-
-    michelson_tuple: $ => seq(
-      '(',
-      field("arg1", $._type_expr),
-      ',',
-      field("label1", $.String),
-      ',',
-      field("arg2", $._type_expr),
-      ',',
-      field("label2", $.String),
-      ')',
-    ),
+    _type_arguments: $ => common.par(common.sepBy(',', field("argument", $._type_expr))),
 
     module_TypeName: $ =>
       seq(
@@ -188,7 +184,7 @@ module.exports = grammar({
     tuple_type: $ =>
       common.par(common.sepBy1(',', field("element", $._type_expr))),
 
-    string_type: $ => $.String,
+    string_type: $ => field("value", $.String),
 
     /// LET DECLARATIONS
 
@@ -598,6 +594,7 @@ module.exports = grammar({
     TypeName: $ => $._Name,
     Name: $ => $._Name,
     NameDecl: $ => $._Name,
+    TypeVariableName: $ => $._Name,
 
     _till_newline: $ => /[^\n]*\n/,
 

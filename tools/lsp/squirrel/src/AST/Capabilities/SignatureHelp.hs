@@ -168,7 +168,7 @@ getSignatureHelp
 getSignatureHelp tree position = LSP.SignatureHelp
   { _signatures = LSP.List (sigResult ^.. _Just . _1)
   , _activeSignature = Just 0
-  , _activeParameter = snd =<< sigResult
+  , _activeParameter = fmap fromIntegral . snd =<< sigResult
   }
   where
     sigResult = findSignature tree position

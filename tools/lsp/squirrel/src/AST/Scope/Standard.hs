@@ -29,8 +29,8 @@ import Util.Graph (traverseAMConcurrently)
 data Standard
 
 instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
-  scopeForest pc = do
-    lgForest <- scopeForest @FromCompiler pc `catches`
+  scopeForest reportProgress pc = do
+    lgForest <- scopeForest @FromCompiler reportProgress pc `catches`
       [ Handler \case
           -- catch only errors that we expect from ligo and try to use fallback parser
           LigoDecodedExpectedClientFailureException err -> addLigoErrToMsg $ fromLigoErrorToMsg err
@@ -43,7 +43,7 @@ instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
     fbForest <- fallbackForest
     merge lgForest fbForest
     where
-      fallbackForest = scopeForest @Fallback pc
+      fallbackForest = scopeForest @Fallback reportProgress pc
 
       addLigoErrToMsg err = G.gmap (getContract . cMsgs %~ (`rewriteAt` err)) <$> fallbackForest
 
