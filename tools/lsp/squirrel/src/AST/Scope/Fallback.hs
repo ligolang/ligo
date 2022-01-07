@@ -1,11 +1,13 @@
 module AST.Scope.Fallback
   ( Fallback
   , loop
+  , loopM
   , loopM_
   ) where
 
+import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
-import Control.Lens ((%~), (&))
+import Control.Lens ((%~), (&), _Just, _head)
 import Control.Monad.Catch.Pure hiding (throwM)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.State
@@ -16,55 +18,65 @@ import Data.Foldable (for_, toList)
 import Data.Functor ((<&>))
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Maybe (listToMaybe)
+import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Set qualified as Set
 import Data.Text (Text)
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
+import UnliftIO.MVar (modifyMVar, newMVar)
 
 import AST.Pretty (PPableLIGO)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
-  ( DeclarationSpecifics (..), Scope, ScopedDecl (..), ValueDeclSpecifics (..)
-  , fillTypeIntoCon
+  ( DeclarationSpecifics (..), Scope, ScopedDecl (..), Type (VariableType)
+  , TypeDeclSpecifics (..), TypeParams (..), TypeVariable (..), ValueDeclSpecifics (..)
+  , fillTypeIntoCon, fillTypeParams
   )
-import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics)
-import AST.Skeleton hiding (Type)
+import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics, parseTypeParams)
+import AST.Skeleton hiding (Type, TypeParams (..))
 import Cli.Types
 import Control.Monad.Except
 import Control.Monad.Trans.Reader
+import Log (i)
 import Parser
+import ParseTree (srcPath)
 import Product
+import Progress (Progress (..), (%))
 import Range
 import Util (foldMapM, unconsFromEnd)
-import Util.Graph (traverseAMConcurrently)
+import Util.Graph (forAMConcurrently)
 
 data Fallback
 
 instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
-  -- TODO: 'mkForest' is pure, so we should find a parallel function and use it
-  -- instead, and then call 'pure'
-  scopeForest = traverseAMConcurrently mkForest
-    where
-      mkForest (FindContract src (SomeLIGO dialect ligo) msg) = do
-        let runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
-            fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
-            sf = case runLigoEnv ligo of
-              Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
-              Right sf' -> FindContract src sf' msg
-        pure sf
+  scopeForest reportProgress graph = do
+    let nContracts = G.vertexCount graph
+    -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
+    -- 'StateT'. It's best to avoid using this class for stateful monads.
+    counter <- newMVar 0
+    forAMConcurrently graph \(FindContract src (SomeLIGO dialect ligo) msg) -> do
+      n <- modifyMVar counter (pure . (succ &&& id))
+      reportProgress $ Progress (n % nContracts) [i|Adding scopes for #{srcPath src}|]
+      let
+        runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
+        fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
+        sf = case runLigoEnv ligo of
+          Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
+          Right sf' -> FindContract src sf' msg
+      pure sf
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
   where
     addRef :: LIGO ParsedInfo -> State ScopeForest ()
     addRef = \case
-      (match -> Just (r, Name     n)) -> addThisRef TermLevel (getElem r) n
-      (match -> Just (r, NameDecl n)) -> addThisRef TermLevel (getElem r) n
-      (match -> Just (r, Ctor     n)) -> addThisRef TermLevel (getElem r) n
-      (match -> Just (r, TypeName n)) -> addThisRef TypeLevel (getElem r) n
-      _                               -> return ()
+      (match -> Just (r, Name             n)) -> addThisRef TermLevel (getElem r) n
+      (match -> Just (r, NameDecl         n)) -> addThisRef TermLevel (getElem r) n
+      (match -> Just (r, Ctor             n)) -> addThisRef TermLevel (getElem r) n
+      (match -> Just (r, TypeName         n)) -> addThisRef TypeLevel (getElem r) n
+      (match -> Just (r, TypeVariableName n)) -> addThisRef TypeLevel (getElem r) n
+      _                                       -> pure ()
 
     addThisRef :: Level -> PreprocessedRange -> Text -> State ScopeForest ()
     addThisRef cat' (PreprocessedRange r) n = do
@@ -204,6 +216,19 @@ assignDecls
 assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
   where
     go = \case
+      -- TODO (LIGO-318): We get declarations twice because of this branch.
+      -- For example, suppose we have some BTypeDecl followed by a BConst. We'd
+      -- get the decls for BTypeDecl and put them in BConst's scope. But then,
+      -- because of the loopM above, we'd eventually get to the BTypeDecl again
+      -- and once more extract its declarations.
+      -- Unfortunately, it can't just be trivially removed, because it would
+      -- break things, and tests would start failing.
+      -- This also means that branches that do non-trivial operations on the
+      -- decl node may be incorrect (i.e., do not simply use markAsScope), since
+      -- their branches are not properly visited. Again using the example above,
+      -- we want to fill BTypeDecl's decl with the parsed type variables, but
+      -- it's too bad they won't appear here since we do it below. I'm not sure
+      -- what kind of problems may arise.
       (match -> Just (r, Let decl body)) -> do
         imm <- getImmediateDecls decl
         let r' :< body' = body
@@ -237,11 +262,21 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
         let b' = b & _extract %~ (putElem True . modElem (imms <>))
         pure (make (r', BFunction False n params ty b'))
 
+      node@(match -> Just (r, BTypeDecl t tyVars b)) -> do
+        imms <- getImmediateDecls node
+        let parsedVars = parseTypeParams =<< tyVars
+        let imms' = maybe imms (\vars -> imms & _head %~ fillTypeParams vars) parsedVars
+        varDecls <- fromMaybe [] <$> traverse typeVariableScopedDecl parsedVars
+
+        let r' = putElem True $ modElem (imms' <>) r
+        let tyVars' = tyVars & _Just . _extract %~ (putElem True . modElem (varDecls <>))
+        let b' = b & _extract %~ (putElem True . modElem (varDecls <>))
+        pure (make (r', BTypeDecl t tyVars' b'))
+
       (match -> Just (r, node@BVar{})) -> markAsScope r node
       (match -> Just (r, node@BConst{})) -> markAsScope r node
       (match -> Just (r, node@BParameter{})) -> markAsScope r node
       (match -> Just (r, node@IsVar{})) -> markAsScope r node
-      (match -> Just (r, node@BTypeDecl{})) -> markAsScope r node
 
       it -> pure it
 
@@ -307,7 +342,10 @@ typeScopedDecl
      , PPableLIGO info
      , Contains PreprocessedRange info
      )
-  => [Text] -> LIGO info -> LIGO info -> ScopeM ScopedDecl
+  => [Text]  -- ^ documentation comments
+  -> LIGO info  -- ^ name node
+  -> LIGO info  -- ^ type body node
+  -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
   dialect <- lift ask
   (PreprocessedRange origin, name) <- getTypeName nameNode
@@ -317,8 +355,26 @@ typeScopedDecl docs nameNode body = do
     , _sdRefs = []
     , _sdDoc = docs
     , _sdDialect = dialect
-    , _sdSpec = TypeSpec (parseTypeDeclSpecifics body)
+    , _sdSpec = TypeSpec Nothing (parseTypeDeclSpecifics body)  -- The type variables are filled later
     }
+
+typeVariableScopedDecl :: TypeParams -> ScopeM Scope
+typeVariableScopedDecl tyVars = do
+  dialect <- lift ask
+  pure case tyVars of
+    TypeParam var -> [mkTyVarScope dialect var]
+    TypeParams vars -> map (mkTyVarScope dialect) vars
+  where
+    mkTyVarScope dialect (TypeDeclSpecifics r tv@(TypeVariable name)) =
+      let tspec = TypeDeclSpecifics r $ VariableType tv in
+      ScopedDecl
+        { _sdName = name
+        , _sdOrigin = r
+        , _sdRefs = []
+        , _sdDoc = []
+        , _sdDialect = dialect
+        , _sdSpec = TypeSpec Nothing tspec
+        }
 
 -- | Wraps a value into a list. Like 'pure' but perhaps with a more clear intent.
 singleton :: a -> [a]
@@ -418,7 +474,7 @@ getImmediateDecls = \case
       BParameter n t ->
         singleton <$> valueScopedDecl (getElem r) n t Nothing
 
-      BTypeDecl t b -> do
+      BTypeDecl t _ b -> do
         typeDecl <- typeScopedDecl (getElem r) t b
         -- Gather all other declarations from the depths of ast, such as type
         -- sum constructors, nested types etc. Then, fill in missing types of
@@ -440,6 +496,10 @@ getImmediateDecls = \case
     TRecord typeFields -> foldMapM getImmediateDecls typeFields
     TProduct typs -> foldMapM getImmediateDecls typs
     TSum variants -> foldMapM getImmediateDecls variants
+    -- TODO: Currently, we don't handle type variables in type signatures for
+    -- terms. LIGO doesn't seem to yet compile contracts with them, and I'm not
+    -- sure what are the scoping rules for them (e.g.: whether they are true
+    -- type variables or existentials).
     _ -> pure []
     -- there are most probably others, add them as problems arise
 

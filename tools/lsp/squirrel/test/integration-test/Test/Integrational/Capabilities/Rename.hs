@@ -6,6 +6,7 @@ module Test.Integrational.Capabilities.Rename
   , unit_rename_in_included_file_fallback
   , unit_rename_nested_include
   , unit_rename_nested_include_fallback
+  , unit_rename_type_variable
   ) where
 
 import AST.Scope (Fallback, Standard)
@@ -35,3 +36,6 @@ unit_rename_nested_include = renameNestedInclude @Standard
 
 unit_rename_nested_include_fallback :: Assertion
 unit_rename_nested_include_fallback = renameNestedInclude @Fallback
+
+unit_rename_type_variable :: Assertion
+unit_rename_type_variable = renameTypeVariable @Standard

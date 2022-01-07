@@ -7,9 +7,9 @@ import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)
 
-import Test.Common.Util (getResponseResult, openLigoDoc, runHandlersTest)
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.LSP (getResponseResult, openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "folding-range"

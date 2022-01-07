@@ -3,6 +3,8 @@
 module Util.Graph
   ( traverseAM
   , traverseAMConcurrently
+  , forAM
+  , forAMConcurrently
   , wcc
   ) where
 
@@ -43,6 +45,14 @@ traverseAM = traverseAMImpl traverse
 -- | Traverse an adjacency map concurrently.
 traverseAMConcurrently :: (MonadUnliftIO m, Ord a, Ord b) => (a -> m b) -> AdjacencyMap a -> m (AdjacencyMap b)
 traverseAMConcurrently = traverseAMImpl pooledMapConcurrently
+
+-- | Flipped version of 'traverseAM'.
+forAM :: (Monad m, Ord a, Ord b) => AdjacencyMap a -> (a -> m b) -> m (AdjacencyMap b)
+forAM = flip traverseAM
+
+-- | Flipped version of 'traverseAMConcurrently'.
+forAMConcurrently :: (MonadUnliftIO m, Ord a, Ord b) => AdjacencyMap a -> (a -> m b) -> m (AdjacencyMap b)
+forAMConcurrently = flip traverseAMConcurrently
 
 -- | Contains the state used internally by 'wcc'.
 data StateWCC a = WCC

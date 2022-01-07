@@ -10,7 +10,6 @@ import Duplo.Tree
 
 import ParseTree
 import Parser
-import Product
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -29,8 +28,15 @@ recognise (SomeRawTree dialect rawTree)
         "let_decl"  -> BConst    <$>                      field "name"                  <*> fieldOpt "type" <*> fieldOpt "body"
         "p_include" -> BInclude  <$>                      field "filename"
         "p_import"  -> BImport   <$>                      field "filename" <*> field "alias"
-        "type_decl" -> BTypeDecl <$> field "name" <*> field "type"
+        "type_decl" -> BTypeDecl <$> field "name"     <*> fieldOpt "params" <*> field "type"
         _           -> fallthrough
+
+    -- TypeParams
+  , Descent do
+      boilerplate \case
+        "type_param"  -> TypeParam  <$> field  "param"
+        "type_params" -> TypeParams <$> fields "param"
+        _             -> fallthrough
 
   , Descent do
       boilerplate $ \case
@@ -45,7 +51,7 @@ recognise (SomeRawTree dialect rawTree)
         "record_literal"    -> Record     <$> fields "field"
         "if_expr"           -> If         <$> field  "condition" <*> field "then"  <*> fieldOpt "else"
         "match_expr"        -> Case       <$> field  "subject"   <*> fields "alt"
-        "lambda_expr"       -> Lambda     <$> fields "arg"       <*> pure Nothing  <*> field "body"
+        "lambda_expr"       -> Lambda     <$> fields "arg"       <*> fieldOpt "type" <*> field "body"
         "list_expr"         -> List       <$> fields "item"
         "tup_expr"          -> Tuple      <$> fields "x"
         "paren_expr"        -> Paren      <$> field  "expr"
@@ -175,13 +181,16 @@ recognise (SomeRawTree dialect rawTree)
     -- Type
   , Descent do
       boilerplate $ \case
+        "string_type"  -> TString  <$> field  "value"
         "fun_type"     -> TArrow   <$> field  "domain" <*> field "codomain"
         "prod_type"    -> TProduct <$> fields "x"
         "app_type"     -> TApply   <$> field  "f"      <*> fields "x"
         "record_type"  -> TRecord  <$> fields "field"
         "tuple_type"   -> TProduct <$> fields "x"
-        "sum_type"     -> TSum     <$> fields "variant"
         "TypeWildcard" -> pure TWildcard
+        "var_type"     -> TVariable <$> field "name"
+        "sum_type_prod_type_level" -> TSum <$> fields "variant"
+        "sum_type_fun_type_level"  -> TSum <$> fields "variant"
         _              -> fallthrough
 
     -- Module access:
@@ -194,8 +203,9 @@ recognise (SomeRawTree dialect rawTree)
     -- Variant
   , Descent do
       boilerplate $ \case
-        "variant" -> Variant <$> field "constructor" <*> fieldOpt "type"
-        _         -> fallthrough
+        "variant_prod_type_level" -> Variant <$> field "constructor" <*> fieldOpt "type"
+        "variant_fun_type_level"  -> Variant <$> field "constructor" <*> fieldOpt "type"
+        _                         -> fallthrough
 
     -- TField
   , Descent do
@@ -208,6 +218,12 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate' $ \case
         ("TypeName", name) -> return $ TypeName name
         _                  -> fallthrough
+
+    -- TypeVariableName
+  , Descent do
+      boilerplate' \case
+        ("TypeVariableName", name) -> pure $ TypeVariableName name
+        _                          -> fallthrough
 
     -- Preprocessor
   , Descent do
@@ -234,8 +250,5 @@ recognise (SomeRawTree dialect rawTree)
         _                    -> fallthrough
 
   -- Err
-  , Descent do
-      \(r :> _, ParseTree _ children source) ->
-        withComments do
-          return ([] :> r :> N :> CodeSource source :> Nil, Error source children)
+  , Descent noMatch
   ]

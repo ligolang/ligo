@@ -8,7 +8,7 @@ import Test.HUnit (Assertion)
 
 import Test.Common.Capabilities.Hover (contractsDir)
 import Test.Common.FixedExpectations (shouldSatisfy)
-import Test.Common.Util (openLigoDoc, runHandlersTest)
+import Test.Common.LSP (openLigoDoc, runHandlersTest)
 
 unit_hover :: Assertion
 unit_hover = do

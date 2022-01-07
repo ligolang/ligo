@@ -11,7 +11,9 @@ import Data.Aeson
   (FromJSON (parseJSON), Result (Error, Success), ToJSON (toJSON), Value, fromJSON, object,
   withObject, (.!=), (.:), (.:?), (.=))
 import Data.Default (Default (def))
+import Data.Set (Set)
 import Data.Text qualified as T
+import Language.LSP.Types qualified as J
 
 import Cli (LigoClientEnv (..))
 
@@ -36,12 +38,15 @@ data Config =
   Config
     { _cLigoBinaryPath :: FilePath -- ^ Path to ligo binary
     , _cMaxNumberOfProblems :: Int -- ^ Maximum amount of errors displayed
-    } deriving stock (Eq, Show)
+    , _cDisabledFeatures :: Set J.SomeClientMethod
+    -- ^ Features disabled in the language server.
+    } deriving stock (Show)
 
 instance Default Config where
   def = Config
     { _cLigoBinaryPath = _lceClientPath def -- Extract ligo binary from $PATH
     , _cMaxNumberOfProblems = 100
+    , _cDisabledFeatures = mempty
     }
 
 ----------------------------------------------------------------------------
@@ -54,9 +59,11 @@ instance FromJSON Config where
     flip (withObject "Config.settings") s $ \o -> do
       _cLigoBinaryPath <- o .:? "ligoBinaryPath" .!= _cLigoBinaryPath def
       _cMaxNumberOfProblems <- o .:? "maxNumberOfProblems" .!= _cMaxNumberOfProblems def
+      _cDisabledFeatures <- o .:? "disabledFeatures" .!= _cDisabledFeatures def
       pure Config
         { _cLigoBinaryPath = _cLigoBinaryPath
         , _cMaxNumberOfProblems = _cMaxNumberOfProblems
+        , _cDisabledFeatures
         }
 
 instance ToJSON Config where
@@ -65,4 +72,5 @@ instance ToJSON Config where
       r = object
         [ "ligoBinaryPath" .= _cLigoBinaryPath
         , "maxNumberOfProblems" .= _cMaxNumberOfProblems
+        , "disabledFeatures" .= _cDisabledFeatures
         ]

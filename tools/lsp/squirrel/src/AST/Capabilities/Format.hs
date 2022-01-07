@@ -20,37 +20,32 @@ import Parser
 import Product
 import Range
 
-callForFormat :: HasLigoClient m => Lang -> Source -> m (Maybe Text)
-callForFormat lang source =
+callForFormat :: HasLigoClient m => Source -> m (Maybe Text)
+callForFormat source =
     (Just . fst <$> getResult) `catchAny` \_ -> return Nothing
   where
-    syntax = case lang of
-      Reason -> "reasonligo"
-      Pascal -> "pascaligo"
-      Caml -> "cameligo"
-
     path = srcPath source
 
     getResult = callLigo
-      ["print", "pretty-print", path, "--syntax", syntax]
+      ["print", "pretty", path]
       (Path path)
 
 formatDocument :: HasLigoClient m => SomeLIGO Info' -> m (J.List J.TextEdit)
-formatDocument (SomeLIGO lang (extract -> info)) = do
+formatDocument (SomeLIGO _lang (extract -> info)) = do
   let CodeSource source = getElem info
   let r@Range{_rFile} = getElem info
-  out <- callForFormat lang (Text _rFile source)
+  out <- callForFormat (Text _rFile source)
   return . J.List $
     maybe [] (\out' -> [J.TextEdit (toLspRange r) out']) out
 
 formatAt :: HasLigoClient m => Range -> SomeLIGO Info' -> m (J.List J.TextEdit)
-formatAt at (SomeLIGO lang tree) = case spineTo (leq at . getElem) tree of
+formatAt at (SomeLIGO _lang tree) = case spineTo (leq at . getElem) tree of
   [] -> return $ J.List []
   (node:_) -> do
     let
       info = extract node
       CodeSource source = getElem info
       r@Range{_rFile} = getElem info
-    out <- callForFormat lang (Text _rFile source)
+    out <- callForFormat (Text _rFile source)
     return . J.List $
       maybe [] (\out' -> [J.TextEdit (toLspRange r) out']) out

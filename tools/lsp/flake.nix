@@ -53,6 +53,7 @@
               inherit grammars;
             }) # We don't want any overlays (static, cross, etc) applied to grammars
           ];
+          config = { allowUnfree = true; };
           localSystem = system;
         };
 
@@ -97,6 +98,8 @@
                 + "touch $out";
         };
 
+        # n.b.: If the dependency on ligo is changed for any test, remember to
+        # also update the main functions of the respective tests.
         integration-test = squirrel.checks.integration-test.overrideAttrs (oldAttrs: {
           buildInputs = [ ligo-bin ] ++ oldAttrs.buildInputs;
         });

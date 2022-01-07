@@ -1,1 +1,1 @@
-(contract (const u unit unit))
+(contract (const (? u) unit unit))
