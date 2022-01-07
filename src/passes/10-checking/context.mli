@@ -7,7 +7,7 @@ val pp : Format.formatter -> t -> unit
 
 val add_value    : t -> expression_variable -> type_expression -> t
 val add_type     : t -> type_variable       -> type_expression -> t
-val add_type_var : t -> type_variable       -> unit            -> t 
+val add_type_var : t -> type_variable       -> unit            -> t
 val add_kind     : t -> type_variable       -> unit            -> t
 val add_module   : t -> module_variable     -> t               -> t
 

@@ -35,7 +35,7 @@ let syntax =
 let on_chain_views : _ Command.Param.t =
   let open Command.Param in
   let doc  = "VIEWS A list of declaration name that will be compiled as on-chain views, separated by ','" in
-  let spec = optional_with_default [] @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in  
+  let spec = optional_with_default [] @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
   flag ~doc ~aliases:["v"] "--views" spec
 
 let steps =
@@ -88,14 +88,14 @@ let sender =
   let open Command.Param in
   let name = "--sender" in
   let doc  = "ADDRESS the sender the Michelson interpreter transaction will use." in
-  let spec = optional string in 
+  let spec = optional string in
   flag ~doc name spec
 
 let source =
   let open Command.Param in
   let name = "--source" in
   let doc  = "ADDRESS the source the Michelson interpreter transaction will use." in
-  let spec = optional string in 
+  let spec = optional string in
   flag ~doc name spec
 
 let disable_michelson_typechecking =
@@ -129,7 +129,7 @@ let display_format =
   let name = "--display-format" in
   let doc  = "format the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
   flag ~doc ~aliases:["--format"] name @@
-  optional_with_default human_readable @@ 
+  optional_with_default human_readable @@
   Command.Arg_type.create @@ function
     | "human-readable" -> human_readable
     | "dev"            -> dev
@@ -182,7 +182,7 @@ let werror =
   let name = "--werror" in
   let doc  = "treat warnings as errors" in
   flag ~doc name no_arg
-  
+
 let seed =
   let open Command.Param in
   let name = "--seed" in
@@ -195,6 +195,11 @@ let generator =
   let doc = "GEN the generator for mutation." in
   flag ~doc ~aliases:["g"] name @@ optional_with_default "random" string
 
+let self_pass =
+  let open Command.Param in
+  let name = "--self-pass" in
+  let doc  = "apply the self pass" in
+  flag ~doc name no_arg
 
 module Api = Ligo_api
 let (<*>) = Command.Param.(<*>)
@@ -212,7 +217,7 @@ let compile_file =
                   code. It expects a source file and an entrypoint \
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
-  Command.basic ~summary ~readme 
+  Command.basic ~summary ~readme
   (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments)
 
 
@@ -289,7 +294,7 @@ let transpile_expression =
   Command.basic ~summary ~readme
   (f <$> req_syntax <*> expression "" <*> req_syntax <*> dialect <*> display_format)
 
-let transpile_group = 
+let transpile_group =
   Command.group ~summary:"transpile ligo code from a syntax to another (BETA)" @@
   [ "contract"  , transpile_contract;
     "expression", transpile_expression;]
@@ -339,9 +344,9 @@ let test =
   (f <$> source_file <*> syntax <*> steps <*> protocol_version <*> display_format)
 
 let dry_run =
-  let f source_file input storage entry_point amount balance sender source now syntax protocol_version display_format warn werror () =
+  let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format warn werror () =
     return_result ~return ~warn @@
-    Api.Run.dry_run source_file entry_point input storage amount balance sender source now syntax protocol_version display_format werror
+    Api.Run.dry_run source_file entry_point parameter storage amount balance sender source now syntax protocol_version display_format werror
     in
   let summary   = "run a smart-contract with the given storage and input." in
   let readme () = "This sub-command runs a LIGO contract on a given \
@@ -391,7 +396,7 @@ let interpret =
   Command.basic ~summary ~readme
   (f <$> expression "EXPRESSION" <*> init_file <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format)
 
-let run_group = 
+let run_group =
   Command.group ~summary:"compile and interpret ligo code"
   [
     "test"         , test;
@@ -435,9 +440,9 @@ let get_scope =
   Command.basic ~summary ~readme
   (f <$> source_file <*> protocol_version <*> libraries <*> display_format <*> with_types)
 
-let info_group = 
+let info_group =
   let summary = "tools to get information from contracts" in
-  Command.group ~summary 
+  Command.group ~summary
   [ "list-declarations", list_declarations;
     "measure-contract" , measure_contract;
     "get-scope"        , get_scope; ]
@@ -505,31 +510,31 @@ let print_ast =
 
 
 let print_ast_sugar =
-  let f source_file syntax display_format () =
+  let f source_file syntax display_format self_pass () =
     return_result ~return @@
-    Api.Print.ast_sugar source_file syntax display_format
+    Api.Print.ast_sugar source_file syntax display_format self_pass
   in
   let summary   = "print the AST with syntatic sugar.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
                   stage, after desugaring step is applied." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> syntax <*> display_format <*> self_pass)
 
 let print_ast_core =
-  let f source_file syntax display_format () =
+  let f source_file syntax display_format self_pass () =
     return_result ~return @@
-    Api.Print.ast_core source_file syntax display_format
+    Api.Print.ast_core source_file syntax display_format self_pass
   in
   let summary  = "print the core ligo AST.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
                   core stage." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> syntax <*> display_format <*> self_pass)
 
 let print_ast_typed =
-  let f source_file syntax protocol_version display_format () =
+  let f source_file syntax protocol_version display_format self_pass () =
     return_result ~return @@
-    Api.Print.ast_typed source_file syntax protocol_version display_format
+    Api.Print.ast_typed source_file syntax protocol_version display_format self_pass
   in
   let summary   = "print the typed AST.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
@@ -537,7 +542,18 @@ let print_ast_typed =
                   type the contract, but the contract is not combined \
                   with imported modules." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format)
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass)
+
+let print_ast_aggregated =
+  let f source_file syntax protocol_version display_format self_pass () =
+    return_result ~return @@
+      Api.Print.ast_aggregated source_file syntax protocol_version display_format self_pass
+  in
+  let summary = "print the contract after aggregation.\n Warning: Intended for development of LIGO and can break at any time." in
+  let readme () = "This sub-command prints the source file in the AST \
+                   aggregated stage." in
+  Command.basic ~summary ~readme
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass)
 
 let print_ast_combined =
   let f source_file syntax protocol_version display_format () =
@@ -565,7 +581,7 @@ let print_mini_c =
   Command.basic ~summary ~readme
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> optimize)
 
-let print_group = 
+let print_group =
   let summary = "print intermediary program representation.\nWarning: Intended for development of LIGO and can break at any time" in
   Command.group ~summary ~preserve_subcommand_order:() @@
   [ "preprocessed"    , preprocessed;
@@ -577,6 +593,7 @@ let print_group =
     "ast-core"        , print_ast_core;
     "ast-typed"       , print_ast_typed;
     "ast-combined"    , print_ast_combined;
+    "ast-aggregated"  , print_ast_aggregated;
     "mini-c"          , print_mini_c; ]
 
 (** other *)
@@ -599,7 +616,7 @@ let repl =
     | None, _, _ -> Error ("", "Please check protocol name.")
     | _, _, None -> Error ("", "Please check run options.")
     | Some protocol, Some syntax, Some dry_run_opts ->
-       (Repl.main syntax display_format protocol false dry_run_opts init_file); Ok("","")) in
+       (Repl.main syntax display_format protocol dry_run_opts init_file); Ok("","")) in
   let summary   = "interactive ligo interpreter" in
   let _readme () = "" in
   Command.basic ~summary
@@ -617,14 +634,14 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"the LigoLANG co
     "print"    , print_group;
   ]
 
-let run ?argv () = 
+let run ?argv () =
   Command.run ~version:Version.version ?argv main;
   (* Effect to error code *)
   match !return with
     Done -> 0;
   | Compileur_Error -> 1;
   | Exception exn ->
-    let message msg = 
+    let message msg =
       Format.eprintf "An internal error ocurred. Please, contact the developers.@.";
       if !is_dev then Format.eprintf "%s.@." msg;
       Format.pp_print_flush Format.err_formatter () ;

@@ -31,7 +31,7 @@ let fold_map2_exn ~f ~init a b =
 let rec fold_map_right ~f ~init = function
     | [] -> (init , [])
     | hd :: tl ->
-        let init,tl = fold_map_right ~f ~init tl in 
+        let init,tl = fold_map_right ~f ~init tl in
         let init,hd = f init hd in
         init,hd::tl
 

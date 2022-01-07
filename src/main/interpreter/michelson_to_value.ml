@@ -176,7 +176,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *     D_operation op
    *   ) *)
   | Prim (_, "lambda", [_; _], _), ((Seq (_, _)) as c) ->
-      let open! Ast_typed in
+      let open! Ast_aggregated in
       let arg_binder = Var.fresh () in
       let arg_binder = Location.wrap arg_binder in
       (* These are temporal types, need to be patched later: *)
@@ -201,13 +201,13 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
   | ty, v ->
     raise.raise (untranspilable ty v)
 
-let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_typed.type_expression) : value =
+let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_aggregated.type_expression) : value =
   let open Stage_common.Constant in
   let open Ligo_interpreter.Combinators in
-  let open! Ast_typed in
+  let open! Ast_aggregated in
   let self = decompile_value ~raise ~bigmaps in
   match t.type_content with
-  | tc when (Ast_typed.Compare.type_content tc (t_bool ()).type_content) = 0 ->
+  | tc when (Compare.type_content tc (t_bool ()).type_content) = 0 ->
      v
   | T_constant { language; injection; parameters } -> (
     let () = Assert.assert_true ~raise
@@ -266,15 +266,15 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_typ
       v
   )
   | T_sum {layout ; content} ->
-      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
+      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout content in
       let (Label constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in
       let sub = self v tv in
       (V_Construct (constructor, sub))
   | T_record {layout ; content } ->
-      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
+      let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout content in
       let lst = Layout.extract_record ~raise ~layout v lst in
       let lst = List.Assoc.map ~f:(fun (y, z) -> self y z) lst in
-      let m' = Ast_typed.LMap.of_list lst in
+      let m' = Ast_aggregated.LMap.of_list lst in
       (V_Record m')
   | T_arrow {type1;type2} ->
       (* We now patch the types *)

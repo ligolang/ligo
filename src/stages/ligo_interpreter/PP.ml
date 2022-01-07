@@ -35,7 +35,7 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
     in
     Format.fprintf ppf "[%a]" (list_sep aux (tag " ; ")) vmap
   | V_Record recmap  ->
-    if (Ast_typed.Helpers.is_tuple_lmap recmap) then
+    if (Ast_aggregated.Helpers.is_tuple_lmap recmap) then
       let aux : Format.formatter -> value -> unit = fun ppf v ->
         Format.fprintf ppf "%a" pp_value v
       in
@@ -50,7 +50,7 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
   | V_Ligo (_syntax , code) ->
      Format.fprintf ppf "%s" code
   | V_Mutation (l, e) ->
-     Format.fprintf ppf "Mutation at: %a@.Replacing by: %a.@." Snippet.pp l Ast_typed.PP.expression e
+     Format.fprintf ppf "Mutation at: %a@.Replacing by: %a.@." Snippet.pp l Ast_aggregated.PP.expression e
   | V_Failure err ->
      match err with
      | Object_lang_ex {location;errors;calltrace = _} ->
@@ -65,12 +65,10 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term
 
-let rec pp_env : Format.formatter -> env -> unit = fun ppf env ->
+let pp_env : Format.formatter -> env -> unit = fun ppf env ->
   let aux : Format.formatter -> env_item -> unit = fun ppf ->
     function | Expression {name;item;no_mutation=_} ->
-                Format.fprintf ppf "%a -> %a" Var.pp name.wrap_content pp_value_expr item
-             | Module {name;item} ->
-                Format.fprintf ppf "%a -> %a" Ast_typed.PP.module_variable name pp_env item in
+                Format.fprintf ppf "%a -> %a" Var.pp name.wrap_content pp_value_expr item in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
     (List.length env)
     (list_sep aux (tag "@ "))
