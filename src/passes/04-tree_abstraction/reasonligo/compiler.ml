@@ -550,7 +550,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
       let (l , _loc) = r_split constr in
       let pv_opt = match p_opt with
         | Some pv -> conv ~raise pv
-        | None -> Location.wrap P_unit
+        | None -> Location.wrap ~loc P_unit
       in
       Location.wrap ~loc @@ P_variant (Label l, pv_opt)
   )

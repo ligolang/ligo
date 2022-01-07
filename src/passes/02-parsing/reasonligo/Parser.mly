@@ -348,16 +348,33 @@ irrefutable:
     in PTuple {region; value=$1} }
 
 sub_irrefutable:
-  "_"                     { PVar    (mk_wild $1#region) }
-| var_pattern             { PVar    $1 }
-| unit                    { PUnit   $1 }
-| record_pattern          { PRecord $1 }
-| par(closed_irrefutable) { PPar    $1 }
+  "_"                             { PVar    (mk_wild $1#region) }
+| var_pattern                     { PVar    $1 }
+| unit                            { PUnit   $1 }
+| record_pattern(sub_irrefutable) { PRecord $1 }
+| par(closed_irrefutable)         { PPar    $1 }
 
 closed_irrefutable:
-  irrefutable     {         $1 }
-| constr_pattern  { PConstr $1 }
-| typed_pattern   {  PTyped $1 }
+  irrefutable
+| constr_irrefutable                { $1 }
+| typed_pattern(irrefutable)        {  PTyped $1 }
+
+constr_irrefutable:
+  par(non_const_constr_irrefutable) {    PPar $1 }
+| constant_constr_pattern           { PConstr $1 }
+
+constant_constr_pattern:
+  "<uident>" {
+    let constr = unwrap $1 in
+    {constr with value = constr,None} }
+
+non_const_constr_irrefutable:
+  "<uident>" sub_irrefutable {
+    let constr = unwrap $1 in
+    let stop   = pattern_to_region $2 in
+    let region = cover constr.region stop
+    and value  = constr, Some $2 in
+    PConstr {region; value} }
 
 var_pattern:
   attributes "<ident>" {
@@ -365,17 +382,16 @@ var_pattern:
     let value = {variable; attributes=$1}
     in {variable with value} }
 
-typed_pattern:
-  irrefutable ":" type_expr  {
+typed_pattern(pattern):
+  pattern ":" type_expr  {
     let start  = pattern_to_region $1 in
     let stop   = type_expr_to_region $3 in
     let region = cover start stop in
     let value  = {pattern=$1; colon=$2; type_expr=$3}
     in {region; value} }
 
-pattern:
-  core_pattern { $1 }
-| "[" sub_pattern "," "..." sub_pattern "]" {
+list_pattern:
+  "[" core_pattern "," "..." pattern "]" {
     let lbracket = $1 in
     let comma = $3 in
     let ellipsis = $4 in
@@ -390,32 +406,30 @@ pattern:
         ellipsis;
         rpattern = $5;
         rbracket}
-    in PList (PCons {value;region})
-  }
-| tuple(sub_pattern) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
+    in PCons {value;region} }
 
-sub_pattern:
-  par(sub_pattern) { PPar $1 }
-| core_pattern     {      $1 }
+pattern:
+  ptuple
+| core_pattern { $1 }
+| typed_pattern(core_pattern) { PTyped $1 }
 
 core_pattern:
-  "<int>"              { PInt      (unwrap $1) }
-| "<nat>"              { PNat      (unwrap $1) }
-| "<bytes>"            { PBytes    (unwrap $1) }
-| "<string>"           { PString   (unwrap $1) }
-| "<verbatim>"         { PVerbatim (unwrap $1) }
-| "_"                  { PVar      (mk_wild $1#region) }
-| var_pattern          { PVar      $1 }
-| unit                 { PUnit     $1 }
-| par(ptuple)          { PPar      $1 }
-| list_of(sub_pattern) { PList     (PListComp $1) }
-| constr_pattern       { PConstr   $1 }
-| record_pattern       { PRecord   $1 }
+  "<int>"                       { PInt      (unwrap $1) }
+| "<nat>"                       { PNat      (unwrap $1) }
+| "<bytes>"                     { PBytes    (unwrap $1) }
+| "<string>"                    { PString   (unwrap $1) }
+| "<verbatim>"                  { PVerbatim (unwrap $1) }
+| "_"                           { PVar      (mk_wild $1#region) }
+| var_pattern                   { PVar      $1 }
+| unit                          { PUnit     $1 }
+| list_of(core_pattern)         { PList     (PListComp $1) }
+| constr_pattern                { PConstr   $1 }
+| record_pattern(core_pattern)  { PRecord   $1 }
+| list_pattern                  { PList     $1 }
+| par(pattern)                  { PPar      $1 }
 
-record_pattern:
-  "{" sep_or_term_list(field_pattern,",") "}" {
+record_pattern(rhs_pattern):
+  "{" sep_or_term_list(field_pattern(rhs_pattern),",") "}" {
     let lbrace = $1 in
     let rbrace = $3 in
     let ne_elements, terminator = $2 in
@@ -427,14 +441,14 @@ record_pattern:
       attributes=[]}
     in {region; value} }
 
-field_pattern:
+field_pattern(rhs_pattern):
   field_name {
     let region  = $1.region in
     let pattern = PVar {region; value = {variable=$1; attributes=[]}} in
     let value   = {field_name=$1; eq=ghost; pattern}
     in {region; value}
   }
-| field_name ":" sub_pattern {
+| field_name ":" rhs_pattern {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop
@@ -442,7 +456,7 @@ field_pattern:
     in {region; value} }
 
 constr_pattern:
-  "<uident>" ioption(sub_pattern) {
+  "<uident>" ioption(core_pattern) {
     let constr = unwrap $1 in
     let region =
       match $2 with
@@ -451,7 +465,7 @@ constr_pattern:
     in {region; value = (constr,$2)} }
 
 ptuple:
-  tuple(sub_pattern) {
+  tuple(core_pattern) {
     let region = nsepseq_to_region pattern_to_region $1
     in PTuple {region; value=$1} }
 

@@ -6,118 +6,113 @@ type myd = One(myt) | Two(myr);
 
 let t1 = 
   ((x: (myt, myt)) => 
-     let fr = ((x: myt) => 1);
-     let fl = ((x: myt) => 2);
+     let fr = ((_x: myt) => 1);
+     let fl = ((_x: myt) => 2);
      switch x{
      | Nil, ys => fr(ys)
      | xs, Nil => fl(xs)
      | Cons (a, b) , Cons (c, d) => a + b +c +d
      });
 
-// let t2 = 
-//   ((x: myt) => 
-//      ((y: myt) =>
-//         switch x {
-//         | Nil => {
-//             switch y {
-//             | Nil => 1
-//             | Cons (a, b) =>
-//                 let a = "a";
-//                 int(Bytes.length(a)) + b
-//             }
-//         }
-//         | Cons (a, b) =>
-//             let old_b = b;
-//             let b = 
-//               switch y{
-//               | Nil => {
-//                   let f = ((b: int) : int => a+b) ;
-//                   f(b+1)
-//               }
-//               | _ => a + b
-//               };
-//             a + old_b + b
-//         }));
+let t2 = 
+  ((x: myt) => 
+     ((y: myt) =>
+        switch x {
+        | Nil => {
+            switch y {
+            | Nil => 1
+            | Cons (_a, b) =>
+                let a = "a";
+                int(Bytes.length(a)) + b
+            }
+        }
+        | Cons (a, b) =>
+            let old_b = b;
+            let b = 
+              switch y{
+              | Nil => {
+                  let f = ((b: int) : int => a+b) ;
+                  f(b+1)
+              }
+              | _ => a + b
+              };
+            a + old_b + b
+        }));
 
-// REASONLIGO LEFTOVER (linearity check triggers when it should not)
-// let t3 = 
-//   ((x: myd) => 
-//      switch x{
-//      | One (Nil) => 1
-//      | One x => (
-//          switch x {
-//          | Nil => 2
-//          | Cons (a, b) => a + b
-//          }
-//      )
-//      | Two {a , b , c } => a + int (b) + int(Bytes.length(c))
-//      });
+let t3 = 
+  ((x: myd) => 
+     switch x{
+     | One (Nil) => 1
+     | One x => (
+         switch x {
+         | Nil => 2
+         | Cons (a, b) => a + b
+         }
+     )
+     | Two {a , b , c } => a + int (b) + int(Bytes.length(c))
+     });
 
-// REASONLIGO LEFTOVER (linearity check triggers when it should not)
-// let t2_3 = 
-//   ((x: myt) => 
-//      ((y: myt) => 
-//         ((x2: myd) => 
-//            let t2 = 
-//              switch x {
-//              | Nil => {
-//                  switch y {
-//                  | Nil => 1
-//                  | Cons(a, b) =>
-//                      let a = "a";
-//                      int(Bytes.length(a)) + b
-//                  }
-//              }
-//              | Cons (a, b) =>
-//                  let old_b = b;
-//                  let b = 
-//                    switch y{
-//                    | Nil =>
-//                        let f = ((b: int) => a + b);
-//                        f((ADD((b), (1))))
-//                    | Cons (a, b) => a + b
-//                    };
-//                  a + old_b + b
-//              };
-//            let t3 = 
-//              switch (x2) {
-//              | One Nil => 1
-//              | One x => {
-//                  switch x{
-//                  | Nil => 2
-//                  | Cons (a, b) => a + b
-//                  }
-//              }
-//              | Two {a : a , b : b , c : c } => a + b + int(Bytes.length(c))
-//              };
-//            t2 + t3 )));
+let t2_3 = 
+  ((x: myt) => 
+     ((y: myt) => 
+        ((x2: myd) => 
+           let t2 = 
+             switch x {
+             | Nil => {
+                 switch y {
+                 | Nil => 1
+                 | Cons(_a, b) =>
+                     let a = "a";
+                     int(Bytes.length(a)) + b
+                 }
+             }
+             | Cons (a, b) =>
+                 let old_b = b;
+                 let b = 
+                   switch y{
+                   | Nil =>
+                       let f = ((b: int) => a + b);
+                       f(b + 1)
+                   | Cons (a, b) => a + b
+                   };
+                 a + old_b + b
+             };
+           let t3 = 
+             switch (x2) {
+             | One Nil => 1
+             | One x => {
+                 switch x{
+                 | Nil => 2
+                 | Cons (a, b) => a + b
+                 }
+             }
+             | Two {a : a , b : b , c : c } => a + b + int(Bytes.length(c))
+             };
+           t2 + t3 )));
 
-// REASONLIGO LEFTOVER (linearity check triggers when it should not)
-// let t4 = 
-//   ((x: myd) => 
-//      ((y: myd) => 
-//         switch (x, y) {
-//         | a, One x => 1
-//         | One Nil, y => 2
-//         | One (Cons a, b), y => (ADD((a), (b)))
-//         | Two {a , b , c}, Two{a : aa, b : _, c : cc } =>
-//           a + int(b) + int (Bytes.length (c)) + aa + int (Bytes.length (cc))
-//         }));
+let t4 = 
+  ((x: myd) => 
+     ((y: myd) => 
+        switch (x, y) {
+        | a, One(_x) => 1
+        | One Nil, y => 2
+        | One (Cons (a, b)), y => a + b
+        | Two {a , b , c}, Two{a : aa, b : _, c : cc } =>
+          a + int(b) + int (Bytes.length (c)) + aa + int (Bytes.length (cc))
+        }));
 
-// REASONLIGO LEFTOVER
-// let t5 = (x: int) => {
-//   switch (x, ()) {
-//   | (a, ()) => a
-//   };
-// };
+let t5 = (x: int) => {
+  switch (x, ()) {
+  | (a, ()) => a
+  };
+};
 
-// REASONLIGO LEFTOVER
-// let t6 = 
-//   ((x: int) =>
-//      switch (x, ()) {
-//      | (_, _) => 2
-//      };
-//   )
+let t6 = 
+  ((x: int) =>
+     switch (x, ()) {
+     | (_, _) => 2
+     }
+  )
 
 let t7 = 
   ((x: option(int)) => 
@@ -131,7 +126,7 @@ let t8 =
      ((y: int) => 
         switch (x, y) {
         | None, x => x
-        | Some x, y => x + y
+        | Some (x, y), _ => x + y
         }));
 
 let t9 = 
@@ -140,16 +135,16 @@ let t9 =
         switch (x, y) {
         | None, ys => 1
         | xs, None => 2
-        | Some a, Some b => a+b
+        | Some(a), Some(b) => a+b
         }));
 
 type optioni = option(int);
 
 type myti = Consi(optioni) | Nili(unit);
 
-let fl = ((x: myti) => 1);
+let fl = ((_x: myti) => 1);
 
-let fo = ((x: optioni) => 2);
+let fo = ((_x: optioni) => 2);
 
 let t10 = 
   ((x: myti) => 
@@ -157,39 +152,38 @@ let t10 =
         switch (x, y) {
         | Nili, ys => fl(ys)
         | xs, Nili => fl(xs)
-        | Consi(None), Consi(Some b) =>
+        | Consi(None), Consi(Some(_b)) =>
           let b = 1;
           b
-        | Consi a, Consi b => fo(a) + fo(b)
+        | Consi(a), Consi(b) => fo(a) + fo(b)
         }));
 
 let t11 = 
   ((x: myti) => 
      ((y: myti) => 
-        switch (x, y) {
+        switch(x, y) {
         | Nili, ys => fl(ys)
         | xs, Nili => fl(xs)
-        | Consi(Some a), Consi(Some b) =>
+        | Consi(Some(_a)), Consi(Some(b)) =>
             let a = 1;
             a+b
-        | Consi a, Consi b => {
-            switch a {
+        | Consi(a), Consi(b) => {
+            switch(a) {
             | None => fo(a) + fo(b)
-            | Some a => a
+            | Some(a) => a
             }
         }
         }));
 
-// REASONLIGO LEFTOVER (nested list patterns)
-// let t12 = 
-//   ((x: list(int)) => 
-//      switch x{
-//      | [] => 0
-//      | [hd, ...[]] => hd
-//      | [hd, ...[hd2, ...[]]] => hd + hd2
-//      | [hd, ...[hd2, ...[hd3, ...[]]]] => hd + hd2 + hd3
-//      | [hd, ...tl] => (NEG((1)))
-//      });
+let t12 = 
+  ((x: list(int)) => 
+     switch x{
+     | [] => 0
+     | [hd, ...[]] => hd
+     | [hd, ...[hd2, ...[]]] => hd + hd2
+     | [hd, ...[hd2, ...[hd3, ...[]]]] => hd + hd2 + hd3
+     | [hd, ...tl] => -1
+     });
 
 type recordi = {a: option(list(int)), b: list(int) };
 
@@ -207,15 +201,14 @@ let b_empty_a_not = {
   b: ([] : list(int))
 };
 
-// REASONLIGO LEFTOVER (nested list patterns)
-// let t13 = 
-//   ((x: recordi) => 
-//      ((y: recordi) => 
-//         switch (x, y) {
-//         | {a : None, b : _ }, {a : _, b : _ } => -1
-//         | { a : _, b : _ }, {a : Some [], b : [hd, ...tl] } =>
-//             hd
-//         | { a : _, b = _ }, {a : Some [hd, ...tl], b : [] } =>
-//             hd
-//         | { a : Some a, b : _}, _ => int(Bytes.length(a))
-//         }));
+let t13 = 
+  ((x: recordi) => 
+     ((y: recordi) => 
+        switch (x, y) {
+        | {a : None, b : _ }, {a : _, b : _ } => -1
+        | { a : _, b : _ }, {a : Some([]), b : [hd, ..._tl] } =>
+            hd
+        | { a : _, b : _ }, {a : Some([hd, ..._tl]), b : [] } =>
+            hd
+        | { a : Some a, b : _}, _ => int(Bytes.length(a))
+        }));
