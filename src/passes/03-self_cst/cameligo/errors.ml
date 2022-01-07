@@ -45,8 +45,8 @@ let error_ppformat :
         var.value.name.value
     | `Self_cst_cameligo_duplicate_field_name var ->
       Format.fprintf f
-        "Duplicate field name %S in this record declaration.\n\
-        Hint: Change the name.\n"
+        "@[<hv>%a@.Duplicate field name %S in this record declaration.@.Hint: Change the name.@]"
+        Snippet.pp_lift var.region
         var.value
   )
 

@@ -1705,6 +1705,10 @@ Missing a type annotation for argument "b". |}];
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "duplicate_record_field.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative/duplicate_record_field.mligo", line 1, characters 23-26:
+      1 | type r = { foo : int ; foo : int }
+      2 |
+
     Duplicate field name "foo" in this record declaration.
     Hint: Change the name. |}];
 
