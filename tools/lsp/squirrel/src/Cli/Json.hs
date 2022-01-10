@@ -792,7 +792,7 @@ fromLigoTypeFull = enclose . \case
     enclose = flip evalState defaultState
 
     defaultState :: Product Info
-    defaultState = [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
+    defaultState = [] :> [] :> point 1 1 :> CodeSource "" :> Nil
 
 mkLigoError :: Product Info -> Text -> LIGO Info
 mkLigoError p msg = make' . (p,) $ Error msg [p :< inject (Name "ligo error")]

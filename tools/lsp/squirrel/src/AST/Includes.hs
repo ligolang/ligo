@@ -41,7 +41,6 @@ import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
 
 import Parser
   ( CodeSource (..), Info, LineMarker (..), LineMarkerType (..), ParsedInfo
-  , ShowRange (N)
   )
 import ParseTree (Source (..))
 import Product (Contains, Product (..), getElem, modElem, putElem)
@@ -213,7 +212,7 @@ includesGraph contracts = do
     emptyContract name =
       let
         p = point 0 0
-        info = PreprocessedRange p :> [] :> [] :> p :> N :> CodeSource "" :> Nil
+        info = PreprocessedRange p :> [] :> [] :> p :> CodeSource "" :> Nil
       in
       FindContract
         (Path name)

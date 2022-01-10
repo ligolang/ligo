@@ -28,7 +28,7 @@ import Duplo.Tree (Tree)
 
 import AST.Skeleton hiding (Type)
 import AST.Skeleton qualified as AST
-import Parser (LineMarker (..), LineMarkerType (..), ShowRange)
+import Parser (LineMarker (..), LineMarkerType (..))
 import Product (Contains)
 import Range (Range)
 
@@ -804,5 +804,4 @@ docToText = Text.pack . show
 type PPableLIGO info =
   ( Contains [Text] info
   , Contains Range info
-  , Contains ShowRange info
   )

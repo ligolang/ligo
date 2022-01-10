@@ -157,7 +157,7 @@ constructTypeAlias dialect alias typeVars t Range{_rStart = (sl, sc, _)} =
       tVars  -> Just $ defaultState :< inject (TypeParams tVars)
 
 defaultState :: Product Info'
-defaultState = [] :> Nothing :> PreprocessedRange (point 1 1) :> [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
+defaultState = [] :> Nothing :> PreprocessedRange (point 1 1) :> [] :> [] :> point 1 1 :> CodeSource "" :> Nil
 
 -- | Diagnostics collected for every type that allows for
 -- type extraction code action to be clicked.

@@ -6,7 +6,6 @@ module Parser
   , LineMarkerType (..)
   , LineMarker (..)
   , Failure (..)
-  , ShowRange (..)
   , CodeSource (..)
   , Info
   , ParsedInfo
@@ -183,50 +182,30 @@ fields name = go <$> ask
     errorAtTheTop (match -> Just (_, ParseTree "ERROR" _ _)) = True
     errorAtTheTop _ = False
 
-data ShowRange
-  = Y | N
-  deriving stock Eq
-
-instance Pretty ShowRange where
-  pp Y = "Yau"
-  pp N = "Nah"
-
 newtype CodeSource = CodeSource { unCodeSource :: Text }
   deriving newtype (Eq, Ord, Show, Pretty)
 
-type Info = [[Text], [LineMarker], Range, ShowRange, CodeSource]
+type Info = [[Text], [LineMarker], Range, CodeSource]
 
 type ParsedInfo = PreprocessedRange ': Info
 
 emptyParsedInfo :: Product ParsedInfo
 emptyParsedInfo =
-  PreprocessedRange emptyPoint :> [] :> [] :> emptyPoint :> N :> CodeSource "" :> Nil
+  PreprocessedRange emptyPoint :> [] :> [] :> emptyPoint :> CodeSource "" :> Nil
   where
     emptyPoint = point 0 0
 
-instance
-  ( Contains Range xs
-  , Contains [Text] xs
-  , Contains ShowRange xs
-  )
-  => Modifies (Product xs)
-  where
-    ascribe xs
-      = ascribeRange (getElem @Range xs) (getElem xs)
-      . ascribeComms (getElem xs)
+instance Contains [Text] xs => Modifies (Product xs) where
+  ascribe = ascribeComms . getElem
 
-fillInfo :: Functor f => f (Product xs) -> f (Product ([Text] : Range : ShowRange : xs))
-fillInfo = fmap \it -> [] :> point 0 0 :> N :> it
+fillInfo :: Functor f => f (Product xs) -> f (Product ([Text] : Range : xs))
+fillInfo = fmap \it -> [] :> point 0 0 :> it
 
 ascribeComms :: [Text] -> Doc -> Doc
 ascribeComms comms
   | null comms = id
   | otherwise  = \d ->
       block $ map pp comms ++ [d]
-
-ascribeRange :: Pretty p => p -> ShowRange -> Doc -> Doc
-ascribeRange r Y = (pp r $$)
-ascribeRange _ _ = id
 
 withComments :: ParserM (Product xs, a) -> ParserM (Product ([Text] : xs), a)
 withComments act = do
@@ -247,7 +226,7 @@ boilerplate f (r :> _, ParseTree ty cs src) =
     -- probably get unwanted behavior in 'AST.Parser'.
     let markers = getMarkers cs
     f' <- local (const cs) $ f ty
-    return (markers :> r :> N :> CodeSource src :> Nil, f')
+    return (markers :> r :> CodeSource src :> Nil, f')
 
 boilerplate'
   :: ((Text, Text) -> ParserM (f RawTree))
@@ -257,7 +236,7 @@ boilerplate' f (r :> _, ParseTree ty cs src) =
   withComments do
     let markers = getMarkers cs
     f' <- local (const cs) $ f (ty, src)
-    return (markers :> r :> N :> CodeSource src :> Nil, f')
+    return (markers :> r :> CodeSource src :> Nil, f')
 
 fallthrough :: MonadThrow m => m a
 fallthrough = throwM HandlerFailed
@@ -266,6 +245,6 @@ noMatch
   :: (Product (Range : xs), ParseTree it)
   -> ParserM (Product Info, Error it)
 noMatch (r :> _, ParseTree _ children source) = withComments $ pure
-  ( [] :> r :> N :> CodeSource source :> Nil
+  ( [] :> r :> CodeSource source :> Nil
   , Error ("Unrecognized: " <> source) children
   )

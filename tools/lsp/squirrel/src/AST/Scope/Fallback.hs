@@ -207,7 +207,6 @@ joinWithLet decl body = make (r', Let decl body)
 assignDecls
   :: ( Contains  Range     xs
      , Contains [Text]     xs
-     , Contains  ShowRange xs
      , Contains  PreprocessedRange xs
      , Eq (Product xs)
      )
