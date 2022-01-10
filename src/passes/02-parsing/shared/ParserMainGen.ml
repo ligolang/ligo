@@ -99,7 +99,7 @@ module Make
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
                in cli_error msg
-      | _ -> ()
+           | _ -> ()
 
     (* Main *)
 
