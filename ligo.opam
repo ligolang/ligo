@@ -29,7 +29,7 @@ depends: [
   "pprint"
   "yojson"
   "ocaml-recovery-parser"
-  # Tezos libs 
+  # Tezos libs
   "tezos-base"
   "tezos-crypto"
   "tezos-micheline"

@@ -44,7 +44,7 @@ module Make (File        : FILE)
            cli_error (Printf.sprintf "Choose either %s or %s." o1 o2)
       | `Done ->
            match CLI.Preprocessor_CLI.extension with
-             Some ext when String.equal ext File.extension ->
+             Some ext when String.(<>) ext File.extension ->
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
                in cli_error msg
