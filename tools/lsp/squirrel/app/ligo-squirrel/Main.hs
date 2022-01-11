@@ -332,7 +332,7 @@ handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol
 handleDocumentSymbolsRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
-    result <- extractDocumentSymbols (J.fromNormalizedUri uri) tree
+    let result = extractDocumentSymbols (J.fromNormalizedUri uri) tree
     respond . Right . J.InR . J.List $ result
 
 handleHoverRequest :: S.Handler RIO 'J.TextDocumentHover
