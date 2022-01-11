@@ -18,7 +18,7 @@ import Language.LSP.Types.Lens qualified as J
 import StmContainers.Map (newIO)
 import System.Exit
 import System.Log qualified as L
-import UnliftIO.Exception (catchAny, displayException)
+import UnliftIO.Exception (SomeException (..), displayException, withException)
 import UnliftIO.MVar (modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST
@@ -69,7 +69,11 @@ mainLoop =
       , S.signatureHelpRetriggerCharacters = Just [',']
       }
 
-    -- | Handle all uncaught exceptions.
+    -- | Show a error message to the user if an exception crashes the server.
+    -- The LSP protocol defines that the client should handle server crashes and
+    -- attempt to reasonably restart it. For example, Visual Studio Code will
+    -- attempt to restart the server 5 times within 3 minutes, and will leave it
+    -- dead if it continues crashing within that time frame.
     catchExceptions :: S.Handlers RIO -> S.Handlers RIO
     catchExceptions = S.mapHandlers
       (wrapReq . handleDisabledReq . addReqLogging)
@@ -79,7 +83,7 @@ mainLoop =
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
              S.Handler RIO meth -> S.Handler RIO meth
         wrapReq handler msg@J.RequestMessage{_method} resp = Log.addNamespace "wrapReq" $
-          handler msg resp `catchAny` \e -> do
+          handler msg resp `withException` \(SomeException e) -> do
             $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
             resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
 
@@ -87,7 +91,7 @@ mainLoop =
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
              S.Handler RIO meth -> S.Handler RIO meth
         wrapNotif handler msg@J.NotificationMessage{_method} = Log.addNamespace "wrapNotif" $
-          handler msg `catchAny` \e -> do
+          handler msg `withException` \(SomeException e) -> do
             $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
 
