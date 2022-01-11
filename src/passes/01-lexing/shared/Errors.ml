@@ -13,11 +13,14 @@ module Display  = Simple_utils.Display
 
 type t = [
   `Lexing_generic of string Region.reg
+| `Unbalanced_token of Region.t
 ]
 
 type error = t
 
 let generic reg = `Lexing_generic reg
+
+let unbalanced t = `Unbalanced_token t
 
 (* Colour snippet *)
 
@@ -33,6 +36,9 @@ let error_ppformat :
         `Lexing_generic Region.{region; value} ->
            Snippet.pp_lift format region;
            Format.pp_print_string format value
+      | `Unbalanced_token region ->
+          Snippet.pp_lift format region;
+          Format.pp_print_string format "Unbalanced token. Please ensure that left braces/parenthesis are properly balanced with right braces/parenthesis."
 
 (* JSON *)
 
@@ -52,3 +58,12 @@ let error_jsonformat : error -> Yojson.Safe.t =
               ("message",  `String value);
               ("location", `String loc)]
          in json_error ~stage ~content
+    | `Unbalanced_token region ->
+        let loc =
+          Format.asprintf "%a" Location.pp_lift @@ region in
+        let value = "Unbalanced token" in
+        let content =
+          `Assoc [
+            ("message",  `String value);
+            ("location", `String loc)]
+        in json_error ~stage ~content
