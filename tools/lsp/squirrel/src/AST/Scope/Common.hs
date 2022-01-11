@@ -51,7 +51,6 @@ import Algebra.Graph.ToGraph qualified as G
 import Control.Arrow ((&&&))
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
-import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
 import Control.Monad.Trans.Except
 import Data.Aeson (ToJSON (..), object, (.=))
@@ -339,7 +338,7 @@ addLocalScopes tree forest =
 
 addScopes
   :: forall impl m
-   . (HasScopeForest impl m, MonadUnliftIO m)
+   . HasScopeForest impl m
   => ProgressCallback m
   -> Includes ParsedContractInfo
   -> m (Includes ContractInfo')

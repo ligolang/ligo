@@ -11,11 +11,9 @@ module AST.Parser
   , collectAllErrors
   ) where
 
-import Control.Exception.Safe (Handler (..), catches, throwM)
 import Control.Lens ((%~))
 import Control.Monad ((<=<))
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.List (find)
@@ -27,7 +25,7 @@ import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
-import UnliftIO.Exception (fromEither)
+import UnliftIO.Exception (Handler (..), catches, fromEither, throwIO)
 
 import Duplo.Lattice (Lattice (leq))
 
@@ -96,14 +94,14 @@ parsePreprocessed src = do
 
 parseWithScopes
   :: forall impl m
-   . (HasScopeForest impl m, Log m, MonadUnliftIO m)
+   . (HasScopeForest impl m, Log m)
   => Source
   -> m ContractInfo'
 parseWithScopes src = do
   let fp = srcPath src
   graph <- parseContractsWithDependencies parsePreprocessed noProgress (takeDirectory fp)
   scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (Includes <$> wcc (getIncludes graph))
-  maybe (throwM $ ContractNotFoundException fp scoped) pure (lookupContract fp scoped)
+  maybe (throwIO $ ContractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.
 -- This ignores every other file which is not a contract.
@@ -154,7 +152,7 @@ parseContractsWithDependencies parser reportProgress =
 
 parseContractsWithDependenciesScopes
   :: forall impl m
-   . (HasScopeForest impl m, MonadUnliftIO m)
+   . HasScopeForest impl m
   => ParserCallback m ContractInfo
   -> ProgressCallback m
   -> FilePath

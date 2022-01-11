@@ -3,7 +3,6 @@
 module Main (main) where
 
 import Algebra.Graph.Class qualified as G (empty)
-import Control.Exception.Safe (catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
@@ -19,6 +18,7 @@ import Language.LSP.Types.Lens qualified as J
 import StmContainers.Map (newIO)
 import System.Exit
 import System.Log qualified as L
+import UnliftIO.Exception (catchAny, displayException)
 import UnliftIO.MVar (modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST

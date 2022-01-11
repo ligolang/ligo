@@ -2,7 +2,7 @@ module Test.Common.Util.Parsers
   ( checkFile
   ) where
 
-import Control.Exception.Safe (try)
+import UnliftIO.Exception (try)
 
 import AST.Parser (parsePreprocessed)
 import AST.Scope (pattern FindContract, HasScopeForest, ScopeError, addShallowScopes)
