@@ -52,7 +52,7 @@ instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest Standard m 
       merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do
         let src = _cFile lf
         let fp = srcPath src
-        FindFilepath ff <- maybe (throwM $ ContractNotFoundException fp f) pure (lookupContract fp f)
+        FindFilepath ff <- maybe (throwIO $ ContractNotFoundException fp f) pure (lookupContract fp f)
         pure $ FindContract
           src
           (mergeScopeForest OnUnion (_cTree ff) (_cTree lf))

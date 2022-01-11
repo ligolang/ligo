@@ -15,6 +15,7 @@ import Test.Tasty.HUnit (Assertion)
 expectedMsgs :: [(Range, Text)]
 expectedMsgs =
   [ (mkRange (3, 17) (3, 23), "Unexpected: :: int")
+  , (mkRange (3, 17) (3, 23), "Unexpected: :: int")
   , (mkRange (3, 17) (3, 23), "Unrecognized: :: int")
   , (mkRange (3, 20) (3, 23), "Unrecognized: int")
   ]

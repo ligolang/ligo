@@ -41,4 +41,4 @@ parseDiagnosticsDriver expectedMsgs = withoutLogger \runLogger -> do
     Nothing -> expectationFailure ("Couldn't find " <> inputFile)
     Just contract ->
       let msgs = collectAllErrors contract
-       in expectedMsgs `shouldMatchList` fmap simplifyError msgs
+       in fmap simplifyError msgs `shouldMatchList` expectedMsgs

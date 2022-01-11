@@ -94,6 +94,6 @@ makeTest :: forall parser. ScopeTester parser => TestInfo -> Assertion
 makeTest TestInfo{tiContract, tiCursor, tiExpectedEdits} = do
   let contractPath = contractsDir </> "code-action" </> "extract-type-definition" </> tiContract
   tree <- readContractWithScopes @parser contractPath
-  [action] <- typeExtractionCodeAction tiCursor (J.filePathToUri contractPath) tree
+  let [action] = typeExtractionCodeAction tiCursor (J.filePathToUri contractPath) tree
   let resultingEdits = extractTextEdits action
   resultingEdits `shouldBe` constructExpectedWorkspaceEdit tiExpectedEdits

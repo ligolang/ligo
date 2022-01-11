@@ -315,7 +315,6 @@ handleLigoError path stderr = Log.addNamespace "handleLigoError" do
   -- Call ligo with `compile contract` to extract more readable error message
   case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
     Left err -> do
-      -- LIGO dumps its crash information on StdOut rather than StdErr.
       let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
       case failureRecovery of
         Left failure -> do

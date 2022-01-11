@@ -29,7 +29,7 @@ extra-deps:
 - primitive-unlifted-0.1.3.0
 
 - git: https://github.com/serokell/duplo.git
-  commit: b0ac4699c44a35ea178d7d117e48076408b0886f
+  commit: ff156b3ce574f75b74f2110ed349d441ce5baecc
 
 nix:
   packages: [zlib]

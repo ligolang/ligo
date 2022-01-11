@@ -14,10 +14,10 @@ module AST.Parser
 import Control.Exception.Safe (Handler (..), catches, throwM)
 import Control.Lens ((%~))
 import Control.Monad ((<=<))
-import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Bifunctor (second)
+import Data.Either (isRight)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
@@ -27,6 +27,7 @@ import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
+import UnliftIO.Exception (fromEither)
 
 import Duplo.Lattice (Lattice (leq))
 
@@ -49,14 +50,15 @@ import Util.Graph (wcc)
 
 type ParserCallback m contract = Source -> m contract
 
-parse :: (Log m, MonadThrow m) => Source -> m ContractInfo
+parse :: Log m => ParserCallback m ContractInfo
 parse src = do
-  (recogniser, dialect) <- onExt ElimExt
+  (recogniser, dialect) <- fromEither $ onExt ElimExt
     { eePascal = (Pascal.recognise, Pascal)
     , eeCaml   = (Caml.recognise,   Caml)
     , eeReason = (Reason.recognise, Reason)
     } (srcPath src)
-  uncurry (FindContract src) <$> (liftIO . runParserM . recogniser =<< toParseTree dialect src)
+  tree <- toParseTree dialect src
+  fromEither $ uncurry (FindContract src) <$> runParserM (recogniser tree)
 
 parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
@@ -136,7 +138,7 @@ scanContracts top = do
     exists <- liftIO $ doesDirectoryExist p
     if exists
       then scanContracts p
-      else if isJust (getExt p)
+      else if isRight (getExt p)
         then pure [p]
         else pure []
   pure $ concat contracts

@@ -218,7 +218,7 @@ simpleFunctionCallDriver = withoutLogger \runLogger -> do
     makeTest graph TestInfo{..} = do
       let filepath = contractsDir </> "signature-help" </> tiContract
       let tree = contractTree $ fromJust $ lookupContract filepath graph
-      dialect <- getExt filepath
+      let Right dialect = getExt filepath
       let result = findSignature (tree ^. nestedLIGO) tiCursor
       result `shouldBe`
         Just ( SignatureInformation

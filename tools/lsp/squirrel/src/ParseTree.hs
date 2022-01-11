@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE StrictData, TupleSections #-}
 
 {- | The input tree from TreeSitter. Doesn't have any pointers to any data
      from actual tree the TS produced and therefore has no usage limitations.
@@ -145,7 +144,7 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
               if   nodeFieldName node' == nullPtr
               then return ""
               else peekCString $ nodeFieldName node'
-            return $ make (r :> Text.pack field :> Nil, tree)
+            pure $ fastMake (r :> Text.pack field :> Nil) tree
 
           ty <- peekCString $ nodeType node
 
@@ -174,11 +173,10 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
               , _rFile = srcPath input
               }
 
-          return $ make
-            ( range :> "" :> Nil
-            , ParseTree
+          pure $ fastMake
+            (range :> "" :> Nil)
+            ParseTree
               { ptName     = name
               , ptChildren = nodes
               , ptSource   = cutOut range src
               }
-            )

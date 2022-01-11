@@ -76,7 +76,7 @@ import UnliftIO.STM (atomically)
 
 import Witherable (iwither)
 
-import Duplo.Tree (make)
+import Duplo.Tree (fastMake)
 
 import AST hiding (cTree)
 import ASTMap (ASTMap)
@@ -289,7 +289,7 @@ delete uri = do
         -- Dummy
         c = FindContract
           (Path fp)
-          (SomeLIGO Caml $ make (emptyParsedInfo, Error "Impossible" []))
+          (SomeLIGO Caml $ fastMake emptyParsedInfo (Error "Impossible" []))
           []
       modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
 

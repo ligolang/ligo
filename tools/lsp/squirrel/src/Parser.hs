@@ -27,7 +27,8 @@ module Parser
   ) where
 
 import Control.Arrow
-import Control.Monad.Catch
+import Control.Exception (Exception)
+import Control.Monad.Except (ExceptT, throwError)
 import Control.Monad.RWS hiding (Product)
 import Data.Functor
 import Data.Maybe (fromJust, isJust, mapMaybe)
@@ -54,11 +55,12 @@ import Range
   4) On leaving, move move comments from 2 to 1.
 -}
 
-runParserM :: ParserM a -> IO (a, [Msg])
+runParserM :: ParserM a -> Either Failure (a, [Msg])
 runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p [] ([], [])
 
-type Msg      = (Range, Error ())
-type ParserM  = RWST [RawTree] [Msg] ([Text], [Text]) IO
+type Msg = (Range, Error ())
+type ParserM = RWST [RawTree] [Msg] ([Text], [Text]) (Either Failure)
+type ParserHandler = ExceptT HandlerFailed ParserM
 
 collectTreeErrors :: Contains Range info => SomeLIGO info -> [Msg]
 collectTreeErrors = map (getElem *** void) . collect . getLIGO
@@ -111,8 +113,8 @@ newtype Failure = Failure String
   deriving stock (Show)
   deriving anyclass (Exception)
 
-instance Scoped (Product [Range, Text]) ParserM RawTree ParseTree where
-  before (_ :> _ :> _) (ParseTree _ cs _) = do
+instance Scoped (Product [Range, Text]) ParserHandler RawTree ParseTree where
+  before _ (ParseTree _ cs _) = do
     let (comms, rest) = allComments cs
     let (comms1, _)   = allComments $ reverse rest
     modify $ first  (++ comms)
@@ -139,10 +141,10 @@ allComments = first (map getBody . filter isComment) . break isMeaningful
     isComment :: RawTree -> Bool
     isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
 
-allErrors :: [RawTree] -> [(Range, Error ())]
+allErrors :: [RawTree] -> [Msg]
 allErrors = mapMaybe extractUnnamedError
   where
-    extractUnnamedError :: RawTree -> Maybe (Range, Error ())
+    extractUnnamedError :: RawTree -> Maybe Msg
     extractUnnamedError tree = case only tree of
       (r :> "" :> _, ParseTree "ERROR" children _)
         -> Just (r, void (Error ("Unexpected: " <> getBody tree) children))
@@ -151,15 +153,15 @@ allErrors = mapMaybe extractUnnamedError
 getBody :: RawTree -> Text
 getBody (gist -> f) = ptSource f
 
-flag :: Text -> ParserM Bool
+flag :: Text -> ParserHandler Bool
 flag name = fieldOpt name <&> isJust
 
-field :: Text -> ParserM RawTree
+field :: Text -> ParserHandler RawTree
 field name =
   fieldOpt name
-    >>= maybe (throwM $ Failure [i|Cannot find field #{name}|]) return
+    >>= maybe (lift $ lift $ Left $ Failure [i|Cannot find field #{name}|]) pure
 
-fieldOpt :: Text -> ParserM (Maybe RawTree)
+fieldOpt :: Text -> ParserHandler (Maybe RawTree)
 fieldOpt name = go <$> ask
   where
     go (tree@(extract -> _ :> n :> _) : rest)
@@ -168,7 +170,7 @@ fieldOpt name = go <$> ask
 
     go _ = Nothing
 
-fields :: Text -> ParserM [RawTree]
+fields :: Text -> ParserHandler [RawTree]
 fields name = go <$> ask
   where
     go (tree : rest)
@@ -207,19 +209,22 @@ ascribeComms comms
   | otherwise  = \d ->
       block $ map pp comms ++ [d]
 
-withComments :: ParserM (Product xs, a) -> ParserM (Product ([Text] : xs), a)
+withComments
+  :: ParserHandler (Product xs, a)
+  -> ParserHandler (Product ([Text] : xs), a)
 withComments act = do
-  comms <- grabComments
+  comms <- lift grabComments
   first (comms :>) <$> act
 
 getMarkers :: [RawTree] -> [LineMarker]
 getMarkers = mapMaybe (parseLineMarker . fromJust . match)
 
 boilerplate
-  :: (Text -> ParserM (f RawTree))
-  -> (RawInfo, ParseTree RawTree)
-  -> ParserM (Product Info, f RawTree)
-boilerplate f (r :> _, ParseTree ty cs src) =
+  :: (Text -> ParserHandler (f RawTree))
+  -> RawInfo
+  -> ParseTree RawTree
+  -> ParserHandler (Product Info, f RawTree)
+boilerplate f (r :> _) (ParseTree ty cs src) =
   withComments do
     -- TODO: What is exactly the appropriate action in case something ever
     -- returns 'Nothing'? 'catMaybes'? If something goes wrong, then we will
@@ -229,22 +234,24 @@ boilerplate f (r :> _, ParseTree ty cs src) =
     return (markers :> r :> CodeSource src :> Nil, f')
 
 boilerplate'
-  :: ((Text, Text) -> ParserM (f RawTree))
-  -> (RawInfo, ParseTree RawTree)
-  -> ParserM (Product Info, f RawTree)
-boilerplate' f (r :> _, ParseTree ty cs src) =
+  :: ((Text, Text) -> ParserHandler (f RawTree))
+  -> RawInfo
+  -> ParseTree RawTree
+  -> ParserHandler (Product Info, f RawTree)
+boilerplate' f (r :> _) (ParseTree ty cs src) =
   withComments do
     let markers = getMarkers cs
     f' <- local (const cs) $ f (ty, src)
     return (markers :> r :> CodeSource src :> Nil, f')
 
-fallthrough :: MonadThrow m => m a
-fallthrough = throwM HandlerFailed
+fallthrough :: ParserHandler a
+fallthrough = throwError HandlerFailed
 
 noMatch
-  :: (Product (Range : xs), ParseTree it)
-  -> ParserM (Product Info, Error it)
-noMatch (r :> _, ParseTree _ children source) = withComments $ pure
+  :: Product (Range : xs)
+  -> ParseTree it
+  -> ParserHandler (Product Info, Error it)
+noMatch (r :> _) (ParseTree _ children source) = withComments $ pure
   ( [] :> r :> CodeSource source :> Nil
   , Error ("Unrecognized: " <> source) children
   )

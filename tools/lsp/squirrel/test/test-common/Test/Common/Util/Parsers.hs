@@ -3,11 +3,10 @@ module Test.Common.Util.Parsers
   ) where
 
 import Control.Exception.Safe (try)
-import Duplo (HandlerFailed (..))
 
 import AST.Parser (parsePreprocessed)
 import AST.Scope (pattern FindContract, HasScopeForest, ScopeError, addShallowScopes)
-import Parser (collectTreeErrors)
+import Parser (Failure, collectTreeErrors)
 import ParseTree (Source (Path))
 import Progress (noProgress)
 
@@ -23,7 +22,7 @@ checkFile
 checkFile True (Path -> path) = withoutLogger \runLogger -> do
   res <- try (runLogger $ parsePreprocessed path)
   case res of
-    Left (err :: HandlerFailed) -> expectationFailure $
+    Left (err :: Failure) -> expectationFailure $
       "Parsing failed, but it shouldn't have. " <>
       "Error: " <> show err <> "."
     Right c@(FindContract _file tree msgs) -> case msgs' of
@@ -46,7 +45,7 @@ checkFile True (Path -> path) = withoutLogger \runLogger -> do
       where
         msgs' = collectTreeErrors tree <> msgs
 checkFile False (Path -> path) = withoutLogger \runLogger -> do
-  res <- try @_ @HandlerFailed (runLogger $ parsePreprocessed path)
+  res <- try @_ @Failure (runLogger $ parsePreprocessed path)
   case res of
     Right c@(FindContract _file tree []) -> case collectTreeErrors tree of
       [] -> expectationFailure "Parsing succeeded, but it shouldn't have."

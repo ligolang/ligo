@@ -296,7 +296,7 @@ handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
 handleFoldingRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
-    actions <- foldingAST (tree ^. nestedLIGO)
+    let actions = foldingAST (tree ^. nestedLIGO)
     respond . Right . J.List $ toFoldingRange <$> actions
 
 handleTextDocumentCodeAction :: S.Handler RIO 'J.TextDocumentCodeAction
@@ -306,7 +306,7 @@ handleTextDocumentCodeAction req respond = do
       r = req ^. J.params . J.range . to fromLspRange
       con = req ^. J.params . J.context
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
-    actions <- collectCodeActions r con (J.fromNormalizedUri uri) tree
+    let actions = collectCodeActions r con (J.fromNormalizedUri uri) tree
     let response = Right . J.List . fmap J.InR $ actions
     respond response
 
