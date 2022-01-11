@@ -20,5 +20,5 @@
   zarith
   str)
  (modules Errors Formatter Token Common Wrap Lexer Self_tokens LexerMainGen
-   UnlexerGen)
+   UnlexerGen Attr)
  (modules_without_implementation Token Self_tokens))

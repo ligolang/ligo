@@ -152,11 +152,11 @@ module Make (File        : FILE)
         else
           let lex_units = Scan.LexUnits.from_lexbuf config lexbuf
           in match Self_tokens.filter lex_units with
-               Stdlib.Ok tokens ->
-                 store  := tokens;
-                 called := true;
-                 scan lexbuf
-             | Error _ as err -> err
+             Stdlib.Ok tokens ->
+               store  := tokens;
+               called := true;
+               scan lexbuf
+           | Error _ as err -> err
 
     (* Scanning all tokens with or without a preprocessor *)
 
@@ -179,7 +179,9 @@ module Make (File        : FILE)
           match config#input with
             Some path -> Scan.LexUnits.from_file config path
           |      None -> Scan.LexUnits.from_channel config In_channel.stdin
-      in match Self_tokens.filter lex_units with
-           Stdlib.Error msg -> print_in_red msg
-         | Ok _ -> ()
+      in 
+      match Self_tokens.filter lex_units with
+        Stdlib.Ok _ -> ()
+      | Error msg   -> print_in_red msg
+
   end

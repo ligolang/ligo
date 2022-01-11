@@ -1,0 +1,6 @@
+---
+  title: "Move ES6FUN token insertion to a pre-parser"
+  merge_request: "1465"
+  author: "@SanderSpies"
+  type: "internal"
+

@@ -7,9 +7,11 @@ module Markup    = LexerLib.Markup
 module Directive = LexerLib.Directive
 
 (* Utility modules and types *)
-
-module SMap = Map.Make (String)
+module String = Core.String
+module SMap = Core.Map.Make (String)
 module Wrap = Lexing_shared.Wrap
+
+module List = Core.List
 
 type 'a wrap = 'a Wrap.t
 type 'a reg  = 'a Region.reg
@@ -19,6 +21,8 @@ let wrap = Wrap.wrap
 (* TOKENS *)
 
 type lexeme = Lexing_shared.Common.lexeme
+
+
 
 module T =
   struct
