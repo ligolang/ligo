@@ -1,65 +1,100 @@
+-- | Provides a façade to Katip's logger.
 module Log
-  ( Level (..)
+  ( Severity (..)
+  , NoLoggingT (..)
+  , LogT
+  , Log
   , i
+  , addContext
+  , addNamespace
+  , sl
   , debug
+  , warning
   , err
-  , setLogLevel
-  , flagBasedLogLevel
+  , critical
+  , withLogger
+  , withoutLogger
+  , flagBasedEnv
+  , flagBasedSeverity
   ) where
 
-import Control.Concurrent
-import Control.Monad.IO.Class
-import Control.Monad.Catch
-import Control.Monad
-import Data.IORef
+import Control.Monad.IO.Class (MonadIO (..))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.String.Interpolate.IsString (i)
+import Data.Text (pack)
+import Katip
+import Katip.Monadic (NoLoggingT (..))
+import Language.Haskell.TH (ExpQ)
 import Language.Haskell.TH.Syntax.Compat (SpliceQ, examineSplice, liftSplice)
 import System.Environment (lookupEnv)
-import System.IO (hFlush, hPutStrLn, stderr)
-import System.IO.Unsafe (unsafePerformIO)
+import System.FilePath ((</>))
+import System.IO (stderr)
+import System.IO.Temp (getCanonicalTemporaryDirectory)
+import UnliftIO.Exception (bracket)
 
-data Level = DEBUG | ERROR | CRASH deriving stock (Eq, Ord, Read, Show)
+type LogT = KatipContextT
+type Log = KatipContext
 
-{-# NOINLINE logLevel #-}
-logLevel :: IORef Level
-logLevel = unsafePerformIO do
-  newIORef CRASH
+addContext :: (LogItem i, Log m) => i -> m a -> m a
+addContext = katipAddContext
 
-{-# NOINLINE logLock #-}
-logLock :: MVar ()
-logLock = unsafePerformIO do
-  newMVar ()
+addNamespace :: Log m => Namespace -> m a -> m a
+addNamespace = katipAddNamespace
 
-debug :: MonadIO m => String -> String -> m ()
-debug sys msg = liftIO do
-  lvl <- readIORef logLevel
-  when (lvl == DEBUG) do
-    synchronized do
-      hPutStrLn stderr $ "DEBUG (" <> sys <> "): " <> msg
-      hFlush stderr
+debug :: ExpQ
+debug = [| $logTM DebugS |]
+{-# INLINE debug #-}
 
-err :: MonadIO m => String -> String -> m ()
-err sys msg = liftIO do
-  synchronized do
-    hPutStrLn stderr $ "ERROR (" <> sys <> "): " <> msg
+warning :: ExpQ
+warning = [| $logTM WarningS |]
+{-# INLINE warning #-}
 
-setLogLevel :: MonadIO m => Level -> m ()
-setLogLevel level = liftIO do
-  writeIORef logLevel level
-  return ()
+err :: ExpQ
+err = [| $logTM ErrorS |]
+{-# INLINE err #-}
 
-synchronized :: (MonadMask m, MonadIO m) => m a -> m a
-synchronized = bracket_
-  do liftIO $ takeMVar logLock
-  do liftIO $ putMVar  logLock ()
+critical :: ExpQ
+critical = [| $logTM CriticalS |]
+{-# INLINE critical #-}
 
-flagBasedLogLevel :: SpliceQ Level
-flagBasedLogLevel = liftSplice do
-  let flagName = "LIGO_LOG_LEVEL"
+withoutLogger
+  :: ((forall a. NoLoggingT m a -> m a) -> m b)
+  -> m b
+withoutLogger action = action runNoLoggingT
+
+withLogger
+  :: MonadUnliftIO m
+  => Severity
+  -> Namespace
+  -> Environment
+  -> ((forall a. LogT m a -> m a) -> m b)
+  -> m b
+withLogger level initNamespace env action = do
+  initEnv <- liftIO $ initLogEnv "ligo" env
+  let
+    mkLogEnv = liftIO do
+      stderrScribe <- mkHandleScribe ColorIfTerminal stderr (permitItem level) V2
+      le <- registerScribe "stderr" stderrScribe defaultScribeSettings initEnv
+
+      dir <- getCanonicalTemporaryDirectory
+      handleScribe <- mkFileScribe (dir </> "ligo-language-server.log") (permitItem DebugS) V3
+      registerScribe "Log file" handleScribe defaultScribeSettings le
+    delLogEnv = liftIO . closeScribes
+  bracket mkLogEnv delLogEnv \le ->
+    action (runKatipContextT le () initNamespace)
+
+flagBasedEnv :: SpliceQ Environment
+flagBasedEnv = liftSplice do
+  let flagName = "LIGO_ENV"
   liftIO (lookupEnv flagName) >>= maybe
-    (examineSplice [|| ERROR ||])
-    (\case
-      "DEBUG" -> examineSplice [|| DEBUG ||]
-      "ERROR" -> examineSplice [|| ERROR ||]
-      "CRASH" -> examineSplice [|| CRASH ||]
-      other -> fail $ "Unrecognized " <> flagName <> " flag: " <> other)
+    (examineSplice [|| "production" ||])
+    (\flag -> [|| Environment (pack flag) ||])
+
+flagBasedSeverity :: SpliceQ Severity
+flagBasedSeverity = liftSplice do
+  let flagName = "LIGO_SEVERITY"
+  liftIO (lookupEnv flagName) >>= maybe
+    (examineSplice [|| ErrorS ||])
+    (\flag -> case textToSeverity $ pack flag of
+      Nothing -> fail $ "Unrecognized " <> flagName <> " flag: " <> flag
+      Just severity -> examineSplice [|| severity ||])

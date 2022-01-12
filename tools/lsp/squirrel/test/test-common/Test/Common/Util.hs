@@ -1,10 +1,12 @@
 module Test.Common.Util
-  ( contractsDir
+  ( ScopeTester
+  , contractsDir
   , getContractsWithExtension
   , readContract
   , readContractWithMessages
   , readContractWithScopes
   , supportedExtensions
+  , withoutLogger
   ) where
 
 import Control.Arrow ((&&&))
@@ -24,7 +26,10 @@ import AST.Scope.Common (HasScopeForest, Info', contractTree, _cMsgs, _cTree, _g
 import AST.Skeleton (SomeLIGO)
 
 import Extension (supportedExtensions)
+import Log (NoLoggingT, withoutLogger)
 import Parser (ParsedInfo, Msg)
+
+type ScopeTester impl = HasScopeForest impl (NoLoggingT IO)
 
 contractsDir :: FilePath
 contractsDir =
@@ -45,17 +50,18 @@ getContractsWithExtension ext ignore dir = listDirectory dir
                                 <&> filter (`notElem` ignore)
 
 readContract :: FilePath -> IO (SomeLIGO ParsedInfo)
-readContract filepath = do
-  pp <- parsePreprocessed (Path filepath)
+readContract filepath = withoutLogger \runLogger -> do
+  pp <- runLogger $ parsePreprocessed (Path filepath)
   ppRanges <- insertPreprocessorRanges pp
   pure (contractTree ppRanges)
 
 readContractWithMessages :: FilePath -> IO (SomeLIGO ParsedInfo, [Msg])
-readContractWithMessages filepath =
-  (_cTree &&& _cMsgs) . _getContract <$> (insertPreprocessorRanges =<< parsePreprocessed (Path filepath))
+readContractWithMessages filepath = withoutLogger \runLogger ->
+  (_cTree &&& _cMsgs) . _getContract
+    <$> (insertPreprocessorRanges =<< runLogger (parsePreprocessed $ Path filepath))
 
 readContractWithScopes
-  :: forall parser. HasScopeForest parser IO
+  :: forall parser. ScopeTester parser
   => FilePath -> IO (SomeLIGO Info')
-readContractWithScopes filepath
-  = contractTree <$> parseWithScopes @parser (Path filepath)
+readContractWithScopes filepath = withoutLogger \runLogger ->
+  contractTree <$> runLogger (parseWithScopes @parser $ Path filepath)

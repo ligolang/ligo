@@ -50,7 +50,7 @@ import Util.Graph (forAMConcurrently)
 data Fallback
 
 instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
-  scopeForest reportProgress graph = do
+  scopeForest reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
     -- 'StateT'. It's best to avoid using this class for stateful monads.

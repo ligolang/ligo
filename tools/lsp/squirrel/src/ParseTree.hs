@@ -24,6 +24,7 @@ module ParseTree
   )
   where
 
+import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Map
@@ -33,13 +34,14 @@ import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Data.Text.IO qualified as Text
 import Data.Traversable (for)
-
 import Control.Monad ((>=>))
+import Control.Monad.IO.Class (MonadIO (..))
 import Foreign.C.String (peekCString)
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (peek, peekElemOff, poke)
+import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import TreeSitter.Language
 import TreeSitter.Node
 import TreeSitter.Parser
@@ -49,6 +51,7 @@ import Duplo.Pretty as PP
 import Duplo.Tree
 
 import Extension
+import Log (Log)
 import Log qualified
 import Product
 import Range
@@ -62,6 +65,14 @@ data Source
   | Text       { srcPath :: FilePath, srcText :: Text }
   | ByteString { srcPath :: FilePath, srcBS   :: ByteString }
   deriving stock (Eq, Ord)
+
+instance ToJSON Source where
+  toJSON src = object ["srcPath" .= srcPath src]
+
+deriving anyclass instance ToObject Source
+
+instance LogItem Source where
+  payloadKeys = const $ const AllKeys
 
 instance IsString Source where
   fromString = Path
@@ -112,22 +123,21 @@ instance Pretty1 ParseTree where
         (pp forest)
       )
 
--- | Feed file contents into PascaLIGO grammar recogniser.
-toParseTree :: Lang -> Source -> IO SomeRawTree
-toParseTree dialect input = do
-  Log.debug "TS" [Log.i|Reading #{input}|]
+toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
+toParseTree dialect input = Log.addNamespace "toParseTree" do
+  $(Log.debug) [Log.i|Reading #{input}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
         Reason -> tree_sitter_ReasonLigo
 
-  SomeRawTree dialect <$> withParser language \parser -> do
+  res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
     src <- srcToBytestring input
-    res <- withParseTree parser src \tree -> do
+    withParseTree parser src \tree ->
       withRootNode tree (peek >=> go input src)
-    Log.debug "TS" [Log.i|Done reading #{input}|]
-    return res
 
+  $(Log.debug) [Log.i|Done reading #{input}|]
+  pure res
   where
     go :: Source -> ByteString -> Node -> IO RawTree
     go fin src node = do
