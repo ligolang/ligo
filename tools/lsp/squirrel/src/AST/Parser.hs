@@ -27,8 +27,6 @@ import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
 import UnliftIO.Exception (Handler (..), catches, displayException, fromEither, throwIO)
 
-import Duplo.Lattice (Lattice (leq))
-
 import AST.Includes (includesGraph)
 import AST.Parser.Camligo qualified as Caml
 import AST.Parser.Pascaligo qualified as Pascal
@@ -78,11 +76,7 @@ parsePreprocessed src = do
     else
       parse src'
   where
-    addLigoErrToMsg err = getContract . cMsgs %~ (`rewriteAt` err)
-
-    -- | Rewrite error message at the most local scope or append it to the end.
-    rewriteAt :: [Msg] -> Msg -> [Msg]
-    rewriteAt at what@(from, _) = filter (not . (from `leq`) . fst) at <> [what]
+    addLigoErrToMsg err = getContract . cMsgs %~ (err :)
 
     -- If the user has hand written any line markers, they will get removed here.
     -- Also query whether we need to do any preprocessing at all in the first place.

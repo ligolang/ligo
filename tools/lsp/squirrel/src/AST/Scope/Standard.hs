@@ -18,10 +18,8 @@ import Cli.Impl
 import Cli.Json (fromLigoErrorToMsg)
 import Cli.Types (HasLigoClient)
 
-import Duplo.Lattice (Lattice (leq))
 import Log (Log, i)
 import Log qualified
-import Parser (Msg)
 import ParseTree (srcPath)
 import Util.Graph (traverseAMConcurrently)
 
@@ -30,7 +28,7 @@ data Standard
 instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
   scopeForest reportProgress pc = do
     fbForest <- scopeForest @Fallback reportProgress pc
-    lgForest <- scopeForest @FromCompiler reportProgress pc `catches`
+    tryMergeWithFromCompiler fbForest `catches`
       [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
           -- catch only errors that we expect from ligo and try to use fallback parser
           pure $ addLigoErrToMsg fbForest $ fromLigoErrorToMsg err
@@ -41,10 +39,13 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
         $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
         pure fbForest
       ]
-    merge lgForest fbForest
     where
+      tryMergeWithFromCompiler fbForest = do
+        lgForest <- scopeForest @FromCompiler reportProgress pc
+        merge lgForest fbForest
+
       addLigoErrToMsg (Includes forest) err =
-        Includes $ G.gmap (getContract . cMsgs %~ (`rewriteAt` err)) forest
+        Includes $ G.gmap (getContract . cMsgs %~ (err :)) forest
 
       merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do
         let src = _cFile lf
@@ -54,7 +55,3 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
           src
           (mergeScopeForest OnUnion (_cTree ff) (_cTree lf))
           (_cMsgs ff <> _cMsgs lf)
-
-      -- | Rewrite error message at the most local scope or append it to the end.
-      rewriteAt :: [Msg] -> Msg -> [Msg]
-      rewriteAt at what@(from, _) = filter (not . (from `leq`) . fst) at <> [what]
