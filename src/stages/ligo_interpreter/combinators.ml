@@ -245,7 +245,7 @@ let rec compare_value (v : value) (v' : value) : int =
   | V_Map _, (V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
   | V_Set _, (V_Ct _ | V_List _ | V_Record _ | V_Map _) -> -1
   | V_Set s, V_Set s' ->
-     List.compare compare_value s s'
+    List.compare compare_value (List.dedup_and_sort ~compare:compare_value s) (List.dedup_and_sort ~compare:compare_value s')
   | V_Set _, (V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
   | V_Construct _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _) -> -1
   | V_Construct (c, l), V_Construct (c', l') -> (
