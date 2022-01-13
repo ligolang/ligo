@@ -93,7 +93,7 @@ flagBasedSeverity :: SpliceQ Severity
 flagBasedSeverity = liftSplice do
   let flagName = "LIGO_SEVERITY"
   liftIO (lookupEnv flagName) >>= maybe
-    (examineSplice [|| ErrorS ||])
+    (examineSplice [|| WarningS ||])
     (\flag -> case textToSeverity $ pack flag of
       Nothing -> fail $ "Unrecognized " <> flagName <> " flag: " <> flag
       Just severity -> examineSplice [|| severity ||])

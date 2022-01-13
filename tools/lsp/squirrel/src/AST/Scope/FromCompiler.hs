@@ -7,7 +7,7 @@ module AST.Scope.FromCompiler
 import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
 import Control.Category ((>>>))
-import Control.Monad.IO.Unlift (MonadIO, MonadUnliftIO)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (foldrM)
 import Data.Function (on)
 import Data.HashMap.Strict ((!))
@@ -35,7 +35,7 @@ data FromCompiler
 
 -- FIXME: If one contract throws an exception, the entire thing will fail. Standard
 -- scopes will use Fallback.
-instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest FromCompiler m where
+instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
   scopeForest reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for

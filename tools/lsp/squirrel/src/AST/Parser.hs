@@ -25,7 +25,7 @@ import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
-import UnliftIO.Exception (Handler (..), catches, fromEither, throwIO)
+import UnliftIO.Exception (Handler (..), catches, displayException, fromEither, throwIO)
 
 import Duplo.Lattice (Lattice (leq))
 
@@ -37,10 +37,11 @@ import AST.Scope
 import AST.Skeleton
 import Cli
   ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
-  , LigoErrorNodeParseErrorException (..), fromLigoErrorToMsg, preprocess
+  , SomeLigoException (..), fromLigoErrorToMsg, preprocess
   )
 import Extension
 import Log (Log, i)
+import Log qualified
 import ParseTree (Source (..), srcToText, toParseTree)
 import Parser
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
@@ -66,9 +67,11 @@ parsePreprocessed src = do
       (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
           pure (src', Just $ fromLigoErrorToMsg err)
-        , Handler \LigoErrorNodeParseErrorException {} ->
+        , Handler \(_ :: SomeLigoException) ->
           pure (src', Nothing)
-        , Handler \(_ :: IOError) ->
+        , Handler \(e :: IOError) -> do
+          -- Likely LIGO isn't installed or was not found.
+          $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
           pure (src', Nothing)
         ]
       maybe id addLigoErrToMsg err <$> parse src''

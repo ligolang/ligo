@@ -8,6 +8,7 @@ import Parser
 import Progress (noProgress)
 import Range
 import System.FilePath ((</>))
+import System.Directory (makeAbsolute)
 
 import AST.Parser (collectAllErrors, parseContractsWithDependencies, parsePreprocessed)
 import AST.Scope (addScopes, lookupContract)
@@ -34,9 +35,11 @@ parseDiagnosticsDriver
   => [(Range, Text)]
   -> Assertion
 parseDiagnosticsDriver expectedMsgs = withoutLogger \runLogger -> do
-  parsedContracts <- runLogger $ parseContractsWithDependencies parsePreprocessed noProgress inputDir
+  inputDir' <- makeAbsolute inputDir
+  inputFile' <- makeAbsolute inputFile
+  parsedContracts <- runLogger $ parseContractsWithDependencies parsePreprocessed noProgress inputDir'
   contractGraph <- runLogger $ addScopes @impl noProgress parsedContracts
-  let mContract = lookupContract inputFile contractGraph
+  let mContract = lookupContract inputFile' contractGraph
   case mContract of
     Nothing -> expectationFailure ("Couldn't find " <> inputFile)
     Just contract ->

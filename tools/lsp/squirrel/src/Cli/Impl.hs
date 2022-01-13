@@ -106,6 +106,7 @@ instance Exception SomeLigoException where
       , SomeLigoException <$> fromException @LigoDecodedExpectedClientFailureException e
       , SomeLigoException <$> fromException @LigoErrorNodeParseErrorException          e
       , SomeLigoException <$> fromException @LigoDefinitionParseErrorException         e
+      , SomeLigoException <$> fromException @LigoUnexpectedCrashException              e
       , SomeLigoException <$> fromException @LigoPreprocessFailedException             e
       ]
 
