@@ -1,6 +1,5 @@
 module AST.Parser
   ( Source (..)
-  , Progress (..)
   , ParserCallback
   , parse
   , parsePreprocessed
@@ -21,10 +20,12 @@ import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Bifunctor (second)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
+import Data.Text (Text)
 import Data.Text qualified as Text (lines, unlines)
 import Data.Traversable (for)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
+import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
 
 import Duplo.Lattice (Lattice (leq))
@@ -59,16 +60,20 @@ parse src = do
 
 parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
-  src' <- liftIO $ deleteExtraMarkers <$> srcToText src
-  (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
-    [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
-      pure (src', Just $ fromLigoErrorToMsg err)
-    , Handler \LigoErrorNodeParseErrorException {} ->
-      pure (src', Nothing)
-    , Handler \(_ :: IOError) ->
-      pure (src', Nothing)
-    ]
-  maybe id addLigoErrToMsg err <$> parse src''
+  (src', needsPreprocessing) <- liftIO $ prePreprocess <$> srcToText src
+  if needsPreprocessing
+    then do
+      (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
+        [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
+          pure (src', Just $ fromLigoErrorToMsg err)
+        , Handler \LigoErrorNodeParseErrorException {} ->
+          pure (src', Nothing)
+        , Handler \(_ :: IOError) ->
+          pure (src', Nothing)
+        ]
+      maybe id addLigoErrToMsg err <$> parse src''
+    else
+      parse src'
   where
     addLigoErrToMsg err = getContract . cMsgs %~ (`rewriteAt` err)
 
@@ -77,8 +82,15 @@ parsePreprocessed src = do
     rewriteAt at what@(from, _) = filter (not . (from `leq`) . fst) at <> [what]
 
     -- If the user has hand written any line markers, they will get removed here.
-    deleteExtraMarkers =
-      Text (srcPath src) . Text.unlines . map (\l -> maybe l mempty $ parseLineMarkerText l) . Text.lines
+    -- Also query whether we need to do any preprocessing at all in the first place.
+    prePreprocess :: Text -> (Source, Bool)
+    prePreprocess contents =
+      let
+        hasPreprocessor = contents =~ ("^#\\s*[a-z]+" :: Text)
+        prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
+        shouldPreprocess = hasPreprocessor || any snd prepreprocessed
+      in
+      (Text (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
 
 parseWithScopes
   :: forall impl m

@@ -79,7 +79,7 @@ data LigoErrorContent = LigoErrorContent
     _lecMessage :: Text
     -- | Location of the error
     -- `"location"`
-  , _lecLocation :: LigoRange
+  , _lecLocation :: Maybe LigoRange
   }
   deriving stock (Eq, Generic, Show)
 
@@ -314,10 +314,19 @@ instance ToJSON LigoError where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 instance FromJSON LigoErrorContent where
-  parseJSON = withObject "error_content" $ \o -> do
-    _lecMessage <- o .: "message"
-    _lecLocation <- parseLigoRange "location_error_inner_range" =<< o .: "location"
-    return LigoErrorContent {..}
+  parseJSON = asum . (parsers ??)
+    where
+      parsers =
+        [ withObject "error_content" \o -> do
+          _lecMessage <- o .: "message"
+          _lecLocation <- traverse (parseLigoRange "location_error_inner_range") =<< o .:? "location"
+          return LigoErrorContent {..}
+        , withText "error_content" \t -> do
+          let
+            _lecMessage = t
+            _lecLocation = Nothing
+          pure LigoErrorContent {..}
+        ]
 
 instance ToJSON LigoErrorContent where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
@@ -598,13 +607,11 @@ parseLigoTypeMeta _ = do
 instance Pretty LigoError where
   pp (LigoError _ stage (LigoErrorContent msg at)) = mconcat
     [ text "Error in ", text $ show stage
-    , text "\n\nat: ", pp $ fromLigoRangeOrDef at
+    , case at of
+        Nothing -> mempty
+        Just at' -> text "\n\nat: " <> pp (fromLigoRangeOrDef at')
     , text "\n\n" <> pp msg
     ]
-    where
-      _fromLigoRange r@(LigoRange _ _) =
-        "[" <> pp (fromMaybe (error "impossible") (mbFromLigoRange r)) <> "]"
-      _fromLigoRange (Virtual _) = text "virtual"
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -615,9 +622,9 @@ fromLigoErrorToMsg :: LigoError -> Msg
 fromLigoErrorToMsg LigoError
   { _leContent = LigoErrorContent
       { _lecMessage = err
-      , _lecLocation = fromLigoRangeOrDef -> at
+      , _lecLocation = fmap fromLigoRangeOrDef -> at
       }
-  } = (at, Error (err :: Text) [])
+  } = (fromMaybe (point 0 0) at, Error (err :: Text) [])
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --

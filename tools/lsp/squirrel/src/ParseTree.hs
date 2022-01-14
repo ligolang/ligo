@@ -27,7 +27,6 @@ module ParseTree
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
-import Data.Map
 import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -99,13 +98,6 @@ data SomeRawTree where
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = Product [Range, Text]
 
--- instance {-# OVERLAPS #-} Modifies RawInfo where
---   ascribe (r :> n :> _) d = color 3 (pp n) `indent` pp d
-
--- TODO: move and refactor
-instance (Pretty v) => Pretty (Map k v) where
-  pp = pp . fmap snd . toList
-
 -- | The tree tree-sitter produces.
 data ParseTree self = ParseTree
   { ptName     :: Text         -- ^ Name of the node.
@@ -134,13 +126,13 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
   res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
     src <- srcToBytestring input
     withParseTree parser src \tree ->
-      withRootNode tree (peek >=> go input src)
+      withRootNode tree (peek >=> go src)
 
   $(Log.debug) [Log.i|Done reading #{input}|]
   pure res
   where
-    go :: Source -> ByteString -> Node -> IO RawTree
-    go fin src node = do
+    go :: ByteString -> Node -> IO RawTree
+    go src node = do
       let count = fromIntegral $ nodeChildCount node
       allocaArray count $ \children -> do
         alloca $ \tsNodePtr -> do
@@ -148,7 +140,7 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
           ts_node_copy_child_nodes tsNodePtr children
           nodes <- for [0.. count - 1] $ \i -> do
             node' <- peekElemOff children i
-            (only -> (r :> _, tree :: ParseTree RawTree)) <- go fin src node'
+            (only -> (r :> _, tree :: ParseTree RawTree)) <- go src node'
             field <-
               if   nodeFieldName node' == nullPtr
               then return ""
@@ -168,8 +160,6 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
             -- https://github.com/tree-sitter/tree-sitter-bash/issues/27#issuecomment-410865045
             -- we can check for this by testing whether we have an empty node.
             name     = if start2D == finish2D then "ERROR" else Text.pack ty
-
-          let
             range = Range
               { _rStart  =
                   ( pointRow    start2D + 1
@@ -181,7 +171,7 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
                   , pointColumn finish2D + 1
                   , nodeEndByte node
                   )
-              , _rFile = srcPath fin
+              , _rFile = srcPath input
               }
 
           return $ make
