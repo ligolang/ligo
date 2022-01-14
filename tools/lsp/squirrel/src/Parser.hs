@@ -5,7 +5,7 @@ module Parser
   , ParserM
   , LineMarkerType (..)
   , LineMarker (..)
-  , Failure (..)
+  , UnrecognizedFieldException (..)
   , CodeSource (..)
   , Info
   , ParsedInfo
@@ -27,7 +27,7 @@ module Parser
   ) where
 
 import Control.Arrow
-import Control.Exception (Exception)
+import Control.Exception (Exception (..))
 import Control.Monad.Except (ExceptT, throwError)
 import Control.Monad.RWS hiding (Product)
 import Data.Functor
@@ -55,11 +55,27 @@ import Range
   4) On leaving, move move comments from 2 to 1.
 -}
 
-runParserM :: ParserM a -> Either Failure (a, [Msg])
-runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p [] ([], [])
+-- | Reader environment for the parser.
+data ParserEnv = ParserEnv
+  { peNodes :: [RawTree]
+  -- ^ Nodes that must yet be parsed.
+  , peNodeType :: Text
+  -- ^ Type of the node being parsed. Stored for better error messages.
+  , peNodeRange :: Range
+  -- ^ Type of the node being parsed. Stored for better error messages.
+  }
+
+runParserM :: ParserM a -> Either UnrecognizedFieldException (a, [Msg])
+runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], [])
+  where
+    initEnv = ParserEnv
+      { peNodes = []
+      , peNodeType = ""
+      , peNodeRange = point 0 0
+      }
 
 type Msg = (Range, Error ())
-type ParserM = RWST [RawTree] [Msg] ([Text], [Text]) (Either Failure)
+type ParserM = RWST ParserEnv [Msg] ([Text], [Text]) (Either UnrecognizedFieldException)
 type ParserHandler = ExceptT HandlerFailed ParserM
 
 collectTreeErrors :: Contains Range info => SomeLIGO info -> [Msg]
@@ -109,9 +125,15 @@ parseLineMarker (getRange -> range, ParseTree ty _ marker) = do
   (file, markerType, line) <- parseLineMarkerText marker
   pure $ LineMarker file markerType line range
 
-newtype Failure = Failure String
-  deriving stock (Show)
-  deriving anyclass (Exception)
+data UnrecognizedFieldException = UnrecognizedFieldException
+  { ufeFieldName :: Text
+  , ufeNodeType :: Text
+  , ufeNodeRange :: Range
+  } deriving stock (Show)
+
+instance Exception UnrecognizedFieldException where
+  displayException UnrecognizedFieldException {ufeFieldName, ufeNodeType, ufeNodeRange} =
+    [i|Cannot find field `#{ufeFieldName}` while decoding `#{ufeNodeType}` (at #{ufeNodeRange}).|]
 
 instance Scoped (Product [Range, Text]) ParserHandler RawTree ParseTree where
   before _ (ParseTree _ cs _) = do
@@ -159,10 +181,14 @@ flag name = fieldOpt name <&> isJust
 field :: Text -> ParserHandler RawTree
 field name =
   fieldOpt name
-    >>= maybe (lift $ lift $ Left $ Failure [i|Cannot find field #{name}|]) pure
+    >>= maybe
+      (do
+        ParserEnv {peNodeType, peNodeRange} <- ask
+        lift $ lift $ Left $ UnrecognizedFieldException name peNodeType peNodeRange)
+      pure
 
 fieldOpt :: Text -> ParserHandler (Maybe RawTree)
-fieldOpt name = go <$> ask
+fieldOpt name = go <$> asks peNodes
   where
     go (tree@(extract -> _ :> n :> _) : rest)
       | n == name = Just tree
@@ -171,7 +197,7 @@ fieldOpt name = go <$> ask
     go _ = Nothing
 
 fields :: Text -> ParserHandler [RawTree]
-fields name = go <$> ask
+fields name = go <$> asks peNodes
   where
     go (tree : rest)
       | _ :> n :> _ <- extract tree, n == name = tree : go rest
@@ -219,30 +245,33 @@ withComments act = do
 getMarkers :: [RawTree] -> [LineMarker]
 getMarkers = mapMaybe (parseLineMarker . fromJust . match)
 
-boilerplate
-  :: (Text -> ParserHandler (f RawTree))
+boilerplateImpl
+  :: ParserHandler (f RawTree)
   -> RawInfo
   -> ParseTree RawTree
   -> ParserHandler (Product Info, f RawTree)
-boilerplate f (r :> _) (ParseTree ty cs src) =
+boilerplateImpl handler (r :> _) (ParseTree ty cs src) =
   withComments do
     -- TODO: What is exactly the appropriate action in case something ever
     -- returns 'Nothing'? 'catMaybes'? If something goes wrong, then we will
     -- probably get unwanted behavior in 'AST.Parser'.
     let markers = getMarkers cs
-    f' <- local (const cs) $ f ty
+    f' <- local (const $ ParserEnv cs ty r) handler
     return (markers :> r :> CodeSource src :> Nil, f')
+
+boilerplate
+  :: (Text -> ParserHandler (f RawTree))
+  -> RawInfo
+  -> ParseTree RawTree
+  -> ParserHandler (Product Info, f RawTree)
+boilerplate f info pt = boilerplateImpl (f $ ptName pt) info pt
 
 boilerplate'
   :: ((Text, Text) -> ParserHandler (f RawTree))
   -> RawInfo
   -> ParseTree RawTree
   -> ParserHandler (Product Info, f RawTree)
-boilerplate' f (r :> _) (ParseTree ty cs src) =
-  withComments do
-    let markers = getMarkers cs
-    f' <- local (const cs) $ f (ty, src)
-    return (markers :> r :> CodeSource src :> Nil, f')
+boilerplate' f info pt@(ParseTree ty _ src) = boilerplateImpl (f (ty, src)) info pt
 
 fallthrough :: ParserHandler a
 fallthrough = throwError HandlerFailed
