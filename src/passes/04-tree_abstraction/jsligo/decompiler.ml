@@ -84,15 +84,8 @@ let decompile_variable : AST.Var.t -> CST.variable = fun var ->
       wrap @@ var
 
 let decompile_variable2 : AST.Var.t -> CST.var_pattern Region.reg = fun var ->
-  let var = Format.asprintf "%a" AST.Var.pp var in
-  if String.contains var '#' then
-    let var = String.split ~on:'#' var in
-    wrap @@ CST.{variable = wrap ("gen__" ^ (String.concat var)); attributes = []}
-  else
-    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
-      wrap @@ CST.{variable = wrap ("user__" ^ var); attributes = []}
-    else
-      wrap @@ CST.{variable = wrap var; attributes = []}
+  let variable = decompile_variable var in
+  wrap @@ CST.{variable; attributes = []}
 
 let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   let return te = te in

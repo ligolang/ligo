@@ -174,8 +174,8 @@ let%expect_test _ =
   let ##A#other6 = lambda (n) return let current_turn = (##A#current_turn5)@(+1) in
   ASSERTION(EQ(n ,
   current_turn)) in
-  let main = lambda (#1) return let #3 = #1 in
-   match #3 with
+  let main = lambda (#generated1) return let #generated3 = #generated1 in
+   match #generated3 with
     | ( _p , _s ) ->
     ( LIST_EMPTY() , (##A#other6)@(+2) ) in
   unit |}]

@@ -15,7 +15,7 @@ let compare {name=na;_} {name=nb;_} =
 (* TODO : remove counter, make sure that every generated_variable is corectly used *)
 let global_counter = ref 0
 let reset_counter () = global_counter := 0
-let generate ?(loc=Location.dummy) ?(name="") () = 
+let generate ?(loc=Location.dummy) ?(name="generated") () = 
   let counter = incr global_counter ; !global_counter in
   let name = Format.asprintf "#%s%i" name counter in
   {name=name;location=loc}

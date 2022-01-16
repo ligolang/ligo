@@ -61,15 +61,8 @@ let brackets = Some (`Brackets (ghost,ghost))
 (* Decompiler *)
 
 let decompile_variable : AST.Var.t -> CST.variable = fun var ->
-  let var = Format.asprintf "%a" AST.Var.pp var in
-  if String.contains var '#' then
-    let var = String.split ~on:'#' var in
-    wrap @@ "gen__" ^ (String.concat var)
-  else
-    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
-      wrap @@ "user__" ^ var
-    else
-      wrap @@ var
+  let var = AST.Var.to_name var in
+  wrap @@ var
 
 let rec decompile_type_expr : AST.type_expression -> _ = fun te ->
   let return te = te in

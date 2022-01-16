@@ -13909,7 +13909,7 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "name": "#3",
+                                  "name": "#generated3",
                                   "location": [
                                     "File",
                                     {
