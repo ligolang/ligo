@@ -39,10 +39,6 @@ val fresh : ?name:string -> unit -> t
    given variable. *)
 val fresh_like : t -> t
 
-(* Internal to handle handshake with AST.Var, should disapear*)
-val of_ast_var : string -> int option -> t
-val init_from_ast_var : int -> unit
-
 (* Reset the global counter. Danger, do not use... Provided for tests
    only. *)
 val reset_counter : unit -> unit

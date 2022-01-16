@@ -22,9 +22,9 @@ let%expect_test _ =
                                                      | ( action , #2 ) ->
                                                      ( LIST_EMPTY() , let #7 = action in  match
                                                                         #7 with
-                                                                        | Decrement unit_proj#8 ->
+                                                                        | Decrement #unit_proj8 ->
                                                                         amt
-                                                                        | Increment unit_proj#9 ->
+                                                                        | Increment #unit_proj9 ->
                                                                         bal ) |}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
@@ -49,9 +49,9 @@ let%expect_test _ =
                                                      | ( action , #2 ) ->
                                                      ( LIST_EMPTY() , let #7 = action in  match
                                                                         #7 with
-                                                                        | Decrement unit_proj#8 ->
+                                                                        | Decrement #unit_proj8 ->
                                                                         amt
-                                                                        | Increment unit_proj#9 ->
+                                                                        | Increment #unit_proj9 ->
                                                                         bal ) |}]
 
 let%expect_test _ =
@@ -74,9 +74,9 @@ let%expect_test _ =
                                                      | ( action , #2 ) ->
                                                      ( LIST_EMPTY() , let #7 = action in  match
                                                                         #7 with
-                                                                        | Decrement unit_proj#8 ->
+                                                                        | Decrement #unit_proj8 ->
                                                                         amt
-                                                                        | Increment unit_proj#9 ->
+                                                                        | Increment #unit_proj9 ->
                                                                         bal ) |}]
 
 let%expect_test _ =
@@ -105,7 +105,7 @@ run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules_with_free_vars.
                                                    | ( action , #2 ) ->
                                                    ( LIST_EMPTY() , let #7 = action in  match
                                                                       #7 with
-                                                                      | Decrement unit_proj#8 ->
+                                                                      | Decrement #unit_proj8 ->
                                                                       1000000mutez
-                                                                      | Increment unit_proj#9 ->
+                                                                      | Increment #unit_proj9 ->
                                                                       used ) |}]

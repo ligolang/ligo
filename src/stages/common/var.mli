@@ -32,7 +32,6 @@ val is_generalizable : t -> bool
 val is_generated     : t -> bool
 val is_name          : t -> string -> bool
 val internal_get_name_and_counter : t -> (string * int option)
-val internal_transfer_to_mini_c   : unit -> int
   
 (* Prints vars as %s or %s#%d *)
 val pp : Format.formatter -> t -> unit

@@ -51,8 +51,8 @@ let t_abstraction1 ?loc name kind : type_expression =
   let type_ = t_constant name [t_variable ty_binder ()] in
   t_abstraction ?loc { ty_binder ; kind ; type_ } ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Var.generate () in
-  let ty_binder_r = Var.generate () in
+  let ty_binder_l = Var.of_name "_l" in
+  let ty_binder_r = Var.of_name "_r" in
   let type_ = t_constant name
     [ t_variable ty_binder_l () ;
       t_variable ty_binder_r () ]

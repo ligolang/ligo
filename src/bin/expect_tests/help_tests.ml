@@ -13,7 +13,7 @@ let%expect_test _ =
   Raised at Core_kernel__Command.exit in file "src/command.ml", line 23, characters 34-64
   Called from Core_kernel__Command.Exn.handle_uncaught_and_exit in file "src/command.ml", line 32, characters 12-16
   Called from Cli.run in file "src/bin/cli.ml", line 665, characters 2-49
-  Called from Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 25, characters 18-31
+  Called from Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 26, characters 18-31
   Called from Cli_expect_tests__Help_tests.(fun) in file "src/bin/expect_tests/help_tests.ml", line 5, characters 2-18
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
@@ -38,7 +38,7 @@ let%expect_test _ =
     version    print version information
     help       explain a given subcommand (perhaps recursively)
 
-  missing subcommand for command ligo |}] 
+  missing subcommand for command ligo |}]
 
 let%expect_test _ =
   run_ligo_good [ "-help" ] ;
@@ -62,8 +62,8 @@ let%expect_test _ =
       version    print version information
       help       explain a given subcommand (perhaps recursively)
 
-    (src/command.ml.Exit_called (status 0)) |} ] 
- 
+    (src/command.ml.Exit_called (status 0)) |} ]
+
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; "-help" ] ;
   [%expect {|
@@ -119,7 +119,7 @@ let%expect_test _ =
       [-help]                             print this help text and exit
                                           (alias: -?)
 
-    (src/command.ml.Exit_called (status 0)) |} ] 
+    (src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; "-help" ] ;

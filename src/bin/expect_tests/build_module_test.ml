@@ -94,39 +94,39 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
-let #../../test/contracts/build/A.mligo#toto#10 = L(1) in
-let #../../test/contracts/build/B.mligo#toto#11 = L(32) in
-let #../../test/contracts/build/B.mligo#titi#12 =
-  ADD(#../../test/contracts/build/A.mligo#toto#10 , L(42)) in
-let #../../test/contracts/build/B.mligo#f#13 =
+let ##../../test/contracts/build/A.mligo#toto10 = L(1) in
+let ##../../test/contracts/build/B.mligo#toto11 = L(32) in
+let ##../../test/contracts/build/B.mligo#titi12 =
+  ADD(##../../test/contracts/build/A.mligo#toto10 , L(42)) in
+let ##../../test/contracts/build/B.mligo#f13 =
   fun #1 ->
   (let #6 = #1 in
-   let (#20, #21) = #6 in
-   let #2 = #20 in
-   let x = #21 in
+   let (#1, #2) = #6 in
+   let #2 = #1 in
+   let x = #2 in
    let x =
-     ADD(ADD(x , #../../test/contracts/build/A.mligo#toto#10) ,
-         #../../test/contracts/build/B.mligo#titi#12) in
+     ADD(ADD(x , ##../../test/contracts/build/A.mligo#toto10) ,
+         ##../../test/contracts/build/B.mligo#titi12) in
    PAIR(LIST_EMPTY() , x)) in
-let #../../test/contracts/build/F.mligo#toto#14 = L(44) in
-let #../../test/contracts/build/G.mligo#toto#15 = L(43) in
-let #../../test/contracts/build/C.mligo#tata#16 =
-  ADD(#../../test/contracts/build/A.mligo#toto#10 ,
-      #../../test/contracts/build/B.mligo#titi#12) in
-let #../../test/contracts/build/C.mligo#foo#17 =
-  (#../../test/contracts/build/B.mligo#f#13)@(PAIR(L(unit) , L(3))) in
-let #../../test/contracts/build/E.mligo#toto#18 = L(10) in
-let #../../test/contracts/build/E.mligo#foo#19 = L("bar") in
+let ##../../test/contracts/build/F.mligo#toto14 = L(44) in
+let ##../../test/contracts/build/G.mligo#toto15 = L(43) in
+let ##../../test/contracts/build/C.mligo#tata16 =
+  ADD(##../../test/contracts/build/A.mligo#toto10 ,
+      ##../../test/contracts/build/B.mligo#titi12) in
+let ##../../test/contracts/build/C.mligo#foo17 =
+  (##../../test/contracts/build/B.mligo#f13)@(PAIR(L(unit) , L(3))) in
+let ##../../test/contracts/build/E.mligo#toto18 = L(10) in
+let ##../../test/contracts/build/E.mligo#foo19 = L("bar") in
 let toto =
-  ADD(#../../test/contracts/build/E.mligo#toto#18 ,
-      #../../test/contracts/build/A.mligo#toto#10) in
+  ADD(##../../test/contracts/build/E.mligo#toto18 ,
+      ##../../test/contracts/build/A.mligo#toto10) in
 let fb = (L(1), toto, L(2), L(3)) in
 let main =
   fun #4 ->
   (let #8 = #4 in
-   let (#22, #23) = #8 in
-   let p = #22 in
-   let s = #23 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
+   let (#3, #4) = #8 in
+   let p = #3 in
+   let s = #4 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
 L(unit) |}]
 
 let%expect_test _ =

@@ -19,8 +19,9 @@ let compare {name=na;counter=ca;_} {name=nb;counter=cb;_} =
 let global_counter = ref 0
 let reset_counter () = global_counter := 0
 let generate ?(loc=Location.dummy) ?(name="") () = 
-  let counter = incr global_counter ; Some !global_counter in
-  {name=name;counter;location=loc}
+  let counter = incr global_counter ; !global_counter in
+  let name = Format.asprintf "#%s%i" name counter in
+  {name=name;counter=Some counter;location=loc}
 
 let of_name ?(loc=Location.dummy) name = {name;counter=None;location=loc}
 (* This exception indicates that some code tried to throw away the
@@ -45,37 +46,6 @@ let is_generated var =
 let is_name var name = String.equal var.name name
 
 let internal_get_name_and_counter var = (var.name, var.counter)
-let internal_transfer_to_mini_c () = !global_counter
 
 (* PP *)
-type names_for_print = { get_name_for_print : t -> string }
-let global_mutable_names_for_print : names_for_print ref =
-  ref { get_name_for_print =  (fun _ -> "") }
-
-let rec int_to_unicode (x : Int.t) =
-  let digit =
-    match (x - ((x / 10) * 10)) with
-      a when Int.equal a 0 -> "₀"
-    | a when Int.equal a 1 -> "₁"
-    | a when Int.equal a 2 -> "₂"
-    | a when Int.equal a 3 -> "₃"
-    | a when Int.equal a 4 -> "₄"
-    | a when Int.equal a 5 -> "₅"
-    | a when Int.equal a 6 -> "₆"
-    | a when Int.equal a 7 -> "₇"
-    | a when Int.equal a 8 -> "₈"
-    | a when Int.equal a 9 -> "₉"
-    | _ -> failwith (Format.asprintf "internal error: couldn't pretty-print int64: %d (is it a negative number?)" x)
-  in
-  if x = 0 then "" else (int_to_unicode (Int.(/) x 10)) ^ digit
-
-let pp ppf v =
-  match v.name, v.counter with
-  | "", None -> Format.fprintf ppf "%s" v.name
-  | "", Some i ->
-    let new_name = ((!global_mutable_names_for_print).get_name_for_print v) in
-    if String.equal new_name ""
-    then Format.fprintf ppf "#%d" i
-    else Format.fprintf ppf "'%s%s" new_name (int_to_unicode i)
-  | _, None -> Format.fprintf ppf "%s" v.name
-  | _, Some i -> Format.fprintf ppf "%s#%d" v.name i
+let pp ppf v = Format.fprintf ppf "%s" v.name

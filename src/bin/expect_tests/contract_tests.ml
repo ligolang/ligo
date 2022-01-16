@@ -1969,15 +1969,15 @@ let%expect_test _ =
   [%expect {|
     const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let #3 = EQ(n ,
     0) in  match #3 with
-            | False unit_proj#4 ->
+            | False #unit_proj4 ->
               (f)@(SUB(n ,
-              1)) | True unit_proj#5 ->
+              1)) | True #unit_proj5 ->
                     1 ) in (f)@(4)
     const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let #6 = EQ(n ,
     0) in  match #6 with
-            | False unit_proj#7 ->
+            | False #unit_proj7 ->
               (h)@(SUB(n ,
-              1)) | True unit_proj#8 ->
+              1)) | True #unit_proj8 ->
                     1 ) in h) ) |}]
 
 let%expect_test _ =
@@ -2222,7 +2222,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let #Foo#x#1 = L(54) in let #Foo#y#2 = #Foo#x#1 in L(unit) |}]
+    let ##Foo#x1 = L(54) in let ##Foo#y2 = ##Foo#x1 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;

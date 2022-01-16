@@ -17,8 +17,8 @@ let temp_unwrap_loc = Location.unwrap
 let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 
 let compile_variable : AST.expression_variable -> Mini_c.expression_variable = fun v ->
-  let (name,counter) = AST.Var.internal_get_name_and_counter v in
-  Var.of_ast_var name counter
+  let name = AST.Var.to_name v in
+  Var.of_name name
 
 let compile_constant' : AST.constant' -> constant' = function
   | C_INT -> C_INT
@@ -864,5 +864,4 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   Expression.make (E_closure {binder;body}) fun_type
 
 let compile_program ~raise : AST.expression -> Mini_c.expression = fun p ->
-  Var.init_from_ast_var @@ AST.Var.internal_transfer_to_mini_c ();
   compile_expression ~raise p

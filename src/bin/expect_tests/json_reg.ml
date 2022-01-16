@@ -2015,7 +2015,7 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "parameters",
+                  "name": "#parameters1",
                   "counter": 1,
                   "location": [ "Virtual", "dummy" ]
                 },
@@ -2145,7 +2145,7 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "parameters",
+                          "name": "#parameters1",
                           "counter": 1,
                           "location": [ "Virtual", "dummy" ]
                         }
@@ -10294,7 +10294,7 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "parameters",
+                  "name": "#parameters2",
                   "counter": 2,
                   "location": [ "Virtual", "dummy" ]
                 },
@@ -10424,7 +10424,7 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "parameters",
+                          "name": "#parameters2",
                           "counter": 2,
                           "location": [ "Virtual", "dummy" ]
                         }
@@ -14045,7 +14045,7 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "parameters",
+                  "name": "#parameters4",
                   "counter": 4,
                   "location": [ "Virtual", "dummy" ]
                 },
@@ -14175,7 +14175,7 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "parameters",
+                          "name": "#parameters4",
                           "counter": 4,
                           "location": [ "Virtual", "dummy" ]
                         }
@@ -14191,7 +14191,7 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "name": "",
+                                  "name": "#3",
                                   "counter": 3,
                                   "location": [
                                     "File",
@@ -14812,7 +14812,7 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "parameters",
+                  "name": "#parameters5",
                   "counter": 5,
                   "location": [ "Virtual", "dummy" ]
                 },
@@ -14942,7 +14942,7 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "parameters",
+                          "name": "#parameters5",
                           "counter": 5,
                           "location": [ "Virtual", "dummy" ]
                         }
