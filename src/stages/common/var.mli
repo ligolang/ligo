@@ -20,18 +20,14 @@ val generate : ?loc:Location.t -> ?name:string -> unit -> t
    generated variables, use `fresh`. Take care not to cause
    shadowing/capture except as the user intended. *)
 val of_name : ?loc:Location.t -> string -> t
-
-(* TODO don't use this, this should not exist. *)
 val to_name : t -> string
 
 val add_prefix : string -> t -> t
 val concat : ?sep:string -> t list -> t
 
-(* Check if the*)
 val is_generalizable : t -> bool
 val is_generated     : t -> bool
 val is_name          : t -> string -> bool
-val internal_get_name_and_counter : t -> (string * int option)
   
 (* Prints vars as %s or %s#%d *)
 val pp : Format.formatter -> t -> unit

@@ -1211,7 +1211,7 @@ let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
   let initial_state = Tezos_state.init_ctxt ~raise protocol_version [] in
   let f (n, t) r =
-    let s, _ = Var.internal_get_name_and_counter n in
+    let s = Var.to_name n in
     LMap.add (Label s) (Ast_typed.e_a_variable n t) r in
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
@@ -1221,7 +1221,7 @@ let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = Var.internal_get_name_and_counter n in
+      let s = Var.to_name n in
       match LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in
