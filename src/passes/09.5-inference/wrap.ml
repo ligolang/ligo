@@ -27,28 +27,28 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   | T_app {type_operator;arguments} -> (
     let open Stage_common.Constant in
     let (csttag, args) = Option.value_exn (* This will be removed later *)
-    T.(match (Var.to_name type_operator , arguments) with
-      | ( s , [] ) when String.equal s unit_name -> Some (C_unit , [])
-      | ( s , [] ) when String.equal s never_name -> Some (C_never , [])
-      | ( s , [] ) when String.equal s string_name-> Some (C_string , [])
-      | ( s , [] ) when String.equal s nat_name-> Some (C_nat , [])
-      | ( s , [] ) when String.equal s tez_name-> Some (C_mutez , [])
-      | ( s , [] ) when String.equal s timestamp_name-> Some (C_timestamp , [])
-      | ( s , [] ) when String.equal s int_name-> Some (C_int , [])
-      | ( s , [] ) when String.equal s address_name-> Some (C_address , [])
-      | ( s , [] ) when String.equal s bytes_name-> Some (C_bytes , [])
-      | ( s , [] ) when String.equal s key_hash_name-> Some (C_key_hash , [])
-      | ( s , [] ) when String.equal s key_name-> Some (C_key , [])
-      | ( s , [] ) when String.equal s signature_name-> Some (C_signature , [])
-      | ( s , [] ) when String.equal s operation_name-> Some (C_operation , [])
-      | ( s , [] ) when String.equal s chain_id_name-> Some (C_chain_id , [])
-      | ( s , [o] ) when String.equal s option_name -> Some (C_option, [o])
-      | ( s , [p] ) when String.equal s set_name -> Some (C_set, [p])
-      | ( s , [ k ; v ]) when String.equal s map_name -> Some (C_map, [k;v])
-      | ( s , [ k ; v ]) when String.equal s big_map_name -> Some (C_big_map, [k;v])
-      | ( s , [ k ; v ]) when String.equal s map_or_big_map_name -> Some (C_map, [k;v])
-      | ( s , [l] ) when String.equal s list_name -> Some (C_list, [l])
-      | ( s , [c] ) when String.equal s contract_name -> Some (C_contract, [c])
+    T.(match (type_operator , arguments) with
+      | ( s , [] ) when Var.is_name s unit_name -> Some (C_unit , [])
+      | ( s , [] ) when Var.is_name s never_name -> Some (C_never , [])
+      | ( s , [] ) when Var.is_name s string_name-> Some (C_string , [])
+      | ( s , [] ) when Var.is_name s nat_name-> Some (C_nat , [])
+      | ( s , [] ) when Var.is_name s tez_name-> Some (C_mutez , [])
+      | ( s , [] ) when Var.is_name s timestamp_name-> Some (C_timestamp , [])
+      | ( s , [] ) when Var.is_name s int_name-> Some (C_int , [])
+      | ( s , [] ) when Var.is_name s address_name-> Some (C_address , [])
+      | ( s , [] ) when Var.is_name s bytes_name-> Some (C_bytes , [])
+      | ( s , [] ) when Var.is_name s key_hash_name-> Some (C_key_hash , [])
+      | ( s , [] ) when Var.is_name s key_name-> Some (C_key , [])
+      | ( s , [] ) when Var.is_name s signature_name-> Some (C_signature , [])
+      | ( s , [] ) when Var.is_name s operation_name-> Some (C_operation , [])
+      | ( s , [] ) when Var.is_name s chain_id_name-> Some (C_chain_id , [])
+      | ( s , [o] ) when Var.is_name s option_name -> Some (C_option, [o])
+      | ( s , [p] ) when Var.is_name s set_name -> Some (C_set, [p])
+      | ( s , [ k ; v ]) when Var.is_name s map_name -> Some (C_map, [k;v])
+      | ( s , [ k ; v ]) when Var.is_name s big_map_name -> Some (C_big_map, [k;v])
+      | ( s , [ k ; v ]) when Var.is_name s map_or_big_map_name -> Some (C_map, [k;v])
+      | ( s , [l] ) when Var.is_name s list_name -> Some (C_list, [l])
+      | ( s , [c] ) when Var.is_name s contract_name -> Some (C_contract, [c])
       | ( _ , _ ) -> None
       )
     in
@@ -56,11 +56,11 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   )
   | T_abstraction { ty_binder ; kind = _ ; type_ } -> (
     let body = type_expression_to_type_value type_ in
-    p_for_all ty_binder.wrap_content [] body
+    p_for_all ty_binder [] body
   )
   | T_for_all { ty_binder ; kind = _ ; type_ } -> (
     let body = type_expression_to_type_value type_ in
-    p_for_all ty_binder.wrap_content [] body
+    p_for_all ty_binder [] body
   )
 
 let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun name expr ->

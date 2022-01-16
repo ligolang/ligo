@@ -12,7 +12,7 @@ module Random_type_generator = struct
   let concrete_t var cor : m = { var ; cor_opt = Some cor }
   let make_var i =
     let name = "n"^(string_of_int i) in 
-    Var.fresh ~name ()
+    Var.generate ~name ()
   let (base_t_1, base_t_2) = make_var (-1) , make_var (-2)
   let pp : Format.formatter -> m -> unit = fun ppf {var ; cor_opt} ->
     match cor_opt with
@@ -87,7 +87,7 @@ end
 module Small_env_manual_test = struct
 
   let all_vars = 
-    let v name = Var.fresh ~name () in
+    let v name = Var.generate ~name () in
     List.map ~f:(fun n -> v n) ["a" ; "b" ; "c" ; "d" ; "e" ; "f" ; "g" ; "h" ; "i" ; "j" ; "k"]
   let (a,b,c,d,e,f,g,h,i,j,k) =
     match all_vars with

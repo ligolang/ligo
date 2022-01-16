@@ -1,4 +1,5 @@
 module Location = Simple_utils.Location
+module Var = Stage_common.Var
 open Types
 
 let pair_map = fun f (x , y) -> (f x , f y)

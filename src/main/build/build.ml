@@ -31,13 +31,17 @@ module M (Params : Params) =
         Environment.append ast env
       let add_module_to_env : module_name -> environment -> environment -> environment =
         fun module_name ast_typed_env env ->
+          let module_name = Ast_typed.Var.of_name module_name in
           Environment.add_module ~public:() module_name (Environment.to_program ast_typed_env) env
       let init_env : environment = options.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
+        let module_binder = Ast_typed.Var.of_name module_binder in
         (Location.wrap @@ (Ast_typed.Declaration_module {module_binder;module_=ast_typed;module_attr={public=true}}: Ast_typed.declaration))
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
+        let module_name = Ast_typed.Var.of_name module_name in
+        let file_name   = Ast_typed.Var.of_name file_name in
         Location.wrap @@ (Ast_typed.Module_alias {alias=module_name;binders=file_name,[]}: Ast_typed.declaration)
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
@@ -61,13 +65,17 @@ module Infer (Params : Params) = struct
         Environment.append_core ast env
       let add_module_to_env : module_name -> environment -> environment -> environment =
         fun module_name ast_typed_env env ->
+          let module_name = Ast_core.Var.of_name module_name in
           Environment.add_core_module ~public:() module_name (Environment.to_core_program ast_typed_env) env
       let init_env : environment = Environment.init_core @@ Checking.untype_program @@ Environment.to_program @@ options.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
+        let module_binder = Ast_core.Var.of_name module_binder in
         (Location.wrap @@ (Ast_core.Declaration_module {module_binder;module_=ast_typed;module_attr={public=true}}: Ast_core.declaration))
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
+        let module_name = Ast_core.Var.of_name module_name in
+        let file_name   = Ast_core.Var.of_name file_name in
         Location.wrap @@ (Ast_core.Module_alias {alias=module_name;binders=file_name,[]}: Ast_core.declaration)
   end
 

@@ -22,8 +22,8 @@ let rec assign_expression ~raise : ?vars:expression_variable list -> expression 
                    match expr.expression_content with
                    | E_assign {variable;expression=_;access_path=_} ->
                       begin
-                        match List.find ~f:(fun v -> compare_vars variable v = 0) vars with
-                        | Some v -> raise.raise@@ const_assigned v.location variable
+                        match List.find ~f:(fun v -> Var.equal variable v) vars with
+                        | Some v -> raise.raise@@ const_assigned expr.location v
                         | None -> (true, vars, expr)
                       end
                    | E_lambda {binder={var;ascr=_;attributes};output_type=_;result=_} ->

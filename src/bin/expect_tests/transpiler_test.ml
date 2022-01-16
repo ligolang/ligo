@@ -523,7 +523,7 @@ let%expect_test _ =
 
     type ppp is ppi * ppi
 
-    function main (const _ : unit) is
+    function main (const gen__1 : unit) is
     block {
       const a : ppp
       = (record [x = (0, 1); y = (10, 11)],
@@ -531,7 +531,7 @@ let%expect_test _ =
       a.0.x.0 := 2
     } with a.0.x.0
 
-    function asymetric_tuple_access (const _ : unit) is
+    function asymetric_tuple_access (const gen__2 : unit) is
     block {
       const tuple : int * int * int * int = (0, (1, (2, 3)))
     } with (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1)
@@ -557,14 +557,14 @@ let%expect_test _ =
     type ppp = ppi * ppi
 
     let main : unit -> int =
-      (fun _ : unit ->
+      (fun gen__1 : unit ->
          let [@var] a : ppp =
            {x = 0, 1; y = 10, 11}, {x = 100, 101; y = 110, 111} in
          let a = {a with {0.x.0 = 2}} in
          a.0.x.0)
 
     let asymetric_tuple_access : unit -> int =
-      (fun _ : unit ->
+      (fun gen__2 : unit ->
          let [@var] tuple : int * int * int * int = 0, 1, 2, 3 in
          (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1))
 
@@ -586,7 +586,7 @@ type ppi = {x: pii, y: pii };
 type ppp = (ppi, ppi);
 
 let main: unit => int =
-  ((_: unit): int =>
+  ((gen__1: unit): int =>
      let [@var] a: ppp =
        {
           x: 0, 1,
@@ -596,7 +596,7 @@ let main: unit => int =
      a[0].x[0]);
 
 let asymetric_tuple_access: unit => int =
-  ((_: unit): int =>
+  ((gen__2: unit): int =>
      let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
      ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
 

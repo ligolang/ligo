@@ -96,18 +96,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 21-26:
-      7 |
-      8 | let main = ([action, store] : [unit, storage]) : return_ => {
-      9 |   let foo = [3, [1, 2 as nat]];
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
 
-    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 13-19:
-      7 |
-      8 | let main = ([action, store] : [unit, storage]) : return_ => {
-      9 |   let foo = [3, [1, 2 as nat]];
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.

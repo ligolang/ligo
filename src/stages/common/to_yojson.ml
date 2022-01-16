@@ -35,7 +35,7 @@ let attributes attr =
 
 let for_all type_expression {ty_binder ; kind = _ ; type_ } =
   `Assoc [
-    ("ty_binder", Location.wrap_to_yojson type_variable_to_yojson ty_binder) ;
+    ("ty_binder",type_variable_to_yojson ty_binder) ;
     (* ("kind", ) *)
     ("type_", type_expression type_)
   ]

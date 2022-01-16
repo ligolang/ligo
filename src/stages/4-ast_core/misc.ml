@@ -3,7 +3,7 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let var_equal = Location.equal_content ~equal:Var.equal
+  let var_equal = Var.equal
   let mem : bindings -> expression_variable -> bool = List.mem ~equal:var_equal
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
@@ -123,7 +123,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_app _, _ -> None
   | T_variable _x, T_variable _y -> failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> None
-  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when String.equal mna mnb ->
+  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when Var.equal mna mnb ->
     assert_type_expression_eq (ea, eb)
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
@@ -202,7 +202,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | E_constructor (ca), E_constructor (cb) when Caml.(=) ca.constructor cb.constructor -> (
       assert_value_eq (ca.element, cb.element)
     )
-  | E_module_accessor {module_name=maa;element=a}, E_module_accessor {module_name=mab;element=b} when String.equal maa mab -> (
+  | E_module_accessor {module_name=maa;element=a}, E_module_accessor {module_name=mab;element=b} when Var.equal maa mab -> (
       assert_value_eq (a,b)
   )
   | E_record sma, E_record smb -> (
@@ -281,7 +281,7 @@ let get_entry (lst : module_) (name : string) : expression option =
 
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
-  | E_variable a, E_variable b -> Var.equal a.wrap_content b.wrap_content
+  | E_variable a, E_variable b -> Var.equal a b
   |  _, _ -> false
 
 let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =

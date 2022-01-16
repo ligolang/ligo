@@ -41,7 +41,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "view.mligo" ; "--protocol" ; "hangzhou" ; "--views" ; "v1,bad_view" ] ;
   [%expect {|
-    File "../../test/contracts/view.mligo", line 5, characters 13-30:
+    File "../../test/contracts/view.mligo", line 5, characters 14-17:
       4 | let v2 (_,s: int * int) : int = s + 2
       5 | let bad_view (_,_: int * nat ) : nat = 1n
       6 |

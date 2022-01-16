@@ -1,6 +1,6 @@
 (* Serializer/Derserializer *)
 
-type 'a t = {
+type t = {
   name : string ;
   counter : int option ;
 }
@@ -29,7 +29,7 @@ let of_yojson = fun t ->
   | _ ->
      Utils.error_yojson_format "{name: string; counter: int option}"
 
-type names_for_print = { get_name_for_print : 'a . 'a t -> string }
+type names_for_print = { get_name_for_print : t -> string }
 let global_mutable_names_for_print : names_for_print ref =
   ref { get_name_for_print =  (fun _ -> "") }
 
@@ -88,16 +88,6 @@ let of_name name =
     counter = None
   }
 
-(* This exception indicates that some code tried to throw away the
-   counter of a generated variable. It is not supposed to happen. *)
-exception Tried_to_unfreshen_variable
-
-(* TODO delete this *)
-let to_name var =
-  match var.counter with
-  | None -> var.name
-  | Some _ -> raise Tried_to_unfreshen_variable
-
 let fresh ?name () =
   let name = Option.value ~default:"" name in
   let counter = incr global_counter ; Some !global_counter in
@@ -106,15 +96,6 @@ let fresh ?name () =
 let fresh_like v =
   fresh ~name:v.name ()
 
-let debug v = match v.counter with Some c -> Printf.sprintf "%s(%d)" v.name c | None -> Printf.sprintf "%s(None)" v.name
+let of_ast_var name counter = { name ; counter }
+let init_from_ast_var gc = global_counter := gc
 
-let is_generated var =
-  match var.counter with
-  | None -> false
-  | Some _ -> true
-
-let internal_get_name_and_counter var = (var.name, var.counter)
-
-let todo_cast : 'a 'b . 'a t -> 'b t = fun { name ; counter } -> { name ; counter }
-
-let wildcard = "_"

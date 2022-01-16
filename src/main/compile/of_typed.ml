@@ -25,7 +25,7 @@ let compile_type ~raise : Ast_typed.type_expression -> Ast_aggregated.type_expre
 let apply_to_entrypoint_contract ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
-  let v = Location.wrap (Var.of_name entrypoint) in
+  let v = Ast_typed.Var.of_name entrypoint in
   let Self_ast_typed.Helpers.{parameter=p_ty ; storage=s_ty} =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
   in
@@ -37,7 +37,7 @@ let apply_to_entrypoint_view ~raise : Ast_typed.program -> string list -> Ast_ag
     fun prg views ->
   let aggregated_prg = compile_program ~raise prg in
   let aux : int -> string -> (label * expression) = fun i view_name ->
-    let v = Location.wrap (Var.of_name view_name) in
+    let v = Stage_common.Var.of_name view_name in
     let Self_ast_typed.Helpers.{arg=a_ty ; storage=s_ty ; return=r_ty}, _ =
       trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_view_type view_name prg in
     let ty = t_arrow (t_pair a_ty s_ty) r_ty () in
@@ -49,7 +49,7 @@ let apply_to_entrypoint_view ~raise : Ast_typed.program -> string list -> Ast_ag
 let apply_to_entrypoint ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
-  let v = Location.wrap (Var.of_name entrypoint) in
+  let v = Ast_typed.Var.of_name entrypoint in
   let ty, _ =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_entry_type entrypoint prg in
   let var_ep = Ast_typed.(e_a_variable v ty) in
@@ -78,7 +78,7 @@ let rec get_views : Ast_typed.program -> (string * location) list = fun p ->
   let f : (string * location) list -> declaration_loc -> (string * location) list =
     fun acc {wrap_content=decl ; location=_ } ->
       match decl with
-      | Declaration_constant { name=_ ; binder ; expr=_ ; attr } when attr.view -> (Var.to_name binder.wrap_content, binder.location)::acc
+      | Declaration_constant { name=_ ; binder ; expr=_ ; attr } when attr.view -> (Ast_typed.Var.to_name binder, Ast_typed.Var.get_location binder)::acc
       | Declaration_module { module_binder=_ ; module_ ; module_attr=_} -> get_views module_ @ acc
       | _ -> acc
   in
@@ -89,7 +89,7 @@ let list_declarations (m : Ast_typed.module_) : string list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match (el.wrap_content : Ast_typed.declaration) with
-      | Declaration_constant {binder;_} -> (Var.to_name binder.wrap_content)::prev
+      | Declaration_constant {binder;_} -> (Ast_typed.Var.to_name binder)::prev
       | _ -> prev)
     ~init:[] m
 
@@ -98,7 +98,7 @@ let list_type_declarations (m : Ast_typed.module_) : string list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match (el.wrap_content : Ast_typed.declaration) with
-      | Declaration_type {type_binder;_} -> (Var.to_name type_binder)::prev
+      | Declaration_type {type_binder;_} -> (Ast_typed.Var.to_name type_binder)::prev
       | _ -> prev)
     ~init:[] m
 
@@ -107,7 +107,7 @@ let list_mod_declarations (m : Ast_typed.module_) : string list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match (el.wrap_content : Ast_typed.declaration) with
-      | Declaration_module {module_binder;_} -> (module_binder)::prev
-      | Module_alias {alias;_} -> (alias)::prev
+      | Declaration_module {module_binder;_} -> (Ast_typed.Var.to_name module_binder)::prev
+      | Module_alias {alias;_} -> (Ast_typed.Var.to_name alias)::prev
       | _ -> prev)
     ~init:[] m

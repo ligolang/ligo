@@ -43,6 +43,7 @@ let compare a b = match a,b with
   | (Virtual _, File _) -> 1
   | (Virtual a, Virtual b) -> String.compare a b
 
+let equal a b = (compare a b = 0)
 
 let make (start_pos:Lexing.position) (end_pos:Lexing.position) : t =
   File (Region.make ~start:(Pos.from_byte start_pos)

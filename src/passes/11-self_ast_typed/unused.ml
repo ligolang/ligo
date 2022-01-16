@@ -11,7 +11,7 @@ type contract_pass_data = Contract_passes.contract_pass_data
 
 module V = struct
   type t = expression_variable
-  let compare x y = Var.compare (Location.unwrap x) (Location.unwrap y)
+  let compare x y = Var.compare x y
 end
 
 module M = Simple_utils.Map.Make(V)
@@ -43,9 +43,8 @@ let replace_opt k x m =
   Option.value_map ~default:(M.remove k m) ~f:(fun x -> M.add k x m) x
 
 let add_if_not_generated ?forbidden x xs b =
-  let v = Location.unwrap x in
-  let sv = Format.asprintf "%a" Var.pp v in
-  if not b && not (Var.is_generated v)
+  let sv = Format.asprintf "%a" Var.pp x in
+  if not b && not (Var.is_generated x)
      && Char.(<>) (String.get sv 0) '_'
      && Option.value_map ~default:true ~f:(String.(<>) sv) forbidden
   then x::xs else xs
@@ -141,7 +140,7 @@ let rec unused_map_module ~add_warning : module_ -> module_ = function m ->
       let _,unused = defuse_of_expr defuse expr in
       let warn_var v =
         `Self_ast_typed_warning_unused
-          (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
+          (Var.get_location v, Format.asprintf "%a" Var.pp v) in
       let () = update_annotations @@ List.map ~f:warn_var unused in
       ()
     )

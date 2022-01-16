@@ -26,7 +26,7 @@ let (stranger_addr , stranger_contract) =
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+let empty_message = e_lambda_ez (Var.of_name "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 

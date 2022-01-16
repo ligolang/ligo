@@ -1,6 +1,5 @@
 [@@@coverage exclude_file]
 module Location    = Simple_utils.Location
-module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 open Types
@@ -93,10 +92,6 @@ and record ppf {content; layout=_} =
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te.type_content
-
-let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev.wrap_content
-
 
 let rec expression ppf ({ expression_content=ec; location=_; type_expression=te } : expression) =
   fprintf ppf "(%a : %a)"

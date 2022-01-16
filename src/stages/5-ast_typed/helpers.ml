@@ -1,5 +1,4 @@
 module Location    = Simple_utils.Location
-module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 
@@ -112,10 +111,10 @@ let rec subst_type v t (u : type_expression) =
      let type1 = self v t type1 in
      let type2 = self v t type2 in
      { u with type_content = T_arrow {type1;type2} }
-  | T_abstraction {ty_binder;kind;type_} when not (Var.equal (Location.unwrap ty_binder) v) ->
+  | T_abstraction {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_abstraction {ty_binder;kind;type_} }
-  | T_for_all {ty_binder;kind;type_} when not (Var.equal (Location.unwrap ty_binder) v) ->
+  | T_for_all {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_for_all {ty_binder;kind;type_} }
   | T_constant {language;injection;parameters} ->
@@ -135,7 +134,7 @@ let rec subst_type v t (u : type_expression) =
 let destruct_for_alls (t : type_expression) =
   let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
     | T_for_all { ty_binder ; type_ ; _ } ->
-       destruct_for_alls (Location.unwrap ty_binder :: type_vars) type_
+       destruct_for_alls (ty_binder :: type_vars) type_
     | _ -> (type_vars, t)
   in destruct_for_alls [] t
 
@@ -158,5 +157,3 @@ let build_applications_opt (lamb : expression) (args : expression list) =
     | _, _ ->
        None in
   aux lamb args lamb.type_expression
-
-let is_generalizable_variable name = String.equal (String.sub (Var.to_name name) ~pos:0 ~len:1) "_"

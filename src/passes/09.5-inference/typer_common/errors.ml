@@ -6,7 +6,7 @@ open Simple_utils.Display
 let stage = "inferer"
 
 type typer_error = [
-  | `Typer_missing_funarg_annotation of Ast_core.expression_variable
+  | `Typer_missing_funarg_annotation of Location.t * Ast_core.expression_variable
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
   | `Typer_unbound_module_variable of Ast_core.Environment.t * Ast_core.module_variable * Location.t
@@ -19,7 +19,7 @@ type typer_error = [
   | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable* int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_module_tracer of Ast_core.module_ * typer_error
-  | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_core.type_expression option) * typer_error
+  | `Typer_constant_declaration_tracer of Location.t * Ast_core.expression_variable * Ast_core.expression * (Ast_core.type_expression option) * typer_error
   | `Typer_match_error of Ast_core.matching_expr * Ast_core.type_expression * Location.t
   | `Typer_needs_annotation of Ast_core.expression * string
   | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Ast_core.expression_variable
@@ -104,10 +104,10 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Pattern do not match returned expression.@]"
           Snippet.pp loc
-    | `Typer_missing_funarg_annotation v ->
+    | `Typer_missing_funarg_annotation (loc,v) ->
       Format.fprintf f
         "@[<hv>%a@.In inference: Missing a type annotation for argument \"%a\".@]"
-          Snippet.pp v.location
+          Snippet.pp loc
           Ast_core.PP.expression_variable v
     | `Typer_michelson_comb_no_record loc ->
       Format.fprintf f
@@ -200,7 +200,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "%a"
         (error_ppformat ~display_format) err
-    | `Typer_constant_declaration_tracer (_,_,_,err) ->
+    | `Typer_constant_declaration_tracer (_,_,_,_,err) ->
       error_ppformat ~display_format f err
     | `Typer_match_error (expected,actual,loc) ->
       Format.fprintf f
@@ -505,12 +505,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", `String message );
       ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
-  | `Typer_missing_funarg_annotation v ->
+  | `Typer_missing_funarg_annotation (loc,v) ->
     let message = Format.asprintf "Missing type annotation for argument" in
     let content = `Assoc [
       ("value", Stage_common.Types.expression_variable_to_yojson v );
       ("message", `String message );
-      ("location", Location.to_yojson v.location); ] in
+      ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
   | `Typer_michelson_comb_no_record loc ->
     let message = `String "michelson pair comb can only be used on a record type" in
@@ -659,10 +659,10 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("children", error_jsonformat err);
     ] in
     json_error ~stage ~content
-  | `Typer_constant_declaration_tracer (name,ae,Some t,err) ->
+  | `Typer_constant_declaration_tracer (loc,name,ae,Some t,err) ->
     let message = `String "Typing constant declaration" in
     let value = `String (Format.asprintf "%a" Ast_core.PP.expression ae) in
-    let loc = `String (Format.asprintf "%a" Location.pp name.location) in
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let name = `String (Format.asprintf "%a" Ast_core.PP.expression_variable name) in
     let expected = `String (Format.asprintf "%a" Ast_core.PP.type_expression t) in
     let content = `Assoc [
@@ -674,9 +674,9 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("children", error_jsonformat err);
     ] in
     json_error ~stage ~content
-  | `Typer_constant_declaration_tracer (name,ae,None,err) ->
+  | `Typer_constant_declaration_tracer (loc,name,_ae,None,err) ->
     let message = `String "Typing constant declaration" in
-    let loc = `String (Format.asprintf "%a" Location.pp ae.location) in
+    let loc = Location.to_yojson loc in
     let name = `String (Format.asprintf "%a" Ast_core.PP.expression_variable name) in
     let content = `Assoc [
       ("message", message);

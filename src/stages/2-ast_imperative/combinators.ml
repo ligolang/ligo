@@ -113,7 +113,7 @@ let e_binop ?loc name a b  = make_e ?loc @@ E_constant {cons_name = name ; argum
 
 let e_constant    ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable    ?loc v = make_e ?loc @@ E_variable v
-let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
+let e_variable_ez ?loc v = e_variable ?loc @@ Var.of_name ?loc v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
 let e_lambda_ez ?loc var ?ascr ?const_or_var output_type result : expression = e_lambda ?loc {var;ascr;attributes={const_or_var}} output_type result
@@ -187,7 +187,7 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression}
-let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Location.wrap ?loc @@ Var.of_name variable) access_path expression
+let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Var.of_name ?loc variable) access_path expression
 
 
 let get_e_accessor = fun t ->
@@ -245,6 +245,6 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
 let destruct_for_alls (t : type_expression) =
   let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
     | T_for_all { ty_binder ; type_ ; _ } ->
-       destruct_for_alls (Location.unwrap ty_binder :: type_vars) type_
+       destruct_for_alls (ty_binder :: type_vars) type_
     | _ -> (type_vars, t)
   in destruct_for_alls [] t

@@ -1033,7 +1033,7 @@ let%expect_test _ =
       Warning: unused variable "c".
       Hint: replace it by "_c" to prevent this warning.
 
-      File "../../test/contracts/implicit.mligo", line 1, characters 25-35:
+      File "../../test/contracts/implicit.mligo", line 1, characters 26-27:
         1 | let main2 (p : key_hash) (s : unit) =
         2 |   let c : unit contract = Tezos.implicit_account p
       :
@@ -1056,7 +1056,7 @@ let%expect_test _ =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 8, characters 6-16:
+    File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
       8 |   fun (x : unit) -> Current.amount
       9 |
@@ -1064,7 +1064,7 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 7, characters 7-17:
+    File "../../test/contracts/amount_lambda.mligo", line 7, characters 8-9:
       6 | (* should return an impure function *)
       7 | let f2 (x : unit) : unit -> tez =
       8 |   fun (x : unit) -> Current.amount
@@ -1072,7 +1072,7 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 4, characters 6-16:
+    File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
       3 |   let amt : tez = Current.amount in
       4 |   fun (x : unit) -> amt
       5 |
@@ -1080,7 +1080,7 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 2, characters 7-17:
+    File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
       1 | (* should return a constant function *)
       2 | let f1 (x : unit) : unit -> tez =
       3 |   let amt : tez = Current.amount in
@@ -1113,14 +1113,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
   [%expect {|
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 12-27:
+    File "../../test/contracts/bad_address_format.religo", line 1, characters 12-21:
       1 | let main = (parameter : int, storage : address) =>
       2 |   ([] : list (operation), "KT1badaddr" : address);
     :
     Warning: unused variable "parameter".
     Hint: replace it by "_parameter" to prevent this warning.
 
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 29-46:
+    File "../../test/contracts/bad_address_format.religo", line 1, characters 29-36:
       1 | let main = (parameter : int, storage : address) =>
       2 |   ([] : list (operation), "KT1badaddr" : address);
     :
@@ -1198,7 +1198,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "subtle_nontail_fail.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
       2 |   if true
     :
@@ -1216,7 +1216,7 @@ let%expect_test _ =
   (* TODO should not be bad? *)
   run_ligo_good [ "run" ; "dry-run" ; contract "subtle_nontail_fail.mligo" ; "()" ; "()" ] ;
   [%expect {|
-    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
       2 |   if true
     :
@@ -1442,7 +1442,7 @@ File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-1
 Warning: unused variable "action".
 Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46:
+File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-23:
   3 |
   4 | let main (action, store : parameter * storage) : storage =
   5 |   store + 1
@@ -1460,7 +1460,7 @@ File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-
 Warning: unused variable "action".
 Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46:
+File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-23:
   4 |
   5 | let main (action, store : parameter * storage) : return =
   6 |   ("bad",store + 1)
@@ -1487,7 +1487,7 @@ File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 18-
 Warning: unused variable "store".
 Hint: replace it by "_store" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46:
+File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 10-23:
   4 |
   5 | let main (action, store : parameter * storage) : return =
   6 |   (([]: operation list),"bad")
@@ -1662,7 +1662,7 @@ const x =  match (+1 , (+2 , +3)) with
     Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.religo"];
   [%expect {|
-File "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9:
+File "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-14:
   1 | /* these should give a missing type annotation error */
   2 | let a = b => b
   3 | let a = (b,c) => b
@@ -1788,12 +1788,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
   [%expect{|
-    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-50:
-      1 | module Foo = struct
-      2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
-      3 | end
     :
-    Warning: variable "Foo.x" cannot be used more than once.
+    Warning: variable "#Foo.x" cannot be used more than once.
 
     Error(s) occurred while checking the contract:
     At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.

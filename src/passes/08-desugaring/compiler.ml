@@ -7,8 +7,6 @@ module Pair     = Simple_utils.Pair
 
 open Stage_common.Maps
 
-let cast_var = Location.map Var.todo_cast
-
 let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
 
 let is_layout = String.chop_prefix ~prefix:"layout:"
@@ -49,7 +47,7 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
   let self = compile_type_expression in
   let return tc = O.make_t ~loc:te.location ~sugar:te tc in
   match te.type_content with
-    | I.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
+    | I.T_variable type_variable -> return @@ T_variable type_variable
     | I.T_app a ->
       let a' = type_app compile_type_expression a in
       return @@ T_app a'
@@ -111,7 +109,7 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_constant cons ->
       let cons = constant self cons in
       return @@ O.E_constant cons
-    | I.E_variable name -> return @@ O.E_variable (cast_var name)
+    | I.E_variable name -> return @@ O.E_variable name
     | I.E_application app ->
       let app = application self app in
       return @@ O.E_application app
@@ -256,7 +254,7 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_sequence {expr1; expr2} ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
-      let let_binder : _ O.binder = {var = Location.wrap @@ Var.of_name "_" ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
+      let let_binder : _ O.binder = {var = Stage_common.Var.of_name "_" ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
       return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false; view = false ; public=true}}
     | I.E_skip -> O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->

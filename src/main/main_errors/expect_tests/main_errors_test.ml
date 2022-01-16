@@ -419,9 +419,8 @@ let%expect_test "typer" =
   let error e = human_readable_error (checking_tracer e) in
   let location_t = File default_location in
   let type_variable = Var.of_name "foo" in
-  let expression_variable = Location.wrap (Var.of_name "bar") in
-  let ast_core_expression_variable : Ast_core.expression_variable =
-    Location.wrap (Var.of_name "bar")
+  let expression_variable = Var.of_name "bar" in
+  let ast_core_expression_variable : Ast_core.expression_variable = Var.of_name "bar"
   in
   let ast_core_expression_content : Ast_core.expression_content =
     E_variable ast_core_expression_variable
@@ -523,7 +522,8 @@ let%expect_test "typer" =
     The "michelson_or" type expects a variant type as argument.|}] ;
   error
     (`Typer_constant_declaration_tracer
-      ( ast_core_expression_variable,
+      ( location_t,
+        ast_core_expression_variable,
         ast_core_expression,
         Some type_expression,
         `Typer_michelson_comb_no_record location_t )) ;
@@ -887,7 +887,7 @@ let%expect_test "self_ast_typed" =
   let open Ast_typed in
   let open Location in
   let error e = human_readable_error (self_ast_typed_tracer e) in
-  let expression_variable = Location.wrap (Var.of_name "bar") in
+  let expression_variable = Var.of_name "bar" in
   let location_t = File default_location in
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
@@ -1010,11 +1010,11 @@ let%expect_test "self_mini_c" =
 let%expect_test "spilling" =
   let error (e:Spilling.Errors.spilling_error) = human_readable_error (spilling_tracer e) in
   let open Location in
-  let type_variable : Ast_typed.type_variable = Simple_utils.Var.of_name "foo" in
+  let type_variable : Ast_typed.type_variable = Ast_typed.Var.of_name "foo" in
   let location_t = File default_location in
-  let expression_variable = Location.wrap (Simple_utils.Var.of_name "bar") in
+  let expression_variable = Ast_aggregated.Var.of_name "bar" in
   let type_expression : Ast_aggregated.type_expression =
-    { type_content= T_variable (Simple_utils.Var.of_name "foo");
+    { type_content= T_variable (Ast_aggregated.Var.of_name "foo");
       orig_var = None ;
       location= File default_location }
   in
@@ -1032,8 +1032,10 @@ let%expect_test "spilling" =
     File "a dummy file name", line 20, character 5:
 
     Invalid pattern matching.@Tuple patterns are not (yet) supported. |}] ;
-  error (`Spilling_unsupported_recursive_function expression_variable) ;
+  error (`Spilling_unsupported_recursive_function (location_t, expression_variable)) ;
   [%expect{|
+    File "a dummy file name", line 20, character 5:
+
     Invalid recursive function "bar".
     A recursive function can only have one argument. |}] ;
   error (`Spilling_wrong_mini_c_value (type_expression, value)) ;

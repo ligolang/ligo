@@ -101,8 +101,8 @@ tc "arguments for (+)"
                                                                 ]
 
   let tc_sizearg  a     = 
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+    let x = Var.generate () in
+    let y = Var.generate () in
     tc "arguments for size"
       ~bound:[x;y] ~constraints:[] ()
       [a]     [ [string] ; [bytes] ; [list (var x)] ; [set (var x)] ; [map (var x) (var y)] ]
@@ -112,7 +112,7 @@ tc "arguments for (+)"
 
   (* Typeclasses for typegroups *)
   let tc_comparable a = 
-    let x = Var.fresh () in
+    let x = Var.generate () in
     tc "comparable"
       ~bound:[x] ~constraints:[c_apply comparable x "tc_comparable:bound"] ()
       [a]     [ 
@@ -137,9 +137,9 @@ tc "arguments for (+)"
                 (* pair of comparable *)
               ]
   let tc_storable a =
-    let c = Var.fresh () in
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+    let c = Var.generate () in
+    let x = Var.generate () in
+    let y = Var.generate () in
     tc "storable"
       ~bound:[x;y] ~constraints:[
                                  tc_comparable (p_var c);
@@ -177,9 +177,9 @@ tc "arguments for (+)"
                 [unit] ; 
               ]
   let tc_packable a =  
-    let c = Var.fresh () in
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+    let c = Var.generate () in
+    let x = Var.generate () in
+    let y = Var.generate () in
     tc "packable"
       ~bound:[c;x;y] ~constraints:[
                                       tc_comparable (p_var c);

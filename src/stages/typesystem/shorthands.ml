@@ -2,6 +2,7 @@ open Ast_core.Types
 open Ast_core.Misc
 open Ast_core.Reasons
 open Types
+module Var = Stage_common.Var
 
 (* TODO: remove this () argument, it is just here to make sure that
    the ~bound and ~constraints arguments are given (while adding the
@@ -97,12 +98,12 @@ let never         = p_constant C_never      []
 let ( * ) a b = pair a b
 
 (* type value of recursive types *)
-let comparable = Var.of_name "comparable"
+let comparable = Var.generate ~name:"comparable" ()
 let tc_comparable = 
-  let a =Var.fresh () in
+  let a = Var.generate () in
    P_abs {arg = a; ret =
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+    let x = Var.generate () in
+    let y = Var.generate () in
     Location.wrap @@ P_constraint { pc = { c = C_typeclass {
       tc_bound = [x;y] ;
       tc_constraints =[c_apply comparable x "tc_comparable:bound"; 
@@ -137,11 +138,11 @@ let tc_comparable =
 let storable = Var.of_name "storable" 
 
 let tc_storable =
-  let a = Var.fresh () in
+  let a = Var.generate () in
    P_abs {arg = a; ret =
-    let c = Var.fresh () in
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+    let c = Var.generate () in
+    let x = Var.generate () in
+    let y = Var.generate () in
     Location.wrap @@ P_constraint { pc = { c = C_typeclass {
       tc_bound = [c;x;y];
       tc_constraints =[
@@ -189,11 +190,11 @@ let tc_storable =
 let packable = Var.of_name "packable"
 
 let tc_packable =  
-  let a = Var.fresh () in
+  let a = Var.generate () in
    P_abs {arg = a; ret =
-    let c = Var.fresh () in
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+    let c = Var.generate () in
+    let x = Var.generate () in
+    let y = Var.generate () in
     Location.wrap @@ P_constraint { pc = { c = C_typeclass {
       tc_bound = [c;x;y];
       tc_constraints = [

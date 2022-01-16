@@ -28,9 +28,9 @@ let label_map ~compare lma lmb =
 
 let typeVariableMap compare a b = List.compare (compare_tvmap_entry compare) a b
 
-let expression_variable = Location.compare_wrap ~compare:Var.compare
+let expression_variable = Var.compare
 let type_variable       = Var.compare
-let module_variable     = String.compare
+let module_variable     = Var.compare
 
 let module_access f {module_name=mna; element=ea}
                     {module_name=mnb; element=eb} =
@@ -134,7 +134,7 @@ and app {type_operator=ta;arguments=aa} {type_operator=tb;arguments=ab} =
 and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _ ; type_ = tb } =
   cmp2
     type_expression ta tb
-    type_variable ba.wrap_content bb.wrap_content
+    type_variable ba bb
 
 let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
   Int.compare (constant_tag ct ) (constant_tag ct2 )

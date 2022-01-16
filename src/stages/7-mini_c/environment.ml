@@ -15,13 +15,12 @@ open Types
  * end *)
 
 module Environment (* : ENVIRONMENT *) = struct
+  module List = Simple_utils.List
   type element = environment_element
   type t = environment
 
-  let compare_var : expression_variable -> expression_variable -> int =
-    fun a b -> Var.compare a.wrap_content b.wrap_content
-  
-  let var_equal = Location.equal_content ~equal:Var.equal
+  let compare_var : expression_variable -> expression_variable -> int = Var.compare
+  let var_equal = Var.equal
   let empty : t = []
   let add : element -> t -> t  = List.cons
   let concat : t list -> t  = List.concat

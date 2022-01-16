@@ -17,7 +17,7 @@ let (int, unit, nat, string, bytes, mutez) = (mk C_int [], mk C_unit [], mk C_na
 (* An arbitrary two-argument type constructor (this only needs to be a type constructor with two arguments, feel free to replace). *)
 let map (k,v) = mk C_map [k; v]
 (* A bunch of type variables: *)
-let (m,n,o,p,x,y,z) = let v name = Var.fresh ~name () in v "m", v "n", v "o", v "p", v "x", v "y", v "z"
+let (m,n,o,p,x,y,z) = let v name = Var.generate ~name () in v "m", v "n", v "o", v "p", v "x", v "y", v "z"
 
 let test_restrict
     (name : string)

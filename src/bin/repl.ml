@@ -148,7 +148,7 @@ let import_file ~raise state file_name module_name =
   let options = {options with init_env = state.env } in
   let file_name = resolve_file_name file_name state.project_root in
   let module_ = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.Var.of_name module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)

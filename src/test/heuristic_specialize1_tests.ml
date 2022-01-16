@@ -59,7 +59,7 @@ let propagator_test ~raise : _ -> unit -> unit =
   (* check that the propagator returns exactly this constraint
      (left/right in the equality is not important, variable "fresh" is not important):
      n = fresh -> record { x = int ; y = fresh } -> map(fresh,int) *)
-  let fresh = Var.fresh ~name:"fresh" () in
+  let fresh = Var.generate ~name:"fresh" () in
   check_specialize1_result fresh (result : update list) (n === var fresh @-> p_row C_record { x = rv int ; y = rv (var fresh) } @-> map(var fresh, int))
 
 let selector_test2 ~raise:_ : _ -> _ -> unit -> unit =

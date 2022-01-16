@@ -1,6 +1,5 @@
 (* This file represente the context which give the association of values to types *)
 module Location = Simple_utils.Location
-module Var      = Simple_utils.Var
 module Types = struct
   open Ast_typed
 
@@ -75,9 +74,9 @@ let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te ->
   let modules = (mv,te)::c.modules in
   {c with modules}
 
-let get_value (e:t)  = List.Assoc.find ~equal:(Location.equal_content ~equal:Var.equal) e.values
-let get_type (e:t)   = List.Assoc.find ~equal:Var.equal e.types
-let get_module (e:t) = List.Assoc.find ~equal:String.equal e.modules
+let get_value (e:t)  = List.Assoc.find ~equal:Stage_common.Var.equal e.values
+let get_type (e:t)   = List.Assoc.find ~equal:Stage_common.Var.equal e.types
+let get_module (e:t) = List.Assoc.find ~equal:Stage_common.Var.equal e.modules
 
 let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip types
 
@@ -140,7 +139,7 @@ let get_constructor_parametric : label -> t -> (type_variable list * type_expres
             Some {associated_type ; _} -> Some (av, associated_type , type_)
           | None -> None)
       | T_abstraction { ty_binder ; kind = _ ; type_ } ->
-         aux (Location.unwrap ty_binder :: av) (_t,type_)
+         aux (ty_binder :: av) (_t,type_)
       | _ -> None in
     let aux = aux []in
     match List.find_map ~f:aux (get_types e) with

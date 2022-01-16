@@ -10,11 +10,12 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
   let make_v_def_option_type = make_v_def_option_type ~with_types in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
+    let loc = e.location in
     match e.expression_content with
     | E_let_in { let_binder = {var ; ascr ; attributes=_} ; rhs ; let_result ; attr=_} -> (
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) bindings rhs in
-      let def = make_v_def_option_type bindings var ascr var.location rhs.location in
-      let (i,env) = add_shadowing_def (i,var.wrap_content) def env in
+      let def = make_v_def_option_type bindings var ascr loc rhs.location in
+      let (i,env) = add_shadowing_def (i,var) def env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
@@ -26,34 +27,34 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     )
     | E_mod_in { module_binder; rhs; let_result } -> (
       let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~options i rhs in
-      let def = make_m_def module_binder e.location new_outer_def_map in
-      let env = Def_map.add module_binder def env in
+      let def = make_m_def (get_binder_name module_binder) e.location new_outer_def_map in
+      let env = Def_map.add (get_binder_name module_binder) def env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
     | E_mod_alias { alias; binders ; result } -> (
-      let env_opt = Def_map.find_opt (fst binders) env in
+      let env_opt = Def_map.find_opt (get_binder_name (fst binders)) env in
       let aux def_opt binder =
         match def_opt with
-        | Some Module m -> Def_map.find_opt binder m.content
+        | Some Module m -> Def_map.find_opt (get_binder_name binder) m.content
         | _ -> None
       in
       let def = List.fold_left ~f:aux ~init:env_opt (snd binders) in
       let env = match def with 
-        | Some def -> Def_map.add alias def env
+        | Some def -> Def_map.add (get_binder_name alias) def env
         | None -> env
       in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
     | E_recursive { fun_name ; fun_type ; lambda = { result ; _ } } -> (
-      let def = make_v_def_option_type bindings fun_name (Some fun_type) fun_name.location result.location in
-      let (i,env) = add_shadowing_def (i,fun_name.wrap_content) def env in
+      let def = make_v_def_option_type bindings fun_name (Some fun_type) (Ast_typed.Var.get_location fun_name) result.location in
+      let (i,env) = add_shadowing_def (i,fun_name) def env in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
     | E_lambda { binder={var;ascr=input_type; attributes=_} ; output_type = _ ; result } -> (
-      let def = make_v_def_option_type bindings var input_type var.location result.location in
-      let (i,env) = add_shadowing_def (i,var.wrap_content) def env in
+      let def = make_v_def_option_type bindings var input_type (Ast_typed.Var.get_location var) result.location in
+      let (i,env) = add_shadowing_def (i,var) def env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
@@ -63,8 +64,9 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         let aux (i,env) (p: _ Ast_core.pattern) =
           match p.wrap_content with
           | Ast_core.P_var binder ->
-            let proj_def = make_v_def_from_core bindings binder.var binder.var.location binder.var.location in
-            add_shadowing_def (i,binder.var.wrap_content) proj_def env
+            let loc = Ast_core.Var.get_location binder.var in
+            let proj_def = make_v_def_from_core bindings binder.var loc loc in
+            add_shadowing_def (i,binder.var) proj_def env
           | _ -> (i,env)
         in
         let (i,env) = Stage_common.Helpers.fold_pattern aux (i,env) pattern in
@@ -104,7 +106,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       find_scopes' (i,all_defs,env,scopes,e.location) bindings e
     )
     | E_module_accessor { module_name; element=e} ->
-      let env_opt = Def_map.find_opt module_name env in
+      let env_opt = Def_map.find_opt (get_binder_name module_name) env in
       let env = match env_opt with 
         | Some Module def -> def.content
         | _ -> env
@@ -145,8 +147,8 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       | Declaration_constant { binder= { var ; ascr ; attributes=_ } ; expr ; _ } -> (
         let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,decl.location) partials.bindings expr in
         let inner_def_map = merge_defs new_inner_def_map inner_def_map in
-        let def = make_v_def_option_type partials.bindings var ascr var.location expr.location in
-        let (i,top_def_map) = add_shadowing_def (i,var.wrap_content) def top_def_map in
+        let def = make_v_def_option_type partials.bindings var ascr (Ast_core.Var.get_location var) expr.location in
+        let (i,top_def_map) = add_shadowing_def (i,var) def top_def_map in
         ( i, top_def_map, inner_def_map, scopes , partials )
       )
       | Declaration_type {type_binder; type_expr ; type_attr=_} -> (
@@ -156,19 +158,19 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       )
       | Declaration_module {module_binder; module_ ; module_attr=_} -> (
         let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~options i module_ in
-        let def = make_m_def module_binder decl.location new_outer_def_map in
-        let top_def_map = Def_map.add module_binder def top_def_map in
+        let def = make_m_def (get_binder_name module_binder) decl.location new_outer_def_map in
+        let top_def_map = Def_map.add (get_binder_name module_binder) def top_def_map in
         ( i, top_def_map, inner_def_map, scopes, partials )
       )
       | Module_alias {alias; binders} -> (
-        let env_opt = Def_map.find_opt (fst binders) top_def_map in
+        let env_opt = Def_map.find_opt (get_binder_name (fst binders)) top_def_map in
         let aux def_opt binder = match def_opt with
-          | Some Module m -> Def_map.find_opt binder m.content
+          | Some Module m -> Def_map.find_opt (get_binder_name binder) m.content
           | _ -> None
         in
         let def = List.fold_left ~f:aux ~init:env_opt (snd binders) in
         let top_def_map = match def with 
-          | Some def -> Def_map.add alias def top_def_map
+          | Some def -> Def_map.add (get_binder_name alias) def top_def_map
           | None -> top_def_map
         in
         ( i, top_def_map, inner_def_map, scopes, partials )

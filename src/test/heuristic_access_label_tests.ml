@@ -11,7 +11,7 @@ let (int, unit, nat, string, bytes, mutez) = (mk C_int [], mk C_unit [], mk C_na
 (* An arbitrary two-argument type constructor (this only needs to be a type constructor with two arguments, feel free to replace). *)
 let map (k,v) = mk C_map [k; v]
 (* A bunch of type variables: *)
-let (m,n,o,p,x,y,z) = let v name : type_variable = Var.fresh ~name () in v "m", v "n", v "o", v "p", v "x", v "y", v "z"
+let (m,n,o,p,x,y,z) = let v name : type_variable = Var.generate ~name () in v "m", v "n", v "o", v "p", v "x", v "y", v "z"
 
 module Map = Database_plugins.All_plugins.Grouped_by_variable
 let selector_test ~raise:_ : (_ -> type_constraint_simpl -> < grouped_by_variable : type_variable Map.t > -> Inference.Heuristic_break_ctor.selector_output list) -> unit -> unit =

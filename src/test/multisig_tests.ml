@@ -33,7 +33,7 @@ let empty_op_list =
 
 let chain_id_zero =
   e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero) *)
-let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+let empty_message = e_lambda_ez (Var.of_name "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode

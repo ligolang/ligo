@@ -1,5 +1,4 @@
 module Location = Simple_utils.Location
-module Var      = Simple_utils.Var
 module Pair     = Simple_utils.Pair
 module Errors = Errors
 module I = Ast_imperative
@@ -7,8 +6,8 @@ module O = Ast_sugar
 open Simple_utils.Trace
 open Stage_common.Maps
 
-let equal_var = Location.equal_content ~equal:Var.equal
-let compare_var = Location.compare_content ~compare:Var.compare
+let equal_var = I.Var.equal
+let compare_var = I.Var.compare
 
 let rec add_to_end (expression: O.expression) to_add =
   match expression.expression_content with
@@ -33,7 +32,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
           else(
             let free_var = if (List.mem ~equal:equal_var free_var name) then free_var else name::free_var in
-            let expr = O.e_let_in_ez env false [] (O.e_update (O.e_variable env) [O.Access_record (Var.to_name name.wrap_content)] (O.e_variable name)) let_result in
+            let expr = O.e_let_in_ez env false [] (O.e_update (O.e_variable env) [O.Access_record (O.Var.to_name name)] (O.e_variable name)) let_result in
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs expr)
           )
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
@@ -80,7 +79,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
               then free_var
               else name::free_var in
             let expr = O.e_let_in_ez env false [] (
-              O.e_update (O.e_variable env) [O.Access_tuple Z.zero; O.Access_record (Var.to_name name.wrap_content)] (O.e_variable name)
+              O.e_update (O.e_variable env) [O.Access_tuple Z.zero; O.Access_record (O.Var.to_name name)] (O.e_variable name)
               )
               let_result in
             (true,(decl_var, free_var), O.e_let_in let_binder false  [] rhs expr)
@@ -110,12 +109,12 @@ and store_mutable_variable (free_vars : I.expression_variable list) =
   if (List.is_empty free_vars) then
     O.e_unit ()
   else
-    let aux (var:I.expression_variable) = (O.Label (Var.to_name var.wrap_content), O.e_variable var) in
+    let aux (var:I.expression_variable) = (O.Label (O.Var.to_name var), O.e_variable var) in
     O.e_record @@ O.LMap.of_list (List.map ~f:aux free_vars)
 
 and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.expression_variable list) (env : O.expression_variable) =
   let aux (f: O.expression -> O.expression) (ev: O.expression_variable) =
-    fun expr -> f (O.e_let_in_ez ev true [] (O.e_accessor (O.e_variable env) [O.Access_record (Var.to_name ev.wrap_content)]) expr)
+    fun expr -> f (O.e_let_in_ez ev true [] (O.e_accessor (O.e_variable env) [O.Access_record (O.Var.to_name ev)]) expr)
   in
   let ef = List.fold_left ~f:aux ~init:(fun e -> e) free_vars in
   fun e -> match e with
@@ -142,7 +141,7 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
       let arr = arrow self arr in
       return @@ T_arrow arr
     | I.T_variable type_variable -> return @@ T_variable type_variable
-    | I.T_app {type_operator;arguments=[l;r]} when Var.equal Stage_common.Constant.v_michelson_or type_operator ->
+    | I.T_app {type_operator;arguments=[l;r]} when equal_var Stage_common.Constant.v_michelson_or type_operator ->
       let (l, l_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let (r, r_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let (l,r) = Pair.map ~f:(compile_type_expression ~raise) (l,r) in
@@ -151,7 +150,7 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
         (O.Label "M_right", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
       return @@ O.T_sum { fields = O.LMap.of_list sum ; attributes = [] }
-    | I.T_app {type_operator;arguments=[l;r]} when Var.equal Stage_common.Constant.v_michelson_pair type_operator ->
+    | I.T_app {type_operator;arguments=[l;r]} when equal_var Stage_common.Constant.v_michelson_pair type_operator ->
       let (l, l_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let (r, r_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let (l,r) = Pair.map ~f:(compile_type_expression ~raise) (l,r) in
@@ -265,7 +264,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let condition    = self condition in
       let then_clause' = self then_clause in
       let else_clause' = self else_clause in
-      let env = Location.wrap (Var.fresh ~name:"env" ()) in
+      let env = (I.Var.generate ~name:"env" ()) in
       let ((_,free_vars_true), then_clause) = repair_mutable_variable_in_matching then_clause' [] env in
       let ((_,free_vars_false), else_clause) = repair_mutable_variable_in_matching else_clause' [] env in
       let then_clause  = add_to_end then_clause (O.e_variable env) in
@@ -317,7 +316,7 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
     | Some e -> O.e_sequence expr e
   in
   let matchee = compile_expression ~raise ~last matchee in
-  let env = Location.wrap (Var.fresh ~name:"env" ()) in
+  let env = I.Var.generate ~name:"env" () in
   let aux :
     _ I.match_case -> (_ O.match_case * _ O.match_case)  * (I.expression_variable list) =
     fun {pattern ; body} ->
@@ -352,8 +351,8 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
     restore_mutable_variable return_expr free_vars env
 
 and compile_while ~raise ~last I.{cond;body} =
-  let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
-  let binder  = Location.wrap @@ Var.fresh ~name:"binder"  () in
+  let env_rec = I.Var.generate ~name:"env_rec" () in
+  let binder  = I.Var.generate ~name:"binder"  () in
 
   let cond = compile_expression ~raise ~last cond in
   let ctrl =
@@ -365,7 +364,7 @@ and compile_while ~raise ~last I.{cond;body} =
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable binder) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable binder) [Access_tuple Z.zero; Access_record (O.Var.to_name name)]) expr
   in
   let init_rec = O.e_tuple [store_mutable_variable @@ captured_name_list] in
   let restore = fun expr -> List.fold_right ~f:aux captured_name_list ~init:expr in
@@ -396,8 +395,8 @@ and compile_while ~raise ~last I.{cond;body} =
 
 
 and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
-  let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
-  let loop_binder = Location.wrap @@ Var.fresh ~name:"loop_binder" () in
+  let env_rec     = I.Var.generate ~name:"env_rec" () in
+  let loop_binder = I.Var.generate ~name:"loop_binder" () in
   (*Make the cond and the step *)
   let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
   let cond = compile_expression ~raise ~last cond in
@@ -414,7 +413,7 @@ and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.zero; Access_record (O.Var.to_name name)]) expr
   in
 
   (* restores the initial value of the free_var*)
@@ -453,8 +452,8 @@ and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
     restore_mutable_variable return_expr captured_name_list env_rec
 
 and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_body} =
-  let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
-  let args    = Location.wrap @@ Var.fresh ~name:"args" () in
+  let env_rec = I.Var.generate ~name:"env_rec" () in
+  let args    = I.Var.generate ~name:"args" () in
 
   let element_names = match snd fe_binder with
     | Some v -> [fst fe_binder;v]
@@ -468,7 +467,7 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
   let init_record = store_mutable_variable free_vars in
   let collect = compile_expression ~raise ~last collection in
   let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_record (O.Var.to_name name)]) expr
   in
   let restore = fun expr -> List.fold_right ~f:aux free_vars ~init:expr in
   let restore = match collection_type with

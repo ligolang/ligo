@@ -95,10 +95,6 @@ and row : formatter -> row_element -> unit =
       type_expression associated_type
 
 
-let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev.wrap_content
-
-
 let rec expression ppf (e : expression) =
   fprintf ppf "@[%a@]" expression_content e.expression_content
 and expression_content ppf (ec : expression_content) =
@@ -654,9 +650,9 @@ and type_environment_binding ppf ({type_variable=tv;type_} : type_environment_bi
     type_variable tv
     type_expression type_
 
-and module_environment_binding ppf ({module_variable;module_} : module_environment_binding) =
-  fprintf ppf "{@[<hv 2> @ odule_variable : %s ;@ module_ : %a;@]@ }"
-    module_variable
+and module_environment_binding ppf ({module_variable=mv;module_} : module_environment_binding) =
+  fprintf ppf "{@[<hv 2> @ odule_variable : %a ;@ module_ : %a;@]@ }"
+    module_variable mv
     environment module_
 
 and environment ppf ({expression_environment;type_environment=_;module_environment} : environment) =

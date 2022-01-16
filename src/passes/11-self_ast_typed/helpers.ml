@@ -350,7 +350,7 @@ and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> modu
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
-        if Var.equal binder.wrap_content (Var.of_name main_fname)
+        if Var.equal binder (Var.of_name main_fname)
         then Some p
         else None
     | Declaration_type   _
@@ -373,7 +373,7 @@ type contract_type = {
 let fetch_contract_type ~raise : string -> module_ -> contract_type = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ; name=_} as p) ->
-       if Var.equal binder.wrap_content (Var.of_name main_fname)
+       if Var.equal binder (Var.of_name main_fname)
        then Some p
        else None
     | Declaration_type   _
@@ -411,7 +411,7 @@ type view_type = {
 let fetch_view_type ~raise : string -> module_ -> (view_type * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
-        if Var.equal binder.wrap_content (Var.of_name main_fname)
+        if Var.equal binder (Var.of_name main_fname)
         then Some p
         else None
     | Declaration_type   _
@@ -428,7 +428,7 @@ let fetch_view_type ~raise : string -> module_ -> (view_type * Location.t) = fun
   | Some ({binder; result=_} , (tin,return))-> (
     match get_t_tuple tin with
     | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
-    | _ -> raise.raise (expected_pair_in_view binder.location)
+    | _ -> raise.raise (expected_pair_in_view @@ Var.get_location binder)
   )
   | None -> raise.raise @@ bad_contract_io main_fname expr
 
@@ -444,38 +444,29 @@ module Free_variables :
     val expression : expression -> (module_variable list * expression_variable list)
   end
   = struct
-  module Var = struct
-    type t = expression_variable
-    let compare e e' = Location.compare_content ~compare:Var.compare e e'
-  end
-
   module VarSet = Caml.Set.Make(Var)
+  module ModVarSet = Caml.Set.Make(Var)
+  module VarMap = Caml.Map.Make(Var)
 
-  module ModVar = struct
-    type t = module_variable
-    let compare e e' = compare_module_variable e e'
-  end
-
-  module ModVarSet = Caml.Set.Make(ModVar)
   type moduleEnv' = {modVarSet : ModVarSet.t; moduleEnv: moduleEnv; varSet: VarSet.t}
-  and moduleEnv = moduleEnv' SMap.t
+  and moduleEnv = moduleEnv' VarMap.t
 
   let rec merge =fun {modVarSet=x1;moduleEnv=y1;varSet=z1} {modVarSet=x2;moduleEnv=y2;varSet=z2} ->
     let aux : module_variable -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
       fun _ a b -> Some (merge a b)
     in
-      {modVarSet=ModVarSet.union x1 x2;moduleEnv=SMap.union aux y1 y2;varSet=VarSet.union z1 z2}
+      {modVarSet=ModVarSet.union x1 x2;moduleEnv=VarMap.union aux y1 y2;varSet=VarSet.union z1 z2}
 
   let unions : moduleEnv' list -> moduleEnv' =
-    fun l -> List.fold l ~init:{modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
+    fun l -> List.fold l ~init:{modVarSet=ModVarSet.empty;moduleEnv=VarMap.empty;varSet=VarSet.empty}
     ~f:merge
   let rec get_fv_expr : expression -> moduleEnv' = fun e ->
     let self = get_fv_expr in
     match e.expression_content with
     | E_variable v ->
-      {modVarSet=ModVarSet.empty; moduleEnv=SMap.empty ;varSet=VarSet.singleton v}
+      {modVarSet=ModVarSet.empty; moduleEnv=VarMap.empty ;varSet=VarSet.singleton v}
     | E_literal _ | E_raw_code _ ->
-      {modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
+      {modVarSet=ModVarSet.empty;moduleEnv=VarMap.empty;varSet=VarSet.empty}
     | E_constant {cons_name=_;arguments} ->
       unions @@ List.map ~f:self arguments
     | E_application {lamb; args} ->
@@ -514,7 +505,7 @@ module Free_variables :
       self result
     | E_module_accessor { module_name; element } ->
       let env = self element in
-      {modVarSet=ModVarSet.union env.modVarSet (ModVarSet.singleton module_name);moduleEnv=SMap.singleton module_name env;varSet=VarSet.empty}
+      {modVarSet=ModVarSet.union env.modVarSet (ModVarSet.singleton module_name);moduleEnv=VarMap.singleton module_name env;varSet=VarSet.empty}
 
   and get_fv_cases : matching_expr -> moduleEnv' = fun m ->
     match m with
@@ -536,9 +527,9 @@ module Free_variables :
       | Declaration_module {module_binder=_;module_; module_attr=_} ->
         get_fv_module module_
       | Declaration_type _t ->
-        {modVarSet=ModVarSet.empty;moduleEnv=SMap.empty;varSet=VarSet.empty}
+        {modVarSet=ModVarSet.empty;moduleEnv=VarMap.empty;varSet=VarSet.empty}
       | Module_alias {alias=_;binders} ->
-        {modVarSet=ModVarSet.singleton @@ fst binders;moduleEnv=SMap.empty;varSet=VarSet.empty}
+        {modVarSet=ModVarSet.singleton @@ fst binders;moduleEnv=VarMap.empty;varSet=VarSet.empty}
     in
     unions @@ List.map ~f:aux m
 
@@ -561,11 +552,6 @@ module Free_module_variables :
   end
 
   module ModVarSet = Caml.Set.Make(ModVar)
-
-  module Var = struct
-    type t = expression_variable
-    let compare e e' = Location.compare_content ~compare:Var.compare e e'
-  end
 
   module VarSet = Caml.Set.Make(Var)
 

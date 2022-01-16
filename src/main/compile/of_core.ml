@@ -1,6 +1,5 @@
 open Main_errors
 open Simple_utils.Trace
-module Var = Simple_utils.Var
 module Location = Simple_utils.Location
 
 type form =
@@ -42,7 +41,7 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
   applied
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =
-  let name = Location.wrap @@ Var.of_name entry_point in
+  let name = Ast_core.Var.of_name entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content  = Ast_core.E_variable name ;
       sugar    = None ;
@@ -59,7 +58,7 @@ let list_declarations (m : Ast_core.module_) : string list =
       let open Location in
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration) with
-      | Declaration_constant {binder;_} -> (Var.to_name binder.var.wrap_content)::prev
+      | Declaration_constant {binder;_} -> (Var.to_name binder.var)::prev
       | _ -> prev)
     ~init:[] m
 
@@ -79,8 +78,8 @@ let list_mod_declarations (m : Ast_core.module_) : string list =
       let open Location in
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration) with
-      | Declaration_module {module_binder;_} -> (module_binder)::prev
-      | Module_alias {alias;_} -> (alias)::prev
+      | Declaration_module {module_binder;_} -> (Var.to_name module_binder)::prev
+      | Module_alias {alias;_} -> (Var.to_name alias)::prev
       | _ -> prev)
     ~init:[] m
 
