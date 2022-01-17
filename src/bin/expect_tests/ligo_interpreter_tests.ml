@@ -574,3 +574,15 @@ let%expect_test _ =
 
     The source address is not an implicit account
     KT1EaZdMJaW3jgoYLwKJSjuUFA6qoKCPjiie |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 20-45:
+      1 | const foo = (x: {field: int}): {field: int} => {return x};
+      2 | const bar = Test.run(foo, {property: "toto"});
+      3 |
+
+    These types are not matching:
+     - record[field -> int]
+     - record[property -> string] |}]
