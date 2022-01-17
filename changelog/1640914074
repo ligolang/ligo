@@ -1,0 +1,5 @@
+author: er433
+merge_request: '1468'
+title: 'Testing framework: add and fix primitives (Crypto.*, Set.remove, Option.unopt/Option.unopt_with_error,
+  Tezos.pairing_check)'
+type: internal

@@ -13,4 +13,4 @@ include Misc
 include Combinators
 module Debug = Stage_common.Debug
 
-module Compare = Compare 
+module Compare = Compare

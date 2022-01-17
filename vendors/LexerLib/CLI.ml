@@ -211,6 +211,7 @@ module Make (Preprocessor_CLI: PREPROCESSOR_CLI) : S =
       |> add "--tokens"
       |> add "--units"
       |> add "--preprocess"
+      |> add "--bytes"
 
       (* The following options are present in all CLI *)
       |> add "--cli"

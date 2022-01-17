@@ -1,0 +1,16 @@
+type storage = int;
+
+type parameter = list<int>;
+
+type return_ = [list<operation>, storage];
+
+let hd = (x : list<int>) : int => {
+  if (x == []) then {
+    return -1;
+  } else {
+    return hd(x);
+  };
+};
+
+let main = ([a, b] : [parameter, storage]) : return_ =>
+  [list([]) as list<operation>, (hd(a) + (b + 8) * 11)]

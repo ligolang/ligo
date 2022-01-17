@@ -110,6 +110,445 @@ module T =
 
     | EOF of lexeme wrap
 
+
+    let to_lexeme = function
+      (* Directives *)
+
+      Directive d -> Directive.to_lexeme d
+
+      (* Literals *)
+
+    | String t   -> sprintf "%S" (String.escaped t#payload)
+    | Verbatim t -> String.escaped t#payload
+    | Bytes t    -> fst t#payload
+    | Int t
+    | Nat t
+    | Mutez t    -> fst t#payload
+    | Ident t    -> t#payload
+    | UIdent t   -> t#payload
+    | Attr t     -> sprintf "[@%s]" t#payload
+    | Lang {value = {value = payload; _}; _}  -> payload
+
+    (* Symbols *)
+
+    | ARROW    _ -> "->"
+    | CONS     _ -> "::"
+    | CARET    _ -> "^"
+    | MINUS    _ -> "-"
+    | PLUS     _ -> "+"
+    | SLASH    _ -> "/"
+    | TIMES    _ -> "*"
+    | LPAR     _ -> "("
+    | RPAR     _ -> ")"
+    | LBRACKET _ -> "["
+    | RBRACKET _ -> "]"
+    | LBRACE   _ -> "{"
+    | RBRACE   _ -> "}"
+    | COMMA    _ -> ","
+    | SEMI     _ -> ";"
+    | VBAR     _ -> "|"
+    | COLON    _ -> ":"
+    | DOT      _ -> "."
+    | WILD     _ -> "_"
+    | EQ       _ -> "="
+    | NE       _ -> "<>"
+    | LT       _ -> "<"
+    | GT       _ -> ">"
+    | LE       _ -> "<="
+    | GE       _ -> ">="
+    | BOOL_OR  _ -> "||"
+    | BOOL_AND _ -> "&&"
+    | QUOTE    _ -> "'"
+
+    (* Keywords *)
+
+    | Begin  _ -> "begin"
+    | Else   _ -> "else"
+    | End    _ -> "end"
+    | Fun    _ -> "fun"
+    | Rec    _ -> "rec"
+    | If     _ -> "if"
+    | In     _ -> "in"
+    | Let    _ -> "let"
+    | Match  _ -> "match"
+    | Mod    _ -> "mod"
+    | Land   _ -> "land"
+    | Lor    _ -> "lor"
+    | Lxor   _ -> "lxor"
+    | Lsl    _ -> "lsl"
+    | Lsr    _ -> "lsr"
+    | Not    _ -> "not"
+    | Of     _ -> "of"
+    | Or     _ -> "or"
+    | Type   _ -> "type"
+    | Then   _ -> "then"
+    | With   _ -> "with"
+    | Module _ -> "module"
+    | Struct _ -> "struct"
+
+    (* End-Of-File *)
+
+    | EOF _ -> ""
+
+
+        (* KEYWORDS *)
+
+    let wrap_begin  = wrap "begin"
+    let wrap_else   = wrap "else"
+    let wrap_end    = wrap "end"
+    let wrap_fun    = wrap "fun"
+    let wrap_rec    = wrap "rec"
+    let wrap_if     = wrap "if"
+    let wrap_in     = wrap "in"
+    let wrap_let    = wrap "let"
+    let wrap_match  = wrap "match"
+    let wrap_mod    = wrap "mod"
+    let wrap_land   = wrap "land"
+    let wrap_lor    = wrap "lor"
+    let wrap_lxor   = wrap "lxor"
+    let wrap_lsl    = wrap "lsl"
+    let wrap_lsr    = wrap "lsr"
+    let wrap_module = wrap "module"
+    let wrap_not    = wrap "not"
+    let wrap_of     = wrap "of"
+    let wrap_or     = wrap "or"
+    let wrap_struct = wrap "struct"
+    let wrap_then   = wrap "then"
+    let wrap_type   = wrap "type"
+    let wrap_with   = wrap "with"
+
+    (* Smart constructors *)
+
+    let mk_Begin  region = Begin  (wrap_begin  region)
+    let mk_Else   region = Else   (wrap_else   region)
+    let mk_End    region = End    (wrap_end    region)
+    let mk_Fun    region = Fun    (wrap_fun    region)
+    let mk_If     region = If     (wrap_if     region)
+    let mk_In     region = In     (wrap_in     region)
+    let mk_Land   region = Land   (wrap_land   region)
+    let mk_Let    region = Let    (wrap_let    region)
+    let mk_Lor    region = Lor    (wrap_lor    region)
+    let mk_Lsl    region = Lsl    (wrap_lsl    region)
+    let mk_Lsr    region = Lsr    (wrap_lsr    region)
+    let mk_Lxor   region = Lxor   (wrap_lxor   region)
+    let mk_Match  region = Match  (wrap_match  region)
+    let mk_Mod    region = Mod    (wrap_mod    region)
+    let mk_Module region = Module (wrap_module region)
+    let mk_Not    region = Not    (wrap_not    region)
+    let mk_Of     region = Of     (wrap_of     region)
+    let mk_Or     region = Or     (wrap_or     region)
+    let mk_Rec    region = Rec    (wrap_rec    region)
+    let mk_Struct region = Struct (wrap_struct region)
+    let mk_Then   region = Then   (wrap_then   region)
+    let mk_Type   region = Type   (wrap_type   region)
+    let mk_With   region = With   (wrap_with   region)
+
+    (* All keyword smart constructors *)
+
+    let keywords = [
+      mk_Begin;
+      mk_Else;
+      mk_End;
+      mk_Fun;
+      mk_If;
+      mk_In;
+      mk_Land;
+      mk_Let;
+      mk_Lor;
+      mk_Lsl;
+      mk_Lsr;
+      mk_Lxor;
+      mk_Match;
+      mk_Mod;
+      mk_Module;
+      mk_Not;
+      mk_Of;
+      mk_Or;
+      mk_Rec;
+      mk_Struct;
+      mk_Then;
+      mk_Type;
+      mk_With
+    ]
+
+    (* All keywords *)
+
+    let keywords =
+      let add map (key, data) =
+        match SMap.add ~key ~data map with
+          `Ok map -> map
+        | `Duplicate -> map in
+      let apply map mk_kwd =
+        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
+      in List.fold_left ~f:apply ~init:SMap.empty keywords
+
+    (* Ghost keywords *)
+
+    let ghost_begin  = wrap_begin  Region.ghost
+    let ghost_else   = wrap_else   Region.ghost
+    let ghost_end    = wrap_end    Region.ghost
+    let ghost_fun    = wrap_fun    Region.ghost
+    let ghost_if     = wrap_if     Region.ghost
+    let ghost_in     = wrap_in     Region.ghost
+    let ghost_land   = wrap_land   Region.ghost
+    let ghost_let    = wrap_let    Region.ghost
+    let ghost_lor    = wrap_lor    Region.ghost
+    let ghost_lsl    = wrap_lsl    Region.ghost
+    let ghost_lsr    = wrap_lsr    Region.ghost
+    let ghost_lxor   = wrap_lxor   Region.ghost
+    let ghost_match  = wrap_match  Region.ghost
+    let ghost_mod    = wrap_mod    Region.ghost
+    let ghost_module = wrap_module Region.ghost
+    let ghost_not    = wrap_not    Region.ghost
+    let ghost_of     = wrap_of     Region.ghost
+    let ghost_or     = wrap_or     Region.ghost
+    let ghost_rec    = wrap_rec    Region.ghost
+    let ghost_struct = wrap_struct Region.ghost
+    let ghost_then   = wrap_then   Region.ghost
+    let ghost_type   = wrap_type   Region.ghost
+    let ghost_with   = wrap_with   Region.ghost
+
+    let ghost_Begin  = Begin  ghost_begin
+    let ghost_Else   = Else   ghost_else
+    let ghost_End    = End    ghost_end
+    let ghost_Fun    = Fun    ghost_fun
+    let ghost_If     = If     ghost_if
+    let ghost_In     = In     ghost_in
+    let ghost_Land   = Land   ghost_land
+    let ghost_Let    = Let    ghost_let
+    let ghost_Lor    = Lor    ghost_lor
+    let ghost_Lsl    = Lsl    ghost_lsl
+    let ghost_Lsr    = Lsr    ghost_lsr
+    let ghost_Lxor   = Lxor   ghost_lxor
+    let ghost_Match  = Match  ghost_match
+    let ghost_Mod    = Mod    ghost_mod
+    let ghost_Module = Module ghost_module
+    let ghost_Not    = Not    ghost_not
+    let ghost_Of     = Of     ghost_of
+    let ghost_Or     = Or     ghost_or
+    let ghost_Rec    = Rec    ghost_rec
+    let ghost_Struct = Struct ghost_struct
+    let ghost_Then   = Then   ghost_then
+    let ghost_Type   = Type   ghost_type
+    let ghost_With   = With   ghost_with
+
+
+    (* SYMBOLS *)
+
+    let wrap_arrow    = wrap "->"
+    let wrap_cons     = wrap "::"
+    let wrap_caret    = wrap "^"
+    let wrap_minus    = wrap "-"
+    let wrap_plus     = wrap "+"
+    let wrap_slash    = wrap "/"
+    let wrap_times    = wrap "*"
+    let wrap_lpar     = wrap "("
+    let wrap_rpar     = wrap ")"
+    let wrap_lbracket = wrap "["
+    let wrap_rbracket = wrap "]"
+    let wrap_lbrace   = wrap "{"
+    let wrap_rbrace   = wrap "}"
+    let wrap_comma    = wrap ","
+    let wrap_semi     = wrap ";"
+    let wrap_vbar     = wrap "|"
+    let wrap_colon    = wrap ":"
+    let wrap_dot      = wrap "."
+    let wrap_wild     = wrap "_"
+    let wrap_eq       = wrap "="
+    let wrap_ne       = wrap "<>"
+    let wrap_lt       = wrap "<"
+    let wrap_gt       = wrap ">"
+    let wrap_le       = wrap "<="
+    let wrap_ge       = wrap ">="
+    let wrap_bool_or  = wrap "||"
+    let wrap_bool_and = wrap "&&"
+    let wrap_quote    = wrap "'"
+
+    (* Smart constructors *)
+
+    let mk_ARROW    region = ARROW    (wrap_semi     region)
+    let mk_CONS     region = CONS     (wrap_cons     region)
+    let mk_CARET    region = CARET    (wrap_caret    region)
+    let mk_MINUS    region = MINUS    (wrap_minus    region)
+    let mk_PLUS     region = PLUS     (wrap_minus    region)
+    let mk_SLASH    region = SLASH    (wrap_slash    region)
+    let mk_TIMES    region = TIMES    (wrap_times    region)
+    let mk_LPAR     region = LPAR     (wrap_lpar     region)
+    let mk_RPAR     region = RPAR     (wrap_rpar     region)
+    let mk_LBRACKET region = LBRACKET (wrap_lbracket region)
+    let mk_RBRACKET region = RBRACKET (wrap_rbracket region)
+    let mk_LBRACE   region = LBRACE   (wrap_lbrace   region)
+    let mk_RBRACE   region = RBRACE   (wrap_rbrace   region)
+    let mk_COMMA    region = COMMA    (wrap_comma    region)
+    let mk_SEMI     region = SEMI     (wrap_semi     region)
+    let mk_VBAR     region = VBAR     (wrap_vbar     region)
+    let mk_COLON    region = COLON    (wrap_colon    region)
+    let mk_DOT      region = DOT      (wrap_dot      region)
+    let mk_WILD     region = WILD     (wrap_wild     region)
+    let mk_EQ       region = EQ       (wrap_eq       region)
+    let mk_NE       region = NE       (wrap_ne       region)
+    let mk_LT       region = LT       (wrap_lt       region)
+    let mk_GT       region = GT       (wrap_gt       region)
+    let mk_LE       region = LE       (wrap_le       region)
+    let mk_GE       region = GE       (wrap_ge       region)
+    let mk_BOOL_OR  region = BOOL_OR  (wrap_bool_or  region)
+    let mk_BOOL_AND region = BOOL_AND (wrap_bool_and region)
+    let mk_QUOTE    region = QUOTE    (wrap_quote    region)
+
+    (* All symbol smart constructors *)
+
+    let symbols = [
+      mk_ARROW;
+      mk_CONS;
+      mk_CARET;
+      mk_MINUS;
+      mk_PLUS;
+      mk_SLASH;
+      mk_TIMES;
+      mk_LPAR;
+      mk_RPAR;
+      mk_LBRACKET;
+      mk_RBRACKET;
+      mk_LBRACE;
+      mk_RBRACE;
+      mk_COMMA;
+      mk_SEMI;
+      mk_VBAR;
+      mk_COLON;
+      mk_DOT;
+      mk_WILD;
+      mk_EQ;
+      mk_NE;
+      mk_LT;
+      mk_GT;
+      mk_LE;
+      mk_GE;
+      mk_BOOL_OR;
+      mk_BOOL_AND;
+      mk_QUOTE
+    ]
+
+    (* All symbols *)
+
+    let symbols =
+      let add map (key, data) =
+        match SMap.add ~key ~data map with
+          `Ok map -> map
+        | `Duplicate -> map in
+      let apply map mk_kwd =
+        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
+      in List.fold_left ~f:apply ~init:SMap.empty symbols
+
+    (* Ghost symbols *)
+
+    let ghost_arrow    = wrap_arrow    Region.ghost
+    let ghost_cons     = wrap_cons     Region.ghost
+    let ghost_caret    = wrap_caret    Region.ghost
+    let ghost_minus    = wrap_caret    Region.ghost
+    let ghost_plus     = wrap_plus     Region.ghost
+    let ghost_slash    = wrap_slash    Region.ghost
+    let ghost_times    = wrap_times    Region.ghost
+    let ghost_lpar     = wrap_lpar     Region.ghost
+    let ghost_rpar     = wrap_rpar     Region.ghost
+    let ghost_lbracket = wrap_lbracket Region.ghost
+    let ghost_rbracket = wrap_rbracket Region.ghost
+    let ghost_lbrace   = wrap_lbrace   Region.ghost
+    let ghost_rbrace   = wrap_rbrace   Region.ghost
+    let ghost_comma    = wrap_comma    Region.ghost
+    let ghost_semi     = wrap_semi     Region.ghost
+    let ghost_vbar     = wrap_vbar     Region.ghost
+    let ghost_colon    = wrap_colon    Region.ghost
+    let ghost_dot      = wrap_dot      Region.ghost
+    let ghost_wild     = wrap_wild     Region.ghost
+    let ghost_eq       = wrap_eq       Region.ghost
+    let ghost_ne       = wrap_ne       Region.ghost
+    let ghost_lt       = wrap_lt       Region.ghost
+    let ghost_gt       = wrap_gt       Region.ghost
+    let ghost_le       = wrap_le       Region.ghost
+    let ghost_ge       = wrap_ge       Region.ghost
+    let ghost_bool_or  = wrap_bool_or  Region.ghost
+    let ghost_bool_and = wrap_bool_and Region.ghost
+    let ghost_quote    = wrap_quote    Region.ghost
+
+    let ghost_ARROW    = ARROW    ghost_semi
+    let ghost_CONS     = CONS     ghost_cons
+    let ghost_CARET    = CARET    ghost_caret
+    let ghost_MINUS    = MINUS    ghost_minus
+    let ghost_PLUS     = PLUS     ghost_minus
+    let ghost_SLASH    = SLASH    ghost_slash
+    let ghost_TIMES    = TIMES    ghost_times
+    let ghost_LPAR     = LPAR     ghost_lpar
+    let ghost_RPAR     = RPAR     ghost_rpar
+    let ghost_LBRACKET = LBRACKET ghost_lbracket
+    let ghost_RBRACKET = RBRACKET ghost_rbracket
+    let ghost_LBRACE   = LBRACE   ghost_lbrace
+    let ghost_RBRACE   = RBRACE   ghost_rbrace
+    let ghost_COMMA    = COMMA    ghost_comma
+    let ghost_SEMI     = SEMI     ghost_semi
+    let ghost_VBAR     = VBAR     ghost_vbar
+    let ghost_COLON    = COLON    ghost_colon
+    let ghost_DOT      = DOT      ghost_dot
+    let ghost_WILD     = WILD     ghost_wild
+    let ghost_EQ       = EQ       ghost_eq
+    let ghost_NE       = NE       ghost_ne
+    let ghost_LT       = LT       ghost_lt
+    let ghost_GT       = GT       ghost_gt
+    let ghost_LE       = LE       ghost_le
+    let ghost_GE       = GE       ghost_ge
+    let ghost_BOOL_OR  = BOOL_OR  ghost_bool_or
+    let ghost_BOOL_AND = BOOL_AND ghost_bool_and
+    let ghost_QUOTE    = QUOTE    ghost_quote
+
+
+    (* OTHER GHOST TOKENS *)
+
+    (* IMPORTANT: These values cannot be exported in Token.mli *)
+
+    let wrap_string   s = Wrap.wrap s
+    let wrap_verbatim s = Wrap.wrap s
+    let wrap_bytes    b = Wrap.wrap ("0x" ^ Hex.show b, b)
+    let wrap_int      z = Wrap.wrap (Z.to_string z, z)
+    let wrap_nat      z = Wrap.wrap (Z.to_string z ^ "n", z)
+    let wrap_mutez    i = Wrap.wrap (Z.to_string i ^ "mutez", i)
+    let wrap_ident    i = Wrap.wrap i
+    let wrap_uident   c = Wrap.wrap c
+
+    let wrap_attr value = Wrap.wrap value
+
+    let wrap_lang lang region =
+      let start = region#start#shift_bytes (String.length "[%") in
+      let lang_reg = Region.make ~start ~stop:region#stop in
+      Region.{region; value = {value=lang; region=lang_reg}}
+
+    let ghost_string   s = wrap_string   s   Region.ghost
+    let ghost_verbatim s = wrap_verbatim s   Region.ghost
+    let ghost_bytes    b = wrap_bytes    b   Region.ghost
+    let ghost_int      z = wrap_int      z   Region.ghost
+    let ghost_nat      z = wrap_nat      z   Region.ghost
+    let ghost_mutez    i = wrap_mutez    i   Region.ghost
+    let ghost_ident    i = wrap_ident    i   Region.ghost
+    let ghost_uident   c = wrap_uident   c   Region.ghost
+    (* let ghost_attr   k v = wrap_attr     k v Region.ghost *)
+    let ghost_lang     l = wrap_lang     l   Region.ghost
+
+    let ghost_String   s = String   (ghost_string s)
+    let ghost_Verbatim s = Verbatim (ghost_verbatim s)
+    let ghost_Bytes    b = Bytes    (ghost_bytes b)
+    let ghost_Int      z = Int      (ghost_int z)
+    let ghost_Nat      z = Nat      (ghost_nat z)
+    let ghost_Mutez    i = Mutez    (ghost_mutez i)
+    let ghost_Ident    i = Ident    (ghost_ident i)
+    let ghost_UIdent   c = UIdent   (ghost_uident c)
+    (* let ghost_Attr   k v = Attr     (ghost_attr k v) *)
+    let ghost_Lang     l = Lang     (ghost_lang l)
+
+    (* END-OF-FILE TOKEN *)
+
+    let wrap_eof      = wrap ""
+    let mk_EOF region = EOF (wrap_eof region)
+    let ghost_eof     = wrap_eof Region.ghost
+    let ghost_EOF     = mk_EOF Region.ghost
+
     (* Unlexing the tokens *)
 
     let gen_sym prefix =
@@ -316,86 +755,6 @@ module T =
     | EOF t -> t#region, "EOF"
 
 
-    let to_lexeme = function
-      (* Directives *)
-
-      Directive d -> Directive.to_lexeme d
-
-      (* Literals *)
-
-    | String t   -> sprintf "%S" (String.escaped t#payload)
-    | Verbatim t -> String.escaped t#payload
-    | Bytes t    -> fst t#payload
-    | Int t
-    | Nat t
-    | Mutez t    -> fst t#payload
-    | Ident t    -> t#payload
-    | UIdent t   -> t#payload
-    | Attr t     -> sprintf "[@%s]" t#payload
-    | Lang {value = {value = payload; _}; _}  -> payload
-
-    (* Symbols *)
-
-    | ARROW    _ -> "->"
-    | CONS     _ -> "::"
-    | CARET    _ -> "^"
-    | MINUS    _ -> "-"
-    | PLUS     _ -> "+"
-    | SLASH    _ -> "/"
-    | TIMES    _ -> "*"
-    | LPAR     _ -> "("
-    | RPAR     _ -> ")"
-    | LBRACKET _ -> "["
-    | RBRACKET _ -> "]"
-    | LBRACE   _ -> "{"
-    | RBRACE   _ -> "}"
-    | COMMA    _ -> ","
-    | SEMI     _ -> ";"
-    | VBAR     _ -> "|"
-    | COLON    _ -> ":"
-    | DOT      _ -> "."
-    | WILD     _ -> "_"
-    | EQ       _ -> "="
-    | NE       _ -> "<>"
-    | LT       _ -> "<"
-    | GT       _ -> ">"
-    | LE       _ -> "<="
-    | GE       _ -> ">="
-    | BOOL_OR  _ -> "||"
-    | BOOL_AND _ -> "&&"
-    | QUOTE    _ -> "'"
-
-    (* Keywords *)
-
-    | Begin  _ -> "begin"
-    | Else   _ -> "else"
-    | End    _ -> "end"
-    | Fun    _ -> "fun"
-    | Rec    _ -> "rec"
-    | If     _ -> "if"
-    | In     _ -> "in"
-    | Let    _ -> "let"
-    | Match  _ -> "match"
-    | Mod    _ -> "mod"
-    | Land   _ -> "land"
-    | Lor    _ -> "lor"
-    | Lxor   _ -> "lxor"
-    | Lsl    _ -> "lsl"
-    | Lsr    _ -> "lsr"
-    | Not    _ -> "not"
-    | Of     _ -> "of"
-    | Or     _ -> "or"
-    | Type   _ -> "type"
-    | Then   _ -> "then"
-    | With   _ -> "with"
-    | Module _ -> "module"
-    | Struct _ -> "struct"
-
-    (* End-Of-File *)
-
-    | EOF _ -> ""
-
-
     (* CONVERSIONS *)
 
     let to_string ~offsets mode token =
@@ -408,38 +767,6 @@ module T =
     (* SMART CONSTRUCTORS *)
 
     (* Keywords *)
-
-    let keywords = [
-      (fun reg -> Begin     (wrap "begin" reg));
-      (fun reg -> Else      (wrap "else" reg));
-      (fun reg -> End       (wrap "fnd" reg));
-      (fun reg -> Fun       (wrap "fun" reg));
-      (fun reg -> Rec       (wrap "rec" reg));
-      (fun reg -> If        (wrap "if" reg));
-      (fun reg -> In        (wrap "in" reg));
-      (fun reg -> Let       (wrap "let" reg));
-      (fun reg -> Match     (wrap "match" reg));
-      (fun reg -> Mod       (wrap "mod" reg));
-      (fun reg -> Land      (wrap "land" reg));
-      (fun reg -> Lor       (wrap "lor" reg));
-      (fun reg -> Lxor      (wrap "lxor" reg));
-      (fun reg -> Lsl       (wrap "lsl" reg));
-      (fun reg -> Lsr       (wrap "lsr" reg));
-      (fun reg -> Not       (wrap "not" reg));
-      (fun reg -> Of        (wrap "of" reg));
-      (fun reg -> Or        (wrap "or" reg));
-      (fun reg -> Then      (wrap "then" reg));
-      (fun reg -> Type      (wrap "type" reg));
-      (fun reg -> With      (wrap "with" reg));
-      (fun reg -> Module    (wrap "module" reg));
-      (fun reg -> Struct    (wrap "struct" reg))
-    ]
-
-    let keywords =
-      let add map (key, value) = SMap.add_exn ~key ~data:value map in
-      let apply map mk_kwd =
-        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
-      in List.fold_left ~f:apply ~init:SMap.empty keywords
 
     type kwd_err = Invalid_keyword
 

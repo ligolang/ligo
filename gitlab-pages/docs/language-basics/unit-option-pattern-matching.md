@@ -411,8 +411,7 @@ function on_tuple (const v : my_tuple) : int is
 </Syntax>
 <Syntax syntax="reasonligo">
 
-<!-- skipping, REASONLIGO LEFTOVER -->
-```reasonligo skip
+```reasonligo group=pm_rec_tuple
 type my_record = { a : int , b : nat , c : string } ;
 type my_tuple = ( int , nat , string ) ;
 
@@ -461,12 +460,11 @@ function weird_length (const v : list(int)) : int is
 </Syntax>
 <Syntax syntax="reasonligo">
 
-<!-- skipping, REASONLIGO LEFTOVER -->
-```reasonligo skip
+```reasonligo group=pm_lists
 let weird_length = (v : list(int)) : int =>
   switch v {
   | [] => 1
-  | [a,b,c] => -2
+  | [a, ...[b, ...[c, ...[]]]] => -2
   | x => int (List.length (x))
   }
 
@@ -522,19 +520,20 @@ function complex (const x:complex_t ; const y:complex_t) is
 </Syntax>
 <Syntax syntax="reasonligo">
 
-<!-- skipping, REASONLIGO LEFTOVER -->
-```reasonligo skip
-// let t13 = 
-//   ((x: recordi) => 
-//      ((y: recordi) => 
-//         switch (x, y) {
-//         | {a : None, b : _ }, {a : _, b : _ } => -1
-//         | { a : _, b : _ }, {a : Some [], b : [hd, ...tl] } =>
-//             hd
-//         | { a : _, b = _ }, {a : Some [hd, ...tl], b : [] } =>
-//             hd
-//         | { a : Some a, b : _}, _ => int(Bytes.length(a))
-//         }));
+```reasonligo group=pm_complex
+type complex_t = { a : option(list(int)) , b : list(int) };
+
+let t13 = 
+  ((x: complex_t) => 
+     ((y: complex_t) => 
+        switch (x, y) {
+        | {a : None, b : _ }, {a : _, b : _ } => -1
+        | { a : _, b : _ }, {a : Some([]), b : [hd, ...tl] } =>
+            hd
+        | { a : _, b : _ }, {a : Some([hd, ...tl]), b : [] } =>
+            hd
+        | { a : Some(a), b : _}, _ => int(Bytes.length(a))
+        }));
 ```
 
 </Syntax>

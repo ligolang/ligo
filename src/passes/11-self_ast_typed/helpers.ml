@@ -347,6 +347,24 @@ and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> modu
     in
     List.fold ~f:aux ~init p
 
+let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
+  let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
+    | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
+        if Var.equal binder.wrap_content (Var.of_name main_fname)
+        then Some p
+        else None
+    | Declaration_type   _
+    | Declaration_module _
+    | Module_alias _ -> None
+  in
+  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
+  let main_decl =
+    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
+      main_decl_opt
+    in
+  let { binder=_ ; expr ; attr=_ ; name=_} = main_decl in
+  expr.type_expression, expr.location
+
 type contract_type = {
   parameter : Ast_typed.type_expression ;
   storage : Ast_typed.type_expression ;
