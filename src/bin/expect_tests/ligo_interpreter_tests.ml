@@ -612,7 +612,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 11-27:
+    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 26-27:
       2 |   let x = Test.eval 4n in
       3 |   let y = (Test.decompile x : string) in
       4 |   ()
