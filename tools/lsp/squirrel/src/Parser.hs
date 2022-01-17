@@ -27,7 +27,7 @@ module Parser
   ) where
 
 import Control.Arrow
-import Control.Exception (Exception (..))
+import Control.Exception (Exception (..), throwIO)
 import Control.Monad.Except (ExceptT, throwError)
 import Control.Monad.RWS hiding (Product)
 import Data.Functor
@@ -65,8 +65,8 @@ data ParserEnv = ParserEnv
   -- ^ Type of the node being parsed. Stored for better error messages.
   }
 
-runParserM :: ParserM a -> Either UnrecognizedFieldException (a, [Msg])
-runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], [])
+runParserM :: MonadIO m => ParserM a -> m (a, [Msg])
+runParserM p = liftIO $ (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], [])
   where
     initEnv = ParserEnv
       { peNodes = []
@@ -75,7 +75,7 @@ runParserM p = (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], [])
       }
 
 type Msg = (Range, Error ())
-type ParserM = RWST ParserEnv [Msg] ([Text], [Text]) (Either UnrecognizedFieldException)
+type ParserM = RWST ParserEnv [Msg] ([Text], [Text]) IO
 type ParserHandler = ExceptT HandlerFailed ParserM
 
 collectTreeErrors :: Contains Range info => SomeLIGO info -> [Msg]
@@ -184,7 +184,7 @@ field name =
     >>= maybe
       (do
         ParserEnv {peNodeType, peNodeRange} <- ask
-        lift $ lift $ Left $ UnrecognizedFieldException name peNodeType peNodeRange)
+        lift $ lift $ throwIO $ UnrecognizedFieldException name peNodeType peNodeRange)
       pure
 
 fieldOpt :: Text -> ParserHandler (Maybe RawTree)

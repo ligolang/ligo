@@ -55,7 +55,7 @@ parse src = do
     , eeReason = (Reason.recognise, Reason)
     } (srcPath src)
   tree <- toParseTree dialect src
-  fromEither $ uncurry (FindContract src) <$> runParserM (recogniser tree)
+  uncurry (FindContract src) <$> runParserM (recogniser tree)
 
 parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
