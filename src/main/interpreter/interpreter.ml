@@ -865,7 +865,9 @@ let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace
        return code
     | ( C_TEST_EVAL , _  ) -> fail @@ error_type
     | ( C_TEST_COMPILE_META_VALUE , _  ) -> fail @@ error_type
-    | ( C_TEST_DECOMPILE , [ V_Michelson _ ] ) -> fail @@ error_type
+    | ( C_TEST_DECOMPILE , [ V_Michelson (Ty_code { code_ty ; code ; ast_ty }) ] ) ->
+      let>> v = Decompile (code, code_ty, ast_ty) in
+      return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
     | ( C_TEST_GET_STORAGE , [ addr ] ) ->
        let* typed_address_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
