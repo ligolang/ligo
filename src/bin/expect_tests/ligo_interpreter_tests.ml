@@ -617,4 +617,4 @@ let%expect_test _ =
       3 |   let y = (Test.decompile x : string) in
       4 |   ()
 
-    Assigned type to Michelson code (nat) and annotated type (string) do not coincide. |}]
+    This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]

@@ -869,8 +869,8 @@ let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace
     | ( C_TEST_EVAL , _  ) -> fail @@ error_type
     | ( C_TEST_COMPILE_META_VALUE , _  ) -> fail @@ error_type
     | ( C_TEST_DECOMPILE , [ V_Michelson (Ty_code { code_ty ; code ; ast_ty }) ] ) ->
-      let () = trace_option ~raise (Errors.generic_error loc @@ Format.asprintf "Assigned type to Michelson code (%a) and annotated type (%a) do not coincide." AST.PP.type_expression ast_ty AST.PP.type_expression expr_ty) @@ AST.Helpers.assert_type_expression_eq (ast_ty, expr_ty) in
-      let>> v = Decompile (code, code_ty, ast_ty) in
+      let () = trace_option ~raise (Errors.generic_error loc @@ Format.asprintf "This Michelson value has assigned type '%a', which does not coincide with expected type '%a'." AST.PP.type_expression ast_ty AST.PP.type_expression expr_ty) @@ AST.Helpers.assert_type_expression_eq (ast_ty, expr_ty) in
+      let>> v = Decompile (code, code_ty, expr_ty) in
       return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
     | ( C_TEST_GET_STORAGE , [ addr ] ) ->
