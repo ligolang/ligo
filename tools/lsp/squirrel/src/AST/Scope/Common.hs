@@ -8,8 +8,6 @@ module AST.Scope.Common
   , FindFilepath (..)
   , HasScopeForest (..)
   , Level (..)
-  , ScopeError (..)
-  , ScopeM
   , Info'
   , ScopeForest (..)
   , ScopeInfo
@@ -52,7 +50,6 @@ import Control.Arrow ((&&&))
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
 import Control.Monad.Reader
-import Control.Monad.Trans.Except
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
@@ -76,7 +73,7 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
-  ( Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
+  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
   , TypeVariableName (..), withNestedLIGO
   )
 import Cli.Types
@@ -147,22 +144,6 @@ ofLevel level decl = case (level, _sdSpec decl) of
   (TermLevel, ValueSpec{}) -> True
   (TypeLevel, TypeSpec{}) -> True
   _ -> False
-
-data ScopeError =
-  TreeDoesNotContainName
-    Doc  -- ^ pprinted tree (used for simplifying purposes for not stacking
-         -- type parameters for `ScopeM` which brings plethora of confusion)
-    Range -- ^ location where the error has occurred
-    Text -- ^ variable name
-  deriving Show via PP ScopeError
-
-instance Pretty ScopeError where
-  pp (TreeDoesNotContainName tree range name) =
-    "Given tree does not contain " <> pp name <> ": " <> tree <> " (" <> pp range <> ")"
-
-instance Exception ScopeError
-
-type ScopeM = ExceptT ScopeError (Reader Lang)
 
 type Info' = Scope ': Maybe Level ': ParsedInfo
 

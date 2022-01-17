@@ -1,5 +1,6 @@
 module AST.Scope.Fallback
   ( Fallback
+  , TreeDoesNotContainNameException (..)
   , loop
   , loopM
   , loopM_
@@ -8,13 +9,11 @@ module AST.Scope.Fallback
 import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&), _Just, _head)
-import Control.Monad.Except (MonadError (throwError), runExceptT)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.State
 import Control.Monad.Trans.Reader
 import Control.Monad.Writer (Writer, execWriter, runWriter, tell)
 
-import Data.Bifunctor (first)
 import Data.Foldable (for_, toList)
 import Data.Functor ((<&>))
 import Data.Map (Map)
@@ -24,6 +23,7 @@ import Data.Set qualified as Set
 import Data.Text (Text)
 import Duplo.Pretty
 import Duplo.Tree hiding (loop)
+import UnliftIO.Exception (Exception (..), throwIO)
 import UnliftIO.MVar (modifyMVar, newMVar)
 
 import AST.Pretty (PPableLIGO)
@@ -47,6 +47,18 @@ import Util.Graph (forAMConcurrently)
 
 data Fallback
 
+data TreeDoesNotContainNameException =
+  TreeDoesNotContainNameException
+    Doc  -- ^ pprinted tree (used for simplifying purposes for not stacking
+         -- type parameters for `ScopeM` which brings plethora of confusion)
+    Range -- ^ location where the error has occurred
+    Text -- ^ variable name
+  deriving stock (Show)
+
+instance Exception TreeDoesNotContainNameException where
+  displayException (TreeDoesNotContainNameException tree range name) =
+    [i|Given tree does not contain #{name}: #{tree} (#{range})|]
+
 instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
   scopeForest reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
@@ -56,13 +68,8 @@ instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
     forAMConcurrently graph \(FindContract src (SomeLIGO dialect ligo) msg) -> do
       n <- modifyMVar counter (pure . (succ &&& id))
       reportProgress $ Progress (n % nContracts) [i|Adding scopes for #{srcPath src}|]
-      let
-        runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
-        fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
-        sf = case runLigoEnv ligo of
-          Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
-          Right sf' -> FindContract src sf' msg
-      pure sf
+      sf <- liftIO $ flip runReaderT dialect $ getEnv ligo
+      pure $ FindContract src sf msg
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
@@ -97,6 +104,8 @@ addReferences ligo = execState $ loopM_ addRef ligo
 
     addRefToDecl :: Range -> ScopedDecl -> ScopedDecl
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
+
+type ScopeM = ReaderT Lang IO
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv tree
@@ -277,7 +286,7 @@ functionScopedDecl
   -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
-  dialect <- lift ask
+  dialect <- ask
   (PreprocessedRange origin, name) <- getName nameNode
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure $ parseParameters paramNodes
@@ -301,7 +310,7 @@ valueScopedDecl
   -> Maybe (LIGO info) -- ^ initializer node
   -> ScopeM ScopedDecl
 valueScopedDecl docs nameNode typ body = do
-  dialect <- lift ask
+  dialect <- ask
   (PreprocessedRange origin, name) <- getName nameNode
   pure ScopedDecl
     { _sdName = name
@@ -325,7 +334,7 @@ typeScopedDecl
   -> LIGO info  -- ^ type body node
   -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
-  dialect <- lift ask
+  dialect <- ask
   (PreprocessedRange origin, name) <- getTypeName nameNode
   pure ScopedDecl
     { _sdName = name
@@ -338,7 +347,7 @@ typeScopedDecl docs nameNode body = do
 
 typeVariableScopedDecl :: TypeParams -> ScopeM Scope
 typeVariableScopedDecl tyVars = do
-  dialect <- lift ask
+  dialect <- ask
   pure case tyVars of
     TypeParam var -> [mkTyVarScope dialect var]
     TypeParams vars -> map (mkTyVarScope dialect) vars
@@ -491,7 +500,7 @@ getImmediateDecls = \case
 
 select
   :: ( PPableLIGO info
-     , MonadError ScopeError m
+     , MonadIO m
      , Contains PreprocessedRange info
      )
   => Text
@@ -500,7 +509,7 @@ select
   -> m (PreprocessedRange, Text)
 select what handlers t
   = maybe
-      (throwError $ TreeDoesNotContainName (pp t) (extractRange $ getElem @PreprocessedRange $ extract t) what)
+      (throwIO $ TreeDoesNotContainNameException (pp t) (extractRange $ getElem $ extract t) what)
       (return . (getElem . extract &&& ppToText))
   $ listToMaybe
   $ execWriter
@@ -511,7 +520,7 @@ select what handlers t
 
 getName
   :: ( PPableLIGO info
-     , MonadError ScopeError m
+     , MonadIO m
      , Contains PreprocessedRange info
      )
   => LIGO info
@@ -527,7 +536,7 @@ getName = select "name"
 
 getTypeName
   :: ( PPableLIGO info
-     , MonadError ScopeError m
+     , MonadIO m
      , Contains PreprocessedRange info
      )
   => LIGO info
