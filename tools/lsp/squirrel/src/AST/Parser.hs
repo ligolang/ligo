@@ -20,7 +20,6 @@ import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
 import Data.Text qualified as Text (lines, unlines)
-import Data.Traversable (for)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA ((=~))
@@ -121,22 +120,21 @@ parseContracts parser reportProgress top = do
 
 -- | Scan the whole directory for LIGO contracts.
 -- This ignores every other file which is not a contract.
-scanContracts
-  :: MonadIO m
-  => FilePath
-  -> m [FilePath]
-scanContracts top = do
+scanContracts :: MonadIO m => FilePath -> m [FilePath]
+scanContracts = liftIO . scanContractsImpl []
+
+scanContractsImpl :: [FilePath] -> FilePath -> IO [FilePath]
+scanContractsImpl seen top = do
   let exclude p = p /= "." && p /= ".."
-  ds <- liftIO $ getDirectoryContents top
-  contracts <- for (filter exclude ds) \d -> do
+  ds <- getDirectoryContents top
+  flip foldMap (filter exclude ds) \d -> do
     let p = top </> d
-    exists <- liftIO $ doesDirectoryExist p
+    exists <- doesDirectoryExist p
     if exists
-      then scanContracts p
+      then scanContractsImpl seen p
       else if isRight (getExt p)
-        then pure [p]
-        else pure []
-  pure $ concat contracts
+        then pure $ p : seen
+        else pure seen
 
 parseContractsWithDependencies
   :: MonadUnliftIO m
