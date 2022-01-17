@@ -540,6 +540,23 @@ let test_example =
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
+function decompile : michelson_program -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val decompile : michelson_program -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let decompile: michelson_program => 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let decompile = (value: michelson_program) => 'a
+</SyntaxTitle>
+Decompile a Michelson value to LIGO, following the (mandatory) type
+annotation. Note: this operation can fail at run-time, in case that
+the `michelson_program` given cannot be decompiled to something
+compatible with the annotated type.
+
+<SyntaxTitle syntax="pascaligo">
 function mutate_value : nat -> 'a -> option ('a * mutation)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
