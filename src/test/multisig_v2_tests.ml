@@ -4,13 +4,7 @@ open Test_helpers
 let get_program = get_program "./contracts/multisig-v2.ligo" (Contract "main")
 
 let compile_main ~raise ~add_warning () =
-  let typed_prg     = get_program ~raise ~add_warning () in
-  let mini_c_prg    = Ligo_compile.Of_typed.compile ~raise typed_prg in
-  let michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~raise ~options mini_c_prg "main" in
-  let _contract =
-    (* fails if the given entry point is not a valid contract *)
-    Ligo_compile.Of_michelson.build_contract michelson_prg in
-  ()
+  Test_helpers.compile_main ~raise ~add_warning "./contracts/multisig-v2.ligo" ()
 
 open Ast_imperative
 

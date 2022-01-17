@@ -3,9 +3,11 @@
 
 (* Vendor dependencies *)
 
+module List   = Core.List
 module Core   = LexerLib.Core
 module Region = Simple_utils.Region
 module Utils  = Simple_utils.Utils
+module Snippet = Simple_utils.Snippet
 
 (* Signature *)
 
@@ -29,106 +31,6 @@ type message = string Region.reg
 type token = Token.t
 type lex_unit = token Core.lex_unit
 
-(* Virtual token *)
-
-let es6fun = Token.ES6FUN (object 
-  method region = Region.ghost
-  method attributes = []
-  method payload = ""
-end)
-
-(* Inserting the ES6FUN virtual token *)
-
-let insert_es6fun_token tokens =
-  let open Token in
-
-  (* Unclosed parentheses are used to check if the parentheses are
-     balanced *)
-
-  let rec inner result open_parentheses tokens =
-    match tokens with
-      (* Balancing parentheses *)
-    | (RPAR _ as hd) :: rest ->
-         inner (hd :: result) (open_parentheses + 1) rest
-
-      (* let foo = (b: (int, int) => int) => ... *)
-    | (LPAR _ as hd)::(COLON _ as c)::(Ident _ as i)::(LPAR _ as l)::rest
-         when open_parentheses = 1 ->
-         List.rev_append (l::i::c::es6fun::hd::result) rest
-
-      (* let a = (x:int) => x *)
-    | (LPAR _ as hd)::(ARROW _ as a)::rest
-         when open_parentheses = 1 ->
-         List.rev_append (a::es6fun::hd::result) rest
-
-    | (DOT _ as dot) :: (UIdent _ as hd) :: rest ->
-      inner (hd :: dot :: result) open_parentheses rest
-
-    (* let a : (A|B) => int = (_a:(|A|B)) => 3 *)
-    | (UIdent _ as c) :: (VBAR _ as vbar) ::  rest ->
-      inner (vbar :: c :: result) open_parentheses rest
-    
-    | (_ as hd) :: (UIdent _ as c) :: rest ->
-      List.rev_append (c :: hd :: result) rest
-
-      (* let foo = (a: int) => (b: int) => a + b *)
-    | (_ as hd)::(ARROW _ as a)::rest
-         when open_parentheses = 0 ->
-         List.rev_append (a::es6fun::hd::result) rest
-
-      (* ((a: int) => a *)
-    | (LPAR _ as hd)::(LPAR _ as a)::rest
-         when open_parentheses = 1 ->
-         List.rev_append (a::es6fun::hd::result) rest
-
-      (* let x : (int => int) *)
-    | (LPAR _ as hd)::rest
-         when open_parentheses = 0 ->
-         List.rev_append (hd::es6fun::result) rest
-
-      (* Balancing parentheses *)
-    | (LPAR _ as hd)::rest ->
-        inner (hd::result) (open_parentheses - 1) rest
-
-      (* When the arrow '=>' is not part of a function: *)
-    | (RBRACKET _ as hd) :: rest
-    | (VBAR _ as hd) :: rest ->
-        List.rev_append (hd :: result) rest
-
-    (* let rec foo : int => int = (i: int) => ...  *)
-    | (COLON _ as hd)::(Ident _ as i)::(Rec _ as r)::rest
-        when open_parentheses = 0 ->
-        List.rev_append (r::i::hd::es6fun::result) rest
-
-      (* let foo : int => int = (i: int) => ...  *)
-    | (COLON _ as hd)::(Ident _ as i)::(Let _ as l)::rest
-         when open_parentheses = 0 ->
-         List.rev_append (l::i::hd::es6fun::result) rest
-
-    | (EQ _ as hd)::rest ->
-        List.rev_append (hd::es6fun::result) rest
-
-    | hd::rest ->
-        inner (hd::result) open_parentheses rest
-    | [] ->
-        List.rev result
-  in inner [] 0 tokens
-
-let insert_es6fun tokens =
-  let open Token in
-  let rec inner result = function
-    (ARROW _ as a)::rest ->
-      inner (insert_es6fun_token (a::result)) rest
-  | hd::rest ->
-      inner (hd::result) rest
-  | [] ->
-      List.rev result
-  in inner [] tokens
-
-let insert_es6fun = function
-  Stdlib.Ok tokens -> insert_es6fun tokens |> ok
-| Error _ as err -> err
-
 (* Filtering out the markup *)
 
 let tokens_of = function
@@ -140,6 +42,97 @@ let tokens_of = function
     in List.fold_left ~f:apply ~init:[] lex_units |> List.rev |> ok
 | Error _ as err -> err
 
+
+(* It's not a lexer *)
+
+
+type window = <
+  last_token    : token option;
+  current_token : token           (* Including EOF *)
+  >
+
+let window     : window option ref    = ref None
+let get_window : unit -> window option = fun () -> !window
+
+let set_window ~current ~last : unit =
+  window := Some (object
+                    method last_token    = last
+                    method current_token = current
+                  end)
+
+let fake_lexer: token list -> Lexing.lexbuf -> token = fun tokens ->
+  let store = ref tokens in
+  fun _ ->
+    match !store with
+      token::tokens ->
+        let last =
+          match !window with
+            None -> None
+          | Some window -> Some window#current_token in
+        set_window ~current:token ~last;
+        store := tokens;
+        token
+    | [] -> Token.mk_eof Region.ghost
+
+let pre_parser tokens = 
+  let fake_lexer = fake_lexer tokens in
+  let fake_lexbuf = Lexing.from_string "" in 
+  let module Inter = PreParser.MenhirInterpreter in
+  let supplier     = Inter.lexer_lexbuf_to_supplier fake_lexer fake_lexbuf in
+  let success a    = ok a
+  in
+  let failure = function
+    Inter.Accepted s ->  Ok s
+  | HandlingError env -> 
+    (match Inter.top env with 
+        Some (Inter.Element (s, _, _, _)) ->            
+          let window = get_window() in 
+          let prefix = (match window with 
+            Some window -> 
+              let region = Token.to_region window#current_token in
+              Format.asprintf "%a\n" Snippet.pp_lift region
+          | None -> 
+              "") in
+          let state = Inter.number s in
+          let msg = try PreParErr.message state with Not_found -> "<YOUR SYNTAX ERROR MESSAGE HERE>\n" in
+          let msg = if msg = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
+            "Syntax error " ^ string_of_int state ^ "."
+          else 
+            msg
+          in
+          let error_msg = prefix ^ msg in
+          Error Region.{value = error_msg; region = Region.ghost}
+      | None -> 
+        Error Region.{value = "Parser error."; region = Region.ghost}
+    )
+  | _ -> Error Region.{value = "Unhandled state."; region = Region.ghost}
+  in
+  let checkpoint = PreParser.Incremental.self_pass fake_lexbuf.lex_curr_p in
+  let _buffer, supplier = MenhirLib.ErrorReports.wrap_supplier supplier in
+  Inter.loop_handle success failure supplier checkpoint
+
+let apply filter = function
+  Stdlib.Ok tokens -> filter tokens
+| Error _ as err   -> err
+
+let pre_parser units =
+  apply pre_parser units 
+
+(* debug *)
+
+let print_token token =
+  Printf.printf "%s\n" (Token.to_string ~offsets:true `Point token)
+
+let print_tokens (tokens: (token list, _) result) =
+  apply (fun tokens -> List.iter ~f:print_token tokens; Ok tokens) tokens
+
 (* Exported *)
 
-let filter = Utils.(insert_es6fun <@ tokens_of <@ Style.check)
+let filter = 
+  Utils.(
+  (* print_tokens
+  <@  *)
+  pre_parser
+  <@ tokens_of 
+  <@ Style.check
+  )

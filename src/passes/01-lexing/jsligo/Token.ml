@@ -147,6 +147,589 @@ module T =
 
     | EOF of lexeme wrap
 
+    let to_lexeme = function
+      (* Directives *)
+
+      Directive d -> Directive.to_lexeme d
+
+      (* Comments *)
+
+    | LineCom t  -> sprintf "// %s" t#payload
+    | BlockCom t -> sprintf "/* %s */" t#payload
+
+      (* Literals *)
+
+    | String t   -> sprintf "%S" (String.escaped t#payload)
+    | Verbatim t -> String.escaped t#payload
+    | Bytes t    -> fst t#payload
+    | Int t      -> fst t#payload
+    | Ident t    -> t#payload
+    | UIdent t   -> t#payload
+    | Attr t     -> sprintf "[@%s]" t#payload
+    (* | Lang lang  -> Region.(lang.value.value) *)
+
+    (* Symbols *)
+
+    | MINUS    _ -> "-"
+    | PLUS     _ -> "+"
+    | SLASH    _ -> "/"
+    | TIMES    _ -> "*"
+    | REM      _ -> "%"
+    (* | PLUS2    _ -> "++"
+    | MINUS2   _ -> "--" *)
+
+    | LPAR     _ -> "("
+    | RPAR     _ -> ")"
+    | LBRACKET _ -> "["
+    | RBRACKET _ -> "]"
+    | LBRACE   _ -> "{"
+    | RBRACE   _ -> "}"
+
+    | COMMA    _ -> ","
+    | SEMI     _ -> ";"
+    | COLON    _ -> ":"
+    | DOT      _ -> "."
+    | ELLIPSIS _ -> "..."
+
+    | BOOL_OR  _ -> "||"
+    | BOOL_AND _ -> "&&"
+    | BOOL_NOT _ -> "!"
+
+    (* | BIT_AND  _ -> "&"
+    | BIT_NOT  _ -> "~"
+    | BIT_XOR  _ -> "^"
+    | SHIFT_L  _ -> "<<<"
+    | SHIFT_R  _ -> ">>>" *)
+
+    | EQ       _ -> "="
+    | EQ2      _ -> "=="
+    | NE       _ -> "!="
+
+    | LT       _ -> "<"
+    | GT       _ -> ">"
+    | LE       _ -> "<="
+    | GE       _ -> ">="
+
+    | PLUS_EQ  _ -> "+="
+    | MINUS_EQ _ -> "-="
+    | MULT_EQ  _ -> "*="
+    | REM_EQ   _ -> "%="
+    | DIV_EQ   _ -> "/="
+    (* | SL_EQ    _ -> "<<<="
+    | SR_EQ    _ -> ">>>="
+    | AND_EQ   _ -> "&="
+    | OR_EQ    _ -> "|="
+    | XOR_EQ   _ -> "^=" *)
+
+    | VBAR     _ -> "|"
+    | ARROW    _ -> "=>"
+    | WILD     _ -> "_"
+
+    (* JavaScript Keywords *)
+
+    (* | Break    _ -> "break" *)
+    | Case     _ -> "case"
+    (* | Class    _ -> "class" *)
+    | Const    _ -> "const"
+    | Default  _ -> "default"
+    | Else     _ -> "else"
+    | Export   _ -> "export"
+    | For      _ -> "for"
+    | If       _ -> "if"
+    | Import   _ -> "import"
+    | Let      _ -> "let"
+    | Of       _ -> "of"
+    | Return   _ -> "return"
+    | Break    _ -> "break"
+    | Switch   _ -> "switch"
+    (* | This     _ -> "this" *)
+    (* | Void     _ -> "void" *)
+    | While    _ -> "while"
+    (* | With     _ -> "with" *)
+
+    (* TypeScript keywords *)
+
+    | As        _ -> "as"
+    | Namespace _ -> "namespace"
+    | Type      _ -> "type"
+
+    (* Virtual tokens *)
+
+    | ZWSP _ -> ""
+
+    (* End-Of-File *)
+
+    | EOF _ -> ""
+
+   (* KEYWORDS *)
+
+    (* JavaScript Keywords *)
+
+     let wrap_break   = wrap "break"
+     let wrap_case    = wrap "case"
+  (* let wrap_class   = wrap "class"   *)
+     let wrap_const   = wrap "const"
+     let wrap_default = wrap "default"
+     let wrap_else    = wrap "else"
+     let wrap_export  = wrap "export"
+     let wrap_for     = wrap "for"
+     let wrap_if      = wrap "if"
+     let wrap_import  = wrap "import"
+     let wrap_let     = wrap "let"
+     let wrap_of      = wrap "of"
+     let wrap_return  = wrap "return"
+     let wrap_switch  = wrap "switch"
+  (* let wrap_this    = wrap "this"
+     let wrap_void    = wrap "void"    *)
+     let wrap_while   = wrap "while"
+  (* let wrap_with    = wrap "with"    *)
+
+     let mk_Break   region = Break   (wrap_break   region)
+     let mk_Case    region = Case    (wrap_case    region)
+  (* let mk_Class   region = Class   (wrap_class   region) *)
+     let mk_Const   region = Const   (wrap_const   region)
+     let mk_Default region = Default (wrap_default region)
+     let mk_Else    region = Else    (wrap_else    region)
+     let mk_Export  region = Export  (wrap_export  region)
+     let mk_For     region = For     (wrap_for     region)
+     let mk_If      region = If      (wrap_if      region)
+     let mk_Import  region = Import  (wrap_import  region)
+     let mk_Let     region = Let     (wrap_let     region)
+     let mk_Of      region = Of      (wrap_of      region)
+     let mk_Return  region = Return  (wrap_return  region)
+     let mk_Switch  region = Switch  (wrap_switch  region)
+  (* let mk_This    region = This    (wrap_this    region)
+     let mk_Void    region = Void    (wrap_void    region) *)
+     let mk_While   region = While   (wrap_while   region)
+  (* let mk_With    region = With    (wrap_with    region) *)
+
+     (* TypeScript keywords *)
+
+     let wrap_as        = wrap "as"
+     let wrap_namespace = wrap "namespace"
+     let wrap_type      = wrap "type"
+
+     let mk_As        region = As        (wrap_as        region)
+     let mk_Namespace region = Namespace (wrap_namespace region)
+     let mk_Type      region = Type      (wrap_type      region)
+
+    (* All keyword smart constructors *)
+
+     let keywords = [
+       mk_Break;
+       mk_Case;
+  (*   mk_Class; *)
+       mk_Const;
+       mk_Default;
+       mk_Else;
+       mk_Export;
+       mk_For;
+       mk_If;
+       mk_Import;
+       mk_Let;
+       mk_Of;
+       mk_Return;
+       mk_Switch;
+  (*   mk_This;
+       mk_Void;   *)
+       mk_While;
+  (*   mk_With;   *)
+
+       mk_As;
+       mk_Namespace;
+       mk_Type
+     ]
+
+    (* All keywords *)
+
+    let keywords =
+      let add map (key, data) =
+        match SMap.add ~key ~data map with
+          `Ok map -> map
+        | `Duplicate -> map in
+      let apply map mk_kwd =
+        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
+      in List.fold_left ~f:apply ~init:SMap.empty keywords
+
+    (* Ghost keywords *)
+
+    (* JavaScript Keywords *)
+
+     let ghost_break   = wrap_break   Region.ghost
+     let ghost_case    = wrap_case    Region.ghost
+  (* let ghost_class   = wrap_class   Region.ghost *)
+     let ghost_const   = wrap_const   Region.ghost
+     let ghost_default = wrap_default Region.ghost
+     let ghost_else    = wrap_else    Region.ghost
+     let ghost_export  = wrap_export  Region.ghost
+     let ghost_for     = wrap_for     Region.ghost
+     let ghost_if      = wrap_if      Region.ghost
+     let ghost_import  = wrap_import  Region.ghost
+     let ghost_let     = wrap_let     Region.ghost
+     let ghost_of      = wrap_of      Region.ghost
+     let ghost_return  = wrap_return  Region.ghost
+     let ghost_switch  = wrap_switch  Region.ghost
+  (* let ghost_this    = wrap_this    Region.ghost
+     let ghost_void    = wrap_void    Region.ghost *)
+     let ghost_while   = wrap_while   Region.ghost
+  (* let ghost_with    = wrap_with    Region.ghost *)
+
+     let ghost_Break   = Break   ghost_break
+     let ghost_Case    = Case    ghost_case
+  (* let ghost_Class   = Class   ghost_class    *)
+     let ghost_Const   = Const   ghost_const
+     let ghost_Default = Default ghost_default
+     let ghost_Else    = Else    ghost_else
+     let ghost_Export  = Export  ghost_export
+     let ghost_For     = For     ghost_for
+     let ghost_If      = If      ghost_if
+     let ghost_Import  = Import  ghost_import
+     let ghost_Let     = Let     ghost_let
+     let ghost_Of      = Of      ghost_of
+     let ghost_Return  = Return  ghost_return
+     let ghost_Switch  = Switch  ghost_switch
+  (* let ghost_This    = This    ghost_this
+     let ghost_Void    = Void    ghost_void     *)
+     let ghost_While   = While   ghost_while
+  (* let ghost_With    = With    ghost_with     *)
+
+     (* TypeScript keywords *)
+
+     let ghost_as        = wrap_as        Region.ghost
+     let ghost_namespace = wrap_namespace Region.ghost
+     let ghost_type      = wrap_type      Region.ghost
+
+     let ghost_As        = As        ghost_as
+     let ghost_Namespace = Namespace ghost_namespace
+     let ghost_Type      = Type      ghost_type
+
+
+    (* SYMBOLS *)
+
+    let wrap_minus    = wrap "-"
+    let wrap_plus     = wrap "+"
+    let wrap_slash    = wrap "/"
+    let wrap_times    = wrap "*"
+    let wrap_rem      = wrap "%"
+ (* let wrap_plus2    = wrap "++"
+    let wrap_minus2   = wrap "--" *)
+    let wrap_lpar     = wrap "("
+    let wrap_rpar     = wrap ")"
+    let wrap_lbracket = wrap "["
+    let wrap_rbracket = wrap "]"
+    let wrap_lbrace   = wrap "{"
+    let wrap_rbrace   = wrap "}"
+    let wrap_comma    = wrap ","
+    let wrap_semi     = wrap ";"
+    let wrap_colon    = wrap ":"
+    let wrap_dot      = wrap "."
+    let wrap_ellipsis = wrap "..."
+    let wrap_bool_or  = wrap "||"
+    let wrap_bool_and = wrap "&&"
+    let wrap_bool_not = wrap "!"
+ (* let wrap_bit_and  = wrap "&"
+    let wrap_bit_not  = wrap "~"
+    let wrap_bit_xor  = wrap "^"
+    let wrap_shift_l  = wrap "<<<"
+    let wrap_shift_r  = wrap ">>>" *)
+    let wrap_eq       = wrap "="
+    let wrap_eq2      = wrap "=="
+    let wrap_ne       = wrap "!="
+    let wrap_lt       = wrap "<"
+    let wrap_gt       = wrap ">"
+    let wrap_le       = wrap "<="
+    let wrap_ge       = wrap ">="
+    let wrap_plus_eq  = wrap "+="
+    let wrap_minus_eq = wrap "-="
+    let wrap_mult_eq  = wrap "*="
+    let wrap_rem_eq   = wrap "%="
+    let wrap_div_eq   = wrap "/="
+ (* let wrap_sl_eq    = wrap "<<<="
+    let wrap_sr_eq    = wrap ">>>="
+    let wrap_and_eq   = wrap "&="
+    let wrap_or_eq    = wrap "|="
+    let wrap_xor_eq   = wrap "^=" *)
+    let wrap_vbar     = wrap "|"
+    let wrap_arrow    = wrap "=>"
+    let wrap_wild     = wrap "_"
+
+    (* Smart constructors *)
+
+    let mk_MINUS    region = MINUS    (wrap_minus    region)
+    let mk_PLUS     region = PLUS     (wrap_plus     region)
+    let mk_SLASH    region = SLASH    (wrap_slash    region)
+    let mk_TIMES    region = TIMES    (wrap_times    region)
+    let mk_REM      region = REM      (wrap_rem      region)
+ (* let mk_PLUS2    region = PLUS2    (wrap_plus2    region)
+    let mk_MINUS2   region = MINUS2   (wrap_minus2   region) *)
+    let mk_LPAR     region = LPAR     (wrap_lpar     region)
+    let mk_RPAR     region = RPAR     (wrap_rpar     region)
+    let mk_LBRACKET region = LBRACKET (wrap_lbracket region)
+    let mk_RBRACKET region = RBRACKET (wrap_rbracket region)
+    let mk_LBRACE   region = LBRACE   (wrap_lbrace   region)
+    let mk_RBRACE   region = RBRACE   (wrap_rbrace   region)
+    let mk_COMMA    region = COMMA    (wrap_comma    region)
+    let mk_SEMI     region = SEMI     (wrap_semi     region)
+    let mk_COLON    region = COLON    (wrap_colon    region)
+    let mk_DOT      region = DOT      (wrap_dot      region)
+    let mk_ELLIPSIS region = ELLIPSIS (wrap_ellipsis region)
+    let mk_BOOL_OR  region = BOOL_OR  (wrap_bool_or  region)
+    let mk_BOOL_AND region = BOOL_AND (wrap_bool_and region)
+    let mk_BOOL_NOT region = BOOL_NOT (wrap_bool_not region)
+ (* let mk_BIT_AND  region = BIT_AND  (wrap_bit_and  region)
+    let mk_BIT_NOT  region = BIT_NOT  (wrap_bit_not  region)
+    let mk_BIT_XOR  region = BIT_XOR  (wrap_bit_xor  region)
+    let mk_SHIFT_L  region = SHIFT_L  (wrap_shift_l  region)
+    let mk_SHIFT_R  region = SHIFT_R  (wrap_shift_r  region) *)
+    let mk_EQ       region = EQ       (wrap_eq       region)
+    let mk_EQ2      region = EQ2      (wrap_eq2      region)
+    let mk_NE       region = NE       (wrap_ne       region)
+    let mk_LT       region = LT       (wrap_lt       region)
+    let mk_GT       region = GT       (wrap_gt       region)
+    let mk_LE       region = LE       (wrap_le       region)
+    let mk_GE       region = GE       (wrap_ge       region)
+    let mk_PLUS_EQ  region = PLUS_EQ  (wrap_plus_eq  region)
+    let mk_MINUS_EQ region = MINUS_EQ (wrap_minus_eq region)
+    let mk_MULT_EQ  region = MULT_EQ  (wrap_mult_eq  region)
+    let mk_REM_EQ   region = REM_EQ   (wrap_rem_eq   region)
+    let mk_DIV_EQ   region = DIV_EQ   (wrap_div_eq   region)
+ (* let mk_SL_EQ    region = SL_EQ    (wrap_sl_eq    region)
+    let mk_SR_EQ    region = SR_EQ    (wrap_sr_eq    region)
+    let mk_AND_EQ   region = AND_EQ   (wrap_and_eq   region)
+    let mk_OR_EQ    region = OR_EQ    (wrap_or_eq    region)
+    let mk_XOR_EQ   region = XOR_EQ   (wrap_xor_eq   region) *)
+    let mk_VBAR     region = VBAR     (wrap_vbar     region)
+    let mk_ARROW    region = ARROW    (wrap_arrow    region)
+    let mk_WILD     region = WILD     (wrap_wild     region)
+
+    (* All symbol smart constructors *)
+
+    let symbols = [
+      mk_MINUS;
+      mk_PLUS;
+      mk_SLASH;
+      mk_TIMES;
+      mk_REM;
+ (*   mk_PLUS2;
+      mk_MINUS2; *)
+      mk_LPAR;
+      mk_RPAR;
+      mk_LBRACKET;
+      mk_RBRACKET;
+      mk_LBRACE;
+      mk_RBRACE;
+      mk_COMMA;
+      mk_SEMI;
+      mk_COLON;
+      mk_DOT;
+      mk_ELLIPSIS;
+      mk_BOOL_OR;
+      mk_BOOL_AND;
+      mk_BOOL_NOT;
+ (*   mk_BIT_AND;
+      mk_BIT_NOT;
+      mk_BIT_XOR;
+      mk_SHIFT_L;
+      mk_SHIFT_R;  *)
+      mk_EQ;
+      mk_EQ2;
+      mk_NE;
+      mk_LT;
+      mk_GT;
+      mk_LE;
+      mk_GE;
+      mk_PLUS_EQ;
+      mk_MINUS_EQ;
+      mk_MULT_EQ;
+      mk_REM_EQ;
+      mk_DIV_EQ;
+ (*   mk_SL_EQ;
+      mk_SR_EQ;
+      mk_AND_EQ;
+      mk_OR_EQ;
+      mk_XOR_EQ;  *)
+      mk_VBAR;
+      mk_ARROW;
+      mk_WILD
+    ]
+
+    (* All symbols *)
+
+    let symbols =
+      let add map (key, data) =
+        match SMap.add ~key ~data map with
+          `Ok map -> map
+        | `Duplicate -> map in
+      let apply map mk_kwd =
+        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
+      in List.fold_left ~f:apply ~init:SMap.empty symbols
+
+    (* Ghost symbols *)
+
+    let ghost_minus    = wrap_minus    Region.ghost
+    let ghost_plus     = wrap_plus     Region.ghost
+    let ghost_slash    = wrap_slash    Region.ghost
+    let ghost_times    = wrap_times    Region.ghost
+    let ghost_rem      = wrap_rem      Region.ghost
+ (* let ghost_plus2    = wrap_plus2    Region.ghost
+    let ghost_minus2   = wrap_minus2   Region.ghost *)
+    let ghost_lpar     = wrap_lpar     Region.ghost
+    let ghost_rpar     = wrap_rpar     Region.ghost
+    let ghost_lbracket = wrap_lbracket Region.ghost
+    let ghost_rbracket = wrap_rbracket Region.ghost
+    let ghost_lbrace   = wrap_lbrace   Region.ghost
+    let ghost_rbrace   = wrap_rbrace   Region.ghost
+    let ghost_comma    = wrap_comma    Region.ghost
+    let ghost_semi     = wrap_semi     Region.ghost
+    let ghost_colon    = wrap_colon    Region.ghost
+    let ghost_dot      = wrap_dot      Region.ghost
+    let ghost_ellipsis = wrap_ellipsis Region.ghost
+    let ghost_bool_or  = wrap_bool_or  Region.ghost
+    let ghost_bool_and = wrap_bool_and Region.ghost
+    let ghost_bool_not = wrap_bool_not Region.ghost
+ (* let ghost_bit_and  = wrap_bit_and  Region.ghost
+    let ghost_bit_not  = wrap_bit_not  Region.ghost
+    let ghost_bit_xor  = wrap_bit_xor  Region.ghost
+    let ghost_shift_l  = wrap_shift_l  Region.ghost
+    let ghost_shift_r  = wrap_shift_r  Region.ghost *)
+    let ghost_eq       = wrap_eq       Region.ghost
+    let ghost_eq2      = wrap_eq2      Region.ghost
+    let ghost_ne       = wrap_ne       Region.ghost
+    let ghost_lt       = wrap_lt       Region.ghost
+    let ghost_gt       = wrap_gt       Region.ghost
+    let ghost_le       = wrap_le       Region.ghost
+    let ghost_ge       = wrap_ge       Region.ghost
+    let ghost_plus_eq  = wrap_plus_eq  Region.ghost
+    let ghost_minus_eq = wrap_minus_eq Region.ghost
+    let ghost_mult_eq  = wrap_mult_eq  Region.ghost
+    let ghost_rem_eq   = wrap_rem_eq   Region.ghost
+    let ghost_div_eq   = wrap_div_eq   Region.ghost
+ (* let ghost_sl_eq    = wrap_sl_eq    Region.ghost
+    let ghost_sr_eq    = wrap_sr_eq    Region.ghost
+    let ghost_and_eq   = wrap_and_eq   Region.ghost
+    let ghost_or_eq    = wrap_or_eq    Region.ghost
+    let ghost_xor_eq   = wrap_xor_eq   Region.ghost *)
+    let ghost_vbar     = wrap_vbar     Region.ghost
+    let ghost_arrow    = wrap_arrow    Region.ghost
+    let ghost_wild     = wrap_wild     Region.ghost
+
+    let ghost_MINUS    = MINUS    ghost_minus
+    let ghost_PLUS     = PLUS     ghost_plus
+    let ghost_SLASH    = SLASH    ghost_slash
+    let ghost_TIMES    = TIMES    ghost_times
+    let ghost_REM      = REM      ghost_rem
+ (* let ghost_PLUS2    = PLUS2    ghost_plus2
+    let ghost_MINUS2   = MINUS2   ghost_minus *)
+    let ghost_LPAR     = LPAR     ghost_lpar
+    let ghost_RPAR     = RPAR     ghost_rpar
+    let ghost_LBRACKET = LBRACKET ghost_lbracket
+    let ghost_RBRACKET = RBRACKET ghost_rbracket
+    let ghost_LBRACE   = LBRACE   ghost_lbrace
+    let ghost_RBRACE   = RBRACE   ghost_rbrace
+    let ghost_COMMA    = COMMA    ghost_comma
+    let ghost_SEMI     = SEMI     ghost_semi
+    let ghost_COLON    = COLON    ghost_colon
+    let ghost_DOT      = DOT      ghost_dot
+    let ghost_ELLIPSIS = ELLIPSIS ghost_ellipsis
+    let ghost_BOOL_OR  = BOOL_OR  ghost_bool_or
+    let ghost_BOOL_AND = BOOL_AND ghost_bool_and
+    let ghost_BOOL_NOT = BOOL_NOT ghost_bool_not
+ (* let ghost_BIT_AND  = BIT_AND  ghost_bit_and
+    let ghost_BIT_NOT  = BIT_NOT  ghost_bit_not
+    let ghost_BIT_XOR  = BIT_XOR  ghost_bit_xor
+    let ghost_SHIFT_L  = SHIFT_L  ghost_shift_l
+    let ghost_SHIFT_R  = SHIFT_R  ghost_shift_r *)
+    let ghost_EQ       = EQ       ghost_eq
+    let ghost_EQ2      = EQ2      ghost_eq2
+    let ghost_NE       = NE       ghost_ne
+    let ghost_LT       = LT       ghost_lt
+    let ghost_GT       = GT       ghost_gt
+    let ghost_LE       = LE       ghost_le
+    let ghost_GE       = GE       ghost_ge
+    let ghost_PLUS_EQ  = PLUS_EQ  ghost_plus_eq
+    let ghost_MINUS_EQ = MINUS_EQ ghost_minus_eq
+    let ghost_MULT_EQ  = MULT_EQ  ghost_mult_eq
+    let ghost_REM_EQ   = REM_EQ   ghost_rem_eq
+    let ghost_DIV_EQ   = DIV_EQ   ghost_div_eq
+ (* let ghost_SL_EQ    = SL_EQ    ghost_sl_eq
+    let ghost_SR_EQ    = SR_EQ    ghost_sr_eq
+    let ghost_AND_EQ   = AND_EQ   ghost_and_eq
+    let ghost_OR_EQ    = OR_EQ    ghost_or_eq
+    let ghost_XOR_EQ   = XOR_EQ   ghost_xor_eq *)
+    let ghost_VBAR     = VBAR     ghost_vbar
+    let ghost_ARROW    = ARROW    ghost_arrow
+    let ghost_WILD     = WILD     ghost_wild
+
+
+    (* OTHER GHOST TOKENS *)
+
+    (* IMPORTANT: These values cannot be exported in Token.mli *)
+
+    let wrap_string   s = Wrap.wrap s
+    let wrap_verbatim s = Wrap.wrap s
+    let wrap_bytes    b = Wrap.wrap ("0x" ^ Hex.show b, b)
+    let wrap_int      z = Wrap.wrap (Z.to_string z, z)
+(*  let wrap_nat      z = Wrap.wrap (Z.to_string z ^ "n", z)
+    let wrap_mutez    i = Wrap.wrap (Int64.to_string i ^ "mutez", i) *)
+    let wrap_ident    i = Wrap.wrap i
+    let wrap_uident   c = Wrap.wrap c
+
+    let wrap_attr value = Wrap.wrap value
+
+(*  let wrap_lang lang region =
+      let start = region#start#shift_bytes (String.length "[%") in
+      let lang_reg = Region.make ~start ~stop:region#stop in
+      Region.{region; value = {value=lang; region=lang_reg}} *)
+
+    let ghost_string   s = wrap_string   s   Region.ghost
+    let ghost_verbatim s = wrap_verbatim s   Region.ghost
+    let ghost_bytes    b = wrap_bytes    b   Region.ghost
+    let ghost_int      z = wrap_int      z   Region.ghost
+(*  let ghost_nat      z = wrap_nat      z   Region.ghost
+    let ghost_mutez    i = wrap_mutez    i   Region.ghost *)
+    let ghost_ident    i = wrap_ident    i   Region.ghost
+    let ghost_uident   c = wrap_uident   c   Region.ghost
+    (* let ghost_attr   k v = wrap_attr     k v Region.ghost *)
+(*  let ghost_lang     l = wrap_lang     l   Region.ghost *)
+
+    let ghost_String   s = String   (ghost_string s)
+    let ghost_Verbatim s = Verbatim (ghost_verbatim s)
+    let ghost_Bytes    b = Bytes    (ghost_bytes b)
+    let ghost_Int      z = Int      (ghost_int z)
+(*  let ghost_Nat      z = Nat      (ghost_nat z)
+    let ghost_Mutez    i = Mutez    (ghost_mutez i) *)
+    let ghost_Ident    i = Ident    (ghost_ident i)
+    let ghost_UIdent   c = UIdent   (ghost_uident c)
+    (* let ghost_Attr   k v = Attr     (ghost_attr k v) *)
+(*  let ghost_Lang     l = Lang     (ghost_lang l) *)
+
+    (* COMMENTS *)
+
+    let wrap_block_com  c    = Wrap.wrap c
+    let ghost_block_com c    = wrap_block_com c Region.ghost
+    let mk_BlockCom c region = BlockCom (wrap_block_com c region)
+    let ghost_BlockCom c     = mk_BlockCom c Region.ghost
+
+    let wrap_line_com c     = Wrap.wrap c
+    let ghost_line_com c    = wrap_line_com c Region.ghost
+    let mk_LineCom c region = LineCom (wrap_line_com c region)
+    let ghost_LineCom c     = mk_LineCom c Region.ghost
+
+    (* VIRTUAL TOKENS *)
+
+    let wrap_zwsp      = wrap ""
+    let ghost_zwsp     = wrap_zwsp Region.ghost
+    let mk_ZWSP region = ZWSP (wrap_zwsp region)
+    let ghost_ZWSP     = mk_ZWSP Region.ghost
+
+    (* END-OF-FILE TOKEN *)
+
+    let wrap_eof      = wrap ""
+    let ghost_eof     = wrap_eof Region.ghost
+    let mk_EOF region = EOF (wrap_eof region)
+    let ghost_EOF     = mk_EOF Region.ghost
+
+
     (* Unlexing the tokens *)
 
     let gen_sym prefix =
@@ -405,121 +988,6 @@ module T =
 
     | EOF t -> t#region, "EOF"
 
-
-    let to_lexeme = function
-      (* Directives *)
-
-      Directive d -> Directive.to_lexeme d
-
-      (* Comments *)
-
-    | LineCom t  -> sprintf "// %s" t#payload
-    | BlockCom t -> sprintf "/* %s */" t#payload
-
-      (* Literals *)
-
-    | String t   -> sprintf "%S" (String.escaped t#payload)
-    | Verbatim t -> String.escaped t#payload
-    | Bytes t    -> fst t#payload
-    | Int t      -> fst t#payload
-    | Ident t    -> t#payload
-    | UIdent t   -> t#payload
-    | Attr t     -> sprintf "[@%s]" t#payload
-    (* | Lang lang  -> Region.(lang.value.value) *)
-
-    (* Symbols *)
-
-    | MINUS    _ -> "-"
-    | PLUS     _ -> "+"
-    | SLASH    _ -> "/"
-    | TIMES    _ -> "*"
-    | REM      _ -> "%"
-    (* | PLUS2    _ -> "++"
-    | MINUS2   _ -> "--" *)
-
-    | LPAR     _ -> "("
-    | RPAR     _ -> ")"
-    | LBRACKET _ -> "["
-    | RBRACKET _ -> "]"
-    | LBRACE   _ -> "{"
-    | RBRACE   _ -> "}"
-
-    | COMMA    _ -> ","
-    | SEMI     _ -> ";"
-    | COLON    _ -> ":"
-    | DOT      _ -> "."
-    | ELLIPSIS _ -> "..."
-
-    | BOOL_OR  _ -> "||"
-    | BOOL_AND _ -> "&&"
-    | BOOL_NOT _ -> "!"
-
-    (* | BIT_AND  _ -> "&"
-    | BIT_NOT  _ -> "~"
-    | BIT_XOR  _ -> "^"
-    | SHIFT_L  _ -> "<<<"
-    | SHIFT_R  _ -> ">>>" *)
-
-    | EQ       _ -> "="
-    | EQ2      _ -> "=="
-    | NE       _ -> "!="
-
-    | LT       _ -> "<"
-    | GT       _ -> ">"
-    | LE       _ -> "<="
-    | GE       _ -> ">="
-
-    | PLUS_EQ  _ -> "+="
-    | MINUS_EQ _ -> "-="
-    | MULT_EQ  _ -> "*="
-    | REM_EQ   _ -> "%="
-    | DIV_EQ   _ -> "/="
-    (* | SL_EQ    _ -> "<<<="
-    | SR_EQ    _ -> ">>>="
-    | AND_EQ   _ -> "&="
-    | OR_EQ    _ -> "|="
-    | XOR_EQ   _ -> "^=" *)
-
-    | VBAR     _ -> "|"
-    | ARROW    _ -> "=>"
-    | WILD     _ -> "_"
-
-    (* JavaScript Keywords *)
-
-    (* | Break    _ -> "break" *)
-    | Case     _ -> "case"
-    (* | Class    _ -> "class" *)
-    | Const    _ -> "const"
-    | Default  _ -> "default"
-    | Else     _ -> "else"
-    | Export   _ -> "export"
-    | For      _ -> "for"
-    | If       _ -> "if"
-    | Import   _ -> "import"
-    | Let      _ -> "let"
-    | Of       _ -> "of"
-    | Return   _ -> "return"
-    | Break    _ -> "break"
-    | Switch   _ -> "switch"
-    (* | This     _ -> "this" *)
-    (* | Void     _ -> "void" *)
-    | While    _ -> "while"
-    (* | With     _ -> "with" *)
-
-    (* TypeScript keywords *)
-
-    | As        _ -> "as"
-    | Namespace _ -> "namespace"
-    | Type      _ -> "type"
-
-    (* Virtual tokens *)
-
-    | ZWSP _ -> ""
-
-    (* End-Of-File *)
-
-    | EOF _ -> ""
-
     (* CONVERSIONS *)
 
     let to_string ~offsets mode token =
@@ -532,42 +1000,6 @@ module T =
     (* SMART CONSTRUCTORS *)
 
     (* Keywords *)
-
-    let keywords = [
-        (* JavaScript Keywords *)
-
-       (* (fun reg -> Break   (wrap reg)); *)
-       (fun reg -> Case    (wrap "case"         reg));
-       (* (fun reg -> Class   (wrap reg)); *)
-       (fun reg -> Const   (wrap "const"        reg));
-       (fun reg -> Else    (wrap "else"         reg));
-       (fun reg -> Default (wrap "default"      reg));
-       (fun reg -> Export  (wrap "export"       reg));
-       (fun reg -> For     (wrap "for"          reg));
-       (fun reg -> If      (wrap "if"           reg));
-       (fun reg -> Import  (wrap "import"       reg));
-       (fun reg -> Let     (wrap "let"          reg));
-       (fun reg -> Of      (wrap "of"           reg));
-       (fun reg -> Return  (wrap "return"       reg));
-       (fun reg -> Break   (wrap "break"        reg));
-       (fun reg -> Switch  (wrap "switch"       reg));
-       (* (fun reg -> This    (wrap reg)); *)
-       (* (fun reg -> Void    (wrap reg)); *)
-       (fun reg -> While   (wrap "while"        reg));
-       (* (fun reg -> With    (wrap reg)); *)
-
-       (* TypeScript keywords *)
-
-       (fun reg -> As        (wrap "as"         reg));
-       (fun reg -> Namespace (wrap "namespace"  reg));
-       (fun reg -> Type      (wrap "type"       reg));
-    ]
-
-    let keywords =
-      let add map (key, value) = SMap.add_exn ~key ~data:value map in
-      let apply map mk_kwd =
-        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
-      in List.fold_left ~f:apply ~init:SMap.empty keywords
 
     type kwd_err = Invalid_keyword
 

@@ -8,102 +8,108 @@
          For example: [lexeme] type comes from [open CST] *)
 
 %[@recover.prelude
-  open Lexing_shared.Wrap
   module Region = Simple_utils.Region
+  module Directive = LexerLib.Directive
+  module Token     = Lexing_cameligo.Token
 
-  let default_loc = ref Region.ghost
 
-  let mk str = wrap str !default_loc
+  let mk_Directive region =
+    let value = (1, "file_path", None)
+    in Directive.Linemarker Region.{value; region}
 
-  let mkDirective () = LexerLib.Directive.Linemarker Region.{value = (0, "<invalid-path>", None);
-                                                             region = !default_loc}
-  let mkLang () = Region.{value = Region.{value = "<invalid-lang-literal>";
-                                          region = !default_loc};
-                          region = !default_loc}
+  let mk_lang region =
+    Region.{value = {value = "Ghost_lang"; region}; region}
+
+  (* Ghost semantic values for inserted tokens *)
+
+  let mk_string   loc = Token.wrap_string   "ghost string" loc
+  let mk_verbatim loc = Token.wrap_verbatim "ghost verbatim" loc
+  let mk_bytes    loc = Token.wrap_bytes    (Hex.of_string "Ghost bytes") loc
+  let mk_int      loc = Token.wrap_int      Z.zero loc
+  let mk_nat      loc = Token.wrap_nat      Z.zero loc
+  let mk_mutez    loc = Token.wrap_mutez    Z.zero loc
+  let mk_ident    loc = Token.wrap_ident    "ghost_ident" loc
+  let mk_uident   loc = Token.wrap_uident   "Ghost_uident" loc
+  let mk_attr     loc = Token.wrap_attr     "ghost_attr" loc
+
  ]
 (* Tokens (mirroring thise defined in module Token) *)
 
   (* Literals *)
 
-%token              <LexerLib.Directive.t> Directive "<directive>"  [@recover.expr mkDirective ()]
-%token                  <string Wrap.wrap> String    "<string>"     [@recover.expr mk "<invalid-string-literal>"]
-%token                  <string Wrap.wrap> Verbatim  "<verbatim>"   [@recover.expr mk "<invalid-verbatim-literal>"]
-%token        <(lexeme * Hex.t) Wrap.wrap> Bytes     "<bytes>"      [@recover.expr mk ("<invalid-bytes-literal>", `Hex "")]
-%token          <(string * Z.t) Wrap.wrap> Int       "<int>"        [@recover.expr mk ("<invalid-int-literal>", Z.zero)]
-%token          <(string * Z.t) Wrap.wrap> Nat       "<nat>"        [@recover.expr mk ("<invalid-nat-literal>", Z.zero)]
-%token          <(string * Z.t) Wrap.wrap> Mutez     "<mutez>"      [@recover.expr mk ("<invalid-mutez-literal>", Z.zero)]
-%token                  <string Wrap.wrap> Ident     "<ident>"      [@recover.expr mk "<invalid-ident>"]
-%token                  <string Wrap.wrap> UIdent    "<uident>"     [@recover.expr mk "<invalid-uident>"]
-%token                  <string Wrap.wrap> Attr      "[@attr]"      [@recover.expr mk "<invalid-attr-literal>"]
-%token      <lexeme Region.reg Region.reg> Lang      "[%lang"       [@recover.expr mkLang ()]
+%token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
+%token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string    $loc]
+%token                <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim  $loc]
+%token      <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes     $loc]
+%token        <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int       $loc]
+%token        <(string * Z.t) Wrap.t> Nat       "<nat>"       [@recover.expr mk_nat       $loc]
+%token        <(string * Z.t) Wrap.t> Mutez     "<mutez>"     [@recover.expr mk_mutez     $loc]
+%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc]
+%token                <string Wrap.t> UIdent    "<uident>"    [@recover.expr mk_uident    $loc]
+%token                <string Wrap.t> Attr      "[@attr]"     [@recover.expr mk_attr      $loc]
+%token <string Region.reg Region.reg> Lang      "[%lang"      [@recover.expr mk_lang      $loc]
 
-  (* Symbols *)
 
-%token <lexeme Wrap.wrap> MINUS   "-" [@recover.expr mk "-"]
-%token <lexeme Wrap.wrap> PLUS    "+" [@recover.expr mk "+"]
-%token <lexeme Wrap.wrap> SLASH   "/" [@recover.expr mk "/"]
-%token <lexeme Wrap.wrap> TIMES   "*" [@recover.expr mk "*"]
 
-%token <lexeme Wrap.wrap> LPAR     "(" [@recover.expr mk "("]
-%token <lexeme Wrap.wrap> RPAR     ")" [@recover.expr mk ")"]
-%token <lexeme Wrap.wrap> LBRACKET "[" [@recover.expr mk "["]
-%token <lexeme Wrap.wrap> RBRACKET "]" [@recover.expr mk "]"]
-%token <lexeme Wrap.wrap> LBRACE   "{" [@recover.expr mk "{"]
-%token <lexeme Wrap.wrap> RBRACE   "}" [@recover.expr mk "}"]
+(* Symbols *)
 
-%token <lexeme Wrap.wrap> ARROW "->" [@recover.expr mk "->"]
-%token <lexeme Wrap.wrap> CONS  "::" [@recover.expr mk "::"]
-%token <lexeme Wrap.wrap> CARET "^"  [@recover.expr mk "^"]
-(*%token <lexeme Wrap.wrap> APPEND "@" *)
-%token <lexeme Wrap.wrap> DOT   "." [@recover.expr mk "."]
+%token <string Wrap.t> MINUS    "-"  [@recover.expr Token.wrap_minus     $loc]
+%token <string Wrap.t> PLUS     "+"  [@recover.expr Token.wrap_plus      $loc]
+%token <string Wrap.t> SLASH    "/"  [@recover.expr Token.wrap_slash     $loc]
+%token <string Wrap.t> TIMES    "*"  [@recover.expr Token.wrap_times     $loc]
+%token <string Wrap.t> LPAR     "("  [@recover.expr Token.wrap_lpar      $loc]
+%token <string Wrap.t> RPAR     ")"  [@recover.expr Token.wrap_rpar      $loc]
+%token <string Wrap.t> LBRACKET "["  [@recover.expr Token.wrap_lbracket  $loc]
+%token <string Wrap.t> RBRACKET "]"  [@recover.expr Token.wrap_rbracket  $loc]
+%token <string Wrap.t> LBRACE   "{"  [@recover.expr Token.wrap_lbrace    $loc]
+%token <string Wrap.t> RBRACE   "}"  [@recover.expr Token.wrap_rbrace    $loc]
+%token <string Wrap.t> ARROW    "->" [@recover.expr Token.wrap_arrow     $loc]
+%token <string Wrap.t> CONS     "::" [@recover.expr Token.wrap_cons      $loc]
+%token <string Wrap.t> CARET    "^"  [@recover.expr Token.wrap_caret     $loc]
+%token <string Wrap.t> DOT      "."  [@recover.expr Token.wrap_dot       $loc]
+%token <string Wrap.t> COMMA    ","  [@recover.expr Token.wrap_comma     $loc]
+%token <string Wrap.t> SEMI     ";"  [@recover.expr Token.wrap_semi      $loc]
+%token <string Wrap.t> COLON    ":"  [@recover.expr Token.wrap_colon     $loc]
+%token <string Wrap.t> VBAR     "|"  [@recover.expr Token.wrap_vbar      $loc]
+%token <string Wrap.t> WILD     "_"  [@recover.expr Token.wrap_wild      $loc]
+%token <string Wrap.t> EQ       "="  [@recover.expr Token.wrap_eq        $loc]
+%token <string Wrap.t> NE       "<>" [@recover.expr Token.wrap_ne        $loc]
+%token <string Wrap.t> LT       "<"  [@recover.expr Token.wrap_lt        $loc]
+%token <string Wrap.t> GT       ">"  [@recover.expr Token.wrap_gt        $loc]
+%token <string Wrap.t> LE       "<=" [@recover.expr Token.wrap_le        $loc]
+%token <string Wrap.t> GE       ">=" [@recover.expr Token.wrap_ge        $loc]
+%token <string Wrap.t> BOOL_OR  "||" [@recover.expr Token.wrap_bool_or   $loc]
+%token <string Wrap.t> BOOL_AND "&&" [@recover.expr Token.wrap_bool_and  $loc]
+%token <string Wrap.t> QUOTE    "'"  [@recover.expr Token.wrap_quote     $loc]
 
-%token <lexeme Wrap.wrap> COMMA "," [@recover.expr mk ","]
-%token <lexeme Wrap.wrap> SEMI  ";" [@recover.expr mk ";"]
-%token <lexeme Wrap.wrap> COLON ":" [@recover.expr mk ":"]
-%token <lexeme Wrap.wrap> VBAR  "|" [@recover.expr mk "|"]
+(* Keywords *)
 
-%token <lexeme Wrap.wrap> WILD  "_" [@recover.expr mk "_"]
+%token <string Wrap.t> Begin  "begin"  [@recover.expr Token.wrap_begin   $loc]
+%token <string Wrap.t> Else   "else"   [@recover.expr Token.wrap_else    $loc]
+%token <string Wrap.t> End    "end"    [@recover.expr Token.wrap_end     $loc]
+%token <string Wrap.t> Fun    "fun"    [@recover.expr Token.wrap_fun     $loc]
+%token <string Wrap.t> If     "if"     [@recover.expr Token.wrap_if      $loc]
+%token <string Wrap.t> In     "in"     [@recover.expr Token.wrap_in      $loc]
+%token <string Wrap.t> Land   "land"   [@recover.expr Token.wrap_land    $loc]
+%token <string Wrap.t> Let    "let"    [@recover.expr Token.wrap_let     $loc]
+%token <string Wrap.t> Lor    "lor"    [@recover.expr Token.wrap_lor     $loc]
+%token <string Wrap.t> Lsl    "lsl"    [@recover.expr Token.wrap_lsl     $loc]
+%token <string Wrap.t> Lsr    "lsr"    [@recover.expr Token.wrap_lsr     $loc]
+%token <string Wrap.t> Lxor   "lxor"   [@recover.expr Token.wrap_lxor    $loc]
+%token <string Wrap.t> Match  "match"  [@recover.expr Token.wrap_match   $loc]
+%token <string Wrap.t> Mod    "mod"    [@recover.expr Token.wrap_mod     $loc]
+%token <string Wrap.t> Module "module" [@recover.expr Token.wrap_module  $loc]
+%token <string Wrap.t> Not    "not"    [@recover.expr Token.wrap_not     $loc]
+%token <string Wrap.t> Of     "of"     [@recover.expr Token.wrap_of      $loc]
+%token <string Wrap.t> Or     "or"     [@recover.expr Token.wrap_or      $loc]
+%token <string Wrap.t> Rec    "rec"    [@recover.expr Token.wrap_rec     $loc]
+%token <string Wrap.t> Struct "struct" [@recover.expr Token.wrap_struct  $loc]
+%token <string Wrap.t> Then   "then"   [@recover.expr Token.wrap_then    $loc]
+%token <string Wrap.t> Type   "type"   [@recover.expr Token.wrap_type    $loc]
+%token <string Wrap.t> With   "with"   [@recover.expr Token.wrap_with    $loc]
 
-%token <lexeme Wrap.wrap> EQ "="  [@recover.expr mk "="]
-%token <lexeme Wrap.wrap> NE "<>" [@recover.expr mk "<>"]
-%token <lexeme Wrap.wrap> LT "<"  [@recover.expr mk "<"]
-%token <lexeme Wrap.wrap> GT ">"  [@recover.expr mk ">"]
-%token <lexeme Wrap.wrap> LE "<=" [@recover.expr mk "<="]
-%token <lexeme Wrap.wrap> GE ">=" [@recover.expr mk ">="]
+(* End of File *)
 
-%token <lexeme Wrap.wrap> BOOL_OR  "||" [@recover.expr mk "||"]
-%token <lexeme Wrap.wrap> BOOL_AND "&&" [@recover.expr mk "&&"]
-%token <lexeme Wrap.wrap> QUOTE    "'"  [@recover.expr mk "'"]
-
- (* Keywords *)
-
-(*%token And*)
-%token <lexeme Wrap.wrap> Begin  "begin"  [@recover.expr mk "begin"]
-%token <lexeme Wrap.wrap> Else   "else"   [@recover.expr mk "else"]
-%token <lexeme Wrap.wrap> End    "end"    [@recover.expr mk "end"]
-%token <lexeme Wrap.wrap> Fun    "fun"    [@recover.expr mk "fun"]
-%token <lexeme Wrap.wrap> Rec    "rec"    [@recover.expr mk "rec"]
-%token <lexeme Wrap.wrap> If     "if"     [@recover.expr mk "if"]
-%token <lexeme Wrap.wrap> In     "in"     [@recover.expr mk "in"]
-%token <lexeme Wrap.wrap> Let    "let"    [@recover.expr mk "let"]
-%token <lexeme Wrap.wrap> Match  "match"  [@recover.expr mk "match"]
-%token <lexeme Wrap.wrap> Mod    "mod"    [@recover.expr mk "mod"]
-%token <lexeme Wrap.wrap> Land   "land"   [@recover.expr mk "land"]
-%token <lexeme Wrap.wrap> Lor    "lor"    [@recover.expr mk "lor"]
-%token <lexeme Wrap.wrap> Lxor   "lxor"   [@recover.expr mk "lxor"]
-%token <lexeme Wrap.wrap> Lsl    "lsl"    [@recover.expr mk "lsl"]
-%token <lexeme Wrap.wrap> Lsr    "lsr"    [@recover.expr mk "lsr"]
-%token <lexeme Wrap.wrap> Not    "not"    [@recover.expr mk "not"]
-%token <lexeme Wrap.wrap> Of     "of"     [@recover.expr mk "of"]
-%token <lexeme Wrap.wrap> Or     "or"     [@recover.expr mk "or"]
-%token <lexeme Wrap.wrap> Then   "then"   [@recover.expr mk "then"]
-%token <lexeme Wrap.wrap> Type   "type"   [@recover.expr mk "type"]
-%token <lexeme Wrap.wrap> With   "with"   [@recover.expr mk "with"]
-%token <lexeme Wrap.wrap> Module "module" [@recover.expr mk "module"]
-%token <lexeme Wrap.wrap> Struct "struct" [@recover.expr mk "struct"]
-
-  (* Virtual tokens *)
-
-%token <lexeme Wrap.wrap> EOF [@recover.expr mk ""]
+%token <string Wrap.t> EOF [@recover.expr Token.wrap_eof $loc]
 
 %%

@@ -71,10 +71,7 @@ module type PARSER =
         include Merlin_recovery.RECOVERY_GENERATED
                 with module I := MenhirInterpreter
 
-        module Default :
-          sig
-            val default_loc : Region.t ref
-          end
+        val default_value : Region.t -> 'a MenhirInterpreter.symbol -> 'a
       end
   end
 
@@ -86,10 +83,19 @@ module type PAR_ERR =
     val message : int -> string
   end
 
-(* Debug setting *)
 
-module type DEBUG_CONFIG =
+(* Parser configuration *)
+
+module type CONFIG =
   sig
+    (* Assume that positions refer to bytes or code points.
+       It mostly affects the position of synthesized tokens in the error recovery
+       mode because menhir requires to convert [Pos.t] type to the poorer
+       representation - [Lexing.position]. *)
+    val mode : [`Byte | `Point]
+
+    (* Debug options *)
+
     (* Enable debug printing in the recovery algorithm *)
     val error_recovery_tracing : bool
     (* Path to a log file or [None] that means to use stdout *)
@@ -100,7 +106,7 @@ module type DEBUG_CONFIG =
 
 module Make (Lexer  : LEXER)
             (Parser : PARSER with type token = Lexer.token)
-            (Debug  : DEBUG_CONFIG) :
+            (Config : CONFIG) :
   sig
     type token = Lexer.token
 

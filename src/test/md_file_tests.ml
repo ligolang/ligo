@@ -119,7 +119,7 @@ let compile_groups ~raise filename grp_list =
       let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
       let core       = Ligo_compile.Of_sugar.compile sugar in
-      let inferred   = Ligo_compile.Of_core.infer  ~raise~options core in
+      let inferred   = Ligo_compile.Of_core.infer ~raise ~options core in
       match lang with
       | Meta ->
         let init_env = Environment.default_with_test options.protocol_version in
@@ -128,15 +128,11 @@ let compile_groups ~raise filename grp_list =
         let _ = Interpreter.eval_test ~protocol_version:options.protocol_version ~raise ~steps:5000 typed in
         ()
       | Object ->
-        let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
-        let applied = Self_ast_typed.monomorphise_module typed in
-        let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.morph_program options.init_env applied in
-        let mini_c  = Ligo_compile.Of_typed.compile ~raise applied in
-        let (_michelsons : Stacking.compiled_expression list) =
-          List.map ~f:
-            (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options mini_c exp)
-            mini_c
-        in
+        let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
+        let agg_prg   = Ligo_compile.Of_typed.compile_program ~raise typed in
+        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise (Ast_typed.e_a_unit ()) agg_prg in
+        let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in
+        let _michelson : Stacking__Compiler_program.compiled_expression = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
         ()
   in
   let () = List.iter ~f:aux grp_list in

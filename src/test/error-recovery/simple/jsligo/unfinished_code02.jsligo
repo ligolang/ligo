@@ -1,0 +1,65 @@
+type commit = { 
+  date : timestamp, 
+  salted_hash : bytes 
+};
+
+type commit_set = big_map<address, commit>;
+
+type storage = { 
+  hashed : bytes, 
+  unused : bool, 
+  commits : commit_set 
+};
+
+type reveal = { 
+  hashable : bytes, 
+  message : (x: unit) => list<operation>
+};
+
+type parameter = ["Commit", bytes] | ["Reveal", reveal];
+
+type return_ = /* TODO */
+/* We use hash-commit so that a baker can not steal */
+
+let commit = ([p, s] : [bytes, storage]) : return_ => {
+  const commit : commit =
+    { date: Tezos.now + 86400, salted_hash: p };
+  const updated_map : commit_set =
+    Big_map.update(Tezos.sender(Some (commit)), s.commits);
+  const s = {...s, commits: updated_map};
+  return [([] as list<operation>), s]
+}
+  
+let reveal = ([p, s] : [reveal, storage]) : return_ => {
+  if (!s.unused) {
+     failwith("This contract has already been used.");
+  } else {
+    const commit : commit =
+      match(Big_map.find_opt(sender, s.commits), {
+        "Some": (c: commit) => c,
+        "None": () => failwith("You have not made a commitment to hash against yet.")
+      });
+    if (Tezos.now < commit.date) {
+      failwith("It has not been 24 hours since your commit yet.");
+    } else {
+      const salted =
+        Crypto.sha256(Bytes.concat(p.hashable, (Bytes.pack(sender))));
+      if (salted != commit.salted_hash) {
+        failwith("This reveal does not match your commitment.");
+      } else {
+        if (s.hashed = Crypto.sha256(p.hashable)) {
+          let s : storage = {...s, unused: false};
+          return [p.message(), s];
+        } else {
+          failwith("Your commitment did not match the storage hash.");
+        }
+      }
+    }
+  }
+};
+
+let main = ([p, s] : [parameter, storage]) : return_ =>
+  match(p, {
+    "Commit": (c: bytes) => commit([c, s]),
+    "Reveal": (r: reveal) => reveal([r, s])
+  });
