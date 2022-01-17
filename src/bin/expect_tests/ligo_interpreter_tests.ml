@@ -597,3 +597,14 @@ let%expect_test _ =
     These types are not matching:
      - record[b -> int]
      - string |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 20-42:
+      1 | const foo = (x: int): int => {return x};
+      2 | const bar = Test.run(foo, {field: "toto"});
+
+    These types are not matching:
+     - int
+     - record[field -> string] |}]
