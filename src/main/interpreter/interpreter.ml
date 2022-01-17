@@ -167,12 +167,13 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
   let eval_ligo = eval_ligo ~raise ~steps ~protocol_version in
-  let types = List.map ~f:snd operands in
-  let operands = List.map ~f:fst operands in
+  let locs = List.map ~f:(fun (_, _, c) -> c) operands in
+  let types = List.map ~f:(fun (_, b, _) -> b) operands in
+  let operands = List.map ~f:(fun (a, _, _) -> a) operands in
   let error_type = Errors.generic_error loc "Type error." in
   let return_ct v = return @@ V_Ct v in
   let return_none () = return @@ v_none () in
@@ -869,6 +870,7 @@ let rec apply_operator ~raise ~steps ~protocol_version : Location.t -> calltrace
     | ( C_TEST_EVAL , _  ) -> fail @@ error_type
     | ( C_TEST_COMPILE_META_VALUE , _  ) -> fail @@ error_type
     | ( C_TEST_DECOMPILE , [ V_Michelson (Ty_code { code_ty ; code ; ast_ty }) ] ) ->
+      let* loc = monad_option (Errors.generic_error loc "Could not recover locations") @@ List.nth locs 0 in
       let () = trace_option ~raise (Errors.generic_error loc @@ Format.asprintf "This Michelson value has assigned type '%a', which does not coincide with expected type '%a'." AST.PP.type_expression ast_ty AST.PP.type_expression expr_ty) @@ AST.Helpers.assert_type_expression_eq (ast_ty, expr_ty) in
       let>> v = Decompile (code, code_ty, expr_ty) in
       return v
@@ -1080,7 +1082,7 @@ and eval_ligo ~raise ~steps ~protocol_version : AST.expression -> calltrace -> e
       let* arguments' = Monad.bind_map_list
         (fun (ae:AST.expression) ->
           let* value = eval_ligo ae calltrace env in
-          return @@ (value, ae.type_expression))
+          return @@ (value, ae.type_expression, ae.location))
         arguments in
       apply_operator ~raise ~steps ~protocol_version term.location calltrace term.type_expression env cons_name arguments'
     )
