@@ -28,7 +28,7 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as Text (pack)
 import Data.Word (Word32)
-import Duplo.Tree (Cofree ((:<)), inject)
+import Duplo.Tree (Cofree ((:<)), fastMake)
 import System.FilePath ((</>), takeDirectory)
 import UnliftIO.Directory (canonicalizePath)
 
@@ -216,5 +216,5 @@ includesGraph contracts = do
       in
       FindContract
         (Path name)
-        (SomeLIGO Caml (info :< inject (Error ("Missing contract: " <> Text.pack name) [])))
+        (SomeLIGO Caml (fastMake info (Error ("Missing contract: " <> Text.pack name) [])))
         []

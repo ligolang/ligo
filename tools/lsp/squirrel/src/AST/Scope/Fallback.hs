@@ -14,7 +14,7 @@ import Control.Monad.State
 import Control.Monad.Trans.Reader
 import Control.Monad.Writer (Writer, execWriter, runWriter, tell)
 
-import Data.Foldable (for_, toList)
+import Data.Foldable (foldrM, for_, toList)
 import Data.Functor ((<&>))
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -120,9 +120,9 @@ prepareTree
   -> ScopeM (LIGO (Scope ': Bool ': Range ': ParsedInfo))
 prepareTree
   = assignDecls
-  . wildcardToName
-  . unSeq
-  . unLetRec
+  <=< pure . wildcardToName
+  <=< unSeq
+  <=< unLetRec
 
 loop :: Functor f => (Cofree f a -> Cofree f a) -> Cofree f a -> Cofree f a
 loop go = aux
@@ -151,46 +151,55 @@ wildcardToName = loop go
     go (match -> Just (r, IsWildcard)) = fastMake r (NameDecl "_")
     go it = it
 
-unLetRec :: Contains Range xs => LIGO xs -> LIGO xs
-unLetRec = loop go
+unLetRec
+  :: ( Contains Range xs
+     , Eq (Product xs)
+     )
+  => LIGO xs -> ScopeM (LIGO xs)
+unLetRec = loopM go
   where
     go = \case
       (match -> Just (r, expr)) -> do
         case expr of
           Let (match -> Just (_, Seq decls)) body -> do
-            foldr joinWithLet body decls
-          _ -> fastMake r expr
+            foldrM joinWithLet body decls
+          _ -> pure $ fastMake r expr
 
       -- TODO: somehow append Unit to the end
       (match -> Just (r, RawContract decls)) ->
         case unconsFromEnd decls of
-          Nothing -> fastMake r (RawContract [])
-          Just (initDecls, lastDecl) -> foldr joinWithLet lastDecl initDecls
+          Nothing -> pure $ fastMake r (RawContract [])
+          Just (initDecls, lastDecl) -> foldrM joinWithLet lastDecl initDecls
 
-      it -> it
+      it -> pure it
 
 -- | Turn all 'Seq'uences of nodes into a tree of 'Let's, so that each
 -- subsequent node turned out to be in the scope of the previous one.
-unSeq :: Contains Range xs => LIGO xs -> LIGO xs
-unSeq = loop go
+unSeq
+  :: ( Contains Range xs
+     , Eq (Product xs)
+     )
+  => LIGO xs -> ScopeM (LIGO xs)
+unSeq = loopM go
   where
     go = \case
       (match -> Just (r, Seq decls)) -> do
         case unconsFromEnd decls of
-          Nothing -> fastMake r (Seq [])
-          Just (initDecls, lastDecl) -> foldr joinWithLet lastDecl initDecls
+          Nothing -> pure $ fastMake r (Seq [])
+          Just (initDecls, lastDecl) -> foldrM joinWithLet lastDecl initDecls
 
-      it -> it
+      it -> pure it
 
 -- | Combine two tree nodes with 'Let', so that the second node turns out to be
 -- in the scope of the first node.
 joinWithLet
   :: ( Contains Range xs
+     , Eq (Product xs)
      , Apply Functor fs
      , Element Expr fs
      )
-  => Tree' fs xs -> Tree' fs xs -> Tree' fs xs
-joinWithLet decl body = fastMake r' (Let decl body)
+  => Tree' fs xs -> Tree' fs xs -> ScopeM (Tree' fs xs)
+joinWithLet decl body = makeIO r' (Let decl body)
   where
     r' = putElem (getRange decl `merged` getRange body)
         $ extract body
@@ -225,32 +234,32 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
         let l' :< decl' = decl
         let r'' = putElem (getRange body) $ putElem True $ modElem (imm <>) r'
         let l'' = putElem (getRange decl) $ putElem True l'
-        pure (fastMake r (Let (l'' :< decl') (r'' :< body')))
+        makeIO r (Let (l'' :< decl') (r'' :< body'))
 
       (match -> Just (r, Lambda args ty body)) -> do
         imms <- foldMapM getImmediateDecls args
         let r' :< body' = body
         let r'' = putElem True $ modElem (imms <>) r'
-        pure (fastMake r (Lambda args ty (r'' :< body')))
+        makeIO r (Lambda args ty (r'' :< body'))
 
       (match -> Just (r, Alt pat body)) -> do
         imms <- getImmediateDecls pat
         let r' :< body' = body
         let r'' = putElem True $ modElem (imms <>) r'
-        pure (fastMake r (Alt pat (r'' :< body')))
+        makeIO r (Alt pat (r'' :< body'))
 
       (match -> Just (r, BFunction True n params ty b)) -> do
         imms <- foldMapM getImmediateDecls params
         fDecl <- functionScopedDecl (getElem r) n params ty (Just b)
         let r' = putElem True $ modElem ((fDecl : imms) <>) r
-        pure (fastMake r' (BFunction True n params ty b))
+        makeIO r' (BFunction True n params ty b)
 
       (match -> Just (r, BFunction False n params ty b)) -> do
         imms <- foldMapM getImmediateDecls params
         fDecl <- functionScopedDecl (getElem r) n params ty (Just b)
         let r' = putElem True (modElem (fDecl :) r)
         let b' = b & _extract %~ (putElem True . modElem (imms <>))
-        pure (fastMake r' (BFunction False n params ty b'))
+        makeIO r' (BFunction False n params ty b')
 
       node@(match -> Just (r, BTypeDecl t tyVars b)) -> do
         imms <- getImmediateDecls node
@@ -261,7 +270,7 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
         let r' = putElem True $ modElem (imms' <>) r
         let tyVars' = tyVars & _Just . _extract %~ (putElem True . modElem (varDecls <>))
         let b' = b & _extract %~ (putElem True . modElem (varDecls <>))
-        pure (fastMake r' (BTypeDecl t tyVars' b'))
+        makeIO r' (BTypeDecl t tyVars' b')
 
       (match -> Just (r, node@BVar{})) -> markAsScope r node
       (match -> Just (r, node@BConst{})) -> markAsScope r node
@@ -271,9 +280,9 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
       it -> pure it
 
     markAsScope range node = do
-      imms <- getImmediateDecls (fastMake range node)
+      imms <- getImmediateDecls =<< makeIO range node
       let range' = putElem True (modElem (imms <>) range)
-      pure (fastMake range' node)
+      makeIO range' node
 
 functionScopedDecl
   :: ( PPableLIGO info
