@@ -135,6 +135,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_RUN
   | C_TEST_EVAL
   | C_TEST_COMPILE_CONTRACT
+  | C_TEST_DECOMPILE
   | C_TEST_TO_CONTRACT
   | C_TEST_TO_ENTRYPOINT
   | C_TEST_TO_TYPED_ADDRESS
