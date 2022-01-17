@@ -1076,11 +1076,19 @@ let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ f
   let () = assert_eq_1 ~raise ~loc dir (t_string ()) in
   (t_option (t_string ()))
 
-let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun _ _ ->
+let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun lambda expr ->
+  let (arg, _) = trace_option ~raise (expected_function loc lambda) @@ get_t_function lambda in
+  let () = assert_eq_1 ~raise ~loc arg expr in
   (t_michelson_code ())
 
 let test_eval ~raise loc = typer_1 ~raise loc "TEST_EVAL" @@ fun _ ->
   (t_michelson_code ())
+
+let test_decompile ~raise loc = typer_1_opt ~raise loc "TEST_DECOMPILE" @@ fun mich tv_opt ->
+  let () = trace_option ~raise (expected_michelson_code loc mich) @@ get_t_michelson_code mich in
+  match tv_opt with
+  | None -> raise.raise (not_annotated loc)
+  | Some t -> t
 
 let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
   let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
@@ -1317,6 +1325,7 @@ let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_TEST_RUN -> test_run ~raise loc ;
   | C_TEST_EVAL -> test_eval ~raise loc ;
   | C_TEST_COMPILE_CONTRACT -> test_compile_contract ~raise loc ;
+  | C_TEST_DECOMPILE -> test_decompile ~raise loc ;
   | C_TEST_TO_CONTRACT -> test_to_contract ~raise loc ;
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
   | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;

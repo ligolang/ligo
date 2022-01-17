@@ -574,3 +574,47 @@ let%expect_test _ =
 
     The source address is not an implicit account
     KT1EaZdMJaW3jgoYLwKJSjuUFA6qoKCPjiie |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 20-45:
+      1 | const foo = (x: {field: int}): {field: int} => {return x};
+      2 | const bar = Test.run(foo, {property: "toto"});
+      3 |
+
+    These types are not matching:
+     - record[field -> int]
+     - record[property -> string] |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 20-33:
+      1 | const foo = (x:  {b:int}):  {b:int} => {return x};
+      2 | const bar = Test.run(foo, "toto");
+
+    These types are not matching:
+     - record[b -> int]
+     - string |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 20-42:
+      1 | const foo = (x: int): int => {return x};
+      2 | const bar = Test.run(foo, {field: "toto"});
+
+    These types are not matching:
+     - int
+     - record[field -> string] |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 26-27:
+      2 |   let x = Test.eval 4n in
+      3 |   let y = (Test.decompile x : string) in
+      4 |   ()
+
+    This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]

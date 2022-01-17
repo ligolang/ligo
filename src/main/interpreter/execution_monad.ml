@@ -43,6 +43,7 @@ module Command = struct
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Decompile : LT.mcode * LT.mcode * Ast_aggregated.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_aggregated.type_expression -> LT.value t
     | Check_storage_address : Location.t * Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression -> unit t
     | Contract_exists : LT.value -> bool t
@@ -250,6 +251,10 @@ module Command = struct
       let expr = clean_locations compiled_expr in
       let contract = Michelson.contract param_ty storage_ty expr [] in
       (LT.V_Michelson (Contract contract), ctxt)
+    | Decompile (code, code_ty, ast_ty) ->
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps code_ty code in
+      let ret = Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret ast_ty in
+      (ret, ctxt)
     | To_contract (loc, v, entrypoint, _ty_expr) -> (
       match v with
       | LT.V_Ct (LT.C_address address) ->

@@ -197,6 +197,7 @@ module Tree_abstraction = struct
     | "Test.run" -> some_const C_TEST_RUN
     | "Test.eval" -> some_const C_TEST_EVAL
     | "Test.compile_contract" -> some_const C_TEST_COMPILE_CONTRACT
+    | "Test.decompile" -> some_const C_TEST_DECOMPILE
     | "Test.to_contract" -> some_const C_TEST_TO_CONTRACT
     | "Test.nth_bootstrap_typed_address" -> some_const C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
     | "Test.to_entrypoint" -> some_const C_TEST_TO_ENTRYPOINT
@@ -384,6 +385,7 @@ module Tree_abstraction = struct
     | C_TEST_RUN -> "Test.run"
     | C_TEST_EVAL -> "Test.eval"
     | C_TEST_COMPILE_CONTRACT -> "Test.compile_contract"
+    | C_TEST_DECOMPILE -> "Test.decompile"
     | C_TEST_TO_CONTRACT -> "Test.to_contract"
     | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> "Test.nth_bootstrap_typed_address"
     | C_TEST_TO_ENTRYPOINT -> "Test.to_entrypoint"
