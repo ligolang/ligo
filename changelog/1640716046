@@ -1,0 +1,4 @@
+author: Rémi Lesenechal & Exequiel Rivas
+merge_request: '1431'
+title: 'REPL: re-write internal state'
+type: internal

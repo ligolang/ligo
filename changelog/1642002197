@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal
+title: 'testing framework: fix sets comparison'
+type: fixed
+merge_request: '1488'

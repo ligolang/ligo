@@ -1,0 +1,36 @@
+type storage = int;
+
+type parameter = list<int>;
+
+let quarter = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1:
+    case :
+    case 3:
+      output = "Q1";
+      break;
+    case 4:
+    case 5:
+    case 6:
+      output = "Q2";
+      break;
+    case 7:
+    case 8:
+    case 9:
+      output = "Q3";
+    case 10:
+    case 11:
+    case 12:
+      output = "Q4";
+      break;
+    default:
+      output = "Invalid month."
+  };
+  return output;
+}
+
+type return_ = [list<operation>, storage];
+
+let main = ([a, b] : [parameter, storage]) : return_ =>
+  [list([]) as list<operation>, 0]

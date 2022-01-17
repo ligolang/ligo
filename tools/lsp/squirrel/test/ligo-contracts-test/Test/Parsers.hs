@@ -37,6 +37,20 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/modules.mligo"
       , "polymorphism/modules.religo"
       , "remove_unused_module.mligo"
+      , "build/module_scoping_bug.mligo"
+      , "aggregation/bug_alias.mligo"
+      , "aggregation/bug_alias2.mligo"
+      , "aggregation/bug_alias3.mligo"
+      , "aggregation/bug_alias4.mligo"
+      , "aggregation/bug_alias5.mligo"
+      , "aggregation/bug_alias6.mligo"
+      , "aggregation/bug_alias7.mligo"
+      , "aggregation/bug_alias8.mligo"
+      , "aggregation/bug_alias9.mligo"
+      , "aggregation/bug_alias10.mligo"
+      , "aggregation/bug_alias11.mligo"
+      , "aggregation/bug_alias12.mligo"
+      , "aggregation/bug_alias13.mligo"
 
         -- LIGO-204
       , "build/C_test.mligo"
@@ -77,6 +91,9 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/nelist.mligo"
       , "polymorphism/set_monad.mligo"
       , "polymorphism/test.mligo"
+
+        -- LIGO-404
+      , "deep_pattern_matching/pm_test.religo"
       ]
 
 okayIgnoreDirs :: [FilePath]

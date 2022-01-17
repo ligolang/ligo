@@ -1479,3 +1479,21 @@ let y = (n: int): int =>
   let a: int = 7;
   let rec b: int => int = (c: int): int => c;
   z;
+
+let foo = (_: (int, int) => int) => 1;
+
+let list_of_funcs = [x => x, y => y];
+
+let f = ((x, y): (int, int => int)): int => y(x);
+
+let zip: a => b => c = (xs: a) => b: c => 3;
+
+let a = 
+  switch  x {
+  | Nil, ys => 4
+  };
+
+let a = 
+  switch  x {
+  | Nil(foo), U(bar) => 4
+  };

@@ -78,7 +78,7 @@ Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). Th
 
 In this section and the following one we will use a simple smart-contract that is present as example on our webide. We will cover the ligo language and smart-contract development in the following tutorials.
 
-First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is availiable in [Pascaligo](https://gitlab.com/ligolang/ligo/-/raw/dev/example/contracts/increment.ligo?inline=false), [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/example/contracts/increment.mligo?inline=false), [Reasonligo](https://gitlab.com/ligolang/ligo/-/raw/dev/example/contracts/increment.religo?inline=false) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/example/contracts/increment.jsligo?inline=false)
+First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is availiable in [Pascaligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.ligo), [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.mligo), [Reasonligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.religo) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.jsligo)
 
 In the following, we consider that you are using the Cameligo contract, simply change the extension (`.mligo` for cameligo, `.ligo` for pascaligo, `.religo` for reasonligo, `.jsligo`) in case you use another one.
 

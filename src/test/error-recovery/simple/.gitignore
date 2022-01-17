@@ -1,0 +1,6 @@
+*.cst
+*.cst_symbols
+*.tokens
+*.errors
+formatted_*
+recovered/

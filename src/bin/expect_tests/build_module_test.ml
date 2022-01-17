@@ -65,14 +65,16 @@ let%expect_test _ =
   [%expect{|
     { parameter unit ;
       storage int ;
-      code { PUSH int 42 ;
-             PUSH int 1 ;
-             ADD ;
+      code { PUSH int 1 ;
+             PUSH int 42 ;
              SWAP ;
+             DUP ;
+             DUG 2 ;
+             ADD ;
+             DIG 2 ;
              CDR ;
              SWAP ;
-             PUSH int 1 ;
-             DIG 2 ;
+             DUG 2 ;
              ADD ;
              ADD ;
              NIL operation ;
@@ -82,7 +84,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "D.mligo" ] ;
   [%expect {|
     const toto = ADD(E.toto ,
-    C.B.titi)
+    C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main = lambda (#6) return let #8 = #6 in  match #8 with
                                                      | ( p , s ) ->
@@ -92,53 +94,47 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
-let ../../test/contracts/build/A.mligo =
-  let toto = L(1)[@inline] in (toto)[@inline]
-let ../../test/contracts/build/B.mligo =
-  let A = ../../test/contracts/build/A.mligo[@inline] in
-  let toto = L(32)[@inline] in
-  let titi = ADD((A).(0) , L(42))[@inline] in
-  let f =
-    fun #1 ->
-    (let #6 = #1 in
-     let (#10, #11) = #6 in
-     let #2 = #10 in
-     let x = #11 in
-     let x = ADD(ADD(x , (A).(0)) , titi) in PAIR(LIST_EMPTY() , x))[@inline] in
-  (A, f, titi, toto)[@inline]
-let ../../test/contracts/build/F.mligo =
-  let toto = L(44)[@inline] in (toto)[@inline]
-let ../../test/contracts/build/G.mligo =
-  let toto = L(43)[@inline] in (toto)[@inline]
-let ../../test/contracts/build/C.mligo =
-  let A = ../../test/contracts/build/A.mligo[@inline] in
-  let B = ../../test/contracts/build/B.mligo[@inline] in
-  let tata = ADD((A).(0) , (B).(2))[@inline] in
-  let foo = ((B).(1))@(PAIR(L(unit) , L(3)))[@inline] in (A, B, foo, tata)[@inline]
-let ../../test/contracts/build/E.mligo =
-  let F = ../../test/contracts/build/F.mligo[@inline] in
-  let G = ../../test/contracts/build/G.mligo[@inline] in
-  let toto = L(10)[@inline] in
-  let foo = L("bar")[@inline] in (F, G, foo, toto)[@inline]
-let C = ../../test/contracts/build/C.mligo[@inline]
-let E = ../../test/contracts/build/E.mligo[@inline]
-let toto = ADD((E).(3) , ((C).(1)).(2))
-let fb = (L(1), toto, L(2), L(3))
+let #../../test/contracts/build/A.mligo#toto#10 = L(1) in
+let #../../test/contracts/build/B.mligo#toto#11 = L(32) in
+let #../../test/contracts/build/B.mligo#titi#12 =
+  ADD(#../../test/contracts/build/A.mligo#toto#10 , L(42)) in
+let #../../test/contracts/build/B.mligo#f#13 =
+  fun #1 ->
+  (let #6 = #1 in
+   let (#20, #21) = #6 in
+   let #2 = #20 in
+   let x = #21 in
+   let x =
+     ADD(ADD(x , #../../test/contracts/build/A.mligo#toto#10) ,
+         #../../test/contracts/build/B.mligo#titi#12) in
+   PAIR(LIST_EMPTY() , x)) in
+let #../../test/contracts/build/F.mligo#toto#14 = L(44) in
+let #../../test/contracts/build/G.mligo#toto#15 = L(43) in
+let #../../test/contracts/build/C.mligo#tata#16 =
+  ADD(#../../test/contracts/build/A.mligo#toto#10 ,
+      #../../test/contracts/build/B.mligo#titi#12) in
+let #../../test/contracts/build/C.mligo#foo#17 =
+  (#../../test/contracts/build/B.mligo#f#13)@(PAIR(L(unit) , L(3))) in
+let #../../test/contracts/build/E.mligo#toto#18 = L(10) in
+let #../../test/contracts/build/E.mligo#foo#19 = L("bar") in
+let toto =
+  ADD(#../../test/contracts/build/E.mligo#toto#18 ,
+      #../../test/contracts/build/A.mligo#toto#10) in
+let fb = (L(1), toto, L(2), L(3)) in
 let main =
   fun #4 ->
   (let #8 = #4 in
-   let (#12, #13) = #8 in
-   let p = #12 in
-   let s = #13 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) |}]
+   let (#22, #23) = #8 in
+   let p = #22 in
+   let s = #23 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
+L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "D.mligo" ] ;
   [%expect{|
     { parameter int ;
       storage int ;
-      code { PUSH int 42 ;
-             PUSH int 1 ;
-             ADD ;
+      code { PUSH int 1 ;
              PUSH int 10 ;
              ADD ;
              SWAP ;
@@ -201,3 +197,12 @@ let%expect_test _ =
         |   |-- 1 -- ../../test/contracts/build/Xlist.mligo
         |   `-- 2 -- ../../test/contracts/build/Xset.mligo
         `-- 1 -- ../../test/contracts/build/Xlist.mligo |}]
+
+let%expect_test _ =
+  run_ligo_bad ["run"; "interpret"; "--init-file"; contract "module_scoping_bug.mligo" ; "x"; ] ;
+  [%expect {|
+    File "../../test/contracts/build/module_scoping_bug.mligo", line 24, characters 10-13:
+     23 |
+     24 | let x = B.A.a
+
+    Module "A" not found. |}]

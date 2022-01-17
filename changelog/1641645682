@@ -1,0 +1,6 @@
+---
+  title: "Fixed regression in standalone preprocessor, lexers and parsers introduced when porting the code base from Stdlib to Core."
+  merge_request: "1484"
+  author: "Christian Rinderknecht"
+  type: "fixed"
+

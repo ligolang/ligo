@@ -1,7 +1,7 @@
 #import "C.mligo" "C"
 #import "E.mligo" "E"
 
-let toto = E.toto + C.B.titi
+let toto = E.toto + C.B.A.toto
 
 let fb : E.F.foobar = {
 	titi = 1;

@@ -384,11 +384,11 @@ let neg ~raise loc = typer_1 ~raise loc "NEG" @@ fun t ->
               ]
               [t]
 
-let unopt ~raise loc = typer_1 ~raise loc "ASSERT" @@ fun a ->
+let unopt ~raise loc = typer_1 ~raise loc "UNOPT" @@ fun a ->
   let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
   a
 
-let unopt_with_error ~raise loc = typer_2 ~raise loc "ASSERT" @@ fun a b ->
+let unopt_with_error ~raise loc = typer_2 ~raise loc "UNOPT_WITH_ERROR" @@ fun a b ->
   let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
   let () = trace_option ~raise (expected_option loc a) @@ assert_t_string b in
   a
