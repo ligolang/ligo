@@ -1084,6 +1084,12 @@ let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun lambda expr ->
 let test_eval ~raise loc = typer_1 ~raise loc "TEST_EVAL" @@ fun _ ->
   (t_michelson_code ())
 
+let test_decompile ~raise loc = typer_1_opt ~raise loc "TEST_DECOMPILE" @@ fun mich tv_opt ->
+  let () = trace_option ~raise (expected_michelson_code loc mich) @@ get_t_michelson_code mich in
+  match tv_opt with
+  | None -> raise.raise (not_annotated loc)
+  | Some t -> t
+
 let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
   let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
                        get_t_typed_address t in
@@ -1319,6 +1325,7 @@ let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_TEST_RUN -> test_run ~raise loc ;
   | C_TEST_EVAL -> test_eval ~raise loc ;
   | C_TEST_COMPILE_CONTRACT -> test_compile_contract ~raise loc ;
+  | C_TEST_DECOMPILE -> test_decompile ~raise loc ;
   | C_TEST_TO_CONTRACT -> test_to_contract ~raise loc ;
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
   | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
