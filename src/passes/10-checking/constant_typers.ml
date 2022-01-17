@@ -1076,7 +1076,9 @@ let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ f
   let () = assert_eq_1 ~raise ~loc dir (t_string ()) in
   (t_option (t_string ()))
 
-let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun _ _ ->
+let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun lambda expr ->
+  let (arg, _) = trace_option ~raise (expected_function loc lambda) @@ get_t_function lambda in
+  let () = assert_eq_1 ~raise ~loc arg expr in
   (t_michelson_code ())
 
 let test_eval ~raise loc = typer_1 ~raise loc "TEST_EVAL" @@ fun _ ->
