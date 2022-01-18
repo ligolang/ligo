@@ -5,8 +5,6 @@ open Simple_utils.Trace
 
 let get_t_function ~raise e =
   trace_option ~raise not_a_function @@ Mini_c.get_t_function e
-let get_function ~raise e =
-  trace_option ~raise not_a_function @@ Mini_c.get_function e
 let get_function_eta ~raise e =
   trace_option ~raise not_a_function @@ Mini_c.get_function_eta e
 
@@ -274,20 +272,6 @@ let beta ~raise:_ : bool ref -> expression -> expression =
     then (changed := true;
           List.nth_exn es i)
     else e
-
-  (** This case shows up in the compilation of modules:
-      (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
-  | E_proj ({ content = E_let_in (e1, inline, ((x, a), e2));type_expression = _; location=_ } as e_let_in, i, n) ->
-    changed := true;
-    { e_let_in with content = E_let_in (e1, inline, ((x, a), ({ e with content = E_proj (e2, i, n) }))) }
-
-  (** This case shows up in the compilation of modules:
-      (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
-  | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3)) ->
-    let y' = Location.wrap (Var.fresh_like (Location.unwrap y)) in
-    let e2 = Subst.replace e2 y y' in
-    changed := true;
-    {e with content = E_let_in (e1, inline2, ((y', b), {e with content = E_let_in (e2, inline1, ((x, a), e3))}))}
 
   (** This case shows up in the compilation of modules:
       (let x = e1 in e2)@e3 ↦ let x = e1 in e2@e3  (only if e2 and e3 are pure??) *)
