@@ -5,8 +5,8 @@ module AST.Capabilities.Format
   , formatAt
   ) where
 
-import Control.Exception.Safe (catchAny)
 import Data.Text (Text)
+import UnliftIO.Exception (catchAny)
 
 import Language.LSP.Types qualified as J
 

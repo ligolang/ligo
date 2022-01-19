@@ -8,8 +8,6 @@ module AST.Scope.Common
   , FindFilepath (..)
   , HasScopeForest (..)
   , Level (..)
-  , ScopeError (..)
-  , ScopeM
   , Info'
   , ScopeForest (..)
   , ScopeInfo
@@ -49,16 +47,14 @@ import Algebra.Graph.Export qualified as G (export, literal, render)
 import Algebra.Graph.ToGraph (ToGraph)
 import Algebra.Graph.ToGraph qualified as G
 import Control.Arrow ((&&&))
-import Control.Exception.Safe
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&))
-import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
-import Control.Monad.Trans.Except
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
+import Data.Functor.Identity (runIdentity)
 import Data.List (sortOn)
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -67,6 +63,7 @@ import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text, pack)
 import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
+import UnliftIO.Exception (Exception, throwIO)
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -76,7 +73,7 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
-  ( Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
+  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
   , TypeVariableName (..), withNestedLIGO
   )
 import Cli.Types
@@ -148,22 +145,6 @@ ofLevel level decl = case (level, _sdSpec decl) of
   (TypeLevel, TypeSpec{}) -> True
   _ -> False
 
-data ScopeError =
-  TreeDoesNotContainName
-    Doc  -- ^ pprinted tree (used for simplifying purposes for not stacking
-         -- type parameters for `ScopeM` which brings plethora of confusion)
-    Range -- ^ location where the error has occurred
-    Text -- ^ variable name
-  deriving Show via PP ScopeError
-
-instance Pretty ScopeError where
-  pp (TreeDoesNotContainName tree range name) =
-    "Given tree does not contain " <> pp name <> ": " <> tree <> " (" <> pp range <> ")"
-
-instance Exception ScopeError
-
-type ScopeM = ExceptT ScopeError (Reader Lang)
-
 type Info' = Scope ': Maybe Level ': ParsedInfo
 
 data ScopeForest = ScopeForest
@@ -210,13 +191,13 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       -- These two are likely different things, so we shouldn't merge them.
       | not (lr `intersects` rr) = [l, r]
       -- Merge the scopes if they have different decls within the same range.
-      | lr == rr  = [make (mergeDecls ldecls rdecls :> rr :> Nil, descend ldeepen rdeepen)]
+      | lr == rr  = [fastMake (mergeDecls ldecls rdecls :> rr :> Nil) (descend ldeepen rdeepen)]
       -- The left scope is more local than the right hence try to find where the
       -- right subscope is more local or equal to the left one.
-      | leq lr rr = [make (mergeDecls ldecls rdecls :> rr :> Nil, descend [l] rdeepen)]
+      | leq lr rr = [fastMake (mergeDecls ldecls rdecls :> rr :> Nil) (descend [l] rdeepen)]
       -- The right scope is more local than the left hence try to find where the
       -- left subscope is more local or equal to the right one.
-      | otherwise = [make (mergeDecls ldecls rdecls :> lr :> Nil, descend ldeepen [r])]
+      | otherwise = [fastMake (mergeDecls ldecls rdecls :> lr :> Nil) (descend ldeepen [r])]
 
     zipWithMissing, zipWithMatched, zipWithStrategy :: Ord c => (a -> c) -> (a -> a -> b) -> (a -> b) -> [a] -> [a] -> [b]
     zipWithMissing _ _ g [] ys = g <$> ys
@@ -301,7 +282,10 @@ spine r (only -> (i, trees))
   | leq r (getRange i) = foldMap (spine r) trees `snoc` getElem @(Set DeclRef) i
   | otherwise = mempty
 
-addLocalScopes :: MonadCatch m => SomeLIGO ParsedInfo -> ScopeForest -> m (SomeLIGO Info')
+addLocalScopes
+  :: SomeLIGO ParsedInfo
+  -> ScopeForest
+  -> SomeLIGO Info'
 addLocalScopes tree forest =
   let
     getPreRange xs = let PreprocessedRange r = getElem xs in r
@@ -310,32 +294,32 @@ addLocalScopes tree forest =
       let env = envAtPoint (getPreRange i) forest
       return ((env :> Nothing :> i) :< fs')
   in
-  withNestedLIGO tree $
+  runIdentity $ withNestedLIGO tree $
     descent @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
-    [ Descent \(i, Name t) -> do
+    [ Descent \i (Name t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Name t)
 
-    , Descent \(i, NameDecl t) -> do
+    , Descent \i (NameDecl t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, NameDecl t)
 
-    , Descent \(i, Ctor t) -> do
+    , Descent \i (Ctor t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Ctor t)
 
-    , Descent \(i, TypeName t) -> do
+    , Descent \i (TypeName t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeName t)
 
-    , Descent \(i, TypeVariableName t) -> do
+    , Descent \i (TypeVariableName t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeVariableName t)
     ]
 
 addScopes
   :: forall impl m
-   . (HasScopeForest impl m, MonadUnliftIO m)
+   . HasScopeForest impl m
   => ProgressCallback m
   -> Includes ParsedContractInfo
   -> m (Includes ContractInfo')
@@ -349,10 +333,10 @@ addScopes reportProgress graph = do
     addScope (_getContract -> sf) = do
       let src = _cFile sf
       let fp = srcPath src
-      pc <- maybe (throwM $ ContractNotFoundException fp graph) pure (lookupContract fp graph)
-      FindContract src
-        <$> addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe)
-        <*> pure (_cMsgs sf)
+      pc <- maybe (throwIO $ ContractNotFoundException fp graph) pure (lookupContract fp graph)
+      pure $ FindContract src
+        (addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe))
+        (_cMsgs sf)
   Includes <$> traverseAMConcurrently addScope (getIncludes forestGraph)
   where
     nubRef sd = sd
