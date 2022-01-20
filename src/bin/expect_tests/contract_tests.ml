@@ -2297,3 +2297,15 @@ let%expect_test _ =
              IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
              NIL operation ;
              PAIR } } |}]
+
+(* Test compiling parameter in a file which uses test primitives *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "parameter" ; contract "increment_with_test.mligo" ; "z.1" ] ;
+  [%expect{|
+    (Left (Right 32)) |}]
+
+(* Test compiling storage in a file which uses test primitives *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ; contract "increment_with_test.mligo" ; "z.0 + 10" ] ;
+  [%expect{|
+    42 |}]
