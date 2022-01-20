@@ -33,15 +33,18 @@ let apply_to_entrypoint_contract ~raise : Ast_typed.program -> string -> Ast_agg
   let var_ep = Ast_typed.(e_a_variable v ty) in
   compile_expression_in_context ~raise var_ep aggregated_prg
 
-let apply_to_entrypoint_view ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
-    fun prg entrypoint ->
+let apply_to_entrypoint_view ~raise : Ast_typed.program -> string list -> Ast_aggregated.expression =
+    fun prg views ->
   let aggregated_prg = compile_program ~raise prg in
-  let v = Location.wrap (Var.of_name entrypoint) in
-  let Self_ast_typed.Helpers.{arg=a_ty ; storage=s_ty ; return=r_ty}, _ =
-    trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_view_type entrypoint prg in
-  let ty = t_function (t_pair a_ty s_ty) r_ty () in
-  let var_ep = Ast_typed.(e_a_variable v ty) in
-  compile_expression_in_context ~raise var_ep aggregated_prg
+  let aux : int -> string -> (label * expression) = fun i view_name ->
+    let v = Location.wrap (Var.of_name view_name) in
+    let Self_ast_typed.Helpers.{arg=a_ty ; storage=s_ty ; return=r_ty}, _ =
+      trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_view_type view_name prg in
+    let ty = t_function (t_pair a_ty s_ty) r_ty () in
+    Ast_typed.Label (string_of_int i), Ast_typed.(e_a_variable v ty)
+  in
+  let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views) in
+  compile_expression_in_context ~raise tuple_view aggregated_prg
 
 let apply_to_entrypoint ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->

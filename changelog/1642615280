@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal ; Exequiel Rivas
+merge_request: '1501'
+title: 'Compilation: dramatically reduce compilation time when using views'
+type: performance

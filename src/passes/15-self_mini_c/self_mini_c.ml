@@ -3,10 +3,70 @@ open Errors
 open Mini_c
 open Simple_utils.Trace
 
+let eta_expand : expression -> type_expression -> type_expression -> anon_function =
+  fun e in_ty out_ty ->
+    let binder = Location.wrap @@ Var.fresh () in
+    let var = e_var binder in_ty in
+    let app = e_application e out_ty var in
+    { binder = binder ; body = app }
 let get_t_function ~raise e =
   trace_option ~raise not_a_function @@ Mini_c.get_t_function e
-let get_function_eta ~raise e =
-  trace_option ~raise not_a_function @@ Mini_c.get_function_eta e
+
+let get_function_or_eta_expand ~raise e =
+  let in_ty, out_ty = match e.type_expression.type_content with
+    | T_function t -> t
+    | _ -> raise.raise (corner_case "contract do not have the type of a function")
+  in
+  match e.content with
+  | E_closure f -> f
+  | _ ->
+    eta_expand e in_ty out_ty
+
+let get_function_or_eta_expand_views ~raise : expression -> anon_function * (type_expression * type_expression) list  = fun e ->
+  (*
+    < let .. = .. in > (view1, view2, view3)
+
+    |->
+
+    fun _dummy ->
+      let body' = ( < let .. = .. in > (view1, view2, view3) ) in
+      (body'.0 , body'.1 , body'.3)
+  *)
+  let err =
+    corner_case "view/views do not have the type of a function or a tuple of function"
+      (* Format.asprintf "view/views do not have the type of a function or a tuple of function : \n%a\n"
+        Mini_c.PP.type_expression ty
+    ) *)
+  in
+  match e.type_expression.type_content with
+  | T_function (in_ty,out_ty) -> (
+    (* if only one view *)
+    match e.content with
+    | E_closure f -> f , [(in_ty,out_ty)]
+    | _ -> eta_expand e in_ty out_ty , [(in_ty,out_ty)]
+  )
+  | T_tuple lst ->
+    (* if N views *)
+    let aux : _ * type_expression-> (type_expression * type_expression) =
+      fun (_,ty) -> trace_option ~raise err @@ Mini_c.get_t_function ty
+    in
+    let view_tys = List.map ~f:aux lst in
+    let arg = Location.wrap @@ Var.fresh ~name:"_dummy" () in
+    (* let arg_ty = Mini_c.t_tuple @@ List.map ~f:(fun (in_ty,_) -> (None, in_ty)) view_tys in *)
+    let v_prg = Location.wrap @@ Var.fresh () in
+    let aux : int -> (type_expression * type_expression) -> expression =
+      fun i (in_ty,out_ty) ->
+        (* let var = e_proj (e_var arg arg_ty) in_ty i i in *)
+        (* e_application (e_var v_prg e.type_expression) out_ty var *)
+        e_proj (e_var v_prg e.type_expression) (t_function in_ty out_ty) i i
+    in
+    let app_tup = Mini_c.e_tuple (List.mapi ~f:aux view_tys) (Mini_c.t_tuple (List.map ~f:(fun x -> (None,snd x)) view_tys)) in
+    let body =
+      let inline = false in
+      Mini_c.e_let_in v_prg e.type_expression inline e app_tup
+    in
+    { binder = arg ; body }, view_tys
+  | _ -> raise.raise (corner_case "heyho")
 
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression = Helpers.map_expression
@@ -272,6 +332,21 @@ let beta ~raise:_ : bool ref -> expression -> expression =
     then (changed := true;
           List.nth_exn es i)
     else e
+
+  (** This case shows up in the compilation of modules:
+      (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
+  | E_proj ({ content = E_let_in (e1, inline, ((x, a), e2));type_expression = _; location=_ } as e_let_in, i, n) ->
+    changed := true;
+    { e_let_in with content = E_let_in (e1, inline, ((x, a), ({ e with content = E_proj (e2, i, n) }))) ;
+                    type_expression = e.type_expression }
+
+  (** This case shows up in the compilation of modules:
+      (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
+  | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3)) ->
+    let y' = Location.wrap (Var.fresh_like (Location.unwrap y)) in
+    let e2 = Subst.replace e2 y y' in
+    changed := true;
+    {e with content = E_let_in (e1, inline2, ((y', b), {e with content = E_let_in (e2, inline1, ((x, a), e3))}))}
 
   (** This case shows up in the compilation of modules:
       (let x = e1 in e2)@e3 ↦ let x = e1 in e2@e3  (only if e2 and e3 are pure??) *)
