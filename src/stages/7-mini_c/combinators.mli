@@ -31,11 +31,11 @@ val get_list : value -> value list option
 val get_set : value -> value list option
 val get_function_with_ty : expression -> ( anon_function * ( type_expression * type_expression) ) option
 val get_function : expression -> anon_function option
-val get_function_eta : expression -> anon_function option
 val get_t_function : type_expression -> ( type_expression * type_expression ) option
 val get_t_option : type_expression -> type_expression option
 val get_pair : value -> ( value * value ) option
 val get_t_pair : type_expression -> ( type_expression * type_expression ) option
+val get_t_tuple : type_expression -> ( type_expression list ) option
 val get_t_or : type_expression -> ( type_expression * type_expression ) option
 val get_t_map : type_expression -> ( type_expression * type_expression ) option
 val get_t_big_map : type_expression -> ( type_expression * type_expression ) option
@@ -72,7 +72,8 @@ val e_int : Expression.t' -> Expression.t
 val e_unit    : ?loc:Location.t -> unit -> Expression.t
 val e_var_int : ?loc:Location.t -> expression_variable -> Expression.t
 val e_let_in  : ?loc:Location.t -> expression_variable -> type_expression -> inline -> Expression.t -> Expression.t -> Expression.t
-
+val e_proj    : ?loc:Location.t -> expression -> type_expression -> int -> int -> expression
+val e_tuple   : ?loc:Location.t -> expression list -> type_expression -> expression
 (*
 val ez_e_return : Expression.t -> Expression.t
 *)

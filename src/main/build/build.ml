@@ -173,21 +173,31 @@ let build_views ~raise ~add_warning :
         (* detects whether a declared view (passed with --views command line option) overwrites an annotated view ([@view] let ..)*)
         let () = List.iter annotated_views
           ~f:(fun (x,loc) ->
-            if not (List.mem declared_views x ~equal:String.equal) then
-              add_warning (`Main_view_ignored loc)
+            if not (List.mem declared_views x ~equal:String.equal) then add_warning (`Main_view_ignored loc)
           )
         in
         declared_views
       )
     in
-    let f view_name =
-      let _, contract  = build_typed ~raise ~add_warning:(fun _ -> ()) ~options syntax (Ligo_compile.Of_core.View (main_name,view_name)) source_file in
-      let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise contract view_name in
-      let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-      let michelson  = Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c in
-      (view_name, michelson)
-    in
-    List.map ~f views
+    match views with
+    | [] -> []
+    | _ ->
+    let _, contract  = build_typed ~raise ~add_warning:(fun _ -> ()) ~options syntax (Ligo_compile.Of_core.View (views,main_name)) source_file in
+    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise contract views in
+    let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+    let mini_c = Self_mini_c.all_expression ~raise mini_c in
+    let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
+                       Mini_c.get_t_tuple mini_c.type_expression in
+    let aux i view =
+      let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
+                     List.nth mini_c_tys i in
+      let idx = Mini_c.e_proj mini_c idx_ty i (List.length views) in
+      let idx = Self_mini_c.all_expression ~raise idx in
+      (view, idx) in
+    let views = List.mapi ~f:aux views in
+    let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
+    let michelsons = List.map ~f:aux views in
+    michelsons
 
 (* build_context builds a context to be used later for evaluation *)
 let build_context ~raise ~add_warning :

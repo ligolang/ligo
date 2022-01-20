@@ -95,16 +95,6 @@ let get_function (e : expression) =
   | E_closure f -> Some f
   | _ -> None
 
-let get_function_eta (e : expression) =
-  let in_ty, out_ty = match e.type_expression.type_content with
-    | T_function t -> t
-    | _ -> failwith "not function" in
-  match (e.content) with
-  | E_closure f -> Some f
-  | _ ->
-    let binder = Location.wrap @@ Var.fresh () in
-    Some { binder = binder ; body = { content = E_application (e, { content = E_variable binder ; type_expression = in_ty ; location = Location.generated }) ; type_expression = out_ty ; location = Location.generated } }
-
 let get_t_function tv = match tv.type_content with
   | T_function ty -> Some ty
   | _ -> None
@@ -119,6 +109,10 @@ let get_pair (v:value) = match v with
 
 let get_t_pair (t:type_expression) = match t.type_content with
   | T_tuple [(_, a); (_, b)] -> Some (a, b)
+  | _ -> None
+
+let get_t_tuple (t:type_expression) = match t.type_content with
+  | T_tuple l -> Some (List.map ~f:snd l)
   | _ -> None
 
 let get_t_or (t:type_expression) = match t.type_content with
@@ -191,6 +185,8 @@ let t_function ?loc x y : type_expression = Expression.make_t ?loc @@ T_function
 let t_pair     ?loc x y : type_expression = Expression.make_t ?loc @@ T_tuple [x; y]
 let t_union    ?loc x y : type_expression = Expression.make_t ?loc @@ T_or ( x , y )
 let t_tuple ?loc xs : type_expression = Expression.make_t ?loc @@ T_tuple xs
+let e_proj ?loc exp ty index field_count : expression = Expression.make ?loc (E_proj (exp,index,field_count)) ty
+let e_tuple ?loc xs ty : expression = Expression.make ?loc (E_tuple xs) ty
 
 let e_int  ?loc expr    : expression = Expression.make_tpl ?loc (expr, t_int ())
 let e_unit ?loc ()      : expression = Expression.make_tpl ?loc (E_constant { cons_name = C_UNIT ; arguments = [] }, t_unit ())
