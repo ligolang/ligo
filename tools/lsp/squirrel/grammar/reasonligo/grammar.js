@@ -264,7 +264,7 @@ module.exports = grammar({
 
     constr_pattern: $ => prec(1, seq(
       field("constructor", $.ConstrName),
-      optional(field("arg", $._pattern)),
+      optional(field("arg", $._unannotated_pattern)),
     )),
 
     list_pattern: $ => common.brackets(

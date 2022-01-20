@@ -91,9 +91,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/nelist.mligo"
       , "polymorphism/set_monad.mligo"
       , "polymorphism/test.mligo"
-
-        -- LIGO-404
-      , "deep_pattern_matching/pm_test.religo"
       ]
 
 okayIgnoreDirs :: [FilePath]
