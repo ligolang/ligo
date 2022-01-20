@@ -43,20 +43,21 @@ let parameter source_file entry_point expression syntax protocol_version amount 
       fun ~raise ->
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         let options = Compiler_options.make ~protocol_version () in
-        let typed_prg   = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
-        let aggregated_prg  = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
+        let app_typed_prg, typed_prg =
+          Build.build_typed ~raise ~add_warning ~options syntax (Ligo_compile.Of_core.Contract entry_point) source_file in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
+        let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
+        let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract =
-          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise typed_prg entry_point in
-          let mini_c   = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
-          let michelson = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
+          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise app_typed_prg entry_point in
+          let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
+          let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
         (* fails if the given entry point is not a valid contract *)
           Ligo_compile.Of_michelson.build_contract ~raise michelson in
-
-        let typed_param      = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
-        let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_parameter entry_point typed_prg typed_param in
+        let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_parameter entry_point app_typed_prg typed_param in
         let options          = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)
 
@@ -66,18 +67,20 @@ let storage source_file entry_point expression syntax protocol_version amount ba
       fun ~raise ->
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         let options = Compiler_options.make ~protocol_version () in
-        let typed_prg   = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
-        let aggregated_prg  = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
+        let app_typed_prg, typed_prg =
+          Build.build_typed ~raise ~add_warning ~options syntax (Ligo_compile.Of_core.Contract entry_point) source_file in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
+        let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
+        let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract =
-          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise typed_prg entry_point in
-          let mini_c   = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
-          let michelson = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
+          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise app_typed_prg entry_point in
+          let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
+          let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
          (* fails if the given entry point is not a valid contract *)
           Ligo_compile.Of_michelson.build_contract ~raise michelson in
-        let typed_param      = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
-        let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_storage entry_point typed_prg typed_param in
+        let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_storage entry_point app_typed_prg typed_param in
         let options          = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)
