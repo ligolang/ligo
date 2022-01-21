@@ -168,7 +168,7 @@ let compile_contract_ ~raise ~protocol_version subst_lst arg_binder rec_name in_
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp = match rec_name with
     | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = arg_binder } in_ty out_ty
-    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_function in_ty out_ty ()) ; lambda = { result = aggregated_exp';binder = arg_binder } } in
+    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';binder = arg_binder } } in
   let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
   Of_mini_c.compile_contract ~raise ~options mini_c
 
@@ -283,7 +283,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      else
        raise.raise @@ Errors.generic_error loc "Expected either None or Some"
   | V_Construct (ctor, arg) when is_t_sum ty ->
-     let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected sum type but got %a" Ast_aggregated.PP.type_expression ty)) @@ get_t_sum ty in
+     let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected sum type but got %a" Ast_aggregated.PP.type_expression ty)) @@ get_t_sum_opt ty in
      let {associated_type=ty';michelson_annotation=_;decl_pos=_} = LMap.find (Label ctor) map_ty.content in
      let arg = val_to_ast ~raise ~loc arg ty' in
      e_a_constructor ctor arg ty
@@ -295,7 +295,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      let mini_c = trace ~raise Main_errors.main_decompile_michelson @@ Stacking.Decompiler.decompile_value expr_ty expr in
      trace ~raise Main_errors.main_decompile_mini_c @@ Spilling.decompile mini_c ty_exp
   | V_Record map when is_t_record ty ->
-     let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)) @@  get_t_record ty in
+     let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)) @@  get_t_record_opt ty in
      make_ast_record ~raise ~loc map_ty map
   | V_Record _ ->
      raise.raise @@ Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)
@@ -329,8 +329,8 @@ and make_ast_func ~raise ?name env arg body orig =
   let lambda = { result=typed_exp' ; binder=arg} in
   let typed_exp' = match name with
     | None ->
-       let in_ty,out_ty =
-         get_t_function_exn orig.type_expression in
+       let { type1 = in_ty ; type2 = out_ty } =
+         get_t_arrow_exn orig.type_expression in
        e_a_lambda lambda in_ty out_ty
     | Some fun_name ->
        e_a_recursive {fun_name ;

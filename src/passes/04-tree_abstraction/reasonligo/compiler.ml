@@ -151,7 +151,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
     let ((input_type,_,output_type), loc) = r_split func in
     let input_type = self input_type in
     let output_type = self output_type in
-    return @@ t_function ~loc input_type output_type
+    return @@ t_arrow ~loc input_type output_type
   | TPar par ->
     let (par, _) = r_split par in
     let type_expr = par.inside in
@@ -670,7 +670,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
     let expr = match kwd_rec with
       Some reg ->
         let lambda = trace_option ~raise (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
-        let lhs_type = Option.map ~f:(Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
+        let lhs_type = Option.map ~f:(Utils.uncurry t_arrow) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
         let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
         e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None   ->

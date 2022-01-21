@@ -256,7 +256,7 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
         List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
       | Some record_path ->
         let expr = O.e_a_variable v (compile_type ~raise expr.type_expression) in
-        let expr = List.fold_right ~f:(fun (l, t) r -> O.e_a_record_access r l t) ~init:expr record_path in
+        let expr = List.fold_right ~f:(fun (l, t) r -> O.e_a_record_accessor r l t) ~init:expr record_path in
         List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
     )
     | I.E_mod_in { module_binder ; rhs ; let_result } -> (

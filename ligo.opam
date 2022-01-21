@@ -38,6 +38,7 @@ depends: [
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_expect"
+  "ppx_import"
   "ppx_inline_test"
   # work around tezos' failure to constrain
   "ctypes-foreign"

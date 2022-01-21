@@ -315,7 +315,7 @@ and ctor_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_ex
   match ms with
   | mhd::mtl ->
     let matchee_t = type_matchee ~raise eqs in
-    let matchee = O.make_e (O.e_variable mhd) matchee_t in
+    let matchee = O.e_a_variable mhd matchee_t in
     let eq_map = group_equations ~raise eqs in
     let aux_p : O.type_expression option -> O.label * equations -> O.type_expression option * O.matching_content_case  =
       fun body_t (constructor,eq) ->
@@ -458,7 +458,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
     let new_matchees = List.map ~f:(fun (_,((x:O.expression_variable),_)) -> x) lb in
     let body = match_ ~raise ~err_loc ~type_f ~body_t (new_matchees @ ms) eqs' def in
     let cases = O.Match_record { fields; body ; tv = snd product_shape } in
-    let matchee = O.make_e (O.e_variable mhd) matchee_t in
+    let matchee = O.e_a_variable mhd matchee_t in
     O.make_e (O.E_matching { matchee ; cases }) body.type_expression
   )
   | [] -> raise.raise @@ corner_case __LOC__

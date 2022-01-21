@@ -105,7 +105,7 @@ module Substitution = struct
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
       let type_content = s_type_content ~substs type_content in
-      T.{ type_content; location; sugar}
+      { type_content ; location ; sugar }
     and s_literal : (T.literal,_) w = fun ~substs -> function
       | T.Literal_unit ->
         let () = ignore @@ substs in
@@ -215,7 +215,7 @@ module Substitution = struct
     and s_expression : (T.expression,_) w = fun ~(substs:substs) { expression_content; sugar; location } ->
       let expression_content = s_expression_content ~substs expression_content in
       let location = location in
-      T.{ expression_content;sugar; location }
+      { expression_content ; sugar ; location }
 
     and s_declaration : (T.declaration,_) w =
     let return (d : T.declaration) = d in

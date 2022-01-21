@@ -87,7 +87,7 @@ let compress_matching ~raise : expression -> expression =
         let stop e = (false,(true,smap),e) in
         match exp.expression_content with
         | E_matching m -> (
-          let matchee_var = get_variable m.matchee in
+          let matchee_var = get_e_variable_opt m.matchee in
           match m.cases with
           | Match_variant cases -> (
             match matchee_var with

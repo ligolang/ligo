@@ -325,9 +325,9 @@ let internal_error loc msg =
 
 (* todo: refactor handling of recursive functions *)
 let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.matching_content_record) =
-  let record = 
+  let record =
     trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
-    get_t_record tv in
+    get_t_record_opt tv in
   match record.layout with
   (* TODO unify with or simplify other case below? *)
   | L_comb ->
@@ -420,7 +420,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
     let ty' = compile_type ~raise ae.type_expression in
     let ty_variant =
       trace_option ~raise (corner_case ~loc:__LOC__ "not a record") @@
-      get_t_sum (get_type_expression ae) in
+      get_t_sum_opt (get_type ae) in
     let path = Layout.constructor_to_lr ~raise ~layout:ty_variant.layout ty' ty_variant.content constructor in
     let aux = fun pred (ty, lr) ->
       let c = match lr with
@@ -434,14 +434,14 @@ and compile_expression ~raise (ae:AST.expression) : expression =
     expr
   )
   | E_record m -> (
-      let record_t = trace_option ~raise (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record ae.type_expression) in
+      let record_t = trace_option ~raise (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record_opt ae.type_expression) in
       (* Note: now returns E_tuple, not pairs, for combs *)
       Layout.record_to_pairs ~raise self return record_t m
     )
   | E_record_accessor {record; path} -> (
-    let ty' = compile_type ~raise (get_type_expression record) in
+    let ty' = compile_type ~raise (get_type record) in
     let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "not a record") @@
-      get_t_record (get_type_expression record) in
+      get_t_record_opt (get_type record) in
     match record_ty.layout with
     | L_comb ->
       let record_fields = AST.Helpers.kv_list_of_t_record_or_tuple ~layout:record_ty.layout record_ty.content in
@@ -466,10 +466,10 @@ and compile_expression ~raise (ae:AST.expression) : expression =
     (* Compile record update to simple constructors &
        projections. This will be optimized to some degree by eta
        contraction in a later pass. *)
-      let ty = get_type_expression record in
+      let ty = get_type record in
       let record_ty =
         trace_option ~raise (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (ty) in
+        get_t_record_opt (ty) in
       let ty' = compile_type ~raise (ty) in
       match record_ty.layout with
       | L_comb ->
@@ -523,7 +523,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
         let expression_to_iterator_body (f : AST.expression) =
-          let (input , output) = trace_option ~raise (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_function f.type_expression in
+          let { type1 = input ; type2 = output } = trace_option ~raise (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_arrow f.type_expression in
           let f' = self f in
           let input' = compile_type ~raise input in
           let output' = compile_type ~raise output in
@@ -584,9 +584,9 @@ and compile_expression ~raise (ae:AST.expression) : expression =
         )
     )
   | E_lambda l ->
-    let io = trace_option ~raise (corner_case ~loc:__LOC__ "expected function type") @@
-      AST.get_t_function ae.type_expression in
-    compile_lambda ~raise l io
+    let { type1 ; type2 } = trace_option ~raise (corner_case ~loc:__LOC__ "expected function type") @@
+      AST.get_t_arrow ae.type_expression in
+    compile_lambda ~raise l (type1, type2)
   | E_recursive r ->
     compile_recursive ~raise r
   | E_matching {matchee=expr; cases=m} -> (
@@ -644,7 +644,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
             return @@ E_if_bool (expr', t, f)
           | _ -> (
               let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
-                get_t_sum tv in
+                get_t_sum_opt tv in
               let tree = Layout.match_variant_to_tree ~raise ~layout:record_ty.layout ~compile_type:(compile_type ~raise) record_ty.content in
               let rec aux top t =
                 match t with
@@ -686,7 +686,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
         (corner_case ~loc:__LOC__ "Language insert - backend mismatch only provide code insertion in the language you are compiling to")
         (String.equal language backend)
     in
-    let type_anno  = get_type_expression code in
+    let type_anno  = get_type code in
     let type_anno' = compile_type ~raise type_anno in
     let code = trace_option ~raise (corner_case ~loc:__LOC__ "could not get a string") @@ get_a_string code in
     let open Tezos_micheline in
@@ -811,7 +811,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
           return @@ E_if_bool (expr', t, f)
         | _ -> (
             let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
-              get_t_sum tv in
+              get_t_sum_opt tv in
             let tree = Layout.match_variant_to_tree ~raise ~layout:record_ty.layout ~compile_type:(compile_type ~raise) record_ty.content in
             let rec aux top t =
               match t with
