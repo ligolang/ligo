@@ -638,7 +638,7 @@ val cast_address : address -> ('p,'s) typed_address
 let cast_address : address => typed_address (p,s)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let save_mutation : adress => typed_address &lt;&apos;p, &apos;s&gt
+let cast_address : (addr: adress) => typed_address &lt;&apos;p, &apos;s&gt;
 </SyntaxTitle>
 
 This function casts an address to a typed address. You will need to annotate the result with the type you expect.
