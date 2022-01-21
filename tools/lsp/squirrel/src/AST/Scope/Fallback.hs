@@ -21,7 +21,7 @@ import Data.Map qualified as Map
 import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Set qualified as Set
 import Data.Text (Text)
-import Duplo.Pretty
+import Duplo.Pretty (Doc, pp, ppToText)
 import Duplo.Tree hiding (loop)
 import UnliftIO.Exception (Exception (..), throwIO)
 import UnliftIO.MVar (modifyMVar, newMVar)
