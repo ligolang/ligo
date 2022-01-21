@@ -1,6 +1,6 @@
 -- Deriving `ToGraph` creates some reduntant constraints warnings which we
 -- unforunately have no control over. Disable this warning for now.
-{-# OPTIONS_GHC -Wno-orphans -Wno-redundant-constraints #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module AST.Scope.Common
   ( MarkerInfo (..)
@@ -18,6 +18,7 @@ module AST.Scope.Common
   , ParsedContractInfo
   , ContractInfo'
   , ContractNotFoundException (..)
+  , contractNotFoundException
   , Includes (..)
 
   , pattern FindContract
@@ -42,6 +43,7 @@ module AST.Scope.Common
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
+import Algebra.Graph.AdjacencyMap qualified as G (gmap)
 import Algebra.Graph.Class (Graph)
 import Algebra.Graph.Export qualified as G (export, literal, render)
 import Algebra.Graph.ToGraph (ToGraph)
@@ -61,9 +63,9 @@ import Data.Map qualified as Map
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
-import UnliftIO.Exception (Exception, throwIO)
+import UnliftIO.Exception (Exception (..), throwIO)
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -128,9 +130,6 @@ class HasLigoClient m => HasScopeForest impl m where
     :: ProgressCallback m
     -> Includes ParsedContractInfo
     -> m (Includes (FindFilepath ScopeForest))
-
-instance {-# OVERLAPPABLE #-} Pretty x => Show x where
-  show = show . pp
 
 data Level = TermLevel | TypeLevel
   deriving stock Eq
@@ -333,7 +332,7 @@ addScopes reportProgress graph = do
     addScope (_getContract -> sf) = do
       let src = _cFile sf
       let fp = srcPath src
-      pc <- maybe (throwIO $ ContractNotFoundException fp graph) pure (lookupContract fp graph)
+      pc <- maybe (contractNotFoundException fp graph) pure (lookupContract fp graph)
       pure $ FindContract src
         (addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe))
         (_cMsgs sf)
@@ -360,25 +359,30 @@ type ContractInfo       = FindFilepath (SomeLIGO Info)
 type ParsedContractInfo = FindFilepath (SomeLIGO ParsedInfo)
 type ContractInfo'      = FindFilepath (SomeLIGO Info')
 
-data ContractNotFoundException where
-  ContractNotFoundException :: FilePath -> Includes (FindFilepath info) -> ContractNotFoundException
+contractNotFoundException :: MonadIO m => FilePath -> Includes (FindFilepath info) -> m a
+contractNotFoundException fp (Includes g) =
+  throwIO $ ContractNotFoundException fp $ Includes $ G.gmap contractFile g
 
-instance Pretty ContractNotFoundException where
-  pp (ContractNotFoundException cnfPath cnfGraph) =
-    "Could not find contract '" <.> pp (pack cnfPath) <.> "'.\n"
-    <.> "Searched graph:\n"
-    <.> pp (pack $ G.render $ G.export vDoc eDoc cnfGraph)
+data ContractNotFoundException = ContractNotFoundException
+  { cnfeMissingFile :: FilePath
+  , cnfeIncludedFiles :: Includes FilePath
+  } deriving stock (Show)
+
+instance Exception ContractNotFoundException where
+  displayException ContractNotFoundException {cnfeMissingFile, cnfeIncludedFiles} =
+    "Could not find contract '" <> cnfeMissingFile <> "'.\n"
+    <> "Searched graph:\n"
+    <> G.render (G.export vDoc eDoc cnfeIncludedFiles)
     where
-      vDoc x   = G.literal (contractFile x) <> "\n"
-      eDoc x y = G.literal (contractFile x) <> " -> " <> G.literal (contractFile y) <> "\n"
-
-instance Exception ContractNotFoundException
+      vDoc x   = G.literal x <> "\n"
+      eDoc x y = G.literal x <> " -> " <> G.literal y <> "\n"
 
 -- TODO: We should preferrably export it from AST.Includes, but it would create
 -- cyclic imports.
 newtype Includes info = Includes
   { getIncludes :: AdjacencyMap info
-  } deriving newtype (Graph, ToGraph)
+  } deriving stock (Show)
+    deriving newtype (Graph, ToGraph)
 
 instance (Ord info, ToJSON info) => ToJSON (Includes info) where
   toJSON includes = object

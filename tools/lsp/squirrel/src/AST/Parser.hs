@@ -24,14 +24,16 @@ import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
-import UnliftIO.Exception (Handler (..), catches, displayException, fromEither, throwIO)
+import UnliftIO.Exception (Handler (..), catches, displayException, fromEither)
 
 import AST.Includes (includesGraph)
 import AST.Parser.Camligo qualified as Caml
 import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
 import AST.Scope
-import AST.Skeleton
+  ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
+  , ParsedContractInfo, addScopes, contractNotFoundException, cMsgs, getContract, lookupContract
+  )
 import Cli
   ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
   , SomeLigoException (..), fromLigoErrorToMsg, preprocess
@@ -97,7 +99,7 @@ parseWithScopes src = do
   let fp = srcPath src
   graph <- parseContractsWithDependencies parsePreprocessed noProgress (takeDirectory fp)
   scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (Includes <$> wcc (getIncludes graph))
-  maybe (throwIO $ ContractNotFoundException fp scoped) pure (lookupContract fp scoped)
+  maybe (contractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.
 -- This ignores every other file which is not a contract.
