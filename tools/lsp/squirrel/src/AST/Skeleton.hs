@@ -38,8 +38,7 @@ import Duplo.Tree
 
 import Product
 
-data SomeLIGO xs where
-  SomeLIGO :: Lang -> LIGO xs -> SomeLIGO xs
+data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
 
 nestedLIGO :: Lens (SomeLIGO xs) (SomeLIGO xs') (LIGO xs) (LIGO xs')
 nestedLIGO = lens getLIGO setLIGO

@@ -26,6 +26,7 @@ module ParseTree
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
+import Data.Functor.Classes (Show1 (..))
 import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -45,13 +46,11 @@ import TreeSitter.Node
 import TreeSitter.Parser
 import TreeSitter.Tree hiding (Tree)
 
-import Duplo.Pretty as PP
 import Duplo.Tree
 
 import Extension
 import Log (Log)
 import Log qualified
-import Product
 import Range
 
 foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
@@ -90,29 +89,28 @@ srcToText = \case
   Text       _ t -> return t
   ByteString _ s -> return $ Text.decodeUtf8 s
 
-data SomeRawTree where
-  SomeRawTree
-    :: Lang -> RawTree -> SomeRawTree
-
 type RawTree = Tree '[ParseTree] RawInfo
-type RawInfo = Product [Range, Text]
+type RawInfo = (Range, Text)
 
 -- | The tree tree-sitter produces.
 data ParseTree self = ParseTree
   { ptName     :: Text         -- ^ Name of the node.
   , ptChildren :: [self]       -- ^ Subtrees.
-  , ptSource   :: ~Text        -- ^ Range of the node.
+  , ptSource   :: ~Text        -- ^ Source of the node.
   }
-  deriving stock (Functor, Foldable, Show, Traversable)
+  deriving stock (Functor, Foldable, Traversable)
 
-instance Pretty1 ParseTree where
-  pp1 (ParseTree n forest _) =
-    parens
-      ( hang
-        (quotes (text (Text.unpack n)))
-        2
-        (pp forest)
-      )
+instance Show1 ParseTree where
+  liftShowsPrec lift liftList d (ParseTree name children _) = showParen (d > appPrec)
+    $ showString "ParseTree "
+    . showsPrec (appPrec + 1) name . showChar ' '
+    . liftShowsPrec lift liftList d children
+    where
+      appPrec :: Int
+      appPrec = 10
+
+data SomeRawTree = SomeRawTree Lang RawTree
+  deriving stock (Show)
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
 toParseTree dialect input = Log.addNamespace "toParseTree" do
@@ -139,12 +137,12 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
           ts_node_copy_child_nodes tsNodePtr children
           nodes <- for [0.. count - 1] $ \i -> do
             node' <- peekElemOff children i
-            (only -> (r :> _, tree :: ParseTree RawTree)) <- go src node'
+            (only -> ((r, _), tree :: ParseTree RawTree)) <- go src node'
             field <-
               if   nodeFieldName node' == nullPtr
               then return ""
               else peekCString $ nodeFieldName node'
-            pure $ fastMake (r :> Text.pack field :> Nil) tree
+            pure $ fastMake (r, Text.pack field) tree
 
           ty <- peekCString $ nodeType node
 
@@ -174,7 +172,7 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
               }
 
           pure $ fastMake
-            (range :> "" :> Nil)
+            (range, "")
             ParseTree
               { ptName     = name
               , ptChildren = nodes

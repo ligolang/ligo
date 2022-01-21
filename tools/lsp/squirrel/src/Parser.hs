@@ -30,6 +30,7 @@ import Control.Arrow
 import Control.Exception (Exception (..), throwIO)
 import Control.Monad.Except (ExceptT, throwError)
 import Control.Monad.RWS hiding (Product)
+import Data.Foldable (find)
 import Data.Functor
 import Data.Maybe (fromJust, isJust, mapMaybe)
 import Data.String.Interpolate (i)
@@ -120,7 +121,7 @@ parseLineMarkerText marker = do
   pure (file, markerType, line)
 
 parseLineMarker :: (RawInfo, ParseTree RawTree) -> Maybe LineMarker
-parseLineMarker (getRange -> range, ParseTree ty _ marker) = do
+parseLineMarker ((range, _), ParseTree ty _ marker) = do
   guard (ty == "line_marker")
   (file, markerType, line) <- parseLineMarkerText marker
   pure $ LineMarker file markerType line range
@@ -135,7 +136,7 @@ instance Exception UnrecognizedFieldException where
   displayException UnrecognizedFieldException {ufeFieldName, ufeNodeType, ufeNodeRange} =
     [i|Cannot find field `#{ufeFieldName}` while decoding `#{ufeNodeType}` (at #{ufeNodeRange}).|]
 
-instance Scoped (Product [Range, Text]) ParserHandler RawTree ParseTree where
+instance Scoped (Range, Text) ParserHandler RawTree ParseTree where
   before _ (ParseTree _ cs _) = do
     let (comms, rest) = allComments cs
     let (comms1, _)   = allComments $ reverse rest
@@ -157,8 +158,7 @@ allComments :: [RawTree] -> ([Text], [RawTree])
 allComments = first (map getBody . filter isComment) . break isMeaningful
   where
     isMeaningful :: RawTree -> Bool
-    isMeaningful (extract -> _ :> "" :> _) = False
-    isMeaningful  _                        = True
+    isMeaningful = not . Text.null . snd . extract
 
     isComment :: RawTree -> Bool
     isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
@@ -168,7 +168,7 @@ allErrors = mapMaybe extractUnnamedError
   where
     extractUnnamedError :: RawTree -> Maybe Msg
     extractUnnamedError tree = case only tree of
-      (r :> "" :> _, ParseTree "ERROR" children _)
+      ((r, ""), ParseTree "ERROR" children _)
         -> Just (r, void (Error ("Unexpected: " <> getBody tree) children))
       _ -> Nothing
 
@@ -188,19 +188,13 @@ field name =
       pure
 
 fieldOpt :: Text -> ParserHandler (Maybe RawTree)
-fieldOpt name = go <$> asks peNodes
-  where
-    go (tree@(extract -> _ :> n :> _) : rest)
-      | n == name = Just tree
-      | otherwise = go rest
-
-    go _ = Nothing
+fieldOpt name = find ((== name) . snd . extract) <$> asks peNodes
 
 fields :: Text -> ParserHandler [RawTree]
 fields name = go <$> asks peNodes
   where
     go (tree : rest)
-      | _ :> n :> _ <- extract tree, n == name = tree : go rest
+      | (_, n) <- extract tree, n == name = tree : go rest
       | errorAtTheTop tree = tree : go rest
       | otherwise = go rest
 
@@ -250,7 +244,7 @@ boilerplateImpl
   -> RawInfo
   -> ParseTree RawTree
   -> ParserHandler (Product Info, f RawTree)
-boilerplateImpl handler (r :> _) (ParseTree ty cs src) =
+boilerplateImpl handler (r, _) (ParseTree ty cs src) =
   withComments do
     -- TODO: What is exactly the appropriate action in case something ever
     -- returns 'Nothing'? 'catMaybes'? If something goes wrong, then we will
@@ -276,11 +270,8 @@ boilerplate' f info pt@(ParseTree ty _ src) = boilerplateImpl (f (ty, src)) info
 fallthrough :: ParserHandler a
 fallthrough = throwError HandlerFailed
 
-noMatch
-  :: Product (Range : xs)
-  -> ParseTree it
-  -> ParserHandler (Product Info, Error it)
-noMatch (r :> _) (ParseTree _ children source) = withComments $ pure
+noMatch :: RawInfo -> ParseTree it -> ParserHandler (Product Info, Error it)
+noMatch (r, _) (ParseTree _ children source) = withComments $ pure
   ( [] :> r :> CodeSource source :> Nil
   , Error ("Unrecognized: " <> source) children
   )
