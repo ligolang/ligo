@@ -100,12 +100,14 @@ data ParsedContract info = ParsedContract
   , _cTree :: info -- ^ The payload of the contract.
   , _cMsgs :: [Msg] -- ^ Messages produced by this contract.
   } deriving stock (Show)
+    deriving Pretty via ShowPP (ParsedContract info)
 
 -- | Wraps a 'ParsedContract', allowing it to be stored in a container where its
 -- comparison will always be on its source file.
 newtype FindFilepath info
   = FindFilepath { _getContract :: ParsedContract info }
-  deriving newtype (Show)
+  deriving stock (Show)
+  deriving newtype (Pretty)
 
 instance Eq (FindFilepath info) where
   (==) = (==) `on` contractFile
@@ -132,11 +134,8 @@ class HasLigoClient m => HasScopeForest impl m where
     -> m (Includes (FindFilepath ScopeForest))
 
 data Level = TermLevel | TypeLevel
-  deriving stock Eq
-
-instance Pretty Level where
-  pp TermLevel = "TermLevel"
-  pp TypeLevel = "TypeLevel"
+  deriving stock (Eq, Show)
+  deriving Pretty via ShowPP Level
 
 ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of
@@ -167,7 +166,7 @@ data DeclRef = DeclRef
   deriving stock (Eq, Ord)
 
 instance Pretty DeclRef where
-  pp (DeclRef n r) = pp n <.> "@" <.> pp r
+  pp (DeclRef n r) = pp n <.> "<-" <.> pp r
 
 data MergeStrategy
   = OnUnion
@@ -261,7 +260,7 @@ instance Pretty ScopeForest where
       go = sexpr "list" . map go'
       go' :: ScopeTree -> Doc
       go' (only -> (decls :> r :> Nil, list')) =
-        sexpr "scope" ([pp r] ++ map pp (Set.toList decls) ++ [go list' | not $ null list'])
+        sexpr "scope" (pp r : map pp (Set.toList decls) ++ [go list' | not $ null list'])
 
       decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
 
