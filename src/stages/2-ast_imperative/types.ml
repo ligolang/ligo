@@ -19,7 +19,6 @@ and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression
 
 type module_ = (expr,ty_expr) module'
-  [@@deriving yojson]
 
 and declaration = (expr,ty_expr) declaration'
 

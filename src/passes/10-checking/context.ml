@@ -66,7 +66,7 @@ let add_type : t -> Ast_typed.type_variable -> Ast_typed.type_expression -> t = 
 
 (* we represent for_all types as themselves because we don't have typechecking yet *)
 let add_type_var : t -> Ast_typed.type_variable -> unit -> t = fun c tv () ->
-  add_type c tv (Ast_typed.t_variable tv)
+  add_type c tv (Ast_typed.t_variable tv ())
 
 (* we use type_var while we don't have kind checking *)
 let add_kind : t -> Ast_typed.type_variable -> unit -> t = fun c tv () ->

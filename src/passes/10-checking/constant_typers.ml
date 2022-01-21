@@ -122,7 +122,7 @@ let map_find_opt ~raise loc : typer = typer_2 ~raise loc "MAP_FIND_OPT" @@ fun k
 
 let map_iter ~raise loc : typer = typer_2 ~raise loc "MAP_ITER" @@ fun f m ->
   let (k, v) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let (arg , res) = trace_option ~raise (expected_function loc f) @@ get_t_function f in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
   let kv = t_pair k v in
   let unit = t_unit () in
   let () = assert_eq_1 ~raise ~loc arg kv in
@@ -131,7 +131,7 @@ let map_iter ~raise loc : typer = typer_2 ~raise loc "MAP_ITER" @@ fun f m ->
 
 let map_map ~raise loc : typer = typer_2 ~raise loc "MAP_MAP" @@ fun f m ->
   let (k, v) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let (arg , res) = trace_option ~raise (expected_function loc f) @@ get_t_function f in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
   let kv = t_pair k v in
   let () = assert_eq_1 ~raise ~loc arg kv in
   t_map k res
@@ -295,7 +295,7 @@ let transaction ~raise loc = typer_3 ~raise loc "CALL" @@ fun param amount contr
   t_operation ()
 
 let create_contract ~raise loc = typer_4 ~raise loc "CREATE_CONTRACT" @@ fun f kh_opt amount init_storage  ->
-  let (args , ret) = trace_option ~raise (expected_function loc f) @@ get_t_function f in
+  let { type1 = args ; type2 = ret } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
   let (_,s) = trace_option ~raise (expected_pair loc args) @@ get_t_pair args in
   let (oplist,s') = trace_option ~raise (expected_pair loc ret) @@ get_t_pair ret in
   let () = trace_option ~raise (expected_mutez loc amount) @@ assert_t_mutez amount in
@@ -610,7 +610,7 @@ let set_remove ~raise loc = typer_2 ~raise loc "SET_REMOVE" @@ fun elt set ->
   set
 
 let set_iter ~raise loc = typer_2 ~raise loc "SET_ITER" @@ fun body set ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let () = assert_eq_1 ~raise ~loc res (t_unit ()) in
   let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
   let () = assert_eq_1 ~raise ~loc key arg in
@@ -624,20 +624,20 @@ let list_empty ~raise loc = typer_0 ~raise loc "LIST_EMPTY" @@ fun tv_opt ->
     t
 
 let list_iter ~raise loc = typer_2 ~raise loc "LIST_ITER" @@ fun body lst ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let () = assert_eq_1 ~raise ~loc res (t_unit ()) in
   let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
   let () = assert_eq_1 ~raise ~loc key arg in
   (t_unit ())
 
 let list_map ~raise loc = typer_2 ~raise loc "LIST_MAP" @@ fun body lst ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
   let () = assert_eq_1 ~raise ~loc key arg in
   (t_list res )
 
 let fold ~raise loc = typer_3 ~raise loc "FOLD" @@ fun body container init ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let key = trace_option ~raise (expected_list loc container) @@ Option.map_pair_or (get_t_list,get_t_set) container in
   let () = assert_eq_1 ~raise ~loc key cur in
@@ -645,7 +645,7 @@ let fold ~raise loc = typer_3 ~raise loc "FOLD" @@ fun body container init ->
   let () = assert_eq_1 ~raise ~loc res init in
   res
 let list_fold ~raise loc = typer_3 ~raise loc "LIST_FOLD" @@ fun body lst init ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
   let () = assert_eq_1 ~raise ~loc key cur in
@@ -654,7 +654,7 @@ let list_fold ~raise loc = typer_3 ~raise loc "LIST_FOLD" @@ fun body lst init -
   res
 
 let list_fold_left ~raise loc = typer_3 ~raise loc "LIST_FOLD_LEFT" @@ fun body init lst ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
   let () = assert_eq_1 ~raise ~loc key cur in
@@ -663,7 +663,7 @@ let list_fold_left ~raise loc = typer_3 ~raise loc "LIST_FOLD_LEFT" @@ fun body 
   res
 
 let list_fold_right ~raise loc = typer_3 ~raise loc "LIST_FOLD_RIGHT" @@ fun body lst init ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (cur , prec) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
   let () = assert_eq_1 ~raise ~loc key cur in
@@ -680,7 +680,7 @@ let list_tail_opt ~raise loc = typer_1 ~raise loc "LIST_TAIL_OPT" @@ fun lst ->
   t_option ~loc @@ t_list ~loc key
 
 let set_fold ~raise loc = typer_3 ~raise loc "SET_FOLD" @@ fun body lst init ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let key = trace_option ~raise (expected_set loc lst) @@ get_t_set lst in
   let () = assert_eq_1 ~raise ~loc key cur in
@@ -689,7 +689,7 @@ let set_fold ~raise loc = typer_3 ~raise loc "SET_FOLD" @@ fun body lst init ->
   res
 
 let set_fold_desc ~raise loc = typer_3 ~raise loc "SET_FOLD_DESC" @@ fun body lst init ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (cur , prec) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let key = trace_option ~raise (expected_set loc lst) @@ get_t_set lst in
   let () = assert_eq_1 ~raise ~loc key cur in
@@ -698,7 +698,7 @@ let set_fold_desc ~raise loc = typer_3 ~raise loc "SET_FOLD_DESC" @@ fun body ls
   res
 
 let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
-  let (arg , res) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let (key , value) = trace_option ~raise (expected_map loc map) @@ get_t_map map in
   let kv = t_pair key value in
@@ -714,7 +714,7 @@ let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
     must match the input parameter of the auxillary function, and the auxillary
     should return type (bool * input) *)
 let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
-  let (arg, result) = trace_option ~raise (expected_function loc body) @@ get_t_function body in
+  let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let () = assert_eq_1 ~raise ~loc arg init in
   let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
   in init
@@ -972,7 +972,7 @@ let open_chest ~raise loc = typer_3 ~raise loc "OPEN_CHEST" @@ fun key chest n -
   t_chest_opening_result ()
 
 let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main storage balance ->
-  let in_ty,_ = trace_option ~raise (expected_function loc main) @@ get_t_function main in
+  let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
   let param_ty,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
   let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
   let () = assert_eq_1 ~raise ~loc storage storage_ty in
@@ -985,7 +985,7 @@ let test_state_reset ~raise loc = typer_2 ~raise loc "TEST_STATE_RESET" @@ fun n
   (t_unit ())
 
 let test_bootstrap_contract ~raise loc = typer_3 ~raise loc "TEST_BOOTSTRAP_CONTRACT" @@ fun balance main storage ->
-  let in_ty,_ = trace_option ~raise (expected_function loc main) @@ get_t_function main in
+  let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
   let _,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
   let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
   let () = assert_eq_1 ~raise ~loc storage storage_ty in
@@ -1062,12 +1062,12 @@ let test_mutate_value ~raise loc = typer_2 ~raise loc "TEST_MUTATE_VALUE" @@ fun
   (t_option (t_pair expr (t_mutation ())))
 
 let test_mutation_test ~raise loc = typer_2 ~raise loc "TEST_MUTATION_TEST" @@ fun expr tester ->
-  let (arg , res) = trace_option ~raise (expected_function loc tester) @@ get_t_function tester in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc tester) @@ get_t_arrow tester in
   let () = assert_eq_1 ~raise ~loc arg expr in
   (t_option (t_pair res (t_mutation ())))
 
 let test_mutation_test_all ~raise loc = typer_2 ~raise loc "TEST_MUTATION_TEST_ALL" @@ fun expr tester ->
-  let (arg , res) = trace_option ~raise (expected_function loc tester) @@ get_t_function tester in
+  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc tester) @@ get_t_arrow tester in
   let () = assert_eq_1 ~raise ~loc arg expr in
   (t_list (t_pair res (t_mutation ())))
 
@@ -1077,7 +1077,7 @@ let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ f
   (t_option (t_string ()))
 
 let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun lambda expr ->
-  let (arg, _) = trace_option ~raise (expected_function loc lambda) @@ get_t_function lambda in
+  let { type1 = arg ; type2 = _ } = trace_option ~raise (expected_function loc lambda) @@ get_t_arrow lambda in
   let () = assert_eq_1 ~raise ~loc arg expr in
   (t_michelson_code ())
 

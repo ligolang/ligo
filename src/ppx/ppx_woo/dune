@@ -1,0 +1,8 @@
+(library
+  (name ppx_woo)
+  (kind ppx_deriver)
+  (libraries
+    core
+    ppxlib)
+  (preprocess (pps ppxlib.metaquot))
+)

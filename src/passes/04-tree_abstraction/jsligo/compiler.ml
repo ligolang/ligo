@@ -289,7 +289,7 @@ module Compile_type = struct
       let ((input_type,_,output_type), loc) = r_split func in
       let input_type = compile_type_function_args ~raise input_type in
       let output_type = self output_type in
-      return @@ t_function ~loc input_type output_type
+      return @@ t_arrow ~loc input_type output_type
     | TPar par ->
       let (par, _) = r_split par in
       let type_expr = par.inside in
@@ -1065,7 +1065,7 @@ and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (_ 
           let lambda = trace_option ~raise (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
           let lhs_type = match lhs_type with
             | Some lhs_type -> Some lhs_type
-            | None ->  Option.map ~f:(Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type)
+            | None ->  Option.map ~f:(Utils.uncurry t_arrow) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type)
           in
           let fun_type = trace_option ~raise (untyped_recursive_fun name.region) @@ lhs_type in
           e_recursive ~loc:(Location.lift name.region) fun_binder fun_type lambda

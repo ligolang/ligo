@@ -5,4 +5,4 @@
   (backend bisect_ppx))
  (libraries simple-utils stage_common ast_sugar UnionFind)
  (preprocess
-  (pps ppx_map)))
+  (staged_pps ppx_import ppx_map ppx_woo)))

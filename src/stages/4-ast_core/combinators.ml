@@ -1,14 +1,32 @@
 open Types
-module S = Ast_sugar
 open Stage_common.Constant
 
-let make_t ?(loc = Location.generated) ?sugar type_content = {type_content; location=loc; sugar }
-let make_e ?(loc = Location.generated) ?sugar expression_content = {
-  expression_content ;
-  location = loc ;
-  sugar ;
-  }
-let t_variable   ?loc ?sugar t  : type_expression = make_t ?loc ?sugar (T_variable t)
+(* Helpers for accessing and constructing elements are derived using
+   `ppx_woo` (`@@deriving ez`) *)
+
+type expression_content = [%import: Types.expression_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_e" , fun ?(loc = Location.generated) ?sugar expression_content ->
+                  ({ expression_content ; location = loc ; sugar } : expression)) ;
+        ("get" , fun x -> x.expression_content) ;
+        ("get_sugar" , fun x -> x.sugar) ;
+      ] ;
+      wrap_constructor = ("expression_content" , (fun expression_content ?loc ?sugar () -> make_e ?loc ?sugar expression_content)) ;
+      wrap_get = ("expression_content" , get) ;
+    } ]
+
+type type_content = [%import: Types.type_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_t" , fun  ?(loc = Location.generated) ?sugar type_content ->
+                  ({ type_content ; location = loc ; sugar } : type_expression)) ;
+        ("get" , fun x -> x.type_content) ;
+      ] ;
+      wrap_constructor = ("type_content" , (fun type_content ?loc ?sugar () -> make_t ?loc ?sugar type_content)) ;
+      wrap_get = ("type_content" , get) ;
+      default_get = `Option ;
+    } ]
 
 let t_constant ?loc ?sugar type_operator arguments : type_expression =
   make_t ?loc ?sugar (T_app {type_operator=Var.of_name type_operator;arguments})
@@ -31,12 +49,12 @@ let t_mutez = t_tez
 
 let t_abstraction1 ?loc ?sugar name kind : type_expression =
   let ty_binder = Location.wrap @@ Var.fresh () in
-  let type_ = t_constant name [t_variable ty_binder.wrap_content] in
+  let type_ = t_constant name [t_variable ty_binder.wrap_content ()] in
   t_abstraction ?loc ?sugar ty_binder kind type_
 let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression =
   let ty_binder_l = Location.wrap @@ Var.fresh () in
   let ty_binder_r = Location.wrap @@ Var.fresh () in
-  let type_ = t_constant name [t_variable ty_binder_l.wrap_content ; t_variable ty_binder_r.wrap_content] in
+  let type_ = t_constant name [t_variable ty_binder_l.wrap_content () ; t_variable ty_binder_r.wrap_content ()] in
   t_abstraction ?loc ?sugar ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
 let t_record ?loc ?sugar ?layout fields  : type_expression = make_t ?loc ?sugar @@ T_record {fields;layout}
@@ -63,20 +81,12 @@ let t_sum_ez ?loc ?sugar ?layout (lst:(string * type_expression) list) : type_ex
 let t_bool ?loc ?sugar ()       : type_expression = t_sum_ez ?loc ?sugar
   [("True", t_unit ());("False", t_unit ())]
 
-let t_function ?loc ?sugar param result : type_expression = make_t ?loc ?sugar (T_arrow {type1=param; type2=result})
+let t_arrow ?loc ?sugar param result : type_expression = t_arrow ?loc ?sugar {type1=param; type2=result} ()
 let t_shallow_closure ?loc ?sugar param result: type_expression = make_t ?loc ?sugar (T_arrow {type1=param; type2=result})
-
-let get_type' (x:type_expression) = x.type_content
-let get_expression (x:expression) = x.expression_content
-
-let get_lambda e : (_,_) lambda option = match e.expression_content with
-  | E_lambda l -> Some l
-  | _ -> None
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
-
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
@@ -100,33 +110,14 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
       )
   | _ -> None
 
-let get_t_function (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
-  | T_arrow {type1;type2} -> Some (type1,type2)
-  | _ -> None
-
-let get_t_sum (t:type_expression) : rows option = match t.type_content with
-  | T_sum m -> Some m
-  | _ -> None
-
-let get_t_record (t:type_expression) : rows option = match t.type_content with
-  | T_record m -> Some m
-  | _ -> None
-
-let get_t__type__exn t = match get_t__type_ t with
-  | Some x -> x
-  | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-[@@map (_type_, ("function", "sum", "record"))]
-
-
-let e_record map : expression = make_e @@ E_record map
 let ez_e_record (lst : (label * expression) list) : expression =
   let aux prev (k, v) = LMap.add k v prev in
   let map = List.fold_left ~f:aux ~init:LMap.empty lst in
-  e_record map
+  e_record map ()
 
-let e_var       ?loc ?sugar n  : expression = make_e ?loc ?sugar @@ E_variable (Location.wrap ?loc (Var.of_name n))
-let e_literal   ?loc ?sugar l  : expression = make_e ?loc ?sugar @@ E_literal l
-let e_unit      ?loc ?sugar () : expression = make_e ?loc ?sugar @@ E_literal (Literal_unit)
+let e_var       ?loc ?sugar n  : expression = e_variable (Location.wrap ?loc (Var.of_name n)) ?loc ?sugar ()
+let e_unit      ?loc ?sugar () : expression = e_literal (Literal_unit) ?loc ?sugar ()
+let e_literal   ?loc ?sugar l  : expression = e_literal l ?loc ?sugar ()
 
 let e__type_ ?loc ?sugar p : expression = make_e ?loc ?sugar @@ E_literal (Literal__type_ p)
 [@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
@@ -141,35 +132,32 @@ let e_bytes_raw ?loc ?sugar (b: bytes) : expression =
   make_e ?loc ?sugar @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc ?sugar (s: string) : expression =
   make_e ?loc ?sugar @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
-let e_some       ?loc ?sugar s        : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_SOME; arguments = [s]}
-let e_none       ?loc ?sugar ()       : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_NONE; arguments = []}
-let e_string_cat ?loc ?sugar sl sr    : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_CONCAT; arguments = [sl ; sr ]}
-let e_map_add    ?loc ?sugar k v old  : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_MAP_ADD; arguments = [k ; v ; old]}
 
-let e_constant    ?loc ?sugar name lst             = make_e ?loc ?sugar @@ E_constant {cons_name=name ; arguments = lst}
-let e_variable v            : expression = make_e @@ E_variable v
-let e_application lamb args : expression = make_e @@ E_application {lamb;args}
-let e_lambda      ?loc ?sugar binder output_type result            = make_e ?loc ?sugar @@ E_lambda {binder; output_type; result ;  }
+let e_constant ?loc ?sugar cons_name arguments = e_constant ?loc ?sugar { cons_name ; arguments } ()
+let e_variable v : expression = e_variable v ()
+let e_application lamb args : expression = e_application {lamb;args} ()
+let e_lambda ?loc ?sugar binder output_type result = e_lambda ?loc ?sugar {binder; output_type; result ;  } ()
+let e_recursive ?loc ?sugar fun_name fun_type lambda = e_recursive ?loc ?sugar {fun_name; fun_type; lambda} ()
+let e_let_in ?loc ?sugar let_binder rhs let_result attr = e_let_in ?loc ?sugar { let_binder ; rhs ; let_result; attr } ()
+let e_type_in type_binder rhs let_result = e_type_in { type_binder ; rhs ; let_result } ()
+let e_mod_in ?loc ?sugar module_binder rhs let_result = e_mod_in ?loc ?sugar { module_binder ; rhs ; let_result } ()
+let e_mod_alias ?loc ?sugar  alias binders result = e_mod_alias ?loc ?sugar { alias ; binders ; result } ()
+let e_raw_code ?loc ?sugar language code = e_raw_code ?loc ?sugar {language; code} ()
+let e_constructor constructor element : expression = e_constructor {constructor;element} ()
+let e_matching ?loc ?sugar matchee cases : expression = e_matching ?loc ?sugar { matchee ; cases } ()
+let e_record_accessor ?loc ?sugar record path = e_record_accessor ?loc ?sugar ({record; path} : _ record_accessor) ()
+let e_record_update ?loc ?sugar record path update = e_record_update ?loc ?sugar ({record; path; update} : _ record_update) ()
+let e_module_accessor ?loc ?sugar module_name element = e_module_accessor ?loc ?sugar {module_name;element} ()
+let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = e_ascription ?loc ?sugar {anno_expr;type_annotation} ()
+
 let e_lambda_ez   ?loc ?sugar var ?ascr ?const_or_var output_type result         = e_lambda ?loc ?sugar {var;ascr;attributes={const_or_var}} output_type result
-let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
-let e_let_in      ?loc ?sugar let_binder rhs let_result attr = make_e ?loc ?sugar @@ E_let_in { let_binder ; rhs ; let_result; attr }
 let e_let_in_ez   ?loc ?sugar var ?ascr ?const_or_var inline rhs let_result = e_let_in ?loc ?sugar {var;ascr;attributes={const_or_var}} rhs let_result inline
-let e_type_in type_binder rhs let_result = make_e @@ E_type_in { type_binder ; rhs ; let_result }
-let e_mod_in      ?loc ?sugar module_binder rhs let_result         = make_e ?loc ?sugar @@ E_mod_in { module_binder ; rhs ; let_result }
-let e_mod_alias  ?loc ?sugar  alias binders result = make_e ?loc ?sugar @@ E_mod_alias { alias ; binders ; result }
-let e_raw_code    ?loc ?sugar language code                       = make_e ?loc ?sugar @@ E_raw_code {language; code}
 
-let e_constructor constructor element: expression = make_e @@ E_constructor {constructor;element}
-let e_matching    ?loc ?sugar a b : expression = make_e ?loc ?sugar @@ E_matching {matchee=a;cases=b}
-
-
-let e_record          ?loc ?sugar map                = make_e ?loc ?sugar @@ E_record map
-let e_record_accessor ?loc ?sugar record path        = make_e ?loc ?sugar @@ E_record_accessor ({record; path} : _ record_accessor)
-let e_record_update   ?loc ?sugar record path update = make_e ?loc ?sugar @@ E_record_update ({record; path; update} : _ record_update)
-
-let e_module_accessor ?loc ?sugar module_name element = make_e ?loc ?sugar @@ E_module_accessor {module_name;element}
-
-let e_ascription ?loc ?sugar anno_expr type_annotation  : expression = make_e ?loc ?sugar @@ E_ascription {anno_expr;type_annotation}
+(* Constants *)
+let e_some       ?loc ?sugar s        : expression = e_constant ?loc ?sugar C_SOME [s]
+let e_none       ?loc ?sugar ()       : expression = e_constant ?loc ?sugar C_NONE []
+let e_string_cat ?loc ?sugar sl sr    : expression = e_constant ?loc ?sugar C_CONCAT [sl; sr]
+let e_map_add    ?loc ?sugar k v old  : expression = e_constant ?loc ?sugar C_MAP_ADD [k; v; old]
 
 let e_bool b : expression =
   if b then
@@ -235,16 +223,6 @@ let get_e_list = fun t ->
 let get_e_tuple = fun t ->
   match t with
   | E_record r -> Some (List.map ~f:snd @@ Helpers.tuple_of_record r)
-  | _ -> None
-
-let get_e_record = fun t ->
-  match t.expression_content with
-  | E_record record -> Some record
-  | _ -> None
-
-let get_e_record_accessor = fun t ->
-  match t.expression_content with
-  | E_record_accessor {record; path} -> Some (record, path)
   | _ -> None
 
 let get_declaration_by_name : module_ -> string -> declaration option = fun (p) name ->

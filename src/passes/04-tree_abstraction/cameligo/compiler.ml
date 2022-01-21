@@ -152,7 +152,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
     let ((input_type,_,output_type), loc) = r_split func in
     let input_type = self input_type in
     let output_type = self output_type in
-    return @@ t_function ~loc input_type output_type
+    return @@ t_arrow ~loc input_type output_type
   | TPar par ->
     let (par, _) = r_split par in
     let type_expr = par.inside in
@@ -401,7 +401,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         let expr,lhs_type = aux lst in
         let expr = fun_ expr in
         e_lambda ~loc binder lhs_type expr,
-        Option.map ~f:(Utils.uncurry @@ t_function ~loc) @@ Option.bind_pair (binder.ascr,lhs_type)
+        Option.map ~f:(Utils.uncurry @@ t_arrow ~loc) @@ Option.bind_pair (binder.ascr,lhs_type)
     in
     let expr,lhs_type = aux lst in
     let expr = fun_ expr  in
@@ -673,7 +673,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
         let expr,lhs_type = aux lst in
         let expr = fun_ expr in
         e_lambda ~loc binder lhs_type expr,
-        Option.map ~f:(Utils.uncurry @@ t_function ~loc) @@ Option.bind_pair (binder.ascr,lhs_type)
+        Option.map ~f:(Utils.uncurry @@ t_arrow ~loc) @@ Option.bind_pair (binder.ascr,lhs_type)
     in
     let expr,lhs_type = aux args in
     (* This handle the recursion *)

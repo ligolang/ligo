@@ -4,7 +4,29 @@ module Option = Simple_utils.Option
 module SMap = Simple_utils.Map.String
 open Stage_common.Constant
 
-let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
+type expression_content = [%import: Types.expression_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_e" , fun ?(loc = Location.generated) expression_content ->
+                  ({ expression_content ; location = loc } : expression)) ;
+        ("get" , fun x -> x.expression_content) ;
+      ] ;
+      wrap_constructor = ("expression_content" , (fun expression_content ?loc () -> make_e ?loc expression_content)) ;
+      wrap_get = ("expression_content" , get) ;
+    } ]
+
+type type_content = [%import: Types.type_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_t" , fun  ?(loc = Location.generated) type_content ->
+                  ({ type_content ; location = loc } : type_expression)) ;
+        ("get" , fun x -> x.type_content) ;
+      ] ;
+      wrap_constructor = ("type_content" , (fun type_content ?loc () -> make_t ?loc type_content)) ;
+      wrap_get = ("type_content" , get) ;
+      (* default_get = `Option ; *)
+    } ]
+
 let t_variable ?loc variable  = make_t ?loc @@ T_variable variable
 let t_singleton ?loc x = make_t ?loc @@ T_singleton x
 let t_variable_ez ?loc n     : type_expression = t_variable ?loc (Var.of_name n)
@@ -44,7 +66,7 @@ let t_sum_ez_attr ?loc ?(attr=[]) lst =
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 let t_module_accessor ?loc module_name element = make_t ?loc @@ T_module_accessor {module_name;element}
 
-let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
+let t_arrow ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
 let t_abstraction ?loc ty_binder kind type_ : type_expression = make_t ?loc @@ T_abstraction { ty_binder ; kind ; type_ }
 let t_for_all ?loc ty_binder kind type_ : type_expression   = make_t ?loc @@ T_for_all { ty_binder ; kind ; type_ }
 let t_michelson_or ?loc l l_ann r r_ann   : type_expression = t_app ?loc v_michelson_or [t_annoted l l_ann; t_annoted r r_ann]
@@ -56,10 +78,6 @@ let get_t_annoted = fun te ->
   match te.type_content with
     T_annoted (te, lst) -> Some (te,lst)
   | _ -> None
-
-let make_e ?(loc = Location.generated) expression_content =
-  let location = loc in
-  { expression_content; location }
 
 let e_literal ?loc l : expression = make_e ?loc @@ E_literal l
 let e__type_ ?loc p : expression = make_e ?loc @@ E_literal (Literal__type_ p)

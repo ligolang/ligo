@@ -5,20 +5,35 @@ module Ligo_string = Simple_utils.Ligo_string
 open Types
 open Stage_common.Constant
 
-let make_t ?(loc = Location.generated) type_content = {type_content; location=loc; orig_var = None}
-let make_e ?(location = Location.generated) expression_content type_expression = {
-    Types.expression_content ;
-    type_expression ;
-    location ;
-  }
-let t_variable   ?loc t  : type_expression = make_t ?loc (T_variable t)
-let t_abstraction ?loc ty_binder kind type_ =
-  make_t ?loc (T_abstraction {ty_binder ; kind ; type_})
-let t_for_all ?loc ty_binder kind type_ =
-  make_t ?loc (T_for_all {ty_binder ; kind ; type_})
+(* Helpers for accessing and constructing elements are derived using
+   `ppx_woo` (`@@deriving ez`) *)
+
+type expression_content = [%import: Types.expression_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_e" , fun ?(location = Location.generated) expression_content type_expression ->
+                  ({ expression_content ; location ; type_expression } : expression)) ;
+        ("get" , fun x -> x.expression_content) ;
+        ("get_type" , fun x -> x.type_expression) ;
+      ] ;
+      wrap_constructor = ("expression_content" , make_e) ;
+      wrap_get = ("expression_content" , get) ;
+    } ]
+
+type type_content = [%import: Types.type_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_t" , fun ?(loc = Location.generated) type_content ->
+                  ({ type_content ; location = loc ; orig_var = None } : type_expression)) ;
+        ("get" , fun x -> x.type_content) ;
+      ] ;
+      wrap_constructor = ("type_content" , (fun type_content ?loc () -> make_t ?loc type_content)) ;
+      wrap_get = ("type_content" , get) ;
+      default_get = `Option ;
+    } ]
 
 let t_constant ?loc injection parameters : type_expression =
-  make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters})
+  t_constant ?loc {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters} ()
 
 (* TODO?: X_name here should be replaced by X_injection *)
 let t__type_ ?loc () : type_expression = t_constant ?loc _type__name []
@@ -34,16 +49,16 @@ let t_mutez = t_tez
 
 let t_abstraction1 ?loc name kind : type_expression =
   let ty_binder = Location.wrap @@ Var.fresh () in
-  let type_ = t_constant name [t_variable ty_binder.wrap_content] in
-  t_abstraction ?loc ty_binder kind type_
+  let type_ = t_constant name [t_variable ty_binder.wrap_content ()] in
+  t_abstraction ?loc { ty_binder ; kind ; type_ } ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
   let ty_binder_l = Location.wrap @@ Var.fresh () in
   let ty_binder_r = Location.wrap @@ Var.fresh () in
   let type_ = t_constant name
-    [ t_variable ty_binder_l.wrap_content ;
-      t_variable ty_binder_r.wrap_content ]
+    [ t_variable ty_binder_l.wrap_content () ;
+      t_variable ty_binder_r.wrap_content () ]
   in
-  t_abstraction ?loc ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
+  t_abstraction ?loc { ty_binder = ty_binder_l ; kind = kind_l ; type_ = (t_abstraction ?loc { ty_binder = ty_binder_r ; kind = kind_r ; type_ } ()) } ()
 
 let t_record ?loc ~layout content  : type_expression = make_t ?loc (T_record {content;layout})
 let default_layout = L_tree
@@ -81,7 +96,7 @@ let t_test_exec_error ?loc () : type_expression = t_sum_ez ?loc
 let t_test_exec_result ?loc () : type_expression = t_sum_ez ?loc
   [ ("Success" ,t_unit ()); ("Fail", t_sum_ez [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())])]
 
-let t_function param result ?loc () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result})
+let t_arrow param result ?loc () : type_expression = t_arrow ?loc {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result})
 let t_chest_opening_result ?loc () : type_expression =
   t_sum_ez ?loc [
@@ -90,25 +105,8 @@ let t_chest_opening_result ?loc () : type_expression =
     ("Fail_timelock", t_unit ())
   ]
 
-let get_type_expression (x:expression) = x.type_expression
-let get_type' (x:type_expression) = x.type_content
-let get_expression (x:expression) = x.expression_content
-
-let get_variable e : expression_variable option = match e.expression_content with
-  | E_variable v -> Some v
-  | _ -> None
-
-let get_lambda e : lambda option = match e.expression_content with
-  | E_lambda l -> Some l
-  | _ -> None
-
-let get_lambda_with_type e =
-  match (e.expression_content , e.type_expression.type_content) with
-  | E_lambda l , T_arrow {type1;type2} -> Some (l , (type1,type2))
-  | _ -> None
-
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
-  | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
+  | t when (Compare.type_content t (t_bool ()).type_content) = 0 -> Some ()
   | _ -> None
 
 let get_param_inj (t:type_expression) : (string * Ligo_string.t * type_expression list) option =
@@ -120,14 +118,17 @@ let get_t_inj (t:type_expression) (v:string) : (type_expression list) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters} when String.equal (Ligo_string.extract injection) v -> Some parameters
   | _ -> None
+
 let get_t_base_inj (t:type_expression) (v:string) : unit option =
   match get_t_inj t v with
   | Some [] -> Some ()
   | _ -> None
+
 let get_t_unary_inj (t:type_expression) (v:string) : type_expression option =
   match get_t_inj t v with
   | Some [a] -> Some a
   | _ -> None
+
 let get_t_binary_inj (t:type_expression) (v:string) : (type_expression * type_expression) option =
   match get_t_inj t v with
   | Some [a;b] -> Some (a,b)
@@ -150,7 +151,6 @@ let tuple_of_record (m: _ LMap.t) =
   let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
   List.map ~f:(fun {associated_type;_} -> associated_type) l
 
-
 let get_t_tuple (t:type_expression) : type_expression list option = match t.type_content with
   | T_record record -> Some (tuple_of_record record.content)
   | _ -> None
@@ -162,23 +162,6 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
         | true -> Some (List.(nth_exn lst 0 , nth_exn lst 1))
         | false -> None
       )
-  | _ -> None
-
-let get_t_function (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
-  | T_arrow {type1;type2} -> Some (type1,type2)
-  | _ -> None
-
-let get_t_for_all (t : type_expression) : (type_variable Location.wrap * type_expression) option =
-  match t.type_content with
-  | T_for_all { ty_binder ; type_ ; _ } -> Some (ty_binder, type_)
-  | _ -> None
-
-let get_t_sum (t:type_expression) : rows option = match t.type_content with
-  | T_sum m -> Some m
-  | _ -> None
-
-let get_t_record (t:type_expression) : rows option = match t.type_content with
-  | T_record m -> Some m
   | _ -> None
 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
@@ -198,38 +181,17 @@ let get_t_big_map (t:type_expression) : (type_expression * type_expression) opti
   | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
   | _ -> None
 
-let get_t_map_key : type_expression -> type_expression option = fun t ->
-  match get_t_map t with
-  | Some (key,_) -> Some key
-  | None -> None
-
-let get_t_map_value : type_expression -> type_expression option = fun t ->
-  match get_t_map t with
-  | Some (_,value) -> Some value
-  | None -> None
-
-let get_t_big_map_key : type_expression -> type_expression option = fun t ->
-  match get_t_big_map t with
-  | Some (key,_) -> Some key
-  | None -> None
-
-let get_t_big_map_value : type_expression -> type_expression option = fun t ->
-  match get_t_big_map t with
-  | Some (_,value) -> Some value
-  | None -> None
-
 let get_t__type__exn t = match get_t__type_ t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-[@@map (_type_, ("function", "sum", "record", "list", "set", "map", "typed_address", "big_map", "map_key", "map_value", "big_map_key","big_map_value"))]
+[@@map (_type_, ("list", "set", "map", "typed_address", "big_map"))]
 
-let is_e_matching e = match e.expression_content with | E_matching _ -> true | _ -> false
 let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t contract_name with
   | Some _ -> Some ()
   | _ -> None
 
 let is_t__type_ t = Option.is_some (get_t__type_ t)
-[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "bool", "unit", "address", "tez", "contract", "map", "big_map", "record", "option", "sum", "function"))]
+[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "bool", "unit", "address", "tez", "contract", "map", "big_map", "option"))]
 
 let is_t_mutez t = is_t_tez t
 
@@ -244,11 +206,10 @@ let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t
 let assert_t__type_ : type_expression -> unit option = fun v -> Option.map ~f:(fun _ -> ()) @@ get_t__type_ v
 [@@map (_type_, ("option", "set", "list"))]
 
-let e_record map : expression_content = E_record map
 let ez_e_record (lst : (label * expression) list) : expression_content =
   let aux prev (k, v) = LMap.add k v prev in
   let map = List.fold_left ~f:aux ~init:LMap.empty lst in
-  e_record map
+  E_record map
 
 let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments = [] }
 [@@map (_ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty"))]
@@ -267,22 +228,13 @@ let e__type_ p : expression_content = E_literal (Literal__type_ p)
 [@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 let e_unit () : expression_content = E_literal (Literal_unit)
 
-let e_lambda l : expression_content = E_lambda l
-let e_recursive l : expression_content = E_recursive l
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
-let e_application lamb args : expression_content = E_application {lamb;args}
-let e_raw_code language code : expression_content = E_raw_code { language ; code }
-let e_variable v : expression_content = E_variable v
-let e_let_in let_binder rhs let_result attr = E_let_in { let_binder ; rhs ; let_result; attr }
-let e_type_inst e t : expression_content = E_type_inst { forall = e ; type_ = t }
-let e_constructor constructor element: expression_content = E_constructor {constructor;element}
-let e_record_access record path = E_record_accessor {record ; path}
 
 let e_bool b : expression_content =
   if b then
-    e_constructor (Label "True") (make_e (e_unit ())(t_unit()))
+    E_constructor { constructor = (Label "True") ; element = (make_e (e_unit ()) (t_unit())) }
   else
-    e_constructor (Label "False") (make_e (e_unit ())(t_unit()))
+    E_constructor { constructor = (Label "False") ; element = (make_e (e_unit ()) (t_unit())) }
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
@@ -290,24 +242,26 @@ let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
-let e_a_constructor' ?(layout=default_layout) m l v = make_e (e_constructor l v) (t_sum ~layout:layout m)
-let e_a_constructor c e t = make_e (e_constructor (Label c) e) t
-let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
-let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
-let e_a_recursive l= make_e (e_recursive l) l.fun_type
-let e_a_none t = make_e (e_none ()) (t_option t)
-let e_a_record_access record path t = make_e (e_record_access record path) t
-let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layout
+let e_a_constructor constructor element t = e_constructor { constructor = (Label constructor) ; element } t
+let e_a_record_accessor record path t = e_record_accessor {record ; path} t
+let e_a_record ?(layout=default_layout) r = e_record r (t_record ~layout
   (LMap.map
     (fun t ->
-      let associated_type = get_type_expression t in
+      let associated_type = get_type t in
       {associated_type ; michelson_annotation=None ; decl_pos = 0} )
     r ))
-let e_a_application a b t = make_e (e_application a b) t
-let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi ~f:(fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
-let e_a_let_in binder expr body attr = make_e (e_let_in binder expr body attr) (get_type_expression body)
-let e_a_raw_code l c t = make_e (e_raw_code l c) t
+let e_a_variable v ty = e_variable v ty
+let e_a_application lamb args t = e_application {lamb;args} t
+let e_a_lambda l in_ty out_ty = e_lambda l (t_arrow in_ty out_ty ())
+let e_a_recursive l= e_recursive l l.fun_type
+let e_a_let_in let_binder rhs let_result attr = e_let_in { let_binder ; rhs ; let_result ; attr } (get_type let_result)
+let e_a_raw_code language code t = e_raw_code { language ; code } t
+let e_a_type_inst forall type_ u = e_type_inst { forall ; type_ } u
+
+(* Constants *)
+let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
+let e_a_none t = make_e (e_none ()) (t_option t)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
 let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
@@ -323,7 +277,6 @@ let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contra
 let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
 let e_a_pack e = make_e (e_pack e) (t_bytes ())
 let e_a_unpack e t = make_e (e_unpack e) (t_option t)
-let e_a_type_inst e t u = make_e (e_type_inst e t) u
 
 let get_a_int (t:expression) =
   match t.expression_content with
@@ -357,18 +310,8 @@ let get_a_bool (t:expression) =
       Some false
   | _ -> None
 
-let get_a_record = fun t ->
-  match t.expression_content with
-  | E_record record -> Some record
-  | _ -> None
-
-let get_a_record_accessor = fun t ->
-  match t.expression_content with
-  | E_record_accessor {record; path} -> Some (record, path)
-  | _ -> None
-
 let get_record_field_type (t : type_expression) (label : label) : type_expression option =
-  match get_t_record t with
+  match get_t_record_opt t with
   | None -> None
   | Some record ->
     match LMap.find_opt label record.content with

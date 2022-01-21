@@ -99,7 +99,7 @@ end = struct
       | O.Module_alias { alias=_; binders=_} ->
         let _where () = Format.asprintf "module alias %a" O.PP.declaration d in
         () in
-    let () = List.fold ~f:(fun () Location.{wrap_content;location=_} -> decl wrap_content) ~init:() p in
+    let () = List.fold ~f:(fun () Location.{wrap_content;_} -> decl wrap_content) ~init:() p in
     p
 end
 
@@ -217,7 +217,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ -> _ (* return of type_expression *) = fun expr e state new_constraints constraints type_name ->
-    let tv = t_variable type_name in
+    let tv = t_variable type_name () in
     let loc = ae.location in
     let expr' = e_ascription ~loc expr tv in
     if Ast_core.Debug.debug_new_typer then Format.eprintf "Returning expr : %a \nwith new_constraints: %a\n"
@@ -338,11 +338,11 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
         let rec gather_constraints_from_pattern : _ I.pattern -> _ O.pattern * O.type_constraint list * O.type_expression = fun x ->
           match x.wrap_content with
           | P_unit ->
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_unit_pattern" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_unit_pattern" ()) () in
             let c = Wrap.pattern_match_unit fresh in
             (x, c, fresh)
           | P_var v ->(
-            let fresh = t_variable (Typesystem.Types.fresh_for_expr_var v.var) in
+            let fresh = t_variable (Typesystem.Types.fresh_for_expr_var v.var) () in
             let ascr = Some fresh in
             let c : O.type_constraint list =
               match v.ascr with
@@ -356,8 +356,8 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
             (x, c, fresh)
           )
           | P_list (List pl) -> (
-            let element_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_element_type" ()) in
-            let list_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_list_type" ()) in
+            let element_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_element_type" ()) () in
+            let list_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_list_type" ()) () in
             let (ps,constraints,ts) = List.map ~f:gather_constraints_from_pattern pl |> List.unzip3 in
             let nested_pattern_constraints = List.concat constraints in
             let whole_list_constraints = Wrap.match_lst element_type list_type in
@@ -375,7 +375,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
             (x, constraints', tl_t)
           )
           | P_variant (constructor, arg) -> (
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_variant" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_variant" ()) () in
             let (arg_t_env , variant_t_env) =
               (* TODO For row polymorphism or variant inference:
                 delete this and the associated constraint and have a heuristic which infers variants
@@ -403,7 +403,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
             (x, constraints, fresh)
           )
           | P_record (labels,pl) -> (
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) () in
             let (pl,all_fields_constraints,ts) = List.map ~f:gather_constraints_from_pattern pl |> List.unzip3 in
             let lm = O.LMap.of_list (List.zip_exn labels ts) in
             let record_contraints = Wrap.match_record lm fresh in
@@ -413,7 +413,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
           )
           | P_tuple pl -> (
             let labels = List.mapi ~f:(fun i _ -> O.Label (string_of_int i)) pl in
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) () in
             let (pl,all_fields_constraints,ts) = List.map ~f:gather_constraints_from_pattern pl |> List.unzip3 in
             let lm = O.LMap.of_list (List.zip_exn labels ts) in
             let record_contraints = Wrap.match_record lm fresh in
@@ -468,7 +468,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
       | Some r -> r
     in
     let wrapped = Wrap.record record_type in
-    return_wrapped (e_record @@ O.LMap.map fst m') e state' constraints wrapped
+    return_wrapped (e_record (O.LMap.map fst m') ()) e state' constraints wrapped
 
   | E_record_accessor {record;path} -> (
       let (e,state,base,t),constraints = self e state record in
@@ -489,7 +489,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     let (e,state,rhs,t_r),c1 = self e state rhs in
     let let_binder = Stage_common.Maps.binder (evaluate_type ~raise e) let_binder in
     let fresh = Typesystem.Types.fresh_for_expr_var let_binder.var in
-    let e = Environment.add_ez_binder (let_binder.var) (t_variable fresh) e in
+    let e = Environment.add_ez_binder (let_binder.var) (t_variable fresh ()) e in
     let (_,state,let_result,l_let),c2 = self e state let_result in
     let wrapped = Wrap.let_in fresh t_r rhs_tv_opt l_let in
     return_wrapped (e_let_in let_binder rhs let_result attr) e state (c1@c2) wrapped
@@ -565,7 +565,7 @@ and type_lambda ~raise e state {
       let output_type' = Option.map ~f:(evaluate_type ~raise e) output_type in
       let binder = Stage_common.Maps.binder (evaluate_type ~raise e) binder in
 
-      let fresh : O.type_expression = t_variable (Typesystem.Types.fresh_for_expr_var binder.var) in
+      let fresh : O.type_expression = t_variable (Typesystem.Types.fresh_for_expr_var binder.var) () in
       let e' = Environment.add_ez_binder (binder.var) fresh e in
 
       let (e, state', result,t),constraints = type_expression' ~raise e' state result in
@@ -638,7 +638,7 @@ and type_and_subst : type a b.
         (* let () = Format.eprintf "\ncstr : %a(was %a) %a(was %a)\n" Ast_core.PP.type_variable tv_root Ast_core.PP.type_variable tv Ast_core.PP.type_variable root Ast_core.PP.type_variable variable in *)
         let () = assert (Var.equal tv_root root) in
         let (expr : O.type_content) = trace_option ~raise (corner_case "wrong constant tag") @@
-        Typesystem.Types.type_expression'_of_simple_c_constant (c_tag , (List.map ~f:O.t_variable tv_list)) in
+        Typesystem.Types.type_expression'_of_simple_c_constant (c_tag , (List.map ~f:(fun x -> O.t_variable x ()) tv_list)) in
         let () = (if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_core.PP.type_content expr) in
         expr
       | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_ } ->

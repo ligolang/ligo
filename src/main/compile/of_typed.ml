@@ -29,7 +29,7 @@ let apply_to_entrypoint_contract ~raise : Ast_typed.program -> string -> Ast_agg
   let Self_ast_typed.Helpers.{parameter=p_ty ; storage=s_ty} =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
   in
-  let ty = t_function (t_pair p_ty s_ty) (t_pair (t_list (t_operation ())) s_ty) () in
+  let ty = t_arrow (t_pair p_ty s_ty) (t_pair (t_list (t_operation ())) s_ty) () in
   let var_ep = Ast_typed.(e_a_variable v ty) in
   compile_expression_in_context ~raise var_ep aggregated_prg
 
@@ -40,7 +40,7 @@ let apply_to_entrypoint_view ~raise : Ast_typed.program -> string list -> Ast_ag
     let v = Location.wrap (Var.of_name view_name) in
     let Self_ast_typed.Helpers.{arg=a_ty ; storage=s_ty ; return=r_ty}, _ =
       trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_view_type view_name prg in
-    let ty = t_function (t_pair a_ty s_ty) r_ty () in
+    let ty = t_arrow (t_pair a_ty s_ty) r_ty () in
     Ast_typed.Label (string_of_int i), Ast_typed.(e_a_variable v ty)
   in
   let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views) in
