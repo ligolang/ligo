@@ -105,9 +105,9 @@ let clean_locations e t =
 
 let add_ast_env ?(name = Location.wrap (Var.fresh ())) env binder body =
   let open Ast_aggregated in
-  let aux (let_binder , expr) (e : expression) =
+  let aux (let_binder , expr, no_mutation) (e : expression) =
     if Var.compare let_binder.Location.wrap_content binder.Location.wrap_content <> 0 && Var.compare let_binder.wrap_content name.wrap_content <> 0 then
-      e_a_let_in let_binder expr e { inline = false ; no_mutation = true ; view = false ; public = false }
+      e_a_let_in let_binder expr e { inline = false ; no_mutation ; view = false ; public = false }
     else
       e in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in
@@ -387,14 +387,14 @@ and make_subst_ast_env_exp ~raise env expr =
    snd @@ Self_ast_aggregated.Helpers.Free_variables.expression expr in
   let rec aux (fv) acc = function
     | [] -> acc
-    | Expression { name; item ; no_mutation = _ } :: tl ->
+    | Expression { name; item ; no_mutation } :: tl ->
        let binder = Location.unwrap name in
        if List.mem fv binder ~equal:Var.equal then
          let expr = val_to_ast ~raise ~loc:name.location item.eval_term item.ast_type in
          let expr_fv = get_fv expr in
          let fv = List.remove_element ~compare:Var.compare binder fv in
          let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
-         aux fv ((name, expr) :: acc) tl
+         aux fv ((name, expr, no_mutation) :: acc) tl
        else
          aux fv acc tl in
   aux (get_fv expr) [] env
