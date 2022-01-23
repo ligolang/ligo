@@ -21,6 +21,7 @@ let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = f
   | E_constant c -> Folds.constant self init c
   | E_application app -> Folds.application self init app
   | E_lambda l -> Folds.lambda self idle init l
+  | E_type_abstraction ta -> Folds.type_abs self init ta
   | E_ascription a -> Folds.ascription self idle init a
   | E_constructor c -> Folds.constructor self init c
   | E_matching {matchee=e; cases} -> (
@@ -123,6 +124,10 @@ let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fu
       let l = Maps.lambda self (fun a -> a) l in
       return @@ E_lambda l
     )
+  | E_type_abstraction ta -> (
+      let ta = Maps.type_abs self ta in
+      return @@ E_type_abstraction ta
+  )
   | E_recursive r ->
       let r = Maps.recursive self (fun a -> a) r in
       return @@ E_recursive r
@@ -230,6 +235,10 @@ let rec fold_map_expression ~raise : ('a , 'err) fold_mapper -> 'a -> expression
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
     )
+  | E_type_abstraction ta -> (
+      let res, ta = Fold_maps.type_abs self init ta in
+      res, return @@ E_type_abstraction ta
+  )
   | E_type_in { type_binder; rhs; let_result } -> (
       let res, let_result = self init let_result in
       (res, return @@ E_type_in {type_binder; rhs; let_result})

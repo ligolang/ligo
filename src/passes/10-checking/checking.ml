@@ -533,6 +533,10 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
                | Some _ -> lambda in
      let (lambda,lambda_type) = type_lambda ~raise ~test ~protocol_version context lambda in
      return (E_lambda lambda ) lambda_type
+  | I.E_type_abstraction {type_binder;result} ->
+    let context = Context.add_type_var context type_binder () in
+    let result  = type_expression' ~raise ~test ~protocol_version context result in
+    return (E_type_abstraction {type_binder;result}) result.type_expression
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
                     ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None;attributes=_};
@@ -892,6 +896,10 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let result = untype_expression result in
       return (e_lambda {var=binder;ascr=Some input_type;attributes=Stage_common.Helpers.empty_attribute} (Some output_type) result)
     )
+  | E_type_abstraction {type_binder;result} -> (
+    let result = untype_expression result in
+    return (e_type_abs type_binder result)
+  )
   | E_constructor {constructor; element} ->
       let p' = untype_expression element in
       return (e_constructor constructor p')

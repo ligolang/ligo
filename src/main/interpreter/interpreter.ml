@@ -1059,6 +1059,9 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
       )
     | E_lambda {binder; result;} ->
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder ; body=result ; env}
+    | E_type_abstraction {type_binder=_ ; result} -> (
+      eval_ligo (result) calltrace env
+    )
     | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_}} -> (
       let* rhs' = eval_ligo rhs calltrace env in
       eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))

@@ -38,6 +38,7 @@ module Free_variables = struct
         (expression b' let_result)
         (self rhs)
     | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
+    | E_type_abstraction { type_binder=_; result} -> self result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
     | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
@@ -239,7 +240,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
   )
   | E_record _, _
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
-  | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
+  | (E_lambda _, _) | (E_type_abstraction _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
   | (E_type_in _, _)| (E_mod_in _, _) | (E_mod_alias _,_)
   | (E_record_accessor _, _) | (E_record_update _,_) | (E_type_inst _, _)
   | (E_matching _, _)

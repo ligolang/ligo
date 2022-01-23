@@ -57,6 +57,12 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
+    | E_type_abstraction { type_binder; result } -> (
+      let def = make_t_def (get_binder_name type_binder) e.location (Ast_core.t_variable type_binder ()) in
+      let (i,env) = add_shadowing_def (i,type_binder) def env in
+      let all_defs = merge_defs env all_defs in
+      find_scopes' (i,all_defs,env,scopes,result.location) bindings result
+    )
     | E_matching {matchee; cases} -> (
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,matchee.location) bindings matchee in
       let aux = fun (i,all_defs,scopes) ({pattern;body}: (Ast_core.expression,_) Ast_core.match_case) ->

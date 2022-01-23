@@ -20,7 +20,7 @@ let extract_variable_types :
       let return = add env in
       match exp.expression_content with
       | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
-      | E_type_in _ | E_mod_in _ | E_mod_alias _
+      | E_type_in _ | E_type_abstraction _ | E_mod_in _ | E_mod_alias _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
       | E_module_accessor _ -> return []
       | E_type_inst _ -> return [] (* TODO *)
