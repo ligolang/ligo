@@ -64,8 +64,11 @@ RUN opam exec -- bisect-ppx-report summary --per-file > coverage/coverage-summar
 # Run doc
 RUN opam exec -- dune build @doc
 
+FROM esydev/esy:nightly-alpine as esy
+
 # TODO see also ligo-docker-large in nix build
 FROM alpine:3.12
+COPY --from=esy . .
 WORKDIR /root/
 COPY --from=0 /tmp/ligo /root/ligo
 COPY --from=0 /ligo/_build/default/_doc/_html /root/doc

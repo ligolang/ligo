@@ -24,11 +24,12 @@ module type S =
   sig
     include COMMENTS
 
-    val input     : string option (* input file     *)
-    val extension : string option (* file extension *)
-    val dirs      : string list   (* -I             *)
-    val show_pp   : bool          (* --show-pp      *)
-    val offsets   : bool          (* neg --columns  *)
+    val input            : string option (* input file         *)
+    val extension        : string option (* file extension     *)
+    val dirs             : string list   (* -I                 *)
+    val project_root     : string option (* --project-root     *)
+    val show_pp          : bool          (* --show-pp          *)
+    val offsets          : bool          (* neg --columns      *)
 
     type status = [
       `Done

@@ -12,7 +12,7 @@ let%expect_test _ =
   (src/command.ml.Exit_called (status 1))
   Raised at Core_kernel__Command.exit in file "src/command.ml", line 23, characters 34-64
   Called from Core_kernel__Command.Exn.handle_uncaught_and_exit in file "src/command.ml", line 32, characters 12-16
-  Called from Cli.run in file "src/bin/cli.ml", line 638, characters 2-49
+  Called from Cli.run in file "src/bin/cli.ml", line 658, characters 2-49
   Called from Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 25, characters 18-31
   Called from Cli_expect_tests__Help_tests.(fun) in file "src/bin/expect_tests/help_tests.ml", line 5, characters 2-18
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
@@ -34,6 +34,7 @@ let%expect_test _ =
     changelog  print the ligo changelog
     print      print intermediary program representation.
                Warning: Intended for development of LIGO and can break at any time
+    install    install ligo packages declared in package.json
     version    print version information
     help       explain a given subcommand (perhaps recursively)
 
@@ -57,6 +58,7 @@ let%expect_test _ =
       changelog  print the ligo changelog
       print      print intermediary program representation.
                  Warning: Intended for development of LIGO and can break at any time
+      install    install ligo packages declared in package.json
       version    print version information
       help       explain a given subcommand (perhaps recursively)
 
@@ -94,6 +96,7 @@ let%expect_test _ =
       [--output-file FILENAME]            if used, prints the output into the
                                           specified file instead of stdout
                                           (alias: -o)
+      [--project-root PATH]               The path to root of the project.
       [--syntax SYNTAX]                   the syntax that will be used. Currently
                                           supported syntaxes are "pascaligo",
                                           "cameligo", "reasonligo" and "jsligo". By
@@ -150,6 +153,7 @@ let%expect_test _ =
       [--output-file FILENAME]     if used, prints the output into the specified
                                    file instead of stdout
                                    (alias: -o)
+      [--project-root PATH]        The path to root of the project.
       [--sender ADDRESS]           the sender the Michelson interpreter transaction
                                    will use.
       [--source ADDRESS]           the source the Michelson interpreter transaction
@@ -205,6 +209,7 @@ let%expect_test _ =
       [--output-file FILENAME]     if used, prints the output into the specified
                                    file instead of stdout
                                    (alias: -o)
+      [--project-root PATH]        The path to root of the project.
       [--sender ADDRESS]           the sender the Michelson interpreter transaction
                                    will use.
       [--source ADDRESS]           the source the Michelson interpreter transaction
@@ -252,6 +257,7 @@ let%expect_test _ =
       [--no-warn]                disable warning messages
       [--now TIMESTAMP]          the NOW value the Michelson interpreter will use
                                  (e.g. '2000-01-01T10:10:10Z')
+      [--project-root PATH]      The path to root of the project.
       [--sender ADDRESS]         the sender the Michelson interpreter transaction
                                  will use.
       [--source ADDRESS]         the source the Michelson interpreter transaction
@@ -299,6 +305,7 @@ let%expect_test _ =
       [--no-warn]                disable warning messages
       [--now TIMESTAMP]          the NOW value the Michelson interpreter will use
                                  (e.g. '2000-01-01T10:10:10Z')
+      [--project-root PATH]      The path to root of the project.
       [--sender ADDRESS]         the sender the Michelson interpreter transaction
                                  will use.
       [--source ADDRESS]         the source the Michelson interpreter transaction
@@ -347,6 +354,7 @@ let%expect_test _ =
       [--no-warn]                disable warning messages
       [--now TIMESTAMP]          the NOW value the Michelson interpreter will use
                                  (e.g. '2000-01-01T10:10:10Z')
+      [--project-root PATH]      The path to root of the project.
       [--sender ADDRESS]         the sender the Michelson interpreter transaction
                                  will use.
       [--source ADDRESS]         the source the Michelson interpreter transaction
@@ -395,6 +403,7 @@ let%expect_test _ =
                                    Available formats are 'text' (default), 'json'
                                    and 'hex'.
       [--no-warn]                  disable warning messages
+      [--project-root PATH]        The path to root of the project.
       [--werror]                   treat warnings as errors
       [--without-run]              disable running of compiled expression.
       [-p PROTOCOL]                choose protocol's types/values pre-loaded into
