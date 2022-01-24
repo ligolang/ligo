@@ -10,7 +10,7 @@ module AST.Capabilities.Completion
 
 import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
-import Control.Lens ((^?))
+import Control.Lens (_2, (^?))
 import Control.Monad (foldM)
 import Data.Foldable (asum)
 import Data.Function (on)
@@ -29,10 +29,10 @@ import AST.Capabilities.Find
 import AST.Pretty (PPableLIGO, docToText)
 import AST.Scope
 import AST.Scope.ScopedDecl
-  (Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), TypeDeclSpecifics (..),
+  (Accessor, DeclarationSpecifics (..), Scope, ScopedDecl (..), Type, TypeDeclSpecifics (..),
   TypeField (..), _RecordType, _TypeSpec, accessField, lppDeclCategory, lppLigoLike, sdSpec,
   tdsInit)
-import AST.Skeleton
+import AST.Skeleton hiding (Type)
 import Product
 import Range
 import Util (unconsFromEnd)
@@ -121,10 +121,10 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
     covers = spineTo (leq pos . getRange) nested
 
     toTspec TypeNotFound = Nothing
-    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec
+    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec . _2  -- TODO
     toTspec (TypeInlined tspec) = Just tspec
 
-    accessAndDereference :: TypeDeclSpecifics -> Accessor -> Maybe TypeDeclSpecifics
+    accessAndDereference :: TypeDeclSpecifics Type -> Accessor -> Maybe (TypeDeclSpecifics Type)
     accessAndDereference tspec accessor =
       dereferenceTspec scope <$> accessField tspec accessor
 

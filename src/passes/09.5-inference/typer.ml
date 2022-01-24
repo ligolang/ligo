@@ -35,8 +35,9 @@ end = struct
         (O.Literal_bytes _)|O.E_literal (O.Literal_address _)|O.E_literal
         (O.Literal_signature _)|O.E_literal (O.Literal_key _)|O.E_literal
         (O.Literal_key_hash _)|O.E_literal (O.Literal_chain_id _)|O.E_literal
-        (O.Literal_operation _) -> ()
-    | O.E_constant        { cons_name = _; arguments } -> 
+        (O.Literal_operation _)|O.E_literal (O.Literal_bls12_381_g1 _)|O.E_literal
+        (O.Literal_bls12_381_g2 _)|O.E_literal (O.Literal_bls12_381_fr _) -> ()
+    | O.E_constant        { cons_name = _; arguments } ->
       List.fold ~f:(fun () e -> expression e) ~init:() arguments
     | O.E_variable        _ -> ()
     | O.E_application     { lamb; args } -> let () = expression lamb in expression args
@@ -98,7 +99,7 @@ end = struct
       | O.Module_alias { alias=_; binders=_} ->
         let _where () = Format.asprintf "module alias %a" O.PP.declaration d in
         () in
-    let () = List.fold ~f:(fun () Location.{wrap_content;location=_} -> decl wrap_content) ~init:() p in
+    let () = List.fold ~f:(fun () Location.{wrap_content;_} -> decl wrap_content) ~init:() p in
     p
 end
 
@@ -144,7 +145,7 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
     let aux env binder =
       trace_option ~raise (unbound_module_variable env binder d.location)
       @@ Environment.get_module_opt binder env in
-    let e = List.Ne.fold_left aux env binders in
+    let e = List.Ne.fold_left ~f:aux ~init:env binders in
     let post_env = Environment.add_module alias e env in
     return (Module_alias { alias; binders}) (t_unit ()) post_env state @@ Wrap.mod_al ()
   )
@@ -216,7 +217,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ -> _ (* return of type_expression *) = fun expr e state new_constraints constraints type_name ->
-    let tv = t_variable type_name in
+    let tv = t_variable type_name () in
     let loc = ae.location in
     let expr' = e_ascription ~loc expr tv in
     if Ast_core.Debug.debug_new_typer then Format.eprintf "Returning expr : %a \nwith new_constraints: %a\n"
@@ -289,6 +290,15 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
   | E_literal (Literal_unit) -> (
       return_wrapped (e_unit ()) e state [] @@ Wrap.literal "unit" (t_unit ())
     )
+  | E_literal (Literal_bls12_381_g1 a) -> (
+      return_wrapped (e_bls12_381_g1 a) e state [] @@ Wrap.literal "bls12_381_g1" (t_bls12_381_g1 ())
+    )
+  | E_literal (Literal_bls12_381_g2 a) -> (
+      return_wrapped (e_bls12_381_g2 a) e state [] @@ Wrap.literal "bls12_381_g2" (t_bls12_381_g2 ())
+    )
+  | E_literal (Literal_bls12_381_fr a) -> (
+      return_wrapped (e_bls12_381_fr a) e state [] @@ Wrap.literal "bls12_381_fr" (t_bls12_381_fr ())
+    )
   | E_constant {cons_name; arguments=lst} ->
     let t = Typer_common.Constant_typers_new.Operators_types.constant_type ~raise cons_name in
     let (e,state,constraints),lst = List.fold_map
@@ -328,11 +338,11 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
         let rec gather_constraints_from_pattern : _ I.pattern -> _ O.pattern * O.type_constraint list * O.type_expression = fun x ->
           match x.wrap_content with
           | P_unit ->
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_unit_pattern" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_unit_pattern" ()) () in
             let c = Wrap.pattern_match_unit fresh in
             (x, c, fresh)
           | P_var v ->(
-            let fresh = t_variable (Typesystem.Types.fresh_for_expr_var v.var) in
+            let fresh = t_variable (Typesystem.Types.fresh_for_expr_var v.var) () in
             let ascr = Some fresh in
             let c : O.type_constraint list =
               match v.ascr with
@@ -346,8 +356,8 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
             (x, c, fresh)
           )
           | P_list (List pl) -> (
-            let element_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_element_type" ()) in
-            let list_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_list_type" ()) in
+            let element_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_element_type" ()) () in
+            let list_type = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_list_type" ()) () in
             let (ps,constraints,ts) = List.map ~f:gather_constraints_from_pattern pl |> List.unzip3 in
             let nested_pattern_constraints = List.concat constraints in
             let whole_list_constraints = Wrap.match_lst element_type list_type in
@@ -365,10 +375,10 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
             (x, constraints', tl_t)
           )
           | P_variant (constructor, arg) -> (
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_variant" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_variant" ()) () in
             let (arg_t_env , variant_t_env) =
               (* TODO For row polymorphism or variant inference:
-                delete this and the associated constraint and have a heuristic which infers variants 
+                delete this and the associated constraint and have a heuristic which infers variants
               *)
               match constructor with
               (* TODO: this prevents shadowing *)
@@ -376,7 +386,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
                 let option_content = Location.wrap ~loc:x.location @@ Ast_core.P_variable (Typesystem.Types.fresh_type_variable ~name:"option_content_none (special case)" ()) in
                 let p = Ast_core.Misc.p_constant C_option [option_content] in
                 (Wrap.type_expression_to_type_value (t_unit ()), p)
-              | Label "Some" -> 
+              | Label "Some" ->
                 let option_content = Location.wrap ~loc:x.location @@ Ast_core.P_variable (Typesystem.Types.fresh_type_variable ~name:"option_content_some (special case)" ()) in
                 let p = Ast_core.Misc.p_constant C_option [option_content] in
                 (option_content, p)
@@ -393,7 +403,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
             (x, constraints, fresh)
           )
           | P_record (labels,pl) -> (
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) () in
             let (pl,all_fields_constraints,ts) = List.map ~f:gather_constraints_from_pattern pl |> List.unzip3 in
             let lm = O.LMap.of_list (List.zip_exn labels ts) in
             let record_contraints = Wrap.match_record lm fresh in
@@ -403,7 +413,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
           )
           | P_tuple pl -> (
             let labels = List.mapi ~f:(fun i _ -> O.Label (string_of_int i)) pl in
-            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) in
+            let fresh = t_variable (Typesystem.Types.fresh_type_variable ~name:"match_record" ()) () in
             let (pl,all_fields_constraints,ts) = List.map ~f:gather_constraints_from_pattern pl |> List.unzip3 in
             let lm = O.LMap.of_list (List.zip_exn labels ts) in
             let record_contraints = Wrap.match_record lm fresh in
@@ -449,7 +459,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     let (e,state',constraints), m' = O.LMap.fold_map ~f:aux ~init:(e,state,[]) m in
     (* Do we need row_element for Ast_core ? *)
     let _,lmap = O.LMap.fold_map ~f:(
-      fun (Label k) (_e,t) i -> 
+      fun (Label k) (_e,t) i ->
         let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
         i+1,({associated_type = t ; michelson_annotation = None ; decl_pos}: O.row_element)
       ) m' ~init:0 in
@@ -458,7 +468,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
       | Some r -> r
     in
     let wrapped = Wrap.record record_type in
-    return_wrapped (e_record @@ O.LMap.map fst m') e state' constraints wrapped
+    return_wrapped (e_record (O.LMap.map fst m') ()) e state' constraints wrapped
 
   | E_record_accessor {record;path} -> (
       let (e,state,base,t),constraints = self e state record in
@@ -479,7 +489,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     let (e,state,rhs,t_r),c1 = self e state rhs in
     let let_binder = Stage_common.Maps.binder (evaluate_type ~raise e) let_binder in
     let fresh = Typesystem.Types.fresh_for_expr_var let_binder.var in
-    let e = Environment.add_ez_binder (let_binder.var) (t_variable fresh) e in
+    let e = Environment.add_ez_binder (let_binder.var) (t_variable fresh ()) e in
     let (_,state,let_result,l_let),c2 = self e state let_result in
     let wrapped = Wrap.let_in fresh t_r rhs_tv_opt l_let in
     return_wrapped (e_let_in let_binder rhs let_result attr) e state (c1@c2) wrapped
@@ -503,7 +513,7 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
     let aux e binder =
       trace_option ~raise (unbound_module_variable e binder ae.location) @@
       Environment.get_module_opt binder e in
-    let env = List.Ne.fold_left aux e binders in
+    let env = List.Ne.fold_left ~f:aux ~init:e binders in
     let e = Environment.add_module alias env e in
     let (e,state,result,t),constraints = self e state result in
     let wrapped =
@@ -555,7 +565,7 @@ and type_lambda ~raise e state {
       let output_type' = Option.map ~f:(evaluate_type ~raise e) output_type in
       let binder = Stage_common.Maps.binder (evaluate_type ~raise e) binder in
 
-      let fresh : O.type_expression = t_variable (Typesystem.Types.fresh_for_expr_var binder.var) in
+      let fresh : O.type_expression = t_variable (Typesystem.Types.fresh_for_expr_var binder.var) () in
       let e' = Environment.add_ez_binder (binder.var) fresh e in
 
       let (e, state', result,t),constraints = type_expression' ~raise e' state result in
@@ -628,7 +638,7 @@ and type_and_subst : type a b.
         (* let () = Format.eprintf "\ncstr : %a(was %a) %a(was %a)\n" Ast_core.PP.type_variable tv_root Ast_core.PP.type_variable tv Ast_core.PP.type_variable root Ast_core.PP.type_variable variable in *)
         let () = assert (Var.equal tv_root root) in
         let (expr : O.type_content) = trace_option ~raise (corner_case "wrong constant tag") @@
-        Typesystem.Types.type_expression'_of_simple_c_constant (c_tag , (List.map ~f:O.t_variable tv_list)) in
+        Typesystem.Types.type_expression'_of_simple_c_constant (c_tag , (List.map ~f:(fun x -> O.t_variable x ()) tv_list)) in
         let () = (if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_core.PP.type_content expr) in
         expr
       | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_ } ->
@@ -653,7 +663,7 @@ and type_and_subst : type a b.
   let () = (if Ast_core.Debug.debug_new_typer && Ast_core.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   (node, ty, state, env)
 
-and type_declaration_subst ~raise env _state decl = 
+and type_declaration_subst ~raise env _state decl =
   let empty_state = Solver.initial_state in
   let (d,t, state, e) = type_and_subst
       (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.declaration\"")
@@ -690,3 +700,26 @@ and type_expression_subst ~raise (env : environment) (state : _ O'.typer_state) 
   let () = (if Ast_core.Debug.json_new_typer then Printf.eprintf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   let () = Pretty_print_variables.flush_pending_print state in
   (env, expr, t, state)
+
+let decompile_env (env : Ast_typed.declaration_loc list) =
+  let rec f env d = match Location.unwrap d with
+    Ast_typed.Declaration_constant {binder;expr;_} ->
+      let e  = Checking.untype_expression expr in
+      let ty = Checking.untype_type_expression expr.type_expression in
+      I.Environment.add_ez_declaration binder e ty env
+  | Declaration_type {type_binder;type_expr;_} ->
+      let type_expr = Checking.untype_type_expression type_expr in
+      I.Environment.add_type type_binder type_expr env
+  | Declaration_module {module_binder;module_;_} ->
+      let module_ = List.fold_left ~f ~init:Ast_core.Environment.empty module_ in
+      I.Environment.add_module module_binder (module_) env
+  | Module_alias {alias;binders} ->
+      let module_ =
+        List.Ne.fold_left ~f:(fun env binder ->
+          Option.value_exn
+          (Environment.get_module_opt binder env))
+        ~init:env binders
+      in
+      I.Environment.add_module alias module_ env
+  in
+  List.fold_left ~f ~init:Ast_core.Environment.empty env

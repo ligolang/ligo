@@ -3,7 +3,9 @@ module Test.Common.Capabilities.Hover
   , HoverTest (..)
   , hover'
   , checkHover
-  , unit_hover
+  , unit_hover_apply_type
+  , unit_hover_inferred_simple
+  , unit_hover_inferred_recursion
   ) where
 
 import Prelude hiding (lines)
@@ -56,8 +58,20 @@ checkHover fp reference HoverTest{..} = do
         _  -> Just (ppToText htDoc) `shouldBe` find (/= "") doc
     _ -> expectationFailure "Hover definition is not of the expected type"
 
-unit_hover :: forall parser. HasScopeForest parser IO => Assertion
-unit_hover = do
+unit_hover_apply_type :: forall parser. HasScopeForest parser IO => Assertion
+unit_hover_apply_type = do
   fp <- makeAbsolute $ contractsDir </> "apply-type.ligo"
   let type' = ApplyType (AliasType "contract") [AliasType "unit"]
   checkHover @parser fp (point 3 23){_rFile = fp} (hover' (interval 2 9 10){_rFile = fp} "c" type' Pascal)
+
+unit_hover_inferred_simple :: forall parser. HasScopeForest parser IO => Assertion
+unit_hover_inferred_simple = do
+  fp <- makeAbsolute $ contractsDir </> "simple.mligo"
+  let type' = AliasType "int"
+  checkHover @parser fp (point 2 9){_rFile = fp} (hover' (interval 1 5 6){_rFile = fp} "x" type' Caml)
+
+unit_hover_inferred_recursion :: forall parser. HasScopeForest parser IO => Assertion
+unit_hover_inferred_recursion = do
+  fp <- makeAbsolute $ contractsDir </> "recursion.mligo"
+  let type' = AliasType "int"
+  checkHover @parser fp (point 2 21){_rFile = fp} (hover' (interval 1 18 21){_rFile = fp} "acc" type' Caml)

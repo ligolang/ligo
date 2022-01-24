@@ -18,7 +18,7 @@ depends: [
   "alcotest" { with-test }
   # Pipelinye
   "ocamlgraph"
-  "menhir" { = "20211012" }
+  "menhir" { = "20211128" }
   "coq" { build & >= "8.12" & < "8.14" }
   # I/O
   "getopt"
@@ -29,7 +29,7 @@ depends: [
   "pprint"
   "yojson"
   "ocaml-recovery-parser"
-  # Tezos libs 
+  # Tezos libs
   "tezos-base"
   "tezos-crypto"
   "tezos-micheline"
@@ -38,6 +38,7 @@ depends: [
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_expect"
+  "ppx_import"
   "ppx_inline_test"
   # work around tezos' failure to constrain
   "ctypes-foreign"
@@ -101,5 +102,5 @@ pin-depends: [
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/src/lib_test" ]
   [ "tezos-version.dev" "./vendors/tezos-ligo/src/lib_version" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/src/lib_workers" ]
-  [ "ocaml-recovery-parser.0.1" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.1" ]
+  [ "ocaml-recovery-parser.0.2.2" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.2" ]
 ]

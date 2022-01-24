@@ -30,7 +30,7 @@ let add_warning _ = ()
 type repl_result =
     Expression_value of Ast_core.expression
   | Defined_values_core of Ast_core.module_
-  | Defined_values_typed of Ast_typed.module'
+  | Defined_values_typed of Ast_typed.module_
   | Just_ok
 
 open Simple_utils.Display
@@ -76,45 +76,45 @@ let repl_result_format : 'a format = {
 
 module Run = Ligo_run.Of_michelson
 
-type state = { env : Ast_typed.environment;
+type state = { env : Environment.t; (* The repl should have its own notion of environment *)
                syntax : Ligo_compile.Helpers.v_syntax;
-               infer : bool ;
                protocol : Environment.Protocols.t;
-               decl_list : Mini_c.program;
+               top_level : Ast_typed.program;
                dry_run_opts : Run.options;
+               project_root : string option;
               }
 
 let try_eval ~raise state s =
-  let options = Compiler_options.make ~infer:state.infer ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
-  let typed_exp,env = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s state.env in
-  let env,applied = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_expression env typed_exp in
-  let mini_c_exp = Ligo_compile.Of_typed.compile_expression ~raise applied in
-  let compiled_exp = Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~raise ~options:options state.decl_list mini_c_exp in
+  let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
+  let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
+  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp module_ in
+  let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
+  let compiled_exp = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let options = state.dry_run_opts in
   let runres = Run.run_expression ~raise ~options:options compiled_exp.expr compiled_exp.expr_ty in
-  let x = Decompile.Of_michelson.decompile_expression ~raise applied.type_expression runres in
+  let x = Decompile.Of_michelson.decompile_expression ~raise aggregated_exp.type_expression runres in
   match x with
   | Success expr ->
-     let state = { state with env = env; decl_list = state.decl_list } in
+     let state = { state with top_level = state.top_level } in
      (state, Expression_value expr)
   | Fail _ ->
     raise.raise `Repl_unexpected
 
-let try_contract ~raise state s =
-  let options = Compiler_options.make ~infer:state.infer ~protocol_version:state.protocol () in
+let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program) : Ast_typed.program =
+  let () = if declaration then assert (List.length m2 = 1) in
+  (m1 @ m2)
+
+let try_declaration ~raise state s =
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
   try
     try_with (fun ~raise ->
-      let typed_prg,core_prg,env =
+      let typed_prg,core_prg =
         Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s state.env in
-      let env,applied =
-        trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_module env typed_prg in
-      let mini_c =
-        Ligo_compile.Of_typed.compile_with_modules ~raise applied in
-      let state = { state with env = env;
-                               decl_list = state.decl_list @ mini_c;
-                               } in
+      let env = Environment.append typed_prg state.env in
+      let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))
     (function
         (`Parser_tracer _ : Main_errors.all)
@@ -128,24 +128,40 @@ let try_contract ~raise state s =
   | Failure _ ->
      raise.raise `Repl_unexpected
 
+let resolve_file_name file_name project_root =
+  (* TODO: dont use stdlib here *)
+  if Stdlib.Sys.file_exists file_name then file_name
+  else
+    match project_root with
+      Some project_root ->
+        let open Preprocessor in
+        let module_resolutions = ModuleResolutions.make project_root in
+        let inclusion_list = ModuleResolutions.get_root_inclusion_list module_resolutions in
+        let external_file = ModuleResolutions.find_external_file ~file:file_name ~inclusion_list in
+        (match external_file with
+          Some external_file -> external_file
+        | None -> file_name)
+    | None -> file_name
+
 let import_file ~raise state file_name module_name =
-  let options = Compiler_options.make ~infer:state.infer ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
-  let module_,env = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
-  let env = Ast_typed.Environment.add_module ~public:true module_name env state.env in
-  let module_ = Ast_typed.(Module_Fully_Typed [Simple_utils.Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
-  let env,contract = trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.morph_module env module_ in
-  let mini_c = Ligo_compile.Of_typed.compile_with_modules ~raise contract in
-  let state = { state with env = env; decl_list = state.decl_list @ mini_c } in
+  let file_name = resolve_file_name file_name state.project_root in
+  let module_ = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
+  let env     = Environment.append module_ state.env in
+  let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
 
-let use_file ~raise state s =
-  let options = Compiler_options.make ~infer:state.infer ~protocol_version:state.protocol () in
+let use_file ~raise state file_name =
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
   (* Missing typer environment? *)
-  let mini_c,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~raise ~add_warning ~options (variant_to_syntax state.syntax) s in
+  let file_name = resolve_file_name file_name state.project_root in
+  let module' = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
+  let env = Environment.append module' state.env in
   let state = { state with env = env;
-                           decl_list = state.decl_list @ mini_c;
+                           top_level = concat_modules ~declaration:false state.top_level module'
                           } in
   (state, Defined_values_typed module')
 
@@ -192,7 +208,7 @@ let parse_and_eval display_format state s =
   let c = match parse s with
     | Use s -> use_file state s
     | Import (fn, mn) -> import_file state fn mn
-    | Expr s -> try_contract state s in
+    | Expr s -> try_declaration state s in
   eval display_format state c
 
 let welcome_msg = "Welcome to LIGO's interpreter!
@@ -200,13 +216,14 @@ Included directives:
   #use \"file_path\";;
   #import \"file_path\" \"module_name\";;"
 
-let make_initial_state syntax protocol infer dry_run_opts =
-  { env = Environment.default protocol;
-    decl_list = [];
+let make_initial_state syntax protocol dry_run_opts project_root =
+  {
+    env = Environment.default protocol ;
+    top_level = [];
     syntax = syntax;
-    infer = infer;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
+    project_root = project_root;
   }
 
 let rec read_input prompt delim =
@@ -232,9 +249,9 @@ let rec loop syntax display_format state n =
      loop syntax display_format state (n + k)
   | None -> ()
 
-let main syntax display_format protocol typer_switch dry_run_opts init_file =
+let main syntax display_format protocol dry_run_opts init_file project_root =
   print_endline welcome_msg;
-  let state = make_initial_state syntax protocol typer_switch dry_run_opts in
+  let state = make_initial_state syntax protocol dry_run_opts project_root in
   let state = match init_file with
     | None -> state
     | Some file_name -> let c = use_file state file_name in

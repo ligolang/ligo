@@ -7,15 +7,16 @@ open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
 module Tezos_protocol = Tezos_protocol_011_PtHangz2
 module Tezos_raw_protocol = Tezos_raw_protocol_011_PtHangz2
+module Tezos_protocol_parameters = Tezos_protocol_011_PtHangz2_parameters
 
 type r = Errors.interpreter_error raise
 
 type bootstrap_contract =
-  int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_typed.type_expression * Ast_typed.type_expression
+  int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_aggregated.type_expression * Ast_aggregated.type_expression
 type block = Tezos_alpha_test_helpers.Block.t
 type last_originations = (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * Memory_proto_alpha.Protocol.Alpha_context.Contract.t list) list
-type storage_tys = (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression) list
-type parameter_tys = (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_typed.type_expression) list
+type storage_tys = (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression) list
+type parameter_tys = (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression) list
 type state_error = Tezos_error_monad.TzCore.error list
 type tezos_op = Tezos_raw_protocol.Alpha_context.packed_operation
 
@@ -61,8 +62,8 @@ let contract_exists : context ->  Memory_proto_alpha.Protocol.Alpha_context.Cont
     Tezos_raw_protocol.Alpha_services.Contract.info Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
   Trace.tz_result_to_bool info
 
-let compare_account_ = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare
-let compare_account a b = (compare_account_ a b) = 0
+let equal_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.equal
+let compare_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare
 
 type ligo_repr = unit Tezos_utils.Michelson.michelson
 type canonical_repr = Tezos_raw_protocol.Michelson_v1_primitives.prim Tezos_micheline.Micheline.canonical
@@ -373,7 +374,7 @@ let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt
 let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> value * value -> Z.t -> value * context =
   fun ~raise ~loc ~calltrace ctxt (contract, storage) amt ->
     let contract = trace_option ~raise (corner_case ()) @@ get_michelson_contract contract in
-    let (storage,_,ligo_ty) = trace_option ~raise (corner_case ()) @@ get_michelson_expr storage in
+    let { code = storage ; ast_ty = ligo_ty ; _ } = trace_option ~raise (corner_case ()) @@ get_michelson_expr storage in
     let open Tezos_alpha_test_helpers in
     let source = unwrap_source ~raise ~loc ctxt.internals.source in
     let amt = Test_tez.Tez.of_mutez (Int64.of_int (Z.to_int amt)) in
@@ -407,7 +408,7 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
     match initial_balances with
     | [] -> () (* if empty list: will be defaulted with coherent values*)
     | baker::_ -> (
-      let max = Tezos_protocol_011_PtHangz2_parameters.Default_parameters.constants_test.tokens_per_roll in
+      let max = Tezos_protocol_parameters.Default_parameters.constants_test.tokens_per_roll in
       if (Tez.(<) (Alpha_context.Tez.of_mutez_exn baker) max) then raise.raise (Errors.not_enough_initial_accounts loc max) else ()
     )
   in

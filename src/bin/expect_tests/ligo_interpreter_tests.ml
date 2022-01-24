@@ -47,6 +47,7 @@ let%expect_test _ =
     - test_map_update exited with value ().
     - test_set_add exited with value ().
     - test_set_mem exited with value ().
+    - test_set_remove exited with value ().
     - test_recursion_let_rec_in exited with value ().
     - test_top_level_recursion exited with value ().
     - test_bitwise_ops exited with value ().
@@ -67,15 +68,24 @@ let%expect_test _ =
     - test_some exited with value ().
     - test_some_with_error exited with value ().
     - test_none exited with value ().
-    - test_none_with_error exited with value (). |}]
+    - test_none_with_error exited with value ().
+    - test_unopt exited with value ().
+    - test_unopt_with_error exited with value ().
+    - test_sha256 exited with value ().
+    - test_sha512 exited with value ().
+    - test_blake2b exited with value ().
+    - test_keccak exited with value ().
+    - test_sha3 exited with value ().
+    - test_key_hash exited with value ().
+    - test_check exited with value ().
+    - test_int_bls exited with value (). |}]
 
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
   run_ligo_good ["run"; "test" ; test "imported_modules/test.mligo" ; "--format" ; "dev" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test1 exited with value ().
-    Number of elements in environment: 7 |}]
+    - test1 exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "views_test.mligo" ; "--protocol" ; "hangzhou" ] ;
@@ -221,7 +231,6 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_importer.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test_imported.mligo exited with value {D = {default = {final = false ; initial = true}} ; main = <fun>}.
     - test exited with value (). |}]
 
 let%expect_test _ =
@@ -441,6 +450,12 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "pairing_check.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -559,3 +574,47 @@ let%expect_test _ =
 
     The source address is not an implicit account
     KT1EaZdMJaW3jgoYLwKJSjuUFA6qoKCPjiie |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 20-45:
+      1 | const foo = (x: {field: int}): {field: int} => {return x};
+      2 | const bar = Test.run(foo, {property: "toto"});
+      3 |
+
+    These types are not matching:
+     - record[field -> int]
+     - record[property -> string] |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 20-33:
+      1 | const foo = (x:  {b:int}):  {b:int} => {return x};
+      2 | const bar = Test.run(foo, "toto");
+
+    These types are not matching:
+     - record[b -> int]
+     - string |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 20-42:
+      1 | const foo = (x: int): int => {return x};
+      2 | const bar = Test.run(foo, {field: "toto"});
+
+    These types are not matching:
+     - int
+     - record[field -> string] |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 26-27:
+      2 |   let x = Test.eval 4n in
+      3 |   let y = (Test.decompile x : string) in
+      4 |   ()
+
+    This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]

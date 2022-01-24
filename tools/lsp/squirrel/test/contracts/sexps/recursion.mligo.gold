@@ -9,7 +9,7 @@
   (fun
     rec
     fibo
-    (type? (?(tuple? (? n) (? n_1) (? n_0))) (PROD int (PROD int int)))
+    (type? (?(tuple? (? n) (? n_1) (? n_0))) (PROD int int int))
     :
     int
     =

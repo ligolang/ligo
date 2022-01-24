@@ -4,6 +4,7 @@
 
 module Region = Simple_utils.Region
 module Utils  = Simple_utils.Utils
+module Pos    = Simple_utils.Pos
 
 (* Generic signature of tokens *)
 
@@ -71,10 +72,7 @@ module type PARSER =
         include Merlin_recovery.RECOVERY_GENERATED
                 with module I := MenhirInterpreter
 
-        module Default :
-        sig
-          val default_loc : Region.t ref
-        end
+        val default_value : Region.t -> 'a MenhirInterpreter.symbol -> 'a
       end
   end
 
@@ -85,10 +83,18 @@ module type PAR_ERR =
     val message : int -> string
   end
 
-(* Debug setting *)
+(* Parser configuration *)
 
-module type DEBUG_CONFIG =
+module type CONFIG =
   sig
+    (* Assume that positions refer to bytes or code points.
+       It mostly affects the position of synthesized tokens in the error recovery
+       mode because menhir requires to convert [Pos.t] type to the poorer
+       representation - [Lexing.position]. *)
+    val mode : [`Byte | `Point]
+
+    (* Debug options *)
+
     (* Enable debug printing in the recovery algorithm *)
     val error_recovery_tracing : bool
     (* Path to a log file or [None] that means to use stdout *)
@@ -97,9 +103,9 @@ module type DEBUG_CONFIG =
 
 (* The functor integrating the parser with its errors *)
 
-module Make (Lexer: LEXER)
-            (Parser: PARSER with type token = Lexer.Token.token)
-            (Debug: DEBUG_CONFIG) =
+module Make (Lexer  : LEXER)
+            (Parser : PARSER with type token = Lexer.Token.token)
+            (Config : CONFIG) =
   struct
     module Token = Lexer.Token
     type token = Lexer.token
@@ -221,10 +227,32 @@ module Make (Lexer: LEXER)
 
     (* Incremental parsing *)
 
+    (* Wrap lexer in supplier according [mode] *)
+    let lexer_lexbuf_to_supplier mode lexer lexbuf =
+      let to_point (pos : Simple_utils.Pos.t) : Lexing.position =
+        if pos#is_ghost then
+            Lexing.dummy_pos
+        else {
+            pos_fname = pos#file;
+            pos_lnum  = pos#line;
+            pos_bol   = pos#point_bol;
+            pos_cnum  = pos#point_num } in
+      let to_byte pos = pos#byte in
+      let supplier to_position =
+        fun () ->
+        let token = lexer lexbuf in
+        let (startp, endp) = (Token.to_region token)#pos
+        in token, to_position startp, to_position endp
+      in
+      (* Note: both conversions are lossy *)
+      match mode with
+      | `Byte  -> supplier to_byte
+      | `Point -> supplier to_point
+
     let incr_menhir lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf       = lexbuf_of source
       and menhir_lexer = mk_menhir_lexer Lexer.scan in
-      let supplier     = Inter.lexer_lexbuf_to_supplier menhir_lexer lexbuf in
+      let supplier     = lexer_lexbuf_to_supplier Config.mode menhir_lexer lexbuf in
       let failure      = raise_on_failure (module ParErr) in
       let interpreter  = Inter.loop_handle success failure supplier in
       let module Incr  = Parser.Incremental in
@@ -267,7 +295,7 @@ module Make (Lexer: LEXER)
     (* Debug printer *)
 
     let tracing_channel =
-      match Debug.tracing_output with
+      match Config.tracing_output with
       | None      -> stdout
       | Some path -> open_out path
 
@@ -276,7 +304,7 @@ module Make (Lexer: LEXER)
             (struct
                 module I = Inter
                 let print str =
-                  if Debug.error_recovery_tracing then
+                  if Config.error_recovery_tracing then
                       Printf.fprintf tracing_channel "%s" str
 
                 let print_symbol = function
@@ -287,20 +315,44 @@ module Make (Lexer: LEXER)
                 let print_token t = print @@ Lexer.Token.to_lexeme t
             end)
 
-    (* Remember last consumed token to assign approximate to synthesized token *)
-    let last_token_region = ref Region.ghost
+    let checkpoint_to_string = function
+      | Inter.InputNeeded _   -> "InputNeeded"
+      | Inter.Accepted _      -> "Accepted"
+      | Inter.Rejected        -> "Rejected"
+      | Inter.AboutToReduce _ -> "AboutToReduce"
+      | Inter.HandlingError _ -> "HandlingError"
+      | Inter.Shifting _      -> "Shifting"
 
     module R = Merlin_recovery.Make
                    (Inter)
                    (struct
                        include Parser.Recovery
 
-                       let default_value _loc sym =
-                         let stop = !last_token_region#stop in
-                         Default.default_loc := Region.make stop stop;
-                         default_value sym
+                       (* Note: it's consistent with [lexer_lexbuf_to_supplier] *)
+                       let convert mode position : Pos.t =
+                         (* Because we cannot restore both byte and point position
+                            correctly another part is assumed to be equal.
+
+                            Assuming that [Pos.from_byte] keeps
+                            [(point_bol, point_num) = (byte.pos_bol, byte.pos_cnum)]
+                          *)
+                         if Caml.(position = Lexing.dummy_pos) then
+                             Pos.ghost
+                         else
+                         match mode with
+                         | `Byte  -> Pos.from_byte position
+                         | `Point -> Pos.from_byte position
+
+                       let default_value loc sym =
+                         let open Custom_compiler_libs.Location in
+                         let convert = convert Config.mode in
+                         let reg = Region.make ~start:(convert loc.loc_start)
+                                               ~stop:(convert loc.loc_end)
+                         in Parser.Recovery.default_value reg sym
 
                        let guide _ = false
+
+                       let use_indentation_heuristic = false
                     end)
                    (TracingPrinter)
 
@@ -320,6 +372,12 @@ module Make (Lexer: LEXER)
           | InternalError of string
             (* returned in impossible match cases or [Merlin_recovery]'s logic error *)
 
+        let inputNeededExpected = function
+          | Inter.InputNeeded _ | Inter.Accepted _      | Inter.HandlingError _
+          | Inter.Shifting _    | Inter.AboutToReduce _ | Inter.Rejected as cp ->
+             Format.sprintf "Expected InputNeeded checkpoint, but actual is %s"
+                 (checkpoint_to_string cp)
+
         (* Moves parser through [Shifting] and [AboutToReduce] checkpoints like
            in simple [loop_handle] from MenhirLib. *)
         let rec check_for_error checkpoint : ('a step, 'a Inter.checkpoint) Stdlib.result =
@@ -335,7 +393,9 @@ module Make (Lexer: LEXER)
         let try_recovery failure_cp candidates token : 'a step =
           begin match R.attempt candidates token with
           | `Ok (Inter.InputNeeded _ as cp, _) -> Intermediate (Correct cp)
-          | `Ok _     -> InternalError "Recovery failed: impossible result of [attempt] function"
+          | `Ok (cp, _) ->
+             InternalError ("Recovery failed due to impossible result of [attempt] function:\n"
+                            ^ (inputNeededExpected cp))
           | `Accept x -> Success x
           | `Fail ->
              begin match token with
@@ -364,7 +424,9 @@ module Make (Lexer: LEXER)
                 let candidates = R.generate env in
                 (try_recovery failure_cp candidates token, Some error)
              end
-          | Correct (_) -> (InternalError "Impossible case", None)
+          | Correct cp ->
+             let msg = "Impossible case:\n" ^ (inputNeededExpected cp)
+             in (InternalError msg, None)
           | Recovering (failure_cp, candidates) ->
              (try_recovery failure_cp candidates token, None)
 
@@ -385,7 +447,6 @@ module Make (Lexer: LEXER)
                | Some error -> errors := error :: !errors;
                | None       -> ()
                end;
-               last_token_region := (let (t, _, _) = token in Token.to_region t);
                match s with
                | Success x              -> Stdlib.Ok (success x, !errors)
                | Intermediate (parser)  -> loop parser
@@ -403,7 +464,7 @@ module Make (Lexer: LEXER)
     let incr_menhir_recovery lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf       = lexbuf_of source
       and menhir_lexer = mk_menhir_lexer Lexer.scan in
-      let supplier     = Inter.lexer_lexbuf_to_supplier menhir_lexer lexbuf in
+      let supplier     = lexer_lexbuf_to_supplier Config.mode menhir_lexer lexbuf in
       let failure      = get_message_on_failure (module ParErr) in
       let interpreter  = Recover.loop_handle success failure supplier in
       let module Incr  = Parser.Incremental in

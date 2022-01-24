@@ -4,12 +4,15 @@ module Test.Common.Capabilities.Rename
   , renameParam
   , renameInIncludedFile
   , renameNestedInclude
+  , renameTypeVariable
   ) where
 
 import Control.Arrow ((***))
 import Data.HashMap.Strict qualified as HM
+import Data.List (sort)
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Word (Word32)
 import Language.LSP.Types qualified as J
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
@@ -53,14 +56,17 @@ testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected
 
     case renameDeclarationAt pos tree newName of
       NotFound -> expectationFailure "Should return edits"
-      Ok results -> results `shouldBe` expected'
+      Ok results -> sortWSMap results `shouldBe` sortWSMap expected'
   where
-    len = T.length name
+    len = fromIntegral $ T.length name
+
+    sortWSMap :: J.WorkspaceEditMap -> HM.HashMap J.Uri [(J.Range, Text)]
+    sortWSMap = fmap (\(J.List xs) -> sort $ fmap (\(J.TextEdit r t) -> (r, t)) xs)
 
 testRenameFail
   :: forall impl. HasScopeForest impl IO
   => FilePath  -- ^ Contract path
-  -> (Int, Int)  -- ^ Rename location
+  -> (Word32, Word32)  -- ^ Rename location
   -> Assertion
 testRenameFail fp pos = do
     tree <- readContractWithScopes @impl fp
@@ -105,4 +111,11 @@ renameNestedInclude = do
   testRenameOk @impl def "f" def "func"
     [ (param, [(interval 1 2 3){_rFile = param}])
     , (func, [(interval 4 3 4){_rFile = func}, def])
+    ]
+
+renameTypeVariable :: forall impl. HasScopeForest impl IO => Assertion
+renameTypeVariable = do
+  fp <- makeAbsolute (contractsDir </> "parametric.religo")
+  testRenameOk @impl (point 1 36){_rFile = fp} "a" (point 1 36){_rFile = fp} "key"
+    [ (fp, [(interval 1 36 37){_rFile = fp}, (interval 1 11 12){_rFile = fp}])
     ]

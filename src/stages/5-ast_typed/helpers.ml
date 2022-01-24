@@ -2,6 +2,7 @@ module Location    = Simple_utils.Location
 module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
+
 open Types
 
 let range i j =
@@ -20,7 +21,7 @@ let get_pair m =
   | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =
-  let aux i = 
+  let aux i =
     let label = Label (string_of_int i) in
     let opt = LMap.find_opt (label) m in
     Option.bind ~f: (fun opt -> Some ((label,opt),i+1)) opt

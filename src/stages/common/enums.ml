@@ -31,6 +31,9 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_operation of bytes
+  | Literal_bls12_381_g1 of bytes
+  | Literal_bls12_381_g2 of bytes
+  | Literal_bls12_381_fr of bytes
 [@@deriving yojson, ord]
 
 let literal_to_enum = function
@@ -47,6 +50,9 @@ let literal_to_enum = function
   | Literal_key_hash _  -> 11
   | Literal_chain_id _  -> 12
   | Literal_operation _ -> 13
+  | Literal_bls12_381_g1 _ -> 14
+  | Literal_bls12_381_g2 _ -> 15
+  | Literal_bls12_381_fr _ -> 16
 
 type constant' =
   | C_INT
@@ -162,7 +168,6 @@ type constant' =
   | C_SHA256
   | C_SHA512
   | C_BLAKE2b
-  | C_HASH
   | C_HASH_KEY
   | C_CHECK_SIGNATURE
   | C_CHAIN_ID
@@ -205,7 +210,6 @@ type constant' =
   | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
   | C_TEST_COMPILE_META_VALUE [@only_interpreter]
-  | C_TEST_MUTATE_COUNT [@only_interpreter]
   | C_TEST_MUTATE_VALUE [@only_interpreter]
   | C_TEST_MUTATION_TEST [@only_interpreter]
   | C_TEST_MUTATION_TEST_ALL [@only_interpreter]
@@ -213,6 +217,7 @@ type constant' =
   | C_TEST_RUN [@only_interpreter]
   | C_TEST_EVAL [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT [@only_interpreter]
+  | C_TEST_DECOMPILE [@only_interpreter]
   | C_TEST_TO_CONTRACT [@only_interpreter]
   | C_TEST_TO_ENTRYPOINT [@only_interpreter]
   | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]

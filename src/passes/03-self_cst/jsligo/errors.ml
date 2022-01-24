@@ -42,8 +42,8 @@ let error_ppformat : display_format:string display_format ->
         var.value
     | `Self_cst_jsligo_duplicate_field_name var ->
       Format.fprintf f
-        "Duplicate field name %S in this record declaration.\n\
-        Hint: Change the name.\n"
+        "@[<hv>%a@.Duplicate field name %S in this record declaration.@.Hint: Change the name.@]"
+        Snippet.pp_lift var.region
         var.value
     | `Self_cst_jsligo_not_supported_variant _t ->
       Format.fprintf f

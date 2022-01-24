@@ -6,9 +6,9 @@ import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)
 
-import Test.Common.Util (openLigoDoc, runHandlersTest)
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.LSP (openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "document-format"

@@ -1,0 +1,6 @@
+---
+  title: "Fix --lib and adding it for 'print preprocess' "
+  merge_request: "1460"
+  author: "melwyn95 & Rémi Lesénéchal"
+  type: "fixed"
+

@@ -2,22 +2,22 @@ open Simple_utils.Trace
 open Errors
 module LT = Ligo_interpreter.Types
 
-let mutate_some_value : raise:interpreter_error raise -> Location.t -> Z.t -> LT.value -> Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) option =
+let mutate_some_value : raise:interpreter_error raise -> Location.t -> Z.t -> LT.value -> Ast_aggregated.type_expression -> (Ast_aggregated.expression * LT.mutation) option =
   fun ~raise loc z v v_type ->
     let n = Z.to_int z in
     let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
-    let module Fuzzer = Fuzz.Ast_typed.Mutator in
+    let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
     Fuzzer.some_mutate_expression ~n expr
 
-let mutate_all_value : raise:interpreter_error raise -> Location.t -> LT.value -> Ast_typed.type_expression -> (Ast_typed.expression * LT.mutation) list =
+let mutate_all_value : raise:interpreter_error raise -> Location.t -> LT.value -> Ast_aggregated.type_expression -> (Ast_aggregated.expression * LT.mutation) list =
   fun ~raise loc v v_type ->
     let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
-    let module Fuzzer = Fuzz.Ast_typed.Mutator in
+    let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
     Fuzzer.all_mutate_expression expr
 
-let rec expr_gen : raise:interpreter_error raise -> Ast_typed.type_expression -> Ast_typed.expression QCheck.Gen.t =
+let rec expr_gen : raise:interpreter_error raise -> Ast_aggregated.type_expression -> Ast_aggregated.expression QCheck.Gen.t =
   fun ~raise type_expr ->
-  let open Ast_typed in
+  let open Ast_aggregated in
   if is_t_unit type_expr then
     QCheck.Gen.(unit >>= fun _ -> return (e_a_unit ()))
   else if is_t_string type_expr then
@@ -49,16 +49,16 @@ let rec expr_gen : raise:interpreter_error raise -> Ast_typed.type_expression ->
                    return (of_list l))
     | None -> raise.raise (Errors.generic_error type_expr.location "Expected set type")
   else if is_t_sum type_expr then
-    match get_t_sum type_expr with
+    match get_t_sum_opt type_expr with
     | Some rows ->
        let l = LMap.to_kv_list rows.content in
-       let gens = List.map ~f:(fun (label, row_el) ->
+       let gens = List.map ~f:(fun (Label label, row_el) ->
                       QCheck.Gen.(expr_gen ~raise row_el.associated_type >>= fun v ->
-                                  return (e_a_constructor' ~layout:rows.layout rows.content label v))) l in
+                                  return (e_a_constructor label v (t_sum ~layout:rows.layout rows.content)))) l in
        QCheck.Gen.oneof gens
     | None -> raise.raise (Errors.generic_error type_expr.location "Expected sum type")
   else if is_t_record type_expr then
-    match get_t_record type_expr with
+    match get_t_record_opt type_expr with
     | Some rows ->
        let l = LMap.to_kv_list rows.content in
        let gens = List.map ~f:(fun (label, row_el) ->

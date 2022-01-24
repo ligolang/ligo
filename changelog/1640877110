@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1481'
+title: Add cases for decompilation of bls12_381_g1/g2/fr
+type: fixed

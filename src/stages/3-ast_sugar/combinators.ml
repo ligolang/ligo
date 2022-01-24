@@ -4,7 +4,31 @@ module Option = Simple_utils.Option
 module SMap = Simple_utils.Map.String
 open Stage_common.Constant
 
-let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
+(* Helpers for accessing and constructing elements are derived using
+   `ppx_woo` (`@@deriving ez`) *)
+
+type expression_content = [%import: Types.expression_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_e" , fun ?(loc = Location.generated) expression_content ->
+                  ({ expression_content ; location = loc } : expression)) ;
+        ("get" , fun x -> x.expression_content) ;
+      ] ;
+      wrap_constructor = ("expression_content" , (fun expression_content ?loc () -> make_e ?loc expression_content)) ;
+      wrap_get = ("expression_content" , get) ;
+    } ]
+
+type type_content = [%import: Types.type_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_t" , fun  ?(loc = Location.generated) type_content ->
+                  ({ type_content ; location = loc } : type_expression)) ;
+        ("get" , fun x -> x.type_content) ;
+      ] ;
+      wrap_constructor = ("type_content" , (fun type_content ?loc () -> make_t ?loc type_content)) ;
+      wrap_get = ("type_content" , get) ;
+      default_get = `Option ;
+    } ]
 
 let tuple_to_record lst =
   let aux (i,acc) el = (i+1,(string_of_int i, el)::acc) in
@@ -42,11 +66,7 @@ let t_sum ?loc m : type_expression =
   let lst = SMap.to_kv_list_rev m in
   t_sum_ez ?loc lst
 
-let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
-
-let make_e ?(loc = Location.generated) expression_content =
-  let location = loc in
-  { expression_content; location }
+let t_arrow ?loc type1 type2  : type_expression = t_arrow ?loc {type1; type2} ()
 
 let e_literal ?loc l : expression = make_e ?loc @@ E_literal l
 let e__type_ ?loc p : expression = make_e ?loc @@ E_literal (Literal__type_ p)

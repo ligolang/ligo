@@ -42,6 +42,7 @@ import Control.Monad.Trans.Writer
 import Data.Text qualified as T
 
 import Data.HashMap.Strict qualified as HM
+import Data.HashSet qualified as HS
 import Language.LSP.Types qualified as J
 
 import AST.Pretty
@@ -75,23 +76,31 @@ typeExtractionCodeAction at uri (SomeLIGO dialect tree) =
           [] -> getElem @Range i
           (x:_) -> getElem @Range $ extract x
         strippedTree =  make (i, RawContract filteredSubtree)
+      typeAliasName <- genTypeName tree
+      typeVars <- extractTypeVariableNames strippedTree
       case spineTo (leq at . getElem) strippedTree of
         ((match -> Just (info, TypeName tn)):_) -> do
-          typeAliasName <- genTypeName tree
           typeEdits <- makeReplaceTypeEdits typeAliasName (Right tn) strippedTree
           let
             replaceRange = getElem @Range info
-            typeAlias = constructTypeAlias dialect typeAliasName (Left tn) filteredSubtreeRange
+            typeAlias = constructTypeAlias dialect typeAliasName typeVars (Left tn) filteredSubtreeRange
           return $ mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
         (typeNode@(match @Type -> Just (info, exactType)):_) -> do
-          typeAliasName <- genTypeName tree
           typeEdits <- makeReplaceTypeEdits typeAliasName (Left exactType) strippedTree
           let
             replaceRange = getElem @Range info
-            typeAlias = constructTypeAlias dialect typeAliasName (Right typeNode) filteredSubtreeRange
+            typeAlias = constructTypeAlias dialect typeAliasName typeVars (Right typeNode) filteredSubtreeRange
           return $ mkCodeAction uri replaceRange (typeEdits <> [typeAlias])
         _ -> return [] -- Matched everything but type, ignore
     _ -> return [] -- Malformed tree with error nodes passed, ignore
+
+extractTypeVariableNames
+  :: MonadCatch m
+  => LIGO Info'
+  -> m (HS.HashSet T.Text)
+extractTypeVariableNames = execWriterT . visit
+  [ Visit \(_, TypeVariableName typeVar) -> tell $ HS.singleton typeVar
+  ]
 
 -- | Generate fresh type alias that is not found
 -- in the given tree.
@@ -118,11 +127,12 @@ genTypeName _tree =
 -- either if it's a typename or some other complex type.
 constructTypeAlias
   :: Lang
-  -> T.Text -- Given type alias
-  -> Either T.Text (LIGO Info') -- Either type name or type node
-  -> Range -- range of the topmost level of the stripped tree
+  -> T.Text -- ^ Given type alias
+  -> HS.HashSet T.Text -- ^ Type variables in the node
+  -> Either T.Text (LIGO Info') -- ^ Either type name or type node
+  -> Range -- ^ Range of the topmost level of the stripped tree
   -> J.TextEdit
-constructTypeAlias dialect alias t Range{_rStart = (sl, sc, _)} =
+constructTypeAlias dialect alias typeVars t Range{_rStart = (sl, sc, _)} =
   J.TextEdit
     { _range = toLspRange $ point sl sc
     , _newText = T.pack . (<>"\n") . show . lppDialect @(LIGO Info') dialect $
@@ -131,13 +141,20 @@ constructTypeAlias dialect alias t Range{_rStart = (sl, sc, _)} =
             defaultState :< inject @Binding
               (BTypeDecl
                 (defaultState :< inject @TypeName (TypeName alias))
+                typeVarNode
                 (defaultState :< inject @TypeName (TypeName typeName)))
           (Right typeNode) ->
             defaultState :< inject @Binding
               (BTypeDecl
                 (defaultState :< inject @TypeName (TypeName alias))
+                typeVarNode
                 typeNode)
     }
+  where
+    typeVarNode = case (defaultState :<) . inject . TypeVariableName <$> HS.toList typeVars of
+      []     -> Nothing
+      [tVar] -> Just $ defaultState :< inject (TypeParam tVar)
+      tVars  -> Just $ defaultState :< inject (TypeParams tVars)
 
 defaultState :: Product Info'
 defaultState = [] :> Nothing :> PreprocessedRange (point 1 1) :> [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil

@@ -73,7 +73,7 @@ let type_expression'_of_simple_c_row : Ast_core.row_tag * Ast_core.row_variable 
   fun (tag, content) ->
   let open Ast_core in
   let fields = LMap.map (fun {associated_variable;michelson_annotation;decl_pos} ->
-    {associated_type = Ast_core.t_variable associated_variable; michelson_annotation; decl_pos}) content in
+    {associated_type = Ast_core.t_variable associated_variable (); michelson_annotation; decl_pos}) content in
   match tag with
   | C_record -> T_record { layout = Some default_layout ; fields }
   | C_variant -> T_sum { layout = Some default_layout ; fields }

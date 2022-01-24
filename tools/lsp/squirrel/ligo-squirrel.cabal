@@ -14,6 +14,7 @@ library
       AST.Capabilities
       AST.Capabilities.CodeAction.ExtractTypeAlias
       AST.Capabilities.Completion
+      AST.Capabilities.DocumentLink
       AST.Capabilities.DocumentSymbol
       AST.Capabilities.Find
       AST.Capabilities.Folding
@@ -49,6 +50,7 @@ library
       Parser
       ParseTree
       Product
+      Progress
       Range
       Util
       Util.Graph
@@ -131,8 +133,8 @@ library
     , process
     , regex-tdfa
     , safe-exceptions
-    , template-haskell
     , text
+    , th-compat
     , transformers
     , tree-sitter
     , unliftio
@@ -278,10 +280,12 @@ executable ligo-vet
 
 test-suite integration-test
   type: exitcode-stdio-1.0
-  main-is: Driver.hs
+  main-is: Main.hs
   other-modules:
+      Driver
       Test.Integrational.Capabilities.CodeAction.ExtractTypeAlias
       Test.Integrational.Capabilities.Completion
+      Test.Integrational.Capabilities.DocumentLink
       Test.Integrational.Capabilities.DocumentSymbol
       Test.Integrational.Capabilities.Find
       Test.Integrational.Capabilities.Hover
@@ -291,6 +295,7 @@ test-suite integration-test
       Test.Integrational.Diagnostics
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
@@ -299,6 +304,7 @@ test-suite integration-test
       Test.Common.Capabilities.Util
       Test.Common.Diagnostics
       Test.Common.FixedExpectations
+      Test.Common.Tasty
       Test.Common.Util
       Test.Common.Util.Parsers
       Paths_ligo_squirrel
@@ -359,7 +365,6 @@ test-suite integration-test
     , hspec-expectations
     , lens
     , ligo-squirrel
-    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty
@@ -371,11 +376,13 @@ test-suite integration-test
 
 test-suite ligo-contracts-test
   type: exitcode-stdio-1.0
-  main-is: Driver.hs
+  main-is: Main.hs
   other-modules:
+      Driver
       Test.Parsers
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
@@ -384,6 +391,7 @@ test-suite ligo-contracts-test
       Test.Common.Capabilities.Util
       Test.Common.Diagnostics
       Test.Common.FixedExpectations
+      Test.Common.Tasty
       Test.Common.Util
       Test.Common.Util.Parsers
       Paths_ligo_squirrel
@@ -444,7 +452,6 @@ test-suite ligo-contracts-test
     , hspec-expectations
     , lens
     , ligo-squirrel
-    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty
@@ -456,12 +463,14 @@ test-suite ligo-contracts-test
 
 test-suite lsp-handlers-test
   type: exitcode-stdio-1.0
-  main-is: Driver.hs
+  main-is: Main.hs
   other-modules:
+      Driver
       Test.Capabilities.CodeAction
       Test.Capabilities.Completion
       Test.Capabilities.Definition
       Test.Capabilities.DocumentFormatting
+      Test.Capabilities.DocumentLink
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Folding
       Test.Capabilities.Hover
@@ -472,8 +481,11 @@ test-suite lsp-handlers-test
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
       Test.Capabilities.TypeDefinition
+      Test.Common.LSP
+      Test.DisabledFeatures
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
@@ -482,6 +494,7 @@ test-suite lsp-handlers-test
       Test.Common.Capabilities.Util
       Test.Common.Diagnostics
       Test.Common.FixedExpectations
+      Test.Common.Tasty
       Test.Common.Util
       Test.Common.Util.Parsers
       Paths_ligo_squirrel
@@ -534,7 +547,9 @@ test-suite lsp-handlers-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , aeson
     , base
+    , data-default
     , directory
     , duplo
     , filepath
@@ -554,10 +569,12 @@ test-suite lsp-handlers-test
 
 test-suite lsp-test
   type: exitcode-stdio-1.0
-  main-is: Driver.hs
+  main-is: Main.hs
   other-modules:
+      Driver
       Test.Capabilities.CodeAction.ExtractTypeAlias
       Test.Capabilities.Completion
+      Test.Capabilities.DocumentLink
       Test.Capabilities.DocumentSymbol
       Test.Capabilities.Find
       Test.Capabilities.Hover
@@ -569,6 +586,7 @@ test-suite lsp-test
       Test.Scope.ScopedDecl
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
+      Test.Common.Capabilities.DocumentLink
       Test.Common.Capabilities.DocumentSymbol
       Test.Common.Capabilities.Find
       Test.Common.Capabilities.Hover
@@ -577,6 +595,7 @@ test-suite lsp-test
       Test.Common.Capabilities.Util
       Test.Common.Diagnostics
       Test.Common.FixedExpectations
+      Test.Common.Tasty
       Test.Common.Util
       Test.Common.Util.Parsers
       Paths_ligo_squirrel
@@ -637,7 +656,6 @@ test-suite lsp-test
     , hspec-expectations
     , lens
     , ligo-squirrel
-    , lsp-test
     , lsp-types
     , safe-exceptions
     , tasty

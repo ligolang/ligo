@@ -4,6 +4,7 @@ module Test.Capabilities.SelectionRange
 
 import Control.Lens ((^.))
 import Data.Function ((&))
+import Data.Word (Word32)
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
@@ -18,7 +19,7 @@ import Test.Common.Util (readContract)
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "selection-range"
 
-data SimpleRange = SimpleRange (Int, Int) (Int, Int) FilePath
+data SimpleRange = SimpleRange (Word32, Word32) (Word32, Word32) FilePath
   deriving stock (Eq, Show)
 
 simplify :: Range -> SimpleRange

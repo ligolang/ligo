@@ -1,34 +1,34 @@
-type tokens =  big_map<address, nat>;
+type tokens = big_map<address, nat>;
 
-type allowances = 
+type allowances =
   big_map<
    [address,
     address], nat>;
 
-type storage = 
+type storage =
   {
     tokens: tokens,
     allowances: allowances,
     total_amount: nat
   };
 
-type transfer = 
+type transfer =
   {address_from: address, address_to: address, value: nat};
 
-type approve =  {spender: address, value: nat};
+type approve = {spender: address, value: nat};
 
-type getAllowance = 
+type getAllowance =
   {
     owner: address,
     spender: address,
     callback: contract<nat>
   };
 
-type getBalance =  {owner: address, callback: contract<nat>};
+type getBalance = {owner: address, callback: contract<nat>};
 
-type getTotalSupply =  {callback: contract<nat>};
+type getTotalSupply = {callback: contract<nat>};
 
-type action = 
+type action =
 
   ["Transfer",
    transfer]|

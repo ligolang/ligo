@@ -37,6 +37,7 @@ import Data.ByteString qualified as BS
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding
+import Data.Word (Word32)
 
 import Duplo.Lattice
 import Duplo.Pretty
@@ -44,24 +45,24 @@ import Duplo.Tree
 
 import Product
 
-point :: Int -> Int -> Range
+point :: Word32 -> Word32 -> Range
 point l c = Range (l, c, 0) (l, c, 0) ""
 
 -- | Construct a range spanning a single line `line` from a column
 -- `colSt` (inclusively) to `colFin` (exclusively).
-interval :: Int -> Int -> Int -> Range
+interval :: Word32 -> Word32 -> Word32 -> Range
 interval line colSt colFin = Range (line, colSt, 0) (line, colFin, 0) ""
 
 -- | A continuous location in text. This includes information to the file as
 -- seen by the user (i.e.: before preprocessing).
 data Range = Range
-  { _rStart  :: (Int, Int, Int)  -- ^ [Start: line, col, byte-offset...
-  , _rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
+  { _rStart  :: (Word32, Word32, Word32)  -- ^ [Start: line, col, byte-offset...
+  , _rFinish :: (Word32, Word32, Word32)  -- ^ ... End: line, col, byte-offset).
   , _rFile   :: FilePath
   }
   deriving (Show) via PP Range
 
-rangeLines :: Traversal' Range Int
+rangeLines :: Traversal' Range Word32
 rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
   Range
     <$> ((,,) <$> f sl <*> pure sc <*> pure so)
@@ -71,10 +72,10 @@ rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
     text f <.> ":"
-    <.> int ll <.> ":"
-    <.> int lc <.> "-"
-    <.> int rl <.> ":"
-    <.> int rc
+    <.> int (fromIntegral ll) <.> ":"
+    <.> int (fromIntegral lc) <.> "-"
+    <.> int (fromIntegral rl) <.> ":"
+    <.> int (fromIntegral rc)
 
 -- | Like 'Range', but includes information on the preprocessed range of the
 -- file.
@@ -128,8 +129,8 @@ instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)
 cutOut :: Range -> ByteString -> Text
 cutOut (Range (_, _, s) (_, _, f) _) bs =
   decodeUtf8
-    $ BS.take (f - s)
-    $ BS.drop  s
+    $ BS.take (fromIntegral (f - s))
+    $ BS.drop (fromIntegral  s)
       bs
 
 excluding :: Range -> Range -> Range
@@ -178,10 +179,10 @@ instance (Contains Range xs, Eq (Product xs)) => Lattice (Product xs) where
 
 makeLenses ''Range
 
-startLine :: Lens' Range Int
+startLine :: Lens' Range Word32
 startLine = rStart . _1
 {-# INLINE startLine #-}
 
-finishLine :: Lens' Range Int
+finishLine :: Lens' Range Word32
 finishLine = rFinish . _1
 {-# INLINE finishLine #-}

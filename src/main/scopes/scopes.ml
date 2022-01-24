@@ -127,15 +127,17 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
 
   and declaration ~options i core_prg =
     let test = options.test in
-    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version env decl in
+    (* Note : Why do we need to compile here ? Is it just about handling the environment ? *)
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version ~env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
         if with_types then Simple_utils.Trace.to_option (compile_declaration partials.type_env decl ())
         else None
       in
       let partials = match typed_prg with
-        | Some (type_env,decl') ->
+        | Some (decl') ->
           let bindings = extract_variable_types partials.bindings decl'.wrap_content in
+          let type_env = Environment.add_declaration decl' partials.type_env in
           { type_env ; bindings }
         | None -> partials
       in

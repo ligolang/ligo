@@ -144,7 +144,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression =
     let ((input_type,_,output_type), loc) = r_split func in
     let input_type = self input_type  in
     let output_type = self output_type  in
-    return @@ t_function ~loc input_type output_type
+    return @@ t_arrow ~loc input_type output_type
   | TPar par ->
     let (par, _) = r_split par in
     let type_expr = par.inside in
@@ -390,14 +390,14 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let (lambda, fun_type) = match param with
       binder::[] ->
       e_lambda ~loc binder ret_type body,
-      Option.map ~f:(fun (a,b) -> t_function a b)@@ Option.bind_pair (binder.ascr,ret_type)
+      Option.map ~f:(fun (a,b) -> t_arrow a b)@@ Option.bind_pair (binder.ascr,ret_type)
     (* Cannot be empty EDIT Use "| _::_ as lst -> ... | [] -> assert false" *)
     | lst ->
       let input_type = Option.map ~f:t_tuple @@ Option.all @@ List.map ~f:(fun b -> b.ascr) lst in
       let binder = Location.wrap ~loc:loc_par @@ Var.fresh ~name:"parameter" () in
       e_lambda_ez ~loc binder ?ascr:input_type (ret_type) @@
         e_matching_tuple ~loc:loc_par (e_variable binder) param body,
-      Option.map ~f:(fun (a,b) -> t_function a b)@@ Option.bind_pair (input_type,ret_type)
+      Option.map ~f:(fun (a,b) -> t_arrow a b)@@ Option.bind_pair (input_type,ret_type)
     in
     return @@ Option.value ~default:lambda @@
       Option.map ~f:(e_annotation ~loc lambda) fun_type
@@ -948,7 +948,7 @@ and compile_fun_decl ~raise : CST.fun_decl -> string * expression_variable * typ
           binder;
           output_type = ret_type;
           result }
-        in lambda, Option.map ~f:(fun (a,b) -> t_function a b)
+        in lambda, Option.map ~f:(fun (a,b) -> t_arrow a b)
                    @@ Option.bind_pair (binder.ascr,ret_type)
     | lst ->
         let lst = Option.all @@ List.map ~f:(fun e -> e.ascr) lst in
@@ -959,7 +959,7 @@ and compile_fun_decl ~raise : CST.fun_decl -> string * expression_variable * typ
           output_type = ret_type;
           result= e_matching_tuple (e_variable binder) param result;
           } in
-        lambda, Option.map ~f:(fun (a,b) -> t_function a b)
+        lambda, Option.map ~f:(fun (a,b) -> t_arrow a b)
                 @@ Option.bind_pair (input_type,ret_type) in
   (* This handles the recursion *)
   let func = match kwd_recursive with

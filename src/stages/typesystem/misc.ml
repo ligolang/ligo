@@ -105,7 +105,7 @@ module Substitution = struct
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
       let type_content = s_type_content ~substs type_content in
-      T.{ type_content; location; sugar}
+      { type_content ; location ; sugar }
     and s_literal : (T.literal,_) w = fun ~substs -> function
       | T.Literal_unit ->
         let () = ignore @@ substs in
@@ -121,9 +121,12 @@ module Substitution = struct
       | (T.Literal_key _ as x)
       | (T.Literal_key_hash _ as x)
       | (T.Literal_chain_id _ as x)
-      | (T.Literal_operation _ as x) ->
+      | (T.Literal_operation _ as x)
+      | (T.Literal_bls12_381_g1 _ as x)
+      | (T.Literal_bls12_381_g2 _ as x)
+      | (T.Literal_bls12_381_fr _ as x) ->
         x
-    and s_matching_expr : (_ T.match_case list,_) w = fun ~(substs : substs) -> 
+    and s_matching_expr : (_ T.match_case list,_) w = fun ~(substs : substs) ->
       fun x ->
         List.map ~f:
           (fun (x: _ T.match_case) -> let body = s_expression ~substs x.body in { x with body })
@@ -212,7 +215,7 @@ module Substitution = struct
     and s_expression : (T.expression,_) w = fun ~(substs:substs) { expression_content; sugar; location } ->
       let expression_content = s_expression_content ~substs expression_content in
       let location = location in
-      T.{ expression_content;sugar; location }
+      { expression_content ; sugar ; location }
 
     and s_declaration : (T.declaration,_) w =
     let return (d : T.declaration) = d in

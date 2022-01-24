@@ -22,7 +22,7 @@ module Free_variables : sig
   val singleton : expression_variable -> bindings
 end
 
-val get_entry : module_fully_typed -> string -> expression option
+val get_entry : program -> string -> expression option
 
 val layout_eq : layout -> layout -> bool
 

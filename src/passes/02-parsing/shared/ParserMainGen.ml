@@ -99,19 +99,20 @@ module Make
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
                in cli_error msg
-      | _ -> ()
+           | _ -> ()
 
     (* Main *)
 
     module MainParser = ParserLib.API.Make (MainLexer) (Parser)
                             (struct
+                                let mode                   = CLI.Lexer_CLI.mode
                                 let error_recovery_tracing = CLI.trace_recovery
                                 let tracing_output         = CLI.trace_recovery_output
                              end)
 
     let show_error_message : MainParser.message -> unit =
       function Region.{value; region} ->
-        let reg = region#to_string ~file:true ~offsets:true `Point in
+        let reg = region#to_string ~file:true ~offsets:true CLI.Lexer_CLI.mode in
         let msg = Printf.sprintf "Parse error %s:\n%s" reg value
         in (Out_channel.flush stdout; print_in_red msg)
 
@@ -149,14 +150,16 @@ module Make
     let wrap =
       function
         Stdlib.Ok tree -> show_tree tree
-      | Stdlib.Error message -> show_error_message message
+      | Stdlib.Error message -> show_error_message message; exit 1
 
     let wrap_recovery result =
       let tree, messages = MainParser.extract_recovery_results (result) in
       List.iter
           ~f:(fun msg -> show_error_message msg; Printf.eprintf "\n")
           (List.rev messages);
-      Option.iter ~f:show_tree tree
+      Option.iter ~f:show_tree tree;
+      if List.length messages > 0 then
+        exit 1
 
     let config =
       object

@@ -32,7 +32,7 @@ let iter_op = (s : set <int>) : int => {
 
 let aggregate = ( [i,j] : [list <int>, int]) : list <int> => list ([j, ...i]);
 
-let fold_op  = (s : set <int>) : list<int> => Set.fold (aggregate, s, list([]))
+let fold_op  = (s : set <int>) : list<int> => Set.fold (aggregate, s, list([]) as list<int>)
 
 let aggregate2 = ( [i,j] : [int , list<int>]) : list<int> => list ([i, ...j]);
-let fold_right = (s : set <int>) : list<int> => Set.fold_desc (aggregate2, s, list([]))
+let fold_right = (s : set <int>) : list<int> => Set.fold_desc (aggregate2, s, list([]) as list<int>)

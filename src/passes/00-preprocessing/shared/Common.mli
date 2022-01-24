@@ -21,15 +21,15 @@ module Make (File : File.S) (Comments : Comments.S) :
 
     (* Preprocessing various sources *)
 
-    val from_file    : dirs -> file_path  -> result
-    val from_string  : dirs -> string     -> result
-    val from_channel : dirs -> In_channel.t -> result
+    val from_file    : ?project_root:file_path -> dirs -> file_path  -> result
+    val from_string  : ?project_root:file_path -> dirs -> string     -> result
+    val from_channel : ?project_root:file_path -> dirs -> In_channel.t -> result
 
     (* Aliases *)
 
-    val preprocess_file    : dirs -> file_path  -> result
-    val preprocess_string  : dirs -> string     -> result
-    val preprocess_channel : dirs -> In_channel.t -> result
+    val preprocess_file    : ?project_root:file_path -> dirs -> file_path  -> result
+    val preprocess_string  : ?project_root:file_path -> dirs -> string     -> result
+    val preprocess_channel : ?project_root:file_path -> dirs -> In_channel.t -> result
   end
 
 (* For further passes *)
@@ -37,6 +37,7 @@ module Make (File : File.S) (Comments : Comments.S) :
 module type FILE =
   sig
     include File.S
-    val input : file_path option
-    val dirs  : dirs
+    val input            : file_path option
+    val dirs             : dirs
+    val project_root     : file_path option
   end

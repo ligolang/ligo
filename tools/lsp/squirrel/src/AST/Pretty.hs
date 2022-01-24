@@ -19,6 +19,7 @@ import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
 import Data.Text qualified as Text (pack)
+import Data.Word (Word32)
 import Duplo (Cofree ((:<)), Layers)
 import Duplo.Pretty as Exports
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
@@ -159,7 +160,7 @@ instance Pretty1 RawContract where
 
 instance Pretty1 Binding where
   pp1 = \case
-    BTypeDecl     n    ty       -> sexpr "type_decl"  [n, ty]
+    BTypeDecl     n    tys ty   -> sexpr "type_decl"  [n, pp tys, ty]
     BParameter    n    ty       -> sexpr "parameter"  [n, pp ty]
     BVar          name ty value -> sexpr "var"   [name, pp ty, pp value]
     BConst        name ty body  -> sexpr "const" [name, pp ty, pp body]
@@ -176,6 +177,11 @@ instance Pretty1 Binding where
         , ["=", body]
         ]
 
+instance Pretty1 TypeParams where
+  pp1 = \case
+    TypeParam  t  -> sexpr "tparameter" [t]
+    TypeParams ts -> sexpr "tparameters" ts
+
 instance Pretty1 AST.Type where
   pp1 = \case
     TArrow    dom codom -> sop dom "->" [codom]
@@ -184,9 +190,8 @@ instance Pretty1 AST.Type where
     TProduct  elements  -> sexpr "PROD" elements
     TApply    f xs      -> sop f "$" xs
     TString   t         -> sexpr "TSTRING" [pp t]
-    TOr       l n r m   -> sexpr "OR"   [l, n, r, m]
-    TAnd      l n r m   -> sexpr "AND" [l, n, r, m]
     TWildcard           -> "_"
+    TVariable v         -> sexpr "'" [v]
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -313,6 +318,10 @@ instance Pretty1 TypeName where
   pp1 = \case
     TypeName     raw -> pp raw
 
+instance Pretty1 TypeVariableName where
+  pp1 = \case
+    TypeVariableName raw -> pp raw
+
 instance Pretty1 FieldName where
   pp1 = \case
     FieldName    raw -> pp raw
@@ -336,6 +345,10 @@ instance Pretty LineMarkerType where
   pp RootFile     = ""
   pp IncludedFile = "1"
   pp ReturnToFile = "2"
+
+-- Orphans
+instance Pretty Word32 where
+  pp = pp . Text.pack . show
 
 ----------------------------------------------------------------------------
 -- Common
@@ -414,13 +427,16 @@ instance LPP1 'Pascal AST.Type where
     TSum      []        -> error "looks like you've been given malformed AST" -- never called
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
-    TOr       l n r m   -> tuple [l, n, r, m]
-    TAnd      l n r m   -> tuple [l, n, r, m]
     TWildcard           -> "_"
+    TVariable v         -> v
+
+instance LPP1 'Pascal TypeVariableName where
+  lpp1 = \case
+    TypeVariableName raw -> lpp raw
 
 instance LPP1 'Pascal Binding where
   lpp1 = \case
-    BTypeDecl     n    ty       -> "type" <+> lpp n <+> "is" <+> lpp ty
+    BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> lpp n <+> "is" <+> lpp ty
     BVar          name ty value -> "var" <+> name <+> ":" <+> lpp ty <+> ":=" <+> lpp value
     BConst        name ty body  -> "const" <+> name <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BAttribute    name          -> brackets ("@" <.> name)
@@ -436,6 +452,11 @@ instance LPP1 'Pascal Binding where
         , [":", lpp ty]
         , ["is", body]
         ]
+
+instance LPP1 'Pascal TypeParams where
+  lpp1 = \case
+    TypeParam  t  -> parens t
+    TypeParams ts -> tuple ts
 
 instance LPP1 'Pascal Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -549,13 +570,16 @@ instance LPP1 'Reason AST.Type where
     TSum      []        -> error "malformed TSum type" -- never called
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
-    TOr       l n r m   -> tuple [l, n, r, m]
-    TAnd      l n r m   -> tuple [l, n, r, m]
     TWildcard           -> "_"
+    TVariable v         -> v
+
+instance LPP1 'Reason TypeVariableName where
+  lpp1 = \case
+    TypeVariableName raw -> "'" <.> lpp raw
 
 instance LPP1 'Reason Binding where
   lpp1 = \case
-    BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
+    BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> foldr (<+>) empty
       [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
     BAttribute    name          -> brackets ("@" <.> name)
@@ -563,6 +587,11 @@ instance LPP1 'Reason Binding where
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
+
+instance LPP1 'Reason TypeParams where
+  lpp1 = \case
+    TypeParam  t  -> parens t
+    TypeParams ts -> tuple ts
 
 instance LPP1 'Reason Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
@@ -658,13 +687,16 @@ instance LPP1 'Caml AST.Type where
     TSum      []        -> error "malformed TSum type" -- never called
     TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
-    TOr       l n r m   -> tuple [l, n, r, m]
-    TAnd      l n r m   -> tuple [l, n, r, m]
     TWildcard           -> "_"
+    TVariable v         -> v
+
+instance LPP1 'Caml TypeVariableName where
+  lpp1 = \case
+    TypeVariableName raw -> "'" <.> lpp raw
 
 instance LPP1 'Caml Binding where
   lpp1 = \case
-    BTypeDecl     n    ty       -> "type" <+> n <+> "=" <+> lpp ty
+    BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> "let" <+> name <+> ":" <+> lpp ty <+> lpp body
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
@@ -679,6 +711,11 @@ instance LPP1 'Caml Binding where
         , ["=", body]
         ]
     node                      -> error "unexpected `Binding` node failed with: " <+> pp node
+
+instance LPP1 'Caml TypeParams where
+  lpp1 = \case
+    TypeParam  t  -> t
+    TypeParams ts -> tuple ts
 
 instance LPP1 'Caml Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one

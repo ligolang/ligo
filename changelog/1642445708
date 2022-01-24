@@ -1,0 +1,5 @@
+author: Rémi Lesénéchal ; Exequiel Rivas
+title: Fixing a bug where a contract compilation would fail because of views compilation
+  with an obscure error message
+type: fixed
+merge_request: '1496'

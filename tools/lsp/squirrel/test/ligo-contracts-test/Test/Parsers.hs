@@ -4,6 +4,7 @@ module Test.Parsers
   ) where
 
 import AST (Fallback, parseContracts, srcPath)
+import Progress (noProgress)
 
 import Data.List (isPrefixOf)
 import System.FilePath ((</>))
@@ -23,34 +24,25 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "uncurry_contract.mligo"
       , "modules.mligo"
       , "modules.ligo"
+      , "modules_env.mligo"
+      , "module_contract_simple.mligo"
+      , "module_contract_complex.mligo"
       , "warning_duplicate.mligo"
+      , "interpreter_tests/nesting_modules.mligo"
       , "interpreter_tests/test_imported.mligo"
       , "interpreter_tests/test_importer.mligo" -- Also needs LIGO-204
       , "interpreter_tests/test_module.mligo"
       , "modules_and_free_vars/nested_modules.mligo"
       , "modules_and_free_vars/simple.mligo"
+      , "polymorphism/modules.mligo"
+      , "polymorphism/modules.religo"
       , "remove_unused_module.mligo"
 
-        -- LIGO-281
-      , "michelson_pair_tree.religo"
-      , "tuples_sequences_functions.religo"
-      , "string_arithmetic.religo"
-
-        -- LIGO-306
-      , "parametric_types.ligo"
-      , "parametric_types.mligo"
-      , "parametric_types.religo"
-
-        -- LIGO-308
+        -- LIGO-204
       , "build/C_test.mligo"
       , "build/b.mligo"
-
-        -- Uncategorized
-      , "existential.mligo"
-      , "heap.ligo"
-      , "heap-instance.ligo"
-      , "vars_consts/multiple_vars.ligo"
       , "build/B.mligo"
+      , "build/B1.mligo"
       , "build/C.mligo"
       , "build/D.mligo"
       , "build/E.mligo"
@@ -58,11 +50,33 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "build/cycle_B.mligo"
       , "build/cycle_C.mligo"
       , "build/type_B.mligo"
-      , "interpreter_tests/test_subst_with_storage_from_file.mligo"
-      , "interpreter_tests/test_now_from_file.mligo"
-      , "interpreter_tests/test_fail_from_file.mligo"
-      , "interpreter_tests/test_example_from_file.mligo"
-      , "interpreter_tests/compile_expr_from_file.mligo"
+      , "build/Xfoo.mligo"
+      , "build/Xmain.mligo"
+      , "interpreter_tests/A.mligo"
+      , "interpreter_tests/C.mligo"
+      , "interpreter_tests/imported_modules/a.mligo"
+      , "interpreter_tests/imported_modules/b.mligo"
+      , "interpreter_tests/imported_modules/main.mligo"
+      , "interpreter_tests/imported_modules/test.mligo"
+      , "interpreter_tests/test_many_imports.mligo"
+      , "polymorphism/use_error.mligo" -- polymorphism/* tests also depend on
+      , "polymorphism/use_monad.mligo" --   LIGO-331
+      , "polymorphism/use_monad_set.mligo"
+      , "polymorphism/use_nelist.mligo"
+
+        -- LIGO-331
+      , "polymorphism/cases_annotation1.mligo"
+      , "polymorphism/cases_annotation2.mligo"
+      , "polymorphism/comb.mligo"
+      , "polymorphism/ctrct.mligo"
+      , "polymorphism/error_monad.mligo"
+      , "polymorphism/lambda.mligo"
+      , "polymorphism/list_monad.mligo"
+      , "polymorphism/map.mligo"
+      , "polymorphism/module_k.mligo"
+      , "polymorphism/nelist.mligo"
+      , "polymorphism/set_monad.mligo"
+      , "polymorphism/test.mligo"
       ]
 
 okayIgnoreDirs :: [FilePath]
@@ -83,7 +97,7 @@ getBadContractsWithExtension ext
 
 getOkayContracts :: IO [FilePath]
 getOkayContracts = do
-  allContracts <- parseContracts (pure . srcPath) contractsDir
+  allContracts <- parseContracts (pure . srcPath) noProgress contractsDir
   pure $ filter (\x -> not $ any (`isPrefixOf` x) okayIgnoreDirs)
        $ filter (`notElem` okayIgnoreContracts)
          allContracts

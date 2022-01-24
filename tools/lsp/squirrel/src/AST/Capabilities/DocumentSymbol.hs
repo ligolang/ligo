@@ -64,7 +64,7 @@ extractDocumentSymbols uri tree =
               J.SkNamespace
               ("some import at " <> pack (show r))
 
-          (BTypeDecl (match @TypeName -> Just (getElem @Range -> r, _)) _) ->
+          (BTypeDecl (match @TypeName -> Just (getElem @Range -> r, _)) _ _) ->
             tellScopedDecl
               r
               J.SkTypeParameter

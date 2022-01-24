@@ -222,6 +222,13 @@ let test_set_add =
 let test_set_mem =
   assert ((Set.mem 1 s) && (Set.mem 2 s) && (Set.mem 3 s))
 
+let test_set_remove =
+  let s = Set.literal [0n; 1n; 2n] in
+  let () = assert ((Set.mem 1n s) && (Set.mem 2n s) && (Set.mem 0n s)) in
+  let s = Set.remove 0n s in
+  assert ((Set.mem 1n s) && (Set.mem 2n s) && not (Set.mem 0n s))
+
+
 let test_recursion_let_rec_in =
   let rec sum : int*int -> int = fun ((n,res):int*int) ->
     if (n<1) then res else sum (n-1,res+n)
@@ -349,3 +356,66 @@ let test_none =
 
 let test_none_with_error =
   assert_none_with_error (None : int option) "bar"
+
+let test_unopt =
+  assert (Option.unopt (Some 1 : int option) = 1)
+
+let test_unopt_with_error =
+  assert (Option.unopt_with_error (Some 2 : int option) "bar" = 2)
+
+let test_sha256 =
+  let hash5n = (0xf6c5c0ad2216920e105be5e940c4a71ead0741f9dbdb32bfab9570df57cc983a : bytes) in
+  let hashempty = (0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 : bytes) in
+  let () = assert (Crypto.sha256 (Bytes.pack 5n) = hash5n) in
+  let () = assert (Test.eval (Crypto.sha256 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha256 (Bytes.pack n)) 5n) in
+  assert (Crypto.sha256 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+
+let test_sha512 =
+  let hash5n =
+    (0x31ca75e6613c8e8db4f59d9b69f51b0944a4f6ccb8ced6501122569d2890c519c8ce3a2ccc2a09428ad37a7af6b1903ece93ed863b65b94f072e45a8fdae4e5c : bytes) in
+  let hashempty =
+    (0xcf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e : bytes) in
+  let () = assert (Crypto.sha512 (Bytes.pack 5n) = hash5n) in
+  let () = assert (Test.eval (Crypto.sha512 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha512 (Bytes.pack n)) 5n) in
+  assert (Crypto.sha512 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+
+let test_blake2b =
+  let hash5n = (0x2af6f7eb61511de4fa3a667a63e2f26f9c506042b335e62fed916335d04a08ed : bytes) in
+  let hashempty = (0x0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8 : bytes) in
+  let () = assert (Crypto.blake2b (Bytes.pack 5n) = hash5n) in
+  let () = assert (Test.eval (Crypto.blake2b (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.blake2b (Bytes.pack n)) 5n) in
+  assert (Crypto.blake2b (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+
+let test_keccak =
+  let hash5n = (0xb40da68da4779bf68d31e6ab2eb21c26d950cc23e13efb4da0ec424f138000c3 : bytes) in
+  let hashempty = (0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 : bytes) in
+  let () = assert (Crypto.keccak (Bytes.pack 5n) = hash5n) in
+  let () = assert (Test.eval (Crypto.keccak (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.keccak (Bytes.pack n)) 5n) in
+  assert (Crypto.keccak (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+
+let test_sha3 =
+  let hash5n = (0xfe2ecff30c0281f99ad639b9cfa50970ee98b382fa1688cef0bd33c7f5b0be16 : bytes) in
+  let hashempty = (0xa7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a : bytes) in
+  let () = assert (Crypto.sha3 (Bytes.pack 5n) = hash5n) in
+  let () = assert (Test.eval (Crypto.sha3 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha3 (Bytes.pack n)) 5n) in
+  assert (Crypto.sha3 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+
+let test_key_hash =
+  let key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key) in
+  let key_hash = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : key_hash) in
+  let () = assert (Test.eval (Crypto.hash_key key) = Test.run (fun (k : key) -> Crypto.hash_key k) key) in
+  assert (Crypto.hash_key key = key_hash)
+
+let test_check =
+  let key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key) in
+  let signature = ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" : signature) in
+  let message = Crypto.blake2b (Bytes.pack "hello") in
+  let () = assert (Crypto.check key signature message) in
+  let message = Crypto.blake2b (Bytes.pack "hola") in
+  assert (not (Crypto.check key signature message))
+
+let test_int_bls =
+  let alpha = (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr) in
+  let alpha_int = int alpha in
+  let mich_int = Test.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
+  assert (Test.eval alpha_int = mich_int)
