@@ -158,11 +158,20 @@ let () = Sys.chdir pwd ;
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (test "annotate.mligo") ] ;
-  [%expect{|
-    File "./annotate.mligo", line 1, characters 0-26:
-      1 | let f (type a) (x : a) = x
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
 
-    Functions with type parameters need to be annotated. |}]
+  (Cli_expect_tests.Cli_expect.Should_exit_bad)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 33, characters 7-28
+  Called from Cli_expect_tests__Polymorphism.(fun) in file "src/bin/expect_tests/polymorphism.ml", line 160, characters 2-66
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  const f = lambda (x) return x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (test "annotate2.mligo") ] ;

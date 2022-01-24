@@ -250,6 +250,13 @@ let get_e_ascription = fun a ->
   | E_ascription {anno_expr; type_annotation} -> Some (anno_expr,type_annotation)
   | _ -> None
 
+let get_type_abstractions (e : expression) =
+  let rec aux tv e = match get_e_type_abstraction e with
+  | None -> tv, e
+  | Some { type_binder ; result } ->
+     aux (type_binder :: tv) result in
+  aux [] e
+
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.expression_content with

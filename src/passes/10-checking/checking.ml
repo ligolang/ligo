@@ -143,10 +143,17 @@ match Location.unwrap d with
     let env' = Context.add_type c type_binder tv in
     return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public} }
   )
-  | Declaration_constant {binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
+  | Declaration_constant { binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
+    let av, expr = Ast_core.Combinators.get_type_abstractions expr in
+    let c = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:c in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr None) @@
       type_expression' ~test ~protocol_version c expr in
+    let rec aux t = function
+      | [] -> t
+      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+    let type_expression = aux expr.type_expression (List.rev av) in
+    let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
     let post_env = Context.add_value c binder expr.type_expression in
     return post_env @@ Declaration_constant { binder ; expr ; attr }
@@ -155,6 +162,8 @@ match Location.unwrap d with
     let type_env = Context.get_type_vars c in
     let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
+    let av', expr = Ast_core.Combinators.get_type_abstractions expr in
+    let av = av @ av' in
     let env = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:c in
     let tv = evaluate_type ~raise env tv in
     let expr =
@@ -702,8 +711,15 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       return x case_exp.type_expression
   )
   | E_let_in {let_binder = {var ; ascr = None ; attributes=_} ; rhs ; let_result; attr } ->
+     let av, rhs = Ast_core.Combinators.get_type_abstractions rhs in
+     let context = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:context in
      let rhs = type_expression' ~raise ~protocol_version ~test context rhs in
      let binder = var in
+     let rec aux t = function
+       | [] -> t
+       | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+     let type_expression = aux rhs.type_expression (List.rev av) in
+     let rhs = { rhs with type_expression } in
      let e' = Context.add_value context binder rhs.type_expression in
      let let_result = type_expression' ~raise ~protocol_version ~test e' let_result in
      return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
@@ -711,6 +727,8 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let type_env = Context.get_type_vars context in
     let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
+    let av', rhs = Ast_core.Combinators.get_type_abstractions rhs in
+    let av = av @ av' in
     let pre_context = context in
     let context = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:context in
     let tv = evaluate_type ~raise context tv in

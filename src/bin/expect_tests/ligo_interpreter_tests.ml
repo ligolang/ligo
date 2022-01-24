@@ -218,8 +218,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fresh.mligo" ] ;
-  [%expect {|
-    Everything at the top-level was executed. |}]
+  [%expect{| Everything at the top-level was executed. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_rec_contract.mligo" ] ;
@@ -567,8 +566,7 @@ let%expect_test _ =
       4 |     else
 
     Replacing by: 2.
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
-     16 |     | None -> ()
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
