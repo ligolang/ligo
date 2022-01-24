@@ -62,6 +62,8 @@ type trace = cond list
        current input file;
      * the field [import] is a list of (filename, module) imports
        (#import);
+     * the field [parent] points to the parent file when processing
+       nested #include;
      *)
 
 type line_comment  = string (* Opening of a line comment *)
@@ -71,11 +73,14 @@ type file_path = string
 type module_name = string
 
 type config = <
-  block   : block_comment option;
-  line    : line_comment option;
-  input   : file_path option;
-  offsets : bool;
-  dirs    : file_path list (* Directories to search for #include files *)
+  block              : block_comment option;
+  line               : line_comment option;
+  input              : file_path option;
+  offsets            : bool;
+  dirs               : file_path list; (* Directories to search for #include files *)
+
+  (* Data structure used for resolving path to external packages/modules *)
+  module_resolutions : ModuleResolutions.t option; 
 >
 
 type state = {
@@ -87,6 +92,7 @@ type state = {
   chans  : in_channel list;
   incl   : file_path;
   import : (file_path * module_name) list;
+  parent : file_path option;
 }
 
 (* Directories *)
@@ -228,7 +234,7 @@ let rec last_mode = function
 | (If mode | Elif mode)::_ -> mode
 |                 _::trace -> last_mode trace
 
-(* Finding a file to #include *)
+(* Finding a file to #include & #import *)
 
 (* The function [find_in_cli_paths file_path dirs] tries to find a valid path
    by prepending a directory from [dirs] to [file_path], The list [dirs] is a 
@@ -247,13 +253,28 @@ let rec find_in_cli_paths file_path = function
    unable to find such a file then it tries to look for the file
    in [dirs] using the [find_in_cli_paths] function. *)
 
-let find dir file dirs =
+(* The [find] function looks for [file] in [dir] if the file does not
+   exist then we look for the file in the directories [dirs] (
+   passed by the -I flag) if the file is still not found we try to
+   search for the file using the [inclusion_list] with the help of
+   ModuleResolutions *)
+let find dir file dirs inclusion_list =
   let path =
     if dir = "." || dir = "" then file
     else dir ^ Filename.dir_sep ^ file in
   try Some (path, open_in path) with
     Sys_error _ -> 
-      find_in_cli_paths file dirs
+      match find_in_cli_paths file dirs with
+        Some (path, ic) -> Some (path, ic)
+      | None -> (
+        let file_opt = 
+          ModuleResolutions.find_external_file ~file ~inclusion_list in
+        match file_opt with
+          Some file -> 
+            (try Some (file, open_in file) with 
+              Sys_error _ -> None)
+        | None -> None
+      )
 
 (* PRINTING *)
 
@@ -494,10 +515,15 @@ rule scan state = parse
         and file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
         let base = Filename.basename file
         and reg, incl_file = scan_include state lexbuf in
+        let parent = match state.parent with
+          Some parent -> parent
+        | None        -> file
+        in
         if state.mode = Copy then
           let path = get_incl_dir state in
+          let external_dirs = ModuleResolutions.get_inclusion_list ~file:parent state.config#module_resolutions in
           let incl_path, incl_chan =
-            match find path incl_file state.config#dirs with
+            match find path incl_file state.config#dirs external_dirs with
               Some p -> p
             |   None -> fail state reg (File_not_found incl_file) in
           let () = print state (sprintf "\n# 1 %S 1\n" incl_path) in
@@ -507,7 +533,7 @@ rule scan state = parse
             incl_buf.lex_curr_p <-
               {incl_buf.lex_curr_p with pos_fname = incl_file} in
           let state  = {state with chans = incl_chan::state.chans} in
-          let state' = {state with mode=Copy; trace=[]} in
+          let state' = {state with mode=Copy; trace=[]; parent=Some incl_path} in
           let state' = scan (set_incl_dir (Filename.dirname incl_path) state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans;import=state'.import} in
           let path   = if path = "" || path = "." then base
@@ -517,10 +543,15 @@ rule scan state = parse
         else scan state lexbuf
     | "import" ->
         let reg, import_file, imported_module = scan_import state lexbuf in
+        let file = match state.parent with
+          Some parent -> parent
+        | None        -> Lexing.(lexbuf.lex_curr_p.pos_fname)
+        in
         if state.mode = Copy then
           let path = get_incl_dir state in
+          let external_dirs = ModuleResolutions.get_inclusion_list ~file state.config#module_resolutions in
           let import_path =
-            match find path import_file state.config#dirs with
+            match find path import_file state.config#dirs external_dirs with
               Some p -> fst p
             | None -> fail state reg (File_not_found import_file) in
           let state  = {state with
@@ -793,7 +824,8 @@ let from_lexbuf config buffer =
     out    = Buffer.create 80;
     chans  = [];
     incl   = Filename.dirname path;
-    import = []
+    import = [];
+    parent = None;
   } in
   match preproc state buffer with
     state ->

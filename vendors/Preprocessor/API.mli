@@ -39,11 +39,12 @@ type line_comment  = string (* Opening of a line comment *)
 type block_comment = <opening : string; closing : string>
 
 type config = <
-  block   : block_comment option;
-  line    : line_comment option;
-  input   : file_path option;
-  offsets : bool;          (* [true] for horizontal offsets *)
-  dirs    : file_path list (* Directories to search for #include files *)
+  block              : block_comment option;
+  line               : line_comment option;
+  input              : file_path option;
+  offsets            : bool;           (* [true] for horizontal offsets *)
+  dirs               : file_path list; (* Directories to search for #include files *)
+  module_resolutions : ModuleResolutions.t option 
 >
 
 (* In case of success, a buffer containing the preprocessed input is

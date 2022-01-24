@@ -81,10 +81,11 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
                protocol : Environment.Protocols.t;
                top_level : Ast_typed.program;
                dry_run_opts : Run.options;
+               project_root : string option;
               }
 
 let try_eval ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
@@ -106,7 +107,7 @@ let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program
   (m1 @ m2)
 
 let try_declaration ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
   try
     try_with (fun ~raise ->
@@ -127,20 +128,37 @@ let try_declaration ~raise state s =
   | Failure _ ->
      raise.raise `Repl_unexpected
 
+let resolve_file_name file_name project_root =
+  (* TODO: dont use stdlib here *)
+  if Stdlib.Sys.file_exists file_name then file_name
+  else
+    match project_root with
+      Some project_root ->
+        let open Preprocessor in
+        let module_resolutions = ModuleResolutions.make project_root in
+        let inclusion_list = ModuleResolutions.get_root_inclusion_list module_resolutions in
+        let external_file = ModuleResolutions.find_external_file ~file:file_name ~inclusion_list in
+        (match external_file with
+          Some external_file -> external_file
+        | None -> file_name)
+    | None -> file_name
+
 let import_file ~raise state file_name module_name =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
+  let file_name = resolve_file_name file_name state.project_root in
   let module_ = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
 
-let use_file ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
+let use_file ~raise state file_name =
+  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
   let options = {options with init_env = state.env } in
   (* Missing typer environment? *)
-  let module' = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) s in
+  let file_name = resolve_file_name file_name state.project_root in
+  let module' = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
   let env = Environment.append module' state.env in
   let state = { state with env = env;
                            top_level = concat_modules ~declaration:false state.top_level module'
@@ -198,13 +216,14 @@ Included directives:
   #use \"file_path\";;
   #import \"file_path\" \"module_name\";;"
 
-let make_initial_state syntax protocol dry_run_opts =
+let make_initial_state syntax protocol dry_run_opts project_root =
   {
     env = Environment.default protocol ;
     top_level = [];
     syntax = syntax;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
+    project_root = project_root;
   }
 
 let rec read_input prompt delim =
@@ -230,9 +249,9 @@ let rec loop syntax display_format state n =
      loop syntax display_format state (n + k)
   | None -> ()
 
-let main syntax display_format protocol dry_run_opts init_file =
+let main syntax display_format protocol dry_run_opts init_file project_root =
   print_endline welcome_msg;
-  let state = make_initial_state syntax protocol dry_run_opts in
+  let state = make_initial_state syntax protocol dry_run_opts project_root in
   let state = match init_file with
     | None -> state
     | Some file_name -> let c = use_file state file_name in
