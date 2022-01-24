@@ -142,7 +142,7 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
   | E_type_abstraction ta -> (
       let ta = Maps.type_abs self ta in
       return @@ E_type_abstraction ta
-  )
+    )
   | E_recursive r ->
       let r = Maps.recursive self (fun a -> a) r in
       return @@ E_recursive r
