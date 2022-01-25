@@ -55,7 +55,7 @@ let%expect_test _ =
                   (failwith ("transfer_single: No card.")
                    : card)
               ];
-            if Operator.neq (card.card_owner, Tezos.sender)
+            if (card.card_owner =/= Tezos.sender)
             then failwith ("This card doesn't belong to you")
             else skip;
             card.card_owner := action.destination;
@@ -75,7 +75,7 @@ let%expect_test _ =
               | None (Unit) ->
                   (failwith ("sell_single: No card.") : card)
               ];
-            if Operator.neq (card.card_owner, Tezos.sender)
+            if (card.card_owner =/= Tezos.sender)
             then failwith ("This card doesn't belong to you")
             else skip;
             const card_pattern : card_pattern
@@ -86,7 +86,7 @@ let%expect_test _ =
                    : card_pattern)
               ];
             card_pattern.quantity :=
-              abs (Operator.sub (card_pattern.quantity, 1n));
+              abs ((card_pattern.quantity - 1n));
             const card_patterns : card_patterns
             = s.card_patterns;
             card_patterns [card.card_pattern] := card_pattern;
@@ -96,8 +96,7 @@ let%expect_test _ =
             = Map.remove (action.card_to_sell, cards);
             s.cards := cards;
             const price : tez
-            = Operator.times
-                (card_pattern.coefficient, card_pattern.quantity);
+            = (card_pattern.coefficient * card_pattern.quantity);
             const receiver : contract (unit)
             = case (Tezos.get_contract_opt (Tezos.sender)
                     : option (contract (unit)))
@@ -126,14 +125,13 @@ let%expect_test _ =
                    : card_pattern)
               ];
             const price : tez
-            = Operator.times
-                (card_pattern.coefficient,
-                 Operator.add (card_pattern.quantity, 1n));
-            if Operator.gt (price, Tezos.amount)
+            = (card_pattern.coefficient
+               * (card_pattern.quantity + 1n));
+            if (price > Tezos.amount)
             then failwith ("Not enough money")
             else skip;
             card_pattern.quantity :=
-              Operator.add (card_pattern.quantity, 1n);
+              (card_pattern.quantity + 1n);
             const card_patterns : card_patterns
             = s.card_patterns;
             card_patterns [action.card_to_buy] := card_pattern;
@@ -145,7 +143,7 @@ let%expect_test _ =
                 card_pattern = action.card_to_buy
               ];
             s.cards := cards;
-            s.next_id := Operator.add (s.next_id, 1n)
+            s.next_id := (s.next_id + 1n)
           } with ((list [] : list (operation)), s)
       ]
 
@@ -206,7 +204,7 @@ let%expect_test _ =
                    ((failwith ("transfer_single: No card."))
                     : card) in
              begin
-               if (Operator.neq (card.card_owner) (Tezos.sender))
+               if (card.card_owner <> Tezos.sender)
                then
                  (failwith ("This card doesn't belong to you"))
                else ();
@@ -230,7 +228,7 @@ let%expect_test _ =
                | None () ->
                    ((failwith ("sell_single: No card.")) : card) in
              begin
-               if (Operator.neq (card.card_owner) (Tezos.sender))
+               if (card.card_owner <> Tezos.sender)
                then
                  (failwith ("This card doesn't belong to you"))
                else ();
@@ -247,10 +245,7 @@ let%expect_test _ =
                let card_pattern =
                  {card_pattern with
                    {quantity =
-                      (abs
-                         ((Operator.sub
-                             (card_pattern.quantity)
-                             (1n))))}} in
+                      (abs ((card_pattern.quantity - 1n)))}} in
                let [@var] card_patterns : card_patterns =
                  s.card_patterns in
                let card_patterns =
@@ -264,9 +259,8 @@ let%expect_test _ =
                  (Map.remove (action.card_to_sell) (cards)) in
                let s = {s with {cards = cards}} in
                let price : tez =
-                 (Operator.times
-                    (card_pattern.coefficient)
-                    (card_pattern.quantity)) in
+                 (card_pattern.coefficient
+                  * card_pattern.quantity) in
                let receiver : unit contract =
                  match ((Tezos.get_contract_opt (Tezos.sender))
                         : unit contract option)
@@ -295,17 +289,15 @@ let%expect_test _ =
                    ((failwith ("buy_single: No card pattern."))
                     : card_pattern) in
              let price : tez =
-               (Operator.times
-                  (card_pattern.coefficient)
-                  ((Operator.add (card_pattern.quantity) (1n)))) in
+               (card_pattern.coefficient
+                * (card_pattern.quantity + 1n)) in
              begin
-               if (Operator.gt (price) (Tezos.amount))
+               if (price > Tezos.amount)
                then (failwith ("Not enough money"))
                else ();
                let card_pattern =
                  {card_pattern with
-                   {quantity =
-                      (Operator.add (card_pattern.quantity) (1n))}} in
+                   {quantity = (card_pattern.quantity + 1n)}} in
                let [@var] card_patterns : card_patterns =
                  s.card_patterns in
                let card_patterns =
@@ -322,9 +314,7 @@ let%expect_test _ =
                    s.next_id
                    cards in
                let s = {s with {cards = cards}} in
-               let s =
-                 {s with
-                   {next_id = (Operator.add (s.next_id) (1n))}} in
+               let s = {s with {next_id = (s.next_id + 1n)}} in
                ([] : operation list), s
              end)
 
@@ -387,8 +377,7 @@ let transfer_single
                  : card)
            };
          {
-           if((
-             Operator.neq((card.card_owner), (Tezos.sender)))) {
+           if(((card.card_owner) != (Tezos.sender))) {
              (failwith(("This card doesn't belong to you")))
            } else {
 
@@ -415,15 +404,14 @@ let sell_single: (action_sell_single, storage) => return =
                ((failwith(("sell_single: No card."))) : card)
            };
          {
-           if((
-             Operator.neq((card.card_owner), (Tezos.sender)))) {
+           if(((card.card_owner) != (Tezos.sender))) {
              (failwith(("This card doesn't belong to you")))
            } else {
 
              ()
              };
            let [@var] card_pattern: card_pattern =
-             switch 
+             switch
              Map.find_opt(card.card_pattern, s.card_patterns) {
              | Some pattern => pattern
              | None() =>
@@ -435,10 +423,7 @@ let sell_single: (action_sell_single, storage) => return =
              {...card_pattern,
                {
                  quantity:
-                   (
-                    abs(((
-                        Operator.sub((card_pattern.quantity),
-                           (1n))))))
+                   (abs((((card_pattern.quantity) - (1n)))))
                }};
            let [@var] card_patterns: card_patterns =
              s.card_patterns;
@@ -453,9 +438,8 @@ let sell_single: (action_sell_single, storage) => return =
              (Map.remove((action.card_to_sell), (cards)));
            let s = {...s, {cards: cards }};
            let price: tez =
-             (
-              Operator.times((card_pattern.coefficient),
-                 (card_pattern.quantity)));
+             ((card_pattern.coefficient) * (card_pattern.
+                 quantity));
            let receiver: contract(unit) =
              switch ((Tezos.get_contract_opt((Tezos.sender)))
                : option(contract(unit))) {
@@ -476,7 +460,7 @@ let buy_single: (action_buy_single, storage) => return =
      switch  gen__parameters3 {
      | action, [@var] s =>
          let [@var] card_pattern: card_pattern =
-           switch 
+           switch
            Map.find_opt(action.card_to_buy, s.card_patterns) {
            | Some pattern => pattern
            | None() =>
@@ -484,11 +468,10 @@ let buy_single: (action_buy_single, storage) => return =
                  : card_pattern)
            };
          let price: tez =
-           (
-            Operator.times((card_pattern.coefficient),
-               ((Operator.add((card_pattern.quantity), (1n))))));
+           ((card_pattern.coefficient) * (((card_pattern.
+                 quantity) + (1n))));
          {
-           if((Operator.gt((price), (Tezos.amount)))) {
+           if(((price) > (Tezos.amount))) {
              (failwith(("Not enough money")))
            } else {
 
@@ -496,12 +479,7 @@ let buy_single: (action_buy_single, storage) => return =
              };
            let card_pattern =
              {...card_pattern,
-               {
-                 quantity:
-                   (
-                    Operator.add((card_pattern.quantity),
-                       (1n)))
-               }};
+               {quantity: ((card_pattern.quantity) + (1n)) }};
            let [@var] card_patterns: card_patterns =
              s.card_patterns;
            let card_patterns =
@@ -520,9 +498,7 @@ let buy_single: (action_buy_single, storage) => return =
                 s.next_id,
                 cards);
            let s = {...s, {cards: cards }};
-           let s =
-             {...s,
-               {next_id: (Operator.add((s.next_id), (1n))) }};
+           let s = {...s, {next_id: ((s.next_id) + (1n)) }};
            ([] : list(operation)), s
          }
      });
@@ -558,11 +534,7 @@ let%expect_test _ =
     function asymetric_tuple_access (const _ : unit) is
     block {
       const tuple : int * int * int * int = (0, (1, (2, 3)))
-    } with
-        Operator.add
-          (Operator.add
-             (Operator.add (tuple.0, tuple.1.0), tuple.1.1.0),
-           tuple.1.1.1)
+    } with (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1)
 
     type nested_record_t is
       record [nesty : record [mymap : map (int, string)]]
@@ -594,11 +566,7 @@ let%expect_test _ =
     let asymetric_tuple_access : unit -> int =
       (fun _ : unit ->
          let [@var] tuple : int * int * int * int = 0, 1, 2, 3 in
-         (Operator.add
-            ((Operator.add
-                ((Operator.add (tuple.0) (tuple.1.0)))
-                (tuple.1.1.0)))
-            (tuple.1.1.1)))
+         (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1))
 
     type nested_record_t = {nesty : {mymap : (int, string) map}}
 
@@ -630,12 +598,7 @@ let main: unit => int =
 let asymetric_tuple_access: unit => int =
   ((_: unit): int =>
      let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
-     (
-      Operator.add(((
-          Operator.add(((
-              Operator.add((tuple[0]), (tuple[1][0])))),
-             (tuple[1][1][0])))),
-         (tuple[1][1][1]))));
+     ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
 
 type nested_record_t = {nesty: {mymap: map(int, string) } };
 
@@ -808,13 +771,9 @@ let%expect_test _ =
           block {
             case p of [
               Zero (n) ->
-                if Operator.gt (n, 0n)
-                then failwith ("fail")
-                else skip
+                if (n > 0n) then failwith ("fail") else skip
             | Pos (n) ->
-                if Operator.gt (n, 0n)
-                then skip
-                else failwith ("fail")
+                if (n > 0n) then skip else failwith ("fail")
             ]
           } with ((list [] : list (operation)), s)
       ]
@@ -824,14 +783,14 @@ let%expect_test _ =
       const p : parameter = (Zero (42n));
       const gen__env12 = record [i = i];
       const gen__env12
-      = if Operator.gt (i, 0)
+      = if (i > 0)
         then
           block {
-            const i = Operator.add (i, 1);
+            const i = (i + 1);
             gen__env12.i := i;
             const gen__env10 = record [i = i];
             const gen__env10
-            = if Operator.gt (i, 10)
+            = if (i > 10)
               then
                 block {
                   const i = 20;
@@ -865,7 +824,7 @@ let%expect_test _ =
 
     function failer (const p : int) is
     block {
-      if Operator.eq (p, 1) then failwith (42) else skip
+      if (p = 1) then failwith (42) else skip
     } with p |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect {|
@@ -882,13 +841,9 @@ let%expect_test _ =
              begin
                match p with
                  Zero n ->
-                   if (Operator.gt (n) (0n))
-                   then (failwith ("fail"))
-                   else ()
+                   if (n > 0n) then (failwith ("fail")) else ()
                | Pos n ->
-                   if (Operator.gt (n) (0n))
-                   then ()
-                   else (failwith ("fail"));
+                   if (n > 0n) then () else (failwith ("fail"));
                ([] : operation list), s
              end)
 
@@ -897,13 +852,13 @@ let%expect_test _ =
          let [@var] p : parameter = (Zero 42n) in
          let gen__env12 = {i = i} in
          let gen__env12 =
-           if (Operator.gt (i) (0))
+           if (i > 0)
            then
-             let i = (Operator.add (i) (1)) in
+             let i = (i + 1) in
              let gen__env12 = {gen__env12 with {i = i}} in
              let gen__env10 = {i = i} in
              let gen__env10 =
-               if (Operator.gt (i) (10))
+               if (i > 10)
                then
                  let i = 20 in
                  let gen__env10 = {gen__env10 with {i = i}} in
@@ -942,7 +897,7 @@ let%expect_test _ =
     let failer : int -> int =
       (fun p : int ->
          begin
-           if (Operator.eq (p) (1)) then (failwith (42)) else ();
+           if (p = 1) then (failwith (42)) else ();
            p
          end) |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
@@ -960,14 +915,14 @@ let main: (parameter, storage) => return =
          {
            switch  p {
            | Zero n =>
-               if((Operator.gt((n), (0n)))) {
+               if(((n) > (0n))) {
                  (failwith(("fail")))
                } else {
 
                  ()
                  }
            | Pos n =>
-               if((Operator.gt((n), (0n)))) {
+               if(((n) > (0n))) {
                  ()
                } else {
 
@@ -985,15 +940,15 @@ let foobar: int => int =
        i: i
      };
      let gen__env12 =
-       if((Operator.gt((i), (0)))) {
+       if(((i) > (0))) {
 
-         let i = (Operator.add((i), (1)));
+         let i = ((i) + (1));
          let gen__env12 = {...gen__env12, {i: i }};
          let gen__env10 = {
            i: i
          };
          let gen__env10 =
-           if((Operator.gt((i), (10)))) {
+           if(((i) > (10))) {
 
              let i = 20;
              let gen__env10 = {...gen__env10, {i: i }};
@@ -1037,7 +992,7 @@ let foobar: int => int =
 
 let failer: int => int =
   ((p: int): int => {
-     if((Operator.eq((p), (1)))) {
+     if(((p) == (1))) {
        (failwith((42)))
      } else {
 
@@ -1052,20 +1007,16 @@ let%expect_test _ =
     recursive function sum (const gen__parameters1 : int * int) is
       case gen__parameters1 of [
         (n, acc) ->
-          if Operator.lt (n, 1)
-          then acc
-          else sum (Operator.sub (n, 1), Operator.add (acc, n))
+          if (n < 1) then acc else sum ((n - 1), (acc + n))
       ]
 
     recursive function fibo
       (const gen__parameters2 : int * int * int) is
       case gen__parameters2 of [
         (n, n_1, n_0) ->
-          if Operator.lt (n, 2)
+          if (n < 2)
           then n_1
-          else
-            fibo
-              (Operator.sub (n, 1), Operator.add (n_1, n_0), n_1)
+          else fibo ((n - 1), (n_1 + n_0), n_1)
       ] |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "cameligo" ] ;
   [%expect {|
@@ -1073,37 +1024,26 @@ let%expect_test _ =
       (fun gen__parameters1 : int * int ->
          match gen__parameters1 with
          n, acc ->
-             if (Operator.lt (n) (1))
-             then acc
-             else
-               sum
-                 (Operator.sub (n) (1))
-                 (Operator.add (acc) (n)))
+             if (n < 1) then acc else sum (n - 1) (acc + n))
 
     let rec fibo : int * int * int -> int =
       (fun gen__parameters2 : int * int * int ->
          match gen__parameters2 with
          n, n_1, n_0 ->
-             if (Operator.lt (n) (2))
+             if (n < 2)
              then n_1
-             else
-               fibo
-                 (Operator.sub (n) (1))
-                 (Operator.add (n_1) (n_0))
-                 n_1) |}];
+             else fibo (n - 1) (n_1 + n_0) n_1) |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "reasonligo" ] ;
   [%expect {|
     let rec sum: (int, int) => int =
       ((gen__parameters1: (int, int)): int =>
          switch  gen__parameters1 {
          | n, acc =>
-             if((Operator.lt((n), (1)))) {
+             if(((n) < (1))) {
                acc
              } else {
 
-
-               sum((Operator.sub((n), (1))),
-                  (Operator.add((acc), (n))))
+               sum(((n) - (1)), ((acc) + (n)))
                }
          });
 
@@ -1111,14 +1051,11 @@ let%expect_test _ =
       ((gen__parameters2: (int, int, int)): int =>
          switch  gen__parameters2 {
          | n, n_1, n_0 =>
-             if((Operator.lt((n), (2)))) {
+             if(((n) < (2))) {
                n_1
              } else {
 
-
-               fibo((Operator.sub((n), (1))),
-                  (Operator.add((n_1), (n_0))),
-                  n_1)
+               fibo(((n) - (1)), ((n_1) + (n_0)), n_1)
                }
          }); |}]
 

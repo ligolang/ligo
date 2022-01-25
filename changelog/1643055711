@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1508'
+title: 'Transpiler: change decompilation of (some) operators'
+type: changed
