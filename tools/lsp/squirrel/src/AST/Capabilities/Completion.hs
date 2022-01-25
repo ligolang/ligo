@@ -12,6 +12,7 @@ import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionIt
 
 import Control.Lens (_2, (^?))
 import Control.Monad (foldM)
+import Data.Char (isUpper)
 import Data.Bool (bool)
 import Data.Foldable (asum)
 import Data.Function (on)
@@ -139,13 +140,19 @@ completeFromScope :: Scope -> Maybe Level -> Maybe [Completion]
 completeFromScope scope level
   = Just [asCompletion decl | decl <- scope, decl `fitsLevel` level]
 
+isLikelyConstr :: Text -> Bool
+isLikelyConstr = maybe False (isUpper . fst) . Text.uncons
+
 completionKind :: ScopedDecl -> Maybe CompletionItemKind
-completionKind ScopedDecl {_sdSpec} = case _sdSpec of
+completionKind ScopedDecl {_sdName, _sdSpec} = case _sdSpec of
   TypeSpec _typeParams spec ->
     Just $ completeFromTSpec spec
   ValueSpec ValueDeclSpecifics {_vdsParams, _vdsTspec} ->
     let completion = completeFromTSpec <$> _vdsTspec in
-    maybe completion (bool (Just CiFunction) completion . null) _vdsParams
+    bool
+      (maybe completion (bool (Just CiFunction) completion . null) _vdsParams)
+      (Just CiConstructor)
+      (isLikelyConstr _sdName)
 
 -- LSP is pretty OOP-centric; common FP data structures such as sum types or
 -- tuples are not there. We improvised some of them for now.

@@ -97,21 +97,21 @@ caseInfos =
     { tiContract = "type-constructor.ligo"
     , tiPosition = (5, 21)
     , tiExpected =
-      [ Completion (Just CiVariable) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
       ]
     }
   , TestInfo
     { tiContract = "type-constructor.mligo"
     , tiPosition = (5, 19)
     , tiExpected =
-      [ Completion (Just CiVariable) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
       ]
     }
   , TestInfo
     { tiContract = "type-constructor.religo"
     , tiPosition = (5, 19)
     , tiExpected =
-      [ Completion (Just CiVariable) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
       ]
     }
 
