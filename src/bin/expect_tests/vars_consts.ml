@@ -141,7 +141,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_const_param_2.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/assign_const_param_2.jsligo", line 1, characters 9-15:
+    File "../../test/contracts/negative/vars_consts/assign_const_param_2.jsligo", line 1, characters 9-10:
       1 | let x = (a: int): int => {
       2 |   a = 42;
 

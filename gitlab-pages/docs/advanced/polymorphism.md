@@ -90,7 +90,7 @@ declaration that works for both cases.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-function id (const x : _a) : _a is x
+function id<a> (const x : a) : a is x
 ```
 
 Here we introduce a type variable `a` which can be generalised using
@@ -186,8 +186,8 @@ variations by using `List` combinators.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-function rev (const xs : list (_a)) : list (_a) is {
-  var acc := (nil : list (_a));
+function rev<a> (const xs : list (a)) : list (a) is {
+  var acc := (nil : list (a));
   for x in list xs { acc := x # acc; };
 } with acc
 ```

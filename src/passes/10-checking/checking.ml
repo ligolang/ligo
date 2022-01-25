@@ -159,8 +159,6 @@ match Location.unwrap d with
     return post_env @@ Declaration_constant { binder ; expr ; attr }
   )
   | Declaration_constant { binder = { ascr = Some tv ; var ; attributes=_ } ; attr ; expr } ->
-    let type_env = Context.get_type_vars c in
-    let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
     let av', expr = Ast_core.Combinators.get_type_abstractions expr in
     let av = av @ av' in
@@ -724,8 +722,6 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
      let let_result = type_expression' ~raise ~protocol_version ~test e' let_result in
      return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_let_in {let_binder = {var ; ascr = Some tv ; attributes=_} ; rhs ; let_result; attr } ->
-    let type_env = Context.get_type_vars context in
-    let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
     let av', rhs = Ast_core.Combinators.get_type_abstractions rhs in
     let av = av @ av' in
