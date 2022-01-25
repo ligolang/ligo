@@ -641,7 +641,16 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     ({var; ascr; attributes }, fun_) in
   let return_1 ?ascr ?(attributes = Stage_common.Helpers.const_attribute) var = return ?ascr ~attributes (fun e -> e) var in
   match pattern with
-    PConstr _ -> raise.raise @@ unsupported_pattern_type [pattern]
+  | PConstr pattern ->
+    let ((constr, p_opt), loc) = r_split pattern in
+    let l, ploc = r_split constr in
+    let var = Var.fresh () in
+    let inner_binder, inner_fun = match p_opt with
+      | Some p -> compile_parameter ~raise p
+      | None -> return_1 ~ascr:(t_unit ~loc ()) loc @@ Var.fresh () in
+    let inner_case expr = [ { pattern = Location.wrap ~loc:ploc @@ (P_variant (Label l, (Location.wrap @@ (P_var inner_binder)))) ; body = inner_fun expr } ] in
+    let expr = fun expr -> e_matching (e_variable @@ Location.wrap var) @@ inner_case expr in
+    return loc expr var
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) @@ Var.fresh ~loc ()

@@ -2,44 +2,25 @@ open Cli_expect
 
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret" ; "t1" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| 1 |}] ;
   run_ligo_good [ "run"; "interpret" ; "t2" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| "7" |}] ;
   run_ligo_good [ "run"; "interpret" ; "t3" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| ( 3 , +3 , "7" ) |}] ;
   run_ligo_good [ "run"; "interpret" ; "t4" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| ( 4 , +3 ) |}] ;
   run_ligo_good [ "run"; "interpret" ; "t5" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| +1 |}] ;
   run_ligo_good [ "run"; "interpret" ; "t6" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| ( 3 , +2 ) |}] ;
   run_ligo_good [ "run"; "interpret" ; "t7" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| ( 2 , +3 ) |}] ;
   run_ligo_good [ "run"; "interpret" ; "t8" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| ( 2 , +2 ) |}] ;
   run_ligo_good [ "run"; "interpret" ; "t9" ; "--init-file";(test "let_destructuring.mligo") ] ;
-  [%expect.unreachable] ;
+  [%expect{| 2 |}] ;
   run_ligo_bad [ "run"; "interpret" ; "t1" ; "--init-file";(bad_test "let_destructuring.mligo") ] ;
-  [%expect.unreachable]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 27, characters 7-29
-  Called from Cli_expect_tests__Let_destructuring.(fun) in file "src/bin/expect_tests/let_destructuring.ml", line 4, characters 2-94
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
-
-  Trailing output
-  ---------------
-  File "../../test/contracts/let_destructuring.mligo", line 39, characters 8-20:
-   38 | let t9 =
-   39 |   let ((OneCase (av)), { a ; b = _ }) = (OneCase (1), { a = 1 ; b = 1n }) in
-   40 |   av + a
-
-  Invalid pattern.
-  Can't match on values. |}]
+  [%expect{| Pattern {a = a ; f = b} do not conform type record[a -> int , b -> nat] |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret" ; "t1"; "--init-file";(test "let_destructuring.religo") ] ;
