@@ -49,22 +49,22 @@ A test error.
 
 <SyntaxTitle syntax="pascaligo">
 type test_exec_result =
-  Success
+  Success of nat
 | Fail of test_exec_error
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_result =
-  Success
+  Success of nat
 | Fail of test_exec_error
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type test_exec_result =
-  Success
+  Success of nat
 | Fail(test_exec_error)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 type test_exec_result =
-  ["Success"]
+  ["Success", nat]
 | ["Fail", test_exec_error]
 </SyntaxTitle>
 A test execution result.
@@ -238,18 +238,19 @@ let transfer: (address, michelson_program, tez) => test_exec_result
 let transfer = (addr: address, parameter: michelson_program, amount: tez) => test_exec_result
 </SyntaxTitle>
 Bake a transaction by sending an amount of tez with a parameter from the current source to another account.
+Returns the amount of gas consumed by the execution of the contract.
 
 <SyntaxTitle syntax="pascaligo">
-function transfer_exn : address -> michelson_program -> tez -> unit
+function transfer_exn : address -> michelson_program -> tez -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val transfer_exn : address -> michelson_program -> tez -> unit
+val transfer_exn : address -> michelson_program -> tez -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let transfer_exn: (address, michelson_program, tez) => unit
+let transfer_exn: (address, michelson_program, tez) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let transfer_exn = (addr: address, parameter: michelson_program, amount: tez) => unit
+let transfer_exn = (addr: address, parameter: michelson_program, amount: tez) => nat
 </SyntaxTitle>
 Similar as `Test.transfer`, but fails when anything goes wrong.
 
@@ -266,18 +267,19 @@ let transfer_to_contract: (contract ('p), 'p, tez) => test_exec_result
 let transfer_to_contract = (addr: contract&lt;&apos;p&gt;, parameter: &apos;p, amount: tez) => test_exec_result
 </SyntaxTitle>
 Bake a transaction by sending an amount of tez with a parameter from the current source to a contract.
+Returns the amount of gas consumed by the execution of the contract.
 
 <SyntaxTitle syntax="pascaligo">
-function transfer_to_contract_exn : contract ('p) -> 'p -> tez -> unit
+function transfer_to_contract_exn : contract ('p) -> 'p -> tez -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val transfer_to_contract_exn : 'p contract -> 'p -> tez -> unit
+val transfer_to_contract_exn : 'p contract -> 'p -> tez -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let transfer_to_contract_exn: (contract ('p), 'p, tez) => unit
+let transfer_to_contract_exn: (contract ('p), 'p, tez) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let transfer_to_contract_exn = (addr: contract&lt;&apos;p&gt;, parameter: &apos;p, amount: tez) => unit
+let transfer_to_contract_exn = (addr: contract&lt;&apos;p&gt;, parameter: &apos;p, amount: tez) => nat
 </SyntaxTitle>
 Similar as `Test.transfer_to_contract`, but fails when anything goes wrong.
 

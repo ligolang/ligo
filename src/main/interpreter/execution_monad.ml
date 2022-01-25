@@ -30,7 +30,8 @@ module Command = struct
     | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
     | Get_state : unit -> Tezos_state.context t
     | Put_state : Tezos_state.context -> unit t
-    | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
+    | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t
+      -> [`Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t] t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
     | Get_storage : Location.t * Ligo_interpreter.Types.calltrace * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Get_storage_of_address : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
@@ -138,8 +139,9 @@ module Command = struct
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) -> (
       let x = Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt in
       match x with
-      | Success ctxt -> (None, ctxt)
-      | Fail errs -> (Some errs, ctxt)
+      | Success (ctxt',gas_consumed) ->
+        (`Exec_ok gas_consumed, ctxt')
+      | Fail errs -> (`Exec_failed errs, ctxt)
     )
     | State_error_to_value errs -> (
       match Tezos_state.get_contract_rejection_data errs with

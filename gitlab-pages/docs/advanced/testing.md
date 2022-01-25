@@ -283,15 +283,17 @@ ligo run test gitlab-pages/docs/advanced/src/testnew.jsligo
 The function `Test.transfer_to_contract` allows to bake a transaction.
 It takes a target account of type `'parameter contract`, the parameter
 of type `'parameter` and an amount of type `tez`. This function
-performs the transaction, and returns a `test_exec_result`, which
-tells whether the transaction was successful or not, and in case it
-was not, it contains a `test_exec_error` describing the error. There
-is an alternative version, called `Test.transfer_to_contract_exn`
-which performs the transaction and ignores the result, failing in case
-that there was an error.
+performs the transaction, and returns a `test_exec_result` which
+can be matched on to know whether the transaction was successful or not.
+In case of success you will get access to the gas consumed by the execution
+of the contract and in case of failure you will get access to a `test_exec_error`
+describing the error.  
+There is an alternative version, called `Test.transfer_to_contract_exn`
+which performs the transaction and will only return the gas consumption,
+failing in case that there was an error.
 
 We can extend the previous example by executing a transaction that
-increments the storage after deployment:
+increments the storage after deployment, we also print the gas consumption:
 <Syntax syntax="pascaligo">
 
 ```pascaligo test-ligo group=frontpage
@@ -302,7 +304,8 @@ const test2 =
     const initial_storage = 42;
     const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
     const contr = Test.to_contract(taddr);
-    const _ = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
+    const gas_cons = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
+    Test.log (("gas consumption",gas_cons)) ;
     const storage = Test.get_storage(taddr);
   } with (storage = initial_storage + 1);
 ```
@@ -317,7 +320,8 @@ let test2 =
   let initial_storage = 42 in
   let (taddr, _, _) = Test.originate main initial_storage 0tez in
   let contr = Test.to_contract taddr in
-  let () = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
+  let gas_cons = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
+  let () = Test.log ("gas consumption",gas_cons) in
   assert (Test.get_storage taddr = initial_storage + 1)
 ```
 
@@ -331,7 +335,8 @@ let test2 =
   let initial_storage = 42;
   let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
   let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  let gas_cons = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  let _unit = Test.log(("gas consumption",gas_cons));
   assert (Test.get_storage(taddr) == initial_storage + 1)
 ```
 
@@ -345,7 +350,8 @@ let _test2 = () : bool => {
   let initial_storage = 42 as int;
   let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
-  let r = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  let gas_cons = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  let _ = Test.log(["gas consumption", gas_cons]);
   return (Test.get_storage(taddr) == initial_storage + 1);
 }
 

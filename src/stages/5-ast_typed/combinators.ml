@@ -98,7 +98,7 @@ let t_michelson_code ?loc ?core () : type_expression = t_constant ?loc ?core tes
 let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
 let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
-  [ ("Success" ,t_unit ()); ("Fail", t_sum_ez [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())])]
+  [ ("Success" ,t_nat ()); ("Fail", t_sum_ez [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())])]
 
 let t_arrow param result ?loc ?s () : type_expression = t_arrow ?loc ?type_meta:s {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s

@@ -178,6 +178,16 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
   let return_ct v = return @@ V_Ct v in
   let return_none () = return @@ v_none () in
   let return_some v = return @@ v_some v in
+  let return_contract_exec_exn = function
+    | `Exec_ok gas -> return_ct (C_nat gas)
+    | `Exec_failed e -> fail @@ Errors.target_lang_error loc calltrace e
+  in
+  let return_contract_exec = function
+    | `Exec_ok gas -> return (LC.v_ctor "Success" (LC.v_nat gas))
+    | `Exec_failed e ->
+      let>> a = State_error_to_value e in
+      return a
+  in
   ( match (c,operands) with
     (* nullary *)
     | ( C_NONE , [] ) -> return_none ()
@@ -693,20 +703,14 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
       let contract = { address; entrypoint = None } in
-      let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
-      match err_opt with
-      | None -> return_ct C_unit
-      | Some e -> fail @@ Errors.target_lang_error loc calltrace e
+      let>> res = External_call (loc,calltrace,contract,param,amt) in
+      return_contract_exec_exn res
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , _  ) -> fail @@ error_type
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
       let contract = { address; entrypoint = None } in
-      let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
-      match err_opt with
-      | None -> return (LC.v_ctor "Success" (LC.v_unit ()))
-      | Some e ->
-        let>> a = State_error_to_value e in
-        return a
+      let>> res = External_call (loc,calltrace,contract,param,amt) in
+      return_contract_exec res
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_SET_NOW , [ V_Ct (C_timestamp t) ] ) ->
@@ -892,29 +896,25 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
        let>> addr  = Inject_script (loc, calltrace, code, storage, amt) in
        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
     | ( C_TEST_ORIGINATE , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , [ (V_Ct (C_contract contract)) ; param ; V_Ct ( C_mutez amt ) ] ) ->
+    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , [ (V_Ct (C_contract contract)) ; param ; V_Ct ( C_mutez amt ) ] ) -> (
        let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let>> param = Eval (loc, param, param_ty) in
-       (match param with
+       match param with
        | V_Michelson (Ty_code { code = param ; _ }) ->
-          let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
-          (match err_opt with
-                     | None -> return @@ V_Ct C_unit
-                     | Some e -> fail @@ Errors.target_lang_error loc calltrace e)
-       | _ -> fail @@ Errors.generic_error loc "Error typing param")
+          let>> res = External_call (loc,calltrace,contract,param,amt) in
+          return_contract_exec_exn res
+       | _ -> fail @@ Errors.generic_error loc "Error typing param"
+    )
     | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , [ (V_Ct (C_contract contract)) ; param; V_Ct ( C_mutez amt ) ] ) ->
+    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , [ (V_Ct (C_contract contract)) ; param; V_Ct ( C_mutez amt ) ] ) -> (
        let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let>> param = Eval (loc, param, param_ty) in
-       (match param with
+       match param with
        | V_Michelson (Ty_code { code = param ; _ }) ->
-          let>> err_opt = External_call (loc,calltrace,contract,param,amt) in
-          (match err_opt with
-           | None -> return (LC.v_ctor "Success" (LC.v_unit ()))
-           | Some e ->
-              let>> a = State_error_to_value e in
-              return a)
-       | _ -> fail @@ Errors.generic_error loc "Error typing param")
+          let>> res = External_call (loc,calltrace,contract,param,amt) in
+          return_contract_exec res
+       | _ -> fail @@ Errors.generic_error loc "Error typing param"
+    )
     | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , [ V_Ct (C_nat n) ] ) ->
       let n = Z.to_int n in
