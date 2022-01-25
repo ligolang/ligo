@@ -1011,7 +1011,7 @@ let test_external_call_to_contract_exn ~raise loc = typer_3 ~raise loc "TEST_EXT
   let contract_ty = trace_option ~raise (expected_contract loc addr) @@ get_t_contract addr in
   let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
   let () = assert_eq_1 ~raise ~loc p contract_ty in
-  (t_unit ())
+  (t_nat ())
 
 let test_external_call_to_contract ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_CONTRACT" @@ fun addr p amt  ->
   let contract_ty = trace_option ~raise (expected_contract loc addr) @@ get_t_contract addr in
@@ -1023,7 +1023,7 @@ let test_external_call_to_address_exn ~raise loc = typer_3 ~raise loc "TEST_EXTE
   let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
   let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
   let () = assert_eq_1 ~raise ~loc p (t_michelson_code ()) in
-  (t_unit ())
+  (t_nat ())
 
 let test_external_call_to_address ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_ADDRESS" @@ fun addr p amt  ->
   let () = assert_eq_1 ~raise ~loc addr (t_address ()) in

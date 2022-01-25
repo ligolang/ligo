@@ -13,7 +13,7 @@ let test =
   let () = Test.set_now ("2010-01-01t10:10:10Z" : timestamp) in
 
   let param = Test.compile_value () in
-  let () = Test.transfer_exn addr param 10tez in
+  let _ = Test.transfer_exn addr param 10tez in
 
   let () = Test.log "storage after calling" in
   let st = Test.get_storage_of_address addr in

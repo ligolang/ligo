@@ -23,7 +23,7 @@ let test =
   let new_account1 = check_new_origination src in
 
   let param = Test.run (fun () -> (Two : parameter)) () in
-  let () = Test.transfer_exn addr param 10tez in
+  let _ = Test.transfer_exn addr param 10tez in
   let new_account2 = check_new_origination new_account1 in
   let new_storage = Test.get_storage_of_address addr in
   let expected_new_storage = Test.run (fun (x : address) -> Some x) new_account2 in
@@ -32,7 +32,7 @@ let test =
 
   let param = Test.run (fun () -> (One : parameter)) () in
   match (Test.transfer addr param 10tez : test_exec_result) with
-  | Success -> (failwith "contract did not fail" : michelson_program)
+  | Success _ -> (failwith "contract did not fail" : michelson_program)
   | Fail x -> (
     let x = (fun (x : test_exec_error) -> x) x in 
     match x with

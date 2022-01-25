@@ -686,7 +686,7 @@ function assert_string_failure (const res : test_exec_result ; const expected : 
     case res of
     | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal (actual, expected))
     | Fail (Other) -> failwith ("contract failed for an unknown reason")
-    | Success -> failwith ("bad price check")
+    | Success (_) -> failwith ("bad price check")
     end
 
 const test = block {
@@ -716,7 +716,7 @@ const test = block {
   // Purchasing a Taco with 1tez and checking that the stock has been updated
   const ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1tez) ;
   const _unit = case ok_case of
-    | Success  -> block {
+    | Success (_) -> block {
       const storage = Test.get_storage (pedro_taco_shop_ta) ;
     } with (assert (eq_in_map (record [ current_stock = 49n ; max_price = 50tez ], storage, 1n) and
                     eq_in_map (record [ current_stock = 20n ; max_price = 75tez ], storage, 2n)))
@@ -744,7 +744,7 @@ let assert_string_failure (res : test_exec_result) (expected : string) : unit =
   match res with
   | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal actual expected)
   | Fail (Other) -> failwith "contract failed for an unknown reason"
-  | Success -> failwith "bad price check"
+  | Success _ -> failwith "bad price check"
 
 let test =
   (* originate the contract with a initial storage *)
@@ -771,7 +771,7 @@ let test =
   (* Purchasing a Taco with 1tez and checking that the stock has been updated *)
   let ok_case : test_exec_result = Test.transfer_to_contract pedro_taco_shop_ctr classico_kind 1tez in
   let () = match ok_case with
-    | Success  ->
+    | Success _ ->
       let storage = Test.get_storage pedro_taco_shop_ta in
       assert ((eq_in_map { current_stock = 49n ; max_price = 50tez } storage 1n) &&
               (eq_in_map { current_stock = 20n ; max_price = 75tez } storage 2n))
@@ -799,7 +799,7 @@ let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit
   switch (res) {
   | Fail (Rejected (actual,_)) => assert (Test.michelson_equal (actual, expected))
   | Fail (Other) => failwith ("contract failed for an unknown reason")
-  | Success => failwith ("bad price check")
+  | Success (_) => failwith ("bad price check")
   }
 } ;
 
@@ -828,7 +828,7 @@ let test =
   /* Purchasing a Taco with 1tez and checking that the stock has been updated */
   let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1tez) ;
   let _u = switch (ok_case) {
-    | Success  =>
+    | Success (_) =>
       let storage = Test.get_storage (pedro_taco_shop_ta) ;
       assert (eq_in_map({ current_stock : 49n , max_price : 50tez }, storage, 1n) &&
               eq_in_map({ current_stock : 20n , max_price : 75tez }, storage, 2n))
@@ -859,7 +859,7 @@ let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit
         Rejected: (x:[michelson_code,address]) => assert (Test.michelson_equal (x[0], expected)),
         Other: (_:unit) => failwith ("contract failed for an unknown reason")
       })),
-    Success: (_:unit) => failwith ("bad price check")
+    Success: (_:nat) => failwith ("bad price check")
   } );
 } ;
 
@@ -887,7 +887,7 @@ let _test = (_: unit): unit => {
   /* Purchasing a Taco with 1tez and checking that the stock has been updated */
   let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, classico_kind, 1 as tez) ;
   let _u = match (ok_case, {
-    Success: (_:unit) => {
+    Success: (_:nat) => {
       let storage = Test.get_storage (pedro_taco_shop_ta) ;
       assert (eq_in_map({ current_stock : 49 as nat, max_price : 50 as tez }, storage, 1 as nat) &&
               eq_in_map({ current_stock : 20 as nat, max_price : 75 as tez }, storage, 2 as nat)); },

@@ -11,7 +11,7 @@ let test =
     Test.originate_from_file cut "main_calling" ([] : string list) init_storage 0tez
   in
   match Test.transfer addr_c (Test.eval addr_v) 1tez with
-  | Success ->
+  | Success _ ->
     let x = Test.get_storage (Test.cast_address addr_c : (address,int) typed_address) in
     assert (x = 2)
   | _ -> failwith "transfer to view caller failed"
