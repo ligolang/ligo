@@ -199,6 +199,36 @@ let statements_of_expression : CST.expr -> CST.statement List.Ne.t option = fun 
   | CST.ECall call -> Some (CST.Instr (CST.ProcCall call), [])
   | _ -> None
 
+let decompile_operator : AST.rich_constant -> CST.expr List.Ne.t -> CST.expr option = fun cons_name arguments ->
+  match cons_name, arguments with
+  | Const C_ADD, (arg1, [arg2]) ->
+     Some CST.(EArith (Add (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_POLYMORPHIC_ADD, (arg1, [arg2]) ->
+     Some CST.(EArith (Add (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_SUB, (arg1, [arg2]) ->
+     Some CST.(EArith (Sub (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_MUL, (arg1, [arg2]) ->
+     Some CST.(EArith (Mult (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_DIV, (arg1, [arg2]) ->
+     Some CST.(EArith (Div (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_MOD, (arg1, [arg2]) ->
+     Some CST.(EArith (Mod (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_NEG, (arg, []) ->
+     Some CST.(EArith (Neg (wrap { op = ghost ; arg })))
+  | Const C_LT, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Lt (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_LE, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Leq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_GT, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Gt (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_GE, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Geq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_EQ, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Equal (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_NEQ, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Neq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | _ -> None
+
 let rec decompile_expression ?(dialect=Verbose) : AST.expression -> CST.expr = fun e ->
   let (block,expr) = decompile_to_block dialect e in
   match expr with
@@ -300,16 +330,23 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let var = decompile_variable name.wrap_content in
     return_expr @@ CST.EVar (var)
   | E_constant {cons_name; arguments} ->
-    let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
     (match arguments with
-      [] -> return_expr @@ expr
+      [] -> let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
+            return_expr @@ expr
     | _ ->
-      let arguments = decompile_to_tuple_expr dialect arguments in
-      let const : CST.fun_call = wrap (expr, arguments) in
-      (match output with
-        Expression -> return_expr (CST.ECall const)
-      | Statements -> return_inst (CST.ProcCall const)
-      )
+      let arguments = List.map ~f:(decompile_expression ~dialect) arguments in
+      let arguments = List.Ne.of_list arguments in
+      match decompile_operator cons_name arguments with
+      | None ->
+         let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
+         let arguments = wrap @@ par @@ nelist_to_npseq @@ arguments in
+         let const : CST.fun_call = wrap (expr, arguments) in
+         (match output with
+            Expression -> return_expr (CST.ECall const)
+          | Statements -> return_inst (CST.ProcCall const)
+         )
+      | Some expr ->
+         return_expr_with_par @@ expr
     )
   | E_literal literal ->
     (match literal with

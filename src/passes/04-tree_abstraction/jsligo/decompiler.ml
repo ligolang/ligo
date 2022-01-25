@@ -16,12 +16,12 @@ open Simple_utils.Function
 
 (* Utils *)
 
-let ghost = 
-  object 
-    method region = Region.ghost 
+let ghost =
+  object
+    method region = Region.ghost
     method attributes = []
     method payload = ""
-  end 
+  end
 
 let wrap = Region.wrap_ghost
 
@@ -40,7 +40,7 @@ let list_to_nsepseq lst =
   | None   -> failwith "List is empty"
 
 let nelist_to_npseq (hd, lst) = (hd, List.map ~f:(fun e -> (ghost, e)) lst)
-                                
+
 let npseq_cons hd lst = hd,(ghost, fst lst)::(snd lst)
 
 let par a = CST.{lpar=ghost;inside=a;rpar=ghost}
@@ -68,7 +68,7 @@ let brackets x = CST.{lbracket=ghost;inside=x;rbracket=ghost}
 let fun_type_arg x = CST.{ name = wrap "_" ; colon = ghost ; type_expr = x }
 let braced d = CST.{lbrace=ghost; rbrace=ghost; inside=d}
 
-let filter_private (attributes: CST.attributes) = 
+let filter_private (attributes: CST.attributes) =
   List.filter ~f:(fun v -> not (String.equal v.value "private")) attributes
 
 (* Decompiler *)
@@ -83,7 +83,7 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
       wrap @@ "user__" ^ var
     else
       wrap @@ var
-      
+
 let decompile_variable2 : type a. a Var.t -> CST.var_pattern Region.reg = fun var ->
   let var = Format.asprintf "%a" Var.pp var in
   if String.contains var '#' then
@@ -103,12 +103,12 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
     let aux (AST.Label c, AST.{associated_type;attributes=row_attr; _}) =
       let constr = wrap c in
       let arg = decompile_type_expr associated_type in
-      let arg = (match arg with 
+      let arg = (match arg with
         TProd {inside; _ } ->
           inside.value.inside
-      | _ as p -> 
+      | _ as p ->
         (p, [])
-      ) 
+      )
       in
       let arg = Some (ghost, arg) in
       let row_attr = decompile_attributes row_attr in
@@ -198,17 +198,47 @@ type statement_or_expr =
   | Statement of CST.statement
   | Expr of CST.expr
 
-let e_hd : _ -> CST.expr = function 
+let e_hd : _ -> CST.expr = function
   [Expr hd] -> hd
 | _ -> failwith "not supported"
 
-let rec s_hd = function 
+let rec s_hd = function
   [Statement hd] -> hd
 | [Expr e] -> CST.SExpr e
-| lst -> 
+| lst ->
   let lst = List.map ~f:(fun e -> s_hd [e]) lst in
   let lst = list_to_nsepseq lst in
   CST.SBlock (wrap @@ braced @@ lst)
+
+let decompile_operator : AST.rich_constant -> CST.expr List.Ne.t -> CST.expr option = fun cons_name arguments ->
+  match cons_name, arguments with
+  | Const C_ADD, (arg1, [arg2]) ->
+     Some CST.(EArith (Add (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_POLYMORPHIC_ADD, (arg1, [arg2]) ->
+     Some CST.(EArith (Add (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_SUB, (arg1, [arg2]) ->
+     Some CST.(EArith (Sub (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_MUL, (arg1, [arg2]) ->
+     Some CST.(EArith (Mult (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_DIV, (arg1, [arg2]) ->
+     Some CST.(EArith (Div (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_MOD, (arg1, [arg2]) ->
+     Some CST.(EArith (Mod (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_NEG, (arg, []) ->
+     Some CST.(EArith (Neg (wrap { op = ghost ; arg })))
+  | Const C_LT, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Lt (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_LE, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Leq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_GT, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Gt (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_GE, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Geq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_EQ, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Equal (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_NEQ, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Neq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | _ -> None
 
 let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun expr ->
   let return_expr expr = expr in
@@ -218,23 +248,28 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let var = decompile_variable name.wrap_content in
     return_expr @@ [Expr (CST.EVar (var))]
   | E_constant {cons_name; arguments} ->
-    let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
     (match arguments with
-      [] -> return_expr @@ [Expr expr]
+      [] ->
+       let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
+       return_expr @@ [Expr expr]
     | _ ->
-      let arguments =
-        (fun xs -> CST.Multiple (wrap (par xs))) @@
-        (fun (hd,tl) -> hd,List.map ~f:(fun x -> ghost,x) tl) @@
-        List.Ne.of_list @@
+      let arguments = List.Ne.of_list @@
         (List.map ~f:(fun x -> CST.EPar (wrap @@ par @@ x))) @@
-        List.map ~f:(fun e -> 
-          let e = decompile_expression_in e in 
-          match e with 
+        List.map ~f:(fun e ->
+          let e = decompile_expression_in e in
+          match e with
             Expr hd :: [] -> hd
           | _ -> failwith "should not happen"
           ) arguments in
-      let const = wrap (expr, arguments) in
-      return_expr @@ [Expr (CST.ECall const)]
+      match decompile_operator cons_name arguments with
+      | None ->
+         let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
+         let arguments = (fun (hd,tl) -> hd,List.map ~f:(fun x -> ghost,x) tl) @@ arguments in
+         let arguments = CST.Multiple (wrap (par arguments)) in
+         let const = wrap (expr, arguments) in
+         return_expr @@ [Expr (CST.ECall const)]
+      | Some expr ->
+         return_expr @@ [Expr expr]
     )
     | E_literal literal ->
       (match literal with
@@ -295,7 +330,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       )
   | E_application {lamb;args} ->
     let lamb = decompile_expression_in lamb in
-    let lamb = match lamb with 
+    let lamb = match lamb with
       Expr hd :: [] -> hd
     |  _ -> failwith "should not happen"
     in
@@ -303,9 +338,9 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       (fun xs -> CST.Multiple (wrap (par xs))) @@
       (fun (hd,tl) -> hd,List.map ~f:(fun x -> ghost,x) tl) @@
       List.Ne.of_list @@
-      (List.map ~f:(fun e -> 
-        let x = decompile_expression_in e in 
-        match x with 
+      (List.map ~f:(fun e ->
+        let x = decompile_expression_in e in
+        match x with
           Expr hd :: [] -> hd
         | _ -> failwith "should not happen"
         )) @@
@@ -352,7 +387,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       | _ -> failwith "not implemented"
       in
     let a = (fst module_.statements) in
-    let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
+    let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in
     let statements: CST.statements CST.braces Region.reg = wrap @@ braced statements in
     let body = decompile_expression_in let_result in
     let attributes = [] in
@@ -366,7 +401,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_raw_code {language; code} ->
     let language = wrap language in
     let code = decompile_expression_in code in
-    let (code, kwd_as, type_expr) = match code with 
+    let (code, kwd_as, type_expr) = match code with
       [Expr (CST.EAnnot {value = hd; _})] -> hd
     | _ -> failwith "not implemented"
     in
@@ -398,12 +433,12 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_accessor {record; path} ->
     let record = decompile_expression_in record in
     let rec proj expr = function
-      AST.Access_map e :: rest ->        
+      AST.Access_map e :: rest ->
         let e = decompile_expression_in e in
         let e = e_hd e in
         let arg = CST.Multiple (wrap (par (e,[ghost,expr]))) in
         proj (CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))) rest
-    | AST.Access_tuple index :: rest -> 
+    | AST.Access_tuple index :: rest ->
       let i = CST.EArith (Int (wrap ("", index))) in
       let p = CST.{
         expr;
@@ -435,7 +470,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let s1 = s_hd expr1 in
     let expr2 = decompile_expression_in expr2 in
     let s2 = s_hd expr2 in
-    let l2: statement_or_expr list = [Statement s1; Statement s2] in 
+    let l2: statement_or_expr list = [Statement s1; Statement s2] in
     let s = statements_to_block l2 in
     return_expr [Statement (CST.SBlock s)]
   | E_cond {condition;then_clause;else_clause} ->
@@ -525,18 +560,18 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     return_expr @@ [Statement (CST.SWhile (wrap loop))]
   | E_for _ ->
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
-    AST.PP.expression expr   
+    AST.PP.expression expr
   (* Update on multiple field of the same record. may be removed by adding sugar *)
   | E_update {record;path;update} when List.length path > 1 ->
     failwith "Nested updates are not supported in JsLIGO."
   | E_update {record; path; update} ->
     let record = decompile_expression_in record in
     let expr = e_hd record in
-    let name = match path with 
+    let name = match path with
       [AST.Access_record name] -> CST.EVar (wrap name)
     | _ -> failwith "not supported"
     in
-    let update = decompile_expression_in update in 
+    let update = decompile_expression_in update in
     let update = e_hd update in
     let p:CST.property = CST.Property (wrap CST.{
       name;
@@ -545,39 +580,39 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     }) in
     return_expr @@ [Expr (CST.EObject (wrap @@ braced (CST.Property_rest (wrap ({expr; ellipsis = ghost}: CST.property_rest)), [(ghost, p)])))]
 
-and statements_to_block (statements: statement_or_expr list) = 
+and statements_to_block (statements: statement_or_expr list) =
   let statements = List.map ~f:(fun f ->
-    match f with 
+    match f with
       Statement s -> s
     | Expr e -> SExpr e
   ) statements in
   let s = list_to_nsepseq statements in
   wrap @@ braced s
 
-and add_return statements = 
+and add_return statements =
   let statements = List.rev statements in
-  let (last, before) = match statements with 
+  let (last, before) = match statements with
     Statement last :: before -> (last, before)
   | Expr last :: before -> (SExpr last, before)
   | _ -> failwith "not implemented"
   in
   let rec aux l =
-    match l with 
+    match l with
       CST.SExpr (EUnit _) -> CST.SReturn (wrap CST.{kwd_return = ghost; expr = None})
     | CST.SExpr e -> CST.SReturn (wrap CST.{kwd_return = ghost; expr = Some e})
-    | CST.SCond {value = {kwd_if; test; ifso; ifnot}; region} -> 
+    | CST.SCond {value = {kwd_if; test; ifso; ifnot}; region} ->
       let ifso = aux ifso in
-      let ifnot = match ifnot with 
-        Some (e, s) -> 
+      let ifnot = match ifnot with
+        Some (e, s) ->
           let s = aux s in
           Some (e, s)
       | None -> None
       in
       CST.SCond {value = {kwd_if; test; ifso; ifnot}; region }
-    | CST.SBlock {value = {lbrace; inside; rbrace}; region} -> 
+    | CST.SBlock {value = {lbrace; inside; rbrace}; region} ->
       let inside = Utils.nsepseq_to_list inside in
-      let inside = List.rev inside in 
-      let (last, before) = (match inside with 
+      let inside = List.rev inside in
+      let (last, before) = (match inside with
         last :: before -> (last, before)
       | [] -> failwith "not implemented"
       ) in
@@ -585,19 +620,19 @@ and add_return statements =
       let inside = last :: before in
       let inside = List.rev inside in
       let inside = list_to_nsepseq inside in
-      CST.SBlock {value = {lbrace; inside; rbrace}; region}      
+      CST.SBlock {value = {lbrace; inside; rbrace}; region}
     | _ -> failwith "not implemented"
   in
   let last = aux last in
   List.rev (Statement last :: before)
 
-and function_body body = 
-  let body = match body with 
+and function_body body =
+  let body = match body with
   | [Expr e] -> CST.ExpressionBody e
-  | (_ :: _) as s -> 
+  | (_ :: _) as s ->
     let s = add_return s in
     let o = statements_to_block s in
-    
+
     CST.FunctionBody o
   | _ -> failwith "not supported"
   in
@@ -610,7 +645,7 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
     let v = decompile_variable binder.var.wrap_content in
     let seq = CST.ESeq (wrap (CST.EAnnot (wrap (CST.EVar v,ghost,type_expr)), [])) in
     let parameters = CST.EPar (wrap @@ par seq ) in
-    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in    
+    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in
     let body = decompile_expression_in result in
     let body = function_body body in
     (parameters, lhs_type, body)
@@ -630,7 +665,7 @@ and decompile_matching_cases : _ AST.match_case list -> CST.expr =
           value = rhs;
         }: CST.property2)))
       in
-      let fields = List.map ~f:aux lst in 
+      let fields = List.map ~f:aux lst in
       let fields = list_to_nsepseq fields in
       CST.EObject (wrap @@ braced fields)
     | Match_list {match_nil; match_cons} ->
@@ -638,18 +673,18 @@ and decompile_matching_cases : _ AST.match_case list -> CST.expr =
       let nil_expr = decompile_expression_in match_nil in
       let body = function_body nil_expr in
       let nil  = CST.EFun (wrap CST.{
-        parameters = EAnnot (wrap (EArray (wrap @@ brackets (Empty_entry ghost, [])), ghost, TVar (wrap "any"))); 
+        parameters = EAnnot (wrap (EArray (wrap @@ brackets (Empty_entry ghost, [])), ghost, TVar (wrap "any")));
         lhs_type = None;
-        arrow = ghost; 
+        arrow = ghost;
         body}) in
       let cons_expr = decompile_expression_in expr in
       let body = function_body cons_expr in
       let hd = Var.to_name hd.wrap_content in
       let tl = ({expr = EVar (wrap (Var.to_name tl.wrap_content)); ellipsis = ghost }: CST.array_item_rest) in
       let cons  = CST.EFun (wrap CST.{
-        parameters = EAnnot (wrap (EArray (wrap @@ brackets (Expr_entry (EVar (wrap hd)), [(ghost, (Rest_entry (wrap tl)))])), ghost, TVar (wrap "any"))); 
+        parameters = EAnnot (wrap (EArray (wrap @@ brackets (Expr_entry (EVar (wrap hd)), [(ghost, (Rest_entry (wrap tl)))])), ghost, TVar (wrap "any")));
         lhs_type = None;
-        arrow = ghost; 
+        arrow = ghost;
         body}) in
       let args = (CST.Expr_entry cons, [(ghost, CST.Expr_entry nil)]) in
       CST.ECall (wrap ((CST.EVar (wrap "list")), CST.Multiple (wrap @@ par (CST.EArray (wrap @@ brackets args), []))))
@@ -663,14 +698,14 @@ and decompile_matching_cases : _ AST.match_case list -> CST.expr =
       let body2 = decompile_expression_in (snd match_some) in
       let body2 = function_body body2 in
       let fields = CST.[
-        CST.Property (wrap 
-          {name = CST.EVar (wrap "Some"); 
-          colon = ghost; 
+        CST.Property (wrap
+          {name = CST.EVar (wrap "Some");
+          colon = ghost;
           value = EFun (wrap CST.{parameters = EAnnot (wrap (EVar (wrap name), ghost, TVar (wrap "any"))); lhs_type = None; arrow = ghost; body = body2})
           });
-          CST.Property (wrap 
-            {name = CST.EVar (wrap "None"); 
-            colon = ghost; 
+          CST.Property (wrap
+            {name = CST.EVar (wrap "None");
+            colon = ghost;
             value = EFun (wrap CST.{parameters = EUnit (wrap (ghost, ghost)); lhs_type = None; arrow = ghost; body})
           })
       ] in
@@ -709,7 +744,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
     in
     let type_expr = decompile_type_expr type_expr in
     let type_ = CST.SType (wrap (CST.{attributes;kwd_type=ghost; name; params;eq=ghost; type_expr})) in
-    if is_private then 
+    if is_private then
       type_
     else
       CST.SExport (wrap (ghost, type_))
@@ -730,7 +765,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
     let const = CST.SConst (wrap (CST.{kwd_const=ghost; bindings = (wrap binding, []); attributes})) in
     if is_private then
       const
-    else 
+    else
       CST.SExport (wrap (ghost, const))
   | Declaration_module {module_binder; module_; module_attr} ->
     let attr = module_attr in
@@ -744,12 +779,12 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
       | _ -> failwith "not implemented"
       in
     let a = (fst module_.statements) in
-    let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
+    let statements: CST.statements = (toplevel_to_statement a, List.map ~f:(fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in
     let statements: CST.statements CST.braces Region.reg = wrap @@ braced statements in
     let ns = CST.SNamespace (wrap (ghost, name, statements, attributes)) in
     if is_private then
       ns
-    else 
+    else
       CST.SExport (wrap (ghost, ns))
   | Module_alias {alias; binders} ->
     let alias = wrap alias in

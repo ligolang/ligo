@@ -187,6 +187,36 @@ let decompile_type_params : AST.type_expression -> _ option * CST.type_expr = fu
          let q = wrap q in
          Some q, t
 
+let decompile_operator : AST.rich_constant -> CST.expr List.Ne.t -> CST.expr option = fun cons_name arguments ->
+  match cons_name, arguments with
+  | Const C_ADD, (arg1, [arg2]) ->
+     Some CST.(EArith (Add (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_POLYMORPHIC_ADD, (arg1, [arg2]) ->
+     Some CST.(EArith (Add (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_SUB, (arg1, [arg2]) ->
+     Some CST.(EArith (Sub (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_MUL, (arg1, [arg2]) ->
+     Some CST.(EArith (Mult (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_DIV, (arg1, [arg2]) ->
+     Some CST.(EArith (Div (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_MOD, (arg1, [arg2]) ->
+     Some CST.(EArith (Mod (wrap { op = ghost ; arg1 ; arg2 })))
+  | Const C_NEG, (arg, []) ->
+     Some CST.(EArith (Neg (wrap { op = ghost ; arg })))
+  | Const C_LT, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Lt (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_LE, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Leq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_GT, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Gt (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_GE, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Geq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_EQ, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Equal (wrap { op = ghost ; arg1 ; arg2 }))))
+  | Const C_NEQ, (arg1, [arg2]) ->
+     Some CST.(ELogic (CompExpr (Neq (wrap { op = ghost ; arg1 ; arg2 }))))
+  | _ -> None
+
 let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   let return_expr expr = expr in
   let return_expr_with_par expr = return_expr @@ CST.EPar (wrap @@ par @@ expr) in
@@ -195,15 +225,20 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let var = decompile_variable name.wrap_content in
     return_expr @@ CST.EVar (var)
   | E_constant {cons_name; arguments} ->
-    let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
     (match arguments with
-      [] -> return_expr @@ expr
+      [] -> let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
+            return_expr @@ expr
     | _ ->
       let arguments = List.Ne.of_list @@
-        (List.map ~f:(fun x -> CST.EPar (wrap @@ par @@ x))) @@
         List.map ~f:decompile_expression arguments in
-      let const = wrap (expr, arguments) in
-      return_expr_with_par @@ CST.ECall const
+      match decompile_operator cons_name arguments with
+      | None ->
+         let arguments = List.Ne.map (fun x -> CST.EPar (wrap @@ par @@ x)) arguments in
+         let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
+         let const = wrap (expr, arguments) in
+         return_expr_with_par @@ CST.ECall const
+      | Some expr ->
+         return_expr_with_par @@ expr
     )
   | E_literal literal ->
     (match literal with
