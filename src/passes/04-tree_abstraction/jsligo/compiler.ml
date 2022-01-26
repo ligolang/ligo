@@ -281,7 +281,7 @@ module Compile_type = struct
       return @@ t_tuple ~loc lst
     | TApp app ->
       let ((operator,args), loc) = r_split app in
-      let operators = Var.of_input_var operator.value in
+      let operators = compile_variable operator in
       let lst = npseq_to_list args.value.inside in
       let lst = List.map ~f:self lst in
       return @@ t_app ~loc operators lst
@@ -296,7 +296,7 @@ module Compile_type = struct
       self type_expr
     | TVar var ->
       let (name,loc) = r_split var in
-      let v = Var.of_input_var name in
+      let v = Var.of_input_var ~loc name in
       return @@ t_variable ~loc v
     | TString _s -> raise.raise @@ unsupported_string_singleton te
     | TInt _s -> raise.raise @@ unsupported_string_singleton te
@@ -484,7 +484,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let fields' = Utils.nsepseq_to_list fields in
     let compile_simple_pattern p =
       let rec aux = function
-        CST.EVar v -> Some (Var.of_input_var v.value, Location.lift v.region)
+        CST.EVar v -> Some (compile_variable v)
       | EPar par -> aux par.value.inside
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
@@ -510,14 +510,13 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let cases = List.map
       ~f:(fun ((constructor,p_opt),body) ->
         (* TODO: location should be fetch*)
-        let param_loc = Location.generated in
         let whole_pattern_loc = Location.generated in
         let pvar = match p_opt with
-          | Some (p, param_loc) ->
-            Location.wrap ~loc:param_loc @@ P_var ({var = p ; ascr = None ; attributes = Stage_common.Helpers.const_attribute}:_ AST.binder)
-          | None -> Location.wrap ~loc:param_loc P_unit
+          | Some (var) ->
+            P_var ({var ; ascr = None ; attributes = Stage_common.Helpers.const_attribute}:_ AST.binder)
+          | None -> P_unit
         in
-        let pattern = Location.wrap ~loc:whole_pattern_loc @@ P_variant (constructor, pvar) in
+        let pattern = Location.wrap ~loc:whole_pattern_loc @@ P_variant (constructor,Location.wrap pvar) in
         ({body ; pattern} : _ AST.match_case)
       )
       constrs
@@ -683,7 +682,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     return @@ e_accessor ~loc var [sels]
   | EModA ma ->
     let (ma, loc) = r_split ma in
-    let (module_name, _) = r_split ma.module_name in
+    let (module_name, l) = r_split ma.module_name in
     let element = self ma.field in
     (*TODO: move to proper module*)
     if List.mem ~equal:String.equal build_ins module_name then
@@ -702,7 +701,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       | None -> return @@ e_variable_ez ~loc var
       )
     else
-      return @@ e_module_accessor ~loc (Var.of_input_var module_name) element
+      return @@ e_module_accessor ~loc (Var.of_input_var ~loc:l module_name) element
   | EFun func ->
     let (func, loc) = r_split func in
     let ({parameters; lhs_type; body;arrow=_} : CST.fun_expr) = func in
@@ -916,12 +915,11 @@ and compile_parameter ~raise : CST.expr ->
         let ascr = compile_type_expression ~raise type_expr in
         (match expr with
           CST.EVar ev ->
-            return ~ascr loc [] @@ Var.of_input_var ev.value
+            return ~ascr loc [] @@ compile_variable ev
         | EArray {value = {inside = Some array_items; _}; _} ->
             let array_item = function
-              CST.Expr_entry EVar e ->
-                let (var,loc) = r_split e in
-                return loc [] @@ Var.of_input_var var
+              CST.Expr_entry EVar var ->
+                return loc [] @@ compile_variable var
             | Rest_entry _ as r -> raise.raise @@ array_rest_not_supported r
             | _ -> raise.raise @@ not_a_valid_parameter expr
             in
@@ -932,7 +930,7 @@ and compile_parameter ~raise : CST.expr ->
               {var;ascr;attributes=_}, [] ->
               var, []
             | var, lst ->
-              let binder = Var.fresh () in
+              let binder = Var.fresh ~loc () in
               let aux (i: Z.t) (b: type_expression binder) =
                 Z.add i Z.one,
                 (b, [], e_accessor (e_variable binder) @@ [Access_tuple i])
@@ -953,7 +951,7 @@ and compile_parameter ~raise : CST.expr ->
       {var;ascr;attributes=_}, [] ->
       var, ascr, []
     | var, lst ->
-      let binder = Var.fresh () in
+      let binder = Var.fresh ~loc () in
       let aux (i: Z.t) (b: type_expression binder) =
         Z.add i Z.one,
         (b, [], e_accessor (e_variable binder) @@ [Access_tuple i])
@@ -967,10 +965,10 @@ and compile_parameter ~raise : CST.expr ->
 
   | EVar var ->
     let (var,loc) = r_split var in
-    return loc [] @@ Var.of_input_var var
+    return loc [] @@ Var.of_input_var ~loc var
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
-    return ~ascr:(t_unit ~loc ()) loc [] @@ Var.fresh ~name:"()" ()
+    return ~ascr:(t_unit ~loc ()) loc [] @@ Var.fresh ~loc ~name:"()" ()
   | _ -> raise.raise @@ not_a_valid_parameter expr
 
 
@@ -1018,28 +1016,28 @@ and is_failwith_call = function
 
 and compile_pattern ~raise : const:bool -> CST.pattern -> type_expression binder * (_ -> _) =
   fun ~const pattern ->
-  let return ?ascr loc fun_ var attributes =
+  let return ?ascr fun_ var attributes =
     ({var; ascr; attributes}, fun_) in
-  let return_1 ?ascr loc var = return ?ascr loc (fun e -> e) var in
+  let return_1 ?ascr var = return ?ascr (fun e -> e) var in
   match pattern with
     PVar var ->
     let (var,loc) = r_split var in
     let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
     let var = match var.variable.value with
-      | "_" -> Var.fresh ()
-      | var -> Var.of_input_var var
+      | "_" -> Var.fresh ~loc ()
+      | var -> Var.of_input_var ~loc var
     in
-    return_1 loc var attributes
+    return_1 var attributes
   | PArray tuple ->
     let (tuple, loc) = r_split tuple in
-    let var = Var.fresh () in
+    let var = Var.fresh ~loc () in
     let aux pattern (binder_lst, fun_) =
       let (binder, fun_') = compile_pattern ~raise ~const pattern in
       (binder :: binder_lst, fun_' <@ fun_)
     in
     let binder_lst, fun_ = List.fold_right ~f:aux ~init:([], fun e -> e) @@ Utils.nsepseq_to_list tuple.inside in
     let expr = fun expr -> e_matching_tuple (e_variable var) binder_lst @@ fun_ expr in
-    return loc expr var Stage_common.Helpers.empty_attribute
+    return expr var Stage_common.Helpers.empty_attribute
   | _ -> raise.raise @@ unsupported_pattern_type pattern
 
 and filter_private (attributes: CST.attributes) =
@@ -1328,7 +1326,7 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
   | SType ti ->
     let (ti, loc) = r_split ti in
     let ({name;type_expr;_}: CST.type_decl) = ti in
-    let type_binder = Var.of_input_var name.value in
+    let type_binder = compile_variable name in
     let rhs = compile_type_expression ~raise type_expr in
     binding (e_type_in ~loc type_binder rhs)
   | SNamespace n ->

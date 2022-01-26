@@ -27,7 +27,11 @@ let%expect_test _ =
       7 |     Add: (n: int) => { n = 42; return n; },
       8 |     Sub: (n: int) => { n = 42; return -n; }
 
-    Invalid assignment to constant variable "n", declared at |}]
+    Invalid assignment to constant variable "n", declared at
+    File "../../test/contracts/negative/vars_consts/match.jsligo", line 7, characters 10-11:
+      6 |   let store2 = match (action, {
+      7 |     Add: (n: int) => { n = 42; return n; },
+      8 |     Sub: (n: int) => { n = 42; return -n; } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_const_param.ligo") ] ;
@@ -142,7 +146,10 @@ let%expect_test _ =
       2 |   a = 42;
       3 |   return a;
 
-    Invalid assignment to constant variable "a", declared at |}]
+    Invalid assignment to constant variable "a", declared at
+    File "../../test/contracts/negative/vars_consts/assign_const_param_2.jsligo", line 1, characters 9-10:
+      1 | let x = (a: int): int => {
+      2 |   a = 42; |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "multiple_vars_1.jsligo") ] ;
