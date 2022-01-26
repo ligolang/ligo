@@ -1665,7 +1665,7 @@ const x =  match (+1 , (+2 , +3)) with
     Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.religo"];
   [%expect {|
-File "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-14:
+File "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, characters 8-9:
   1 | /* these should give a missing type annotation error */
   2 | let a = b => b
   3 | let a = (b,c) => b

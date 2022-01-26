@@ -6,7 +6,7 @@ open Simple_utils.Display
 let stage = "typer"
 
 type typer_error = [
-  | `Typer_missing_funarg_annotation of Location.t * Ast_typed.expression_variable
+  | `Typer_missing_funarg_annotation of Ast_typed.expression_variable
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
   | `Typer_unbound_module_variable of Ast_typed.module_variable * Location.t
@@ -112,10 +112,10 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Pattern do not match returned expression.@]"
           Snippet.pp loc
-    | `Typer_missing_funarg_annotation (loc,v) ->
+    | `Typer_missing_funarg_annotation (v) ->
       Format.fprintf f
         "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
-          Snippet.pp loc
+          Snippet.pp (Stage_common.Var.get_location v)
           Ast_typed.PP.expression_variable v
     | `Typer_michelson_comb_no_record loc ->
       Format.fprintf f
@@ -563,12 +563,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", `String message );
       ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
-  | `Typer_missing_funarg_annotation (loc,v) ->
+  | `Typer_missing_funarg_annotation v ->
     let message = Format.asprintf "Missing type annotation for argument" in
     let content = `Assoc [
       ("value", Stage_common.Types.expression_variable_to_yojson v );
       ("message", `String message );
-      ("location", Location.to_yojson loc); ] in
+      ("location", Location.to_yojson @@ Stage_common.Var.get_location v); ] in
     json_error ~stage ~content
   | `Typer_michelson_comb_no_record loc ->
     let message = `String "michelson pair comb can only be used on a record type" in
@@ -797,7 +797,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
       ("message", message); ("location", loc);
-      ("value", value); 
+      ("value", value);
       ("field", field);
     ] in
     json_error ~stage ~content

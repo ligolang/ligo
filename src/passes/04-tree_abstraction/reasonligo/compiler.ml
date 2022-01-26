@@ -142,7 +142,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
           )
         | _ ->raise.raise @@ michelson_type_wrong_arity loc operator.value)
     | _ ->
-      let operators = Var.of_input_var operator.value in
+      let operators = Var.of_input_var ~loc operator.value in
       let lst = npseq_to_list args.value.inside in
       let lst = List.map ~f:self lst in
       return @@ t_app ~loc operators lst
@@ -158,7 +158,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
     self type_expr
   | TVar var ->
     let (name,loc) = r_split var in
-    let v = Var.of_input_var name in
+    let v = mk_var ~loc name in
     return @@ t_variable ~loc v
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te
@@ -169,7 +169,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
     return @@ t_module_accessor ~loc module_name element
   | TArg var ->
     let (name,loc) = r_split var in
-    let v = Var.of_input_var (quote_var name.name.value) in
+    let v = Var.of_input_var ~loc (quote_var name.name.value) in
     return @@ t_variable ~loc v
 
 
@@ -476,7 +476,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
   | ETypeIn ti ->
     let (ti, loc) = r_split ti in
     let ({type_decl={name;type_expr;_};semi=_;body} : CST.type_in) = ti in
-    let type_binder = Var.of_input_var name.value in
+    let type_binder = compile_variable name in
     let rhs = compile_type_expression ~raise type_expr in
     let body = compile_expression ~raise body in
     return @@ e_type_in ~loc type_binder rhs body
@@ -515,12 +515,15 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
 and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
   fun p ->
   match unepar p with
-  | CST.PVar {value={variable; attributes}; region} ->
-    let loc = Location.lift region in
+  | CST.PVar {value={variable; attributes}; _} ->
+    let (var,loc) = r_split variable in
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
     let b =
-      let var = compile_variable variable in
+      let var = match var with
+        | "_" -> Var.fresh ~loc ()
+        | var -> Var.of_input_var ~loc var
+      in
       { var ; ascr = None ; attributes }
     in
     Location.wrap ~loc @@ P_var b
@@ -625,27 +628,6 @@ and untpar = function
 | CST.TPar { value = { inside; _ }; _ } -> untpar inside
 | _ as v -> v
 
-and check_annotation ~raise = function
-| CST.PVar {value={variable;_};region=_} -> raise.raise (missing_funarg_annotation variable)
-| CST.PPar { value = { inside ; _ }; _ } -> check_annotation ~raise inside
-| CST.PTuple { value ; _ } ->
-  let l = Utils.nsepseq_to_list value in
-  List.iter ~f:(check_annotation ~raise) l
-| CST.PTyped { value = { pattern; type_expr; _ }; _ } -> (
-  let (pattern: CST.pattern) = unepar pattern in
-  let (type_expr: CST.type_expr) = untpar type_expr in
-  match pattern, type_expr with
-  | PTuple { value = pval; region }, TProd { value = tval; _ } -> (
-    let no_of_tuple_components = List.length (Utils.nsepseq_to_list pval) in
-    let no_of_tuple_type_components = List.length (Utils.nsepseq_to_list tval.inside) in
-    if (no_of_tuple_components <> no_of_tuple_type_components) then
-     raise.raise (funarg_tuple_type_mismatch region pattern type_expr)
-    else
-      ())
-  | _ -> ()
-  )
-| _ -> ()
-
 and compile_let_binding ~raise ?kwd_rec attributes binding =
   let return lst = lst in
   let return_1 a = return [a] in
@@ -721,7 +703,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
   let return_1 reg decl = return reg [decl] in
   match decl with
     TypeDecl {value={name; type_expr; params; _};region} ->
-    let (name,_) = r_split name in
+    let type_binder = compile_variable name in
     let type_expr =
       let rhs = compile_type_expression ~raise type_expr in
       match params with
@@ -736,7 +718,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration_type {type_binder=Var.of_input_var name; type_expr; type_attr=[]}
+    return_1 region @@ AST.Declaration_type {type_binder; type_expr; type_attr=[]}
   | ModuleDecl {value={name; module_; _};region} ->
     let module_binder = compile_variable name in
     let module_ = compile_module ~raise module_ in

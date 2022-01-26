@@ -388,7 +388,6 @@ and type_expression ~raise ~test ~protocol_version : ?env:Environment.t -> ?tv_o
     res
 
 and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun context ?tv_opt e ->
-  let loc = e.location in
   let return expr tv =
     let () =
       match tv_opt with
@@ -532,7 +531,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
                | None -> let binder = {lambda.binder with ascr = Some input_type } in
                          { lambda with binder = binder }
                | Some _ -> lambda in
-     let (lambda,lambda_type) = type_lambda ~loc ~raise ~test ~protocol_version context lambda in
+     let (lambda,lambda_type) = type_lambda ~raise ~test ~protocol_version context lambda in
      return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
@@ -748,7 +747,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let fun_type = evaluate_type ~raise context fun_type in
     let e' = Context.add_value context fun_name fun_type in
     let e' = List.fold_left av ~init:e' ~f:(fun e v -> Context.add_type_var e v ()) in
-    let (lambda,_) = type_lambda ~loc ~raise ~test ~protocol_version e' lambda in
+    let (lambda,_) = type_lambda ~raise ~test ~protocol_version e' lambda in
     return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
     let tv = evaluate_type ~raise context type_annotation in
@@ -774,7 +773,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     return (E_module_accessor {module_name; element}) element.type_expression
 
 
-and type_lambda ~loc ~raise ~test ~protocol_version e {
+and type_lambda ~raise ~test ~protocol_version e {
       binder ;
       output_type ;
       result ;
@@ -785,7 +784,7 @@ and type_lambda ~loc ~raise ~test ~protocol_version e {
         Option.map ~f:(evaluate_type ~raise e) output_type
       in
       let binder = binder.var in
-      let input_type = trace_option ~raise (missing_funarg_annotation loc binder) input_type in
+      let input_type = trace_option ~raise (missing_funarg_annotation binder) input_type in
       let e' = Context.add_value e binder input_type in
       let body = type_expression' ~raise ~test ~protocol_version ?tv_opt:output_type e' result in
       let output_type = body.type_expression in

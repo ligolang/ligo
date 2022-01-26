@@ -404,13 +404,7 @@ let%expect_test "main_cit_reasonligo" =
       File "a dummy file name", line 20, character 5:
 
       Invalid "bar" type.
-      An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}];
-  error(`Concrete_reasonligo_missing_funarg_annotation variable);
-  [%expect
-    {|
-      File "a dummy file name", line 20, character 5:
-
-      Missing a type annotation for argument "dog".|}]
+      An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}]
 
 
 let%expect_test "typer" =
