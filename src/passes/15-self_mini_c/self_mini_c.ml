@@ -113,6 +113,7 @@ let is_pure_constant : constant' -> bool =
   | C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE
   | C_OPEN_CHEST
+  | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
     -> true
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
@@ -233,6 +234,10 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_constant (c)
     -> is_pure_constant c.cons_name && List.for_all ~f:is_pure c.arguments
+
+  | E_global_constant (_hash, _args) ->
+    (* hashed code can be impure :( *)
+    false
 
   (* I'm not sure about these. Maybe can be tested better? *)
   | E_application _

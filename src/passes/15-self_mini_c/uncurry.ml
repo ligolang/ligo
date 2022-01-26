@@ -112,6 +112,8 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     usages [self expr; self update]
   | E_raw_michelson _ ->
     Unused
+  | E_global_constant (_hash, args) ->
+    usages (List.map ~f:self args)
 
 let comb_type (ts : type_expression list) : type_expression =
   { type_content = T_tuple (List.map ~f:(fun t -> (None, t)) ts);
@@ -243,6 +245,9 @@ let rec uncurry_in_expression
     let expr = self expr in
     let update = self update in
     return (E_update (expr, i, update, n))
+  | E_global_constant (hash, args) ->
+    let args = List.map ~f:self args in
+    return (E_global_constant (hash, args))
 
 (* hack to specialize map_expression to identity monad since there are
    no errors here *)

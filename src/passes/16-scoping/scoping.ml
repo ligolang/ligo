@@ -222,6 +222,10 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
       | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
       | Some (a, b) -> (a, b) in
     (E_raw_michelson (meta, translate_type a, translate_type b, List.map ~f:backward code), use_nothing env)
+  | E_global_constant (hash, args) ->
+    let (args, us) = translate_args args env in
+    let output_ty = translate_type ty in
+    (E_global_constant (meta, output_ty, hash, args), us)
 
 and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in
@@ -279,6 +283,13 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   let special : (_ O.static_args * I.expression list) option =
     let return (x : _ O.static_args * I.expression list) : _ = Some x in
     match expr.cons_name with
+    | C_GLOBAL_CONSTANT -> (
+      match expr.arguments with
+      | { content = E_literal (Literal_string hash); type_expression = _ ; _} :: arguments ->
+        let hash = Ligo_string.extract hash in
+        return (O.Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
+      | _ -> None
+    )
     | C_VIEW -> (
       match expr.arguments with
       | { content = E_literal (Literal_string view_name); type_expression = _; location=_} :: arguments ->

@@ -111,6 +111,8 @@ and expression_content =
   (* E_update (record, index, update, field_count): field_count as for E_proj *)
   | E_update of expression * int * expression * int
   | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
+  (* E_global_constant (hash, args) *)
+  | E_global_constant of string * expression list
 
 and expression = {
   content : expression_content ;

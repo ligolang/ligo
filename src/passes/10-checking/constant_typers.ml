@@ -1174,7 +1174,12 @@ let view ~raise loc = typer_3_opt ~raise loc "TEST_VIEW" @@ fun name _arg addr t
   let _ : type_expression = trace_option ~raise (expected_option loc view_ret_t) @@ get_t_option view_ret_t in
   view_ret_t
 
-let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
+let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTANT" @@ fun hash_str tv_opt ->
+  let () = trace_option ~raise (expected_string loc hash_str) @@ get_t_string hash_str in
+  let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
+  ret_t
+
+let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_INT                 -> int ~raise loc ;
   | C_UNIT                -> unit ~raise loc ;
   | C_NEVER               -> never ~raise loc ;
@@ -1335,26 +1340,19 @@ let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
   | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
   | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
-  | C_TEST_CREATE_CHEST -> (
-    match protocol_version with
-    | Ligo_proto.Hangzhou -> test_create_chest ~raise loc ;
-    | Ligo_proto.Edo ->
-      raise.raise @@ corner_case (
-        Format.asprintf "Unsupported constant %a in protocol %s"
-        PP.constant' c
-        (Ligo_proto.variant_to_string protocol_version)
-      )
-  )
-  | C_TEST_CREATE_CHEST_KEY -> (
-    match protocol_version with
-    | Ligo_proto.Hangzhou -> test_create_chest_key ~raise loc ;
-    | Ligo_proto.Edo ->
-      raise.raise @@ corner_case (
-        Format.asprintf "Unsupported constant %a in protocol %s"
-          PP.constant' c
-          (Ligo_proto.variant_to_string protocol_version)
-      )
-  )
+  | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
+  | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
+  | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
+
+and only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
+  match protocol_version with
+  | Ligo_proto.Hangzhou -> default
+  | Ligo_proto.Edo ->
+    raise.raise @@ corner_case (
+      Format.asprintf "Unsupported constant %a in protocol %s"
+        PP.constant' c
+        (Ligo_proto.variant_to_string protocol_version)
+    )

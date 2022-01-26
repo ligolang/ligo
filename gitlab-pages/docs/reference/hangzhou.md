@@ -99,6 +99,20 @@ let call_view : string => 'arg => address => option ('ret)
 let call_view : string => 'arg => address => option &lt;&apos;ret&gt;
 </SyntaxTitle>
 
+
+<SyntaxTitle syntax="pascaligo">
+function constant: string -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val constant : string -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let constant : string => 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let constant : string => 'a
+</SyntaxTitle>
+
 #### Test
 
 new signature for originate_from_file:
@@ -375,3 +389,8 @@ function view_call (const name : string ; const parameter : int ; const addr: ad
 ```
 
 </Syntax>
+
+### Global constant
+
+The new primitive `Test.constant` allows you to use a predefined constant already registered on chain.
+It accepts a hash in the form of a string and will require a type annotation.

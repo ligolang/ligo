@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal
+title: Added Tezos.constant for protocol Hangzhou
+type: added
+merge_request: '1438'

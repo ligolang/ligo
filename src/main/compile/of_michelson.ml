@@ -12,7 +12,7 @@ let build_contract ~raise :
       let views =
         List.map
           ~f:(fun (name, view) ->
-            let (view_param_ty, ret_ty) = trace_option ~raise (main_entrypoint_not_a_function) @@ (* remitodo error specific to views*)
+            let (view_param_ty, ret_ty) = trace_option ~raise (main_view_not_a_function name) @@ (* remitodo error specific to views*)
               Self_michelson.fetch_views_ty view.expr_ty
             in
             (name, view_param_ty, ret_ty, view.expr)

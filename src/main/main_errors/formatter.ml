@@ -121,6 +121,7 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>An error occurred while evaluating an expression: %s@]"
         value
     | `Main_entrypoint_not_a_function -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not a function.@]"
+    | `Main_view_not_a_function str -> Format.fprintf f "@[<hv>Invalid command line argument. @.View \"%s\" is not a function.@]" str
     | `Main_entrypoint_not_found -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not found in the contract.@]"
     | `Main_invalid_balance a -> Format.fprintf f "@[<hv>Invalid command line option \"--balance\". @.The provided balance \"%s\" is invalid. Use an integer instead. @]" a
     | `Main_invalid_amount a -> Format.fprintf f "@[<hv>Invalid command line option \"--amount\". @.The provided amount \"%s\" is invalid. Use an integer instead. @]" a
@@ -375,6 +376,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
     json_error ~stage:"michelson execution" ~content:(`String "error of execution")
 
   | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~content:(`String "given entrypoint is not a function")
+  | `Main_view_not_a_function _str -> json_error ~stage:"top-level glue" ~content:(`String "given view is not a function")
   | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~content:(`String "Missing entrypoint")
 
   | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
