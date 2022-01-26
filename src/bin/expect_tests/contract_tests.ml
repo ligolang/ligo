@@ -1791,8 +1791,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
   [%expect{|
+    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-50:
+      1 | module Foo = struct
+      2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
+      3 | end
     :
-    Warning: variable "Foox" cannot be used more than once.
+    Warning: variable "Foo.x" cannot be used more than once.
 
     Error(s) occurred while checking the contract:
     At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
