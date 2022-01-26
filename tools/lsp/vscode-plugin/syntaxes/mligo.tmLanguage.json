@@ -15,7 +15,8 @@
     { "include": "#numericliterals" },
     { "include": "#operators" },
     { "include": "#identifierconstructor" },
-    { "include": "#module" }
+    { "include": "#moduleaccess" },
+    { "include": "#moduledeclaration" }
   ],
   "repository": {
     "string": {
@@ -51,7 +52,8 @@
     },
     "controlkeywords": {
       "name": "keyword.control.mligo",
-      "match": "\\b(match|with|if|then|else|assert|failwith|begin|end|in)\\b",
+      "match":
+        "\\b(match|with|if|then|else|assert|failwith|struct|begin|end|in)\\b",
       "captures": {}
     },
     "letbinding": {
@@ -85,11 +87,18 @@
       "match": "\\b(type)\\b",
       "captures": {}
     },
-    "module": {
+    "moduleaccess": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.mligo" },
         "1": { "name": "storage.class.mligo" }
+      }
+    },
+    "moduledeclaration": {
+      "match": "\\b(module)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
+      "captures": {
+        "2": { "name": "storage.class.mligo" },
+        "1": { "name": "keyword.other.mligo" }
       }
     },
     "identifierconstructor": {

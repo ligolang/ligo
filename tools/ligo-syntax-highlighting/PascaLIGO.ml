@@ -8,7 +8,8 @@ module Name = struct
   let function_              = "function"
   let operators              = "operators"
   let type_definition        = "typedefinition"
-  let module_                = "module"
+  let module_access          = "moduleaccess"
+  let module_declaration     = "moduledeclaration"
   let identifier_constructor = "identifierconstructor"
   let const_or_var           = "constorvar"
   let numeric_literals       = "numericliterals"
@@ -107,7 +108,8 @@ let syntax_highlighting =
       Name.function_;
       Name.operators;
       Name.type_definition;
-      Name.module_;
+      Name.module_access;
+      Name.module_declaration;
       Name.identifier_constructor;
       Name.const_or_var;
       Name.numeric_literals;
@@ -148,11 +150,21 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.module_;
+        name = Name.module_access;
         kind = Match {
           match_     = [
-            (Regexp.module_match1, Some Structure);
-            (Regexp.module_match2, Some Identifier)
+            (Regexp.module_access_match1, Some Structure);
+            (Regexp.module_access_match2, Some Identifier)
+          ];
+          match_name = None
+        }
+      };
+      {
+        name = Name.module_declaration;
+        kind = Match {
+          match_ = [
+            (Regexp.module_declaration_match1, Some Keyword);
+            (Regexp.module_declaration_match2, Some Structure);
           ];
           match_name = None
         }
