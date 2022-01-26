@@ -70,15 +70,17 @@ data ScopedDecl = ScopedDecl
   , _sdDoc :: [Text]
   , _sdDialect :: Lang
   , _sdSpec :: DeclarationSpecifics
-  }
+  } deriving stock (Show)
 
 data DeclarationSpecifics
   = TypeSpec (Maybe TypeParams) (TypeDeclSpecifics Type)
   | ValueSpec ValueDeclSpecifics
+  deriving stock (Show)
 
 data TypeParams
   = TypeParam (TypeDeclSpecifics TypeVariable)
   | TypeParams [TypeDeclSpecifics TypeVariable]
+  deriving stock (Show)
 
 newtype TypeVariable = TypeVariable
   { _tvName :: Text

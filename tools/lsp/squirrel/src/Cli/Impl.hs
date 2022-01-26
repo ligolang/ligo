@@ -21,11 +21,12 @@ import Control.Monad.Reader
 import Data.Aeson (ToJSON (..), eitherDecodeStrict', object, (.=))
 import Data.Bifunctor (bimap)
 import Data.Foldable (asum)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text, pack, unpack)
 import Data.Text qualified as Text
 import Data.Text.Encoding (encodeUtf8)
 import Data.Text.IO qualified as Text
-import Duplo.Pretty (PP (PP), Pretty (..), text, (<+>), (<.>))
+import Duplo.Pretty (pp)
 import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
 import System.FilePath (takeDirectory, takeFileName)
@@ -52,28 +53,28 @@ data LigoClientFailureException = LigoClientFailureException
   { cfeStdout :: Text -- ^ stdout
   , cfeStderr :: Text -- ^ stderr
   , cfeFile   :: Maybe FilePath  -- ^ File that caused the error
-  } deriving anyclass (Exception, LigoException)
-    deriving Show via (PP LigoClientFailureException)
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
 
 -- | Expected ligo failure decoded from its JSON output
 data LigoDecodedExpectedClientFailureException = LigoDecodedExpectedClientFailureException
   { decfeErrorDecoded :: LigoError -- ^ Successfully decoded ligo error
   , decfeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (Exception, LigoException)
-    deriving Show via (PP LigoDecodedExpectedClientFailureException)
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
 
 -- | Ligo has unexpectedly crashed.
 data LigoUnexpectedCrashException = LigoUnexpectedCrashException
   { uceMessage :: Text -- ^ extracted failure message
   , uceFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (Exception, LigoException)
-    deriving Show via (PP LigoUnexpectedCrashException)
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
 
 data LigoPreprocessFailedException = LigoPreprocessFailedException
   { pfeMessage :: Text -- ^ Successfully decoded ligo error
   , pfeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (Exception, LigoException)
-    deriving Show via (PP LigoPreprocessFailedException)
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
 
 ----------------------------------------------------------------------------
 -- Errors that may fail due to changes in ligo compiler
@@ -83,23 +84,25 @@ data LigoErrorNodeParseErrorException = LigoErrorNodeParseErrorException
   { lnpeError :: Text -- ^ Error description
   , lnpeOutput :: Text -- ^ The JSON output which we failed to decode
   , lnpeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (Exception, LigoException)
-    deriving Show via (PP LigoErrorNodeParseErrorException)
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
 
 -- | Parse error occured during ligo stderr JSON decoding.
 data LigoDefinitionParseErrorException = LigoDefinitionParseErrorException
   { ldpeError :: Text -- ^ Error description
   , ldpeOutput :: Text -- ^ The JSON output which we failed to decode
   , ldpeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (Exception, LigoException)
-    deriving Show via (PP LigoDefinitionParseErrorException)
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
 
-data SomeLigoException
-  = forall a . (LigoException a, Pretty a) => SomeLigoException a
-  deriving Show via (PP SomeLigoException)
+data SomeLigoException where
+  SomeLigoException :: LigoException a => a -> SomeLigoException
+
+deriving stock instance Show SomeLigoException
 
 instance Exception SomeLigoException where
-  displayException = show . pp
+  displayException (SomeLigoException a) = [i|Error (LIGO): #{displayException a}|]
+
   fromException e =
     asum
       [ SomeLigoException <$> fromException @LigoClientFailureException                e
@@ -110,51 +113,43 @@ instance Exception SomeLigoException where
       , SomeLigoException <$> fromException @LigoPreprocessFailedException             e
       ]
 
-----------------------------------------------------------------------------
--- Pretty
-----------------------------------------------------------------------------
+instance Exception LigoClientFailureException where
+  displayException LigoClientFailureException {cfeStdout, cfeStderr, cfeFile} =
+    "LIGO binary failed with\nStdout:\n" <> unpack cfeStdout
+    <> "\nStderr:\n" <> unpack cfeStderr
+    <> "\nCaused by: " <> fromMaybe "<unknown file>" cfeFile
 
-instance Pretty LigoClientFailureException where
-  pp LigoClientFailureException {cfeStdout, cfeStderr, cfeFile} =
-      "ligo binary failed as expected with\nStdout:\n" <.> pp cfeStdout
-      <.> "\nStderr:\n" <.> pp cfeStderr
-      <.> "\nCaused by:" <+> pp (pack <$> cfeFile)
+instance Exception LigoDecodedExpectedClientFailureException where
+  displayException LigoDecodedExpectedClientFailureException {decfeErrorDecoded, decfeFile} =
+    "LIGO binary produced expected error which we successfully decoded as:\n"
+    <> show (pp decfeErrorDecoded)
+    <> "\nCaused by: " <> decfeFile
 
-instance Pretty LigoDecodedExpectedClientFailureException where
-  pp LigoDecodedExpectedClientFailureException {decfeErrorDecoded, decfeFile} =
-      "ligo binary produced expected error which we successfully decoded as:\n"
-      <.> text (show decfeErrorDecoded)
-      <.> "\nCaused by:" <+> pp (pack decfeFile)
+instance Exception LigoErrorNodeParseErrorException where
+  displayException LigoErrorNodeParseErrorException {lnpeError, lnpeOutput, lnpeFile} =
+    "LIGO binary produced an error JSON which we consider malformed:\n"
+    <> unpack lnpeError
+    <> "\nCaused by: " <> lnpeFile
+    <> "\nJSON output dumped:\n"
+    <> unpack lnpeOutput
 
-instance Pretty LigoErrorNodeParseErrorException where
-  pp LigoErrorNodeParseErrorException {lnpeError, lnpeOutput, lnpeFile} =
-      "ligo binary produced error JSON which we consider malformed:\n"
-      <.> pp lnpeError
-      <.> "\nCaused by:" <+> pp (pack lnpeFile)
-      <.> "\nJSON output dumped:\n"
-      <.> pp lnpeOutput
+instance Exception LigoDefinitionParseErrorException where
+  displayException LigoDefinitionParseErrorException {ldpeError, ldpeOutput, ldpeFile} =
+    "LIGO binary produced a definition output which we consider malformed:\n"
+    <> unpack ldpeError
+    <> "\nCaused by: " <> ldpeFile
+    <> "\nJSON output dumped:\n"
+    <> unpack ldpeOutput
 
-instance Pretty LigoDefinitionParseErrorException where
-  pp LigoDefinitionParseErrorException {ldpeError, ldpeOutput, ldpeFile} =
-      "ligo binary produced a definition output which we consider malformed:\n"
-      <.> pp ldpeError
-      <.> "\nCaused by:" <+> pp (pack ldpeFile)
-      <.> "\nJSON output dumped:\n"
-      <.> pp ldpeOutput
+instance Exception LigoUnexpectedCrashException where
+  displayException LigoUnexpectedCrashException {uceMessage, uceFile} =
+    "LIGO binary crashed with error: " <> unpack uceMessage
+    <> "\nCaused by: " <> uceFile
 
-instance Pretty LigoUnexpectedCrashException where
-  pp LigoUnexpectedCrashException {uceMessage, uceFile} =
-      "ligo binary crashed with error: " <+> pp uceMessage
-      <.> "\nCaused by:" <+> pp (pack uceFile)
-
-instance Pretty SomeLigoException where
-  pp (SomeLigoException a) =
-    "Error (ligo):" <+> pp a
-
-instance Pretty LigoPreprocessFailedException where
-  pp LigoPreprocessFailedException {pfeMessage, pfeFile} =
-    "ligo failed to preprocess contract with\n:" <.> pp pfeMessage
-    <.> "\nCaused by:" <+> pp (pack pfeFile)
+instance Exception LigoPreprocessFailedException where
+  displayException LigoPreprocessFailedException {pfeMessage, pfeFile} =
+    "LIGO failed to preprocess contract with\n:" <> unpack pfeMessage
+    <> "\nCaused by: " <> pfeFile
 
 ----------------------------------------------------------------------------
 -- Execution

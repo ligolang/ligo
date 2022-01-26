@@ -4,11 +4,11 @@ module AST.Scope.Standard
 
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Lens ((%~))
-import UnliftIO.Exception (Handler (..), catches, displayException, throwIO)
+import UnliftIO.Exception (Handler (..), catches, displayException)
 
 import AST.Scope.Common
-  ( pattern FindContract, FindFilepath (..), ContractNotFoundException (..)
-  , HasScopeForest (..), Includes (..), ParsedContract (..), MergeStrategy (..), cMsgs
+  ( pattern FindContract, FindFilepath (..), HasScopeForest (..), Includes (..)
+  , ParsedContract (..), MergeStrategy (..), cMsgs, contractNotFoundException
   , getContract, lookupContract, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
@@ -50,7 +50,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
       merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do
         let src = _cFile lf
         let fp = srcPath src
-        FindFilepath ff <- maybe (throwIO $ ContractNotFoundException fp f) pure (lookupContract fp f)
+        FindFilepath ff <- maybe (contractNotFoundException fp f) pure (lookupContract fp f)
         pure $ FindContract
           src
           (mergeScopeForest OnUnion (_cTree ff) (_cTree lf))

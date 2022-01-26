@@ -29,7 +29,7 @@ module Cli.Json
 where
 
 import Control.Applicative (Alternative ((<|>)), liftA2)
-import Control.Lens.Operators
+import Control.Lens.Operators ((??))
 import Control.Monad.State
 import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
@@ -605,8 +605,8 @@ parseLigoTypeMeta _ = do
 ----------------------------------------------------------------------------
 
 instance Pretty LigoError where
-  pp (LigoError _ stage (LigoErrorContent msg at)) = mconcat
-    [ text "Error in ", text $ show stage
+  pp (LigoError status stage (LigoErrorContent msg at)) = mconcat
+    [ pp status <+> " in ", text $ show stage
     , case at of
         Nothing -> mempty
         Just at' -> text "\n\nat: " <> pp (fromLigoRangeOrDef at')
