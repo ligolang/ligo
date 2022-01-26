@@ -158,6 +158,8 @@ recognise (SomeRawTree dialect rawTree)
         "p_include" -> BInclude   <$> field "filename"
         "p_import"  -> BImport    <$> field "filename" <*> field "alias"
         "fun_arg"   -> BParameter <$> field "argument" <*> fieldOpt "type"
+        "module_decl" -> BModuleDecl <$> field "moduleName" <*> fields "declaration"
+        "module_alias" -> BModuleAlias <$> field "moduleName" <*> field "module"
         _           -> fallthrough
 
     -- TypeParams

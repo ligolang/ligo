@@ -42,9 +42,9 @@ let lambda_end: Core.regexp = {
 }
 
 let control_keywords_match: Core.regexp = {
-  emacs    = "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\|end\\\\|in\\\\)\\\\b";
-  textmate = "\\b(match|with|if|then|else|assert|failwith|begin|end|in)\\b";
-  vim      = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\)\\>"
+  emacs    = "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|struct\\\\|begin\\\\|end\\\\|in\\\\)\\\\b";
+  textmate = "\\b(match|with|if|then|else|assert|failwith|struct|begin|end|in)\\b";
+  vim      = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|struct\\|begin\\|end\\|in\\)\\>"
 }
 
 let control_keywords_match_reasonligo: Core.regexp = {
@@ -60,36 +60,48 @@ let control_keywords_match_ligo: Core.regexp = {
 }
 
 let operators_match: Core.regexp = {
-  emacs    = "[ ]*\\\\(::\\\\|-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=\\\\)[ ]*";
+  emacs    = "[ ]*\\\\b\\\\(::\\\\|-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=\\\\)\\\\b[ ]*";
   textmate = "\\s+(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\s+";
   vim      = "\\<\\(::\\|-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\)\\>"
 }
 
 let operators_match_reasonligo: Core.regexp = {
-  emacs    = "[ ]*\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|!=\\\\|<=\\\\|>=\\\\)[ ]*";
+  emacs    = "[ ]*\\\\b\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|!=\\\\|<=\\\\|>=\\\\)\\\\b[ ]*";
   textmate = "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+";
   vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|!=\\|<=\\|>=\\)\\>"
 }
 
 let operators_match_ligo: Core.regexp = {
-  emacs    = "[ ]*\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|=/=\\\\|<=\\\\|>=\\\\)[ ]*";
+  emacs    = "[ ]*\\\\b\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|=/=\\\\|<=\\\\|>=\\\\)\\\\b[ ]*";
   textmate = "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\s+";
   vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\>"
 }
 
-
-let module_match1: Core.regexp = {
+(* TODO: We need to add a way to highlight nested module access, perhaps by
+   implementing the Kleene star. *)
+let module_access_match1: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\.";
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\.";
   vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)\\."
 }
 
-let module_match2: Core.regexp = {
+let module_access_match2: Core.regexp = {
   emacs    = "\\\\([a-z_][a-zA-Z0-9_$]*\\\\)\\\\b";
   textmate = "([a-z][a-zA-Z0-9_$]*)";
   vim      = "[a-z_][a-zA-Z0-9_$]*"
 }
 
+let module_declaration_match1: Core.regexp = {
+  emacs    = "\\\\b\\\\(module\\\\)\\\\b[ ]*"; 
+  textmate = "\\b(module)\\b\\s*";
+  vim      = "\\(module\\)\\W";
+}
+
+let module_declaration_match2: Core.regexp = {
+  emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)";
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
+  vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)"
+}
 
 let identifier_constructor_match: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\b";
