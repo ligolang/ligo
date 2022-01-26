@@ -10,11 +10,10 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
   let make_v_def_option_type = make_v_def_option_type ~with_types in
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
-    let loc = e.location in
     match e.expression_content with
     | E_let_in { let_binder = {var ; ascr ; attributes=_} ; rhs ; let_result ; attr=_} -> (
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) bindings rhs in
-      let def = make_v_def_option_type bindings var ascr loc rhs.location in
+      let def = make_v_def_option_type bindings var ascr (Stage_common.Var.get_location var) rhs.location in
       let (i,env) = add_shadowing_def (i,var) def env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
@@ -40,7 +39,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         | _ -> None
       in
       let def = List.fold_left ~f:aux ~init:env_opt (snd binders) in
-      let env = match def with 
+      let env = match def with
         | Some def -> Def_map.add (get_binder_name alias) def env
         | None -> env
       in
@@ -107,7 +106,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     )
     | E_module_accessor { module_name; element=e} ->
       let env_opt = Def_map.find_opt (get_binder_name module_name) env in
-      let env = match env_opt with 
+      let env = match env_opt with
         | Some Module def -> def.content
         | _ -> env
       in
@@ -169,7 +168,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
           | _ -> None
         in
         let def = List.fold_left ~f:aux ~init:env_opt (snd binders) in
-        let top_def_map = match def with 
+        let top_def_map = match def with
           | Some def -> Def_map.add (get_binder_name alias) def top_def_map
           | None -> top_def_map
         in
@@ -177,7 +176,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       )
     in
     let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in
-    List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg 
+    List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg
   in
   let (_,top_d,inner_d,s,_) = declaration ~options 0 core_prg in
   let d = Def_map.union merge_refs top_d inner_d in
