@@ -1,3 +1,19 @@
+module Constants = struct
+  type command = (string * string array)
+  let ligo_install_path = "./.ligo"
+  let esy = "esy"
+  let windows = "Win32"
+  let esy_add = fun ~package_name ~cache_path -> 
+    ("", [|"esy"; "add"; package_name; "--prefix-path"; cache_path|])
+  let esy_install = fun ~cache_path -> 
+    ("", [|"esy"; "install"; "--prefix-path"; cache_path|])
+  let where = fun ~cmd -> 
+    ("", [|"where"; "/q"; cmd|])
+  let which = fun ~cmd -> 
+    ("", [|"which"; cmd|])
+end
+
+
 let return_good ?output_file v = 
   let fmt : Format.formatter = match output_file with
     | Some file_path -> Format.formatter_of_out_channel @@ Out_channel.create file_path
@@ -33,10 +49,10 @@ type command = (string * string array)
 (* Checks if executable is present *)
 let does_command_exist (cmd : string) =
   let cmd = 
-    if String.equal Sys.os_type "Win32" then
-      ("", [|"where"; "/q"; cmd|])
+    if String.equal Sys.os_type Constants.windows then
+      Constants.where ~cmd
     else
-      ("", [|"which"; cmd|]) in
+      Constants.which ~cmd in
   let exit = Lwt_process.exec cmd in
   let status = Lwt_main.run exit in
   match status with

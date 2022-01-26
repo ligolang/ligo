@@ -7,4 +7,5 @@ packages declared in package.json
 
 === flags ===
 
+\[\--cache-path PATH\] The path where dependencies are installed.
 \[-help\] print this help text and exit (alias: -?)
