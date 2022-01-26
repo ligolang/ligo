@@ -11,12 +11,12 @@ open Simple_utils.Function
 
 (* Utils *)
 
-let ghost = 
-  object 
-    method region = Region.ghost 
+let ghost =
+  object
+    method region = Region.ghost
     method attributes = []
     method payload = ""
-  end 
+  end
 
 let wrap = Region.wrap_ghost
 
@@ -61,8 +61,15 @@ let brackets = Some (`Brackets (ghost,ghost))
 (* Decompiler *)
 
 let decompile_variable : AST.Var.t -> CST.variable = fun var ->
-  let var = AST.Var.to_name var in
-  wrap @@ var
+  let var = Format.asprintf "%a" AST.Var.pp var in
+  if String.contains var '#' then
+    let var = String.split ~on:'#' var in
+    wrap @@ "gen__" ^ (String.concat var)
+  else
+    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
+      wrap @@ "user__" ^ var
+    else
+      wrap @@ var
 
 let rec decompile_type_expr : AST.type_expression -> _ = fun te ->
   let return te = te in
@@ -344,7 +351,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let pattern = decompile_pattern pattern in
         (wrap ({pattern ; arrow = ghost ; rhs ; terminator = Some ghost}:_ CST.case_clause))
     in
-    let case_clauses = List.map ~f:aux cases in 
+    let case_clauses = List.map ~f:aux cases in
     let cases = list_to_nsepseq case_clauses in
     let cases = wrap cases in
     let cases : _ CST.case = {kwd_switch=ghost;lbrace=ghost;rbrace=ghost;expr;cases} in
@@ -394,7 +401,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
       Access_record var::path -> (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (AST.Var.of_name var) path in
+    let field_path = decompile_to_path (AST.Var.of_input_var var) path in
     let field_expr = decompile_expression update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
     let updates = updates.value.ne_elements in
@@ -555,7 +562,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
   match decl with
     Declaration_type {type_binder;type_expr;type_attr=_} ->
     let name = decompile_variable type_binder in
-    let params =  
+    let params =
       match type_expr.type_content with
       | T_abstraction _ -> (
         let rec aux : AST.type_expression -> _ list -> _ list  =

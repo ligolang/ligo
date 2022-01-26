@@ -31,7 +31,7 @@ let rec untype_type_expression_nofail (t:O.type_expression) : I.type_expression 
   | O.T_constant {language;injection;parameters} ->
     ignore language ;
     let arguments = List.map ~f:untype_type_expression_nofail parameters in
-    let type_operator = I.Var.of_name (Ligo_string.extract injection) in
+    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_variable name -> return @@ I.T_variable name
   | O.T_module_accessor {module_name;element} ->
@@ -78,7 +78,7 @@ and untype_declaration untype_expression =
   | Declaration_module dm ->
     let dm = untype_declaration_module untype_expression dm in
     return @@ Declaration_module dm
-  | Module_alias ma -> 
+  | Module_alias ma ->
     return @@ Module_alias ma
 
 

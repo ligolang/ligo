@@ -16,9 +16,7 @@ module SMap = Map.Make(String)
 let temp_unwrap_loc = Location.unwrap
 let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 
-let compile_variable : AST.expression_variable -> Mini_c.expression_variable = fun v ->
-  let name = AST.Var.to_name v in
-  Var.of_name name
+let compile_variable : AST.expression_variable -> Mini_c.expression_variable = fun v -> v
 
 let compile_constant' : AST.constant' -> constant' = function
   | C_INT -> C_INT
@@ -155,7 +153,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SHA3 -> C_SHA3
   | C_KECCAK -> C_KECCAK
   | C_LEVEL -> C_LEVEL
-  | C_VOTING_POWER -> C_VOTING_POWER 
+  | C_VOTING_POWER -> C_VOTING_POWER
   | C_TOTAL_VOTING_POWER -> C_TOTAL_VOTING_POWER
   | C_TICKET -> C_TICKET
   | C_READ_TICKET -> C_READ_TICKET
@@ -557,7 +555,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
           | [ f ; collection ; initial ], C_FOLD_RIGHT -> (
               let f' = expression_to_iterator_body f in
               let initial' = self initial in
-              let elem_type = 
+              let elem_type =
                 (trace_option ~raise (corner_case ~loc:__LOC__ "Wrong type : expecting collection")) @@
                 get_t_collection @@ compile_type ~raise collection.type_expression in
               let collection' = self collection in

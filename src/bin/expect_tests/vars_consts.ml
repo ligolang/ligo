@@ -279,33 +279,33 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
-                                    let #env_rec1 = ( record[i -> i] ) in
-                                    let #env_rec1 =
-                                      FOLD_WHILE(lambda (#binder2) return
-                                                 let i = #binder2.0.i in
+                                    let env_rec#1 = ( record[i -> i] ) in
+                                    let env_rec#1 =
+                                      FOLD_WHILE(lambda (binder#2) return
+                                                 let i = binder#2.0.i in
                                                   match AND(LT(i , x) ,
                                                             GT(b , 0)) with
                                                    | True () -> CONTINUE(let i =
                                                                         ADD
                                                                         (i ,
                                                                         1) in
-                                                                        let #binder2 =
+                                                                        let binder#2 =
                                                                         {
-                                                                        #binder2
+                                                                        binder#2
                                                                         with
                                                                         { 0 =
                                                                         {
-                                                                        #binder2.0
+                                                                        binder#2.0
                                                                         with
                                                                         { i =
                                                                         i } } } } in
-                                                                        let _ : unit =
+                                                                        let ()#3 : unit =
                                                                         unit in
-                                                                        #binder2)
-                                                   | False () -> STOP(#binder2) ,
-                                                 #env_rec1) in
-                                    let #env_rec1 = #env_rec1.0 in
-                                    let i = #env_rec1.i in i |}]
+                                                                        binder#2)
+                                                   | False () -> STOP(binder#2) ,
+                                                 env_rec#1) in
+                                    let env_rec#1 = env_rec#1.0 in
+                                    let i = env_rec#1.i in i |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.ligo") ] ;

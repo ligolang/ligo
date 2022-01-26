@@ -19,7 +19,7 @@ open Simple_utils.Trace
 open Errors
 
 type matchees = O.expression_variable list
-type pattern = I.type_expression I.pattern 
+type pattern = I.type_expression I.pattern
 type typed_pattern = pattern * O.type_expression
 type equations = (typed_pattern list * (I.expression * Context.t)) list
 type type_fun = raise:typer_error raise -> Context.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
@@ -50,12 +50,12 @@ let is_product : equations -> typed_pattern option = fun eqs ->
   List.find_map
     ~f:(fun (pl,_) ->
       match pl with
-      | (p,t)::_ -> if is_product' p then Some(p,t) else None 
+      | (p,t)::_ -> if is_product' p then Some(p,t) else None
       | [] -> None
     )
     eqs
 
-let assert_unit_pattern ~raise (loc:Location.t) (tv: O.type_expression) : unit = 
+let assert_unit_pattern ~raise (loc:Location.t) (tv: O.type_expression) : unit =
   trace_option ~raise (wrong_type_for_unit_pattern loc tv) @@
     O.assert_type_expression_eq (O.t_unit () , tv)
 
@@ -106,7 +106,7 @@ It also fails if the pattern do not conform to the type (T_sum with P_variant, T
 e.g.
   get_matchee_type [ ( [ (p0,t0) , ... ], body0 ) , .. , ( [ (pk,tk) , ... ], bodyk ) ]
   checks:
-    - t0 = t1 = .. = tk 
+    - t0 = t1 = .. = tk
     - conform p0 t0 && conform p1 t1 && conform pk tk
 **)
 let type_matchee ~raise : equations -> O.type_expression =
@@ -327,20 +327,20 @@ and ctor_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_ex
             | P_var x -> x.var
             | P_unit ->
               let () = assert_unit_pattern ~raise pattern.location t in
-              I.Var.generate ~name:"unit_proj" ()
-            | _ -> I.Var.generate ~name:"ctor_proj" ()
+              I.Var.fresh ~name:"unit_proj" ()
+            | _ -> I.Var.fresh ~name:"ctor_proj" ()
           )
           | _ ->
-            I.Var.generate ~name:"ctor_proj" ()
+            I.Var.fresh ~name:"ctor_proj" ()
         in
         let new_ms = proj::mtl in
         let nested = match_ ~raise ~err_loc ~type_f ~body_t new_ms eq def in
         let () = assert_body_t ~raise ~body_t nested.location nested.type_expression in
-        (Some nested.type_expression , O.{ constructor ; pattern = proj ; body = nested }) 
+        (Some nested.type_expression , O.{ constructor ; pattern = proj ; body = nested })
     in
     let aux_m : O.label * O.type_expression -> O.matching_content_case =
       fun (constructor,t) ->
-        let proj = I.Var.generate ~name:"ctor_proj" () in
+        let proj = I.Var.fresh ~name:"ctor_proj" () in
         let body = O.make_e def t in
         { constructor ; pattern = proj ; body }
     in
@@ -383,7 +383,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
             let field_t = extract_record_type ~raise p l t in
             let v = match proj_pattern.wrap_content with
               | P_var x -> x.var
-              | _ -> I.Var.generate ~loc:proj_pattern.location ~name:"tuple_proj" ()
+              | _ -> I.Var.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()
             in
             (l, (v,field_t))
         in
@@ -393,7 +393,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
           fun (l,proj_pattern) ->
             let v = match proj_pattern.wrap_content with
               | P_var x -> x.var
-              | _ -> I.Var.generate ~loc:proj_pattern.location ~name:"record_proj" ()
+              | _ -> I.Var.fresh ~loc:proj_pattern.location ~name:"record_proj" ()
             in
             let field_t = extract_record_type ~raise p l t in
             (l , (v,field_t))
@@ -405,7 +405,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
       fun (pl, (body,env)) ->
       match pl with
       | (prod,t)::ptl -> (
-        let var_filler = (make_var_pattern (I.Var.generate ~name:"_" ()) , t) in
+        let var_filler = (make_var_pattern (I.Var.fresh ~name:"_" ()) , t) in
         match prod.wrap_content with
         | P_tuple ps ->
           let aux i p =
@@ -430,7 +430,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
                 let field_t = extract_record_type ~raise p (O.Label (string_of_int i)) t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
-                  | _ -> make_var_pattern (I.Var.generate ~loc:p.location ~name:"_" ())
+                  | _ -> make_var_pattern (I.Var.fresh ~loc:p.location ~name:"_" ())
                 in
                 (v,field_t)
               in
@@ -440,7 +440,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
                 let field_t = extract_record_type ~raise p l t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
-                  | _ -> make_var_pattern (I.Var.generate ~loc:p.location ~name:"_" ())
+                  | _ -> make_var_pattern (I.Var.fresh ~loc:p.location ~name:"_" ())
                 in
                 (v,field_t)
               in

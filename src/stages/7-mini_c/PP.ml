@@ -86,7 +86,7 @@ and type_expression_annotated ppf : type_expression annotated -> unit = fun (_, 
 
 and type_expression ppf : type_expression -> unit = fun te ->
   fprintf ppf "%a" type_content te.type_content
-  
+
 and type_content ppf : type_content -> unit = function
   | T_tuple ts ->
     fprintf ppf "@[(%a)@]" (list_sep annotated (tag " *@ ")) ts
@@ -191,8 +191,8 @@ let%expect_test _ =
   let pp = expression_content Format.std_formatter in
   let dummy_type = {type_content=T_base TB_unit;location=Location.generated} in
   let wrap e = { content = e ; type_expression = dummy_type ; location = Location.generated} in
-  let y = Var.of_name "y" in
-  let z = Var.of_name "z" in
+  let y = Var.of_input_var "y" in
+  let z = Var.of_input_var "z" in
   pp @@ E_closure { binder = y ; body = wrap (E_variable y) } ;
   [%expect{|
     fun y -> (y)

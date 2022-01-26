@@ -118,7 +118,7 @@ and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.
   in
   let ef = List.fold_left ~f:aux ~init:(fun e -> e) free_vars in
   fun e -> match e with
-    | None -> 
+    | None ->
       expr (ef (O.e_skip ()))
     | Some e -> expr (ef e)
 
@@ -264,7 +264,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let condition    = self condition in
       let then_clause' = self then_clause in
       let else_clause' = self else_clause in
-      let env = (I.Var.generate ~name:"env" ()) in
+      let env = (I.Var.fresh ~name:"env" ()) in
       let ((_,free_vars_true), then_clause) = repair_mutable_variable_in_matching then_clause' [] env in
       let ((_,free_vars_false), else_clause) = repair_mutable_variable_in_matching else_clause' [] env in
       let then_clause  = add_to_end then_clause (O.e_variable env) in
@@ -283,7 +283,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
         return' @@ O.e_cond ~loc:e.location condition then_clause' else_clause'
     | I.E_sequence {expr1; expr2} ->
       let expr1 = compile_expression' ~raise ~last:false expr1 in
-      let expr2 = compile_expression' ~raise ~last expr2 in 
+      let expr2 = compile_expression' ~raise ~last expr2 in
       fun e -> expr1 (Some (expr2 e))
     | I.E_skip -> return @@ O.E_skip
     | I.E_tuple tuple ->
@@ -316,7 +316,7 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
     | Some e -> O.e_sequence expr e
   in
   let matchee = compile_expression ~raise ~last matchee in
-  let env = I.Var.generate ~name:"env" () in
+  let env = I.Var.fresh ~name:"env" () in
   let aux :
     _ I.match_case -> (_ O.match_case * _ O.match_case)  * (I.expression_variable list) =
     fun {pattern ; body} ->
@@ -339,7 +339,7 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
   let (cases_no_fv,cases_fv) = List.unzip @@ List.map ~f:fst l in
   let free_vars = List.dedup_and_sort ~compare:compare_var (List.concat @@ List.map ~f:snd l) in
   match free_vars with
-  | [] -> return (O.e_matching ~loc matchee cases_no_fv) 
+  | [] -> return (O.e_matching ~loc matchee cases_no_fv)
   | _ when last -> return (O.e_matching ~loc matchee cases_no_fv)
   | _ ->
     let match_expr  = O.e_matching matchee cases_fv in
@@ -351,8 +351,8 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
     restore_mutable_variable return_expr free_vars env
 
 and compile_while ~raise ~last I.{cond;body} =
-  let env_rec = I.Var.generate ~name:"env_rec" () in
-  let binder  = I.Var.generate ~name:"binder"  () in
+  let env_rec = I.Var.fresh ~name:"env_rec" () in
+  let binder  = I.Var.fresh ~name:"binder"  () in
 
   let cond = compile_expression ~raise ~last cond in
   let ctrl =
@@ -390,13 +390,13 @@ and compile_while ~raise ~last I.{cond;body} =
       O.e_let_in_ez env_rec false [] init_rec @@
       O.e_let_in_ez env_rec false [] loop @@
       (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]))
-  else 
+  else
     restore_mutable_variable return_expr captured_name_list env_rec
 
 
 and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
-  let env_rec     = I.Var.generate ~name:"env_rec" () in
-  let loop_binder = I.Var.generate ~name:"loop_binder" () in
+  let env_rec     = I.Var.fresh ~name:"env_rec" () in
+  let loop_binder = I.Var.fresh ~name:"loop_binder" () in
   (*Make the cond and the step *)
   let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
   let cond = compile_expression ~raise ~last cond in
@@ -441,7 +441,7 @@ and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
     | None -> expr
     | Some e -> O.e_sequence expr e
   in
-  if last then 
+  if last then
     return (
       O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] start @@
       O.e_let_in_ez env_rec false [] init_rec @@
@@ -452,8 +452,8 @@ and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
     restore_mutable_variable return_expr captured_name_list env_rec
 
 and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_body} =
-  let env_rec = I.Var.generate ~name:"env_rec" () in
-  let args    = I.Var.generate ~name:"args" () in
+  let env_rec = I.Var.fresh ~name:"env_rec" () in
+  let args    = I.Var.fresh ~name:"args" () in
 
   let element_names = match snd fe_binder with
     | Some v -> [fst fe_binder;v]
@@ -489,7 +489,7 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
     | None -> expr
     | Some e -> O.e_sequence expr e
   in
-  if last then 
+  if last then
     return (O.e_constant op_name [lambda; collect ; init_record])
   else
     restore_mutable_variable fold free_vars env_rec

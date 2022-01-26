@@ -50,12 +50,12 @@ let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type__na
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = Var.generate () in
+  let ty_binder = Var.fresh ~name:"_a" () in
   let type_ = t_constant name [t_variable ~type_meta:(Ast_core.t_variable ty_binder ()) ty_binder ()] in
   t_abstraction { ty_binder ; kind ; type_ } ?loc ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Var.of_name "_l" in
-  let ty_binder_r = Var.of_name "_r" in
+  let ty_binder_l = Var.fresh ~name:"_l" () in
+  let ty_binder_r = Var.fresh ~name:"_r" () in
   let type_ = t_constant name
     [ t_variable ty_binder_l () ;
       t_variable ty_binder_r () ]

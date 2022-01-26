@@ -9,12 +9,12 @@ module AST = Ast_imperative
 
 open AST
 
-let ghost = 
-  object 
-    method region = Region.ghost 
+let ghost =
+  object
+    method region = Region.ghost
     method attributes = []
     method payload = ""
-  end 
+  end
 
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
@@ -25,8 +25,8 @@ open Predefined.Tree_abstraction.Pascaligo
 
 let r_split = Location.r_split
 
-let mk_var ~loc var = if String.equal var "_" then Var.generate ~loc () else Var.of_name ~loc var
-let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var 
+let mk_var ~loc var = if String.equal var "_" then Var.fresh ~loc () else Var.of_input_var ~loc var
+let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var
 
 let compile_attributes : CST.attributes -> AST.attributes = fun attributes ->
   List.map ~f:(fst <@ r_split) attributes
@@ -136,7 +136,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression =
           )
         | _ -> raise.raise @@ michelson_type_wrong_arity loc type_constant.value)
     | _ ->
-      let operator = Var.of_name type_constant.value in
+      let operator = Var.of_input_var type_constant.value in
       let lst = npseq_to_list args.value.inside in
       let lst = List.map ~f:self lst in
       return @@ t_app ~loc operator lst
@@ -152,7 +152,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression =
     self type_expr
   | TVar var ->
     let (name,loc) = r_split var in
-    let v = Var.of_name name in
+    let v = Var.of_input_var name in
     return @@ t_variable ~loc v
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te
@@ -343,7 +343,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       | None -> return @@ e_variable_ez ~loc var
       )
     else
-      return @@ e_module_accessor ~loc (Var.of_name module_name) element
+      return @@ e_module_accessor ~loc (Var.of_input_var module_name) element
   | EUpdate update ->
     let (update, _loc) = r_split update in
     let record = compile_path update.record in
@@ -395,7 +395,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     (* Cannot be empty EDIT Use "| _::_ as lst -> ... | [] -> assert false" *)
     | lst ->
       let input_type = Option.map ~f:t_tuple @@ Option.all @@ List.map ~f:(fun b -> b.ascr) lst in
-      let binder = Var.generate ~name:"parameter" () in
+      let binder = Var.fresh ~name:"parameter" () in
       e_lambda_ez ~loc binder ?ascr:input_type (ret_type) @@
         e_matching_tuple ~loc:loc_par (e_variable binder) param body,
       Option.map ~f:(fun (a,b) -> t_arrow a b)@@ Option.bind_pair (input_type,ret_type)
@@ -885,7 +885,7 @@ and compile_data_declaration ~raise : next:AST.expression -> CST.data_decl -> _ 
     let td,loc = r_split type_decl in
     let name,_ = r_split td.name in
     let rhs = compile_type_expression ~raise td.type_expr in
-    let name = Var.of_name name in
+    let name = Var.of_input_var name in
     e_type_in ~loc name rhs next
 
   | LocalModule module_decl ->
@@ -950,7 +950,7 @@ and compile_fun_decl ~raise : CST.fun_decl -> string * expression_variable * typ
     | lst ->
         let lst = Option.all @@ List.map ~f:(fun e -> e.ascr) lst in
         let input_type = Option.map ~f:t_tuple lst in
-        let binder = Var.generate ~name:"parameters" () in
+        let binder = Var.fresh ~name:"parameters" () in
         let lambda : _ AST.lambda = {
           binder={var=binder;ascr=input_type;attributes=Stage_common.Helpers.empty_attribute};
           output_type = ret_type;
@@ -991,7 +991,7 @@ and compile_declaration ~raise : CST.declaration -> _ =
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr; type_attr=[]}
+    return region @@ AST.Declaration_type {type_binder=Var.of_input_var name; type_expr; type_attr=[]}
   | ConstDecl {value={pattern; const_type; init; attributes; _}; region} -> (
     let attr = compile_attributes attributes in
     match pattern with

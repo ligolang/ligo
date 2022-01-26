@@ -309,4 +309,4 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | #generated1 -> 3 |}]
+        | gen#1 -> 3 |}]

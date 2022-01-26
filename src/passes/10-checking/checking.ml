@@ -682,7 +682,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   (* Advanced *)
   | E_matching {matchee;cases} -> (
     let matchee' = type_expression' ~raise ~test ~protocol_version context matchee in
-    let matcheevar = I.Var.generate () in
+    let matcheevar = I.Var.fresh () in
     let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * context)) =
       fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,context))
     in
@@ -846,7 +846,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = I.Var.of_name (Ligo_string.extract injection) in
+    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_module_accessor ma ->
     let ma = Stage_common.Maps.module_access self ma in

@@ -10,12 +10,12 @@ module Pair     = Simple_utils.Pair
 
 (* Utils *)
 
-let ghost = 
-  object 
-    method region = Region.ghost 
+let ghost =
+  object
+    method region = Region.ghost
     method attributes = []
     method payload = ""
-  end 
+  end
 
 let wrap = Region.wrap_ghost
 
@@ -85,8 +85,15 @@ let empty_block dialect =
 (* Decompiler *)
 
 let decompile_variable : AST.Var.t -> CST.variable = fun var ->
-  let var = AST.Var.to_name var in
-  wrap @@ var
+  let var = Format.asprintf "%a" AST.Var.pp var in
+  if String.contains var '#' then
+    let var = String.split ~on:'#' var in
+    wrap @@ "gen__" ^ (String.concat var)
+  else
+    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
+      wrap @@ "user__" ^ var
+    else
+      wrap @@ var
 
 let rec decompile_type_expr : dialect -> AST.type_expression -> CST.type_expr = fun dialect te ->
   let return te = te in
@@ -541,7 +548,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
       Access_record var::path -> (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (AST.Var.of_name var) path in
+    let field_path = decompile_to_path (AST.Var.of_input_var var) path in
     let field_expr = decompile_expression ~dialect update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
     let updates = updates.value.ne_elements in
@@ -832,7 +839,7 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
     and kwd_is = ghost in
     let terminator = terminator dialect in
     CST.ModuleAlias (wrap (CST.{kwd_module; alias; kwd_is; binders; terminator}))
-  
+
 
 and decompile_module ?(dialect=Verbose): AST.module_ -> CST.ast = fun prg ->
   let decl = List.map ~f:(decompile_declaration ~dialect) prg in

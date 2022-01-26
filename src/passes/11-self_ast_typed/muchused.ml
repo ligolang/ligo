@@ -152,7 +152,7 @@ let rec muchuse_of_expr expr : muchuse =
   | E_module_accessor {element;module_name} ->
      match element.expression_content with
      | E_variable v ->
-        let name = Var.concat ~sep:"." [module_name; v] in
+        let name = Var.of_input_var @@ (Var.to_name module_name) ^ (Var.to_name v) in
         (M.add name 1 M.empty,[])
      | _ -> muchuse_neutral
 
@@ -209,13 +209,13 @@ let rec get_all_declarations (module_name : module_variable) : module_ ->
     let aux = fun (x : declaration) ->
       match x with
       | Declaration_constant {binder;expr;_} ->
-         let name = Var.concat ~sep:"." [ module_name ; binder ] in
-         [(name, expr.type_expression)]
+          let name = Var.of_input_var @@ (Var.to_name module_name) ^ (Var.to_name binder) in
+          [(name, expr.type_expression)]
       | Declaration_module {module_binder;module_;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
-           let name = Var.concat ~sep:"." [ module_name ; v ] in
-           (name, t) in
+          let name = Var.of_input_var @@ (Var.to_name module_name) ^ (Var.to_name v) in
+          (name, t) in
          recs |> List.map ~f:add_module_name
       | _ -> [] in
     m |> List.map ~f:Location.unwrap |> List.map ~f:aux |> List.concat

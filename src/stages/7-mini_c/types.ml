@@ -1,9 +1,5 @@
 include Stage_common.Types
 
-module Var = Simple_utils.Var
-
-type expression_variable = Var.t
-
 type 'a annotated = string option * 'a
 
 type type_content =

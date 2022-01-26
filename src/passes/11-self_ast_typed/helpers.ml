@@ -54,8 +54,8 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
       let res = self res let_result in
       res
     )
-  | E_type_in { type_binder=_; rhs = _ ; let_result} -> 
-    let res = self init let_result in 
+  | E_type_in { type_binder=_; rhs = _ ; let_result} ->
+    let res = self init let_result in
     res
   | E_mod_in { module_binder = _ ; rhs ; let_result } -> (
       let res = fold_module f init rhs in
@@ -156,7 +156,7 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     return @@ E_let_in { let_binder ; rhs ; let_result; attr }
   )
   | E_type_in {type_binder; rhs; let_result} -> (
-    let let_result = self let_result in 
+    let let_result = self let_result in
     return @@ E_type_in {type_binder; rhs; let_result}
   )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
@@ -350,7 +350,7 @@ and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> modu
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
-        if Var.equal binder (Var.of_name main_fname)
+        if Var.is_name binder main_fname
         then Some p
         else None
     | Declaration_type   _
@@ -373,7 +373,7 @@ type contract_type = {
 let fetch_contract_type ~raise : string -> module_ -> contract_type = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ; name=_} as p) ->
-       if Var.equal binder (Var.of_name main_fname)
+       if Var.is_name binder main_fname
        then Some p
        else None
     | Declaration_type   _
@@ -411,7 +411,7 @@ type view_type = {
 let fetch_view_type ~raise : string -> module_ -> (view_type * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
-        if Var.equal binder (Var.of_name main_fname)
+        if Var.is_name binder main_fname
         then Some p
         else None
     | Declaration_type   _

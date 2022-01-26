@@ -11,12 +11,12 @@ module Pair     = Simple_utils.Pair
 
 (* Utils *)
 
-let ghost = 
-  object 
-    method region = Region.ghost 
+let ghost =
+  object
+    method region = Region.ghost
     method attributes = []
     method payload = ""
-  end 
+  end
 
 let wrap = Region.wrap_ghost
 
@@ -44,7 +44,7 @@ let type_vars_of_list : string Region.reg list -> CST.type_vars = fun lst ->
   let type_var_of_name : _ -> CST.type_var Region.reg = fun name -> wrap CST.{quote=ghost;name} in
   match lst with
   | [name] -> QParam (type_var_of_name name)
-  | x -> 
+  | x ->
     let x = Utils.nsepseq_map type_var_of_name (list_to_nsepseq x) in
     QParamTuple (wrap (par x))
 
@@ -365,7 +365,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let pattern = decompile_pattern pattern in
         (wrap ({pattern ; arrow = ghost ; rhs }:_ CST.case_clause))
     in
-    let case_clauses = List.map ~f:aux cases in 
+    let case_clauses = List.map ~f:aux cases in
     let cases = list_to_nsepseq case_clauses in
     let cases = wrap cases in
     let cases : _ CST.case = {kwd_match=ghost;expr;kwd_with=ghost;lead_vbar=None;cases} in
@@ -415,7 +415,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
       Access_record var::path -> (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (AST.Var.of_name var) path in
+    let field_path = decompile_to_path (AST.Var.of_input_var var) path in
     let field_expr = decompile_expression update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
     let updates = updates.value.ne_elements in
@@ -567,7 +567,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
   match decl with
     Declaration_type {type_binder;type_expr; type_attr=_} -> (
     let name = decompile_variable type_binder in
-    let params =  
+    let params =
       match type_expr.type_content with
       | T_abstraction _ -> (
         let rec aux : AST.type_expression -> _ list -> _ list  =

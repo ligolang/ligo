@@ -1098,7 +1098,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (#generated1) return let _x = +1 in let _ = let _x = +2 in UNIT() in let _ = let _x = +23 in UNIT() in let _ = let _x = +42 in UNIT() in _x |}]
+  [%expect {| const y = lambda (gen#1) return let _x = +1 in let ()#4 = let _x = +2 in UNIT() in let ()#3 = let _x = +23 in UNIT() in let ()#2 = let _x = +42 in UNIT() in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1611,15 +1611,15 @@ const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
-  lambda (#generated1 : unit) return let s = "test" in
-                                     let p0 = (f0)@(s) in { ASSERTION(p0);
+  lambda (gen#1 : unit) return let s = "test" in
+                               let p0 = (f0)@(s) in { ASSERTION(p0);
  let p1 = (f1)@(s) in { ASSERTION(p1);
  let p2 = (f2)@(s) in { ASSERTION(p2);
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
 const x =  match (+1 , (+2 , +3)) with
-            | (#generated2,(x,#generated3)) -> x
+            | (gen#2,(x,gen#3)) -> x
     |}];
 
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.religo"];
@@ -1633,15 +1633,15 @@ const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
-  lambda (#generated1 : unit) return let s = "test" in
-                                     let p0 = (f0)@(s) in { ASSERTION(p0);
+  lambda (gen#1 : unit) return let s = "test" in
+                               let p0 = (f0)@(s) in { ASSERTION(p0);
  let p1 = (f1)@(s) in { ASSERTION(p1);
  let p2 = (f2)@(s) in { ASSERTION(p2);
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
 const x =  match (+1 , (+2 , +3)) with
-            | (#generated2,(x,#generated3)) -> x
+            | (gen#2,(x,gen#3)) -> x
     |}];
 
   run_ligo_bad ["print" ; "ast-typed"; contract "existential.mligo"];
@@ -1789,7 +1789,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
   [%expect{|
     :
-    Warning: variable "#Foo.x" cannot be used more than once.
+    Warning: variable "Foox" cannot be used more than once.
 
     Error(s) occurred while checking the contract:
     At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
@@ -1967,17 +1967,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let #generated3 = EQ(n ,
-    0) in  match #generated3 with
-            | False #unit_proj4 ->
+    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#3 = EQ(n ,
+    0) in  match gen#3 with
+            | False unit_proj#4 ->
               (f)@(SUB(n ,
-              1)) | True #unit_proj5 ->
+              1)) | True unit_proj#5 ->
                     1 ) in (f)@(4)
-    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let #generated6 = EQ(n ,
-    0) in  match #generated6 with
-            | False #unit_proj7 ->
+    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#6 = EQ(n ,
+    0) in  match gen#6 with
+            | False unit_proj#7 ->
               (h)@(SUB(n ,
-              1)) | True #unit_proj8 ->
+              1)) | True unit_proj#8 ->
                     1 ) in h) ) |}]
 
 let%expect_test _ =
@@ -2203,26 +2203,26 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-                     const c = lambda (#generated4) return CREATE_CONTRACT(lambda (#generated1) return let #generated9 = #generated1 in
-                      match #generated9 with
-                       | ( #generated3 , #generated2 ) ->
+                     const c = lambda (gen#4) return CREATE_CONTRACT(lambda (gen#1) return let gen#10 = gen#1 in
+                      match gen#10 with
+                       | ( gen#3 , gen#2 ) ->
                        ( LIST_EMPTY() , unit ) ,
                      NONE() ,
                      0mutez ,
                      unit)
-                     const foo = let #generated11 = (c)@(unit) in  match #generated11 with
-                                                                    | ( _a , _b ) ->
-                                                                    unit
-                     const c = lambda (#generated5) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let #generated13 = (c)@(unit) in  match #generated13 with
-                                                                    | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
-                                                                    unit |} ]
+                     const foo = let gen#12 = (c)@(unit) in  match gen#12 with
+                                                              | ( _a , _b ) ->
+                                                              unit
+                     const c = lambda (gen#5) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+                     const foo = let gen#15 = (c)@(unit) in  match gen#15 with
+                                                              | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+                                                              unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let ##Foo#x1 = L(54) in let ##Foo#y2 = ##Foo#x1 in L(unit) |}]
+    let #Foo#x#35 = L(54) in let #Foo#y#36 = #Foo#x#35 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;

@@ -30,7 +30,7 @@ open Predefined.Tree_abstraction.Cameligo
 
 let r_split = Location.r_split
 
-let mk_var ?loc var = if String.equal var "_" then Var.generate ?loc () else Var.of_name ?loc var
+let mk_var ?loc var = if String.equal var "_" then Var.fresh ?loc () else Var.of_input_var ?loc var
 let quote_var var = "'"^var
 let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var
 let compile_attributes attributes : string list =
@@ -144,7 +144,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
         | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
       )
     | _ ->
-      let operator = Var.of_name operator.value in
+      let operator = Var.of_input_var operator.value in
       let lst = List.map ~f:self args in
       return @@ t_app ~loc operator lst
   )
@@ -160,18 +160,18 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
 
   | TVar var ->
     let (name,loc) = r_split var in
-    let v = Var.of_name name in
+    let v = Var.of_input_var name in
     return @@ t_variable ~loc v
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te
   | TArg var ->
     let (quoted_var,loc) = r_split var in
-    let v = Var.of_name (quote_var quoted_var.name.value) in
+    let v = Var.of_input_var (quote_var quoted_var.name.value) in
     return @@ t_variable ~loc v
   | TModA ma ->
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
-    let module_name = Var.of_name module_name in
+    let module_name = Var.of_input_var module_name in
     let element = self ma.field in
     return @@ t_module_accessor ~loc module_name element
 
@@ -364,7 +364,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       | None -> return @@ e_variable_ez ~loc var
       )
     else
-      return @@ e_module_accessor ~loc (Var.of_name module_name) element
+      return @@ e_module_accessor ~loc (Var.of_input_var module_name) element
   | EUpdate update ->
     let (update, _loc) = r_split update in
     let record = compile_path update.record in
@@ -474,7 +474,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         let ascr = trace_option ~raise (type_params_not_annotated region) binder.ascr in
         let rec add_type_params = function
           | [] -> ascr
-          | ({ value ; region=_ } : CST.variable) :: vs -> t_for_all (Var.of_name value) () (add_type_params vs) in
+          | ({ value ; region=_ } : CST.variable) :: vs -> t_for_all (Var.of_input_var value) () (add_type_params vs) in
         let ascr = Some (add_type_params type_params) in
         let binder = { binder with ascr } in
         let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
@@ -695,7 +695,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     PConstr _ -> raise.raise @@ unsupported_pattern_type [pattern]
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
-    return_1 ~ascr:(t_unit ~loc ()) @@ Var.generate ~loc ()
+    return_1 ~ascr:(t_unit ~loc ()) @@ Var.fresh ~loc ()
   | PVar pvar ->
     let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
     let {variable;attributes} : CST.var_pattern = pvar in
@@ -705,7 +705,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     return_1 ~attributes @@ variable
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
-    let var = Var.generate ~loc () in
+    let var = Var.fresh ~loc () in
     let aux pattern (binder_lst, fun_) =
       let (binder,fun_') = compile_parameter ~raise pattern in
       (binder :: binder_lst, fun_' <@ fun_)
@@ -744,12 +744,12 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let aux : CST.type_var Region.reg -> AST.type_expression -> AST.type_expression =
           fun param type_ ->
             let (param,ploc) = r_split param in
-            let ty_binder = Var.of_name ~loc:ploc (quote_var param.name.value) in
+            let ty_binder = Var.of_input_var ~loc:ploc (quote_var param.name.value) in
             t_abstraction ~loc:(Location.lift region) ty_binder () type_
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration_type  {type_binder=Var.of_name ~loc name; type_expr; type_attr=[]}
+    return_1 region @@ AST.Declaration_type  {type_binder=Var.of_input_var ~loc name; type_expr; type_attr=[]}
   )
 
   | Directive _ -> []

@@ -1170,7 +1170,7 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
                                            is_t_arrow (get_type code) ->
         let AST.{ type1 = in_type ; type2 = out_type } = trace_option ~raise (Errors.generic_error term.location "Expected function") @@
                                    get_t_arrow (get_type code) in
-        let arg_binder = Var.generate () in
+        let arg_binder = Var.fresh () in
         let body = e_a_application term (e_a_variable arg_binder in_type) out_type in
         let orig_lambda = e_a_lambda { binder = arg_binder ; result = body } in_type out_type in
         return @@ V_Func_val { rec_name = None ; orig_lambda ; body ; env ; arg_binder }

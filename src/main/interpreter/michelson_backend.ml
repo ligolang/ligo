@@ -102,7 +102,7 @@ let clean_location_with v x =
 let clean_locations e t =
   clean_location_with () e, clean_location_with () t
 
-let add_ast_env ?(name = Ast_aggregated.Var.generate ()) env binder body =
+let add_ast_env ?(name = Ast_aggregated.Var.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation) (e : expression) =
     if Var.compare let_binder binder <> 0 && Var.compare let_binder name <> 0 then

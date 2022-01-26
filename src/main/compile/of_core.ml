@@ -14,7 +14,7 @@ let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
        let (_,e,_,_) = trace ~raise inference_tracer @@ Inference.type_module ~init_env:env_inf m in e
     | false -> m
 
-let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program = 
+let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
   let typed = trace ~raise checking_tracer @@ Checking.type_program ~test:options.test ~env:options.init_env ~protocol_version:options.protocol_version m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
@@ -41,7 +41,7 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
   applied
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =
-  let name = Ast_core.Var.of_name entry_point in
+  let name = Ast_core.Var.of_input_var entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content  = Ast_core.E_variable name ;
       sugar    = None ;

@@ -11,12 +11,17 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "threshold",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
           "type_content": [
             "t_variable",
-            { "name": "nat", "location": [ "Virtual", "dummy" ] }
+            {
+              "name": "nat",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
           ],
           "location": [
             "File",
@@ -79,12 +84,17 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "max_proposal",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
           "type_content": [
             "t_variable",
-            { "name": "nat", "location": [ "Virtual", "dummy" ] }
+            {
+              "name": "nat",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
           ],
           "location": [
             "File",
@@ -147,12 +157,17 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "max_message_size",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
           "type_content": [
             "t_variable",
-            { "name": "nat", "location": [ "Virtual", "dummy" ] }
+            {
+              "name": "nat",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
           ],
           "location": [
             "File",
@@ -215,12 +230,17 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "state_hash",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
           "type_content": [
             "t_variable",
-            { "name": "bytes", "location": [ "Virtual", "dummy" ] }
+            {
+              "name": "bytes",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
           ],
           "location": [
             "File",
@@ -283,6 +303,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "addr_set",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
@@ -291,13 +312,18 @@ let%expect_test _ =
             {
               "type_operator": {
                 "name": "set",
+                "counter": null,
                 "location": [ "Virtual", "dummy" ]
               },
               "arguments": [
                 {
                   "type_content": [
                     "t_variable",
-                    { "name": "address", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "address",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -391,6 +417,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "message_store",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
@@ -399,13 +426,18 @@ let%expect_test _ =
             {
               "type_operator": {
                 "name": "map",
+                "counter": null,
                 "location": [ "Virtual", "dummy" ]
               },
               "arguments": [
                 {
                   "type_content": [
                     "t_variable",
-                    { "name": "bytes", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "bytes",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -440,6 +472,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "addr_set",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -535,6 +568,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "proposal_counters",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
@@ -543,13 +577,18 @@ let%expect_test _ =
             {
               "type_operator": {
                 "name": "map",
+                "counter": null,
                 "location": [ "Virtual", "dummy" ]
               },
               "arguments": [
                 {
                   "type_content": [
                     "t_variable",
-                    { "name": "address", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "address",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -582,7 +621,11 @@ let%expect_test _ =
                 {
                   "type_content": [
                     "t_variable",
-                    { "name": "nat", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "nat",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -676,6 +719,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "storage",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
@@ -688,6 +732,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "threshold",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -728,6 +773,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "state_hash",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -768,6 +814,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "proposal_counters",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -808,6 +855,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "message_store",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -848,6 +896,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "max_proposal",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -888,6 +937,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "max_message_size",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -928,6 +978,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "addr_set",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -1026,6 +1077,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "message",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
@@ -1035,7 +1087,11 @@ let%expect_test _ =
               "type1": {
                 "type_content": [
                   "t_variable",
-                  { "name": "bytes", "location": [ "Virtual", "dummy" ] }
+                  {
+                    "name": "bytes",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
                 ],
                 "location": [
                   "File",
@@ -1069,6 +1125,7 @@ let%expect_test _ =
                   {
                     "type_operator": {
                       "name": "list",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     },
                     "arguments": [
@@ -1077,6 +1134,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "operation",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -1200,12 +1258,17 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "send_pt",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
           "type_content": [
             "t_variable",
-            { "name": "message", "location": [ "Virtual", "dummy" ] }
+            {
+              "name": "message",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
           ],
           "location": [
             "File",
@@ -1268,12 +1331,17 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "withdraw_pt",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
           "type_content": [
             "t_variable",
-            { "name": "message", "location": [ "Virtual", "dummy" ] }
+            {
+              "name": "message",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
           ],
           "location": [
             "File",
@@ -1336,12 +1404,17 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "default_pt",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
           "type_content": [
             "t_variable",
-            { "name": "unit", "location": [ "Virtual", "dummy" ] }
+            {
+              "name": "unit",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
           ],
           "location": [
             "File",
@@ -1404,6 +1477,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "return",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
@@ -1416,6 +1490,7 @@ let%expect_test _ =
                   {
                     "type_operator": {
                       "name": "list",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     },
                     "arguments": [
@@ -1424,6 +1499,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "operation",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -1487,7 +1563,11 @@ let%expect_test _ =
               {
                 "type_content": [
                   "t_variable",
-                  { "name": "storage", "location": [ "Virtual", "dummy" ] }
+                  {
+                    "name": "storage",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
                 ],
                 "location": [
                   "File",
@@ -1578,6 +1658,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "parameter",
+          "counter": null,
           "location": [ "Virtual", "dummy" ]
         },
         "type_expr": {
@@ -1590,6 +1671,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "withdraw_pt",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -1628,7 +1710,11 @@ let%expect_test _ =
                 "associated_type": {
                   "type_content": [
                     "t_variable",
-                    { "name": "send_pt", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "send_pt",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -1667,6 +1753,7 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "default_pt",
+                      "counter": null,
                       "location": [ "Virtual", "dummy" ]
                     }
                   ],
@@ -1767,6 +1854,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "send",
+            "counter": null,
             "location": [
               "File",
               {
@@ -1806,6 +1894,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "send_pt",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -1842,6 +1931,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -1880,7 +1970,11 @@ let%expect_test _ =
                 "type2": {
                   "type_content": [
                     "t_variable",
-                    { "name": "return", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -1921,7 +2015,8 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "#parameters1",
+                  "name": "parameters",
+                  "counter": 1,
                   "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
@@ -1933,6 +2028,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "send_pt",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -1969,6 +2065,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -2008,7 +2105,11 @@ let%expect_test _ =
               "output_type": {
                 "type_content": [
                   "t_variable",
-                  { "name": "return", "location": [ "Virtual", "dummy" ] }
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
                 ],
                 "location": [
                   "File",
@@ -2044,7 +2145,8 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "#parameters1",
+                          "name": "parameters",
+                          "counter": 1,
                           "location": [ "Virtual", "dummy" ]
                         }
                       ],
@@ -2060,6 +2162,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "param",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -2093,6 +2196,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "send_pt",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -2132,6 +2236,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -2165,6 +2270,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "storage",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -2275,6 +2381,8 @@ let%expect_test _ =
                                                               "E_variable",
                                                               {
                                                                 "name": "s",
+                                                                "counter":
+                                                                  null,
                                                                 "location": [
                                                                   "File",
                                                                   {
@@ -2599,6 +2707,7 @@ let%expect_test _ =
                                     "let_binder": {
                                       "var": {
                                         "name": "message",
+                                        "counter": null,
                                         "location": [
                                           "File",
                                           {
@@ -2632,6 +2741,7 @@ let%expect_test _ =
                                           "t_variable",
                                           {
                                             "name": "message",
+                                            "counter": null,
                                             "location": [
                                               "Virtual", "dummy"
                                             ]
@@ -2672,6 +2782,7 @@ let%expect_test _ =
                                         "E_variable",
                                         {
                                           "name": "param",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -2736,6 +2847,7 @@ let%expect_test _ =
                                           "let_binder": {
                                             "var": {
                                               "name": "packed_msg",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -2769,6 +2881,7 @@ let%expect_test _ =
                                                 "t_variable",
                                                 {
                                                   "name": "bytes",
+                                                  "counter": null,
                                                   "location": [
                                                     "Virtual", "dummy"
                                                   ]
@@ -2818,6 +2931,7 @@ let%expect_test _ =
                                                       "E_variable",
                                                       {
                                                         "name": "message",
+                                                        "counter": null,
                                                         "location": [
                                                           "File",
                                                           {
@@ -2950,6 +3064,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3078,6 +3194,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3422,6 +3540,7 @@ let%expect_test _ =
                                                       "let_binder": {
                                                         "var": {
                                                           "name": "new_store",
+                                                          "counter": null,
                                                           "location": [
                                                             "File",
                                                             {
@@ -3466,6 +3585,7 @@ let%expect_test _ =
                                                             {
                                                               "name":
                                                                 "addr_set",
+                                                              "counter": null,
                                                               "location": [
                                                                 "Virtual",
                                                                 "dummy"
@@ -3583,6 +3703,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3670,6 +3792,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3848,6 +3972,8 @@ let%expect_test _ =
                                                                     "var": {
                                                                     "name":
                                                                     "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3970,6 +4096,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4138,6 +4266,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4325,6 +4455,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4663,6 +4795,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4772,6 +4906,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4961,6 +5097,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5152,6 +5290,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5450,6 +5590,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5683,6 +5825,8 @@ let%expect_test _ =
                                                                     "var": {
                                                                     "name":
                                                                     "sender_proposal_counter",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5727,6 +5871,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "nat",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
@@ -5851,6 +5997,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6040,6 +6188,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "sender_proposal_counter",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6127,6 +6277,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6483,6 +6635,8 @@ let%expect_test _ =
                                                                     "var": {
                                                                     "name":
                                                                     "ret_ops",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6528,6 +6682,8 @@ let%expect_test _ =
                                                                     "type_operator": {
                                                                     "name":
                                                                     "list",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
@@ -6540,6 +6696,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "operation",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
@@ -6707,6 +6865,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6835,6 +6995,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7010,6 +7172,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7071,6 +7235,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7158,6 +7324,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7373,6 +7541,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "ret_ops",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7423,6 +7593,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "message",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7510,6 +7682,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7724,6 +7898,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7800,6 +7976,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7929,6 +8107,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8136,6 +8316,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "addr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8179,6 +8361,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "ctr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8229,6 +8413,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8377,6 +8563,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "addr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8460,6 +8648,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8585,6 +8775,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8636,6 +8828,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "addr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8743,6 +8937,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "ctr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9139,6 +9335,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9190,6 +9388,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9275,6 +9475,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9442,6 +9644,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "ret_ops",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9525,6 +9729,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9927,6 +10133,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "withdraw",
+            "counter": null,
             "location": [
               "File",
               {
@@ -9966,6 +10173,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "withdraw_pt",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -10002,6 +10210,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -10040,7 +10249,11 @@ let%expect_test _ =
                 "type2": {
                   "type_content": [
                     "t_variable",
-                    { "name": "return", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -10081,7 +10294,8 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "#parameters2",
+                  "name": "parameters",
+                  "counter": 2,
                   "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
@@ -10093,6 +10307,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "withdraw_pt",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -10129,6 +10344,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -10168,7 +10384,11 @@ let%expect_test _ =
               "output_type": {
                 "type_content": [
                   "t_variable",
-                  { "name": "return", "location": [ "Virtual", "dummy" ] }
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
                 ],
                 "location": [
                   "File",
@@ -10204,7 +10424,8 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "#parameters2",
+                          "name": "parameters",
+                          "counter": 2,
                           "location": [ "Virtual", "dummy" ]
                         }
                       ],
@@ -10220,6 +10441,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "param",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -10253,6 +10475,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "withdraw_pt",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -10292,6 +10515,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -10325,6 +10549,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "storage",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -10368,6 +10593,7 @@ let%expect_test _ =
                               "let_binder": {
                                 "var": {
                                   "name": "message",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -10401,6 +10627,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "message",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -10439,6 +10666,7 @@ let%expect_test _ =
                                   "E_variable",
                                   {
                                     "name": "param",
+                                    "counter": null,
                                     "location": [
                                       "File",
                                       {
@@ -10503,6 +10731,7 @@ let%expect_test _ =
                                     "let_binder": {
                                       "var": {
                                         "name": "packed_msg",
+                                        "counter": null,
                                         "location": [
                                           "File",
                                           {
@@ -10536,6 +10765,7 @@ let%expect_test _ =
                                           "t_variable",
                                           {
                                             "name": "bytes",
+                                            "counter": null,
                                             "location": [
                                               "Virtual", "dummy"
                                             ]
@@ -10585,6 +10815,7 @@ let%expect_test _ =
                                                 "E_variable",
                                                 {
                                                   "name": "message",
+                                                  "counter": null,
                                                   "location": [
                                                     "File",
                                                     {
@@ -10694,6 +10925,8 @@ let%expect_test _ =
                                                                 "E_variable",
                                                                 {
                                                                   "name": "s",
+                                                                  "counter":
+                                                                    null,
                                                                   "location": [
                                                                     "File",
                                                                     {
@@ -10793,6 +11026,8 @@ let%expect_test _ =
                                                               {
                                                                 "name":
                                                                   "packed_msg",
+                                                                "counter":
+                                                                  null,
                                                                 "location": [
                                                                   "File",
                                                                   {
@@ -10912,6 +11147,7 @@ let%expect_test _ =
                                                         {
                                                           "var": {
                                                             "name": "voters",
+                                                            "counter": null,
                                                             "location": [
                                                               "File",
                                                               {
@@ -10964,6 +11200,7 @@ let%expect_test _ =
                                                             "var": {
                                                               "name":
                                                                 "new_set",
+                                                              "counter": null,
                                                               "location": [
                                                                 "File",
                                                                 {
@@ -11008,6 +11245,8 @@ let%expect_test _ =
                                                                 {
                                                                   "name":
                                                                     "addr_set",
+                                                                  "counter":
+                                                                    null,
                                                                   "location": [
                                                                     "Virtual",
                                                                     "dummy"
@@ -11124,6 +11363,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11278,6 +11519,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11413,6 +11656,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "new_set",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11579,6 +11824,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11777,6 +12024,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12224,6 +12473,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "new_set",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12436,6 +12687,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12497,6 +12750,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12584,6 +12839,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12795,6 +13052,8 @@ let%expect_test _ =
                                                                     "variable": {
                                                                     "name":
                                                                     "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12846,6 +13105,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12931,6 +13192,8 @@ let%expect_test _ =
                                                                     {
                                                                     "name":
                                                                     "new_set",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13259,6 +13522,7 @@ let%expect_test _ =
                                                           {
                                                             "type_operator": {
                                                               "name": "list",
+                                                              "counter": null,
                                                               "location": [
                                                                 "Virtual",
                                                                 "dummy"
@@ -13271,6 +13535,8 @@ let%expect_test _ =
                                                                   {
                                                                     "name":
                                                                     "operation",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
@@ -13391,6 +13657,7 @@ let%expect_test _ =
                                                     "E_variable",
                                                     {
                                                       "name": "s",
+                                                      "counter": null,
                                                       "location": [
                                                         "File",
                                                         {
@@ -13617,6 +13884,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "default",
+            "counter": null,
             "location": [
               "File",
               {
@@ -13656,6 +13924,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "default_pt",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -13692,6 +13961,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -13730,7 +14000,11 @@ let%expect_test _ =
                 "type2": {
                   "type_content": [
                     "t_variable",
-                    { "name": "return", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -13771,7 +14045,8 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "#parameters4",
+                  "name": "parameters",
+                  "counter": 4,
                   "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
@@ -13783,6 +14058,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "default_pt",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -13819,6 +14095,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -13858,7 +14135,11 @@ let%expect_test _ =
               "output_type": {
                 "type_content": [
                   "t_variable",
-                  { "name": "return", "location": [ "Virtual", "dummy" ] }
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
                 ],
                 "location": [
                   "File",
@@ -13894,7 +14175,8 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "#parameters4",
+                          "name": "parameters",
+                          "counter": 4,
                           "location": [ "Virtual", "dummy" ]
                         }
                       ],
@@ -13909,7 +14191,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "name": "#generated3",
+                                  "name": "gen",
+                                  "counter": 3,
                                   "location": [
                                     "File",
                                     {
@@ -13943,6 +14226,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "default_pt",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -13982,6 +14266,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -14015,6 +14300,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "storage",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -14095,6 +14381,7 @@ let%expect_test _ =
                                         {
                                           "type_operator": {
                                             "name": "list",
+                                            "counter": null,
                                             "location": [
                                               "Virtual", "dummy"
                                             ]
@@ -14105,6 +14392,7 @@ let%expect_test _ =
                                                 "t_variable",
                                                 {
                                                   "name": "operation",
+                                                  "counter": null,
                                                   "location": [
                                                     "Virtual", "dummy"
                                                   ]
@@ -14204,6 +14492,7 @@ let%expect_test _ =
                                   "E_variable",
                                   {
                                     "name": "s",
+                                    "counter": null,
                                     "location": [
                                       "File",
                                       {
@@ -14362,6 +14651,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "main",
+            "counter": null,
             "location": [
               "File",
               {
@@ -14401,6 +14691,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "parameter",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -14437,6 +14728,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -14475,7 +14767,11 @@ let%expect_test _ =
                 "type2": {
                   "type_content": [
                     "t_variable",
-                    { "name": "return", "location": [ "Virtual", "dummy" ] }
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
                   ],
                   "location": [
                     "File",
@@ -14516,7 +14812,8 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "name": "#parameters5",
+                  "name": "parameters",
+                  "counter": 5,
                   "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
@@ -14528,6 +14825,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "parameter",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -14564,6 +14862,7 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
+                            "counter": null,
                             "location": [ "Virtual", "dummy" ]
                           }
                         ],
@@ -14603,7 +14902,11 @@ let%expect_test _ =
               "output_type": {
                 "type_content": [
                   "t_variable",
-                  { "name": "return", "location": [ "Virtual", "dummy" ] }
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
                 ],
                 "location": [
                   "File",
@@ -14639,7 +14942,8 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "name": "#parameters5",
+                          "name": "parameters",
+                          "counter": 5,
                           "location": [ "Virtual", "dummy" ]
                         }
                       ],
@@ -14655,6 +14959,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "param",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -14688,6 +14993,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "parameter",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -14727,6 +15033,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -14760,6 +15067,7 @@ let%expect_test _ =
                                     "t_variable",
                                     {
                                       "name": "storage",
+                                      "counter": null,
                                       "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
@@ -14805,6 +15113,7 @@ let%expect_test _ =
                                   "E_variable",
                                   {
                                     "name": "param",
+                                    "counter": null,
                                     "location": [
                                       "File",
                                       {
@@ -14872,6 +15181,7 @@ let%expect_test _ =
                                       {
                                         "var": {
                                           "name": "p",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -14914,6 +15224,7 @@ let%expect_test _ =
                                             "E_variable",
                                             {
                                               "name": "send",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -14980,6 +15291,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "p",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15042,6 +15354,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "s",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15169,6 +15482,7 @@ let%expect_test _ =
                                       {
                                         "var": {
                                           "name": "p",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -15211,6 +15525,7 @@ let%expect_test _ =
                                             "E_variable",
                                             {
                                               "name": "withdraw",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -15277,6 +15592,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "p",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15339,6 +15655,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "s",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15466,6 +15783,7 @@ let%expect_test _ =
                                       {
                                         "var": {
                                           "name": "p",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -15508,6 +15826,7 @@ let%expect_test _ =
                                             "E_variable",
                                             {
                                               "name": "default",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -15574,6 +15893,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "p",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15636,6 +15956,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "s",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {

@@ -310,13 +310,13 @@ let p_apply tf targ =
   Reasons.wrap Builtin_type @@
     P_apply { tf ; targ }
 
-let p_var var = 
+let p_var var =
   Reasons.wrap Builtin_type @@
     P_variable var
 
-let p_var_ez var = 
+let p_var_ez var =
   Reasons.wrap Builtin_type @@
-    P_variable (Var.of_name var)
+    P_variable (Var.of_input_var var)
 
 let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
 let c_apply f arg reason = {c = C_apply {f; arg}; reason}

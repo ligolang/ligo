@@ -16,7 +16,7 @@ let c2 = constraint_ 2L n' == ctor C_arrow[p; q]
 let c3 = constraint_ 3L o == ctor C_string[]
 let c4 = constraint_ 4L p == row C_record { x = rv' m ; y = rv' m }
 let c5 = constraint_ 5L q == ctor C_map[o; r]
-           
+
 let c6 = constraint_ 6L n == ctor C_arrow[o; n']
 
 let check_specialize1_result fresh (actual : update list) expected =
@@ -59,7 +59,7 @@ let propagator_test ~raise : _ -> unit -> unit =
   (* check that the propagator returns exactly this constraint
      (left/right in the equality is not important, variable "fresh" is not important):
      n = fresh -> record { x = int ; y = fresh } -> map(fresh,int) *)
-  let fresh = Var.generate ~name:"fresh" () in
+  let fresh = Var.fresh ~name:"fresh" () in
   check_specialize1_result fresh (result : update list) (n === var fresh @-> p_row C_record { x = rv int ; y = rv (var fresh) } @-> map(var fresh, int))
 
 let selector_test2 ~raise:_ : _ -> _ -> unit -> unit =

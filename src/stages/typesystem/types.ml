@@ -27,7 +27,7 @@ type type_expression = Ast_core.type_expression
 
 (* generate a new type variable and gave it an id *)
 let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () ->
-  let fresh_name = Ast_core.Var.generate ?name () in
+  let fresh_name = Ast_core.Var.fresh ?name () in
   fresh_name
 
 let fresh_for_expr_var: Ast_core.expression_variable -> type_variable = fun v ->

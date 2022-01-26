@@ -25,7 +25,7 @@ let compile_type ~raise : Ast_typed.type_expression -> Ast_aggregated.type_expre
 let apply_to_entrypoint_contract ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
-  let v = Ast_typed.Var.of_name entrypoint in
+  let v = Ast_typed.Var.of_input_var entrypoint in
   let Self_ast_typed.Helpers.{parameter=p_ty ; storage=s_ty} =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
   in
@@ -37,7 +37,7 @@ let apply_to_entrypoint_view ~raise : Ast_typed.program -> string list -> Ast_ag
     fun prg views ->
   let aggregated_prg = compile_program ~raise prg in
   let aux : int -> string -> (label * expression) = fun i view_name ->
-    let v = Stage_common.Var.of_name view_name in
+    let v = Stage_common.Var.of_input_var view_name in
     let Self_ast_typed.Helpers.{arg=a_ty ; storage=s_ty ; return=r_ty}, _ =
       trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_view_type view_name prg in
     let ty = t_arrow (t_pair a_ty s_ty) r_ty () in
@@ -49,7 +49,7 @@ let apply_to_entrypoint_view ~raise : Ast_typed.program -> string list -> Ast_ag
 let apply_to_entrypoint ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
-  let v = Ast_typed.Var.of_name entrypoint in
+  let v = Ast_typed.Var.of_input_var entrypoint in
   let ty, _ =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_entry_type entrypoint prg in
   let var_ep = Ast_typed.(e_a_variable v ty) in

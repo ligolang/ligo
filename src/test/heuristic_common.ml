@@ -12,7 +12,7 @@ let (int, unit, nat, string, bytes, mutez) = (mk C_int [], mk C_unit [], mk C_na
 (* An arbitrary two-argument type constructor (this only needs to be a type constructor with two arguments, feel free to replace). *)
 let map (k,v) = mk C_map [k; v]
 (* A bunch of type variables: *)
-let (m,n,n',o,p,q,r,x,y,z,v) = let v name : type_variable = Var.generate ~name () in v "m", v "n", v "n'", v "o", v "p", v "q", v "r", v "x", v "y", v "z", v "v"
+let (m,n,n',o,p,q,r,x,y,z,v) = let v name : type_variable = Var.fresh ~name () in v "m", v "n", v "n'", v "o", v "p", v "q", v "r", v "x", v "y", v "z", v "v"
 let var x = wrap (Todo "unit test") @@ P_variable x
 
 (* Syntactic sugar for human-readable constraints in the tests below. *)

@@ -598,7 +598,7 @@ and print_env_state_node : type a. (Format.formatter -> a -> unit) -> (environme
       node_printer node
 
 and _get_alias ~raise variable aliases =
-  trace_option ~raise (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
+  trace_option ~raise (corner_case (Format.asprintf "can't find alias root of variable %a" Ast_typed.PP.type_variable variable)) @@
   (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
   try Some (Solver.UF.repr variable aliases) with Caml.Not_found -> None
 

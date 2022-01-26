@@ -27,7 +27,7 @@ open Predefined.Tree_abstraction.Cameligo
 
 let r_split = Location.r_split
 
-let mk_var ?loc var = if String.equal var "_" then Var.generate ?loc () else Var.of_name ?loc var
+let mk_var ?loc var = if String.equal var "_" then Var.fresh ?loc () else Var.of_input_var ?loc var
 let quote_var var = "'"^var
 let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var
 let compile_attributes attributes : string list =
@@ -142,7 +142,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
           )
         | _ ->raise.raise @@ michelson_type_wrong_arity loc operator.value)
     | _ ->
-      let operators = Var.of_name operator.value in
+      let operators = Var.of_input_var operator.value in
       let lst = npseq_to_list args.value.inside in
       let lst = List.map ~f:self lst in
       return @@ t_app ~loc operators lst
@@ -158,7 +158,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
     self type_expr
   | TVar var ->
     let (name,loc) = r_split var in
-    let v = Var.of_name name in
+    let v = Var.of_input_var name in
     return @@ t_variable ~loc v
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te
@@ -169,7 +169,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> _ =
     return @@ t_module_accessor ~loc module_name element
   | TArg var ->
     let (name,loc) = r_split var in
-    let v = Var.of_name (quote_var name.name.value) in
+    let v = Var.of_input_var (quote_var name.name.value) in
     return @@ t_variable ~loc v
 
 
@@ -375,7 +375,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
       | None -> return @@ e_variable_ez ~loc var
       )
     else
-      return @@ e_module_accessor ~loc (Var.of_name module_name) element
+      return @@ e_module_accessor ~loc (Var.of_input_var module_name) element
   | EUpdate update ->
     let (update, _loc) = r_split update in
     let record = compile_path update.record in
@@ -476,7 +476,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
   | ETypeIn ti ->
     let (ti, loc) = r_split ti in
     let ({type_decl={name;type_expr;_};semi=_;body} : CST.type_in) = ti in
-    let type_binder = Var.of_name name.value in
+    let type_binder = Var.of_input_var name.value in
     let rhs = compile_type_expression ~raise type_expr in
     let body = compile_expression ~raise body in
     return @@ e_type_in ~loc type_binder rhs body
@@ -686,7 +686,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     PConstr _ ->raise.raise @@ unsupported_pattern_type pattern
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
-    return_1 ~ascr:(t_unit ~loc ()) @@ Var.generate ~loc ()
+    return_1 ~ascr:(t_unit ~loc ()) @@ Var.fresh ~loc ()
   | PVar {value={variable; attributes}; _} ->
     let var = compile_variable variable in
     let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
@@ -694,7 +694,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     return_1 ~attributes var
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
-    let var = Var.generate ~loc () in
+    let var = Var.fresh ~loc () in
     let aux pattern (binder_lst, fun_) =
       let (binder,fun_') = compile_parameter ~raise pattern in
       (binder :: binder_lst, fun_' <@ fun_)
@@ -736,7 +736,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr; type_attr=[]}
+    return_1 region @@ AST.Declaration_type {type_binder=Var.of_input_var name; type_expr; type_attr=[]}
   | ModuleDecl {value={name; module_; _};region} ->
     let module_binder = compile_variable name in
     let module_ = compile_module ~raise module_ in

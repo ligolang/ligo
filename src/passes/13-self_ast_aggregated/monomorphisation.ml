@@ -6,7 +6,7 @@ let fold_map_expression = Helpers.fold_map_expression
 let to_name_safe v = AST.Var.to_name v
 let poly_counter = ref 0
 let poly_name v = poly_counter := ! poly_counter + 1 ;
-                  AST.Var.of_name ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
+                  AST.Var.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
 
 module Longident = struct
   type t = { variable : AST.expression_variable }

@@ -266,9 +266,9 @@ let%expect_test _ =
       PP.expression expr
       PP.expression (subst_expression ~body ~x ~expr) in
 
-  let x = Var.of_name "x" in
-  let y = Var.of_name "y" in
-  let z = Var.of_name "z" in
+  let x = Var.of_input_var "x" in
+  let y = Var.of_input_var "y" in
+  let z = Var.of_input_var "z" in
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
