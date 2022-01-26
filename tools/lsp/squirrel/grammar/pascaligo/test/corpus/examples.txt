@@ -48,3 +48,46 @@ function main() : int is
     )
   )
 )
+
+
+=========
+Modules
+=========
+
+module EURO is {
+    type t is nat
+    const one : t = 1n
+    module CONST is {
+        const zero : t = 0n
+        const one : t = 1n
+    }
+}
+
+module PESO is begin
+    type t is nat
+end
+
+module US_DOLLAR is EURO
+
+type storage is EURO.t
+const uno : storage = EURO.one
+
+---
+
+(source_file
+  (module_decl (ModuleName)
+    (type_decl (TypeName) (TypeName))
+    (const_decl (var_pattern (NameDecl)) (TypeName) (Nat))
+    (module_decl (ModuleName)
+      (const_decl (var_pattern (NameDecl)) (TypeName) (Nat))
+      (const_decl (var_pattern (NameDecl)) (TypeName) (Nat))
+    )
+  )
+  (module_decl (ModuleName)
+    (type_decl (TypeName) (TypeName))
+  )
+  (module_alias (ModuleName) (ModuleName))
+  (type_decl (TypeName) (module_TypeName (ModuleName) (TypeName)))
+  (const_decl (var_pattern (NameDecl)) (TypeName)
+    (module_access (ModuleName) (FieldName)))
+)
