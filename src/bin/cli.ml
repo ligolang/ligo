@@ -213,6 +213,13 @@ let project_root =
   let spec = optional string in
   flag ~doc name spec
 
+let cache_path = 
+  let open Command.Param in
+  let name = "--cache-path" in
+  let doc  = "PATH The path where dependencies are installed." in
+  let spec = optional_with_default Constants.ligo_install_path string in
+  flag ~doc name spec
+
 module Api = Ligo_api
 let (<*>) = Command.Param.(<*>)
 let (<$>) f a = Command.Param.return f <*> a
@@ -637,9 +644,9 @@ let repl =
 let install =
   let summary   = "install ligo packages declared in package.json" in
   let readme () = "This command invokes the package manager to install the external packages declared in package.json" in
-  let f package_name () =
-    return_result ~return @@ fun () -> Install.install package_name in
-  Command.basic ~summary ~readme (f <$> package_name)
+  let f package_name cache_path () =
+    return_result ~return @@ fun () -> Install.install ~package_name ~cache_path in
+  Command.basic ~summary ~readme (f <$> package_name <*> cache_path)
 
 let main = Command.group ~preserve_subcommand_order:() ~summary:"the LigoLANG compiler" @@
   [

@@ -89,6 +89,12 @@ If you working with an existing LIGO project, to install the dependencies, at th
 ligo install
 ```
 
+By default dependencies are installed in the `.ligo` directory at the root of the project, If you wish to change
+the path where dependencies are installed use the `--cache-path` flag to specify the path e.g.
+
+```bash
+ligo install --cache-path /some/path
+```
 
 ## Creating and publishing LIGO packages to npm
 
