@@ -781,31 +781,31 @@ function main (const gen__parameters1 : parameter * storage) is
 function foobar (const i : int) is
 block {
   const p : parameter = (Zero (42n));
-  const gen__env12 = record [i = i];
+  const gen__env12 = (i);
   const gen__env12
   = if (i > 0)
     then
       block {
         const i = (i + 1);
-        gen__env12.i := i;
-        const gen__env10 = record [i = i];
+        gen__env12.0 := i;
+        const gen__env10 = (i);
         const gen__env10
         = if (i > 10)
           then
             block {
               const i = 20;
-              gen__env10.i := i;
+              gen__env10.0 := i;
               failwith ("who knows");
               const i = 30;
-              gen__env10.i := i;
+              gen__env10.0 := i;
               skip
             } with gen__env10
           else
             block {
               skip
             } with gen__env10;
-        const i = gen__env10.i;
-        gen__env12.i := i;
+        const i = gen__env10.0;
+        gen__env12.0 := i;
         skip
       } with gen__env12
     else
@@ -815,7 +815,7 @@ block {
         | Pos (gen__gen5) -> skip
         ]
       } with gen__env12;
-  const i = gen__env12.i
+  const i = gen__env12.0
 } with
     case p of [
       Zero (gen__gen2) -> i
@@ -850,22 +850,22 @@ block {
     let foobar : int -> int =
       (fun [@var] i : int ->
          let [@var] p : parameter = (Zero 42n) in
-         let gen__env12 = {i = i} in
+         let gen__env12 = i in
          let gen__env12 =
            if (i > 0)
            then
              let i = (i + 1) in
-             let gen__env12 = {gen__env12 with {i = i}} in
-             let gen__env10 = {i = i} in
+             let gen__env12 = {gen__env12 with {0 = i}} in
+             let gen__env10 = i in
              let gen__env10 =
                if (i > 10)
                then
                  let i = 20 in
-                 let gen__env10 = {gen__env10 with {i = i}} in
+                 let gen__env10 = {gen__env10 with {0 = i}} in
                  begin
                    (failwith ("who knows"));
                    let i = 30 in
-                   let gen__env10 = {gen__env10 with {i = i}} in
+                   let gen__env10 = {gen__env10 with {0 = i}} in
                    begin
                      ();
                      gen__env10
@@ -876,8 +876,8 @@ block {
                    ();
                    gen__env10
                  end in
-             let i = gen__env10.i in
-             let gen__env12 = {gen__env12 with {i = i}} in
+             let i = gen__env10.0 in
+             let gen__env12 = {gen__env12 with {0 = i}} in
              begin
                ();
                gen__env12
@@ -889,7 +889,7 @@ block {
                | Pos gen__gen5 -> ();
                gen__env12
              end in
-         let i = gen__env12.i in
+         let i = gen__env12.0 in
          match p with
            Zero gen__gen2 -> i
          | Pos gen__gen3 -> ((failwith ("waaaa")) : int))
@@ -936,26 +936,22 @@ let main: (parameter, storage) => return =
 let foobar: int => int =
   (([@var] i: int): int =>
      let [@var] p: parameter = (Zero 42n);
-     let gen__env12 = {
-       i: i
-     };
+     let gen__env12 = i;
      let gen__env12 =
        if(((i) > (0))) {
 
          let i = ((i) + (1));
-         let gen__env12 = {...gen__env12, {i: i }};
-         let gen__env10 = {
-           i: i
-         };
+         let gen__env12 = {...gen__env12, {0: i }};
+         let gen__env10 = i;
          let gen__env10 =
            if(((i) > (10))) {
 
              let i = 20;
-             let gen__env10 = {...gen__env10, {i: i }};
+             let gen__env10 = {...gen__env10, {0: i }};
              {
                (failwith(("who knows")));
                let i = 30;
-               let gen__env10 = {...gen__env10, {i: i }};
+               let gen__env10 = {...gen__env10, {0: i }};
                {
                  ();
                  gen__env10
@@ -968,8 +964,8 @@ let foobar: int => int =
                gen__env10
              }
              };
-         let i = gen__env10.i;
-         let gen__env12 = {...gen__env12, {i: i }};
+         let i = gen__env10[0];
+         let gen__env12 = {...gen__env12, {0: i }};
          {
            ();
            gen__env12
@@ -984,7 +980,7 @@ let foobar: int => int =
            gen__env12
          }
          };
-     let i = gen__env12.i;
+     let i = gen__env12[0];
      switch  p {
      | Zero gen__gen2 => i
      | Pos gen__gen3 => ((failwith(("waaaa"))) : int)

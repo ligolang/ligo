@@ -5,6 +5,7 @@ module I = Ast_imperative
 module O = Ast_sugar
 open Simple_utils.Trace
 open Stage_common.Maps
+module VMap = Simple_utils.Map.Make(Stage_common.Var)
 
 let equal_var = I.Var.equal
 let compare_var = I.Var.compare
@@ -19,10 +20,11 @@ let rec add_to_end (expression: O.expression) to_add =
     {expression with expression_content = O.E_sequence seq}
   | _ -> O.e_sequence expression to_add
 
-let repair_mutable_variable_in_matching (match_body : O.expression) (element_names : O.expression_variable list) (env : I.expression_variable) =
+let repair_mutable_variable_in_matching (match_body : O.expression) (element_names : O.expression_variable list) (init_fv : Z.t VMap.t) (i : Z.t) (env : I.expression_variable) =
+  let i = ref i in
   let ((dv,fv),mb) = Self_ast_sugar.fold_map_expression
     (* TODO : these should use Variables sets *)
-    (fun (decl_var,free_var : O.expression_variable list * O.expression_variable list) (ass_exp : O.expression) ->
+    (fun (decl_var,free_var : O.expression_variable list * Z.t VMap.t) (ass_exp : O.expression) ->
       match ass_exp.expression_content with
         | E_let_in {let_binder;mut=false;rhs;let_result;attributes=_} ->
           (true,(let_binder.var::decl_var, free_var),O.e_let_in let_binder false [] rhs let_result)
@@ -31,8 +33,10 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
           if List.mem ~equal:equal_var decl_var name then
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
           else(
-            let free_var = if (List.mem ~equal:equal_var free_var name) then free_var else name::free_var in
-            let expr = O.e_let_in_ez env false [] (O.e_update (O.e_variable env) [O.Access_record (O.Var.to_name name)] (O.e_variable name)) let_result in
+            let free_var = if (VMap.mem name free_var) then free_var else (let x = !i in i := Z.succ x; VMap.add name x free_var) in
+            let expr = O.e_let_in_ez env false [] (O.e_update (O.e_variable env) [
+              O.Access_tuple (VMap.find name free_var)
+              ] (O.e_variable name)) let_result in
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs expr)
           )
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
@@ -52,21 +56,22 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
       | E_module_accessor _
        -> (true, (decl_var, free_var),ass_exp)
     )
-      (element_names,[])
+      (element_names,init_fv)
       match_body in
-  ((dv,fv),mb)
+  ((dv,fv),mb,!i)
 
 and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : O.expression_variable list) (env : O.expression_variable) =
+  let i = ref Z.zero in
   let ((dv,fv),fb) = Self_ast_sugar.fold_map_expression
     (* TODO : these should use Variables sets *)
-    (fun (decl_var,free_var : O.expression_variable list * O.expression_variable list) (ass_exp : O.expression) ->
+    (fun (decl_var,free_var : O.expression_variable list * Z.t VMap.t) (ass_exp : O.expression) ->
       (* Format.printf "debug: dv:%a; fv:%a; expr:%a \n%!"
         (I.PP.list_sep_d I.PP.expression_variable) decl_var
         (I.PP.list_sep_d I.PP.expression_variable) decl_var
         O.PP.expression ass_exp
       ;*)
       match ass_exp.expression_content with
-        | E_let_in {let_binder;rhs=_;let_result=_;mut=false;attributes=_} ->
+        | E_let_in {let_binder;mut=false; rhs=_;let_result=_;attributes=_} ->
           let {var;ascr=_;attributes=_} : _ O.binder = let_binder in
           (true,(var::decl_var, free_var),ass_exp)
         | E_let_in {let_binder;mut=true; rhs;let_result;attributes=_} ->
@@ -75,11 +80,12 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
           else(
             let free_var =
-              if (List.mem ~equal:equal_var free_var name)
+              if (VMap.mem name free_var)
               then free_var
-              else name::free_var in
+              else (let x = !i in i := Z.succ x; VMap.add name x free_var) in
             let expr = O.e_let_in_ez env false [] (
-              O.e_update (O.e_variable env) [O.Access_tuple Z.zero; O.Access_record (O.Var.to_name name)] (O.e_variable name)
+              O.e_update (O.e_variable env) [O.Access_tuple Z.zero;
+              O.Access_tuple (VMap.find name free_var)] (O.e_variable name)
               )
               let_result in
             (true,(decl_var, free_var), O.e_let_in let_binder false  [] rhs expr)
@@ -101,22 +107,26 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
       | E_module_accessor _
        -> (true, (decl_var, free_var),ass_exp)
     )
-      (element_names,[])
+      (element_names,VMap.empty)
       for_body in
   ((dv,fv),fb)
 
-and store_mutable_variable (free_vars : I.expression_variable list) =
-  if (List.is_empty free_vars) then
+and store_mutable_variable (free_vars : Z.t VMap.t) =
+  if (VMap.is_empty free_vars) then
     O.e_unit ()
   else
-    let aux (var:I.expression_variable) = (O.Label (O.Var.to_name var), O.e_variable var) in
-    O.e_record @@ O.LMap.of_list (List.map ~f:aux free_vars)
+    O.e_tuple @@ List.map ~f:O.e_variable @@
+     List.map ~f:fst @@ List.dedup_and_sort
+     ~compare:(fun (_,a) (_,b) -> Z.compare a b) @@ VMap.to_kv_list free_vars
 
-and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.expression_variable list) (env : O.expression_variable) =
-  let aux (f: O.expression -> O.expression) (ev: O.expression_variable) =
-    fun expr -> f (O.e_let_in_ez ev true [] (O.e_accessor (O.e_variable env) [O.Access_record (O.Var.to_name ev)]) expr)
+and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : Z.t VMap.t) (env : O.expression_variable) =
+  let aux (ev,i) =
+    ev, O.e_accessor (O.e_variable env) [O.Access_tuple i] in
+  let accesses = List.map ~f:aux @@ VMap.to_kv_list free_vars in
+  let aux (f: O.expression -> O.expression) (ev, rhs: O.expression_variable * O.expression) =
+    fun expr -> f @@ O.e_let_in_ez ev true [] rhs expr
   in
-  let ef = List.fold_left ~f:aux ~init:(fun e -> e) free_vars in
+  let ef = List.fold_left ~f:aux ~init:(fun e -> e) accesses in
   fun e -> match e with
     | None ->
       expr (ef (O.e_skip ()))
@@ -265,13 +275,14 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let then_clause' = self then_clause in
       let else_clause' = self else_clause in
       let env = (I.Var.fresh ~name:"env" ()) in
-      let ((_,free_vars_true), then_clause) = repair_mutable_variable_in_matching then_clause' [] env in
-      let ((_,free_vars_false), else_clause) = repair_mutable_variable_in_matching else_clause' [] env in
+      let ((_,free_vars), then_clause,i) = repair_mutable_variable_in_matching then_clause' [] VMap.empty Z.zero env in
+      let ((_,free_vars), else_clause,_) = repair_mutable_variable_in_matching else_clause' [] free_vars i env in
       let then_clause  = add_to_end then_clause (O.e_variable env) in
       let else_clause = add_to_end else_clause (O.e_variable env) in
 
-      let free_vars = List.dedup_and_sort ~compare:compare_var @@ free_vars_true @ free_vars_false in
-      if (List.length free_vars <> 0 && not last) then
+      if (VMap.is_empty free_vars || last)  then
+        return' @@ O.e_cond ~loc:e.location condition then_clause' else_clause'
+      else
         let cond_expr  = O.e_cond condition then_clause else_clause in
         let return_expr = fun expr ->
           O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
@@ -279,8 +290,6 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
           expr
         in
         restore_mutable_variable return_expr free_vars env
-      else
-        return' @@ O.e_cond ~loc:e.location condition then_clause' else_clause'
     | I.E_sequence {expr1; expr2} ->
       let expr1 = compile_expression' ~raise ~last:false expr1 in
       let expr2 = compile_expression' ~raise ~last expr2 in
@@ -317,9 +326,9 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
   in
   let matchee = compile_expression ~raise ~last matchee in
   let env = I.Var.fresh ~name:"env" () in
-  let aux :
-    _ I.match_case -> (_ O.match_case * _ O.match_case)  * (I.expression_variable list) =
-    fun {pattern ; body} ->
+  let aux : (Z.t VMap.t * Z.t) ->
+    _ I.match_case ->(Z.t VMap.t * Z.t) * (_ O.match_case * _ O.match_case) =
+    fun (init_fv,i) {pattern ; body} ->
       let body = compile_expression ~raise ~last body in
       let get_pattern_vars : I.expression_variable list -> I.type_expression I.pattern -> I.expression_variable list =
         fun acc p->
@@ -329,19 +338,17 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
       in
       let n = Stage_common.Helpers.fold_pattern get_pattern_vars [] pattern in
       let pattern = Stage_common.Helpers.map_pattern_t (binder (compile_type_expression ~raise)) pattern in
-      let ((_,free_vars), body') = repair_mutable_variable_in_matching body n env in
+      let ((_,free_vars), body',i) = repair_mutable_variable_in_matching body n init_fv i env in
       let body' = add_to_end body' (O.e_variable env) in
       let cases_no_fv : (O.expression, O.type_expression) O.match_case = { pattern ; body } in
       let cases_fv : (O.expression, O.type_expression) O.match_case = { pattern ; body = body' } in
-      ((cases_no_fv,cases_fv),free_vars)
+      ((free_vars,i),(cases_no_fv,cases_fv))
   in
-  let l = List.map ~f:aux cases in
-  let (cases_no_fv,cases_fv) = List.unzip @@ List.map ~f:fst l in
-  let free_vars = List.dedup_and_sort ~compare:compare_var (List.concat @@ List.map ~f:snd l) in
-  match free_vars with
-  | [] -> return (O.e_matching ~loc matchee cases_no_fv)
-  | _ when last -> return (O.e_matching ~loc matchee cases_no_fv)
-  | _ ->
+  let (free_vars,_),l = List.fold_map ~f:aux cases ~init:(VMap.empty,Z.zero) in
+  let (cases_no_fv,cases_fv) = List.unzip @@ l in
+  if  (VMap.is_empty free_vars || last ) then
+    return (O.e_matching ~loc matchee cases_no_fv)
+  else
     let match_expr  = O.e_matching matchee cases_fv in
     let return_expr = fun expr ->
       O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
@@ -363,11 +370,11 @@ and compile_while ~raise ~last I.{cond;body} =
   let ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [] binder in
   let for_body = add_to_end for_body ctrl in
 
-  let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable binder) [Access_tuple Z.zero; Access_record (O.Var.to_name name)]) expr
+  let aux name i expr =
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable binder) [Access_tuple Z.zero; Access_tuple i]) expr
   in
   let init_rec = O.e_tuple [store_mutable_variable @@ captured_name_list] in
-  let restore = fun expr -> List.fold_right ~f:aux captured_name_list ~init:expr in
+  let restore = fun expr -> VMap.fold aux captured_name_list expr in
   let continue_expr = O.e_constant C_FOLD_CONTINUE [for_body] in
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable binder] in
   let aux_func =
@@ -412,12 +419,12 @@ and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
   let ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] loop_binder in
   let for_body = add_to_end for_body ctrl in
 
-  let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.zero; Access_record (O.Var.to_name name)]) expr
+  let aux name i expr =
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.zero; Access_tuple i]) expr
   in
 
   (* restores the initial value of the free_var*)
-  let restore = fun expr -> List.fold_right ~f:aux captured_name_list ~init:expr in
+  let restore = fun expr -> VMap.fold aux captured_name_list expr in
 
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable loop_binder] in
@@ -466,10 +473,10 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
 
   let init_record = store_mutable_variable free_vars in
   let collect = compile_expression ~raise ~last collection in
-  let aux name expr=
-    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_record (O.Var.to_name name)]) expr
+  let aux name i expr =
+    O.e_let_in_ez name false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_tuple i]) expr
   in
-  let restore = fun expr -> List.fold_right ~f:aux free_vars ~init:expr in
+  let restore = fun expr -> VMap.fold aux free_vars expr in
   let restore = match collection_type with
     | Map -> (match snd fe_binder with
       | Some v -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero])

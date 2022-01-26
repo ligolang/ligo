@@ -16,7 +16,7 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    1541 bytes |}] ;
+    1549 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
@@ -484,6 +484,7 @@ let%expect_test _ =
                      PUSH bool True ;
                      SENDER ;
                      UPDATE ;
+                     SWAP ;
                      PAIR }
                    { DUP ;
                      SENDER ;
@@ -521,11 +522,9 @@ let%expect_test _ =
                      PUSH bool True ;
                      SENDER ;
                      UPDATE ;
+                     SWAP ;
                      PAIR } ;
-                 DUP ;
-                 CAR ;
-                 SWAP ;
-                 CDR ;
+                 UNPAIR ;
                  DUP ;
                  CDR ;
                  CAR ;
@@ -650,36 +649,40 @@ let%expect_test _ =
                                 { DIG 2 ; DROP 2 } } ;
                       DIG 2 ;
                       DROP ;
-                      SWAP ;
                       PAIR }
                     { DIG 3 ;
                       DROP ;
-                      DUP ;
-                      CDR ;
+                      NIL operation ;
                       SWAP ;
                       DUP ;
                       DUG 2 ;
+                      CDR ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 3 ;
                       DIG 4 ;
+                      DIG 5 ;
                       SWAP ;
                       SOME ;
                       SWAP ;
                       UPDATE ;
-                      DUP 3 ;
+                      DUP 4 ;
                       CAR ;
                       CDR ;
                       CAR ;
                       PAIR ;
-                      DIG 2 ;
+                      DIG 3 ;
                       CAR ;
                       CAR ;
                       PAIR ;
                       PAIR ;
-                      NIL operation ;
-                      PAIR } } }
+                      PAIR } ;
+                 DUP ;
+                 CAR ;
+                 SWAP ;
+                 CDR ;
+                 PAIR } }
            { PACK ;
              SWAP ;
              DUP ;
