@@ -3,8 +3,8 @@ open Simple_utils.Trace
 module Location = Simple_utils.Location
 
 type form =
-  | Contract of string
-  | View of string list * string
+  | Contract of Ast_typed.expression_variable
+  | View of Ast_typed.expression_variable list * Ast_typed.expression_variable
   | Env
 
 let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
@@ -52,34 +52,34 @@ let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expres
       location = Virtual "generated application" } in
   applied
 
-let list_declarations (m : Ast_core.module_) : string list =
+let list_declarations (m : Ast_core.module_) : Ast_core.expression_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration) with
-      | Declaration_constant {binder;_} -> (Var.to_name binder.var)::prev
+      | Declaration_constant {binder;_} -> binder.var::prev
       | _ -> prev)
     ~init:[] m
 
-let list_type_declarations (m : Ast_core.module_) : string list =
+let list_type_declarations (m : Ast_core.module_) : Ast_core.type_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration) with
-      | Declaration_type {type_binder;_} -> (Var.to_name type_binder)::prev
+      | Declaration_type {type_binder;_} -> type_binder::prev
       | _ -> prev)
     ~init:[] m
 
-let list_mod_declarations (m : Ast_core.module_) : string list =
+let list_mod_declarations (m : Ast_core.module_) : Ast_core.type_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration) with
-      | Declaration_module {module_binder;_} -> (Var.to_name module_binder)::prev
-      | Module_alias {alias;_} -> (Var.to_name alias)::prev
+      | Declaration_module {module_binder;_} -> module_binder::prev
+      | Module_alias {alias;_} -> alias::prev
       | _ -> prev)
     ~init:[] m
 

@@ -62,7 +62,7 @@ let extract_variable_types :
                     let t = Ast_typed.t_pair list_proj matchee.type_expression in
                     return [(x.pattern,t)]
                   | None -> failwith "matched value in the Match_variant: wrong type"
-                ) 
+                )
               )
         )
         | Match_record { fields ; _ }  ->
@@ -80,7 +80,7 @@ let extract_variable_types :
 let get_binder_name : Ast_typed.Var.t -> string = fun v ->
   if Ast_typed.Var.is_generated v
   then "generated"
-  else Ast_typed.Var.to_name v
+  else Ast_typed.Var.to_name_exn v
 
 let make_def_id name i =
   (name ^ "#" ^ (string_of_int i), i+1)

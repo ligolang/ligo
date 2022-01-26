@@ -3,7 +3,7 @@ module Trace = Simple_utils.Trace
 open Main_errors
 open Test_helpers
 
-let get_program = get_program "./contracts/time-lock.ligo" (Contract "main")
+let get_program = get_program "./contracts/time-lock.ligo" (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/time-lock.ligo" ()

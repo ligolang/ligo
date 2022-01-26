@@ -19,7 +19,7 @@ module Typeclasses_constraining_tests = struct
     let () = tst_assert ~raise "Length saf = Length sbf" (List.length sa = List.length sb) in
     List.iter2_exn
       ~f:(fun a b ->
-        let () = tst_assert ~raise ("type variable =" ^ Var.to_name (fst a) ^ " " ^ Var.to_name (fst b)) (Ast_core.Compare.type_variable (fst a) (fst b) = 0) in
+        let () = tst_assert ~raise ("type variable =" ^ Var.to_name_exn (fst a) ^ " " ^ Var.to_name_exn (fst b)) (Ast_core.Compare.type_variable (fst a) (fst b) = 0) in
         let () = tst_assert ~raise "c_typeclass_simpl set =" (List.compare Ast_core.Compare.c_typeclass_simpl (MultiSet.elements (snd a)) (MultiSet.elements (snd b)) = 0) in
         ()
       )
@@ -29,7 +29,7 @@ module Typeclasses_constraining_tests = struct
     same_state2 ~raise sa sb
 end
 
-let tval ?(loc = Location.generated) tag args = 
+let tval ?(loc = Location.generated) tag args =
   {
     Location.
     wrap_content = P_constant { p_ctor_tag = tag ; p_ctor_args = args; };
@@ -55,7 +55,7 @@ let typeclasses_constraining ~raise () =
    * (\* assert state' = {} because only typeclass constraints are indexed by this indexer. *\)
    * let () = same_state2 state' [] in *)
   let state' = state in
-  
+
   (* add ([tvb;tvc] ∈ { [int;unit] , [unit;int] , [map(int,unit);map(int,unit)] } ) to the state *)
   let tc_allowed_bc : type_value list list = [
     [ tval_int ; tval_unit ] ;
@@ -103,4 +103,4 @@ let typeclasses_constraining ~raise () =
       (tvc, set[tc_bc]);        (* TODO: should the old one still be there? *)
     ] in
   ()
-  
+

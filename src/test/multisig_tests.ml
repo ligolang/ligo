@@ -5,7 +5,7 @@ let file = "./contracts/multisig.ligo"
 let mfile = "./contracts/multisig.mligo"
 let refile = "./contracts/multisig.religo"
 
-let get_program ~add_warning f = get_program ~add_warning f (Contract "main")
+let get_program ~add_warning f = get_program ~add_warning f (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning f () =
   Test_helpers.compile_main ~raise ~add_warning f ()

@@ -3,7 +3,8 @@ module AST = Ast_aggregated
 
 let fold_map_expression = Helpers.fold_map_expression
 
-let to_name_safe v = AST.Var.to_name v
+let to_name_safe v =
+  fst (AST.Var.internal_get_name_and_counter v)
 let poly_counter = ref 0
 let poly_name v = poly_counter := ! poly_counter + 1 ;
                   AST.Var.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))

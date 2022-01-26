@@ -299,7 +299,7 @@ and fresh_name : I.expression_variable -> Data.path -> O.expression_variable  = 
   match path with
   | [] -> v
   | _ ->
-    let name = Var.to_name v in
-    let name = List.fold_right ~f:(fun s r -> Var.to_name s ^ "#" ^ r) ~init:name path in
+    let name,_ = Var.internal_get_name_and_counter v in
+    let name = List.fold_right ~f:(fun s r -> Var.to_name_exn s ^ "#" ^ r) ~init:name path in
     let name = "#" ^ name in
     Var.fresh ~loc:(Var.get_location v) ~name ()

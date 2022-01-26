@@ -574,10 +574,10 @@ and type_module_returns_env ~raise ((env, state, p) : environment * _ O'.typer_s
     let ds',tys' = match (Location.unwrap d' : O.declaration) with
       | O.Declaration_type _ -> d' :: ds,tys
       | O.Declaration_constant {binder = {var= n};_}
-        ->  let n = O.Var.to_name n in d' :: ds, (n,t)::tys
+        ->  let n = O.Var.to_name_exn n in d' :: ds, (n,t)::tys
       | O.Declaration_module {module_binder = n;_}
       | O.Module_alias {alias = n;_}
-        ->  let n = O.Var.to_name n in d' :: ds, (n,t)::tys
+        ->  let n = O.Var.to_name_exn n in d' :: ds, (n,t)::tys
     in
     (e , s' , ds', tys')
   in

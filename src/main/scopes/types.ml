@@ -22,7 +22,7 @@ module Definitions = struct
     body_range : Location.t ;
     content : Ast_core.type_expression ;
   }
-  
+
   type adef = {
     name       : string ;
     range      : Location.t ;
@@ -51,11 +51,11 @@ module Definitions = struct
     Def_map.union merge_refs a b
 
   let get_def_name = function
-    | Variable    d -> Ast_core.Var.to_name d.name
+    | Variable    d -> Ast_core.Var.to_name_exn d.name
     | Type        d -> d.name
     | Module      d -> d.name
     | ModuleAlias d -> d.name
-  
+
   let get_range = function
     | Type        t -> t.range
     | Variable    v -> v.range

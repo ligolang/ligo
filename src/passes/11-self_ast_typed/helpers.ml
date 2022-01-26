@@ -370,10 +370,10 @@ type contract_type = {
   storage : Ast_typed.type_expression ;
 }
 
-let fetch_contract_type ~raise : string -> module_ -> contract_type = fun main_fname m ->
+let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ; name=_} as p) ->
-       if Var.is_name binder main_fname
+       if Var.equal binder main_fname
        then Some p
        else None
     | Declaration_type   _
@@ -382,7 +382,7 @@ let fetch_contract_type ~raise : string -> module_ -> contract_type = fun main_f
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let main_decl =
-    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@ (* Better error maybe ? *)
+    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" Var.pp main_fname : string)) @@
       main_decl_opt
     in
   let { binder=_ ; expr ; attr=_ ; name=_} = main_decl in
@@ -408,10 +408,10 @@ type view_type = {
   return : Ast_typed.type_expression ;
 }
 
-let fetch_view_type ~raise : string -> module_ -> (view_type * Location.t) = fun main_fname m ->
+let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ ;name=_} as p) ->
-        if Var.is_name binder main_fname
+        if Var.equal binder main_fname
         then Some p
         else None
     | Declaration_type   _
@@ -420,7 +420,7 @@ let fetch_view_type ~raise : string -> module_ -> (view_type * Location.t) = fun
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let main_decl =
-    trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
+    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" Var.pp main_fname : string)) @@
       main_decl_opt
     in
   let { binder=_ ; expr ; attr=_ ; name=_} = main_decl in

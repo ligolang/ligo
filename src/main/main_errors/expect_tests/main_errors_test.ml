@@ -954,7 +954,7 @@ let%expect_test "self_ast_typed" =
   error (`Self_ast_typed_corner_case "foo") ;
   [%expect {|
     Internal error: foo |}] ;
-  error (`Self_ast_typed_bad_contract_io ("foo", expression)) ;
+  error (`Self_ast_typed_bad_contract_io (Var.of_input_var "foo", expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -962,7 +962,7 @@ let%expect_test "self_ast_typed" =
     Invalid type for entrypoint "foo".
     An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
   error
-    (`Self_ast_typed_expected_list_operation ("foo", type_expression, expression)) ;
+    (`Self_ast_typed_expected_list_operation (Var.of_input_var "foo", type_expression, expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -972,7 +972,7 @@ let%expect_test "self_ast_typed" =
     We expected a list of operations but we got foo |}] ;
   error
     (`Self_ast_typed_expected_same_entry
-      ("foo", type_expression, type_expression2, expression)) ;
+      (Var.of_input_var "foo", type_expression, type_expression2, expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:

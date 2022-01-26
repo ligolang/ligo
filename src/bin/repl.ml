@@ -42,12 +42,12 @@ let repl_result_ppformat ~display_format f = function
   | Defined_values_core module_ ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Simple_utils.PP_helpers.string f
+                                  Ast_core.PP.expression_variable f
                                   (get_declarations_core module_))
   | Defined_values_typed module' ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Simple_utils.PP_helpers.string f
+                                  Ast_typed.PP.expression_variable f
                                   (get_declarations_typed module'))
   | Just_ok -> Simple_utils.PP_helpers.string f "Done."
 
@@ -58,13 +58,13 @@ let repl_result_jsonformat = function
   | Defined_values_core module_ ->
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
-     let name n = `Assoc [("name", `String n)] in
+     let name n = `Assoc [("name", Ast_core.type_variable_to_yojson n)] in
      let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
-     let name n = `Assoc [("name", `String n)] in
+     let name n = `Assoc [("name", Ast_typed.type_variable_to_yojson n)] in
      let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Just_ok -> `Assoc []

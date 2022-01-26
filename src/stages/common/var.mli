@@ -20,8 +20,10 @@ val fresh_like : t -> t
    generated variables, use `fresh`. Take care not to cause
    shadowing/capture except as the user intended. *)
 val of_input_var : ?loc:Location.t -> string -> t
-val to_name : t -> string
+
+(* Warning : do not use *)
 val to_name_exn : t -> string
+val internal_get_name_and_counter : t -> (string * int option)
 
 val get_location : t -> Location.t
 

@@ -4,7 +4,7 @@ let file   = "./contracts/basic_multisig/multisig.ligo"
 let mfile  = "./contracts/basic_multisig/multisig.mligo"
 let refile = "./contracts/basic_multisig/multisig.religo"
 
-let get_program f = get_program f (Contract "main")
+let get_program f = get_program f (Contract (Stage_common.Var.of_input_var "main"))
 let compile_main ~raise ~add_warning f () =
   Test_helpers.compile_main ~raise ~add_warning f ()
 
@@ -36,10 +36,10 @@ let op_list ~raise =
   let source =
     Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
     (Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG") in
-  let operation = 
+  let operation =
     let parameters : Script.lazy_expr = Script.unit_parameter in
     let entrypoint = "default" in
-    let destination = 
+    let destination =
       Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
        Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE"
     in

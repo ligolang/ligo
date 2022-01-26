@@ -5,10 +5,10 @@ let declarations_ppformat ~display_format f (source_file,decls) =
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file ;
-    List.iter ~f: (fun decl -> Format.fprintf f "%s\n" decl) decls
+    List.iter ~f: (fun decl -> Format.fprintf f "%a\n" Stage_common.Var.pp decl) decls
 
 let declarations_jsonformat (source_file,decls) : json =
-  let json_decl = List.map ~f:(fun decl -> `String decl) decls in
+  let json_decl = List.map ~f:(fun decl -> Stage_common.Var.to_yojson decl) decls in
   `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
 
 let declarations_format : 'a format = {
@@ -117,7 +117,7 @@ module Michelson_formatter = struct
     | `Text ->
       let code_as_str = Format.asprintf "%a" (pp_comment ~comment:(comment michelson_comments)) a in
       `Assoc [("text_code" , `String code_as_str)]
-    | `Hex -> 
+    | `Hex ->
       let code_as_hex = Format.asprintf "%a" pp_hex a in
       `Assoc [("hex_code" , `String code_as_hex)]
     | `Json ->

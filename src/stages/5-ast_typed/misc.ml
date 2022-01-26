@@ -56,7 +56,7 @@ module Free_variables = struct
 
     and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
       f (union (singleton pattern) b) body
-  
+
     and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
       match m with
       | Match_variant { cases ; tv=_ } -> unions @@ List.map ~f:(matching_variant_case f b) cases
@@ -258,11 +258,11 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (lst : program) (name : string) : expression option =
+let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
-      if match name' with None -> false | Some name' -> String.equal name name'
+    | Declaration_constant { name = _; binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
+      if   (Stage_common.Var.equal name binder)
       then Some expr
       else None
     )

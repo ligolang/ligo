@@ -1,7 +1,7 @@
 module Var = Simple_utils.Var
 open Test_helpers
 
-let get_program = get_program "./contracts/multisig-v2.ligo" (Contract "main")
+let get_program = get_program "./contracts/multisig-v2.ligo" (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/multisig-v2.ligo" ()

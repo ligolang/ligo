@@ -38,7 +38,151 @@ let%expect_test _ =
     {
       "source_file": "../../test/contracts/loop.mligo",
       "declarations": [
-        "counter_nest", "aux_nest", "counter", "counter_simple", "aux_simple"
+        {
+          "name": "counter_nest",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 31,
+                  "pos_bol": 777,
+                  "pos_cnum": 781
+                },
+                "point_num": 781,
+                "point_bol": 777
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 31,
+                  "pos_bol": 777,
+                  "pos_cnum": 793
+                },
+                "point_num": 793,
+                "point_bol": 777
+              }
+            }
+          ]
+        },
+        {
+          "name": "aux_nest",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 24,
+                  "pos_bol": 571,
+                  "pos_cnum": 579
+                },
+                "point_num": 579,
+                "point_bol": 571
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 24,
+                  "pos_bol": 571,
+                  "pos_cnum": 587
+                },
+                "point_num": 587,
+                "point_bol": 571
+              }
+            }
+          ]
+        },
+        {
+          "name": "counter",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 13,
+                  "pos_bol": 234,
+                  "pos_cnum": 238
+                },
+                "point_num": 238,
+                "point_bol": 234
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 13,
+                  "pos_bol": 234,
+                  "pos_cnum": 245
+                },
+                "point_num": 245,
+                "point_bol": 234
+              }
+            }
+          ]
+        },
+        {
+          "name": "counter_simple",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 6,
+                  "pos_bol": 127,
+                  "pos_cnum": 131
+                },
+                "point_num": 131,
+                "point_bol": 127
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 6,
+                  "pos_bol": 127,
+                  "pos_cnum": 145
+                },
+                "point_num": 145,
+                "point_bol": 127
+              }
+            }
+          ]
+        },
+        {
+          "name": "aux_simple",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 3,
+                  "pos_bol": 45,
+                  "pos_cnum": 53
+                },
+                "point_num": 53,
+                "point_bol": 45
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/loop.mligo",
+                  "pos_lnum": 3,
+                  "pos_bol": 45,
+                  "pos_cnum": 63
+                },
+                "point_num": 63,
+                "point_bol": 45
+              }
+            }
+          ]
+        }
       ]
     } |} ];
 

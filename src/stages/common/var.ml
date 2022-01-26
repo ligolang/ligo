@@ -35,11 +35,13 @@ let of_input_var ?(loc=Location.dummy) name = {name;counter=None;location=loc}
 exception Tried_to_unfreshen_variable
 
 (* TODO delete this *)
-let to_name var = var.name
 let to_name_exn var =
   match var.counter with
   | None -> var.name
   | Some _ -> raise Tried_to_unfreshen_variable
+
+(* TODO remove this *)
+let internal_get_name_and_counter var = (var.name, var.counter)
 
 let get_location var = var.location
 

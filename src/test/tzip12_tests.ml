@@ -2,7 +2,7 @@ open Test_helpers
 
 let mfile_FA12  = "./contracts/FA1.2.mligo"
 
-let get_program f st = get_program ~st f (Contract "main")
+let get_program f st = get_program ~st f (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning f _s () =
   Test_helpers.compile_main ~raise ~add_warning f ()

@@ -17,6 +17,7 @@ let dry_run source_file entry_point parameter storage amount balance sender sour
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
+      let entry_point = Stage_common.Var.of_input_var entry_point in
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
       let options = Compiler_options.make ~protocol_version ?project_root () in
       let typed_prg = Build.build_context ~raise ~add_warning ~options syntax source_file in

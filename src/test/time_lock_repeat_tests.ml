@@ -4,7 +4,7 @@ open Test_helpers
 open Ast_imperative
 open Main_errors
 
-let get_program = get_program "./contracts/timelock_repeat.mligo" (Contract "main")
+let get_program = get_program "./contracts/timelock_repeat.mligo" (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/timelock_repeat.mligo" ()
