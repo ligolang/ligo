@@ -317,13 +317,11 @@ let get_a_bool (t:expression) =
       Some false
   | _ -> None
 
-let get_declaration_by_name : program -> string -> declaration option = fun p name ->
+let get_declaration_by_name : program -> expression_variable -> declaration option = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { name = name'; binder = _ ; expr = _ ; attr = _ } ->
-      (match name' with
-       | None -> false
-       | Some name' -> String.equal name' name)
+    | Declaration_constant { binder; expr = _ ; attr = _ } ->
+        Var.equal binder name
     | Declaration_type   _
     | Declaration_module _
     | Module_alias       _ -> false

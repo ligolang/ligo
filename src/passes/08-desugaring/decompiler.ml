@@ -158,11 +158,11 @@ and decompile_declaration : O.declaration -> I.declaration =
   | O.Declaration_type {type_binder; type_expr; type_attr=_} ->
     let type_expr = decompile_type_expression type_expr in
     return @@ I.Declaration_type {type_binder; type_expr; type_attr=[]}
-  | O.Declaration_constant {name; binder=b; attr={inline;no_mutation=_;public=_;view=_}; expr} ->
+  | O.Declaration_constant {binder=b; attr={inline;no_mutation=_;public=_;view=_}; expr} ->
     let binder = binder decompile_type_expression b in
     let expr = decompile_expression expr in
     let attr = if inline then ["inline"] else [] in
-    return @@ I.Declaration_constant {name; binder; attr; expr}
+    return @@ I.Declaration_constant {binder; attr; expr}
   | O.Declaration_module {module_binder;module_;module_attr=_} ->
     let module_ = decompile_module module_ in
     return @@ I.Declaration_module {module_binder;module_;module_attr=[]}

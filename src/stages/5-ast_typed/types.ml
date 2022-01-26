@@ -95,13 +95,7 @@ and type_attribute = { public : bool }
 
 and module_attribute = { public : bool }
 
-(* A Declaration_constant is described by
- *   a name + a type-annotated expression
- *   a boolean indicating whether it should be inlined
- *   the environment before the declaration (the original environment)
- *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
 and declaration_constant = {
-    name : string option ;
     binder : expression_variable ;
     expr : expression ;
     attr : known_attributes ;

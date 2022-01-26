@@ -112,7 +112,7 @@ and expression_content ppf (ec : expression_content) =
   | E_matching x -> fprintf ppf "%a" (match_exp expression type_expression) x
   | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation ; view; _ }} ->
     fprintf ppf "@[let %a =@;<1 2>%a%a%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline option_no_mutation no_mutation option_view view expression let_result
-  | E_type_in   {type_binder; rhs; let_result} -> 
+  | E_type_in   {type_binder; rhs; let_result} ->
     fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
       type_variable type_binder
       type_expression rhs
@@ -126,9 +126,9 @@ and expression_content ppf (ec : expression_content) =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_type     {type_binder;type_expr;type_attr={public}} -> 
+  | Declaration_type     {type_binder;type_expr;type_attr={public}} ->
     fprintf ppf "@[<2>type %a =@ %a%a@]" type_variable type_binder type_expression type_expr option_public public
-  | Declaration_constant {name = _ ; binder=b ; attr = { inline ; no_mutation ; view ; public } ; expr} ->
+  | Declaration_constant { binder=b ; attr = { inline ; no_mutation ; view ; public } ; expr} ->
       fprintf ppf "@[<2>const %a =@ %a%a%a%a%a@]"
         (binder type_expression) b
         expression expr

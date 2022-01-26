@@ -143,15 +143,15 @@ match Location.unwrap d with
     let env' = Context.add_type c type_binder tv in
     return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public} }
   )
-  | Declaration_constant {name ; binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
+  | Declaration_constant {binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr None) @@
       type_expression' ~test ~protocol_version c expr in
     let binder : O.expression_variable = var in
     let post_env = Context.add_value c binder expr.type_expression in
-    return post_env @@ Declaration_constant { name ; binder ; expr ; attr }
+    return post_env @@ Declaration_constant { binder ; expr ; attr }
   )
-  | Declaration_constant {name ; binder = { ascr = Some tv ; var ; attributes=_ } ; attr ; expr } ->
+  | Declaration_constant { binder = { ascr = Some tv ; var ; attributes=_ } ; attr ; expr } ->
     let type_env = Context.get_type_vars c in
     let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
@@ -167,7 +167,7 @@ match Location.unwrap d with
     let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
     let c = Context.add_value c binder expr.type_expression in
-    return c @@ Declaration_constant { name ; binder ; expr ; attr }
+    return c @@ Declaration_constant { binder ; expr ; attr }
   | Declaration_module {module_binder;module_; module_attr = {public}} -> (
     let module_ = type_module ~raise ~test ~protocol_version ~init_context:c module_ in
     let post_env = Context.add_ez_module c module_binder module_ in
@@ -984,11 +984,11 @@ function
   Declaration_type {type_binder; type_expr;type_attr={public}} ->
   let type_expr = untype_type_expression type_expr in
   return @@ Declaration_type {type_binder; type_expr;type_attr={public}}
-| Declaration_constant {name; binder;expr;attr={inline;no_mutation;public;view}} ->
+| Declaration_constant {binder;expr;attr={inline;no_mutation;public;view}} ->
   let ty = untype_type_expression expr.type_expression in
   let var = binder in
   let expr = untype_expression expr in
-  return @@ Declaration_constant {name; binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation;view;public}}
+  return @@ Declaration_constant {binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation;view;public}}
 | Declaration_module {module_binder;module_;module_attr={public}} ->
   let module_ = untype_module module_ in
   return @@ Declaration_module {module_binder;module_; module_attr={public}}

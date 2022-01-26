@@ -740,7 +740,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
       type_
     else
       CST.SExport (wrap (ghost, type_))
-  | Declaration_constant {binder; attr; expr; name=_ } ->
+  | Declaration_constant {binder; attr; expr} ->
     let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable2 binder.var) in

@@ -191,7 +191,7 @@ and declaration_tag = function
 let rec expression a b =
   expression_content a.expression_content b.expression_content
 
-and expression_content a b = 
+and expression_content a b =
   match a,b with
     E_literal  a, E_literal  b -> literal a b
   | E_constant a, E_constant b -> constant a b
@@ -222,8 +222,8 @@ and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
 
 and lambda ({binder=ba;output_type=ta;result=ra}) ({binder=bb;output_type=tb;result=rb}) =
-  cmp3 
-    (binder type_expression) ba bb 
+  cmp3
+    (binder type_expression) ba bb
     (option type_expression) ta tb
     expression ra rb
 
@@ -324,9 +324,8 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
-  cmp7
-    (Option.compare String.compare) na nb
+and declaration_constant {binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
+  cmp6
     (binder type_expression) ba bb
     expression ea eb
     bool ia ib

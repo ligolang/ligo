@@ -76,7 +76,7 @@ let rec get_views : Ast_typed.program -> (expression_variable * location) list =
   let f : (expression_variable * location) list -> declaration_loc -> (expression_variable * location) list =
     fun acc {wrap_content=decl ; location=_ } ->
       match decl with
-      | Declaration_constant { name=_ ; binder ; expr=_ ; attr } when attr.view -> (binder, Ast_typed.Var.get_location binder)::acc
+      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder, Ast_typed.Var.get_location binder)::acc
       | Declaration_module { module_binder=_ ; module_ ; module_attr=_} -> get_views module_ @ acc
       | _ -> acc
   in

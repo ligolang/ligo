@@ -78,7 +78,7 @@ and compile_declarations ~raise : Data.scope -> Data.path -> I.declaration_loc l
         let return d h = (d , acc_hic @ [h]) in
         match decl.wrap_content with
         | I.Declaration_type _ -> (acc_scope, acc_hic)
-        | I.Declaration_constant { name = _ ; binder ; expr ; attr } -> (
+        | I.Declaration_constant { binder ; expr ; attr } -> (
           let item = compile_expression ~raise acc_scope [] expr in
           let fresh_name = fresh_name binder path in
           let n = ({ name = binder ; fresh_name ; item } : Data.exp_) in

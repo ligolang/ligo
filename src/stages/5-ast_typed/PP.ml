@@ -156,14 +156,14 @@ and expression_content ppf (ec: expression_content) =
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _} } ->
       fprintf ppf "let %a = %a%a%a in %a" expression_variable let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_type_in   {type_binder; rhs; let_result} -> 
+  | E_type_in   {type_binder; rhs; let_result} ->
       fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
         type_variable type_binder
         type_expression rhs
         expression let_result
   | E_mod_in {module_binder; rhs; let_result} ->
-      fprintf ppf "let module %a = struct@;@[<v>%a]@ end in %a" module_variable module_binder 
-        module_ rhs 
+      fprintf ppf "let module %a = struct@;@[<v>%a]@ end in %a" module_variable module_binder
+        module_ rhs
         expression let_result
   | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code {language; code} ->
@@ -200,7 +200,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant {name = _; binder; expr; attr = { inline; no_mutation ; view ; public } } ->
+  | Declaration_constant {binder; expr; attr = { inline; no_mutation ; view ; public } } ->
       fprintf ppf "const %a = %a%a%a%a%a" expression_variable binder expression expr option_inline inline option_no_mutation no_mutation option_view view option_public public
   | Declaration_type {type_binder; type_expr; type_attr = { public }} ->
     fprintf ppf "type %a = %a%a" type_variable type_binder type_expression type_expr option_public public

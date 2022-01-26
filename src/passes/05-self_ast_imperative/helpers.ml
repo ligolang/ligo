@@ -460,7 +460,7 @@ module Free_variables :
   and get_fv_module : module_ -> VarSet.t = fun p ->
     let aux = fun (x : declaration Location.wrap) ->
       match Location.unwrap x with
-      | Declaration_constant {binder=_; expr;name=_;attr=_} ->
+      | Declaration_constant {binder=_; expr;attr=_} ->
         get_fv_expr expr
       | Declaration_module {module_binder=_;module_;module_attr=_} ->
         get_fv_module module_

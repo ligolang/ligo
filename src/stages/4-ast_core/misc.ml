@@ -265,11 +265,11 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (lst : module_) (name : string) : expression option =
+let get_entry (lst : module_) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { name = name' ; binder = _ ; expr ; attr=_ } -> (
-      if match name' with None -> false | Some name' -> String.equal name name'
+    | Declaration_constant {binder; expr ; attr=_ } -> (
+      if Var.equal name binder.var
       then Some expr
       else None
     )

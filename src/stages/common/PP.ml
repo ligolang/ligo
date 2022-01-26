@@ -138,7 +138,7 @@ let option_const_or_var ppf is_var =
 let binder type_expression ppf {var;ascr;attributes={const_or_var}} =
   match ascr with
   | None ->
-      fprintf ppf "%a%a" expression_variable var option_const_or_var const_or_var 
+      fprintf ppf "%a%a" expression_variable var option_const_or_var const_or_var
   | Some ty ->
       fprintf ppf "%a%a : %a" expression_variable var option_const_or_var const_or_var type_expression ty
 
@@ -304,25 +304,25 @@ let match_exp expression type_expression ppf = fun {matchee ; cases} ->
 
 (* Declaration *)
 let declaration_type type_expression ppf = fun {type_binder;type_expr; type_attr} ->
-  fprintf ppf "@[<2>type %a =@ %a%a@]" 
-    type_variable type_binder 
-    type_expression type_expr 
+  fprintf ppf "@[<2>type %a =@ %a%a@]"
+    type_variable type_binder
+    type_expression type_expr
     attributes type_attr
 
-let declaration_constant expression type_expression ppf = fun {name = _; binder=binder'; attr ; expr} ->
+let declaration_constant expression type_expression ppf = fun {binder=binder'; attr ; expr} ->
   fprintf ppf "@[<2>const %a =@ %a%a@]"
     (binder type_expression) binder'
     expression expr
     attributes attr
 
 let rec declaration_module expression type_expression ppf = fun {module_binder;module_;module_attr} ->
-  fprintf ppf "@[<2>module %a =@ %a%a@]" 
-    module_variable module_binder 
-    (module' expression type_expression) module_ 
+  fprintf ppf "@[<2>module %a =@ %a%a@]"
+    module_variable module_binder
+    (module' expression type_expression) module_
     attributes module_attr
 
 and module_alias ppf = fun ({alias;binders} : module_alias) ->
-  fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders 
+  fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
 
 and declaration expression type_expression ppf = function
     Declaration_type    ty -> declaration_type                type_expression ppf ty

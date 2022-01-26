@@ -462,7 +462,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       match (unepar pattern), type_params with
       | CST.PVar _, None -> (
         let lst = compile_let_binding ~raise ?kwd_rec attributes binding in
-        let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
+        let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
         return @@ aux lst body
       )
       | CST.PVar _, Some type_params -> (
@@ -470,15 +470,15 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
            i.e., we have `let foo (type a ... z) = RHS in BODY`, then we use `T_for_all` to quantify
            over type parameters in the annotation (required) of the binder (`t = binder.ascr`):
            `let foo : ∀ a . ... . ∀ z. t = RHS in BODY` *)
-        let (name, binder, attr, expr) = compile_let_binding ~raise ?kwd_rec attributes binding in
+        let (binder, attr, expr) = compile_let_binding ~raise ?kwd_rec attributes binding in
         let ascr = trace_option ~raise (type_params_not_annotated region) binder.ascr in
         let rec add_type_params = function
           | [] -> ascr
           | ({ value ; region=_ } : CST.variable) :: vs -> t_for_all (Var.of_input_var value) () (add_type_params vs) in
         let ascr = Some (add_type_params type_params) in
         let binder = { binder with ascr } in
-        let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
-        return @@ aux (name, binder, attr, expr) body
+        let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
+        return @@ aux (binder, attr, expr) body
       )
       | pattern, _ -> (
         (* let destructuring happens here *)
@@ -682,7 +682,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
     | None   ->
         expr
     in
-    return_1 @@ (Some name.value, {var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)
+    return_1 @@ ({var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)
   | _ -> raise.raise @@ unsupported_pattern_type @@ nseq_to_list binders
   in aux binders
 
@@ -777,9 +777,9 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let lst = List.map ~f:(compile_parameter ~raise) @@ npseq_to_list tuple in
         let (lst, exprs) = List.unzip lst in
         let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
-        let aux i binder = Z.add i Z.one, (None, binder, attributes, e_accessor expr @@ [Access_tuple i]) in
+        let aux i binder = Z.add i Z.one, (binder, attributes, e_accessor expr @@ [Access_tuple i]) in
         let lst = snd @@ List.fold_map ~f:aux ~init:Z.zero @@ lst in
-        let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
+        let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       | CST.PRecord record , [] , None ->
         let attributes = compile_attributes attributes in
@@ -793,27 +793,27 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let lst = List.map ~f:aux @@ npseq_to_list record.ne_elements in
         let (lst, exprs) = List.unzip lst in
         let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
-        let aux (field_name,binder) = (None, binder, attributes, e_accessor expr @@ [Access_record field_name]) in
+        let aux (field_name,binder) = (binder, attributes, e_accessor expr @@ [Access_record field_name]) in
         let lst = List.map ~f:aux @@ lst in
-        let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
+        let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       | _, _, None -> (
-        let (name, binder,attr, expr) = compile_let_binding ~raise ?kwd_rec attributes let_binding in
-        return region @@ [AST.Declaration_constant {name; binder; attr; expr}]
+        let (binder,attr, expr) = compile_let_binding ~raise ?kwd_rec attributes let_binding in
+        return region @@ [AST.Declaration_constant {binder; attr; expr}]
       )
       | CST.PVar _, _, Some type_params -> (
         (* In case that we have a pattern variable defined (`foo`) and type parameters are present,
            i.e., we have `let foo (type a ... z) = RHS`, then we use `T_for_all` to quantify
            over type parameters in the annotation (required) of the binder (`t = binder.ascr`):
            `let foo : ∀ a . ... . ∀ z. t = RHS` *)
-        let (name, binder,attr, expr) = compile_let_binding ~raise ?kwd_rec attributes let_binding in
+        let (binder,attr, expr) = compile_let_binding ~raise ?kwd_rec attributes let_binding in
         let ascr = trace_option ~raise (type_params_not_annotated region) binder.ascr in
         let rec add_type_params = function
           | [] -> ascr
           | (value : CST.variable) :: vs -> t_for_all (compile_variable value) () (add_type_params vs) in
         let ascr = Some (add_type_params type_params) in
         let binder = { binder with ascr } in
-        return region @@ [AST.Declaration_constant {name; binder; attr; expr}]
+        return region @@ [AST.Declaration_constant {binder; attr; expr}]
       )
       | p, _, Some _ ->
          (* In case that we have a non-variable pattern with type parameters, we fail. E.g.,

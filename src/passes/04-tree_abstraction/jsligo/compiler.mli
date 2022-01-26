@@ -440,41 +440,6 @@ val compile_pattern :
   CST.pattern ->
   AST.type_expression AST.binder * (AST.expression -> AST.expression)
 val filter_private : CST.attributes -> CST.attributes
-val compile_let_binding :
-  raise:[> `Concrete_jsligo_array_rest_not_supported of CST.array_item
-         | `Concrete_jsligo_expected_a_function of CST.expr
-         | `Concrete_jsligo_expected_a_variable of CST.expr
-         | `Concrete_jsligo_expected_an_expression of CST.array_item
-         | `Concrete_jsligo_expected_an_int of CST.expr
-         | `Concrete_jsligo_invalid_case of string * CST.expr
-         | `Concrete_jsligo_invalid_list_pattern_match of CST.array_item list
-         | `Concrete_jsligo_michelson_type_wrong of CST.type_expr * string
-         | `Concrete_jsligo_michelson_type_wrong_arity of
-             AST.location * string
-         | `Concrete_jsligo_not_a_valid_parameter of CST.expr
-         | `Concrete_jsligo_not_supported_assignment of CST.expr
-         | `Concrete_jsligo_property_not_supported of CST.property
-         | `Concrete_jsligo_recursion_on_non_function of AST.location
-         | `Concrete_jsligo_rest_not_supported_here of CST.property
-         | `Concrete_jsligo_statement_not_supported_at_toplevel of
-             CST.statement
-         | `Concrete_jsligo_unknown_constant of string * AST.location
-         | `Concrete_jsligo_unknown_constructor of string * AST.location
-         | `Concrete_jsligo_unsupported_match_object_property of CST.property
-         | `Concrete_jsligo_unsupported_match_pattern of CST.expr
-         | `Concrete_jsligo_unsupported_pattern_type of CST.pattern
-         | `Concrete_jsligo_unsupported_string_singleton of CST.type_expr
-         | `Concrete_jsligo_untyped_recursive_fun of CST.Region.t ]
-        Simple_utils.Trace.raise ->
-  const:bool ->
-  CST.attributes ->
-  CST.expr ->
-  (CST.colon * CST.type_expr) option ->
-  CST.pattern ->
-  CST.Region.t ->
-  (string option * AST.type_expression AST.binder * AST.Types.attributes *
-   AST.expression)
-  list
 val compile_statements :
   ?wrap:bool ->
   raise:[> `Concrete_jsligo_array_rest_not_supported of CST.array_item

@@ -468,7 +468,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
         compile_record_let_destructuring ~raise matchee body record
       | _ -> (
         let lst = compile_let_binding ~raise ?kwd_rec attributes binding in
-        let aux (_name,binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
+        let aux (binder,attr,rhs) expr = e_let_in ~loc binder attr rhs expr in
         return @@ List.fold_right ~f:aux lst ~init:body
       )
     )
@@ -673,7 +673,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
     | None   ->
         expr
     in
-    return_1 @@ (Some name.value, {var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)
+    return_1 @@ ({var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)
   | _ ->raise.raise @@ unsupported_pattern_type @@ binders
   in aux binders
 
@@ -758,9 +758,9 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let lst = List.map ~f:(compile_parameter ~raise) @@ npseq_to_list tuple in
         let (lst, exprs) = List.unzip lst in
         let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
-        let aux i binder = Z.add i Z.one, (None, binder, attributes, e_accessor expr @@ [Access_tuple i]) in
+        let aux i binder = Z.add i Z.one, (binder, attributes, e_accessor expr @@ [Access_tuple i]) in
         let lst = snd @@ List.fold_map ~f:aux ~init:Z.zero @@ lst in
-        let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
+        let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       | CST.PRecord record ->
         let attributes = compile_attributes attributes in
@@ -774,13 +774,13 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let lst = List.map ~f:aux @@ npseq_to_list record.ne_elements in
         let (lst, exprs) = List.unzip lst in
         let expr = List.fold_right ~f:(@@) exprs ~init:matchee in
-        let aux (field_name,binder) = (None, binder, attributes, e_accessor expr @@ [Access_record field_name]) in
+        let aux (field_name,binder) = (binder, attributes, e_accessor expr @@ [Access_record field_name]) in
         let lst = List.map ~f:aux @@ lst in
-        let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
+        let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       | _ -> (
         let lst = compile_let_binding ~raise ?kwd_rec attributes let_binding in
-        let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
+        let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
         return region @@ List.map ~f:aux lst
       )
     )

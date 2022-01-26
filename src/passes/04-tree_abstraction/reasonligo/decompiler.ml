@@ -581,7 +581,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
     in
     let type_expr = decompile_type_expr type_expr in
     CST.TypeDecl (wrap (CST.{kwd_type=ghost;params;name; eq=ghost; type_expr}))
-  | Declaration_constant {binder;attr;expr;name=_}-> (
+  | Declaration_constant {binder;attr;expr}-> (
     let attributes : CST.attributes = decompile_attributes attr in
     let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
     let pvar = CST.{variable = decompile_variable binder.var ; attributes = var_attributes} in

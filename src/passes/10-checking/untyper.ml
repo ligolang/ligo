@@ -48,13 +48,13 @@ let rec untype_type_expression_nofail (t:O.type_expression) : I.type_expression 
 let untype_type_expression (t:O.type_expression) : I.type_expression =
   untype_type_expression_nofail t
 
-let untype_declaration_constant untype_expression O.{name;binder;expr;attr} =
+let untype_declaration_constant untype_expression O.{binder;expr;attr} =
   let ty = untype_type_expression expr.type_expression in
   let var = binder in
   let binder = ({var;ascr=Some ty;attributes=Stage_common.Helpers.empty_attribute}: _ I.binder) in
   let expr = untype_expression expr in
   let expr = I.e_ascription expr ty in
-  I.{name;binder;attr;expr;}
+  I.{binder;attr;expr;}
 
 let untype_declaration_type O.{type_binder; type_expr; type_attr={public}} =
   let type_expr = untype_type_expression type_expr in

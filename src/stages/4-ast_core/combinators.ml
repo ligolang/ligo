@@ -226,13 +226,11 @@ let get_e_tuple = fun t ->
   | E_record r -> Some (List.map ~f:snd @@ Helpers.tuple_of_record r)
   | _ -> None
 
-let get_declaration_by_name : module_ -> string -> declaration option = fun (p) name ->
+let get_declaration_by_name : module_ -> expression_variable -> declaration option = fun (p) name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { name = name'; binder = _ ; expr=_ ; attr=_ } ->
-      (match name' with
-       | None -> false
-       | Some name' -> String.equal name' name)
+    | Declaration_constant { binder ; expr=_ ; attr=_ } ->
+        Var.equal binder.var name
     | Declaration_type   _
     | Declaration_module _
     | Module_alias       _ -> false

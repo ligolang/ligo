@@ -803,7 +803,7 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
     let type_expr = decompile_type_expr dialect type_expr in
     let terminator = terminator dialect in
     CST.TypeDecl (wrap (CST.{kwd_type; name; kwd_is; type_expr; terminator ; params}))
-  | Declaration_constant {binder; attr; expr;name=_} -> (
+  | Declaration_constant {binder; attr; expr} -> (
     let attributes = decompile_attributes attr in
     let name = decompile_variable binder.var in
     let fun_name = name in

@@ -166,13 +166,13 @@ and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
 
 and get_fv_module env acc = function
   | [] -> env, acc
-  | {Location.wrap_content = Declaration_constant {name;binder; expr;attr}; _} as hd :: tl ->
+  | {Location.wrap_content = Declaration_constant {binder; expr;attr}; _} as hd :: tl ->
      let binder' = binder in
      if VSet.mem binder' env.used_var then
        let env = {env with used_var = VSet.remove binder' env.used_var} in
        let env',expr = get_fv expr in
        let env = merge_env env @@ env' in
-       get_fv_module env ({hd with wrap_content = Declaration_constant {name;binder;expr;attr}} :: acc) tl
+       get_fv_module env ({hd with wrap_content = Declaration_constant {binder;expr;attr}} :: acc) tl
      else
        get_fv_module env acc tl
   | {Location.wrap_content = Declaration_module {module_binder; module_;module_attr}; _} as hd :: tl ->

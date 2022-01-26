@@ -261,7 +261,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
 let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { name = _; binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
+    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
       if   (Stage_common.Var.equal name binder)
       then Some expr
       else None

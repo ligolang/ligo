@@ -273,14 +273,14 @@ and compile_declaration : I.declaration -> O.declaration =
     let type_expr = compile_type_expression type_expr in
     let public = get_public type_attr in
     return @@ O.Declaration_type {type_binder; type_expr; type_attr = {public}}
-  | I.Declaration_constant {name; binder;attr;expr} ->
+  | I.Declaration_constant {binder;attr;expr} ->
     let binder = compile_binder binder in
     let expr = compile_expression expr in
     let inline = get_inline attr in
     let no_mutation = get_no_mutation attr in
     let public = get_public attr in
     let view = get_view attr in
-    return @@ O.Declaration_constant {name; binder; attr={inline;no_mutation;view;public}; expr}
+    return @@ O.Declaration_constant {binder; attr={inline;no_mutation;view;public}; expr}
   | I.Declaration_module {module_binder;module_;module_attr} ->
     let module_ = compile_module module_ in
     let public = get_public module_attr in

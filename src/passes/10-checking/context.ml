@@ -83,10 +83,10 @@ let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types 
 (* Load context from the outside declarations *)
 let rec add_ez_module : t -> Ast_typed.module_variable -> Ast_typed.module_ -> t = fun outer_context mv m ->
   let f inner_context d = match Location.unwrap d with
-    Ast_typed.Declaration_constant {name=_;binder;expr;attr={public;_}}  -> if public then add_value inner_context binder expr.type_expression else inner_context
+    Ast_typed.Declaration_constant {binder;expr;attr={public;_}}  -> if public then add_value inner_context binder expr.type_expression else inner_context
   | Declaration_type {type_binder;type_expr;type_attr={public}} -> if public then add_type inner_context type_binder type_expr else inner_context
   | Declaration_module {module_binder;module_;module_attr={public}} -> if public then add_ez_module (union inner_context outer_context) module_binder module_ else inner_context
-  | Module_alias {alias;binders} -> 
+  | Module_alias {alias;binders} ->
     let m = Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.bind ~f:(fun c -> get_module c b) c) ~init:(Some (union inner_context outer_context)) binders in
     let c' = Option.map ~f:(add_module inner_context alias) m in
     Option.value_exn c' (* The alias exist because the module is out of the type checker *)
@@ -99,7 +99,7 @@ let init ?env () =
   match env with None -> empty
   | Some (env) ->
     let f c d = match Location.unwrap d with
-      Ast_typed.Declaration_constant {name=_;binder;expr;attr=_}  -> add_value c binder expr.type_expression
+      Ast_typed.Declaration_constant {binder;expr;attr=_}  -> add_value c binder expr.type_expression
     | Declaration_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr
     | Declaration_module {module_binder;module_;module_attr=_} -> add_ez_module c module_binder module_
     | Module_alias {alias;binders} ->

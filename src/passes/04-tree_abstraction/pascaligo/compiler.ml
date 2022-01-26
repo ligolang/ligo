@@ -877,7 +877,7 @@ and compile_data_declaration ~raise : next:AST.expression -> CST.data_decl -> _ 
   )
   | LocalFun fun_decl ->
       let fun_decl, loc = r_split fun_decl in
-      let _fun_name, fun_var, fun_type, attr, lambda =
+      let fun_var, fun_type, attr, lambda =
         compile_fun_decl ~raise fun_decl in
       return loc fun_var fun_type Stage_common.Helpers.empty_attribute attr lambda
 
@@ -926,12 +926,11 @@ and compile_block ~raise : ?next:AST.expression -> CST.block CST.reg -> _ =
     Some block -> return block
   | None -> raise.raise @@ block_start_with_attribute block
 
-and compile_fun_decl ~raise : CST.fun_decl -> string * expression_variable * type_expression option * AST.attributes * expression =
+and compile_fun_decl ~raise : CST.fun_decl -> expression_variable * type_expression option * AST.attributes * expression =
   fun ({kwd_recursive; fun_name; param; ret_type; return=r; attributes; kwd_function=_;kwd_is=_;terminator=_}: CST.fun_decl) ->
   let return a = a in
   let fun_binder = compile_variable fun_name in
   let loc        = Location.lift fun_name.region in
-  let fun_name   = fun_name.value in
   let ret_type =
     Option.map ~f:(compile_type_expression ~raise <@ snd) ret_type in
   let param = compile_parameters ~raise param in
@@ -969,7 +968,7 @@ and compile_fun_decl ~raise : CST.fun_decl -> string * expression_variable * typ
       return @@ make_e ~loc @@ E_lambda lambda
   in
   let attr = compile_attributes attributes in
-  return (fun_name, fun_binder, fun_type, attr, func)
+  return (fun_binder, fun_type, attr, func)
 
 and compile_declaration ~raise : CST.declaration -> _ =
   fun decl ->
@@ -1002,14 +1001,14 @@ and compile_declaration ~raise : CST.declaration -> _ =
         Option.map ~f:(compile_type_expression ~raise <@ snd) const_type in
       let expr = compile_expression ~raise init in
       let binder = {var;ascr;attributes=Stage_common.Helpers.const_attribute} in
-      return region @@ AST.Declaration_constant {name = Some name.variable.value; binder;attr;expr}
+      return region @@ AST.Declaration_constant {binder;attr;expr}
     | _ ->
       raise.raise (unsupported_top_level_destructuring region)
   )
   | FunDecl {value;region} ->
-    let (name,var,ascr,attr,expr) = compile_fun_decl ~raise value in
+    let (var,ascr,attr,expr) = compile_fun_decl ~raise value in
     let binder = {var;ascr;attributes=Stage_common.Helpers.empty_attribute} in
-    let ast = AST.Declaration_constant {name = Some name; binder;attr;expr}
+    let ast = AST.Declaration_constant {binder;attr;expr}
     in return region ast
 
   | ModuleDecl {value={name; module_; _};region} ->

@@ -145,7 +145,7 @@ and declaration_tag = function
 let rec expression a b =
   expression_content a.expression_content b.expression_content
 
-and expression_content a b = 
+and expression_content a b =
   match a,b with
     E_literal  a, E_literal  b -> literal a b
   | E_constant a, E_constant b -> constant a b
@@ -181,8 +181,8 @@ and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
 
 and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
-  cmp2 
-    expression_variable ba bb 
+  cmp2
+    expression_variable ba bb
     expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =
@@ -287,9 +287,8 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
-  cmp7
-    (Option.compare String.compare) na nb
+and declaration_constant {binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
+  cmp6
     expression_variable ba bb
     expression ea eb
     bool ia ib
