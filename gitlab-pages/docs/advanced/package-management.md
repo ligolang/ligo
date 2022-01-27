@@ -64,7 +64,7 @@ let test =
     let (addr, _, _) = Test.originate_from_file "./main.mligo" "main" storage 0tez in
     let taddr : (parameter, storage) typed_address = Test.cast_address addr in
     let contr : parameter contract = Test.to_contract taddr in
-    let () = Test.transfer_to_contract_exn contr Reverse 1mutez in
+    let _ = Test.transfer_to_contract_exn contr Reverse 1mutez in
     assert (Test.get_storage taddr = [3; 2; 1])
 
 ```
