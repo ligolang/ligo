@@ -524,7 +524,7 @@ select what handlers t
       (return . (getElem . extract &&& ppToText))
   $ listToMaybe
   $ execWriter
-  $ visit handlers
+  $ visit' handlers
     t
   where
     extractRange (PreprocessedRange r) = r

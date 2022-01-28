@@ -18,7 +18,7 @@ import Range
 -- at each specific node we face.
 -- TODO: may affect perfomance, if so we need to use `Endo` instead.
 foldingAST :: LIGO Info' -> [Range]
-foldingAST = execWriter . visit handlers
+foldingAST = execWriter . visit' handlers
   where
     handlers =
       [ Visit @Binding \(getRange -> r) -> \case
