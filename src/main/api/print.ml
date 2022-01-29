@@ -73,7 +73,7 @@ let ast_typed source_file syntax protocol_version display_format self_pass proje
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-        Compiler_options.make ~protocol_version ?project_root ()
+        Compiler_options.make ~protocol_version ~test:true ?project_root ()
       in
       let typed = Build.type_contract ~raise ~add_warning ~options syntax Env source_file in
       if self_pass then

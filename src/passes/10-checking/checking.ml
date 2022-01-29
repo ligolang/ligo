@@ -689,15 +689,21 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   (* Advanced *)
   | E_matching {matchee;cases} -> (
     let matchee' = type_expression' ~raise ~test ~protocol_version context matchee in
-    let matcheevar = Location.wrap (Var.fresh ()) in
     let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * context)) =
       fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,context))
     in
     let eqs = List.map ~f:aux cases in
-    let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~test ~protocol_version ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
-    let case_exp = { case_exp with location = e.location } in
-    let x = O.E_let_in { let_binder = matcheevar ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false } } in
-    return x case_exp.type_expression
+    match matchee.expression_content with
+    | E_variable matcheevar ->
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~test ~protocol_version ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = { case_exp with location = e.location } in
+      return case_exp.expression_content case_exp.type_expression
+    | _ ->
+      let matcheevar = Location.wrap (Var.fresh ()) in
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~test ~protocol_version ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = { case_exp with location = e.location } in
+      let x = O.E_let_in { let_binder = matcheevar ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false } } in
+      return x case_exp.type_expression
   )
   | E_let_in {let_binder = {var ; ascr = None ; attributes=_} ; rhs ; let_result; attr } ->
      let rhs = type_expression' ~raise ~protocol_version ~test context rhs in

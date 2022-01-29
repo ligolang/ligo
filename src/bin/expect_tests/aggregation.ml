@@ -170,14 +170,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias13.mligo" ] ;
   [%expect {|
-  let #A#current_turn#5 = lambda (i) return ADD(i , +1) in
-  let #A#other#6 = lambda (n) return let current_turn = (#A#current_turn#5)@(+1) in
+  let #A#current_turn#4 = lambda (i) return ADD(i , +1) in
+  let #A#other#5 = lambda (n) return let current_turn = (#A#current_turn#4)@(+1) in
   ASSERTION(EQ(n ,
   current_turn)) in
-  let main = lambda (#1) return let #3 = #1 in
-   match #3 with
-    | ( _p , _s ) ->
-    ( LIST_EMPTY() , (#A#other#6)@(+2) ) in
+  let main = lambda (#1) return  match #1 with
+                                  | ( _p , _s ) ->
+                                  ( LIST_EMPTY() , (#A#other#5)@(+2) ) in
   unit |}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "bug_alias13.mligo" ] ;

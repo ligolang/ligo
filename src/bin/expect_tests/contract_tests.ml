@@ -1098,7 +1098,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (#1) return let _x = +1 in let _ = let _x = +2 in UNIT() in let _ = let _x = +23 in UNIT() in let _ = let _x = +42 in UNIT() in _x |}]
+  [%expect {| const y = lambda (#3) return let _x = +1 in let _ = let _x = +2 in UNIT() in let _ = let _x = +23 in UNIT() in let _ = let _x = +42 in UNIT() in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1971,17 +1971,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let #3 = EQ(n ,
-    0) in  match #3 with
-            | False unit_proj#4 ->
+    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let #5 = EQ(n ,
+    0) in  match #5 with
+            | False unit_proj#6 ->
               (f)@(SUB(n ,
-              1)) | True unit_proj#5 ->
+              1)) | True unit_proj#7 ->
                     1 ) in (f)@(4)
-    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let #6 = EQ(n ,
-    0) in  match #6 with
-            | False unit_proj#7 ->
+    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let #8 = EQ(n ,
+    0) in  match #8 with
+            | False unit_proj#9 ->
               (h)@(SUB(n ,
-              1)) | True unit_proj#8 ->
+              1)) | True unit_proj#10 ->
                     1 ) in h) ) |}]
 
 let%expect_test _ =
@@ -2207,18 +2207,18 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-                     const c = lambda (#4) return CREATE_CONTRACT(lambda (#1) return let #9 = #1 in
-                      match #9 with
-                       | ( #3 , #2 ) ->
-                       ( LIST_EMPTY() , unit ) ,
+                     const c = lambda (#6) return CREATE_CONTRACT(lambda (#3) return  match
+                                                                                       #3 with
+                                                                                       | ( #5 , #4 ) ->
+                                                                                       ( LIST_EMPTY() , unit ) ,
                      NONE() ,
                      0mutez ,
                      unit)
-                     const foo = let #11 = (c)@(unit) in  match #11 with
+                     const foo = let #12 = (c)@(unit) in  match #12 with
                                                            | ( _a , _b ) ->
                                                            unit
-                     const c = lambda (#5) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let #13 = (c)@(unit) in  match #13 with
+                     const c = lambda (#7) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+                     const foo = let #14 = (c)@(unit) in  match #14 with
                                                            | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
                                                            unit |} ]
 

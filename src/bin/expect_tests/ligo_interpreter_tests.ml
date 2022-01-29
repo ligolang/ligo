@@ -132,15 +132,15 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fail.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value "my contract always fail". |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value "my contract always fail". |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fail_from_file.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value "my contract always fail". |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value "my contract always fail". |}]
 
 
 let%expect_test _ =
