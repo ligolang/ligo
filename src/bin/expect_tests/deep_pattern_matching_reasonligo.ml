@@ -63,7 +63,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
   [%expect{|
-    const t = lambda (x) return let #2 = x in 0 |}]
+    const t = lambda (x) return 0 |}]
 
 (* wrong body type *)
 
