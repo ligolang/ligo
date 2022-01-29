@@ -7,4 +7,5 @@ let expression_mono = Monomorphisation.mono_polymorphic_expr
 let all_expression ~raise e =
   let e = expression_obj ~raise e in
   let e = Monomorphisation.mono_polymorphic_expr e in
+  let e = Uncurry.uncurry_expression ~raise e in
   e

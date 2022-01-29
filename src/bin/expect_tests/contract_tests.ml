@@ -2321,3 +2321,36 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "increment_with_test.mligo" ; "z.0 + 10" ] ;
   [%expect{|
     42 |}]
+
+(* Test compiling expression with curried recursive function *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo 2 \"titi\"" ; "--init-file" ; contract "recursion_uncurry.mligo" ] ;
+  [%expect{|
+    "tititotototo" |}]
+
+(* Test compiling contract with curried recursive function *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "recursion_uncurry.mligo" ] ;
+  [%expect{|
+    { parameter int ;
+      storage string ;
+      code { LEFT string ;
+             LOOP_LEFT
+               { UNPAIR ;
+                 PUSH int 0 ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
+                 COMPARE ;
+                 EQ ;
+                 IF { DROP ; RIGHT (pair int string) }
+                    { PUSH string "toto" ;
+                      DIG 2 ;
+                      CONCAT ;
+                      PUSH int 1 ;
+                      DIG 2 ;
+                      SUB ;
+                      PAIR ;
+                      LEFT string } } ;
+             NIL operation ;
+             PAIR } } |}]
