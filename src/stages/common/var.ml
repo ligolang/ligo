@@ -25,7 +25,7 @@ let fresh ?(loc=Location.dummy) ?(name="gen") () =
   {name;counter;location=loc}
 
 let fresh_like v =
-  fresh ~name:v.name ()
+  fresh ~loc:v.location ~name:v.name ()
 
 (* should be removed in favor of a lift pass before ast_imperative *)
 let of_input_var ?(loc=Location.dummy) name = {name;counter=None;location=loc}
