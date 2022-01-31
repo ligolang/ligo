@@ -18,6 +18,7 @@ module Cli.Impl
   ) where
 
 import Control.Monad
+import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.Reader
 import Data.Aeson (ToJSON (..), eitherDecodeStrict', object, (.=))
 import Data.Bifunctor (bimap)
@@ -183,13 +184,13 @@ deriving anyclass instance ToObject Version
 instance LogItem Version where
   payloadKeys = const $ const AllKeys
 
-usingTemporaryDir :: MonadIO m => Source -> (FilePath -> Handle -> IO a) -> m a
+usingTemporaryDir :: MonadUnliftIO m => Source -> (FilePath -> Handle -> m a) -> m a
 usingTemporaryDir src action =
-  liftIO $ withSystemTempFile (takeFileName $ srcPath src) \tempFp handle -> do
+  withRunInIO \run -> withSystemTempFile (takeFileName $ srcPath src) \tempFp handle -> do
     contents <- srcToText src
     Text.hPutStr handle contents
     hFlush handle
-    action tempFp handle
+    run $ action tempFp handle
 
 fixMarkers :: FilePath -> FilePath -> Text -> Text
 fixMarkers tempFp fp = Text.replace (pack tempFp) (pack fp)
@@ -227,15 +228,17 @@ getLigoVersion = Log.addNamespace "getLigoVersion" do
 --
 -- FIXME: LIGO expands preprocessor directives before pretty printing. We should
 -- find a workaround for this or report to them.
-callForFormat :: HasLigoClient m => Source -> m (Maybe Text)
-callForFormat source =
+callForFormat :: (HasLigoClient m, Log m) => Source -> m (Maybe Text)
+callForFormat source = Log.addNamespace "callForFormat" $ Log.addContext source $
   usingTemporaryDir source \tempFp _ ->
     let
       getResult = callLigo
         ["print", "pretty", tempFp]
         source
     in
-    (Just . fst <$> getResult) `catchAny` \_ -> pure Nothing
+    (Just . fst <$> getResult) `catchAny` \err -> do
+      $(Log.err) [i|Could not format document with error: #{err}|]
+      pure Nothing
 
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
 --
