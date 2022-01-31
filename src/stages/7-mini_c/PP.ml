@@ -189,7 +189,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   let pp = expression_content Format.std_formatter in
-  let dummy_type = {type_content=T_base TB_unit;location=Location.generated} in
+  let dummy_type = Combinators.t_unit () in
   let wrap e = { content = e ; type_expression = dummy_type ; location = Location.generated} in
   let y = ValueVar.of_input_var "y" in
   let z = ValueVar.of_input_var "z" in

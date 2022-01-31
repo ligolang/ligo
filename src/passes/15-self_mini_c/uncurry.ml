@@ -114,7 +114,8 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
 
 let comb_type (ts : type_expression list) : type_expression =
   { type_content = T_tuple (List.map ~f:(fun t -> (None, t)) ts);
-    location = Location.generated }
+    location = Location.generated;
+    source_type = None }
 
 let comb_expr (es : expression list) : expression =
   { content = E_tuple es;

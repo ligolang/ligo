@@ -11,7 +11,7 @@ module Errors = Main_errors
 type options = Memory_proto_alpha.options
 
 type dry_run_options =
-  { parameter_ty : (Location.t, string) Tezos_micheline.Micheline.node option ; (* added to allow dry-running contract using `Tezos.self` *)
+  { parameter_ty : (Stacking.Program.meta, string) Tezos_micheline.Micheline.node option ; (* added to allow dry-running contract using `Tezos.self` *)
     amount : string ;
     balance : string ;
     now : string option ;

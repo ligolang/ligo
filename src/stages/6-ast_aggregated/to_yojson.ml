@@ -26,7 +26,7 @@ let layout = function
   | L_tree -> `List [ `String "L_tree"; `Null ]
 
 
-let rec type_expression {type_content=tc;location;orig_var} =
+let rec type_expression {type_content=tc; location; orig_var; source_type = _} =
   `Assoc [
     ("type_content", type_content tc);
     ("location", Location.to_yojson location);

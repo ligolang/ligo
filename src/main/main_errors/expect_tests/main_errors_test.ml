@@ -977,7 +977,8 @@ let%expect_test "spilling" =
   let type_expression : Ast_aggregated.type_expression =
     { type_content= T_variable (Ast_aggregated.TypeVar.of_input_var "foo");
       orig_var = None ;
-      location= File default_location }
+      location= File default_location;
+      source_type = None }
   in
   let value = Mini_c.D_none in
   error (`Spilling_corner_case ("foo", "bar")) ;

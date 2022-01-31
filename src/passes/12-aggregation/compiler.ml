@@ -118,7 +118,7 @@ and compile_declarations ~raise : Data.scope -> Data.path -> I.declaration_loc l
 and compile_type ~raise : I.type_expression -> O.type_expression =
   fun ty ->
     let self = compile_type ~raise in
-    let return type_content : O.type_expression = { type_content ; orig_var = ty.orig_var ; location = ty.location } in
+    let return type_content : O.type_expression = { type_content ; orig_var = ty.orig_var ; location = ty.location ; source_type = Some ty } in
     let map_rows : I.row_element label_map -> O.row_element label_map = fun rows ->
       let f : I.row_element -> O.row_element = fun row -> { row with associated_type = self row.associated_type} in
       LMap.map f rows

@@ -3,9 +3,11 @@ open Stage_common.Types
 open Tezos_micheline.Micheline
 module Location = Simple_utils.Location
 
+type meta = Mini_c.meta
+
 type compiled_expression = {
-  expr_ty : (Location.t, string) node ;
-  expr : (Location.t, string) node ;
+  expr_ty : (meta, string) node ;
+  expr : (meta, string) node ;
 }
 
 include Ligo_coq_ocaml.Compiler
@@ -14,7 +16,10 @@ open Ligo_coq_ocaml.Ligo
 let wipe_locations l e =
   inject_locations (fun _ -> l) (strip_locations e)
 
-let generated = Location.generated
+let generated : meta =
+  { location = Location.generated;
+    env = [];
+    binder = None }
 
 let literal_type_prim (l : literal) : string =
   match l with
@@ -37,10 +42,10 @@ let literal_type_prim (l : literal) : string =
   | Literal_chest _ -> "chest"
   | Literal_chest_key _ -> "chest_key"
 
-let literal_type (l : literal) : (Location.t, string) node =
+let literal_type (l : literal) : (meta, string) node =
   Prim (generated, literal_type_prim l, [], [])
 
-let literal_value (l : literal) : (Location.t, string) node =
+let literal_value (l : literal) : (meta, string) node =
   match l with
   | Literal_unit -> Prim (generated, "Unit", [], [])
   | Literal_int x -> Int (generated, x)
@@ -66,10 +71,14 @@ let compile_expr' = compile_expr
 
 open Ligo_coq_ocaml.Micheline_wrapper
 
+let with_var_names (env : (meta, string) node list) (m : meta) : meta =
+  { m with env = List.map ~f:(fun ty -> (location ty).binder) env }
+
 let rec compile_binds ~raise protocol_version env outer proj binds =
   List.map ~f:forward
     (compile_binds'
        generated
+       (fun env meta -> with_var_names (List.map ~f:forward env) meta)
        (fun x y z ->
           List.map ~f:backward
             (compile_operator ~raise protocol_version x y z))
@@ -81,6 +90,7 @@ and compile_expr ~raise protocol_version env outer expr =
   List.map ~f:forward
     (compile_expr'
        generated
+       (fun env meta -> with_var_names (List.map ~f:forward env) meta)
        (fun x y z ->
           List.map ~f:backward
             (compile_operator ~raise protocol_version x y z))
@@ -107,7 +117,9 @@ and apply_static_args ~raise : Environment.Protocols.t -> string -> (_, constant
     let code = Prim (generated, "code", [Seq (generated, e)], []) in
     Prim (generated, prim, [Seq (generated, [parameter; storage; code])], [])
 
-and compile_operator ~raise : Environment.Protocols.t -> Location.t -> constant' -> (_, constant', literal) static_args -> (Location.t, string) node list =
+and compile_operator ~raise :
+  Environment.Protocols.t -> meta -> constant' ->
+  (_, constant', literal) static_args -> (meta, string) node list =
   fun protocol_version loc c args ->
   match Predefined.Stacking.get_operators protocol_version c with
   | Some x -> [(* Handle predefined (and possibly special)
