@@ -5,9 +5,6 @@ module AST.Capabilities.Format
   , formatAt
   ) where
 
-import Data.Text (Text)
-import UnliftIO.Exception (catchAny)
-
 import Language.LSP.Types qualified as J
 
 import AST.Scope
@@ -19,16 +16,6 @@ import ParseTree
 import Parser
 import Product
 import Range
-
-callForFormat :: HasLigoClient m => Source -> m (Maybe Text)
-callForFormat source =
-    (Just . fst <$> getResult) `catchAny` \_ -> return Nothing
-  where
-    path = srcPath source
-
-    getResult = callLigo
-      ["print", "pretty", path]
-      source
 
 formatDocument :: HasLigoClient m => SomeLIGO Info' -> m (J.List J.TextEdit)
 formatDocument (SomeLIGO _lang (extract -> info)) = do

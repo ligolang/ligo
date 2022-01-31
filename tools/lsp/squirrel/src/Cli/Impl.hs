@@ -11,6 +11,7 @@ module Cli.Impl
   , Version (..)
 
   , callLigo
+  , callForFormat
   , getLigoVersion
   , preprocess
   , getLigoDefinitions
@@ -34,7 +35,7 @@ import System.IO (Handle, hFlush)
 import System.IO.Temp (withSystemTempFile)
 import System.Process
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
-import UnliftIO.Exception (Exception (..), SomeException (..), throwIO, try)
+import UnliftIO.Exception (Exception (..), SomeException (..), catchAny, throwIO, try)
 
 import Cli.Json
 import Cli.Types
@@ -213,6 +214,28 @@ getLigoVersion = Log.addNamespace "getLigoVersion" do
       unless (Text.null e) $
         $(Log.warning) [i|LIGO produced an error with the output: #{e}|]
       pure $ Just $ Version $ Text.strip output
+
+-- | Call LIGO's pretty printer on some contract.
+--
+-- This function will call the contract with a temporary file path, dumping the
+-- contents of the given source so LIGO reads the contents. This allows us to
+-- call the pretty printer even if it's an unsaved LSP buffer.
+--
+-- ```
+-- ligo print pretty ${temp_file_name}
+-- ```
+--
+-- FIXME: LIGO expands preprocessor directives before pretty printing. We should
+-- find a workaround for this or report to them.
+callForFormat :: HasLigoClient m => Source -> m (Maybe Text)
+callForFormat source =
+  usingTemporaryDir source \tempFp _ ->
+    let
+      getResult = callLigo
+        ["print", "pretty", tempFp]
+        source
+    in
+    (Just . fst <$> getResult) `catchAny` \_ -> pure Nothing
 
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
 --
