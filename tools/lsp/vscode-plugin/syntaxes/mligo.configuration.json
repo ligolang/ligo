@@ -1,8 +1,5 @@
 {
-  "comments": {
-    "lineComment": "\\/\\/.*$",
-    "blockComment": [ "\\(\\*", "\\*\\)" ]
-  },
+  "comments": { "lineComment": "//", "blockComment": [ "(*", "*)" ] },
   "brackets": [ [ "{", "}" ], [ "[", "]" ], [ "(", ")" ] ],
   "autoClosingPairs": [
     [ "{", "}" ],
