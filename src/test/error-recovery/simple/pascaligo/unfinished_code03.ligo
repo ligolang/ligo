@@ -1,6 +1,6 @@
 type commit is record [
   date        : timestamp;
-  \\ TODO
+  // TODO
 
 type commit_set is big_map(address, commit)
 

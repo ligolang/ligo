@@ -48,7 +48,7 @@
 
 %token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive  $loc]
 %token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string     $loc]
-%token                <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim   $loc]
+%token                <string Wrap.t> Verbatim  "<verbatim>"  (* [@recover.expr mk_verbatim   $loc] *)
 %token      <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes      $loc]
 %token        <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int        $loc]
 %token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident      $loc]
