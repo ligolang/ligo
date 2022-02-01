@@ -338,23 +338,29 @@ let beta ~raise:_ : bool ref -> expression -> expression =
           List.nth_exn es i)
     else e
 
-  (** This case shows up in the compilation of modules:
-      (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
+  (** (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
   | E_proj ({ content = E_let_in (e1, inline, ((x, a), e2));type_expression = _; location=_ } as e_let_in, i, n) ->
     changed := true;
     { e_let_in with content = E_let_in (e1, inline, ((x, a), ({ e with content = E_proj (e2, i, n) }))) ;
                     type_expression = e.type_expression }
 
-  (** This case shows up in the compilation of modules:
-      (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
+  (** (let (x, y, ...) = e1 in e2).(i) ↦ (let (x, y, ...) = e1 in e2.(i)) *)
+  | E_proj ({ content = E_let_tuple (e1, (vars, e2));type_expression = _; location=_ } as e_let_tuple, i, n) ->
+    changed := true;
+    { e_let_tuple with content = E_let_tuple (e1, (vars, ({ e with content = E_proj (e2, i, n) }))) ;
+                       type_expression = e.type_expression }
+
+  (** (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
   | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3)) ->
     let y' = Location.wrap (Var.fresh_like (Location.unwrap y)) in
     let e2 = Subst.replace e2 y y' in
     changed := true;
     {e with content = E_let_in (e1, inline2, ((y', b), {e with content = E_let_in (e2, inline1, ((x, a), e3))}))}
 
-  (** This case shows up in the compilation of modules:
-      (let x = e1 in e2)@e3 ↦ let x = e1 in e2@e3  (only if e2 and e3 are pure??) *)
+  (** note: E_let_tuple/E_let_in and E_let_in/E_let_tuple conversions
+      not implemented yet because they don't seem important (?) *)
+
+  (** (let x = e1 in e2)@e3 ↦ let x = e1 in e2@e3  (if e1 or e3 is pure) *)
   | E_application ({ content = E_let_in (e1, inline, ((x, a), e2)); _ }, e3) ->
     if is_pure e1 || is_pure e3
     then
@@ -362,6 +368,17 @@ let beta ~raise:_ : bool ref -> expression -> expression =
       let e2 = Subst.replace e2 x x' in
       changed := true;
       {e with content = E_let_in (e1, inline, ((x', a), {e with content = E_application (e2, e3)}))}
+    else e
+
+  (** (let (x, y, ...) = e1 in e2)@e3 ↦ let (x, y, ...) = e1 in e2@e3  (if e1 or e3 is pure) *)
+  | E_application ({ content = E_let_tuple (e1, (vars, e2)); _ }, e3) ->
+    if is_pure e1 || is_pure e3
+    then
+      let vars = List.map ~f:(fun (x, a) -> (x, Location.wrap (Var.fresh_like (Location.unwrap x)), a)) vars in
+      let e2 = List.fold_left vars ~init:e2 ~f:(fun e2 (x, x', _a) -> Subst.replace e2 x x') in
+      let vars = List.map ~f:(fun (_x, x', a) -> (x', a)) vars in
+      changed := true;
+      {e with content = E_let_tuple (e1, (vars, {e with content = E_application (e2, e3)}))}
     else e
 
   (* let (x0, x1, ...) = (e0, e1, ...) in body ↦

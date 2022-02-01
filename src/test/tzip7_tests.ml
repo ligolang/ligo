@@ -141,7 +141,7 @@ let get_total_supply ~raise ~add_warning f s () =
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
   expect_eq ~raise program ~options "getTotalSupply" input expected
 
-let main = test_suite "tzip-12" [
+let main = test_suite "tzip-7" [
   test_w "transfer"                          (transfer                 mfile_FA12 "cameligo");
   test_w "transfer (not enough allowance)"   (transfer_not_e_allowance mfile_FA12 "cameligo");
   test_w "transfer (not enough balance)"     (transfer_not_e_balance   mfile_FA12 "cameligo");
