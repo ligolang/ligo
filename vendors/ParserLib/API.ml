@@ -131,6 +131,7 @@ module Make (Lexer  : LEXER)
       let window = get_window ()
       in Token.to_region window#current_token
 
+
     (* THE MONOLITHIC API *)
 
     exception LexingError of message
@@ -176,7 +177,11 @@ module Make (Lexer  : LEXER)
           let tree = mono_menhir (fun x -> x) lexbuf
           in close (); tree
 
+
     (* THE INCREMENTAL API *)
+
+    (* Utilities for incremental parsing *)
+
 
     module Inter = Parser.MenhirInterpreter
 
@@ -225,11 +230,48 @@ module Make (Lexer  : LEXER)
 
     let success v = v
 
-    (* Incremental parsing *)
+    (* Converting [Pos.t] into [Lexing.position] and vice verse.
 
-    (* Wrap lexer in supplier according [mode] *)
-    let lexer_lexbuf_to_supplier mode lexer lexbuf =
-      let to_point (pos : Simple_utils.Pos.t) : Lexing.position =
+       IMPORTANT: This conversion is lossy because the [Lexing.position] cannot
+       store all information about byte and code point positions that is contained
+       in the [Pos.t].
+
+       The position is an offset from the beginning of the line or file that is
+       counted in terms of bytes or Unicode code points. Obviously, if source
+       code contains Unicode symbols that occupy several bytes (like β) they are
+       distanced. So [Pos.t] stores both kind of offsets, but [Lexing.position]
+       does not and can remember only part of the former. Another part and the
+       distance between them will be lost.
+
+       So, we temporarily decided to keep only one part correct depending on [mode]
+       that is a part of the API. For example, if [mode] equals to [`Point] then
+       [Lexing.position] contains code point offsets and it is interpreted like
+       that when will be converted back to [Pos.t]. The unknown part will be a
+       copy of the known one just to fill it.
+
+       The drawback is that one part of [Pos.t] for synthesized tokens, for which
+       we have to retrieve location from menhir interface, is incorrect. But we
+       assume that in a certain mode (e.g. [`Point]) the compiler uses only certain
+       terms of the position.
+     *)
+
+    let to_pos (mode : [`Byte | `Point]) (pos : Lexing.position) : Simple_utils.Pos.t =
+      (* Note: [Pos.from_byte (Lexing.dummy_pos) != Pos.ghost] *)
+      if Caml.(pos = Lexing.dummy_pos) then
+          Pos.ghost
+      else
+      (* Note: assumed that [Pos.from_byte] keeps
+         [(point_bol, point_num) = (byte.pos_bol, byte.pos_cnum)]
+         So both branch do the same: copy data into both byte part and code
+         point part of [Pos.t] *)
+      match mode with
+      | `Byte  -> Pos.from_byte pos
+      | `Point -> Pos.from_byte pos
+
+    let of_pos (mode : [`Byte | `Point]) : Simple_utils.Pos.t -> Lexing.position =
+      (* pack code point offsets into [Lexing.position] *)
+      let to_point pos =
+        (* Note: [Pos.from_byte (Lexing.dummy_pos) != Pos.ghost] *)
         if pos#is_ghost then
             Lexing.dummy_pos
         else {
@@ -237,17 +279,21 @@ module Make (Lexer  : LEXER)
             pos_lnum  = pos#line;
             pos_bol   = pos#point_bol;
             pos_cnum  = pos#point_num } in
+      (* pack byte offsets into [Lexing.position] *)
       let to_byte pos = pos#byte in
-      let supplier to_position =
-        fun () ->
-        let token = lexer lexbuf in
-        let (startp, endp) = (Token.to_region token)#pos
-        in token, to_position startp, to_position endp
-      in
-      (* Note: both conversions are lossy *)
       match mode with
-      | `Byte  -> supplier to_byte
-      | `Point -> supplier to_point
+      | `Byte  -> to_point
+      | `Point -> to_byte
+
+    (* Wrap lexer in supplier according [mode] *)
+
+    let lexer_lexbuf_to_supplier mode lexer lexbuf =
+      fun () ->
+      let token = lexer lexbuf in
+      let (startp, endp) = (Token.to_region token)#pos
+      in token, of_pos mode startp, of_pos mode endp
+
+    (* Incremental parsing *)
 
     let incr_menhir lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf       = lexbuf_of source
@@ -328,26 +374,11 @@ module Make (Lexer  : LEXER)
                    (struct
                        include Parser.Recovery
 
-                       (* Note: it's consistent with [lexer_lexbuf_to_supplier] *)
-                       let convert mode position : Pos.t =
-                         (* Because we cannot restore both byte and point position
-                            correctly another part is assumed to be equal.
-
-                            Assuming that [Pos.from_byte] keeps
-                            [(point_bol, point_num) = (byte.pos_bol, byte.pos_cnum)]
-                          *)
-                         if Caml.(position = Lexing.dummy_pos) then
-                             Pos.ghost
-                         else
-                         match mode with
-                         | `Byte  -> Pos.from_byte position
-                         | `Point -> Pos.from_byte position
-
                        let default_value loc sym =
                          let open Custom_compiler_libs.Location in
-                         let convert = convert Config.mode in
+                         let convert = to_pos Config.mode in
                          let reg = Region.make ~start:(convert loc.loc_start)
-                                               ~stop:(convert loc.loc_end)
+                                               ~stop:( convert loc.loc_end)
                          in Parser.Recovery.default_value reg sym
 
                        let guide _ = false
