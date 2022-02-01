@@ -32,3 +32,10 @@ The last check is that generated `results.csv` is equal to `results.csv.expected
 nodes). Like the previous but the tree structure is erased.
 - Tokens -- diff between lists of tokens
 - Errors -- count of new syntax error returned by recovery parser
+
+# Why some tests are out of CI?
+
+In spite of the error recovery, the parser still can fail if an error turns out before it:
+
+- The basic case is a lexer failure. Specific tests can be found in `src/test/error-recovery/lexer-fails-before-recovery`
+- The new case is a pre-parser failure. Currently, it affects only the ReasonLIGO, and tests broken by it are temporarily placed in `src/tests/error-recovery/preparser-fails-before-recovery`.

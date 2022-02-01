@@ -1,7 +1,6 @@
 FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
 extra_arrow_in_case_expr.ligo,0,0,0,0,0
 extra_colon_in_const_decl.ligo,0,0,0,0,0
-extra_colon_in_return_type.ligo,26,188,188,149,2
 extra_eq_in_func_decl.ligo,0,0,0,0,0
 extra_then_kw.ligo,0,0,0,0,0
 extra_vertical_bar.ligo,0,0,0,0,0
@@ -46,4 +45,3 @@ unfinished_code10.ligo,10,50,36,20,2
 unfinished_code11.ligo,10,44,16,8,2
 unfinished_code12.ligo,2,6,6,4,0
 unfinished_code13.ligo,4,14,14,9,0
-unreadable_symbol.ligo,26,188,188,149,2

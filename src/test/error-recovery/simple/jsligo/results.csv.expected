@@ -1,6 +1,5 @@
 FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
 extra_arrow_in_lambda.jsligo,0,0,0,0,0
-extra_colon_in_return_type.jsligo,26,215,215,186,2
 extra_eq_in_func_decl.jsligo,0,0,0,0,0
 extra_gt_zwsp.jsligo,2,15,5,2,0
 lambda_with_missing_arguments.jsligo,3,20,10,6,0
@@ -49,6 +48,5 @@ unfinished_code10.jsligo,2,230,8,5,0
 unfinished_code11.jsligo,2,6,4,4,0
 unfinished_code12.jsligo,2,8,8,6,0
 unfinished_code13.jsligo,3,58,14,10,0
-unreadable_symbol.jsligo,26,215,215,186,2
 using_then_in_if_expr.jsligo,2,19,7,2,0
 var_kw_instead_of_let_kw.jsligo,4,143,15,3,0

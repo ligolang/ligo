@@ -2,8 +2,7 @@
 
 diff_lines () {
     stat=$(git diff --numstat --minimal --no-index -- "$1" "$2")
-    if [ -z "$stat" ]
-    then
+    if [ -z "$stat" ]; then
         echo 0
     else
         read insertion deletion rest <<<$stat
@@ -37,36 +36,45 @@ echo "FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS" > $RESULTS
 
 for f in $1; do
     CURRENT_FILE_ERROR=0
-    trap 'RETURN_CODE=1 ; CURRENT_FILE_ERROR=1' ERR
+    # enable trap to catch all nonzero exit code
+    trap 'CURRENT_FILE_ERROR=1' ERR
 
     # run parser in different mode to catch errors and the result of error recovery
     $PARSER -- "$f"                     2>&1 > /dev/null \
                  | sed -e $'s/\x1b\[[0-9;]*m//g' > original_generated/"$f.errors" # remove red color
     $PARSER --recovery --pretty -- "$f" 2>&1 > recovered/"$f"\
                  | sed -e $'s/\x1b\[[0-9;]*m//g' > recovered/"$f.errors"
-    # NOTE: original/*.errors contains errors that is returned by parser in general mode (without recovery)
+    # NOTE: original_generated/*.errors contains errors that is returned by parser in general
+    #       mode (without recovery)
+
+    # run parser on the recovery output and check that it is not empty
+    if [[ $(cat recovered/"$f") ]]; then
+        $PARSER -- recovered/"$f"
+    else
+        echo -e $RED"ERROR:$f recovery output is empty."$NC
+        cat recovered/"$f.errors"
+        CURRENT_FILE_ERROR=1
+    fi
 
     # formate original/ to reduce diff
     $PARSER --pretty -- original/"$f" > original_generated/formatted_"$f"
 
     # compare string representation of CST
     $PARSER --cst -- original/"$f"                | sed 's/([^()]*)$//' > original_generated/"$f".cst
-
     $PARSER --recovery --cst -- "$f" 2> /dev/null | sed 's/([^()]*)$//' > recovered/"$f".cst
 
     # compare list of symbols (nodes of CST)
     cat original_generated/"$f".cst  | sed 's/^\([-|` ]\)*//' > original_generated/"$f".cst_symbols
-
     cat recovered/"$f".cst | sed 's/^\([-|` ]\)*//' > recovered/"$f".cst_symbols
 
     # compare list of tokens
-    $PARSER --tokens -- original_generated/formatted_"$f"      | sed 's/^[^\ ]*://' > original_generated/"$f".tokens
-
+    $PARSER --tokens -- original_generated/formatted_"$f" | sed 's/^[^\ ]*://' > original_generated/"$f".tokens
     $PARSER --tokens --\
             `#workaround: suppress spliting "<invalid-*>" into several tokens`\
             <(sed 's/<invalid-\([^<>]*\)>/_invalid_\1/' recovered/"$f") \
             2> /dev/null  | sed 's/^[^\ ]*://' > recovered/"$f".tokens
 
+    # disable trap because diff utilities return nonzero code if files aren't the same
     trap - ERR
 
     LOC_DIFF=$(    diff_lines original_generated/formatted_"$f"   recovered/"$f")
@@ -79,15 +87,15 @@ for f in $1; do
     ERR_DELETED=$(git diff --no-index -- original_generated/"$f".errors recovered/"$f".errors \
             | grep ^-[^-] | grep -c "$f")
     if [ $ERR_DELETED != "0" ]; then
-        echo "Error is lost!!!"
-        RETURN_CODE=1
+        echo -e $RED"ERROR:$f: the recovery left the original error!!!"$NC
+        CURRENT_FILE_ERROR=1
     fi
 
     echo "$f,$LOC_DIFF,$CST_DIFF,$SYMBOLS_DIFF,$TOKENS_DIFF,$ERR_DIFF" >> $RESULTS
 
-    if [ $CURRENT_FILE_ERROR != "0" ];
-    then
+    if [ $CURRENT_FILE_ERROR != "0" ]; then
         echo -e "$RED$f$NC"
+        RETURN_CODE=1
     else
         echo -e "$GREEN$f$NC"
     fi
