@@ -293,7 +293,7 @@ addLocalScopes tree forest =
       return ((env :> Nothing :> i) :< fs')
   in
   runIdentity $ withNestedLIGO tree $
-    descent @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
+    descent' @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
     [ Descent \i (Name t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Name t)

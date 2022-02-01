@@ -36,7 +36,6 @@ module AST.Capabilities.CodeAction.ExtractTypeAlias
   , extractedTypeNameAlias
   ) where
 
-import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Writer
 import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
@@ -88,8 +87,8 @@ typeExtractionCodeAction at uri (SomeLIGO dialect tree) =
     _ -> [] -- Malformed tree with error nodes passed, ignore
 
 extractTypeVariableNames :: LIGO Info' -> HS.HashSet T.Text
-extractTypeVariableNames = execWriter . visit
-  [ Visit \_ (TypeVariableName typeVar) -> lift $ tell $ HS.singleton typeVar
+extractTypeVariableNames = execWriter . visit'
+  [ Visit \_ (TypeVariableName typeVar) -> tell $ HS.singleton typeVar
   ]
 
 -- | Generate fresh type alias that is not found
@@ -194,16 +193,16 @@ makeReplaceTypeEdits
   -> LIGO Info'
   -> [J.TextEdit]
 makeReplaceTypeEdits newTypeName (Left typeNode) =
-  execWriter . visit
+  execWriter . visit'
     [ Visit @Type \(getRange -> r) -> \case
         typeNode' | typeNode == typeNode' ->
-          lift $ tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
+          tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
         _ -> pure ()
     ]
 makeReplaceTypeEdits newTypeName (Right oldTypeName) =
-  execWriter . visit
+  execWriter . visit'
     [ Visit @TypeName \(getRange -> r) -> \case
         TypeName typeName' | oldTypeName == typeName' ->
-          lift $ tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
+          tell [J.TextEdit { _range = toLspRange r, _newText = newTypeName }]
         _ -> pure ()
     ]

@@ -16,7 +16,6 @@ import Test.Tasty.HUnit (Assertion)
 expectedMsgs :: FilePath -> [(Range, Text)]
 expectedMsgs inputFile' =
   [ (mkRange (3, 17) (3, 23), "Unexpected: :: int")
-  , (mkRange (3, 17) (3, 23), "Unexpected: :: int")
   , (mkRange (3, 17) (3, 23), "Unrecognized: :: int")
   , (mkRange (3, 20) (3, 23), "Unrecognized: int")
   , (mkRange (3, 17) (3, 19), "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n\n")
