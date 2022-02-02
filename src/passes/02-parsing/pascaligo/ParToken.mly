@@ -36,6 +36,11 @@
   let mk_attr     = Token.wrap_attr     "ghost_attr" None
 ]
 
+(* Make the recovery pay more attention to the number of synthesized tokens than
+   production reducing because the latter often means only precedence level *)
+%[@recover.default_cost_of_symbol     100]
+%[@recover.default_cost_of_production 1]
+
 (* Literals *)
 
 %token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]

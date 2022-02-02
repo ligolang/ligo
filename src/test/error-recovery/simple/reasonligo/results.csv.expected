@@ -11,7 +11,7 @@ missing_arrow_in_match_expr.religo,0,0,0,0,0
 missing_comma_in_arguments.religo,3,65,29,22,3
 missing_comma_in_record_decl.religo,7,3,3,4,0
 missing_dot_in_list_pat.religo,2,2,2,1,0
-missing_dot_in_record_update.religo,6,23,11,9,3
+missing_dot_in_record_update.religo,2,13,11,3,0
 missing_eq_in_type_decl.religo,0,0,0,0,0
 missing_ident_in_type_decl.religo,2,2,2,2,0
 missing_int.religo,3,7,7,2,0

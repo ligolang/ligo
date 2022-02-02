@@ -41,6 +41,11 @@
 
 ]
 
+(* Make the recovery pay more attention to the number of synthesized tokens than
+   production reducing because the latter often means only precedence level *)
+%[@recover.default_cost_of_symbol     100]
+%[@recover.default_cost_of_production 1]
+
 (* Literals *)
 
 %token             <string Wrap.t> BlockCom  "<block_comment>" [@recover.expr mk_block_com $loc]
