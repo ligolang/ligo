@@ -375,7 +375,7 @@ compiler like so:
 ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/functions/incr_map.ligo --entry-point incr_map
 "list [1;2;3]"
-# Outputs: [ 2 ; 3 ; 4 ]
+# Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to [ 2 ; 3 ; 4 ]
 ```
 
 </Syntax>
@@ -390,8 +390,8 @@ like so:
 ```shell
 ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/functions/incr_map.mligo --entry-point incr_map
-"list [1;2;3]"
-# Outputs: [ 2 ; 3 ; 4 ]
+"[1;2;3]"
+# Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to [ 2 ; 3 ; 4 ]
 ```
 
 </Syntax>
@@ -406,8 +406,8 @@ like so:
 ```shell
 ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/functions/incr_map.religo --entry-point incr_map
-"list [1;2;3]"
-# Outputs: [ 2 ; 3 ; 4 ]
+"[1,2,3]"
+# Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to [ 2 , 3 , 4 ]
 ```
 
 </Syntax>
@@ -422,8 +422,8 @@ like so:
 ```shell
 ligo run evaluate-call
 gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo --entry-point incr_map
-"list [1;2;3]"
-# Outputs: [ 2 ; 3 ; 4 ]
+"list([1,2,3])"
+# Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to list([ 2 , 3 , 4 ])
 ```
 
 </Syntax>
