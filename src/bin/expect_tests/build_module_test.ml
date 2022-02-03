@@ -86,48 +86,45 @@ let%expect_test _ =
     const toto = ADD(E.toto ,
     C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
-    const main = lambda (gen#6) return let gen#8 = gen#6 in  match gen#8 with
-                                                              | ( p , s ) ->
-                                                              let s = ADD(ADD(p ,
-                                                              s) ,
-                                                              toto) in ( LIST_EMPTY() , s ) |}]
+    const main = lambda (gen#7) return  match gen#7 with
+                                         | ( p , s ) ->
+                                         let s = ADD(ADD(p , s) ,
+                                         toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
-let #../../test/contracts/build/A.mligo#toto#44 = L(1) in
-let #../../test/contracts/build/B.mligo#toto#45 = L(32) in
-let #../../test/contracts/build/B.mligo#titi#46 =
-  ADD(#../../test/contracts/build/A.mligo#toto#44 , L(42)) in
-let #../../test/contracts/build/B.mligo#f#47 =
+let #../../test/contracts/build/A.mligo#toto#42 = L(1) in
+let #../../test/contracts/build/B.mligo#toto#43 = L(32) in
+let #../../test/contracts/build/B.mligo#titi#44 =
+  ADD(#../../test/contracts/build/A.mligo#toto#42 , L(42)) in
+let #../../test/contracts/build/B.mligo#f#45 =
   fun gen#35 ->
-  (let gen#40 = gen#35 in
-   let (gen#54, gen#55) = gen#40 in
-   let gen#36 = gen#54 in
-   let x = gen#55 in
+  (let (gen#52, gen#53) = gen#35 in
+   let gen#36 = gen#52 in
+   let x = gen#53 in
    let x =
-     ADD(ADD(x , #../../test/contracts/build/A.mligo#toto#44) ,
-         #../../test/contracts/build/B.mligo#titi#46) in
+     ADD(ADD(x , #../../test/contracts/build/A.mligo#toto#42) ,
+         #../../test/contracts/build/B.mligo#titi#44) in
    PAIR(LIST_EMPTY() , x)) in
-let #../../test/contracts/build/F.mligo#toto#48 = L(44) in
-let #../../test/contracts/build/G.mligo#toto#49 = L(43) in
-let #../../test/contracts/build/C.mligo#tata#50 =
-  ADD(#../../test/contracts/build/A.mligo#toto#44 ,
-      #../../test/contracts/build/B.mligo#titi#46) in
-let #../../test/contracts/build/C.mligo#foo#51 =
-  (#../../test/contracts/build/B.mligo#f#47)@(PAIR(L(unit) , L(3))) in
-let #../../test/contracts/build/E.mligo#toto#52 = L(10) in
-let #../../test/contracts/build/E.mligo#foo#53 = L("bar") in
+let #../../test/contracts/build/F.mligo#toto#46 = L(44) in
+let #../../test/contracts/build/G.mligo#toto#47 = L(43) in
+let #../../test/contracts/build/C.mligo#tata#48 =
+  ADD(#../../test/contracts/build/A.mligo#toto#42 ,
+      #../../test/contracts/build/B.mligo#titi#44) in
+let #../../test/contracts/build/C.mligo#foo#49 =
+  (#../../test/contracts/build/B.mligo#f#45)@(PAIR(L(unit) , L(3))) in
+let #../../test/contracts/build/E.mligo#toto#50 = L(10) in
+let #../../test/contracts/build/E.mligo#foo#51 = L("bar") in
 let toto =
-  ADD(#../../test/contracts/build/E.mligo#toto#52 ,
-      #../../test/contracts/build/A.mligo#toto#44) in
+  ADD(#../../test/contracts/build/E.mligo#toto#50 ,
+      #../../test/contracts/build/A.mligo#toto#42) in
 let fb = (L(1), toto, L(2), L(3)) in
 let main =
   fun gen#38 ->
-  (let gen#42 = gen#38 in
-   let (gen#56, gen#57) = gen#42 in
-   let p = gen#56 in
-   let s = gen#57 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
+  (let (gen#54, gen#55) = gen#38 in
+   let p = gen#54 in
+   let s = gen#55 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
 L(unit) |}]
 
 let%expect_test _ =
@@ -169,11 +166,11 @@ let%expect_test _ =
       storage int ;
       code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
 
-let%expect_test _ = 
+let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "tata" ; "--init-file" ; contract "C.mligo" ] ;
   [%expect {| 44 |}]
 
-let%expect_test _ = 
+let%expect_test _ =
   run_ligo_good [ "run" ; "test" ;  contract "C1.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
@@ -189,7 +186,7 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "Xmain.mligo" ] ;
   [%expect {|
     { 1 ; 2 ; 3 } |}]
-    
+
 let%expect_test _ =
   run_ligo_good [ "print" ; "dependency-graph" ; contract "Xmain.mligo"; "--format" ; "dev" ] ;
   [%expect {|

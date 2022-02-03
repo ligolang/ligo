@@ -19,7 +19,8 @@ let () =
     Hash_lock_tests_re.main ;
     Time_lock_repeat_tests.main ;
     Pledge_tests.main ;
-    Tzip12_tests.main ;
+    Tzip5_tests.main ;
+    Tzip7_tests.main ;
     Positive_contract_tests.main ;
   ] ;
   ()

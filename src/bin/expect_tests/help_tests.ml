@@ -1,7 +1,6 @@
 open Cli_expect
 
 let%expect_test _ =
-  (* TODO good? *)
   run_ligo_good [] ;
   [%expect.unreachable ]
 [@@expect.uncaught_exn {|

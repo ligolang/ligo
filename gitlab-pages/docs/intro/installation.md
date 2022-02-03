@@ -5,14 +5,30 @@ title: Installation
 
 There are currently three ways to get started with LIGO. You can choose to use a Docker image, a static Linux binary or to install packages for your Debian Linux distribution.
 
+You can also try LIGO in a Gitpod environment
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://gitlab.com/ligolang/template-ligo)
+
 ## Dockerised installation (recommended)
 If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.34.0](./changelog.md):
 
 Linux or OSX:
-> `docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.34.0`
+> ```sh
+> docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.34.0
+> ```
+> For convenience you can alias the above command
+> ```sh
+> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:next"
+> ```
 
 Windows:
-> `docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.34.0`
+> ```dos
+> docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.34.0`
+> ```
+> For convenience you can alias the above command
+> ```dos
+> doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.34.0 $*
+> ```
 
 Or if you want the development version, replace the version above with `next`.
 

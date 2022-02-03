@@ -1,0 +1,6 @@
+---
+  title: "Remove generation of intermediary variable"
+  merge_request: "1513"
+  author: "melwyn95"
+  type: "internal"
+

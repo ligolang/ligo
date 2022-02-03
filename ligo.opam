@@ -28,7 +28,7 @@ depends: [
   "terminal_size"
   "pprint"
   "yojson"
-  "ocaml-recovery-parser"
+  "ocaml-recovery-parser" { = "0.2.2" }
   # Tezos libs
   "tezos-base"
   "tezos-crypto"

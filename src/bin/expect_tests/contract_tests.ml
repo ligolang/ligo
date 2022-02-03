@@ -1101,7 +1101,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (gen#1) return let _x = +1 in let ()#4 = let _x = +2 in UNIT() in let ()#3 = let _x = +23 in UNIT() in let ()#2 = let _x = +42 in UNIT() in _x |}]
+  [%expect {| const y = lambda (gen#3) return let _x = +1 in let ()#6 = let _x = +2 in UNIT() in let ()#5 = let _x = +23 in UNIT() in let ()#4 = let _x = +42 in UNIT() in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1974,17 +1974,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#3 = EQ(n ,
-    0) in  match gen#3 with
-            | False unit_proj#4 ->
+    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#5 = EQ(n ,
+    0) in  match gen#5 with
+            | False unit_proj#6 ->
               (f)@(SUB(n ,
-              1)) | True unit_proj#5 ->
+              1)) | True unit_proj#7 ->
                     1 ) in (f)@(4)
-    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#6 = EQ(n ,
-    0) in  match gen#6 with
-            | False unit_proj#7 ->
+    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#8 = EQ(n ,
+    0) in  match gen#8 with
+            | False unit_proj#9 ->
               (h)@(SUB(n ,
-              1)) | True unit_proj#8 ->
+              1)) | True unit_proj#10 ->
                     1 ) in h) ) |}]
 
 let%expect_test _ =
@@ -2210,18 +2210,18 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-                     const c = lambda (gen#4) return CREATE_CONTRACT(lambda (gen#1) return let gen#10 = gen#1 in
-                      match gen#10 with
-                       | ( gen#3 , gen#2 ) ->
+                     const c = lambda (gen#6) return CREATE_CONTRACT(lambda (gen#3) return
+                      match gen#3 with
+                       | ( gen#5 , gen#4 ) ->
                        ( LIST_EMPTY() , unit ) ,
                      NONE() ,
                      0mutez ,
                      unit)
-                     const foo = let gen#12 = (c)@(unit) in  match gen#12 with
+                     const foo = let gen#13 = (c)@(unit) in  match gen#13 with
                                                               | ( _a , _b ) ->
                                                               unit
-                     const c = lambda (gen#5) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let gen#15 = (c)@(unit) in  match gen#15 with
+                     const c = lambda (gen#7) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+                     const foo = let gen#16 = (c)@(unit) in  match gen#16 with
                                                               | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
                                                               unit |} ]
 
@@ -2324,3 +2324,36 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "increment_with_test.mligo" ; "z.0 + 10" ] ;
   [%expect{|
     42 |}]
+
+(* Test compiling expression with curried recursive function *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo 2 \"titi\"" ; "--init-file" ; contract "recursion_uncurry.mligo" ] ;
+  [%expect{|
+    "tititotototo" |}]
+
+(* Test compiling contract with curried recursive function *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "recursion_uncurry.mligo" ] ;
+  [%expect{|
+    { parameter int ;
+      storage string ;
+      code { LEFT string ;
+             LOOP_LEFT
+               { UNPAIR ;
+                 PUSH int 0 ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
+                 COMPARE ;
+                 EQ ;
+                 IF { DROP ; RIGHT (pair int string) }
+                    { PUSH string "toto" ;
+                      DIG 2 ;
+                      CONCAT ;
+                      PUSH int 1 ;
+                      DIG 2 ;
+                      SUB ;
+                      PAIR ;
+                      LEFT string } } ;
+             NIL operation ;
+             PAIR } } |}]
