@@ -20,7 +20,31 @@ let%expect_test _ =
             {
               "name": "nat",
               "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "location": [
+                "File",
+                {
+                  "start": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 3,
+                      "pos_bol": 17,
+                      "pos_cnum": 35
+                    },
+                    "point_num": 35,
+                    "point_bol": 17
+                  },
+                  "stop": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 3,
+                      "pos_bol": 17,
+                      "pos_cnum": 38
+                    },
+                    "point_num": 38,
+                    "point_bol": 17
+                  }
+                }
+              ]
             }
           ],
           "location": [
@@ -93,7 +117,31 @@ let%expect_test _ =
             {
               "name": "nat",
               "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "location": [
+                "File",
+                {
+                  "start": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 4,
+                      "pos_bol": 39,
+                      "pos_cnum": 60
+                    },
+                    "point_num": 60,
+                    "point_bol": 39
+                  },
+                  "stop": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 4,
+                      "pos_bol": 39,
+                      "pos_cnum": 63
+                    },
+                    "point_num": 63,
+                    "point_bol": 39
+                  }
+                }
+              ]
             }
           ],
           "location": [
@@ -166,7 +214,31 @@ let%expect_test _ =
             {
               "name": "nat",
               "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "location": [
+                "File",
+                {
+                  "start": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 5,
+                      "pos_bol": 64,
+                      "pos_cnum": 89
+                    },
+                    "point_num": 89,
+                    "point_bol": 64
+                  },
+                  "stop": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 5,
+                      "pos_bol": 64,
+                      "pos_cnum": 92
+                    },
+                    "point_num": 92,
+                    "point_bol": 64
+                  }
+                }
+              ]
             }
           ],
           "location": [
@@ -239,7 +311,31 @@ let%expect_test _ =
             {
               "name": "bytes",
               "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "location": [
+                "File",
+                {
+                  "start": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 6,
+                      "pos_bol": 93,
+                      "pos_cnum": 112
+                    },
+                    "point_num": 112,
+                    "point_bol": 93
+                  },
+                  "stop": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 6,
+                      "pos_bol": 93,
+                      "pos_cnum": 117
+                    },
+                    "point_num": 117,
+                    "point_bol": 93
+                  }
+                }
+              ]
             }
           ],
           "location": [
@@ -322,7 +418,33 @@ let%expect_test _ =
                     {
                       "name": "address",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 7,
+                              "pos_bol": 118,
+                              "pos_cnum": 140
+                            },
+                            "point_num": 140,
+                            "point_bol": 118
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 7,
+                              "pos_bol": 118,
+                              "pos_cnum": 147
+                            },
+                            "point_num": 147,
+                            "point_bol": 118
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -436,7 +558,33 @@ let%expect_test _ =
                     {
                       "name": "bytes",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 8,
+                              "pos_bol": 149,
+                              "pos_cnum": 176
+                            },
+                            "point_num": 176,
+                            "point_bol": 149
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 8,
+                              "pos_bol": 149,
+                              "pos_cnum": 181
+                            },
+                            "point_num": 181,
+                            "point_bol": 149
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -473,7 +621,33 @@ let%expect_test _ =
                     {
                       "name": "addr_set",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 8,
+                              "pos_bol": 149,
+                              "pos_cnum": 183
+                            },
+                            "point_num": 183,
+                            "point_bol": 149
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 8,
+                              "pos_bol": 149,
+                              "pos_cnum": 191
+                            },
+                            "point_num": 191,
+                            "point_bol": 149
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -587,7 +761,33 @@ let%expect_test _ =
                     {
                       "name": "address",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 9,
+                              "pos_bol": 193,
+                              "pos_cnum": 224
+                            },
+                            "point_num": 224,
+                            "point_bol": 193
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 9,
+                              "pos_bol": 193,
+                              "pos_cnum": 231
+                            },
+                            "point_num": 231,
+                            "point_bol": 193
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -624,7 +824,33 @@ let%expect_test _ =
                     {
                       "name": "nat",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 9,
+                              "pos_bol": 193,
+                              "pos_cnum": 233
+                            },
+                            "point_num": 233,
+                            "point_bol": 193
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 9,
+                              "pos_bol": 193,
+                              "pos_cnum": 236
+                            },
+                            "point_num": 236,
+                            "point_bol": 193
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -733,7 +959,33 @@ let%expect_test _ =
                     {
                       "name": "threshold",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 14,
+                              "pos_bol": 305,
+                              "pos_cnum": 332
+                            },
+                            "point_num": 332,
+                            "point_bol": 305
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 14,
+                              "pos_bol": 305,
+                              "pos_cnum": 341
+                            },
+                            "point_num": 341,
+                            "point_bol": 305
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -774,7 +1026,33 @@ let%expect_test _ =
                     {
                       "name": "state_hash",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 13,
+                              "pos_bol": 266,
+                              "pos_cnum": 293
+                            },
+                            "point_num": 293,
+                            "point_bol": 266
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 13,
+                              "pos_bol": 266,
+                              "pos_cnum": 303
+                            },
+                            "point_num": 303,
+                            "point_bol": 266
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -815,7 +1093,33 @@ let%expect_test _ =
                     {
                       "name": "proposal_counters",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 19,
+                              "pos_bol": 508,
+                              "pos_cnum": 535
+                            },
+                            "point_num": 535,
+                            "point_bol": 508
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 19,
+                              "pos_bol": 508,
+                              "pos_cnum": 552
+                            },
+                            "point_num": 552,
+                            "point_bol": 508
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -856,7 +1160,33 @@ let%expect_test _ =
                     {
                       "name": "message_store",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 18,
+                              "pos_bol": 466,
+                              "pos_cnum": 493
+                            },
+                            "point_num": 493,
+                            "point_bol": 466
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 18,
+                              "pos_bol": 466,
+                              "pos_cnum": 506
+                            },
+                            "point_num": 506,
+                            "point_bol": 466
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -897,7 +1227,33 @@ let%expect_test _ =
                     {
                       "name": "max_proposal",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 15,
+                              "pos_bol": 343,
+                              "pos_cnum": 370
+                            },
+                            "point_num": 370,
+                            "point_bol": 343
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 15,
+                              "pos_bol": 343,
+                              "pos_cnum": 382
+                            },
+                            "point_num": 382,
+                            "point_bol": 343
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -938,7 +1294,33 @@ let%expect_test _ =
                     {
                       "name": "max_message_size",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 16,
+                              "pos_bol": 384,
+                              "pos_cnum": 411
+                            },
+                            "point_num": 411,
+                            "point_bol": 384
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 16,
+                              "pos_bol": 384,
+                              "pos_cnum": 427
+                            },
+                            "point_num": 427,
+                            "point_bol": 384
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -979,7 +1361,33 @@ let%expect_test _ =
                     {
                       "name": "addr_set",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 17,
+                              "pos_bol": 429,
+                              "pos_cnum": 456
+                            },
+                            "point_num": 456,
+                            "point_bol": 429
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 17,
+                              "pos_bol": 429,
+                              "pos_cnum": 464
+                            },
+                            "point_num": 464,
+                            "point_bol": 429
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -1090,7 +1498,33 @@ let%expect_test _ =
                   {
                     "name": "bytes",
                     "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "location": [
+                      "File",
+                      {
+                        "start": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 24,
+                            "pos_bol": 572,
+                            "pos_cnum": 588
+                          },
+                          "point_num": 588,
+                          "point_bol": 572
+                        },
+                        "stop": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 24,
+                            "pos_bol": 572,
+                            "pos_cnum": 593
+                          },
+                          "point_num": 593,
+                          "point_bol": 572
+                        }
+                      }
+                    ]
                   }
                 ],
                 "location": [
@@ -1135,7 +1569,33 @@ let%expect_test _ =
                           {
                             "name": "operation",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 24,
+                                    "pos_bol": 572,
+                                    "pos_cnum": 603
+                                  },
+                                  "point_num": 603,
+                                  "point_bol": 572
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 24,
+                                    "pos_bol": 572,
+                                    "pos_cnum": 612
+                                  },
+                                  "point_num": 612,
+                                  "point_bol": 572
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -1267,7 +1727,31 @@ let%expect_test _ =
             {
               "name": "message",
               "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "location": [
+                "File",
+                {
+                  "start": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 25,
+                      "pos_bol": 614,
+                      "pos_cnum": 630
+                    },
+                    "point_num": 630,
+                    "point_bol": 614
+                  },
+                  "stop": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 25,
+                      "pos_bol": 614,
+                      "pos_cnum": 637
+                    },
+                    "point_num": 637,
+                    "point_bol": 614
+                  }
+                }
+              ]
             }
           ],
           "location": [
@@ -1340,7 +1824,31 @@ let%expect_test _ =
             {
               "name": "message",
               "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "location": [
+                "File",
+                {
+                  "start": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 26,
+                      "pos_bol": 638,
+                      "pos_cnum": 658
+                    },
+                    "point_num": 658,
+                    "point_bol": 638
+                  },
+                  "stop": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 26,
+                      "pos_bol": 638,
+                      "pos_cnum": 665
+                    },
+                    "point_num": 665,
+                    "point_bol": 638
+                  }
+                }
+              ]
             }
           ],
           "location": [
@@ -1413,7 +1921,31 @@ let%expect_test _ =
             {
               "name": "unit",
               "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "location": [
+                "File",
+                {
+                  "start": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 27,
+                      "pos_bol": 666,
+                      "pos_cnum": 685
+                    },
+                    "point_num": 685,
+                    "point_bol": 666
+                  },
+                  "stop": {
+                    "byte": {
+                      "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                      "pos_lnum": 27,
+                      "pos_bol": 666,
+                      "pos_cnum": 689
+                    },
+                    "point_num": 689,
+                    "point_bol": 666
+                  }
+                }
+              ]
             }
           ],
           "location": [
@@ -1500,7 +2032,33 @@ let%expect_test _ =
                           {
                             "name": "operation",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 29,
+                                    "pos_bol": 691,
+                                    "pos_cnum": 712
+                                  },
+                                  "point_num": 712,
+                                  "point_bol": 691
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 29,
+                                    "pos_bol": 691,
+                                    "pos_cnum": 721
+                                  },
+                                  "point_num": 721,
+                                  "point_bol": 691
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -1566,7 +2124,33 @@ let%expect_test _ =
                   {
                     "name": "storage",
                     "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "location": [
+                      "File",
+                      {
+                        "start": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 29,
+                            "pos_bol": 691,
+                            "pos_cnum": 725
+                          },
+                          "point_num": 725,
+                          "point_bol": 691
+                        },
+                        "stop": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 29,
+                            "pos_bol": 691,
+                            "pos_cnum": 732
+                          },
+                          "point_num": 732,
+                          "point_bol": 691
+                        }
+                      }
+                    ]
                   }
                 ],
                 "location": [
@@ -1672,7 +2256,33 @@ let%expect_test _ =
                     {
                       "name": "withdraw_pt",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 33,
+                              "pos_bol": 774,
+                              "pos_cnum": 788
+                            },
+                            "point_num": 788,
+                            "point_bol": 774
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 33,
+                              "pos_bol": 774,
+                              "pos_cnum": 799
+                            },
+                            "point_num": 799,
+                            "point_bol": 774
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -1713,7 +2323,33 @@ let%expect_test _ =
                     {
                       "name": "send_pt",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 32,
+                              "pos_bol": 752,
+                              "pos_cnum": 766
+                            },
+                            "point_num": 766,
+                            "point_bol": 752
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 32,
+                              "pos_bol": 752,
+                              "pos_cnum": 773
+                            },
+                            "point_num": 773,
+                            "point_bol": 752
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -1754,7 +2390,33 @@ let%expect_test _ =
                     {
                       "name": "default_pt",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 34,
+                              "pos_bol": 800,
+                              "pos_cnum": 814
+                            },
+                            "point_num": 814,
+                            "point_bol": 800
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 34,
+                              "pos_bol": 800,
+                              "pos_cnum": 824
+                            },
+                            "point_num": 824,
+                            "point_bol": 800
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -1894,7 +2556,33 @@ let%expect_test _ =
                           {
                             "name": "send_pt",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 855
+                                  },
+                                  "point_num": 855,
+                                  "point_bol": 826
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 862
+                                  },
+                                  "point_num": 862,
+                                  "point_bol": 826
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -1931,7 +2619,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 872
+                                  },
+                                  "point_num": 872,
+                                  "point_bol": 826
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 879
+                                  },
+                                  "point_num": 879,
+                                  "point_bol": 826
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -1972,7 +2686,33 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 36,
+                              "pos_bol": 826,
+                              "pos_cnum": 883
+                            },
+                            "point_num": 883,
+                            "point_bol": 826
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 36,
+                              "pos_bol": 826,
+                              "pos_cnum": 889
+                            },
+                            "point_num": 889,
+                            "point_bol": 826
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -2028,7 +2768,33 @@ let%expect_test _ =
                           {
                             "name": "send_pt",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 855
+                                  },
+                                  "point_num": 855,
+                                  "point_bol": 826
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 862
+                                  },
+                                  "point_num": 862,
+                                  "point_bol": 826
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -2065,7 +2831,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 872
+                                  },
+                                  "point_num": 872,
+                                  "point_bol": 826
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 36,
+                                    "pos_bol": 826,
+                                    "pos_cnum": 879
+                                  },
+                                  "point_num": 879,
+                                  "point_bol": 826
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -2107,7 +2899,33 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "location": [
+                      "File",
+                      {
+                        "start": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 36,
+                            "pos_bol": 826,
+                            "pos_cnum": 883
+                          },
+                          "point_num": 883,
+                          "point_bol": 826
+                        },
+                        "stop": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 36,
+                            "pos_bol": 826,
+                            "pos_cnum": 889
+                          },
+                          "point_num": 889,
+                          "point_bol": 826
+                        }
+                      }
+                    ]
                   }
                 ],
                 "location": [
@@ -2196,7 +3014,33 @@ let%expect_test _ =
                                     {
                                       "name": "send_pt",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 36,
+                                              "pos_bol": 826,
+                                              "pos_cnum": 855
+                                            },
+                                            "point_num": 855,
+                                            "point_bol": 826
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 36,
+                                              "pos_bol": 826,
+                                              "pos_cnum": 862
+                                            },
+                                            "point_num": 862,
+                                            "point_bol": 826
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -2270,7 +3114,33 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 36,
+                                              "pos_bol": 826,
+                                              "pos_cnum": 872
+                                            },
+                                            "point_num": 872,
+                                            "point_bol": 826
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 36,
+                                              "pos_bol": 826,
+                                              "pos_cnum": 879
+                                            },
+                                            "point_num": 879,
+                                            "point_bol": 826
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -2742,7 +3612,31 @@ let%expect_test _ =
                                             "name": "message",
                                             "counter": null,
                                             "location": [
-                                              "Virtual", "dummy"
+                                              "File",
+                                              {
+                                                "start": {
+                                                  "byte": {
+                                                    "pos_fname":
+                                                      "../../test/contracts/multisig-v2.ligo",
+                                                    "pos_lnum": 46,
+                                                    "pos_bol": 1125,
+                                                    "pos_cnum": 1143
+                                                  },
+                                                  "point_num": 1143,
+                                                  "point_bol": 1125
+                                                },
+                                                "stop": {
+                                                  "byte": {
+                                                    "pos_fname":
+                                                      "../../test/contracts/multisig-v2.ligo",
+                                                    "pos_lnum": 46,
+                                                    "pos_bol": 1125,
+                                                    "pos_cnum": 1150
+                                                  },
+                                                  "point_num": 1150,
+                                                  "point_bol": 1125
+                                                }
+                                              }
                                             ]
                                           }
                                         ],
@@ -2882,7 +3776,31 @@ let%expect_test _ =
                                                   "name": "bytes",
                                                   "counter": null,
                                                   "location": [
-                                                    "Virtual", "dummy"
+                                                    "File",
+                                                    {
+                                                      "start": {
+                                                        "byte": {
+                                                          "pos_fname":
+                                                            "../../test/contracts/multisig-v2.ligo",
+                                                          "pos_lnum": 47,
+                                                          "pos_bol": 1161,
+                                                          "pos_cnum": 1184
+                                                        },
+                                                        "point_num": 1184,
+                                                        "point_bol": 1161
+                                                      },
+                                                      "stop": {
+                                                        "byte": {
+                                                          "pos_fname":
+                                                            "../../test/contracts/multisig-v2.ligo",
+                                                          "pos_lnum": 47,
+                                                          "pos_bol": 1161,
+                                                          "pos_cnum": 1189
+                                                        },
+                                                        "point_num": 1189,
+                                                        "point_bol": 1161
+                                                      }
+                                                    }
                                                   ]
                                                 }
                                               ],
@@ -3586,8 +4504,41 @@ let%expect_test _ =
                                                                 "addr_set",
                                                               "counter": null,
                                                               "location": [
-                                                                "Virtual",
-                                                                "dummy"
+                                                                "File",
+                                                                {
+                                                                  "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    55,
+                                                                    "pos_bol":
+                                                                    1439,
+                                                                    "pos_cnum":
+                                                                    1459
+                                                                    },
+                                                                    "point_num":
+                                                                    1459,
+                                                                    "point_bol":
+                                                                    1439
+                                                                  },
+                                                                  "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    55,
+                                                                    "pos_bol":
+                                                                    1439,
+                                                                    "pos_cnum":
+                                                                    1467
+                                                                    },
+                                                                    "point_num":
+                                                                    1467,
+                                                                    "point_bol":
+                                                                    1439
+                                                                  }
+                                                                }
                                                               ]
                                                             }
                                                           ],
@@ -5873,8 +6824,41 @@ let%expect_test _ =
                                                                     "counter":
                                                                     null,
                                                                     "location": [
-                                                                    "Virtual",
-                                                                    "dummy"
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    80,
+                                                                    "pos_bol":
+                                                                    2308,
+                                                                    "pos_cnum":
+                                                                    2342
+                                                                    },
+                                                                    "point_num":
+                                                                    2342,
+                                                                    "point_bol":
+                                                                    2308
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    80,
+                                                                    "pos_bol":
+                                                                    2308,
+                                                                    "pos_cnum":
+                                                                    2345
+                                                                    },
+                                                                    "point_num":
+                                                                    2345,
+                                                                    "point_bol":
+                                                                    2308
+                                                                    }
+                                                                    }
                                                                     ]
                                                                     }
                                                                     ],
@@ -6698,8 +7682,41 @@ let%expect_test _ =
                                                                     "counter":
                                                                     null,
                                                                     "location": [
-                                                                    "Virtual",
-                                                                    "dummy"
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    89,
+                                                                    "pos_bol":
+                                                                    2552,
+                                                                    "pos_cnum":
+                                                                    2576
+                                                                    },
+                                                                    "point_num":
+                                                                    2576,
+                                                                    "point_bol":
+                                                                    2552
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    89,
+                                                                    "pos_bol":
+                                                                    2552,
+                                                                    "pos_cnum":
+                                                                    2585
+                                                                    },
+                                                                    "point_num":
+                                                                    2585,
+                                                                    "point_bol":
+                                                                    2552
+                                                                    }
+                                                                    }
                                                                     ]
                                                                     }
                                                                     ],
@@ -10172,7 +11189,33 @@ let%expect_test _ =
                           {
                             "name": "withdraw_pt",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3170
+                                  },
+                                  "point_num": 3170,
+                                  "point_bol": 3137
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3181
+                                  },
+                                  "point_num": 3181,
+                                  "point_bol": 3137
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -10209,7 +11252,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3191
+                                  },
+                                  "point_num": 3191,
+                                  "point_bol": 3137
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3198
+                                  },
+                                  "point_num": 3198,
+                                  "point_bol": 3137
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -10250,7 +11319,33 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 105,
+                              "pos_bol": 3137,
+                              "pos_cnum": 3202
+                            },
+                            "point_num": 3202,
+                            "point_bol": 3137
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 105,
+                              "pos_bol": 3137,
+                              "pos_cnum": 3208
+                            },
+                            "point_num": 3208,
+                            "point_bol": 3137
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -10306,7 +11401,33 @@ let%expect_test _ =
                           {
                             "name": "withdraw_pt",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3170
+                                  },
+                                  "point_num": 3170,
+                                  "point_bol": 3137
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3181
+                                  },
+                                  "point_num": 3181,
+                                  "point_bol": 3137
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -10343,7 +11464,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3191
+                                  },
+                                  "point_num": 3191,
+                                  "point_bol": 3137
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 105,
+                                    "pos_bol": 3137,
+                                    "pos_cnum": 3198
+                                  },
+                                  "point_num": 3198,
+                                  "point_bol": 3137
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -10385,7 +11532,33 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "location": [
+                      "File",
+                      {
+                        "start": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 105,
+                            "pos_bol": 3137,
+                            "pos_cnum": 3202
+                          },
+                          "point_num": 3202,
+                          "point_bol": 3137
+                        },
+                        "stop": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 105,
+                            "pos_bol": 3137,
+                            "pos_cnum": 3208
+                          },
+                          "point_num": 3208,
+                          "point_bol": 3137
+                        }
+                      }
+                    ]
                   }
                 ],
                 "location": [
@@ -10474,7 +11647,33 @@ let%expect_test _ =
                                     {
                                       "name": "withdraw_pt",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 105,
+                                              "pos_bol": 3137,
+                                              "pos_cnum": 3170
+                                            },
+                                            "point_num": 3170,
+                                            "point_bol": 3137
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 105,
+                                              "pos_bol": 3137,
+                                              "pos_cnum": 3181
+                                            },
+                                            "point_num": 3181,
+                                            "point_bol": 3137
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -10548,7 +11747,33 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 105,
+                                              "pos_bol": 3137,
+                                              "pos_cnum": 3191
+                                            },
+                                            "point_num": 3191,
+                                            "point_bol": 3137
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 105,
+                                              "pos_bol": 3137,
+                                              "pos_cnum": 3198
+                                            },
+                                            "point_num": 3198,
+                                            "point_bol": 3137
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -10626,7 +11851,33 @@ let%expect_test _ =
                                     {
                                       "name": "message",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 107,
+                                              "pos_bol": 3222,
+                                              "pos_cnum": 3240
+                                            },
+                                            "point_num": 3240,
+                                            "point_bol": 3222
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 107,
+                                              "pos_bol": 3222,
+                                              "pos_cnum": 3247
+                                            },
+                                            "point_num": 3247,
+                                            "point_bol": 3222
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -10765,7 +12016,31 @@ let%expect_test _ =
                                             "name": "bytes",
                                             "counter": null,
                                             "location": [
-                                              "Virtual", "dummy"
+                                              "File",
+                                              {
+                                                "start": {
+                                                  "byte": {
+                                                    "pos_fname":
+                                                      "../../test/contracts/multisig-v2.ligo",
+                                                    "pos_lnum": 108,
+                                                    "pos_bol": 3258,
+                                                    "pos_cnum": 3281
+                                                  },
+                                                  "point_num": 3281,
+                                                  "point_bol": 3258
+                                                },
+                                                "stop": {
+                                                  "byte": {
+                                                    "pos_fname":
+                                                      "../../test/contracts/multisig-v2.ligo",
+                                                    "pos_lnum": 108,
+                                                    "pos_bol": 3258,
+                                                    "pos_cnum": 3286
+                                                  },
+                                                  "point_num": 3286,
+                                                  "point_bol": 3258
+                                                }
+                                              }
                                             ]
                                           }
                                         ],
@@ -11246,8 +12521,41 @@ let%expect_test _ =
                                                                   "counter":
                                                                     null,
                                                                   "location": [
-                                                                    "Virtual",
-                                                                    "dummy"
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    114,
+                                                                    "pos_bol":
+                                                                    3426,
+                                                                    "pos_cnum":
+                                                                    3452
+                                                                    },
+                                                                    "point_num":
+                                                                    3452,
+                                                                    "point_bol":
+                                                                    3426
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    114,
+                                                                    "pos_bol":
+                                                                    3426,
+                                                                    "pos_cnum":
+                                                                    3460
+                                                                    },
+                                                                    "point_num":
+                                                                    3460,
+                                                                    "point_bol":
+                                                                    3426
+                                                                    }
+                                                                    }
                                                                   ]
                                                                 }
                                                               ],
@@ -13536,8 +14844,41 @@ let%expect_test _ =
                                                                     "counter":
                                                                     null,
                                                                     "location": [
-                                                                    "Virtual",
-                                                                    "dummy"
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    133,
+                                                                    "pos_bol":
+                                                                    4180,
+                                                                    "pos_cnum":
+                                                                    4203
+                                                                    },
+                                                                    "point_num":
+                                                                    4203,
+                                                                    "point_bol":
+                                                                    4180
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    133,
+                                                                    "pos_bol":
+                                                                    4180,
+                                                                    "pos_cnum":
+                                                                    4212
+                                                                    },
+                                                                    "point_num":
+                                                                    4212,
+                                                                    "point_bol":
+                                                                    4180
+                                                                    }
+                                                                    }
                                                                     ]
                                                                   }
                                                                 ],
@@ -13922,7 +15263,33 @@ let%expect_test _ =
                           {
                             "name": "default_pt",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4248
+                                  },
+                                  "point_num": 4248,
+                                  "point_bol": 4220
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4258
+                                  },
+                                  "point_num": 4258,
+                                  "point_bol": 4220
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -13959,7 +15326,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4270
+                                  },
+                                  "point_num": 4270,
+                                  "point_bol": 4220
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4277
+                                  },
+                                  "point_num": 4277,
+                                  "point_bol": 4220
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -14000,7 +15393,33 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 135,
+                              "pos_bol": 4220,
+                              "pos_cnum": 4281
+                            },
+                            "point_num": 4281,
+                            "point_bol": 4220
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 135,
+                              "pos_bol": 4220,
+                              "pos_cnum": 4287
+                            },
+                            "point_num": 4287,
+                            "point_bol": 4220
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -14043,7 +15462,7 @@ let%expect_test _ =
               "binder": {
                 "var": {
                   "name": "parameters",
-                  "counter": 4,
+                  "counter": 3,
                   "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
@@ -14056,7 +15475,33 @@ let%expect_test _ =
                           {
                             "name": "default_pt",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4248
+                                  },
+                                  "point_num": 4248,
+                                  "point_bol": 4220
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4258
+                                  },
+                                  "point_num": 4258,
+                                  "point_bol": 4220
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -14093,7 +15538,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4270
+                                  },
+                                  "point_num": 4270,
+                                  "point_bol": 4220
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 135,
+                                    "pos_bol": 4220,
+                                    "pos_cnum": 4277
+                                  },
+                                  "point_num": 4277,
+                                  "point_bol": 4220
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -14135,7 +15606,33 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "location": [
+                      "File",
+                      {
+                        "start": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 135,
+                            "pos_bol": 4220,
+                            "pos_cnum": 4281
+                          },
+                          "point_num": 4281,
+                          "point_bol": 4220
+                        },
+                        "stop": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 135,
+                            "pos_bol": 4220,
+                            "pos_cnum": 4287
+                          },
+                          "point_num": 4287,
+                          "point_bol": 4220
+                        }
+                      }
+                    ]
                   }
                 ],
                 "location": [
@@ -14173,7 +15670,7 @@ let%expect_test _ =
                         "E_variable",
                         {
                           "name": "parameters",
-                          "counter": 4,
+                          "counter": 3,
                           "location": [ "Virtual", "dummy" ]
                         }
                       ],
@@ -14188,8 +15685,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "name": "gen",
-                                  "counter": 3,
+                                  "name": "_",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -14224,7 +15721,33 @@ let%expect_test _ =
                                     {
                                       "name": "default_pt",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 135,
+                                              "pos_bol": 4220,
+                                              "pos_cnum": 4248
+                                            },
+                                            "point_num": 4248,
+                                            "point_bol": 4220
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 135,
+                                              "pos_bol": 4220,
+                                              "pos_cnum": 4258
+                                            },
+                                            "point_num": 4258,
+                                            "point_bol": 4220
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -14298,7 +15821,33 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 135,
+                                              "pos_bol": 4220,
+                                              "pos_cnum": 4270
+                                            },
+                                            "point_num": 4270,
+                                            "point_bol": 4220
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 135,
+                                              "pos_bol": 4220,
+                                              "pos_cnum": 4277
+                                            },
+                                            "point_num": 4277,
+                                            "point_bol": 4220
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -14391,7 +15940,31 @@ let%expect_test _ =
                                                   "name": "operation",
                                                   "counter": null,
                                                   "location": [
-                                                    "Virtual", "dummy"
+                                                    "File",
+                                                    {
+                                                      "start": {
+                                                        "byte": {
+                                                          "pos_fname":
+                                                            "../../test/contracts/multisig-v2.ligo",
+                                                          "pos_lnum": 136,
+                                                          "pos_bol": 4291,
+                                                          "pos_cnum": 4309
+                                                        },
+                                                        "point_num": 4309,
+                                                        "point_bol": 4291
+                                                      },
+                                                      "stop": {
+                                                        "byte": {
+                                                          "pos_fname":
+                                                            "../../test/contracts/multisig-v2.ligo",
+                                                          "pos_lnum": 136,
+                                                          "pos_bol": 4291,
+                                                          "pos_cnum": 4318
+                                                        },
+                                                        "point_num": 4318,
+                                                        "point_bol": 4291
+                                                      }
+                                                    }
                                                   ]
                                                 }
                                               ],
@@ -14688,7 +16261,33 @@ let%expect_test _ =
                           {
                             "name": "parameter",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4355
+                                  },
+                                  "point_num": 4355,
+                                  "point_bol": 4326
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4364
+                                  },
+                                  "point_num": 4364,
+                                  "point_bol": 4326
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -14725,7 +16324,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4376
+                                  },
+                                  "point_num": 4376,
+                                  "point_bol": 4326
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4383
+                                  },
+                                  "point_num": 4383,
+                                  "point_bol": 4326
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -14766,7 +16391,33 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 138,
+                              "pos_bol": 4326,
+                              "pos_cnum": 4387
+                            },
+                            "point_num": 4387,
+                            "point_bol": 4326
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 138,
+                              "pos_bol": 4326,
+                              "pos_cnum": 4393
+                            },
+                            "point_num": 4393,
+                            "point_bol": 4326
+                          }
+                        }
+                      ]
                     }
                   ],
                   "location": [
@@ -14809,7 +16460,7 @@ let%expect_test _ =
               "binder": {
                 "var": {
                   "name": "parameters",
-                  "counter": 5,
+                  "counter": 4,
                   "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
@@ -14822,7 +16473,33 @@ let%expect_test _ =
                           {
                             "name": "parameter",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4355
+                                  },
+                                  "point_num": 4355,
+                                  "point_bol": 4326
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4364
+                                  },
+                                  "point_num": 4364,
+                                  "point_bol": 4326
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -14859,7 +16536,33 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "location": [
+                              "File",
+                              {
+                                "start": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4376
+                                  },
+                                  "point_num": 4376,
+                                  "point_bol": 4326
+                                },
+                                "stop": {
+                                  "byte": {
+                                    "pos_fname":
+                                      "../../test/contracts/multisig-v2.ligo",
+                                    "pos_lnum": 138,
+                                    "pos_bol": 4326,
+                                    "pos_cnum": 4383
+                                  },
+                                  "point_num": 4383,
+                                  "point_bol": 4326
+                                }
+                              }
+                            ]
                           }
                         ],
                         "location": [
@@ -14901,7 +16604,33 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "location": [
+                      "File",
+                      {
+                        "start": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 138,
+                            "pos_bol": 4326,
+                            "pos_cnum": 4387
+                          },
+                          "point_num": 4387,
+                          "point_bol": 4326
+                        },
+                        "stop": {
+                          "byte": {
+                            "pos_fname":
+                              "../../test/contracts/multisig-v2.ligo",
+                            "pos_lnum": 138,
+                            "pos_bol": 4326,
+                            "pos_cnum": 4393
+                          },
+                          "point_num": 4393,
+                          "point_bol": 4326
+                        }
+                      }
+                    ]
                   }
                 ],
                 "location": [
@@ -14939,7 +16668,7 @@ let%expect_test _ =
                         "E_variable",
                         {
                           "name": "parameters",
-                          "counter": 5,
+                          "counter": 4,
                           "location": [ "Virtual", "dummy" ]
                         }
                       ],
@@ -14990,7 +16719,33 @@ let%expect_test _ =
                                     {
                                       "name": "parameter",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 138,
+                                              "pos_bol": 4326,
+                                              "pos_cnum": 4355
+                                            },
+                                            "point_num": 4355,
+                                            "point_bol": 4326
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 138,
+                                              "pos_bol": 4326,
+                                              "pos_cnum": 4364
+                                            },
+                                            "point_num": 4364,
+                                            "point_bol": 4326
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [
@@ -15064,7 +16819,33 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "location": [
+                                        "File",
+                                        {
+                                          "start": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 138,
+                                              "pos_bol": 4326,
+                                              "pos_cnum": 4376
+                                            },
+                                            "point_num": 4376,
+                                            "point_bol": 4326
+                                          },
+                                          "stop": {
+                                            "byte": {
+                                              "pos_fname":
+                                                "../../test/contracts/multisig-v2.ligo",
+                                              "pos_lnum": 138,
+                                              "pos_bol": 4326,
+                                              "pos_cnum": 4383
+                                            },
+                                            "point_num": 4383,
+                                            "point_bol": 4326
+                                          }
+                                        }
+                                      ]
                                     }
                                   ],
                                   "location": [

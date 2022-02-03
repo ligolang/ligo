@@ -523,7 +523,7 @@ let%expect_test _ =
 
     type ppp is ppi * ppi
 
-    function main (const gen__gen1 : unit) is
+    function main (const _ : unit) is
     block {
       const a : ppp
       = (record [x = (0, 1); y = (10, 11)],
@@ -531,7 +531,7 @@ let%expect_test _ =
       a.0.x.0 := 2
     } with a.0.x.0
 
-    function asymetric_tuple_access (const gen__gen2 : unit) is
+    function asymetric_tuple_access (const _ : unit) is
     block {
       const tuple : int * int * int * int = (0, (1, (2, 3)))
     } with (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1)
@@ -557,14 +557,14 @@ let%expect_test _ =
     type ppp = ppi * ppi
 
     let main : unit -> int =
-      (fun gen__gen1 : unit ->
+      (fun _ : unit ->
          let [@var] a : ppp =
            {x = 0, 1; y = 10, 11}, {x = 100, 101; y = 110, 111} in
          let a = {a with {0.x.0 = 2}} in
          a.0.x.0)
 
     let asymetric_tuple_access : unit -> int =
-      (fun gen__gen2 : unit ->
+      (fun _ : unit ->
          let [@var] tuple : int * int * int * int = 0, 1, 2, 3 in
          (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1))
 
@@ -586,7 +586,7 @@ type ppi = {x: pii, y: pii };
 type ppp = (ppi, ppi);
 
 let main: unit => int =
-  ((gen__gen1: unit): int =>
+  ((_: unit): int =>
      let [@var] a: ppp =
        {
           x: 0, 1,
@@ -596,7 +596,7 @@ let main: unit => int =
      a[0].x[0]);
 
 let asymetric_tuple_access: unit => int =
-  ((gen__gen2: unit): int =>
+  ((_: unit): int =>
      let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
      ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
 
@@ -781,45 +781,45 @@ function main (const gen__parameters1 : parameter * storage) is
 function foobar (const i : int) is
 block {
   const p : parameter = (Zero (42n));
-  const gen__env12 = (i);
-  const gen__env12
+  const gen__env8 = (i);
+  const gen__env8
   = if (i > 0)
     then
       block {
         const i = (i + 1);
-        gen__env12.0 := i;
-        const gen__env10 = (i);
-        const gen__env10
+        gen__env8.0 := i;
+        const gen__env6 = (i);
+        const gen__env6
         = if (i > 10)
           then
             block {
               const i = 20;
-              gen__env10.0 := i;
+              gen__env6.0 := i;
               failwith ("who knows");
               const i = 30;
-              gen__env10.0 := i;
+              gen__env6.0 := i;
               skip
-            } with gen__env10
+            } with gen__env6
           else
             block {
               skip
-            } with gen__env10;
-        const i = gen__env10.0;
-        gen__env12.0 := i;
+            } with gen__env6;
+        const i = gen__env6.0;
+        gen__env8.0 := i;
         skip
-      } with gen__env12
+      } with gen__env8
     else
       block {
         case p of [
-          Zero (gen__gen4) -> failwith (42n)
-        | Pos (gen__gen5) -> skip
+          Zero (_) -> failwith (42n)
+        | Pos (_) -> skip
         ]
-      } with gen__env12;
-  const i = gen__env12.0
+      } with gen__env8;
+  const i = gen__env8.0
 } with
     case p of [
-      Zero (gen__gen2) -> i
-    | Pos (gen__gen3) -> (failwith ("waaaa") : int)
+      Zero (_) -> i
+    | Pos (_) -> (failwith ("waaaa") : int)
     ]
 
 function failer (const p : int) is
@@ -850,49 +850,49 @@ block {
     let foobar : int -> int =
       (fun [@var] i : int ->
          let [@var] p : parameter = (Zero 42n) in
-         let gen__env12 = i in
-         let gen__env12 =
+         let gen__env8 = i in
+         let gen__env8 =
            if (i > 0)
            then
              let i = (i + 1) in
-             let gen__env12 = {gen__env12 with {0 = i}} in
-             let gen__env10 = i in
-             let gen__env10 =
+             let gen__env8 = {gen__env8 with {0 = i}} in
+             let gen__env6 = i in
+             let gen__env6 =
                if (i > 10)
                then
                  let i = 20 in
-                 let gen__env10 = {gen__env10 with {0 = i}} in
+                 let gen__env6 = {gen__env6 with {0 = i}} in
                  begin
                    (failwith ("who knows"));
                    let i = 30 in
-                   let gen__env10 = {gen__env10 with {0 = i}} in
+                   let gen__env6 = {gen__env6 with {0 = i}} in
                    begin
                      ();
-                     gen__env10
+                     gen__env6
                    end
                  end
                else
                  begin
                    ();
-                   gen__env10
+                   gen__env6
                  end in
-             let i = gen__env10.0 in
-             let gen__env12 = {gen__env12 with {0 = i}} in
+             let i = gen__env6.0 in
+             let gen__env8 = {gen__env8 with {0 = i}} in
              begin
                ();
-               gen__env12
+               gen__env8
              end
            else
              begin
                match p with
-                 Zero gen__gen4 -> (failwith (42n))
-               | Pos gen__gen5 -> ();
-               gen__env12
+                 Zero _ -> (failwith (42n))
+               | Pos _ -> ();
+               gen__env8
              end in
-         let i = gen__env12.0 in
+         let i = gen__env8.0 in
          match p with
-           Zero gen__gen2 -> i
-         | Pos gen__gen3 -> ((failwith ("waaaa")) : int))
+           Zero _ -> i
+         | Pos _ -> ((failwith ("waaaa")) : int))
 
     let failer : int -> int =
       (fun p : int ->
@@ -936,54 +936,54 @@ let main: (parameter, storage) => return =
 let foobar: int => int =
   (([@var] i: int): int =>
      let [@var] p: parameter = (Zero 42n);
-     let gen__env12 = i;
-     let gen__env12 =
+     let gen__env8 = i;
+     let gen__env8 =
        if(((i) > (0))) {
 
          let i = ((i) + (1));
-         let gen__env12 = {...gen__env12, {0: i }};
-         let gen__env10 = i;
-         let gen__env10 =
+         let gen__env8 = {...gen__env8, {0: i }};
+         let gen__env6 = i;
+         let gen__env6 =
            if(((i) > (10))) {
 
              let i = 20;
-             let gen__env10 = {...gen__env10, {0: i }};
+             let gen__env6 = {...gen__env6, {0: i }};
              {
                (failwith(("who knows")));
                let i = 30;
-               let gen__env10 = {...gen__env10, {0: i }};
+               let gen__env6 = {...gen__env6, {0: i }};
                {
                  ();
-                 gen__env10
+                 gen__env6
                }
              }
            } else {
 
              {
                ();
-               gen__env10
+               gen__env6
              }
              };
-         let i = gen__env10[0];
-         let gen__env12 = {...gen__env12, {0: i }};
+         let i = gen__env6[0];
+         let gen__env8 = {...gen__env8, {0: i }};
          {
            ();
-           gen__env12
+           gen__env8
          }
        } else {
 
          {
            switch  p {
-           | Zero gen__gen4 => (failwith((42n)))
-           | Pos gen__gen5 => ()
+           | Zero _ => (failwith((42n)))
+           | Pos _ => ()
            };
-           gen__env12
+           gen__env8
          }
          };
-     let i = gen__env12[0];
+     let i = gen__env8[0];
      switch  p {
-     | Zero gen__gen2 => i
-     | Pos gen__gen3 => ((failwith(("waaaa"))) : int)
+     | Zero _ => i
+     | Pos _ => ((failwith(("waaaa"))) : int)
      });
 
 let failer: int => int =

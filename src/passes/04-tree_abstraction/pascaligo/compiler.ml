@@ -25,7 +25,7 @@ open Predefined.Tree_abstraction.Pascaligo
 
 let r_split = Location.r_split
 
-let mk_var ~loc var = if String.equal var "_" then Var.fresh ~loc () else Var.of_input_var ~loc var
+let mk_var ~loc var = Var.of_input_var ~loc var
 let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var
 
 let compile_attributes : CST.attributes -> AST.attributes = fun attributes ->
@@ -152,7 +152,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression =
     self type_expr
   | TVar var ->
     let (name,loc) = r_split var in
-    let v = Var.of_input_var name in
+    let v = mk_var ~loc name in
     return @@ t_variable ~loc v
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te

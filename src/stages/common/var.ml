@@ -46,7 +46,7 @@ let internal_get_name_and_counter var = (var.name, var.counter)
 let get_location var = var.location
 
 let add_prefix str var = {var with name=str^var.name}
-let is_generalizable var = String.equal (String.sub (var.name) ~pos:0 ~len:1) "_"
+let is_generalizable var = String.is_prefix var.name ~prefix:"_"
 let is_generated var = Option.is_some var.counter
 
 let is_name var name = String.equal var.name name
