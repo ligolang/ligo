@@ -1,0 +1,3 @@
+{ parameter unit ;
+  storage int ;
+  code { CDR ; PUSH int 42 ; ADD ; NIL operation ; PAIR } }

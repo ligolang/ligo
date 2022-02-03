@@ -1,0 +1,141 @@
+cabal-version: 2.0
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           ligo-debugger
+version:        0.0.0
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+
+library
+  exposed-modules:
+      Language.LIGO.Debugger.Cli
+      Language.LIGO.Debugger.Handlers
+      Language.LIGO.Debugger.Michelson
+      Language.LIGO.Debugger.Types
+      Prelude
+      Util
+  other-modules:
+      Paths_ligo_debugger
+  autogen-modules:
+      Paths_ligo_debugger
+  hs-source-dirs:
+      src/
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      StrictData
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages
+  build-depends:
+      aeson
+    , base-noprelude
+    , containers
+    , data-default
+    , directory
+    , filepath
+    , fmt
+    , morley
+    , morley-debugger
+    , mtl
+    , stm
+    , text
+    , universum
+    , vector
+    , with-utf8
+  default-language: Haskell2010
+
+executable ligo-debugger
+  main-is: Main.hs
+  other-modules:
+      Paths_ligo_debugger
+  autogen-modules:
+      Paths_ligo_debugger
+  hs-source-dirs:
+      app/ligo-debugger
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      OverloadedStrings
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      StrictData
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  build-depends:
+      base-noprelude
+    , ligo-debugger
+    , morley
+    , morley-debugger
+    , universum
+  default-language: Haskell2010
