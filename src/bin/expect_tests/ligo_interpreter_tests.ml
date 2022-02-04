@@ -462,6 +462,14 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (1801n , 2125n , 2125n). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
+  [%expect {|
+    0mutez
+    123mutez
+    Everything at the top-level was executed.
+    - test_addresses exited with value [tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx]. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
