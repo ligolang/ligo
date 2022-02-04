@@ -16,12 +16,12 @@ let poly tv forall = make_sc_poly tv forall
 let access_label tv ~record_type label = make_sc_access_label tv ~record_type label
 
 module Test_vars = struct
-  let tva : type_variable = Var.of_name "a"
-  let tvb : type_variable = Var.of_name "b"
-  let tvc : type_variable = Var.of_name "c"
-  let tvd : type_variable = Var.of_name "d"
-  let tve : type_variable = Var.of_name "e"
-  let tvf : type_variable = Var.of_name "f"
+  let tva : type_variable = Var.of_input_var "a"
+  let tvb : type_variable = Var.of_input_var "b"
+  let tvc : type_variable = Var.of_input_var "c"
+  let tvd : type_variable = Var.of_input_var "d"
+  let tve : type_variable = Var.of_input_var "e"
+  let tvf : type_variable = Var.of_input_var "f"
   let labelfoo : label = Label "foo"
   let labelbar : label = Label "bar"
 end

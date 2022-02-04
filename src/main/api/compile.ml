@@ -41,6 +41,7 @@ let parameter source_file entry_point expression syntax protocol_version amount 
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
+        let entry_point = Stage_common.Var.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         let options = Compiler_options.make ~protocol_version ?project_root () in
         let app_typed_prg, typed_prg =
@@ -65,6 +66,7 @@ let storage source_file entry_point expression syntax protocol_version amount ba
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
+        let entry_point = Stage_common.Var.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         let options = Compiler_options.make ~protocol_version ?project_root () in
         let app_typed_prg, typed_prg =

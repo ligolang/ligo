@@ -3,7 +3,7 @@ module Trace = Simple_utils.Trace
 open Main_errors
 open Test_helpers
 
-let get_program = get_program "./contracts/time-lock.ligo" (Contract "main")
+let get_program = get_program "./contracts/time-lock.ligo" (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/time-lock.ligo" ()
@@ -12,7 +12,7 @@ open Ast_imperative
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
+let empty_message = e_lambda_ez (Var.of_input_var "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 

@@ -1,5 +1,4 @@
 module Location    = Simple_utils.Location
-module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module S = Ast_core
@@ -51,15 +50,15 @@ let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type__na
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = Location.wrap @@ Var.fresh () in
-  let type_ = t_constant name [t_variable ~type_meta:(Ast_core.t_variable ty_binder.wrap_content ()) ty_binder.wrap_content ()] in
+  let ty_binder = Var.fresh ~name:"_a" () in
+  let type_ = t_constant name [t_variable ~type_meta:(Ast_core.t_variable ty_binder ()) ty_binder ()] in
   t_abstraction { ty_binder ; kind ; type_ } ?loc ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Location.wrap @@ Var.fresh () in
-  let ty_binder_r = Location.wrap @@ Var.fresh () in
+  let ty_binder_l = Var.fresh ~name:"_l" () in
+  let ty_binder_r = Var.fresh ~name:"_r" () in
   let type_ = t_constant name
-    [ t_variable ty_binder_l.wrap_content () ;
-      t_variable ty_binder_r.wrap_content () ]
+    [ t_variable ty_binder_l () ;
+      t_variable ty_binder_r () ]
   in
   t_abstraction ?loc { ty_binder = ty_binder_l ; kind = kind_l ; type_ = t_abstraction ?loc { ty_binder = ty_binder_r ; kind = kind_r ; type_ } () } ()
 let t_for_all ty_binder kind type_ = t_for_all { ty_binder ; kind ; type_ } ()
@@ -318,13 +317,11 @@ let get_a_bool (t:expression) =
       Some false
   | _ -> None
 
-let get_declaration_by_name : program -> string -> declaration option = fun p name ->
+let get_declaration_by_name : program -> expression_variable -> declaration option = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { name = name'; binder = _ ; expr = _ ; attr = _ } ->
-      (match name' with
-       | None -> false
-       | Some name' -> String.equal name' name)
+    | Declaration_constant { binder; expr = _ ; attr = _ } ->
+        Var.equal binder name
     | Declaration_type   _
     | Declaration_module _
     | Module_alias       _ -> false

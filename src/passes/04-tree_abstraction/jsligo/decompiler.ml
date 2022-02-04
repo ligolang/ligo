@@ -6,7 +6,6 @@ module AST = Ast_imperative
 module CST = Cst.Jsligo
 module Predefined = Predefined.Tree_abstraction.Jsligo
 module Region     = Simple_utils.Region
-module Var        = Simple_utils.Var
 module Location   = Simple_utils.Location
 module List       = Simple_utils.List
 module Pair       = Simple_utils.Pair
@@ -73,8 +72,8 @@ let filter_private (attributes: CST.attributes) =
 
 (* Decompiler *)
 
-let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
-  let var = Format.asprintf "%a" Var.pp var in
+let decompile_variable : AST.Var.t -> CST.variable = fun var ->
+  let var = Format.asprintf "%a" AST.Var.pp var in
   if String.contains var '#' then
     let var = String.split ~on:'#' var in
     wrap @@ "gen__" ^ (String.concat var)
@@ -84,16 +83,9 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
     else
       wrap @@ var
 
-let decompile_variable2 : type a. a Var.t -> CST.var_pattern Region.reg = fun var ->
-  let var = Format.asprintf "%a" Var.pp var in
-  if String.contains var '#' then
-    let var = String.split ~on:'#' var in
-    wrap @@ CST.{variable = wrap ("gen__" ^ (String.concat var)); attributes = []}
-  else
-    if String.length var > 4 && String.equal "gen__" @@ String.sub var ~pos:0 ~len:5 then
-      wrap @@ CST.{variable = wrap ("user__" ^ var); attributes = []}
-    else
-      wrap @@ CST.{variable = wrap var; attributes = []}
+let decompile_variable2 : AST.Var.t -> CST.var_pattern Region.reg = fun var ->
+  let variable = decompile_variable var in
+  wrap @@ CST.{variable; attributes = []}
 
 let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   let return te = te in
@@ -155,7 +147,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
     let var = decompile_variable variable in
     return @@ CST.TVar var
   | T_app {type_operator; arguments} ->
-    let type_operator = wrap @@ Var.to_name type_operator in
+    let type_operator = decompile_variable type_operator in
     let lst = List.map ~f:decompile_type_expr arguments in
     let lst = list_to_nsepseq lst in
     let lst = wrap @@ chevrons lst in
@@ -163,7 +155,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   | T_annoted _annot ->
     failwith "let's work on it later"
   | T_module_accessor {module_name;element} ->
-    let module_name = wrap module_name in
+    let module_name = decompile_variable module_name in
     let field  = decompile_type_expr element in
     return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
   | T_singleton x -> (
@@ -178,7 +170,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
 
 let get_e_variable : AST.expression -> _ = fun expr ->
   match expr.expression_content with
-    E_variable var -> var.wrap_content
+    E_variable var -> var
   | _ -> failwith @@
     Format.asprintf "%a should be a variable expression"
     AST.PP.expression expr
@@ -245,7 +237,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   let return_expr_with_par expr = return_expr @@ [CST.EPar (wrap @@ par @@ expr)] in
   match expr.expression_content with
     E_variable name ->
-    let var = decompile_variable name.wrap_content in
+    let var = decompile_variable name in
     return_expr @@ [Expr (CST.EVar (var))]
   | E_constant {cons_name; arguments} ->
     (match arguments with
@@ -355,7 +347,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_let_in {let_binder={var;ascr;attributes=_};rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
     let attributes = filter_private attributes in
-    let var = CST.PVar (decompile_variable2 @@ var.wrap_content) in
+    let var = CST.PVar (decompile_variable2 var) in
     let binders = var in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) ascr in
     let expr = decompile_expression_in rhs in
@@ -374,13 +366,13 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let body = decompile_expression_in let_result in
     return_expr @@ Statement const :: body
   | E_type_in {type_binder;rhs;let_result} ->
-    let name = wrap @@ Var.to_name type_binder in
+    let name = decompile_variable type_binder in
     let type_expr = decompile_type_expr rhs in
     let type_decl : CST.type_decl = {kwd_type=ghost;name;params=None;eq=ghost;type_expr;attributes=[]} in
     let body = decompile_expression_in let_result in
     return_expr @@ Statement (CST.SType (wrap type_decl)) :: body
   | E_mod_in {module_binder;rhs;let_result} ->
-    let name = wrap module_binder in
+    let name = decompile_variable module_binder in
     let module_ = decompile_module rhs in
     let toplevel_to_statement = function
         CST.TopLevel (s, _) -> s
@@ -393,8 +385,8 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let attributes = [] in
     [Statement (CST.SNamespace (wrap (ghost, name, statements, attributes)))] @ body
   | E_mod_alias {alias; binders; result} ->
-    let alias   = wrap alias in
-    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let alias   = decompile_variable alias in
+    let binders = nelist_to_npseq @@ List.Ne.map decompile_variable binders in
     let mod_alias : CST.import = {kwd_import=ghost;alias;equal=ghost;module_path=binders} in
     let body = decompile_expression_in result in
     return_expr @@ [Statement (CST.SImport (wrap mod_alias))] @ body
@@ -461,9 +453,9 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let ty   = decompile_type_expr type_annotation in
     return_expr @@ [Expr (CST.EAnnot (wrap @@ (expr,ghost,ty)))]
   | E_module_accessor {module_name;element} ->
-    let module_name = wrap module_name in
-    let field  = decompile_expression_in element in
-    let field = e_hd field in
+    let module_name = decompile_variable module_name in
+    let field       = decompile_expression_in element in
+    let field       = e_hd field in
     return_expr @@ [Expr (CST.EModA (wrap CST.{module_name;selector=ghost;field}))]
   | E_sequence {expr1;expr2} ->
     let expr1 = decompile_expression_in expr1 in
@@ -538,13 +530,13 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
   | E_assign {variable;access_path;expression} when List.length access_path > 0 ->
     failwith "Assignments with access paths are not supported by JsLIGO."
   | E_assign {variable;expression;_} ->
-    let name = Var.to_name variable.wrap_content in
-    let evar = CST.EVar (wrap name) in
+    let name = decompile_variable variable in
+    let evar = CST.EVar name in
     let rhs = decompile_expression_in expression in
     return_expr @@ [Expr (CST.EAssign (evar, {value = CST.Eq; region = Region.ghost}, e_hd rhs))]
   | E_for_each {fe_binder;collection;fe_body; _} ->
-    let var = decompile_variable @@ (fst fe_binder).wrap_content in
-    let bind_to = Option.map ~f:(fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
+    let var = decompile_variable @@ fst fe_binder in
+    let bind_to = Option.map ~f:(fun (x:AST.expression_variable) -> (ghost,decompile_variable x)) @@ snd fe_binder in
     let expr = decompile_expression_in collection in
     let expr = e_hd expr in
     let block = decompile_expression_in fe_body in
@@ -642,7 +634,7 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
     let type_expr = Option.map ~f:decompile_type_expr binder.ascr in
     let type_expr = Option.value ~default:(TVar {value = "_"; region = Region.ghost}) type_expr in
-    let v = decompile_variable binder.var.wrap_content in
+    let v = decompile_variable binder.var in
     let seq = CST.ESeq (wrap (CST.EAnnot (wrap (CST.EVar v,ghost,type_expr)), [])) in
     let parameters = CST.EPar (wrap @@ par seq ) in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) output_type in
@@ -736,7 +728,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
         in
         let vars = aux type_expr [] in
         let params = type_vars_of_list @@
-          List.map ~f:(fun x -> decompile_variable x.wrap_content) vars
+          List.map ~f:decompile_variable vars
         in
         Some params
       )
@@ -748,10 +740,10 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
       type_
     else
       CST.SExport (wrap (ghost, type_))
-  | Declaration_constant {binder; attr; expr; name=_ } ->
+  | Declaration_constant {binder; attr; expr} ->
     let is_private = List.mem ~equal:Caml.(=) attr "private" in
     let attributes : CST.attributes = decompile_attributes attr in
-    let var = CST.PVar (decompile_variable2 binder.var.wrap_content) in
+    let var = CST.PVar (decompile_variable2 binder.var) in
     let binders = var in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) binder.ascr in
     let expr = decompile_expression_in expr in
@@ -770,7 +762,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
   | Declaration_module {module_binder; module_; module_attr} ->
     let attr = module_attr in
     let is_private = List.mem ~equal:Caml.(=) attr "private" in
-    let name = wrap module_binder in
+    let name = decompile_variable module_binder in
     let module_ = decompile_module module_ in
     let attributes = decompile_attributes module_attr in
     let attributes = filter_private attributes in
@@ -787,8 +779,8 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.statement = fun
     else
       CST.SExport (wrap (ghost, ns))
   | Module_alias {alias; binders} ->
-    let alias = wrap alias in
-    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let alias = decompile_variable alias in
+    let binders = nelist_to_npseq @@ List.Ne.map decompile_variable binders in
     CST.SImport (wrap CST.{alias; module_path = binders; kwd_import = ghost; equal = ghost})
 
 and decompile_module : AST.module_ -> CST.ast = fun prg ->

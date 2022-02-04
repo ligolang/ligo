@@ -1,4 +1,5 @@
 module Location = Simple_utils.Location
+module Var = Stage_common.Var
 open Types
 
 let pair_map = fun f (x , y) -> (f x , f y)
@@ -221,10 +222,10 @@ module Substitution = struct
     let return (d : T.declaration) = d in
     fun ~substs ->
       function
-      | T.Declaration_constant {name ; binder ; expr ; attr} ->
+      | T.Declaration_constant {binder ; expr ; attr} ->
         let binder = s_binder ~substs binder in
         let expr = s_expression ~substs expr in
-        return @@ Declaration_constant {name; binder; expr; attr}
+        return @@ Declaration_constant {binder; expr; attr}
       | T.Declaration_type t -> return @@ Declaration_type t
       | T.Declaration_module {module_binder;module_;module_attr} ->
         let module_       = s_module' ~substs module_ in

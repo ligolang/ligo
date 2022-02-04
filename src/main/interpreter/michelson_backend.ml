@@ -102,10 +102,10 @@ let clean_location_with v x =
 let clean_locations e t =
   clean_location_with () e, clean_location_with () t
 
-let add_ast_env ?(name = Location.wrap (Var.fresh ())) env binder body =
+let add_ast_env ?(name = Ast_aggregated.Var.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation) (e : expression) =
-    if Var.compare let_binder.Location.wrap_content binder.Location.wrap_content <> 0 && Var.compare let_binder.wrap_content name.wrap_content <> 0 then
+    if Var.compare let_binder binder <> 0 && Var.compare let_binder name <> 0 then
       e_a_let_in let_binder expr e { inline = false ; no_mutation ; view = false ; public = false }
     else
       e in
@@ -382,16 +382,15 @@ and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->
 
 and make_subst_ast_env_exp ~raise env expr =
   let open Ligo_interpreter.Types in
-  let get_fv expr = List.map ~f:(fun v -> v.Location.wrap_content) @@
+  let get_fv expr =
    snd @@ Self_ast_aggregated.Helpers.Free_variables.expression expr in
   let rec aux (fv) acc = function
     | [] -> acc
     | Expression { name; item ; no_mutation } :: tl ->
-       let binder = Location.unwrap name in
-       if List.mem fv binder ~equal:Var.equal then
-         let expr = val_to_ast ~raise ~loc:name.location item.eval_term item.ast_type in
+       if List.mem fv name ~equal:Var.equal then
+         let expr = val_to_ast ~raise ~loc:(Var.get_location name) item.eval_term item.ast_type in
          let expr_fv = get_fv expr in
-         let fv = List.remove_element ~compare:Var.compare binder fv in
+         let fv = List.remove_element ~compare:Var.compare name fv in
          let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
          aux fv ((name, expr, no_mutation) :: acc) tl
        else

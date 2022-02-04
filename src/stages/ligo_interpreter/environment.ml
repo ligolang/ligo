@@ -10,12 +10,9 @@ let expressions :
   = fun env ->
   List.filter_map env ~f:(function | Expression {name;item;no_mutation} -> Some (name, (item, no_mutation)))
 
-let lookup :
-  env -> expression_variable -> (value_expr * bool) option
+let lookup : env -> expression_variable -> (value_expr * bool) option
   = fun env var ->
-  let open Location in
-  let equal a b = Var.compare a.wrap_content b.wrap_content = 0 in
-  List.Assoc.find (expressions env) ~equal var
+  List.Assoc.find (expressions env) ~equal:Var.equal var
 
 let empty_env = []
 

@@ -95,10 +95,6 @@ and row : formatter -> row_element -> unit =
       type_expression associated_type
 
 
-let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev.wrap_content
-
-
 let rec expression ppf (e : expression) =
   fprintf ppf "@[%a@]" expression_content e.expression_content
 and expression_content ppf (ec : expression_content) =
@@ -116,7 +112,7 @@ and expression_content ppf (ec : expression_content) =
   | E_matching x -> fprintf ppf "%a" (match_exp expression type_expression) x
   | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation ; view; _ }} ->
     fprintf ppf "@[let %a =@;<1 2>%a%a%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline option_no_mutation no_mutation option_view view expression let_result
-  | E_type_in   {type_binder; rhs; let_result} -> 
+  | E_type_in   {type_binder; rhs; let_result} ->
     fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
       type_variable type_binder
       type_expression rhs
@@ -130,9 +126,9 @@ and expression_content ppf (ec : expression_content) =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_type     {type_binder;type_expr;type_attr={public}} -> 
+  | Declaration_type     {type_binder;type_expr;type_attr={public}} ->
     fprintf ppf "@[<2>type %a =@ %a%a@]" type_variable type_binder type_expression type_expr option_public public
-  | Declaration_constant {name = _ ; binder=b ; attr = { inline ; no_mutation ; view ; public } ; expr} ->
+  | Declaration_constant { binder=b ; attr = { inline ; no_mutation ; view ; public } ; expr} ->
       fprintf ppf "@[<2>const %a =@ %a%a%a%a%a@]"
         (binder type_expression) b
         expression expr
@@ -654,9 +650,9 @@ and type_environment_binding ppf ({type_variable=tv;type_} : type_environment_bi
     type_variable tv
     type_expression type_
 
-and module_environment_binding ppf ({module_variable;module_} : module_environment_binding) =
-  fprintf ppf "{@[<hv 2> @ odule_variable : %s ;@ module_ : %a;@]@ }"
-    module_variable
+and module_environment_binding ppf ({module_variable=mv;module_} : module_environment_binding) =
+  fprintf ppf "{@[<hv 2> @ odule_variable : %a ;@ module_ : %a;@]@ }"
+    module_variable mv
     environment module_
 
 and environment ppf ({expression_environment;type_environment=_;module_environment} : environment) =

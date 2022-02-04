@@ -31,13 +31,17 @@ module M (Params : Params) =
         Environment.append ast env
       let add_module_to_env : module_name -> environment -> environment -> environment =
         fun module_name ast_typed_env env ->
+          let module_name = Ast_typed.Var.of_input_var module_name in
           Environment.add_module ~public:() module_name (Environment.to_program ast_typed_env) env
       let init_env : environment = options.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
+        let module_binder = Ast_typed.Var.of_input_var module_binder in
         (Location.wrap @@ (Ast_typed.Declaration_module {module_binder;module_=ast_typed;module_attr={public=true}}: Ast_typed.declaration))
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
+        let module_name = Ast_typed.Var.of_input_var module_name in
+        let file_name   = Ast_typed.Var.of_input_var file_name in
         Location.wrap @@ (Ast_typed.Module_alias {alias=module_name;binders=file_name,[]}: Ast_typed.declaration)
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
@@ -61,13 +65,17 @@ module Infer (Params : Params) = struct
         Environment.append_core ast env
       let add_module_to_env : module_name -> environment -> environment -> environment =
         fun module_name ast_typed_env env ->
+          let module_name = Ast_core.Var.of_input_var module_name in
           Environment.add_core_module ~public:() module_name (Environment.to_core_program ast_typed_env) env
       let init_env : environment = Environment.init_core @@ Checking.untype_program @@ Environment.to_program @@ options.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
+        let module_binder = Ast_core.Var.of_input_var module_binder in
         (Location.wrap @@ (Ast_core.Declaration_module {module_binder;module_=ast_typed;module_attr={public=true}}: Ast_core.declaration))
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
+        let module_name = Ast_core.Var.of_input_var module_name in
+        let file_name   = Ast_core.Var.of_input_var file_name in
         Location.wrap @@ (Ast_core.Module_alias {alias=module_name;binders=file_name,[]}: Ast_core.declaration)
   end
 
@@ -156,6 +164,7 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
 (* TODO: this function could be called build_michelson_code since it does not really reflect a "contract" (no views, parameter/storage types) *)
 let build_contract ~raise ~add_warning : options:Compiler_options.t -> string -> string -> file_name -> Stacking.compiled_expression * Ast_typed.program =
   fun ~options syntax entry_point file_name ->
+    let entry_point = Stage_common.Var.of_input_var entry_point in
     let typed_prg, contract = build_typed ~raise ~add_warning ~options syntax (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise typed_prg entry_point in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
@@ -163,8 +172,9 @@ let build_contract ~raise ~add_warning : options:Compiler_options.t -> string ->
     michelson, contract
 
 let build_views ~raise ~add_warning :
-  options:Compiler_options.t -> string -> string -> string list * Ast_typed.program -> file_name -> (string * Stacking.compiled_expression) list =
+  options:Compiler_options.t -> string -> string -> string list * Ast_typed.program -> file_name -> (Stage_common.Var.t * Stacking.compiled_expression) list =
   fun ~options syntax main_name (declared_views,program) source_file ->
+    let main_name = Stage_common.Var.of_input_var main_name in
     let views =
       let annotated_views = Ligo_compile.Of_typed.get_views @@ program in
       match declared_views with
@@ -173,10 +183,11 @@ let build_views ~raise ~add_warning :
         (* detects whether a declared view (passed with --views command line option) overwrites an annotated view ([@view] let ..)*)
         let () = List.iter annotated_views
           ~f:(fun (x,loc) ->
-            if not (List.mem declared_views x ~equal:String.equal) then add_warning (`Main_view_ignored loc)
+            if Option.is_none (List.find ~f:(fun s -> Stage_common.Var.is_name x s) declared_views) then
+              add_warning (`Main_view_ignored loc)
           )
         in
-        declared_views
+        List.map ~f:Stage_common.Var.of_input_var declared_views
       )
     in
     match views with

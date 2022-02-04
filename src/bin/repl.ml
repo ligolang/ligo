@@ -42,12 +42,12 @@ let repl_result_ppformat ~display_format f = function
   | Defined_values_core module_ ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Simple_utils.PP_helpers.string f
+                                  Ast_core.PP.expression_variable f
                                   (get_declarations_core module_))
   | Defined_values_typed module' ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Simple_utils.PP_helpers.string f
+                                  Ast_typed.PP.expression_variable f
                                   (get_declarations_typed module'))
   | Just_ok -> Simple_utils.PP_helpers.string f "Done."
 
@@ -58,13 +58,13 @@ let repl_result_jsonformat = function
   | Defined_values_core module_ ->
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
-     let name n = `Assoc [("name", `String n)] in
+     let name n = `Assoc [("name", Ast_core.type_variable_to_yojson n)] in
      let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
-     let name n = `Assoc [("name", `String n)] in
+     let name n = `Assoc [("name", Ast_typed.type_variable_to_yojson n)] in
      let defs = List.map ~f:name (func_declarations @ type_declarations) in
      `Assoc [("definitions", `List defs)]
   | Just_ok -> `Assoc []
@@ -148,7 +148,7 @@ let import_file ~raise state file_name module_name =
   let options = {options with init_env = state.env } in
   let file_name = resolve_file_name file_name state.project_root in
   let module_ = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=module_name;module_;module_attr={public=true}}]) in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.Var.of_input_var module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)

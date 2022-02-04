@@ -12,11 +12,11 @@ let compile_expression ~raise (e : expression) : Ast_sugar.expression =
 let pretty_print formatter (m : module_) =
   PP.module_ formatter m
 
-let list_declarations (m : module_) : string list =
+let list_declarations (m : module_) : expression_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       match el.wrap_content with
-      | Declaration_constant {binder;_} -> (Simple_utils.Var.to_name binder.var.wrap_content)::prev
+      | Declaration_constant {binder;_} -> binder.var::prev
       | _ -> prev)
     ~init:[] m

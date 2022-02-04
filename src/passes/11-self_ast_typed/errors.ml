@@ -12,15 +12,15 @@ type self_ast_typed_error = [
   | `Self_ast_typed_unmatched_entrypoint of Location.t
   | `Self_ast_typed_nested_bigmap of Location.t
   | `Self_ast_typed_corner_case of string
-  | `Self_ast_typed_bad_contract_io of string * Ast_typed.expression
-  | `Self_ast_typed_expected_list_operation of string * Ast_typed.type_expression * Ast_typed.expression
+  | `Self_ast_typed_bad_contract_io of Ast_typed.expression_variable * Ast_typed.expression
+  | `Self_ast_typed_expected_list_operation of Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
-    string * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
+    Ast_typed.type_variable * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_pair_in of Location.t * [`View | `Contract]
   | `Self_ast_typed_expected_pair_out of Location.t
   | `Self_ast_typed_pattern_matching_anomaly of Location.t
   | `Self_ast_typed_expected_obj_ligo of Location.t
-  | `Self_ast_typed_storage_view_contract of Location.t * string * string * Ast_typed.type_expression * Ast_typed.type_expression
+  | `Self_ast_typed_storage_view_contract of Location.t * Ast_typed.expression_variable * Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.type_expression
   | `Self_ast_typed_view_io of Location.t * Ast_typed.type_expression * [`In | `Out]
 ] [@@deriving poly_constructor { prefix = "self_ast_typed_" }]
 
@@ -37,11 +37,11 @@ let error_ppformat : display_format:string display_format ->
     match a with
     | `Self_ast_typed_storage_view_contract (loc,main_name,view_name,ct,vt) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid view argument.@.View '%s' has storage type '%a' and contract '%s' has storage type '%a'.@]"
+        "@[<hv>%a@.Invalid view argument.@.View '%a' has storage type '%a' and contract '%a' has storage type '%a'.@]"
         Snippet.pp loc
-        view_name
+        Ast_typed.PP.expression_variable view_name
         Ast_typed.PP.type_expression vt
-        main_name
+        Ast_typed.PP.expression_variable main_name
         Ast_typed.PP.type_expression ct
     | `Self_ast_typed_view_io (loc,got,arg) ->
       let s = match arg with
@@ -90,21 +90,21 @@ let error_ppformat : display_format:string display_format ->
         desc
     | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
         Snippet.pp e.location
-        entrypoint
+        Ast_typed.PP.expression_variable entrypoint
     | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\".@.\
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\".@.\
         We expected a list of operations but we got %a@]"
         Snippet.pp e.location
-        entrypoint
+        Ast_typed.PP.expression_variable entrypoint
         Ast_typed.PP.type_expression got
     | `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%s\".@.The storage type \"%a\" of the function parameter must be the same as the storage type \"%a\" of the return value.@]"
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the function parameter must be the same as the storage type \"%a\" of the return value.@]"
         Snippet.pp e.location
-        entrypoint
+        Ast_typed.PP.expression_variable entrypoint
         Ast_typed.PP.type_expression t1
         Ast_typed.PP.type_expression t2
     | `Self_ast_typed_expected_pair_in (loc,t) ->
@@ -136,8 +136,8 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", message);
       ("loc", Location.to_yojson loc);
-      ("main_name", `String main_name);
-      ("view_name", `String view_name);
+      ("main_name", Ast_typed.expression_variable_to_yojson main_name);
+      ("view_name", Ast_typed.expression_variable_to_yojson view_name);
       ]
     in
     json_error ~stage ~content
@@ -227,7 +227,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
     let message = `String "badly typed contract" in
     let description = `String "unexpected entrypoint type" in
-    let entrypoint = `String entrypoint in
+    let entrypoint = Ast_typed.expression_variable_to_yojson entrypoint in
     let eptype = `String (Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression) in
     let content = `Assoc [
        ("message", message);
@@ -239,7 +239,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
-    let entrypoint = `String entrypoint in
+    let entrypoint = Ast_typed.expression_variable_to_yojson entrypoint in
     let message = `String "badly typed contract" in
     let actual = `String (Format.asprintf "%a"
       Ast_typed.PP.type_expression {got with type_content= T_constant {language="Michelson";injection=Simple_utils.Ligo_string.verbatim Stage_common.Constant.list_name;parameters=[{got with type_content=(Ast_typed.t_operation ()).type_content}]}}) in
@@ -254,7 +254,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_ast_typed_expected_same_entry (entrypoint,t1,t2,e) ->
-    let entrypoint = `String entrypoint in
+    let entrypoint = Ast_typed.expression_variable_to_yojson entrypoint in
     let message = `String "badly typed contract" in
     let description = `String "expected storages" in
     let t1 = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t1) in

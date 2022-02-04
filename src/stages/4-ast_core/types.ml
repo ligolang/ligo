@@ -20,10 +20,9 @@ and module_attribute = {
 and module_ = declaration Location.wrap list
 
 and declaration_constant = {
-    name : string option ;
-    binder : ty_expr binder;
-    attr : known_attributes ;
-    expr : expression ;
+  binder : ty_expr binder;
+  attr : known_attributes ;
+  expr : expression ;
 }
 
 and declaration_type = {
@@ -176,8 +175,8 @@ and environment = {
 (* core *)
 module ConstraintIdentifier = struct
   type t = T of int64
-  let counter : int64 ref = ref Int64.zero 
-  let fresh () = 
+  let counter : int64 ref = ref Int64.zero
+  let fresh () =
     let res = !counter in
     counter := Int64.succ !counter;
     T res
@@ -409,7 +408,7 @@ and c_equation_e = {
       Show        = ∃ , () => (δ) ∈ [(int),(string),(nat)]
    and the typeclass
       my_tc       = ∃ α β, (Packable α && Packable β && Show α) => (χ,γ) ∈ [(int,string), (bool, string), (α,β), (α,mutez) ]
-  
+
    the allowed combinations of types for χ and γ are
     χ = int   && γ = string
     χ = bool  && γ = string
@@ -479,7 +478,7 @@ and c_alias = {
 
 
 (* sub-sub component: lazy selector *)
-  
+
 type constructor_or_row = [ (* TODO : c_row_simpl and c_constructor_simpl must be merged*)
   | `Constructor of c_constructor_simpl
   | `Row of c_row_simpl

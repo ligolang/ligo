@@ -369,7 +369,7 @@ let transfer_single
      | action, [@var] s =>
          let [@var] cards: cards = s.cards;
          let [@var] card: card =
-           switch 
+           switch
            Map.find_opt(action.card_to_transfer, cards) {
            | Some card => card
            | None() =>
@@ -759,73 +759,73 @@ block {
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "pascaligo" ] ;
   [%expect {|
-    type parameter is Pos of nat | Zero of nat
+type parameter is Pos of nat | Zero of nat
 
-    type storage is unit
+type storage is unit
 
-    type return is list (operation) * storage
+type return is list (operation) * storage
 
-    function main (const gen__parameters1 : parameter * storage) is
-      case gen__parameters1 of [
-        (p, s) ->
-          block {
-            case p of [
-              Zero (n) ->
-                if (n > 0n) then failwith ("fail") else skip
-            | Pos (n) ->
-                if (n > 0n) then skip else failwith ("fail")
-            ]
-          } with ((list [] : list (operation)), s)
-      ]
-
-    function foobar (const i : int) is
-    block {
-      const p : parameter = (Zero (42n));
-      const gen__env12 = record [i = i];
-      const gen__env12
-      = if (i > 0)
-        then
-          block {
-            const i = (i + 1);
-            gen__env12.i := i;
-            const gen__env10 = record [i = i];
-            const gen__env10
-            = if (i > 10)
-              then
-                block {
-                  const i = 20;
-                  gen__env10.i := i;
-                  failwith ("who knows");
-                  const i = 30;
-                  gen__env10.i := i;
-                  skip
-                } with gen__env10
-              else
-                block {
-                  skip
-                } with gen__env10;
-            const i = gen__env10.i;
-            gen__env12.i := i;
-            skip
-          } with gen__env12
-        else
-          block {
-            case p of [
-              Zero (gen__4) -> failwith (42n)
-            | Pos (gen__5) -> skip
-            ]
-          } with gen__env12;
-      const i = gen__env12.i
-    } with
+function main (const gen__parameters1 : parameter * storage) is
+  case gen__parameters1 of [
+    (p, s) ->
+      block {
         case p of [
-          Zero (gen__2) -> i
-        | Pos (gen__3) -> (failwith ("waaaa") : int)
+          Zero (n) ->
+            if (n > 0n) then failwith ("fail") else skip
+        | Pos (n) ->
+            if (n > 0n) then skip else failwith ("fail")
         ]
+      } with ((list [] : list (operation)), s)
+  ]
 
-    function failer (const p : int) is
-    block {
-      if (p = 1) then failwith (42) else skip
-    } with p |}];
+function foobar (const i : int) is
+block {
+  const p : parameter = (Zero (42n));
+  const gen__env8 = (i);
+  const gen__env8
+  = if (i > 0)
+    then
+      block {
+        const i = (i + 1);
+        gen__env8.0 := i;
+        const gen__env6 = (i);
+        const gen__env6
+        = if (i > 10)
+          then
+            block {
+              const i = 20;
+              gen__env6.0 := i;
+              failwith ("who knows");
+              const i = 30;
+              gen__env6.0 := i;
+              skip
+            } with gen__env6
+          else
+            block {
+              skip
+            } with gen__env6;
+        const i = gen__env6.0;
+        gen__env8.0 := i;
+        skip
+      } with gen__env8
+    else
+      block {
+        case p of [
+          Zero (_) -> failwith (42n)
+        | Pos (_) -> skip
+        ]
+      } with gen__env8;
+  const i = gen__env8.0
+} with
+    case p of [
+      Zero (_) -> i
+    | Pos (_) -> (failwith ("waaaa") : int)
+    ]
+
+function failer (const p : int) is
+block {
+  if (p = 1) then failwith (42) else skip
+} with p |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect {|
     type parameter = Pos of nat | Zero of nat
@@ -850,49 +850,49 @@ let%expect_test _ =
     let foobar : int -> int =
       (fun [@var] i : int ->
          let [@var] p : parameter = (Zero 42n) in
-         let gen__env12 = {i = i} in
-         let gen__env12 =
+         let gen__env8 = i in
+         let gen__env8 =
            if (i > 0)
            then
              let i = (i + 1) in
-             let gen__env12 = {gen__env12 with {i = i}} in
-             let gen__env10 = {i = i} in
-             let gen__env10 =
+             let gen__env8 = {gen__env8 with {0 = i}} in
+             let gen__env6 = i in
+             let gen__env6 =
                if (i > 10)
                then
                  let i = 20 in
-                 let gen__env10 = {gen__env10 with {i = i}} in
+                 let gen__env6 = {gen__env6 with {0 = i}} in
                  begin
                    (failwith ("who knows"));
                    let i = 30 in
-                   let gen__env10 = {gen__env10 with {i = i}} in
+                   let gen__env6 = {gen__env6 with {0 = i}} in
                    begin
                      ();
-                     gen__env10
+                     gen__env6
                    end
                  end
                else
                  begin
                    ();
-                   gen__env10
+                   gen__env6
                  end in
-             let i = gen__env10.i in
-             let gen__env12 = {gen__env12 with {i = i}} in
+             let i = gen__env6.0 in
+             let gen__env8 = {gen__env8 with {0 = i}} in
              begin
                ();
-               gen__env12
+               gen__env8
              end
            else
              begin
                match p with
-                 Zero gen__4 -> (failwith (42n))
-               | Pos gen__5 -> ();
-               gen__env12
+                 Zero _ -> (failwith (42n))
+               | Pos _ -> ();
+               gen__env8
              end in
-         let i = gen__env12.i in
+         let i = gen__env8.0 in
          match p with
-           Zero gen__2 -> i
-         | Pos gen__3 -> ((failwith ("waaaa")) : int))
+           Zero _ -> i
+         | Pos _ -> ((failwith ("waaaa")) : int))
 
     let failer : int -> int =
       (fun p : int ->
@@ -936,58 +936,54 @@ let main: (parameter, storage) => return =
 let foobar: int => int =
   (([@var] i: int): int =>
      let [@var] p: parameter = (Zero 42n);
-     let gen__env12 = {
-       i: i
-     };
-     let gen__env12 =
+     let gen__env8 = i;
+     let gen__env8 =
        if(((i) > (0))) {
 
          let i = ((i) + (1));
-         let gen__env12 = {...gen__env12, {i: i }};
-         let gen__env10 = {
-           i: i
-         };
-         let gen__env10 =
+         let gen__env8 = {...gen__env8, {0: i }};
+         let gen__env6 = i;
+         let gen__env6 =
            if(((i) > (10))) {
 
              let i = 20;
-             let gen__env10 = {...gen__env10, {i: i }};
+             let gen__env6 = {...gen__env6, {0: i }};
              {
                (failwith(("who knows")));
                let i = 30;
-               let gen__env10 = {...gen__env10, {i: i }};
+               let gen__env6 = {...gen__env6, {0: i }};
                {
                  ();
-                 gen__env10
+                 gen__env6
                }
              }
            } else {
 
              {
                ();
-               gen__env10
+               gen__env6
              }
              };
-         let i = gen__env10.i;
-         let gen__env12 = {...gen__env12, {i: i }};
+         let i = gen__env6[0];
+         let gen__env8 = {...gen__env8, {0: i }};
          {
            ();
-           gen__env12
+           gen__env8
          }
        } else {
 
          {
            switch  p {
-           | Zero gen__4 => (failwith((42n)))
-           | Pos gen__5 => ()
+           | Zero _ => (failwith((42n)))
+           | Pos _ => ()
            };
-           gen__env12
+           gen__env8
          }
          };
-     let i = gen__env12.i;
+     let i = gen__env8[0];
      switch  p {
-     | Zero gen__2 => i
-     | Pos gen__3 => ((failwith(("waaaa"))) : int)
+     | Zero _ => i
+     | Pos _ => ((failwith(("waaaa"))) : int)
      });
 
 let failer: int => int =

@@ -394,7 +394,7 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | #1 -> 3 |}]
+        | gen#1 -> 3 |}]
 
 
 let%expect_test _ =
@@ -499,8 +499,8 @@ let%expect_test _ =
                                 | record[a -> a , b -> b , c -> c] ->
                                 ADD(ADD(a , b) , INT(SIZE(c))) in ADD(t2 ,
     t3)
-    const t4 = lambda (x) return lambda (y) return let #86 = ( x , y ) in
-     match #86 with
+    const t4 = lambda (x) return lambda (y) return let gen#86 = ( x , y ) in
+     match gen#86 with
       | ( a , tuple_proj#87 ) ->
        match tuple_proj#87 with
         | Two ctor_proj#101 ->
@@ -517,23 +517,23 @@ let%expect_test _ =
                match ctor_proj#96 with
                 | record[a -> a , b -> b , c -> c] ->
                  match ctor_proj#101 with
-                  | record[a -> aa , b -> #4 , c -> cc] ->
+                  | record[a -> aa , b -> gen#4 , c -> cc] ->
                   ADD(ADD(ADD(ADD(a , INT(b)) , INT(SIZE(c))) , aa) ,
                   INT(SIZE(cc)))
         | One _x ->
           1
-    const t5 = lambda (x) return let #102 = ( x , unit ) in  match #102 with
-                                                              | ( a , tuple_proj#103 ) ->
-                                                              a
-    const t6 = lambda (x) return let #105 = ( x , unit ) in  match #105 with
-                                                              | ( #5 , #6 ) ->
-                                                              2
+    const t5 = lambda (x) return let gen#102 = ( x , unit ) in  match gen#102 with
+                                                                 | ( a , tuple_proj#103 ) ->
+                                                                 a
+    const t6 = lambda (x) return let gen#105 = ( x , unit ) in  match gen#105 with
+                                                                 | ( gen#5 , gen#6 ) ->
+                                                                 2
     const t7 = lambda (x) return  match x with
                                    | Some x ->
                                      x | None unit_proj#107 ->
                                          1
-    const t8 = lambda (x) return lambda (y) return let #108 = ( x , y ) in
-     match #108 with
+    const t8 = lambda (x) return lambda (y) return let gen#108 = ( x , y ) in
+     match gen#108 with
       | ( tuple_proj#109 , x ) ->
        match tuple_proj#109 with
         | Some ctor_proj#112 ->
@@ -542,8 +542,8 @@ let%expect_test _ =
             ADD(x , y)
         | None unit_proj#114 ->
           x
-    const t9 = lambda (x) return lambda (y) return let #115 = ( x , y ) in
-     match #115 with
+    const t9 = lambda (x) return lambda (y) return let gen#115 = ( x , y ) in
+     match gen#115 with
       | ( tuple_proj#116 , ys ) ->
        match tuple_proj#116 with
         | Some ctor_proj#125 ->
@@ -559,8 +559,8 @@ let%expect_test _ =
     type myti = sum[Consi -> option (int) , Nili -> unit]
     const fl = lambda (_x) return 1
     const fo = lambda (_x) return 2
-    const t10 = lambda (x) return lambda (y) return let #126 = ( x , y ) in
-     match #126 with
+    const t10 = lambda (x) return lambda (y) return let gen#126 = ( x , y ) in
+     match gen#126 with
       | ( tuple_proj#127 , ys ) ->
        match tuple_proj#127 with
         | Consi ctor_proj#143 ->
@@ -586,8 +586,8 @@ let%expect_test _ =
               (fl)@(tuple_proj#127)
         | Nili unit_proj#142 ->
           (fl)@(ys)
-    const t11 = lambda (x) return lambda (y) return let #144 = ( x , y ) in
-     match #144 with
+    const t11 = lambda (x) return lambda (y) return let gen#144 = ( x , y ) in
+     match gen#144 with
       | ( tuple_proj#145 , ys ) ->
        match tuple_proj#145 with
         | Consi ctor_proj#161 ->
@@ -657,11 +657,11 @@ let%expect_test _ =
     const some_a = record[a -> SOME(CONS(1 , CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))))) , b -> CONS(42 , LIST_EMPTY())]
     const a_empty_b_not = record[a -> SOME(LIST_EMPTY()) , b -> CONS(111 , LIST_EMPTY())]
     const b_empty_a_not = record[a -> SOME(CONS(222 , LIST_EMPTY())) , b -> LIST_EMPTY()]
-    const t13 = lambda (x) return lambda (y) return let #180 = ( x , y ) in
-     match #180 with
+    const t13 = lambda (x) return lambda (y) return let gen#180 = ( x , y ) in
+     match gen#180 with
       | ( tuple_proj#181 , tuple_proj#182 ) ->
        match tuple_proj#181 with
-        | record[a -> record_proj#187 , b -> #8] ->
+        | record[a -> record_proj#187 , b -> gen#8] ->
          match record_proj#187 with
           | Some ctor_proj#209 ->
              match tuple_proj#182 with
@@ -689,5 +689,5 @@ let%expect_test _ =
                             hd
           | None unit_proj#207 ->
              match tuple_proj#182 with
-              | record[a -> #10 , b -> #9] ->
+              | record[a -> gen#10 , b -> gen#9] ->
               NEG(1) |}]

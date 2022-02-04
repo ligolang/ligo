@@ -241,9 +241,8 @@ and declaration_type {type_binder;type_expr; type_attr} =
     ("type_attr", type_attribute type_attr);
   ]
 
-and declaration_constant {name; binder;expr;attr} =
+and declaration_constant {binder;expr;attr} =
   `Assoc [
-    ("name", option' string name);
     ("binder",expression_variable_to_yojson binder);
     ("expr", expression expr);
     ("attr", attribute attr);

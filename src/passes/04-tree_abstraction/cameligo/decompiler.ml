@@ -5,19 +5,18 @@ module Predefined = Predefined.Tree_abstraction.Cameligo
 open Simple_utils.Function
 module Region   = Simple_utils.Region
 module Utils    = Simple_utils.Utils
-module Var      = Simple_utils.Var
 module List     = Simple_utils.List
 module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
 
 (* Utils *)
 
-let ghost = 
-  object 
-    method region = Region.ghost 
+let ghost =
+  object
+    method region = Region.ghost
     method attributes = []
     method payload = ""
-  end 
+  end
 
 let wrap = Region.wrap_ghost
 
@@ -45,7 +44,7 @@ let type_vars_of_list : string Region.reg list -> CST.type_vars = fun lst ->
   let type_var_of_name : _ -> CST.type_var Region.reg = fun name -> wrap CST.{quote=ghost;name} in
   match lst with
   | [name] -> QParam (type_var_of_name name)
-  | x -> 
+  | x ->
     let x = Utils.nsepseq_map type_var_of_name (list_to_nsepseq x) in
     QParamTuple (wrap (par x))
 
@@ -66,8 +65,8 @@ let beginEnd = Some (CST.BeginEnd (ghost,ghost))
 
 (* Decompiler *)
 
-let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
-  let var = Format.asprintf "%a" Var.pp var in
+let decompile_variable : AST.Var.t -> CST.variable = fun var ->
+  let var = Format.asprintf "%a" AST.Var.pp var in
   if String.contains var '#' then
     let var = String.split ~on:'#' var in
     wrap @@ "gen__" ^ (String.concat var)
@@ -122,7 +121,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
     let var = decompile_variable variable in
     return @@ CST.TVar var
   | T_app {type_operator; arguments} ->
-    let type_constant = wrap @@ Var.to_name type_operator in
+    let type_constant = decompile_variable type_operator in
     let arguments = List.map ~f:decompile_type_expr arguments in
     let arguments = list_to_nsepseq arguments in
     let par : _ CST.par = {lpar=ghost;inside=arguments;rpar=ghost} in
@@ -131,7 +130,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   | T_annoted _annot ->
     failwith "let's work on it later"
   | T_module_accessor {module_name;element} ->
-    let module_name = wrap @@ module_name in
+    let module_name = decompile_variable module_name in
     let field  = decompile_type_expr element in
     return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
   | T_singleton x -> (
@@ -146,7 +145,7 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
 
 let get_e_variable : AST.expression -> _ = fun expr ->
   match expr.expression_content with
-    E_variable var -> var.wrap_content
+    E_variable var -> var
   | _ -> failwith @@
     Format.asprintf "%a should be a variable expression"
     AST.PP.expression expr
@@ -167,7 +166,7 @@ let get_e_tuple : AST.expression -> _  = fun expr ->
 
 let pattern_type ({var;ascr;attributes}: _ AST.binder) =
   let attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-  let var : CST.var_pattern = {variable = decompile_variable var.wrap_content; attributes = attributes} in
+  let var : CST.var_pattern = {variable = decompile_variable var; attributes = attributes} in
   let pattern : CST.pattern = CST.PVar (wrap var) in
   match ascr with
     Some s ->
@@ -222,7 +221,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
   let return_expr_with_par expr = return_expr @@ CST.EPar (wrap @@ par @@ expr) in
   match expr.expression_content with
     E_variable name ->
-    let var = decompile_variable name.wrap_content in
+    let var = decompile_variable name in
     return_expr @@ CST.EVar (var)
   | E_constant {cons_name; arguments} ->
     (match arguments with
@@ -316,7 +315,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder={var;ascr;attributes=var_attributes};rhs;let_result;attributes} ->
     let var_attributes = var_attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-    let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ var.wrap_content; attributes = var_attributes } : CST.var_pattern)) in
+    let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable var; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
     let type_params, lhs_type = Option.value_map ascr ~default:(None, None)
                                            ~f:(fun t -> let type_params, lhs_type = decompile_type_params t in
@@ -335,15 +334,15 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let tin : CST.type_in = {type_decl;kwd_in=ghost;body} in
     return_expr @@ CST.ETypeIn (wrap tin)
   | E_mod_in {module_binder;rhs;let_result} ->
-    let name = wrap module_binder in
+    let name = decompile_variable module_binder in
     let module_ = decompile_module rhs in
     let mod_decl : CST.module_decl = {kwd_module=ghost;name;eq=ghost;kwd_struct=ghost;module_;kwd_end=ghost} in
     let body = decompile_expression let_result in
     let min : CST.mod_in = {mod_decl;kwd_in=ghost;body} in
     return_expr @@ CST.EModIn (wrap min)
   | E_mod_alias {alias; binders; result} ->
-    let alias   = wrap alias in
-    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let alias   = decompile_variable alias in
+    let binders = nelist_to_npseq @@ List.Ne.map decompile_variable binders in
     let mod_alias : CST.module_alias = {kwd_module=ghost;alias;eq=ghost;binders} in
     let body = decompile_expression result in
     let mod_alias : CST.mod_alias = {mod_alias;kwd_in=ghost;body} in
@@ -366,7 +365,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let pattern = decompile_pattern pattern in
         (wrap ({pattern ; arrow = ghost ; rhs }:_ CST.case_clause))
     in
-    let case_clauses = List.map ~f:aux cases in 
+    let case_clauses = List.map ~f:aux cases in
     let cases = list_to_nsepseq case_clauses in
     let cases = wrap cases in
     let cases : _ CST.case = {kwd_match=ghost;expr;kwd_with=ghost;lead_vbar=None;cases} in
@@ -416,7 +415,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
       Access_record var::path -> (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (Location.wrap @@ Var.of_name var) path in
+    let field_path = decompile_to_path (AST.Var.of_input_var var) path in
     let field_expr = decompile_expression update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
     let updates = updates.value.ne_elements in
@@ -482,7 +481,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let ty   = decompile_type_expr type_annotation in
     return_expr @@ CST.EAnnot (wrap @@ par (expr,ghost,ty))
   | E_module_accessor {module_name;element} ->
-    let module_name = wrap module_name in
+    let module_name = decompile_variable module_name in
     let field  = decompile_expression element in
     return_expr @@ CST.EModA (wrap CST.{module_name;selector=ghost;field})
   | E_cond {condition;then_clause;else_clause} ->
@@ -539,7 +538,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     AST.PP.expression expr
 
 and decompile_to_path : AST.expression_variable -> _ AST.access list -> CST.path = fun var access ->
-  let struct_name = decompile_variable var.wrap_content in
+  let struct_name = decompile_variable var in
   match access with
     [] -> CST.Name struct_name
   | lst ->
@@ -568,7 +567,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
   match decl with
     Declaration_type {type_binder;type_expr; type_attr=_} -> (
     let name = decompile_variable type_binder in
-    let params =  
+    let params =
       match type_expr.type_content with
       | T_abstraction _ -> (
         let rec aux : AST.type_expression -> _ list -> _ list  =
@@ -579,7 +578,7 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
         in
         let vars = aux type_expr [] in
         let params = type_vars_of_list @@
-          List.map ~f:(fun x -> decompile_variable x.wrap_content) vars
+          List.map ~f:decompile_variable vars
         in
         Some params
       )
@@ -588,10 +587,10 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
     let type_expr = decompile_type_expr type_expr in
     CST.TypeDecl (wrap (CST.{kwd_type=ghost;params;name; eq=ghost; type_expr}))
   )
-  | Declaration_constant {binder;attr;expr;name=_}-> (
+  | Declaration_constant {binder;attr;expr}-> (
     let attributes : CST.attributes = decompile_attributes attr in
     let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-    let var = CST.PVar (wrap ({variable = decompile_variable binder.var.wrap_content; attributes = var_attributes } : CST.var_pattern)) in
+    let var = CST.PVar (wrap ({variable = decompile_variable binder.var; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
     let type_params, lhs_type = Option.value_map binder.ascr ~default:(None, None)
                                            ~f:(fun t -> let type_params, lhs_type = decompile_type_params t in
@@ -614,13 +613,13 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
       CST.Let (wrap @@ let_decl)
   )
   | Declaration_module {module_binder;module_;module_attr=_} ->
-    let name = wrap module_binder in
+    let name    = decompile_variable module_binder in
     let module_ = decompile_module module_ in
     let module_decl :CST.module_decl = {kwd_module=ghost;name;eq=ghost;kwd_struct=ghost;module_;kwd_end=ghost} in
     CST.ModuleDecl (wrap @@ module_decl)
   | Module_alias {alias;binders} ->
-    let alias   = wrap alias in
-    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let alias   = decompile_variable alias in
+    let binders = nelist_to_npseq @@ List.Ne.map decompile_variable binders in
     let module_alias :CST.module_alias = {kwd_module=ghost;alias;eq=ghost;binders} in
     CST.ModuleAlias (wrap @@ module_alias)
 
@@ -629,9 +628,9 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
     match pattern.wrap_content with
     | AST.P_unit -> CST.PUnit (wrap (ghost, ghost))
     | AST.P_var v ->
-      let name = (decompile_variable v.var.wrap_content).value in
+      let variable = decompile_variable v.var in
       let attributes = v.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> decompile_attributes in
-      let pvar : CST.var_pattern = {variable = wrap name; attributes } in
+      let pvar : CST.var_pattern = {variable; attributes } in
       CST.PVar (wrap pvar)
     | AST.P_list pl -> (
       let ret x = (CST.PList x) in

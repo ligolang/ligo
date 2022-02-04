@@ -78,7 +78,7 @@ let check_reserved_name ~raise var =
 
 let is_wildcard var =
   let var = var.value in
-  String.compare var Var.wildcard = 0
+  String.compare var "_" = 0
 
 (* Check linearty of quoted variable in parametric types *)
 

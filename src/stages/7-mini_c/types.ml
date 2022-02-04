@@ -86,12 +86,12 @@ type value =
 and selector = var_name list
 
 and expression_content =
-  | E_literal of literal
+  | E_literal of Stage_common.Types.literal
   | E_closure of anon_function
   | E_constant of constant
   | E_application of (expression * expression)
   | E_variable of var_name
-  | E_iterator of constant' * ((var_name * type_expression) * expression) * expression
+  | E_iterator of Stage_common.Types.constant' * ((var_name * type_expression) * expression) * expression
   | E_fold     of (((var_name * type_expression) * expression) * expression * expression)
   | E_fold_right of (((var_name * type_expression) * expression) * (expression * type_expression) * expression)
   | E_if_bool  of (expression * expression * expression)
@@ -121,7 +121,7 @@ and expression = {
 }
 
 and constant = {
-  cons_name : constant';
+  cons_name : Stage_common.Types.constant';
   arguments : expression list;
 }
 

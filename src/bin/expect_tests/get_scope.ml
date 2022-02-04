@@ -39,12 +39,12 @@ references:
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 24-25 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 16-17
-(i#1 -> i) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 36-45 |core: int|
+(i#1 -> i) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 37-38 |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 16-17 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 16-17 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 8-9
-(j#2 -> j) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 46-55 |core: int|
+(j#2 -> j) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 47-48 |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 12-13 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 12-13 ,
@@ -123,10 +123,10 @@ references: []
 (f#3 -> f) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 6-7 |core: int -> int -> int|
 references:
   File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 2-3
-(i#1 -> i) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 35-44 |core: int|
+(i#1 -> i) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 36-37 |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 62-63
-(j#2 -> j) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 45-54 |core: int|
+(j#2 -> j) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 46-47 |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 58-59
 Type definitions:
@@ -211,7 +211,7 @@ let%expect_test _ =
     [ a#0 c#1 i#2 j#3 ] File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 20-21
     [ a#0 c#1 i#2 j#3 ] File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 16-17
     [ a#0 c#1 i#2 j#3 ] File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-13
-    [ a#0 c#1 ]
+    [ a#0 c#1 ] File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-40
     [ ] File "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 0-9
 
     Variable definitions:
@@ -356,7 +356,7 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 29-30
     (b#4 -> b) File "../../test/contracts/get_scope_tests/constant.mligo", line 3, characters 4-5 |resolved: list (int)|
     references: []
-    (c#1 -> c) File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 9-18 |core: int|
+    (c#1 -> c) File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 10-11 |core: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 39-40
     (d#2 -> d) File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 26-27 |resolved: int|
@@ -392,10 +392,10 @@ let%expect_test _ =
     (f#2 -> f) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 6-7 |core: int -> int -> int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 16-17
-    (i#0 -> i) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 35-44 |core: int|
+    (i#0 -> i) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 36-37 |core: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 62-63
-    (j#1 -> j) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 45-54 |core: int|
+    (j#1 -> j) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 46-47 |core: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-59
     Type definitions:
@@ -509,7 +509,7 @@ let%expect_test _ =
     references: []
     (main#6 -> main) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-8 |core: foo_record -> foo_variant|
     references: []
-    (p#5 -> p) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 9-25 |core: foo_record|
+    (p#5 -> p) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 10-11 |core: foo_record|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-43
     Type definitions:

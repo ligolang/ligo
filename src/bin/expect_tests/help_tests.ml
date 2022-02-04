@@ -1,9 +1,9 @@
 open Cli_expect
 
 let%expect_test _ =
-  (* TODO good? *)
+  (* This test return a backtrace with both ligo bad and ligo good *)
   run_ligo_good [] ;
-  [%expect.unreachable ]
+  [%expect.unreachable]
 [@@expect.uncaught_exn {|
   (* CR expect_test_collector: This test expectation appears to contain a backtrace.
      This is strongly discouraged as backtraces are fragile.
@@ -38,7 +38,7 @@ let%expect_test _ =
     version    print version information
     help       explain a given subcommand (perhaps recursively)
 
-  missing subcommand for command ligo |}] 
+  missing subcommand for command ligo |}]
 
 let%expect_test _ =
   run_ligo_good [ "-help" ] ;
@@ -62,8 +62,8 @@ let%expect_test _ =
       version    print version information
       help       explain a given subcommand (perhaps recursively)
 
-    (src/command.ml.Exit_called (status 0)) |} ] 
- 
+    (src/command.ml.Exit_called (status 0)) |} ]
+
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; "-help" ] ;
   [%expect {|
@@ -119,7 +119,7 @@ let%expect_test _ =
       [-help]                             print this help text and exit
                                           (alias: -?)
 
-    (src/command.ml.Exit_called (status 0)) |} ] 
+    (src/command.ml.Exit_called (status 0)) |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; "-help" ] ;

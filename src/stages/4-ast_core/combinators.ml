@@ -29,7 +29,7 @@ type type_content = [%import: Types.type_content]
     } ]
 
 let t_constant ?loc ?sugar type_operator arguments : type_expression =
-  make_t ?loc ?sugar (T_app {type_operator=Var.of_name type_operator;arguments})
+  make_t ?loc ?sugar (T_app {type_operator=Var.of_input_var type_operator;arguments})
 let t_abstraction ?loc ?sugar ty_binder kind type_ =
   make_t ?loc ?sugar (T_abstraction {ty_binder ; kind ; type_})
 let t_for_all ?loc ?sugar ty_binder kind type_ =
@@ -48,13 +48,13 @@ let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type__
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc ?sugar name kind : type_expression =
-  let ty_binder = Location.wrap @@ Var.fresh () in
-  let type_ = t_constant name [t_variable ty_binder.wrap_content ()] in
+  let ty_binder = Var.fresh ~name:"_a" () in
+  let type_ = t_constant name [t_variable ty_binder ()] in
   t_abstraction ?loc ?sugar ty_binder kind type_
 let t_abstraction2 ?loc ?sugar name kind_l kind_r : type_expression =
-  let ty_binder_l = Location.wrap @@ Var.fresh () in
-  let ty_binder_r = Location.wrap @@ Var.fresh () in
-  let type_ = t_constant name [t_variable ty_binder_l.wrap_content () ; t_variable ty_binder_r.wrap_content ()] in
+  let ty_binder_l = Var.fresh ~name:"_l" () in
+  let ty_binder_r = Var.fresh ~name:"_r" () in
+  let type_ = t_constant name [t_variable ty_binder_l () ; t_variable ty_binder_r ()] in
   t_abstraction ?loc ?sugar ty_binder_l kind_l (t_abstraction ?loc ty_binder_r kind_r type_)
 
 let t_record ?loc ?sugar ?layout fields  : type_expression = make_t ?loc ?sugar @@ T_record {fields;layout}
@@ -115,7 +115,7 @@ let ez_e_record (lst : (label * expression) list) : expression =
   let map = List.fold_left ~f:aux ~init:LMap.empty lst in
   e_record map ()
 
-let e_var       ?loc ?sugar n  : expression = e_variable (Location.wrap ?loc (Var.of_name n)) ?loc ?sugar ()
+let e_var       ?loc ?sugar n  : expression = e_variable (Stage_common.Var.of_input_var ?loc n) ?loc ?sugar ()
 let e_unit      ?loc ?sugar () : expression = e_literal (Literal_unit) ?loc ?sugar ()
 let e_literal   ?loc ?sugar l  : expression = e_literal l ?loc ?sugar ()
 
@@ -125,6 +125,7 @@ let e__type_ ?loc ?sugar p : expression = make_e ?loc ?sugar @@ E_literal (Liter
 let e'_bytes b : expression_content =
   let bytes = Hex.to_bytes (`Hex b) in
   E_literal (Literal_bytes bytes)
+
 let e_bytes_hex ?loc ?sugar b : expression =
   let e' = e'_bytes b in
   make_e ?loc ?sugar e'
@@ -225,13 +226,11 @@ let get_e_tuple = fun t ->
   | E_record r -> Some (List.map ~f:snd @@ Helpers.tuple_of_record r)
   | _ -> None
 
-let get_declaration_by_name : module_ -> string -> declaration option = fun (p) name ->
+let get_declaration_by_name : module_ -> expression_variable -> declaration option = fun (p) name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant { name = name'; binder = _ ; expr=_ ; attr=_ } ->
-      (match name' with
-       | None -> false
-       | Some name' -> String.equal name' name)
+    | Declaration_constant { binder ; expr=_ ; attr=_ } ->
+        Var.equal binder.var name
     | Declaration_type   _
     | Declaration_module _
     | Module_alias       _ -> false

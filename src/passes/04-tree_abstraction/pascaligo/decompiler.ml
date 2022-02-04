@@ -4,19 +4,18 @@ module Predefined = Predefined.Tree_abstraction.Pascaligo
 
 open Simple_utils.Function
 module Region   = Simple_utils.Region
-module Var      = Simple_utils.Var
 module List     = Simple_utils.List
 module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
 
 (* Utils *)
 
-let ghost = 
-  object 
-    method region = Region.ghost 
+let ghost =
+  object
+    method region = Region.ghost
     method attributes = []
     method payload = ""
-  end 
+  end
 
 let wrap = Region.wrap_ghost
 
@@ -85,8 +84,8 @@ let empty_block dialect =
 
 (* Decompiler *)
 
-let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
-  let var = Format.asprintf "%a" Var.pp var in
+let decompile_variable : AST.Var.t -> CST.variable = fun var ->
+  let var = Format.asprintf "%a" AST.Var.pp var in
   if String.contains var '#' then
     let var = String.split ~on:'#' var in
     wrap @@ "gen__" ^ (String.concat var)
@@ -95,6 +94,7 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
       wrap @@ "user__" ^ var
     else
       wrap @@ var
+
 let rec decompile_type_expr : dialect -> AST.type_expression -> CST.type_expr = fun dialect te ->
   let return te = te in
   match te.type_content with
@@ -148,7 +148,7 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> CST.type_expr = 
   | T_annoted _annot ->
     failwith "TODO: decompile T_annoted"
   | T_module_accessor {module_name;element} ->
-    let module_name = wrap module_name in
+    let module_name = decompile_variable module_name in
     let field  = decompile_type_expr dialect element in
     return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
   | T_singleton x -> (
@@ -163,7 +163,7 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> CST.type_expr = 
 
 let get_e_variable : AST.expression -> _ = fun expr ->
   match expr.expression_content with
-    E_variable var -> var.wrap_content
+    E_variable var -> var
   | _ -> failwith @@
     Format.asprintf "%a should be a variable expression"
     AST.PP.expression expr
@@ -263,7 +263,7 @@ and decompile_pattern : dialect -> AST.type_expression AST.pattern -> CST.patter
     | AST.P_unit ->
       CST.PConstr (wrap (wrap "Unit", None))
     | AST.P_var v ->
-      let name = (decompile_variable v.var.wrap_content).value in
+      let name = (decompile_variable v.var).value in
       let var : CST.var_pattern = { variable = wrap name ; attributes = []} in
       CST.PVar (wrap var)
     | AST.P_list pl -> (
@@ -327,7 +327,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
   let return_inst inst = return_stat_ez @@ CST.Instr inst in
   match expr.expression_content with
     E_variable name ->
-    let var = decompile_variable name.wrap_content in
+    let var = decompile_variable name in
     return_expr @@ CST.EVar (var)
   | E_constant {cons_name; arguments} ->
     (match arguments with
@@ -443,7 +443,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     return @@ (Some lst, expr)
   | E_mod_in {module_binder;rhs;let_result} ->
     let kwd_module = ghost
-    and name = wrap module_binder
+    and name   = decompile_variable module_binder
     and kwd_is = ghost in
     let module_ = decompile_module ~dialect rhs in
     let terminator = terminator dialect in
@@ -456,8 +456,8 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     in
     return @@ (Some lst, expr)
   | E_mod_alias {alias; binders; result} ->
-    let alias   = wrap alias in
-    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let alias   = decompile_variable alias in
+    let binders = nelist_to_npseq @@ List.Ne.map decompile_variable binders in
     let terminator = terminator dialect in
     let ma = wrap @@ CST.{kwd_module=ghost;alias;kwd_is=ghost;binders;terminator} in
     let (lst, expr) = decompile_eos dialect Expression result in
@@ -548,7 +548,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
       Access_record var::path -> (var,path)
     | _ -> failwith "Impossible case %a"
     in
-    let field_path = decompile_to_path (Location.wrap @@ Var.of_name var) path in
+    let field_path = decompile_to_path (AST.Var.of_input_var var) path in
     let field_expr = decompile_expression ~dialect update in
     let field_assign : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
     let updates = updates.value.ne_elements in
@@ -609,7 +609,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let ty   = decompile_type_expr dialect type_annotation in
     return_expr @@ CST.EAnnot (wrap @@ par (expr,ghost,ty))
   | E_module_accessor {module_name;element} ->
-    let module_name = wrap module_name in
+    let module_name = decompile_variable module_name in
     let field  = decompile_expression element in
     return_expr @@ CST.EModA (wrap CST.{module_name;selector=ghost;field})
   | E_cond {condition;then_clause;else_clause} ->
@@ -667,18 +667,18 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let assign : CST.assignment = {lhs;assign=ghost;rhs} in
     return_inst @@ Assign (wrap assign)
   | E_for {binder;start;final;incr;f_body} ->
-    let binder     = decompile_variable binder.wrap_content in
-    let init  = decompile_expression ~dialect start in
-    let bound = decompile_expression ~dialect final in
-    let step  = decompile_expression ~dialect incr  in
-    let step       = Some (ghost, step) in
+    let binder = decompile_variable binder in
+    let init   = decompile_expression ~dialect start in
+    let bound  = decompile_expression ~dialect final in
+    let step   = decompile_expression ~dialect incr  in
+    let step   = Some (ghost, step) in
     let (block,_next) = decompile_to_block dialect f_body in
     let block = wrap @@ Option.value ~default:(empty_block dialect) block in
     let fl : CST.for_int = {kwd_for=ghost;binder;assign=ghost;init;kwd_to=ghost;bound;step;block} in
     return_inst @@ CST.Loop (For (ForInt (wrap fl)))
   | E_for_each {fe_binder;collection;collection_type;fe_body} ->
-    let var = decompile_variable @@ (fst fe_binder).wrap_content in
-    let bind_to = Option.map ~f:(fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
+    let var = decompile_variable @@ (fst fe_binder) in
+    let bind_to = Option.map ~f:(fun (x:AST.expression_variable) -> (ghost,decompile_variable x)) @@ snd fe_binder in
     let expr = decompile_expression ~dialect collection in
     let collection = match collection_type with
       Map -> CST.Map ghost | Set -> Set ghost | List -> List ghost | Any -> failwith "TODO : have the type of the collection propagated from AST_typed" in
@@ -704,7 +704,7 @@ and decompile_if_clause : dialect -> AST.expression -> CST.if_clause = fun diale
 
 and decompile_to_data_decl : dialect -> _ AST.binder -> AST.expression -> AST.attributes -> CST.data_decl =
     fun dialect binder expr attributes ->
-  let name = decompile_variable binder.var.wrap_content in
+  let name = decompile_variable binder.var in
   let const_type =
     Option.map
       ~f:(prefix_colon <@ decompile_type_expr dialect)
@@ -730,7 +730,7 @@ and decompile_to_data_decl : dialect -> _ AST.binder -> AST.expression -> AST.at
 
 and decompile_to_lhs : dialect -> AST.expression_variable -> _ AST.access list -> CST.lhs = fun dialect var access ->
   match List.rev access with
-    [] -> (CST.Path (Name (decompile_variable var.wrap_content)) : CST.lhs)
+    [] -> (CST.Path (Name (decompile_variable var)) : CST.lhs)
   | hd :: tl ->
     match hd with
     | AST.Access_map e ->
@@ -743,7 +743,7 @@ and decompile_to_lhs : dialect -> AST.expression_variable -> _ AST.access list -
       (CST.Path (path) : CST.lhs)
 
 and decompile_to_path : AST.expression_variable -> _ AST.access list -> CST.path = fun var access ->
-  let struct_name = decompile_variable var.wrap_content in
+  let struct_name = decompile_variable var in
   match access with
     [] -> CST.Name struct_name
   | lst ->
@@ -760,7 +760,7 @@ and decompile_to_selection : _ AST.access -> CST.selection = fun access ->
     "Can't decompile access_map to selection"
 
 and decompile_lambda : dialect -> (AST.expr, AST.ty_expr) AST.lambda -> _ = fun dialect {binder;result;output_type=_} ->
-    let var = decompile_variable @@ binder.var.wrap_content in
+    let var = decompile_variable binder.var in
     let vpat : CST.var_pattern = {variable = var ; attributes = []} in
     let param_type = Option.map ~f:(prefix_colon <@ decompile_type_expr dialect) binder.ascr in
     let param_const : CST.param_const = {kwd_const=ghost;var=wrap vpat;param_type} in
@@ -794,7 +794,7 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
         in
         let vars = aux type_expr [] in
         let params = type_vars_of_list @@
-          List.map ~f:(fun x -> decompile_variable x.wrap_content) vars
+          List.map ~f:decompile_variable vars
         in
         Some params
       )
@@ -803,9 +803,9 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
     let type_expr = decompile_type_expr dialect type_expr in
     let terminator = terminator dialect in
     CST.TypeDecl (wrap (CST.{kwd_type; name; kwd_is; type_expr; terminator ; params}))
-  | Declaration_constant {binder; attr; expr;name=_} -> (
+  | Declaration_constant {binder; attr; expr} -> (
     let attributes = decompile_attributes attr in
-    let name = decompile_variable binder.var.wrap_content in
+    let name = decompile_variable binder.var in
     let fun_name = name in
     let terminator = terminator dialect in
     match expr.expression_content with
@@ -826,7 +826,7 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
   )
   | Declaration_module {module_binder;module_;module_attr=_} ->
     let kwd_module = ghost
-    and name = wrap module_binder
+    and name = decompile_variable module_binder
     and kwd_is = ghost in
     let module_ = decompile_module ~dialect module_ in
     let terminator = terminator dialect in
@@ -834,12 +834,12 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> CST.declar
     CST.ModuleDecl (wrap (CST.{kwd_module; name; kwd_is; enclosing; module_; terminator}))
   | Module_alias {alias;binders} ->
     let kwd_module = ghost
-    and alias   = wrap alias
-    and binders = nelist_to_npseq @@ List.Ne.map wrap binders
+    and alias   = decompile_variable alias
+    and binders = nelist_to_npseq @@ List.Ne.map decompile_variable binders
     and kwd_is = ghost in
     let terminator = terminator dialect in
     CST.ModuleAlias (wrap (CST.{kwd_module; alias; kwd_is; binders; terminator}))
-  
+
 
 and decompile_module ?(dialect=Verbose): AST.module_ -> CST.ast = fun prg ->
   let decl = List.map ~f:(decompile_declaration ~dialect) prg in

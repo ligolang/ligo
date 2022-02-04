@@ -198,9 +198,8 @@ and declaration_type {type_binder;type_expr;type_attr} =
     ("type_attr", type_attribute type_attr)
   ]
 
-and declaration_constant {name; binder=b;attr;expr} =
+and declaration_constant {binder=b;attr;expr} =
   `Assoc [
-    ("name", option' string name);
     ("binder",binder type_expression b);
     ("expr", expression expr);
     ("attr", attribute attr);
