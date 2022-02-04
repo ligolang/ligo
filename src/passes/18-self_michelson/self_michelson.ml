@@ -369,23 +369,23 @@ let opt_dip3 : _ peep3 = function
   | _ -> None
 
 let opt_cond : _ peep1 = function
-  | Prim (l1, p, [bt; bf], annot1) when is_cond p -> (
+  | Prim (l, p, [bt; bf], annot) when is_cond p -> (
     let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"] in
-    let force_k = ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"] in
-    let force = ["NIL"; "NONE"] in
+    let force_z = ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"] in
+    let no_force = ["NIL"; "NONE"] in
     let pred = function
-        Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_k @ force) l -> true
+        Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_z @ no_force) l -> true
       | _ -> false in
     let eq = fun m1 m2 -> match m1, m2 with
         Prim (_, l, [], _), Prim (_, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r -> true
-      | Prim (_, l, _, _), Prim (_, r, _, _) when List.mem ~equal:String.equal force l && String.equal l r -> true
-      | Prim (_, l, [Int (_, n)], _), Prim (_, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_k l && String.equal l r && Z.equal n m -> true
+      | Prim (_, l, _, _), Prim (_, r, _, _) when List.mem ~equal:String.equal no_force l && String.equal l r -> true
+      | Prim (_, l, [Int (_, n)], _), Prim (_, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_z l && String.equal l r && Z.equal n m -> true
       | _ -> false in
     match last_is eq pred bt, last_is eq pred bf with
-    | Some l, Some r when eq l r ->
+    | Some l_op, Some r_op when eq l_op r_op ->
        let bt = remove_last pred bt in
        let bf = remove_last pred bf in
-       Some [Prim (l1, p, [bt; bf], annot1); l]
+       Some [Prim (l, p, [bt; bf], annot); l_op]
     | _ -> None)
   | _ -> None
 
