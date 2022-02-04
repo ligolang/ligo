@@ -41,6 +41,8 @@ module Tree_abstraction = struct
   *)
   let pseudo_modules x =
     match x with
+    | "Tezos.voting_power"       -> some_const C_VOTING_POWER
+    | "Tezos.total_voting_power" -> some_const C_TOTAL_VOTING_POWER
     | "Tezos.chain_id"           -> some_const C_CHAIN_ID
     | "Tezos.balance"            -> some_const C_BALANCE
     | "Tezos.now"                -> some_const C_NOW
