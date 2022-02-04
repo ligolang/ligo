@@ -19,25 +19,25 @@ module Data = struct
   let resolve_path : scope -> path -> scope =
     fun scope requested_path ->
       let f : scope -> module_variable -> scope = fun acc module_variable ->
-        match List.find acc.mod_ ~f:(fun x -> String.equal x.name module_variable) with
+        match List.find acc.mod_ ~f:(fun x -> Var.equal x.name module_variable) with
         | Some x -> x.items
         | _ -> failwith "couldnt resolve"
       in
       List.fold requested_path ~init:scope ~f
   let rm_exp : scope -> I.expression_variable -> scope = fun items to_rm ->
-    let exp = List.filter items.exp ~f:(fun x -> not @@ Var.equal x.name.wrap_content to_rm.wrap_content) in
+    let exp = List.filter items.exp ~f:(fun x -> not @@ Var.equal x.name to_rm) in
     { items with exp }
   let add_exp : scope -> exp_ -> scope =
     fun scope new_exp ->
-      let exp = List.filter scope.exp ~f:(fun x -> not (Var.equal x.name.wrap_content new_exp.name.wrap_content)) in
+      let exp = List.filter scope.exp ~f:(fun x -> not (Var.equal x.name new_exp.name)) in
       { scope with exp = new_exp :: exp}
   let shadow_module : scope -> module_variable -> scope -> scope = fun scope mod_var new_items ->
-    let mod_ = List.filter scope.mod_ ~f:(fun x -> not (String.equal x.name mod_var)) in
+    let mod_ = List.filter scope.mod_ ~f:(fun x -> not (Var.equal x.name mod_var)) in
     let mod_ = {name = mod_var ; items = new_items } :: mod_ in
     { scope with mod_}
   let resolve_variable : scope -> expression_variable -> expression_variable =
     fun scope v ->
-      match List.find scope.exp ~f:(fun x -> Var.equal v.wrap_content x.name.wrap_content) with
+      match List.find scope.exp ~f:(fun x -> Var.equal v x.name) with
       | Some x -> x.fresh_name
       | None -> v
   let resolve_variable_in_path : scope -> module_variable list -> expression_variable -> expression_variable =
@@ -78,7 +78,7 @@ and compile_declarations ~raise : Data.scope -> Data.path -> I.declaration_loc l
         let return d h = (d , acc_hic @ [h]) in
         match decl.wrap_content with
         | I.Declaration_type _ -> (acc_scope, acc_hic)
-        | I.Declaration_constant { name = _ ; binder ; expr ; attr } -> (
+        | I.Declaration_constant { binder ; expr ; attr } -> (
           let item = compile_expression ~raise acc_scope [] expr in
           let fresh_name = fresh_name binder path in
           let n = ({ name = binder ; fresh_name ; item } : Data.exp_) in
@@ -92,7 +92,7 @@ and compile_declarations ~raise : Data.scope -> Data.path -> I.declaration_loc l
                 match hic with
                 | New_decl (name,fresh_name,exp,_) ->
                   let exp_ = ({ name ; fresh_name ; item = exp } : Data.exp_) in
-                  Data.add_exp acc exp_ 
+                  Data.add_exp acc exp_
                 | New_mod (name, hics) ->
                   let items = merge_inner_outer hics in
                   Data.shadow_module acc name items
@@ -223,7 +223,7 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       return @@ O.E_constant { cons_name ; arguments }
     )
     | I.E_module_accessor { module_name; element} -> (
-      let rec aux : string List.Ne.t -> (O.type_expression * O.type_expression) list -> I.expression -> _ * string List.Ne.t * (O.type_expression * O.type_expression) list * _ option =
+      let rec aux : module_variable List.Ne.t -> (O.type_expression * O.type_expression) list -> I.expression -> _ * _ List.Ne.t * (O.type_expression * O.type_expression) list * _ option =
         fun acc_path acc_types exp ->
           match exp.expression_content with
           | E_module_accessor {module_name ; element} ->
@@ -260,7 +260,7 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
         List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
     )
     | I.E_mod_in { module_binder ; rhs ; let_result } -> (
-      let local_name = "LOCAL#in"^module_binder in
+      let local_name = Var.add_prefix "LOCAL#in" module_binder in
       compile ~raise scope path let_result
         [
           Location.wrap @@ I.Declaration_module { module_binder = local_name ; module_ = rhs ; module_attr = {public = false}} ;
@@ -299,7 +299,7 @@ and fresh_name : I.expression_variable -> Data.path -> O.expression_variable  = 
   match path with
   | [] -> v
   | _ ->
-    let (name,_) = Var.internal_get_name_and_counter v.wrap_content in
-    let name = List.fold_right ~f:(fun s r -> s ^ "#" ^ r) ~init:name path in
+    let name,_ = Var.internal_get_name_and_counter v in
+    let name = List.fold_right ~f:(fun s r -> Var.to_name_exn s ^ "#" ^ r) ~init:name path in
     let name = "#" ^ name in
-    Location.wrap ~loc:v.location @@ Var.fresh ~name ()
+    Var.fresh ~loc:(Var.get_location v) ~name ()

@@ -26,7 +26,7 @@ and annotated ppf : type_expression annotated -> _ = function
   | (None, a) -> type_variable ppf a
 
 and environment_element ppf ((n, tv) : environment_element) =
-  Format.fprintf ppf "%a : %a" Var.pp n.wrap_content type_variable tv
+  Format.fprintf ppf "%a : %a" Var.pp n type_variable tv
 
 and environment ppf (x:environment) =
   fprintf ppf "Env[%a]" (list_sep_d environment_element) x
@@ -86,7 +86,7 @@ and type_expression_annotated ppf : type_expression annotated -> unit = fun (_, 
 
 and type_expression ppf : type_expression -> unit = fun te ->
   fprintf ppf "%a" type_content te.type_content
-  
+
 and type_content ppf : type_content -> unit = function
   | T_tuple ts ->
     fprintf ppf "@[(%a)@]" (list_sep annotated (tag " *@ ")) ts
@@ -111,7 +111,7 @@ and expression ppf (e:expression) =
 
 and expression_content ppf (e:expression_content) = match e with
   | E_closure x -> function_ ppf x
-  | E_variable v -> fprintf ppf "%a" Var.pp v.wrap_content
+  | E_variable v -> fprintf ppf "%a" Var.pp v
   | E_application(a, b) -> fprintf ppf "@[(%a)@(%a)@]" expression a expression b
 
   | E_constant c -> fprintf ppf "@[%a@[<hv 1>(%a)@]@]" constant c.cons_name (list_sep_d expression) c.arguments
@@ -123,16 +123,16 @@ and expression_content ppf (e:expression_content) = match e with
   | E_if_none (c, n, ((name, _) , s)) ->
     fprintf ppf
       "@[match %a with@ @[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]@]"
-      expression c expression n Var.pp name.wrap_content expression s
+      expression c expression n Var.pp name expression s
   | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) ->
     fprintf ppf "@[%a ?? %a : (%a :: %a) -> %a@]"
-      expression c expression n Var.pp hd_name.wrap_content Var.pp tl_name.wrap_content expression cons
+      expression c expression n Var.pp hd_name Var.pp tl_name expression cons
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf
         "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
-        expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
+        expression c Var.pp name_l expression l Var.pp name_r expression r
   | E_let_in (expr, inline , ((name , _) , body)) ->
-      fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
+      fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name expression expr option_inline inline expression body
   | E_tuple exprs ->
     fprintf ppf "@[(%a)@]"
       Format.(pp_print_list ~pp_sep:(const ", ") expression)
@@ -140,7 +140,7 @@ and expression_content ppf (e:expression_content) = match e with
   | E_let_tuple (expr, (fields, body)) ->
       fprintf ppf "@[let (%a) =@;<1 2>%a in@ %a@]"
         Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") Var.pp)
-          (List.map ~f:(fun (x, _) -> x.Location.wrap_content) fields)
+          (List.map ~f:(fun (x, _) -> x) fields)
         expression expr
         expression body
   | E_proj (expr, i, _n) ->
@@ -149,11 +149,11 @@ and expression_content ppf (e:expression_content) = match e with
       fprintf ppf "{ %a with (%d) = %a }"
         expression expr i expression update
   | E_iterator (b , ((name , _) , body) , expr) ->
-    fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
+    fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-    fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
+    fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name expression body
   | E_fold_right (((name , _) , body) , (collection,_) , initial) ->
-    fprintf ppf "@[fold_right %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
+    fprintf ppf "@[fold_right %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name expression body
   | E_raw_michelson code ->
     let open Tezos_micheline in
     let code = Micheline.Seq (Location.generated, code) in
@@ -172,7 +172,7 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
 
 and function_ ppf ({binder ; body}:anon_function) =
   fprintf ppf "@[fun %a ->@ (%a)@]"
-    Var.pp binder.wrap_content
+    Var.pp binder
     expression body
 
 and option_inline ppf inline =
@@ -191,8 +191,8 @@ let%expect_test _ =
   let pp = expression_content Format.std_formatter in
   let dummy_type = {type_content=T_base TB_unit;location=Location.generated} in
   let wrap e = { content = e ; type_expression = dummy_type ; location = Location.generated} in
-  let y = Location.wrap ~loc:(Location.generated) (Var.of_name "y") in
-  let z = Location.wrap ~loc:(Location.generated) (Var.of_name "z") in
+  let y = Var.of_input_var "y" in
+  let z = Var.of_input_var "z" in
   pp @@ E_closure { binder = y ; body = wrap (E_variable y) } ;
   [%expect{|
     fun y -> (y)

@@ -12,11 +12,11 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
   [%expect {|
-    569 bytes |}] ;
+    567 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    1501 bytes |}] ;
+    1511 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
@@ -331,10 +331,10 @@ let%expect_test _ =
               PAIR ;
               PAIR ;
               PACK ;
+              DUP 4 ;
+              CAR ;
+              CAR ;
               PUSH nat 0 ;
-              DUP 5 ;
-              CAR ;
-              CAR ;
               PAIR ;
               DIG 3 ;
               CDR ;
@@ -342,12 +342,12 @@ let%expect_test _ =
                      PAIR ;
                      DUP ;
                      CAR ;
-                     CDR ;
+                     CAR ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
                      CAR ;
-                     CAR ;
+                     CDR ;
                      DIG 2 ;
                      CDR ;
                      SWAP ;
@@ -371,7 +371,6 @@ let%expect_test _ =
                                  { PUSH string "Invalid signature" ; FAILWITH } }
                             { DIG 2 ; DROP 2 ; SWAP } }
                        { DROP ; SWAP } ;
-                     SWAP ;
                      PAIR } ;
               SWAP ;
               DROP ;
@@ -379,7 +378,7 @@ let%expect_test _ =
               CDR ;
               CDR ;
               SWAP ;
-              CDR ;
+              CAR ;
               COMPARE ;
               LT ;
               IF { PUSH string "Not enough signatures passed the check" ; FAILWITH }
@@ -520,15 +519,14 @@ let%expect_test _ =
                      UPDATE } ;
                  SWAP ;
                  DUP ;
+                 DUG 2 ;
                  CDR ;
                  CAR ;
                  CAR ;
                  SENDER ;
                  GET ;
                  IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  CAR ;
@@ -536,18 +534,22 @@ let%expect_test _ =
                  COMPARE ;
                  GT ;
                  IF { PUSH string "Maximum number of proposal reached" ; FAILWITH } {} ;
+                 SWAP ;
                  DUP ;
+                 DUG 2 ;
                  CDR ;
                  CDR ;
-                 DUP 3 ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
                  SIZE ;
                  COMPARE ;
                  GE ;
-                 IF { DUP ;
-                      CDR ;
-                      SWAP ;
+                 IF { SWAP ;
                       DUP ;
                       DUG 2 ;
+                      CDR ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CDR ;
@@ -555,12 +557,12 @@ let%expect_test _ =
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
-                      DUP 3 ;
+                      DUP 4 ;
                       CAR ;
                       CDR ;
                       CAR ;
                       PAIR ;
-                      DIG 2 ;
+                      DIG 3 ;
                       CAR ;
                       CAR ;
                       PAIR ;
@@ -642,35 +644,33 @@ let%expect_test _ =
                                   PAIR }
                                 { DIG 2 ; DROP 2 } } ;
                       DIG 2 ;
-                      DROP ;
-                      SWAP }
+                      DROP }
                     { DIG 3 ;
                       DROP ;
-                      DUP ;
+                      NIL operation ;
+                      DUP 3 ;
                       CDR ;
-                      SWAP ;
-                      DUP ;
-                      DUG 2 ;
+                      DUP 4 ;
                       CAR ;
                       CDR ;
                       CDR ;
                       DIG 3 ;
-                      DIG 4 ;
+                      DIG 5 ;
                       SWAP ;
                       SOME ;
                       SWAP ;
                       UPDATE ;
-                      DUP 3 ;
+                      DUP 4 ;
                       CAR ;
                       CDR ;
                       CAR ;
                       PAIR ;
-                      DIG 2 ;
+                      DIG 3 ;
                       CAR ;
                       CAR ;
                       PAIR ;
-                      PAIR ;
-                      NIL operation } } }
+                      PAIR } ;
+                 SWAP } }
            { PACK ;
              SWAP ;
              DUP ;
@@ -1009,7 +1009,7 @@ let%expect_test _ =
       Warning: unused variable "c".
       Hint: replace it by "_c" to prevent this warning.
 
-      File "../../test/contracts/implicit.mligo", line 1, characters 25-35:
+      File "../../test/contracts/implicit.mligo", line 1, characters 26-27:
         1 | let main2 (p : key_hash) (s : unit) =
         2 |   let c : unit contract = Tezos.implicit_account p
       :
@@ -1032,7 +1032,7 @@ let%expect_test _ =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 8, characters 6-16:
+    File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
       8 |   fun (x : unit) -> Current.amount
       9 |
@@ -1040,7 +1040,7 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 7, characters 7-17:
+    File "../../test/contracts/amount_lambda.mligo", line 7, characters 8-9:
       6 | (* should return an impure function *)
       7 | let f2 (x : unit) : unit -> tez =
       8 |   fun (x : unit) -> Current.amount
@@ -1048,7 +1048,7 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 4, characters 6-16:
+    File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
       3 |   let amt : tez = Current.amount in
       4 |   fun (x : unit) -> amt
       5 |
@@ -1056,7 +1056,7 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 2, characters 7-17:
+    File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
       1 | (* should return a constant function *)
       2 | let f1 (x : unit) : unit -> tez =
       3 |   let amt : tez = Current.amount in
@@ -1074,7 +1074,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (#3) return let _x = +1 in let _ = let _x = +2 in UNIT() in let _ = let _x = +23 in UNIT() in let _ = let _x = +42 in UNIT() in _x |}]
+  [%expect {| const y = lambda (gen#3) return let _x = +1 in let ()#6 = let _x = +2 in UNIT() in let ()#5 = let _x = +23 in UNIT() in let ()#4 = let _x = +42 in UNIT() in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1089,14 +1089,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
   [%expect {|
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 12-27:
+    File "../../test/contracts/bad_address_format.religo", line 1, characters 12-21:
       1 | let main = (parameter : int, storage : address) =>
       2 |   ([] : list (operation), "KT1badaddr" : address);
     :
     Warning: unused variable "parameter".
     Hint: replace it by "_parameter" to prevent this warning.
 
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 29-46:
+    File "../../test/contracts/bad_address_format.religo", line 1, characters 29-36:
       1 | let main = (parameter : int, storage : address) =>
       2 |   ([] : list (operation), "KT1badaddr" : address);
     :
@@ -1174,7 +1174,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "subtle_nontail_fail.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
       2 |   if true
     :
@@ -1192,7 +1192,7 @@ let%expect_test _ =
   (* TODO should not be bad? *)
   run_ligo_good [ "run" ; "dry-run" ; contract "subtle_nontail_fail.mligo" ; "()" ; "()" ] ;
   [%expect {|
-    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27:
+    File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
       2 |   if true
     :
@@ -1418,7 +1418,7 @@ File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-1
 Warning: unused variable "action".
 Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 9-46:
+File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-23:
   3 |
   4 | let main (action, store : parameter * storage) : storage =
   5 |   store + 1
@@ -1436,7 +1436,7 @@ File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-
 Warning: unused variable "action".
 Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 9-46:
+File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-23:
   4 |
   5 | let main (action, store : parameter * storage) : return =
   6 |   ("bad",store + 1)
@@ -1463,7 +1463,7 @@ File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 18-
 Warning: unused variable "store".
 Hint: replace it by "_store" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 9-46:
+File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 10-23:
   4 |
   5 | let main (action, store : parameter * storage) : return =
   6 |   (([]: operation list),"bad")
@@ -1587,15 +1587,15 @@ const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
-  lambda (#1 : unit) return let s = "test" in
-                            let p0 = (f0)@(s) in { ASSERTION(p0);
+  lambda (gen#1 : unit) return let s = "test" in
+                               let p0 = (f0)@(s) in { ASSERTION(p0);
  let p1 = (f1)@(s) in { ASSERTION(p1);
  let p2 = (f2)@(s) in { ASSERTION(p2);
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
 const x =  match (+1 , (+2 , +3)) with
-            | (#2,(x,#3)) -> x
+            | (gen#2,(x,gen#3)) -> x
     |}];
 
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.religo"];
@@ -1609,15 +1609,15 @@ const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
-  lambda (#1 : unit) return let s = "test" in
-                            let p0 = (f0)@(s) in { ASSERTION(p0);
+  lambda (gen#1 : unit) return let s = "test" in
+                               let p0 = (f0)@(s) in { ASSERTION(p0);
  let p1 = (f1)@(s) in { ASSERTION(p1);
  let p2 = (f2)@(s) in { ASSERTION(p2);
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
 const x =  match (+1 , (+2 , +3)) with
-            | (#2,(x,#3)) -> x
+            | (gen#2,(x,gen#3)) -> x
     |}];
 
   run_ligo_bad ["print" ; "ast-typed"; contract "existential.mligo"];
@@ -1764,7 +1764,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
   [%expect{|
-    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-50:
+    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-50:
       1 | module Foo = struct
       2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
       3 | end
@@ -1947,14 +1947,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let #5 = EQ(n ,
-    0) in  match #5 with
+    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#5 = EQ(n ,
+    0) in  match gen#5 with
             | False unit_proj#6 ->
               (f)@(SUB(n ,
               1)) | True unit_proj#7 ->
                     1 ) in (f)@(4)
-    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let #8 = EQ(n ,
-    0) in  match #8 with
+    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#8 = EQ(n ,
+    0) in  match gen#8 with
             | False unit_proj#9 ->
               (h)@(SUB(n ,
               1)) | True unit_proj#10 ->
@@ -2183,26 +2183,26 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-                     const c = lambda (#6) return CREATE_CONTRACT(lambda (#3) return  match
-                                                                                       #3 with
-                                                                                       | ( #5 , #4 ) ->
-                                                                                       ( LIST_EMPTY() , unit ) ,
+                     const c = lambda (gen#6) return CREATE_CONTRACT(lambda (gen#3) return
+                      match gen#3 with
+                       | ( gen#5 , gen#4 ) ->
+                       ( LIST_EMPTY() , unit ) ,
                      NONE() ,
                      0mutez ,
                      unit)
-                     const foo = let #12 = (c)@(unit) in  match #12 with
-                                                           | ( _a , _b ) ->
-                                                           unit
-                     const c = lambda (#7) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let #14 = (c)@(unit) in  match #14 with
-                                                           | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
-                                                           unit |} ]
+                     const foo = let gen#13 = (c)@(unit) in  match gen#13 with
+                                                              | ( _a , _b ) ->
+                                                              unit
+                     const c = lambda (gen#7) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+                     const foo = let gen#16 = (c)@(unit) in  match gen#16 with
+                                                              | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+                                                              unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let #Foo#x#1 = L(54) in let #Foo#y#2 = #Foo#x#1 in L(unit) |}]
+    let #Foo#x#35 = L(54) in let #Foo#y#36 = #Foo#x#35 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;

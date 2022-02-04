@@ -30,12 +30,9 @@ let curried_depth_in_lambda (rhs : expression) : int =
   let (vars, _) = uncurry_lambda Int.max_value rhs in
   List.length vars
 
-let eqvar f x : bool =
-  Location.equal_content ~equal:Var.equal f x
-
 let isvar f x : bool =
   match x.expression_content with
-  | E_variable x -> eqvar f x
+  | E_variable x -> Var.equal f x
   | _ -> false
 
 (* Finding the usage of a function in an expression: we will look for
@@ -68,7 +65,7 @@ let rec usage_in_expr ~raise (f : expression_variable) (expr : expression) : usa
   match expr.expression_content with
   (* interesting cases: *)
   | E_variable x ->
-    if eqvar f x
+    if Var.equal f x
     (* if f was only used in applications we won't get here *)
     then Other
     else Unused
@@ -141,7 +138,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
   let (arg_types, ret_type) = uncurry_arrow depth expr.type_expression in
 
   let (vars, body) = uncurry_lambda depth expr in
-  let binder = Location.wrap (Var.fresh ()) in
+  let binder = Var.fresh () in
 
   let labels = uncurried_labels depth in
   let rows = uncurried_rows depth arg_types in
@@ -267,7 +264,7 @@ let uncurry_expression ~raise (expr : expression) : expression =
               (* Uncurry calls inside the expression *)
               let result = uncurry_in_expression ~raise fun_name depth result in
               (* Generate binders for each argument: x1', ..., xn' *)
-              let binder_types = List.map ~f:(fun t -> (Location.wrap @@ Var.fresh (), t)) arg_types in
+              let binder_types = List.map ~f:(fun t -> (Var.fresh (), t)) arg_types in
               (* An variable for each function argument *)
               let args = List.map ~f:(fun (b, t) -> e_a_variable b t) binder_types in
               (* Generate tupled argument (x1', ..., xn') *)

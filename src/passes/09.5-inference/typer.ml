@@ -15,9 +15,6 @@ They are not typing per say, just add a type variable to all expression and make
 let _assert_type_expression_eq ~raise ((tv',tv):O.type_expression * O.type_expression) : unit =
   Compare_types.assert_type_expression_eq ~raise (tv' , tv)
 
-let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
-
-
 module Check : sig
   val check_expression_has_no_unification_vars : O.expression -> unit
 
@@ -67,7 +64,7 @@ end = struct
     | O.T_arrow    { type1; type2 } ->
       let () = te where type1 in
       te where type2
-    | O.T_variable tv -> failwith (Format.asprintf "Unassigned type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
+    | O.T_variable tv -> failwith (Format.asprintf "Unassigned type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Ast_core.Var.pp tv (where ()))
     | O.T_app { arguments ; _ } ->
       List.fold ~f:(fun () texpr -> te where texpr) ~init:() arguments
     | O.T_module_accessor {module_name=_; element} -> te where element
@@ -117,24 +114,23 @@ let rec type_declaration ~raise env state : I.declaration Location.wrap -> envir
   if Ast_core.Debug.debug_new_typer then Format.eprintf "env : %a\n" O.PP.environment env ;
   match Location.unwrap d with
   | Declaration_type {type_binder; type_expr; type_attr} ->
-    let type_binder = Var.todo_cast type_binder in
     let type_expr = evaluate_type ~raise env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     let c = Wrap.type_decl () in
     return (O.Declaration_type {type_binder; type_expr; type_attr}) type_expr env' state c
-  | Declaration_constant {name; binder; attr; expr} -> (
+  | Declaration_constant {binder; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
     let tv_opt = Option.map ~f:(evaluate_type ~raise env) binder.ascr in
     if Ast_core.Debug.debug_new_typer then Format.eprintf "const_decl: tv_opt : %a\n%!" (PP_helpers.option O.PP.type_expression) tv_opt ;
     let (e, state', expr, t),constraints =
-      trace ~raise (constant_declaration_tracer binder.var expr tv_opt) @@
+      trace ~raise (constant_declaration_tracer d.location binder.var expr tv_opt) @@
       type_expression' env state expr in
     let binder = Stage_common.Maps.binder (evaluate_type ~raise env)  binder in
     let post_env = Environment.add_ez_declaration binder.var expr t e in
     let c = Wrap.const_decl t tv_opt in
-    return (Declaration_constant { name; binder ; expr ; attr}) t post_env state' (constraints@c)
+    return (Declaration_constant { binder ; expr ; attr}) t post_env state' (constraints@c)
     )
   | Declaration_module {module_binder;module_;module_attr} -> (
     let (e,module_,t,state) = type_module ~raise ~init_env:env module_ in
@@ -179,9 +175,8 @@ and evaluate_type ~raise : environment -> I.type_expression -> O.type_expression
     return (T_record {fields ; layout})
   | T_variable variable ->
     (* Check that the variable is in the environment *)
-    let name : O.type_variable = Var.todo_cast variable in
-    trace_option ~raise (unbound_type_variable e name t.location)
-      @@ Environment.get_type_opt (name) e
+    trace_option ~raise (unbound_type_variable e variable t.location)
+      @@ Environment.get_type_opt variable e
   | T_arrow {type1;type2} ->
     let type1 = evaluate_type ~raise e type1 in
     let type2 = evaluate_type ~raise e type2 in
@@ -522,7 +517,6 @@ and type_expression' ~raise : ?tv_opt:O.type_expression -> environment -> _ O'.t
 
   | E_recursive {fun_name;fun_type;lambda} ->
     (* Add the function name to the environment before evaluating the lambda*)
-    let fun_name = cast_var fun_name in
     let fun_type = evaluate_type ~raise e fun_type in
     let e = Environment.add_ez_binder fun_name fun_type e in
     let lambda,e,state,c1,(c2,t_var) = type_lambda ~raise e state lambda in
@@ -579,10 +573,11 @@ and type_module_returns_env ~raise ((env, state, p) : environment * _ O'.typer_s
     (* TODO: Move this filter to the spiller *)
     let ds',tys' = match (Location.unwrap d' : O.declaration) with
       | O.Declaration_type _ -> d' :: ds,tys
-      | O.Declaration_constant {binder = {var= {wrap_content = n}};_}
-        ->  let n = Var.to_name n in d' :: ds, (n,t)::tys
+      | O.Declaration_constant {binder = {var= n};_}
+        ->  let n = O.Var.to_name_exn n in d' :: ds, (n,t)::tys
       | O.Declaration_module {module_binder = n;_}
-      | O.Module_alias {alias = n;_} -> d' :: ds, (n,t)::tys
+      | O.Module_alias {alias = n;_}
+        ->  let n = O.Var.to_name_exn n in d' :: ds, (n,t)::tys
     in
     (e , s' , ds', tys')
   in
@@ -603,7 +598,7 @@ and print_env_state_node : type a. (Format.formatter -> a -> unit) -> (environme
       node_printer node
 
 and _get_alias ~raise variable aliases =
-  trace_option ~raise (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
+  trace_option ~raise (corner_case (Format.asprintf "can't find alias root of variable %a" Ast_typed.PP.type_variable variable)) @@
   (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
   try Some (Solver.UF.repr variable aliases) with Caml.Not_found -> None
 
@@ -626,27 +621,27 @@ and type_and_subst : type a b.
     let substs : variable: O.type_variable -> O.type_content option = fun ~variable ->
       to_option @@
       fun ~raise ->
-      let () = (if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a\n" Var.pp variable) in
+      let () = Ast_core.(if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a\n" Var.pp variable) in
       let root = Solver.get_alias ~raise variable aliases in
-      let () = (if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a (its root is %a)\n" Var.pp variable Var.pp root) in
+      let () = Ast_core.(if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a (its root is %a)\n" Var.pp variable Var.pp root) in
       let assignment =
-        trace_option ~raise (corner_case (Format.asprintf "can't find assignment for root %a%!" Var.pp root)) @@
+        trace_option ~raise (corner_case (Format.asprintf "can't find assignment for root %a%!" Ast_core.Var.pp root)) @@
           (Database_plugins.All_plugins.Assignments.find_opt root assignments) in
       match assignment with
       | `Constructor { tv ; c_tag ; tv_list } ->
         let tv_root = Solver.get_alias ~raise tv aliases in
         (* let () = Format.eprintf "\ncstr : %a(was %a) %a(was %a)\n" Ast_core.PP.type_variable tv_root Ast_core.PP.type_variable tv Ast_core.PP.type_variable root Ast_core.PP.type_variable variable in *)
-        let () = assert (Var.equal tv_root root) in
+        let () = assert (Ast_core.Var.equal tv_root root) in
         let (expr : O.type_content) = trace_option ~raise (corner_case "wrong constant tag") @@
         Typesystem.Types.type_expression'_of_simple_c_constant (c_tag , (List.map ~f:(fun x -> O.t_variable x ()) tv_list)) in
-        let () = (if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_core.PP.type_content expr) in
+        let () = Ast_core.(if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_core.PP.type_content expr) in
         expr
       | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_ } ->
         let tv_root = Solver.get_alias ~raise tv aliases in
         (* let () = Format.eprintf "\ncstr : %a(was %a) %a(was %a)\n" Ast_core.PP.type_variable tv_root Ast_core.PP.type_variable tv Ast_core.PP.type_variable root Ast_core.PP.type_variable variable in *)
-        let () = assert (Var.equal tv_root root) in
+        let () = assert (Ast_core.Var.equal tv_root root) in
         let (expr : O.type_content) = Typesystem.Types.type_expression'_of_simple_c_row (r_tag , tv_map) in
-        let () = (if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_core.PP.type_content expr) in
+        let () = Ast_core.(if Ast_core.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_core.PP.type_content expr) in
         expr
     in
     if Ast_core.Debug.debug_new_typer then Format.eprintf "substituting node\n%!";

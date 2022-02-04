@@ -3,7 +3,7 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let var_equal = Location.equal_content ~equal:Var.equal
+  let var_equal = Var.equal
   let mem : bindings -> expression_variable -> bool = List.mem ~equal:var_equal
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let mem_count : expression_variable -> bindings -> int =

@@ -137,7 +137,7 @@ let get_t_set (t:type_expression) = match t.type_content with
 
 let get_t_collection (t:type_expression ) = match t.type_content with
   | T_list t | T_set t | T_map (_,t) | T_big_map (_,t) -> Some t
-  | _ -> None 
+  | _ -> None
 
 let get_left (v:value) = match v with
   | D_left b -> Some b
@@ -204,7 +204,7 @@ let e_var ?loc vname t: expression = Expression.(make_tpl ?loc(
     t
   ))
 
-let ec_pair a b : expression_content = 
+let ec_pair a b : expression_content =
   E_constant {cons_name=C_PAIR;arguments=[a; b]}
 
 let d_unit : value = D_unit

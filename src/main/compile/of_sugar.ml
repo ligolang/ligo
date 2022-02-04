@@ -7,11 +7,11 @@ let compile (m : module_) : Ast_core.module_  =
 let compile_expression (e : expression) : Ast_core.expression  =
   compile_expression e
 
-let list_declarations (m : module_) : string list =
+let list_declarations (m : module_) : expression_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in
       match el.wrap_content with
-      | Declaration_constant {binder;_} -> (Simple_utils.Var.to_name binder.var.wrap_content)::prev
+      | Declaration_constant {binder;_} -> binder.var::prev
       | _ -> prev)
     ~init:[] m

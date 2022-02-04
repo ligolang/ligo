@@ -22,8 +22,8 @@ let wrap_test_w name f =
   try_with (fun ~raise ->
   let () =
     f ~raise ~add_warning () in
-    List.iter ~f:(fun w -> 
-      Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ; 
+    List.iter ~f:(fun w ->
+      Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ;
     ) @@ get_warning () ;
   )
   (fun error ->
@@ -31,8 +31,8 @@ let wrap_test_w name f =
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value ; format} in
      let s = Simple_utils.Display.convert ~display_format:(Dev) disp in
-    List.iter ~f:(fun w -> 
-      Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ; 
+    List.iter ~f:(fun w ->
+      Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ;
     ) @@ get_warning () ;
      Format.printf "%s\n" s ;
      raise Alcotest.Test_error
@@ -53,7 +53,7 @@ let test_w_all name test =
   ) ["ligo";"mligo";"religo";"jsligo"]
 
 let wrap_test name f =
-    try_with (fun ~raise -> f ~raise ()) 
+    try_with (fun ~raise -> f ~raise ())
     (fun error ->
     let value = Error (test_err_tracer name error) in
      let format = Display.bind_format test_format Formatter.error_format in
@@ -106,7 +106,7 @@ let rec run_test ?(prefix = "") : test -> unit = fun t ->
 let wrap_ref file f =
   let s = ref None in
   fun () -> match !s with
-    | Some (a,file') -> 
+    | Some (a,file') ->
       if String.equal file' file then
         a else f s
     | None -> f s
@@ -333,7 +333,7 @@ let expect_eq_b_bool a b c =
   expect_eq_b a b (fun bool -> e_bool (c bool))
 
 let compile_main ~raise ~add_warning f () =
-  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise (get_program ~raise ~add_warning f (Contract "main") ()) "main" in
+  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise (get_program ~raise ~add_warning f (Contract (Stage_common.Var.of_input_var "main")) ()) @@ Stage_common.Var.of_input_var "main" in
   let mini_c    = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let michelson_prg = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
   let _contract : Location.t Tezos_utils.Michelson.michelson =

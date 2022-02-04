@@ -18,13 +18,13 @@ let%expect_test _ =
     type parameter = sum[Decrement -> unit , Increment -> unit]
     type storage = tez
     type return = ( list (operation) * tez )
-    const main = lambda (#3) return  match #3 with
-                                      | ( action , #4 ) ->
-                                      ( LIST_EMPTY() ,  match action with
-                                                         | Decrement unit_proj#8 ->
-                                                           amt
-                                                         | Increment unit_proj#9 ->
-                                                           bal ) |}]
+    const main = lambda (gen#3) return  match gen#3 with
+                                         | ( action , gen#4 ) ->
+                                         ( LIST_EMPTY() ,  match action with
+                                                            | Decrement unit_proj#11 ->
+                                                              amt
+                                                            | Increment unit_proj#12 ->
+                                                              bal ) |}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
   [%expect {|
@@ -44,13 +44,13 @@ let%expect_test _ =
     type parameter = sum[Decrement -> unit , Increment -> unit]
     type storage = tez
     type return = ( list (operation) * tez )
-    const main = lambda (#3) return  match #3 with
-                                      | ( action , #4 ) ->
-                                      ( LIST_EMPTY() ,  match action with
-                                                         | Decrement unit_proj#8 ->
-                                                           amt
-                                                         | Increment unit_proj#9 ->
-                                                           bal ) |}]
+    const main = lambda (gen#3) return  match gen#3 with
+                                         | ( action , gen#4 ) ->
+                                         ( LIST_EMPTY() ,  match action with
+                                                            | Decrement unit_proj#11 ->
+                                                              amt
+                                                            | Increment unit_proj#12 ->
+                                                              bal ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "module_with_free_vars.mligo" ] ;
@@ -68,13 +68,13 @@ let%expect_test _ =
     type parameter = sum[Decrement -> unit , Increment -> unit]
     type storage = tez
     type return = ( list (operation) * tez )
-    const main = lambda (#3) return  match #3 with
-                                      | ( action , #4 ) ->
-                                      ( LIST_EMPTY() ,  match action with
-                                                         | Decrement unit_proj#8 ->
-                                                           amt
-                                                         | Increment unit_proj#9 ->
-                                                           bal ) |}]
+    const main = lambda (gen#3) return  match gen#3 with
+                                         | ( action , gen#4 ) ->
+                                         ( LIST_EMPTY() ,  match action with
+                                                            | Decrement unit_proj#11 ->
+                                                              amt
+                                                            | Increment unit_proj#12 ->
+                                                              bal ) |}]
 
 let%expect_test _ =
 run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules_with_free_vars.mligo" ] ;
@@ -98,10 +98,10 @@ run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules_with_free_vars.
   type parameter = sum[Decrement -> unit , Increment -> unit]
   type storage = tez
   type return = ( list (operation) * tez )
-  const main = lambda (#3) return  match #3 with
-                                    | ( action , #4 ) ->
-                                    ( LIST_EMPTY() ,  match action with
-                                                       | Decrement unit_proj#8 ->
-                                                         1000000mutez
-                                                       | Increment unit_proj#9 ->
-                                                         used ) |}]
+  const main = lambda (gen#3) return  match gen#3 with
+                                       | ( action , gen#4 ) ->
+                                       ( LIST_EMPTY() ,  match action with
+                                                          | Decrement unit_proj#11 ->
+                                                            1000000mutez
+                                                          | Increment unit_proj#12 ->
+                                                            used ) |}]

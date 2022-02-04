@@ -13,7 +13,7 @@ open Mini_c
 
 let replace_var : var_name -> var_name -> var_name -> var_name =
   fun v x y ->
-  if Var.equal v.wrap_content x.wrap_content
+  if Var.equal v x
   then y
   else v
 
@@ -117,14 +117,14 @@ let subst_binder : type body.
   body:(var_name * body) -> x:var_name -> expr:expression -> (var_name * body) =
   fun subst replace ~body:(y, body) ~x ~expr ->
     (* if x is shadowed, binder doesn't change *)
-    if Var.equal x.wrap_content y.wrap_content
+    if Var.equal x y
     then (y, body)
     (* else, if no capture, subst in binder *)
     else if not (Free_variables.mem (Free_variables.expression [] expr) y)
     then (y, subst ~body ~x ~expr)
     (* else, avoid capture and subst in binder *)
     else
-      let fresh = Location.wrap @@ Var.fresh_like y.wrap_content in
+      let fresh = Var.fresh_like y in
       let body = replace body y fresh in
       (fresh, subst ~body ~x ~expr)
 
@@ -173,7 +173,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   let return_id = body in
   match body.content with
   | E_variable x' ->
-     if Location.equal_content ~equal:Var.equal x' x
+     if Var.equal x' x
      then expr
      else return_id
   | E_closure { binder; body } -> (
@@ -262,13 +262,13 @@ let%expect_test _ =
   let show_subst ~body ~(x:var_name) ~expr =
     Format.printf "(%a)[%a := %a] =@ %a"
       PP.expression body
-      Var.pp x.wrap_content
+      Var.pp x
       PP.expression expr
       PP.expression (subst_expression ~body ~x ~expr) in
 
-  let x = Location.wrap @@ Var.of_name "x" in
-  let y = Location.wrap @@ Var.of_name "y" in
-  let z = Location.wrap @@ Var.of_name "z" in
+  let x = Var.of_input_var "x" in
+  let y = Var.of_input_var "y" in
+  let z = Var.of_input_var "z" in
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
@@ -468,7 +468,7 @@ let%expect_test _ =
 
   (* old bug *)
   Var.reset_counter () ;
-  let y0 = Location.wrap @@ Var.fresh ~name:"y" () in
+  let y0 = Var.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x

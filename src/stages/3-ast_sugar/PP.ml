@@ -22,7 +22,7 @@ let record_sep_t value sep ppf (m : 'a label_map) =
 
 
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev.wrap_content
+  fprintf ppf "%a" expression_variable ev
 
 let list_sep_d_par f ppf lst =
   match lst with

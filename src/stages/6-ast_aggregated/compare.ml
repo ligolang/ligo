@@ -31,9 +31,9 @@ let label_map ~compare lma lmb =
 
 let typeVariableMap compare a b = List.compare (compare_tvmap_entry compare) a b
 
-let expression_variable = Location.compare_wrap ~compare:Var.compare
+let expression_variable = Var.compare
 let type_variable       = Var.compare
-let module_variable     = String.compare
+let module_variable     = Var.compare
 
 let module_access f {module_name=mna; element=ea}
                     {module_name=mnb; element=eb} =
@@ -100,7 +100,7 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
 and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _ ; type_ = tb } =
   cmp2
     type_expression ta tb
-    type_variable ba.wrap_content bb.wrap_content
+    type_variable ba bb
 
 let option f oa ob =
   match oa,ob with

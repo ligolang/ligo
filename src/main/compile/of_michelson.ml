@@ -7,7 +7,7 @@ open Trace
 let build_contract ~raise :
   ?disable_typecheck:bool ->
   Stacking.compiled_expression ->
-  (string * Stacking.compiled_expression) list -> _ Michelson.michelson  =
+  (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
     fun ?(disable_typecheck= false) compiled views ->
       let views =
         List.map
@@ -15,7 +15,7 @@ let build_contract ~raise :
             let (view_param_ty, ret_ty) = trace_option ~raise (main_view_not_a_function name) @@ (* remitodo error specific to views*)
               Self_michelson.fetch_views_ty view.expr_ty
             in
-            (name, view_param_ty, ret_ty, view.expr)
+            (Stage_common.Var.to_name_exn name, view_param_ty, ret_ty, view.expr)
           )
           views
       in

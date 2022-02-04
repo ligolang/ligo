@@ -1,6 +1,5 @@
 (* This file represente the context which give the association of values to types *)
 module Location = Simple_utils.Location
-module Var      = Simple_utils.Var
 module Types = struct
   open Ast_typed
 
@@ -75,19 +74,19 @@ let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te ->
   let modules = (mv,te)::c.modules in
   {c with modules}
 
-let get_value (e:t)  = List.Assoc.find ~equal:(Location.equal_content ~equal:Var.equal) e.values
-let get_type (e:t)   = List.Assoc.find ~equal:Var.equal e.types
-let get_module (e:t) = List.Assoc.find ~equal:String.equal e.modules
+let get_value (e:t)  = List.Assoc.find ~equal:Stage_common.Var.equal e.values
+let get_type (e:t)   = List.Assoc.find ~equal:Stage_common.Var.equal e.types
+let get_module (e:t) = List.Assoc.find ~equal:Stage_common.Var.equal e.modules
 
 let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip types
 
 (* Load context from the outside declarations *)
 let rec add_ez_module : t -> Ast_typed.module_variable -> Ast_typed.module_ -> t = fun outer_context mv m ->
   let f inner_context d = match Location.unwrap d with
-    Ast_typed.Declaration_constant {name=_;binder;expr;attr={public;_}}  -> if public then add_value inner_context binder expr.type_expression else inner_context
+    Ast_typed.Declaration_constant {binder;expr;attr={public;_}}  -> if public then add_value inner_context binder expr.type_expression else inner_context
   | Declaration_type {type_binder;type_expr;type_attr={public}} -> if public then add_type inner_context type_binder type_expr else inner_context
   | Declaration_module {module_binder;module_;module_attr={public}} -> if public then add_ez_module (union inner_context outer_context) module_binder module_ else inner_context
-  | Module_alias {alias;binders} -> 
+  | Module_alias {alias;binders} ->
     let m = Simple_utils.List.Ne.fold_left ~f:(fun c b -> Option.bind ~f:(fun c -> get_module c b) c) ~init:(Some (union inner_context outer_context)) binders in
     let c' = Option.map ~f:(add_module inner_context alias) m in
     Option.value_exn c' (* The alias exist because the module is out of the type checker *)
@@ -100,7 +99,7 @@ let init ?env () =
   match env with None -> empty
   | Some (env) ->
     let f c d = match Location.unwrap d with
-      Ast_typed.Declaration_constant {name=_;binder;expr;attr=_}  -> add_value c binder expr.type_expression
+      Ast_typed.Declaration_constant {binder;expr;attr=_}  -> add_value c binder expr.type_expression
     | Declaration_type {type_binder;type_expr;type_attr=_} -> add_type c type_binder type_expr
     | Declaration_module {module_binder;module_;module_attr=_} -> add_ez_module c module_binder module_
     | Module_alias {alias;binders} ->
@@ -140,7 +139,7 @@ let get_constructor_parametric : label -> t -> (type_variable list * type_expres
             Some {associated_type ; _} -> Some (av, associated_type , type_)
           | None -> None)
       | T_abstraction { ty_binder ; kind = _ ; type_ } ->
-         aux (Location.unwrap ty_binder :: av) (_t,type_)
+         aux (ty_binder :: av) (_t,type_)
       | _ -> None in
     let aux = aux []in
     match List.find_map ~f:aux (get_types e) with

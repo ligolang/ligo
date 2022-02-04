@@ -71,7 +71,7 @@ type all =
  | `Main_decompile_inferred of Inference.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
- | `Main_view_not_a_function of string
+ | `Main_view_not_a_function of Ast_typed.type_variable
  | `Main_invalid_balance of string
  | `Main_invalid_amount of string
  | `Main_invalid_sender of string

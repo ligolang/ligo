@@ -1,5 +1,4 @@
 module Definitions = struct
-  module Var      = Simple_utils.Var
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
   module Def_map = Simple_utils.Map.Make( struct type t = string let compare = String.compare end)
@@ -10,7 +9,7 @@ module Definitions = struct
     | Unresolved
 
   type vdef = {
-    name : Ast_core.expression_ Var.t ;
+    name  : Ast_core.expression_variable;
     range : Location.t ;
     body_range : Location.t ;
     t : type_case ;
@@ -23,7 +22,7 @@ module Definitions = struct
     body_range : Location.t ;
     content : Ast_core.type_expression ;
   }
-  
+
   type adef = {
     name       : string ;
     range      : Location.t ;
@@ -52,18 +51,18 @@ module Definitions = struct
     Def_map.union merge_refs a b
 
   let get_def_name = function
-    | Variable    d -> (Var.to_name d.name)
+    | Variable    d -> Ast_core.Var.to_name_exn d.name
     | Type        d -> d.name
     | Module      d -> d.name
     | ModuleAlias d -> d.name
-  
+
   let get_range = function
     | Type        t -> t.range
     | Variable    v -> v.range
     | Module      m -> m.range
     | ModuleAlias a -> a.range
 
-  let make_v_def : Ast_core.expression_ Var.t -> type_case -> Location.t -> Location.t -> def =
+  let make_v_def : Ast_core.expression_variable -> type_case -> Location.t -> Location.t -> def =
     fun name t range body_range ->
       Variable { name ; range ; body_range ; t ; references = [] }
 
@@ -82,14 +81,14 @@ module Definitions = struct
   let add_reference : Ast_core.expression_variable -> def_map -> def_map = fun x env ->
     let aux : string * def -> bool = fun (_,d) ->
       match d with
-      | Variable v -> Var.equal v.name x.wrap_content
+      | Variable v -> Ast_core.Var.equal v.name x
       | (Type _ | Module _ | ModuleAlias _) -> false
     in
     match List.find ~f:aux (Def_map.bindings env) with
     | Some (k,_) ->
       let aux : def option -> def option = fun d_opt ->
         match d_opt with
-        | Some (Variable v) -> Some (Variable { v with references = (x.location :: v.references) })
+        | Some (Variable v) -> Some (Variable { v with references = (Ast_core.Var.get_location x :: v.references) })
         | Some x -> Some x
         | None -> None
       in

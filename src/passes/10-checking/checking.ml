@@ -11,13 +11,12 @@ module Pair = Simple_utils.Pair
 
 type context = Context.t
 
-let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
 
 (* The `table` represents the substitutions that have been inferred.
    For example, if matching `a -> b -> a` with `int -> bool -> int`,
    it should have information such as `[a ↦ int; b ↦ bool]`. *)
-module TMap = Simple_utils.Map.Make(struct type t = O.type_variable let compare x y = Var.compare x y end)
+module TMap = Simple_utils.Map.Make(struct type t = O.type_variable let compare x y = I.Var.compare x y end)
 
 let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') table (type_matched : O.type_expression) (type_ : O.type_expression) =
   let open O in
@@ -115,7 +114,7 @@ let build_type_insts ~raise ~loc (forall : O.expression) table bound_variables =
     | [] -> forall
     | av :: avs' ->
        let O.{ ty_binder ; type_ = t ; kind = _ } = trace_option ~raise (corner_case "Expected a for all type quantifier") @@ O.get_t_for_all forall.type_expression in
-       assert (Var.equal (Location.unwrap ty_binder) av);
+       assert (I.Var.equal ty_binder av);
        let type_ = trace_option ~raise (Errors.not_annotated loc) @@ TMap.find_opt av table in
        build_type_insts (make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_type av type_ t)) avs' in
   build_type_insts forall bound_variables
@@ -133,42 +132,42 @@ let rec type_module ~raise ~test ~init_context ~protocol_version (p:I.module_) :
 
 and type_declaration' : raise: typer_error raise -> protocol_version:protocol_version -> test: bool -> context -> I.declaration Location.wrap -> context * O.declaration Location.wrap =
 fun ~raise ~protocol_version ~test c d ->
-let return ?(loc = d.location) c (d : O.declaration) = c,Location.wrap ~loc d in
+let loc = d.location in
+let return ?(loc = loc) c (d : O.declaration) = c,Location.wrap ~loc d in
 match Location.unwrap d with
   | Declaration_type {type_binder ; _} when Ast_core.Helpers.is_generalizable_variable type_binder ->
     raise.raise (wrong_generalizable d.location type_binder)
   | Declaration_type {type_binder ; type_expr; type_attr={public}} -> (
-    let type_binder = Var.todo_cast type_binder in
     let tv = evaluate_type ~raise c type_expr in
     let tv = {tv with orig_var = Some type_binder} in
     let env' = Context.add_type c type_binder tv in
     return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public} }
   )
-  | Declaration_constant {name ; binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
+  | Declaration_constant {binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
     let expr =
-      trace ~raise (constant_declaration_tracer var expr None) @@
+      trace ~raise (constant_declaration_tracer loc var expr None) @@
       type_expression' ~test ~protocol_version c expr in
-    let binder : O.expression_variable = cast_var var in
+    let binder : O.expression_variable = var in
     let post_env = Context.add_value c binder expr.type_expression in
-    return post_env @@ Declaration_constant { name ; binder ; expr ; attr }
+    return post_env @@ Declaration_constant { binder ; expr ; attr }
   )
-  | Declaration_constant {name ; binder = { ascr = Some tv ; var ; attributes=_ } ; attr ; expr } ->
+  | Declaration_constant { binder = { ascr = Some tv ; var ; attributes=_ } ; attr ; expr } ->
     let type_env = Context.get_type_vars c in
     let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
     let env = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:c in
     let tv = evaluate_type ~raise env tv in
     let expr =
-      trace ~raise (constant_declaration_tracer var expr (Some tv)) @@
+      trace ~raise (constant_declaration_tracer loc var expr (Some tv)) @@
       type_expression' ~test ~protocol_version ~tv_opt:tv env expr in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all (Location.wrap abs_var) () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
     let type_expression = aux expr.type_expression (List.rev av) in
     let expr = { expr with type_expression } in
-    let binder : O.expression_variable = cast_var var in
+    let binder : O.expression_variable = var in
     let c = Context.add_value c binder expr.type_expression in
-    return c @@ Declaration_constant { name ; binder ; expr ; attr }
+    return c @@ Declaration_constant { binder ; expr ; attr }
   | Declaration_module {module_binder;module_; module_attr = {public}} -> (
     let module_ = type_module ~raise ~test ~protocol_version ~init_context:c module_ in
     let post_env = Context.add_ez_module c module_binder module_ in
@@ -237,8 +236,7 @@ and evaluate_otype ~raise (c:context) (t:O.type_expression) : O.type_expression 
     in
     return @@ T_record record
   )
-  | T_variable variable -> (
-    let name : O.type_variable = Var.todo_cast variable in
+  | T_variable name -> (
     match Context.get_type c name with
     | Some x -> x
     | None -> raise.raise (unbound_type_variable name t.location)
@@ -251,11 +249,11 @@ and evaluate_otype ~raise (c:context) (t:O.type_expression) : O.type_expression 
     evaluate_otype ~raise module_ element
   | T_singleton x -> return (T_singleton x)
   | T_abstraction x ->
-    let c = Context.add_kind c x.ty_binder.wrap_content () in
+    let c = Context.add_kind c x.ty_binder () in
     let type_ = evaluate_otype ~raise c x.type_ in
     return (T_abstraction {x with type_})
   | T_for_all x ->
-    let c = Context.add_type_var c x.ty_binder.wrap_content () in
+    let c = Context.add_type_var c x.ty_binder () in
     let type_ = evaluate_otype ~raise c x.type_ in
     return (T_for_all {x with type_})
 
@@ -306,11 +304,10 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
     in
     return @@ T_record record
   )
-  | T_variable variable -> (
-    let name : O.type_variable = Var.todo_cast variable in
+  | T_variable name -> (
     match Context.get_type c name with
     | Some x -> x
-    | None when Ast_typed.Helpers.is_generalizable_variable name ->
+    | None when I.Var.is_generalizable name ->
        (* Case happening when trying to use a variable that is not in
           the context, but it is generalizable: we hint the user
           that the variable could be put in the extended context
@@ -319,9 +316,8 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
     | None -> raise.raise (unbound_type_variable name t.location)
   )
   | T_app {type_operator;arguments} -> (
-    let name : O.type_variable = Var.todo_cast type_operator in
-    let operator = trace_option ~raise (unbound_type_variable name t.location) @@
-      Context.get_type c name
+    let operator = trace_option ~raise (unbound_type_variable type_operator t.location) @@
+      Context.get_type c type_operator
     in
     let is_fully_applied location (t:O.type_expression) =
       match t.type_content with
@@ -333,7 +329,7 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
         raise.raise (type_constant_wrong_number_of_arguments None expected 0 location)
       | _ -> ()
     in
-    let rec aux : O.type_expression * I.type_variable Location.wrap list -> O.type_expression * I.type_variable Location.wrap list =
+    let rec aux : O.type_expression * I.type_variable list -> O.type_expression * I.type_variable list =
       fun (op, lst) ->
         match op.type_content with
         | O.T_abstraction {ty_binder;kind=_;type_} -> (
@@ -347,14 +343,13 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
       | Unequal_lengths ->
         let actual = List.length arguments in
         let expected = List.length vars in
-        raise.raise (type_constant_wrong_number_of_arguments (Some name) expected actual t.location)
+        raise.raise (type_constant_wrong_number_of_arguments (Some type_operator) expected actual t.location)
       | Ok x -> x
     in
-    let aux : context -> (I.type_variable Location.wrap * I.type_expression) -> context =
+    let aux : context -> (I.type_variable * I.type_expression) -> context =
       fun c (ty_binder,arg) ->
         let arg' = evaluate_type ~raise c arg in
         let () = is_fully_applied arg.location arg' in
-        let ty_binder : O.type_variable = Var.todo_cast ty_binder.wrap_content in
         Context.add_type c ty_binder arg'
     in
     let env' = List.fold_left ~f:aux ~init:c vargs in
@@ -378,11 +373,11 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
     evaluate_type ~raise module_ element
   | T_singleton x -> return (T_singleton x)
   | T_abstraction x ->
-    let c = Context.add_kind c x.ty_binder.wrap_content () in
+    let c = Context.add_kind c x.ty_binder () in
     let type_ = evaluate_type ~raise c x.type_ in
     return (T_abstraction {x with type_})
   | T_for_all x ->
-    let c = Context.add_type_var c x.ty_binder.wrap_content () in
+    let c = Context.add_type_var c x.ty_binder () in
     let type_ = evaluate_type ~raise c x.type_ in
     return (T_for_all {x with type_})
 
@@ -404,8 +399,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   trace ~raise (expression_tracer e) @@
   fun ~raise -> match e.expression_content with
   (* Basic *)
-  | E_variable name' ->
-      let name = cast_var name' in
+  | E_variable name ->
       let tv' =
         trace_option ~raise (unbound_variable name e.location)
         @@ Context.get_value context name in
@@ -414,7 +408,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
           (* TODO: This is some inference, and we should reconcile it with the inference pass. *)
           let avs, type_ = O.Helpers.destruct_for_alls tv' in
           let table = infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
-          let lamb = make_e ~location:e.location (E_variable name') tv' in
+          let lamb = make_e ~location:e.location (E_variable name) tv' in
           return_e @@ build_type_insts ~raise ~loc:e.location lamb table avs
        | _ ->
           return (E_variable name) tv')
@@ -551,7 +545,6 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let open Stage_common.Constant in
       (* this special case is here to force annotation of the untyped lambda
          generated by pascaligo's for_collect loop *)
-      let lname = cast_var lname in
       let (v_col , v_initr ) = Pair.map ~f:(type_expression' ~raise ~test ~protocol_version context) (collect , init_record ) in
       let tv_col = get_type v_col   in (* this is the type of the collection  *)
       let tv_out = get_type v_initr in (* this is the output type of the lambda*)
@@ -585,7 +578,6 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let v_initr = type_expression' ~raise ~test ~protocol_version context init_record in
       let tv_out = get_type v_initr in
       let input_type  = tv_out in
-      let lname = cast_var lname in
       let e' = Context.add_value context lname input_type in
       let body = type_expression' ~raise ~test ~protocol_version e' result in
       let output_type = body.type_expression in
@@ -699,7 +691,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let case_exp = { case_exp with location = e.location } in
       return case_exp.expression_content case_exp.type_expression
     | _ ->
-      let matcheevar = Location.wrap (Var.fresh ()) in
+      let matcheevar = I.Var.fresh () in
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~test ~protocol_version ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       let x = O.E_let_in { let_binder = matcheevar ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false } } in
@@ -707,7 +699,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   )
   | E_let_in {let_binder = {var ; ascr = None ; attributes=_} ; rhs ; let_result; attr } ->
      let rhs = type_expression' ~raise ~protocol_version ~test context rhs in
-     let binder = cast_var var in
+     let binder = var in
      let e' = Context.add_value context binder rhs.type_expression in
      let let_result = type_expression' ~raise ~protocol_version ~test e' let_result in
      return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
@@ -721,10 +713,10 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let rhs = type_expression' ~raise ~protocol_version ~test ~tv_opt:tv context rhs in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all (Location.wrap abs_var) () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
     let type_expression = aux rhs.type_expression (List.rev av) in
     let rhs = { rhs with type_expression } in
-    let binder = cast_var var in
+    let binder  = var in
     let context = Context.add_value pre_context binder type_expression in
     let let_result = type_expression' ~raise ~protocol_version ~test context let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
@@ -758,7 +750,6 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   | E_recursive {fun_name; fun_type; lambda} ->
     let type_env = Context.get_type_vars context in
     let av = Ast_core.Helpers.Free_type_variables.type_expression type_env fun_type in
-    let fun_name = cast_var fun_name in
     let fun_type = evaluate_type ~raise context fun_type in
     let e' = Context.add_value context fun_name fun_type in
     let e' = List.fold_left av ~init:e' ~f:(fun e v -> Context.add_type_var e v ()) in
@@ -798,7 +789,7 @@ and type_lambda ~raise ~test ~protocol_version e {
       let output_type =
         Option.map ~f:(evaluate_type ~raise e) output_type
       in
-      let binder = cast_var binder.var in
+      let binder = binder.var in
       let input_type = trace_option ~raise (missing_funarg_annotation binder) input_type in
       let e' = Context.add_value e binder input_type in
       let body = type_expression' ~raise ~test ~protocol_version ?tv_opt:output_type e' result in
@@ -854,13 +845,13 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     let x' = I.LMap.map aux content in
     return @@ I.T_record {fields = x' ; layout = Some layout}
   )
-  | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
+  | O.T_variable name -> return @@ I.T_variable name
   | O.T_arrow arr ->
     let arr = Stage_common.Maps.arrow self arr in
     return @@ I.T_arrow arr
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = Var.of_name (Ligo_string.extract injection) in
+    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_module_accessor ma ->
     let ma = Stage_common.Maps.module_access self ma in
@@ -887,14 +878,12 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let lst' = List.map ~f:untype_expression arguments in
       return (e_constant cons_name lst')
   | E_variable n ->
-      let n = cast_var n in
       return (e_variable (n))
   | E_application {lamb;args} ->
       let f' = untype_expression lamb in
       let arg' = untype_expression args in
       return (e_application f' arg')
   | E_lambda {binder ; result} -> (
-      let binder = cast_var binder in
       let _, ty = Ast_typed.Helpers.destruct_for_alls ty in
       let { type1 ; type2 } = O.get_t_arrow_exn ty in
       let (input_type , output_type) =
@@ -929,7 +918,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
           let pattern =
             match tv with
             | _ ->
-              let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var pattern) ; attributes = Stage_common.Helpers.empty_attribute } in
+              let proj = Location.wrap @@ P_var { ascr = None ; var = pattern ; attributes = Stage_common.Helpers.empty_attribute } in
               Location.wrap @@ P_variant (constructor, proj)
           in
           let body = untype_expression body in
@@ -941,7 +930,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
     | Match_record {fields ; body ; tv=_} -> (
       let aux : (Ast_typed.label * (Ast_typed.expression_variable * _)) -> label * Ast_core.type_expression pattern =
         fun (Ast_typed.Label label, (proj,_)) -> (
-          let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var proj) ; attributes = Stage_common.Helpers.empty_attribute } in
+          let proj = Location.wrap @@ P_var { ascr = None ; var = proj ; attributes = Stage_common.Helpers.empty_attribute } in
           (Label label, proj)
         )
       in
@@ -959,7 +948,6 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
     )
   )
   | E_let_in {let_binder;rhs;let_result; attr} ->
-      let let_binder = cast_var let_binder in
       let tv = Untyper.untype_type_expression rhs.type_expression in
       let rhs = untype_expression rhs in
       let result = untype_expression let_result in
@@ -979,7 +967,6 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let code = untype_expression code in
       return (e_raw_code language code)
   | E_recursive {fun_name;fun_type; lambda} ->
-      let fun_name = cast_var fun_name in
       let fun_type = Untyper.untype_type_expression fun_type in
       let unty_expr= untype_expression_content ty @@ E_lambda lambda in
       let lambda = match unty_expr.expression_content with I.E_lambda l -> l | _ -> failwith "impossible case" in
@@ -990,7 +977,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
   | E_type_inst {forall;type_=type_inst} ->
     match forall.type_expression.type_content with
     | T_for_all {ty_binder;type_;kind=_} ->
-       let type_ = Ast_typed.Helpers.subst_type (Location.unwrap ty_binder) type_inst type_ in
+       let type_ = Ast_typed.Helpers.subst_type ty_binder type_inst type_ in
        let forall = { forall with type_expression = type_ } in
        untype_expression forall
     | _ ->
@@ -1002,11 +989,11 @@ function
   Declaration_type {type_binder; type_expr;type_attr={public}} ->
   let type_expr = untype_type_expression type_expr in
   return @@ Declaration_type {type_binder; type_expr;type_attr={public}}
-| Declaration_constant {name; binder;expr;attr={inline;no_mutation;public;view}} ->
+| Declaration_constant {binder;expr;attr={inline;no_mutation;public;view}} ->
   let ty = untype_type_expression expr.type_expression in
-  let var = Location.map Var.todo_cast binder in
+  let var = binder in
   let expr = untype_expression expr in
-  return @@ Declaration_constant {name; binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation;view;public}}
+  return @@ Declaration_constant {binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation;view;public}}
 | Declaration_module {module_binder;module_;module_attr={public}} ->
   let module_ = untype_module module_ in
   return @@ Declaration_module {module_binder;module_; module_attr={public}}

@@ -1,4 +1,3 @@
-module Var = Simple_utils.Var
 (* TODO: remove these and use the proper qualification where needed *)
 type    unionfind             =    Ast_core.unionfind
 type    constant_tag          =    Ast_core.constant_tag
@@ -28,13 +27,11 @@ type type_expression = Ast_core.type_expression
 
 (* generate a new type variable and gave it an id *)
 let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () ->
-  let fresh_name = Simple_utils.Var.fresh ?name () in
-  let () = (if Ast_core.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
+  let fresh_name = Ast_core.Var.fresh ?name () in
   fresh_name
 
 let fresh_for_expr_var: Ast_core.expression_variable -> type_variable = fun v ->
-  let fresh_name = Var.fresh_like v.wrap_content in
-  let () = (if Ast_core.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
+  let fresh_name = v in
   fresh_name
 
 let type_expression'_of_simple_c_constant : constant_tag * type_expression list -> Ast_core.type_content option = fun (c, l) ->

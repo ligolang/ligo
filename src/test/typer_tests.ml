@@ -62,17 +62,17 @@ module TestExpressions = struct
   let failwith ~raise  () : unit = test_expression ~raise I.(e_ascription (e_constant C_FAILWITH [e_int Z.zero]) (t_int ())) O.(t_int ())
   let application ~raise  () : unit =
     test_expression ~raise
-      I.(e_application (e_lambda_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x")) @@ e_int Z.one)
+      I.(e_application (e_lambda_ez (Var.of_input_var "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x")) @@ e_int Z.one)
       O.(t_int ())
 
   let lambda ~raise  () : unit =
     test_expression ~raise
-      I.(e_lambda_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x"))
+      I.(e_lambda_ez (Var.of_input_var "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x"))
       O.(t_arrow (t_int ()) (t_int ()))
 
   let recursive ~raise  () : unit =
-    let fun_name = Location.wrap @@ Var.of_name "sum" in
-    let var      = Location.wrap @@ Var.of_name "n" in
+    let fun_name = Var.of_input_var "sum" in
+    let var      = Var.of_input_var "n" in
     let lambda = I.{binder={var;ascr=Some(t_nat ());attributes=Stage_common.Helpers.empty_attribute};
                     output_type = Some (t_nat ());
                     result=e_application (e_variable fun_name) (e_variable var)
@@ -83,12 +83,12 @@ module TestExpressions = struct
 
   let let_in ~raise  () : unit =
     test_expression  ~raise
-      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") {inline=false;no_mutation=false;view=false;public=true} (e_int Z.zero) @@ e_var "x")
+      I.(e_let_in_ez (Var.of_input_var "x") {inline=false;no_mutation=false;view=false;public=true} (e_int Z.zero) @@ e_var "x")
       O.(t_int ())
 
   let let_in_ascr ~raise  () : unit =
     test_expression  ~raise
-      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) {inline=false;no_mutation=false;view=false;public=true} (e_int Z.zero) @@ e_var "x")
+      I.(e_let_in_ez (Var.of_input_var "x") ~ascr:(t_int ()) {inline=false;no_mutation=false;view=false;public=true} (e_int Z.zero) @@ e_var "x")
       O.(t_int ())
 
   let constructor ~raise  () : unit =
@@ -97,7 +97,7 @@ module TestExpressions = struct
         ("Bar", Inferred.t_string () ); ]
     in
     test_expression ~raise
-      ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
+      ~env:(E.add_type (Var.of_input_var "test_t") variant_foo_bar E.empty)
       I.(e_constructor (Label "Foo") (e_int (Z.of_int 32)))
       variant_foo_bar
 
@@ -110,11 +110,11 @@ module TestExpressions = struct
         ("Quux", Inferred.t_unit ());
       ]
     in
-    let binder_wild : type_expression binder = {var=Location.wrap (Var.of_name "_");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
-    let binder_x : type_expression binder = {var=Location.wrap (Var.of_name "x");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
-    let binder_y : type_expression binder = {var=Location.wrap (Var.of_name "y");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+    let binder_wild : type_expression binder = {var=(Var.of_input_var "_");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+    let binder_x    : type_expression binder = {var=(Var.of_input_var "x");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+    let binder_y    : type_expression binder = {var=(Var.of_input_var "y");ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
     test_expression ~raise
-      ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
+      ~env:(E.add_type (Var.of_input_var "test_t") variant_foo_bar E.empty)
       I.(e_matching (e_constructor (Label "Foo") (e_int (Z.of_int 32)))
         [
           {pattern = Location.wrap @@ P_variant (Label "Foo", Location.wrap @@ P_var binder_x); body = e_var "x"};
