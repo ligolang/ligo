@@ -235,31 +235,31 @@ let is_cond : string -> bool = function
   | "IF_LEFT" -> true
   | _ -> false
 
-let rec last_is_ : (_ michelson -> _ michelson -> bool) -> (_ michelson -> bool) -> _ michelson -> _ option = fun eq pred ->
+let rec last_is : (_ michelson -> _ michelson -> bool) -> (_ michelson -> bool) -> _ michelson -> _ option = fun eq pred ->
   function
   | Seq (_, []) -> None
-  | Seq (_, [arg]) -> last_is_ eq pred arg
-  | Seq (l, _ :: args) -> last_is_ eq pred (Seq (l, args))
+  | Seq (_, [arg]) -> last_is eq pred arg
+  | Seq (l, _ :: args) -> last_is eq pred (Seq (l, args))
   | Prim (_, "IF", [bt; bf], _)
   | Prim (_, "IF_CONS", [bt; bf], _)
   | Prim (_, "IF_LEFT", [bt; bf], _)
   | Prim (_, "IF_NONE", [bt; bf], _) ->
     let (let+) v f = Option.bind v ~f in
-    let+ bt = last_is_ eq pred bt in
-    let+ bf = last_is_ eq pred bf in
+    let+ bt = last_is eq pred bt in
+    let+ bf = last_is eq pred bf in
     if eq bt bf then Some bt else None
   | Prim _ as prim when pred prim -> Some prim
   | _ -> None
 
-let rec remove_last_ : (_ michelson -> bool) ->  _ michelson -> _ michelson = fun pred ->
+let rec remove_last : (_ michelson -> bool) ->  _ michelson -> _ michelson = fun pred ->
   function
   | Seq (l, []) -> Seq (l, [])
   | Seq (l, ls) ->
      let (init, last) = List.drop_last_exn ls, List.last_exn ls in
      let last = match last with
        | Prim (l, p, [bt; bf], t) when is_cond p ->
-          let bt = remove_last_ pred bt in
-          let bf = remove_last_ pred bf in
+          let bt = remove_last pred bt in
+          let bf = remove_last pred bf in
           [Prim (l, p, [bt; bf], t)]
        | Prim _ as prim when pred prim ->
           []
@@ -373,34 +373,21 @@ let opt_dip3 : _ peep3 = function
 
 let opt_cond : _ peep1 = function
   | Prim (l1, p, [bt; bf], annot1) when is_cond p -> (
+    let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"] in
+    let force_k = ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"] in
+    let force = ["NIL"; "NONE"] in
     let pred = function
-        Prim (_, ("SWAP"|"PAIR"|"UNPAIR"|"CAR"|"CDR"|"DIG"|"DUG"|"DUP"|"NIL"|"DROP"|"UNIT"|"SOME"|"NONE"), _, _) -> true
+        Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_k @ force) l -> true
       | _ -> false in
     let eq = fun m1 m2 -> match m1, m2 with
-        Prim (_, "SWAP", [], _), Prim (_, "SWAP", [], _) -> true
-      | Prim (_, "PAIR", [], _), Prim (_, "PAIR", [], _) -> true
-      | Prim (_, "UNPAIR", [], _), Prim (_, "UNPAIR", [], _) -> true
-      | Prim (_, "CAR", [], _), Prim (_, "CAR", [], _) -> true
-      | Prim (_, "CDR", [], _), Prim (_, "CDR", [], _) -> true
-      | Prim (_, "DUP", [], _), Prim (_, "DUP", [], _) -> true
-      | Prim (_, "DROP", [], _), Prim (_, "DROP", [], _) -> true
-      | Prim (_, "UNIT", [], _), Prim (_, "UNIT", [], _) -> true
-      | Prim (_, "SOME", [], _), Prim (_, "SOME", [], _) -> true
-      | Prim (_, "NIL", _, _), Prim (_, "NIL", _, _) -> true
-      | Prim (_, "NONE", _, _), Prim (_, "NONE", _, _) -> true
-      | Prim (_, "PAIR", [Int (_, n)], _), Prim (_, "PAIR", [Int (_, m)], _) when Z.equal n m -> true
-      | Prim (_, "UNPAIR", [Int (_, n)], _), Prim (_, "UNPAIR", [Int (_, m)], _) when Z.equal n m -> true
-      | Prim (_, "CAR", [Int (_, n)], _), Prim (_, "CAR", [Int (_, m)], _) when Z.equal n m -> true
-      | Prim (_, "CDR", [Int (_, n)], _), Prim (_, "CDR", [Int (_, m)], _) when Z.equal n m -> true
-      | Prim (_, "DUP", [Int (_, n)], _), Prim (_, "DUP", [Int (_, m)], _) when Z.equal n m -> true
-      | Prim (_, "DROP", [Int (_, n)], _), Prim (_, "DROP", [Int (_, m)], _) when Z.equal n m -> true
-      | Prim (_, "DIG", [Int (_, n)], _), Prim (_, "DIG", [Int (_, m)], _) when Z.equal n m -> true
-      | Prim (_, "DUG", [Int (_, n)], _), Prim (_, "DUG", [Int (_, m)], _) when Z.equal n m -> true
+        Prim (_, l, [], _), Prim (_, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r -> true
+      | Prim (_, l, _, _), Prim (_, r, _, _) when List.mem ~equal:String.equal force l && String.equal l r -> true
+      | Prim (_, l, [Int (_, n)], _), Prim (_, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_k l && String.equal l r && Z.equal n m -> true
       | _ -> false in
-    match last_is_ eq pred bt, last_is_ eq pred bf with
+    match last_is eq pred bt, last_is eq pred bf with
     | Some l, Some r when eq l r ->
-       let bt = remove_last_ pred bt in
-       let bf = remove_last_ pred bf in
+       let bt = remove_last pred bt in
+       let bf = remove_last pred bf in
        Some [Prim (l1, p, [bt; bf], annot1); l]
     | _ -> None)
   | _ -> None
