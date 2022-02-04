@@ -361,4 +361,5 @@ let%expect_test _ =
              UNPAIR ;
              CAR ;
              SWAP ;
-             IF_NONE { NIL operation ; PAIR } { SWAP ; DROP ; NIL operation ; PAIR } } } |}]
+             IF_NONE { NIL operation } { SWAP ; DROP ; NIL operation } ;
+             PAIR } } |}]

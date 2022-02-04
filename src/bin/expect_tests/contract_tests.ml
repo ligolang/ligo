@@ -8,7 +8,7 @@ let () = Unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good [ "info" ; "measure-contract" ; contract "coase.ligo" ] ;
-  [%expect {| 1175 bytes |}] ;
+  [%expect {| 1171 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
   [%expect {|
@@ -16,11 +16,11 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    1541 bytes |}] ;
+    1501 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
-    430 bytes |}] ;
+    426 bytes |}] ;
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -172,8 +172,7 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 NIL operation ;
-                 PAIR }
+                 NIL operation }
                { SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -259,8 +258,7 @@ let%expect_test _ =
                  PAIR ;
                  NIL operation ;
                  DIG 2 ;
-                 CONS ;
-                 PAIR } }
+                 CONS } }
            { SWAP ;
              DUP ;
              DUG 2 ;
@@ -297,8 +295,8 @@ let%expect_test _ =
              CAR ;
              PAIR ;
              PAIR ;
-             NIL operation ;
-             PAIR } } } |} ]
+             NIL operation } ;
+         PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig.ligo" ] ;
@@ -371,10 +369,10 @@ let%expect_test _ =
                               CHECK_SIGNATURE ;
                               IF { PUSH nat 1 ; DIG 2 ; ADD }
                                  { PUSH string "Invalid signature" ; FAILWITH } }
-                            { DIG 2 ; DROP 2 ; SWAP } ;
-                         SWAP ;
-                         PAIR }
-                       { DROP ; PAIR } } ;
+                            { DIG 2 ; DROP 2 ; SWAP } }
+                       { DROP ; SWAP } ;
+                     SWAP ;
+                     PAIR } ;
               SWAP ;
               DROP ;
               DUP 3 ;
@@ -419,7 +417,7 @@ let%expect_test _ =
   code { UNPAIR ;
          IF_LEFT
            { IF_LEFT
-               { DROP ; NIL operation ; PAIR }
+               { DROP ; NIL operation }
                { SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -483,8 +481,7 @@ let%expect_test _ =
                      EMPTY_SET address ;
                      PUSH bool True ;
                      SENDER ;
-                     UPDATE ;
-                     PAIR }
+                     UPDATE }
                    { DUP ;
                      SENDER ;
                      MEM ;
@@ -520,12 +517,8 @@ let%expect_test _ =
                      SWAP ;
                      PUSH bool True ;
                      SENDER ;
-                     UPDATE ;
-                     PAIR } ;
-                 DUP ;
-                 CAR ;
+                     UPDATE } ;
                  SWAP ;
-                 CDR ;
                  DUP ;
                  CDR ;
                  CAR ;
@@ -650,8 +643,7 @@ let%expect_test _ =
                                 { DIG 2 ; DROP 2 } } ;
                       DIG 2 ;
                       DROP ;
-                      SWAP ;
-                      PAIR }
+                      SWAP }
                     { DIG 3 ;
                       DROP ;
                       DUP ;
@@ -678,8 +670,7 @@ let%expect_test _ =
                       CAR ;
                       PAIR ;
                       PAIR ;
-                      NIL operation ;
-                      PAIR } } }
+                      NIL operation } } }
            { PACK ;
              SWAP ;
              DUP ;
@@ -751,17 +742,7 @@ let%expect_test _ =
                       DIG 3 ;
                       NONE (set address) ;
                       SWAP ;
-                      UPDATE ;
-                      DUP 3 ;
-                      CAR ;
-                      CDR ;
-                      CAR ;
-                      PAIR ;
-                      DIG 2 ;
-                      CAR ;
-                      CAR ;
-                      PAIR ;
-                      PAIR }
+                      UPDATE }
                     { DUP ;
                       CDR ;
                       SWAP ;
@@ -775,19 +756,19 @@ let%expect_test _ =
                       SWAP ;
                       SOME ;
                       SWAP ;
-                      UPDATE ;
-                      DUP 3 ;
-                      CAR ;
-                      CDR ;
-                      CAR ;
-                      PAIR ;
-                      DIG 2 ;
-                      CAR ;
-                      CAR ;
-                      PAIR ;
-                      PAIR } } ;
-             NIL operation ;
-             PAIR } } } |} ]
+                      UPDATE } ;
+                 DUP 3 ;
+                 CAR ;
+                 CDR ;
+                 CAR ;
+                 PAIR ;
+                 DIG 2 ;
+                 CAR ;
+                 CAR ;
+                 PAIR ;
+                 PAIR } ;
+             NIL operation } ;
+         PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "vote.mligo" ] ;
@@ -821,8 +802,7 @@ let%expect_test _ =
              PAIR ;
              PAIR ;
              PAIR ;
-             NIL operation ;
-             PAIR }
+             NIL operation }
            { SENDER ;
              SWAP ;
              IF_LEFT
@@ -845,7 +825,6 @@ let%expect_test _ =
                  CAR ;
                  CAR ;
                  PAIR ;
-                 PAIR ;
                  PAIR }
                { DROP ;
                  PUSH nat 1 ;
@@ -858,8 +837,8 @@ let%expect_test _ =
                  CAR ;
                  PAIR ;
                  DIG 2 ;
-                 CAR ;
-                 PAIR } ;
+                 CAR } ;
+             PAIR ;
              DUP ;
              CDR ;
              CDR ;
@@ -876,8 +855,8 @@ let%expect_test _ =
              SWAP ;
              CAR ;
              PAIR ;
-             NIL operation ;
-             PAIR } } } |}]
+             NIL operation } ;
+         PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "ticket_wallet.mligo" ] ;
@@ -999,8 +978,7 @@ Hint: replace it by "_ticket" to prevent this warning.
              COMPARE ;
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
-             NIL operation ;
-             PAIR }
+             NIL operation }
            { SWAP ;
              DUP ;
              DUG 2 ;
@@ -1019,8 +997,8 @@ Hint: replace it by "_ticket" to prevent this warning.
              SWAP ;
              NIL operation ;
              DIG 2 ;
-             CONS ;
-             PAIR } } } |} ]
+             CONS } ;
+         PAIR } } |} ]
 
 let%expect_test _ =
     run_ligo_good [ "compile" ; "contract" ; contract "implicit.mligo" ] ;

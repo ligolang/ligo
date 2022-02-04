@@ -235,6 +235,38 @@ let is_cond : string -> bool = function
   | "IF_LEFT" -> true
   | _ -> false
 
+let rec last_is_ : (_ michelson -> _ michelson -> bool) -> (_ michelson -> bool) -> _ michelson -> _ option = fun eq pred ->
+  function
+  | Seq (_, []) -> None
+  | Seq (_, [arg]) -> last_is_ eq pred arg
+  | Seq (l, _ :: args) -> last_is_ eq pred (Seq (l, args))
+  | Prim (_, "IF", [bt; bf], _)
+  | Prim (_, "IF_CONS", [bt; bf], _)
+  | Prim (_, "IF_LEFT", [bt; bf], _)
+  | Prim (_, "IF_NONE", [bt; bf], _) ->
+    let (let+) v f = Option.bind v ~f in
+    let+ bt = last_is_ eq pred bt in
+    let+ bf = last_is_ eq pred bf in
+    if eq bt bf then Some bt else None
+  | Prim _ as prim when pred prim -> Some prim
+  | _ -> None
+
+let rec remove_last_ : (_ michelson -> bool) ->  _ michelson -> _ michelson = fun pred ->
+  function
+  | Seq (l, []) -> Seq (l, [])
+  | Seq (l, ls) ->
+     let (init, last) = List.drop_last_exn ls, List.last_exn ls in
+     let last = match last with
+       | Prim (l, p, [bt; bf], t) when is_cond p ->
+          let bt = remove_last_ pred bt in
+          let bf = remove_last_ pred bf in
+          [Prim (l, p, [bt; bf], t)]
+       | Prim _ as prim when pred prim ->
+          []
+       | _ -> [last] in
+     Seq (l, init @ last)
+  | t -> t
+
 let opt_drop2 : _ peep2 = function
   (* nullary_op ; DROP  ↦  *)
   | op, Prim (_, "DROP", [], _) when is_nullary_op op -> Some []
@@ -337,6 +369,27 @@ let opt_dip3 : _ peep3 = function
             proj2 ;
             Prim (l, "SWAP", [], []) ;
             proj1 ]
+  | _ -> None
+
+let opt_cond : _ peep1 = function
+  | Prim (l1, p, [bt; bf], annot1) when is_cond p -> (
+    let pred = function
+        Prim (_, ("SWAP"|"PAIR"|"CAR"|"CDR"|"DIG"|"DUP"), _, _) -> true
+      | _ -> false in
+    let eq = fun m1 m2 -> match m1, m2 with
+        Prim (_, "SWAP", [], _), Prim (_, "SWAP", [], _) -> true
+      | Prim (_, "PAIR", [], _), Prim (_, "PAIR", [], _) -> true
+      | Prim (_, "CAR", [], _), Prim (_, "CAR", [], _) -> true
+      | Prim (_, "CDR", [], _), Prim (_, "CDR", [], _) -> true
+      | Prim (_, "DIG", [Int (_, n)], _), Prim (_, "DIG", [Int (_, m)], _) when Z.equal n m -> true
+      | Prim (_, "DUP", [Int (_, n)], _), Prim (_, "DUP", [Int (_, m)], _) when Z.equal n m -> true
+      | _ -> false in
+    match last_is_ eq pred bt, last_is_ eq pred bf with
+    | Some l, Some r when eq l r ->
+       let bt = remove_last_ pred bt in
+       let bf = remove_last_ pred bf in
+       Some [Prim (l1, p, [bt; bf], annot1); l]
+    | _ -> None)
   | _ -> None
 
 let opt_swap2 : _ peep2 = function
@@ -638,6 +691,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep3 opt_dip3 ;
                      peephole @@ peep2 opt_dip2 ;
                      peephole @@ peep1 opt_dip1 ;
+                     peephole @@ peep1 opt_cond ;
                      peephole @@ peep2 opt_swap2 ;
                      peephole @@ peep3 opt_beta3 ;
                      peephole @@ peep5 opt_beta5 ;
