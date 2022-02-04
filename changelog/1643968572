@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal
+title: Adding `Tezos.voting_power` and `Tezos.total_voting_power`
+type: added
+merge_request: '1531'
