@@ -1705,7 +1705,11 @@ File "../../test/contracts/negative/missing_funarg_annotation.religo", line 2, c
 Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "funarg_tuple_wrong.mligo"];
   [%expect {|
-    Pattern (b,c,d) do not conform type ( int * int ) |}];
+    File "../../test/contracts/negative/funarg_tuple_wrong.mligo", line 1, characters 7-14:
+      1 | let a (b, c, d: int * int) = d
+      2 | let a (((b, c, d)): ((((int))) * int)) = d
+
+    Pattern do not conform type ( int * int ) |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
     Pattern (b,c,d) do not conform type ( int * int ) |}];
