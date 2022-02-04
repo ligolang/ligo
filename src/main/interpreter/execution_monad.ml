@@ -60,6 +60,7 @@ module Command = struct
     | Keccak : bytes -> LT.value t
     | Sha3 : bytes -> LT.value t
     | Hash_key : Tezos_protocol.Protocol.Alpha_context.public_key -> LT.value t
+    | Implicit_account : Location.t * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Check_signature : Tezos_protocol.Protocol.Alpha_context.public_key * Tezos_protocol.Protocol.Alpha_context.signature * bytes -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
   let eval
@@ -339,6 +340,12 @@ module Command = struct
     | Hash_key k -> (
       let kh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash k in
       let v = LT.V_Ct (LT.C_key_hash kh) in
+      (v, ctxt)
+    )
+    | Implicit_account (loc, kh) -> (
+      let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
+      let address = Tezos_state.implicit_account ~raise ~loc address in
+      let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
       (v, ctxt)
     )
     | Check_signature (k, s, b) -> (

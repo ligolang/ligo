@@ -675,6 +675,10 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       let>> value = Pairing_check l in
       return @@ value
     | ( C_PAIRING_CHECK , _  ) -> fail @@ error_type
+    | ( C_IMPLICIT_ACCOUNT, [ V_Ct (C_key_hash kh) ] )->
+      let>> value = Implicit_account (loc, kh) in
+      return @@ value
+    | ( C_IMPLICIT_ACCOUNT , _  ) -> fail @@ error_type
     | ( C_FAILWITH , [ a ] ) ->
       fail @@ Errors.meta_lang_failwith loc calltrace a
     | ( C_FAILWITH , _  ) -> fail @@ error_type
@@ -960,7 +964,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
-         C_CONTRACT_ENTRYPOINT_OPT | C_IMPLICIT_ACCOUNT | C_SET_DELEGATE |
+         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_TEST_COMPILE_CONTRACT | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )
