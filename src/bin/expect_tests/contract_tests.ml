@@ -12,11 +12,11 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
   [%expect {|
-    569 bytes |}] ;
+    579 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    1549 bytes |}] ;
+    1565 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
@@ -333,10 +333,10 @@ let%expect_test _ =
               PAIR ;
               PAIR ;
               PACK ;
+              DUP 4 ;
+              CAR ;
+              CAR ;
               PUSH nat 0 ;
-              DUP 5 ;
-              CAR ;
-              CAR ;
               PAIR ;
               DIG 3 ;
               CDR ;
@@ -344,12 +344,12 @@ let%expect_test _ =
                      PAIR ;
                      DUP ;
                      CAR ;
-                     CDR ;
+                     CAR ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
                      CAR ;
-                     CAR ;
+                     CDR ;
                      DIG 2 ;
                      CDR ;
                      SWAP ;
@@ -374,14 +374,19 @@ let%expect_test _ =
                             { DIG 2 ; DROP 2 ; SWAP } ;
                          SWAP ;
                          PAIR }
-                       { DROP ; PAIR } } ;
+                       { DROP ; PAIR } ;
+                     DUP ;
+                     CAR ;
+                     SWAP ;
+                     CDR ;
+                     PAIR } ;
               SWAP ;
               DROP ;
               DUP 3 ;
               CDR ;
               CDR ;
               SWAP ;
-              CDR ;
+              CAR ;
               COMPARE ;
               LT ;
               IF { PUSH string "Not enough signatures passed the check" ; FAILWITH }
@@ -524,17 +529,20 @@ let%expect_test _ =
                      UPDATE ;
                      SWAP ;
                      PAIR } ;
-                 UNPAIR ;
                  DUP ;
+                 CAR ;
+                 SWAP ;
+                 CDR ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
                  CDR ;
                  CAR ;
                  CAR ;
                  SENDER ;
                  GET ;
                  IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  CAR ;
@@ -542,18 +550,22 @@ let%expect_test _ =
                  COMPARE ;
                  GT ;
                  IF { PUSH string "Maximum number of proposal reached" ; FAILWITH } {} ;
+                 SWAP ;
                  DUP ;
+                 DUG 2 ;
                  CDR ;
                  CDR ;
-                 DUP 3 ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
                  SIZE ;
                  COMPARE ;
                  GE ;
-                 IF { DUP ;
-                      CDR ;
-                      SWAP ;
+                 IF { SWAP ;
                       DUP ;
                       DUG 2 ;
+                      CDR ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CDR ;
@@ -561,12 +573,12 @@ let%expect_test _ =
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
-                      DUP 3 ;
+                      DUP 4 ;
                       CAR ;
                       CDR ;
                       CAR ;
                       PAIR ;
-                      DIG 2 ;
+                      DIG 3 ;
                       CAR ;
                       CAR ;
                       PAIR ;
@@ -653,15 +665,13 @@ let%expect_test _ =
                     { DIG 3 ;
                       DROP ;
                       NIL operation ;
-                      SWAP ;
-                      DUP ;
-                      DUG 2 ;
-                      CDR ;
                       DUP 3 ;
+                      CDR ;
+                      DUP 4 ;
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 4 ;
+                      DIG 3 ;
                       DIG 5 ;
                       SWAP ;
                       SOME ;

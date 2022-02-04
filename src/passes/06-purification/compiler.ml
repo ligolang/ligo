@@ -120,6 +120,7 @@ and store_mutable_variable (free_vars : Z.t VMap.t) =
      ~compare:(fun (_,a) (_,b) -> Z.compare a b) @@ VMap.to_kv_list free_vars
 
 and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : Z.t VMap.t) (env : O.expression_variable) =
+(*
   let aux (ev,i) =
     ev, O.e_accessor (O.e_variable env) [O.Access_tuple i] in
   let accesses = List.map ~f:aux @@ VMap.to_kv_list free_vars in
@@ -127,6 +128,13 @@ and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : Z.
     fun expr -> f @@ O.e_let_in_ez ev true [] rhs expr
   in
   let ef = List.fold_left ~f:aux ~init:(fun e -> e) accesses in
+  *)
+  let aux ev i (f: O.expression -> O.expression) =
+    fun expr ->
+      O.e_let_in_ez ev true []
+      (O.e_accessor (O.e_variable env)
+      [O.Access_tuple i]) @@ f expr in
+  let ef = VMap.fold aux free_vars (fun e -> e) in
   fun e -> match e with
     | None ->
       expr (ef (O.e_skip ()))
