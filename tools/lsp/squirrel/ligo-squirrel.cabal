@@ -122,6 +122,7 @@ library
     , duplo
     , fastsum
     , filepath
+    , free
     , ghc-prim
     , interpolate
     , katip

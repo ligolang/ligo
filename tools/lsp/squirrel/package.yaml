@@ -89,6 +89,7 @@ library:
     - dlist
     - fastsum
     - filepath
+    - free
     - interpolate
     - katip
     - lens
