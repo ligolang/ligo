@@ -20,7 +20,13 @@ let%expect_test _ =
   run_ligo_good [ "run"; "interpret" ; "t9" ; "--init-file";(test "let_destructuring.mligo") ] ;
   [%expect{| 2 |}] ;
   run_ligo_bad [ "run"; "interpret" ; "t1" ; "--init-file";(bad_test "let_destructuring.mligo") ] ;
-  [%expect{| Pattern {a = a ; f = b} do not conform type record[a -> int , b -> nat] |}]
+  [%expect{|
+    File "../../test/contracts/negative/let_destructuring.mligo", line 4, characters 6-23:
+      3 | let t1 =
+      4 |   let { a = a ; f = b }  = { a = 1 ; b = 1n } in
+      5 |   (a,b)
+
+    Pattern do not conform type record[a -> int , b -> nat] |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret" ; "t1"; "--init-file";(test "let_destructuring.religo") ] ;
@@ -61,7 +67,7 @@ let%expect_test _ =
     Pattern do not conform type record[a -> int , b -> nat] |}] ;
   run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a} = x in a" ; "--syntax" ; "cameligo" ] ;
   [%expect{|
-    Pattern {a = a} do not conform type record[a -> int , b -> int] |}] ;
+    Pattern do not conform type record[a -> int , b -> int] |}] ;
   run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a ; b ; c} = x in a" ; "--syntax" ; "cameligo" ] ;
   [%expect{|
-    Pattern {a = a ; b = b ; c = c} do not conform type record[a -> int , b -> int] |}]
+    Pattern do not conform type record[a -> int , b -> int] |}]

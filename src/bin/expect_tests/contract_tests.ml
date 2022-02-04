@@ -1641,11 +1641,8 @@ const letin_nesting2 =
   lambda (x : int) return let y = 2 in
                           let z = 3 in
                           ADD(ADD(x ,y) ,z)
-const x =
-  let gen#2 = (+1 , (+2 , +3)) in
-   match gen#2 with
-    | (gen#5,gen#3) ->  match gen#3 with
-                         | (x,gen#4) -> x
+const x =  match (+1 , (+2 , +3)) with
+            | (gen#2,(x,gen#3)) -> x
     |}];
 
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.religo"];
@@ -2248,13 +2245,13 @@ let%expect_test _ =
                      NONE() ,
                      0mutez ,
                      unit)
-                     const foo = let gen#7 = (c)@(unit) in  match gen#7 with
-                                                             | ( _a , _b ) ->
-                                                             unit
-                     const c = lambda (gen#8) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let gen#9 = (c)@(unit) in  match gen#9 with
-                                                             | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
-                                                             unit |} ]
+                     const foo = let gen#12 = (c)@(unit) in  match gen#12 with
+                                                              | ( _a , _b ) ->
+                                                              unit
+                     const c = lambda (gen#7) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+                     const foo = let gen#15 = (c)@(unit) in  match gen#15 with
+                                                              | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+                                                              unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =

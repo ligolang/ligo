@@ -566,7 +566,8 @@ let%expect_test _ =
       4 |     else
 
     Replacing by: 2.
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
+     16 |     | None -> ()
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 

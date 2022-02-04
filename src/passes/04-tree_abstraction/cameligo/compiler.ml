@@ -33,7 +33,7 @@ let r_split = Location.r_split
 let mk_var ?loc var = if String.equal var "_" then Var.fresh ?loc () else Var.of_input_var ?loc var
 let quote_var var = "'"^var
 let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var
-let compile_type_var (var : CST.variable) = mk_var var.value
+let compile_type_var var : AST.type_variable  = let (var,loc) = r_split var in mk_var ~loc var
 let compile_attributes : CST.attributes -> string list = fun attr ->
   let f : CST.attribute Region.reg -> string =
     fun x ->
@@ -464,8 +464,17 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let let_rhs = compile_expression ~raise let_rhs in
     let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
     let let_rhs = Option.value_map ~default:let_rhs ~f:(e_annotation let_rhs) lhs_type in
-    let (pattern, args) = binders in
-    let let_binder,fun_ = compile_parameter ~raise pattern in
+    (match binders with
+      pattern, [] when pattern_is_matching pattern -> (* matchin *)
+        let matchee = match lhs_type with
+          | Some t -> (e_annotation let_rhs t)
+          | None -> let_rhs
+        in
+        let pattern = conv ~raise pattern in
+        let match_case = { pattern ; body } in
+        e_matching ~loc matchee [match_case]
+    | pattern, args -> (* functoin *)
+    let let_binder, fun_ = compile_parameter ~raise pattern in
     let binders = List.map ~f:(compile_parameter ~raise) args in
     let let_rhs = List.fold_right binders ~init:let_rhs ~f:(fun (b,fun_) e ->
       e_lambda ~loc b None @@ fun_ e) in
@@ -486,6 +495,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:let_rhs type_vars
     ) type_params in
     return @@ e_let_in ~loc let_binder let_attr let_rhs @@ fun_ body
+    )
   | ETypeIn ti ->
     let (ti, loc) = r_split ti in
     let ({type_decl={name;type_expr;_};kwd_in=_;body} : CST.type_in) = ti in
@@ -525,6 +535,12 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       in
       aux hd @@ tl
 
+and pattern_is_matching : CST.pattern -> bool =
+  fun p -> match unepar p with
+    CST.PVar _  -> false
+  | CST.PUnit _ | CST.PInt _ | CST.PNat _ | CST.PBytes _ | CST.PString _ | CST.PVerbatim _
+  | CST.PPar _ | CST.PTyped _
+  | CST.PTuple _ | CST.PRecord _ | CST.PConstr _ | CST.PList _ -> true
 and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
   fun p ->
   match unepar p with
@@ -641,16 +657,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     ({var; ascr; attributes }, fun_) in
   let return_1 ?ascr ?(attributes = Stage_common.Helpers.const_attribute) var = return ?ascr ~attributes (fun e -> e) var in
   match pattern with
-  | PConstr pattern ->
-    let ((constr, p_opt), loc) = r_split pattern in
-    let l, ploc = r_split constr in
-    let var = Var.fresh () in
-    let inner_binder, inner_fun = match p_opt with
-      | Some p -> compile_parameter ~raise p
-      | None -> return_1 ~ascr:(t_unit ~loc ()) loc @@ Var.fresh () in
-    let inner_case expr = [ { pattern = Location.wrap ~loc:ploc @@ (P_variant (Label l, (Location.wrap @@ (P_var inner_binder)))) ; body = inner_fun expr } ] in
-    let expr = fun expr -> e_matching (e_variable @@ Location.wrap var) @@ inner_case expr in
-    return loc expr var
+    PConstr _ -> raise.raise @@ unsupported_pattern_type [pattern]
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) @@ Var.fresh ~loc ()
