@@ -240,10 +240,7 @@ let rec last_is : (_ michelson -> _ michelson -> bool) -> (_ michelson -> bool) 
   | Seq (_, []) -> None
   | Seq (_, [arg]) -> last_is eq pred arg
   | Seq (l, _ :: args) -> last_is eq pred (Seq (l, args))
-  | Prim (_, "IF", [bt; bf], _)
-  | Prim (_, "IF_CONS", [bt; bf], _)
-  | Prim (_, "IF_LEFT", [bt; bf], _)
-  | Prim (_, "IF_NONE", [bt; bf], _) ->
+  | Prim (_, p, [bt; bf], _) when is_cond p ->
     let (let+) v f = Option.bind v ~f in
     let+ bt = last_is eq pred bt in
     let+ bf = last_is eq pred bf in
