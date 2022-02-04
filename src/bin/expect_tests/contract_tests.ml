@@ -20,7 +20,7 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
-    426 bytes |}] ;
+    420 bytes |}] ;
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -800,9 +800,7 @@ let%expect_test _ =
              CAR ;
              CAR ;
              PAIR ;
-             PAIR ;
-             PAIR ;
-             NIL operation }
+             PAIR }
            { SENDER ;
              SWAP ;
              IF_LEFT
@@ -853,9 +851,9 @@ let%expect_test _ =
              UPDATE ;
              PAIR ;
              SWAP ;
-             CAR ;
-             PAIR ;
-             NIL operation } ;
+             CAR } ;
+         PAIR ;
+         NIL operation ;
          PAIR } } |}]
 
 let%expect_test _ =
