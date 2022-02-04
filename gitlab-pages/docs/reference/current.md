@@ -815,6 +815,37 @@ let never: (never: never) => &apos;a
 Eliminate a value of the type `never` using the instruction `NEVER`
 from Michelson.
 
+<SyntaxTitle syntax="pascaligo">
+function total_voting_power : nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val total_voting_power : nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let total_voting_power: nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let total_voting_power: nat
+</SyntaxTitle>
+
+Return the total voting power of all contracts. The total voting power coincides with the sum of the rolls count of every contract in the voting listings. The voting listings is calculated at the beginning of every voting period.
+
+
+<SyntaxTitle syntax="pascaligo">
+function voting_power : key_hash -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val voting_power : key_hash -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let voting_power: key_hash =>nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let voting_power: (key_hash:key_hash) => nat
+</SyntaxTitle>
+
+Return the voting power of a given contract. This voting power coincides with the weight of the contract in the voting listings (i.e., the rolls count) which is calculated at the beginning of every voting period.
+
 <h2>Sapling</h2>
 
 Delphi protocol introduced the following sapling types (state and transaction) with N being an int singleton

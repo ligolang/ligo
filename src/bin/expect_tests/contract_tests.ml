@@ -2354,3 +2354,18 @@ let%expect_test _ =
                       LEFT string } } ;
              NIL operation ;
              PAIR } } |}]
+
+(* voting power *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "voting.mligo" ] ;
+  [%expect{|
+{ parameter key ;
+  storage (pair nat nat) ;
+  code { CAR ;
+         HASH_KEY ;
+         VOTING_POWER ;
+         TOTAL_VOTING_POWER ;
+         SWAP ;
+         PAIR ;
+         NIL operation ;
+         PAIR } } |}]
