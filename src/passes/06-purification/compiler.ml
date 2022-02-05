@@ -474,10 +474,33 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
     | Some v -> [fst fe_binder;v]
     | None -> [fst fe_binder]
   in
-
+  (* let () = Format.printf "\n----------------------\n" in
+  let () = Format.printf "%a" I.PP.expression fe_body in
+  let () = Format.printf "\n----------------------\n" in *)
   let body = compile_expression ~raise ~last fe_body in
+  
   let ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
+  (* let () = Format.printf "%a" O.PP.expression body in
+  let () = Format.printf "\n----------------------\n" in *)
+
+  let body = 
+    match body.expression_content with
+    | O.E_sequence {expr1;expr2=_} -> 
+      (* let expr1 = Self_ast_sugar.map_expression (fun e -> 
+        match e.expression_content with 
+          O.E_skip -> (O.e_variable args) 
+        | _ -> e)
+      expr1 in
+      O.e_let_in_ez args false [] expr1 (O.e_variable args) *)
+      expr1
+    | _ -> body
+  in
+
+  (* let () = Format.printf "%a" O.PP.expression body in *)
+  (* let () = Format.printf "\n----------------------\n" in *)
+
   let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
+
 
   let init_record = store_mutable_variable free_vars in
   let collect = compile_expression ~raise ~last collection in
