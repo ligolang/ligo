@@ -25,41 +25,43 @@ module Scope : sig
   val make_swapper : t -> swapper
 end =
 struct
-  module VarMap = Simple_utils.Map.Make(Var)
-  type t = {value:expression_variable VarMap.t;type_:type_variable VarMap.t;module_:module_variable VarMap.t}
-  let empty = {value = VarMap.empty;type_ = VarMap.empty;module_ = VarMap.empty}
+  module VMap = Simple_utils.Map.Make(ValueVar)
+  module TMap = Simple_utils.Map.Make(TypeVar)
+  module MMap = Simple_utils.Map.Make(ModuleVar)
+  type t = {value:expression_variable VMap.t;type_:type_variable TMap.t;module_:module_variable MMap.t}
+  let empty = {value = VMap.empty;type_ = TMap.empty;module_ = MMap.empty}
   let new_value_var map var =
-    let var' = match VarMap.find_opt var map.value with
-      Some (var) -> Var.add_suffix var "'" 
-    | None -> Var.add_suffix var "'" in
-    let value = VarMap.add var var' map.value in
+    let var' = match VMap.find_opt var map.value with
+      Some (var) -> ValueVar.fresh_like var
+    | None -> ValueVar.fresh_like var in
+    let value = VMap.add var var' map.value in
     {map with value}, var'
 
   let get_value_var map var =
     (* The default value is for variable coming from other files *)
-    Option.value ~default:var @@ VarMap.find_opt var map.value 
-  
+    Option.value ~default:var @@ VMap.find_opt var map.value
+
   let new_type_var map var =
-    let var' = match VarMap.find_opt var map.type_ with
-      Some (var) -> Var.add_suffix var "'" 
-    | None -> Var.add_suffix var "'" in
-    let type_ = VarMap.add var var' map.type_ in
+    let var' = match TMap.find_opt var map.type_ with
+      Some (var) -> TypeVar.fresh_like var
+    | None -> TypeVar.fresh_like var in
+    let type_ = TMap.add var var' map.type_ in
     {map with type_}, var'
 
   let get_type_var map var =
     (* The default value is for variable coming from other files *)
-    Option.value ~default:var @@ VarMap.find_opt var map.type_
+    Option.value ~default:var @@ TMap.find_opt var map.type_
 
     let new_module_var map var =
-    let var' = match VarMap.find_opt var map.module_ with
-      Some (var) -> Var.add_suffix var "'" 
-    | None -> Var.add_suffix var "'" in
-    let module_ = VarMap.add var var' map.module_ in
+    let var' = match MMap.find_opt var map.module_ with
+      Some (var) -> ModuleVar.fresh_like var
+    | None -> ModuleVar.fresh_like var in
+    let module_ = MMap.add var var' map.module_ in
     {map with module_}, var'
 
   let get_module_var map var =
     (* The default value is for variable coming from other files *)
-    Option.value ~default:var @@ VarMap.find_opt var map.module_
+    Option.value ~default:var @@ MMap.find_opt var map.module_
 
   type swapper = {
     value   : expression_variable -> expression_variable;
@@ -68,12 +70,14 @@ struct
   }
   let make_swapper (scope:t) =
     let swap_value   = List.map ~f:(fun (k,v) -> v,k) in
-    let swap_map map = VarMap.of_list @@ swap_value @@ VarMap.to_kv_list map in
-    let value = swap_map scope.value in
-    let type_ = swap_map scope.type_ in
-    let module_ = swap_map scope.module_ in
-    let mk_swapper = fun map v -> Option.value ~default:v @@ VarMap.find_opt v map in
-    {value=mk_swapper value;type_=mk_swapper type_;module_=mk_swapper module_}
+    let value   = VMap.of_list @@ swap_value @@ VMap.to_kv_list scope.value in
+    let type_   = TMap.of_list @@ swap_value @@ TMap.to_kv_list scope.type_ in
+    let module_ = MMap.of_list @@ swap_value @@ MMap.to_kv_list scope.module_ in
+    {
+      value   = (fun map v -> Option.value ~default:v @@ VMap.find_opt v map) value ;
+      type_   = (fun map v -> Option.value ~default:v @@ TMap.find_opt v map) type_;
+      module_ = (fun map v -> Option.value ~default:v @@ MMap.find_opt v map) module_
+    }
 end
 
 let rec swap_type_expression : Scope.swapper -> type_expression -> type_expression = fun swaper te ->
@@ -83,10 +87,18 @@ let rec swap_type_expression : Scope.swapper -> type_expression -> type_expressi
     T_variable type_variable ->
     let type_variable = swaper.type_ type_variable in
     return @@ T_variable type_variable
-  | T_sum rows ->
-    return @@ T_sum rows
-  | T_record rows ->
-    return @@ T_record rows
+  | T_sum {fields;layout} ->
+    let fields = LMap.map (fun {associated_type;michelson_annotation;decl_pos} ->
+      let associated_type = self associated_type in
+      {associated_type;michelson_annotation;decl_pos}
+    ) fields in
+    return @@ T_sum {fields;layout}
+  | T_record {fields;layout} ->
+    let fields = LMap.map (fun {associated_type;michelson_annotation;decl_pos} ->
+      let associated_type = self associated_type in
+      {associated_type;michelson_annotation;decl_pos}
+    ) fields in
+    return @@ T_record {fields;layout}
   | T_arrow {type1;type2} ->
     let type1 = self type1 in
     let type2 = self type2 in
@@ -133,6 +145,10 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     let output_type = Option.map ~f:self_type output_type in
     let result = self result in
     return @@ E_lambda {binder={var;ascr;attributes};output_type;result}
+  | E_type_abstraction {type_binder;result} ->
+    let type_binder = swaper.type_ type_binder in
+    let result = self result in
+    return @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};output_type;result}} ->
     let fun_name = swaper.value fun_name in
     let fun_type = self_type fun_type in
@@ -234,11 +250,11 @@ and declaration : Scope.swapper -> declaration Location.wrap -> declaration Loca
     let type_expr = self_type type_expr in
     let type_binder = swaper.type_ type_binder in
     return @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {name;binder={var;ascr;attributes};attr;expr} ->
+  | Declaration_constant {binder={var;ascr;attributes};attr;expr} ->
     let expr = self expr in
     let var = swaper.value var in
     let ascr = Option.map ~f:(self_type) ascr in
-    return @@ Declaration_constant {name;binder={var;ascr;attributes};attr;expr}
+    return @@ Declaration_constant {binder={var;ascr;attributes};attr;expr}
   | Declaration_module {module_binder;module_=m;module_attr} ->
     let m = swap_variable_in_module_ swaper m in
     let module_binder = swaper.module_ module_binder in
@@ -259,10 +275,18 @@ let rec type_expression : Scope.t -> type_expression -> type_expression = fun sc
     T_variable type_variable ->
     let type_variable = Scope.get_type_var scope type_variable in
     return @@ T_variable type_variable
-  | T_sum rows ->
-    return @@ T_sum rows
-  | T_record rows ->
-    return @@ T_record rows
+  | T_sum {fields;layout} ->
+    let fields = LMap.map (fun {associated_type;michelson_annotation;decl_pos} ->
+      let associated_type = self associated_type in
+      {associated_type;michelson_annotation;decl_pos}
+    ) fields in
+    return @@ T_sum {fields;layout}
+  | T_record {fields;layout} ->
+    let fields = LMap.map (fun {associated_type;michelson_annotation;decl_pos} ->
+      let associated_type = self associated_type in
+      {associated_type;michelson_annotation;decl_pos}
+    ) fields in
+    return @@ T_record {fields;layout}
   | T_arrow {type1;type2} ->
     let type1 = self type1 in
     let type2 = self type2 in
@@ -309,6 +333,10 @@ let rec expression : Scope.t -> expression -> expression = fun scope e ->
     let output_type = Option.map ~f:self_type output_type in
     let result = self ~scope result in
     return @@ E_lambda {binder={var;ascr;attributes};output_type;result}
+  | E_type_abstraction {type_binder;result} ->
+    let scope,type_binder = Scope.new_type_var scope type_binder in
+    let result = self ~scope result in
+    return @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name;fun_type;lambda={binder={var;ascr;attributes};output_type;result}} ->
     let scope,fun_name = Scope.new_value_var scope fun_name in
     let fun_type = self_type fun_type in
@@ -408,11 +436,11 @@ and declaration : Scope.t -> declaration Location.wrap -> Scope.t * declaration 
     let type_expr = type_expression scope type_expr in
     let scope,type_binder = Scope.new_type_var scope type_binder in
     return scope @@ Declaration_type {type_binder;type_expr;type_attr}
-  | Declaration_constant {name;binder={var;ascr;attributes};attr;expr} ->
+  | Declaration_constant {binder={var;ascr;attributes};attr;expr} ->
     let expr = expression scope expr in
     let scope,var = Scope.new_value_var scope var in
     let ascr = Option.map ~f:(type_expression scope) ascr in
-    return scope @@ Declaration_constant {name;binder={var;ascr;attributes};attr;expr}
+    return scope @@ Declaration_constant {binder={var;ascr;attributes};attr;expr}
   | Declaration_module {module_binder;module_=m;module_attr} ->
     let m = module_ scope m in
     let scope,module_binder = Scope.new_module_var scope module_binder in
@@ -424,7 +452,7 @@ and declaration : Scope.t -> declaration Location.wrap -> Scope.t * declaration 
 
 and module_ : Scope.t -> module_ -> module_ = fun scope m ->
   (* this breaks the exported value -> solution swap the first occurence with the last, *)
-  let scope,module_ = List.fold_map_right m ~init:scope ~f:(declaration) in
+  let scope,module_ = List.fold_map m ~init:scope ~f:(declaration) in
   let swaper  = Scope.make_swapper scope in
   let module_ = swap_variable_in_module_ swaper module_ in
   module_

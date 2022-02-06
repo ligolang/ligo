@@ -56,7 +56,7 @@ let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pas
       Ast_typed.assert_type_expression_eq (entrypoint_t , t) in
     (true, dat, e)
   | _ -> (true,dat,e)
-    
+
 let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contract_pass_data * expression = fun dat e ->
   match e.expression_content with
   | E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT|C_CONTRACT_ENTRYPOINT ; arguments=[entrypoint_exp;_]} ->
@@ -208,7 +208,7 @@ and get_fv_module_expr env x =
   | M_variable v ->
     let new_env = { env = MVarMap.singleton v env ; used_var = VVarSet.empty } in
     new_env, x
-   
+
 let remove_unused ~raise : contract_pass_data -> program -> program = fun contract_pass_data prg ->
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in

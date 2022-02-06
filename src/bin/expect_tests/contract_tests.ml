@@ -2713,7 +2713,7 @@ Hint: You might want to add a type annotation.
 { parameter unit ;
   storage (or (int %a) (nat %b)) ;
   code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
-  
+
   run_ligo_good [ "compile" ; "contract" ; contract "not_ambiguous_ctor.mligo" ] ;
   [%expect{|
 { parameter unit ;

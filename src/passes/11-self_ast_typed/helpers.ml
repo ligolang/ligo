@@ -350,7 +350,7 @@ and fold_map_expression_in_module_expr : 'a fold_mapper -> 'a -> module_expr -> 
     return res (M_struct decls)
   | M_module_path _ as x -> return acc x
   | M_variable _ as x -> return acc x
-  
+
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->

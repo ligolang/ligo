@@ -28,6 +28,7 @@ let add_core_module ?public ?hidden : Ast_core.module_variable -> Ast_core.modul
 let to_program env = List.rev env
 let init_core p = append p []
 let to_core_program env = List.rev env
+let append_core = append
 
 (* This is an stdlib *)
 let star = Type

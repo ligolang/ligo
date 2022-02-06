@@ -62,7 +62,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   | O.T_for_all x ->
     let type_ = untype_type_expression x.type_ in
     return @@ T_for_all {x with type_}
-    
+
 let rec untype_expression (e:O.expression) : I.expression =
   untype_expression_content e.type_expression e.expression_content
 and untype_expression_content ty (ec:O.expression_content) : I.expression =
@@ -214,7 +214,7 @@ and untype_declaration_module : O.declaration_module -> I.declaration_module =
     let module_ = untype_module_expr module_ in
     let module_attr = (I.{public;hidden}: I.module_attribute) in
     I.{module_binder; module_ ; module_attr}
-      
+
 and untype_declaration =
   let return (d: I.declaration_content) = d in
   fun (d: O.declaration_content) -> match d with
@@ -229,5 +229,5 @@ and untype_declaration =
     return @@ Declaration_module dm
 and untype_declarations : O.module_ -> I.module_ = fun p ->
   List.map ~f:(Location.map untype_declaration) p
-    
+
 and untype_program : O.module_ -> I.module_ = fun x -> untype_declarations x
