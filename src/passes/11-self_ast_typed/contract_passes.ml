@@ -67,14 +67,14 @@ let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contra
     (true, dat, e)
   | _ -> (true,dat,e)
 
-module VSet = Caml.Set.Make(Var)
-module VMap = Simple_utils.Map.Make(Var)
+module VSet = Caml.Set.Make(ValueVar)
+module VMap = Simple_utils.Map.Make(ModuleVar)
 
 type env = {env:env VMap.t;used_var:VSet.t}
 let rec pp_env ppf env =
   Format.fprintf ppf "{env: %a;used_var: %a}"
-    (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%a,%a)" Var.pp k pp_env v)) (VMap.to_kv_list env.env)
-    (Simple_utils.PP_helpers.list_sep_d Var.pp) (VSet.elements env.used_var)
+    (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%a,%a)" ModuleVar.pp k pp_env v)) (VMap.to_kv_list env.env)
+    (Simple_utils.PP_helpers.list_sep_d ValueVar.pp) (VSet.elements env.used_var)
 
 (* Detect and remove unesed declaration *)
 let rec merge_env {env=x1;used_var=y1} {env=x2;used_var=y2} =
@@ -208,7 +208,7 @@ let remove_unused ~raise : expression_variable -> program -> program = fun main_
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
-      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (Var.equal binder main_name)
+      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder main_name)
     | _ -> true in
   (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
   let _, prg_decls = List.split_while prg_decls ~f:aux in

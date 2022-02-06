@@ -12070,20 +12070,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 36,
                   "pos_bol": 826,
-                  "pos_cnum": 835
+                  "pos_cnum": 826
                 },
-                "point_num": 835,
+                "point_num": 826,
                 "point_bol": 826
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 36,
-                  "pos_bol": 826,
-                  "pos_cnum": 839
+                  "pos_lnum": 103,
+                  "pos_bol": 3114,
+                  "pos_cnum": 3135
                 },
-                "point_num": 839,
-                "point_bol": 826
+                "point_num": 3135,
+                "point_bol": 3114
               }
             }
           ]
@@ -16648,20 +16648,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 105,
                   "pos_bol": 3137,
-                  "pos_cnum": 3146
+                  "pos_cnum": 3137
                 },
-                "point_num": 3146,
+                "point_num": 3137,
                 "point_bol": 3137
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 105,
-                  "pos_bol": 3137,
-                  "pos_cnum": 3154
+                  "pos_lnum": 133,
+                  "pos_bol": 4180,
+                  "pos_cnum": 4218
                 },
-                "point_num": 3154,
-                "point_bol": 3137
+                "point_num": 4218,
+                "point_bol": 4180
               }
             }
           ]
@@ -17439,20 +17439,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 135,
                   "pos_bol": 4220,
-                  "pos_cnum": 4229
+                  "pos_cnum": 4220
                 },
-                "point_num": 4229,
+                "point_num": 4220,
                 "point_bol": 4220
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 135,
-                  "pos_bol": 4220,
-                  "pos_cnum": 4236
+                  "pos_lnum": 136,
+                  "pos_bol": 4291,
+                  "pos_cnum": 4324
                 },
-                "point_num": 4236,
-                "point_bol": 4220
+                "point_num": 4324,
+                "point_bol": 4291
               }
             }
           ]
@@ -18965,20 +18965,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 138,
                   "pos_bol": 4326,
-                  "pos_cnum": 4335
+                  "pos_cnum": 4326
                 },
-                "point_num": 4335,
+                "point_num": 4326,
                 "point_bol": 4326
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 138,
-                  "pos_bol": 4326,
-                  "pos_cnum": 4339
+                  "pos_lnum": 149,
+                  "pos_bol": 4750,
+                  "pos_cnum": 4753
                 },
-                "point_num": 4339,
-                "point_bol": 4326
+                "point_num": 4753,
+                "point_bol": 4750
               }
             }
           ]

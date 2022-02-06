@@ -257,19 +257,9 @@ module Free_variables :
     val expression : expression -> (module_variable list * expression_variable list)
   end
   = struct
-  module Var = struct
-    type t = expression_variable
-    let compare e e' = Ast_aggregated.Var.compare e e'
-  end
 
-  module VarSet = Caml.Set.Make(Var)
-
-  module ModVar = struct
-    type t = module_variable
-    let compare e e' = compare_module_variable e e'
-  end
-
-  module ModVarSet = Caml.Set.Make(ModVar)
+  module VarSet = Caml.Set.Make(ValueVar)
+  module ModVarSet = Caml.Set.Make(ModuleVar)
   type moduleEnv' = {modVarSet : ModVarSet.t; moduleEnv: moduleEnv; varSet: VarSet.t}
   and moduleEnv = moduleEnv' SMap.t
 

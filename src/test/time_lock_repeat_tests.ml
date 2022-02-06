@@ -4,14 +4,14 @@ open Test_helpers
 open Ast_imperative
 open Main_errors
 
-let get_program = get_program "./contracts/timelock_repeat.mligo" (Contract (Stage_common.Var.of_input_var "main"))
+let get_program = get_program "./contracts/timelock_repeat.mligo"
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/timelock_repeat.mligo" ()
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (Var.of_input_var "arguments")
+let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 

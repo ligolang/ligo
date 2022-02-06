@@ -1,5 +1,6 @@
 module Location = Simple_utils.Location
 
+module Internal () = struct
 type t = {
   name : string;
   counter : int option;
@@ -28,7 +29,9 @@ let fresh_like v =
   fresh ~loc:v.location ~name:v.name ()
 
 (* should be removed in favor of a lift pass before ast_imperative *)
-let of_input_var ?(loc=Location.dummy) name = {name;counter=None;location=loc}
+let of_input_var ?(loc=Location.dummy) name =
+  if String.equal name "_" then fresh ~loc ~name () else
+  {name;counter=None;location=loc}
 
 (* This exception indicates that some code tried to throw away the
    counter of a generated variable. It is not supposed to happen. *)
@@ -56,3 +59,8 @@ let pp ppf v =
   match v.counter with
   | None -> Format.fprintf ppf "%s" v.name
   | Some i -> Format.fprintf ppf "%s#%d" v.name i
+end
+
+module ValueVar = Internal ()
+module TypeVar = Internal ()
+module ModuleVar = Internal ()

@@ -5,10 +5,8 @@ module I = Ast_imperative
 module O = Ast_sugar
 open Simple_utils.Trace
 open Stage_common.Maps
-module VMap = Simple_utils.Map.Make(Stage_common.Var)
+module VMap = Simple_utils.Map.Make(I.ValueVar)
 
-let equal_var = I.Var.equal
-let compare_var = I.Var.compare
 
 let rec add_to_end (expression: O.expression) to_add =
   match expression.expression_content with
@@ -30,7 +28,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
           (true,(let_binder.var::decl_var, free_var),O.e_let_in let_binder false [] rhs let_result)
         | E_let_in {let_binder;mut=true; rhs;let_result;attributes=_} ->
           let name = let_binder.var in
-          if List.mem ~equal:equal_var decl_var name then
+          if List.mem ~equal:I.ValueVar.equal decl_var name then
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
           else(
             let free_var = if (VMap.mem name free_var) then free_var else (let x = !i in i := Z.succ x; VMap.add name x free_var) in
@@ -76,7 +74,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
           (true,(var::decl_var, free_var),ass_exp)
         | E_let_in {let_binder;mut=true; rhs;let_result;attributes=_} ->
           let name = let_binder.var in
-          if List.mem ~equal:equal_var decl_var name then
+          if List.mem ~equal:O.ValueVar.equal decl_var name then
             (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs let_result)
           else(
             let free_var =
@@ -163,7 +161,7 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
       let arr = arrow self arr in
       return @@ T_arrow arr
     | I.T_variable type_variable -> return @@ T_variable type_variable
-    | I.T_app {type_operator;arguments=[l;r]} when equal_var Stage_common.Constant.v_michelson_or type_operator ->
+    | I.T_app {type_operator;arguments=[l;r]} when I.TypeVar.equal Stage_common.Constant.v_michelson_or type_operator ->
       let (l, l_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let (r, r_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let (l,r) = Pair.map ~f:(compile_type_expression ~raise) (l,r) in
@@ -172,7 +170,7 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
         (O.Label "M_right", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
       return @@ O.T_sum { fields = O.LMap.of_list sum ; attributes = [] }
-    | I.T_app {type_operator;arguments=[l;r]} when equal_var Stage_common.Constant.v_michelson_pair type_operator ->
+    | I.T_app {type_operator;arguments=[l;r]} when I.TypeVar.equal Stage_common.Constant.v_michelson_pair type_operator ->
       let (l, l_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let (r, r_ann) = trace_option ~raise (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let (l,r) = Pair.map ~f:(compile_type_expression ~raise) (l,r) in
@@ -290,7 +288,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let condition    = self condition in
       let then_clause' = self then_clause in
       let else_clause' = self else_clause in
-      let env = (I.Var.fresh ~name:"env" ()) in
+      let env = (I.ValueVar.fresh ~name:"env" ()) in
       let ((_,free_vars), then_clause,i) = repair_mutable_variable_in_matching then_clause' [] VMap.empty Z.zero env in
       let ((_,free_vars), else_clause,_) = repair_mutable_variable_in_matching else_clause' [] free_vars i env in
       let then_clause  = add_to_end then_clause (O.e_variable env) in
@@ -342,7 +340,7 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
     | Some e -> O.e_sequence expr e
   in
   let matchee = compile_expression ~raise ~last matchee in
-  let env = I.Var.fresh ~name:"env" () in
+  let env = I.ValueVar.fresh ~name:"env" () in
   let aux : (Z.t VMap.t * Z.t) ->
     _ I.match_case ->(Z.t VMap.t * Z.t) * (_ O.match_case * _ O.match_case) =
     fun (init_fv,i) {pattern ; body} ->
@@ -375,8 +373,8 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
     restore_mutable_variable return_expr free_vars env
 
 and compile_while ~raise ~last I.{cond;body} =
-  let env_rec = I.Var.fresh ~name:"env_rec" () in
-  let binder  = I.Var.fresh ~name:"binder"  () in
+  let env_rec = I.ValueVar.fresh ~name:"env_rec" () in
+  let binder  = I.ValueVar.fresh ~name:"binder"  () in
 
   let cond = compile_expression ~raise ~last cond in
   let ctrl =
@@ -419,8 +417,8 @@ and compile_while ~raise ~last I.{cond;body} =
 
 
 and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
-  let env_rec     = I.Var.fresh ~name:"env_rec" () in
-  let loop_binder = I.Var.fresh ~name:"loop_binder" () in
+  let env_rec     = I.ValueVar.fresh ~name:"env_rec" () in
+  let loop_binder = I.ValueVar.fresh ~name:"loop_binder" () in
   (*Make the cond and the step *)
   let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
   let cond = compile_expression ~raise ~last cond in
@@ -476,8 +474,8 @@ and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
     restore_mutable_variable return_expr captured_name_list env_rec
 
 and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_body} =
-  let env_rec = I.Var.fresh ~name:"env_rec" () in
-  let args    = I.Var.fresh ~name:"args" () in
+  let env_rec = I.ValueVar.fresh ~name:"env_rec" () in
+  let args    = I.ValueVar.fresh ~name:"args" () in
 
   let element_names = match snd fe_binder with
     | Some v -> [fst fe_binder;v]

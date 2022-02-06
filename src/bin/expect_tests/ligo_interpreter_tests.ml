@@ -188,10 +188,10 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "nesting_modules.mligo" ] ;
-  [%expect {|
-  111
-  Everything at the top-level was executed.
-  - test exited with value (). |}]
+  [%expect{|
+    111
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
 
 (* DEPRECATED
 let%expect_test _ =
