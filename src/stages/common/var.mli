@@ -18,7 +18,7 @@ module ValueVar : sig
    val of_input_var : ?loc:Location.t -> string -> t
    (* Warning : do not use *)
    val to_name_exn : t -> string
-   val internal_get_name_and_counter : t -> (string * int option)
+   val internal_get_name_and_counter : t -> (string * int)
 
    val get_location : t -> Location.t
    val add_prefix : string -> t -> t

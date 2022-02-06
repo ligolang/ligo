@@ -18,12 +18,12 @@ const amt = ADD(Tezo.amoun ,
 type parameter = sum[Decrement -> unit , Increment -> unit]
 type storage = tez
 type return = ( list (operation) * tez )
-const main = lambda (gen#1) return  match gen#1 with
-                                     | ( action , _#2 ) ->
+const main = lambda (gen#2) return  match gen#2 with
+                                     | ( action , _#3 ) ->
                                      ( LIST_EMPTY() ,  match action with
-                                                        | Decrement unit_proj#6 ->
+                                                        | Decrement unit_proj#7 ->
                                                           amt
-                                                        | Increment unit_proj#7 ->
+                                                        | Increment unit_proj#8 ->
                                                           bal ) |}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
@@ -44,12 +44,12 @@ const amt = ADD(Tezo.X.Y.amoun ,
 type parameter = sum[Decrement -> unit , Increment -> unit]
 type storage = tez
 type return = ( list (operation) * tez )
-const main = lambda (gen#1) return  match gen#1 with
-                                     | ( action , _#2 ) ->
+const main = lambda (gen#2) return  match gen#2 with
+                                     | ( action , _#3 ) ->
                                      ( LIST_EMPTY() ,  match action with
-                                                        | Decrement unit_proj#6 ->
+                                                        | Decrement unit_proj#7 ->
                                                           amt
-                                                        | Increment unit_proj#7 ->
+                                                        | Increment unit_proj#8 ->
                                                           bal ) |}]
 
 let%expect_test _ =
@@ -68,12 +68,12 @@ const amt = ADD(Tezo.amoun ,
 type parameter = sum[Decrement -> unit , Increment -> unit]
 type storage = tez
 type return = ( list (operation) * tez )
-const main = lambda (gen#1) return  match gen#1 with
-                                     | ( action , _#2 ) ->
+const main = lambda (gen#2) return  match gen#2 with
+                                     | ( action , _#3 ) ->
                                      ( LIST_EMPTY() ,  match action with
-                                                        | Decrement unit_proj#6 ->
+                                                        | Decrement unit_proj#7 ->
                                                           amt
-                                                        | Increment unit_proj#7 ->
+                                                        | Increment unit_proj#8 ->
                                                           bal ) |}]
 
 let%expect_test _ =
@@ -98,10 +98,10 @@ const unused = Tezo.X.Y.unused
 type parameter = sum[Decrement -> unit , Increment -> unit]
 type storage = tez
 type return = ( list (operation) * tez )
-const main = lambda (gen#1) return  match gen#1 with
-                                     | ( action , _#2 ) ->
+const main = lambda (gen#2) return  match gen#2 with
+                                     | ( action , _#3 ) ->
                                      ( LIST_EMPTY() ,  match action with
-                                                        | Decrement unit_proj#6 ->
+                                                        | Decrement unit_proj#7 ->
                                                           1000000mutez
-                                                        | Increment unit_proj#7 ->
+                                                        | Increment unit_proj#8 ->
                                                           used ) |}]
