@@ -1,0 +1,23 @@
+// for-of
+
+let add1 : (xs : list<int>) => list<int> =
+    (xs : list<int>) => {
+        let ys : list<int> = list([]);
+        for (const x of xs) {
+            let y = x + 1;
+            ys = list([y, ...ys]);
+        };
+        return ys;
+    }
+
+let _test1 : (x : unit) => unit = () => {
+    let xs : list<int> = list([1,2,3]);
+    let ys : list<int> = add1(xs);
+    Test.log(ys);
+    // TODO: fix ordering of elements as well (fold_right)
+    assert(ys == list([2,3,4]));
+}
+
+let test1 = _test1();
+
+// while
