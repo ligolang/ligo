@@ -7,17 +7,72 @@ let add1 : (xs : list<int>) => list<int> =
             let y = x + 1;
             ys = list([y, ...ys]);
         };
-        return ys;
+        let zs : list<int> = list([]);
+        for (const y of ys) {
+            let z = y;
+            zs = list([z, ...zs]);
+        };
+        return zs;
     }
 
 let _test1 : (x : unit) => unit = () => {
     let xs : list<int> = list([1,2,3]);
     let ys : list<int> = add1(xs);
-    Test.log(ys);
-    // TODO: fix ordering of elements as well (fold_right)
     assert(ys == list([2,3,4]));
 }
 
 let test1 = _test1();
 
 // while
+
+let length : (xs : list<int>) => int =
+    (xs : list<int>) => {
+        let len : int = 0;
+        for (const _x of xs) {
+            len += 1;
+        };
+        return len;
+    }
+
+let get_index : (xs : list<int>, i : int) => int =
+    (xs : list<int>, i : int) => {
+
+        return match(xs, list([
+            ([] : list<int>) => failwith("index not found"),
+            ([hd, ...tl] : list<int>) => {
+                if(i==0) {
+                    return hd 
+                } else {
+                    return get_index(tl,i-1)
+                } 
+            }
+        ]));
+    }
+
+let add2 : (xs : list<int>) => list<int> =
+    (xs : list<int>) => {
+        let ys : list<int> = list([]);
+        let len : int = length(xs);
+        let i : int = 0;
+        while (i < len) {
+            Test.log(i);
+            let y = get_index(xs,i) + 1;
+            ys = list([y, ...ys]);
+            i += 1;
+        }
+
+        let zs : list<int> = list([]);
+        for (const y of ys) {
+            let z = y;
+            zs = list([z, ...zs]);
+        };
+        return zs;
+    }
+
+let _test2 : (x : unit) => unit = () => {
+    let xs : list<int> = list([1,2,3]);
+    let ys : list<int> = add2(xs);
+    assert(ys == list([2,3,4]));
+}
+
+let test2 = _test2();
