@@ -944,8 +944,8 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     | ( C_TEST_CAST_ADDRESS , [ V_Ct (C_address x) ] ) ->
       return_ct (C_address x)
     | ( C_TEST_CAST_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_TEST_ADD_ACCOUNT , [ V_Ct (C_string sk) ; V_Ct (C_key pk) ; V_Ct (C_key_hash pkh) ] ) ->
-      let>> () = Add_account (loc, sk, pk, pkh) in
+    | ( C_TEST_ADD_ACCOUNT , [ V_Ct (C_string sk) ; V_Ct (C_key pk) ] ) ->
+      let>> () = Add_account (loc, sk, pk) in
       return @@ v_unit ()
     | ( C_TEST_ADD_ACCOUNT , _ ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST , [ V_Ct (C_bytes payload) ; V_Ct (C_nat time)] ) ->

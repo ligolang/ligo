@@ -1157,10 +1157,9 @@ let test_cast_address ~raise loc = typer_1_opt ~raise loc "TEST_CAST_ADDRESS" @@
   let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
   t_typed_address pty sty
 
-let test_add_account ~raise loc = typer_3 ~raise loc "TEST_ADD_ACCOUNT" @@ fun sk pk pkh ->
-  let _ = trace_option ~raise (expected_string loc pkh) @@ get_t_string sk in
+let test_add_account ~raise loc = typer_2 ~raise loc "TEST_ADD_ACCOUNT" @@ fun sk pk ->
+  let _ = trace_option ~raise (expected_string loc pk) @@ get_t_string sk in
   let _ = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
-  let _ = trace_option ~raise (expected_key_hash loc pkh) @@ get_t_key_hash pkh in
   (t_unit ())
 
 let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
