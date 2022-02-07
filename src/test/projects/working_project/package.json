@@ -1,0 +1,12 @@
+{
+  "name": "test-working-project",
+  "version": "1.0.6",
+  "description": "A test ligo project",
+  "scripts": {
+    "test": "ligo run test foo.test.mligo --project-root ."
+  },
+  "dependencies": {
+    "ligo-list-helpers": "1.0.0",
+    "ligo-set-helpers": "^1.0.2"
+  }
+}
