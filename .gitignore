@@ -21,3 +21,6 @@ version.ml
 /*.mligo
 /*.religo
 /*.jsligo
+
+_esy
+node_modules
