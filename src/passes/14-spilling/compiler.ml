@@ -204,6 +204,7 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_CAST_ADDRESS
       | C_TEST_CREATE_CHEST
       | C_TEST_CREATE_CHEST_KEY
+      | C_TEST_ADD_ACCOUNT
       | C_TEST_SAVE_MUTATION) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
