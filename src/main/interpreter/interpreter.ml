@@ -948,7 +948,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       let>> () = Add_account (loc, sk, pk) in
       return @@ v_unit ()
     | ( C_TEST_ADD_ACCOUNT , _ ) -> fail @@ error_type
-    | ( C_TEST_NEW_ACCOUNT , [] ) ->
+    | ( C_TEST_NEW_ACCOUNT , [ V_Ct (C_unit) ] ) ->
       let>> v = New_account () in
       return @@ v
     | ( C_TEST_NEW_ACCOUNT , _ ) -> fail @@ error_type

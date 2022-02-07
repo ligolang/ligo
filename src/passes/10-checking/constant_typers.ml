@@ -1162,7 +1162,8 @@ let test_add_account ~raise loc = typer_2 ~raise loc "TEST_ADD_ACCOUNT" @@ fun s
   let _ = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
   (t_unit ())
 
-let test_new_account ~raise loc = typer_0 ~raise loc "TEST_NEW_ACCOUNT" @@ fun _ ->
+let test_new_account ~raise loc = typer_1 ~raise loc "TEST_NEW_ACCOUNT" @@ fun u ->
+  let _ = trace_option ~raise (expected_unit loc u) @@ get_t_unit u in
   (t_pair (t_string ()) (t_key ()))
 
 let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
