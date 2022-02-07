@@ -38,7 +38,9 @@
 (rule
  (alias vendors_test)
  (action
-  (run ./vendors_test.exe)))
+  (run ./vendors_test.exe))
+ (deps
+  (source_tree projects)))
 
 (rule
  (alias inference_test)

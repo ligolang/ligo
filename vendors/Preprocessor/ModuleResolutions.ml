@@ -82,6 +82,19 @@ module Path = struct
 
 end
 
+(* Module with constants related esy *)
+module Esy = struct 
+  (* TODO: Use a "path join" function instead of ^ to avoid having duplicate slashes *)
+  let ( / ) = fun a b -> a ^ Path.dir_sep ^ b
+  
+  let installation_json_path path = 
+    path / "_esy" / "default" / "installation.json"
+
+  let lock_file_path path =
+    path / "esy.lock" / "index.json"
+end
+
+
 (* [clean_installation_json] converts installation.json to a string SMap.t option
    
   e.g. esy installation.json
@@ -91,7 +104,7 @@ end
     "ligo-list-helpers@1.0.1@d41d8cd9":
       "/path/to/.esy/source/i/ligo_list_helpers__1.0.1__6233bebd",
     "ligo-main@link-dev:./esy.json":
-      "/home/melwyn95/projects/ligo-pkg-mgmnt/ligo-main"
+      "/path/to/projects/ligo-pkg-mgmnt/ligo-main"
   }
    
 *)
@@ -194,24 +207,19 @@ let resolve_paths installation graph =
 (* [find_dependencies] takes the esy lock file and traverses the dependency
    graph and constructs a Map of package_name as key and list of dependencies
    of the package as value *)
-let find_dependencies (lock_file : lock_file) : dependency_list SMap.t option = 
+let find_dependencies (lock_file : lock_file) : dependency_list SMap.t = 
   let root = lock_file.root in
   let node = lock_file.node in
   let rec dfs dep graph =
+    if SMap.mem dep graph then graph else
     let deps = SMap.find_opt dep node in
-    match deps,graph with
-      Some deps,Some graph -> 
+    match deps with
+      Some deps -> 
         let graph = SMap.add dep deps graph in
-        List.fold_left (fun graph dep -> dfs dep graph) (Some graph) deps
-    | _ -> None
+        List.fold_left (fun graph dep -> dfs dep graph) graph deps
+    | _ -> graph
   in
-  dfs root (Some SMap.empty)
-  
-let installation_json_path path = 
-  path ^ Path.dir_sep ^ "_esy/default/installation.json"
-
-let lock_file_path path =
-  path ^ Path.dir_sep ^ "esy.lock/index.json"
+  dfs root SMap.empty
 
 (* [make] takes the root of an esy project and locates the 
    esy intallation.json & esy lock file and constructs a record of 
@@ -221,24 +229,22 @@ let lock_file_path path =
    using the [find_dependencies] & [resolve_paths] functions into a uniform
    representation *)
 let make project_root : t option =
-  let installation_json = installation_json_path project_root 
+  let installation_json = Esy.installation_json_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_installation_json
   in
-  let lock_file_json = lock_file_path project_root 
+  let lock_file_json = Esy.lock_file_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_lock_file_json
   in
   (match installation_json,lock_file_json with
     Some installation_json, Some lock_file_json ->
       let dependencies = find_dependencies lock_file_json in
-      Option.bind dependencies (fun dependencies ->
-        let resolutions = resolve_paths installation_json dependencies in
-        let root_path = resolve_path installation_json lock_file_json.root in
-        (match root_path, resolutions with
-          Some root_path, Some resolutions -> Some { root_path ; resolutions = resolutions }
-        | _ -> None)
-      )
+      let resolutions = resolve_paths installation_json dependencies in
+      let root_path = resolve_path installation_json lock_file_json.root in
+      (match root_path, resolutions with
+        Some root_path, Some resolutions -> Some { root_path ; resolutions = resolutions }
+      | _ -> None)
   | _ -> None)
 
 (* [get_root_inclusion_list] is used in the case when external dependencies are

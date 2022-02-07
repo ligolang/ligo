@@ -49,6 +49,7 @@ depends: [
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # dependencies of vendored dependencies
   "bls12-381-legacy"
+  "bls12-381"
   "alcotest-lwt"
   "qcheck-alcotest"
   "irmin-pack"
