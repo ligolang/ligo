@@ -19,13 +19,13 @@ import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
 import Algebra.Graph.Class qualified as G hiding (overlay)
 import Control.Arrow ((&&&))
 import Control.Lens ((??))
-import Control.Monad (join)
+import Control.Monad (join, (<=<))
 import Control.Monad.Reader (asks)
 import Data.Bool (bool)
 import Data.Foldable (find, for_, toList)
 import Data.Set qualified as Set
 import Data.Map qualified as Map
-import Data.Maybe (fromMaybe, isJust, isNothing)
+import Data.Maybe (isJust, isNothing)
 import Duplo.Tree (fastMake)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
@@ -35,14 +35,15 @@ import UnliftIO.Directory
   ( Permissions (writable), doesDirectoryExist, doesFileExist, getPermissions
   , setPermissions
   )
-import UnliftIO.Exception (catchIO)
+import UnliftIO.Exception (catchIO, throwIO)
 import UnliftIO.MVar (modifyMVar, modifyMVar_)
 import UnliftIO.STM (atomically)
 import Witherable (iwither)
 
 import AST
- ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
- , ParsedContractInfo, addScopes, addShallowScopes, contractFile, lookupContract
+ ( ContractInfo, ContractInfo', ContractNotFoundException (..), pattern FindContract
+ , HasScopeForest, Includes (..), ParsedContractInfo, addScopes, addShallowScopes
+ , contractFile, lookupContract
  )
 import AST.Includes (extractIncludedFiles, insertPreprocessorRanges)
 import AST.Parser (parseContractsWithDependencies, parsePreprocessed)
@@ -55,7 +56,7 @@ import Parser (emptyParsedInfo)
 import ParseTree (Source (..))
 import Progress (Progress (..), (%))
 import RIO.Types (Contract (..), RIO, RioEnv (..))
-import Util.Graph (wcc)
+import Util.Graph (traverseAMConcurrently, wcc)
 
 -- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
 -- to load a contract.
@@ -157,32 +158,34 @@ preload uri = Log.addNamespace "preload" do
     Just vf -> Text fin' (V.virtualFileText vf)
     Nothing -> Path fin'
 
-loadWithoutScopes
-  :: J.NormalizedUri
-  -> RIO ContractInfo
+loadWithoutScopes :: J.NormalizedUri -> RIO ContractInfo
 loadWithoutScopes uri = Log.addNamespace "loadWithoutScopes" do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
   $(Log.debug) [Log.i|running with env #{ligoEnv}|]
   parsePreprocessed src
 
+loadWithoutScopes' :: J.NormalizedUri -> RIO ParsedContractInfo
+loadWithoutScopes' = insertPreprocessorRanges <=< loadWithoutScopes
+
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
 -- return 'Nothing'.
 tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
-tryLoadWithoutScopes uri =
-  (Just <$> (insertPreprocessorRanges =<< loadWithoutScopes uri))
-  `catchIO` const (pure Nothing)
+tryLoadWithoutScopes uri = (Just <$> loadWithoutScopes' uri) `catchIO` const (pure Nothing)
 
 normalizeFilePath :: FilePath -> J.NormalizedUri
 normalizeFilePath = J.toNormalizedUri . J.filePathToUri
 
-loadDirectory :: FilePath -> RIO (Includes ParsedContractInfo)
-loadDirectory root = do
-  S.withProgress "Indexing directory" S.NotCancellable \reportProgress ->
-    parseContractsWithDependencies
-      (loadWithoutScopes . normalizeFilePath . srcPath)
-      (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-      root
+-- TODO: Parses the whole file and then discards it, to later be parsed again.
+-- We can do better.
+loadDirectory :: FilePath -> RIO (G.AdjacencyMap J.NormalizedFilePath)
+loadDirectory root =
+  G.gmap (J.toNormalizedFilePath . contractFile) . getIncludes <$>
+    S.withProgress "Indexing directory" S.NotCancellable \reportProgress ->
+      parseContractsWithDependencies
+        (loadWithoutScopes . normalizeFilePath . srcPath)
+        (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+        root
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -191,14 +194,22 @@ getInclusionsGraph
 getInclusionsGraph root uri = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes uri
   includesVar <- asks reIncludes
-  modifyMVar includesVar \includes -> do
+  modifyMVar includesVar \(Includes includes) -> do
     let rootFileName = contractFile rootContract
-    let groups = Includes <$> wcc (getIncludes includes)
+    let groups = Includes <$> wcc includes
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
         $(Log.debug) [Log.i|Can't find #{uri} in inclusions graph, loading #{root}...|]
-        loadDirectory root
+        paths <- loadDirectory root
+        let exceptionGraph = Includes $ G.gmap J.fromNormalizedFilePath paths
+        connectedContracts <-
+          maybe
+            (throwIO $ ContractNotFoundException rootFileName exceptionGraph)
+            (pure . G.gmap J.normalizedFilePathToUri)
+          $ find (Map.member (J.toNormalizedFilePath rootFileName) . G.adjacencyMap)
+          $ wcc paths
+        Includes <$> traverseAMConcurrently loadWithoutScopes' connectedContracts
       Just (Includes oldIncludes) -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
         let
@@ -265,11 +276,7 @@ load uri = Log.addNamespace "load" do
         case J.uriToFilePath $ J.fromNormalizedUri revUri of
           Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault
           Just fp -> do
-            let
-              raw = fromMaybe rawGraph $ find
-                (isJust . lookupContract fp)
-                (Includes <$> wcc (getIncludes rawGraph))
-            scoped <- addScopesWithProgress raw
+            scoped <- addScopesWithProgress rawGraph
             (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
       let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph

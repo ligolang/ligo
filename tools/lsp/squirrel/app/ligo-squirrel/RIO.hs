@@ -19,8 +19,8 @@ import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
 import UnliftIO.MVar (newMVar, newEmptyMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
 
-import ASTMap qualified
 import AST (Fallback)
+import ASTMap qualified
 import Config (Config (..), getConfigFromNotification)
 import Log (LogT)
 import Log qualified
