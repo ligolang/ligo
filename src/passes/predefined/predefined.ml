@@ -210,6 +210,8 @@ module Tree_abstraction = struct
     | "Test.cast_address" -> some_const C_TEST_CAST_ADDRESS
     | "Test.create_chest" -> some_const C_TEST_CREATE_CHEST
     | "Test.create_chest_key" -> some_const C_TEST_CREATE_CHEST_KEY
+    | "Test.add_account" -> some_const C_TEST_ADD_ACCOUNT
+    | "Test.new_account" -> some_const C_TEST_NEW_ACCOUNT
 
     (* Operator module *)
 
@@ -398,6 +400,8 @@ module Tree_abstraction = struct
     | C_TEST_SET_BIG_MAP -> "Test.set_big_map"
     | C_TEST_CAST_ADDRESS -> "Test.cast_address"
     | C_TEST_CREATE_CHEST -> "Test.create_chest"
+    | C_TEST_ADD_ACCOUNT -> "Test.add_account"
+    | C_TEST_NEW_ACCOUNT -> "Test.new_account"
 
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c

@@ -63,6 +63,8 @@ module Command = struct
     | Implicit_account : Location.t * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Check_signature : Tezos_protocol.Protocol.Alpha_context.public_key * Tezos_protocol.Protocol.Alpha_context.signature * bytes -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
+    | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
+    | New_account : unit -> LT.value t
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
@@ -362,6 +364,16 @@ module Command = struct
                |> Option.map ~f:Fq12.(eq one))
            |> Option.value ~default:false in
       (LC.v_bool check, ctxt)
+    )
+    | Add_account (loc, sk, pk) -> (
+      let pkh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash pk in
+      Tezos_state.add_account ~raise ~loc sk pk pkh;
+      ((), ctxt)
+    )
+    | New_account () -> (
+      let (sk, pk) = Tezos_state.new_account () in
+      let value = LC.v_pair ((V_Ct (C_string sk)), (V_Ct (C_key pk))) in
+      (value, ctxt)
     )
 end
 
