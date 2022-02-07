@@ -1157,6 +1157,12 @@ let test_cast_address ~raise loc = typer_1_opt ~raise loc "TEST_CAST_ADDRESS" @@
   let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
   t_typed_address pty sty
 
+let test_add_account ~raise loc = typer_3 ~raise loc "TEST_ADD_ACCOUNT" @@ fun sk pk pkh ->
+  let _ = trace_option ~raise (expected_string loc pkh) @@ get_t_string sk in
+  let _ = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
+  let _ = trace_option ~raise (expected_key_hash loc pkh) @@ get_t_key_hash pkh in
+  (t_unit ())
+
 let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
   let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
   let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
@@ -1342,6 +1348,7 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
   | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
   | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
+  | C_TEST_ADD_ACCOUNT -> test_add_account ~raise loc;
   | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
