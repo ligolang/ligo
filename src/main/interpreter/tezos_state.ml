@@ -388,6 +388,12 @@ let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tez
     | Error errs ->
       Fail errs
 
+let add_account ~raise ~loc sk pk pkh : unit =
+  let open Tezos_alpha_test_helpers in
+  let sk = Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
+  let account = Account.{ sk ; pk ; pkh } in
+  Account.add_account account
+
 let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt : add_operation_outcome =
   let open Tezos_alpha_test_helpers in
   let source = unwrap_source ~raise ~loc ctxt.internals.source in
