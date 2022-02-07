@@ -205,6 +205,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_CREATE_CHEST
   | C_TEST_CREATE_CHEST_KEY
   | C_TEST_ADD_ACCOUNT
+  | C_TEST_NEW_ACCOUNT
     -> false
 
 let rec is_pure : expression -> bool = fun e ->
