@@ -394,6 +394,12 @@ let add_account ~raise ~loc sk pk pkh : unit =
   let account = Account.{ sk ; pk ; pkh } in
   Account.add_account account
 
+let new_account : unit -> string * Signature.public_key = fun () ->
+  let open Tezos_alpha_test_helpers.Account in
+  let account = new_account () in
+  let sk = Signature.Secret_key.to_b58check account.sk in
+  (sk, account.pk)
+
 let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt : add_operation_outcome =
   let open Tezos_alpha_test_helpers in
   let source = unwrap_source ~raise ~loc ctxt.internals.source in
