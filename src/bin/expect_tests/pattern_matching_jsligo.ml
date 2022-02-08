@@ -47,8 +47,8 @@ let%expect_test _ =
   [%expect{xxx|
     const test_foo =
       lambda (x) return  match x with
-                          | Fail _#3 ->
-                            "" | Success _#2 ->
+                          | Fail _#8 ->
+                            "" | Success _#7 ->
                                  ""[@private] |xxx}]
 
 let%expect_test _ =
@@ -70,4 +70,3 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Cons([1,2]), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
   [%expect{|
     7 |}]
-                                              

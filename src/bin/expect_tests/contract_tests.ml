@@ -1123,7 +1123,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
   [%expect {|
     const y =
-      lambda (_#2) return let _x = +1 in let ()#5 = let _x = +2 in unit in let ()#4 = let _x = +23 in unit in let ()#3 = let _x = +42 in unit in _x |}]
+      lambda (_#6) return let _x = +1 in let ()#8 = let _x = +2 in unit in let ()#10 = let _x = +23 in unit in let ()#12 = let _x = +42 in unit in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1329,7 +1329,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#11. |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#19. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
   [%expect{|
@@ -1410,7 +1410,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#11. 
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#12. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#21. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
@@ -2146,18 +2146,18 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
     const f =
-      lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#4 = EQ(n ,
-      0) in  match gen#4 with
-              | False unit_proj#5 ->
+      lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#16 = EQ(n ,
+      0) in  match gen#16 with
+              | False unit_proj#17 ->
                 (f)@(SUB(n ,
-                1)) | True unit_proj#6 ->
+                1)) | True unit_proj#18 ->
                       1 ) in (f)@(4)
     const g =
-      rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#7 = EQ(n ,
-      0) in  match gen#7 with
-              | False unit_proj#8 ->
+      rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#19 = EQ(n ,
+      0) in  match gen#19 with
+              | False unit_proj#20 ->
                 (h)@(SUB(n ,
-                1)) | True unit_proj#9 ->
+                1)) | True unit_proj#21 ->
                       1 ) in h) ) |}]
 
 let%expect_test _ =
@@ -2449,22 +2449,22 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-                     const c =
-                       lambda (gen#5) return CREATE_CONTRACT(lambda (gen#2) return  match
-                                                                                     gen#2 with
-                                                                                     | ( _#4 , _#3 ) ->
-                                                                                     ( LIST_EMPTY() , unit ) ,
-                       None(unit) , 0mutez , unit)
-                     const foo =
-                       let gen#11 = (c)@(unit) in  match gen#11 with
-                                                    | ( _a , _b ) ->
-                                                    unit
-                     const c =
-                       lambda (gen#6) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo =
-                       let gen#13 = (c)@(unit) in  match gen#13 with
-                                                    | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
-                                                    unit |} ]
+const c =
+  lambda (gen#10) return CREATE_CONTRACT(lambda (gen#11) return  match
+                                                                  gen#11 with
+                                                                  | ( _#12 , _#13 ) ->
+                                                                  ( LIST_EMPTY() , unit ) ,
+  None(unit) , 0mutez , unit)
+const foo =
+  let gen#33 = (c)@(unit) in  match gen#33 with
+                               | ( _a , _b ) ->
+                               unit
+const c =
+  lambda (gen#18) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+const foo =
+  let gen#35 = (c)@(unit) in  match gen#35 with
+                               | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+                               unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =

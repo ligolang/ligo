@@ -81,3 +81,5 @@ and let_in = {
   }
 
 and matching_expr = (expr, ty_expr) match_exp
+
+type program = module_

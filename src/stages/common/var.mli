@@ -9,7 +9,7 @@ module type VAR = sig
    (* Create a compiler generated variable *)
    val reset_counter : unit -> unit
    val fresh : ?loc:Location.t -> ?name:string -> unit -> t
-   val fresh_like : t -> t
+   val fresh_like : ?loc:Location.t -> t -> t
    (* Construct a user variable directly from a string. This should only
       be used for embedding user variable names. For programmatically
       generated variables, use `fresh`. Take care not to cause
@@ -19,6 +19,7 @@ module type VAR = sig
    val to_name_exn : t -> string
 
    val get_location : t -> Location.t
+   val set_location : Location.t -> t -> t
 
    val is_generated     : t -> bool
    (* Prints vars as %s or %s#%d *)

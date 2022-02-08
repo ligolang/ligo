@@ -3,6 +3,7 @@ module type OrderedType = Caml.Map.OrderedType
 module type S = sig
   include Caml.Map.S
 
+  val diff : ('a -> 'a -> bool) -> 'a t -> 'a t -> 'a t
   val of_list : (key * 'a) list -> 'a t
   val to_list_rev : 'a t -> 'a list
   val to_kv_list_rev : 'a t -> (key * 'a) list
@@ -16,6 +17,9 @@ end
 
 module Make(Ord : Caml.Map.OrderedType) : S with type key = Ord.t = struct
   include Caml.Map.Make(Ord)
+
+  let diff equal (a : 'a t) (b : 'a t) =
+    fold (fun k v m -> if Option.equal equal (Some v) (find_opt k m) then remove k m else m) b a
 
   let of_list (lst: (key * 'a) list) : 'a t =
     let aux prev (k, v) = add k v prev in

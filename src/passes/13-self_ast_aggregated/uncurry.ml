@@ -1,6 +1,5 @@
 let map_expression = Helpers.map_expression
 open Ast_aggregated
-open Trace
 
 (* Utilities *)
 
@@ -56,12 +55,12 @@ let combine_usage (u1 : usage) (u2 : usage) : usage =
 
 let usages = List.fold_left ~f:combine_usage ~init:Unused
 
-let rec usage_in_expr ~raise (f : expression_variable) (expr : expression) : usage =
-  let self = usage_in_expr ~raise f in
+let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
+  let self = usage_in_expr f in
   let self_binder vars e =
     if List.mem ~equal:ValueVar.equal vars f
     then Unused
-    else usage_in_expr ~raise f e in
+    else usage_in_expr f e in
   match expr.expression_content with
   (* interesting cases: *)
   | E_variable x ->
@@ -110,7 +109,8 @@ let rec usage_in_expr ~raise (f : expression_variable) (expr : expression) : usa
     self record
   | E_record_update { record; path = _; update } ->
     usages [self record; self update]
-  | E_type_inst _ -> raise.raise @@ Errors.polymorphism_unresolved expr.location
+  | E_type_inst { forall; type_ = _} ->
+    self forall
 
 (* Actually doing one instance of uncurrying *)
 
@@ -246,11 +246,13 @@ let rec uncurry_in_expression ~raise
     let record = self record in
     let update = self update in
     return (E_record_update { record; path; update })
-  | E_type_inst _ -> raise.raise @@ Errors.polymorphism_unresolved expr.location
+  | E_type_inst {forall;type_} ->
+    let forall = self forall in
+    return @@ E_type_inst {forall;type_}
 
 (* Uncurrying as much as possible throughout an expression *)
 
-let uncurry_expression ~raise (expr : expression) : expression =
+let uncurry_expression (expr : expression) : expression =
   (* We transform
        rec (f, x1).fun x2. ... . fun xn . E[x1, x2, ..., xn]
      into
@@ -260,7 +262,7 @@ let uncurry_expression ~raise (expr : expression) : expression =
        match expr.expression_content with
        | E_recursive { fun_name ; fun_type ; lambda = { binder = _ ; result } as lambda } ->
          let inner_lambda = { expr with expression_content = E_lambda lambda } in
-         (match usage_in_expr ~raise fun_name result with
+         (match usage_in_expr fun_name result with
           | Unused | Other ->
             expr
           | Application depth ->

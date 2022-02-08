@@ -405,373 +405,374 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | _#2 -> 3 |}]
+        | _#7 -> 3 |}]
 
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (good_test "pm_test.religo") ] ;
   [%expect{|
-    type myt = sum[Cons -> ( int * int ) , Nil -> unit]
-    type myr = record[a -> int , b -> nat , c -> string]
-    type myd =
-      sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]]
-    const t1 =
-      lambda (x) return let fr = lambda (_x) return 1 in let fl = lambda (_x) return 2 in
-       match x with
-        | ( tuple_proj#38 , ys ) ->
-         match tuple_proj#38 with
-          | Cons ctor_proj#51 ->
-             match ys with
-              | Cons ctor_proj#49 ->
-                 match ctor_proj#51 with
-                  | ( a , b ) ->
-                   match ctor_proj#49 with
-                    | ( c , d ) ->
-                    ADD(ADD(ADD(a , b) , c) , d)
-              | Nil unit_proj#48 ->
-                (fl)@(tuple_proj#38)
-          | Nil unit_proj#50 ->
-            (fr)@(ys)
-    const t2 =
-      lambda (x) return lambda (y) return  match x with
-                                            | Cons ctor_proj#52 ->
-                                               match ctor_proj#52 with
-                                                | ( a , b ) ->
-                                                let old_b = b in let b =
-                                                 match y with
-                                                  | Cons ctor_proj#55 ->
-                                                    ADD(a ,
-                                                    b)
-                                                  | Nil unit_proj#54 ->
-                                                    let f = lambda (b) return ADD(a ,
-                                                    b) in (f)@(ADD(b ,
-                                                    1)) in ADD(ADD(a ,
-                                                old_b) , b)
-                                            | Nil unit_proj#56 ->
-                                               match y with
-                                                | Cons ctor_proj#57 ->
-                                                   match ctor_proj#57 with
-                                                    | ( _a , b ) ->
-                                                    let a = "a" in ADD((int@{nat})@((String.length)@(a)) ,
-                                                    b)
-                                                | Nil unit_proj#59 ->
-                                                  1
-    const t3 =
-      lambda (x) return  match x with
-                          | One ctor_proj#60 ->
-                             match ctor_proj#60 with
-                              | Cons ctor_proj#65 ->
-                                 match ctor_proj#60 with
-                                  | Cons ctor_proj#61 ->
-                                     match ctor_proj#61 with
-                                      | ( a , b ) ->
-                                      ADD(a , b)
-                                  | Nil unit_proj#63 ->
-                                    2
-                              | Nil unit_proj#64 ->
-                                1
-                          | Two ctor_proj#66 ->
-                             match ctor_proj#66 with
-                              | record[a -> a , b -> b , c -> c] ->
-                              ADD(ADD(a , (int@{nat})@(b)) ,
-                              (int@{nat})@((String.length)@(c)))
-    const t2_3 =
-      lambda (x) return lambda (y) return lambda (x2) return let t2 =  match
-                                                                        x with
-                                                                        | Cons ctor_proj#68 ->
-                                                                         match
-                                                                        ctor_proj#68 with
-                                                                        | ( a , b ) ->
-                                                                        let old_b = b in let b =
-                                                                         match
-                                                                        y with
-                                                                        | Cons ctor_proj#70 ->
-                                                                         match
-                                                                        ctor_proj#70 with
-                                                                        | ( a , b ) ->
-                                                                        ADD(a ,
-                                                                        b)
-                                                                        | Nil unit_proj#72 ->
-                                                                        let f = lambda (b) return ADD(a ,
-                                                                        b) in (f)@(ADD(b ,
-                                                                        1)) in ADD(ADD(a ,
-                                                                        old_b) ,
-                                                                        b)
-                                                                        | Nil unit_proj#73 ->
-                                                                         match
-                                                                        y with
-                                                                        | Cons ctor_proj#74 ->
-                                                                         match
-                                                                        ctor_proj#74 with
-                                                                        | ( _a , b ) ->
-                                                                        let a = "a" in ADD((int@{nat})@((String.length)@(a)) ,
-                                                                        b)
-                                                                        | Nil unit_proj#76 ->
-                                                                        1 in let t3 =
-       match x2 with
-        | One ctor_proj#77 ->
-           match ctor_proj#77 with
-            | Cons ctor_proj#82 ->
-               match ctor_proj#77 with
-                | Cons ctor_proj#78 ->
-                   match ctor_proj#78 with
-                    | ( a , b ) ->
-                    ADD(a , b)
-                | Nil unit_proj#80 ->
-                  2
-            | Nil unit_proj#81 ->
-              1
-        | Two ctor_proj#83 ->
-           match ctor_proj#83 with
-            | record[a -> a , b -> b , c -> c] ->
-            ADD(ADD(a , b) , (int@{nat})@((String.length)@(c))) in ADD(t2 ,
-      t3)
-    const t4 =
-      lambda (x) return lambda (y) return let gen#85 = ( x , y ) in  match
-                                                                      gen#85 with
-                                                                      | ( a , tuple_proj#86 ) ->
-                                                                       match
-                                                                        tuple_proj#86 with
-                                                                        | Two ctor_proj#100 ->
-                                                                         match
-                                                                        a with
-                                                                        | One ctor_proj#91 ->
-                                                                         match
-                                                                        ctor_proj#91 with
-                                                                        | Cons ctor_proj#92 ->
-                                                                         match
-                                                                        ctor_proj#92 with
-                                                                        | ( a , b ) ->
-                                                                        ADD(a ,
-                                                                        b)
-                                                                        | Nil unit_proj#94 ->
-                                                                        2
-                                                                        | Two ctor_proj#95 ->
-                                                                         match
-                                                                        ctor_proj#95 with
-                                                                        | record[a -> a , b -> b , c -> c] ->
-                                                                         match
-                                                                        ctor_proj#100 with
-                                                                        | record[a -> aa , b -> gen#3 , c -> cc] ->
-                                                                        ADD(ADD(ADD(ADD(a ,
-                                                                        (int@{nat})@(b)) ,
-                                                                        (int@{nat})@((String.length)@(c))) ,
-                                                                        aa) ,
-                                                                        (int@{nat})@((String.length)@(cc)))
-                                                                        | One _x ->
-                                                                        1
-    const t5 =
-      lambda (x) return let gen#101 = ( x , unit ) in  match gen#101 with
-                                                        | ( a , tuple_proj#102 ) ->
-                                                        a
-    const t6 =
-      lambda (x) return let gen#104 = ( x , unit ) in  match gen#104 with
-                                                        | ( gen#4 , gen#5 ) ->
-                                                        2
-    const t7 =
-      lambda (x) return  match x with
-                          | Some x ->
-                            x | None unit_proj#106 ->
-                                1
-    const t8 =
-      lambda (x) return lambda (y) return let gen#107 = ( x , y ) in  match
-                                                                       gen#107 with
-                                                                       |
-                                                                       ( tuple_proj#108 , x ) ->
-                                                                        match
-                                                                        tuple_proj#108 with
-                                                                        | Some ctor_proj#111 ->
-                                                                         match
-                                                                        ctor_proj#111 with
-                                                                        | ( x , y ) ->
-                                                                        ADD(x ,
-                                                                        y)
-                                                                        | None unit_proj#113 ->
-                                                                        x
-    const t9 =
-      lambda (x) return lambda (y) return let gen#114 = ( x , y ) in  match
-                                                                       gen#114 with
-                                                                       |
-                                                                       ( tuple_proj#115 , ys ) ->
-                                                                        match
-                                                                        tuple_proj#115 with
-                                                                        | Some ctor_proj#124 ->
-                                                                         match
-                                                                        ys with
-                                                                        | Some ctor_proj#122 ->
-                                                                        ADD(ctor_proj#124 ,
-                                                                        ctor_proj#122)
-                                                                        | None unit_proj#121 ->
-                                                                        2
-                                                                        | None unit_proj#123 ->
-                                                                        1
-    type optioni = option (int)
-    type myti = sum[Consi -> option (int) , Nili -> unit]
-    const fl = lambda (_x) return 1
-    const fo = lambda (_x) return 2
-    const t10 =
-      lambda (x) return lambda (y) return let gen#125 = ( x , y ) in  match
-                                                                       gen#125 with
-                                                                       |
-                                                                       ( tuple_proj#126 , ys ) ->
-                                                                        match
-                                                                        tuple_proj#126 with
-                                                                        | Consi ctor_proj#142 ->
-                                                                         match
-                                                                        ys with
-                                                                        | Consi ctor_proj#140 ->
-                                                                         match
-                                                                        ctor_proj#142 with
-                                                                        | Some ctor_proj#137 ->
-                                                                        ADD((fo)@(ctor_proj#142) ,
-                                                                        (fo)@(ctor_proj#140))
-                                                                        | None unit_proj#133 ->
-                                                                         match
-                                                                        ys with
-                                                                        | Nili ctor_proj#136 ->
-                                                                        ADD((fo)@(ctor_proj#142) ,
-                                                                        (fo)@(ctor_proj#140))
-                                                                        | Consi ctor_proj#134 ->
-                                                                         match
-                                                                        ctor_proj#134 with
-                                                                        | None ctor_proj#135 ->
-                                                                        ADD((fo)@(ctor_proj#142) ,
-                                                                        (fo)@(ctor_proj#140))
-                                                                        | Some _b ->
-                                                                        let b = 1 in b
-                                                                        | Nili unit_proj#139 ->
-                                                                        (fl)@(tuple_proj#126)
-                                                                        | Nili unit_proj#141 ->
-                                                                        (fl)@(ys)
-    const t11 =
-      lambda (x) return lambda (y) return let gen#143 = ( x , y ) in  match
-                                                                       gen#143 with
-                                                                       |
-                                                                       ( tuple_proj#144 , ys ) ->
-                                                                        match
-                                                                        tuple_proj#144 with
-                                                                        | Consi ctor_proj#160 ->
-                                                                         match
-                                                                        ys with
-                                                                        | Consi ctor_proj#158 ->
-                                                                         match
-                                                                        ctor_proj#160 with
-                                                                        | None ctor_proj#155 ->
-                                                                         match
-                                                                        ctor_proj#160 with
-                                                                        | Some a ->
-                                                                        a
-                                                                        | None unit_proj#150 ->
-                                                                        ADD((fo)@(ctor_proj#160) ,
-                                                                        (fo)@(ctor_proj#158))
-                                                                        | Some _a ->
-                                                                         match
-                                                                        ys with
-                                                                        | Nili ctor_proj#154 ->
-                                                                         match
-                                                                        ctor_proj#160 with
-                                                                        | Some a ->
-                                                                        a
-                                                                        | None unit_proj#150 ->
-                                                                        ADD((fo)@(ctor_proj#160) ,
-                                                                        (fo)@(ctor_proj#158))
-                                                                        | Consi ctor_proj#152 ->
-                                                                         match
-                                                                        ctor_proj#152 with
-                                                                        | None ctor_proj#153 ->
-                                                                         match
-                                                                        ctor_proj#160 with
-                                                                        | Some a ->
-                                                                        a
-                                                                        | None unit_proj#150 ->
-                                                                        ADD((fo)@(ctor_proj#160) ,
-                                                                        (fo)@(ctor_proj#158))
-                                                                        | Some b ->
-                                                                        let a = 1 in ADD(a ,
-                                                                        b)
-                                                                        | Nili unit_proj#157 ->
-                                                                        (fl)@(tuple_proj#144)
-                                                                        | Nili unit_proj#159 ->
-                                                                        (fl)@(ys)
-    const t12 =
-      lambda (x) return  match x with
-                          | Cons ctor_proj#161 ->
-                             match ctor_proj#161 with
-                              | ( hd , tuple_proj#162 ) ->
-                               match tuple_proj#162 with
-                                | Cons ctor_proj#167 ->
-                                   match ctor_proj#167 with
-                                    | ( hd2 , tuple_proj#168 ) ->
-                                     match tuple_proj#168 with
-                                      | Cons ctor_proj#171 ->
-                                         match ctor_proj#171 with
-                                          | ( hd3 , tuple_proj#172 ) ->
-                                           match tuple_proj#172 with
-                                            | Cons ctor_proj#175 ->
-                                              NEG(1)
-                                            | Nil unit_proj#174 ->
-                                              ADD(ADD(hd ,
-                                              hd2) ,
-                                              hd3)
-                                      | Nil unit_proj#176 ->
-                                        ADD(hd ,
-                                        hd2)
-                                | Nil unit_proj#177 ->
-                                  hd
-                          | Nil unit_proj#178 ->
-                            0
-    type recordi = record[a -> option (list (int)) , b -> list (int)]
-    const none_a = record[a -> None(unit) , b -> CONS(42 , LIST_EMPTY())]
-    const some_a =
-      record[a -> Some(CONS(1 , CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))))) , b -> CONS(42 , LIST_EMPTY())]
-    const a_empty_b_not =
-      record[a -> Some(LIST_EMPTY()) , b -> CONS(111 , LIST_EMPTY())]
-    const b_empty_a_not =
-      record[a -> Some(CONS(222 , LIST_EMPTY())) , b -> LIST_EMPTY()]
-    const t13 =
-      lambda (x) return lambda (y) return let gen#179 = ( x , y ) in  match
-                                                                       gen#179 with
-                                                                       |
-                                                                       ( tuple_proj#180 , tuple_proj#181 ) ->
-                                                                        match
-                                                                        tuple_proj#180 with
-                                                                        |
-                                                                        record[a -> record_proj#186 , b -> gen#7] ->
-                                                                         match
-                                                                        record_proj#186 with
-                                                                        | Some ctor_proj#208 ->
-                                                                         match
-                                                                        tuple_proj#181 with
-                                                                        | record[a -> record_proj#192 , b -> record_proj#193] ->
-                                                                         match
-                                                                        record_proj#192 with
-                                                                        | None ctor_proj#205 ->
-                                                                        (int@{nat})@((List.length@{int})@(ctor_proj#208))
-                                                                        | Some ctor_proj#196 ->
-                                                                         match
-                                                                        ctor_proj#196 with
-                                                                        | Cons ctor_proj#197 ->
-                                                                         match
-                                                                        ctor_proj#197 with
-                                                                        | ( hd , _tl ) ->
-                                                                         match
-                                                                        record_proj#193 with
-                                                                        | Cons ctor_proj#200 ->
-                                                                        (int@{nat})@((List.length@{int})@(ctor_proj#208))
-                                                                        | Nil unit_proj#199 ->
-                                                                        hd
-                                                                        | Nil unit_proj#201 ->
-                                                                         match
-                                                                        record_proj#193 with
-                                                                        | Nil ctor_proj#204 ->
-                                                                        (int@{nat})@((List.length@{int})@(ctor_proj#208))
-                                                                        | Cons ctor_proj#202 ->
-                                                                         match
-                                                                        ctor_proj#202 with
-                                                                        | ( hd , _tl ) ->
-                                                                        hd
-                                                                        | None unit_proj#206 ->
-                                                                         match
-                                                                        tuple_proj#181 with
-                                                                        | record[a -> gen#9 , b -> gen#8] ->
-                                                                        NEG(1) |}]
+type myt = sum[Cons -> ( int * int ) , Nil -> unit]
+type myr = record[a -> int , b -> nat , c -> string]
+type myd =
+  sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]]
+const t1 =
+  lambda (x) return let fr = lambda (_x) return 1 in let fl = lambda (_x) return 2 in
+   match x with
+    | ( tuple_proj#188 , ys ) ->
+     match tuple_proj#188 with
+      | Cons ctor_proj#201 ->
+         match ys with
+          | Cons ctor_proj#199 ->
+             match ctor_proj#201 with
+              | ( a , b ) ->
+               match ctor_proj#199 with
+                | ( c , d ) ->
+                ADD(ADD(ADD(a , b) , c) , d)
+          | Nil unit_proj#198 ->
+            (fl)@(tuple_proj#188)
+      | Nil unit_proj#200 ->
+        (fr)@(ys)
+const t2 =
+  lambda (x) return lambda (y) return  match x with
+                                        | Cons ctor_proj#202 ->
+                                           match ctor_proj#202 with
+                                            | ( a , b ) ->
+                                            let old_b = b in let b =
+                                             match y with
+                                              | Cons ctor_proj#205 ->
+                                                ADD(a ,
+                                                b)
+                                              | Nil unit_proj#204 ->
+                                                let f = lambda (b) return ADD(a ,
+                                                b) in (f)@(ADD(b ,
+                                                1)) in ADD(ADD(a ,
+                                            old_b) , b)
+                                        | Nil unit_proj#206 ->
+                                           match y with
+                                            | Cons ctor_proj#207 ->
+                                               match ctor_proj#207 with
+                                                | ( _a , b ) ->
+                                                let a = "a" in ADD((int@{nat})@((String.length)@(a)) ,
+                                                b)
+                                            | Nil unit_proj#209 ->
+                                              1
+const t3 =
+  lambda (x) return  match x with
+                      | One ctor_proj#210 ->
+                         match ctor_proj#210 with
+                          | Cons ctor_proj#215 ->
+                             match ctor_proj#210 with
+                              | Cons ctor_proj#211 ->
+                                 match ctor_proj#211 with
+                                  | ( a , b ) ->
+                                  ADD(a , b)
+                              | Nil unit_proj#213 ->
+                                2
+                          | Nil unit_proj#214 ->
+                            1
+                      | Two ctor_proj#216 ->
+                         match ctor_proj#216 with
+                          | record[a -> a , b -> b , c -> c] ->
+                          ADD(ADD(a , (int@{nat})@(b)) ,
+                          (int@{nat})@((String.length)@(c)))
+const t2_3 =
+  lambda (x) return lambda (y) return lambda (x2) return let t2 =  match
+                                                                    x with
+                                                                    | Cons ctor_proj#218 ->
+                                                                     match
+                                                                    ctor_proj#218 with
+                                                                    | ( a , b ) ->
+                                                                    let old_b = b in let b =
+                                                                     match
+                                                                    y with
+                                                                    | Cons ctor_proj#220 ->
+                                                                     match
+                                                                    ctor_proj#220 with
+                                                                    | ( a , b ) ->
+                                                                    ADD(a ,
+                                                                    b)
+                                                                    | Nil unit_proj#222 ->
+                                                                    let f = lambda (b) return ADD(a ,
+                                                                    b) in (f)@(ADD(b ,
+                                                                    1)) in ADD(ADD(a ,
+                                                                    old_b) ,
+                                                                    b)
+                                                                    | Nil unit_proj#223 ->
+                                                                     match
+                                                                    y with
+                                                                    | Cons ctor_proj#224 ->
+                                                                     match
+                                                                    ctor_proj#224 with
+                                                                    | ( _a , b ) ->
+                                                                    let a = "a" in ADD((int@{nat})@((String.length)@(a)) ,
+                                                                    b)
+                                                                    | Nil unit_proj#226 ->
+                                                                    1 in let t3 =
+   match x2 with
+    | One ctor_proj#227 ->
+       match ctor_proj#227 with
+        | Cons ctor_proj#232 ->
+           match ctor_proj#227 with
+            | Cons ctor_proj#228 ->
+               match ctor_proj#228 with
+                | ( a , b ) ->
+                ADD(a , b)
+            | Nil unit_proj#230 ->
+              2
+        | Nil unit_proj#231 ->
+          1
+    | Two ctor_proj#233 ->
+       match ctor_proj#233 with
+        | record[a -> a , b -> b , c -> c] ->
+        ADD(ADD(a , b) , (int@{nat})@((String.length)@(c))) in ADD(t2 ,
+  t3)
+const t4 =
+  lambda (x) return lambda (y) return let gen#235 = ( x , y ) in  match
+                                                                   gen#235 with
+                                                                   |
+                                                                   ( a , tuple_proj#236 ) ->
+                                                                    match
+                                                                    tuple_proj#236 with
+                                                                    | Two ctor_proj#250 ->
+                                                                     match
+                                                                    a with
+                                                                    | One ctor_proj#241 ->
+                                                                     match
+                                                                    ctor_proj#241 with
+                                                                    | Cons ctor_proj#242 ->
+                                                                     match
+                                                                    ctor_proj#242 with
+                                                                    | ( a , b ) ->
+                                                                    ADD(a ,
+                                                                    b)
+                                                                    | Nil unit_proj#244 ->
+                                                                    2
+                                                                    | Two ctor_proj#245 ->
+                                                                     match
+                                                                    ctor_proj#245 with
+                                                                    | record[a -> a , b -> b , c -> c] ->
+                                                                     match
+                                                                    ctor_proj#250 with
+                                                                    | record[a -> aa , b -> gen#106 , c -> cc] ->
+                                                                    ADD(ADD(ADD(ADD(a ,
+                                                                    (int@{nat})@(b)) ,
+                                                                    (int@{nat})@((String.length)@(c))) ,
+                                                                    aa) ,
+                                                                    (int@{nat})@((String.length)@(cc)))
+                                                                    | One _x ->
+                                                                    1
+const t5 =
+  lambda (x) return let gen#251 = ( x , unit ) in  match gen#251 with
+                                                    | ( a , tuple_proj#252 ) ->
+                                                    a
+const t6 =
+  lambda (x) return let gen#254 = ( x , unit ) in  match gen#254 with
+                                                    | ( gen#113 , gen#114 ) ->
+                                                    2
+const t7 =
+  lambda (x) return  match x with
+                      | Some x ->
+                        x | None unit_proj#256 ->
+                            1
+const t8 =
+  lambda (x) return lambda (y) return let gen#257 = ( x , y ) in  match
+                                                                   gen#257 with
+                                                                   |
+                                                                   ( tuple_proj#258 , x ) ->
+                                                                    match
+                                                                    tuple_proj#258 with
+                                                                    | Some ctor_proj#261 ->
+                                                                     match
+                                                                    ctor_proj#261 with
+                                                                    | ( x , y ) ->
+                                                                    ADD(x ,
+                                                                    y)
+                                                                    | None unit_proj#263 ->
+                                                                    x
+const t9 =
+  lambda (x) return lambda (y) return let gen#264 = ( x , y ) in  match
+                                                                   gen#264 with
+                                                                   |
+                                                                   ( tuple_proj#265 , ys ) ->
+                                                                    match
+                                                                    tuple_proj#265 with
+                                                                    | Some ctor_proj#274 ->
+                                                                     match
+                                                                    ys with
+                                                                    | Some ctor_proj#272 ->
+                                                                    ADD(ctor_proj#274 ,
+                                                                    ctor_proj#272)
+                                                                    | None unit_proj#271 ->
+                                                                    2
+                                                                    | None unit_proj#273 ->
+                                                                    1
+type optioni = option (int)
+type myti = sum[Consi -> option (int) , Nili -> unit]
+const fl = lambda (_x) return 1
+const fo = lambda (_x) return 2
+const t10 =
+  lambda (x) return lambda (y) return let gen#275 = ( x , y ) in  match
+                                                                   gen#275 with
+                                                                   |
+                                                                   ( tuple_proj#276 , ys ) ->
+                                                                    match
+                                                                    tuple_proj#276 with
+                                                                    | Consi ctor_proj#292 ->
+                                                                     match
+                                                                    ys with
+                                                                    | Consi ctor_proj#290 ->
+                                                                     match
+                                                                    ctor_proj#292 with
+                                                                    | Some ctor_proj#287 ->
+                                                                    ADD((fo)@(ctor_proj#292) ,
+                                                                    (fo)@(ctor_proj#290))
+                                                                    | None unit_proj#283 ->
+                                                                     match
+                                                                    ys with
+                                                                    | Nili ctor_proj#286 ->
+                                                                    ADD((fo)@(ctor_proj#292) ,
+                                                                    (fo)@(ctor_proj#290))
+                                                                    | Consi ctor_proj#284 ->
+                                                                     match
+                                                                    ctor_proj#284 with
+                                                                    | None ctor_proj#285 ->
+                                                                    ADD((fo)@(ctor_proj#292) ,
+                                                                    (fo)@(ctor_proj#290))
+                                                                    | Some _b ->
+                                                                    let b = 1 in b
+                                                                    | Nili unit_proj#289 ->
+                                                                    (fl)@(tuple_proj#276)
+                                                                    | Nili unit_proj#291 ->
+                                                                    (fl)@(ys)
+const t11 =
+  lambda (x) return lambda (y) return let gen#293 = ( x , y ) in  match
+                                                                   gen#293 with
+                                                                   |
+                                                                   ( tuple_proj#294 , ys ) ->
+                                                                    match
+                                                                    tuple_proj#294 with
+                                                                    | Consi ctor_proj#310 ->
+                                                                     match
+                                                                    ys with
+                                                                    | Consi ctor_proj#308 ->
+                                                                     match
+                                                                    ctor_proj#310 with
+                                                                    | None ctor_proj#305 ->
+                                                                     match
+                                                                    ctor_proj#310 with
+                                                                    | Some a ->
+                                                                    a
+                                                                    | None unit_proj#300 ->
+                                                                    ADD((fo)@(ctor_proj#310) ,
+                                                                    (fo)@(ctor_proj#308))
+                                                                    | Some _a ->
+                                                                     match
+                                                                    ys with
+                                                                    | Nili ctor_proj#304 ->
+                                                                     match
+                                                                    ctor_proj#310 with
+                                                                    | Some a ->
+                                                                    a
+                                                                    | None unit_proj#300 ->
+                                                                    ADD((fo)@(ctor_proj#310) ,
+                                                                    (fo)@(ctor_proj#308))
+                                                                    | Consi ctor_proj#302 ->
+                                                                     match
+                                                                    ctor_proj#302 with
+                                                                    | None ctor_proj#303 ->
+                                                                     match
+                                                                    ctor_proj#310 with
+                                                                    | Some a ->
+                                                                    a
+                                                                    | None unit_proj#300 ->
+                                                                    ADD((fo)@(ctor_proj#310) ,
+                                                                    (fo)@(ctor_proj#308))
+                                                                    | Some b ->
+                                                                    let a = 1 in ADD(a ,
+                                                                    b)
+                                                                    | Nili unit_proj#307 ->
+                                                                    (fl)@(tuple_proj#294)
+                                                                    | Nili unit_proj#309 ->
+                                                                    (fl)@(ys)
+const t12 =
+  lambda (x) return  match x with
+                      | Cons ctor_proj#311 ->
+                         match ctor_proj#311 with
+                          | ( hd , tuple_proj#312 ) ->
+                           match tuple_proj#312 with
+                            | Cons ctor_proj#317 ->
+                               match ctor_proj#317 with
+                                | ( hd2 , tuple_proj#318 ) ->
+                                 match tuple_proj#318 with
+                                  | Cons ctor_proj#321 ->
+                                     match ctor_proj#321 with
+                                      | ( hd3 , tuple_proj#322 ) ->
+                                       match tuple_proj#322 with
+                                        | Cons ctor_proj#325 ->
+                                          NEG(1)
+                                        | Nil unit_proj#324 ->
+                                          ADD(ADD(hd ,
+                                          hd2) ,
+                                          hd3)
+                                  | Nil unit_proj#326 ->
+                                    ADD(hd ,
+                                    hd2)
+                            | Nil unit_proj#327 ->
+                              hd
+                      | Nil unit_proj#328 ->
+                        0
+type recordi = record[a -> option (list (int)) , b -> list (int)]
+const none_a = record[a -> None(unit) , b -> CONS(42 , LIST_EMPTY())]
+const some_a =
+  record[a -> Some(CONS(1 , CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))))) , b -> CONS(42 , LIST_EMPTY())]
+const a_empty_b_not =
+  record[a -> Some(LIST_EMPTY()) , b -> CONS(111 , LIST_EMPTY())]
+const b_empty_a_not =
+  record[a -> Some(CONS(222 , LIST_EMPTY())) , b -> LIST_EMPTY()]
+const t13 =
+  lambda (x) return lambda (y) return let gen#329 = ( x , y ) in  match
+                                                                   gen#329 with
+                                                                   |
+                                                                   ( tuple_proj#330 , tuple_proj#331 ) ->
+                                                                    match
+                                                                    tuple_proj#330 with
+                                                                    |
+                                                                    record[a -> record_proj#336 , b -> gen#173] ->
+                                                                     match
+                                                                    record_proj#336 with
+                                                                    | Some ctor_proj#358 ->
+                                                                     match
+                                                                    tuple_proj#331 with
+                                                                    | record[a -> record_proj#342 , b -> record_proj#343] ->
+                                                                     match
+                                                                    record_proj#342 with
+                                                                    | None ctor_proj#355 ->
+                                                                    (int@{nat})@((List.length@{int})@(ctor_proj#358))
+                                                                    | Some ctor_proj#346 ->
+                                                                     match
+                                                                    ctor_proj#346 with
+                                                                    | Cons ctor_proj#347 ->
+                                                                     match
+                                                                    ctor_proj#347 with
+                                                                    | ( hd , _tl ) ->
+                                                                     match
+                                                                    record_proj#343 with
+                                                                    | Cons ctor_proj#350 ->
+                                                                    (int@{nat})@((List.length@{int})@(ctor_proj#358))
+                                                                    | Nil unit_proj#349 ->
+                                                                    hd
+                                                                    | Nil unit_proj#351 ->
+                                                                     match
+                                                                    record_proj#343 with
+                                                                    | Nil ctor_proj#354 ->
+                                                                    (int@{nat})@((List.length@{int})@(ctor_proj#358))
+                                                                    | Cons ctor_proj#352 ->
+                                                                     match
+                                                                    ctor_proj#352 with
+                                                                    | ( hd , _tl ) ->
+                                                                    hd
+                                                                    | None unit_proj#356 ->
+                                                                     match
+                                                                    tuple_proj#331 with
+                                                                    | record[a -> gen#174 , b -> gen#175] ->
+                                                                    NEG(1) |}]
