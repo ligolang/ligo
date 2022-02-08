@@ -18,7 +18,7 @@ Linux or OSX:
 > ```
 > For convenience you can alias the above command
 > ```sh
-> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:next"
+> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.34.0"
 > ```
 
 Windows:
@@ -29,6 +29,8 @@ Windows:
 > ```dos
 > doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.34.0 $*
 > ```
+> To make the alias persistent across terminal sessions you need to add the `doskey` to the Windows Registry.  
+> Follow [this stackoverflow answer](https://stackoverflow.com/a/21040825) for the steps on how to do that.
 
 Or if you want the development version, replace the version above with `next`.
 
