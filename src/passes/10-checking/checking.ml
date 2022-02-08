@@ -18,6 +18,29 @@ let assert_type_expression_eq = Helpers.assert_type_expression_eq
    it should have information such as `[a ↦ int; b ↦ bool]`. *)
 module TMap = Simple_utils.Map.Make(struct type t = O.type_variable let compare x y = I.Var.compare x y end)
 
+module Constant_types = struct
+  module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
+  type t = O.type_expression CTMap.t
+
+  let a_var = O.Var.of_input_var "a"
+  let b_var = O.Var.of_input_var "b"
+
+  let tbl : t = CTMap.of_list [
+                    (C_ABS, O.(t_arrow (t_int ()) (t_nat ()) ()));
+                    (C_SET_EMPTY, O.(t_for_all a_var () (t_set (t_variable a_var ()))));
+                    (C_SET_LITERAL, O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ())));
+                    (C_SET_MEM, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_bool ()) ()) ())));
+                    (C_SET_ADD, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ())));
+                    (C_SET_REMOVE, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ())));
+                    (C_SET_UPDATE, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_bool ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()) ())));
+                    (C_SET_ITER, O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ())));
+                    (C_SET_FOLD, O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ()))));
+                    (C_SET_FOLD_DESC, O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ()))));
+                    (C_NONE, O.(t_for_all a_var () (t_option (t_variable a_var ()))));
+                  ]
+  let find c = CTMap.find_opt c tbl
+end
+
 let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') table (type_matched : O.type_expression) (type_ : O.type_expression) =
   let open O in
   let self = infer_type_application ~raise ~loc ~default_error in
