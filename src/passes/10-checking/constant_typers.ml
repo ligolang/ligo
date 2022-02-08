@@ -36,17 +36,6 @@ let none ~raise loc = typer_0 ~raise loc "NONE" @@ fun tv_opt ->
   | None -> raise.raise (not_annotated loc)
   | Some t -> trace_option ~raise (expected_option loc t) @@ assert_t_option t; t
 
-let set_empty ~raise loc = typer_0 ~raise loc "SET_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> trace_option ~raise (expected_set loc t) @@ assert_t_set t ; t
-
-let set_update ~raise loc = typer_3 ~raise loc "SET_UPDATE" @@ fun elt flag set ->
-  let elt' = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = trace_option ~raise (expected_bool loc flag) @@ assert_t_bool flag in
-  let () = assert_eq_1 ~raise ~loc elt elt' in
-  set
-
 let sub ~raise loc = typer_2 ~raise loc "SUB" @@ fun a b ->
   if eq_2 (a , b) (t_bls12_381_g1 ())
   then (t_bls12_381_g1 ()) else
@@ -594,28 +583,6 @@ let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b
               ]
               [a; b]
 
-let set_mem ~raise loc = typer_2 ~raise loc "SET_MEM" @@ fun elt set ->
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc elt key in
-  t_bool ()
-
-let set_add ~raise loc = typer_2 ~raise loc "SET_ADD" @@ fun elt set ->
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc elt key in
-  set
-
-let set_remove ~raise loc = typer_2 ~raise loc "SET_REMOVE" @@ fun elt set ->
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc elt key in
-  set
-
-let set_iter ~raise loc = typer_2 ~raise loc "SET_ITER" @@ fun body set ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let () = assert_eq_1 ~raise ~loc res (t_unit ()) in
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc key arg in
-  (t_unit ())
-
 let list_empty ~raise loc = typer_0 ~raise loc "LIST_EMPTY" @@ fun tv_opt ->
   match tv_opt with
   | None -> raise.raise (not_annotated loc)
@@ -678,24 +645,6 @@ let list_head_opt ~raise loc = typer_1 ~raise loc "LIST_HEAD_OPT" @@ fun lst ->
 let list_tail_opt ~raise loc = typer_1 ~raise loc "LIST_TAIL_OPT" @@ fun lst ->
   let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
   t_option ~loc @@ t_list ~loc key
-
-let set_fold ~raise loc = typer_3 ~raise loc "SET_FOLD" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_set loc lst) @@ get_t_set lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let set_fold_desc ~raise loc = typer_3 ~raise loc "SET_FOLD_DESC" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (cur , prec) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_set loc lst) @@ get_t_set lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
 
 let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
   let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
@@ -1241,15 +1190,6 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_SLICE               -> slice ~raise loc ;
   | C_BYTES_PACK          -> bytes_pack ~raise loc ;
   | C_BYTES_UNPACK        -> bytes_unpack ~raise loc ;
-    (* SET  *)
-  | C_SET_EMPTY           -> set_empty ~raise loc;
-  | C_SET_ADD             -> set_add ~raise loc ;
-  | C_SET_REMOVE          -> set_remove ~raise loc ;
-  | C_SET_ITER            -> set_iter ~raise loc ;
-  | C_SET_FOLD            -> set_fold ~raise loc ;
-  | C_SET_FOLD_DESC       -> set_fold_desc ~raise loc ;
-  | C_SET_MEM             -> set_mem ~raise loc ;
-  | C_SET_UPDATE          -> set_update ~raise loc;
   (* LIST *)
   | C_CONS                -> cons ~raise loc ;
   | C_LIST_EMPTY          -> list_empty ~raise loc;
