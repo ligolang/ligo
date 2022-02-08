@@ -822,9 +822,17 @@ and type_lambda ~raise ~test ~protocol_version e {
 
 
 and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
-  let typer = Constant_typers.constant_typers ~raise ~test ~protocol_version loc name in
-  let tv = typer lst tv_opt in
-  (name, tv)
+  match Constant_types.find name with
+  | Some lamb_type ->
+     let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
+     let table = infer_type_applications ~raise ~loc lamb_type lst tv_opt in
+     let lamb_type = TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
+     let _, tv = Ast_typed.Helpers.destruct_arrows lamb_type in
+     (name, tv)
+  | None ->
+     let typer = Constant_typers.constant_typers ~raise ~test ~protocol_version loc name in
+     let tv = typer lst tv_opt in
+     (name, tv)
 
 let type_program ~raise ~test ~protocol_version ?env m = type_module ~raise ~test ~init_context:(Context.init ?env ()) ~protocol_version m
 let type_declaration ~raise ~test ~protocol_version ?env d = snd @@ type_declaration' ~raise ~test (Context.init ?env ()) ~protocol_version d
