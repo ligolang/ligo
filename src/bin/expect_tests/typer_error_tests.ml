@@ -201,8 +201,8 @@ let%expect_test _ =
       2 |
       3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
 
-    Incorrect argument.
-    Expected an option, but got an argument of type "int". |} ]
+    Invalid type(s).
+    Expected: "int", but got: "option (a)". |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;
