@@ -65,6 +65,7 @@ module Command = struct
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
     | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
+    | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
@@ -373,6 +374,11 @@ module Command = struct
     | New_account () -> (
       let (sk, pk) = Tezos_state.new_account () in
       let value = LC.v_pair ((V_Ct (C_string sk)), (V_Ct (C_key pk))) in
+      (value, ctxt)
+    )
+    | Register_delegate (loc, calltrace, pkh) -> (
+      let ctxt = Tezos_state.register_delegate ~raise ~loc ~calltrace ctxt pkh in
+      let value = LC.v_unit () in
       (value, ctxt)
     )
 end

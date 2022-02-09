@@ -388,6 +388,17 @@ let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tez
     | Error errs ->
       Fail errs
 
+let register_delegate ~raise ~loc ~calltrace (ctxt :context) pkh =
+  let open Tezos_alpha_test_helpers in
+  let contract = Tezos_raw_protocol.Alpha_context.Contract.implicit_contract pkh in
+  let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.delegation (B ctxt.raw) contract (Some pkh) in
+  match bake_op ~raise ~loc ~calltrace ctxt operation with
+  | Success (ctxt,_) ->
+    let n = Tezos_protocol_parameters.Default_parameters.constants_test.preserved_cycles + 2 in
+    let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end n ctxt.raw in
+    { ctxt with raw }
+  | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
+
 let add_account ~raise ~loc sk pk pkh : unit =
   let open Tezos_alpha_test_helpers in
   let sk = Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
