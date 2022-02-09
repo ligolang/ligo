@@ -42,7 +42,7 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type__name
 [@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type__name [t]
-[@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
+[@@map (_type_, ("option", "list", "set", "contract", "ticket", "custom_length"))]
 
 let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type__name [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
@@ -143,7 +143,7 @@ let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type__n
 [@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "test_michelson", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type__name
-[@@map (_type_, ("contract", "option", "list", "set", "ticket", "sapling_state", "sapling_transaction"))]
+[@@map (_type_, ("contract", "option", "list", "set", "ticket", "sapling_state", "sapling_transaction", "custom_length"))]
 
 let get_t_mutez (t:type_expression) : unit option = get_t_tez t
 let get_t_michelson_code (t:type_expression) : unit option = get_t_test_michelson t
@@ -179,6 +179,11 @@ let get_t_map (t:type_expression) : (type_expression * type_expression) option =
 let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) typed_address_name -> Some (k,v)
+  | _ -> None
+
+let get_t_custom_add (t:type_expression) : (type_expression * type_expression) option =
+  match t.type_content with
+  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) custom_add_name -> Some (k,v)
   | _ -> None
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =

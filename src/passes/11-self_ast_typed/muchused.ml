@@ -57,14 +57,16 @@ let rec is_dup (t : type_expression) =
   | T_constant {injection; parameters = [t]; _}
        when eq_name injection option_name ||
             eq_name injection list_name ||
-            eq_name injection set_name ->
+            eq_name injection set_name ||
+            eq_name injection custom_length_name ->
       is_dup t
   | T_constant {injection;_}
        when eq_name injection contract_name ->
       true
   | T_constant {injection; parameters = [t1;t2]; _}
        when eq_name injection big_map_name ||
-            eq_name injection map_name ->
+            eq_name injection map_name ||
+            eq_name injection custom_add_name ->
       is_dup t1 && is_dup t2
   | T_record rows
   | T_sum rows ->

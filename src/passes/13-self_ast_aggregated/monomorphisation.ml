@@ -165,6 +165,7 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
            | _ -> rhs, data in
          let rhs = apply_table_expr table rhs in
          let data, rhs = self data rhs in
+         let rhs = { rhs with type_expression = typed } in
          (AST.e_a_let_in let_binder rhs let_result attr, data) in
        let data, let_result = self data let_result in
        let instances, data = Data.instances_lookup_and_remove (Longident.of_variable let_binder) data in
