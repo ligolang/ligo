@@ -230,6 +230,7 @@ type constant' =
   | C_TEST_RANDOM [@only_interpreter]
   | C_TEST_ADD_ACCOUNT [@only_interpreter]
   | C_TEST_NEW_ACCOUNT [@only_interpreter]
+  | C_TEST_REGISTER_DELEGATE [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
