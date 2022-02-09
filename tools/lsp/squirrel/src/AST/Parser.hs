@@ -2,10 +2,12 @@ module AST.Parser
   ( Source (..)
   , ParserCallback
   , parse
+  , loadPreprocessed
   , parsePreprocessed
   , parseWithScopes
   , parseContracts
   , scanContracts
+  , loadContractsWithDependencies
   , parseContractsWithDependencies
   , parseContractsWithDependenciesScopes
   , collectAllErrors
@@ -25,7 +27,7 @@ import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
 import UnliftIO.Exception (Handler (..), catches, displayException, fromEither)
 
-import AST.Includes (includesGraph)
+import AST.Includes (includesGraph, includesGraph')
 import AST.Parser.Camligo qualified as Caml
 import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
@@ -58,12 +60,12 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
-parsePreprocessed src = do
-  (src', needsPreprocessing) <- liftIO $ prePreprocess <$> srcToText src
+loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, Maybe Msg)
+loadPreprocessed src = do
+  (src', needsPreprocessing) <- prePreprocess <$> srcToText src
   if needsPreprocessing
-    then do
-      (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
+    then
+      (second (const Nothing) <$> preprocess src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
           pure (src', Just $ fromLigoErrorToMsg err)
         , Handler \(_ :: SomeLigoException) ->
@@ -73,9 +75,8 @@ parsePreprocessed src = do
           $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
           pure (src', Nothing)
         ]
-      maybe id addLigoErrToMsg err <$> parse src''
     else
-      parse src'
+      pure (src', Nothing)
   where
     -- If the user has hand written any line markers, they will get removed here.
     -- Also query whether we need to do any preprocessing at all in the first place.
@@ -87,6 +88,11 @@ parsePreprocessed src = do
         shouldPreprocess = hasPreprocessor || any snd prepreprocessed
       in
       (Text (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
+
+parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
+parsePreprocessed src = do
+  (src', msg) <- loadPreprocessed src
+  maybe id addLigoErrToMsg msg <$> parse src'
 
 parseWithScopes
   :: forall impl m
@@ -135,6 +141,15 @@ scanContractsImpl seen top = do
       else if isRight (getExt p)
         then pure $ p : seen
         else pure seen
+
+loadContractsWithDependencies
+  :: (MonadUnliftIO m, MonadFail m)
+  => ParserCallback m Source
+  -> ProgressCallback m
+  -> FilePath
+  -> m (Includes Source)
+loadContractsWithDependencies parser reportProgress =
+  includesGraph' <=< parseContracts parser reportProgress
 
 parseContractsWithDependencies
   :: MonadUnliftIO m

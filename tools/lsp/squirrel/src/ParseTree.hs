@@ -77,15 +77,15 @@ instance IsString Source where
 instance Show Source where
   show = show . srcPath
 
-srcToBytestring :: Source -> IO ByteString
+srcToBytestring :: MonadIO m => Source -> m ByteString
 srcToBytestring = \case
-  Path       p   -> BS.readFile p
+  Path       p   -> liftIO $ BS.readFile p
   Text       _ t -> return $ Text.encodeUtf8 t
   ByteString _ s -> return s
 
-srcToText :: Source -> IO Text
+srcToText :: MonadIO m => Source -> m Text
 srcToText = \case
-  Path       p   -> Text.readFile p
+  Path       p   -> liftIO $ Text.readFile p
   Text       _ t -> return t
   ByteString _ s -> return $ Text.decodeUtf8 s
 

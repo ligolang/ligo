@@ -68,6 +68,9 @@ newtype RIO a = RIO
     , S.MonadLsp Config.Config
     )
 
+instance MonadFail RIO where
+  fail = RIO . lift . lift . lift . fail
+
 instance Katip RIO where
   getLogEnv = RIO $ lift $ lift getLogEnv
   localLogEnv f = RIO . mapReaderT (S.LspT . localLogEnv f . S.unLspT) . unRio

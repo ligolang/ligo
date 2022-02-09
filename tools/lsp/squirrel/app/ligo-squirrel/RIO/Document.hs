@@ -46,7 +46,7 @@ import AST
  , contractFile, lookupContract
  )
 import AST.Includes (extractIncludedFiles, insertPreprocessorRanges)
-import AST.Parser (parseContractsWithDependencies, parsePreprocessed)
+import AST.Parser (loadContractsWithDependencies, loadPreprocessed, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
 import Cli (getLigoClientEnv)
@@ -176,16 +176,22 @@ tryLoadWithoutScopes uri = (Just <$> loadWithoutScopes' uri) `catchIO` const (pu
 normalizeFilePath :: FilePath -> J.NormalizedUri
 normalizeFilePath = J.toNormalizedUri . J.filePathToUri
 
--- TODO: Parses the whole file and then discards it, to later be parsed again.
--- We can do better.
-loadDirectory :: FilePath -> RIO (G.AdjacencyMap J.NormalizedFilePath)
+-- | Loads the contracts of the directory, without parsing anything.
+--
+-- The pipeline will cause the preprocessor to run on each contract (if
+-- directives are present), and each 'Source' will then be scanned for line
+-- markers, which will be used to build the 'Includes' graph.
+--
+-- The downside is that momentarily, various files will be present in memory. In
+-- the future, we can consider only keeping the line markers and building the
+-- graph from this.
+loadDirectory :: FilePath -> RIO (Includes Source)
 loadDirectory root =
-  G.gmap (J.toNormalizedFilePath . contractFile) . getIncludes <$>
-    S.withProgress "Indexing directory" S.NotCancellable \reportProgress ->
-      parseContractsWithDependencies
-        (loadWithoutScopes . normalizeFilePath . srcPath)
-        (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-        root
+  S.withProgress "Indexing directory" S.NotCancellable \reportProgress ->
+    loadContractsWithDependencies
+      (fmap fst . loadPreprocessed)
+      (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+      root
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -201,15 +207,16 @@ getInclusionsGraph root uri = Log.addNamespace "getInclusionsGraph" do
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
         $(Log.debug) [Log.i|Can't find #{uri} in inclusions graph, loading #{root}...|]
-        paths <- loadDirectory root
-        let exceptionGraph = Includes $ G.gmap J.fromNormalizedFilePath paths
+        Includes paths <- loadDirectory root
+        let exceptionGraph = Includes $ G.gmap srcPath paths
         connectedContracts <-
           maybe
             (throwIO $ ContractNotFoundException rootFileName exceptionGraph)
-            (pure . G.gmap J.normalizedFilePathToUri)
-          $ find (Map.member (J.toNormalizedFilePath rootFileName) . G.adjacencyMap)
-          $ wcc paths
-        Includes <$> traverseAMConcurrently loadWithoutScopes' connectedContracts
+            pure
+          $ find (Map.member rootFileName . G.adjacencyMap)
+          $ wcc
+          $ G.gmap srcPath paths
+        Includes <$> traverseAMConcurrently (loadWithoutScopes' . normalizeFilePath) connectedContracts
       Just (Includes oldIncludes) -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
         let
