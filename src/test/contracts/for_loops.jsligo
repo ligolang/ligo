@@ -56,6 +56,9 @@ let add2 : (xs : list<int>) => list<int> =
         let i : int = 0;
         while (i < len) {
             Test.log(i);
+            let x = 1;
+            let z = x;
+            Test.log(z);
             let y = get_index(xs,i) + 1;
             ys = list([y, ...ys]);
             i += 1;
