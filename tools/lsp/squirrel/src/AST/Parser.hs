@@ -1,7 +1,7 @@
 module AST.Parser
   ( Source (..)
-  , Progress (..)
   , ParserCallback
+  , parse
   , parsePreprocessed
   , parseWithScopes
   , parseContracts
@@ -11,19 +11,21 @@ module AST.Parser
   , collectAllErrors
   ) where
 
-import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Control.Exception.Safe (Handler (..), catches, throwM)
 import Control.Lens ((%~))
 import Control.Monad ((<=<))
+import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Bifunctor (second)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
+import Data.Text (Text)
 import Data.Text qualified as Text (lines, unlines)
 import Data.Traversable (for)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>), takeDirectory)
+import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
 
 import Duplo.Lattice (Lattice (leq))
@@ -39,7 +41,7 @@ import Cli
   , LigoErrorNodeParseErrorException (..), fromLigoErrorToMsg, preprocess
   )
 import Extension
-import Log (i)
+import Log (Log, i)
 import ParseTree (Source (..), srcToText, toParseTree)
 import Parser
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
@@ -47,27 +49,31 @@ import Util.Graph (wcc)
 
 type ParserCallback m contract = Source -> m contract
 
-parse :: MonadIO m => Source -> m ContractInfo
-parse src = liftIO do
+parse :: (Log m, MonadThrow m) => Source -> m ContractInfo
+parse src = do
   (recogniser, dialect) <- onExt ElimExt
     { eePascal = (Pascal.recognise, Pascal)
     , eeCaml   = (Caml.recognise,   Caml)
     , eeReason = (Reason.recognise, Reason)
     } (srcPath src)
-  uncurry (FindContract src) <$> (runParserM . recogniser =<< toParseTree dialect src)
+  uncurry (FindContract src) <$> (liftIO . runParserM . recogniser =<< toParseTree dialect src)
 
-parsePreprocessed :: forall m. HasLigoClient m => Source -> m ContractInfo
+parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
-  src' <- liftIO $ deleteExtraMarkers <$> srcToText src
-  (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
-    [ Handler \(LigoDecodedExpectedClientFailureException err) ->
-      pure (src', Just $ fromLigoErrorToMsg err)
-    , Handler \(LigoErrorNodeParseErrorException _) ->
-      pure (src', Nothing)
-    , Handler \(_ :: IOError) ->
-      pure (src', Nothing)
-    ]
-  maybe id addLigoErrToMsg err <$> parse src''
+  (src', needsPreprocessing) <- liftIO $ prePreprocess <$> srcToText src
+  if needsPreprocessing
+    then do
+      (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
+        [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
+          pure (src', Just $ fromLigoErrorToMsg err)
+        , Handler \LigoErrorNodeParseErrorException {} ->
+          pure (src', Nothing)
+        , Handler \(_ :: IOError) ->
+          pure (src', Nothing)
+        ]
+      maybe id addLigoErrToMsg err <$> parse src''
+    else
+      parse src'
   where
     addLigoErrToMsg err = getContract . cMsgs %~ (`rewriteAt` err)
 
@@ -76,18 +82,25 @@ parsePreprocessed src = do
     rewriteAt at what@(from, _) = filter (not . (from `leq`) . fst) at <> [what]
 
     -- If the user has hand written any line markers, they will get removed here.
-    deleteExtraMarkers =
-      Text (srcPath src) . Text.unlines . map (\l -> maybe l mempty $ parseLineMarkerText l) . Text.lines
+    -- Also query whether we need to do any preprocessing at all in the first place.
+    prePreprocess :: Text -> (Source, Bool)
+    prePreprocess contents =
+      let
+        hasPreprocessor = contents =~ ("^#\\s*[a-z]+" :: Text)
+        prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
+        shouldPreprocess = hasPreprocessor || any snd prepreprocessed
+      in
+      (Text (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
 
 parseWithScopes
   :: forall impl m
-   . (HasScopeForest impl m, MonadUnliftIO m)
+   . (HasScopeForest impl m, Log m, MonadUnliftIO m)
   => Source
   -> m ContractInfo'
 parseWithScopes src = do
   let fp = srcPath src
   graph <- parseContractsWithDependencies parsePreprocessed noProgress (takeDirectory fp)
-  scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (wcc graph)
+  scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (Includes <$> wcc (getIncludes graph))
   maybe (throwM $ ContractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.
@@ -133,7 +146,7 @@ parseContractsWithDependencies
   => ParserCallback m ContractInfo
   -> ProgressCallback m
   -> FilePath
-  -> m (AdjacencyMap ParsedContractInfo)
+  -> m (Includes ParsedContractInfo)
 parseContractsWithDependencies parser reportProgress =
   includesGraph <=< parseContracts parser reportProgress
 
@@ -143,7 +156,7 @@ parseContractsWithDependenciesScopes
   => ParserCallback m ContractInfo
   -> ProgressCallback m
   -> FilePath
-  -> m (AdjacencyMap ContractInfo')
+  -> m (Includes ContractInfo')
 parseContractsWithDependenciesScopes parser reportProgress =
   addScopes @impl reportProgress <=< parseContractsWithDependencies parser reportProgress
 

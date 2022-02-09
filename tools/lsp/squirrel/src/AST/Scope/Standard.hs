@@ -9,7 +9,7 @@ import Control.Monad.IO.Unlift (MonadUnliftIO)
 
 import AST.Scope.Common
   ( pattern FindContract, FindFilepath (..), ContractNotFoundException (..)
-  , HasScopeForest (..) , ParsedContract (..), MergeStrategy (..), cMsgs
+  , HasScopeForest (..), Includes (..), ParsedContract (..), MergeStrategy (..), cMsgs
   , getContract, lookupContract, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
@@ -21,6 +21,7 @@ import Cli.Json (fromLigoErrorToMsg)
 import Cli.Types (HasLigoClient)
 
 import Duplo.Lattice (Lattice (leq))
+import Log (Log)
 import Parser (Msg)
 import ParseTree (srcPath)
 import Range (point)
@@ -28,14 +29,14 @@ import Util.Graph (traverseAMConcurrently)
 
 data Standard
 
-instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
+instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest Standard m where
   scopeForest reportProgress pc = do
     lgForest <- scopeForest @FromCompiler reportProgress pc `catches`
       [ Handler \case
           -- catch only errors that we expect from ligo and try to use fallback parser
-          LigoDecodedExpectedClientFailureException err -> addLigoErrToMsg $ fromLigoErrorToMsg err
+          LigoDecodedExpectedClientFailureException err _ -> addLigoErrToMsg $ fromLigoErrorToMsg err
       , Handler \case
-          LigoUnexpectedCrashException err -> addLigoErrToMsg (point 1 1, Error err [])
+          LigoUnexpectedCrashException err _ -> addLigoErrToMsg (point 1 1, Error err [])
       , Handler \case
           -- all other errors such as "Not found in $PATH" and other exceptions are ignored
           (_ :: SomeException) -> fallbackForest
@@ -45,9 +46,10 @@ instance (HasLigoClient m, MonadUnliftIO m) => HasScopeForest Standard m where
     where
       fallbackForest = scopeForest @Fallback reportProgress pc
 
-      addLigoErrToMsg err = G.gmap (getContract . cMsgs %~ (`rewriteAt` err)) <$> fallbackForest
+      addLigoErrToMsg err =
+        Includes . G.gmap (getContract . cMsgs %~ (`rewriteAt` err)) . getIncludes <$> fallbackForest
 
-      merge l f = flip traverseAMConcurrently l \(FindFilepath lf) -> do
+      merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do
         let src = _cFile lf
         let fp = srcPath src
         FindFilepath ff <- maybe (throwM $ ContractNotFoundException fp f) pure (lookupContract fp f)

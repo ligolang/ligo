@@ -1,4 +1,6 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
+-- Deriving `ToGraph` creates some reduntant constraints warnings which we
+-- unforunately have no control over. Disable this warning for now.
+{-# OPTIONS_GHC -Wno-orphans -Wno-redundant-constraints #-}
 
 module AST.Scope.Common
   ( MarkerInfo (..)
@@ -18,6 +20,7 @@ module AST.Scope.Common
   , ParsedContractInfo
   , ContractInfo'
   , ContractNotFoundException (..)
+  , Includes (..)
 
   , pattern FindContract
 
@@ -41,8 +44,10 @@ module AST.Scope.Common
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import Algebra.Graph.AdjacencyMap qualified as G
+import Algebra.Graph.Class (Graph)
 import Algebra.Graph.Export qualified as G (export, literal, render)
+import Algebra.Graph.ToGraph (ToGraph)
+import Algebra.Graph.ToGraph qualified as G
 import Control.Arrow ((&&&))
 import Control.Exception.Safe
 import Control.Lens (makeLenses)
@@ -50,6 +55,7 @@ import Control.Lens.Operators ((&))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
 import Control.Monad.Trans.Except
+import Data.Aeson (ToJSON (..), object, (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
@@ -60,6 +66,7 @@ import Data.Monoid (First (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text, pack)
+import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -122,8 +129,8 @@ makeLenses ''FindFilepath
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
     :: ProgressCallback m
-    -> AdjacencyMap ParsedContractInfo
-    -> m (AdjacencyMap (FindFilepath ScopeForest))
+    -> Includes ParsedContractInfo
+    -> m (Includes (FindFilepath ScopeForest))
 
 instance {-# OVERLAPPABLE #-} Pretty x => Show x where
   show = show . pp
@@ -276,7 +283,7 @@ instance Pretty ScopeForest where
       go' (only -> (decls :> r :> Nil, list')) =
         sexpr "scope" ([pp r] ++ map pp (Set.toList decls) ++ [go list' | not $ null list'])
 
-      decls' = sexpr "decls" . map pp . Map.toList
+      decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
 
 lookupEnv :: Text -> Scope -> Maybe ScopedDecl
 lookupEnv name = getFirst . foldMap \decl ->
@@ -330,8 +337,8 @@ addScopes
   :: forall impl m
    . (HasScopeForest impl m, MonadUnliftIO m)
   => ProgressCallback m
-  -> AdjacencyMap ParsedContractInfo
-  -> m (AdjacencyMap ContractInfo')
+  -> Includes ParsedContractInfo
+  -> m (Includes ContractInfo')
 addScopes reportProgress graph = do
   -- Bottom-up: add children forests into their parents
   forestGraph <- scopeForest @impl reportProgress graph
@@ -346,7 +353,7 @@ addScopes reportProgress graph = do
       FindContract src
         <$> addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe)
         <*> pure (_cMsgs sf)
-  traverseAMConcurrently addScope forestGraph
+  Includes <$> traverseAMConcurrently addScope (getIncludes forestGraph)
   where
     nubRef sd = sd
       { _sdRefs = ordNub (_sdRefs sd)
@@ -358,7 +365,7 @@ addScopes reportProgress graph = do
       }
 
 -- | Attempt to find a contract in some adjacency map. O(log n)
-lookupContract :: FilePath -> AdjacencyMap (FindFilepath a) -> Maybe (FindFilepath a)
+lookupContract :: FilePath -> Includes (FindFilepath a) -> Maybe (FindFilepath a)
 lookupContract fp g = fst <$> findKey contractFile fp (G.adjacencyMap g)
 
 pattern FindContract :: Source -> info -> [Msg] -> FindFilepath info
@@ -370,7 +377,7 @@ type ParsedContractInfo = FindFilepath (SomeLIGO ParsedInfo)
 type ContractInfo'      = FindFilepath (SomeLIGO Info')
 
 data ContractNotFoundException where
-  ContractNotFoundException :: FilePath -> AdjacencyMap (FindFilepath info) -> ContractNotFoundException
+  ContractNotFoundException :: FilePath -> Includes (FindFilepath info) -> ContractNotFoundException
 
 instance Pretty ContractNotFoundException where
   pp (ContractNotFoundException cnfPath cnfGraph) =
@@ -382,3 +389,25 @@ instance Pretty ContractNotFoundException where
       eDoc x y = G.literal (contractFile x) <> " -> " <> G.literal (contractFile y) <> "\n"
 
 instance Exception ContractNotFoundException
+
+-- TODO: We should preferrably export it from AST.Includes, but it would create
+-- cyclic imports.
+newtype Includes info = Includes
+  { getIncludes :: AdjacencyMap info
+  } deriving newtype (Graph, ToGraph)
+
+instance (Ord info, ToJSON info) => ToJSON (Includes info) where
+  toJSON includes = object
+    [ "vertices" .= vertices
+    , "edges" .= edges
+    ]
+    where
+      vertices = toJSON $ G.vertexList includes
+      edges = toJSON $ G.edgeList includes
+
+deriving anyclass instance (Ord info, ToJSON info, ToObject info) => ToObject (Includes info)
+
+instance (LogItem info, Ord info, ToJSON info) => LogItem (Includes info) where
+  payloadKeys verbosity _includes
+    | verbosity >= V3 = AllKeys
+    | otherwise       = SomeKeys []

@@ -2,21 +2,18 @@
 module Cli.Types
   ( LigoClientEnv (..)
   , HasLigoClient(..)
-  , RawContractCode(..)
   , ligoBinaryPath
   ) where
 
 import Control.Exception.Safe (catch, throwIO)
 import Control.Monad.Catch (MonadCatch)
 import Control.Monad.IO.Class (MonadIO)
-import Data.ByteString.Lazy.Char8 qualified as S8L
+import Control.Monad.Trans (lift)
 import Data.Default (Default (..))
 import System.Environment (getEnv)
 import System.IO.Error (isDoesNotExistError)
 
-newtype RawContractCode = RawContractCode
-  { unRawContract :: S8L.ByteString
-  } deriving stock Show
+import Log (LogT, NoLoggingT)
 
 -- | Environment passed throughout the ligo interaction
 newtype LigoClientEnv = LigoClientEnv
@@ -46,3 +43,9 @@ instance HasLigoClient IO where
     pure def
       { _lceClientPath
       }
+
+instance HasLigoClient m => HasLigoClient (LogT m) where
+  getLigoClientEnv = lift getLigoClientEnv
+
+instance HasLigoClient m => HasLigoClient (NoLoggingT m) where
+  getLigoClientEnv = lift getLigoClientEnv

@@ -7,7 +7,8 @@ module AST.Scope
   )
   where
 
-import Algebra.Graph.AdjacencyMap qualified as G (vertex, vertexList)
+import Algebra.Graph.Class qualified as G (vertex)
+import Algebra.Graph.ToGraph qualified as G (vertexList)
 import Control.Monad ((<=<))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 

@@ -11,7 +11,7 @@ Change one of the definition files, CameLIGO.ml, ReasonLIGO.ml, and PascaLIGO.ml
 Run the following command:
 
 ```
-dune exec tools/ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=tools/vim/ligo/start/ligo/syntax --emacs=tools/emacs/modes --vscode=tools/lsp/vscode-plugin/syntaxes
+dune exec tools/ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=tools/vim/ligo/start/ligo/syntax --emacs=tools/emacs --vscode=tools/lsp/vscode-plugin/syntaxes
 ```
 
 This will place the files where needed.

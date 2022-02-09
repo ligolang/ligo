@@ -61,6 +61,11 @@ RUN opam exec -- dune runtest --instrument-with bisect_ppx --force
 RUN opam exec -- bisect-ppx-report html -o coverage --title="LIGO test coverage"
 RUN opam exec -- bisect-ppx-report summary --per-file > coverage/coverage-summary
 
+# Generate syntax highlighting files
+COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
+RUN mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode
+RUN opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode
+
 # Run doc
 RUN opam exec -- dune build @doc
 
@@ -73,4 +78,5 @@ WORKDIR /root/
 COPY --from=0 /tmp/ligo /root/ligo
 COPY --from=0 /ligo/_build/default/_doc/_html /root/doc
 COPY --from=0 /ligo/coverage /root/coverage
+COPY --from=0 /ligo/highlighting /root/highlighting
 ENTRYPOINT ["/root/ligo"]

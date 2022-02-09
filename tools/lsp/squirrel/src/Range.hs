@@ -1,8 +1,6 @@
 {- | Continuous location inside the source and utilities.
 -}
 
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 module Range
   ( HasRange(..)
   , Range(..)
@@ -41,9 +39,6 @@ import Data.Word (Word32)
 
 import Duplo.Lattice
 import Duplo.Pretty
-import Duplo.Tree
-
-import Product
 
 point :: Word32 -> Word32 -> Range
 point l c = Range (l, c, 0) (l, c, 0) ""
@@ -90,9 +85,6 @@ class HasRange a where
 instance HasRange Range where
   getRange = id
 
-instance Contains Range xs => HasRange (Product xs) where
-  getRange = getElem
-
 -- | Convert `squirrel` range to `haskell-lsp` range.
 -- Note that we consider the first line to be at position 1.
 toLspRange :: Range -> LSP.Range
@@ -121,9 +113,6 @@ fromLspRangeUri
   (LSP.Range
     (fromLspPosition -> s)
     (fromLspPosition -> e)) uri = (merged s e) {_rFile = fromMaybe "" $ LSP.uriToFilePath uri}
-
-instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)) where
-  getRange = getElem . extract
 
 -- | Extract textual representation of given range.
 cutOut :: Range -> ByteString -> Text
@@ -171,11 +160,6 @@ instance Eq Range where
 instance Ord Range where
   Range (l, c, _) (r, d, _) f `compare` Range (l1, c1, _) (r1, d1, _) f1 =
     compare l l1 <> compare c c1 <> compare r r1 <> compare d d1 <> compare f f1
-
-instance (Contains Range xs, Eq (Product xs)) => Ord (Product xs) where (<=) = leq
-
-instance (Contains Range xs, Eq (Product xs)) => Lattice (Product xs) where
-  a `leq` b = getElem @Range a `leq` getElem @Range b
 
 makeLenses ''Range
 

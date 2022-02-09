@@ -2,60 +2,51 @@
 
 module Main (main) where
 
-import Prelude hiding (log)
-
-import Algebra.Graph.AdjacencyMap qualified as G (empty)
+import Algebra.Graph.Class qualified as G (empty)
 import Control.Exception.Safe (catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
-
 import Data.Default
 import Data.Foldable (for_)
-import Data.HashMap.Strict (HashMap)
-import Data.HashMap.Strict qualified as HashMap
-import Data.Int (Int32)
+import Data.HashSet qualified as HashSet
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
-import Data.String.Interpolate (i)
 import Data.Text qualified as T
-
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
-
 import StmContainers.Map (newIO)
-
-import UnliftIO.MVar (MVar, modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
+import System.Exit
+import System.Log qualified as L
+import UnliftIO.MVar (modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST
 import ASTMap qualified
+import Cli.Impl (getLigoVersion)
 import Config (Config (..))
 import Config qualified
 import Language.LSP.Util (sendError)
+import Log (i)
 import Log qualified
-import Product
-import RIO (RIO, RioEnv)
+import RIO (RIO, RioEnv (..))
 import RIO qualified
 import Range
-import System.Exit
-import System.Log qualified as L
 import Util (toLocation)
 
 main :: IO ()
-main = do
-  Log.setLogLevel $$(Log.flagBasedLogLevel)
-  exit =<< mainLoop
+main = exit =<< mainLoop
 
 mainLoop :: IO Int
-mainLoop = do
+mainLoop =
+  Log.withLogger $$(Log.flagBasedSeverity) "lls" $$(Log.flagBasedEnv) \runLogger -> do
     let
       serverDefinition = S.ServerDefinition
         { S.onConfigurationChange = Config.getConfigFromNotification
         , S.defaultConfig = def
         , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> initialize
         , S.staticHandlers = catchExceptions handlers
-        , S.interpretHandler = \envs -> S.Iso (RIO.run envs) liftIO
+        , S.interpretHandler = \envs -> S.Iso (runLogger . RIO.run envs) liftIO
         , S.options = lspOptions
         }
 
@@ -73,31 +64,46 @@ mainLoop = do
 
     lspOptions :: S.Options
     lspOptions = def
-      { S.textDocumentSync       = Just syncOptions
-      , S.executeCommandCommands = Just ["lsp-hello-command"]
+      { S.textDocumentSync = Just syncOptions
       , S.signatureHelpTriggerCharacters = Just ['(', ' ']
       , S.signatureHelpRetriggerCharacters = Just [',']
       }
 
     -- | Handle all uncaught exceptions.
     catchExceptions :: S.Handlers RIO -> S.Handlers RIO
-    catchExceptions = S.mapHandlers (wrapReq . handleDisabledReq) wrapNotif
+    catchExceptions = S.mapHandlers
+      (wrapReq . handleDisabledReq . addReqLogging)
+      (wrapNotif . addNotifLogging)
       where
         wrapReq
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
              S.Handler RIO meth -> S.Handler RIO meth
-        wrapReq handler msg@J.RequestMessage{_method} resp =
+        wrapReq handler msg@J.RequestMessage{_method} resp = Log.addNamespace "wrapReq" $
           handler msg resp `catchAny` \e -> do
-            Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
+            $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
             resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
 
         wrapNotif
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
              S.Handler RIO meth -> S.Handler RIO meth
-        wrapNotif handler msg@J.NotificationMessage{_method} =
+        wrapNotif handler msg@J.NotificationMessage{_method} = Log.addNamespace "wrapNotif" $
           handler msg `catchAny` \e -> do
-            Log.err "Uncaught" $ "Handling `" <> show _method <> "`: " <> displayException e
+            $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
+
+        addReqLogging
+          :: forall (meth :: J.Method 'J.FromClient 'J.Request).
+             S.Handler RIO meth -> S.Handler RIO meth
+        addReqLogging handler msg@J.RequestMessage{_method} resp = Log.addNamespace [i|#{_method}|] do
+          version <- getLigoVersion
+          maybe id Log.addContext version $ handler msg resp
+
+        addNotifLogging
+          :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
+             S.Handler RIO meth -> S.Handler RIO meth
+        addNotifLogging handler msg@J.NotificationMessage{_method} = Log.addNamespace [i|#{_method}|] do
+          version <- getLigoVersion
+          maybe id Log.addContext version $ handler msg
 
         handleDisabledReq
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
@@ -111,12 +117,12 @@ mainLoop = do
 
 initialize :: IO RioEnv
 initialize = do
-  config <- newEmptyMVar
-  astMap <- ASTMap.empty $ RIO.load @Fallback
-  openDocs <- newMVar HashMap.empty
-  includes <- newMVar G.empty
-  tempMap <- newIO
-  pure (config :> astMap :> openDocs :> Tag includes :> Tag tempMap :> Nil)
+  reConfig <- newEmptyMVar
+  reCache <- ASTMap.empty $ RIO.load @Fallback
+  reOpenDocs <- newMVar HashSet.empty
+  reIncludes <- newMVar G.empty
+  reTempFiles <- newIO
+  pure RioEnv {..}
 
 handlers :: S.Handlers RIO
 handlers = mconcat
@@ -162,36 +168,25 @@ handleDidOpenTextDocument notif = do
   let ver = notif^.J.params.J.textDocument.J.version
 
   RIO.Contract doc _ <- RIO.forceFetch' RIO.BestEffort uri
-  openDocsVar <- asks getElem
+  openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
     RIO.collectErrors doc (Just ver)
-    pure $ HashMap.insert uri ver openDocs
+    pure $ HashSet.insert uri openDocs
 
--- FIXME: Suppose the following scenario:
--- * VSCode has `squirrel/test/contracts/` open as folder;
--- * You open `find/includes/A3.mligo`;
--- * You quickly edit it to contain some mistake (e.g.: replace 40 with 4f0) so
--- that `handleDidOpenTextDocument` might be still running when this function is
--- called.
--- Now there is something weird going on: VSCode might not put an error on `4f0`
--- because we got an outdated version (from `fetchBundled`). Even more oddly, if
--- we now delete the `f`, it might highlight `40` as incorrect from the previous
--- error.
--- This can be fixed by opening another contract in WCC or, sometimes, just
--- closing and opening this document again.
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
-  Log.debug "Text document did change" [i|Changed text document: #{uri}|]
+  $(Log.debug) [i|Changed text document: #{uri}|]
   void $ RIO.forceFetchAndNotify notify RIO.LeastEffort uri
   where
     -- Clear diagnostics for all contracts in this WCC and then send diagnostics
-    -- collected from this uri.
+    -- collected from this URI.
     -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
     -- conditions.
+    notify :: RIO.Contract -> RIO ()
     notify (RIO.Contract doc nuris) = do
       let ver = notif^.J.params.J.textDocument.J.version
-      openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int32)))
+      openDocsVar <- asks reOpenDocs
       modifyMVar_ openDocsVar \openDocs -> do
         RIO.clearDiagnostics nuris
         RIO.collectErrors doc ver
@@ -200,14 +195,15 @@ handleDidChangeTextDocument notif = do
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+
   RIO.Contract _ nuris <- RIO.fetch' RIO.LeastEffort uri
 
-  openDocsVar <- asks (getElem @(MVar (HashMap J.NormalizedUri Int32)))
+  openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
-    let openDocs' = HashMap.delete uri openDocs
+    let openDocs' = HashSet.delete uri openDocs
     -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
-    let nuriMap = HashMap.fromList ((, ()) <$> nuris)
-    when (HashMap.null $ HashMap.intersection openDocs' nuriMap) $
+    let nuriMap = HashSet.fromList nuris
+    when (HashSet.null $ HashSet.intersection openDocs' nuriMap) $
       RIO.clearDiagnostics nuris
     pure openDocs'
 
@@ -218,7 +214,6 @@ handleDefinitionRequest req respond = do
     let uri = req^.J.textDocument.J.uri
     let pos = fromLspPosition $ req^.J.position
     -}
-    Log.debug "Definition" [i|Got request: #{req}|]
     let
       J.DefinitionParams{_textDocument, _position} = req ^. J.params
       uri = _textDocument ^. J.uri
@@ -227,7 +222,7 @@ handleDefinitionRequest req respond = do
     let location = case AST.definitionOf pos tree of
           Just defPos -> [toLocation defPos]
           Nothing     -> []
-    Log.debug "Definition" [i|Definition request returned #{location}|]
+    $(Log.debug) [i|Definition request returned #{location}|]
     respond . Right . J.InR . J.InL . J.List $ location
 
 handleTypeDefinitionRequest :: S.Handler RIO 'J.TextDocumentTypeDefinition
@@ -241,7 +236,7 @@ handleTypeDefinitionRequest req respond = do
     let definition = case AST.typeDefinitionAt pos tree of
           Just defPos -> [J.Location uri $ toLspRange defPos]
           Nothing     -> []
-    Log.debug "TypeDefinition" [i|Type definition request returned #{definition}|]
+    $(Log.debug) [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
 handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
@@ -270,29 +265,20 @@ handleFindReferencesRequest req respond = do
     let locations = case AST.referencesOf pos tree of
           Just refs -> toLocation <$> refs
           Nothing   -> []
-    Log.debug "FindReferences" [i|Find references request returned #{locations}|]
+    $(Log.debug) [i|Find references request returned #{locations}|]
     respond . Right . J.List $ locations
 
 handleCompletionRequest :: S.Handler RIO 'J.TextDocumentCompletion
 handleCompletionRequest req respond = do
-    Log.debug "Completion" [i|Request: #{show req}|]
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let pos = fromLspPosition $ req ^. J.params . J.position
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
     let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
-    Log.debug "Completion" [i|Completion request returned #{completions}|]
+    $(Log.debug) [i|Completion request returned #{completions}|]
     respond . Right . J.InL . J.List $ completions
-
-{-
-handleCompletionItemResolveRequest :: S.Handler RIO 'J.CompletionItemResolve
-handleCompletionItemResolveRequest req respond = do
-    Log.debug "Completion resolve" [i|Request: #{show req}|]
-    respond . Right $  req ^. J.params
--}
 
 handleSignatureHelpRequest :: S.Handler RIO 'J.TextDocumentSignatureHelp
 handleSignatureHelpRequest req respond = do
-  Log.debug "Signature help" [i|Request: #{show req}|]
   -- XXX: They forgot lenses for  SignatureHelpParams :/
   {-
   let uri = req ^. J.params . J.textDocument . J.uri
@@ -308,7 +294,6 @@ handleSignatureHelpRequest req respond = do
 
 handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
 handleFoldingRangeRequest req respond = do
-    Log.debug "Folding range" [i|Request: #{show req}|]
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
     actions <- foldingAST (tree ^. nestedLIGO)
@@ -316,7 +301,6 @@ handleFoldingRangeRequest req respond = do
 
 handleTextDocumentCodeAction :: S.Handler RIO 'J.TextDocumentCodeAction
 handleTextDocumentCodeAction req respond = do
-    Log.debug "Code action" [i|Request: #{show req}|]
     let
       uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
       r = req ^. J.params . J.range . to fromLspRange
@@ -328,7 +312,6 @@ handleTextDocumentCodeAction req respond = do
 
 handleSelectionRangeRequest :: S.Handler RIO 'J.TextDocumentSelectionRange
 handleSelectionRangeRequest req respond = do
-    Log.debug "Selection range" [i|Request: #{show req}|]
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let positions = req ^. J.params . J.positions ^.. folded
     tree <- contractTree <$> RIO.fetch RIO.NormalEffort uri
@@ -337,8 +320,6 @@ handleSelectionRangeRequest req respond = do
 
 handleDocumentLinkRequest :: S.Handler RIO 'J.TextDocumentDocumentLink
 handleDocumentLinkRequest req respond = do
-  Log.debug "Document link" [i|Request: #{show req}|]
-
   let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
   contractInfo <- RIO.fetch RIO.LeastEffort uri
   collected <-
@@ -349,7 +330,6 @@ handleDocumentLinkRequest req respond = do
 
 handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol
 handleDocumentSymbolsRequest req respond = do
-    Log.debug "Document symbol" [i|Request: #{show req}|]
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
     result <- extractDocumentSymbols (J.fromNormalizedUri uri) tree
@@ -357,7 +337,6 @@ handleDocumentSymbolsRequest req respond = do
 
 handleHoverRequest :: S.Handler RIO 'J.TextDocumentHover
 handleHoverRequest req respond = do
-    Log.debug "Hover" [i|Request: #{show req}|]
     -- XXX: They forgot lenses for  HoverParams :/
     {-
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
@@ -372,7 +351,6 @@ handleHoverRequest req respond = do
 
 handleRenameRequest :: S.Handler RIO 'J.TextDocumentRename
 handleRenameRequest req respond = do
-    Log.debug "Rename" [i|Request: #{show req}|]
     let (_, nuri, pos) = getUriPos req
     let newName = req ^. J.params . J.newName
 
@@ -380,7 +358,7 @@ handleRenameRequest req respond = do
 
     case renameDeclarationAt pos tree newName of
       NotFound -> do
-        Log.debug "Rename" [i|Declaration not found for: #{show req}|]
+        $(Log.debug) [i|Declaration not found for: #{show req}|]
         respond . Left $
           J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
       Ok edits -> do
@@ -403,7 +381,6 @@ handleRenameRequest req respond = do
               , _documentChanges = Nothing
               , _changeAnnotations = Nothing
               }
-        Log.debug "Rename" [i|Rename request returned #{response}|]
         RIO.invalidate nuri
         respond . Right $ response
         RIO.invalidate nuri
@@ -426,21 +403,19 @@ handleDidChangeWatchedFiles notif = do
   let J.List changes = notif ^. J.params . J.changes
   for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) -> case change of
     J.FcCreated -> do
-      log [i|Created #{uri}|]
+      $(Log.debug) [i|Created #{uri}|]
       void $ RIO.forceFetch' RIO.BestEffort uri
     J.FcChanged -> do
-      openDocsVar <- asks $ getElem @(MVar (HashMap J.NormalizedUri Int32))
+      openDocsVar <- asks reOpenDocs
       mOpenDocs <- tryReadMVar openDocsVar
       case mOpenDocs of
-        Just openDocs | not $ HashMap.member uri openDocs -> do
-          log [i|Changed #{uri}|]
+        Just openDocs | not $ HashSet.member uri openDocs -> do
+          $(Log.debug) [i|Changed #{uri}|]
           void $ RIO.forceFetch' RIO.BestEffort uri
         _ -> pure ()
     J.FcDeleted -> do
-      log [i|Deleted #{uri}|]
+      $(Log.debug) [i|Deleted #{uri}|]
       RIO.delete uri
-  where
-    log = Log.debug "WorkspaceDidChangeWatchedFiles"
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position
