@@ -1170,6 +1170,13 @@ let test_register_delegate ~raise loc = typer_1 ~raise loc "TEST_REGISTER_DELEGA
   let () = trace_option ~raise (expected_key_hash loc pkh) @@ assert_t_key_hash pkh in
   t_unit ()
 
+let test_get_voting_power ~raise loc = typer_1 ~raise loc "C_TEST_GET_VOTING_POWER" @@ fun u ->
+  let _ = trace_option ~raise (expected_string loc u) @@ get_t_key_hash u in
+  t_nat ()
+
+let test_get_total_voting_power ~raise loc = typer_0 ~raise loc "C_TEST_GET_TOTAL_VOTING_POWER" @@ fun _ ->
+  t_nat ()
+
 let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
   let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
   let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
@@ -1358,6 +1365,8 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_ADD_ACCOUNT -> test_add_account ~raise loc;
   | C_TEST_NEW_ACCOUNT -> test_new_account ~raise loc;
   | C_TEST_REGISTER_DELEGATE -> test_register_delegate ~raise loc;
+  | C_TEST_GET_VOTING_POWER -> test_get_voting_power ~raise loc;
+  | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
   | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;

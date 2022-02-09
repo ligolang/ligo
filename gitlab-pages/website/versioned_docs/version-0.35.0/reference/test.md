@@ -326,34 +326,6 @@ let get_balance = (account: address) => tez
 Get the balance of an account in tez.
 
 <SyntaxTitle syntax="pascaligo">
-function get_voting_power : key_hash -> nat
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val get_voting_power : key_hash -> nat
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let get_voting_power: (key_hash) => nat
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let get_voting_power = (kh: key_hash) => nat
-</SyntaxTitle>
-Return the voting power of a given contract. This voting power coincides with the weight of the contract in the voting listings (i.e., the rolls count) which is calculated at the beginning of every voting period.
-
-<SyntaxTitle syntax="pascaligo">
-function get_total_voting_power : nat
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val get_total_voting_power : nat
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let get_total_voting_power: nat
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let get_total_voting_power = nat
-</SyntaxTitle>
-Return the total voting power of all contracts. The total voting power coincides with the sum of the rolls count of every contract in the voting listings. The voting listings is calculated at the beginning of every voting period.
-
-<SyntaxTitle syntax="pascaligo">
 function michelson_equal : michelson_program -> michelson_program -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -395,34 +367,6 @@ let reset_state = (no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
 </SyntaxTitle>
 Generate a number of random bootstrapped accounts with a default amount of 4000000 tez. The passed list can be used to overwrite the amount.
 By default, the state only has two bootstrapped accounts.
-
-<SyntaxTitle syntax="pascaligo">
-function new_account : unit -> (string * key)
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val new_account : unit -> (string * key)
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let new_account: unit => (string, key)
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let new_account = (_: unit) => (string, key)
-</SyntaxTitle>
-Creates and returns secret key & public key of a new account.
-
-<SyntaxTitle syntax="pascaligo">
-function add_account : (string * key) -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val add_account : (string * key) -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let add_account: (string, key) => unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let add_account = (sk: string, pk: key) => unit
-</SyntaxTitle>
-Adds an account specfied by secret key & public key to the test context
 
 <SyntaxTitle syntax="pascaligo">
 function nth_bootstrap_account : int -> address
