@@ -55,17 +55,18 @@ let add2 : (xs : list<int>) => list<int> =
         let len : int = length(xs);
         let i : int = 0;
         while (i < len) {
-            Test.log(i);
             let x = 1;
+            Test.log(i);
             let z = x;
             Test.log(z);
             let y = get_index(xs,i) + 1;
             ys = list([y, ...ys]);
             i += 1;
-        }
+        };
 
         let zs : list<int> = list([]);
         for (const y of ys) {
+            Test.log(zs);
             let z = y;
             zs = list([z, ...zs]);
         };

@@ -392,10 +392,7 @@ and compile_while ~raise ~last I.{cond;body} =
   in
 
   let for_body = match for_body.expression_content with
-    O.E_sequence {expr1;expr2} -> 
-      O.e_let_in_ez binder false [] (
-        O.e_let_in_ez (I.Var.fresh ~name:"()"  ()) false [] expr1 (e_seq_to_e_let_in expr2)
-      ) ctrl
+    O.E_sequence {expr1;expr2} -> e_seq_to_e_let_in for_body
   | _ -> add_to_end for_body ctrl in
 
   let aux name i expr =
@@ -494,32 +491,31 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
     | Some v -> [fst fe_binder;v]
     | None -> [fst fe_binder]
   in
-  (* let () = Format.printf "\n----------------------\n" in
-  let () = Format.printf "%a" I.PP.expression fe_body in
-  let () = Format.printf "\n----------------------\n" in *)
   let body = compile_expression ~raise ~last fe_body in
   
   let ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
-  (* let () = Format.printf "%a" O.PP.expression body in
-  let () = Format.printf "\n----------------------\n" in *)
 
-  let body = 
-    match body.expression_content with
-    | O.E_sequence {expr1;expr2=_} -> 
-      (* let expr1 = Self_ast_sugar.map_expression (fun e -> 
-        match e.expression_content with 
-          O.E_skip -> (O.e_variable args) 
-        | _ -> e)
-      expr1 in
-      O.e_let_in_ez args false [] expr1 (O.e_variable args) *)
-      expr1
-    | _ -> body
+  let rec e_seq_to_e_let_in (e : O.expression) = match e.expression_content with
+    O.E_sequence {expr1;expr2} -> 
+      (match expr1.expression_content with
+        O.E_let_in _ -> O.e_let_in_ez args false [] (e_seq_to_e_let_in expr1) (e_seq_to_e_let_in expr2)
+      | _ -> O.e_let_in_ez (I.Var.fresh ~name:"()"  ()) false [] expr1 (e_seq_to_e_let_in expr2)
+      )
+  | O.E_let_in {let_binder;rhs;let_result;attributes;mut} -> 
+      let let_result = e_seq_to_e_let_in let_result in
+      { e with expression_content=O.E_let_in {let_binder;rhs;let_result;attributes;mut}}
+  | O.E_literal Literal_unit -> (O.e_variable args)
+  | O.E_skip -> (O.e_variable args)
+  | _ -> e
   in
 
-  (* let () = Format.printf "%a" O.PP.expression body in *)
-  (* let () = Format.printf "\n----------------------\n" in *)
+  let for_body = match body.expression_content with
+    O.E_sequence {expr1;expr2} ->
+      O.e_let_in_ez args false [] (e_seq_to_e_let_in body) 
+        (O.e_accessor (O.e_variable args) [Access_tuple Z.zero])
+  | _ -> add_to_end body (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
 
-  let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
+  (* let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in *)
 
 
   let init_record = store_mutable_variable free_vars in
