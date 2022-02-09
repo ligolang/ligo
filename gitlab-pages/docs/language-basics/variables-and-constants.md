@@ -146,7 +146,7 @@ features *constant values*: once they are declared, the value cannot
 be changed (or "mutated").
 
 ```cameligo group=c
-let add (a : int) (b : int) : int =
+let add (a, b : int * int) : int =
   let c : int = a + b in c
 ```
 
