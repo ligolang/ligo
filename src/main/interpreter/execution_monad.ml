@@ -52,6 +52,8 @@ module Command = struct
     | Set_now : Location.t * Ligo_interpreter.Types.calltrace * Z.t -> unit t
     | Set_source : LT.value -> unit t
     | Set_baker : LT.value -> unit t
+    | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Sha256 : bytes -> LT.value t
@@ -294,6 +296,12 @@ module Command = struct
     | Set_baker baker ->
       let baker = trace_option ~raise (corner_case ()) @@ LC.get_address baker in
       ((), {ctxt with internals = { ctxt.internals with baker }})
+    | Get_voting_power (loc, calltrace, key_hash) ->
+      let vp = Tezos_state.get_voting_power ~raise ~loc ~calltrace ctxt key_hash in
+      ((LT.V_Ct (LT.C_nat (Z.of_int32 vp))), ctxt)
+    | Get_total_voting_power (loc, calltrace) ->
+      let tvp = Tezos_state.get_total_voting_power ~raise ~loc ~calltrace ctxt in
+      ((LT.V_Ct (LT.C_nat (Z.of_int32 tvp))), ctxt)
     | Get_bootstrap (loc,x) -> (
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
       match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
