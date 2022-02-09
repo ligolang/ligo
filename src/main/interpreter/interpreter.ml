@@ -959,6 +959,14 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
       return @@ V_Ct (C_bytes chest_key)
+    | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) -> 
+      let>> vp = Get_voting_power (loc, calltrace, hk) in
+      return vp
+    | ( C_TEST_GET_VOTING_POWER , _ ) -> fail @@ error_type
+    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) -> 
+      let>> tvp = Get_total_voting_power (loc, calltrace) in
+      return tvp
+    | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."

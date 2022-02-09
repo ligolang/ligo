@@ -206,7 +206,9 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_CREATE_CHEST_KEY
       | C_TEST_ADD_ACCOUNT
       | C_TEST_NEW_ACCOUNT
-      | C_TEST_SAVE_MUTATION) as c ->
+      | C_TEST_SAVE_MUTATION
+      | C_TEST_GET_VOTING_POWER
+      | C_TEST_GET_TOTAL_VOTING_POWER) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type ~raise (t:AST.type_expression) : type_expression =
