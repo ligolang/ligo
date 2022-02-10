@@ -386,8 +386,7 @@ module Command = struct
       let value = LC.v_pair ((V_Ct (C_string sk)), (V_Ct (C_key pk))) in
       (value, ctxt)
     )
-    | Baker_account (baker_account) -> (
-      let acc, opt = trace_option ~raise (corner_case ()) @@ LC.get_pair baker_account in
+    | Baker_account (acc, opt) -> (
       let tez = trace_option ~raise (corner_case ()) @@ LC.get_option opt in
       let tez = Option.map ~f:(fun v -> trace_option ~raise (corner_case ()) @@ LC.get_mutez v) tez in
       let tez = Option.map ~f:(fun t -> Z.to_int64 t) tez in

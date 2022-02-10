@@ -477,6 +477,13 @@ let%expect_test _ =
     - test_new exited with value 88000000mutez.
     - test_add exited with value 88000000mutez. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_baker_account.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_new exited with value 88000000mutez.
+    - test_add exited with value 88000000mutez. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
