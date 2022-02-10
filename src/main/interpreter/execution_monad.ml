@@ -133,10 +133,11 @@ module Command = struct
         amts
       in
       let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
-      let bootstrap_contract = List.rev ctxt.internals.next_bootstrapped_contracts in
+      let bootstrap_contracts = List.rev ctxt.internals.next_bootstrapped_contracts in
+      let baker_accounts = List.rev ctxt.internals.next_baker_accounts in
       let ctxt = Tezos_state.init_ctxt
         ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n)
-        ctxt.internals.protocol_version bootstrap_contract
+        ctxt.internals.protocol_version bootstrap_contracts ~baker_accounts
       in
       ((),ctxt)
     | Get_state () ->
