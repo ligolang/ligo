@@ -1,0 +1,6 @@
+---
+  title: "Fix for-of & while loops - jsligo."
+  merge_request: "1534"
+  author: Pierre-Emmanuel Wulfman & Melwyn
+  type: "internal"
+

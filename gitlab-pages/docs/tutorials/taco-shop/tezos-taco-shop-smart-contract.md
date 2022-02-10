@@ -848,11 +848,11 @@ let test =
 #include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.jsligo"
 
 let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit => {
-  let expected = Test.eval (expected) ;
+  let expected_bis = Test.eval (expected) ;
   match (res, {
     Fail: (x: test_exec_error) => (
       match (x, {
-        Rejected: (x:[michelson_code,address]) => assert (Test.michelson_equal (x[0], expected)),
+        Rejected: (x:[michelson_code,address]) => assert (Test.michelson_equal (x[0], expected_bis)),
         Other: (_:unit) => failwith ("contract failed for an unknown reason")
       })),
     Success: (_:nat) => failwith ("bad price check")
