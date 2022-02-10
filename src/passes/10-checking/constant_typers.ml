@@ -1372,6 +1372,7 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
   | C_TEST_ADD_ACCOUNT -> test_add_account ~raise loc;
   | C_TEST_NEW_ACCOUNT -> test_new_account ~raise loc;
+  | C_TEST_BAKER_ACCOUNT -> test_baker_account ~raise loc;
   | C_TEST_REGISTER_DELEGATE -> test_register_delegate ~raise loc;
   | C_TEST_GET_VOTING_POWER -> test_get_voting_power ~raise loc;
   | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
