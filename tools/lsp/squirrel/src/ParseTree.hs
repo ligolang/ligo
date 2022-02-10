@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 {- | The input tree from TreeSitter. Doesn't have any pointers to any data
      from actual tree the TS produced and therefore has no usage limitations.
 
@@ -98,7 +96,7 @@ data SomeRawTree = SomeRawTree Lang RawTree
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
 toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
-  $(Log.debug) [Log.i|Reading #{input}|]
+  $(Log.debug) [Log.i|Reading #{fp}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
@@ -109,7 +107,7 @@ toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
     withParseTree parser src \tree ->
       withRootNode tree (peek >=> go src)
 
-  $(Log.debug) [Log.i|Done reading #{input}|]
+  $(Log.debug) [Log.i|Done reading #{fp}|]
   pure res
   where
     go :: ByteString -> Node -> IO RawTree

@@ -19,11 +19,12 @@ import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
 import Algebra.Graph.Class qualified as G hiding (overlay)
 import Control.Arrow ((&&&))
 import Control.Lens ((??))
-import Control.Monad (join, (<=<))
+import Control.Monad (join)
 import Control.Monad.Reader (asks)
 import Data.Bool (bool)
 import Data.Foldable (find, for_, toList)
 import Data.Set qualified as Set
+import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (isJust, isNothing)
 import Duplo.Tree (fastMake)
@@ -42,17 +43,17 @@ import Witherable (iwither)
 
 import AST
  ( ContractInfo, ContractInfo', ContractNotFoundException (..), pattern FindContract
- , HasScopeForest, Includes (..), ParsedContractInfo, addScopes, addShallowScopes
- , contractFile, lookupContract
+ , FindFilepath (..), HasScopeForest, Includes (..), ParsedContract (..), ParsedContractInfo
+ , addLigoErrToMsg, addScopes, addShallowScopes, contractFile, lookupContract
  )
 import AST.Includes (extractIncludedFiles, insertPreprocessorRanges)
-import AST.Parser (loadContractsWithDependencies, loadPreprocessed, parsePreprocessed)
+import AST.Parser (loadContractsWithDependencies, parse, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
 import Cli (getLigoClientEnv)
 import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log qualified
-import Parser (emptyParsedInfo)
+import Parser (Msg, emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), (%))
 import RIO.Types (Contract (..), RIO, RioEnv (..))
@@ -165,13 +166,11 @@ loadWithoutScopes uri = Log.addNamespace "loadWithoutScopes" do
   $(Log.debug) [Log.i|running with env #{ligoEnv}|]
   parsePreprocessed src
 
-loadWithoutScopes' :: J.NormalizedUri -> RIO ParsedContractInfo
-loadWithoutScopes' = insertPreprocessorRanges <=< loadWithoutScopes
-
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
 -- return 'Nothing'.
 tryLoadWithoutScopes :: J.NormalizedUri -> RIO (Maybe ParsedContractInfo)
-tryLoadWithoutScopes uri = (Just <$> loadWithoutScopes' uri) `catchIO` const (pure Nothing)
+tryLoadWithoutScopes uri =
+  (Just <$> (insertPreprocessorRanges =<< loadWithoutScopes uri)) `catchIO` const (pure Nothing)
 
 normalizeFilePath :: FilePath -> J.NormalizedUri
 normalizeFilePath = J.toNormalizedUri . J.filePathToUri
@@ -185,11 +184,10 @@ normalizeFilePath = J.toNormalizedUri . J.filePathToUri
 -- The downside is that momentarily, various files will be present in memory. In
 -- the future, we can consider only keeping the line markers and building the
 -- graph from this.
-loadDirectory :: FilePath -> RIO (Includes Source)
+loadDirectory :: FilePath -> RIO (Includes Source, Map Source Msg)
 loadDirectory root =
   S.withProgress "Indexing directory" S.NotCancellable \reportProgress ->
     loadContractsWithDependencies
-      (fmap fst . loadPreprocessed)
       (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
       root
 
@@ -207,16 +205,20 @@ getInclusionsGraph root uri = Log.addNamespace "getInclusionsGraph" do
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
         $(Log.debug) [Log.i|Can't find #{uri} in inclusions graph, loading #{root}...|]
-        Includes paths <- loadDirectory root
+        (Includes paths, msgs) <- loadDirectory root
         let exceptionGraph = Includes $ G.gmap srcPath paths
         connectedContracts <-
           maybe
             (throwIO $ ContractNotFoundException rootFileName exceptionGraph)
             pure
-          $ find (Map.member rootFileName . G.adjacencyMap)
-          $ wcc
-          $ G.gmap srcPath paths
-        Includes <$> traverseAMConcurrently (loadWithoutScopes' . normalizeFilePath) connectedContracts
+          $ find (Map.member (_cFile $ _getContract rootContract) . G.adjacencyMap)
+          $ wcc paths
+        let
+          parseCached src = do
+            let msg = Map.lookup src msgs
+            parsed <- parse src
+            insertPreprocessorRanges $ maybe parsed (`addLigoErrToMsg` parsed) msg
+        Includes <$> traverseAMConcurrently parseCached connectedContracts
       Just (Includes oldIncludes) -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
         let

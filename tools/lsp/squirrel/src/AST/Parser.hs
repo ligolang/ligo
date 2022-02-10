@@ -18,7 +18,9 @@ import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.List (find)
-import Data.Maybe (fromMaybe, isJust)
+import Data.Map (Map)
+import Data.Map qualified as Map
+import Data.Maybe (fromMaybe, isJust, mapMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text (lines, unlines)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
@@ -144,13 +146,13 @@ scanContractsImpl seen top = do
         else pure seen
 
 loadContractsWithDependencies
-  :: (MonadUnliftIO m, MonadFail m)
-  => ParserCallback m Source
-  -> ProgressCallback m
+  :: (HasLigoClient m, Log m, MonadFail m)
+  => ProgressCallback m
   -> FilePath
-  -> m (Includes Source)
-loadContractsWithDependencies parser reportProgress =
-  includesGraph' <=< parseContracts parser reportProgress
+  -> m (Includes Source, Map Source Msg)
+loadContractsWithDependencies reportProgress path = do
+  loaded <- parseContracts loadPreprocessed reportProgress path
+  (, Map.fromList $ mapMaybe sequenceA loaded) <$> includesGraph' (map fst loaded)
 
 parseContractsWithDependencies
   :: MonadUnliftIO m
