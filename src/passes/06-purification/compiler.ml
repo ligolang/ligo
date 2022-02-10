@@ -376,24 +376,7 @@ and compile_while ~raise ~last I.{cond;body} =
 
   let for_body = compile_expression ~raise ~last body in
   let ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [] binder in
-
-  let rec e_seq_to_e_let_in (e : O.expression) = match e.expression_content with
-    O.E_sequence {expr1;expr2} -> 
-      (match expr1.expression_content with
-        O.E_let_in _ -> O.e_let_in_ez binder false [] (e_seq_to_e_let_in expr1) (e_seq_to_e_let_in expr2)
-      | _ -> O.e_let_in_ez (I.Var.fresh ~name:"()"  ()) false [] expr1 (e_seq_to_e_let_in expr2)
-      )
-  | O.E_let_in {let_binder;rhs;let_result;attributes;mut} -> 
-      let let_result = e_seq_to_e_let_in let_result in
-      { e with expression_content=O.E_let_in {let_binder;rhs;let_result;attributes;mut}}
-  | O.E_literal Literal_unit -> ctrl
-  | O.E_skip -> ctrl
-  | _ -> e
-  in
-
-  let for_body = match for_body.expression_content with
-    O.E_sequence {expr1;expr2} -> e_seq_to_e_let_in for_body
-  | _ -> add_to_end for_body ctrl in
+  let for_body = add_to_end for_body ctrl in
 
   let aux name i expr =
     O.e_let_in_ez name false [] (O.e_accessor (O.e_variable binder) [Access_tuple Z.zero; Access_tuple i]) expr
@@ -491,32 +474,10 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
     | Some v -> [fst fe_binder;v]
     | None -> [fst fe_binder]
   in
+
   let body = compile_expression ~raise ~last fe_body in
-  
   let ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
-
-  let rec e_seq_to_e_let_in (e : O.expression) = match e.expression_content with
-    O.E_sequence {expr1;expr2} -> 
-      (match expr1.expression_content with
-        O.E_let_in _ -> O.e_let_in_ez args false [] (e_seq_to_e_let_in expr1) (e_seq_to_e_let_in expr2)
-      | _ -> O.e_let_in_ez (I.Var.fresh ~name:"()"  ()) false [] expr1 (e_seq_to_e_let_in expr2)
-      )
-  | O.E_let_in {let_binder;rhs;let_result;attributes;mut} -> 
-      let let_result = e_seq_to_e_let_in let_result in
-      { e with expression_content=O.E_let_in {let_binder;rhs;let_result;attributes;mut}}
-  | O.E_literal Literal_unit -> (O.e_variable args)
-  | O.E_skip -> (O.e_variable args)
-  | _ -> e
-  in
-
-  let for_body = match body.expression_content with
-    O.E_sequence {expr1;expr2} ->
-      O.e_let_in_ez args false [] (e_seq_to_e_let_in body) 
-        (O.e_accessor (O.e_variable args) [Access_tuple Z.zero])
-  | _ -> add_to_end body (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
-
-  (* let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in *)
-
+  let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
 
   let init_record = store_mutable_variable free_vars in
   let collect = compile_expression ~raise ~last collection in
