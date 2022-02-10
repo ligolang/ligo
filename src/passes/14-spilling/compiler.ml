@@ -206,6 +206,7 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_CREATE_CHEST_KEY
       | C_TEST_ADD_ACCOUNT
       | C_TEST_NEW_ACCOUNT
+      | C_TEST_BAKER_ACCOUNT
       | C_TEST_REGISTER_DELEGATE
       | C_TEST_SAVE_MUTATION
       | C_TEST_GET_VOTING_POWER

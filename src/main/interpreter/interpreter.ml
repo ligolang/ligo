@@ -952,6 +952,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       let>> v = New_account () in
       return @@ v
     | ( C_TEST_NEW_ACCOUNT , _ ) -> fail @@ error_type
+    | ( C_TEST_BAKER_ACCOUNT , _ ) -> fail @@ error_type
     | ( C_TEST_REGISTER_DELEGATE , [ V_Ct (C_key_hash pkh) ] ) ->
       let>> v = Register_delegate (loc, calltrace, pkh) in
       return @@ v
