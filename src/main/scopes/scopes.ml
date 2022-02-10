@@ -134,10 +134,14 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
 
   and declaration ~options i core_prg =
     let test = options.test in
-    (* Note : Why do we need to compile here ? Is it just about handling the environment ? *)
     let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version ~env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
+        (*
+          if --with-types optional flag is enabled, we try typing the declaration
+          to build a partial Ast_typed program.
+          if a declaration do not type, we will still try to type the next one
+        *)
         if with_types then Simple_utils.Trace.to_option (compile_declaration partials.type_env decl ())
         else None
       in
