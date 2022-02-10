@@ -81,13 +81,14 @@ for f in $1; do
     CST_DIFF=$(    diff_lines original_generated/"$f".cst         recovered/"$f".cst)
     SYMBOLS_DIFF=$(diff_lines original_generated/"$f".cst_symbols recovered/"$f".cst_symbols)
     TOKENS_DIFF=$( diff_lines original_generated/"$f".tokens      recovered/"$f".tokens)
-    ERR_DIFF=$(    diff_lines original_generated/"$f".errors      recovered/"$f".errors)
+    ERR_DIFF=$(git diff --no-index -U0 -- original_generated/"$f".errors recovered/"$f".errors \
+                | tail -n +6 | grep -c "$f")
 
     # check that old error is preserved
     ERR_DELETED=$(git diff --no-index -- original_generated/"$f".errors recovered/"$f".errors \
-            | grep ^-[^-] | grep -c "$f")
+            | grep '^-[^-]' | grep -c "$f")
     if [ $ERR_DELETED != "0" ]; then
-        echo -e $RED"ERROR:$f: the recovery left the original error!!!"$NC
+        echo -e $RED"ERROR:$f: the recovery lost the original error!!!"$NC
         CURRENT_FILE_ERROR=1
     fi
 
