@@ -758,8 +758,8 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
        let>> address = Nth_bootstrap_contract n in
        return_ct (C_address address)
     | ( C_TEST_NTH_BOOTSTRAP_CONTRACT , _  ) -> fail @@ error_type
-    | ( C_TEST_STATE_RESET , [ n ; amts ] ) ->
-      let>> () = Reset_state (loc,calltrace,n,amts) in
+    | ( C_TEST_STATE_RESET , [ n ; amts ; baking_accounts ] ) ->
+      let>> () = Reset_state (loc,calltrace,n,amts, baking_accounts) in
       return_ct C_unit
     | ( C_TEST_STATE_RESET , _  ) -> fail @@ error_type
     | ( C_TEST_GET_NTH_BS , [ n ] ) ->
