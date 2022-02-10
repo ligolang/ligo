@@ -979,7 +979,12 @@ let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main 
   (t_triplet (t_typed_address param_ty storage_ty) (t_michelson_code ()) (t_int ()))
 
 let test_state_reset ~raise loc = typer_2 ~raise loc "TEST_STATE_RESET" @@ fun n amts ->
-  let amt = trace_option ~raise (expected_list loc amts) @@ get_t_list amts in
+  let pair = trace_option ~raise (expected_list loc amts) @@ get_t_list amts in
+  let opt, amt = trace_option ~raise (expected_pair loc pair) @@ get_t_pair pair in
+  let acc = trace_option ~raise (expected_option loc opt) @@ get_t_option opt in
+  let sk, pk = trace_option ~raise (expected_pair loc acc) @@ get_t_pair acc in
+  let () = trace_option ~raise (expected_string loc sk) @@ get_t_string sk in
+  let () = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
   let () = trace_option ~raise (expected_mutez loc amt) @@ get_t_mutez amt in
   let () = trace_option ~raise (expected_nat loc n) @@ get_t_nat n in
   (t_unit ())
