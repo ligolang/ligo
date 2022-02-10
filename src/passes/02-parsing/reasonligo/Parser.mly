@@ -15,8 +15,8 @@ module Wrap = Lexing_shared.Wrap
 
 (* Utilities *)
 
-let unwrap = Wrap.payload
-let wrap   = Wrap.wrap
+let wrap = Wrap.wrap
+let unwrap wrap = Region.{region=wrap#region; value=wrap#payload}
 
 let ghost = wrap "" ghost
 
@@ -171,8 +171,8 @@ module_:
 %inline attributes:
   ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) {
     let l = list_of_option $1 in
-    List.map ~f:unwrap l
-  }
+    let filter (attr: Attr.t reg) = {attr with value = fst attr.value}
+    in List.map filter l }
 
 (* Type declarations *)
 
@@ -310,8 +310,8 @@ field_decl:
   attributes field_name {
     let value = {
       field_name=$2;
-      colon=ghost;
-      field_type = TVar $2;
+      colon=ghost;  (* TODO: Create a "new" CST node *)
+      field_type = TVar {$2 with region = Region.ghost}; (* TODO *)
       attributes=$1}
     in {$2 with value}
   }

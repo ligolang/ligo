@@ -154,10 +154,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Preproc_tracer e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Parser_tracer e -> Parsing.Errors.error_ppformat ~display_format f e
     | `Pretty_tracer _e -> () (*no error in this pass*)
-    | `Self_cst_cameligo_tracer e -> Self_cst.Cameligo.Errors.error_ppformat ~display_format f e
-    | `Self_cst_pascaligo_tracer e -> Self_cst.Pascaligo.Errors.error_ppformat ~display_format f e
-    | `Self_cst_reasonligo_tracer e -> Self_cst.Reasonligo.Errors.error_ppformat ~display_format f e
-    | `Self_cst_jsligo_tracer e -> Self_cst.Jsligo.Errors.error_ppformat ~display_format f e
     | `Cit_pascaligo_tracer e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
     | `Cit_cameligo_tracer e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
     | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
@@ -382,10 +378,6 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
   | `Parser_tracer e -> Parsing.Errors.error_jsonformat e
   | `Pretty_tracer _ -> `Null (*no error in this pass*)
-  | `Self_cst_cameligo_tracer e -> Self_cst.Cameligo.Errors.error_jsonformat e
-  | `Self_cst_pascaligo_tracer e -> Self_cst.Pascaligo.Errors.error_jsonformat e
-  | `Self_cst_reasonligo_tracer e -> Self_cst.Reasonligo.Errors.error_jsonformat e
-  | `Self_cst_jsligo_tracer e -> Self_cst.Jsligo.Errors.error_jsonformat e
   | `Cit_pascaligo_tracer e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
   | `Cit_cameligo_tracer e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
   | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e

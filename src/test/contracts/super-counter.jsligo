@@ -1,6 +1,6 @@
 type parameter =
-| ['Increment', int]
-| ['Decrement', int];
+| ["Increment", int]
+| ["Decrement", int];
 
 type storage = int;
 

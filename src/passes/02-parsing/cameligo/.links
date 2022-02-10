@@ -10,14 +10,14 @@ $HOME/git/OCaml-build/Makefile
 ./Stubs/Parsing_shared.ml
 ./Stubs/Cst_cameligo.ml
 
-$HOME/git/ligo/src/stages/1-cst/cameligo/CST.ml
-$HOME/git/ligo/src/stages/1-cst/cameligo/Printer.mli
-$HOME/git/ligo/src/stages/1-cst/cameligo/Printer.ml
-$HOME/git/ligo/src/passes/00-preprocessing/cameligo/Comments.ml
-$HOME/git/ligo/src/passes/00-preprocessing/cameligo/File.ml
-$HOME/git/ligo/src/passes/01-lexing/cameligo/Self_tokens.ml
-$HOME/git/ligo/src/passes/01-lexing/cameligo/Token.ml
-$HOME/git/ligo/src/passes/01-lexing/cameligo/Style.ml
-$HOME/git/ligo/src/passes/01-lexing/cameligo/AttachComments.ml
-$HOME/git/ligo/src/passes/01-lexing/shared/LexerMainGen.ml
-$HOME/git/ligo/src/passes/01-lexing/shared/Lexer.mll
+../../../stages/1-cst/cameligo/CST.ml
+../../../stages/1-cst/cameligo/Printer.mli
+../../../stages/1-cst/cameligo/Printer.ml
+../../00-preprocessing/cameligo/Comments.ml
+../../00-preprocessing/cameligo/File.ml
+../../01-lexing/cameligo/Self_tokens.ml
+../../01-lexing/cameligo/Token.ml
+../../01-lexing/cameligo/Style.ml
+../../01-lexing/cameligo/AttachComments.ml
+../../01-lexing/shared/LexerMainGen.ml
+../../01-lexing/shared/Lexer.mll

@@ -498,7 +498,7 @@ In Tezos, you can accept _code_ as a parameter. Such functions that you can pass
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-type parameter is Compute of int -> int // a function that accepts an int and returns an int
+type parameter is Compute of (int -> int) // a function that accepts an int and returns an int
 
 type storage is int
 
@@ -560,7 +560,7 @@ But this is not all lambdas are capable of. You can, for example, save them in s
 ```pascaligo
 type storage is record [fn : option (int -> int); value : int]
 
-type parameter is CallFunction | SetFunction of int -> int
+type parameter is CallFunction | SetFunction of (int -> int)
 
 function call (const fn : option (int -> int); const value : int) is
   case fn of [

@@ -5,15 +5,17 @@ title: Interop
 
 import Syntax from '@theme/Syntax';
 
-LIGO can work together with other smart contract languages on Tezos. However 
-data structures might have different representations in Michelson and not 
-correctly match the standard LIGO types. 
+LIGO can work together with other smart contract languages on Tezos. However,
+data structures might have different representations in Michelson and not
+correctly match the standard LIGO types.
 
 ## Michelson types and annotations
-Michelson types consist of `or`'s and `pair`'s, combined with field annotations.
-Field annotations add constraints on a Michelson type, for example a pair of 
-`(pair (int %foo) (string %bar))` will only work with the exact equivalence or 
-the same type without the field annotations.
+
+Michelson types consist of `or`'s and `pair`'s, combined with field
+annotations.  Field annotations add constraints on a Michelson type,
+for example a pair of `(pair (int %foo) (string %bar))` will only work
+with the exact equivalence or the same type without the field
+annotations.
 
 To clarify:
 
@@ -21,7 +23,7 @@ To clarify:
 (pair (int %foo) (string %bar))
 ````
 
-works with 
+works with
 
 ```michelson
 (pair (int %foo) (string %bar))
@@ -33,64 +35,52 @@ works with
 (pair int string)
 ```
 
-works not with 
+works not with
 
 ```michelson
 (pair (int %bar) (string %foo))
 ```
 
-works not with 
+works not with
 
 ```michelson
 (pair (string %bar) (int %foo))
 ```
 
 :::info
-In the case of annotated entrypoints - the annotated `or` tree directly under 
-`parameter` in a contract - you should use annotations, as otherwise it's 
+In the case of annotated entrypoints - the annotated `or` tree directly under
+`parameter` in a contract - you should use annotations, as otherwise it's
 unclear which entrypoint you are referring to.
 :::
 
 ## Default LIGO output
-By default LIGO translates its datatypes into a alphabetically left balanced 
+By default LIGO translates its datatypes into a alphabetically left balanced
 tree. So, for example:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=orig
-type animal is
-| Elephant
-| Dog
-| Cat
+type animal is Elephant | Dog | Cat
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=orig
-type animal =
-| Elephant
-| Dog
-| Cat
+type animal = Elephant | Dog | Cat
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=orig
-type animal = 
-| Elephant
-| Dog
-| Cat
+type animal = | Elephant | Dog | Cat
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=orig
-type animal = 
-| ["Elephant"]
-| ["Dog"]
-| ["Cat"];
+type animal = | ["Elephant"] | ["Dog"] | ["Cat"];
 ```
 
 </Syntax>
@@ -98,23 +88,23 @@ type animal =
 will translate to:
 
 ```michelson
-(or 
-  (or 
-    (unit %cat) 
+(or
+  (or
+    (unit %cat)
     (unit %dog)
   )
-  (unit %elephant) 
+  (unit %elephant)
 )
 ```
 
 ## Right combed tree output
-If you want to change the data representation in Michelson to a location 
+If you want to change the data representation in Michelson to a location
 retaining right combed tree, like this:
 
 ```
-  (or 
-    (unit %elephant) 
-    (or (unit %dog) 
+  (or
+    (unit %elephant)
+    (or (unit %dog)
         (unit %cat)
     )
   )
@@ -132,6 +122,10 @@ type animal is
 | Cat
 ```
 
+> Note how a vertical bar has been inserted between the attribute and
+> the first variant: otherwise, the attribute would apply to the first
+> variant.
+
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -148,7 +142,7 @@ type animal =
 
 ```reasonligo
 type animal =
-[@layout:comb] 
+[@layout:comb]
 | Elephant
 | Dog
 | Cat
@@ -172,10 +166,11 @@ The `layout:comb` attribute can also be used on record types:
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-type artist is [@layout:comb] record [
-  genre: string;
-  since: timestamp;
-  name: string;
+type artist is
+  [@layout:comb] record [
+  genre : string;
+  since : timestamp;
+  name  : string;
 ]
 ```
 
@@ -183,12 +178,11 @@ type artist is [@layout:comb] record [
 <Syntax syntax="cameligo">
 
 ```cameligo
-type artist =  
-[@layout:comb]
-{
-  genre: string;
-  since: timestamp;
-  name: string;
+type artist =
+  [@layout:comb] {
+  genre : string;
+  since : timestamp;
+  name  : string
 }
 ```
 
@@ -196,12 +190,11 @@ type artist =
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-type artist =  
-[@layout:comb]
-{
-  genre: string,
-  since: timestamp,
-  name: string
+type artist =
+  [@layout:comb] {
+  genre : string,
+  since : timestamp,
+  name  : string
 }
 ```
 
@@ -209,12 +202,12 @@ type artist =
 <Syntax syntax="jsligo">
 
 ```jsligo
-type artist =  
+type artist =
 // @layout:comb
 {
-  genre: string,
-  since: timestamp,
-  name: string
+  genre : string,
+  since : timestamp,
+  name  : string
 };
 ```
 
@@ -223,7 +216,7 @@ type artist =
 
 
 ## Different Michelson annotations
-If the Michelson annotation should be different from the LIGO representation, 
+If the Michelson annotation should be different from the LIGO representation,
 the `annot:<string>` attribute can be used. For example:
 
 <Syntax syntax="pascaligo">
@@ -249,7 +242,7 @@ type animal =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=annot
-type animal = 
+type animal =
 | [@annot:memory] Elephant
 | [@annot:face] Dog
 | [@annot:fish] Cat
@@ -259,7 +252,7 @@ type animal =
 <Syntax syntax="jsligo">
 
 ```jsligo group=annot
-type animal = 
+type animal =
 | /* @annot:memory */ ["Elephant"]
 | /* @annot:face */ ["Dog"]
 | /* @annot:fish */ ["Cat"]
@@ -271,11 +264,11 @@ type animal =
 will result into:
 
 ```michelson
-(or 
-  (or 
-    (unit %fish) 
+(or
+  (or
+    (unit %fish)
     (unit %face)
-  ) 
+  )
   (unit %memory)
 )
 ```
@@ -327,29 +320,31 @@ type artist = {
 
 </Syntax>
 
-If the `layout:comb` and `annot:<string>` attributes are not adequate enough
-for your use case, LIGO has more advanced advanced interop features which we 
-will we discuss next. 
+If the `layout:comb` and `annot:<string>` attributes are not adequate
+enough for your use case, LIGO has more advanced advanced interop
+features which we will we discuss next.
 
 ## Advanced interop with Michelson
-To interop with existing Michelson code or for compatibility with certain 
-development tooling, LIGO has two special interop types: `michelson_or` and 
-`michelson_pair`. These types give the flexibility to model the exact Michelson
-output, including field annotations.
 
-Take for example the following Michelson type that we want to interop with:
+To interop with existing Michelson code or for compatibility with
+certain development tooling, LIGO has two special interop types:
+`michelson_or` and `michelson_pair`. These types give the flexibility
+to model the exact Michelson output, including field annotations.
+
+Take for example the following Michelson type that we want to interop
+with:
 
 ```michelson
-(or 
+(or
   (unit %z)
-  (or %other 
-    (unit %y) 
-    (pair %other 
-      (string %x) 
-      (pair %other 
-        (int %w) 
-        (nat %v))))) 
-```  
+  (or %other
+    (unit %y)
+    (pair %other
+      (string %x)
+      (pair %other
+        (int %w)
+        (nat %v)))))
+```
 
 To reproduce this type we can use the following LIGO code:
 
@@ -402,68 +397,68 @@ for pair's instead. Plain tuples don't have any annotations.
 :::
 
 To use variables of type `michelson_or` you have to use `M_left` and `M_right`.
-`M_left` picks the left `or` case while `M_right` picks the right `or` case. 
+`M_left` picks the left `or` case while `M_right` picks the right `or` case.
 For `michelson_pair` you need to use tuples.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const z: z_or = (M_left (unit) : z_or);
+const z : z_or = (M_left (unit) : z_or);
 
-const y_1: y_or = (M_left (unit): y_or);
-const y: z_or = (M_right (y_1) : z_or);
+const y_1 : y_or = (M_left (unit): y_or);
+const y   : z_or = (M_right (y_1) : z_or);
 
-const x_pair: x_and = ("foo", (2, 3n));
-const x_1: y_or = (M_right (x_pair): y_or);
-const x: z_or = (M_right (y_1) : z_or);
+const x_pair : x_and = ("foo", (2, 3n));
+const x_1    : y_or  = (M_right (x_pair) : y_or);
+const x      : z_or  = (M_right (y_1) : z_or);
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let z: z_or = (M_left (unit) : z_or)
+let z : z_or = (M_left unit : z_or)
 
-let y_1: y_or = (M_left (unit): y_or)
-let y: z_or = (M_right (y_1) : z_or)
+let y_1 : y_or = (M_left unit : y_or)
+let y   : z_or = (M_right y_1 : z_or)
 
-let x_pair: x_and = ("foo", (2, 3n))
-let x_1: y_or = (M_right (x_pair): y_or)
-let x: z_or = (M_right (y_1) : z_or)
+let x_pair : x_and = "foo", (2, 3n)
+let x_1    : y_or  = (M_right x_pair : y_or)
+let x      : z_or  = (M_right y_1 : z_or)
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let z: z_or = (M_left (unit) : z_or)
+let z : z_or = (M_left (unit) : z_or)
 
-let y_1: y_or = (M_left (unit): y_or)
-let y: z_or = (M_right (y_1) : z_or)
+let y_1 : y_or = (M_left (unit): y_or)
+let y   : z_or = (M_right (y_1) : z_or)
 
-let x_pair: x_and = ("foo", (2, 3n))
-let x_1: y_or = (M_right (x_pair): y_or)
-let x: z_or = (M_right (y_1) : z_or)
+let x_pair : x_and = ("foo", (2, 3n))
+let x_1    : y_or = (M_right (x_pair): y_or)
+let x      : z_or = (M_right (y_1) : z_or)
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let z: z_or = M_left(unit) as z_or;
+let z : z_or = M_left(unit) as z_or;
 
-let y_1: y_or = M_left(unit) as y_or;
-let y: z_or = M_right(y_1) as z_or;
+let y_1 : y_or = M_left(unit) as y_or;
+let y   : z_or = M_right(y_1) as z_or;
 
-let x_pair: x_and = ["foo", [2, 3 as nat]];
-let x_1: y_or = M_right (x_pair) as y_or;
-let x: z_or = M_right (y_1) as z_or;
+let x_pair : x_and = ["foo", [2, 3 as nat]];
+let x_1    : y_or = M_right (x_pair) as y_or;
+let x      : z_or = M_right (y_1) as z_or;
 ```
 
 </Syntax>
 
 ## Manual data structure conversion
-If you want to get your hands dirty, it's also possible to do manual data 
+If you want to get your hands dirty, it's also possible to do manual data
 structure conversion.
 
 The following code can be used as inspiration:
@@ -472,7 +467,7 @@ The following code can be used as inspiration:
 
 ```pascaligo group=helper_functions
 type z_to_v is
-| Z 
+| Z
 | Y
 | X
 | W
@@ -480,8 +475,8 @@ type z_to_v is
 
 type w_or_v is michelson_or(unit, "w", unit, "v")
 type x_or is michelson_or(unit, "x", w_or_v, "other")
-type y_or is michelson_or(unit, "y", x_or, "other") 
-type z_or is michelson_or(unit, "z", y_or, "other") 
+type y_or is michelson_or(unit, "y", x_or, "other")
+type z_or is michelson_or(unit, "z", y_or, "other")
 
 type test is record [
   z: string;
@@ -491,9 +486,9 @@ type test is record [
   v: int;
 ]
 
-function make_concrete_sum (const r: z_to_v) : z_or is block {
+function make_concrete_sum (const r: z_to_v) : z_or is {
   const z: z_or = (M_left (unit) : z_or);
-  
+
   const y_1: y_or = (M_left (unit): y_or);
   const y: z_or = (M_right (y_1) : z_or);
 
@@ -511,39 +506,39 @@ function make_concrete_sum (const r: z_to_v) : z_or is block {
   const v_1: y_or = (M_right (v_2): y_or);
   const v: z_or = (M_right (v_1) : z_or);
 }
- with (case r of 
+ with case r of [
   | Z -> z
   | Y -> y
   | X -> x
   | W -> w
   | V -> v
-  end)
+  ]
 
 
-function make_concrete_record (const r: test) : (string * int * string * bool * int) is
-  (r.z, r.y, r.x, r.w, r.v)  
+function make_concrete_record (const r : test) : string * int * string * bool * int is
+  (r.z, r.y, r.x, r.w, r.v)
 
 function make_abstract_sum (const z_or: z_or) : z_to_v is
-  (case z_or of
+  case z_or of [
   | M_left (n) -> Z
-  | M_right (y_or) -> 
-    (case y_or of
+  | M_right (y_or) ->
+    case y_or of [
     | M_left (n) -> Y
     | M_right (x_or) ->
-        (case x_or of
+        case x_or of [
         | M_left (n) -> X
         | M_right (w_or) ->
-            (case (w_or) of
+            case (w_or) of [
             | M_left (n) -> W
             | M_right (n) -> V
-            end)
-        end)
-    end)
-  end)  
+            ]
+        ]
+    ]
+  ]
 
-function make_abstract_record (const z: string; const y: int; const x: string; const w: bool; const v: int) : test is
-  record [ z = z; y = y; x = x; w = w; v = v ]
-  
+function make_abstract_record (const z : string; const y : int; const x : string; const w : bool; const v : int) : test is
+  record [z = z; y = y; x = x; w = w; v = v]
+
 ```
 
 </Syntax>
@@ -553,7 +548,7 @@ function make_abstract_record (const z: string; const y: int; const x: string; c
 
 ```cameligo group=helper_functions
 type z_to_v =
-| Z 
+| Z
 | Y
 | X
 | W
@@ -573,7 +568,7 @@ type test = {
 }
 
 let make_concrete_sum (r: z_to_v) : z_or =
-  match r with 
+  match r with
   | Z -> (M_left (unit) : z_or)
   | Y -> (M_right (M_left (unit): y_or) : z_or )
   | X -> (M_right (M_right (M_left (unit): x_or): y_or) : z_or )
@@ -581,19 +576,19 @@ let make_concrete_sum (r: z_to_v) : z_or =
   | V -> (M_right (M_right (M_right (M_right (unit): w_or_v): x_or): y_or) : z_or )
 
 let make_concrete_record (r: test) : (string * int * string * bool * int) =
-  (r.z, r.y, r.x, r.w, r.v)  
+  (r.z, r.y, r.x, r.w, r.v)
 
-let make_abstract_sum (z_or: z_or) : z_to_v = 
-  match z_or with 
+let make_abstract_sum (z_or: z_or) : z_to_v =
+  match z_or with
   | M_left n -> Z
-  | M_right y_or -> 
-    (match y_or with 
+  | M_right y_or ->
+    (match y_or with
     | M_left n -> Y
     | M_right x_or -> (
-        match x_or with 
+        match x_or with
         | M_left n -> X
         | M_right w_or -> (
-            match w_or with 
+            match w_or with
             | M_left n -> W
             | M_right n -> V)))
 
@@ -609,7 +604,7 @@ let make_abstract_record (z: string) (y: int) (x: string) (w: bool) (v: int) : t
 
 ```reasonligo group=helper_functions
 type z_to_v =
-| Z 
+| Z
 | Y
 | X
 | W
@@ -638,7 +633,7 @@ let make_concrete_sum = (r: z_to_v) : z_or =>
   }
 
 let make_concrete_record = (r: test) : (string, int, string, bool, int) =>
-  (r.z, r.y, r.x, r.w, r.v)  
+  (r.z, r.y, r.x, r.w, r.v)
 
 let make_abstract_sum = (z_or: z_or) : z_to_v =>
   switch (z_or) {
@@ -661,7 +656,7 @@ let make_abstract_sum = (z_or: z_or) : z_to_v =>
 
 let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) : test =>
   { z : z, y, x, w, v }
-  
+
 ```
 
 </Syntax>
@@ -695,7 +690,7 @@ let make_concrete_sum = (r: z_to_v): z_or =>
     Y: () => M_right(M_left(unit) as y_or) as z_or,
     X: () => M_right (M_right (M_left(unit) as x_or) as y_or) as z_or ,
     W: () => M_right (M_right (M_right(M_left(unit) as w_or_v) as x_or) as y_or) as z_or ,
-    V: () => M_right (M_right (M_right(M_right(unit) as w_or_v) as x_or) as y_or) as z_or 
+    V: () => M_right (M_right (M_right(M_right(unit) as w_or_v) as x_or) as y_or) as z_or
   });
 
 
@@ -725,14 +720,14 @@ let make_abstract_sum = (z_or: z_or): z_to_v =>
 
 let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int): test =>
   ({ z: z, y, x, w, v })
-  
+
 ```
 
 </Syntax>
 
 
 ## Entrypoints and annotations
-It's possible for a contract to have multiple entrypoints, which translates in 
+It's possible for a contract to have multiple entrypoints, which translates in
 LIGO to a `parameter` with a variant type as shown here:
 
 <Syntax syntax="pascaligo">
@@ -740,15 +735,15 @@ LIGO to a `parameter` with a variant type as shown here:
 ```pascaligo
 type storage is int
 
-type parameter is 
+type parameter is
  | Left of int
  | Right of int
 
 function main (const p: parameter; const x: storage): (list(operation) * storage) is
-  ((nil: list(operation)), case p of
-  | Left(i) -> x - i
-  | Right(i) -> x + i
-  end)
+  ((nil: list(operation)), case p of [
+  | Left  (i) -> x - i
+  | Right (i) -> x + i
+  ])
 ```
 
 </Syntax>
@@ -757,11 +752,11 @@ function main (const p: parameter; const x: storage): (list(operation) * storage
 ```cameligo
 type storage = int
 
-type parameter = 
+type parameter =
  | Left of int
  | Right of int
 
-let main ((p, x): (parameter * storage)): (operation list * storage) = 
+let main ((p, x): (parameter * storage)): (operation list * storage) =
   (([]: operation list), (match p with
   | Left i -> x - i
   | Right i -> x + i
@@ -775,7 +770,7 @@ let main ((p, x): (parameter * storage)): (operation list * storage) =
 ```reasonligo
 type storage = int
 
-type parameter = 
+type parameter =
  | Left(int)
  | Right(int)
 
@@ -794,7 +789,7 @@ let main = ((p, x): (parameter, storage)): (list(operation), storage) => {
 ```jsligo
 type storage = int;
 
-type parameter = 
+type parameter =
    ["Left", int]
  | ["Right", int];
 
@@ -820,12 +815,12 @@ type parameter is int
 
 type x is Left of int
 
-function main (const p: parameter; const s: storage): (list(operation) * storage) is block {
-  const contract: contract(x) = 
-    case (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx":address)): option(contract(x))) of 
+function main (const p: parameter; const s: storage): (list(operation) * storage) is {
+  const contract: contract(x) =
+    case (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx":address)): option(contract(x))) of [
     | Some (c) -> c
     | None -> (failwith("not a correct contract") : contract(x))
-    end;
+    ];
 
   const result: (list(operation) * storage) = ((list [Tezos.transaction(Left(2), 2mutez, contract)]: list(operation)), s)
 } with result
@@ -844,11 +839,11 @@ type parameter = int
 type x = Left of int
 
 let main (p, s: parameter * storage): operation list * storage = (
-  let contract: x contract = 
+  let contract: x contract =
     match ((Tezos.get_entrypoint_opt "%left" ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): x contract option) with
     | Some c -> c
     | None -> (failwith "contract does not match": x contract)
-  in  
+  in
   (([
     Tezos.transaction (Left 2) 2mutez contract;
   ]: operation list), s)
@@ -867,7 +862,7 @@ type parameter = int;
 type x = Left(int);
 
 let main = ((p, s): (parameter, storage)): (list(operation), storage) => {
-  let contract: contract(x) = 
+  let contract: contract(x) =
     switch (Tezos.get_entrypoint_opt("%left", ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)): option(contract(x))) {
       | Some c => c
       | None => (failwith ("contract does not match"): contract(x))
@@ -890,13 +885,13 @@ type parameter = int;
 type x = | ["Left", int];
 
 let main = ([p, s]: [parameter, storage]): [list<operation>, storage] => {
-  let contract: contract<x> = 
+  let contract: contract<x> =
     match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address) as option<contract<x>>, {
       Some: ( c: contract<x>) => c,
       None: () => (failwith ("contract does not match") as contract<x>)
     });
   return [
-    list([Tezos.transaction(Left(2), 2 as mutez, contract)]) as list<operation>, 
+    list([Tezos.transaction(Left(2), 2 as mutez, contract)]) as list<operation>,
     s];
 };
 ```
@@ -904,13 +899,12 @@ let main = ([p, s]: [parameter, storage]): [list<operation>, storage] => {
 </Syntax>
 
 
-Notice how we directly use the `%left` entrypoint without mentioning the 
-`%right` entrypoint. This is done with the help of annotations. Without 
+Notice how we directly use the `%left` entrypoint without mentioning the
+`%right` entrypoint. This is done with the help of annotations. Without
 annotations it wouldn't be clear what our `int` would be referring to.
 
 This currently only works for `or`'s or variant types in LIGO.
 
 ## Amendment
-With the upcoming 007 amendment to Tezos this will change though, and also 
+With the upcoming 007 amendment to Tezos this will change though, and also
 `pair`'s can be ordered differently.
-

@@ -26,7 +26,8 @@ type nested_record_t is
 function nested_record (var nee : nested_record_t) : string is
   block {
     nee.nesty.mymap[1] := "one"
-  } with case nee.nesty.mymap[1] of
-           Some (s) -> s
-         | None -> (failwith ("Should not happen.") : string)
-         end
+  } with
+    case nee.nesty.mymap[1] of [
+      Some (s) -> s
+    | None -> (failwith ("Should not happen.") : string)
+  ]

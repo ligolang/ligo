@@ -22,7 +22,7 @@ function default (const _ : default_pt; const s : storage_t) :
 
 function main(const param : entry_point_t; const s : storage_t) :
   contract_return_t is
-  case param of
+  case param of [
     Call    (p) -> call (p,s)
   | Default (p) -> default (p,s)
-  end
+  ]

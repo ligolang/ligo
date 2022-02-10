@@ -1,16 +1,15 @@
 const filename = "gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.ligo"
 
-function assert_string_failure (const res : test_exec_result ; const expected : string) : unit is
-  block {
-  const expected = Test.compile_value(expected) ;
+function assert_string_failure (const res : test_exec_result ; const expected : string) : unit is {
+  const expected = Test.compile_value(expected);
   } with
-    case res of
+    case res of [
     | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal (actual, expected))
     | Fail (Other) -> failwith ("contract failed for an unknown reason")
     | Success -> failwith ("bad price check")
-    end
+    ]
 
-const test = block {
+const test = {
   // originate the contract with a initial storage
   const init_storage = Test.compile_expression (Some (filename),
     [%pascaligo ({| map [
@@ -24,8 +23,9 @@ const test = block {
 
   // Purchasing a Taco with 1tez and checking that the stock has been updated
   const ok_case : test_exec_result = Test.transfer (pedro_taco_shop, classico_kind, 1tez) ;
-  const _unit = case ok_case of
-    | Success  -> block {
+  const _unit =
+    case ok_case of [
+    | Success  -> {
       const storage = Test.get_storage_of_address (pedro_taco_shop) ;
       const expected = Test.compile_expression (Some (filename),
         [%pascaligo ({| map [
@@ -34,7 +34,7 @@ const test = block {
         |} : ligo_program) ] ) ;
     } with (assert (Test.michelson_equal (expected, storage)))
     | Fail (x) -> failwith ("ok test case failed")
-  end ;
+    ];
 
   // Purchasing an unregistred Taco
   const nok_unknown_kind = Test.transfer (pedro_taco_shop, unknown_kind, 1tez) ;

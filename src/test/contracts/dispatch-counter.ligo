@@ -12,7 +12,7 @@ function decrement (const i : int; const n : int) : int is i-n
 const nop : list (operation) = nil
 
 function main (const action : parameter; const store : storage) : return is
-  case action of
+  case action of [
     Increment (n) -> (nop, increment (store, n))
   | Decrement (n) -> (nop, decrement (store, n))
-  end
+  ]

@@ -8,96 +8,99 @@ type storage is record [
 ]
 
 type transfer is record [
-	address_from : address;
-	address_to   : address;
-	value        : nat;
+  address_from : address;
+  address_to   : address;
+  value        : nat;
 ]
 
 type approve is record [
-	spender : address;
-	value   : nat;
+  spender : address;
+  value   : nat;
 ]
 
 type getAllowance is record [
-	owner    : address;
-	spender  : address;
-	callback : contract (nat);
+  owner    : address;
+  spender  : address;
+  callback : contract (nat);
 ]
 
 type getBalance is record [
-	owner    : address;
-	callback : contract (nat);
+  owner    : address;
+  callback : contract (nat);
 ]
 
 type getTotalSupply is record [
-	callback : contract (nat);
+  callback : contract (nat);
 ]
 
 type action is
-  	Transfer       of transfer
-|	Approve        of approve
-|	GetAllowance   of getAllowance
-|	GetBalance     of getBalance
-|	GetTotalSupply of getTotalSupply
+    Transfer       of transfer
+|  Approve        of approve
+|  GetAllowance   of getAllowance
+|  GetBalance     of getBalance
+|  GetTotalSupply of getTotalSupply
 
 function transfer (const p : transfer; const s: storage) : list (operation) * storage is block {
    var new_allowances : allowances := Big_map.empty;
-	if Tezos.sender = p.address_from
-	then { new_allowances := s.allowances; }
-	else {
-		var authorized_value : nat := 
-		case (Big_map.find_opt ((Tezos.sender,p.address_from), s.allowances)) of
-				Some (value) -> value
-			|	None       -> 0n
-		end;
-		if (authorized_value < p.value)
-		then { failwith("Not Enough Allowance")}
-		else { new_allowances := Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances) }    
-	};
-	var sender_balance : nat := case (Big_map.find_opt (p.address_from, s.tokens)) of
-		Some (value) -> value
-	|	None        -> 0n
-	end;
-	var new_tokens : tokens := Big_map.empty;
-	if (sender_balance < p.value)
-	then { failwith ("Not Enough Balance")}
-	else {
-		new_tokens := Big_map.update (p.address_from, (Some (abs(sender_balance - p.value))), s.tokens);
-		var receiver_balance : nat := case (Big_map.find_opt (p.address_to, s.tokens)) of
-			Some (value) -> value
-		|	None        -> 0n
-		end;
-		new_tokens := Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
-	}
+  if Tezos.sender = p.address_from
+  then { new_allowances := s.allowances; }
+  else {
+    var authorized_value : nat :=
+    case (Big_map.find_opt ((Tezos.sender,p.address_from), s.allowances)) of [
+        Some (value) -> value
+      |  None       -> 0n
+    ];
+    if (authorized_value < p.value)
+    then { failwith("Not Enough Allowance")}
+    else { new_allowances := Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances) }
+  };
+  var sender_balance : nat :=
+     case (Big_map.find_opt (p.address_from, s.tokens)) of [
+       Some (value) -> value
+     |  None        -> 0n
+     ];
+  var new_tokens : tokens := Big_map.empty;
+  if (sender_balance < p.value)
+  then failwith ("Not Enough Balance")
+  else {
+    new_tokens := Big_map.update (p.address_from, (Some (abs(sender_balance - p.value))), s.tokens);
+    var receiver_balance : nat :=
+      case (Big_map.find_opt (p.address_to, s.tokens)) of [
+        Some (value) -> value
+      |  None        -> 0n
+      ];
+    new_tokens := Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
+  }
 } with ((nil: list (operation)), s with record [tokens = new_tokens; allowances = new_allowances])
 
 function approve (const p : approve; const s : storage) : list (operation) * storage is block {
-	var previous_value : nat := case Big_map.find_opt ((p.spender, Tezos.sender), s.allowances) of
-		Some (value) -> value
-	|	None -> 0n
-	end;
-	var new_allowances : allowances := Big_map.empty;
-	if previous_value > 0n and p.value > 0n
-	then { failwith ("Unsafe Allowance Change")}
-	else {
-		new_allowances := Big_map.update ((p.spender, Tezos.sender), (Some (p.value)), s.allowances);
-	}
+  var previous_value : nat :=
+    case Big_map.find_opt ((p.spender, Tezos.sender), s.allowances) of [
+      Some (value) -> value
+    | None -> 0n
+    ];
+  var new_allowances : allowances := Big_map.empty;
+  if previous_value > 0n and p.value > 0n
+  then failwith ("Unsafe Allowance Change")
+  else {
+    new_allowances := Big_map.update ((p.spender, Tezos.sender), (Some (p.value)), s.allowances);
+  }
 } with ((nil: list (operation)), s with record [allowances = new_allowances])
 
 function getAllowance (const p : getAllowance; const s : storage) : list (operation) * storage is block {
-	var value : nat := case Big_map.find_opt ((p.owner, p.spender), s.allowances) of
-		Some (value) -> value
-	|	None -> 0n
-	end;
-	var op : operation := Tezos.transaction (value, 0mutez, p.callback);
+  var value : nat := case Big_map.find_opt ((p.owner, p.spender), s.allowances) of [
+    Some (value) -> value
+  |  None -> 0n
+  ];
+  var op : operation := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op],s)
 
 function getBalance (const p : getBalance; const s : storage) : list (operation) * storage is block {
-	var value : nat := case Big_map.find_opt (p.owner, s.tokens) of
-		Some (value) -> value
-	|	None -> 0n
-	end;
-	var op : operation := Tezos.transaction (value, 0mutez, p.callback);
+  var value : nat := case Big_map.find_opt (p.owner, s.tokens) of [
+    Some (value) -> value
+  |  None -> 0n
+  ];
+  var op : operation := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op],s)
 
 function getTotalSupply (const p : getTotalSupply; const s : storage) : list (operation) * storage is block {
@@ -107,13 +110,14 @@ function getTotalSupply (const p : getTotalSupply; const s : storage) : list (op
 
 
 function main (const a : action; const s : storage) : list (operation) * storage is
- 	case a of
-   	Transfer       (p) -> transfer (p,s)
-	|	Approve        (p) -> approve (p,s)
-	|	GetAllowance   (p) -> getAllowance (p,s)
-	|  GetBalance     (p) -> getBalance (p,s)
-	|	GetTotalSupply (p) -> getTotalSupply (p,s)
-	end;
+   case a of [
+     Transfer       (p) -> transfer (p,s)
+  |  Approve        (p) -> approve (p,s)
+  |  GetAllowance   (p) -> getAllowance (p,s)
+  |  GetBalance     (p) -> getBalance (p,s)
+  |  GetTotalSupply (p) -> getTotalSupply (p,s)
+  ];
+
 function main (const p : key_hash) : address is block {
   const c : contract (unit) = Tezos.implicit_account (p);
 } with Tezos.address (c)
@@ -167,7 +171,7 @@ function bar (const b : int) : int is
         const r : int = 2 + b + z
       } with r;
   } with test (b)
-  
+
 type parameter is unit
 
 type binding is nat * nat
@@ -331,13 +335,12 @@ function transfer_single (const action : action_transfer_single;
   block {
     var cards : cards := s.cards;
     var card : card :=
-      case cards[action.card_to_transfer] of
+      case cards[action.card_to_transfer] of [
         Some (card) -> card
       | None -> (failwith ("transfer_single: No card.") : card)
-      end;
+      ];
     if card.card_owner =/= sender then
-      failwith ("This card doesn't belong to you")
-    else skip;
+      failwith ("This card doesn't belong to you");
     card.card_owner := action.destination;
     cards[action.card_to_transfer] := card;
     s.cards := cards
@@ -347,18 +350,17 @@ function sell_single (const action : action_sell_single;
                       var s : storage) : return is
   block {
     const card : card =
-      case s.cards[action.card_to_sell] of
+      case s.cards[action.card_to_sell] of [
         Some (card) -> card
       | None -> (failwith ("sell_single: No card.") : card)
-      end;
+      ];
     if card.card_owner =/= sender
-    then failwith ("This card doesn't belong to you")
-    else skip;
+    then failwith ("This card doesn't belong to you");
     var card_pattern : card_pattern :=
-      case s.card_patterns[card.card_pattern] of
+      case s.card_patterns[card.card_pattern] of [
         Some (pattern) -> pattern
       | None -> (failwith ("sell_single: No card pattern.") : card_pattern)
-      end;
+      ];
     card_pattern.quantity := abs (card_pattern.quantity - 1n);
     var card_patterns : card_patterns := s.card_patterns;
     card_patterns[card.card_pattern] := card_pattern;
@@ -368,10 +370,10 @@ function sell_single (const action : action_sell_single;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
     const receiver : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of
+      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("sell_single: No contract.") : contract (unit))
-      end;
+      ];
     const op : operation = Tezos.transaction (unit, price, receiver);
     const operations : list (operation) = list [op]
   } with (operations, s)
@@ -381,13 +383,13 @@ function buy_single (const action : action_buy_single;
   block {
     // Check funds
     var card_pattern : card_pattern :=
-      case s.card_patterns[action.card_to_buy] of
+      case s.card_patterns[action.card_to_buy] of [
         Some (pattern) -> pattern
       | None -> (failwith ("buy_single: No card pattern.") : card_pattern)
-      end;
+      ];
     const price : tez =
       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    if price > amount then failwith ("Not enough money") else skip;
+    if price > amount then failwith ("Not enough money");
     // Increase quantity
     card_pattern.quantity := card_pattern.quantity + 1n;
     var card_patterns : card_patterns := s.card_patterns;
@@ -404,11 +406,11 @@ function buy_single (const action : action_buy_single;
   } with ((nil : list (operation)), s)
 
 function main (const action : parameter; const s : storage) : return is
-  case action of
+  case action of [
     Buy_single (bs)      -> buy_single (bs, s)
   | Sell_single (as)     -> sell_single (as, s)
   | Transfer_single (at) -> transfer_single (at, s)
-  end
+  ]
 function main (const i : int) : int is if 1 = 1 then 42 else 0
 function main (const i : int) : int is
   block {
@@ -465,10 +467,10 @@ type nested_record_t is
 function nested_record (var nee : nested_record_t) : string is
   block {
     nee.nesty.mymap[1] := "one"
-  } with case nee.nesty.mymap[1] of
+  } with case nee.nesty.mymap[1] of [
            Some (s) -> s
          | None -> (failwith ("Should not happen.") : string)
-         end
+         ]
 type parameter is
   Increment of int
 | Decrement of int
@@ -483,10 +485,10 @@ function decrement (const i : int; const n : int) : int is i-n
 const nop : list (operation) = nil
 
 function main (const action : parameter; const store : storage) : return is
-  case action of
+  case action of [
     Increment (n) -> (nop, increment (store, n))
   | Decrement (n) -> (nop, decrement (store, n))
-  end
+  ]
 type parameter is unit
 type storage is int
 type return is list (operation) * storage
@@ -501,10 +503,10 @@ function main (const p : parameter; const s : storage) : return is
 type storage is michelson_or (int,"foo",string,"bar")
 type foobar is michelson_or (int,"baz",int,"fooo")
 
-type return is list (operation) * storage 
+type return is list (operation) * storage
 
 function main (const action : unit; const store : storage) : return is
-block { 
+block {
   const foo : storage = (M_right ("one") : storage);
   const bar : foobar = (M_right (1) : foobar)
 } with
@@ -513,10 +515,10 @@ block {
 | Baz
 
 function main (const x : t) : int is
-  case x of
+  case x of [
     Bar (n) -> n
   | Baz     -> -1
-  end
+  ]
 type storage is unit
 
 type return is list (operation) * storage
@@ -530,10 +532,10 @@ function cb (const a : address; const s : storage) : return is
 function cbo (const a : address; const s : storage) : return is
   block {
     const c : contract (unit) =
-      case (get_entrypoint_opt ("%cbo", a) : option (contract (unit))) of
+      case (get_entrypoint_opt ("%cbo", a) : option (contract (unit))) of [
         Some (c) -> c
       | None -> (failwith ("cbo: Entrypoint not found.") : contract (unit))
-      end
+      ]
   } with (list [Tezos.transaction (unit, 0tez, c)], s)
 function main (const a : bool; const b : bool) : int is
   block {
@@ -555,10 +557,10 @@ type return is list (operation) * storage
 
 function main (const p : parameter; const s : storage) : return is
   block {
-    case p of
-      Zero (n) -> if n > 0n then failwith ("fail") else skip
-    | Pos (n)  -> if n > 0n then skip else failwith ("fail")
-    end
+    case p of [
+      Zero (n) -> if n > 0n then failwith ("fail")
+    | Pos (n)  -> if not (n > 0n) then failwith ("fail")
+    ]
   }
   with ((nil : list (operation)), s)
 
@@ -572,21 +574,20 @@ function foobar (var i : int) : int is
         failwith ("who knows");
         i := 30 // Should be no-op
       }
-      else skip
     }
     else
-      case p of
+      case p of [
         Zero (n) -> failwith(42n)
       | Pos (n)  -> skip
-      end
+      ]
   } with
-      case p of
+      case p of [
         Zero (n) -> i
       | Pos (n)  -> (failwith ("waaaa") : int)
-      end
+      ]
 
 function failer (const p : int) : int is block {
-  if p = 1 then failwith (42) else skip
+  if p = 1 then failwith (42)
 } with p
 function main (const a : int) : int is
   block { for i := 0 to 100 block { skip } } with i
@@ -621,10 +622,10 @@ function cb (const s : storage) : return is block {
 function cbo (const s : unit) : return is
   block {
     const c : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of
+      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("contract not found") : contract (unit))
-      end
+      ]
   } with (list [Tezos.transaction (unit, 0tez, c)], s)
 type heap_elt is int * string
 
@@ -645,10 +646,10 @@ function pop_switch (var h : heap) : heap is
    const result : heap_elt = get_top (h);
    const s : nat = Map.size (h);
    const last : heap_elt =
-     case h[s] of
+     case h[s] of [
        Some (e) -> e
      | None -> (failwith ("No element.") : heap_elt)
-     end;
+     ];
    remove 1n from map h;
    h[1n] := last
   } with h
@@ -658,10 +659,10 @@ function pop_ (var h : heap) : nat is
     const result : heap_elt = get_top (h);
     const s : nat = Map.size (h);
     var current : heap_elt :=
-      case h[s] of
+      case h[s] of [
         Some (e) -> e
       | None -> (failwith ("No element.") : heap_elt)
-      end;
+      ];
     const i : nat = 1n;
     const left : nat = 2n * i;
     const right : nat = left + 1n;
@@ -674,7 +675,6 @@ function pop_ (var h : heap) : nat is
     else
       if right <= s and heap_elt_lt (tmp, get_force (right,h))
       then largest := right
-      else skip
   } with largest
 
 function insert (var h : heap ; const e : heap_elt) : heap is
@@ -692,8 +692,8 @@ function insert (var h : heap ; const e : heap_elt) : heap is
           const tmp : heap_elt = get_force (i,h);
           h[i] := get_force(parent, h);
           h[parent] := tmp
-        } else skip
-      } else skip
+        }
+      }
     }
   } with h
 
@@ -721,7 +721,7 @@ function pop (var h : heap) : heap * heap_elt * nat is
           const tmp : heap_elt = get_force(i,h);
           h[i] := get_force (left, h);
           h[left] := tmp
-        } else skip
+        }
       }
       else
         if right <= s then {
@@ -730,8 +730,8 @@ function pop (var h : heap) : heap * heap_elt * nat is
             const tmp : heap_elt = get_force (i,h);
             h[i] := get_force (right, h);
             h[left] := tmp
-          } else skip
-        } else skip
+          }
+        }
     }
    } with (h, result, c)
 (* Test a PascaLIGO function which takes another function as an
@@ -838,18 +838,17 @@ be to deter people from doing it just to chew up address space.
 
 function buy (const parameter : buy; const storage : storage) : list(operation) * storage is
   begin
-    if amount = storage.name_price
-    then skip
-    else failwith("Incorrect amount paid.");
+    if amount =/= storage.name_price
+    then failwith("Incorrect amount paid.");
     const profile : bytes = parameter.profile;
     const initial_controller : option(address) = parameter.initial_controller;
     var identities : big_map (id, id_details) := storage.identities;
     const new_id : int = storage.next_id;
     const controller : address =
-      case initial_controller of
+      case initial_controller of [
         Some(addr) -> addr
       | None -> sender
-      end;
+      ];
     const new_id_details: id_details =
       record [
               owner = sender ;
@@ -869,19 +868,17 @@ function update_owner (const parameter : update_owner; const storage : storage) 
     then
       begin
         failwith("Updating owner doesn't cost anything.");
-      end
-    else skip;
+      end;
     const id : int = parameter.id;
     const new_owner : address = parameter.new_owner;
     var identities : big_map (id, id_details) := storage.identities;
     var id_details : id_details :=
-      case identities[id] of
+      case identities[id] of [
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
-      end;
-    if sender = id_details.owner
-    then skip;
-    else failwith("You are not the owner of this ID.");
+      ];
+    if sender =/= id_details.owner
+    then failwith("You are not the owner of this ID.");
     id_details.owner := new_owner;
     identities[id] := id_details;
   end with ((nil: list(operation)), storage with record [ identities = identities; ])
@@ -889,32 +886,31 @@ function update_owner (const parameter : update_owner; const storage : storage) 
 function update_details (const parameter : update_details; const storage : storage ) :
          list(operation) * storage is
   begin
-    if (amount =/= 0mutez)
-    then failwith("Updating details doesn't cost anything.")
-    else skip;
+    if amount =/= 0mutez
+    then failwith("Updating details doesn't cost anything.");
     const id : int = parameter.id;
     const new_profile : option(bytes) = parameter.new_profile;
     const new_controller : option(address) = parameter.new_controller;
     var identities : big_map (id, id_details) := storage.identities;
     var id_details: id_details :=
-      case identities[id] of
+      case identities[id] of [
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
-      end;
+      ];
     if (sender = id_details.controller) or (sender = id_details.owner)
-    then skip;
+    then skip
     else failwith("You are not the owner or controller of this ID.");
     const owner: address = id_details.owner;
     const profile: bytes =
-      case new_profile of
+      case new_profile of [
         None -> (* Default *) id_details.profile
       | Some(new_profile) -> new_profile
-      end;
+      ];
     const controller: address =
-    case new_controller of
+    case new_controller of [
       None -> (* Default *) id_details.controller
     | Some(new_controller) -> new_controller
-    end;
+    ];
     id_details.owner := owner;
     id_details.controller := controller;
     id_details.profile := profile;
@@ -930,12 +926,12 @@ function skip_ (const p: unit; const storage: storage) : list(operation) * stora
   end with ((nil: list(operation)), storage with record [ next_id = storage.next_id + 1; ])
 
 function main (const action : action; const storage : storage) : list(operation) * storage is
-  case action of
+  case action of [
   | Buy(b) -> buy (b, storage)
   | Update_owner(uo) -> update_owner (uo, storage)
   | Update_details(ud) -> update_details (ud, storage)
   | Skip(s) -> skip_ (unit, storage)
-  end;
+  ];
 function main (const kh: key_hash) : contract (unit) is
   Tezos.implicit_account (kh)
 // Test PascaLIGO inclusion statements, see includer.ligo
@@ -1001,9 +997,9 @@ function map_op (const s : list (int)) : list (int) is
     function increment (const i : int) : int is i+1
   } with List.map (increment, s)
 function local_type (var u : unit) : int is block {
-	type toto is int;
-	var titi : toto := 1;
-	titi := titi + 2
+  type toto is int;
+  var titi : toto := 1;
+  titi := titi + 2
 } with titi
 // Test while loops in PascaLIGO
 
@@ -1106,7 +1102,7 @@ function for_collection_comp_with_acc (var nee : unit) : int is
     var myint : int := 0;
     var mylist : list (int) := list [1; 10; 15];
     for x in list mylist block {
-      if x < myint then skip;
+      if x < myint then skip
       else myint := myint + 10
     }
   } with myint
@@ -1188,7 +1184,7 @@ function inner_capture_in_conditional_block (var nee : unit) : bool * int is
     var mylist : list (int) := list [1; 2; 3];
     for it1 in list mylist block {
       for it2 in list mylist block {
-        if count = it2 then ret := not (ret) else skip
+        if count = it2 then ret := not (ret)
       };
       count := count + 1
     }
@@ -1279,38 +1275,38 @@ function deep_op (var m : foobar) : foobar is
 function match_bool (const i : int) : int is
   block {
     var result : int := 23;
-    case i = 2 of
+    case i = 2 of [
       True  -> result := 42
     | False -> result := 0
-    end
+    ]
   } with result
 
 function match_option (const o : option (int)) : int is
   block {
     var result : int := 23;
-    case o of
+    case o of [
       None -> skip
     | Some (s) -> result := s
-    end
+    ]
   } with result
 
 function match_expr_bool (const i : int) : int is
-  case i = 2 of
+  case i = 2 of [
     True -> 42
   | False -> 0
-  end
+  ]
 
 function match_expr_option (const o : option (int)) : int is
-  case o of
+  case o of [
     None -> 42
   | Some (s) -> s
-  end
+  ]
 
 function match_expr_list (const l : list (int)) : int is
-  case l of
+  case l of [
     nil -> -1
   | hd # tl -> hd
-  end
+  ]
 // Test michelson insertion in PascaLIGO
 
 function michelson_add (var n : nat * nat ) : nat is block {
@@ -1417,7 +1413,7 @@ function send (const param : send_pt; var s : storage) : return is
 
     var new_store : addr_set := set [];
 
-    case map_get (packed_msg, s.message_store) of
+    case map_get (packed_msg, s.message_store) of [
       Some (voters) ->
         block {
           (* The message is already stored.
@@ -1436,7 +1432,7 @@ function send (const param : send_pt; var s : storage) : return is
              get_force (Tezos.sender, s.proposal_counters) + 1n;
              new_store := set [Tezos.sender]
         }
-    end;
+    ];
 
     // check sender counters against the maximum number of proposal
 
@@ -1470,7 +1466,7 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
 
-    case s.message_store[packed_msg] of
+    case s.message_store[packed_msg] of [
       Some (voters) ->
         block {
           // The message is stored
@@ -1492,14 +1488,14 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
           else s.message_store[packed_msg] := new_set
         }
     | None -> skip
-    end // The message is not stored, ignore.
+    ] // The message is not stored, ignore.
   } with ((nil : list (operation)), s)
 
 function default (const p : default_pt; const s : storage) : return is
     ((nil : list (operation)), s)
 
 function main (const param : parameter; const s : storage) : return  is
-  case param of
+  case param of [
     (* Propagate message p if the number of authorized addresses having
        voted for the same message p equals the threshold. *)
     | Send (p) -> send (p, s)
@@ -1509,7 +1505,7 @@ function main (const param : parameter; const s : storage) : return  is
 
     (* Use this action to transfer tez to the contract *)
     | Default (p) -> default (p, s)
-  end
+  ]
 // storage type
 
 type counter is nat
@@ -1555,7 +1551,7 @@ function check_message (const param : check_message_pt;
 
     var keys : authorized_keys := s.auth;
     for pkh_sig in list param.signatures block {
-      case keys of
+      case keys of [
         nil -> skip
       | key # tl -> block {
           keys := tl;
@@ -1563,9 +1559,8 @@ function check_message (const param : check_message_pt;
             if Crypto.check (key, pkh_sig.1, packed_payload)
             then valid := valid + 1n
             else failwith ("Invalid signature")
-          else skip
         }
-      end
+      ]
     };
 
     if valid < s.threshold then
@@ -1575,7 +1570,7 @@ function check_message (const param : check_message_pt;
 } with (message (unit), s)
 
 function main (const param : parameter; const s : storage) : return is
-  case param of CheckMessage (p) -> check_message (p,s) end
+  case param of [ CheckMessage (p) -> check_message (p,s) ]
 // Test the option type in PascaLIGO
 
 type foobar is option (int)
@@ -1667,22 +1662,21 @@ function change_address (const param : change_addr_pt;
                          const s : storage_t) : contract_return_t is
   block {
     if sender =/= s then failwith ("Unauthorized sender")
-    else skip
   } with ((nil : list (operation)), param)
 
 function pass_message (const param: pass_message_pt;
                        const s : storage_t ) : contract_return_t is
   block {
-    if sender =/= s then failwith("Unauthorized sender") else skip;
+    if sender =/= s then failwith("Unauthorized sender");
     var message : pass_message_pt := param
   } with (param (unit), s)
 
 function main (const param : entry_point_t; const s : storage_t) :
   contract_return_t is
-  case param of
+  case param of [
     Change_address (p) -> change_address (p,s)
   | Pass_message (p)   -> pass_message (p,s)
-  end
+  ]
 function main (const p : unit) : address is Tezos.self_address
 type parameter is nat
 type storage is int
@@ -1693,7 +1687,9 @@ function main (const p : parameter; const s : storage) : return is
   block {
     const self_contract: contract(parameter) = Tezos.self("%default") ;
   }
-  with ((nil: list(operation)), s)type parameter is Default | Toto of int
+  with ((nil: list(operation)), s)
+
+type parameter is Default | Toto of int
 type storage is nat
 type return is list (operation) * storage
 
@@ -1784,10 +1780,10 @@ function main (const toto : tpi) : int is
     b.x := a.0;
     m["x"] := b.x
   } with
-      case m["x"] of
+      case m["x"] of [
         Some (s) -> s
       | None -> 42
-      end
+      ]
 const s : string = "toto"
 const x : string =  s ^ "bar"
 const y : string =  "foo" ^ x
@@ -1807,10 +1803,10 @@ type return is list (operation) * storage
 
 function main (const p : action; const s : int) : return is
   ((nil : list (operation)),
-   case p of
+   case p of [
      Increment (n) -> s + n
    | Decrement (n) -> s - n
-   end)
+   ])
 const add_tez : tez = 21mutez + 0.000_021tez
 
 const sub_tez : tez = 21mutez - 20mutez
@@ -1853,10 +1849,10 @@ function default (const p : default_pt; const s : storage_t) :
 
 function main(const param : entry_point_t; const s : storage_t) :
   contract_return_t is
-  case param of
+  case param of [
     Call    (p) -> call (p,s)
   | Default (p) -> default (p,s)
-  end
+  ]
 type storage_ is timestamp
 
 function main (const p : unit; const s : storage_) :
@@ -1897,11 +1893,11 @@ type foobar is
 | Kee of nat
 
 function fb (const p : foobar) : int is
-  case p of
+  case p of [
     Foo (n) -> n
   | Bar (t) -> 42
   | Kee (n) -> 23
-  end
+  ]
 type foobar is
   Foo of int
 | Bar of bool
@@ -1930,7 +1926,7 @@ function subtract (const a : int; const b : int) : int is a - b
 
 function main (const p : action; const s : int) : return is
   ((nil : list (operation)),
-    case p of
+    case p of [
       Increment (n) -> add (s, n)
     | Decrement (n) -> subtract (s, n)
-    end)
+    ])

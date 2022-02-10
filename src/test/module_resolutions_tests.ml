@@ -1,4 +1,4 @@
-module ModuleResolutions = Preprocessor.ModuleResolutions
+module ModuleResolutions = Preprocessor.ModRes
 
 let option_eq a b = 0 = Option.compare String.compare (Some a) b
 

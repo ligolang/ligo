@@ -6,9 +6,9 @@ title: Types
 import Syntax from '@theme/Syntax';
 
 *LIGO is strongly and statically typed.* This means that the compiler
-checks how your contract processes data, ensuring that each function's 
-expectations are met. If it passes the test, your contract will not fail at 
-run-time due to some inconsistent assumptions on your data. This is 
+checks how your contract processes data, ensuring that each function's
+expectations are met. If it passes the test, your contract will not fail at
+run-time due to some inconsistent assumptions on your data. This is
 called *type checking*.
 
 LIGO types are built on top of Michelson's type system.
@@ -239,7 +239,7 @@ let my_ledger : ledger =
 </Syntax>
 
 Complementary to records are the *variant types*, which are described in the
-section on [pattern matching](https://ligolang.org/docs/language-basics/unit-option-pattern-matching#variant-types). 
+section on [pattern matching](https://ligolang.org/docs/language-basics/unit-option-pattern-matching#variant-types).
 Records are a product of types, while variant types are sums of types.
 
 ## Annotations
@@ -248,33 +248,28 @@ In certain cases, the type of an expression cannot be properly
 inferred by the compiler. In order to help the type checker, you can
 annotate an expression with its desired type. Here is an example:
 
-
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=d
 type parameter is Back | Claim | Withdraw
 
 type storage is
-  record
-    owner    : address;
+  record [
     goal     : tez;
     deadline : timestamp;
     backers  : map (address, tez);
     funded   : bool
-  end
+  ]
 
 type return is list (operation) * storage
 
-function back (var action : unit; var store : storage) : return is
-  begin
-    if now > store.deadline then
-      failwith ("Deadline passed.")
-    else case store.backers[sender] of
-           None -> store.backers[sender] := amount
-         | Some (x) -> skip
-         end
-  end with ((nil : list (operation)), store) // Annotation
+function back (var action : unit; var store : storage) : return is {
+  if now > store.deadline then failwith ("Deadline passed.");
+  case store.backers[sender] of [
+    None -> store.backers[sender] := amount
+  | Some (_) -> skip
+  ]
+} with ((nil : list (operation)), store) // Type annotation
 ```
 
 </Syntax>
@@ -341,9 +336,9 @@ let back = ((param, store) : (unit, storage)) : return => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-type parameter = 
-  ["Back"] 
-| ["Claim"] 
+type parameter =
+  ["Back"]
+| ["Claim"]
 | ["Withdraw"];
 
 type storage = {
@@ -365,7 +360,7 @@ let back = ([param, store] : [unit, storage]) : return_ => {
     return match(Map.find_opt (sender, store.backers), {
       None: () => {
         let backers = Map.update(sender, Some(amount), store.backers);
-        return [no_op, {...store, backers:backers}]; 
+        return [no_op, {...store, backers:backers}];
       },
       Some: (x: tez) => [no_op, store]
     })
@@ -374,4 +369,3 @@ let back = ([param, store] : [unit, storage]) : return_ => {
 ```
 
 </Syntax>
-

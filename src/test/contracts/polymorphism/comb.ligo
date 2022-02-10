@@ -12,14 +12,14 @@ function rev(const xs : list (_a)) : list (_a) is block {
 function zip(const xs : list(_a); var ys : list(_b)) : list(_a * _b) is block {
   var zs := (nil : list(_a * _b));
   for x in list xs block {
-    var t := case ys of
+    var t := case ys of [
       | nil -> (failwith("error") : _b * list(_b))
       | (y # ys) -> (y, ys)
-    end;
+    ];
     zs := ((x, t.0) # zs);
     ys := t.1;
   };
-  if List.length(ys) > 0n then failwith("error") else skip;
+  if List.length(ys) > 0n then failwith("error") ;
   zs := rev(zs);
 } with zs
 

@@ -154,10 +154,10 @@ let for_
   (acc, {binder; start; final; incr; f_body})
 
 let for_each
-= fun f acc {fe_binder; collection; collection_type; fe_body} ->
+= fun f acc {fe_binder; collection; fe_body ;  collection_type} ->
   let acc,collection = f acc collection in
   let acc,fe_body    = f acc fe_body in
-  (acc, {fe_binder; collection; collection_type; fe_body})
+  (acc, {fe_binder; collection; fe_body ; collection_type})
 
 let while_loop
 = fun f acc {cond; body} ->

@@ -34,7 +34,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
       let res = List.fold ~f:aux ~init:res cases in
       res
     )
-  | E_record m -> Folds.record self init m
+  | E_record m -> List.fold ~f:(fun acc (_,e) -> self acc e) ~init m
   | E_update u -> Folds.update self init u
   | E_accessor a -> Folds.accessor self init a
   | E_tuple t -> Folds.tuple self init t
@@ -95,7 +95,7 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
     let cases' = List.map ~f:aux cases in
     return @@ E_matching {matchee=e';cases=cases'}
   | E_record m -> (
-    let m' = LMap.map self m in
+    let m' = List.map ~f:(fun (k,v) -> (k,self v)) m in
     return @@ E_record m'
   )
   | E_accessor acc -> (
@@ -177,11 +177,11 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
   let return type_content = { type_content; location=te.location } in
   match te'.type_content with
   | T_sum temap ->
-    let temap' = Maps.rows self temap in
-    return @@ T_sum temap'
+    let fields = List.map ~f:(fun (k,v) -> (k, Maps.row_element self v)) temap.fields in
+    return @@ T_sum {temap with fields}
   | T_record temap ->
-    let temap' = Maps.rows self temap in
-    return @@ T_record temap'
+    let fields = List.map ~f:(fun (k,v) -> (k, Maps.row_element self v)) temap.fields in
+    return @@ T_record {temap with fields}
   | T_tuple telst ->
     let telst' = List.map ~f:self telst in
     return @@ T_tuple telst'
@@ -274,9 +274,9 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
     in
     let (res, cases') = List.fold_map ~f:aux ~init:res cases in
     (res, return @@ E_matching {matchee=e';cases=cases'})
-  | E_record m -> (
-    let (res, m') = LMap.fold_map ~f:(fun _ e res -> self res e) ~init m in
-    (res, return @@ E_record m')
+  | E_record r -> (
+    let (res, t') = List.fold_map ~f:(fun res (_,v) -> self res v) ~init r in
+    (res, return @@ E_tuple t')
   )
   | E_accessor acc -> (
       let (res, acc) = Fold_maps.accessor self init acc in
@@ -404,8 +404,7 @@ module Free_variables :
       in
       VarSet.union (self matchee) (unions @@ List.map ~f:aux cases)
     | E_record m ->
-      let res = LMap.map self m in
-      let res = LMap.to_list res in
+      let res = List.map ~f:(fun (_,v) -> self v) m in
       unions res
     | E_accessor {record;path} ->
       let aux = function
@@ -448,7 +447,7 @@ module Free_variables :
       unions @@ [VarSet.singleton variable; self expression] @ List.map ~f:aux access_path
     | E_for {binder; start; final; incr; f_body} ->
       VarSet.remove binder @@ unions [self start; self final; self incr; self f_body]
-    | E_for_each {fe_binder = (binder, None); collection; fe_body;collection_type=_} ->
+    | E_for_each {fe_binder = (binder, None); collection; fe_body; collection_type = _} ->
       unions [self collection; VarSet.remove binder @@ self fe_body]
     | E_for_each {fe_binder = (binder, Some binder'); collection; fe_body;_} ->
       unions [self collection; VarSet.remove binder @@ VarSet.remove binder' @@ self fe_body]

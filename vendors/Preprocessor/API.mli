@@ -38,13 +38,20 @@ type module_name = string
 type line_comment  = string (* Opening of a line comment *)
 type block_comment = <opening : string; closing : string>
 
+(* Configuration
+
+     * The field [dirs] is the list of directories to search for
+       #include files.
+     * The field [mod_res] is a data structure used for
+       resolving path to external packages/modules *)
+
 type config = <
-  block              : block_comment option;
-  line               : line_comment option;
-  input              : file_path option;
-  offsets            : bool;           (* [true] for horizontal offsets *)
-  dirs               : file_path list; (* Directories to search for #include files *)
-  module_resolutions : ModuleResolutions.t option 
+  block   : block_comment option;
+  line    : line_comment option;
+  input   : file_path option;
+  offsets : bool;
+  dirs    : file_path list;
+  mod_res : ModRes.t option
 >
 
 (* In case of success, a buffer containing the preprocessed input is

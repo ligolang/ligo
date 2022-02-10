@@ -9,7 +9,7 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-function and : 'a -> nat -> nat
+val and : 'a -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val and : 'a -> nat -> nat
@@ -28,14 +28,14 @@ A bitwise `and` operation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const zero: nat = Bitwise.and(2n, 1n)
+const zero : nat = Bitwise.and (2n, 1n)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let zero: nat = Bitwise.and 2n 1n
+let zero : nat = Bitwise.and 2n 1n
 ```
 
 </Syntax>
@@ -56,7 +56,7 @@ let zero: nat = Bitwise.and(2 as nat, 1 as nat);
 
 
 <SyntaxTitle syntax="pascaligo">
-function or : nat -> nat -> nat
+val or : nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val or :  nat -> nat -> nat
@@ -73,14 +73,14 @@ A bitwise `or` operation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const three: nat = Bitwise.or(2n, 1n)
+const three : nat = Bitwise.or (2n, 1n)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let three: nat = Bitwise.or 2n 1n
+let three : nat = Bitwise.or 2n 1n
 ```
 
 </Syntax>
@@ -100,7 +100,7 @@ let three: nat = Bitwise.or(2 as nat, 1 as nat);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function xor : nat -> nat -> nat
+val xor : nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val xor :  nat -> nat -> nat
@@ -117,14 +117,14 @@ A bitwise `xor` operation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const three: nat = Bitwise.xor(2n, 1n)
+const three : nat = Bitwise.xor (2n, 1n)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let three: nat = Bitwise.xor 2n 1n
+let three : nat = Bitwise.xor 2n 1n
 ```
 
 </Syntax>
@@ -144,7 +144,7 @@ let three: nat = Bitwise.xor(2 as nat, 1 as nat);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function shift_left : nat -> nat -> nat
+val shift_left : nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val shift_left :  nat -> nat -> nat
@@ -161,14 +161,14 @@ A bitwise shift left operation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const four: nat = Bitwise.shift_left(2n, 1n)
+const four : nat = Bitwise.shift_left (2n, 1n)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let four: nat = Bitwise.shift_left 2n 1n
+let four : nat = Bitwise.shift_left 2n 1n
 ```
 
 </Syntax>
@@ -188,7 +188,7 @@ let four: nat = Bitwise.shift_left(2 as nat, 1 as nat);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function shift_right : nat -> nat -> nat
+val shift_right : nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val shift_right :  nat -> nat -> nat
@@ -205,14 +205,14 @@ A bitwise shift right operation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const one: nat = Bitwise.shift_right(2n, 1n)
+const one : nat = Bitwise.shift_right (2n, 1n)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let one: nat = Bitwise.shift_right 2n 1n
+let one : nat = Bitwise.shift_right 2n 1n
 ```
 
 </Syntax>

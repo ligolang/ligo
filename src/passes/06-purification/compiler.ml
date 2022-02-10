@@ -143,15 +143,19 @@ and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : Z.
 
 let rec compile_type_expression ~raise : I.type_expression -> O.type_expression =
   fun te ->
+  (*
+    At this point sum and record types becomes linear by their type (see previous pass in self_imperative)
+    TODO: nano pass from non-linear to linear types (?)
+  *)
   let self = compile_type_expression ~raise in
   let return tc = O.make_t ~loc:te.location tc in
   match te.type_content with
-    | I.T_sum sum ->
-      let sum = rows self sum in
-      return @@ O.T_sum sum
-    | I.T_record record ->
-      let record = rows self record in
-      return @@ O.T_record record
+    | I.T_sum { attributes ; fields } ->
+      let fields = O.LMap.(map (row_element self) (of_list fields)) in
+      return @@ O.T_sum { attributes ; fields }
+    | I.T_record { attributes ; fields } ->
+      let fields = O.LMap.(map (row_element self) (of_list fields)) in
+      return @@ O.T_record { attributes ; fields }
     | I.T_tuple tuple ->
       let tuple = List.map ~f:self tuple in
       return @@ O.T_tuple tuple
@@ -246,8 +250,9 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let m = compile_matching ~raise ~last m e.location in
       m
     | I.E_record recd ->
-      let recd = record self recd in
-      return @@ O.E_record recd
+      (* at this point record expression become linear wrt labels *)
+      let recd = List.map ~f:(fun (l,e) -> l, self e) recd in
+      return @@ O.E_record (O.LMap.of_list recd)
     | I.E_accessor acc ->
       let acc = accessor self acc in
       return @@ O.E_accessor acc
@@ -311,11 +316,12 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let expression = self expression in
       let loc = e.location in
       let rhs = match access_path with
-        [] -> expression
-      | _  -> O.e_update ~loc (O.e_variable ~loc variable) access_path expression in
-      fun expr ->
-        O.e_let_in_ez ~loc variable true [] rhs
-        @@ Option.value ~default:(O.e_skip ()) expr
+        | [] -> expression
+        | _  -> O.e_update ~loc (O.e_variable ~loc variable) access_path expression
+      in
+      (fun expr_opt ->
+        O.e_let_in_ez ~loc variable true [] rhs (Option.value ~default:(O.e_skip ()) expr_opt)
+      )
     | I.E_for f ->
       let f = compile_for ~raise ~last f in
       f
@@ -494,7 +500,8 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
     | _ -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
   let lambda = O.e_lambda_ez args None (restore for_body) in
-  let op_name = match collection_type with
+  let op_name =
+    match collection_type with
    | Map -> O.C_MAP_FOLD | Set -> O.C_SET_FOLD | List -> O.C_LIST_FOLD | Any -> O.C_FOLD
   in
   let fold = fun expr ->
