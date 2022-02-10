@@ -42,7 +42,7 @@ import Cli.Json
 import Cli.Types
 import Log (Log, i)
 import Log qualified
-import ParseTree (Source (..), srcToText)
+import ParseTree (Source (..))
 
 ----------------------------------------------------------------------------
 -- Errors
@@ -161,7 +161,7 @@ callLigoImpl :: HasLigoClient m => [String] -> Maybe Source -> m (Text, Text)
 callLigoImpl args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
-    raw <- maybe "" unpack <$> traverse srcToText conM
+    let raw = maybe "" (unpack . srcText) conM
     let fpM = srcPath <$> conM
     (ec, lo, le) <- readProcessWithExitCode _lceClientPath args raw
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
@@ -193,10 +193,8 @@ usingTemporaryDir
   => Source
   -> (FilePath -> Handle -> m a)
   -> m (a, Text -> Text)
-usingTemporaryDir src action = do
-  let fp = srcPath src
+usingTemporaryDir (Source fp contents) action =
   withRunInIO \run -> withSystemTempFile (takeFileName fp) \tempFp handle -> do
-    contents <- srcToText src
     Text.hPutStr handle contents
     hFlush handle
     let fixMarkers = Text.replace (pack tempFp) (pack fp)
@@ -272,10 +270,7 @@ preprocess contract = Log.addNamespace "preprocess" $ Log.addContext contract do
         Left err -> do
           $(Log.err) [i|Unable to preprocess contract with: #{err}|]
           throwIO $ LigoPreprocessFailedException (pack err) fp
-        Right newContract -> pure $ (, errs) case contract of
-          Path       path   -> Text path newContract
-          Text       path _ -> Text path newContract
-          ByteString path _ -> ByteString path $ encodeUtf8 newContract
+        Right newContract -> pure (Source fp newContract, errs)
     Left LigoClientFailureException {cfeStderr} ->
       handleLigoError fp (fixMarkers cfeStderr)
   where

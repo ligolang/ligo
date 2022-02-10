@@ -10,7 +10,6 @@ module Test.Common.Util
   , withoutLogger
   ) where
 
-import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
 import Data.List (isSuffixOf)
@@ -22,13 +21,14 @@ import System.IO.Error (isDoesNotExistError)
 import UnliftIO.Exception (catch, throwIO)
 
 import AST.Includes (insertPreprocessorRanges)
-import AST.Parser (Source (Path), parsePreprocessed, parseWithScopes)
-import AST.Scope.Common (HasScopeForest, Info', contractTree, _cMsgs, _cTree, _getContract)
+import AST.Parser (parsePreprocessed, parseWithScopes)
+import AST.Scope.Common (ContractInfo, HasScopeForest, Info', contractTree)
 import AST.Skeleton (SomeLIGO)
 
 import Extension (supportedExtensions)
 import Log (NoLoggingT, withoutLogger)
-import Parser (ParsedInfo, Msg)
+import Parser (ParsedInfo)
+import ParseTree (pathToSrc)
 
 type ScopeTester impl = HasScopeForest impl (NoLoggingT IO)
 
@@ -52,18 +52,19 @@ getContractsWithExtension ext ignore dir = listDirectory dir
                                 <&> filter (`notElem` ignore)
 
 readContract :: FilePath -> IO (SomeLIGO ParsedInfo)
-readContract filepath = withoutLogger \runLogger -> do
-  pp <- runLogger $ parsePreprocessed (Path filepath)
+readContract filepath = do
+  pp <- readContractWithMessages filepath
   ppRanges <- insertPreprocessorRanges pp
   pure (contractTree ppRanges)
 
-readContractWithMessages :: FilePath -> IO (SomeLIGO ParsedInfo, [Msg])
-readContractWithMessages filepath = withoutLogger \runLogger ->
-  (_cTree &&& _cMsgs) . _getContract
-    <$> (insertPreprocessorRanges =<< runLogger (parsePreprocessed $ Path filepath))
+readContractWithMessages :: FilePath -> IO ContractInfo
+readContractWithMessages filepath = withoutLogger \runLogger -> do
+  src <- pathToSrc filepath
+  runLogger (parsePreprocessed src)
 
 readContractWithScopes
   :: forall parser. ScopeTester parser
   => FilePath -> IO (SomeLIGO Info')
-readContractWithScopes filepath = withoutLogger \runLogger ->
-  contractTree <$> runLogger (parseWithScopes @parser $ Path filepath)
+readContractWithScopes filepath = withoutLogger \runLogger -> do
+  src <- pathToSrc filepath
+  contractTree <$> runLogger (parseWithScopes @parser src)

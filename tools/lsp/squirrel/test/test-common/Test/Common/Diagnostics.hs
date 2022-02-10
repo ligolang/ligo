@@ -12,10 +12,11 @@ import Range
 import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
 
-import AST.Parser (Source (Path), collectAllErrors, parseWithScopes)
+import AST.Parser (collectAllErrors, parseWithScopes)
 import AST.Scope (Fallback, FromCompiler, Standard)
 import AST.Skeleton (Error (..))
 import Log (runNoLoggingT)
+import ParseTree (pathToSrc)
 
 import qualified Test.Common.Capabilities.Util as Util (contractsDir)
 import Test.Common.FixedExpectations (HasCallStack, shouldMatchList)
@@ -83,7 +84,8 @@ parseDiagnosticsDriver
   -> DiagnosticTest
   -> Assertion
 parseDiagnosticsDriver source (DiagnosticTest file fromCompiler fallback) = do
-  contract <- runNoLoggingT $ parseWithScopes @impl (Path file)
+  src <- pathToSrc file
+  contract <- runNoLoggingT $ parseWithScopes @impl src
   let
     expectedMsgs = case source of
       CompilerSource -> fromCompiler

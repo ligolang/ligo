@@ -13,7 +13,7 @@ import System.Environment (setEnv)
 
 import AST (Fallback, FindFilepath, Msg, ParsedContract (..), _getContract, parse, parseWithScopes)
 import Log (withoutLogger)
-import ParseTree (Source (Path))
+import ParseTree (pathToSrc)
 
 newtype Command = PrintSexp PrintSexpOptions
 
@@ -70,7 +70,8 @@ main = withUtf8 $ withoutLogger \runLogger -> do
     parser
       | psoWithScopes = toPretty . parseWithScopes @Fallback
       | otherwise     = toPretty . parse
-  (tree, messages) <- runLogger $ parser (Path psoContract)
+  src <- pathToSrc psoContract
+  (tree, messages) <- runLogger $ parser src
   liftIO do
     putStrLn (render (pp tree))
     unless (null messages) do

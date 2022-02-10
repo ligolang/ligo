@@ -18,16 +18,13 @@ module ParseTree
   , toParseTree
 
     -- * Read file contents from its source
-  , srcToBytestring
-  , srcToText
+  , pathToSrc
   )
   where
 
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
-import Data.ByteString qualified as BS
 import Data.Functor.Classes (Show1 (..))
-import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
@@ -57,11 +54,10 @@ foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
 
-data Source
-  = Path       { srcPath :: FilePath }
-  | Text       { srcPath :: FilePath, srcText :: Text }
-  | ByteString { srcPath :: FilePath, srcBS   :: ByteString }
-  deriving stock (Eq, Ord)
+data Source = Source
+  { srcPath :: FilePath
+  , srcText :: Text
+  } deriving stock (Eq, Ord)
 
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]
@@ -71,23 +67,11 @@ deriving anyclass instance ToObject Source
 instance LogItem Source where
   payloadKeys = const $ const AllKeys
 
-instance IsString Source where
-  fromString = Path
-
 instance Show Source where
   show = show . srcPath
 
-srcToBytestring :: MonadIO m => Source -> m ByteString
-srcToBytestring = \case
-  Path       p   -> liftIO $ BS.readFile p
-  Text       _ t -> return $ Text.encodeUtf8 t
-  ByteString _ s -> return s
-
-srcToText :: MonadIO m => Source -> m Text
-srcToText = \case
-  Path       p   -> liftIO $ Text.readFile p
-  Text       _ t -> return t
-  ByteString _ s -> return $ Text.decodeUtf8 s
+pathToSrc :: MonadIO m => FilePath -> m Source
+pathToSrc p = Source p <$> liftIO (Text.readFile p)
 
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = (Range, Text)
@@ -113,7 +97,7 @@ data SomeRawTree = SomeRawTree Lang RawTree
   deriving stock (Show)
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
-toParseTree dialect input = Log.addNamespace "toParseTree" do
+toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
   $(Log.debug) [Log.i|Reading #{input}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
@@ -121,7 +105,7 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
         Reason -> tree_sitter_ReasonLigo
 
   res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
-    src <- srcToBytestring input
+    let src = Text.encodeUtf8 input
     withParseTree parser src \tree ->
       withRootNode tree (peek >=> go src)
 
@@ -168,7 +152,7 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
                   , pointColumn finish2D + 1
                   , nodeEndByte node
                   )
-              , _rFile = srcPath input
+              , _rFile = fp
               }
 
           pure $ fastMake

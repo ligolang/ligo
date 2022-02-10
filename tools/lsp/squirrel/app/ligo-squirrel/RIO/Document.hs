@@ -53,7 +53,7 @@ import Cli (getLigoClientEnv)
 import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log qualified
 import Parser (emptyParsedInfo)
-import ParseTree (Source (..))
+import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), (%))
 import RIO.Types (Contract (..), RIO, RioEnv (..))
 import Util.Graph (traverseAMConcurrently, wcc)
@@ -107,7 +107,7 @@ delete uri = do
       let
         -- Dummy
         c = FindContract
-          (Path fp)
+          (Source fp "")
           (SomeLIGO Caml $ fastMake emptyParsedInfo (Error "Impossible" []))
           []
       modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
@@ -154,9 +154,9 @@ preload uri = Log.addNamespace "preload" do
   fin' <- bool handlePersistedFile (pure fin) =<< doesFileExist fin
 
   mvf <- S.getVirtualFile uri
-  return case mvf of
-    Just vf -> Text fin' (V.virtualFileText vf)
-    Nothing -> Path fin'
+  case mvf of
+    Just vf -> pure $ Source fin' (V.virtualFileText vf)
+    Nothing -> pathToSrc fin'
 
 loadWithoutScopes :: J.NormalizedUri -> RIO ContractInfo
 loadWithoutScopes uri = Log.addNamespace "loadWithoutScopes" do

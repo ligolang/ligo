@@ -49,7 +49,7 @@ import Parser
   ( Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo
   , parseLineMarkerText
   )
-import ParseTree (Source (..), srcToText)
+import ParseTree (Source (..))
 import Product (Contains, Product (..), getElem, modElem, putElem)
 import Range
   ( PreprocessedRange (..), Range (..), getRange, rangeLines, rFile, rFinish, rStart
@@ -71,7 +71,7 @@ getMarkers ligo = toList $ snd $ execRWS (loopM_ collectMarkers ligo) () ()
 -- | Extracts all file paths mentioned in line markers.
 extractIncludes :: forall m. (MonadIO m, MonadFail m) => Source -> m [LineMarker]
 extractIncludes src = do
-  contents <- srcToText src
+  let contents = srcText src
   regex :: Regex <- makeRegexM source
   let
     matches = getAllTextMatches . match regex <$> Text.lines contents
@@ -108,7 +108,7 @@ includesGraph' contracts = do
   let
     findContract :: FilePath -> (Source, DList (FilePath, FilePath))
     findContract contract =
-      Map.findWithDefault (Path contract, []) contract knownContracts
+      Map.findWithDefault (Source contract "", []) contract knownContracts
 
     go
       :: Source
@@ -273,6 +273,6 @@ includesGraph contracts = do
     emptyContract :: FilePath -> ParsedContractInfo
     emptyContract name =
       FindContract
-        (Path name)
+        (Source name "")
         (SomeLIGO Caml (fastMake emptyParsedInfo (Error ("Missing contract: " <> Text.pack name) [])))
         []

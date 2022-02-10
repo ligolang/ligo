@@ -43,7 +43,7 @@ import Cli
 import Extension
 import Log (Log, i)
 import Log qualified
-import ParseTree (Source (..), srcToText, toParseTree)
+import ParseTree (Source (..), pathToSrc, toParseTree)
 import Parser
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
 import Util.Graph (wcc)
@@ -62,7 +62,7 @@ parse src = do
 
 loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, Maybe Msg)
 loadPreprocessed src = do
-  (src', needsPreprocessing) <- prePreprocess <$> srcToText src
+  let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
     then
       (second (const Nothing) <$> preprocess src') `catches`
@@ -87,7 +87,7 @@ loadPreprocessed src = do
         prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
         shouldPreprocess = hasPreprocessor || any snd prepreprocessed
       in
-      (Text (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
+      (Source (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
 
 parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
@@ -121,7 +121,8 @@ parseContracts parser reportProgress top = do
   pooledMapConcurrently
     (\(n, c) -> do
       reportProgress (Progress (n % numContracts) (mkMsg c))
-      parser (Path c))
+      src <- pathToSrc c
+      parser src)
     (zip [(0 :: Int) ..] input)
 
 -- | Scan the whole directory for LIGO contracts.
