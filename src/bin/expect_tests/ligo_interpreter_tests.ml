@@ -503,8 +503,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run"; "test" ; bad_test "bad_balances_reset.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-91:
-      1 | let test = Test.reset_state 2n [4000tez;4000tez] ([] : ((string * key) * tez option)  list)
+    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
+      1 | let test = Test.reset_state 2n [4000tez;4000tez]
 
      baker account initial balance must at least reach 8000 tez |}]
 

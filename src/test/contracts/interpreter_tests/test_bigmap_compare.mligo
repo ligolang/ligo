@@ -2,7 +2,7 @@ let main ((a, n), s : (address * nat) * ((address * nat), nat) big_map) : operat
   ([] : operation list), Big_map.add (a, 1n) n s
 
 let test =
-    let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
+    let () = Test.reset_state 10n ([] : tez list) in
     let a1 = Test.nth_bootstrap_account 1 in
     let initial_storage = Big_map.literal [((a1, 0n), 42n)] in
     let (taddr, _,_) = Test.originate main initial_storage 0tez in

@@ -33,7 +33,7 @@ let test =
   match (Test.transfer_to_contract contr One 10tez : test_exec_result) with
   | Success _ -> (failwith "contract did not fail" : michelson_program)
   | Fail x -> (
-    let x = (fun (x : test_exec_error) -> x) x in
+    let x = (fun (x : test_exec_error) -> x) x in 
     match x with
     | Rejected reject_data ->
       let (v,addr) = reject_data in
@@ -48,11 +48,11 @@ let test2 =
   // By default:
   //  - only 2 bootstrap accounts are created with a default amount of 4000000000000 mutez
   //  - the 1st and 2nd bootstrap accounts are used as baker and source respectively
-
+  
   // You can change the default behavior by reseting the state:
   let number_of_account = 4n in
-  let overide_default_amounts = [ 8000tez ; 2mutez ] in // the [i]th element of the list overwrite default balance of the [i]th account
-  let () = Test.reset_state number_of_account overide_default_amounts ([] : ((string * key) * tez option)  list) in
+  let overide_default_amounts = [ 8000tez ; 2mutez ] in // the [i]th element of the list overwrite default balance of the [i]th account 
+  let () = Test.reset_state number_of_account overide_default_amounts in
   // And by setting the source in between calls to `Test.transfer_to_contract` or `Test.originate`
   let bsa0 = (Test.nth_bootstrap_account 0) in
   let bsa1 = (Test.nth_bootstrap_account 1) in

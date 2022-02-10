@@ -10,7 +10,7 @@ let test_new =
   Test.get_balance a
 
 let test_add =
-  let () = Test.reset_state 2n ([] : tez list) ([] : ((string * key) * tez option)  list) in
+  let () = Test.reset_state 2n ([] : tez list) in
   let sk = "edsk3FhQ1djEDDCfqseyfbrpwkw5ogTDAaryXAdQGhk5Vpw6VGgo6v" in
   let pk = ("edpkv2kByfiJmUHr3SCp2rpASF2xSEhT248MSNEAZK9ho86sMBdcuE" : key) in
   let () = Test.add_account sk pk in
