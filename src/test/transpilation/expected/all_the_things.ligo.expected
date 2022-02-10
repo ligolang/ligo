@@ -37,8 +37,9 @@ type action is
 
 function transfer (const p : transfer; const s : storage)
   : list (operation) * storage is
-block {
+{
   var new_allowances : allowances := Big_map.empty;
+
   if Tezos.sender = p.address_from
   then {
     new_allowances := s.allowances
@@ -48,9 +49,9 @@ block {
     := case (Big_map.find_opt
               ((Tezos.sender, p.address_from), s.allowances))
       of [
-        Some (value) -> value
-      | None -> 0n
+        Some (value) -> value | None -> 0n
       ];
+
     if (authorized_value < p.value)
     then {
       failwith ("Not Enough Allowance")
@@ -63,26 +64,27 @@ block {
            s.allowances)
     }
   };
+
   var sender_balance : nat
   := case (Big_map.find_opt (p.address_from, s.tokens)) of [
-      Some (value) -> value
-    | None -> 0n
+      Some (value) -> value | None -> 0n
     ];
+
   var new_tokens : tokens := Big_map.empty;
+
   if (sender_balance < p.value)
-  then {
-    failwith ("Not Enough Balance")
-  }
+  then failwith ("Not Enough Balance")
   else {
     new_tokens :=
       Big_map.update
         (p.address_from,
          (Some (abs (sender_balance - p.value))), s.tokens);
+
     var receiver_balance : nat
     := case (Big_map.find_opt (p.address_to, s.tokens)) of [
-        Some (value) -> value
-      | None -> 0n
+        Some (value) -> value | None -> 0n
       ];
+
     new_tokens :=
       Big_map.update
         (p.address_to, (Some (receiver_balance + p.value)),
@@ -98,19 +100,18 @@ block {
 
 function approve (const p : approve; const s : storage)
   : list (operation) * storage is
-block {
+{
   var previous_value : nat
   := case Big_map.find_opt
            ((p.spender, Tezos.sender), s.allowances)
     of [
-      Some (value) -> value
-    | None -> 0n
+      Some (value) -> value | None -> 0n
     ];
+
   var new_allowances : allowances := Big_map.empty;
+
   if previous_value > 0n and p.value > 0n
-  then {
-    failwith ("Unsafe Allowance Change")
-  }
+  then failwith ("Unsafe Allowance Change")
   else {
     new_allowances :=
       Big_map.update
@@ -119,20 +120,19 @@ block {
   }
 } with
     ((nil : list (operation)),
-     s with
-       record [allowances = new_allowances])
+     s with record [allowances = new_allowances])
 
 function getAllowance
   (const p : getAllowance;
    const s : storage) : list (operation) * storage is
-block {
+{
   var value : nat
   := case Big_map.find_opt
            ((p.owner, p.spender), s.allowances)
     of [
-      Some (value) -> value
-    | None -> 0n
+      Some (value) -> value | None -> 0n
     ];
+
   var op : operation
   := Tezos.transaction (value, 0mutez, p.callback)
 } with (list [op], s)
@@ -140,12 +140,12 @@ block {
 function getBalance
   (const p : getBalance;
    const s : storage) : list (operation) * storage is
-block {
+{
   var value : nat
   := case Big_map.find_opt (p.owner, s.tokens) of [
-      Some (value) -> value
-    | None -> 0n
+      Some (value) -> value | None -> 0n
     ];
+
   var op : operation
   := Tezos.transaction (value, 0mutez, p.callback)
 } with (list [op], s)
@@ -153,8 +153,9 @@ block {
 function getTotalSupply
   (const p : getTotalSupply;
    const s : storage) : list (operation) * storage is
-block {
+{
   var total : nat := s.total_amount;
+
   var op : operation
   := Tezos.transaction (total, 0mutez, p.callback)
 } with (list [op], s)
@@ -170,13 +171,14 @@ function main (const a : action; const s : storage)
   ]
 
 function main (const p : key_hash) : address is
-block {
+{
   const c : contract (unit) = Tezos.implicit_account (p)
 } with Tezos.address (c)
 
 function check (const p : unit) : int is
-block {
+{
   var result : int := 0;
+
   if amount = 100000000mutez
   then result := 42
   else result := 0
@@ -213,30 +215,33 @@ function div_op (const n : int) : int is n / 2
 
 function int_op (const n : nat) : int is int (n)
 
-function neg_op (const n : int) : int is -n
+function neg_op (const n : int) : int is - n
 
 function ediv_op (const n : int) : option (int * nat) is
   ediv (n, 2)
 
 function main (var i : int) : int is
-block {
+{
   i := i + 1
 } with i
 
 [@annot] const x : int = 1
 
-[@inline] function foo (const a : int) : int is
-block {
+[@inline]
+function foo (const a : int) : int is
+{
   [@inline] const test : int = 2 + a
 } with test
 
 [@inline][@other] const y : int = 1
 
 function bar (const b : int) : int is
-block {
-  [@inline][@foo][@bar] function test (const z : int)
-    : int is
-  block {
+{
+  [@inline]
+  [@foo]
+  [@bar]
+  function test (const z : int) : int is
+  {
     const r : int = 2 + b + z
   } with r
 } with test (b)
@@ -273,23 +278,25 @@ type return is list (operation) * storage
 
 function main (const p : parameter; var s : storage)
   : return is
-block {
+{
   var toto : option (int) := Some (0);
-  toto := s.0 [23];
-  s.0 [2] := 444
+
+  toto := s.0 [23] ;
+
+  s.0 [2]  := 444
 } with ((nil : list (operation)), s)
 
 type foo is big_map (int, int)
 
 function set_ (var n : int; var m : foo) : foo is
-block {
-  m [23] := n
+{
+  m [23]  := n
 } with m
 
 function add (var n : int; var m : foo) : foo is set_ (n, m)
 
 function rm (var m : foo) : foo is
-block {
+{
   remove 42 from map m
 } with m
 
@@ -301,10 +308,12 @@ const big_map1 : big_map (int, int)
 = big_map [23 -> 0; 42 -> 0]
 
 function mutimaps (const m : foo; var n : foo) : foo is
-block {
+{
   var bar : foo := m;
-  bar [42] := 0;
-  n [42] := get_force (42, bar)
+
+  bar [42]  := 0;
+
+  n [42]  := get_force (42, bar)
 } with n
 
 function or_op (const n : nat) : nat is Bitwise.or (n, 4n)
@@ -341,18 +350,18 @@ function hasherman (const s : bytes) : bytes is
   Crypto.sha256 (s)
 
 function id_string (const p : string) : option (string) is
-block {
+{
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (string))
 
 function id_int (const p : int) : option (int) is
-block {
+{
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (int))
 
 function id_address (const p : address)
   : option (address) is
-block {
+{
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (address))
 
@@ -366,26 +375,30 @@ function check_signature
   Crypto.check (pk, signed, msg)
 
 function foo (const i : int) : int is
-block {
+{
   function add (const j : int) : int is i + j
 } with add (i)
 
 function foobar (const i : int) : int is
-block {
+{
   const j : int = 3;
+
   function add (const k : int) : int is i + j + k
 } with add (42)
 
 function foobar (const i : int) : int is
-block {
+{
   const j : int = 3;
+
   const k : int = 4;
+
   function add (const l : int) : int is i + j + k + l
 } with add (42)
 
 function toto (const i : int) : int is
-block {
+{
   function tata (const j : int) : int is i + j;
+
   function titi (const j : int) : int is i + j
 } with tata (i) + titi (i)
 
@@ -431,50 +444,64 @@ type parameter is
 function transfer_single
   (const action : action_transfer_single;
    var s : storage) : return is
-block {
+{
   var cards : cards := s.cards;
+
   var card : card
-  := case cards [action.card_to_transfer] of [
+  := case cards [action.card_to_transfer]  of [
       Some (card) -> card
     | None ->
         (failwith ("transfer_single: No card.") : card)
     ];
+
   if card.card_owner =/= sender
-  then failwith ("This card doesn't belong to you")
-  else skip;
+  then failwith ("This card doesn't belong to you");
+
   card.card_owner := action.destination;
-  cards [action.card_to_transfer] := card;
+
+  cards [action.card_to_transfer]  := card;
+
   s.cards := cards
 } with ((nil : list (operation)), s)
 
 function sell_single
   (const action : action_sell_single;
    var s : storage) : return is
-block {
+{
   const card : card
-  = case s.cards [action.card_to_sell] of [
+  = case s.cards [action.card_to_sell]  of [
       Some (card) -> card
     | None -> (failwith ("sell_single: No card.") : card)
     ];
+
   if card.card_owner =/= sender
-  then failwith ("This card doesn't belong to you")
-  else skip;
+  then failwith ("This card doesn't belong to you");
+
   var card_pattern : card_pattern
-  := case s.card_patterns [card.card_pattern] of [
+  := case s.card_patterns [card.card_pattern]  of [
       Some (pattern) -> pattern
     | None ->
         (failwith ("sell_single: No card pattern.")
          : card_pattern)
     ];
+
   card_pattern.quantity := abs (card_pattern.quantity - 1n);
+
   var card_patterns : card_patterns := s.card_patterns;
-  card_patterns [card.card_pattern] := card_pattern;
+
+  card_patterns [card.card_pattern]  := card_pattern;
+
   s.card_patterns := card_patterns;
+
   var cards : cards := s.cards;
+
   remove action.card_to_sell from map cards;
+
   s.cards := cards;
+
   const price : tez
   = card_pattern.coefficient * card_pattern.quantity;
+
   const receiver : contract (unit)
   = case (Tezos.get_contract_opt (Tezos.sender)
           : option (contract (unit)))
@@ -484,38 +511,48 @@ block {
         (failwith ("sell_single: No contract.")
          : contract (unit))
     ];
+
   const op : operation
   = Tezos.transaction (unit, price, receiver);
+
   const operations : list (operation) = list [op]
 } with (operations, s)
 
 function buy_single
   (const action : action_buy_single;
    var s : storage) : return is
-block {
+{
   var card_pattern : card_pattern
-  := case s.card_patterns [action.card_to_buy] of [
+  := case s.card_patterns [action.card_to_buy]  of [
       Some (pattern) -> pattern
     | None ->
         (failwith ("buy_single: No card pattern.")
          : card_pattern)
     ];
+
   const price : tez
   = card_pattern.coefficient * (card_pattern.quantity + 1n);
-  if price > amount
-  then failwith ("Not enough money")
-  else skip;
+
+  if price > amount then failwith ("Not enough money");
+
   card_pattern.quantity := card_pattern.quantity + 1n;
+
   var card_patterns : card_patterns := s.card_patterns;
-  card_patterns [action.card_to_buy] := card_pattern;
+
+  card_patterns [action.card_to_buy]  := card_pattern;
+
   s.card_patterns := card_patterns;
+
   var cards : cards := s.cards;
-  cards [s.next_id] :=
+
+  cards [s.next_id]  :=
     record [
       card_owner = sender;
       card_pattern = action.card_to_buy
     ];
+
   s.cards := cards;
+
   s.next_id := s.next_id + 1n
 } with ((nil : list (operation)), s)
 
@@ -531,13 +568,14 @@ function main (const i : int) : int is
   if 1 = 1 then 42 else 0
 
 function main (const i : int) : int is
-block {
+{
   var result : int := 23;
+
   if i = 2 then result := 42 else result := 0
 } with result
 
 function foo (const b : bool) : int is
-block {
+{
   const x : int = 41
 } with 1 + (if b then x else main (x))
 
@@ -545,7 +583,7 @@ type t is int
 
 function main (const p : int; const s : t)
   : list (operation) * int is
-block {
+{
   skip
 } with ((nil : list (operation)), p + s)
 
@@ -556,7 +594,7 @@ function hasherman_blake (const s : bytes) : bytes is
   Crypto.blake2b (s)
 
 function main (const i : int) : int is
-block {
+{
   const j : int = 42
 } with j
 
@@ -571,27 +609,28 @@ type ppi is record [x : pii; y : pii]
 type ppp is ppi * ppi
 
 function main (const toto : unit) : int is
-block {
+{
   var a : ppp
   := (record [x = (0, 1); y = (10, 11)],
      record [x = (100, 101); y = (110, 111)]);
-  a.0.x.0 := 2
-} with a.0.x.0
+
+  a.0. x. 0 := 2
+} with a.0. x. 0
 
 function asymetric_tuple_access (const foo : unit) : int is
-block {
+{
   var tuple : int * (int * (int * int)) := (0, (1, (2, 3)))
-} with tuple.0 + tuple.1.0 + tuple.1.1.0 + tuple.1.1.1
+} with tuple.0 + tuple.1. 0 + tuple.1. 1. 0 + tuple.1. 1. 1
 
 type nested_record_t is
   record [nesty : record [mymap : map (int, string)]]
 
 function nested_record (var nee : nested_record_t)
   : string is
-block {
-  nee.nesty.mymap [1] := "one"
+{
+  nee.nesty. mymap [1]  := "one"
 } with
-    case nee.nesty.mymap [1] of [
+    case nee.nesty. mymap [1]  of [
       Some (s) -> s
     | None -> (failwith ("Should not happen.") : string)
     ]
@@ -629,7 +668,7 @@ function main (const p : parameter; const s : storage)
 
 function main (const p : parameter; const s : storage)
   : return is
-block {
+{
   const ret : return = main (p, s)
 } with (ret.0, ret.1 + 1)
 
@@ -641,8 +680,9 @@ type return is list (operation) * storage
 
 function main (const action : unit; const store : storage)
   : return is
-block {
+{
   const foo : storage = (M_right ("one") : storage);
+
   const bar : foobar = (M_right (1) : foobar)
 } with ((nil : list (operation)), (foo : storage))
 
@@ -650,8 +690,7 @@ type t is Bar of int | Baz
 
 function main (const x : t) : int is
   case x of [
-    Bar (n) -> n
-  | Baz -> -1
+    Bar (n) -> n | Baz -> - 1
   ]
 
 type storage is unit
@@ -660,13 +699,13 @@ type return is list (operation) * storage
 
 function cb (const a : address; const s : storage)
   : return is
-block {
+{
   const c : contract (unit) = get_entrypoint ("%cb", a)
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 function cbo (const a : address; const s : storage)
   : return is
-block {
+{
   const c : contract (unit)
   = case (get_entrypoint_opt ("%cbo", a)
           : option (contract (unit)))
@@ -679,8 +718,9 @@ block {
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 function main (const a : bool; const b : bool) : int is
-block {
+{
   var result : int := 27;
+
   if a = b then result := 999 else result := 1
 } with result
 
@@ -698,59 +738,64 @@ type return is list (operation) * storage
 
 function main (const p : parameter; const s : storage)
   : return is
-block {
+{
   case p of [
-    Zero (n) -> if n > 0n then failwith ("fail") else skip
-  | Pos (n) -> if n > 0n then skip else failwith ("fail")
+    Zero (n) -> if n > 0n then failwith ("fail")
+  | Pos (n) -> if not (n > 0n) then failwith ("fail")
   ]
 } with ((nil : list (operation)), s)
 
 function foobar (var i : int) : int is
-block {
+{
   var p : parameter := Zero (42n);
+
   if i > 0
   then {
     i := i + 1;
+
     if i > 10
     then {
       i := 20;
+
       failwith ("who knows");
+
       i := 30
     }
-    else skip
   }
   else
     case p of [
-      Zero (n) -> failwith (42n)
-    | Pos (n) -> skip
+      Zero (n) -> failwith (42n) | Pos (n) -> skip
     ]
 } with
     case p of [
-      Zero (n) -> i
-    | Pos (n) -> (failwith ("waaaa") : int)
+      Zero (n) -> i | Pos (n) -> (failwith ("waaaa") : int)
     ]
 
 function failer (const p : int) : int is
-block {
-  if p = 1 then failwith (42) else skip
+{
+  if p = 1 then failwith (42)
 } with p
 
 function main (const a : int) : int is
-block {
-  for i := 0 to 100
-  block {
-    skip
-  }
+{
+  for
+    i := 0 to 100
+    {
+      skip
+    }
 } with i
 
 const x : int
-= (function (const i : int) : int is i + 1) (41)
+= (function  (const i : int) : int is i + 1) (41)
 
 function main (const i : int) : int is
-block {
+{
   var j : int := 0;
+
   var k : int := 1;
+
   j := k + i;
+
   k := i + j
 } with k + j
 
@@ -768,12 +813,12 @@ type storage is unit
 type return is list (operation) * storage
 
 function cb (const s : storage) : return is
-block {
+{
   const c : contract (unit) = get_contract (Tezos.sender)
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 function cbo (const s : unit) : return is
-block {
+{
   const c : contract (unit)
   = case (Tezos.get_contract_opt (Tezos.sender)
           : option (contract (unit)))
@@ -798,98 +843,135 @@ function get_top (const h : heap) : heap_elt is
   get_force (1n, h)
 
 function pop_switch (var h : heap) : heap is
-block {
+{
   const result : heap_elt = get_top (h);
+
   const s : nat = Map.size (h);
+
   const last : heap_elt
-  = case h [s] of [
+  = case h [s]  of [
       Some (e) -> e
     | None -> (failwith ("No element.") : heap_elt)
     ];
+
   remove 1n from map h;
-  h [1n] := last
+
+  h [1n]  := last
 } with h
 
 function pop_ (var h : heap) : nat is
-block {
+{
   const result : heap_elt = get_top (h);
+
   const s : nat = Map.size (h);
+
   var current : heap_elt
-  := case h [s] of [
+  := case h [s]  of [
       Some (e) -> e
     | None -> (failwith ("No element.") : heap_elt)
     ];
+
   const i : nat = 1n;
+
   const left : nat = 2n * i;
+
   const right : nat = left + 1n;
+
   remove 1n from map h;
-  h [1n] := current;
+
+  h [1n]  := current;
+
   var largest : nat := i;
+
   const tmp : heap_elt = get_force (s, h);
+
   if left <= s and heap_elt_lt (tmp, get_force (left, h))
   then largest := left
   else
     if right <= s
        and heap_elt_lt (tmp, get_force (right, h))
     then largest := right
-    else skip
 } with largest
 
 function insert (var h : heap; const e : heap_elt) : heap is
-block {
+{
   var i : nat := size (h) + 1n;
-  h [i] := e;
+
+  h [i]  := e;
+
   var largest : nat := i;
+
   var parent : nat := 0n;
+
   while largest =/= i
-  block {
+  {
     parent := i / 2n;
+
     largest := i;
+
     if parent >= 1n
     then {
       if heap_elt_lt
            (get_force (parent, h), get_force (i, h))
       then {
         largest := parent;
+
         const tmp : heap_elt = get_force (i, h);
-        h [i] := get_force (parent, h);
-        h [parent] := tmp
+
+        h [i]  := get_force (parent, h);
+
+        h [parent]  := tmp
       }
-      else skip
     }
-    else skip
   }
 } with h
 
 function pop (var h : heap) : heap * heap_elt * nat is
-block {
+{
   const result : heap_elt = get_top (h);
+
   var s : nat := size (h);
+
   const last : heap_elt = get_force (s, h);
+
   remove s from map h;
-  h [1n] := last;
+
+  h [1n]  := last;
+
   s := size (h);
+
   var i : nat := 0n;
+
   var largest : nat := 1n;
+
   var left : nat := 0n;
+
   var right : nat := 0n;
+
   var c : nat := 0n;
+
   while largest =/= i
-  block {
+  {
     c := c + 1n;
+
     i := largest;
+
     left := 2n * i;
+
     right := left + 1n;
+
     if left <= s
     then {
       if heap_elt_lt (get_force (left, h), get_force (i, h))
       then {
         largest := left;
+
         const tmp : heap_elt = get_force (i, h);
-        h [i] := get_force (left, h);
-        h [left] := tmp
+
+        h [i]  := get_force (left, h);
+
+        h [left]  := tmp
       }
-      else skip
     }
     else
       if right <= s
@@ -898,19 +980,21 @@ block {
              (get_force (right, h), get_force (i, h))
         then {
           largest := right;
+
           const tmp : heap_elt = get_force (i, h);
-          h [i] := get_force (right, h);
-          h [left] := tmp
+
+          h [i]  := get_force (right, h);
+
+          h [left]  := tmp
         }
-        else skip
       }
-      else skip
   }
 } with (h, result, c)
 
 function foobar (const i : int) : int is
-block {
+{
   function foo (const i : int) : int is i;
+
   function bar (const f : int -> int) : int is f (i)
 } with bar (foo)
 
@@ -918,14 +1002,14 @@ function higher2 (const i : int; const f : int -> int)
   : int is f (i)
 
 function foobar2 (const i : int) : int is
-block {
+{
   function foo2 (const i : int) : int is i
 } with higher2 (i, foo2)
 
 const a : int = 0
 
 function foobar3 (const i : int) : int is
-block {
+{
   function foo2 (const i : int) : int is a + i
 } with higher2 (i, foo2)
 
@@ -941,9 +1025,11 @@ function higher3
    const g : int -> int) : int is f (g (i))
 
 function foobar5 (const i : int) : int is
-block {
+{
   const a : int = 0;
+
   function foo (const i : int) : int is a + i;
+
   function goo (const i : int) : int is foo (i)
 } with higher3 (i, foo, goo)
 
@@ -988,119 +1074,139 @@ type storage is
 function buy
   (const parameter : buy;
    const storage : storage) : list (operation) * storage is
-block {
-  if amount = storage.name_price
-  then skip
-  else failwith ("Incorrect amount paid.");
+{
+  if amount =/= storage.name_price
+  then failwith ("Incorrect amount paid.");
+
   const profile : bytes = parameter.profile;
+
   const initial_controller : option (address)
   = parameter.initial_controller;
+
   var identities : big_map (id, id_details)
   := storage.identities;
+
   const new_id : int = storage.next_id;
+
   const controller : address
   = case initial_controller of [
-      Some (addr) -> addr
-    | None -> sender
+      Some (addr) -> addr | None -> sender
     ];
+
   const new_id_details : id_details
   = record [
       owner = sender;
       controller = controller;
       profile = profile
     ];
-  identities [new_id] := new_id_details
+
+  identities [new_id]  := new_id_details
 } with
     ((nil : list (operation)),
      storage with
-       record [identities = identities; next_id = new_id + 1
+       record [
+         identities = identities;
+         next_id = new_id + 1
        ])
 
 function update_owner
   (const parameter : update_owner;
    const storage : storage) : list (operation) * storage is
-block {
+{
   if (amount =/= 0mutez)
-  then
-    block {
-      failwith ("Updating owner doesn't cost anything.")
-    }
-  else skip;
+  then {
+    failwith ("Updating owner doesn't cost anything.")
+  };
+
   const id : int = parameter.id;
+
   const new_owner : address = parameter.new_owner;
+
   var identities : big_map (id, id_details)
   := storage.identities;
+
   var id_details : id_details
-  := case identities [id] of [
+  := case identities [id]  of [
       Some (id_details) -> id_details
     | None ->
         (failwith ("This ID does not exist.") : id_details)
     ];
-  if sender = id_details.owner
-  then skip
-  else failwith ("You are not the owner of this ID.");
+
+  if sender =/= id_details.owner
+  then failwith ("You are not the owner of this ID.");
+
   id_details.owner := new_owner;
-  identities [id] := id_details
+
+  identities [id]  := id_details
 } with
     ((nil : list (operation)),
-     storage with
-       record [identities = identities])
+     storage with record [identities = identities])
 
 function update_details
   (const parameter : update_details;
    const storage : storage) : list (operation) * storage is
-block {
-  if (amount =/= 0mutez)
-  then failwith ("Updating details doesn't cost anything.")
-  else skip;
+{
+  if amount =/= 0mutez
+  then failwith ("Updating details doesn't cost anything.");
+
   const id : int = parameter.id;
+
   const new_profile : option (bytes) = parameter.new_profile;
+
   const new_controller : option (address)
   = parameter.new_controller;
+
   var identities : big_map (id, id_details)
   := storage.identities;
+
   var id_details : id_details
-  := case identities [id] of [
+  := case identities [id]  of [
       Some (id_details) -> id_details
     | None ->
         (failwith ("This ID does not exist.") : id_details)
     ];
+
   if (sender = id_details.controller)
      or (sender = id_details.owner)
   then skip
   else
     failwith
       ("You are not the owner or controller of this ID.");
+
   const owner : address = id_details.owner;
+
   const profile : bytes
   = case new_profile of [
       None -> id_details.profile
     | Some (new_profile) -> new_profile
     ];
+
   const controller : address
   = case new_controller of [
       None -> id_details.controller
     | Some (new_controller) -> new_controller
     ];
+
   id_details.owner := owner;
+
   id_details.controller := controller;
+
   id_details.profile := profile;
-  identities [id] := id_details
+
+  identities [id]  := id_details
 } with
     ((nil : list (operation)),
-     storage with
-       record [identities = identities])
+     storage with record [identities = identities])
 
 function skip_ (const p : unit; const storage : storage)
   : list (operation) * storage is
-block {
+{
   if amount = storage.skip_price
   then skip
   else failwith ("Incorrect amount paid.")
 } with
     ((nil : list (operation)),
-     storage with
-       record [next_id = storage.next_id + 1])
+     storage with record [next_id = storage.next_id + 1])
 
 function main
   (const action : action;
@@ -1124,7 +1230,7 @@ function main (const i : int) : option (nat) is is_nat (i)
 function check_hash_key
   (const kh1 : key_hash;
    const k2 : key) : bool * key_hash is
-block {
+{
   var kh2 : key_hash := Crypto.hash_key (k2)
 } with ((kh1 = kh2), kh2)
 
@@ -1161,106 +1267,130 @@ function size_ (const m : foobar) : nat is size (m)
 const bl : foobar = list [144; 51; 42; 120; 421]
 
 function fold_op (const s : list (int)) : int is
-block {
+{
   function aggregate (const prec : int; const cur : int)
     : int is prec + cur
 } with List.fold (aggregate, s, 10)
 
 function iter_op (const s : list (int)) : int is
-block {
+{
   var r : int := 0;
+
   function aggregate (const i : int) : unit is
-  block {
+  {
     skip
   } with unit;
+
   List.iter (aggregate, s)
 } with r
 
 function map_op (const s : list (int)) : list (int) is
-block {
+{
   function increment (const i : int) : int is i + 1
 } with List.map (increment, s)
 
 function local_type (var u : unit) : int is
-block {
+{
   type toto is int;
+
   var titi : toto := 1;
+
   titi := titi + 2
 } with titi
 
 function counter (var n : nat) : nat is
-block {
+{
   var i : nat := 0n;
+
   while i < n
-  block {
+  {
     i := i + 1n
   }
 } with i
 
 function while_sum (var n : nat) : nat is
-block {
+{
   var i : nat := 0n;
+
   var r : nat := 0n;
+
   while i < n
-  block {
+  {
     i := i + 1n;
+
     r := r + i
   }
 } with r
 
 function for_sum (var n : nat) : int is
-block {
+{
   var acc : int := 0;
-  for i := 1 to int (n)
-  block {
-    acc := acc + i
-  }
+
+  for
+    i := 1 to int (n)
+    {
+      acc := acc + i
+    }
 } with acc
 
 function for_sum_step (var n : nat) : int is
-block {
+{
   var acc : int := 0;
-  for i := 1 to int (2n * n) step 2
-  block {
-    acc := acc + i
-  }
+
+  for
+    i := 1 to int (2n * n) step 2
+    {
+      acc := acc + i
+    }
 } with acc
 
 function for_collection_list (var nee : unit)
   : (int * string) is
-block {
+{
   var acc : int := 0;
+
   var st : string := "to";
+
   var mylist : list (int) := list [1; 1; 1];
+
   for x in list mylist
-  block {
+  {
     acc := acc + x;
+
     st := st ^ "to"
   }
 } with (acc, st)
 
 function for_collection_set (var nee : unit)
   : int * string is
-block {
+{
   var acc : int := 0;
+
   var st : string := "to";
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
-  block {
+  {
     acc := acc + x;
+
     st := st ^ "to"
   }
 } with (acc, st)
 
 function for_collection_if_and_local_var (var nee : unit)
   : int is
-block {
+{
   var acc : int := 0;
+
   const theone : int = 1;
+
   const thetwo : int = 2;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
-  block {
+  {
     if x = theone
     then acc := acc + x
     else
@@ -1272,22 +1402,27 @@ block {
 
 function for_collection_rhs_capture (var nee : unit)
   : int is
-block {
+{
   var acc : int := 0;
+
   const mybigint : int = 1000;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
-  block {
+  {
     if x = 1 then acc := acc + mybigint else acc := acc + 10
   }
 } with acc
 
 function for_collection_proc_call (var nee : unit) : int is
-block {
+{
   var acc : int := 0;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
-  block {
+  {
     if x = 1
     then acc := acc + for_collection_rhs_capture (unit)
     else acc := acc + 10
@@ -1296,69 +1431,88 @@ block {
 
 function for_collection_comp_with_acc (var nee : unit)
   : int is
-block {
+{
   var myint : int := 0;
+
   var mylist : list (int) := list [1; 10; 15];
+
   for x in list mylist
-  block {
+  {
     if x < myint then skip else myint := myint + 10
   }
 } with myint
 
 function for_collection_with_patches (var nee : unit)
   : map (string, int) is
-block {
+{
   var myint : int := 12;
+
   var mylist : list (string) := list ["I"; "am"; "foo"];
+
   var mymap : map (string, int) := map [];
+
   for x in list mylist
-  block {
+  {
     patch mymap with map [x -> myint]
   }
 } with mymap
 
 function for_collection_empty (var nee : unit) : int is
-block {
+{
   var acc : int := 0;
+
   var myset : set (int) := set [1; 2; 3];
+
   for x in set myset
-  block {
+  {
     skip
   }
 } with acc
 
 function for_collection_map_kv (var nee : unit)
   : int * string is
-block {
+{
   var acc : int := 0;
+
   var st : string := "";
+
   var mymap : map (string, int)
   := map ["1" -> 1; "2" -> 2; "3" -> 3];
+
   for k -> v in map mymap
-  block {
+  {
     acc := acc + v;
+
     st := st ^ k
   }
 } with (acc, st)
 
 function nested_for_collection (var nee : unit)
   : int * string is
-block {
+{
   var myint : int := 0;
+
   var mystoo : string := "";
+
   var mylist : list (int) := list [1; 2; 3];
+
   var mymap : map (string, string)
   := map [" one" -> ","; "two" -> " "];
+
   for i in list mylist
-  block {
+  {
     myint := myint + i;
+
     var myset : set (string) := set ["1"; "2"; "3"];
+
     for st in set myset
-    block {
+    {
       myint := myint + i;
+
       mystoo := mystoo ^ st;
+
       for k -> v in map mymap
-      block {
+      {
         mystoo := mystoo ^ k ^ v
       }
     }
@@ -1367,68 +1521,87 @@ block {
 
 function nested_for_collection_local_var (var nee : unit)
   : int * string is
-block {
+{
   var myint : int := 0;
+
   var myst : string := "";
+
   var mylist : list (int) := list [1; 2; 3];
+
   for i in list mylist
-  block {
+  {
     var myst_loc : string := "";
+
     myint := myint + i;
+
     var myset : set (string) := set ["1"; "2"; "3"];
+
     for st in set myset
-    block {
+    {
       myint := myint + i;
+
       myst_loc := myst_loc ^ st
     };
+
     myst := myst_loc ^ myst
   }
 } with (myint, myst)
 
 function dummy (const n : nat) : nat is
-block {
+{
   while False
-  block {
+  {
     skip
   }
 } with n
 
 function inner_capture_in_conditional_block (var nee : unit)
   : bool * int is
-block {
+{
   var count : int := 1;
+
   var ret : bool := False;
+
   var mylist : list (int) := list [1; 2; 3];
+
   for it1 in list mylist
-  block {
+  {
     for it2 in list mylist
-    block {
-      if count = it2 then ret := not (ret) else skip
+    {
+      if count = it2 then ret := not (ret)
     };
+
     count := count + 1
   }
 } with (ret, count)
 
 function shadowing_in_body (var nee : unit) : string is
-block {
+{
   var st : string := "";
+
   var list1 : list (string) := list ["to"; "to"];
+
   for x in list list1
-  block {
+  {
     const x : string = "ta";
+
     st := st ^ x
   }
 } with st
 
 function shadowing_assigned_in_body (var nee : unit)
   : string is
-block {
+{
   var st : string := "";
+
   var list1 : list (string) := list ["to"; "to"];
+
   for x in list list1
-  block {
+  {
     st := st ^ x;
+
     var st : string := "ta";
+
     st := st ^ x
   }
 } with st
@@ -1443,25 +1616,25 @@ const map1 : foobar
 const map2 : foobar = map [23 -> 0; 42 -> 0]
 
 function set_ (var n : int; var m : foobar) : foobar is
-block {
-  m [23] := n
+{
+  m [23]  := n
 } with m
 
 function add (var n : int; var m : foobar) : foobar is
   set_ (n, m)
 
 function rm (var m : foobar) : foobar is
-block {
+{
   remove 42 from map m
 } with m
 
 function patch_ (var m : foobar) : foobar is
-block {
+{
   patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
 } with m
 
 function patch_deep (var m : foobar * nat) : foobar * nat is
-block {
+{
   patch m.0 with map [1 -> 9]
 } with m
 
@@ -1473,75 +1646,72 @@ function mem (const k : int; const m : foobar) : bool is
   Map.mem (k, m)
 
 function iter_op (const m : foobar) : unit is
-block {
+{
   function aggregate (const i : int; const j : int)
     : unit is
-  block {
+  {
     if i = j then skip else failwith ("fail")
   } with unit
 } with Map.iter (aggregate, m)
 
 function map_op (const m : foobar) : foobar is
-block {
+{
   function increment (const i : int; const j : int) : int is
     j + 1
 } with Map.map (increment, m)
 
 function fold_op (const m : foobar) : int is
-block {
+{
   function aggregate (const i : int; const j : int * int)
     : int is i + j.0 + j.1
 } with Map.fold (aggregate, m, 10)
 
 function deep_op (var m : foobar) : foobar is
-block {
+{
   var coco : int * foobar := (0, m);
+
   remove 42 from map coco.1;
-  coco.1 [32] := 16
+
+  coco.1 [32]  := 16
 } with coco.1
 
 function match_bool (const i : int) : int is
-block {
+{
   var result : int := 23;
+
   case i = 2 of [
-    True -> result := 42
-  | False -> result := 0
+    True -> result := 42 | False -> result := 0
   ]
 } with result
 
 function match_option (const o : option (int)) : int is
-block {
+{
   var result : int := 23;
+
   case o of [
-    None -> skip
-  | Some (s) -> result := s
+    None -> skip | Some (s) -> result := s
   ]
 } with result
 
 function match_expr_bool (const i : int) : int is
   case i = 2 of [
-    True -> 42
-  | False -> 0
+    True -> 42 | False -> 0
   ]
 
 function match_expr_option (const o : option (int)) : int is
   case o of [
-    None -> 42
-  | Some (s) -> s
+    None -> 42 | Some (s) -> s
   ]
 
 function match_expr_list (const l : list (int)) : int is
   case l of [
-    nil -> -1
-  | hd #
-      tl -> hd
+    nil -> - 1 | hd # tl -> hd
   ]
 
 function michelson_add (var n : nat * nat) : nat is
-block {
+{
   const f : (nat * nat -> nat)
-  = [%Michelson
-    ({| { UNPAIR; ADD } |} : nat * nat -> nat)]
+  = [%Michelson ({| { UNPAIR; ADD } |} : nat * nat -> nat)]
 } with f (n)
 
 type inner_storage is michelson_or (int, "one", nat, "two")
@@ -1553,7 +1723,7 @@ type return is list (operation) * storage
 
 function main (const action : unit; const store : storage)
   : return is
-block {
+{
   const foo : storage
   = (M_right ((M_left (1) : inner_storage)) : storage)
 } with ((nil : list (operation)), (foo : storage))
@@ -1567,7 +1737,7 @@ type return is list (operation) * storage
 
 function main (const action : unit; const store : storage)
   : return is
-block {
+{
   const foo : storage
   = (M_right ((M_left (1) : inner_storage)) : storage)
 } with ((nil : list (operation)), (foo : storage))
@@ -1582,7 +1752,7 @@ type return is list (operation) * storage
 
 function main (const action : unit; const store : storage)
   : return is
-block {
+{
   const foo : storage = ("foo", (1, 2n))
 } with ((nil : list (operation)), (foo : storage))
 
@@ -1596,7 +1766,7 @@ type return is list (operation) * storage
 
 function main (const action : unit; const store : storage)
   : return is
-block {
+{
   const foo : storage = ("foo", (1, 2n))
 } with ((nil : list (operation)), (foo : storage))
 
@@ -1656,78 +1826,96 @@ type parameter is
 
 function send (const param : send_pt; var s : storage)
   : return is
-block {
+{
   if not Set.mem (Tezos.sender, s.authorized_addresses)
   then failwith ("Unauthorized address")
   else skip;
+
   var message : message := param;
+
   const packed_msg : bytes = Bytes.pack (message);
+
   if Bytes.length (packed_msg) > s.max_message_size
   then failwith ("Message size exceed maximum limit")
   else skip;
+
   var new_store : addr_set := set [];
+
   case map_get (packed_msg, s.message_store) of [
     Some (voters) ->
-      block {
+      {
         if Set.mem (Tezos.sender, voters)
         then skip
         else
-          s.proposal_counters [Tezos.sender] :=
+          s.proposal_counters [Tezos.sender]  :=
             get_force (Tezos.sender, s.proposal_counters)
             + 1n;
+
         new_store := Set.add (Tezos.sender, voters)
       }
   | None ->
-      block {
-        s.proposal_counters [sender] :=
+      {
+        s.proposal_counters [sender]  :=
           get_force (Tezos.sender, s.proposal_counters) + 1n;
+
         new_store := set [Tezos.sender]
       }
   ];
+
   var sender_proposal_counter : nat
   := get_force (Tezos.sender, s.proposal_counters);
+
   if sender_proposal_counter > s.max_proposal
   then failwith ("Maximum number of proposal reached")
   else skip;
+
   var ret_ops : list (operation) := nil;
+
   if Set.cardinal (new_store) >= s.threshold
   then {
     remove packed_msg from map s.message_store;
+
     ret_ops := message (s.state_hash);
+
     s.state_hash :=
       Crypto.sha256
         (Bytes.concat (s.state_hash, packed_msg));
+
     for addr -> ctr in map s.proposal_counters
-    block {
+    {
       if Set.mem (addr, new_store)
-      then s.proposal_counters [addr] := abs (ctr - 1n)
+      then s.proposal_counters [addr]  := abs (ctr - 1n)
       else skip
     }
   }
-  else s.message_store [packed_msg] := new_store
+  else s.message_store [packed_msg]  := new_store
 } with (ret_ops, s)
 
 function withdraw
   (const param : withdraw_pt;
    var s : storage) : return is
-block {
+{
   var message : message := param;
+
   const packed_msg : bytes = Bytes.pack (message);
-  case s.message_store [packed_msg] of [
+
+  case s.message_store [packed_msg]  of [
     Some (voters) ->
-      block {
+      {
         const new_set : addr_set
         = Set.remove (Tezos.sender, voters);
+
         if Set.cardinal (voters) =/= Set.cardinal (new_set)
         then
-          s.proposal_counters [Tezos.sender] :=
+          s.proposal_counters [Tezos.sender]  :=
             abs
               (get_force (Tezos.sender, s.proposal_counters)
                - 1n)
         else skip;
+
         if Set.cardinal (new_set) = 0n
         then remove packed_msg from map s.message_store
-        else s.message_store [packed_msg] := new_set
+        else s.message_store [packed_msg]  := new_set
       }
   | None -> skip
   ]
@@ -1778,34 +1966,38 @@ type parameter is CheckMessage of check_message_pt
 function check_message
   (const param : check_message_pt;
    var s : storage) : return is
-block {
+{
   var message : message := param.message;
+
   if param.counter =/= s.counter
   then failwith ("Counters does not match")
   else {
     const packed_payload : bytes
     = Bytes.pack
         ((message, param.counter, s.id, Tezos.chain_id));
+
     var valid : nat := 0n;
+
     var keys : authorized_keys := s.auth;
+
     for pkh_sig in list param.signatures
-    block {
+    {
       case keys of [
         nil -> skip
-      | key #
-          tl ->
-          block {
+      | key # tl ->
+          {
             keys := tl;
+
             if pkh_sig.0 = Crypto.hash_key (key)
             then
               if Crypto.check
                    (key, pkh_sig.1, packed_payload)
               then valid := valid + 1n
               else failwith ("Invalid signature")
-            else skip
           }
       ]
     };
+
     if valid < s.threshold
     then failwith ("Not enough signatures passed the check")
     else s.counter := s.counter + 1n
@@ -1825,9 +2017,11 @@ const s : foobar = Some (42)
 const n : foobar = None
 
 function assign (var m : int) : foobar is
-block {
+{
   var coco : foobar := None;
+
   coco := Some (m);
+
   coco := (None : foobar)
 } with coco
 
@@ -1859,13 +2053,14 @@ function projection (const r : foobar) : int is
   r.foo + r.bar
 
 function modify (var r : foobar) : foobar is
-block {
+{
   r.foo := 256
 } with r
 
 function modify_abc (var r : abc) : abc is
-block {
+{
   const c : int = 42;
+
   r := r with record [b = 2048; c = c]
 } with r
 
@@ -1879,7 +2074,7 @@ type double_record is record [inner : abc]
 
 function modify_inner (var r : double_record)
   : double_record is
-block {
+{
   r := r with record [inner.b = 2048]
 } with r
 
@@ -1917,19 +2112,16 @@ type entry_point_t is
 function change_address
   (const param : change_addr_pt;
    const s : storage_t) : contract_return_t is
-block {
-  if sender =/= s
-  then failwith ("Unauthorized sender")
-  else skip
+{
+  if sender =/= s then failwith ("Unauthorized sender")
 } with ((nil : list (operation)), param)
 
 function pass_message
   (const param : pass_message_pt;
    const s : storage_t) : contract_return_t is
-block {
-  if sender =/= s
-  then failwith ("Unauthorized sender")
-  else skip;
+{
+  if sender =/= s then failwith ("Unauthorized sender");
+
   var message : pass_message_pt := param
 } with (param (unit), s)
 
@@ -1952,7 +2144,7 @@ type return is list (operation) * storage
 
 function main (const p : parameter; const s : storage)
   : return is
-block {
+{
   const self_contract : contract (parameter)
   = Tezos.self ("%default")
 } with ((nil : list (operation)), s)
@@ -1965,9 +2157,10 @@ type return is list (operation) * storage
 
 function main (const p : parameter; const s : storage)
   : return is
-block {
+{
   const self_contract : contract (int)
   = Tezos.self ("%toto");
+
   const op : operation
   = Tezos.transaction (2, 300000000mutez, self_contract)
 } with (list [op], s)
@@ -1980,25 +2173,28 @@ type return is list (operation) * storage
 
 function main (const p : parameter; const s : storage)
   : return is
-block {
+{
   const self_contract : contract (int)
   = Tezos.self ("%default");
+
   const op : operation
   = Tezos.transaction (2, 300000000mutez, self_contract)
 } with (list [op], s)
 
 function iter_op (const s : set (int)) : int is
-block {
+{
   var r : int := 0;
+
   function aggregate (const i : int) : unit is
-  block {
+  {
     skip
   } with unit;
+
   set_iter (aggregate, s)
 } with r
 
 function fold_op (const s : set (int)) : int is
-block {
+{
   function aggregate (const i : int; const j : int) : int is
     i + j
 } with set_fold (aggregate, s, 15)
@@ -2015,24 +2211,24 @@ function remove_op (const s : set (string))
 
 function remove_syntax (var s : set (string))
   : set (string) is
-block {
+{
   remove "foobar" from set s
 } with s
 
 function remove_deep (var s : set (string) * nat)
   : set (string) * nat is
-block {
+{
   remove "foobar" from set s.0
 } with s
 
 function patch_op (var s : set (string)) : set (string) is
-block {
+{
   patch s with set ["foobar"]
 } with s
 
 function patch_op_deep (var s : set (string) * nat)
   : set (string) * nat is
-block {
+{
   patch s.0 with set ["foobar"]
 } with s
 
@@ -2040,13 +2236,14 @@ function mem_op (const s : set (string)) : bool is
   set_mem ("foobar", s)
 
 function main (const p : key_hash) : list (operation) is
-block {
+{
   const unused : operation = set_delegate (Some (p));
+
   const dummy : list (operation) = nil
 } with dummy
 
 function foo (const i : int) : int is
-block {
+{
   function bar (const i : int) : int is i
 } with bar (0)
 
@@ -2057,17 +2254,21 @@ type rpi is record [x : int; y : int]
 type mpi is map (string, int)
 
 function main (const toto : tpi) : int is
-block {
+{
   var a : tpi := toto;
+
   var b : rpi := record [x = 0; y = 1];
+
   var m : mpi := map ["y" -> 1];
+
   a.0 := 2;
+
   b.x := a.0;
-  m ["x"] := b.x
+
+  m ["x"]  := b.x
 } with
-    case m ["x"] of [
-      Some (s) -> s
-    | None -> 42
+    case m ["x"]  of [
+      Some (s) -> s | None -> 42
     ]
 
 const s : string = "toto"
@@ -2093,8 +2294,7 @@ type return is list (operation) * storage
 function main (const p : action; const s : int) : return is
   ((nil : list (operation)),
    case p of [
-     Increment (n) -> s + n
-   | Decrement (n) -> s - n
+     Increment (n) -> s + n | Decrement (n) -> s - n
    ])
 
 const add_tez : tez = 21mutez + 21mutez
@@ -2134,11 +2334,13 @@ type entry_point_t is
 
 function call (const p : call_pt; const s : storage_t)
   : contract_return_t is
-block {
+{
   if s >= now
   then failwith ("Contract is still time locked")
   else skip;
+
   const message : message_t = p;
+
   const ret_ops : list (operation) = message (unit)
 } with (ret_ops, s)
 
@@ -2149,8 +2351,7 @@ function main
   (const param : entry_point_t;
    const s : storage_t) : contract_return_t is
   case param of [
-    Call (p) -> call (p, s)
-  | Default (p) -> default (p, s)
+    Call (p) -> call (p, s) | Default (p) -> default (p, s)
   ]
 
 type storage_ is timestamp
@@ -2168,7 +2369,7 @@ type abc is int * int * int
 function projection_abc (const tpl : abc) : int is tpl.1
 
 function modify_abc (var tpl : abc) : abc is
-block {
+{
   tpl.1 := 2048
 } with tpl
 
@@ -2187,7 +2388,7 @@ const br : big_tuple
 = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 function update (var tpl : big_tuple) : big_tuple is
-block {
+{
   tpl.11 := 2048
 } with tpl
 
@@ -2201,9 +2402,7 @@ type foobar is Foo of int | Bar of bool | Kee of nat
 
 function fb (const p : foobar) : int is
   case p of [
-    Foo (n) -> n
-  | Bar (t) -> 42
-  | Kee (n) -> 23
+    Foo (n) -> n | Bar (t) -> 42 | Kee (n) -> 23
   ]
 
 type foobar is Foo of int | Bar of bool | Kee of nat

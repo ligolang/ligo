@@ -91,14 +91,16 @@ module type CONFIG =
        It mostly affects the position of synthesized tokens in the error recovery
        mode because menhir requires to convert [Pos.t] type to the poorer
        representation - [Lexing.position]. *)
+
     val mode : [`Byte | `Point]
 
-    (* Debug options *)
-
     (* Enable debug printing in the recovery algorithm *)
+
     val error_recovery_tracing : bool
-    (* Path to a log file or [None] that means to use stdout *)
-    val tracing_output         : string option
+
+    (* Path to a log file. [None] that means to use stdout *)
+
+    val tracing_output : string option
   end
 
 (* The functor integrating the parser with its errors *)
@@ -214,13 +216,13 @@ module Make (Lexer  : LEXER)
         (* A MenhirLib limitation (see [state]). Work around. *)
         None -> "Syntax error."
       | Some state ->
-         match ParErr.message state with
-           (* Default error message (unfinished mapping) *)
-           "<YOUR SYNTAX ERROR MESSAGE HERE>\n" ->
-            Printf.sprintf "Syntax error #%i." state
-         | msg -> msg
-         (* Likely a build error, but we work around it: *)
-         | exception Not_found -> "Syntax error."
+          match ParErr.message state with
+            (* Default error message (unfinished mapping) *)
+            "<YOUR SYNTAX ERROR MESSAGE HERE>\n" ->
+              Printf.sprintf "Syntax error #%i." state
+          | msg -> msg
+            (* Likely a build error, but we work around it: *)
+          | exception Not_found -> "Syntax error."
 
     let raise_on_failure (module ParErr : PAR_ERR) checkpoint =
       let msg = get_error_message (module ParErr) checkpoint
@@ -268,10 +270,14 @@ module Make (Lexer  : LEXER)
       | `Byte  -> Pos.from_byte pos
       | `Point -> Pos.from_byte pos
 
+    (* Wrapping the lexer within a token supplier according to the [mode] *)
+
     let of_pos (mode : [`Byte | `Point]) : Simple_utils.Pos.t -> Lexing.position =
-      (* pack code point offsets into [Lexing.position] *)
+
+      (* Packing code point offsets into a [Lexing.position] *)
+
       let to_point pos =
-        (* Note: [Pos.from_byte (Lexing.dummy_pos) != Pos.ghost] *)
+        (* Note: [Pos.from_byte (Lexing.dummy_pos) <> Pos.ghost] *)
         if pos#is_ghost then
             Lexing.dummy_pos
         else {
@@ -279,10 +285,13 @@ module Make (Lexer  : LEXER)
             pos_lnum  = pos#line;
             pos_bol   = pos#point_bol;
             pos_cnum  = pos#point_num } in
-      (* pack byte offsets into [Lexing.position] *)
+
+      (* Packing byte offsets into a [Lexing.position] *)
+
       let to_byte pos = pos#byte in
+
       match mode with
-      | `Byte  -> to_point
+        `Byte  -> to_point
       | `Point -> to_byte
 
     (* Wrap lexer in supplier according [mode] *)
@@ -305,12 +314,12 @@ module Make (Lexer  : LEXER)
       let parser       = Incr.main lexbuf.Lexing.lex_curr_p in
       let tree =
         try Stdlib.Ok (interpreter parser) with
-        (* See [mk_menhir_lexer]: *)
-        | LexingError msg -> Stdlib.Error msg
+          (* See [mk_menhir_lexer]: *)
+          LexingError msg -> Stdlib.Error msg
         | ParsingError msg ->
-           let region = get_current_region_from_lexer () in
-           let msg    = msg ^ "\n"
-           in Stdlib.Error Region.{value=msg; region}
+            let region = get_current_region_from_lexer () in
+            let value  = msg ^ "\n"
+            in Stdlib.Error Region.{value; region}
       in flush_all (); tree
 
     let incr_from_lexbuf  = incr_menhir (fun x -> x)
@@ -321,176 +330,226 @@ module Make (Lexer  : LEXER)
       match lexbuf_from_file path with
         Stdlib.Error _ as err -> err
       | Ok (lexbuf, close) ->
-         let tree = incr_from_lexbuf (module ParErr) lexbuf
-         in close (); tree
-
+          let tree = incr_from_lexbuf (module ParErr) lexbuf
+          in (close (); tree)
 
     (* Incremental parsing with recovery *)
 
+    (* The type ['src recovery_parser] denotes parsers with recovery
+       on error. The results are one of the following:
+
+         * [Ok (tree, [])] if the input of type ['src] contains a
+           syntactically valid contract;
+
+         * [Ok (repaired_tree, errors)] in case of a syntax error;
+
+         * [Error errors] for non-syntactical errors, e.g. the input
+           is not found or a lexer error occurred. *)
+
     type 'src recovery_parser =
       'src -> (Parser.tree * message list, message Utils.nseq) Stdlib.result
-    (* Returns [Ok (tree, [])] if ['src] contains correct contract
-            or [Ok (repaired_tree, errors)] if any syntax error was encountered
-            or [Error (errors)] if non-syntax error happened and we cannot
-               return any tree (e. g. file does not found or lexer error) *)
 
-     let extract_recovery_results = function
-       | Ok (tree, msgs) -> Some tree, msgs
-       | Error (msgs)    -> None,      Utils.nseq_to_list msgs
+    let extract_recovery_results = function
+      Ok (tree, msgs) -> Some tree, msgs
+    | Error msgs      -> None, Utils.nseq_to_list msgs
 
-    (* Debug printer *)
+    (* Debugger for recovery *)
 
     let tracing_channel =
       match Config.tracing_output with
-      | None      -> stdout
+        None      -> stdout
       | Some path -> open_out path
 
-    module TracingPrinter : Merlin_recovery.PRINTER with module I = Inter
-      = Merlin_recovery.MakePrinter
-            (struct
-                module I = Inter
-                let print str =
-                  if Config.error_recovery_tracing then
-                      Printf.fprintf tracing_channel "%s" str
+    module ElmPrinter =
+      struct
+        module I = Inter
 
-                let print_symbol = function
-                  | Inter.X s -> print @@ Parser.Recovery.print_symbol s
+        let print str =
+          if Config.error_recovery_tracing then
+            Printf.fprintf tracing_channel "%s" str
 
-                let print_element = None
+        let print_symbol (Inter.X s) =
+          print @@ Parser.Recovery.print_symbol s
 
-                let print_token t = print @@ Lexer.Token.to_lexeme t
-            end)
+        let print_element = None
+
+        let print_token t = print @@ Lexer.Token.to_lexeme t
+      end
+
+    module type PRINTER = Merlin_recovery.PRINTER with module I = Inter
+
+    module TracingPrinter : PRINTER =
+      Merlin_recovery.MakePrinter (ElmPrinter)
 
     let checkpoint_to_string = function
-      | Inter.InputNeeded _   -> "InputNeeded"
-      | Inter.Accepted _      -> "Accepted"
-      | Inter.Rejected        -> "Rejected"
-      | Inter.AboutToReduce _ -> "AboutToReduce"
-      | Inter.HandlingError _ -> "HandlingError"
-      | Inter.Shifting _      -> "Shifting"
+      Inter.InputNeeded _   -> "InputNeeded"
+    | Inter.Accepted _      -> "Accepted"
+    | Inter.Rejected        -> "Rejected"
+    | Inter.AboutToReduce _ -> "AboutToReduce"
+    | Inter.HandlingError _ -> "HandlingError"
+    | Inter.Shifting _      -> "Shifting"
+
+    module RecoverWithDefault =
+      struct
+        include Parser.Recovery
+
+        (* Because we cannot restore both byte and point position
+           correctly another part is assumed to be equal. Assuming
+           that [Pos.from_byte] preserves the invariant [(point_bol,
+           point_num) = (byte.pos_bol, byte.pos_cnum)] *)
+
+        (* Note: Consistent with [lexer_lexbuf_to_supplier] *)
+
+        let convert mode position : Pos.t =
+          if Caml.(position = Lexing.dummy_pos) then Pos.ghost
+          else match mode with
+                 `Byte  -> Pos.from_byte position
+               | `Point -> Pos.from_byte position
+
+        let default_value loc sym =
+          let open Custom_compiler_libs.Location in
+          let convert = to_pos Config.mode in
+          let reg = Region.make ~start:(convert loc.loc_start)
+                                ~stop:(convert loc.loc_end)
+          in Parser.Recovery.default_value reg sym
+
+        let guide _ = false
+
+        let use_indentation_heuristic = false
+      end
 
     module R = Merlin_recovery.Make
-                   (Inter)
-                   (struct
-                       include Parser.Recovery
-
-                       let default_value loc sym =
-                         let open Custom_compiler_libs.Location in
-                         let convert = to_pos Config.mode in
-                         let reg = Region.make ~start:(convert loc.loc_start)
-                                               ~stop:( convert loc.loc_end)
-                         in Parser.Recovery.default_value reg sym
-
-                       let guide _ = false
-
-                       let use_indentation_heuristic = false
-                    end)
-                   (TracingPrinter)
+                 (Inter) (RecoverWithDefault) (TracingPrinter)
 
     module Recover =
       struct
+        (* The variants of ['a intermediate_step] mean the following:
+
+             * [Correct (InputNeeded env)] means that variants of
+               [checkpoint] are considered as invalid intermediate
+               steps because we cannot resume parsing with the new
+               token.
+
+             * [Recovering (failure_checkpoint, candidates)] *)
+
         type 'a intermediate_step =
-          | Correct of 'a Inter.checkpoint
-            (* [Correct (InputNeeded env)].
-               Other variants of [checkpoint] is considered as invalid intermediate step
-               because we cannot proceed parsing with new token. *)
-          | Recovering of 'a Inter.checkpoint * 'a R.candidates
-            (* [Recovering (failure_checkpoint, candidates)]  *)
+          Correct    of 'a Inter.checkpoint
+        | Recovering of 'a Inter.checkpoint * 'a R.candidates
+
+        (* The variant [InternalError] is returned in impossible match
+           cases or a logic error in the module [Merlin_recovery]. *)
 
         type 'a step =
-          | Intermediate  of 'a intermediate_step
-          | Success       of 'a
-          | InternalError of string
-            (* returned in impossible match cases or [Merlin_recovery]'s logic error *)
+          Intermediate  of 'a intermediate_step
+        | Success       of 'a
+        | InternalError of string
+
+        (* Moves the parser through [Shifting] and [AboutToReduce]
+           checkpoints like in the simple [loop_handle] from MenhirLib. *)
 
         let inputNeededExpected = function
-          | Inter.InputNeeded _ | Inter.Accepted _      | Inter.HandlingError _
-          | Inter.Shifting _    | Inter.AboutToReduce _ | Inter.Rejected as cp ->
-             Format.sprintf "Expected InputNeeded checkpoint, but actual is %s"
-                 (checkpoint_to_string cp)
+          Inter.InputNeeded _ | Inter.Accepted _      | Inter.HandlingError _
+        | Inter.Shifting _    | Inter.AboutToReduce _ | Inter.Rejected as cp ->
+            Format.sprintf "Expected InputNeeded checkpoint, but got %s"
+                           (checkpoint_to_string cp)
 
-        (* Moves parser through [Shifting] and [AboutToReduce] checkpoints like
-           in simple [loop_handle] from MenhirLib. *)
-        let rec check_for_error checkpoint : ('a step, 'a Inter.checkpoint) Stdlib.result =
+        (* Moves parser through [Shifting] and [AboutToReduce]
+           checkpoints like in simple [loop_handle] from MenhirLib. *)
+
+        let rec check_for_error checkpoint : ('a step, 'a Inter.checkpoint) result =
           match checkpoint with
-          | Inter.InputNeeded _ -> Ok (Intermediate (Correct checkpoint))
+            Inter.InputNeeded _ -> Ok (Intermediate (Correct checkpoint))
           | Inter.Accepted x    -> Ok (Success x)
           | Inter.HandlingError _ | Inter.Rejected        -> Error checkpoint
           | Inter.Shifting _      | Inter.AboutToReduce _ ->
-             check_for_error (Inter.resume checkpoint)
+              check_for_error (Inter.resume checkpoint)
 
-        (* Returns recovered parser after feeding with the [token] or intermediate
-           step with the same candidates and checkpoint if recovery doesn't succeed. *)
+        (* Returns recovered parser after feeding with the [token] or
+           intermediate step with the same candidates and checkpoint
+           if recovery fails. *)
+
         let try_recovery failure_cp candidates token : 'a step =
-          begin match R.attempt candidates token with
-          | `Ok (Inter.InputNeeded _ as cp, _) -> Intermediate (Correct cp)
+          match R.attempt candidates token with
+            `Ok (Inter.InputNeeded _ as cp, _) -> Intermediate (Correct cp)
           | `Ok (cp, _) ->
-             InternalError ("Recovery failed due to impossible result of [attempt] function:\n"
-                            ^ (inputNeededExpected cp))
+               let msg = Printf.sprintf
+                           "Recovery failed: \
+                            Unexpected result of function [attempt]:\n%s"
+                           (inputNeededExpected cp)
+               in InternalError msg
           | `Accept x -> Success x
           | `Fail ->
-             begin match token with
-             | token, _, _ when Token.is_eof token ->
+             match token with
+               token, _, _ when Token.is_eof token ->
                 begin match candidates.final with
-                | Some x -> Success x
-                | None -> InternalError "Recovery failed: cannot recover on EOF token"
+                  Some x -> Success x
+                | None ->
+                    InternalError "Recovery failed: Cannot recover on EOF token"
                 end
-             (* Skip the token and return control to the user to try again
-                on the next step *)
+               (* Skip the token and return control to the user to try again
+                  at the next step *)
              | _ -> Intermediate (Recovering (failure_cp, candidates))
-             end
-          end
 
-        (* Feeds parser with [token] and returns the next intermediate step or result   *)
-        let step (parser : 'a intermediate_step) failure token : 'a step * message option =
+        (* Feeds parser with [token] and returns the next intermediate
+           step or result *)
+
+        let step (parser : 'a intermediate_step) failure token
+          : 'a step * message option =
           match parser with
-          (* If parser is in correct checkpoint (i.e. in [InputNeeded]) feed
-             with [token] like in simple [loop_handle] from the MenhirLib *)
-          | Correct (InputNeeded env as cp) ->
-             begin match check_for_error (Inter.offer cp token) with
-             | Ok s -> (s, None)
-             | Error failure_cp ->
-                let error = failure failure_cp in
-                TracingPrinter.print @@ Printf.sprintf "Error %s\n" error.Region.value;
-                let candidates = R.generate env in
-                (try_recovery failure_cp candidates token, Some error)
-             end
-          | Correct cp ->
-             let msg = "Impossible case:\n" ^ (inputNeededExpected cp)
-             in (InternalError msg, None)
-          | Recovering (failure_cp, candidates) ->
-             (try_recovery failure_cp candidates token, None)
+            Correct (InputNeeded env as cp) ->
+              (* If the parser is in a correct checkpoint (i.e. in
+                 [InputNeeded]) feed with [token] like in simple
+                 [loop_handle] from the MenhirLib *)
 
-        (* Is similar to [loop_handle] from MenhirLib but with error recovery *)
+              begin match check_for_error (Inter.offer cp token) with
+                Ok s -> s, None
+              | Error failure_cp ->
+                  let error = failure failure_cp in
+                  let () = TracingPrinter.print
+                           @@ Printf.sprintf "Error %s\n" error.Region.value in
+                  let candidates = R.generate env in
+                  try_recovery failure_cp candidates token, Some error
+              end
+          | Correct cp ->
+              let msg = "Impossible case:\n" ^ (inputNeededExpected cp)
+              in InternalError msg, None
+          | Recovering (failure_cp, candidates) ->
+              try_recovery failure_cp candidates token, None
+
+        (* The function [loop_hamdle] s similar to [loop_handle] from MenhirLib but with error
+           recovery *)
+
         let loop_handle
-                (success : 'a -> 'a) (failure : 'a Inter.checkpoint -> message)
-                (supplier : unit -> token * Lexing.position * Lexing.position)
-                (initial : 'a Inter.checkpoint)
-            : (Parser.tree * message list, message Utils.nseq) Stdlib.result =
+          (success  : 'a -> 'a)
+          (failure  : 'a Inter.checkpoint -> message)
+          (supplier : unit -> token * Lexing.position * Lexing.position)
+          (initial  : 'a Inter.checkpoint)
+          : (Parser.tree * message list, message Utils.nseq) Stdlib.result =
           let initial = Correct initial in
-          let errors = ref [] in
+          let errors = ref []
+          in
           let rec loop parser =
             match supplier () with
-            | exception LexingError msg -> Stdlib.Error (msg, !errors)
+              exception LexingError msg -> Stdlib.Error (msg, !errors)
             | token ->
-               let (s, error) = (step parser failure token) in
-               begin match error with
-               | Some error -> errors := error :: !errors;
-               | None       -> ()
-               end;
-               match s with
-               | Success x              -> Stdlib.Ok (success x, !errors)
-               | Intermediate (parser)  -> loop parser
-               | InternalError msg      ->
-                  let msg    = "Internal error: " ^ msg in
-                  let region = get_current_region_from_lexer ()
-                  in Stdlib.Error (Region.{value=msg; region}, !errors)
+                let s, error = step parser failure token in
+                let () = match error with
+                           Some error -> errors := error :: !errors
+                         | None       -> () in
+                match s with
+                  Success x              -> Stdlib.Ok (success x, !errors)
+                | Intermediate (parser)  -> loop parser
+                | InternalError msg      ->
+                    let value  = "Internal error: " ^ msg in
+                    let region = get_current_region_from_lexer ()
+                    in Stdlib.Error (Region.{value; region}, !errors)
           in loop initial
       end
 
     let get_message_on_failure (module ParErr : PAR_ERR) checkpoint =
-      let msg = get_error_message (module ParErr) checkpoint
-      in Region.{value = msg; region = get_current_region_from_lexer ()}
+      let value  = get_error_message (module ParErr) checkpoint
+      and region = get_current_region_from_lexer ()
+      in Region.{value; region}
 
     let incr_menhir_recovery lexbuf_of (module ParErr : PAR_ERR) source =
       let lexbuf       = lexbuf_of source
@@ -501,7 +560,7 @@ module Make (Lexer  : LEXER)
       let module Incr  = Parser.Incremental in
       let parser       = Incr.main lexbuf.Lexing.lex_curr_p in
       let result       = interpreter parser
-      in flush_all (); result
+      in (flush_all (); result)
 
     let recov_from_lexbuf  = incr_menhir_recovery (fun x -> x)
     let recov_from_channel = incr_menhir_recovery Lexing.from_channel
@@ -511,6 +570,6 @@ module Make (Lexer  : LEXER)
       match lexbuf_from_file path with
         Stdlib.Error err   -> Stdlib.Error (err, [])
       | Ok (lexbuf, close) ->
-         let r = recov_from_lexbuf (module ParErr) lexbuf
-         in close (); r
+          let result = recov_from_lexbuf (module ParErr) lexbuf
+          in (close (); result)
   end

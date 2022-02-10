@@ -10,15 +10,16 @@ module Directive = LexerLib.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 module Token     = Lexing_jsligo.Token
+module Wrap      = Lexing_shared.Wrap
 
 open Utils
 type 'a reg = 'a Region.reg
 
 (* Lexemes *)
 
-type lexeme       = string
+type lexeme = string
 
-type 'payload wrap = 'payload Token.wrap 
+type 'payload wrap = 'payload Wrap.t
 
 (* Keywords of JsLIGO *)
 
@@ -344,10 +345,10 @@ and expr =
 | EUnit    of the_unit reg
 | ECodeInj of code_inj reg
 
-and assignment_operator = 
+and assignment_operator =
   Times_eq
 | Div_eq
-| Min_eq 
+| Min_eq
 | Plus_eq
 | Mod_eq
 

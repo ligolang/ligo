@@ -33,8 +33,15 @@ let r_split = Location.r_split
 let mk_var ?loc var = if String.equal var "_" then Var.fresh ?loc () else Var.of_input_var ?loc var
 let quote_var var = "'"^var
 let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var
-let compile_attributes attributes : string list =
-  List.map ~f:(fst <@ r_split) attributes
+let compile_attributes : CST.attributes -> string list = fun attr ->
+  let f : CST.attribute Region.reg -> string =
+    fun x ->
+      let ((k,v_opt),_loc) = r_split x in
+      match v_opt with
+      | Some (String v) -> String.concat [k;v]
+      | None -> k
+  in
+  List.map ~f attr
 
 let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = fun te ->
   let self = compile_type_expression ~raise in
@@ -61,7 +68,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
       let aux (field : CST.field_decl CST.reg) =
         let f, _ = r_split field in
         let type_expr = self f.field_type in
-        let field_attr = List.map ~f:(fun x -> x.Region.value) f.attributes
+        let field_attr = compile_attributes f.attributes
         in return @@ (f.field_name.value, type_expr, field_attr) in
       let fields = List.map ~f:aux lst in
       return @@ t_record_ez_attr ~loc ~attr fields
@@ -267,7 +274,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       return @@ e_nat_z ~loc n
     | Mutez mtez ->
       let ((_,mtez), loc) = r_split mtez in
-      return @@ e_mutez_z ~loc mtez
+      return @@ e_mutez_z ~loc (Z.of_int64 mtez)
     )
   | ELogic logic -> (
     match logic with
@@ -538,8 +545,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
   match unepar p with
   | CST.PVar x ->
     let (pvar,loc) = r_split x in
-    let attributes = pvar.attributes |> List.map ~f:(fun x -> x.Region.value) |>
-    Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
+    let attributes = Tree_abstraction_shared.Helpers.binder_attributes_of_strings (compile_attributes pvar.attributes) in
     let b =
       let var = compile_variable pvar.variable in
       { var ; ascr = None ; attributes }
@@ -657,8 +663,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
   | CST.PVar pvar, args -> (* function *)
     let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
     let {variable=name;attributes=var_attributes} : CST.var_pattern = pvar in
-    let var_attributes = var_attributes |> List.map ~f:(fun x -> x.Region.value) |>
-                        Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
+    let var_attributes = Tree_abstraction_shared.Helpers.binder_attributes_of_strings (compile_attributes var_attributes) in
     let () = List.iter ~f:(check_annotation ~raise) args in
     let args = List.map ~f:(compile_parameter ~raise) args in
     let fun_binder = compile_variable name in
@@ -698,11 +703,10 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     return_1 ~ascr:(t_unit ~loc ()) @@ Var.fresh ~loc ()
   | PVar pvar ->
     let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
-    let {variable;attributes} : CST.var_pattern = pvar in
-    let variable = compile_variable variable in
-    let attributes = attributes |> List.map ~f:(fun x -> x.Region.value) |>
-                       Tree_abstraction_shared.Helpers.binder_attributes_of_strings in
-    return_1 ~attributes @@ variable
+    let {variable;attributes=var_attributes} : CST.var_pattern = pvar in
+    let (var,loc) = r_split variable in
+    let attributes = Tree_abstraction_shared.Helpers.binder_attributes_of_strings (compile_attributes var_attributes) in
+    return_1 ~attributes @@ mk_var ~loc var
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
     let var = Var.fresh ~loc () in

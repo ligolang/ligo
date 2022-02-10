@@ -23,12 +23,12 @@ module type S =
   sig
     include COMMENTS
 
-    val input            : string option (* input file         *)
-    val extension        : string option (* file extension     *)
-    val dirs             : string list   (* -I                 *)
-    val project_root     : string option (* --project-path     *)
-    val show_pp          : bool          (* --show-pp          *)
-    val offsets          : bool          (* neg --columns      *)
+    val input        : string option (* input file     *)
+    val extension    : string option (* file extension *)
+    val dirs         : string list   (* -I             *)
+    val project_root : string option (* --project-root *)
+    val show_pp      : bool          (* --show-pp      *)
+    val offsets      : bool          (* neg --columns  *)
 
     type status = [
       `Done
@@ -56,7 +56,7 @@ module Make (Comments: COMMENTS) : S =
 
     let add_path dirs path = dirs := !dirs @ split_at_colon path
 
-    let set_path project_root path = project_root := Some path 
+    let set_path project_root path = project_root := Some path
 
     let make_help () : Buffer.t =
       let file   = Filename.basename Sys.argv.(0) in
@@ -73,7 +73,7 @@ module Make (Comments: COMMENTS) : S =
         "      --cli          Print given options (debug)";
         "      --columns      Columns for source locations";
         "      --show-pp      Print result of preprocessing";
-        "      --project-path Path to the root of esy project"
+        "      --project-root Path to the root of the project"
       ] in
       begin
         Buffer.add_string buffer header;
@@ -84,83 +84,21 @@ module Make (Comments: COMMENTS) : S =
 
     (* Specifying the command-line options a la GNU *)
 
-    let input            = ref None
-    and dirs             = ref []
+    let input        = ref None
+    and dirs         = ref []
 
-    and project_root     = ref None
-    and columns          = ref false
-    and show_pp          = ref false
+    and project_root = ref None
+    and columns      = ref false
+    and show_pp      = ref false
 
-    and help             = ref false
-    and version          = ref false
-    and cli              = ref false
+    and help         = ref false
+    and version      = ref false
+    and cli          = ref false
 
-    (* The following has been copied and pasted from the
-       implementation of the module [Getopt], under the original
-       licence, namely:
+    (* Specifying the command-line options a la GNU
 
-       Copyright (C) 2000-2004 Alain Frisch. Distributed under the
-       terms of the MIT license.
-
-       Layout of the command line
-
-         There are two types of argument on the command line: options
-         and anonymous arguments. Options may have two forms: a short
-         one introduced by a single dash character (-) and a long one
-         introduced by a double dash (--).
-
-         Options may have an argument attached. For the long form, the
-         syntax is "--option=argument". For the short form, there are
-         two possible syntaxes: "-o argument" (argument doesn't start
-         with a dash) and "-oargument"
-
-         Short options that refuse arguments may be concatenated, as in
-         "-opq".
-
-         The special argument -- interrupts the parsing of options:
-         all the remaining arguments are arguments even they start
-         with a dash.
-
-       Command line specification
-
-         A specification lists the possible options and describe what
-         to do when they are found; it also gives the action for
-         anonymous arguments and for the special option - (a single
-         dash alone).
-
-         The specification for a single option is a tuple
-         [(short_form, long_form, action, handler)] where:
-
-         - [short_form] is the character for the short form of the
-           option without the leading - (or [noshort='\000'] if the
-           option does not have a short form)
-
-         - [long_form] is the string for the long form of the option
-           without the leading -- (or [nolong=""] if no long form)
-
-         - [(action : (unit -> unit) option)] gives the action to be
-           executed when the option is found without an argument
-
-         - [(handler : (string -> unit) option)] specifies how to
-           handle the argument when the option is found with the
-           argument
-
-         According to the pair [(action, handler)], the corresponding
-         option may, must or mustn't have an argument :
-
-         - [(Some _, Some _)]: the option may have an argument; the
-           short form can't be concatenated with other options (even
-           if the user does not want to provide an argument). The
-           behaviour (handler/action) is determined by the presence of
-           the argument.
-
-         - [(Some _, None)]: the option must not have an argument; the
-           short form, if it exists, may be concatenated
-
-         - [(None, Some _)]: the option must have an argument; the
-           short form can't be concatenated
-
-         - [(None, None)]: not allowed *)
+       See [Getopt] for the layout of the command line and
+       the specification of the options. *)
 
     let specs =
       let open Getopt in [
@@ -171,7 +109,7 @@ module Make (Comments: COMMENTS) : S =
         noshort, "cli",          set cli true,     None;
         'h',     "help",         set help true,    None;
         'v',     "version",      set version true, None;
-        noshort, "project-path", None,             Some (set_path project_root);
+        noshort, "project-root", None,             Some (set_path project_root);
       ]
 
     (* Handler of anonymous arguments.
@@ -224,7 +162,7 @@ module Make (Comments: COMMENTS) : S =
       let open Argv.SSet in
       empty
       |> add "-I"
-      |> add "--project-path"
+      |> add "--project-root"
 
     let argv_copy = Array.copy Sys.argv
 
@@ -252,11 +190,11 @@ module Make (Comments: COMMENTS) : S =
 
     (* Re-exporting immutable fields with their CLI value *)
 
-    let dirs    = !dirs
+    let dirs         = !dirs
     and project_root = !project_root
-    and offsets = not !columns
-    and show_pp = !show_pp
-    and help    = !help
+    and offsets      = not !columns
+    and show_pp      = !show_pp
+    and help         = !help
     and version = !version
 
     let string_of_opt convert = function
@@ -273,11 +211,11 @@ module Make (Comments: COMMENTS) : S =
       (* Options "help", "version" and "cli" are not given. *)
       let options = [
         "CLI options";
-        sprintf "input            = %s" (string_of_opt (fun x -> x) !input);
-        sprintf "dirs             = %s" string_of_dirs;
-        sprintf "show-pp          = %b" show_pp;
-        sprintf "columns          = %b" (not offsets);
-        sprintf "project-path     = %s" (string_of_opt (fun x -> x) project_root)
+        sprintf "input        = %s" (string_of_opt (fun x -> x) !input);
+        sprintf "dirs         = %s" string_of_dirs;
+        sprintf "show-pp      = %b" show_pp;
+        sprintf "columns      = %b" (not offsets);
+        sprintf "project-root = %s" (string_of_opt (fun x -> x) project_root)
       ] in
     begin
       Buffer.add_string cli_buffer (String.concat "\n" options);

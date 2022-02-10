@@ -57,3 +57,11 @@ function change_color_preference (var account : account; const color : color ) :
   block {
       account := account with record [preferences.color = color]
   } with account
+
+
+(* testing that the left hand side of a record access can be an arbitrary expression *)
+const lhs_expr_access1 = (modify_abc(abc)).b
+const lhs_expr_access2  = (change_color_preference (acc, Green)).preferences.color
+
+(* testing that the left hand side on a functional update can be an arbitrary expression *)
+const lhs_expr_fupdate = (change_color_preference (acc, Green)).preferences with record [ other = 2 ]

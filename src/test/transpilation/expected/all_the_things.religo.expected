@@ -2,11 +2,7 @@ type tokens = big_map(address, nat);
 
 type allowances = big_map((address, address), nat);
 
-type storage = {
-  tokens: tokens,
-  allowances: allowances,
-  total_amount: nat
-};
+type storage = {tokens, allowances, total_amount: nat };
 
 type transfer = {
   address_from: address,
@@ -607,10 +603,10 @@ type buy = {
   initial_controller: option(address)
 };
 
-type update_owner = {id: id, new_owner: address };
+type update_owner = {id, new_owner: address };
 
 type update_details = {
-  id: id,
+  id,
   new_profile: option(bytes),
   new_controller: option(address)
 };
@@ -1090,9 +1086,9 @@ type authorized_keys = list(key);
 type id = string;
 
 type storage = {
-  id: id,
-  counter: counter,
-  threshold: threshold,
+  id,
+  counter,
+  threshold,
   auth: authorized_keys
 };
 
@@ -1102,11 +1098,7 @@ type dummy = (key_hash, signature);
 
 type signatures = list(dummy);
 
-type check_message_pt = {
-  counter: counter,
-  message: message,
-  signatures: signatures
-};
+type check_message_pt = {counter, message, signatures };
 
 type return = (list(operation), storage);
 

@@ -4,8 +4,8 @@ type foobar is
 | Kee of nat
 
 function fb (const p : foobar) : int is
-  case p of
+  case p of [
     Foo (n) -> n
   | Bar (_) -> 42
   | Kee (_) -> 23
-  end
+  ]

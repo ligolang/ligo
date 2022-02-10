@@ -26,6 +26,11 @@ type t =
 
 type directive = t
 
+(* Ghosts *)
+
+val ghost_linemarker : linemarker Region.reg
+val ghost_Linemarker : t
+
 (* Printing *)
 
 type lexeme = string

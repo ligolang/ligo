@@ -1,11 +1,12 @@
-(* Note: All external symbols here should be unqualified because this file is used
-         by [menhir] that does not always insert the [%{..%}] header. So we work
-         around it by the [-open Module] option in [dune] but symbols should be
-         unqualified.
+(* Tokens (mirroring these defined in module Token) *)
 
-         Also, keep in mind that [ParToken.mly] and [Parser.mly] are merging into
-         one file and the header of [Parser.mly] affects this code.
-         For example: [lexeme] type comes from [open CST] *)
+(* All external symbols here should be unqualified because this file
+   is used by [menhir] that does not always insert the [%{..%}]
+   header. So we work around it by the [-open Module] option in [dune]
+   but symbols should be unqualified.
+
+   Also, keep in mind that [ParToken.mly] and [Parser.mly] are merged
+   into one file, and the header of [Parser.mly] affects this code. *)
 
 %[@recover.prelude
   (* See [dune] file for [-open] flags for modules used in the
@@ -16,37 +17,37 @@
   module Token     = Lexing_pascaligo.Token
 
   let mk_Directive region =
-    let value = (1, "file_path", None)
+    let value = 1, "file_path", None
     in Directive.Linemarker Region.{value; region}
 
   let mk_lang region =
-    Region.{value = {value = "Ghost_lang"; region}; region}
+    Region.{value = {value="Ghost_lang"; region}; region}
 
   (* Ghost semantic values for inserted tokens *)
 
-  let mk_string   loc = Token.wrap_string   "ghost string" loc
-  let mk_verbatim loc = Token.wrap_verbatim "ghost verbatim" loc
-  let mk_bytes    loc = Token.wrap_bytes    (Hex.of_string "Ghost bytes") loc
-  let mk_int      loc = Token.wrap_int      Z.zero loc
-  let mk_nat      loc = Token.wrap_nat      Z.zero loc
-  let mk_mutez    loc = Token.wrap_mutez    Z.zero loc
-  let mk_ident    loc = Token.wrap_ident    "ghost_ident" loc
-  let mk_uident   loc = Token.wrap_uident   "Ghost_uident" loc
-  let mk_attr     loc = Token.wrap_attr     "ghost_attr" loc
+  let mk_string   = Token.wrap_string   "ghost string"
+  let mk_verbatim = Token.wrap_verbatim "ghost verbatim"
+  let mk_bytes    = Token.wrap_bytes    (Hex.of_string "Ghost bytes")
+  let mk_int      = Token.wrap_int      Z.zero
+  let mk_nat      = Token.wrap_nat      Z.zero
+  let mk_mutez    = Token.wrap_mutez    Int64.zero
+  let mk_ident    = Token.wrap_ident    "ghost_ident"
+  let mk_uident   = Token.wrap_uident   "Ghost_uident"
+  let mk_attr     = Token.wrap_attr     "ghost_attr" None
 ]
 
 (* Literals *)
 
-%token         <LexerLib.Directive.t> Directive "<directive>"  [@recover.expr mk_Directive $loc]
+%token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
 %token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string    $loc]
 %token                <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim  $loc]
 %token      <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes     $loc]
 %token        <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int       $loc]
 %token        <(string * Z.t) Wrap.t> Nat       "<nat>"       [@recover.expr mk_nat       $loc]
-%token        <(string * Z.t) Wrap.t> Mutez     "<mutez>"     [@recover.expr mk_mutez     $loc]
+%token    <(string * Int64.t) Wrap.t> Mutez     "<mutez>"     [@recover.expr mk_mutez     $loc]
 %token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc]
 %token                <string Wrap.t> UIdent    "<uident>"    [@recover.expr mk_uident    $loc]
-%token                <string Wrap.t> Attr      "[@attr]"     [@recover.expr mk_attr      $loc]
+%token            <Attr.t Region.reg> Attr      "[@attr]"     [@recover.expr mk_attr      $loc]
 %token <string Region.reg Region.reg> Lang      "[%lang"      [@recover.expr mk_lang      $loc]
 
 (* Symbols *)
@@ -59,7 +60,7 @@
 %token <string Wrap.t> RBRACE   "}"   [@recover.expr Token.wrap_rbrace   $loc]
 %token <string Wrap.t> LBRACKET "["   [@recover.expr Token.wrap_lbracket $loc]
 %token <string Wrap.t> RBRACKET "]"   [@recover.expr Token.wrap_rbracket $loc]
-%token <string Wrap.t> CONS     "#"   [@recover.expr Token.wrap_cons     $loc]
+%token <string Wrap.t> SHARP    "#"   [@recover.expr Token.wrap_sharp    $loc]
 %token <string Wrap.t> VBAR     "|"   [@recover.expr Token.wrap_vbar     $loc]
 %token <string Wrap.t> ARROW    "->"  [@recover.expr Token.wrap_arrow    $loc]
 %token <string Wrap.t> ASS      ":="  [@recover.expr Token.wrap_ass      $loc]
@@ -77,6 +78,11 @@
 %token <string Wrap.t> DOT      "."   [@recover.expr Token.wrap_dot      $loc]
 %token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc]
 %token <string Wrap.t> CARET    "^"   [@recover.expr Token.wrap_caret    $loc]
+%token <string Wrap.t> PLUS_EQ  "+="  [@recover.expr Token.wrap_plus_eq  $loc]
+%token <string Wrap.t> MINUS_EQ "-="  [@recover.expr Token.wrap_minus_eq $loc]
+%token <string Wrap.t> TIMES_EQ "*="  [@recover.expr Token.wrap_times_eq $loc]
+%token <string Wrap.t> SLASH_EQ "/="  [@recover.expr Token.wrap_slash_eq $loc]
+%token <string Wrap.t> VBAR_EQ  "|="  [@recover.expr Token.wrap_vbar_eq  $loc]
 
 (* Keywords *)
 

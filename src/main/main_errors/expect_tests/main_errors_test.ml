@@ -224,17 +224,9 @@ let%expect_test "sugaring" = ()
 let%expect_test "main_cit_pascaligo" =
   let open Cst.Pascaligo in
   let open Location in
-  let ghost =
-    object
-      method region = Region.ghost
-      method attributes = []
-      method payload = ""
-    end
-  in
   let error e = human_readable_error (cit_pascaligo_tracer e) in
-  let lexeme_reg : lexeme reg = {value= "foo"; region= default_region1} in
-  let pvar = PVar {value = {variable = lexeme_reg ; attributes = []} ; region = default_region1} in
-  let type_expr = TString {value= "yolo"; region= default_region1} in
+  let pvar = P_Var (Wrap.wrap "foo" default_region1) in
+  let type_expr = T_String (Wrap.wrap "yolo" default_region1) in
   let location_t = File default_location in
   error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   [%expect
@@ -272,31 +264,6 @@ let%expect_test "main_cit_pascaligo" =
 
   Invalid function declaration.
   Recursive functions are required to have a type annotation (for now).
-  |}] ;
-  let pvar : var_pattern = {variable = {value = "foo"; region = Region.ghost} ; attributes = []} in
-  error
-    (`Concrete_pascaligo_block_start_with_attribute
-      { value=
-          { enclosing= BeginEnd (ghost, ghost);
-            statements=
-              ( Data
-                  (LocalVar
-                     { value=
-                         { kwd_var= ghost;
-                           pattern= PVar {value= pvar; region= Region.ghost};
-                           var_type= None;
-                           assign= ghost;
-                           init= EVar {value= "xxx"; region= Region.ghost};
-                           terminator= None;
-                           attributes = []};
-                       region= Region.ghost }),
-                [] );
-            terminator= None };
-        region= Region.ghost }) ;
-  [%expect
-    {|
-  Invalid attribute declaration.
-  Attributes have to follow the declaration it is attached to.
   |}]
 
 let%expect_test "main_cit_cameligo" =
@@ -391,7 +358,7 @@ let%expect_test "main_cit_reasonligo" =
 
     Invalid let declaration.
     Only functions can be recursive.|}] ;
-  error (`Concrete_reasonligo_michelson_type_wrong (type_expr, "foo")) ;
+  error (`Concrete_reasonligo_michelson_type_wrong (Location.lift default_region1, "foo")) ;
   [%expect
     {|
         File "a dummy file name", line 20, character 5:

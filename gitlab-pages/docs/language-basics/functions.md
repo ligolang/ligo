@@ -31,7 +31,7 @@ instructions into an isolated scope. Each block needs to include at
 least one instruction.
 
 ```pascaligo skip
-block { a := a + 1 }
+{ a := a + 1 }
 ```
 
 If we need a placeholder, we use the instruction `skip` which leaves
@@ -40,14 +40,17 @@ empty block is that it prevents you from writing an empty block by
 mistake.
 
 ```pascaligo skip
-block { skip }
+{ skip }
 ```
 
+> Please note that the idiom above is __temporary__: this is not for
+> production code.
+
 Blocks are more versatile than simply containing instructions: they
-can also include *declarations* of values, like so:
+can also contain *declarations* of values, like so:
 
 ```pascaligo skip
-block { const a : int = 1 }
+{ const a : int = 1 }
 ```
 
 Functions in PascaLIGO are defined using the `function` keyword
@@ -57,15 +60,14 @@ Here is how you define a basic function that computes the sum of two
 integers:
 
 ```pascaligo group=a
-function add (const a : int; const b : int) : int is
-  block {
-    const sum : int = a + b
-  } with sum
+function add (const a : int; const b : int) : int is {
+  const sum : int = a + b
+} with sum
 ```
 
 The function body consists of two parts:
 
-- `block { <instructions and declarations> }` is the logic of the function;
+- `{ <instructions and declarations> }` is the logic of the function;
 - `with <value>` is the value returned by the function.
 
 By default, LIGO will warn about unused parameters inside
@@ -89,7 +91,7 @@ Functions that can contain all of their logic into a single
 *expression* can be defined without the need of a block:
 
 ```pascaligo
-function identity (const n : int) : int is block { skip } with n  // Bad! Empty block not needed!
+function identity (const n : int) : int is { skip } with n  // Bad! Empty block not needed!
 
 function identity (const n : int) : int is n  // Blockless
 ```
@@ -261,8 +263,8 @@ let myFun = ([x, y]: [int, int]): int => {
 };
 ```
 
-Note that JsLIGO, like JavaScript, requires the `return` keyword to indicate 
-what is being returned. If `return` is not used, it will be the same as 
+Note that JsLIGO, like JavaScript, requires the `return` keyword to indicate
+what is being returned. If `return` is not used, it will be the same as
 `return unit`.
 
 By default, LIGO will warn about unused arguments inside
@@ -431,15 +433,14 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo --entry-point in
 
 ## Nested functions (also known as closures)
 It's possible to place functions inside other functions. These functions
-have access to variables in the same scope. 
+have access to variables in the same scope.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function closure_example (const i : int) : int is
-  block {
-    function closure (const j : int) : int is i + j
-  } with closure (i)
+function closure_example (const i : int) : int is {
+  function closure (const j : int) : int is i + j
+} with closure (i)
 ```
 
 </Syntax>
@@ -479,56 +480,63 @@ let closure_example = (i: int): int => {
 
 ## Recursive function
 
-LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
+LIGO functions are not recursive by default and the user needs to
+specify that the function is recursive.
 
-At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
-limited to tail recursion (i.e the recursive call should be the last expression of the function).
+At the moment, recursive function are limited to one, e.g., a tuple,
+parameter and recursion is limited to __tail recursion__, that is, the
+recursive call should be the last expression of the function.
 
-In PascaLIGO recursive functions are defined using the `recursive` keyword
+In PascaLIGO, recursive functions are defined using the `recursive`
+keyword:
 
 ```pascaligo group=d
-recursive function sum (const n : int; const acc: int) : int is
-  if n<1 then acc else sum(n-1,acc+n)
+recursive function sum (const n : int; const acc : int) : int is
+  if n < 1 then acc else sum (n-1, acc + n)
 
-recursive function fibo (const n: int; const n_1: int; const n_0 :int) : int is
-  if n<2 then n_1 else fibo(n-1,n_1+n_0,n_1)
+recursive function fibo (const n : int; const n_1 : int; const n_0 : int) : int is
+  if n < 2 then n_1 else fibo (n-1, n_1 + n_0, n_1)
 ```
 </Syntax>
 <Syntax syntax="cameligo">
 
 ## Recursive function
 
-LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
+LIGO functions are not recursive by default, the user need to specify
+that the function is recursive.
 
-At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
-limited to tail recursion (i.e the recursive call should be the last expression of the function)
+At the moment, recursive function are limited to one, e.g., a tuple,
+parameter and recursion is limited to __tail recursion__, that is, the
+recursive call should be the last expression of the function.
 
-In CameLIGO recursive functions are defined using the `rec` keyword
+In CameLIGO, recursive functions are defined using the `rec` keyword
 
 ```cameligo group=d
-let rec sum ((n,acc):int * int) : int =
-    if (n < 1) then acc else sum (n-1, acc+n)
- 
-let rec fibo ((n,n_1,n_0):int*int*int) : int = 
-    if (n < 2) then n_1 else fibo (n-1, n_1 + n_0, n_1)
+let rec sum (n, acc : int * int) : int =
+  if n < 1 then acc else sum (n-1, acc + n)
+
+let rec fibo (n, n_1, n_0 : int * int * int) : int =
+  if n < 2 then n_1 else fibo (n-1, n_1 + n_0, n_1)
 ```
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ## Recursive function
 
-LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
+LIGO functions are not recursive by default, the user need to specify
+that the function is recursive.
 
-At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
-limited to tail recursion (i.e the recursive call should be the last expression of the function)
+At the moment, recursive function are limited to one, e.g., a tuple,
+parameter and recursion is limited to __tail recursion__, that is, the
+recursive call should be the last expression of the function.
 
 In ReasonLIGO recursive functions are defined using the `rec` keyword
 
 ```reasonligo group=d
-let rec sum = ((n, acc) : (int,int)): int =>
-    if (n < 1) {acc;} else {sum ((n-1,acc+n));};
+let rec sum = ((n, acc) : (int, int)): int =>
+  if (n < 1) { acc; } else { sum ((n-1, acc + n)); };
 
-let rec fibo = ((n, n_1, n_0) : (int,int,int)): int =>
-    if (n < 2) {n_1;} else {fibo ((n-1,n_1+n_0,n_1));};
+let rec fibo = ((n, n_1, n_0) : (int, int, int)): int =>
+    if (n < 2) { n_1; } else { fibo ((n-1, n_1 + n_0, n_1)); };
 ```
 </Syntax>

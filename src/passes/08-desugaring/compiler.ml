@@ -194,8 +194,8 @@ let rec compile_expression : I.expression -> O.expression =
       let aux (s, e : O.expression * _) lst =
         let s' = accessor ~loc:s.location s lst in
         let e' = fun expr ->
-          let u = updator ~loc:s.location s lst (expr)
-          in e u
+          let u = updator ~loc:s.location s lst (expr) in
+          e u
         in
         (s',e')
       in

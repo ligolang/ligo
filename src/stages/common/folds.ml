@@ -156,7 +156,7 @@ let for_ : ('acc -> 'a -> 'b) -> 'acc -> 'a for_ -> 'acc
   acc
 
 let for_each : ('acc -> 'a -> 'b) -> 'acc -> 'a for_each -> 'acc
-= fun f acc {fe_binder=_;collection;collection_type=_;fe_body} ->
+= fun f acc {fe_binder=_;collection;fe_body;collection_type=_} ->
   let acc = f acc collection in
   let acc = f acc fe_body in
   acc

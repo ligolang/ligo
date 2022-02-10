@@ -14,7 +14,7 @@ function subtract (const a : int; const b : int) : int is a - b
 
 function main (const p : action; const s : int) : return is
   ((nil : list (operation)),
-    case p of
+    case p of [
       Increment (n) -> add (s, n)
     | Decrement (n) -> subtract (s, n)
-    end)
+    ])

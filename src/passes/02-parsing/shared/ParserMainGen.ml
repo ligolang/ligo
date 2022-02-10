@@ -15,19 +15,15 @@ module type SELF_TOKENS = Lexing_shared.Self_tokens.S
 module type PARSER      = ParserLib.API.PARSER
 
 module LexerMainGen = Lexing_shared.LexerMainGen
+module Tree         = Cst_shared.Tree
 
 (* The functor *)
 
 module type PRINTER =
   sig
     type tree
-    type state
 
-    val mk_state :
-      offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
-
-    val print_tokens : state -> tree -> unit
-    val pp_cst       : state -> tree -> unit
+    val to_buffer : Tree.state -> tree -> Buffer.t
   end
 
 module type PRETTY =
@@ -50,10 +46,9 @@ module Make
          (CST         : sig type t end)
          (Parser      : PARSER with type token = Token.t
                                 and type tree = CST.t)
-         (Printer     : PRINTER with type tree = CST.t)
+         (Print       : PRINTER with type tree = CST.t)
          (Pretty      : PRETTY with type tree = CST.t)
-         (CLI         : ParserLib.CLI.S)
- =
+         (CLI         : ParserLib.CLI.S) =
   struct
     (* Instantiating the lexer *)
 
@@ -77,7 +72,8 @@ module Make
     let cli_error msg =
       red_exit (Printf.sprintf "Command-line error: %s\n" msg)
 
-    let print_and_quit msg = print_string msg; Out_channel.flush stdout; exit 0
+    let print_and_quit msg =
+      print_string msg; Out_channel.flush stdout; exit 0
 
     (* Checking for errors and valid exits *)
 
@@ -103,16 +99,21 @@ module Make
 
     (* Main *)
 
-    module MainParser = ParserLib.API.Make (MainLexer) (Parser)
-                            (struct
-                                let mode                   = CLI.Lexer_CLI.mode
-                                let error_recovery_tracing = CLI.trace_recovery
-                                let tracing_output         = CLI.trace_recovery_output
-                             end)
+    module Recovery =
+      struct
+        let mode                   = CLI.Lexer_CLI.mode
+        let error_recovery_tracing = CLI.trace_recovery
+        let tracing_output         = CLI.trace_recovery_output
+      end
+
+    module MainParser = ParserLib.API.Make (MainLexer) (Parser) (Recovery)
 
     let show_error_message : MainParser.message -> unit =
       function Region.{value; region} ->
-        let reg = region#to_string ~file:true ~offsets:true CLI.Lexer_CLI.mode in
+        let reg =
+          region#to_string ~file:true
+                           ~offsets:Preprocessor_CLI.offsets
+                           Lexer_CLI.mode in
         let msg = Printf.sprintf "Parse error %s:\n%s" reg value
         in (Out_channel.flush stdout; print_in_red msg)
 
@@ -129,23 +130,16 @@ module Make
         end
       else
         let buffer = Buffer.create 231 in
-        let state  = Printer.mk_state
+        let state  = Tree.mk_state
+                       ~buffer
                        ~offsets:Preprocessor_CLI.offsets
-                       ~mode:Lexer_CLI.mode
-                       ~buffer in
+                       Lexer_CLI.mode in
         if CLI.cst then
-            begin
-              Printer.pp_cst state tree;
-              Printf.printf "%s%!" (Buffer.contents buffer)
-            end
-        else
-          if CLI.cst_tokens then
-            begin
-              Printer.print_tokens state tree;
-              Printf.printf "%s%!" (Buffer.contents buffer);
-            end
-          else ();
-         Out_channel.flush stdout
+          let buffer = Print.to_buffer state tree
+          in Printf.printf "%s%!" (Buffer.contents buffer)
+        else ();
+        Out_channel.flush stdout;
+        Out_channel.flush stderr
 
     let wrap =
       function
@@ -188,11 +182,13 @@ module Make
         let open MainParser in
         let stdin_writer () =
           if CLI.mono then
-              mono_from_channel In_channel.stdin |> wrap
-          else if not CLI.recovery then
-              incr_from_channel (module ParErr) In_channel.stdin |> wrap
+            mono_from_channel In_channel.stdin |> wrap
           else
-              recov_from_channel (module ParErr) In_channel.stdin |> wrap_recovery in
+            if not CLI.recovery then
+              incr_from_channel (module ParErr) In_channel.stdin |> wrap
+            else
+              recov_from_channel (module ParErr) In_channel.stdin
+              |> wrap_recovery in
         let file_writer file_path =
           if CLI.mono then
               mono_from_file file_path |> wrap

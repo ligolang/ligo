@@ -22,10 +22,10 @@ let rec type_expression {type_content=tc;location} =
 and type_content = function
   | T_variable        t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_sum             t -> `List [ `String "t_sum";
-                                   label_map row_element t.fields;
+                                   (list (pair label row_element)) t.fields;
                                    attributes t.attributes]
   | T_record          t -> `List [ `String "t_record";
-                                   label_map row_element t.fields;
+                                  (list (pair label row_element)) t.fields;
                                    attributes t.attributes]
   | T_tuple           t -> `List [ `String "t_tuple";  list type_expression t]
   | T_arrow           t -> `List [ `String "t_arrow"; arrow type_expression t]
@@ -66,7 +66,7 @@ and expression_content = function
   | E_constructor e -> `List [ `String "E_constructor"; constructor expression e ]
   | E_matching    e -> `List [ `String "E_matching";    match_exp expression type_expression e ]
   (* Record *)
-  | E_record          e -> `List [ `String "E_record";          record      expression e ]
+  | E_record          e -> `List [ `String "E_record";          record      e ]
   | E_accessor        e -> `List [ `String "E_record_accessor"; accessor    expression e ]
   | E_update          e -> `List [ `String "E_record_update";   update      expression e ]
   | E_ascription      e -> `List [ `String "E_ascription";      ascription  expression type_expression e ]
@@ -86,6 +86,7 @@ and expression_content = function
   | E_while       e -> `List [ `String "E_while";    while_loop expression e ]
 
 
+and record kvl = list (pair label expression) kvl
 and constant {cons_name;arguments} =
   `Assoc [
     ("cons_name", rich_constant cons_name);

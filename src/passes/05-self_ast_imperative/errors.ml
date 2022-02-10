@@ -17,6 +17,13 @@ type self_ast_imperative_error = [
   | `Self_ast_imperative_vars_captured of (location * expression_variable) list
   | `Self_ast_imperative_const_assigned of (location * expression_variable)
   | `Self_ast_imperative_no_shadowing of location
+  | `Self_ast_imperative_non_linear_pattern of type_expression pattern
+  | `Self_ast_imperative_non_linear_record of expression
+  | `Self_ast_imperative_non_linear_type_decl of type_expression
+  | `Self_ast_imperative_non_linear_row of type_expression
+  | `Self_ast_imperative_duplicate_parameter of expression
+  | `Self_ast_imperative_reserved_name of (string * location)
+
 ] [@@deriving poly_constructor { prefix = "self_ast_imperative_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -25,6 +32,31 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Self_ast_imperative_non_linear_record e ->
+      Format.fprintf f
+        "@[<v>%a@.Duplicated record field@.Hint: Change the name.@]"
+        Snippet.pp e.location
+    | `Self_ast_imperative_reserved_name (str,loc) ->
+      Format.fprintf f
+        "@[<v>%a@.Reserved name %S.@.Hint: Change the name.@]"
+        Snippet.pp loc
+        str
+    | `Self_ast_imperative_non_linear_pattern t ->
+      Format.fprintf f
+        "@[<v>%a@.Repeated variable in pattern.@.Hint: Change the name.@]"
+        Snippet.pp t.location
+    | `Self_ast_imperative_non_linear_type_decl t ->
+      Format.fprintf f
+        "@[<v>%a@.Repeated type variable in type.@.Hint: Change the name.@]"
+        Snippet.pp t.location
+    | `Self_ast_imperative_non_linear_row t ->
+      Format.fprintf f
+        "@[<v>%a@.Duplicated field or variant name.@.Hint: Change the name.@]"
+        Snippet.pp t.location
+    | `Self_ast_imperative_duplicate_parameter exp ->
+      Format.fprintf f
+        "@[<v>%a@.Duplicated variable name in function parameter.@.Hint: Change the name.@]"
+        Snippet.pp exp.location
     | `Self_ast_imperative_long_constructor (c,e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed data constructor \"%s\".@.Data constructors have a maximum length of 32 characters, which is a limitation imposed by annotations in Tezos. @]"
@@ -84,6 +116,54 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Self_ast_imperative_non_linear_record e ->
+    let message = `String (Format.asprintf "Duplicated record field") in
+    let loc = Location.to_yojson e.location in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_imperative_reserved_name (str,loc) ->
+    let message = `String (Format.asprintf "reserved name %s" str) in
+    let loc = Location.to_yojson loc in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_imperative_non_linear_pattern t ->
+    let message = `String "Repeated variable in pattern" in
+    let loc = Location.to_yojson t.location in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_imperative_non_linear_type_decl t ->
+    let message = `String "Repeated type variable in type" in
+    let loc = Location.to_yojson t.location in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_imperative_non_linear_row t ->
+    let message = `String "Duplicated field or variant name" in
+    let loc = Location.to_yojson t.location in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+    ] in
+    json_error ~stage ~content
+  | `Self_ast_imperative_duplicate_parameter exp ->
+    let message = `String "Duplicated variable name in function parameter" in
+    let loc = Location.to_yojson exp.location in
+    let content = `Assoc [
+      ("message", message);
+      ("location", loc);
+    ] in
+    json_error ~stage ~content
   | `Self_ast_imperative_long_constructor (c,e) ->
     let message = `String "too long constructor (limited to 32)" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in

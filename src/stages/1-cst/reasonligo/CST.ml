@@ -10,6 +10,7 @@ module Directive = LexerLib.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
 module Token     = Lexing_reasonligo.Token
+module Wrap      = Lexing_shared.Wrap
 
 open Utils
 type 'a reg = 'a Region.reg
@@ -18,7 +19,7 @@ type 'a reg = 'a Region.reg
 
 type lexeme = string
 
-type 'payload wrap = 'payload Token.wrap 
+type 'payload wrap = 'payload Wrap.t
 
 (* Keywords of Reason *)
 
@@ -357,7 +358,7 @@ and arith_expr =
 | Neg   of minus un_op reg
 | Int   of (string * Z.t) reg
 | Nat   of (string * Z.t) reg
-| Mutez of (string * Z.t) reg
+| Mutez of (string * Int64.t) reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -559,7 +560,7 @@ let logic_expr_to_region = function
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
 | Div {region;_} | Mod {region;_} | Neg {region;_}
-| Land {region;_} | Lor {region;_} | Lxor {region;_} 
+| Land {region;_} | Lor {region;_} | Lxor {region;_}
 | Lsl {region;_} | Lsr {region;_}
 | Int {region;_} | Mutez {region; _}
 | Nat {region; _} -> region

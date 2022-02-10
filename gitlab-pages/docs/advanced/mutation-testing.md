@@ -19,8 +19,7 @@ argument and doubles it, tentatively the following one:
 <Syntax syntax="pascaligo">
 
 ```pascaligo test-ligo group=frontpage
-function twice (const x : int) : int is
-  x + x
+function twice (const x : int) : int is x + x
 ```
 
 </Syntax>
@@ -53,15 +52,14 @@ the following tests:
 <Syntax syntax="pascaligo">
 
 ```pascaligo test-ligo group=frontpage
-function simple_tests(const f : int -> int) is
-  block {
-    (* Test 1 *)
-    assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
-    (* Test 2 *)
-    assert (Test.michelson_equal(Test.run(f, 2), Test.eval(4)));
-  } with unit;
+function simple_tests (const f : int -> int) is {
+  (* Test 1 *)
+  assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
+  (* Test 2 *)
+  assert (Test.michelson_equal(Test.run(f, 2), Test.eval(4)));
+} with unit;
 
-const test = simple_tests(twice);
+const test = simple_tests (twice);
 ```
 
 </Syntax>
@@ -72,8 +70,8 @@ let simple_tests (f : int -> int) =
   (* Test 1 *)
   let () = assert (Test.michelson_equal (Test.run f 0) (Test.eval 0)) in
   (* Test 2 *)
-  let () = assert (Test.michelson_equal (Test.run f 2) (Test.eval 4)) in
-  ()
+  let () = assert (Test.michelson_equal (Test.run f 2) (Test.eval 4))
+  in ()
 
 let test = simple_tests twice
 ```
@@ -161,8 +159,7 @@ make a mistake and write the following implementation instead:
 <Syntax syntax="pascaligo">
 
 ```pascaligo test-ligo group=frontpage
-function twice (const x : int) : int is
-  x * x
+function twice (const x : int) : int is x * x
 ```
 
 </Syntax>
@@ -210,28 +207,28 @@ framework that we will use is
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
-Test.mutation_test : 'a -> ('a -> 'b) -> option ('b * mutation)
+function Test.mutation_test<a,b> : a -> (a -> b) -> option (b * mutation)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-Test.mutation_test : 'a -> ('a -> 'b) -> ('b * mutation) option
+val Test.mutation_test : 'a -> ('a -> 'b) -> ('b * mutation) option
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-Test.mutation_test : ('a, ('a -> 'b)) => option ('b, mutation)
+val Test.mutation_test : ('a, ('a -> 'b)) => option ('b, mutation)
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-Test.mutation_test : (value: 'a, tester: ('a -> 'b)) => option <['b, mutation]>
+val Test.mutation_test : (value: 'a, tester: ('a -> 'b)) => option <['b, mutation]>
 ```
 
 </Syntax>
@@ -255,11 +252,12 @@ and the value to mutate is `twice`:
 
 ```pascaligo skip
 const test_mutation =
-  case Test.mutation_test(twice, simple_tests) of
-    None -> unit
-  | Some (_, mutation) -> block { Test.log(mutation) }
-                          with failwith("Some mutation also passes the tests! ^^")
-  end
+  case Test.mutation_test (twice, simple_tests) of [
+    None -> Unit
+  | Some (_, mutation) ->
+      { Test.log (mutation) }
+      with failwith ("Some mutation also passes the tests! ^^")
+  ]
 ```
 
 </Syntax>
@@ -269,8 +267,9 @@ const test_mutation =
 let test_mutation =
   match Test.mutation_test twice simple_tests with
     None -> ()
-  | Some (_, mutation) -> let () = Test.log(mutation) in
-                          failwith "Some mutation also passes the tests! ^^"
+  | Some (_, mutation) ->
+      let () = Test.log mutation in
+      failwith "Some mutation also passes the tests! ^^"
 ```
 
 </Syntax>
@@ -280,8 +279,9 @@ let test_mutation =
 let test_mutation =
   switch(Test.mutation_test(twice, simple_tests)) {
   | None => ()
-  | Some (_, mutation) => { Test.log(mutation);
-                            failwith ("Some mutation also passes the tests! ^^") }
+  | Some (_, mutation) =>
+      { Test.log(mutation);
+      failwith ("Some mutation also passes the tests! ^^") }
   };
 ```
 
@@ -314,7 +314,7 @@ ligo run test gitlab-pages/docs/advanced/src/mutation.ligo
 // Replacing by: MUL(x ,
 // x).
 // File "gitlab-pages/docs/advanced/src/mutation.ligo", line 20, characters 31-82:
-//  19 |   | Some (_, mutation) -> block { Test.log(mutation) }
+//  19 |   | Some (_, mutation) -> { Test.log(mutation) }
 //  20 |                           with failwith("Some mutation also passes the tests! ^^")
 //  21 |   end
 //
@@ -394,15 +394,14 @@ test:
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
-function simple_tests(const f : int -> int) is
-  block {
-    (* Test 1 *)
-    assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
-    (* Test 2 *)
-    assert (Test.michelson_equal(Test.run(f, 2), Test.eval(4)));
-    (* Test 3 *)
-    assert (Test.michelson_equal(Test.run(f, 1), Test.eval(2)));
-  } with unit;
+function simple_tests (const f : int -> int) is {
+  (* Test 1 *)
+  assert (Test.michelson_equal (Test.run (f, 0), Test.eval (0)));
+  (* Test 2 *)
+  assert (Test.michelson_equal (Test.run (f, 2), Test.eval (4)));
+  (* Test 3 *)
+  assert (Test.michelson_equal (Test.run (f, 1), Test.eval (2)));
+} with Unit;
 ```
 
 </Syntax>
@@ -415,8 +414,8 @@ let simple_tests (f : int -> int) =
   (* Test 2 *)
   let () = assert (Test.michelson_equal (Test.run f 2) (Test.eval 4)) in
   (* Test 3 *)
-  let () = assert (Test.michelson_equal (Test.run f 1) (Test.eval 2)) in
-  ()
+  let () = assert (Test.michelson_equal (Test.run f 1) (Test.eval 2))
+  in ()
 ```
 
 </Syntax>
@@ -525,12 +524,13 @@ function sub (const store : storage; const delta : int) : storage is
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
+
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
-  case action of
+  case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
-  end)
+  ])
 ```
 
 </Syntax>
@@ -630,17 +630,16 @@ the entrypoint `Increment(7)` works as intended on an initial storage
 ```pascaligo test-ligo group=frontpage
 // This continues mutation-contract.ligo
 
-function originate_and_test(const mainf : parameter * storage -> return) is
-  block {
-    const initial_storage = 5;
-    const (taddr, _, _) = Test.originate(mainf, initial_storage, 0tez);
-    const contr = Test.to_contract(taddr);
-    const _ = Test.transfer_to_contract_exn(contr, Increment(7), 1mutez);
-    const storage = Test.get_storage(taddr);
-    assert (storage = initial_storage + 7);
-  } with (unit);
+function originate_and_test (const mainf : parameter * storage -> return) is {
+  const initial_storage = 5;
+  const (taddr, _, _) = Test.originate (mainf, initial_storage, 0tez);
+  const contr = Test.to_contract (taddr);
+  const _ = Test.transfer_to_contract_exn (contr, Increment (7), 1mutez);
+  const storage = Test.get_storage (taddr);
+  assert (storage = initial_storage + 7);
+} with unit;
 
-const test = originate_and_test(main);
+const test = originate_and_test (main);
 ```
 
 </Syntax>
@@ -653,7 +652,7 @@ let originate_and_test (mainf : parameter * storage -> return) =
   let initial_storage = 7 in
   let (taddr, _, _) = Test.originate mainf initial_storage 0tez in
   let contr = Test.to_contract taddr in
-  let _ = Test.transfer_to_contract_exn contr (Increment (7)) 1mutez in
+  let _ = Test.transfer_to_contract_exn contr (Increment 7) 1mutez in
   assert (Test.get_storage taddr = initial_storage + 7)
 
 let test = originate_and_test main
@@ -701,11 +700,12 @@ For performing mutation testing as before, we write the following test:
 
 ```pascaligo skip
 const test_mutation =
-  case Test.mutation_test(main, originate_and_test) of
+  case Test.mutation_test (main, originate_and_test) of [
     None -> unit
-  | Some (_, mutation) -> block { Test.log(mutation) }
-                          with failwith("Some mutation also passes the tests! ^^")
-  end
+  | Some (_, mutation) ->
+      { Test.log(mutation) }
+      with failwith ("Some mutation also passes the tests! ^^")
+  ]
 ```
 
 </Syntax>
@@ -760,7 +760,7 @@ ligo run test gitlab-pages/docs/advanced/src/mutation-contract.ligo
 // Replacing by: ADD(store ,
 // delta).
 // File "gitlab-pages/docs/advanced/src/mutation-contract.ligo", line 42, characters 31-82:
-//  41 |   | Some (_, mutation) -> block { Test.log(mutation) }
+//  41 |   | Some (_, mutation) -> { Test.log(mutation) }
 //  42 |                           with failwith("Some mutation also passes the tests! ^^")
 //  43 |   end
 
@@ -841,16 +841,15 @@ to the `Decrement` entrypoint in the test above:
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
-function originate_and_test(const mainf : parameter * storage -> return) is
-  block {
-    const initial_storage = 5;
-    const (taddr, _, _) = Test.originate(mainf, initial_storage, 0tez);
-    const contr = Test.to_contract(taddr);
-    const _ = Test.transfer_to_contract_exn(contr, Increment(7), 1mutez);
-    const _ = Test.transfer_to_contract_exn(contr, Decrement(3), 1mutez);
-    const storage = Test.get_storage(taddr);
-    assert (storage = initial_storage + 4);
-  } with (unit);
+function originate_and_test(const mainf : parameter * storage -> return) is{
+  const initial_storage = 5;
+  const (taddr, _, _) = Test.originate(mainf, initial_storage, 0tez);
+  const contr = Test.to_contract(taddr);
+  const _ = Test.transfer_to_contract_exn(contr, Increment(7), 1mutez);
+  const _ = Test.transfer_to_contract_exn(contr, Decrement(3), 1mutez);
+  const storage = Test.get_storage(taddr);
+  assert (storage = initial_storage + 4);
+} with unit;
 ```
 
 </Syntax>
@@ -942,17 +941,17 @@ then process the list:
 
 ```pascaligo skip
 const test_mutation =
-  case Test.mutation_test_all(main, originate_and_test) of
+  case Test.mutation_test_all (main, originate_and_test) of [
     nil -> unit
-  | ms -> block {
-      for m in list ms block {
+  | ms -> {
+      for m in list ms {
         const (_, mutation) = m;
         const path = Test.save_mutation(".", mutation);
         Test.log("saved at:");
         Test.log(path)
       }
-    } with failwith("Some mutation also passes the tests! ^^")
-  end
+    } with failwith ("Some mutation also passes the tests! ^^")
+  ]
 ```
 
 </Syntax>
@@ -1069,14 +1068,14 @@ function add (const store : storage; const delta : int) : storage is
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
-function main (const action : parameter; const store : storage) : return is block {
+function main (const action : parameter; const store : storage) : return is {
   [@no_mutation] const _ = assert (0 = 0);
 } with
  ((nil : list (operation)),    // No operations
-  case action of
+  case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
-  end)
+  ])
 ```
 
 </Syntax>

@@ -1,0 +1,6 @@
+---
+  title: "[PascaLIGO] Fixed how qualified names are parsed."
+  merge_request: "1356"
+  author: "Christian Rinderknecht"
+  type: "fixed"
+

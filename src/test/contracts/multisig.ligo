@@ -43,7 +43,7 @@ function check_message (const param : check_message_pt;
 
     var keys : authorized_keys := s.auth;
     for pkh_sig in list param.signatures block {
-      case keys of
+      case keys of [
         nil -> skip
       | key # tl -> block {
           keys := tl;
@@ -53,7 +53,7 @@ function check_message (const param : check_message_pt;
             else failwith ("Invalid signature")
           else skip
         }
-      end
+      ]
     };
 
     var _ := keys;
@@ -65,4 +65,4 @@ function check_message (const param : check_message_pt;
 } with (message (unit), s)
 
 function main (const param : parameter; const s : storage) : return is
-  case param of CheckMessage (p) -> check_message (p,s) end
+  case param of [ CheckMessage (p) -> check_message (p,s) ]

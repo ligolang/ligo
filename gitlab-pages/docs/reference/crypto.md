@@ -9,7 +9,7 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-function blake2b : bytes -> bytes
+val blake2b : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val blake2b : bytes -> bytes
@@ -29,7 +29,7 @@ over the given `bytes` data and returns a `bytes` representing the hash.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman_blake (const s: bytes) : bytes is Crypto.blake2b(s)
+function hasherman_blake (const s : bytes) : bytes is Crypto.blake2b (s)
 ```
 
 </Syntax>
@@ -58,7 +58,7 @@ let hasherman_blake = (s: bytes):bytes => Crypto.blake2b(s);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function sha256 : bytes -> bytes
+val sha256 : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sha256 : bytes -> bytes
@@ -78,15 +78,14 @@ Runs the [sha256 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman (const s : bytes) : bytes is Crypto.sha256(s)
+function hasherman (const s : bytes) : bytes is Crypto.sha256 (s)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let hasherman (s : bytes) : bytes =
-   Crypto.sha256 s
+let hasherman (s : bytes) : bytes = Crypto.sha256 s
 ```
 
 </Syntax>
@@ -106,7 +105,7 @@ let hasherman = (s: bytes): bytes => Crypto.sha256(s);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function sha512 : bytes -> bytes
+val sha512 : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sha512 : bytes -> bytes
@@ -126,7 +125,7 @@ Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman512 (const s: bytes) : bytes is Crypto.sha512(s)
+function hasherman512 (const s : bytes) : bytes is Crypto.sha512 (s)
 ```
 
 </Syntax>
@@ -153,7 +152,7 @@ let hasherman512 = (s: bytes): bytes => Crypto.sha512(s);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function sha3 : bytes -> bytes
+val sha3 : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sha3 : bytes -> bytes
@@ -173,7 +172,7 @@ Runs the [sha3 hash algorithm](https://en.wikipedia.org/wiki/SHA-3) over the giv
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman3 (const s: bytes) : bytes is Crypto.sha3(s)
+function hasherman3 (const s : bytes) : bytes is Crypto.sha3 (s)
 ```
 
 </Syntax>
@@ -199,7 +198,7 @@ let hasherman3 = (s: bytes): bytes => Crypto.sha3(s);
 
 </Syntax>
 <SyntaxTitle syntax="pascaligo">
-function keccak : bytes -> bytes
+val keccak : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val keccak : bytes -> bytes
@@ -217,7 +216,7 @@ Runs the [keccak](https://en.wikipedia.org/wiki/keccak) over the given
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman_keccak (const s: bytes) : bytes is Crypto.keccak(s)
+function hasherman_keccak (const s : bytes) : bytes is Crypto.keccak (s)
 ```
 
 </Syntax>
@@ -244,7 +243,7 @@ let hasherman_keccak = (s: bytes): bytes => Crypto.keccak(s);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function hash_key : key -> key_hash
+val hash_key : key -> key_hash
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val hash_key : key -> key_hash
@@ -263,10 +262,10 @@ Hashes a key for easy comparison and storage.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is block {
-  var ret : bool := False ;
-  var kh2 : key_hash := Crypto.hash_key(k2) ;
-  if kh1 = kh2 then ret := True else skip; 
+function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is {
+  var ret : bool := False;
+  var kh2 : key_hash := Crypto.hash_key(k2);
+  if kh1 = kh2 then ret := True;
 } with (ret, kh2)
 ```
 
@@ -276,9 +275,7 @@ function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash
 ```cameligo
 let check_hash_key (kh1, k2: key_hash * key) : bool * key_hash =
   let kh2 : key_hash = Crypto.hash_key k2 in
-  if kh1 = kh2
-  then (true, kh2)
-  else (false, kh2)
+  if kh1 = kh2 then (true, kh2) else (false, kh2)
 ```
 
 </Syntax>
@@ -287,12 +284,7 @@ let check_hash_key (kh1, k2: key_hash * key) : bool * key_hash =
 ```reasonligo
 let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
   let kh2 : key_hash = Crypto.hash_key(k2);
-  if (kh1 == kh2) {
-    (true, kh2);
-  }
-  else {
-    (false, kh2);
-  }
+  if (kh1 == kh2) { (true, kh2); } else { (false, kh2); }
 };
 ```
 
@@ -302,19 +294,14 @@ let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
 ```jsligo
 let check_hash_key = ([kh1, k2]: [key_hash, key]) : [bool, key_hash] => {
   let kh2 : key_hash = Crypto.hash_key(k2);
-  if (kh1 == kh2) {
-    return [true, kh2];
-  }
-  else {
-    return [false, kh2];
-  };
+  if (kh1 == kh2) { return [true, kh2]; } else { return [false, kh2]; };
 };
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function check : key -> signature -> bytes -> bool
+val check : key -> signature -> bytes -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val check : key -> signature -> bytes -> bool
@@ -336,17 +323,17 @@ Check that a message has been signed by a particular key.
 
 ```pascaligo
 function check_signature
-    (const pk: key;
-     const signed: signature;
-     const msg: bytes) : bool
-  is Crypto.check(pk, signed, msg)
+    (const pk     : key;
+     const signed : signature;
+     const msg    : bytes) : bool
+  is Crypto.check (pk, signed, msg)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let check_signature (pk, signed, msg: key * signature * bytes) : bool =
+let check_signature (pk, signed, msg : key * signature * bytes) : bool =
   Crypto.check pk signed msg
 ```
 
@@ -369,4 +356,3 @@ let check_signature = ([pk, signed, msg]: [key, signature, bytes]) : bool => {
 ```
 
 </Syntax>
-

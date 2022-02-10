@@ -19,11 +19,11 @@ let%expect_test _ =
     1 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "interpret" ; "( (case (1,2n,\"3\") of (a,b,c) -> a end) : int)" ; "--syntax";"pascaligo" ] ;
+  run_ligo_good [ "run"; "interpret" ; "( (case (1,2n,\"3\") of [ (a,b,c) -> a ]) : int)" ; "--syntax";"pascaligo" ] ;
    [%expect {|
     1 |}] ;
 
-  run_ligo_good [ "run"; "interpret" ; "case (1,2) of (a,b) -> a end" ; "--syntax";"pascaligo" ] ;
+  run_ligo_good [ "run"; "interpret" ; "case (1,2) of [ (a,b) -> a ]" ; "--syntax";"pascaligo" ] ;
    [%expect {|
     1 |}]
 

@@ -44,7 +44,7 @@ block {
 
     var pkh_sigs : signatures := p.signatures;
     for key in list s.auth block {
-      case pkh_sigs of
+      case pkh_sigs of [
         nil -> skip
       | pkh_sig # tl -> block {
           if pkh_sig.0 = Crypto.hash_key (key) then block {
@@ -55,7 +55,7 @@ block {
           }
           else skip
         }
-      end
+      ]
     };
 
     var _ := pkh_sigs;
@@ -66,8 +66,8 @@ block {
   };
   const contract_opt : option (contract(payload)) = Tezos.get_contract_opt(c_address);
   var op : list(operation) := nil;
-  case contract_opt of
+  case contract_opt of [
     | Some (c) -> op := list [Tezos.transaction (payload, 0tez, c)]
     | None     -> failwith ("Contract not found")
-  end;
+  ];
 } with (op, s)
