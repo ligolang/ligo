@@ -13,7 +13,6 @@ module Log
   , err
   , critical
   , withLogger
-  , withoutLogger
   , flagBasedEnv
   , flagBasedSeverity
   ) where
@@ -55,11 +54,6 @@ err = [| $logTM ErrorS |]
 critical :: ExpQ
 critical = [| $logTM CriticalS |]
 {-# INLINE critical #-}
-
-withoutLogger
-  :: ((forall a. NoLoggingT m a -> m a) -> m b)
-  -> m b
-withoutLogger action = action runNoLoggingT
 
 withLogger
   :: MonadUnliftIO m

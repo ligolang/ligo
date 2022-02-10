@@ -7,7 +7,6 @@ module Test.Common.Util
   , readContractWithMessages
   , readContractWithScopes
   , supportedExtensions
-  , withoutLogger
   ) where
 
 import Control.Monad.IO.Class (liftIO)
@@ -26,7 +25,7 @@ import AST.Scope.Common (ContractInfo, HasScopeForest, Info', contractTree)
 import AST.Skeleton (SomeLIGO)
 
 import Extension (supportedExtensions)
-import Log (NoLoggingT, withoutLogger)
+import Log (NoLoggingT (..))
 import Parser (ParsedInfo)
 import ParseTree (pathToSrc)
 
@@ -58,13 +57,13 @@ readContract filepath = do
   pure (contractTree ppRanges)
 
 readContractWithMessages :: FilePath -> IO ContractInfo
-readContractWithMessages filepath = withoutLogger \runLogger -> do
+readContractWithMessages filepath = do
   src <- pathToSrc filepath
-  runLogger (parsePreprocessed src)
+  runNoLoggingT $ parsePreprocessed src
 
 readContractWithScopes
   :: forall parser. ScopeTester parser
   => FilePath -> IO (SomeLIGO Info')
-readContractWithScopes filepath = withoutLogger \runLogger -> do
+readContractWithScopes filepath = do
   src <- pathToSrc filepath
-  contractTree <$> runLogger (parseWithScopes @parser src)
+  contractTree <$> runNoLoggingT (parseWithScopes @parser src)

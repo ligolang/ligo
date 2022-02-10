@@ -7,8 +7,6 @@ module Test.Common.Diagnostics
 
 import Data.Text (Text)
 import Data.Word (Word32)
-import Parser
-import Range
 import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
 
@@ -17,6 +15,8 @@ import AST.Scope (Fallback, FromCompiler, Standard)
 import AST.Skeleton (Error (..))
 import Log (runNoLoggingT)
 import ParseTree (pathToSrc)
+import Parser
+import Range
 
 import qualified Test.Common.Capabilities.Util as Util (contractsDir)
 import Test.Common.FixedExpectations (HasCallStack, shouldMatchList)
