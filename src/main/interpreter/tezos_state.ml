@@ -463,7 +463,41 @@ let get_bootstrapped_contract ~raise (n : int) =
   let contract = Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check contract in
   Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error Location.generated "Error parsing address") @@ contract
 
-let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balances=[]) ?(n=2) protocol_version bootstrapped_contracts =
+let init ?rng_state ?endorsers_per_block ?with_commitments
+    ?(initial_balances = []) ?initial_endorsers ?min_proposal_quorum
+    ?time_between_blocks ?minimal_block_delay ?delay_per_missing_endorsement
+    ?bootstrap_contracts ?level ?cost_per_byte ?liquidity_baking_subsidy ?(baking_accounts = []) n =
+  let open Tezos_alpha_test_helpers in
+  let accounts = Account.generate_accounts ?rng_state ~initial_balances n in
+  let baking_accounts = List.map baking_accounts ~f:(fun (sk, pk, amt) ->
+                            let pkh = Signature.Public_key.hash pk in
+                            let amt = match amt with
+                              | None -> Tez.of_mutez_exn 4_000_000_000_000L
+                              | Some v -> Tez.of_mutez_exn  v in
+                            Account.({ sk ; pk ; pkh}), amt) in
+  let () = List.iter baking_accounts ~f:(fun (acc, _) ->
+               Account.(add_account acc)) in
+  let accounts = accounts @ baking_accounts in
+  let raw = Block.genesis
+              ?endorsers_per_block
+              ?with_commitments
+              ?initial_endorsers
+              ?min_proposal_quorum
+              ?time_between_blocks
+              ?minimal_block_delay
+              ?delay_per_missing_endorsement
+              ?bootstrap_contracts
+              ?level
+              ?cost_per_byte
+              ?liquidity_baking_subsidy
+              accounts in
+  let contracts =
+    List.map
+      ~f:(fun (a, _) -> Tezos_raw_protocol.Alpha_context.Contract.implicit_contract Account.(a.pkh))
+      accounts in
+  (raw, contracts)
+
+let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balances=[]) ?(baking_accounts = []) ?(n=2) protocol_version bootstrapped_contracts =
   let open Tezos_raw_protocol in
   let rng_state = Caml.Random.State.make (Caml.Array.make 1 0) in
   let () = (* check baker initial balance if the default amount is changed *)
@@ -500,8 +534,11 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
       ~f:(fun i (_, _, _, parameter_ty, _) -> let contract = get_bootstrapped_contract ~raise i in (contract, parameter_ty))
       bootstrapped_contracts
   in
-  let (init_raw_ctxt, acclst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-    Tezos_alpha_test_helpers.Context.init ~rng_state ~level:(Int32.of_int_exn 0) (*~bootstrap_contracts*) ~initial_balances n in
+  let baking_accounts = List.map ~f:(fun ((sk, pk), amt) ->
+                            let sk =  Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
+                            sk, pk, amt) baking_accounts in
+  let r, acclst = init ~rng_state ~level:(Int32.of_int_exn 0) ~initial_balances ~baking_accounts n in
+  let init_raw_ctxt = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ r in
   match acclst with
   | baker::source::_ ->
     let transduced = { last_originations = [] ; bigmaps= [] } in
