@@ -13,6 +13,8 @@ type r = Errors.interpreter_error raise
 
 type bootstrap_contract =
   int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_aggregated.type_expression * Ast_aggregated.type_expression
+type baker_account =
+  string * Signature.Public_key.t * int64 option
 type block = Tezos_alpha_test_helpers.Block.t
 type last_originations = (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * Memory_proto_alpha.Protocol.Alpha_context.Contract.t list) list
 type storage_tys = (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression) list
@@ -42,6 +44,7 @@ and internals = {
   baker : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ; (* baker to be used for the next transfer/origination *)
   source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ; (* source to be used for the next transfer/origination *)
   next_bootstrapped_contracts : bootstrap_contract list ; (* next contracts to be injected as boostrap accounts in the next state reset *)
+  next_baker_accounts : baker_account list ; (* next contracts to be injected as boostrap accounts in the next state reset *)
   bootstrapped : Memory_proto_alpha.Protocol.Alpha_context.Contract.t list ; (* addresses of boostrapped contracts *)
   storage_tys : storage_tys ; (* contract storage ligo types of all originated contracts *)
   parameter_tys : parameter_tys ; (* contract parameter ligo types of bootstrapped contracts *)
@@ -542,7 +545,7 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
   match acclst with
   | baker::source::_ ->
     let transduced = { last_originations = [] ; bigmaps= [] } in
-    let internals = { protocol_version ; baker ; source ; next_bootstrapped_contracts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
+    let internals = { protocol_version ; baker ; source ; next_bootstrapped_contracts = [] ; next_baker_accounts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
     { raw = init_raw_ctxt ; transduced ; internals }
   | _ ->
     raise.raise (bootstrap_not_enough loc)
