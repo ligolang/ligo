@@ -2217,7 +2217,7 @@ let tuple_fun_religo ~raise ~add_warning () : unit =
  ()
 
 let while_and_for_loops_jsligo ~raise ~add_warning () : unit =
-  let program = type_file ~raise ~add_warning "./contracts/for_loops.jsligo" in
+  let program = type_file ~raise ~add_warning "./contracts/loops.jsligo" in
   let _ = expect_eq ~raise program "for_of_single_statement" (e_list [e_int 1;e_int 2;e_int 3]) (e_list [e_int 3;e_int 2;e_int 1]) in
   let _ = expect_eq ~raise program "for_of_multi_statements_1" (e_list [e_int 1;e_int 2;e_int 3]) (e_list [e_int 5;e_int 4;e_int 3]) in
   let _ = expect_eq ~raise program "for_of_multi_statements_2" (e_list [e_int 1;e_int 2;e_int 3]) (e_list [e_int 6;e_int 4;e_int 2]) in
