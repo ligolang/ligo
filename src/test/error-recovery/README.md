@@ -17,21 +17,55 @@ Test script runs parser without recovery on correct contract to generate its pre
 It also runs parser without recovery on incorrect contract to collect errors and parser with recovery on incorrect contract to generate pretty-printed version, cst, cst symbols, and tokens of recovered contract and collect errors.
 
 The script will fail if any of those runs will be finished with non-zero code.
-The script also fails if there is an error in the parser without recovery that is not presented in errors of the parser with recovery.
+Also, the script checks that the recoverable parser's output preserves an error found by the general parser and contains correct CST (except cases described [here](#why-some-tests-are-out-of-ci)).
 In case of failing the name of the test will be printed in red instead of green.
 
 After that, the script diffs all corresponding results and writes the number of different lines in `diff` to `results.csv`. `0` means good recovery. For some tests, it is impossible to guess the right answer so lower changes are better.
 The last check is that generated `results.csv` is equal to `results.csv.expected`.
-**In case if they are not but the numbers are not much different, you can run `dune promote` to copy your `results.csv` to `results.csv.expected`. In the opposite case, your changes greatly affect recovery.**.
 
-# Results.csv description
+# How to interpret changes between `results.csv` and `result.csv.expected`?
 
-- LOC -- diff between pretty-printed code (amount of lines)
-- CST -- diff between printed CST (amount of nodes)
-- CST's symbols -- diff between lists of CST's nodes in tree-order (amount of
-nodes). Like the previous but the tree structure is erased.
-- Tokens -- diff between lists of tokens
-- Errors -- count of new syntax error returned by recovery parser
+If the numbers are not much different, you can run `dune promote` to copy your actual `results.csv` to `results.csv.expected`. In the opposite case, your changes may cause regression of error recovery so further investigation is needed.
+
+## Results.csv description
+
+- LOC — diff between pretty-printed code (amount of lines). It should be very small otherwise, the recovery likely spoiled innocent code around the error. 
+- CST — diff between printed CST. It catches changes in the structure of the code so e.g. big numbers only here likely mean misinterpreting function scopes. 
+- CST's symbols — diff between lists of CST's nodes in tree-order (amount of
+nodes). It's like the previous but the tree structure is erased so it is focused on content of CST rather than structure.
+- Tokens — diff between lists of tokens (amount of tokens). It is focused only on terminal node of CST so it shows how many tokens was inserted or skipped.
+- Errors — count of new syntax errors returned by recovery parser. Currently, our tests assume only one mistake so all new errors are caused by a wrong guess of the recovery. So 1-2 is an acceptable value but a bigger one is suspicious. 
+
+## How to investigate a problems ?
+
+It's hard but possible by use debug tools:
+- look at sources of the `results.csv` numbers: 
+```bash
+cd _build/default/src/test/error-recovery/simple/cameligo
+diff recovered/problem_test.mligo original_generated/formatted_problem_test.mligo
+diff recovered/problem_test.mliog.errors original_generated/problem_test.mligo.errors
+diff recovered/problem_test.mliog.cst original_generated/problem_test.mligo.cst
+```
+- run the parser with the `--trace-recovery` flag to inspect what is happened in the runtime.
+```bash
+cd src/test/error-recovery/simple/jsligo
+(cd ../../../../../src/passes/02-parsing/reasonligo ; dune build)
+../../../../../_build/default/src/passes/02-parsing/jsligo/ParserMain.exe --recovery --trace-recovery --pretty -- problem_test.jsligo
+```
+- to investigate why some recovery candidates is preferred than others look at cost report provided by `menhir-recovery` executable:
+```bash
+dune exec -- menhir-recover -v _build/default/src/passes/02-parsing/reasonligo/Parser.cmly 2> report.txt > /dev/null
+emacs report.txt # or vim report.txt
+```
+In the end of the `report.txt` you shall find verbose description of actual costs of each recovery candidate, shift and reduce action.
+- look at html representation of the parser automaton:
+```bash
+mkdir graph
+dune build src/passes/02-passing/reasonligo
+# note '/' in the end of 'graph/'
+dune exec -- menhir-recover --graph graph/ _build/default/src/passes/02-parsing/jsligo/Parser.cmly
+firefox 0.html # or firefox N.html where N is number of interesting state
+```
 
 # Why some tests are out of CI?
 
