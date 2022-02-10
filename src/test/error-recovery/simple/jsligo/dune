@@ -10,5 +10,6 @@
 
 (rule
  (alias runtest)
+ (deps results.csv)
  (action
   (diff results.csv.expected results.csv)))

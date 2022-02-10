@@ -5,7 +5,7 @@ This is tests for error-recovery
 # How to run
 
 The main script is [test.sh](test.sh). 
-You can run all tests by `dune runtest` from this folder or you can run `cd simple/cameligo && dune runtest` or `dune runtest ./simple/cameligo` to evaluate tests for a specific dialect.
+You can run all tests by `dune build @recovery-test` or from this folder you can run `cd simple/cameligo && dune runtest` or `dune runtest ./simple/cameligo` to evaluate tests for a specific dialect.
 
 # How it works
 

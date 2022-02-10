@@ -1,0 +1,7 @@
+(alias
+ (name recovery-test)
+ (deps
+  (alias simple/cameligo/runtest)
+  (alias simple/pascaligo/runtest)
+  (alias simple/jsligo/runtest)
+  (alias simple/reasonligo/runtest)))
