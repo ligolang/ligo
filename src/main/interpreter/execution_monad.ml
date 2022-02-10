@@ -27,7 +27,7 @@ module Command = struct
     | Bootstrap_contract : int * LT.value * LT.value * Ast_aggregated.type_expression  -> unit t
     | Nth_bootstrap_contract : int -> Tezos_protocol.Protocol.Alpha_context.Contract.t t
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression * Ast_aggregated.type_expression) t
-    | Reset_state : Location.t * LT.calltrace * LT.value * LT.value * LT.value -> unit t
+    | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
     | Get_state : unit -> Tezos_state.context t
     | Put_state : Tezos_state.context -> unit t
     | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t
@@ -124,37 +124,18 @@ module Command = struct
       let next_bootstrapped_contracts = (mutez, contract, storage, parameter_ty, storage_ty) :: ctxt.internals.next_bootstrapped_contracts in
       let ctxt = { ctxt with internals = { ctxt.internals with next_bootstrapped_contracts } } in
       ((),ctxt)
-    | Reset_state (loc,calltrace,n,amts,baking_accounts) ->
+    | Reset_state (loc,calltrace,n,amts) ->
       let amts = trace_option ~raise (corner_case ()) @@ LC.get_list amts in
       let amts = List.map ~f:
         (fun x ->
           let x = trace_option ~raise (corner_case ()) @@ LC.get_mutez x in
           (Z.to_int64 x) )
-          (* let acc, amt = trace_option ~raise (corner_case ()) @@ LC.get_pair x in
-           * let opt = trace_option ~raise (corner_case ()) @@ LC.get_option acc in
-           * let opt = Option.map ~f:(fun v ->
-           *               let sk, pk = trace_option ~raise (corner_case ()) @@ LC.get_pair v in
-           *               let sk = trace_option ~raise (corner_case ()) @@ LC.get_string sk in
-           *               let pk = trace_option ~raise (corner_case ()) @@ LC.get_key pk in
-           *               (sk, pk)) opt in
-           * let amt = trace_option ~raise (corner_case ()) @@ LC.get_mutez amt in *)
-          (* (opt, Z.to_int64 amt) ) *)
         amts
       in
-      let baking_accounts = trace_option ~raise (corner_case ()) @@ LC.get_list baking_accounts in
-      let baking_accounts = List.map ~f:(fun v ->
-                                let acc, opt = trace_option ~raise (corner_case ()) @@ LC.get_pair v in
-                                let tez = trace_option ~raise (corner_case ()) @@ LC.get_option opt in
-                                let sk, pk = trace_option ~raise (corner_case ()) @@ LC.get_pair acc in
-                                let sk = trace_option ~raise (corner_case ()) @@ LC.get_string sk in
-                                let pk = trace_option ~raise (corner_case ()) @@ LC.get_key pk in
-                                let tez = Option.map ~f:(fun v -> trace_option ~raise (corner_case ()) @@ LC.get_mutez v) tez in
-                                let tez = Option.map ~f:(fun t -> Z.to_int64 t) tez in
-                                ((sk, pk), tez)) baking_accounts in
       let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
       let bootstrap_contract = List.rev ctxt.internals.next_bootstrapped_contracts in
       let ctxt = Tezos_state.init_ctxt
-        ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n) ~baking_accounts
+        ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n)
         ctxt.internals.protocol_version bootstrap_contract
       in
       ((),ctxt)
