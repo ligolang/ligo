@@ -5,14 +5,14 @@ title: Inlining
 
 import Syntax from '@theme/Syntax';
 
-When compiling a contract in LIGO, declarations will get inlined if they are 
-only used once and pure. Inlining often results in larger contracts and is 
+When compiling a contract in LIGO, declarations will get inlined if they are
+only used once and pure. Inlining often results in larger contracts and is
 therefore not aggressively done.
 
-A pure declaration is one that doesn't cause side effects like causing a 
+A pure declaration is one that doesn't cause side effects like causing a
 failure or operation.
 
-In some cases you might want to override the default behaviour of LIGO and 
+In some cases you might want to override the default behaviour of LIGO and
 force inlining. The declaration still needs to be pure though.
 
 ## Inline attribute
@@ -22,20 +22,20 @@ To force inlining you can use the inline attribute.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-[@inline] function fst(const p : nat * nat) : nat is p.0;
+[@inline] function fst (const p : nat * nat) : nat is p.0;
 
-function main(const p : nat * nat; const s : nat * nat) : list(operation) * (nat * nat) is
-  ((list end : list(operation)), (fst(p.0,p.1), fst(s.1,s.0)))
+function main (const p : nat * nat; const s : nat * nat) : list (operation) * (nat * nat) is
+  ((list [] : list (operation)), (fst (p.0, p.1), fst (s.1, s.0)))
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
- [@inline]
-let fst (p: (nat * nat)) : nat = p.0
+[@inline]
+let fst (p : nat * nat) : nat = p.0
 
-let main (p : (nat * nat)) (s : (nat * nat)) : (operation list * (nat * nat)) =
+let main (p : nat * nat) (s : nat * nat) : operation list * (nat * nat) =
     (([]: operation list), (fst (p.0, p.1), fst (s.1, s.0)))
 ```
 
@@ -44,7 +44,7 @@ let main (p : (nat * nat)) (s : (nat * nat)) : (operation list * (nat * nat)) =
 
 ```reasonligo
 [@inline]
-let fst = (p: (nat, nat)) : nat => p[0] 
+let fst = (p: (nat, nat)) : nat => p[0]
 
 let main = (p : (nat, nat), s : (nat, nat)) : (list(operation), (nat, nat)) =>
     (([]: list(operation)), (fst((p[0], p[1])), fst((s[1], s[0]))))
@@ -64,7 +64,7 @@ let main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
 </Syntax>
 
 Now if we measure the difference between inlining and without inlining, using
-`ligo info measure-contract name_of_contract.ligo --entry-point <entrypoint>`, we see the 
+`ligo info measure-contract name_of_contract.ligo --entry-point <entrypoint>`, we see the
 following results:
 
 <table>
@@ -77,6 +77,6 @@ following results:
 </table>
 
 :::info
-Note that these results can change due to ongoing work to optimise output of 
+Note that these results can change due to ongoing work to optimise output of
 the LIGO compiler.
 :::

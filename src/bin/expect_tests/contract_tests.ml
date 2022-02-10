@@ -22,33 +22,33 @@ let%expect_test _ =
   [%expect {|
     430 bytes |}] ;
 
-  run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record card_to_buy = 1n end)" ] ;
+  run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect {| (Left (Left 1)) |}] ;
 
-  run_ligo_good [ "compile" ; "storage" ; contract "coase.ligo" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
+  run_ligo_good [ "compile" ; "storage" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect {| (Pair (Pair {} {}) 3) |}] ;
 
-  run_ligo_bad [ "compile" ; "storage" ; contract "coase.ligo" ; "Buy_single (record card_to_buy = 1n end)" ] ;
+  run_ligo_bad [ "compile" ; "storage" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect {|
 Invalid command line argument.
 The provided storage does not have the correct type for the contract.
 File "../../test/contracts/coase.ligo", line 124, characters 9-13:
 123 |
 124 | function main (const action : parameter; const s : storage) : return is
-125 |   case action of
+125 |   case action of [
 
 Invalid type(s).
 Expected: "record[card_patterns -> map (nat , record[coefficient -> tez , quantity -> nat]) , cards -> map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
 sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
 
-  run_ligo_bad [ "compile" ; "parameter" ; contract "coase.ligo" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
+  run_ligo_bad [ "compile" ; "parameter" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect {|
 Invalid command line argument.
 The provided parameter does not have the correct type for the given entrypoint.
 File "../../test/contracts/coase.ligo", line 124, characters 9-13:
 123 |
 124 | function main (const action : parameter; const s : storage) : return is
-125 |   case action of
+125 |   case action of [
 
 Invalid type(s).
 Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
@@ -1616,21 +1616,32 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
   [%expect {|
 type storage = (int , int)
 const main : (int , storage) -> (list (operation) , storage) =
-  lambda (n : (int , storage)) : (list (operation) ,
-  storage) return let x : (int , int) =
-                    let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
-                  (list[] : list (operation) , x)
+  lambda (n : (int , storage)) : (list (operation) , storage) return
+  let x : (int , int) = let x : int = 7 in
+                        (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
+  (list[] : list (operation) , x)
 const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
   lambda (gen#1 : unit) return let s = "test" in
-                               let p0 = (f0)@(s) in { ASSERTION(p0);
- let p1 = (f1)@(s) in { ASSERTION(p1);
- let p2 = (f2)@(s) in { ASSERTION(p2);
- s}}}
+                               let p0 = (f0)@(s) in
+                               {
+                                  ASSERTION(p0);
+                                  let p1 = (f1)@(s) in
+                                  {
+                                     ASSERTION(p1);
+                                     let p2 = (f2)@(s) in
+                                     {
+                                        ASSERTION(p2);
+                                        s
+                                     }
+                                  }
+                               }
 const letin_nesting2 =
-  lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
+  lambda (x : int) return let y = 2 in
+                          let z = 3 in
+                          ADD(ADD(x ,y) ,z)
 const x =  match (+1 , (+2 , +3)) with
             | (gen#2,(x,gen#3)) -> x
     |}];
@@ -1638,21 +1649,33 @@ const x =  match (+1 , (+2 , +3)) with
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.religo"];
   [%expect {|
 type storage = (int , int)
-const main = lambda (n : (int , storage)) : (list (operation) ,
-  storage) return let x : (int , int) =
-                    let x : int = 7 in (ADD(x , n.0) , ADD(n.1.0 , n.1.1)) in
-                  (list[] : list (operation) , x)
+const main =
+  lambda (n : (int , storage)) : (list (operation) , storage) return
+  let x : (int , int) = let x : int = 7 in
+                        (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
+  (list[] : list (operation) , x)
 const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
   lambda (gen#1 : unit) return let s = "test" in
-                               let p0 = (f0)@(s) in { ASSERTION(p0);
- let p1 = (f1)@(s) in { ASSERTION(p1);
- let p2 = (f2)@(s) in { ASSERTION(p2);
- s}}}
+                               let p0 = (f0)@(s) in
+                               {
+                                  ASSERTION(p0);
+                                  let p1 = (f1)@(s) in
+                                  {
+                                     ASSERTION(p1);
+                                     let p2 = (f2)@(s) in
+                                     {
+                                        ASSERTION(p2);
+                                        s
+                                     }
+                                  }
+                               }
 const letin_nesting2 =
-  lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
+  lambda (x : int) return let y = 2 in
+                          let z = 3 in
+                          ADD(ADD(x ,y) ,z)
 const x =  match (+1 , (+2 , +3)) with
             | (gen#2,(x,gen#3)) -> x
     |}];
@@ -1694,11 +1717,11 @@ Missing a type annotation for argument "b". |}];
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "duplicate_record_field.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/duplicate_record_field.mligo", line 1, characters 23-26:
+    File "../../test/contracts/negative/duplicate_record_field.mligo", line 1, characters 9-34:
       1 | type r = { foo : int ; foo : int }
       2 |
 
-    Duplicate field name "foo" in this record declaration.
+    Duplicated field or variant name.
     Hint: Change the name. |}];
 
   ()

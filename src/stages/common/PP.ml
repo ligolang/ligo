@@ -40,7 +40,7 @@ and access f ppf a =
   match a with
     | Access_tuple i  -> fprintf ppf "%a" Z.pp_print i
     | Access_record s -> fprintf ppf "%s" s
-    | Access_map e    -> fprintf ppf "%a" f e
+    | Access_map e    -> fprintf ppf "[%a]" f e
 
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
@@ -119,7 +119,7 @@ let type_record type_expression ppf = fun record ->
   fprintf ppf "%a" (tuple_or_record_sep_type type_expression) record
 
 let type_tuple type_expression ppf = fun tuple ->
-  fprintf ppf "(%a)" (list_sep_d type_expression) tuple
+  fprintf ppf "(%a)" (list_sep type_expression (tag " , ")) tuple
 
 let arrow type_expression ppf = fun {type1;type2} ->
   fprintf ppf "%a -> %a" type_expression type1 type_expression type2
@@ -161,7 +161,7 @@ let record_update expression ppf = fun {record; path; update} ->
   fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression record label path expression update
 
 let tuple expression ppf = fun t ->
-  fprintf ppf "(@[<h>%a@])" (list_sep_d expression) t
+  fprintf ppf "(@[<h>%a@])" (list_sep expression (tag " , ")) t
 
 let accessor expression ppf = fun ({record;path}: _ accessor) ->
   fprintf ppf "%a.%a" expression record (list_sep (access expression) (const ".")) path
@@ -197,7 +197,7 @@ let recursive expression type_expression ppf = fun { fun_name;fun_type; lambda=l
     (lambda expression type_expression) l
 
 let let_in expression type_expression ppf = fun {let_binder; rhs; let_result; attributes=attr} ->
-  fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
+  fprintf ppf "@[<v>let %a = %a%a in@,%a@]"
     (binder type_expression) let_binder
     expression rhs
     attributes attr
@@ -221,7 +221,7 @@ let cond expression ppf = fun {condition; then_clause; else_clause} ->
     expression else_clause
 
 let sequence expression ppf = fun {expr1;expr2} ->
-  fprintf ppf "{ %a; @. %a}"
+  fprintf ppf "{@[<v 2>@,%a;@,%a@]@,}"
     expression expr1
     expression expr2
 
@@ -246,7 +246,7 @@ let set expression ppf = fun set ->
 let assign expression ppf = fun {variable; access_path; expression=e} ->
   fprintf ppf "%a%a := %a"
     expression_variable variable
-    (list_sep (access expression) (const ".")) access_path
+    (list_sep_prep (access expression) (const ".")) access_path
     expression e
 
 let for_ expression ppf = fun {binder; start; final; incr; f_body} ->
@@ -332,7 +332,7 @@ and declaration expression type_expression ppf = function
 
 and module' expression type_expression ppf = fun p ->
   fprintf ppf "@[<v>%a@]"
-    (list_sep (declaration expression type_expression) (tag "@;"))
+    (list_sep (declaration expression type_expression) (tag "@,"))
     (List.map ~f:Location.unwrap p)
 
 and mod_in expression type_expression ppf = fun {module_binder; rhs; let_result;} ->

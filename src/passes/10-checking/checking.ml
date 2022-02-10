@@ -513,7 +513,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
             O.LMap.find_opt path content in
           associated_type
       )
-      | _ -> failwith "Update an expression which is not a record"
+      | _ -> failwith (Format.asprintf "Update an expression which is not a record %a" O.PP.type_expression wrapped)
     in
     let () = assert_type_expression_eq ~raise update.location (tv, get_type update) in
     return (E_record_update {record; path; update}) wrapped

@@ -54,7 +54,7 @@ function send (const param : send_pt; var s : storage) : return is
 
     var new_store : addr_set := set [];
 
-    case map_get (packed_msg, s.message_store) of
+    case map_get (packed_msg, s.message_store) of [
       Some (voters) ->
         block {
           (* The message is already stored.
@@ -73,7 +73,7 @@ function send (const param : send_pt; var s : storage) : return is
              get_force (Tezos.sender, s.proposal_counters) + 1n;
              new_store := set [Tezos.sender]
         }
-    end;
+    ];
 
     // check sender counters against the maximum number of proposal
 
@@ -107,7 +107,7 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
 
-    case s.message_store[packed_msg] of
+    case s.message_store[packed_msg] of [
       Some (voters) ->
         block {
           // The message is stored
@@ -129,14 +129,14 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
           else s.message_store[packed_msg] := new_set
         }
     | None -> skip
-    end // The message is not stored, ignore.
+    ] // The message is not stored, ignore.
   } with ((nil : list (operation)), s)
 
 function default (const _ : default_pt; const s : storage) : return is
     ((nil : list (operation)), s)
 
 function main (const param : parameter; const s : storage) : return  is
-  case param of
+  case param of [
     (* Propagate message p if the number of authorized addresses having
        voted for the same message p equals the threshold. *)
     | Send (p) -> send (p, s)
@@ -146,4 +146,4 @@ function main (const param : parameter; const s : storage) : return  is
 
     (* Use this action to transfer tez to the contract *)
     | Default (p) -> default (p, s)
-  end
+  ]

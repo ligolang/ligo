@@ -1,8 +1,0 @@
-(library
- (name self_cst_cameligo)
- (public_name ligo.self_cst.cameligo)
- (instrumentation
-  (backend bisect_ppx))
- (libraries simple-utils cst tezos-crypto tezos-base)
- (preprocess
-  (pps ppx_poly_constructor)))

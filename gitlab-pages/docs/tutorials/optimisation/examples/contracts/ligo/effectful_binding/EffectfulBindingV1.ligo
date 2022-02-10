@@ -10,7 +10,7 @@ const some_contract = ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address)
 (* The inline attribute will be ignored! *)
 [@inline]
 const target_exists
-= block {
+= {
     const c : option (contract (int)) = Tezos.get_contract_opt (some_contract)
   } with
       case c of [
@@ -20,8 +20,7 @@ const target_exists
 
 type parameter is Increment | IncrementIfEmpty | IncrementIfExists
 
-function main (const p : parameter; const s : int) is
-block {
+function main (const p : parameter; const s : int) is {
   const nop = (list [] : list (operation))
 } with
     case p of [

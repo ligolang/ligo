@@ -44,10 +44,9 @@ testing environment. It takes a contract, which is represented as a
 function of type `'parameter * 'storage -> operation list * 'storage`,
 an initial storage of type `'storage`, and an initial balance for the
 contract being deployed. This function deploys the contract, and
-returns the type
-`('parameter, 'storage) typed_address`, the compiled program in
-Michelson of type `michelson_program`, and the size of the program of
-type `int`.
+returns the type `('parameter, 'storage) typed_address`, the compiled
+program in Michelson of type `michelson_program`, and the size of the
+program of type `int`.
 
 The storage of a deployed contract can be queried using the
 `Test.get_storage` function, that given a typed address `('parameter,
@@ -70,18 +69,20 @@ type return is list (operation) * storage
 // Two entrypoints
 function add (const store : storage; const delta : int) : storage is
   store + delta
+
 function sub (const store : storage; const delta : int) : storage is
   store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
+
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
-  case action of
+  case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
-  end)
+  ])
 ```
 
 </Syntax>
@@ -99,11 +100,13 @@ type parameter =
 type return = operation list * storage
 
 // Two entrypoints
+
 let add (store, delta : storage * int) : storage = store + delta
 let sub (store, delta : storage * int) : storage = store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
+
 let main (action, store : parameter * storage) : return =
  ([] : operation list),    // No operations
  (match action with
@@ -153,7 +156,7 @@ type parameter =
 | ["Decrement", int]
 | ["Reset"];
 
-type return_ = [list<operation>, storage];
+type @return = [list<operation>, storage];
 
 // Two entrypoints
 let add = ([store, delta]: [storage, int]): storage => store + delta;
@@ -161,7 +164,7 @@ let sub = ([store, delta]: [storage, int]): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-let main = ([action, store]: [parameter, storage]) : return_ => {
+let main = ([action, store]: [parameter, storage]) : @return => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
@@ -183,12 +186,11 @@ storage is in fact the one which we started with:
 ```pascaligo test-ligo group=frontpage
 // This continues testnew.ligo
 
-const test =
-  block {
-    const initial_storage = 42;
-    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
-    const storage = Test.get_storage(taddr);
-  } with (storage = initial_storage);
+const test = {
+  const initial_storage = 42;
+  const (taddr, _, _) = Test.originate (main, initial_storage, 0tez);
+  const storage = Test.get_storage (taddr);
+} with storage = initial_storage;
 
 ```
 
@@ -200,7 +202,7 @@ const test =
 
 let test =
   let initial_storage = 42 in
-  let (taddr, _, _) = Test.originate main initial_storage 0tez in
+  let taddr, _, _ = Test.originate main initial_storage 0tez in
   assert (Test.get_storage taddr = initial_storage)
 ```
 
@@ -300,7 +302,7 @@ increments the storage after deployment, we also print the gas consumption:
 // This continues testnew.ligo
 
 const test2 =
-  block {
+  {
     const initial_storage = 42;
     const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
     const contr = Test.to_contract(taddr);
@@ -318,7 +320,7 @@ const test2 =
 
 let test2 =
   let initial_storage = 42 in
-  let (taddr, _, _) = Test.originate main initial_storage 0tez in
+  let taddr, _, _ = Test.originate main initial_storage 0tez in
   let contr = Test.to_contract taddr in
   let gas_cons = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
   let () = Test.log ("gas consumption",gas_cons) in
@@ -370,12 +372,14 @@ Consider a map binding addresses to amounts and a function removing all entries 
 <Syntax syntax="cameligo">
 
 ```cameligo group=rmv_bal
-(*This is remove-balance.mligo*)
+(* This is remove-balance.mligo *)
+
 type balances = (address, tez) map
 
 let balances_under (b:balances) (threshold:tez) : balances =
   Map.fold
-    (fun ((acc, (k, v)) : balances * (address * tez)) -> if v < threshold then Map.remove k acc else acc)
+    (fun ((acc, (k, v)) : balances * (address * tez)) ->
+       if v < threshold then Map.remove k acc else acc)
     b b
 ```
 
@@ -384,17 +388,16 @@ let balances_under (b:balances) (threshold:tez) : balances =
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=rmv_bal
-(*This is remove-balance.ligo*)
+(* This is remove-balance.ligo *)
+
 type balances is map (address, tez)
 
-function balances_under (const b : balances ; const threshold : tez) is
-  block {
-    const f =
-      function (const x : balances * (address * tez)) is
-        block {
-          const (acc, (k,v)) = x ;
-        } with if v < threshold then Map.remove (k, acc) else acc ;
-  } with Map.fold (f, b, b)
+function balances_under (const b : balances ; const threshold : tez) is {
+  const f =
+    function (const x : balances * (address * tez)) is {
+      const (acc, (k, v)) = x;
+    } with if v < threshold then Map.remove (k, acc) else acc;
+} with Map.fold (f, b, b)
 ```
 
 </Syntax>
@@ -403,6 +406,7 @@ function balances_under (const b : balances ; const threshold : tez) is
 
 ```reasonligo group=rmv_bal
 // This is remove-balance.religo
+
 type balances = map(address, tez);
 
 let balances_under = ( (b, threshold) : (balances, tez) ) : balances =>
@@ -416,6 +420,7 @@ let balances_under = ( (b, threshold) : (balances, tez) ) : balances =>
 
 ```jsligo group=rmv_bal
 // This is remove-balance.jsligo
+
 type balances = map <address, tez>
 
 let balances_under = (b : balances, threshold:tez) : balances => {
@@ -463,7 +468,7 @@ let _u = Test.reset_state (5n, ([] : list(tez)));
 
 ```jsligo test-ligo group=rmv_bal_test
 #include "./gitlab-pages/docs/advanced/src/remove-balance.jsligo"
-let x = Test.reset_state ( 5 as nat, list([]) as list <tez> );
+let x = Test.reset_state (5 as nat, list([]) as list <tez>);
 ```
 
 </Syntax>
@@ -474,19 +479,19 @@ Now build the `balances` map that will serve as the input of our test.
 
 ```cameligo test-ligo group=rmv_bal_test
 let balances : balances =
-  let (a1, a2, a3) = (Test.nth_bootstrap_account 1, Test.nth_bootstrap_account 2, Test.nth_bootstrap_account 3) in
-  Map.literal [ (a1 , 10tz ) ; (a2, 100tz ) ; (a3, 1000tz ) ]
+  let a1, a2, a3 = Test.nth_bootstrap_account 1, Test.nth_bootstrap_account 2, Test.nth_bootstrap_account 3
+  in Map.literal [(a1, 10tz); (a2, 100tz); (a3, 1000tz)]
 ```
 
 </Syntax>
 <Syntax syntax="pascaligo">
 
 ```pascaligo test-ligo group=rmv_bal_test
-const balances : balances = block {
-  const a1 = Test.nth_bootstrap_account(1);
-  const a2 = Test.nth_bootstrap_account(2);
-  const a3 = Test.nth_bootstrap_account(3); } with
-  (map [ a1 -> 10tz ; a2 -> 100tz ; a3 -> 1000tz ])
+const balances : balances = {
+  const a1 = Test.nth_bootstrap_account (1);
+  const a2 = Test.nth_bootstrap_account (2);
+  const a3 = Test.nth_bootstrap_account (3);
+} with map [a1 -> 10tz; a2 -> 100tz; a3 -> 1000tz]
 ```
 
 </Syntax>
@@ -495,7 +500,7 @@ const balances : balances = block {
 ```reasonligo test-ligo group=rmv_bal_test
 let balances : balances =
   let (a1, a2, a3) = (Test.nth_bootstrap_account(1), Test.nth_bootstrap_account(2), Test.nth_bootstrap_account(3));
-  Map.literal([ (a1 , 10tz ) , (a2, 100tz ) , (a3, 1000tz ) ]);
+  Map.literal([ (a1, 10tz), (a2, 100tz), (a3, 1000tz)]);
 ```
 
 </Syntax>
@@ -516,7 +521,7 @@ expected value with `Test.michelson_equal`.
 
 The call to `balance_under` and the computation of the size of the resulting map is achieved through the primitive `Test.run`.
 This primitive runs a function on an input, translating both (function and input)
-to Michelson before running on the Michelson interpreter.  
+to Michelson before running on the Michelson interpreter.
 More concretely `Test.run f v` performs the following:
 
 1. Compiles the function argument `f` to Michelson `f_mich`
@@ -550,15 +555,14 @@ let test =
 ```pascaligo test-ligo group=rmv_bal_test
 const test =
   List.iter (
-    (function (const threshold : tez ; const expected_size : nat) is
-      block {
-        function tester(const input : (balances * tez)) is Map.size(balances_under(input.0, input.1));
-        const size_ = Test.run(tester, (balances, threshold));
-        const expected_size = Test.eval(expected_size);
+    (function (const threshold : tez; const expected_size : nat) is {
+        function tester (const input : balances * tez) is
+          Map.size(balances_under (input.0, input.1));
+        const size_ = Test.run (tester, (balances, threshold));
+        const expected_size = Test.eval (expected_size);
         Test.log (("expected", expected_size));
         Test.log (("actual", size_));
-      } with
-        assert (Test.michelson_equal (size_, expected_size))),
+      } with assert (Test.michelson_equal (size_, expected_size))),
     list [(15tez, 2n); (130tez, 1n); (1200tez, 0n)])
 ```
 
@@ -680,6 +684,7 @@ contract.
 
 ```pascaligo
 // This is testme.ligo
+
 type storage is int
 
 type parameter is
@@ -690,20 +695,23 @@ type parameter is
 type return is list (operation) * storage
 
 // Two entrypoints
+
 function add (const store : storage; const delta : int) : storage is
   store + delta
+
 function sub (const store : storage; const delta : int) : storage is
   store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
+
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
-  case action of
+  case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
-  end)
+  ])
 ```
 
 </Syntax>
@@ -711,6 +719,7 @@ function main (const action : parameter; const store : storage) : return is
 
 ```cameligo
 // This is testme.mligo
+
 type storage = int
 
 type parameter =
@@ -721,11 +730,13 @@ type parameter =
 type return = operation list * storage
 
 // Two entrypoints
+
 let add (store, delta : storage * int) : storage = store + delta
 let sub (store, delta : storage * int) : storage = store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
+
 let main (action, store : parameter * storage) : return =
  ([] : operation list),    // No operations
  (match action with
@@ -739,6 +750,7 @@ let main (action, store : parameter * storage) : return =
 
 ```reasonligo
 // This is testme.religo
+
 type storage = int;
 
 type parameter =
@@ -754,6 +766,7 @@ let sub = ((store, delta) : (storage, int)) : storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
+
 let main = ((action, store) : (parameter, storage)) : return => {
  (([] : list (operation)),    // No operations
  (switch (action) {
@@ -768,6 +781,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 
 ```jsligo
 // This is testme.jsligo
+
 type storage = int;
 
 type parameter =
@@ -775,15 +789,17 @@ type parameter =
 | ["Decrement", int]
 | ["Reset"];
 
-type return_ = [list<operation>, storage];
+type @return = [list<operation>, storage];
 
 // Two entrypoints
+
 let add = ([store, delta]: [storage, int]): storage => store + delta;
 let sub = ([store, delta]: [storage, int]): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-let main = ([action, store]: [parameter, storage]) : return_ => {
+
+let main = ([action, store]: [parameter, storage]) : @return => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {

@@ -6,10 +6,9 @@
    one character is encoded with one byte).
 
      Units can be either bytes (as ASCII characters) or, more
-   generally, unicode points.
- *)
+   generally, unicode points. *)
 
-(* Definition *)
+(* DEFINITION *)
 
 (* The type for positions is the object type [t].
 
@@ -103,14 +102,14 @@ type t = <
 
 type pos = t
 
-(* Constructors *)
+(* CONSTRUCTORS *)
 
 val make :
   byte:Lexing.position -> point_num:int -> point_bol:int -> t
 
 val from_byte : Lexing.position -> t
 
-(* Special cases *)
+(* SPECIAL POSITIONS *)
 
 (* The value [ghost] based on the same as [Lexing.dummy_pos]. *)
 
@@ -120,12 +119,13 @@ val ghost : t
 
 val min : file:string -> t
 
-(* Comparisons *)
+(* COMPARISONS *)
 
 val equal : t -> t -> bool
 val lt    : t -> t -> bool
 
-(** {1 serialization} *)
-val to_yojson : t -> Yojson.Safe.t
-val of_yojson : Yojson.Safe.t -> (t,string) result
+(* CONVERSIONS *)
+
+val to_yojson       : t -> Yojson.Safe.t
+val of_yojson       : Yojson.Safe.t -> (t,string) result
 val to_human_yojson : t -> Yojson.Safe.t

@@ -10,7 +10,7 @@ const larger_set  : int_set = Set.add (4, my_set)
 
 const smaller_set : int_set = Set.remove (3, my_set)
 
-function update (var s : set (int)) : set (int) is block {
+function update (var s : set (int)) : set (int) is {
   patch s with set [4; 7]
 } with s
 
@@ -20,9 +20,7 @@ function sum (const acc : int; const i : int): int is acc + i
 
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
 
-function loop (const s : set (int)) : int is block {
+function loop (const s : set (int)) : int is {
   var sum : int := 0;
-  for element in set s block {
-    sum := sum + element
-  }
+  for element in set s { sum := sum + element }
 } with sum

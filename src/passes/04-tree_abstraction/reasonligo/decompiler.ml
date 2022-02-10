@@ -6,20 +6,14 @@ module Region   = Simple_utils.Region
 module Location = Simple_utils.Location
 module List     = Simple_utils.List
 module Pair     = Simple_utils.Pair
+module Utils    = Simple_utils.Utils
+module Wrap     = Lexing_shared.Wrap
 
 open Simple_utils.Function
 
 (* Utils *)
-
-let ghost =
-  object
-    method region = Region.ghost
-    method attributes = []
-    method payload = ""
-  end
-
 let wrap = Region.wrap_ghost
-
+let ghost = Wrap.ghost ""
 let decompile_attributes = List.map ~f:wrap
 
 let list_to_sepseq lst =
@@ -39,10 +33,15 @@ let nelist_to_npseq (hd, lst) = (hd, List.map ~f:(fun e -> (ghost, e)) lst)
 let npseq_cons hd lst = hd,(ghost, fst lst)::(snd lst)
 
 let par a = CST.{lpar=ghost;inside=a;rpar=ghost}
-let type_vars_of_list : string Region.reg list -> CST.type_vars = fun lst ->
-  let type_var_of_name : _ -> CST.type_var Region.reg = fun name -> wrap CST.{quote=ghost;name} in
-  let x = Simple_utils.Utils.nsepseq_map type_var_of_name (list_to_nsepseq lst) in
-  (wrap (par x))
+
+let type_vars_of_list : string Region.reg list -> CST.type_vars =
+  fun lst ->
+  let type_var_of_name : _ -> CST.type_var Region.reg =
+    fun name -> Region.wrap_ghost (CST.{quote=Wrap.ghost "";name}) in
+
+  let x = list_to_nsepseq (List.map lst ~f:type_var_of_name)
+  in Region.wrap_ghost (par x)
+
 let inject compound a = CST.{compound;elements=a;terminator=None}
 
 let ne_inject compound fields ~attr = CST.{
@@ -52,11 +51,11 @@ let ne_inject compound fields ~attr = CST.{
   attributes=attr
   }
 
-let prefix_colon a = (ghost, a)
+let prefix_colon a = (Wrap.ghost "", a)
 
-let braces = Some (`Braces (ghost,ghost))
+let braces = Some (`Braces (Wrap.ghost "",Wrap.ghost ""))
 
-let brackets = Some (`Brackets (ghost,ghost))
+let brackets = Some (`Brackets (Wrap.ghost "",Wrap.ghost ""))
 
 (* Decompiler *)
 
@@ -75,7 +74,6 @@ let rec decompile_type_expr : AST.type_expression -> _ = fun te ->
   let return te = te in
   match te.type_content with
     T_sum { attributes ; fields } ->
-    let lst = AST.LMap.to_kv_list fields in
     let aux (AST.Label c, AST.{associated_type;attributes;decl_pos=_}) =
       let constr = wrap c in
       let args = decompile_type_expr associated_type in
@@ -86,14 +84,13 @@ let rec decompile_type_expr : AST.type_expression -> _ = fun te ->
       let variant : CST.variant = {constr; args; attributes} in
       wrap variant
     in
-    let variants = List.map ~f:aux lst in
+    let variants = List.map ~f:aux fields in
     let variants = list_to_nsepseq variants in
     let lead_vbar = Some ghost in
     let attributes = decompile_attributes attributes in
     let sum : CST.sum_type = { lead_vbar ; variants ; attributes} in
     return @@ CST.TSum (wrap sum)
   | T_record {fields; attributes} ->
-    let record = AST.LMap.to_kv_list fields in
     let aux (AST.Label c, AST.{associated_type; attributes; _}) =
       let field_name = wrap c in
       let colon = ghost in
@@ -102,7 +99,7 @@ let rec decompile_type_expr : AST.type_expression -> _ = fun te ->
       let field : CST.field_decl = {field_name; colon; field_type; attributes} in
       wrap field
     in
-    let record = List.map ~f:aux record in
+    let record = List.map ~f:aux fields in
     let record = list_to_nsepseq record in
     let attributes = List.map ~f:(fun el -> wrap el) attributes in
     return @@ CST.TRecord (wrap @@ ne_inject braces record ~attr:attributes)
@@ -236,7 +233,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let ty = decompile_type_expr @@ AST.t_timestamp () in
         let time = CST.EString (String (wrap time)) in
         return_expr_with_par @@ CST.EAnnot (wrap @@ (time, ghost, ty))
-      | Literal_mutez mtez -> return_expr @@ CST.EArith (Mutez (wrap ("",mtez)))
+      | Literal_mutez mtez -> return_expr @@ CST.EArith (Mutez (wrap ("",(Z.to_int64 mtez))))
       | Literal_string (Standard str) -> return_expr @@ CST.EString (String   (wrap str))
       | Literal_string (Verbatim ver) -> return_expr @@ CST.EString (Verbatim (wrap ver))
       | Literal_bytes b ->
@@ -357,7 +354,6 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let cases : _ CST.case = {kwd_switch=ghost;lbrace=ghost;rbrace=ghost;expr;cases} in
     return_expr @@ CST.ECase (wrap cases)
   | E_record record  ->
-    let record = AST.LMap.to_kv_list record in
     let aux (AST.Label str, expr) =
       let field_name = wrap str in
       let field_expr = decompile_expression expr in
@@ -370,6 +366,13 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     (* why is the record not empty ? *)
     return_expr @@ CST.ERecord (wrap record)
   | E_accessor {record; path} ->
+    let rec aux : AST.expression -> AST.expression AST.access list -> AST.expression * AST.expression AST.access list = fun e acc_path ->
+      match e.expression_content with
+      | E_accessor { record ; path } ->
+        aux record (path @ acc_path)
+      | _ -> e,acc_path
+    in
+    let (record,path) = aux record path in
     (match List.rev path with
       Access_map e :: [] ->
       let map = decompile_expression record in
@@ -406,42 +409,49 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let field_assign : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
     let updates = updates.value.ne_elements in
     let updates =
-      wrap @@ ne_inject ~attr:[] braces @@ npseq_cons (wrap @@ field_assign) updates in
+      wrap @@ ne_inject ~attr:[] braces @@ npseq_cons (wrap field_assign) updates in
     let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
     return_expr @@ CST.EUpdate (wrap @@ update)
-  | E_update {record; path; update} ->
+  | E_update {record; path; update} -> (
+    let rec aux : AST.expression -> AST.expression AST.access list -> AST.expression * AST.expression AST.access list = fun e acc_path ->
+      match e.expression_content with
+      | E_accessor { record ; path } ->
+        aux record (path @ acc_path)
+      | _ -> e,acc_path
+    in
+    let (record,path) = aux record path in
     let record = decompile_variable @@ get_e_variable record in
     let field_expr = decompile_expression update in
     let (struct_name,field_path) = List.Ne.of_list path in
-    (match field_path with
-      [] ->
-      (match struct_name with
-        Access_record name ->
-        let record : CST.path = Name record in
-        let field_path = CST.Name (wrap name) in
-        let update : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
-        let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
-        return_expr @@ CST.EUpdate (wrap update)
-      | Access_tuple i ->
-        let record : CST.path = Name record in
-        let field_path = CST.Name (wrap @@ Z.to_string i) in
-        let update : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
-        let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
-        return_expr @@ CST.EUpdate (wrap update)
-      | Access_map e ->
-        let e = decompile_expression e in
-        let arg = CST.Multiple (wrap (par (field_expr,[ghost,e; ghost,CST.EVar record]))) in
-        return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"), arg))
-      )
-    | _ ->
+    match field_path with
+      [] -> (
+        match struct_name with
+        | Access_record name ->
+          let record : CST.path = Name record in
+          let field_path = CST.Name (wrap name) in
+          let update : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
+          let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
+          let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
+          return_expr @@ CST.EUpdate (wrap update)
+        | Access_tuple i ->
+          let record : CST.path = Name record in
+          let field_path = CST.Name (wrap @@ Z.to_string i) in
+          let update : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
+          let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
+          let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
+          return_expr @@ CST.EUpdate (wrap update)
+        | Access_map e ->
+          let e = decompile_expression e in
+          let arg = CST.Multiple (wrap (par (field_expr,[ghost,e; ghost,CST.EVar record]))) in
+          return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"), arg))
+    )
+    | _ -> (
       let struct_name = match struct_name with
           Access_record name -> wrap name
         | Access_tuple i -> wrap @@ Z.to_string i
         | Access_map _ -> failwith @@ Format.asprintf "invalid map update %a" AST.PP.expression expr
       in
-      (match List.rev field_path with
+      match List.rev field_path with
         Access_map e :: lst ->
         let field_path = List.rev lst in
         let field_path = List.map ~f:decompile_to_selection field_path in
@@ -461,8 +471,8 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
         let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
         return_expr @@ CST.EUpdate (wrap update)
-      )
     )
+  )
   | E_ascription {anno_expr;type_annotation} ->
     let expr = decompile_expression anno_expr in
     let ty   = decompile_type_expr type_annotation in
@@ -558,7 +568,6 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
 
 and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = fun decl ->
   let decl = Location.unwrap decl in
-  let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
     Declaration_type {type_binder;type_expr;type_attr=_} ->
     let name = decompile_variable type_binder in

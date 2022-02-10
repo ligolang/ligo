@@ -4,8 +4,8 @@ include Stage_common.Types
 
 type type_content =
   | T_variable        of type_variable
-  | T_sum             of ty_expr rows
-  | T_record          of ty_expr rows
+  | T_sum             of ty_expr non_linear_rows
+  | T_record          of ty_expr non_linear_rows
   | T_tuple           of ty_expr  list
   | T_arrow           of ty_expr arrow
   | T_annoted         of (type_expression * string)
@@ -15,6 +15,10 @@ type type_content =
   | T_abstraction     of ty_expr abstraction
   | T_for_all         of ty_expr abstraction
 
+and 'ty_exp non_linear_rows = {
+  fields     : (label * ('ty_exp row_element)) list;
+  attributes : string list ;
+  }
 and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression
 
@@ -43,7 +47,7 @@ and expression_content =
   | E_constructor of expr constructor (* For user defined constructors *)
   | E_matching of matching
   (* Record *)
-  | E_record of expression label_map
+  | E_record of (label * expression) list
   | E_accessor of expr accessor
   | E_update   of expr update
   (* Advanced *)

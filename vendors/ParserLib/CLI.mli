@@ -17,12 +17,12 @@ module type PREPROCESSING_CLI =
   sig
     include COMMENTS
 
-    val input            : string option (* input file         *)
-    val extension        : string option (* file extension     *)
-    val dirs             : string list   (* -I                 *)
-    val project_root     : string option (* --project-root     *)
-    val show_pp          : bool          (* --show-pp          *)
-    val offsets          : bool          (* neg --columns      *)
+    val input        : string option (* input file         *)
+    val extension    : string option (* file extension     *)
+    val dirs         : string list   (* -I                 *)
+    val project_root : string option (* --project-root     *)
+    val show_pp      : bool          (* --show-pp          *)
+    val offsets      : bool          (* neg --columns      *)
 
     type status = [
       `Done
@@ -92,10 +92,6 @@ module type S =
     (* Print the AST in ASCII-art. *)
 
     val cst : bool  (* --cst *)
-
-    (* Reconstruct the tokens from the CST and print them .*)
-
-    val cst_tokens : bool  (* --cst-tokens *)
 
     (* Enable error recovery *)
 

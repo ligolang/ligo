@@ -26,7 +26,7 @@ type address
 An untyped address which can refer to a smart contract or account.
 
 <SyntaxTitle syntax="pascaligo">
-type big_map ('key, 'value)
+type big_map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type ('key, 'value) big_map
@@ -112,21 +112,21 @@ type bytes
 </SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">
-type contract('parameter)
+type contract (param)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-type 'parameter contract
+type 'param contract
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-type contract('parameter)
+type contract('param)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type contract&lt;&apos;parameter&gt;
+type contract&lt;&apos;param&gt;
 </SyntaxTitle>
 
-A typed contract. 
+A typed contract.
 
-Use `unit` as `parameter` to indicate an implicit account. 
+Use `unit` as `param` to indicate an implicit account.
 
 <SyntaxTitle syntax="pascaligo">
 type chain_id
@@ -156,7 +156,7 @@ type int
 type int
 </SyntaxTitle>
 
-An integer. 
+An integer.
 
 The only size limit to integers is gas.
 
@@ -191,7 +191,7 @@ type key_hash
 The hash of a public cryptographic key.
 
 <SyntaxTitle syntax="pascaligo">
-type list ('t)
+type list (t)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 't list
@@ -206,7 +206,7 @@ type list&lt;&apos;t&gt;
 A sequence of elements of the same type.
 
 <SyntaxTitle syntax="pascaligo">
-type map ('key, 'value)
+type map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type ('key, 'value) map
@@ -385,7 +385,7 @@ type unit
 
 
 <SyntaxTitle syntax="pascaligo">
-function is_nat: int -> option(nat)
+val is_nat : int -> option (nat)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val is_nat: int -> nat option
@@ -400,7 +400,7 @@ let is_nat: (i: int) => option&lt;nat&gt;
 Convert an `int` to a `nat` if possible.
 
 <SyntaxTitle syntax="pascaligo">
-function abs: int -> nat
+val abs : int -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val abs: int -> nat
@@ -415,7 +415,7 @@ let abs: (i: int) => nat
 Cast an `int` to `nat`.
 
 <SyntaxTitle syntax="pascaligo">
-function int: nat -> int
+val int : nat -> int
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val int: nat -> int
@@ -430,7 +430,7 @@ let int: (n: nat) => int
 Cast an `nat` to `int`.
 
 <SyntaxTitle syntax="pascaligo">
-const unit: unit
+const unit : unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val unit: unit
@@ -446,7 +446,7 @@ A helper to create a unit.
 
 <a name="failwith"></a>
 <SyntaxTitle syntax="pascaligo">
-function failwith : 'a -> unit
+val failwith&lt;a&gt; : a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val failwith : 'a -> unit
@@ -458,7 +458,7 @@ let failwith: 'a => unit
 let failwith: (message: &apos;a) => unit
 </SyntaxTitle>
 
-Cause the contract to fail with an error message or integer. Other types are 
+Cause the contract to fail with an error message or integer. Other types are
 not supported at the moment.
 
 Using this currently requires in general a type annotation on the
@@ -467,11 +467,9 @@ Using this currently requires in general a type annotation on the
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : int; const s : unit) : list (operation) * unit is
-  block {
-    if p > 10 then failwith ("Failure.") else skip
-  }
-  with ((nil : list (operation)), s)
+function main (const p : int; const s : unit) : list (operation) * unit is {
+  if p > 10 then failwith ("Failure.");
+} with ((nil : list (operation)), s)
 ```
 
 </Syntax>
@@ -501,7 +499,7 @@ let main = ([p, s] : [int, unit]): unit => {
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function assert : bool -> unit
+val assert : bool -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val assert : bool -> unit
@@ -516,23 +514,23 @@ let assert: (condition: bool) => unit
 Check if a certain condition has been met. If not the contract will fail.
 
 <SyntaxTitle syntax="pascaligo">
-function ediv : int -> int -> option (int * nat)
+val ediv : int -> int -> option (int * nat)
 </SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
-function ediv : mutez -> nat -> option (mutez * mutez)
+val ediv : mutez -> nat -> option (mutez * mutez)
 </SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
-function ediv : mutez -> mutez -> option (nat * mutez)
+val ediv : mutez -> mutez -> option (nat * mutez)
 </SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
-function ediv : nat -> nat -> option (nat * nat)
+val ediv : nat -> nat -> option (nat * nat)
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
 val ediv : int -> int -> (int * nat) option
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val ediv : mutez -> nat -> (mutez * mutez) option 
+val ediv : mutez -> nat -> (mutez * mutez) option
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val ediv : mutez -> mutez -> (nat * mutez) option
@@ -570,28 +568,28 @@ let ediv: (value: nat, divided_by: nat) => option&lt;[nat, nat]&gt;
 Compiles to Michelson `EDIV`, one operation to get both the quotient and remainder of a division. `ediv x y` returns None if `y` is zero, otherwise returns `Some (quotient, remainder)` such that `x = (quotient * y) + remainder` and `0 <= remainder < abs(y)`.
 
 <SyntaxTitle syntax="pascaligo">
-type sapling_state (N)
+type sapling_state (n)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-type N sapling_state
+type 'n sapling_state
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-type sapling_state(N)
+type sapling_state('a)
 </SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">
-type sapling_transaction (N)
+type sapling_transaction (n)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-type N sapling_transaction
+type 'n sapling_transaction
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-type sapling_transaction(N)
+type sapling_transaction('n)
 </SyntaxTitle>
 
 
 <SyntaxTitle syntax="pascaligo">
-type ticket 'v
+type ticket (v)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 'v ticket
