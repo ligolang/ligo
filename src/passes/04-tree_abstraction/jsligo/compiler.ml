@@ -1353,18 +1353,18 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
     let collection  = compile_expression ~raise v.expr in
     let sr = compile_statement ~raise v.statement in
     let body = statement_result_to_expression sr in
-    binding (e_sequence (e_for_each ~loc binder collection Any body))
+    expr (e_for_each ~loc binder collection Any body)
   | SWhile e ->
     let (w, loc) = r_split e in
     let cond = compile_expression ~raise w.expr in
     let statement_result = compile_statement ~raise w.statement in
     let body = statement_result_to_expression statement_result in
-    binding (e_sequence (e_while ~loc cond body))
+    expr (e_while ~loc cond body)
 
 and statement_result_to_expression: statement_result -> AST.expression = fun statement_result ->
   match statement_result with
   | Binding b -> b (e_unit ())
-  | Expr e -> e_sequence e (e_unit ())
+  | Expr e -> e
   | Break r
   | Return r -> r
 
