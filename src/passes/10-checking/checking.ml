@@ -753,7 +753,8 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let fun_type = evaluate_type ~raise context fun_type in
     let e' = Context.add_value context fun_name fun_type in
     let e' = List.fold_left av ~init:e' ~f:(fun e v -> Context.add_type_var e v ()) in
-    let (lambda,_) = type_lambda ~raise ~test ~protocol_version e' lambda in
+    let (lambda,lambda_type) = type_lambda ~raise ~test ~protocol_version e' lambda in
+    let () = assert_type_expression_eq ~raise fun_type.location (fun_type,lambda_type) in
     return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
     let tv = evaluate_type ~raise context type_annotation in
