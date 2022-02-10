@@ -773,7 +773,7 @@ instruction:
   base_instr(instruction,expr)
 | if_then_instr { $1 }
 
-base_instr(right_instr,right_expr):
+base_instr (right_instr,right_expr):
   if_then_else_instr(right_instr) { I_Cond   $1 }
 | remove_instr(right_expr)        { I_Remove $1 }
 | patch_instr(right_expr)         { I_Patch  $1 }
