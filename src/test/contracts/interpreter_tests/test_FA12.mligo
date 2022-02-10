@@ -1,7 +1,7 @@
 #include "../FA1.2.mligo"
 
 let test_transfer =
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
@@ -21,7 +21,7 @@ let test_transfer =
           (new_storage.total_supply = 300n))
 
 let test_transfer_not_e_allowance =
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
@@ -38,7 +38,7 @@ let test_transfer_not_e_allowance =
   | Fail Other -> failwith "Transaction should fail with rejection"
 
 let test_transfer_not_e_balance =
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
@@ -55,7 +55,7 @@ let test_transfer_not_e_balance =
   | Fail Other -> failwith "Transaction should fail with rejection"
 
 let test_approve =
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
@@ -75,7 +75,7 @@ let test_approve =
           (new_storage.total_supply = 300n))
 
 let test_approve_unsafe =
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
@@ -93,7 +93,7 @@ let test_approve_unsafe =
 
 let test_get_allowance =
   let dummy_contract (v, s : nat * nat) : operation list * nat = ([] : operation list), v + s in
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
@@ -118,7 +118,7 @@ let test_get_allowance =
 
 let test_get_balance =
   let dummy_contract (v, s : nat * nat) : operation list * nat = ([] : operation list), v + s in
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
@@ -143,7 +143,7 @@ let test_get_balance =
 
 let test_get_total_supply =
   let dummy_contract (v, s : nat * nat) : operation list * nat = ([] : operation list), v + s in
-  let () = Test.reset_state 10n ([] : tez list) in
+  let () = Test.reset_state 10n ([] : tez list) ([] : ((string * key) * tez option)  list) in
   let sender_ = Test.nth_bootstrap_account 0 in
   let from_ = Test.nth_bootstrap_account 1 in
   let to_ = Test.nth_bootstrap_account 2 in
