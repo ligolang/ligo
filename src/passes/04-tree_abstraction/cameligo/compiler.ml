@@ -494,8 +494,8 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let type_vars = List.Ne.map compile_type_var tp.type_vars in
       List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:let_rhs type_vars
     ) type_params in
-    return @@ e_let_in ~loc {let_binder with ascr = lhs_type} let_attr let_rhs @@ fun_ body
-  )
+    return @@ e_let_in ~loc let_binder let_attr let_rhs @@ fun_ body
+    )
   | ETypeIn ti ->
     let (ti, loc) = r_split ti in
     let ({type_decl={name;type_expr;_};kwd_in=_;body} : CST.type_in) = ti in
