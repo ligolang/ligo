@@ -1,82 +1,67 @@
-// for-of
-
-let add1 : (xs : list<int>) => list<int> =
-    (xs : list<int>) => {
-        let ys : list<int> = list([]);
-        for (const x of xs) {
-            let y = x + 1;
-            ys = list([y, ...ys]);
-        };
-        let zs : list<int> = list([]);
-        for (const y of ys) {
-            let z = y;
-            zs = list([z, ...zs]);
-        };
-        return zs;
-    }
-
-let _test1 : (x : unit) => unit = () => {
-    let xs : list<int> = list([1,2,3]);
-    let ys : list<int> = add1(xs);
-    assert(ys == list([2,3,4]));
+let for_of_single_statement = (xs : list<int>) : list<int> => {
+    let ys : list<int> = list([]);
+    for (const x of xs) {
+        ys = list([x, ...ys]);
+    };
+    return ys;
 }
 
-let test1 = _test1();
-
-// while
-
-let length : (xs : list<int>) => int =
-    (xs : list<int>) => {
-        let len : int = 0;
-        for (const _x of xs) {
-            len += 1;
-        };
-        return len;
-    }
-
-let get_index : (xs : list<int>, i : int) => int =
-    (xs : list<int>, i : int) => {
-
-        return match(xs, list([
-            ([] : list<int>) => failwith("index not found"),
-            ([hd, ...tl] : list<int>) => {
-                if(i==0) {
-                    return hd 
-                } else {
-                    return get_index(tl,i-1)
-                } 
-            }
-        ]));
-    }
-
-let add2 : (xs : list<int>) => list<int> =
-    (xs : list<int>) => {
-        let ys : list<int> = list([]);
-        let len : int = length(xs);
-        let i : int = 0;
-        while (i < len) {
-            let x = 1;
-            Test.log(i);
-            let z = x;
-            Test.log(z);
-            let y = get_index(xs,i) + 1;
-            ys = list([y, ...ys]);
-            i += 1;
-        };
-
-        let zs : list<int> = list([]);
-        for (const y of ys) {
-            Test.log(zs);
-            let z = y;
-            zs = list([z, ...zs]);
-        };
-        return zs;
-    }
-
-let _test2 : (x : unit) => unit = () => {
-    let xs : list<int> = list([1,2,3]);
-    let ys : list<int> = add2(xs);
-    assert(ys == list([2,3,4]));
+let for_of_multi_statements_1 = (xs : list<int>) : list<int> => {
+    let ys : list<int> = list([]);
+    for (const x of xs) {
+        let z = 1;
+        z += 1;
+        let c = z + x;
+        ys = list([c, ...ys]);
+    };
+    return ys;
 }
 
-let test2 = _test2();
+let for_of_multi_statements_2 = (xs : list<int>) : list<int> => {
+    let ys : list<int> = list([]);
+    let z = 1;
+    for (const x of xs) {
+        let c = z + x;
+        ys = list([c, ...ys]);
+        z += 1;
+    };
+    let _ = z;
+    return ys;
+}
+
+let while_single_statement = (n : int) : int => {
+    let i = 1;
+    let m = n;
+    while (m > 0) {
+        m -= 1;
+    };
+    let _ = m;
+    return n;
+}
+
+let while_multi_statements_1 = (n : int) : int => {
+    let sum = 0;
+    let i = 1;
+    let m = n;
+    while (m > 0) {
+        sum += i;
+        i += 1;
+        m -= 1;
+    };
+    let _ = m = i;
+    return sum
+}
+
+let while_multi_statements_2 = (n : int) : int => {
+    let sum = 0;
+    let i = 1;
+    let m = n;
+    while (m > 0) {
+        let x = i;
+        sum += x;
+        i += 1;
+        m -= 1;
+    };
+    let _ = i = m;
+    return sum
+};
