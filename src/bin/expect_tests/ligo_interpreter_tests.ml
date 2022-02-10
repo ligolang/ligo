@@ -480,9 +480,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_baker_account.mligo" ] ;
   [%expect {|
+    "STARTING BALANCE AND VOTING POWER"
+    4000000000000mutez
+    500n
+    "BALANCE AND VOTING POWER AFTER ORIGINATE"
+    3999360000000mutez
+    500n
+    "BALANCE AND VOTING POWER AFTER TRANSFER"
+    3998720000000mutez
+    500n
     Everything at the top-level was executed.
-    - test_new exited with value 88000000mutez.
-    - test_add exited with value 88000000mutez. |}]
+    - test exited with value (). |}]
 
 (* do not remove that :) *)
 let () = Sys.chdir pwd
