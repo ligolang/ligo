@@ -8,27 +8,27 @@ let good_test s = (test "")^"vars_consts/"^s
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "match.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/match.ligo", line 9, characters 8-14:
-      8 |     | Some (s) -> block {
-      9 |         s := 3;
-     10 |         result := s; }
-
-    Invalid assignment to constant variable "s", declared at
     File "../../test/contracts/negative/vars_consts/match.ligo", line 8, characters 12-13:
       7 |       None -> skip
       8 |     | Some (s) -> block {
-      9 |         s := 3; |}]
+      9 |         s := 3;
+
+    Invalid assignment to constant variable "s", declared at
+    File "../../test/contracts/negative/vars_consts/match.ligo", line 9, characters 8-9:
+      8 |     | Some (s) -> block {
+      9 |         s := 3;
+     10 |         result := s; } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "match.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/match.jsligo", line 7, characters 23-24:
+    File "../../test/contracts/negative/vars_consts/match.jsligo", line 7, characters 10-11:
       6 |   let store2 = match (action, {
       7 |     Add: (n: int) => { n = 42; return n; },
       8 |     Sub: (n: int) => { n = 42; return -n; }
 
     Invalid assignment to constant variable "n", declared at
-    File "../../test/contracts/negative/vars_consts/match.jsligo", line 7, characters 10-11:
+    File "../../test/contracts/negative/vars_consts/match.jsligo", line 7, characters 23-24:
       6 |   let store2 = match (action, {
       7 |     Add: (n: int) => { n = 42; return n; },
       8 |     Sub: (n: int) => { n = 42; return -n; } |}]
@@ -36,56 +36,56 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_const_param.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/assign_const_param.ligo", line 3, characters 4-10:
-      2 |   block {
-      3 |     x := 4;
-      4 |   } with x
-
-    Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/assign_const_param.ligo", line 1, characters 19-20:
       1 | function foo(const x : int) : int is
-      2 |   block { |}]
+      2 |   block {
+
+    Invalid assignment to constant variable "x", declared at
+    File "../../test/contracts/negative/vars_consts/assign_const_param.ligo", line 3, characters 4-5:
+      2 |   block {
+      3 |     x := 4;
+      4 |   } with x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_consts.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/assign_consts.ligo", line 4, characters 4-10:
-      3 |     const (x, y) = (4, 5);
-      4 |     x := 1;
-      5 |   } with x + y + z
-
-    Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/assign_consts.ligo", line 3, characters 11-12:
       2 |   block {
       3 |     const (x, y) = (4, 5);
-      4 |     x := 1; |}]
+      4 |     x := 1;
+
+    Invalid assignment to constant variable "x", declared at
+    File "../../test/contracts/negative/vars_consts/assign_consts.ligo", line 4, characters 4-5:
+      3 |     const (x, y) = (4, 5);
+      4 |     x := 1;
+      5 |   } with x + y + z |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_consts.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/assign_consts.jsligo", line 3, characters 2-3:
-      2 |   const [x, y] = [4, 5];
-      3 |   x = 1;
-      4 |   return (x + y + z);
-
-    Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/assign_consts.jsligo", line 2, characters 9-10:
       1 | let x = (z: int): int => {
       2 |   const [x, y] = [4, 5];
-      3 |   x = 1; |}]
+      3 |   x = 1;
+
+    Invalid assignment to constant variable "x", declared at
+    File "../../test/contracts/negative/vars_consts/assign_consts.jsligo", line 3, characters 2-3:
+      2 |   const [x, y] = [4, 5];
+      3 |   x = 1;
+      4 |   return (x + y + z); |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_const_params.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/assign_const_params.ligo", line 3, characters 4-10:
-      2 |   block {
-      3 |     x := 4;
-      4 |     y := 3;
-
-    Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/assign_const_params.ligo", line 1, characters 19-20:
       1 | function foo(const x : int; var y : int) : int is
-      2 |   block { |}]
+      2 |   block {
+
+    Invalid assignment to constant variable "x", declared at
+    File "../../test/contracts/negative/vars_consts/assign_const_params.ligo", line 3, characters 4-5:
+      2 |   block {
+      3 |     x := 4;
+      4 |     y := 3; |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "capture_var_param.ligo") ] ;
@@ -127,43 +127,43 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_const_param.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/assign_const_param.jsligo", line 5, characters 5-8:
-      4 |      const age: int = 3; // does not give an error
-      5 |      age = 42; // does give an error
-      6 |      return age;
-
-    Invalid assignment to constant variable "age", declared at
     File "../../test/contracts/negative/vars_consts/assign_const_param.jsligo", line 4, characters 11-14:
       3 |   {
       4 |      const age: int = 3; // does not give an error
-      5 |      age = 42; // does give an error |}]
+      5 |      age = 42; // does give an error
+
+    Invalid assignment to constant variable "age", declared at
+    File "../../test/contracts/negative/vars_consts/assign_const_param.jsligo", line 5, characters 5-8:
+      4 |      const age: int = 3; // does not give an error
+      5 |      age = 42; // does give an error
+      6 |      return age; |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_const_param_2.jsligo") ] ;
   [%expect{|
+    File "../../test/contracts/negative/vars_consts/assign_const_param_2.jsligo", line 1, characters 9-15:
+      1 | let x = (a: int): int => {
+      2 |   a = 42;
+
+    Invalid assignment to constant variable "a", declared at
     File "../../test/contracts/negative/vars_consts/assign_const_param_2.jsligo", line 2, characters 2-3:
       1 | let x = (a: int): int => {
       2 |   a = 42;
-      3 |   return a;
-
-    Invalid assignment to constant variable "a", declared at
-    File "../../test/contracts/negative/vars_consts/assign_const_param_2.jsligo", line 1, characters 8-16:
-      1 | let x = (a: int): int => {
-      2 |   a = 42; |}]
+      3 |   return a; |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "multiple_vars_1.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/multiple_vars_1.jsligo", line 4, characters 4-5:
-      3 |     const [x,y] = [4,5];
-      4 |     x = 2;
-      5 |     y = 3;
-
-    Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/multiple_vars_1.jsligo", line 3, characters 11-12:
       2 |   {
       3 |     const [x,y] = [4,5];
-      4 |     x = 2; |}]
+      4 |     x = 2;
+
+    Invalid assignment to constant variable "x", declared at
+    File "../../test/contracts/negative/vars_consts/multiple_vars_1.jsligo", line 4, characters 4-5:
+      3 |     const [x,y] = [4,5];
+      4 |     x = 2;
+      5 |     y = 3; |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "multiple_vars_2.jsligo") ] ;
@@ -193,16 +193,16 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "multiple_vars_1.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/multiple_vars_1.ligo", line 4, characters 4-10:
-      3 |     const (x, y) = (4, 5);
-      4 |     x := 2;
-      5 |     y := 3;
-
-    Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/multiple_vars_1.ligo", line 3, characters 11-12:
       2 |   block {
       3 |     const (x, y) = (4, 5);
-      4 |     x := 2; |}]
+      4 |     x := 2;
+
+    Invalid assignment to constant variable "x", declared at
+    File "../../test/contracts/negative/vars_consts/multiple_vars_1.ligo", line 4, characters 4-5:
+      3 |     const (x, y) = (4, 5);
+      4 |     x := 2;
+      5 |     y := 3; |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "multiple_vars_2.ligo") ] ;
@@ -232,7 +232,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "capture_assign.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/vars_consts/capture_assign.ligo", line 5, characters 4-10:
+    File "../../test/contracts/negative/vars_consts/capture_assign.ligo", line 5, characters 4-5:
       4 |     const y = 0;
       5 |     x := 6;
       6 |   } with unit;
@@ -286,10 +286,10 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
-                                    let env_rec#1 = ( record[i -> i] ) in
+                                    let env_rec#1 = ( ( i ) ) in
                                     let env_rec#1 =
                                       FOLD_WHILE(lambda (binder#2) return
-                                                 let i = binder#2.0.i in
+                                                 let i = binder#2.0.0 in
                                                   match AND(LT(i , x) ,
                                                             GT(b , 0)) with
                                                    | True () -> CONTINUE(let i =
@@ -304,43 +304,49 @@ let%expect_test _ =
                                                                         {
                                                                         binder#2.0
                                                                         with
-                                                                        { i =
+                                                                        { 0 =
                                                                         i } } } } in
-                                                                        let _ : unit =
+                                                                        let ()#3 : unit =
                                                                         unit in
                                                                         binder#2)
                                                    | False () -> STOP(binder#2) ,
                                                  env_rec#1) in
                                     let env_rec#1 = env_rec#1.0 in
-                                    let i = env_rec#1.i in i |}]
+                                    let i = env_rec#1.0 in i |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.ligo") ] ;
   [%expect{|
     const foo =
       lambda (_u : unit) return  match (4 , 5) with
-                                  | (x[@var],y[@var]) -> { x := 2;
-     { y := 3;
-     ADD(x , y)}}
+                                  | (x[@var],y[@var]) -> {
+                                                            x := 2;
+                                                            {
+                                                               y := 3;
+                                                               ADD(x ,y)
+                                                            }
+                                  }
     const bar =
       lambda (_u : unit) return  match (4 , 5) with
-                                  | (x,y) -> let add =
-                                               lambda (_u : unit) return ADD(x ,
-                                             y) in (add)@(UNIT()) |}]
+                                  | (x,y) -> let add = lambda (_u : unit) return ADD(x ,y) in
+                                             (add)@(UNIT()) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;
   [%expect{|
     const foo[@var] =
-      rec (foo:unit -> int => lambda (_ : unit) : int return  match (4 , 5) with
-                                                               | (x[@var],y[@var]) -> { x := 2;
-     { y := 3;
-     C_POLYMORPHIC_ADD(x , y)}} )[@@private]
+      rec (foo:unit -> int => lambda (_#1 : unit) : int return  match (4 , 5) with
+                                                                 | (x[@var],y[@var]) -> {
+
+                                                                   x := 2;
+                                                                   {
+                                                                      y := 3;
+                                                                      C_POLYMORPHIC_ADD(x ,y)
+                                                                   }
+                                                                 } )[@@private]
     const bar[@var] =
-      rec (bar:unit -> int => lambda (_ : unit) : int return  match (4 , 5) with
-                                                               | (x,y) ->
-                                                               let add[@var] =
-                                                                 rec (add:unit -> int => lambda (_ : unit) : int return C_POLYMORPHIC_ADD(x ,
-                                                               y) )[@@private] in
-                                                               (add)@(unit) )[@@private] |}]
+      rec (bar:unit -> int => lambda (_#2 : unit) : int return  match (4 , 5) with
+                                                                 | (x,y) ->
+                                                                 let add[@var] = rec (add:unit -> int => lambda (_#3 : unit) : int return C_POLYMORPHIC_ADD(x ,y) )[@@private] in
+                                                                 (add)@(unit) )[@@private] |}]
 

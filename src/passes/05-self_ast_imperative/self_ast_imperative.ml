@@ -7,19 +7,23 @@ let all_expression_mapper ~raise = [
   Tezos_type_annotation.peephole_expression ~raise ;
   None_variant.peephole_expression ;
   Literals.peephole_expression ~raise ;
+  Expression_soundness.linearity ~raise ;
 ]
 
 let all_expression_mapper_jsligo ~raise = [
-  No_shadowing.peephole_expression ~raise;
+  No_shadowing.peephole_expression ~raise ;
 ]
 
-let all_type_expression_mapper ~raise ~add_warning = [
-  Entrypoints_length_limit.peephole_type_expression ~raise ;
-  Layout_check.layout_type_expression ~add_warning;
-]
+let all_type_expression_mapper ~raise ~add_warning = ignore add_warning ;
+  [
+    Entrypoints_length_limit.peephole_type_expression ~raise ;
+    Type_soundness.predefined_names ~raise ;
+    Type_soundness.linearity ~raise ;
+    Layout_check.layout_type_expression ~add_warning;
+  ]
 
 let all_module_mapper ~raise = [
-  No_shadowing.peephole_module ~raise
+  No_shadowing.peephole_module ~raise ;
 ]
 
 let all_exp ~raise ~(lang:Syntax.v_syntax) = 

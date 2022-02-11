@@ -26,12 +26,9 @@ let curried_depth_in_lambda (rhs : expression) : int =
   let (vars, _) = uncurry_lambda Int.max_value rhs in
   List.length vars
 
-let eqvar f x : bool =
-  Location.equal_content ~equal:Var.equal f x
-
 let isvar f x : bool =
   match x.content with
-  | E_variable x -> eqvar f x
+  | E_variable x -> Var.equal f x
   | _ -> false
 
 (* Finding the usage of a function in an expression: we will look for
@@ -58,13 +55,13 @@ let usages = List.fold_left ~f:combine_usage ~init:Unused
 let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
   let self = usage_in_expr f in
   let self_binder vars e =
-    if List.mem ~equal:(Location.compare_content ~compare:Var.equal) vars f
+    if List.mem ~equal:Var.equal vars f
     then Unused
     else usage_in_expr f e in
   match expr.content with
   (* interesting cases: *)
   | E_variable x ->
-    if eqvar f x
+    if Var.equal f x
     (* if we got here, f wasn't only used in applications *)
     then Other
     else Unused
@@ -112,6 +109,8 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     usages [self expr; self update]
   | E_raw_michelson _ ->
     Unused
+  | E_global_constant (_hash, args) ->
+    usages (List.map ~f:self args)
 
 let comb_type (ts : type_expression list) : type_expression =
   { type_content = T_tuple (List.map ~f:(fun t -> (None, t)) ts);
@@ -126,11 +125,11 @@ let uncurry_rhs (depth : int) (expr : expression) : expression =
   let (arg_types, ret_type) = uncurry_arrow depth expr.type_expression in
 
   let (vars, body) = uncurry_lambda depth expr in
-  let binder = Location.wrap (Var.fresh ()) in
+  let binder = Var.fresh () in
 
   (* generate fresh vars in order to specify binding precedence for
      duplicate vars *)
-  let fresh_vars = List.map ~f:(Location.map Var.fresh_like) vars in
+  let fresh_vars = List.map ~f:(Var.fresh_like) vars in
   let binder_expr = { content = E_variable binder;
                       type_expression = comb_type arg_types;
                       location = Location.generated } in
@@ -159,7 +158,7 @@ let rec uncurry_in_expression
   let self = uncurry_in_expression f depth in
   let self_list = List.map ~f:self in
   let self_binder vars e =
-    if List.mem ~equal:(Location.compare_content ~compare:Var.equal) vars f
+    if List.mem ~equal:Var.equal vars f
     then e
     else uncurry_in_expression f depth e in
   let return e' = { expr with content = e' } in
@@ -243,6 +242,9 @@ let rec uncurry_in_expression
     let expr = self expr in
     let update = self update in
     return (E_update (expr, i, update, n))
+  | E_global_constant (hash, args) ->
+    let args = List.map ~f:self args in
+    return (E_global_constant (hash, args))
 
 (* hack to specialize map_expression to identity monad since there are
    no errors here *)

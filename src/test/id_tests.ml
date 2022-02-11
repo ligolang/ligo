@@ -1,7 +1,7 @@
 open Test_helpers
 open Ast_imperative
 
-let get_program = get_program "./contracts/id.mligo" (Contract "main")
+let get_program = get_program "./contracts/id.mligo" (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/id.mligo" ()
@@ -46,8 +46,8 @@ let buy_id ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~options program "buy" 
-      (e_pair param storage) 
+  let () = expect_eq ~raise ~options program "buy"
+      (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
@@ -84,8 +84,8 @@ let buy_id_sender_addr ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~options program "buy" 
-      (e_pair param storage) 
+  let () = expect_eq ~raise ~options program "buy"
+      (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
@@ -111,7 +111,7 @@ let buy_id_wrong_amount ~raise ~add_warning () =
   in
   let param = e_record_ez [("profile", owner_website) ;
                            ("initial_controller", (e_some (e_address new_addr)))] in
-  let () = expect_string_failwith ~raise ~options program "buy" 
+  let () = expect_string_failwith ~raise ~options program "buy"
       (e_pair param storage)
       "Incorrect amount paid."
   in ()
@@ -209,7 +209,7 @@ let update_details_controller ~raise ~add_warning () =
   in ()
 
 (* Test that contract fails when we attempt to update details of nonexistent ID *)
-let update_details_nonexistent ~raise ~add_warning () = 
+let update_details_nonexistent ~raise ~add_warning () =
   let program = get_program ~raise ~add_warning () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in

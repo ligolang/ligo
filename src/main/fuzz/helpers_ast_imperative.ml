@@ -139,10 +139,10 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {binder; start; final; incr; f_body}
 
   let for_each
-    = fun f {fe_binder; collection; collection_type; fe_body} ->
+    = fun f {fe_binder; collection; fe_body ; collection_type} ->
     let* collection = f collection in
     let* fe_body    = f fe_body in
-    ok @@ {fe_binder; collection; collection_type; fe_body}
+    ok @@ {fe_binder; collection; fe_body ; collection_type}
 
   let while_loop
     = fun f {cond; body} ->
@@ -157,10 +157,10 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {type_binder; type_expr; type_attr}
 
   let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) declaration_constant -> (('b,'d) declaration_constant) monad
-    = fun f g {name; binder=b; attr; expr} ->
+    = fun f g {binder=b; attr; expr} ->
     let* binder = binder g b in
     let* expr   = f expr     in
-    ok @@ {name;binder;attr;expr}
+    ok @@ {binder;attr;expr}
 
   let rec declaration_module : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) declaration_module -> (('b,'d) declaration_module) monad
     = fun f g {module_binder; module_;module_attr} ->
@@ -233,7 +233,7 @@ module Fold_helpers(M : Monad) = struct
        let* cases' = bind_map_list aux cases in
        return @@ E_matching {matchee=e';cases=cases'}
     | E_record m -> (
-      let* m' = bind_map_lmap self m in
+      let* m' = bind_map_list (fun (l,e) -> let* e = self e in ok (l,e)) m in
       return @@ E_record m'
     )
     | E_accessor acc -> (

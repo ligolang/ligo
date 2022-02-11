@@ -9,16 +9,23 @@
 module Directive = LexerLib.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
-module Token     = Lexing_cameligo.Token
+
+(* Local dependencies *)
+
+module Wrap = Lexing_shared.Wrap
+module Attr = Lexing_shared.Attr
+
+(* Utilities *)
+
+type 'a reg = 'a Region.reg
 
 open Utils
-type 'a reg = 'a Region.reg
 
 (* Lexemes *)
 
 type lexeme = string
 
-type 'payload wrap = 'payload Token.wrap 
+type 'payload wrap = 'payload Wrap.wrap
 
 (* Keywords of OCaml *)
 
@@ -120,8 +127,10 @@ type type_name   = string reg
 type field_name  = string reg
 type type_constr = string reg
 type constr      = string reg
-type attribute   = string reg
 type type_param  = string reg
+
+type attribute   = Attr.t
+type attributes  = Attr.attribute reg list
 
 (* Parentheses *)
 
@@ -141,8 +150,6 @@ type t = {
 }
 
 and ast = t
-
-and attributes = attribute list
 
 and declaration =
   Let         of let_decl     reg
@@ -259,7 +266,7 @@ and pattern =
 
 and var_pattern = {
   variable   : variable;
-  attributes : attribute list
+  attributes : attributes
 }
 
 and list_pattern =
@@ -349,7 +356,7 @@ and arith_expr =
 | Neg   of minus un_op reg
 | Int   of (string * Z.t) reg
 | Nat   of (string * Z.t) reg
-| Mutez of (string * Z.t) reg
+| Mutez of (string * Int64.t) reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -544,7 +551,7 @@ let logic_expr_to_region = function
 
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
-| Div {region;_} | Mod {region;_} | Land {region;_} 
+| Div {region;_} | Mod {region;_} | Land {region;_}
 | Lor {region;_} | Lxor {region;_} | Lsl {region;_} | Lsr {region;_}
 | Neg {region;_} | Int {region;_} | Mutez {region; _}
 | Nat {region; _} -> region
@@ -585,6 +592,6 @@ let path_to_region = function
   Name var -> var.region
 | Path {region; _} -> region
 
-let type_constr_arg_to_region = function
+let type_ctor_arg_to_region = function
   CArg  t -> type_expr_to_region t
 | CArgTuple t -> t.region

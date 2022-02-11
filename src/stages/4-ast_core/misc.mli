@@ -27,7 +27,7 @@ end
 val assert_literal_eq : ( literal * literal ) -> unit result
 *)
 
-val get_entry : module_ -> string -> expression option
+val get_entry : module_ -> expression_variable -> expression option
 
 val p_for_all  : type_variable -> p_constraints -> type_value -> type_value
 val p_constant : Types.constant_tag -> p_ctor_args -> type_value

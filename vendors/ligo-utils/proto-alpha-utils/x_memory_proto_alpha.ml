@@ -1,6 +1,5 @@
 module List      = Core.List
 module Michelson = Tezos_utils.Michelson
-
 include Memory_proto_alpha
 let init_environment = Init_proto_alpha.init_environment
 let dummy_environment = Init_proto_alpha.dummy_environment
@@ -10,7 +9,6 @@ open Protocol
 open Script_typed_ir
 open Script_ir_translator
 open Script_interpreter
-
 module X = struct
   open Alpha_context
   open Script_tc_errors
@@ -74,29 +72,6 @@ let prims_of_strings michelson =
 let lazy_expr expr =
     let open Alpha_context in
     Script.lazy_expr expr
-
-(*
-let parse_michelson (type aft aft'.)
-    ?(tezos_context = (dummy_environment ()).tezos_context)
-    ~top_level michelson
-    ?type_logger
-    (bef:('a, 'b) Script_typed_ir.stack_ty) (aft:(aft, aft') Script_typed_ir.stack_ty)
-  =
-  prims_of_strings michelson >>=? fun michelson ->
-  parse_instr
-    ?type_logger
-    top_level tezos_context
-    michelson bef ~legacy:false >>=?? fun (j, _) ->
-  match j with
-  | Typed descr -> (
-      Lwt.return (
-        alpha_wrap (X.stack_ty_eq tezos_context 0 descr.aft aft) >>? fun (Eq, _) ->
-        let descr : ('a, 'b, aft, aft') Script_ir_translator.descr = {descr with aft} in
-        Ok descr
-      )
-    )
-  | _ -> Lwt.return @@ error_exn (Failure "Typing instr failed")
-  *)
 
 let parse_michelson_fail (type aft aftr)
     ?(tezos_context = (dummy_environment ()).tezos_context)
@@ -351,3 +326,14 @@ let to_hex = fun michelson ->
   let canonical = Tezos_micheline.Micheline.strip_locations michelson in
   let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
   Hex.of_bytes bytes
+
+(*
+  original function: `expr_to_address_in_context` in `/tezos/src/proto_alpha/lib_protocol/global_constants_storage.ml`
+  modified to just get the hash out of a script without any need for the raw context
+*)
+  let expr_to_address_in_context : Script_repr.expr -> Script_expr_hash.t option =
+    fun expr ->
+      let lexpr = Script_repr.lazy_expr expr in
+      match Script_repr.force_bytes lexpr with
+      | Ok b -> Some (Script_expr_hash.hash_bytes [b])
+      | Error _ -> None

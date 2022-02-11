@@ -9,6 +9,10 @@ module Region = Simple_utils.Region
 module Utils  = Simple_utils.Utils
 module Snippet = Simple_utils.Snippet
 
+(* LIGO dependencies *)
+
+module Wrap = Lexing_shared.Wrap
+
 (* Signature *)
 
 module type S =
@@ -74,35 +78,35 @@ let fake_lexer: token list -> Lexing.lexbuf -> token = fun tokens ->
         token
     | [] -> Token.mk_eof Region.ghost
 
-let pre_parser tokens = 
+let pre_parser tokens =
   let fake_lexer = fake_lexer tokens in
-  let fake_lexbuf = Lexing.from_string "" in 
+  let fake_lexbuf = Lexing.from_string "" in
   let module Inter = PreParser.MenhirInterpreter in
   let supplier     = Inter.lexer_lexbuf_to_supplier fake_lexer fake_lexbuf in
   let success a    = ok a
   in
   let failure = function
     Inter.Accepted s ->  Ok s
-  | HandlingError env -> 
-    (match Inter.top env with 
-        Some (Inter.Element (s, _, _, _)) ->            
-          let window = get_window() in 
-          let prefix = (match window with 
-            Some window -> 
+  | HandlingError env ->
+    (match Inter.top env with
+        Some (Inter.Element (s, _, _, _)) ->
+          let window = get_window() in
+          let prefix = (match window with
+            Some window ->
               let region = Token.to_region window#current_token in
               Format.asprintf "%a\n" Snippet.pp_lift region
-          | None -> 
+          | None ->
               "") in
           let state = Inter.number s in
           let msg = try PreParErr.message state with Not_found -> "<YOUR SYNTAX ERROR MESSAGE HERE>\n" in
           let msg = if msg = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
             "Syntax error " ^ string_of_int state ^ "."
-          else 
+          else
             msg
           in
           let error_msg = prefix ^ msg in
           Error Region.{value = error_msg; region = Region.ghost}
-      | None -> 
+      | None ->
         Error Region.{value = "Parser error."; region = Region.ghost}
     )
   | _ -> Error Region.{value = "Unhandled state."; region = Region.ghost}
@@ -116,7 +120,7 @@ let apply filter = function
 | Error _ as err   -> err
 
 let pre_parser units =
-  apply pre_parser units 
+  apply pre_parser units
 
 (* debug *)
 
@@ -128,11 +132,11 @@ let print_tokens (tokens: (token list, _) result) =
 
 (* Exported *)
 
-let filter = 
+let filter =
   Utils.(
   (* print_tokens
   <@  *)
   pre_parser
-  <@ tokens_of 
+  <@ tokens_of
   <@ Style.check
   )

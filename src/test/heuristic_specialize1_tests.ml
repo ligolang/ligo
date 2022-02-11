@@ -16,7 +16,7 @@ let c2 = constraint_ 2L n' == ctor C_arrow[p; q]
 let c3 = constraint_ 3L o == ctor C_string[]
 let c4 = constraint_ 4L p == row C_record { x = rv' m ; y = rv' m }
 let c5 = constraint_ 5L q == ctor C_map[o; r]
-           
+
 let c6 = constraint_ 6L n == ctor C_arrow[o; n']
 
 let check_specialize1_result fresh (actual : update list) expected =

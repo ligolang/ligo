@@ -7,11 +7,11 @@ module Operators_types = struct
   let var = p_var
 
   (* Typeclass for arithmetic operations *)
-  let tc_addargs  a b c = 
+  let tc_addargs  a b c =
     tc "arguments for (+)"
       ~bound:[] ~constraints:[] ()
-      [a;b;c] [ [nat;nat;nat] ; 
-                [int;int;int] ; 
+      [a;b;c] [ [nat;nat;nat] ;
+                [int;int;int] ;
                 [nat;int;int] ;
                 [int;nat;int] ;
                 [timestamp;int;timestamp] ;
@@ -22,12 +22,12 @@ module Operators_types = struct
                 [bls12_381_fr;bls12_381_fr;bls12_381_fr] ;
               ]
 
-let tc_polymorphic_addargs  a b c = 
+let tc_polymorphic_addargs  a b c =
 tc "arguments for (+)"
   ~bound:[] ~constraints:[] ()
-  [a;b;c] [ [string;string;string] ; 
-            [nat;nat;nat] ; 
-            [int;int;int] ; 
+  [a;b;c] [ [string;string;string] ;
+            [nat;nat;nat] ;
+            [int;int;int] ;
             [nat;int;int] ;
             [int;nat;int] ;
             [timestamp;int;timestamp] ;
@@ -36,9 +36,9 @@ tc "arguments for (+)"
             [bls12_381_g1;bls12_381_g1;bls12_381_g1] ;
             [bls12_381_g2;bls12_381_g2;bls12_381_g2] ;
             [bls12_381_fr;bls12_381_fr;bls12_381_fr] ;
-          ]    
+          ]
 
-  let tc_subarg   a b c = 
+  let tc_subarg   a b c =
     tc "arguments for (-)"
       ~bound:[] ~constraints:[] ()
       [a;b;c] [ [nat;nat;int] ;
@@ -51,8 +51,8 @@ tc "arguments for (+)"
               ]
 
   let tc_timargs  a b c = tc "arguments for ( * )"      ~bound:[] ~constraints:[] ()
-                                                        [a;b;c] [ [nat;nat;nat] ; 
-                                                                  [nat;int;int] ; 
+                                                        [a;b;c] [ [nat;nat;nat] ;
+                                                                  [nat;int;int] ;
                                                                   [int;nat;int] ;
                                                                   [int;int;int] ;
                                                                   [mutez;nat;mutez] ;
@@ -67,7 +67,7 @@ tc "arguments for (+)"
                                                                 ]
   let tc_edivargs a b c d = tc "arguments and return values for ediv, div and mod"
                                                         ~bound:[] ~constraints:[] ()
-                                                        [a;b;c;d] [ [nat;nat;nat;nat] ; 
+                                                        [a;b;c;d] [ [nat;nat;nat;nat] ;
                                                                     [nat;int;int;nat] ;
                                                                     [int;nat;int;nat] ;
                                                                     [int;int;int;nat] ;
@@ -88,21 +88,21 @@ tc "arguments for (+)"
   let tc_notargs a b = tc "arguments and return values for not"
     ~bound:[] ~constraints:[] ()
     [a;b] [ [bool;bool] ;
-            [nat;int] ; 
+            [nat;int] ;
             [int;int] ]
 
 
   (* Typeclasses for data structure manipulations *)
   let tc_concatable a b = tc "concatenable"             ~bound:[] ~constraints:[] ()
                                                         [a;b]   [ [tuple2 string string  ; string ] ;
-                                                                  [tuple1 @@ list string ; string ] ; 
+                                                                  [tuple1 @@ list string ; string ] ;
                                                                   [tuple2 bytes  bytes   ; bytes  ] ;
                                                                   [tuple1 @@ list bytes  ; bytes  ] ;
                                                                 ]
 
-  let tc_sizearg  a     = 
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+  let tc_sizearg  a     =
+    let x = Var.fresh ~name:"x" () in
+    let y = Var.fresh ~name:"y" () in
     tc "arguments for size"
       ~bound:[x;y] ~constraints:[] ()
       [a]     [ [string] ; [bytes] ; [list (var x)] ; [set (var x)] ; [map (var x) (var y)] ]
@@ -111,20 +111,20 @@ tc "arguments for (+)"
                                                         [a]     [ [string] ; [bytes] ]
 
   (* Typeclasses for typegroups *)
-  let tc_comparable a = 
-    let x = Var.fresh () in
+  let tc_comparable a =
+    let x = Var.fresh ~name:"x" () in
     tc "comparable"
       ~bound:[x] ~constraints:[c_apply comparable x "tc_comparable:bound"] ()
-      [a]     [ 
+      [a]     [
                 [address] ;
                 [bool] ;
                 [bytes] ;
                 [chain_id] ;
-                [int] ; 
-                [key] ; 
+                [int] ;
+                [key] ;
                 [key_hash] ;
-                [mutez] ; 
-                [nat] ; 
+                [mutez] ;
+                [nat] ;
                 [never] ;
                 [option (var x)] ;
                 (* TODO: this is a placeholder, we need some row variables to allow constraints on all the fields of a record https://gitlab.com/ligolang/ligo/-/merge_requests/1189 *)
@@ -133,20 +133,20 @@ tc "arguments for (+)"
                 [signature] ;
                 [string] ;
                 [timestamp] ;
-                [unit] ; 
+                [unit] ;
                 (* pair of comparable *)
               ]
   let tc_storable a =
-    let c = Var.fresh () in
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+    let c = Var.fresh ~name:"c" () in
+    let x = Var.fresh ~name:"x" () in
+    let y = Var.fresh ~name:"y" () in
     tc "storable"
       ~bound:[x;y] ~constraints:[
                                  tc_comparable (p_var c);
                                  c_apply storable c "tc_storable:bound";
-                                 c_apply storable x "tc_storable:bound"; 
+                                 c_apply storable x "tc_storable:bound";
                                  c_apply storable y "tc_storable:bound"] ()
-      [a]     [ 
+      [a]     [
                 [address] ;
                 [big_map (var x) (var y)] ;
                 [bls12_381_fr] ;
@@ -155,14 +155,14 @@ tc "arguments for (+)"
                 [bool] ;
                 [bytes] ;
                 [chain_id] ;
-                [int] ; 
-                [key] ; 
-                [key_hash] ; 
+                [int] ;
+                [key] ;
+                [key_hash] ;
                 [(var x) --> (var y)] ;
                 [list (var x)] ;
                 [map (var c) (var y)] ;
-                [mutez] ; 
-                [nat] ; 
+                [mutez] ;
+                [nat] ;
                 [never] ;
                 [option (var x)] ;
                 [variant] ;
@@ -174,19 +174,19 @@ tc "arguments for (+)"
                 [string] ;
                 (* [ticket (var x)] ; *)
                 [timestamp] ;
-                [unit] ; 
+                [unit] ;
               ]
-  let tc_packable a =  
-    let c = Var.fresh () in
-    let x = Var.fresh () in
-    let y = Var.fresh () in
+  let tc_packable a =
+    let c = Var.fresh ~name:"c" () in
+    let x = Var.fresh ~name:"x" () in
+    let y = Var.fresh ~name:"y" () in
     tc "packable"
       ~bound:[c;x;y] ~constraints:[
                                       tc_comparable (p_var c);
                                       c_apply packable c "tc_packable:bound";
-                                      c_apply packable x "tc_packable:bound"; 
+                                      c_apply packable x "tc_packable:bound";
                                       c_apply packable y "tc_packable:bound"] ()
-      [a]     [ 
+      [a]     [
                 [address] ;
                 [bls12_381_fr] ;
                 [bls12_381_g1] ;
@@ -195,14 +195,14 @@ tc "arguments for (+)"
                 [bytes] ;
                 [chain_id] ;
                 [contract (var x)] ;
-                [int] ; 
-                [key] ; 
-                [key_hash] ; 
+                [int] ;
+                [key] ;
+                [key_hash] ;
                 [(var x) --> (var y)] ;
                 [list (var x)] ;
                 [map (var c) (var y)] ;
-                [mutez] ; 
-                [nat] ; 
+                [mutez] ;
+                [nat] ;
                 [never] ;
                 [option (var x)] ;
                 [variant] ;
@@ -211,7 +211,7 @@ tc "arguments for (+)"
                 [signature] ;
                 [string] ;
                 [timestamp] ;
-                [unit] ; 
+                [unit] ;
               ]
 
   (* Others typeclasses *)

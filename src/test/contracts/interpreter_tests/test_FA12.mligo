@@ -12,7 +12,7 @@ let test_transfer =
   let contr = Test.to_contract typed_addr in
   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
   let () = Test.set_source sender_ in
-  let () = Test.transfer_to_contract_exn contr parameter 0tez in
+  let _ = Test.transfer_to_contract_exn contr parameter 0tez in
   let new_storage = Test.get_storage typed_addr in
   assert ((Big_map.find_opt to_ new_storage.tokens = Some 110n) &&
           (Big_map.find_opt from_ new_storage.tokens = Some 90n) &&
@@ -33,7 +33,7 @@ let test_transfer_not_e_allowance =
   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
   let () = Test.set_source sender_ in
   match Test.transfer_to_contract contr parameter 0tez with
-  | Success -> failwith "Transaction should fail"
+  | Success _ -> failwith "Transaction should fail"
   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughAllowance"))
   | Fail Other -> failwith "Transaction should fail with rejection"
 
@@ -50,7 +50,7 @@ let test_transfer_not_e_balance =
   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
   let () = Test.set_source sender_ in
   match Test.transfer_to_contract contr parameter 0tez with
-  | Success -> failwith "Transaction should fail"
+  | Success _ -> failwith "Transaction should fail"
   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughBalance"))
   | Fail Other -> failwith "Transaction should fail with rejection"
 
@@ -66,7 +66,7 @@ let test_approve =
   let contr = Test.to_contract typed_addr in
   let parameter = Approve { spender = from_; value = 100n } in
   let () = Test.set_source sender_ in
-  let () = Test.transfer_to_contract_exn contr parameter 0tez in
+  let _ = Test.transfer_to_contract_exn contr parameter 0tez in
   let new_storage = Test.get_storage typed_addr in
   assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
           (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&
@@ -87,7 +87,7 @@ let test_approve_unsafe =
   let parameter = Approve { spender = from_; value = 100n } in
   let () = Test.set_source sender_ in
   match Test.transfer_to_contract contr parameter 0tez with
-  | Success -> failwith "Transaction should fail"
+  | Success _ -> failwith "Transaction should fail"
   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "UnsafeAllowanceChange"))
   | Fail Other -> failwith "Transaction should fail with rejection"
 
@@ -106,7 +106,7 @@ let test_get_allowance =
   let contr = Test.to_contract typed_addr in
   let parameter = GetAllowance { request = { owner = from_; spender = sender_} ; callback = dummy_typed_contr } in
   let () = Test.set_source sender_ in
-  let () = Test.transfer_to_contract_exn contr parameter 0tez in
+  let _ = Test.transfer_to_contract_exn contr parameter 0tez in
   let new_storage = Test.get_storage typed_addr in
   let _ = assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
                   (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&
@@ -131,7 +131,7 @@ let test_get_balance =
   let contr = Test.to_contract typed_addr in
   let parameter = GetBalance { owner = from_ ; callback = dummy_typed_contr } in
   let () = Test.set_source sender_ in
-  let () = Test.transfer_to_contract_exn contr parameter 0tez in
+  let _ = Test.transfer_to_contract_exn contr parameter 0tez in
   let new_storage = Test.get_storage typed_addr in
   let _ = assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
                   (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&
@@ -156,7 +156,7 @@ let test_get_total_supply =
   let contr = Test.to_contract typed_addr in
   let parameter = GetTotalSupply { callback = dummy_typed_contr; request = () } in
   let () = Test.set_source sender_ in
-  let () = Test.transfer_to_contract_exn contr parameter 0tez in
+  let _ = Test.transfer_to_contract_exn contr parameter 0tez in
   let new_storage = Test.get_storage typed_addr in
   let _ = assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
                   (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&

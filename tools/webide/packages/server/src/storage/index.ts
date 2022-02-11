@@ -5,7 +5,7 @@ import process from 'process';
 import { GoogleStorage } from './google-storage';
 
 const isGoogleEnabled =
-  process.env['GOOGLE_APPLICATION_CREDENTIALS'] && process.env['GOOGLE_BUCKET'];
+  ( process.env['GOOGLE_APPLICATION_CREDENTIALS'] || process.env['GCP_ACTIVE'] ) && process.env['GOOGLE_BUCKET'];
 
 function createStorage() {
   if (isGoogleEnabled) {

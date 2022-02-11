@@ -3,7 +3,7 @@ type t is
 | Baz
 
 function main (const x : t) : int is
-  case x of
+  case x of [
     Bar (n) -> n
   | Baz     -> -1
-  end
+  ]

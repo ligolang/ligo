@@ -1,0 +1,67 @@
+let for_of_single_statement = (xs : list<int>) : list<int> => {
+    let ys : list<int> = list([]);
+    for (const x of xs) {
+        ys = list([x, ...ys]);
+    };
+    return ys;
+}
+
+let for_of_multi_statements_1 = (xs : list<int>) : list<int> => {
+    let ys : list<int> = list([]);
+    for (const x of xs) {
+        let z = 1;
+        z += 1;
+        let c = z + x;
+        ys = list([c, ...ys]);
+    };
+    return ys;
+}
+
+let for_of_multi_statements_2 = (xs : list<int>) : list<int> => {
+    let ys : list<int> = list([]);
+    let z = 1;
+    for (const x of xs) {
+        let c = z + x;
+        ys = list([c, ...ys]);
+        z += 1;
+    };
+    let _ = z;
+    return ys;
+}
+
+let while_single_statement = (n : int) : int => {
+    let i = 1;
+    let m = n;
+    while (m > 0) {
+        m -= 1;
+    };
+    let _ = m;
+    return n;
+}
+
+let while_multi_statements_1 = (n : int) : int => {
+    let sum = 0;
+    let i = 1;
+    let m = n;
+    while (m > 0) {
+        sum += i;
+        i += 1;
+        m -= 1;
+    };
+    let _ = m = i;
+    return sum
+}
+
+let while_multi_statements_2 = (n : int) : int => {
+    let sum = 0;
+    let i = 1;
+    let m = n;
+    while (m > 0) {
+        let x = i;
+        sum += x;
+        i += 1;
+        m -= 1;
+    };
+    let _ = i = m;
+    return sum
+};

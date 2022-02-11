@@ -20,6 +20,7 @@ let option' f o =
 let string s = `String s
 
 let list f lst = `List (List.map ~f:f lst)
+let pair fa fb (a,b) = `Tuple [ fa a ; fb b ]
 
 let label_map f lmap =
   let lst = List.sort ~compare:(fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
@@ -35,7 +36,7 @@ let attributes attr =
 
 let for_all type_expression {ty_binder ; kind = _ ; type_ } =
   `Assoc [
-    ("ty_binder", Location.wrap_to_yojson type_variable_to_yojson ty_binder) ;
+    ("ty_binder",type_variable_to_yojson ty_binder) ;
     (* ("kind", ) *)
     ("type_", type_expression type_)
   ]
@@ -198,8 +199,7 @@ let collect_type = function
   | Set  -> `List [ `String "Set"; `Null]
   | List -> `List [ `String "List"; `Null]
   | Any  -> `List [ `String "Any"; `Null]
-
-let for_each expression {fe_binder;collection;collection_type;fe_body} =
+let for_each expression {fe_binder;collection;fe_body;collection_type} =
   `Assoc [
     ("binder",  `List [ expression_variable_to_yojson @@ fst fe_binder; option expression_variable_to_yojson @@ snd fe_binder]);
     ("collection", expression collection);
@@ -246,9 +246,8 @@ let declaration_type type_expression {type_binder; type_expr; type_attr} =
     ("type_attr", attributes type_attr)
   ]
 
-let declaration_constant expression type_expression {name; binder=b;attr;expr} =
+let declaration_constant expression type_expression {binder=b;attr;expr} =
   `Assoc [
-    ("name", option' string name);
     ("binder", binder type_expression b);
     ("expr", expression expr);
     ("attribute", attributes attr);
@@ -270,7 +269,7 @@ and module_alias ({alias;binders} : module_alias) =
 and declaration expression type_expression = function
   Declaration_type    ty -> `List [ `String "Declaration_type"    ; declaration_type                type_expression ty ]
 | Declaration_constant c -> `List [ `String "Declaration_constant"; declaration_constant expression type_expression c  ]
-| Declaration_module   m -> `List [ `String "Declaration_module"  ; declaration_module   expression type_expression m  ] 
+| Declaration_module   m -> `List [ `String "Declaration_module"  ; declaration_module   expression type_expression m  ]
 | Module_alias        ma -> `List [ `String "Module_alias"        ; module_alias                                    ma ]
 
 and module' expression type_expression = list (Location.wrap_to_yojson (declaration expression type_expression))

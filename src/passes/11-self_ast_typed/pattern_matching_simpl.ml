@@ -43,7 +43,7 @@ let map_expression = Helpers.map_expression
 open Ast_typed
 open Simple_utils.Trace
 
-module SimplMap = Simple_utils.Map.Make( struct type t = expression_variable let compare (a:expression_variable) (b:expression_variable) = Var.compare a.wrap_content b.wrap_content end)
+module SimplMap = Simple_utils.Map.Make( struct type t = expression_variable let compare = Var.compare end)
 
 type simpl_map = ((label * expression_variable) list) SimplMap.t
 
@@ -73,7 +73,7 @@ let substitute_var_in_body : expression_variable -> expression_variable -> expre
       fun () exp ->
         let ret continue exp = (continue,(),exp) in
         match exp.expression_content with
-        | E_variable var when Var.equal var.wrap_content to_subst.wrap_content -> ret true { exp with expression_content = E_variable new_var }
+        | E_variable var when Var.equal var to_subst -> ret true { exp with expression_content = E_variable new_var }
         | _ -> ret true exp
     in
     let ((), res) = fold_map_expression aux () body in
@@ -87,7 +87,7 @@ let compress_matching ~raise : expression -> expression =
         let stop e = (false,(true,smap),e) in
         match exp.expression_content with
         | E_matching m -> (
-          let matchee_var = get_variable m.matchee in
+          let matchee_var = get_e_variable_opt m.matchee in
           match m.cases with
           | Match_variant cases -> (
             match matchee_var with

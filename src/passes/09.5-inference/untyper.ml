@@ -29,7 +29,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     let x' = O.LMap.map aux fields in
     return @@ I.T_record {fields = x' ; layout}
   )
-  | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
+  | O.T_variable name -> return @@ I.T_variable name
   | O.T_arrow arr ->
     let arr = arrow self arr in
     return @@ I.T_arrow arr
@@ -55,7 +55,7 @@ let rec untype_expression (e:O.expression) : I.expression =
   let open I in
   let return e = I.make_e e in
   match e.expression_content with
-  | E_variable n -> return @@ E_variable (Location.map Var.todo_cast n)
+  | E_variable n -> return @@ E_variable n
   | E_literal l -> return @@ E_literal l
   | E_constant {cons_name;arguments} ->
     let arguments = List.map ~f:untype_expression arguments in
@@ -105,7 +105,6 @@ let rec untype_expression (e:O.expression) : I.expression =
   | E_recursive {fun_name; fun_type; lambda} ->
     let lambda = untype_lambda lambda in
     let fun_type = untype_type_expression fun_type in
-    let fun_name = Location.map Var.todo_cast fun_name in
     return @@ E_recursive {fun_name; fun_type; lambda}
   | E_module_accessor ma ->
     let ma = module_access untype_expression ma in
@@ -131,10 +130,10 @@ function
   Declaration_type {type_binder; type_expr; type_attr} ->
   let type_expr = untype_type_expression type_expr in
   return @@ Declaration_type {type_binder; type_expr; type_attr}
-| Declaration_constant {name; binder;expr;attr} ->
+| Declaration_constant {binder;expr;attr} ->
   let binder = Stage_common.Maps.binder untype_type_expression binder in
   let expr = untype_expression expr in
-  return @@ Declaration_constant {name; binder;expr;attr}
+  return @@ Declaration_constant {binder;expr;attr}
 | Declaration_module {module_binder;module_;module_attr} ->
   let module_ = untype_module_fully_inferred module_ in
   return @@ Declaration_module {module_binder;module_;module_attr}

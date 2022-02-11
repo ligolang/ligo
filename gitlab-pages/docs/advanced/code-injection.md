@@ -23,9 +23,9 @@ code.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-  function michelson_add (var n : nat * nat ) : nat is block {
-    const f : (nat * nat -> nat) =
-      [%Michelson ({| { UNPAIR ; ADD } |} : nat *nat -> nat)];
+  function michelson_add (var n : nat * nat ) : nat is {
+    const f : nat * nat -> nat =
+      [%Michelson ({| { UNPAIR ; ADD } |} : nat * nat -> nat)];
   } with f (n)
 ```
 
@@ -159,15 +159,14 @@ type parameter is
 
 type storage is int
 
-function main(const action : parameter; const store : storage) : list (operation) * storage is
+function main (const action : parameter; const store : storage) : list (operation) * storage is
   ((nil : list (operation)),
-   case action of
+   case action of [
      Increment (n) -> store + n
-   | Extend (k) -> block {
-       const f : (never -> int) =
-        [%Michelson ({| { NEVER } |} : never -> int)];
+   | Extend (k) -> {
+       const f : never -> int = [%Michelson ({| { NEVER } |} : never -> int)];
      } with f (k)
-   end)
+   ])
 ```
 
 </Syntax>
@@ -180,11 +179,11 @@ type parameter =
 
 type storage = int
 
-let main(action, store : parameter * storage) : operation list * storage =
+let main (action, store : parameter * storage) : operation list * storage =
   ([] : operation list),
   (match action with
-    Increment n -> store + n
-  | Extend k -> [%Michelson ({| { NEVER } |} : never -> int)] k)
+     Increment n -> store + n
+   | Extend k    -> [%Michelson ({| { NEVER } |} : never -> int)] k)
 ```
 
 </Syntax>

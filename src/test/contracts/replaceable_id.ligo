@@ -29,7 +29,7 @@ function pass_message (const param: pass_message_pt;
 
 function main (const param : entry_point_t; const s : storage_t) :
   contract_return_t is
-  case param of
+  case param of [
     Change_address (p) -> change_address (p,s)
   | Pass_message (p)   -> pass_message (p,s)
-  end
+  ]

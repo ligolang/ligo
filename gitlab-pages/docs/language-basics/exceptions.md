@@ -5,13 +5,13 @@ title: Exceptions
 
 import Syntax from '@theme/Syntax';
 
-In some cases it's necessary to interrupt the flow of execution and fail the
-contract. This is where the `failwith` function comes in.
+In some cases it is necessary to interrupt the flow of execution with
+a failure: this is where the predefined function `failwith` comes in.
 
-## The failwith function
+## The `failwith` function
 
-The failwith function raises an error that cannot be caught, and terminates the
-contract.
+The failwith function raises an error that cannot be caught, which
+terminates the contract.
 
 <Syntax syntax="pascaligo">
 
@@ -24,14 +24,12 @@ type storage is unit
 
 type return is list (operation) * storage
 
-function main (const p : parameter; const s : storage) : return is
-  block {
-    case p of
-      Zero (n) -> if n > 0n then failwith ("fail") else skip
-    | Pos (n)  -> if n > 0n then skip else failwith ("fail")
-    end
-  }
-  with ((nil : list (operation)), s)
+function main (const p : parameter; const s : storage) : return is {
+  case p of [
+    Zero (n) -> if n > 0n then failwith ("Should be zero.")
+  | Pos (n)  -> if n = 0n then failwith ("Should be positive.")
+  ]
+} with ((nil : list (operation)), s)
 ```
 
 </Syntax>
@@ -41,7 +39,7 @@ function main (const p : parameter; const s : storage) : return is
 type storage = unit
 
 let main (p, store : unit * storage) : operation list * storage =
-  (failwith "This contract always fails" : operation list * storage)
+  (failwith "This contract always fails." : operation list * storage)
 ```
 
 The call to failwith should be annotated with a type as the type-checker cannot infer the correct type yet.
@@ -51,8 +49,8 @@ The call to failwith should be annotated with a type as the type-checker cannot 
 
 ```reasonligo group=failwith
 let main = (p : unit, s : unit) =>
-  if (true) { 
-    failwith("This contract always fails"); 
+  if (true) {
+    failwith("This contract always fails");
   };
 ```
 
@@ -63,8 +61,8 @@ The call to failwith should be annotated with a type as the type-checker cannot 
 
 ```jsligo group=failwith
 let main = (p: unit, s: unit): unit => {
-  if (true) { 
-    failwith("This contract always fails"); 
+  if (true) {
+    failwith("This contract always fails");
   };
 }
 ```
@@ -73,24 +71,22 @@ The call to failwith should be annotated with a type as the type-checker cannot 
 
 </Syntax>
 
-
-
 ## Assertions
 
-Assertions can be used to ensure a certain condition is met when running a 
-contract. 
-`assert` is used to check if a boolean condition is `true` and `assert_some` is used 
-to check if an option value is not `None`. When a condition is not met, the 
-contract will stop executing and display an error.
+Assertions can be used to ensure a certain condition is met when
+running a contract. The predefined function `assert` is used to check
+whether a given a Boolean condition is true. The function
+`assert_some` is used to check if an option value is not `None`. The
+function `assert_some_with_error` is like `assert_some` but an error
+message can be given. When a condition is not met, the contract will
+stop executing and display an error.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=failwith
-function main (const p : bool; const s : storage) : return is
-  block {
-	  assert (p)
-  }
-  with ((nil : list (operation)), s)
+function main (const p : bool; const s : storage) : return is {
+  assert (p)
+} with ((nil : list (operation)), s)
 
 function some (const o : option (unit)) is assert_some (o)
 ```
@@ -142,11 +138,9 @@ You can use `assert_with_error` or `assert_some_with_error` to use a custom erro
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=failwith
-function main (const p : bool; const s : storage) : return is
-  block {
-	  assert_with_error (p,"my custom message")
-  }
-  with ((nil : list (operation)), s)
+function main (const p : bool; const s : storage) : return is {
+  assert_with_error (p, "My custom error message.")
+} with ((nil : list (operation)), s)
 ```
 
 </Syntax>
@@ -154,7 +148,7 @@ function main (const p : bool; const s : storage) : return is
 
 ```cameligo group=failwith
 let main (p, s : bool * unit) =
-  let u : unit = assert_with_error p "my custom error message"
+  let u : unit = assert_with_error p "My custom error message."
   in ([] : operation list), s
 ```
 
@@ -163,7 +157,7 @@ let main (p, s : bool * unit) =
 
 ```reasonligo group=failwith
 let main = (p : bool, s : unit) => {
-  let u : unit = assert_with_error (p, "my custom error message");
+  let u : unit = assert_with_error (p, "My custom error message.");
   ([]: list (operation), s);
 };
 ```
@@ -173,7 +167,7 @@ let main = (p : bool, s : unit) => {
 
 ```jsligo group=failwith
 let main2 = (p: bool, s: unit): [list<operation>, unit] => {
-  let u: unit = assert_with_error (p, "my custom error message");
+  let u: unit = assert_with_error (p, "My custom error message.");
   return [list([]) as list<operation>, s];
 };
 ```

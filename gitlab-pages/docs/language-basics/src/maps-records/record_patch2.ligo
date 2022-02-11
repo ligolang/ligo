@@ -3,7 +3,6 @@ type vector is record [dx : int; dy : int]
 
 const origin : point = record [x = 0; y = 0; z = 0]
 
-function xy_translate (var p : point; const vec : vector) : point is
-  block {
-    patch p with record [x = p.x + vec.dx; y = p.y + vec.dy]
-  } with p
+function xy_translate (var p : point; const vec : vector) : point is {
+  patch p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+} with p

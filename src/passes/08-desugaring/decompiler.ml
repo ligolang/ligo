@@ -2,11 +2,8 @@ module I = Ast_sugar
 module O = Ast_core
 
 module Location = Simple_utils.Location
-module Var      = Simple_utils.Var
 module Pair     = Simple_utils.Pair
 open Stage_common.Maps
-
-let cast_var = Location.map Var.todo_cast
 
 let rec decompile_type_expression : O.type_expression -> I.type_expression =
   fun te ->
@@ -16,7 +13,7 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
     Some te -> te
   | None ->
     match te.type_content with
-      | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
+      | O.T_variable type_variable -> return @@ T_variable type_variable
       | O.T_app tc ->
         let tc = type_app self tc in
         return @@ T_app tc
@@ -71,7 +68,7 @@ let rec decompile_expression : O.expression -> I.expression =
     | O.E_constant {cons_name;arguments} ->
       let arguments = List.map ~f:self arguments in
       return @@ I.E_constant {cons_name = cons_name;arguments}
-    | O.E_variable name -> return @@ I.E_variable (cast_var name)
+    | O.E_variable name -> return @@ I.E_variable name
     | O.E_application app ->
       let app = application self app in
       return @@ I.E_application app
@@ -82,7 +79,7 @@ let rec decompile_expression : O.expression -> I.expression =
       let recs = recursive self self_type recs in
       return @@ I.E_recursive recs
     | O.E_let_in {let_binder = {var; ascr;attributes=_};attr={inline=false;no_mutation=_;view=_;public=_};rhs=expr1;let_result=expr2}
-      when Var.equal var.wrap_content (Var.of_name "_")
+      when O.Var.is_name var "()"
            && Stdlib.(=) ascr (Some (O.t_unit ())) ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
@@ -161,11 +158,11 @@ and decompile_declaration : O.declaration -> I.declaration =
   | O.Declaration_type {type_binder; type_expr; type_attr=_} ->
     let type_expr = decompile_type_expression type_expr in
     return @@ I.Declaration_type {type_binder; type_expr; type_attr=[]}
-  | O.Declaration_constant {name; binder=b; attr={inline;no_mutation=_;public=_;view=_}; expr} ->
+  | O.Declaration_constant {binder=b; attr={inline;no_mutation=_;public=_;view=_}; expr} ->
     let binder = binder decompile_type_expression b in
     let expr = decompile_expression expr in
     let attr = if inline then ["inline"] else [] in
-    return @@ I.Declaration_constant {name; binder; attr; expr}
+    return @@ I.Declaration_constant {binder; attr; expr}
   | O.Declaration_module {module_binder;module_;module_attr=_} ->
     let module_ = decompile_module module_ in
     return @@ I.Declaration_module {module_binder;module_;module_attr=[]}

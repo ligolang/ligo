@@ -104,6 +104,10 @@ Inductive instr_typed : node A string -> list (node A string) -> list (node A st
       instr_typed (Prim l2 "LOOP_LEFT" [Seq l3 body] n2) (Prim l4 "or" [a; b] n4 :: s) (b :: s)}
 | Typed_failwith {a s1 s2} :
     `{instr_typed (Prim l1 "FAILWITH" [] n1) (a :: s1) s2}
+| Typed_global_constant {hash az b s} :
+    `{(* meh, whatever *)
+      (* global_constant_typed hash az b -> *)
+      instr_typed (Prim l1 "constant" [String l2 hash] n1) (az ++ s) (b :: s)}
 with prog_typed : list (node A string) -> list (node A string) -> list (node A string) -> Prop :=
 | Typed_nil {s} :
     prog_typed [] s s

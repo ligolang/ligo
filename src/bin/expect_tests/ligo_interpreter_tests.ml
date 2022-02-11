@@ -132,15 +132,15 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fail.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value "my contract always fail". |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value "my contract always fail". |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fail_from_file.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value "my contract always fail". |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value "my contract always fail". |}]
 
 
 let%expect_test _ =
@@ -456,6 +456,27 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (1801n , 2125n , 2125n). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
+  [%expect {|
+    0mutez
+    123mutez
+    Everything at the top-level was executed.
+    - test_addresses exited with value [tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx]. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_accounts.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_new exited with value 88000000mutez.
+    - test_add exited with value 88000000mutez. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -567,10 +588,54 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source2.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 10, characters 11-53:
+    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 10, characters 10-52:
       9 |   let () = Test.set_source addr in
-     10 |   let () = Test.transfer_exn addr (Test.eval ()) 0tez in
+     10 |   let _ = Test.transfer_exn addr (Test.eval ()) 0tez in
      11 |   ()
 
     The source address is not an implicit account
     KT1EaZdMJaW3jgoYLwKJSjuUFA6qoKCPjiie |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 20-45:
+      1 | const foo = (x: {field: int}): {field: int} => {return x};
+      2 | const bar = Test.run(foo, {property: "toto"});
+      3 |
+
+    These types are not matching:
+     - record[field -> int]
+     - record[property -> string] |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 20-33:
+      1 | const foo = (x:  {b:int}):  {b:int} => {return x};
+      2 | const bar = Test.run(foo, "toto");
+
+    These types are not matching:
+     - record[b -> int]
+     - string |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 20-42:
+      1 | const foo = (x: int): int => {return x};
+      2 | const bar = Test.run(foo, {field: "toto"});
+
+    These types are not matching:
+     - int
+     - record[field -> string] |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 26-27:
+      2 |   let x = Test.eval 4n in
+      3 |   let y = (Test.decompile x : string) in
+      4 |   ()
+
+    This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]

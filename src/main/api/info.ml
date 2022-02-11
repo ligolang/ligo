@@ -2,12 +2,12 @@ open Api_helpers
 module Compile = Ligo_compile
 module Helpers   = Ligo_compile.Helpers
 
-let measure_contract source_file entry_point declared_views syntax protocol_version display_format werror () =
+let measure_contract source_file entry_point declared_views syntax protocol_version display_format werror project_root () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~werror ~display_format Formatter.contract_size_format get_warnings @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-      let options = Compiler_options.make ~protocol_version () in
+      let options = Compiler_options.make ~protocol_version ?project_root () in
       let michelson,e =  Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
       let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,e) source_file in
       let contract = Compile.Of_michelson.build_contract ~raise michelson views in

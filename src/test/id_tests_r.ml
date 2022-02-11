@@ -3,7 +3,7 @@ open Ast_imperative
 
 
 
-let get_program = get_program "./contracts/id.religo" (Contract "main")
+let get_program = get_program "./contracts/id.religo" (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/id.religo" ()
@@ -48,8 +48,8 @@ let buy_id ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~options program "buy" 
-      (e_pair param storage) 
+  let () = expect_eq ~raise ~options program "buy"
+      (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
@@ -211,7 +211,7 @@ let update_details_controller ~raise ~add_warning () =
   in ()
 
 (* Test that contract fails when we attempt to update details of nonexistent ID *)
-let update_details_nonexistent ~raise ~add_warning () = 
+let update_details_nonexistent ~raise ~add_warning () =
   let program = get_program ~raise ~add_warning () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in

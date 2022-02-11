@@ -78,7 +78,7 @@ let tests1 restrict = [
     (* *)        [false               ; true              ; true                 ; ]
     (* Expected restricted typeclass: *)
     [x;y;z] "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
-)  ;    
+)  ;
 ]
 
 let test_deduce_and_clean
@@ -116,7 +116,7 @@ let tests2 deduce_and_clean =
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [ map( nat , unit ) ; int ] ; [ map( bytes , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)
-    [ inferred x "=" C_map[m;n] ; 
+    [ inferred x "=" C_map[m;n] ;
       inferred n "=" C_unit[]   ; ]
     (* Expected cleaned typeclass: *)
     [m;z]   "∈" [ [      nat ;          int ] ; [      bytes ;          string ] ; ]
@@ -165,11 +165,11 @@ let tests2 deduce_and_clean =
     (* Input restricted typeclass: *)
     [x;y;z]   "∈" [ [ map( nat , unit ) ; map( bytes , mutez ) ; int ] ; [ map( nat , unit ) ; map( bytes , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)
-    [ inferred x "=" C_map[m;n] ; 
+    [ inferred x "=" C_map[m;n] ;
       inferred m "=" C_nat[]    ;
       inferred n "=" C_unit[]   ;
-      inferred y "=" C_map[o;p] ; 
-      inferred o "=" C_bytes[]  ; 
+      inferred y "=" C_map[o;p] ;
+      inferred o "=" C_bytes[]  ;
     ]
     (* Expected cleaned typeclass: *)
     [p;z]     "∈" [ [                                  mutez   ; int ] ; [                                   unit   ; string ] ; ]

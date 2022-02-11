@@ -7,8 +7,6 @@ module Pair     = Simple_utils.Pair
 
 open Stage_common.Maps
 
-let cast_var = Location.map Var.todo_cast
-
 let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
 
 let is_layout = String.chop_prefix ~prefix:"layout:"
@@ -49,7 +47,7 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
   let self = compile_type_expression in
   let return tc = O.make_t ~loc:te.location ~sugar:te tc in
   match te.type_content with
-    | I.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
+    | I.T_variable type_variable -> return @@ T_variable type_variable
     | I.T_app a ->
       let a' = type_app compile_type_expression a in
       return @@ T_app a'
@@ -111,7 +109,7 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_constant cons ->
       let cons = constant self cons in
       return @@ O.E_constant cons
-    | I.E_variable name -> return @@ O.E_variable (cast_var name)
+    | I.E_variable name -> return @@ O.E_variable name
     | I.E_application app ->
       let app = application self app in
       return @@ O.E_application app
@@ -152,7 +150,7 @@ let rec compile_expression : I.expression -> O.expression =
       let matchee = compile_expression matchee in
       let cases =
         List.map
-          ~f:(fun ({pattern ; body} : (I.expression, I.type_expression) I.match_case) -> 
+          ~f:(fun ({pattern ; body} : (I.expression, I.type_expression) I.match_case) ->
             let pattern = Stage_common.Helpers.map_pattern_t (binder compile_type_expression) pattern in
             let body = compile_expression body in
             ({pattern ; body} : (O.expression, O.type_expression) I.match_case)
@@ -196,8 +194,8 @@ let rec compile_expression : I.expression -> O.expression =
       let aux (s, e : O.expression * _) lst =
         let s' = accessor ~loc:s.location s lst in
         let e' = fun expr ->
-          let u = updator ~loc:s.location s lst (expr)
-          in e u
+          let u = updator ~loc:s.location s lst (expr) in
+          e u
         in
         (s',e')
       in
@@ -256,7 +254,7 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_sequence {expr1; expr2} ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
-      let let_binder : _ O.binder = {var = Location.wrap @@ Var.of_name "_" ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
+      let let_binder : _ O.binder = {var = Stage_common.Var.fresh ~name:"()" () ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
       return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false; view = false ; public=true}}
     | I.E_skip -> O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->
@@ -275,14 +273,14 @@ and compile_declaration : I.declaration -> O.declaration =
     let type_expr = compile_type_expression type_expr in
     let public = get_public type_attr in
     return @@ O.Declaration_type {type_binder; type_expr; type_attr = {public}}
-  | I.Declaration_constant {name; binder;attr;expr} ->
+  | I.Declaration_constant {binder;attr;expr} ->
     let binder = compile_binder binder in
     let expr = compile_expression expr in
     let inline = get_inline attr in
     let no_mutation = get_no_mutation attr in
     let public = get_public attr in
     let view = get_view attr in
-    return @@ O.Declaration_constant {name; binder; attr={inline;no_mutation;view;public}; expr}
+    return @@ O.Declaration_constant {binder; attr={inline;no_mutation;view;public}; expr}
   | I.Declaration_module {module_binder;module_;module_attr} ->
     let module_ = compile_module module_ in
     let public = get_public module_attr in

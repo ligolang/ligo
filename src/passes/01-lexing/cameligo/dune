@@ -9,20 +9,15 @@
     MenhirToken)))
 
 (library
- (name menhir_cameligo_tokens)
- (public_name ligo.lexing.menhir_cameligo_tokens)
- (modules MenhirToken)
- (libraries lexing_shared hex)
- (flags
-  (:standard
-   -open
-   Lexing_shared
-   -open
-   Wrap ;; for [wrap]
-   -open
-   Common))
- ;; for [lexeme]
- )
+  (name menhir_cameligo_tokens)
+  (public_name ligo.lexing.menhir_cameligo_tokens)
+  (modules MenhirToken)
+  (libraries
+    lexing_shared
+    hex)
+  (flags (:standard
+            -open Lexing_shared
+            -open Wrap)))     ;; for [wrap]
 
 ;; Build of the CameLIGO lexer as a library
 

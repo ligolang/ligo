@@ -1,26 +1,26 @@
 ---
 id: big-map-reference
 title: Big_map
-description: A lazily deserialised map that's intended to store large amounts of data.
+description: A lazily deserialised map that is intended to store large amounts of data.
 hide_table_of_contents: true
 ---
 
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-A lazily deserialised map that's intended to store large amounts of data. 
-"Lazily" means that storage is read or written per key on demand. Therefore 
-there are no `map`, `fold`, and `iter` operations as there are in 
-[Map](map.md).
+A lazily deserialised map that is intended to store large amounts of
+data. Here, "lazily" means that storage is read or written per key on
+demand. Therefore there are no `map`, `fold`, and `iter` operations as
+there are in [Map](map.md).
 
-Compared to non-lazy maps, which have a high upfront gas cost to deserialise all
-the data and then have cheaper access costs thereafter, lazily-deserialised maps
-spread this cost out across each access, increasing the per-access gas costs,
-but providing a cheaper overall cost when only a small portion of a large 
-data-set is needed.
+Compared to strict maps, which have a high upfront gas cost to
+deserialise all the data and then have cheaper access costs
+thereafter, lazily deserialised maps spread this cost out across each
+access, increasing the per-access gas costs, but providing a cheaper
+overall cost when only a small portion of a large dataset is needed.
 
 <SyntaxTitle syntax="pascaligo">
-function empty : big_map ('key, 'value)
+val empty%lt;key,value&gt; : big_map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val empty : ('key, 'value) big_map
@@ -64,7 +64,7 @@ let empty : register = Big_map.empty
 
 ```reasonligo group=big_map
 type move = (int, int);
-type register = big_map(address, move);
+type register = big_map (address, move);
 
 let empty: register = Big_map.empty
 ```
@@ -83,7 +83,7 @@ let empty: register = Big_map.empty;
 
 
 <SyntaxTitle syntax="pascaligo">
-function literal : list ('key * 'value) -> big_map ('key, 'value) 
+val literal&lt;key,value&gt; : list (key * value) -> big_map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val literal : ('key * 'value) list -> ('key, 'value) big_map
@@ -103,7 +103,7 @@ Create a non-empty big_map.
 const moves : register =
   Big_map.literal (list [
     (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), (1,2));
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]);
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))])
 ```
 
 Alternative way of creating an empty big_map:
@@ -148,7 +148,7 @@ let moves: register =
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function find_opt : 'key -> big_map ('key, 'value) -> option 'value
+val find_opt&lt;key,value&gt; : key -> big_map (key, value) -> option (value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val find_opt : 'key -> ('key, 'value) big_map -> 'value option
@@ -160,9 +160,9 @@ let find_opt: ('key, big_map ('key, 'value)) => option ('value)
 let find_opt: (key: &apos;key, big_map: big_map &lt;&apos;key, &apos;value&gt;) => option &lt;&apos;value&gt;
 </SyntaxTitle>
 
-Retrieve a value from a big map with the given key. 
+Retrieve a value from a big map with the given key.
 
-Because the key may be missing in the big map, the result is an 
+Because the key may be missing in the big map, the result is an
 *optional value*.
 
 
@@ -208,7 +208,7 @@ let my_balance: option <move> =
 
 
 <SyntaxTitle syntax="pascaligo">
-function mem : 'key -> big_map ('key, 'value) -> bool
+val mem&lt;key,value&gt; : key -> big_map (key, value) -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val mem : 'key -> ('key, 'value) big_map -> bool
@@ -220,7 +220,7 @@ let mem: ('key, big_map ('key, 'value)) => bool
 let mem: (key: &apos;key, big_map: big_map &lt;&apos;key, &apos;value&gt;) => bool
 </SyntaxTitle>
 
-Test whether a given key exists within a big map. 
+Test whether a given key exists within a big map.
 
 <Syntax syntax="pascaligo">
 
@@ -256,7 +256,7 @@ let has_balance: bool =
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function update : 'key -> option 'value -> big_map ('key, 'value) -> big_map ('key, 'value)
+val update&lt;key,value&gt; : key -> option (value) -> big_map (key, value) -> big_map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val update: 'key -> 'value option -> ('key, 'value) big_map -> ('key, 'value) big_map
@@ -273,31 +273,30 @@ Note: when `None` is used as a value, the value is removed from the big_map.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=big_map
-  const updated_big_map : register = Big_map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some (4,9), moves);
+  const updated_big_map : register =
+    Big_map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some (4,9), moves);
 ```
 
 Alternatively:
 
 ```pascaligo group=big_map
 
-function update (var m : register) : register is
-  block {
-    m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
-  } with m
-  
+function update (var m : register) : register is {
+  m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
+} with m
+
 ```
 
 If multiple bindings need to be updated, PascaLIGO offers a *patch
 instruction* for maps, similar to that for records.
 
 ```pascaligo group=big_map
-function assignments (var m : register) : register is
-  block {
-    patch m with map [
-      ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
-      ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
-    ]
-  } with m
+function assignments (var m : register) : register is {
+  patch m with map [
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
+  ]
+} with m
 ```
 
 > Note the use of the keyword `map` instead of `big_map` (which is not
@@ -333,7 +332,7 @@ let updated_map: register =
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function get_and_update : key -> option(value) -> big_map (key, value) -> option(value) * big_map (key, value)
+val get_and_update&lt;key,value&gt; : key -> option (value) -> big_map (key, value) -> option (value) * big_map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_and_update : 'key -> 'value option -> ('key, 'value) big_map -> value option * ('key, 'value) big_map
@@ -345,13 +344,13 @@ let get_and_update : 'key => option('value) => big_map ('key, 'value) => option(
 Similar to `update` but it also returns the value that was previously stored in the big_map
 
 <SyntaxTitle syntax="pascaligo">
-function add : 'key -> 'value -> big_map ('key, 'value) -> big_map ('key, 'value)
+val add&lt;key,value&gt; : key -> value -> big_map (key, value) -> big_map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val add : 'key -> 'value -> ('key, 'value) big_map  -> ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let add: ('key, 'value, big_map('key, 'value)) => big_map('key, 'value) 
+let add: ('key, 'value, big_map('key, 'value)) => big_map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 let add: (key: &apos;key, value: &apos;value, big_map: big_map&lt;&apos;key, &apos;value&gt;) => big_map&lt;&apos;key, &apos;value&gt;
@@ -359,7 +358,7 @@ let add: (key: &apos;key, value: &apos;value, big_map: big_map&lt;&apos;key, &ap
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=big_map
-const added_item : register = Big_map.add (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4, 9), moves)
+const added_item : register = Big_map.add (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4,9), moves)
 ```
 
 </Syntax>
@@ -393,7 +392,7 @@ let add = (m: register): register =>
 
 
 <SyntaxTitle syntax="pascaligo">
-function remove: 'key -> big_map ('key, 'value) -> big_map ('key, 'value)
+val remove&lt;key,value&gt; : key -> big_map (key, value) -> big_map (key, value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val remove: 'key -> ('key, 'value) big_map -> ('key, 'value) big_map
@@ -408,8 +407,8 @@ let remove: (key: &apos;key, big_map: big_map&lt;&apos;key, &apos;value&gt;) => 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=big_map
-  const updated_map : register = 
-    Big_map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
+const updated_map : register =
+  Big_map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
 
 Alternatively, the instruction `remove key from map m` removes the key
@@ -417,10 +416,9 @@ Alternatively, the instruction `remove key from map m` removes the key
 `big_map`).
 
 ```pascaligo group=big_map
-function rem (var m : register) : register is
-  block {
-    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
-  } with m
+function rem (var m : register) : register is {
+  remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+} with m
 
 const updated_map : register = rem (moves)
 ```
@@ -446,8 +444,7 @@ let updated_map: register =
 
 ```jsligo group=big_map
 let updated_map_: register =
-  Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves); 
+  Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```
 
 </Syntax>
-

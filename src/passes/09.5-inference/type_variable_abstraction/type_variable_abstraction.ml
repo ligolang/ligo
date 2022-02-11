@@ -191,10 +191,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       }
       type updates = update list
 
-      type expression_
-      and expression_variable = expression_ Var.t Location.wrap
-
-      type module_variable = string
+      type expression_variable
+      type module_variable
 
       type type_expression
       type expression
@@ -310,7 +308,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
 
     module Errors : sig
       type typer_error = [
-        | `Typer_missing_funarg_annotation of Types.expression_variable
+        | `Typer_missing_funarg_annotation of Location.t * Types.expression_variable
         | `Typer_michelson_comb_no_record of Location.t
         | `Typer_michelson_comb_no_variant of Location.t
         | `Typer_unbound_module_variable of Ast_core.Environment.t * Types.module_variable * Location.t
@@ -323,7 +321,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | `Typer_type_constant_wrong_number_of_arguments of Types.type_variable* int * int * Location.t
         | `Typer_michelson_or_no_annotation of Types.label * Location.t
         | `Typer_module_tracer of Ast_core.module_ * typer_error
-        | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Types.type_expression option) * typer_error
+        | `Typer_constant_declaration_tracer of Location.t * Ast_core.expression_variable * Ast_core.expression * (Types.type_expression option) * typer_error
         | `Typer_match_error of Ast_core.matching_expr * Ast_core.type_expression * Location.t
         | `Typer_needs_annotation of Ast_core.expression * string
         | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Types.expression_variable

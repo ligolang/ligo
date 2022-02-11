@@ -6,4 +6,5 @@ let main (_, _ : unit * unit) : operation list * unit =
 let test_main =
     let (ta, _, _) =  Test.originate main () 0tez in
     let c : unit contract = Test.to_contract ta in
-    Test.transfer_to_contract_exn c () 0tez
+    let _ = Test.transfer_to_contract_exn c () 0tez in
+    ()

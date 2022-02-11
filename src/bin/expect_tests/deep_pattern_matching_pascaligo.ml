@@ -10,7 +10,7 @@ let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail10.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail10.ligo", line 5, characters 9-10:
-      4 |   case x of
+      4 |   case x of [
       5 |   | One (1) -> 2
       6 |   | Two -> 1
 
@@ -25,7 +25,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail9.ligo", line 6, characters 11-12:
       5 |   | One (a) -> 2
       6 |   | Two -> a
-      7 |   end
+      7 |   ]
 
     Variable "a" not found. |}]
 
@@ -34,7 +34,7 @@ let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail1.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.ligo", line 6, characters 11-30:
-      5 |   case x of
+      5 |   case x of [
       6 |   | (Nil , record [a ; b ; c ]) -> 1
       7 |   | (xs  , Nil) -> 2
 
@@ -44,7 +44,7 @@ let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.ligo", line 5, characters 11-18:
-      4 |   case x of
+      4 |   case x of [
       5 |   | (Nil , (a,b,c)) -> 1
       6 |   | (xs  , Nil) -> 2
 
@@ -56,7 +56,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.ligo", line 6, characters 4-13:
       5 |   | Some_fake (x) -> x
       6 |   | None_fake -> 1
-      7 |   end
+      7 |   ]
 
     Pattern do not conform type option (int) |}]
 
@@ -68,7 +68,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.ligo", line 6, characters 9-10:
       5 |   | A -> "hey"
       6 |   | B -> 2
-      7 |   end
+      7 |   ]
 
     Invalid type(s).
     Expected: "string", but got: "int". |}]
@@ -89,12 +89,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.ligo", line 4, character 2 to line 7, character 5:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.ligo", line 4, character 2 to line 7, character 3:
       3 | function t (const x: myt * ( int * int * int)) is
-      4 |   case x of
+      4 |   case x of [
       5 |   | (xs , (a,b,c)) -> 1
       6 |   | (xs , (c,b,a)) -> 2
-      7 |   end
+      7 |   ]
 
     Redundant pattern matching |}]
 
@@ -103,36 +103,36 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail11.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail11.ligo", line 2, character 2 to line 5, character 5:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail11.ligo", line 2, character 2 to line 5, character 3:
       1 | function t (const x : list(int)) is
-      2 |   case x of
+      2 |   case x of [
       3 |   | hd#(hd2#tl) -> hd + hd2
       4 |   | nil -> 0
-      5 |   end
+      5 |   ]
 
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.ligo", line 4, character 2 to line 7, character 5:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.ligo", line 4, character 2 to line 7, character 3:
       3 | function t (const x:recordi) is
-      4 |   case x of
+      4 |   case x of [
       5 |   | record [ a = Some (nil) ; b = (hd#tl) ] -> hd
       6 |   | record [ a = Some ((hd#tl)) ; b = nil ] -> hd
-      7 |   end
+      7 |   ]
 
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail4.ligo", line 4, character 2 to line 7, character 5:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail4.ligo", line 4, character 2 to line 7, character 3:
       3 | function t (const x: myt * myt) is
-      4 |   case x of
+      4 |   case x of [
       5 |   | (Nil , ys)  -> 1
       6 |   | (xs  , Nil) -> 2
-      7 |   end
+      7 |   ]
 
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
@@ -309,4 +309,4 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | #1 -> 3 |}]
+        | _#1 -> 3 |}]

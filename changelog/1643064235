@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal
+title: 'Testing framework: Test.transfer_* returns gas consumption'
+type: added
+merge_request: '1509'

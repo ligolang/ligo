@@ -3,5 +3,5 @@
  (public_name ligo.tree_abstraction.shared)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_imperative)
+ (libraries simple-utils ast_imperative lexing_shared)
  (modules Helpers))

@@ -16,8 +16,7 @@ type large_record is
 (* An entrypoint that occupies a lot of space. Now it does not end up
    in the code of the contract: we put it to a big map upon origination;
    see /migrations/5_deploy_large_entrypoint.js *)
-function large_entrypoint (const p : int) is
-block {
+function large_entrypoint (const p : int) is {
   const x = "A long line of meaningless words occupying storage";
   function some_lambda (const n : int) is
     record [
@@ -39,8 +38,7 @@ type parameter is LargeEntrypoint of int | SmallEntrypoint of int
 type storage is
   record [large_entrypoint : big_map (bool, int -> int); result : int]
 
-function load_large_ep (const storage : storage) is
-block {
+function load_large_ep (const storage : storage) is {
   const maybe_large_entrypoint : option (int -> int)
   = Map.find_opt (True, storage.large_entrypoint)
 } with
@@ -49,8 +47,7 @@ block {
     | None -> (failwith ("Internal error") : int -> int)
     ]
 
-function main (const parameter : parameter; const storage : storage) is
-block {
+function main (const parameter : parameter; const storage : storage) is {
   const nop = (list [] : list (operation))
 } with
     case parameter of [

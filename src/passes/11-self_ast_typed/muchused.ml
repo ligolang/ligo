@@ -4,7 +4,7 @@ type contract_pass_data = Contract_passes.contract_pass_data
 
 module V = struct
   type t = expression_variable
-  let compare x y = Var.compare (Location.unwrap x) (Location.unwrap y)
+  let compare x y = Var.compare x y
 end
 
 module M = Simple_utils.Map.Make(V)
@@ -152,8 +152,9 @@ let rec muchuse_of_expr expr : muchuse =
   | E_module_accessor {element;module_name} ->
      match element.expression_content with
      | E_variable v ->
-        let name = module_name ^ "." ^ Var.to_name (Location.unwrap v) in
-        (M.add (Location.wrap ~loc:expr.location (Var.of_name name)) 1 M.empty,[])
+        let name = Var.of_input_var ~loc:expr.location @@
+          (Var.to_name_exn module_name) ^ "." ^ (Var.to_name_exn v) in
+        (M.add name 1 M.empty,[])
      | _ -> muchuse_neutral
 
 and muchuse_of_lambda t {binder; result} =
@@ -206,19 +207,19 @@ and muchuse_of_record {body;fields;_} =
 let rec get_all_declarations (module_name : module_variable) : module_ ->
                                (expression_variable * type_expression) list =
   function m ->
-    let aux = fun (x : declaration) ->
+    let aux = fun ({wrap_content=x;location} : declaration Location.wrap) ->
       match x with
       | Declaration_constant {binder;expr;_} ->
-         let name = module_name ^ "." ^ Var.to_name (Location.unwrap binder) in
-         [(Location.wrap ~loc:expr.location (Var.of_name name), expr.type_expression)]
+          let name = Var.of_input_var ~loc:location @@ (Var.to_name_exn module_name) ^ "." ^ (Var.to_name_exn binder) in
+          [(name, expr.type_expression)]
       | Declaration_module {module_binder;module_;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
-           let name = module_name ^ "." ^ Var.to_name (Location.unwrap v) in
-           (Location.wrap ~loc:v.location (Var.of_name name), t) in
+          let name = Var.of_input_var ~loc:location @@ (Var.to_name_exn module_name) ^ "." ^ (Var.to_name_exn v) in
+          (name, t) in
          recs |> List.map ~f:add_module_name
       | _ -> [] in
-    m |> List.map ~f:Location.unwrap |> List.map ~f:aux |> List.concat
+    m |> List.map ~f:aux |> List.concat
 
 let rec muchused_helper (muchuse : muchuse) : module_ -> muchuse =
   function m ->
@@ -241,6 +242,6 @@ let muchused_map_module ~add_warning : module_ -> module_ = function module_ ->
   let _,muchused = muchused_helper muchuse_neutral module_ in
   let warn_var v =
     `Self_ast_typed_warning_muchused
-      (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
+      (Var.get_location v, Format.asprintf "%a" Var.pp v) in
   let () = update_annotations @@ List.map ~f:warn_var muchused in
   module_

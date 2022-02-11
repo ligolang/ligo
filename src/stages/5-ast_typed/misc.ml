@@ -1,5 +1,4 @@
 module Location    = Simple_utils.Location
-module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 open Simple_utils
@@ -9,7 +8,7 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let var_equal = Location.equal_content ~equal:Var.equal
+  let var_equal = Var.equal
   let mem : bindings -> expression_variable -> bool = List.mem ~equal:var_equal
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
@@ -57,7 +56,7 @@ module Free_variables = struct
 
     and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
       f (union (singleton pattern) b) body
-  
+
     and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
       match m with
       | Match_variant { cases ; tv=_ } -> unions @@ List.map ~f:(matching_variant_case f b) cases
@@ -142,7 +141,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
      if Var.equal x y then Some () else None
   | T_variable _, _ -> None
-  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when String.equal mna mnb ->
+  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when Var.equal mna mnb ->
     assert_type_expression_eq (ea, eb)
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
@@ -235,7 +234,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit option =
         Some ()
       else None
     )
-  | E_module_accessor {module_name=mna;element=a}, E_module_accessor {module_name=mnb;element=b} when String.equal mna mnb -> (
+  | E_module_accessor {module_name=mna;element=a}, E_module_accessor {module_name=mnb;element=b} when Var.equal mna mnb -> (
     assert_value_eq (a,b)
   )
   | E_record _, _
@@ -259,11 +258,11 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (lst : program) (name : string) : expression option =
+let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { name = name' ; binder = _ ; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
-      if match name' with None -> false | Some name' -> String.equal name name'
+    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
+      if   (Stage_common.Var.equal name binder)
       then Some expr
       else None
     )
@@ -275,5 +274,5 @@ let get_entry (lst : program) (name : string) : expression option =
 
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
-  | E_variable a, E_variable b -> Var.equal a.wrap_content b.wrap_content
+  | E_variable a, E_variable b -> Var.equal a b
   |  _, _ -> false

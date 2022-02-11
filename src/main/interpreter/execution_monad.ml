@@ -30,7 +30,8 @@ module Command = struct
     | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
     | Get_state : unit -> Tezos_state.context t
     | Put_state : Tezos_state.context -> unit t
-    | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t -> Tezos_state.state_error option t
+    | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t
+      -> [`Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t] t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
     | Get_storage : Location.t * Ligo_interpreter.Types.calltrace * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Get_storage_of_address : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
@@ -43,6 +44,7 @@ module Command = struct
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Decompile : LT.mcode * LT.mcode * Ast_aggregated.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_aggregated.type_expression -> LT.value t
     | Check_storage_address : Location.t * Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression -> unit t
     | Contract_exists : LT.value -> bool t
@@ -50,6 +52,8 @@ module Command = struct
     | Set_now : Location.t * Ligo_interpreter.Types.calltrace * Z.t -> unit t
     | Set_source : LT.value -> unit t
     | Set_baker : LT.value -> unit t
+    | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Sha256 : bytes -> LT.value t
@@ -58,16 +62,20 @@ module Command = struct
     | Keccak : bytes -> LT.value t
     | Sha3 : bytes -> LT.value t
     | Hash_key : Tezos_protocol.Protocol.Alpha_context.public_key -> LT.value t
+    | Implicit_account : Location.t * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Check_signature : Tezos_protocol.Protocol.Alpha_context.public_key * Tezos_protocol.Protocol.Alpha_context.signature * bytes -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
+    | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
+    | New_account : unit -> LT.value t
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
+      options:Compiler_options.t ->
       a t ->
       Tezos_state.context ->
       execution_trace ref option ->
       (a * Tezos_state.context)
-    = fun ~raise command ctxt _log ->
+    = fun ~raise ~options command ctxt _log ->
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
       let (k_ty, v_ty) = trace_option ~raise (Errors.generic_error bigmap_ty.location "Expected big_map type") @@
@@ -107,7 +115,7 @@ module Command = struct
       ((contract, parameter_ty, storage_ty),ctxt)
     | Bootstrap_contract (mutez, contract, storage, contract_ty) ->
       let contract = trace_option ~raise (corner_case ()) @@ LC.get_michelson_contract contract in
-      let input_ty, _ = trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_function contract_ty in
+      let Ast_aggregated.{ type1 = input_ty ; type2 = _ } = trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_arrow contract_ty in
       let parameter_ty, _ = trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_pair input_ty in
       let { code = storage ; ast_ty = storage_ty ; _ } : LT.typed_michelson_code =
         trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage in
@@ -136,8 +144,9 @@ module Command = struct
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) -> (
       let x = Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt in
       match x with
-      | Success ctxt -> (None, ctxt)
-      | Fail errs -> (Some errs, ctxt)
+      | Success (ctxt',gas_consumed) ->
+        (`Exec_ok gas_consumed, ctxt')
+      | Fail errs -> (`Exec_failed errs, ctxt)
     )
     | State_error_to_value errs -> (
       match Tezos_state.get_contract_rejection_data errs with
@@ -195,8 +204,7 @@ module Command = struct
     )
     | Compile_contract_from_file (source_file, entrypoint, views) ->
       let contract_code =
-        let protocol_version = ctxt.internals.protocol_version in
-        Michelson_backend.compile_contract ~raise ~add_warning ~protocol_version source_file entrypoint views in
+        Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entrypoint views in
       let size =
         let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
         LT.V_Ct (C_int (Z.of_int s))
@@ -207,8 +215,8 @@ module Command = struct
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env f.orig_lambda in
-      let in_ty, out_ty = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
-                            Ast_aggregated.get_t_function f.orig_lambda.type_expression in
+      let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
+                            Ast_aggregated.get_t_arrow f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
       let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj func_typed_exp in
       let func_code = Michelson_backend.compile_value ~raise func_typed_exp in
@@ -228,9 +236,9 @@ module Command = struct
        let compiled_expr, compiled_expr_ty = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
             let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env orig_lambda in
-            let in_ty, out_ty =
+            let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
-                Ast_aggregated.get_t_function orig_lambda.type_expression in
+                Ast_aggregated.get_t_arrow orig_lambda.type_expression in
             let compiled_expr =
               let protocol_version = ctxt.internals.protocol_version in
               Michelson_backend.compile_contract_ ~raise ~protocol_version subst_lst arg_binder rec_name in_ty out_ty body in
@@ -250,6 +258,10 @@ module Command = struct
       let expr = clean_locations compiled_expr in
       let contract = Michelson.contract param_ty storage_ty expr [] in
       (LT.V_Michelson (Contract contract), ctxt)
+    | Decompile (code, code_ty, ast_ty) ->
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps code_ty code in
+      let ret = Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret ast_ty in
+      (ret, ctxt)
     | To_contract (loc, v, entrypoint, _ty_expr) -> (
       match v with
       | LT.V_Ct (LT.C_address address) ->
@@ -284,6 +296,12 @@ module Command = struct
     | Set_baker baker ->
       let baker = trace_option ~raise (corner_case ()) @@ LC.get_address baker in
       ((), {ctxt with internals = { ctxt.internals with baker }})
+    | Get_voting_power (loc, calltrace, key_hash) ->
+      let vp = Tezos_state.get_voting_power ~raise ~loc ~calltrace ctxt key_hash in
+      ((LT.V_Ct (LT.C_nat (Z.of_int32 vp))), ctxt)
+    | Get_total_voting_power (loc, calltrace) ->
+      let tvp = Tezos_state.get_total_voting_power ~raise ~loc ~calltrace ctxt in
+      ((LT.V_Ct (LT.C_nat (Z.of_int32 tvp))), ctxt)
     | Get_bootstrap (loc,x) -> (
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
       match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
@@ -334,6 +352,12 @@ module Command = struct
       let v = LT.V_Ct (LT.C_key_hash kh) in
       (v, ctxt)
     )
+    | Implicit_account (loc, kh) -> (
+      let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
+      let address = Tezos_state.implicit_account ~raise ~loc address in
+      let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
+      (v, ctxt)
+    )
     | Check_signature (k, s, b) -> (
       let b = Tezos_protocol.Protocol.Environment.Signature.check k s b in
       let v = LC.v_bool b in
@@ -349,6 +373,16 @@ module Command = struct
            |> Option.value ~default:false in
       (LC.v_bool check, ctxt)
     )
+    | Add_account (loc, sk, pk) -> (
+      let pkh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash pk in
+      Tezos_state.add_account ~raise ~loc sk pk pkh;
+      ((), ctxt)
+    )
+    | New_account () -> (
+      let (sk, pk) = Tezos_state.new_account () in
+      let value = LC.v_pair ((V_Ct (C_string sk)), (V_Ct (C_key pk))) in
+      (value, ctxt)
+    )
 end
 
 type 'a t =
@@ -361,27 +395,28 @@ type 'a t =
 let rec eval
   : type a.
     raise:Errors.interpreter_error raise ->
+    options:Compiler_options.t ->  
     a t ->
     Tezos_state.context ->
     execution_trace ref option ->
     a * Tezos_state.context
-  = fun ~raise e ctxt log ->
+  = fun ~raise ~options e ctxt log ->
   match e with
   | Bind (e', f) ->
-    let (v, ctxt) = eval ~raise e' ctxt log in
-    eval ~raise (f v) ctxt log
-  | Call command -> Command.eval ~raise command ctxt log
+    let (v, ctxt) = eval ~raise ~options e' ctxt log in
+    eval ~raise ~options (f v) ctxt log
+  | Call command -> Command.eval ~raise ~options command ctxt log
   | Return v -> (v, ctxt)
   | Fail_ligo err -> raise.raise err
   | Try_or (e', handler) ->
     try_with
-      (eval e' ctxt log)
+      (eval ~options e' ctxt log)
       (function
             `Main_interpret_target_lang_error _
           | `Main_interpret_target_lang_failwith _
           | `Main_interpret_meta_lang_eval _
           | `Main_interpret_meta_lang_failwith _ ->
-            eval ~raise handler ctxt log
+            eval ~raise ~options handler ctxt log
           | e -> raise.raise e)
 
 let fail err : 'a t = Fail_ligo err
