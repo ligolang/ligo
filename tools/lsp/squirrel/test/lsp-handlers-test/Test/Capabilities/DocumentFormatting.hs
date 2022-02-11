@@ -1,6 +1,6 @@
 module Test.Capabilities.DocumentFormatting
-  ( unit_document_formatting
-  , unit_format_dirty
+--  ( unit_document_formatting
+  ( unit_format_dirty
   ) where
 
 import Language.LSP.Test
@@ -25,17 +25,18 @@ defaultFormattingOptions = FormattingOptions
   , _trimFinalNewlines = Nothing
   }
 
-unit_document_formatting :: Assertion
-unit_document_formatting = do
-  let filename = "trailing_space.ligo"
-  let expectedFilename = "trailing_space_expected.ligo"
-
-  (formattedDoc, expectedDoc) <- runHandlersTest contractsDir $ do
-    doc <- openLigoDoc filename
-    expectedDoc <- openLigoDoc expectedFilename
-    formatDoc doc defaultFormattingOptions
-    (,) <$> documentContents doc <*> documentContents expectedDoc
-  formattedDoc `shouldBe` expectedDoc
+-- FIXME (LIGO-446): Use new PascaLIGO grammar
+--unit_document_formatting :: Assertion
+--unit_document_formatting = do
+--  let filename = "trailing_space.ligo"
+--  let expectedFilename = "trailing_space_expected.ligo"
+--
+--  (formattedDoc, expectedDoc) <- runHandlersTest contractsDir $ do
+--    doc <- openLigoDoc filename
+--    expectedDoc <- openLigoDoc expectedFilename
+--    formatDoc doc defaultFormattingOptions
+--    (,) <$> documentContents doc <*> documentContents expectedDoc
+--  formattedDoc `shouldBe` expectedDoc
 
 unit_format_dirty :: Assertion
 unit_format_dirty = do
