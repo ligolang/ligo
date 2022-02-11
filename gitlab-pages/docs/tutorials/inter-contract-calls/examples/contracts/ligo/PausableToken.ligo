@@ -46,3 +46,4 @@ block {
         if (Tezos.sender =/= s.owner)
         then (failwith ("Access denied") : (list (operation) * storage))
         else (nop, s with record [paused = paused])
+    ]
