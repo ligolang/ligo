@@ -469,7 +469,7 @@ Let us look at a simple access control contract with a "view" entrypoint:
 (* examples/contracts/ligo/AccessController.ligo *)
 
 type parameter is
-    Call of unit -> operation | IsWhitelisted of address * contract (bool)
+    Call of (unit -> operation) | IsWhitelisted of (address * contract (bool))
 
 type storage is record [senders_whitelist : set (address)]
 

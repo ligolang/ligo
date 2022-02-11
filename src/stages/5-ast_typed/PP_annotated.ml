@@ -1,6 +1,5 @@
 [@@@coverage exclude_file]
 module Location    = Simple_utils.Location
-module Var         = Simple_utils.Var
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 open Types
@@ -94,10 +93,6 @@ and record ppf {content; layout=_} =
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te.type_content
 
-let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev.wrap_content
-
-
 let rec expression ppf ({ expression_content=ec; location=_; type_expression=te } : expression) =
   fprintf ppf "(%a : %a)"
     expression_content ec
@@ -135,7 +130,7 @@ and expression_content ppf (ec: expression_content) =
         type_variable type_binder
         type_expression rhs
         expression let_result
-  
+
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let module %a = struct @[%a@]@end in@ %a"
         module_variable module_binder
@@ -180,7 +175,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
 
 and declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant {name = _; binder; expr; attr = { inline; no_mutation; public; view } } ->
+  | Declaration_constant { binder; expr; attr = { inline; no_mutation; public; view } } ->
       fprintf ppf "const %a = %a%a%a%a%a" expression_variable binder expression expr option_inline inline option_no_mutation no_mutation option_public public option_view view
   | Declaration_type {type_binder; type_expr; type_attr = { public }} ->
       fprintf ppf "type %a = %a%a" type_variable type_binder type_expression type_expr option_public public

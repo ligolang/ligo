@@ -62,9 +62,6 @@ let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
-let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
-let module_variable ppf (m : module_variable) : unit = pp_print_string ppf m
-
 open Format
 
 let rec constraint_identifier_unicode (ci : Int64.t) =
@@ -128,7 +125,7 @@ and type_expression ppf (te : type_expression) : unit =
     fprintf ppf "%a" type_content te.type_content
 
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev.wrap_content
+  fprintf ppf "%a" Var.pp ev
 
 
 let rec expression ppf (e : expression) =

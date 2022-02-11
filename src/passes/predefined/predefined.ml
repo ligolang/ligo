@@ -41,6 +41,8 @@ module Tree_abstraction = struct
   *)
   let pseudo_modules x =
     match x with
+    | "Tezos.voting_power"       -> some_const C_VOTING_POWER
+    | "Tezos.total_voting_power" -> some_const C_TOTAL_VOTING_POWER
     | "Tezos.chain_id"           -> some_const C_CHAIN_ID
     | "Tezos.balance"            -> some_const C_BALANCE
     | "Tezos.now"                -> some_const C_NOW
@@ -63,6 +65,7 @@ module Tree_abstraction = struct
     | "Tezos.never"              -> some_const C_NEVER
     | "Tezos.open_chest"         -> some_const C_OPEN_CHEST
     | "Tezos.call_view"          -> some_const C_VIEW
+    | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -197,6 +200,7 @@ module Tree_abstraction = struct
     | "Test.run" -> some_const C_TEST_RUN
     | "Test.eval" -> some_const C_TEST_EVAL
     | "Test.compile_contract" -> some_const C_TEST_COMPILE_CONTRACT
+    | "Test.decompile" -> some_const C_TEST_DECOMPILE
     | "Test.to_contract" -> some_const C_TEST_TO_CONTRACT
     | "Test.nth_bootstrap_typed_address" -> some_const C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
     | "Test.to_entrypoint" -> some_const C_TEST_TO_ENTRYPOINT
@@ -206,6 +210,10 @@ module Tree_abstraction = struct
     | "Test.cast_address" -> some_const C_TEST_CAST_ADDRESS
     | "Test.create_chest" -> some_const C_TEST_CREATE_CHEST
     | "Test.create_chest_key" -> some_const C_TEST_CREATE_CHEST_KEY
+    | "Test.add_account" -> some_const C_TEST_ADD_ACCOUNT
+    | "Test.new_account" -> some_const C_TEST_NEW_ACCOUNT
+    | "Test.get_voting_power" -> some_const C_TEST_GET_VOTING_POWER
+    | "Test.get_total_voting_power" -> some_const C_TEST_GET_TOTAL_VOTING_POWER
 
     (* Operator module *)
 
@@ -252,6 +260,7 @@ module Tree_abstraction = struct
     | C_NEVER                   -> "Tezos.never"
     | C_OPEN_CHEST              -> "Tezos.open_chest" 
     | C_VIEW                    -> "Tezos.call_view" 
+    | C_GLOBAL_CONSTANT         -> "Tezos.constant"
 
     (* Operator module *)
 
@@ -384,6 +393,7 @@ module Tree_abstraction = struct
     | C_TEST_RUN -> "Test.run"
     | C_TEST_EVAL -> "Test.eval"
     | C_TEST_COMPILE_CONTRACT -> "Test.compile_contract"
+    | C_TEST_DECOMPILE -> "Test.decompile"
     | C_TEST_TO_CONTRACT -> "Test.to_contract"
     | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> "Test.nth_bootstrap_typed_address"
     | C_TEST_TO_ENTRYPOINT -> "Test.to_entrypoint"
@@ -392,6 +402,10 @@ module Tree_abstraction = struct
     | C_TEST_SET_BIG_MAP -> "Test.set_big_map"
     | C_TEST_CAST_ADDRESS -> "Test.cast_address"
     | C_TEST_CREATE_CHEST -> "Test.create_chest"
+    | C_TEST_ADD_ACCOUNT -> "Test.add_account"
+    | C_TEST_NEW_ACCOUNT -> "Test.new_account"
+    | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power" 
+    | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power" 
 
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
@@ -892,6 +906,10 @@ module Stacking = struct
       ])
     )
     | C_VIEW , Hangzhou -> Some (trivial_special "VIEW")
+    | C_GLOBAL_CONSTANT , Hangzhou ->
+      Some (special
+        (fun with_args ->  with_args "PUSH")
+        )
     | _ -> None
 
 end

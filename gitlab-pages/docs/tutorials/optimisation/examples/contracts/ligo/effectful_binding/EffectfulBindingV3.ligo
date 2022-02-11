@@ -11,8 +11,7 @@
 const some_contract = ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address)
 
 (* Calls to the function are not inlined anymore *)
-function target_exists (const u : unit) is
-block {
+function target_exists (const u : unit) is {
   const c : option (contract (int)) = Tezos.get_contract_opt (some_contract)
 } with
     case c of [
@@ -22,8 +21,7 @@ block {
 
 type parameter is Increment | IncrementIfEmpty | IncrementIfExists
 
-function main (const p : parameter; const s : int) is
-block {
+function main (const p : parameter; const s : int) is {
   const nop = (list [] : list (operation))
 } with
     case p of [

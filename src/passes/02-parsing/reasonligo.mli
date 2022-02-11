@@ -1,4 +1,4 @@
-(* This file provides an interface to the ReasonLIGO parser. *)
+(* Interfacing the ReasonLIGO parser with the compiler *)
 
 (* Vendor dependencies *)
 

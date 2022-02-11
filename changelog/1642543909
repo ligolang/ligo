@@ -1,0 +1,4 @@
+author: tomjack
+merge_request: '1499'
+title: Revert 1446
+type: performance

@@ -7,6 +7,7 @@ type compiled_expression = {
   expr_ty : (Location.t, string) node ;
   expr : (Location.t, string) node ;
 }
+
 include Ligo_coq_ocaml.Compiler
 open Ligo_coq_ocaml.Ligo
 

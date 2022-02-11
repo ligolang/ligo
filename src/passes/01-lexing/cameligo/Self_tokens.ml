@@ -44,5 +44,5 @@ let tokens_of = function
 
 (* Exported *)
 
-let filter = 
-  Utils.(tokens_of <@ Style.check) 
+let filter =
+  Utils.(tokens_of <@ Style.check)

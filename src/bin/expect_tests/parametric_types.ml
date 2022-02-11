@@ -94,10 +94,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.mligo")] ;
   [%expect{|
-    File "../../test/contracts/negative/parametric_types5.mligo", line 1, characters 9-11:
+    File "../../test/contracts/negative/parametric_types5.mligo", line 1, characters 0-26:
       1 | type ('a,'a) foo = 'a * 'a
 
-    Repeated type variable "a" in type declaration.
+    Repeated type variable in type.
     Hint: Change the name. |}]
 
 let%expect_test _ =
@@ -133,10 +133,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.ligo")] ;
   [%expect{|
-    File "../../test/contracts/negative/parametric_types5.ligo", line 1, characters 11-12:
+    File "../../test/contracts/negative/parametric_types5.ligo", line 1, characters 0-22:
       1 | type foo(a,a) is a * a
 
-    Repeated type variable "a" in type declaration.
+    Repeated type variable in type.
     Hint: Change the name. |}]
 
 let%expect_test _ =
@@ -172,8 +172,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.religo")] ;
   [%expect{|
-    File "../../test/contracts/negative/parametric_types5.religo", line 1, characters 12-14:
+    File "../../test/contracts/negative/parametric_types5.religo", line 1, characters 0-27:
       1 | type foo('a,'a) = ('a , 'a);
 
-    Repeated type variable "a" in type declaration.
+    Repeated type variable in type.
     Hint: Change the name. |}]

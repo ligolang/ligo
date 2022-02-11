@@ -1,12 +1,9 @@
 ;; Generate ['a terminal] type to complete inspection API in parsing stage
 
 (rule
- (targets MenhirToken.ml MenhirToken.mli)
- (deps
-  (:ParToken ../../02-parsing/reasonligo/ParToken.mly))
- (action
-  (run menhir %{ParToken} --only-tokens --inspection --table --base
-    MenhirToken)))
+  (targets MenhirToken.ml MenhirToken.mli)
+  (deps (:ParToken ../../02-parsing/reasonligo/ParToken.mly))
+  (action (run menhir %{ParToken} --only-tokens --inspection --table --base MenhirToken)))
 
 ;; Pre-Parser
 
@@ -18,9 +15,9 @@
 
 (rule
  (targets es6fun_errors.msg)
- (deps 
-  PreParser.mly 
-  (:ParToken ../../02-parsing/reasonligo/ParToken.mly) 
+ (deps
+  PreParser.mly
+  (:ParToken ../../02-parsing/reasonligo/ParToken.mly)
   es6fun_errors.msg.in)
  (action
   (with-stdout-to
@@ -31,7 +28,7 @@
 
 (rule
  (target es6fun_errors.msg.new)
- (deps 
+ (deps
   (:ParToken ../../02-parsing/reasonligo/ParToken.mly))
  (action
   (with-stdout-to
@@ -42,8 +39,8 @@
 
 (rule
  (alias runtest)
- (deps 
-  es6fun_errors.msg 
+ (deps
+  es6fun_errors.msg
   es6fun_errors.msg.new
   (:ParToken ../../02-parsing/reasonligo/ParToken.mly)
   )
@@ -54,8 +51,8 @@
 
 (rule
  (targets PreParErr.ml)
- (deps 
-  PreParser.mly 
+ (deps
+  PreParser.mly
   (:ParToken ../../02-parsing/reasonligo/ParToken.mly)
   es6fun_errors.msg.in)
  (action
@@ -66,20 +63,15 @@
      --compile-errors es6fun_errors.msg.in))))
 
 (library
- (name menhir_reasonligo_tokens)
- (public_name ligo.lexing.menhir_reasonligo_tokens)
- (modules MenhirToken)
- (libraries lexing_shared hex)
- (flags
-  (:standard
-   -open
-   Lexing_shared
-   -open
-   Wrap ;; for [wrap]
-   -open
-   Common))
- ;; for [lexeme]
- )
+  (name menhir_reasonligo_tokens)
+  (public_name ligo.lexing.menhir_reasonligo_tokens)
+  (modules MenhirToken)
+  (libraries
+     lexing_shared
+     hex)
+  (flags (:standard
+            -open Lexing_shared
+            -open Wrap)))     ;; for [wrap]
 
 ;; Build of the ReasonLIGO lexer as a library
 
@@ -95,8 +87,7 @@
   menhirLib
   str
   hex)
-  (flags (:standard \ -open Core))
-  )
+  (flags (:standard \ -open Core)))
 
 ;; Build of a standalone lexer for ReasonLIGO
 
@@ -133,4 +124,3 @@
   (with-stdout-to
    Version.ml
    (run "sh" "-c" "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))
-

@@ -5,12 +5,7 @@ type allowances =
    [address,
     address], nat>;
 
-type storage =
-  {
-    tokens: tokens,
-    allowances: allowances,
-    total_amount: nat
-  };
+type storage = {tokens, allowances, total_amount: nat};
 
 type transfer =
   {address_from: address, address_to: address, value: nat};

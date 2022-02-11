@@ -3,16 +3,73 @@ open Errors
 open Mini_c
 open Simple_utils.Trace
 
+let eta_expand : expression -> type_expression -> type_expression -> anon_function =
+  fun e in_ty out_ty ->
+    let binder = Var.fresh () in
+    let var = e_var binder in_ty in
+    let app = e_application e out_ty var in
+    { binder = binder ; body = app }
 let get_t_function ~raise e =
   trace_option ~raise not_a_function @@ Mini_c.get_t_function e
-let get_function ~raise e =
-  trace_option ~raise not_a_function @@ Mini_c.get_function e
-let get_function_eta ~raise e =
-  trace_option ~raise not_a_function @@ Mini_c.get_function_eta e
+
+let get_function_or_eta_expand ~raise e =
+  let in_ty, out_ty = match e.type_expression.type_content with
+    | T_function t -> t
+    | _ -> raise.raise (corner_case "contract do not have the type of a function")
+  in
+  match e.content with
+  | E_closure f -> f
+  | _ ->
+    eta_expand e in_ty out_ty
+
+let get_function_or_eta_expand_views ~raise : expression -> anon_function * (type_expression * type_expression) list  = fun e ->
+  (*
+    < let .. = .. in > (view1, view2, view3)
+
+    |->
+
+    fun _dummy ->
+      let body' = ( < let .. = .. in > (view1, view2, view3) ) in
+      (body'.0 , body'.1 , body'.3)
+  *)
+  let err =
+    corner_case "view/views do not have the type of a function or a tuple of function"
+      (* Format.asprintf "view/views do not have the type of a function or a tuple of function : \n%a\n"
+        Mini_c.PP.type_expression ty
+    ) *)
+  in
+  match e.type_expression.type_content with
+  | T_function (in_ty,out_ty) -> (
+    (* if only one view *)
+    match e.content with
+    | E_closure f -> f , [(in_ty,out_ty)]
+    | _ -> eta_expand e in_ty out_ty , [(in_ty,out_ty)]
+  )
+  | T_tuple lst ->
+    (* if N views *)
+    let aux : _ * type_expression-> (type_expression * type_expression) =
+      fun (_,ty) -> trace_option ~raise err @@ Mini_c.get_t_function ty
+    in
+    let view_tys = List.map ~f:aux lst in
+    let arg = Var.fresh ~name:"_dummy" () in
+    (* let arg_ty = Mini_c.t_tuple @@ List.map ~f:(fun (in_ty,_) -> (None, in_ty)) view_tys in *)
+    let v_prg = Var.fresh () in
+    let aux : int -> (type_expression * type_expression) -> expression =
+      fun i (in_ty,out_ty) ->
+        (* let var = e_proj (e_var arg arg_ty) in_ty i i in *)
+        (* e_application (e_var v_prg e.type_expression) out_ty var *)
+        e_proj (e_var v_prg e.type_expression) (t_function in_ty out_ty) i i
+    in
+    let app_tup = Mini_c.e_tuple (List.mapi ~f:aux view_tys) (Mini_c.t_tuple (List.map ~f:(fun x -> (None,snd x)) view_tys)) in
+    let body =
+      let inline = false in
+      Mini_c.e_let_in v_prg e.type_expression inline e app_tup
+    in
+    { binder = arg ; body }, view_tys
+  | _ -> raise.raise (corner_case "heyho")
 
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression = Helpers.map_expression
-let fold_map_expression = Helpers.fold_map_expression
 
 (* Conservative purity test: ok to treat pure things as impure, must
    not treat impure things as pure. *)
@@ -56,6 +113,7 @@ let is_pure_constant : constant' -> bool =
   | C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE
   | C_OPEN_CHEST
+  | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
     -> true
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
@@ -135,6 +193,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_RUN
   | C_TEST_EVAL
   | C_TEST_COMPILE_CONTRACT
+  | C_TEST_DECOMPILE
   | C_TEST_TO_CONTRACT
   | C_TEST_TO_ENTRYPOINT
   | C_TEST_TO_TYPED_ADDRESS
@@ -145,6 +204,10 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_CAST_ADDRESS
   | C_TEST_CREATE_CHEST
   | C_TEST_CREATE_CHEST_KEY
+  | C_TEST_ADD_ACCOUNT
+  | C_TEST_NEW_ACCOUNT
+  | C_TEST_GET_VOTING_POWER
+  | C_TEST_GET_TOTAL_VOTING_POWER
     -> false
 
 let rec is_pure : expression -> bool = fun e ->
@@ -175,6 +238,10 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_constant (c)
     -> is_pure_constant c.cons_name && List.for_all ~f:is_pure c.arguments
+
+  | E_global_constant (_hash, _args) ->
+    (* hashed code can be impure :( *)
+    false
 
   (* I'm not sure about these. Maybe can be tested better? *)
   | E_application _
@@ -221,21 +288,22 @@ let should_inline : expression_variable -> expression -> expression -> bool =
   fun x e1 e2 ->
   occurs_count x e2 <= 1 || is_variable e1
 
-let inline_let : bool ref -> unit -> expression -> bool * unit * expression =
-  fun changed () e ->
+let inline_let : bool ref -> expression -> expression =
+  fun changed e ->
   match e.content with
   | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
     if is_pure e1 && (should_inline_here || should_inline x e1 e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
-      (changed := true ; (false, (), e2'))
+      (changed := true ; e2')
     else
-      (true, (), e)
-  | _ -> (true, (), e)
+      e
+  | _ -> e
 
-let inline_lets : bool ref -> expression -> expression =
-  fun changed e ->
-  snd @@ fold_map_expression (inline_let changed) () e
+let inline_lets ~raise : bool ref -> expression -> expression =
+  fun changed ->
+  map_expression ~raise (fun ~raise:_ -> inline_let changed)
+
 
 (* Let "beta" mean transforming the code:
 
@@ -274,29 +342,47 @@ let beta ~raise:_ : bool ref -> expression -> expression =
           List.nth_exn es i)
     else e
 
-  (** This case shows up in the compilation of modules:
-      (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
+  (** (let x = e1 in e2).(i) ↦ (let x = e1 in e2.(i)) *)
   | E_proj ({ content = E_let_in (e1, inline, ((x, a), e2));type_expression = _; location=_ } as e_let_in, i, n) ->
     changed := true;
-    { e_let_in with content = E_let_in (e1, inline, ((x, a), ({ e with content = E_proj (e2, i, n) }))) }
+    { e_let_in with content = E_let_in (e1, inline, ((x, a), ({ e with content = E_proj (e2, i, n) }))) ;
+                    type_expression = e.type_expression }
 
-  (** This case shows up in the compilation of modules:
-      (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
+  (** (let (x, y, ...) = e1 in e2).(i) ↦ (let (x, y, ...) = e1 in e2.(i)) *)
+  | E_proj ({ content = E_let_tuple (e1, (vars, e2));type_expression = _; location=_ } as e_let_tuple, i, n) ->
+    changed := true;
+    { e_let_tuple with content = E_let_tuple (e1, (vars, ({ e with content = E_proj (e2, i, n) }))) ;
+                       type_expression = e.type_expression }
+
+  (** (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
   | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3)) ->
-    let y' = Location.wrap (Var.fresh_like (Location.unwrap y)) in
+    let y' = Var.fresh_like y in
     let e2 = Subst.replace e2 y y' in
     changed := true;
     {e with content = E_let_in (e1, inline2, ((y', b), {e with content = E_let_in (e2, inline1, ((x, a), e3))}))}
 
-  (** This case shows up in the compilation of modules:
-      (let x = e1 in e2)@e3 ↦ let x = e1 in e2@e3  (only if e2 and e3 are pure??) *)
+  (** note: E_let_tuple/E_let_in and E_let_in/E_let_tuple conversions
+      not implemented yet because they don't seem important (?) *)
+
+  (** (let x = e1 in e2)@e3 ↦ let x = e1 in e2@e3  (if e1 or e3 is pure) *)
   | E_application ({ content = E_let_in (e1, inline, ((x, a), e2)); _ }, e3) ->
     if is_pure e1 || is_pure e3
     then
-      let x' = Location.wrap (Var.fresh_like (Location.unwrap x)) in
+      let x' = Var.fresh_like x in
       let e2 = Subst.replace e2 x x' in
       changed := true;
       {e with content = E_let_in (e1, inline, ((x', a), {e with content = E_application (e2, e3)}))}
+    else e
+
+  (** (let (x, y, ...) = e1 in e2)@e3 ↦ let (x, y, ...) = e1 in e2@e3  (if e1 or e3 is pure) *)
+  | E_application ({ content = E_let_tuple (e1, (vars, e2)); _ }, e3) ->
+    if is_pure e1 || is_pure e3
+    then
+      let vars = List.map ~f:(fun (x, a) -> (x, Var.fresh_like x, a)) vars in
+      let e2 = List.fold_left vars ~init:e2 ~f:(fun e2 (x, x', _a) -> Subst.replace e2 x x') in
+      let vars = List.map ~f:(fun (_x, x', a) -> (x', a)) vars in
+      changed := true;
+      {e with content = E_let_tuple (e1, (vars, {e with content = E_application (e2, e3)}))}
     else e
 
   (* let (x0, x1, ...) = (e0, e1, ...) in body ↦
@@ -324,7 +410,7 @@ let eta ~raise:_ : bool ref -> expression -> expression =
                                                   { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_expression = _ ; location = _}]} ->
     (match (e1.content, e2.content) with
      | E_variable x1, E_variable x2 ->
-       if Var.equal x1.wrap_content x2.wrap_content
+       if Var.equal x1 x2
        then
          (changed := true;
           { e with content = e1.content })
@@ -341,7 +427,7 @@ let eta ~raise:_ : bool ref -> expression -> expression =
              if i = j && n = count
              then
                match e'.content with
-               | E_variable x -> Some (Location.unwrap x)
+               | E_variable x -> Some x
                | _ -> None
              else None
            | _ -> None)
@@ -352,7 +438,7 @@ let eta ~raise:_ : bool ref -> expression -> expression =
        match vars with
        | var :: _ ->
          if List.for_all ~f:(Var.equal var) vars
-         then { e with content = E_variable (Location.wrap var) }
+         then { e with content = E_variable var }
          else e
        | _ -> e)
   | _ -> e
@@ -367,7 +453,7 @@ let contract_check ~raise (init: anon_function) : anon_function=
 let rec all_expression ~raise : expression -> expression =
   fun e ->
   let changed = ref false in
-  let e = inline_lets changed e in
+  let e = inline_lets ~raise changed e in
   let e = betas ~raise changed e in
   let e = etas ~raise changed e in
   if !changed

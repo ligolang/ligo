@@ -2,8 +2,24 @@
  (name cli)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils cmdliner ligo ligo_compile build repl ligo_api)
- (modules cli cli_helpers version))
+ (libraries
+  simple-utils
+  cmdliner
+  ligo
+  ligo_compile
+  build
+  repl
+  install
+  cli_helpers
+  ligo_api)
+ (modules cli version))
+
+(library
+ (name cli_helpers)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils lwt lwt.unix)
+ (modules cli_helpers))
 
 (library
  (name repl)
@@ -11,6 +27,13 @@
   (backend bisect_ppx))
  (libraries simple-utils cmdliner ligo build linenoise)
  (modules repl))
+
+(library
+ (name install)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries cli_helpers simple-utils lwt lwt.unix)
+ (modules install))
 
 (rule
  (targets version.ml)

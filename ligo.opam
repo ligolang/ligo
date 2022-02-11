@@ -28,7 +28,7 @@ depends: [
   "terminal_size"
   "pprint"
   "yojson"
-  "ocaml-recovery-parser"
+  "ocaml-recovery-parser" { = "0.2.2" }
   # Tezos libs
   "tezos-base"
   "tezos-crypto"
@@ -38,6 +38,7 @@ depends: [
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_expect"
+  "ppx_import"
   "ppx_inline_test"
   # work around tezos' failure to constrain
   "ctypes-foreign"
@@ -48,6 +49,7 @@ depends: [
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # dependencies of vendored dependencies
   "bls12-381-legacy"
+  "bls12-381"
   "alcotest-lwt"
   "qcheck-alcotest"
   "irmin-pack"

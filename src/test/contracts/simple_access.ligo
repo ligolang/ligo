@@ -15,7 +15,7 @@ function main (const toto : tpi) : int is
     b.x := a.0;
     m["x"] := b.x
   } with
-      case m["x"] of
+      case m["x"] of [
         Some (s) -> s
       | None -> 42
-      end
+      ]

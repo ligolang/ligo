@@ -23,7 +23,7 @@ let test =
   let new_account1 = check_new_origination src in
 
   let contr = Test.to_contract typed_addr in
-  let () = Test.transfer_to_contract_exn contr Two 10tez in
+  let _ = Test.transfer_to_contract_exn contr Two 10tez in
   let new_account2 = check_new_origination new_account1 in
   let new_storage = Test.get_storage typed_addr in
   let expected_new_storage = Some new_account2 in
@@ -31,7 +31,7 @@ let test =
 
 
   match (Test.transfer_to_contract contr One 10tez : test_exec_result) with
-  | Success -> (failwith "contract did not fail" : michelson_program)
+  | Success _ -> (failwith "contract did not fail" : michelson_program)
   | Fail x -> (
     let x = (fun (x : test_exec_error) -> x) x in 
     match x with

@@ -145,7 +145,7 @@ let%expect_test "self_ast_imperative" =
   let open Location in
   let error e = human_readable_error (self_ast_imperative_tracer e) in
   let location_t = File default_location in
-  let type_content = T_variable (Var.of_name "foo") in
+  let type_content = T_variable (Var.of_input_var "foo") in
   let type_expression = {type_content; location= location_t} in
   let expression_content = E_skip in
   let expression = {expression_content; location= location_t} in
@@ -224,17 +224,9 @@ let%expect_test "sugaring" = ()
 let%expect_test "main_cit_pascaligo" =
   let open Cst.Pascaligo in
   let open Location in
-  let ghost =
-    object
-      method region = Region.ghost
-      method attributes = []
-      method payload = ""
-    end
-  in
   let error e = human_readable_error (cit_pascaligo_tracer e) in
-  let lexeme_reg : lexeme reg = {value= "foo"; region= default_region1} in
-  let pvar = PVar {value = {variable = lexeme_reg ; attributes = []} ; region = default_region1} in
-  let type_expr = TString {value= "yolo"; region= default_region1} in
+  let pvar = P_Var (Wrap.wrap "foo" default_region1) in
+  let type_expr = T_String (Wrap.wrap "yolo" default_region1) in
   let location_t = File default_location in
   error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
   [%expect
@@ -272,31 +264,6 @@ let%expect_test "main_cit_pascaligo" =
 
   Invalid function declaration.
   Recursive functions are required to have a type annotation (for now).
-  |}] ;
-  let pvar : var_pattern = {variable = {value = "foo"; region = Region.ghost} ; attributes = []} in
-  error
-    (`Concrete_pascaligo_block_start_with_attribute
-      { value=
-          { enclosing= BeginEnd (ghost, ghost);
-            statements=
-              ( Data
-                  (LocalVar
-                     { value=
-                         { kwd_var= ghost;
-                           pattern= PVar {value= pvar; region= Region.ghost};
-                           var_type= None;
-                           assign= ghost;
-                           init= EVar {value= "xxx"; region= Region.ghost};
-                           terminator= None;
-                           attributes = []};
-                       region= Region.ghost }),
-                [] );
-            terminator= None };
-        region= Region.ghost }) ;
-  [%expect
-    {|
-  Invalid attribute declaration.
-  Attributes have to follow the declaration it is attached to.
   |}]
 
 let%expect_test "main_cit_cameligo" =
@@ -391,7 +358,7 @@ let%expect_test "main_cit_reasonligo" =
 
     Invalid let declaration.
     Only functions can be recursive.|}] ;
-  error (`Concrete_reasonligo_michelson_type_wrong (type_expr, "foo")) ;
+  error (`Concrete_reasonligo_michelson_type_wrong (Location.lift default_region1, "foo")) ;
   [%expect
     {|
         File "a dummy file name", line 20, character 5:
@@ -404,13 +371,7 @@ let%expect_test "main_cit_reasonligo" =
       File "a dummy file name", line 20, character 5:
 
       Invalid "bar" type.
-      An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}];
-  error(`Concrete_reasonligo_missing_funarg_annotation variable);
-  [%expect
-    {|
-      File "a dummy file name", line 20, character 5:
-
-      Missing a type annotation for argument "dog".|}]
+      An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}]
 
 
 let%expect_test "typer" =
@@ -418,10 +379,9 @@ let%expect_test "typer" =
   let open Location in
   let error e = human_readable_error (checking_tracer e) in
   let location_t = File default_location in
-  let type_variable = Var.of_name "foo" in
-  let expression_variable = Location.wrap (Var.of_name "bar") in
-  let ast_core_expression_variable : Ast_core.expression_variable =
-    Location.wrap (Var.of_name "bar")
+  let type_variable = Var.of_input_var "foo" in
+  let expression_variable = Var.of_input_var "bar" in
+  let ast_core_expression_variable : Ast_core.expression_variable = Var.of_input_var "bar"
   in
   let ast_core_expression_content : Ast_core.expression_content =
     E_variable ast_core_expression_variable
@@ -430,13 +390,13 @@ let%expect_test "typer" =
     {expression_content= ast_core_expression_content; sugar= None; location= location_t}
   in
   let type_expression : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_name "foo");
+    { type_content= T_variable (Var.of_input_var "foo");
       type_meta= None;
       orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_name "bar");
+    { type_content= T_variable (Var.of_input_var "bar");
       type_meta= None;
       orig_var = None ;
       location= File default_location }
@@ -523,7 +483,8 @@ let%expect_test "typer" =
     The "michelson_or" type expects a variant type as argument.|}] ;
   error
     (`Typer_constant_declaration_tracer
-      ( ast_core_expression_variable,
+      ( location_t,
+        ast_core_expression_variable,
         ast_core_expression,
         Some type_expression,
         `Typer_michelson_comb_no_record location_t )) ;
@@ -887,16 +848,16 @@ let%expect_test "self_ast_typed" =
   let open Ast_typed in
   let open Location in
   let error e = human_readable_error (self_ast_typed_tracer e) in
-  let expression_variable = Location.wrap (Var.of_name "bar") in
+  let expression_variable = Var.of_input_var "bar" in
   let location_t = File default_location in
   let type_expression : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_name "foo");
+    { type_content= T_variable (Var.of_input_var "foo");
       type_meta= None ;
       orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_name "bar");
+    { type_content= T_variable (Var.of_input_var "bar");
       type_meta= None ;
       orig_var = None ;
       location= File default_location }
@@ -954,7 +915,7 @@ let%expect_test "self_ast_typed" =
   error (`Self_ast_typed_corner_case "foo") ;
   [%expect {|
     Internal error: foo |}] ;
-  error (`Self_ast_typed_bad_contract_io ("foo", expression)) ;
+  error (`Self_ast_typed_bad_contract_io (Var.of_input_var "foo", expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -962,7 +923,7 @@ let%expect_test "self_ast_typed" =
     Invalid type for entrypoint "foo".
     An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
   error
-    (`Self_ast_typed_expected_list_operation ("foo", type_expression, expression)) ;
+    (`Self_ast_typed_expected_list_operation (Var.of_input_var "foo", type_expression, expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -972,7 +933,7 @@ let%expect_test "self_ast_typed" =
     We expected a list of operations but we got foo |}] ;
   error
     (`Self_ast_typed_expected_same_entry
-      ("foo", type_expression, type_expression2, expression)) ;
+      (Var.of_input_var "foo", type_expression, type_expression2, expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -1010,11 +971,11 @@ let%expect_test "self_mini_c" =
 let%expect_test "spilling" =
   let error (e:Spilling.Errors.spilling_error) = human_readable_error (spilling_tracer e) in
   let open Location in
-  let type_variable : Ast_typed.type_variable = Simple_utils.Var.of_name "foo" in
+  let type_variable : Ast_typed.type_variable = Ast_typed.Var.of_input_var "foo" in
   let location_t = File default_location in
-  let expression_variable = Location.wrap (Simple_utils.Var.of_name "bar") in
+  let expression_variable = Ast_aggregated.Var.of_input_var "bar" in
   let type_expression : Ast_aggregated.type_expression =
-    { type_content= T_variable (Simple_utils.Var.of_name "foo");
+    { type_content= T_variable (Ast_aggregated.Var.of_input_var "foo");
       orig_var = None ;
       location= File default_location }
   in
@@ -1032,8 +993,10 @@ let%expect_test "spilling" =
     File "a dummy file name", line 20, character 5:
 
     Invalid pattern matching.@Tuple patterns are not (yet) supported. |}] ;
-  error (`Spilling_unsupported_recursive_function expression_variable) ;
+  error (`Spilling_unsupported_recursive_function (location_t, expression_variable)) ;
   [%expect{|
+    File "a dummy file name", line 20, character 5:
+
     Invalid recursive function "bar".
     A recursive function can only have one argument. |}] ;
   error (`Spilling_wrong_mini_c_value (type_expression, value)) ;

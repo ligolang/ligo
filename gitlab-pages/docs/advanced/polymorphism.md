@@ -20,8 +20,7 @@ immediately. For instance, we can write the identity function for
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=mono
-function id (const x : int) : int is
-  x
+function id (const x : int) : int is x
 ```
 
 </Syntax>
@@ -53,8 +52,7 @@ type, such as `nat`, we will need to write a new definition:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=mono
-function idnat (const x : nat) : nat is
-  x
+function idnat (const x : nat) : nat is x
 ```
 
 </Syntax>
@@ -75,24 +73,28 @@ let idnat = (x : nat) : nat => x;
 <Syntax syntax="jsligo">
 
 ```jsligo group=mono
-let idnat = (x: nat): nat => x;
+let idnat = (x : nat): nat => x;
 ```
 
 </Syntax>
 
-If we see in detail, there is almost no difference between `id` and
-`idnat`: it's just the type that changes, but for the rest, the body
-of the function remains the same.
+If we read carefully, we see that there is almost no difference
+between `id` and `idnat`: it is just the type that changes, but for
+the rest, the body of the function remains the same.
 
 Thanks to parametric polymorphism, we can write a single function
 declaration that works for both cases.
 
+
+
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-function id (const x : _a) : _a is
-  x
+function id (const x : _a) : _a is x
 ```
+
+Here we introduce a type variable `a` which can be generalised using
+`<a>` in the declaration.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -101,13 +103,8 @@ function id (const x : _a) : _a is
 let id (type a) (x : a) : a = x
 ```
 
-Here we introduce an abstract type variable `a` which can be
-generalised using `(type a)` in the declaration. Alternatively, we
-could write:
-
-```cameligo group=poly2mligo
-let id (x : _a) : _a = x
-```
+Here we introduce a type variable `a` which can be generalised using
+`(type a)` in the declaration.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -116,6 +113,9 @@ let id (x : _a) : _a = x
 let id : (_a => _a) = (x : _a) => x;
 ```
 
+Here `_a` is a type variable which can be generalised. In general,
+types prefixed with `_` are treated as generalisable.
+
 </Syntax>
 <Syntax syntax="jsligo">
 
@@ -123,10 +123,10 @@ let id : (_a => _a) = (x : _a) => x;
 let id : ((x : _a) => _a) = (x: _a) => x;
 ```
 
-</Syntax>
-
 Here `_a` is a type variable which can be generalised. In general,
 types prefixed with `_` are treated as generalisable.
+
+</Syntax>
 
 We can then use this function directly in different types by just
 regular application:
@@ -134,8 +134,8 @@ regular application:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-const three_i : int = id(3);
-const three_s : string = id("three");
+const three_i : int = id (3);
+const three_s : string = id ("three");
 ```
 
 </Syntax>
@@ -186,11 +186,9 @@ variations by using `List` combinators.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-function rev(const xs : list (_a)) : list (_a) is block {
+function rev (const xs : list (_a)) : list (_a) is {
   var acc := (nil : list (_a));
-  for x in list xs block {
-    acc := x # acc;
-  };
+  for x in list xs { acc := x # acc; };
 } with acc
 ```
 
@@ -211,7 +209,7 @@ let rev (type a) (xs : a list) : a list =
 
 ```reasonligo group=poly
 let rev : (list (_a) => list (_a)) = (xs : list (_a)) : list (_a) =>
-  let rec rev  : ((list (_a), list (_a)) => list (_a)) = ((xs, acc) : (list (_a), list (_a))) : list (_a) =>
+  let rec rev : ((list (_a), list (_a)) => list (_a)) = ((xs, acc) : (list (_a), list (_a))) : list (_a) =>
     switch xs {
     | [] => acc
     | [x,... xs] => rev (xs, [x,... acc])
@@ -245,8 +243,8 @@ different types:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-const lint : list(int) = rev(list [1; 2; 3]);
-const lnat : list(nat) = rev(list [1n; 2n; 3n]);
+const lint : list (int) = rev (list [1; 2; 3]);
+const lnat : list (nat) = rev (list [1n; 2n; 3n]);
 ```
 
 </Syntax>

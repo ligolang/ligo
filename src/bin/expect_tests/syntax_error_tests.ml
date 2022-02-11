@@ -9,9 +9,12 @@ let%expect_test _ =
     File "../../test/contracts/negative/error_syntax.ligo", line 1, characters 16-17:
       1 | type foo is bar - 42
     Ill-formed contract.
-    At this point, one the following is expected:
-      * another declaration;
-      * the end of the file. |} ]
+    At this point, if the top-level declaration is complete, one of the
+    following is expected:
+      * another declaration starting with the keyword 'type', 'const',
+        'function', 'recursive' or 'module';
+      * the end of the file.
+    Note: 'var' declarations are valid only in blocks. |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression" ; "jsligo" ; "Bytes.X()" ] ;

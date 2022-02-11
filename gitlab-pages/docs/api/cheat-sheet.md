@@ -14,7 +14,7 @@ import Syntax from '@theme/Syntax';
 <div className="example">
 
 ```pascaligo
-const name: string = "Tezos";
+const name : string = "Tezos"
 ```
 
 </div>
@@ -24,7 +24,7 @@ Characters
 <div className="example">
 
 ```pascaligo
-const t: string = "t";
+const t : string = "t"
 ```
 
 </div>
@@ -34,7 +34,7 @@ Integers
 <div className="example">
 
 ```pascaligo
-const i: int = 42;
+const i : int = 42
 ```
 
 </div>
@@ -44,7 +44,7 @@ Natural numbers
 <div className="example">
 
 ```pascaligo
-const n: nat = 7n;
+const n : nat = 7n
 ```
 
 </div>
@@ -54,7 +54,7 @@ Unit
 <div className="example">
 
 ```pascaligo
-const u: unit = unit;
+const u : unit = unit
 ```
 
 </div>
@@ -64,8 +64,8 @@ Boolean
 <div className="example">
 
 ```pascaligo
-const hasDriversLicense: bool = False;
-const adult: bool = True;
+const hasDriversLicense : bool = False
+const adult : bool = True
 ```
 
 </div>
@@ -75,11 +75,11 @@ Boolean Logic
 <div className="example">
 
 ```pascaligo
-const booleanLogic: bool = 
-    (not True) = 
-    False = 
-    (False and True) = 
-    (False or False);
+const booleanLogic : bool =
+    (not True) =
+    False =
+    (False and True) =
+    (False or False)
 ```
 
 </div>
@@ -89,7 +89,7 @@ Mutez (micro tez)
 <div className="example">
 
 ```pascaligo
-const tez: tez = 42tez;
+const tez : tez = 42tez
 ```
 
 </div>
@@ -99,10 +99,10 @@ Address
 <div className="example">
 
 ```pascaligo
-const tz1address: address = 
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
-const kt1address: address = 
-  ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address);
+const tz1address : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
+const kt1address : address =
+  ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD" : address)
 ```
 
 </div>
@@ -112,8 +112,8 @@ Addition
 <div className="example">
 
 ```pascaligo
-const add_int: int = 3 + 4;
-const add_nat: nat = 3n + 4n;
+const add_int : int = 3 + 4
+const add_nat : nat = 3n + 4n
 ```
 
 </div>
@@ -123,11 +123,11 @@ Multiplication & Division
 <div className="example">
 
 ```pascaligo
-const mul_int: int = 3 * 4;
-const mul_nat: nat = 3n * 4n;
+const mul_int : int = 3 * 4
+const mul_nat : nat = 3n * 4n
 
-const div_int: int = 10 / 5;
-const div_nat: nat = 10n / 5n;
+const div_int : int = 10 / 5
+const div_nat : nat = 10n / 5n
 ```
 
 </div>
@@ -137,7 +137,7 @@ Modulo
 <div className="example">
 
 ```pascaligo
-const mod_nat: nat = 10 mod 3;
+const mod_nat : nat = 10 mod 3
 ```
 
 </div>
@@ -147,12 +147,12 @@ Tuples
 <div className="example">
 
 ```pascaligo
-type name is (string * string);
+type name is string * string
 
-const winner: name = ("John", "Doe");
+const winner : name = ("John", "Doe")
 
-const firstName: string = winner.0;
-const lastName: string = winner.1;
+const firstName : string = winner.0
+const lastName  : string = winner.1
 ```
 
 </div>
@@ -162,7 +162,7 @@ Types
 <div className="example">
 
 ```pascaligo
-type age is int;
+type age is int
 type name is string
 ```
 
@@ -192,10 +192,9 @@ Functions (long form)
 <div className="example">
 
 ```pascaligo
-function add (const a : int ; const b : int) : int is
-  block {
-    const result: int = a + b;
-  } with result
+function add (const a : int; const b : int) : int is {
+  const result: int = a + b;
+} with result
 ```
 
 </div>
@@ -205,15 +204,8 @@ If Statement
 <div className="example">
 
 ```pascaligo
-function if_statement (const age : int) : int is
-  block {
-    var id: int := -1;
-    if age < 16 then {
-        failwith ("Too young to drive");
-    } else {
-        id := 1;
-    }
-  } with id
+function can_drive (const age : nat) : string is
+  if age >= 16n then "yes" else "no"
 ```
 
 </div>
@@ -223,9 +215,9 @@ Options
 <div className="example">
 
 ```pascaligo
-type middleName is option(string);
-const middleName : middleName = Some("Foo");
-const middleName : middleName = None;
+type middleName is option (string)
+const middleName : middleName = Some ("Foo")
+const middleName : middleName = None
 ```
 
 </div>
@@ -235,25 +227,24 @@ Assignment
 <div className="example">
 
 ```pascaligo
-const age: int = 5;
+const age : int = 5
 ```
 
 </div>
 <div className="primitive">
-Assignment on an existing variable 
+Reassigning a variable
 </div>
 <div className="example">
 
 :::caution
-This feature is not supported at the top-level scope, you can use it e.g. within functions. Works for Records and Maps as well.
+This feature is not supported at the top-level scope, you can use it e.g. within functions. Works for records and maps as well.
 :::
 
 ```pascaligo
-function assignment_existing (const age : int) : int is
-  block {
-    var x : int := 2;
-    x := 3;
-  } with x
+function assignment_existing (const age : int) : int is {
+  var x : int := 2;
+  x := 3;
+} with x
 ```
 
 </div>
@@ -263,8 +254,8 @@ Type Annotations
 <div className="example">
 
 ```pascaligo
-const someAddress: address = 
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+const someAddress : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 ```
 
 </div>
@@ -274,9 +265,9 @@ Variants
 <div className="example">
 
 ```pascaligo group=variants
-type action is 
-| Increment of int
-| Decrement of int;
+type action is
+  Increment of int
+| Decrement of int
 ```
 
 </div>
@@ -286,12 +277,12 @@ Variant *(pattern)* matching
 <div className="example">
 
 ```pascaligo group=variants
-function main 
+function main
   (const action : action; const input : int) : int is
-  (case action of
+  case action of [
     Increment (n) -> input + 1
   | Decrement (n) -> input - 1
-  end)
+  ]
 ```
 
 </div>
@@ -301,17 +292,19 @@ Records
 <div className="example">
 
 ```pascaligo
-type person is record
-  age: int;
-  name: string;
-end
+type person is
+  record [
+    age  : int;
+    name : string
+  ]
 
-const john : person = record
-  age = 18;
-  name = "john doe";
-end
+const john : person =
+  record [
+    age  = 18;
+    name = "john doe"
+  ]
 
-const name: string = john.name;
+const name : string = john.name
 ```
 
 </div>
@@ -321,19 +314,18 @@ Maps
 <div className="example">
 
 ```pascaligo
-type prices is map(nat, tez);
+type prices is map (nat, tez)
 
-const prices: prices = map
-    10n -> 60mutez;
-    50n -> 30mutez;
-    100n -> 10mutez;
-end
+const prices : prices =
+  map [
+    10n  -> 60mutez;
+    50n  -> 30mutez;
+    100n -> 10mutez
+  ]
 
-const price: option(tez) = prices[50n];
+const price : option (tez) = prices[50n]
 
-function mutate (const u: unit) : unit is block {
-    prices[200n] := 10mutez;
-} with unit;
+function mutate (const u : unit) : unit is { prices[200n] := 10mutez } with unit
 ```
 
 </div>
@@ -343,17 +335,14 @@ Contracts & Accounts
 <div className="example">
 
 ```pascaligo group=tezos_specific
-const destinationAddress: address = 
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+const destinationAddress : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 
-const contract : contract (unit) = ( 
-  case (Tezos.get_contract_opt (Tezos.sender) : option(contract(unit))) of
+const contract : contract (unit) =
+  case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
      Some (contract) -> contract
-   | None -> 
-     (failwith ("No contract.") 
-       : contract (unit))
-  end);
-
+   | None -> (failwith ("No contract.") : contract (unit))
+  ]
 ```
 
 </div>
@@ -364,8 +353,8 @@ Transactions
 
 ```pascaligo group=tezos_specific
 
-const payment: operation = 
-  Tezos.transaction(unit, 100mutez, contract);
+const payment : operation =
+  Tezos.transaction (unit, 100mutez, contract)
 
 ```
 
@@ -376,8 +365,8 @@ Exception/Failure
 <div className="example">
 
 ```pascaligo
-function fail (const u: unit) : unit is
-  failwith("a failure message")
+function fail (const u : unit) : unit is
+  failwith ("a failure message")
 ```
 
 </div>
@@ -391,7 +380,7 @@ function fail (const u: unit) : unit is
 <div className="example">
 
 ```cameligo
-let name: string = "Tezos"
+let name : string = "Tezos"
 ```
 
 </div>
@@ -401,7 +390,7 @@ Characters
 <div className="example">
 
 ```cameligo
-let t: string = "t"
+let t : string = "t"
 ```
 
 </div>
@@ -411,7 +400,7 @@ Integers
 <div className="example">
 
 ```cameligo
-let i: int = 42
+let i : int = 42
 ```
 
 </div>
@@ -421,7 +410,7 @@ Natural numbers
 <div className="example">
 
 ```cameligo
-let n: nat = 7n
+let n : nat = 7n
 ```
 
 </div>
@@ -431,7 +420,7 @@ Unit
 <div className="example">
 
 ```cameligo
-let u: unit = unit
+let u : unit = unit
 ```
 
 </div>
@@ -441,8 +430,8 @@ Boolean
 <div className="example">
 
 ```cameligo
-let has_drivers_license: bool = false
-let adult: bool = true
+let has_drivers_license : bool = false
+let adult : bool = true
 ```
 
 </div>
@@ -452,10 +441,10 @@ Boolean Logic
 <div className="example">
 
 ```cameligo
-let booleanLogic: bool = 
-    (not true) = 
-    false = 
-    (false && true) = 
+let booleanLogic : bool =
+    (not true) =
+    false =
+    (false && true) =
     (false || false)
 ```
 
@@ -466,8 +455,8 @@ Mutez (micro tez)
 <div className="example">
 
 ```cameligo
-let tez: tez = 42tez
-let tez: tez = 7mutez
+let tez : tez = 42tez
+let tez : tez = 7mutez
 ```
 
 </div>
@@ -477,10 +466,10 @@ Address
 <div className="example">
 
 ```cameligo
-let tz1address: address = 
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
-let kt1address: address = 
-  ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)
+let tz1address : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
+let kt1address : address =
+  ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD" : address)
 ```
 
 </div>
@@ -490,8 +479,8 @@ Addition
 <div className="example">
 
 ```cameligo
-let add_int: int = 3 + 4
-let add_nat: nat = 3n + 4n
+let add_int : int = 3 + 4
+let add_nat : nat = 3n + 4n
 ```
 
 </div>
@@ -501,11 +490,11 @@ Multiplication & Division
 <div className="example">
 
 ```cameligo
-let mul_int: int = 3 * 4
-let mul_nat: nat = 3n * 4n
+let mul_int : int = 3 * 4
+let mul_nat : nat = 3n * 4n
 
-let div_int: int = 10 / 5
-let div_nat: nat = 10n / 5n
+let div_int : int = 10 / 5
+let div_nat : nat = 10n / 5n
 ```
 
 </div>
@@ -515,7 +504,7 @@ Modulo
 <div className="example">
 
 ```cameligo
-let mod_nat: nat = 10 mod 3
+let mod_nat : nat = 10 mod 3
 ```
 
 </div>
@@ -525,12 +514,12 @@ Tuples
 <div className="example">
 
 ```cameligo
-type name = (string * string)
+type name = string * string
 
-let winner: name = "John", "Doe"
+let winner : name = "John", "Doe"
 
-let firstName: string = winner.0
-let lastName: string = winner.1
+let firstName : string = winner.0
+let lastName : string = winner.1
 ```
 
 </div>
@@ -571,11 +560,8 @@ If Statement
 <div className="example">
 
 ```cameligo
-let if_statement (age : int) : int =
-  if age < 16 then 
-    (failwith ("Too young to drive"): int)
-  else
-    1
+let can_drive (age : nat) : string =
+  if age >= 16n then "yes" else "no"
 ```
 
 </div>
@@ -597,7 +583,7 @@ Variable Binding
 <div className="example">
 
 ```cameligo
-let age: int = 5
+let age : int = 5
 ```
 
 </div>
@@ -607,8 +593,8 @@ Type Annotations
 <div className="example">
 
 ```cameligo
-let someAddress: address = 
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+let someAddress : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 ```
 
 </div>
@@ -618,8 +604,8 @@ Variants
 <div className="example">
 
 ```cameligo group=variants
-type action = 
-| Increment of int
+type action =
+  Increment of int
 | Decrement of int
 ```
 
@@ -630,10 +616,12 @@ Variant *(pattern)* matching
 <div className="example">
 
 ```cameligo group=variants
-let a: action = Increment 5
-let result: int = match a with
-| Increment n -> n + 1
-| Decrement n -> n - 1
+let a : action = Increment 5
+
+let result : int =
+  match a with
+    Increment n -> n + 1
+  | Decrement n -> n - 1
 ```
 
 </div>
@@ -644,16 +632,16 @@ Records
 
 ```cameligo
 type person = {
-  age: int;
-  name: string;
+  age  : int;
+  name : string
 }
 
 let john : person = {
-  age = 18;
-  name = "john doe";
+  age  = 18;
+  name = "john doe"
 }
 
-let name: string = john.name
+let name : string = john.name
 ```
 
 </div>
@@ -665,13 +653,14 @@ Maps
 ```cameligo
 type prices = (nat, tez) map
 
-let prices: prices = Map.literal [
-  (10n, 60mutez);
-  (50n, 30mutez);
-  (100n, 10mutez);
-]
+let prices : prices =
+  Map.literal [
+    (10n, 60mutez);
+    (50n, 30mutez);
+    (100n, 10mutez);
+  ]
 
-let price: tez option = Map.find_opt 50n prices
+let price : tez option = Map.find_opt 50n prices
 
 let prices : prices = Map.update 200n (Some 5mutez) prices
 ```
@@ -683,10 +672,10 @@ Contracts & Accounts
 <div className="example">
 
 ```cameligo group=tezos_specific
-let destinationAddress: address = 
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+let destinationAddress : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 
-let contract : unit contract = 
+let contract : unit contract =
   match (Tezos.get_contract_opt Tezos.sender : unit contract option) with
     Some contract -> contract
     | None -> (failwith "no contract" : unit contract)
@@ -700,7 +689,7 @@ Transactions
 
 ```cameligo group=tezos_specific
 
-let payment: operation = 
+let payment : operation =
   Tezos.transaction unit 100mutez contract
 
 ```
@@ -712,7 +701,7 @@ Exception/Failure
 <div className="example">
 
 ```cameligo
-let fail (u: unit) : unit =
+let fail (u : unit) : unit =
   failwith "a failure message"
 ```
 
@@ -788,9 +777,9 @@ Boolean Logic
 <div className="example">
 
 ```reasonligo
-let booleanLogic: bool = 
+let booleanLogic: bool =
     (!true) ==
-    false == 
+    false ==
     (false && true) ==
     (false || false)
 ```
@@ -813,9 +802,9 @@ Address
 <div className="example">
 
 ```reasonligo
-let tz1address: address = 
+let tz1address: address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
-let kt1address: address = 
+let kt1address: address =
   ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)
 ```
 
@@ -920,12 +909,8 @@ If Statement
 <div className="example">
 
 ```reasonligo
-let if_statement = (age : int) : int =>
-  if (age < 16) { 
-    (failwith ("Too young to drive"): int)
-  } else {
-    1
-  }
+let if_statement = (age : nat) : string =>
+  if (age >= 16n) { "yes"; } else { "no"; }
 ```
 
 </div>
@@ -957,7 +942,7 @@ Type Annotations
 <div className="example">
 
 ```reasonligo
-let someAddress: address = 
+let someAddress: address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 ```
 
@@ -968,7 +953,7 @@ Variants
 <div className="example">
 
 ```reasonligo group=variants
-type action = 
+type action =
 | Increment (int)
 | Decrement (int)
 ```
@@ -1034,10 +1019,10 @@ Contracts & Accounts
 <div className="example">
 
 ```reasonligo group=tezos_specific
-let destinationAddress: address = 
+let destinationAddress: address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
-let contract : contract(unit) = 
+let contract : contract(unit) =
   switch (Tezos.get_contract_opt(Tezos.sender) : option(contract(unit))) {
     | Some(contract) => contract
     | None => (failwith("no contract") : contract(unit))
@@ -1052,7 +1037,7 @@ Transactions
 
 ```reasonligo group=tezos_specific
 
-let payment: operation = 
+let payment: operation =
   Tezos.transaction(unit, 100mutez, contract);
 
 ```
@@ -1141,9 +1126,9 @@ Boolean Logic
 <div className="example">
 
 ```jsligo
-let booleanLogic: bool = 
+let booleanLogic: bool =
     (!true) ==
-    false == 
+    false ==
     (false && true) ==
     (false || false)
 ```
@@ -1166,9 +1151,9 @@ Address
 <div className="example">
 
 ```jsligo
-let tz1address: address = 
+let tz1address: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
-let kt1address: address = 
+let kt1address: address =
   "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD" as address;
 ```
 
@@ -1273,12 +1258,8 @@ If Statement
 <div className="example">
 
 ```jsligo
-let if_statement = (age : int): int => {
-  if (age < 16) { 
-    failwith ("Too young to drive") as int
-  } else {
-    return 1
-  }
+let if_statement = (age : nat): string => {
+  if (age >= (16 as nat)) { return "yes"; } else { return "no"; }
 }
 ```
 
@@ -1311,7 +1292,7 @@ Type Annotations
 <div className="example">
 
 ```jsligo
-let someAddress: address = 
+let someAddress: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 ```
 
@@ -1322,7 +1303,7 @@ Variants
 <div className="example">
 
 ```jsligo group=variants
-type action = 
+type action =
   ["Increment", int]
 | ["Decrement", int];
 ```
@@ -1388,10 +1369,10 @@ Contracts & Accounts
 <div className="example">
 
 ```jsligo group=tezos_specific
-let destinationAddress: address = 
+let destinationAddress: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
-let contract : contract<unit> = 
+let contract : contract<unit> =
   match (Tezos.get_contract_opt(Tezos.sender) as option<contract<unit>>, {
     Some: (contract: contract<unit>) => contract,
     None: () => (failwith("no contract") as contract<unit>)
@@ -1406,7 +1387,7 @@ Transactions
 
 ```jsligo group=tezos_specific
 
-let payment: operation = 
+let payment: operation =
   Tezos.transaction(unit, 100 as mutez, contract);
 
 ```

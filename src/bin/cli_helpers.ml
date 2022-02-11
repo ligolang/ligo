@@ -1,3 +1,19 @@
+module Constants = struct
+  type command = (string * string array)
+  let ligo_install_path = "./.ligo"
+  let esy = "esy"
+  let windows = "Win32"
+  let esy_add = fun ~package_name ~cache_path -> 
+    ("", [|"esy"; "add"; package_name; "--prefix-path"; cache_path|])
+  let esy_install = fun ~cache_path -> 
+    ("", [|"esy"; "install"; "--prefix-path"; cache_path|])
+  let where = fun ~cmd -> 
+    ("", [|"where"; "/q"; cmd|])
+  let which = fun ~cmd -> 
+    ("", [|"which"; cmd|])
+end
+
+
 let return_good ?output_file v = 
   let fmt : Format.formatter = match output_file with
     | Some file_path -> Format.formatter_of_out_channel @@ Out_channel.create file_path
@@ -26,5 +42,31 @@ let return_result : return:return ref -> ?warn:bool -> ?output_file:string ->(un
       match f () with
       | Ok    (v,w) -> return:=Done; return_with_warn ~warn w (fun () -> return_good ?output_file v)
       | Error (e,w) -> return:=Compileur_Error; return_with_warn ~warn w (fun () -> return_bad e)
-    with exn -> return := Exception exn;
+    with exn -> return := Exception exn;;
 
+type command = (string * string array)
+
+(* Checks if executable is present *)
+let does_command_exist (cmd : string) =
+  let cmd = 
+    if String.equal Sys.os_type Constants.windows then
+      Constants.where ~cmd
+    else
+      Constants.which ~cmd in
+  let exit = Lwt_process.exec cmd in
+  let status = Lwt_main.run exit in
+  match status with
+    WEXITED 0 -> Ok true
+  | WEXITED 1 -> Ok false
+  | _ -> Error "unknown error"
+
+(* Runs a commands in a separate process *)
+let run_command (cmd : command) =
+  let status = Lwt_process.with_process_none ~stdout:`Keep ~stderr:`Keep cmd 
+    (fun p -> Lwt.map  
+      (fun status -> 
+        match status with
+          Caml.Unix.WEXITED 0 -> Ok ()
+        | _ -> Error ("unknown error"))
+        p#status) in
+  Lwt_main.run status

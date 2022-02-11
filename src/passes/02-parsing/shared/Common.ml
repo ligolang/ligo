@@ -25,11 +25,12 @@ module CLI (File : FILE) (Comments : COMMENTS) =
       struct
         include Comments
 
-        let input     = File.input
-        let extension = Some File.extension
-        let dirs      = File.dirs
-        let show_pp   = false
-        let offsets   = true
+        let input        = File.input
+        let extension    = Some File.extension
+        let dirs         = File.dirs
+        let project_root = File.project_root
+        let show_pp      = false
+        let offsets      = true
 
         type status = [
           `Done
@@ -61,9 +62,10 @@ module CLI (File : FILE) (Comments : COMMENTS) =
 
     module ParserConfig : ParserLib.API.CONFIG =
       struct
-        let mode                   = Lexer_CLI.mode
+        let mode = Lexer_CLI.mode
 
         (* Disable all debug options for the parser *)
+
         let error_recovery_tracing = false
         let tracing_output         = None
       end
@@ -134,9 +136,10 @@ module MakeParser
     let from_file ~raise buffer file_path : CST.tree =
       let module File =
         struct
-          let input     = Some file_path
-          let extension = File.extension
-          let dirs      = []
+          let input        = Some file_path
+          let extension    = File.extension
+          let dirs         = []
+          let project_root = None
         end in
       let module CLI = CLI (File) (Comments) in
       let module MainLexer =
@@ -162,9 +165,10 @@ module MakeParser
     let from_string ~raise buffer : CST.tree =
       let module File =
         struct
-          let input     = None
-          let extension = File.extension
-          let dirs      = []
+          let input        = None
+          let extension    = File.extension
+          let dirs         = []
+          let project_root = None
         end in
       let module CLI = CLI (File) (Comments) in
       let module MainLexer =
@@ -282,7 +286,8 @@ module MakeTwoParsers
           end
       end
 
-    module ContractParser = Partial (ContractCST) (ContractParser_Menhir)
+    module ContractParser =
+      Partial (ContractCST) (ContractParser_Menhir)
 
     let from_file  = ContractParser.parse_file
     let parse_file = from_file

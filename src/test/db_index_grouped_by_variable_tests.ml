@@ -127,7 +127,7 @@ let first_test ~raise () =
   let state = add_constraint repr state sc_a in
   let state = add_constraint repr state sc_b in
   let state = add_constraint repr state sc_c in
-  (* 
+  (*
     check that :
     - a is associated with sc_a and sc_b
     - c is associated wit sc_c
@@ -152,7 +152,7 @@ let second_test ~raise () =
   let state = add_constraint repr state sc_a in
   let state = add_constraint repr state sc_b in
   let state = add_constraint repr state sc_c in
-  (* 
+  (*
     check that :
     - a is associated with sc_a and sc_b
     - c is associated wit sc_c
@@ -220,7 +220,7 @@ let add_and_merge ~raise ~sc_a ~sc_b ~sc_c check =
 
   (* merge variable b into a *)
   let repr, state = merge ~demoted_repr:tvb ~new_repr:tva repr state in
-  
+
   (* Test three; state is { a -> [sc_a;sc_b]} *)
   (* same check as above except sc_b should now be in a's constraints *)
   let () = check ~raise __LOC__ [(tva, [sc_a; sc_b])] state in
@@ -251,9 +251,9 @@ let row_add_and_merge () =
 (* test add poly constraint + add other poly constraint + merge poly constraint + add third poly constraint *)
 let poly_add_and_merge () =
   let p_forall : p_forall = {
-    binder = Var.of_name "binder";
+    binder = Var.of_input_var "binder";
     constraints = [];
-    body = Location.wrap @@ P_variable (Var.of_name "binder");
+    body = Location.wrap @@ P_variable (Var.of_input_var "binder");
   } in
   let sc_a : type_constraint_simpl = poly tva p_forall in
   let sc_b : type_constraint_simpl = poly tvb p_forall in
@@ -292,7 +292,7 @@ let add_and_remove ~raise ~sc_a ~sc_b ~sc_c check =
 
   (* Test one; state is { a -> [sc_a]} *)
   let () = check ~raise __LOC__ [(tva, [sc_a])] state in
-  
+
   (* Add constraint sc_b *)
   let state = add_constraint repr state sc_b in
 
@@ -336,9 +336,9 @@ let row_add_and_remove () =
 *)
 let poly_add_and_remove () =
   let p_forall : p_forall = {
-    binder = Var.of_name "binder";
+    binder = Var.of_input_var "binder";
     constraints = [];
-    body = Location.wrap @@ P_variable (Var.of_name "binder");
+    body = Location.wrap @@ P_variable (Var.of_input_var "binder");
   } in
   let sc_a : type_constraint_simpl = poly tva p_forall in
   let sc_b : type_constraint_simpl = poly tvb p_forall in
@@ -382,7 +382,7 @@ let mixed ~raise () =
   let () = assert_states_equal ~raise __LOC__
       ~expected_ctors:[(tva, [sc_a])]
       state in
-  
+
   (* Add row *)
   let sc_b : type_constraint_simpl = row 11 tvb in
   let state = add_constraint repr state sc_b in
@@ -397,9 +397,9 @@ let mixed ~raise () =
 
   (* Add poly*)
   let p_forall : p_forall = {
-    binder = Var.of_name "binder";
+    binder = Var.of_input_var "binder";
     constraints = [];
-    body = Location.wrap @@ P_variable (Var.of_name "binder");
+    body = Location.wrap @@ P_variable (Var.of_input_var "binder");
   } in
   let sc_c : type_constraint_simpl = poly tvc p_forall in
   let state = add_constraint repr state sc_c in
@@ -421,7 +421,7 @@ let mixed ~raise () =
       ~expected_rows:[(tvb, [sc_b])]
       ~expected_polys:[(tvc, [sc_c])]
       state in
-  
+
   (* merge variable b into a *)
   let repr, state = merge ~demoted_repr:tvb ~new_repr:tva repr state in
 

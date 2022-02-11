@@ -17,8 +17,7 @@ type large_record is
   ]
 
 (* An entrypoint that occupies a lot of space *)
-function large_entrypoint (const p : int) is
-block {
+function large_entrypoint (const p : int) is {
   const x = "A long line of meaningless words occupying storage";
   function some_lambda (const n : int) is
     record [
@@ -39,8 +38,7 @@ type parameter is LargeEntrypoint of int | SmallEntrypoint of int
 
 type storage is record [result : int]
 
-function main (const parameter : parameter; const storage : storage) is
-block {
+function main (const parameter : parameter; const storage : storage) is {
   const nop = (list [] : list (operation))
 } with
     case parameter of [

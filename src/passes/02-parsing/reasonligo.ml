@@ -1,6 +1,3 @@
-(* This file provides an interface to the ReasonLIGO parser and
-   pretty-printer. *)
-
 (* Vendor dependencies *)
 
 module Trace = Simple_utils.Trace
@@ -13,8 +10,10 @@ module Token       = Lexing_reasonligo.Token
 module Self_tokens = Lexing_reasonligo.Self_tokens
 module ParErr      = Parsing_reasonligo.ParErr
 module Parser      = Parsing_reasonligo.Parser
-module CST         = Cst_reasonligo.CST
+module Common      = Parsing_shared.Common
 module Pretty      = Parsing_reasonligo.Pretty
+module CST         = Cst_reasonligo.CST
+module Tree        = Cst_shared.Tree
 
 (* Making the parsers *)
 
@@ -26,25 +25,22 @@ module ReasonligoParser =
     module Recovery = Parsing_reasonligo.RecoverParser
   end
 
-include Parsing_shared.Common.MakeTwoParsers
+include Common.MakeTwoParsers
           (File) (Comments) (Token) (ParErr) (Self_tokens)
           (CST) (ReasonligoParser)
 
 (* Making the pretty-printers *)
 
-include Parsing_shared.Common.MakePretty (CST) (Pretty)
+include Common.MakePretty (CST) (Pretty)
 
 let pretty_print_file ~raise buffer file_path =
   ContractParser.parse_file ~raise buffer file_path |> pretty_print
 
 let pretty_print_cst ~raise buffer file_path =
-  let cst = parse_file ~raise buffer file_path in
+  let cst = ContractParser.parse_file ~raise buffer file_path in
   let buffer = Buffer.create 59 in
   let state =
-    Cst_reasonligo.Printer.mk_state
-      ~offsets:true
-      ~mode:`Point
-      ~buffer in
-  let apply tree =
-    Cst_reasonligo.Printer.pp_cst state tree; buffer
-  in apply cst
+    Tree.mk_state ~buffer
+                  ~offsets:true
+                  `Point
+  in Cst_reasonligo.Print.to_buffer state cst

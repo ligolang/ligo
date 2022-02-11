@@ -7,5 +7,5 @@ let test =
   let () = assert ((Bytes.unpack (Test.get_storage ta) : nat option) = Some 42n) in
   let c = Test.to_contract ta in
   let b = Bytes.pack "bonjour" in
-  let () = Test.transfer_to_contract_exn c b 0tez in
+  let _ = Test.transfer_to_contract_exn c b 0tez in
   assert ((Bytes.unpack (Test.get_storage ta) : string option) = Some "bonjour")

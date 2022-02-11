@@ -62,7 +62,7 @@ let rec assert_type_expression_eq ~raise (a, b: (type_expression * type_expressi
   | T_arrow _, _ -> raise.raise @@ different_types a b
   | T_variable x, T_variable y -> let _ = Caml.(x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> raise.raise @@ different_types a b
-  | T_module_accessor {module_name=mna;element=a}, T_module_accessor {module_name=mnb;element=b} when String.equal mna mnb -> (
+  | T_module_accessor {module_name=mna;element=a}, T_module_accessor {module_name=mnb;element=b} when Var.equal mna mnb -> (
       let () = assert_type_expression_eq ~raise (a, b) in
       ()
   )

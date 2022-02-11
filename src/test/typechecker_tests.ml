@@ -11,7 +11,7 @@ module Random_type_generator = struct
   let alias var : m = { var ; cor_opt = None }
   let concrete_t var cor : m = { var ; cor_opt = Some cor }
   let make_var i =
-    let name = "n"^(string_of_int i) in 
+    let name = "n"^(string_of_int i) in
     Var.fresh ~name ()
   let (base_t_1, base_t_2) = make_var (-1) , make_var (-2)
   let pp : Format.formatter -> m -> unit = fun ppf {var ; cor_opt} ->
@@ -35,7 +35,7 @@ module Random_type_generator = struct
         let i,nv,tmap = nest (i-1) tmap in
         let cor = make_constructor_or 0 None tvar C_set [ nv.var ] in
         return i (concrete_t tvar cor) tmap
-      | 1 -> 
+      | 1 ->
         let i,nv,tmap = nest (i-1) tmap in
         let cor = make_constructor_or 0 None tvar C_list [ nv.var ] in
         return i (concrete_t tvar cor) tmap
@@ -53,7 +53,7 @@ module Random_type_generator = struct
       {var = base_t_1 ; cor_opt = Some base_type1} ;
       {var = base_t_2 ; cor_opt = Some base_type2} ; ]
     in
-    let _,_,map = 
+    let _,_,map =
       make_type ~base_type1 ~base_type2 ~max_depth
         nb_type
         0
@@ -86,7 +86,7 @@ end
 
 module Small_env_manual_test = struct
 
-  let all_vars = 
+  let all_vars =
     let v name = Var.fresh ~name () in
     List.map ~f:(fun n -> v n) ["a" ; "b" ; "c" ; "d" ; "e" ; "f" ; "g" ; "h" ; "i" ; "j" ; "k"]
   let (a,b,c,d,e,f,g,h,i,j,k) =
@@ -113,8 +113,8 @@ module Small_env_manual_test = struct
     | e' when Var.equal e' e -> Some (make_constructor_or 4 None e C_map [f ; d])
     | f' when Var.equal f' f -> Some (make_constructor_or 5 None f C_nat [])
     | g' when Var.equal g' g -> None
-    | h' when Var.equal h' h -> Some (make_row_or 6 None h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
-    | h' when Var.equal h' h -> Some (make_row_or 7 None h C_variant [(Label "foo", c) ; (Label "bar", d)]) 
+    | h' when Var.equal h' h -> Some (make_row_or 6 None h C_variant [(Label "foo", c) ; (Label "bar", d)])
+    | h' when Var.equal h' h -> Some (make_row_or 7 None h C_variant [(Label "foo", c) ; (Label "bar", d)])
     | i' when Var.equal i' i -> None
     | j' when Var.equal j' j -> Some (make_row_or 8 None j C_record [(Label "baz", b) ; (Label "goo", e)])
     | k' when Var.equal k' k -> Some (make_constructor_or 9 None k C_arrow [h ; c])
@@ -134,7 +134,7 @@ let alias ~raise () =
   let () = test_checker ~raise [al_ok] in
   let () = test_checker_neg ~raise [al_nok] in
   ()
-  
+
 let constructor ~raise () =
   let open Small_env_manual_test in
   let ctor_ok = make_sc_constructor 1 None a C_map [c ; d] in
