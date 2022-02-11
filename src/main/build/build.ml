@@ -33,7 +33,7 @@ module M (Params : Params) =
         fun module_name ast_typed_env env ->
           let module_name = Ast_typed.Var.of_input_var module_name in
           Environment.add_module ~public:() module_name (Environment.to_program ast_typed_env) env
-      let init_env : environment = options.init_env
+      let init_env : environment = options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
         let module_binder = Ast_typed.Var.of_input_var module_binder in
@@ -46,7 +46,7 @@ module M (Params : Params) =
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
-      let options = {options with init_env = env } in
+      let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = env }} in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
       let inferred = Ligo_compile.Of_core.infer ~raise ~options ast_core in
       let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env inferred in
@@ -67,7 +67,7 @@ module Infer (Params : Params) = struct
         fun module_name ast_typed_env env ->
           let module_name = Ast_core.Var.of_input_var module_name in
           Environment.add_core_module ~public:() module_name (Environment.to_core_program ast_typed_env) env
-      let init_env : environment = Environment.init_core @@ Checking.untype_program @@ Environment.to_program @@ options.init_env
+      let init_env : environment = Environment.init_core @@ Checking.untype_program @@ Environment.to_program @@ options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
         let module_binder = Ast_core.Var.of_input_var module_binder in

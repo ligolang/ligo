@@ -53,8 +53,9 @@ let type_contract_string ~raise ~add_warning ~options syntax expression env =
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
   let core          = Of_sugar.compile sugar in
-  let inferred      = Of_core.infer ~raise ~options:{options with init_env = env} core in
-  let typed         = Of_core.typecheck ~raise ~add_warning ~options:{options with init_env = env} Env inferred in
+  let options       = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = env }} in
+  let inferred      = Of_core.infer ~raise ~options core in
+  let typed         = Of_core.typecheck ~raise ~add_warning ~options Env inferred in
   typed,core
 
 let type_expression ~raise ~options source_file syntax expression init_prog =

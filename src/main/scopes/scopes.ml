@@ -127,9 +127,9 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     (i,defs,scopes)
 
   and declaration ~options i core_prg =
-    let test = options.test in
+    let test = options.middle_end.test in
     (* Note : Why do we need to compile here ? Is it just about handling the environment ? *)
-    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version ~env decl in
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.backend.protocol_version ~env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
         if with_types then Simple_utils.Trace.to_option (compile_declaration partials.type_env decl ())
@@ -175,7 +175,7 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
         ( i, top_def_map, inner_def_map, scopes, partials )
       )
     in
-    let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in
+    let init = { type_env = options.middle_end.init_env ; bindings = Bindings_map.empty } in
     List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg
   in
   let (_,top_d,inner_d,s,_) = declaration ~options 0 core_prg in

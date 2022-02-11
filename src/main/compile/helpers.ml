@@ -2,9 +2,11 @@ open Simple_utils.Trace
 open Main_errors
 
 type s_syntax = Syntax_name of string
-type v_syntax = Self_ast_imperative.Syntax.v_syntax
+type v_syntax = PascaLIGO | CameLIGO | ReasonLIGO | JsLIGO
 
-type meta = Self_ast_imperative.Syntax.meta
+type meta = {
+  syntax : v_syntax;
+}
 
 let protocol_to_variant ~raise : string -> Environment.Protocols.t =
   fun s ->
@@ -46,7 +48,7 @@ type options = Compiler_options.t
 let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
   : Preprocessing.Pascaligo.success =
   let open Preprocessing in
-  let project_root = options.project_root in
+  let project_root = options.frontend.project_root in
   let preprocess_file =
     match meta.syntax with
       PascaLIGO  -> Pascaligo.preprocess_file
@@ -54,11 +56,11 @@ let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
     | ReasonLIGO -> Reasonligo.preprocess_file
     | JsLIGO     -> Jsligo.preprocess_file
   in trace ~raise preproc_tracer @@
-      Simple_utils.Trace.from_result (preprocess_file ?project_root options.libs file_path)
+      Simple_utils.Trace.from_result (preprocess_file ?project_root options.frontend.libs file_path)
 
 let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
   let open Preprocessing in
-  let project_root = options.project_root in
+  let project_root = options.frontend.project_root in
   let preprocess_string =
     match meta.syntax with
       PascaLIGO  -> Pascaligo.preprocess_string
@@ -66,7 +68,7 @@ let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
     | ReasonLIGO -> Reasonligo.preprocess_string
     | JsLIGO     -> Jsligo.preprocess_string
   in trace ~raise preproc_tracer @@
-     from_result (preprocess_string ?project_root options.libs file_path)
+     from_result (preprocess_string ?project_root options.frontend.libs file_path)
 
 (* Front-end compilation *)
 
@@ -154,9 +156,10 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     | JsLIGO     -> parse_and_abstract_jsligo in
   let abstracted =
     parse_and_abstract ~raise buffer file_path in
+  let js_style_no_shadowing = Caml.(=) meta.syntax JsLIGO in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_module abstracted ~add_warning ~lang:meta.syntax in
+    Self_ast_imperative.all_module abstracted ~js_style_no_shadowing ~add_warning in
   applied
 
 let parse_and_abstract_expression ~raise ~(meta: meta) buffer =
@@ -173,9 +176,10 @@ let parse_and_abstract_expression ~raise ~(meta: meta) buffer =
       in
   let abstracted =
     parse_and_abstract ~raise buffer in
+  let js_style_no_shadowing = Caml.(=) meta.syntax JsLIGO in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_expression ~lang:meta.syntax abstracted
+    Self_ast_imperative.all_expression ~js_style_no_shadowing abstracted
   in applied
 
 let parse_and_abstract_string_reasonligo ~raise buffer =
@@ -225,9 +229,10 @@ let parse_and_abstract_string ~raise ~add_warning (syntax: v_syntax) buffer =
         parse_and_abstract_string_jsligo in
   let abstracted =
     parse_and_abstract ~raise buffer in
+  let js_style_no_shadowing = Caml.(=) syntax JsLIGO in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_module abstracted ~add_warning ~lang:syntax
+    Self_ast_imperative.all_module abstracted ~add_warning ~js_style_no_shadowing
   in applied
 
 let pretty_print_pascaligo_cst =

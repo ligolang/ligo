@@ -8,14 +8,14 @@ type form =
   | Env
 
 let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
-  match options.infer with
+  match options.middle_end.infer with
     | true  ->
-       let env_inf = Inference.decompile_env @@ Environment.to_program options.init_env in
+       let env_inf = Inference.decompile_env @@ Environment.to_program options.middle_end.init_env in
        let (_,e,_,_) = trace ~raise inference_tracer @@ Inference.type_module ~init_env:env_inf m in e
     | false -> m
 
 let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
-  let typed = trace ~raise checking_tracer @@ Checking.type_program ~test:options.test ~env:options.init_env ~protocol_version:options.protocol_version m in
+  let typed = trace ~raise checking_tracer @@ Checking.type_program ~test:options.middle_end.test ~env:options.middle_end.init_env ~protocol_version:options.backend.protocol_version m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
     let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
@@ -27,8 +27,8 @@ let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) 
 
 let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
     : Ast_typed.expression =
-  let env = Environment.append init_prog options.init_env in
-  let inferred = match options.infer with
+  let env = Environment.append init_prog options.middle_end.init_env in
+  let inferred = match options.middle_end.infer with
     | true  ->
       let env_inf = Inference.decompile_env @@ Environment.to_program env in
       let (_,expr,_,_) =
@@ -36,7 +36,7 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
       expr
     | false -> expr
   in
-  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~test:false ~protocol_version:options.protocol_version ~env inferred in
+  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~test:false ~protocol_version:options.backend.protocol_version ~env inferred in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
   applied
 
