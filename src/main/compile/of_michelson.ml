@@ -37,6 +37,7 @@ let build_contract ~raise :
             (Memory_proto_alpha.prims_of_strings contract) in
         let _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
           Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract' in
+        let contract = Self_michelson.optimize_with_types ~raise Hangzhou contract in
         contract
 
 let measure ~raise = fun m ->

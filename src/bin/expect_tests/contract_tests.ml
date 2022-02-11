@@ -16,7 +16,7 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    1511 bytes |}] ;
+    1503 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
@@ -478,9 +478,7 @@ let%expect_test _ =
                      CAR ;
                      PAIR ;
                      EMPTY_SET address ;
-                     PUSH bool True ;
-                     SENDER ;
-                     UPDATE }
+                     PUSH bool True }
                    { DUP ;
                      SENDER ;
                      MEM ;
@@ -514,9 +512,9 @@ let%expect_test _ =
                           CAR ;
                           PAIR } ;
                      SWAP ;
-                     PUSH bool True ;
-                     SENDER ;
-                     UPDATE } ;
+                     PUSH bool True } ;
+                 SENDER ;
+                 UPDATE ;
                  SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -740,9 +738,7 @@ let%expect_test _ =
                       CDR ;
                       CDR ;
                       DIG 3 ;
-                      NONE (set address) ;
-                      SWAP ;
-                      UPDATE }
+                      NONE (set address) }
                     { DUP ;
                       CDR ;
                       SWAP ;
@@ -754,9 +750,9 @@ let%expect_test _ =
                       DIG 3 ;
                       DIG 4 ;
                       SWAP ;
-                      SOME ;
-                      SWAP ;
-                      UPDATE } ;
+                      SOME } ;
+                 SWAP ;
+                 UPDATE ;
                  DUP 3 ;
                  CAR ;
                  CDR ;

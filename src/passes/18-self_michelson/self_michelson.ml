@@ -368,18 +368,67 @@ let opt_dip3 : _ peep3 = function
             proj1 ]
   | _ -> None
 
-let opt_cond : _ peep1 = function
+let opt_cond ~type_map ~changed : _ peep1 = function
+  | _ when ! changed  -> None
   | Prim (l, p, [bt; bf], annot) when is_cond p -> (
-    let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"] in
-    let force_z = ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"] in
+    let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"; "CONS"; "SIZE"; "UPDATE"; "ADD"; "SUB"; "MUL"; "EDIV"; "ABS"; "ISNAT"; "INT"; "NEG"; "LSL"; "LSR"; "OR"; "AND"; "XOR"; "NOT"; "COMPARE"; "EQ"; "NEQ"; "LT"; "GT"; "LE"; "GE"; "SLICE"; "CONCAT"; "PACK"; "SENDER"; "AMOUNT"; "ADDRESS"; "SOURCE"; "BALANCE"; "LEVEL"; "NOW"] in
+    let force_z = ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"; "UPDATE"] in
+    let no_force = ["NIL"; "NONE"; "LEFT"; "RIGHT"] in
+    let eq_type ll lr =
+      let rec aux_eq l r =
+        let open Tezos_micheline.Micheline in
+        match l, r with
+        | Prim (_, s, l, _), Prim (_, s', l', _) when String.equal s s' -> (
+           match List.zip l l' with
+           | List.Or_unequal_lengths.Unequal_lengths ->
+              false
+           | Ok l ->
+              List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) l)
+        )
+        | Seq (_, l), Seq (_, l') -> (
+           match List.zip l l' with
+           | List.Or_unequal_lengths.Unequal_lengths ->
+              false
+           | Ok l ->
+              List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) l)
+        )
+        | _, _ -> false in
+      let _tl = List.Assoc.find_exn type_map ~equal:Int.equal ll in
+      let _tr = List.Assoc.find_exn type_map ~equal:Int.equal lr in
+      match List.zip _tl _tr with
+      | List.Or_unequal_lengths.Unequal_lengths ->
+         false
+      | Ok l ->
+         List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) l) in
+    let pred = function
+        Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_z @ no_force) l -> true
+      | _ -> false in
+    let eq = fun m1 m2 -> match m1, m2 with
+        Prim (ll, l, [], _), Prim (lr, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r && eq_type ll lr -> true
+      | Prim (ll, l, _, _), Prim (lr, r, _, _) when List.mem ~equal:String.equal no_force l && String.equal l r && eq_type ll lr -> true
+      | Prim (ll, l, [Int (_, n)], _), Prim (lr, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_z l && String.equal l r && Z.equal n m && eq_type ll lr -> true
+      | _ -> false in
+    match last_is eq pred bt, last_is eq pred bf with
+    | Some l_op, Some r_op when eq l_op r_op ->
+       let bt = remove_last pred bt in
+       let bf = remove_last pred bf in
+       changed := true;
+       Some [Prim (l, p, [bt; bf], annot); l_op]
+    | _ -> None)
+  | _ -> None
+
+let opt_cond_inj  : _ peep1 = function
+  | Prim (l, p, [bt; bf], annot) when is_cond p -> (
+    let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "DUP"; "UNIT"; "SOME"] in
+    let force_z = ["PAIR"; "UNPAIR"; "DUP"; "DIG"; "DUG"] in
     let no_force = ["NIL"; "NONE"] in
     let pred = function
         Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_z @ no_force) l -> true
       | _ -> false in
     let eq = fun m1 m2 -> match m1, m2 with
-        Prim (_, l, [], _), Prim (_, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r -> true
-      | Prim (_, l, _, _), Prim (_, r, _, _) when List.mem ~equal:String.equal no_force l && String.equal l r -> true
-      | Prim (_, l, [Int (_, n)], _), Prim (_, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_z l && String.equal l r && Z.equal n m -> true
+        Prim (_ll, l, [], _), Prim (_lr, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r -> true
+      | Prim (_ll, l, _, _), Prim (_lr, r, _, _) when List.mem ~equal:String.equal no_force l && String.equal l r -> true
+      | Prim (_ll, l, [Int (_, n)], _), Prim (_lr, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_z l && String.equal l r && Z.equal n m -> true
       | _ -> false in
     match last_is eq pred bt, last_is eq pred bf with
     | Some l_op, Some r_op when eq l_op r_op ->
@@ -688,7 +737,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep3 opt_dip3 ;
                      peephole @@ peep2 opt_dip2 ;
                      peephole @@ peep1 opt_dip1 ;
-                     peephole @@ peep1 opt_cond ;
+                     peephole @@ peep1 opt_cond_inj ;
                      peephole @@ peep2 opt_swap2 ;
                      peephole @@ peep3 opt_beta3 ;
                      peephole @@ peep5 opt_beta5 ;
@@ -714,3 +763,46 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
   let x = opt_strip_annots x in
   let x = use_lambda_instr x in
   x
+
+let rec optimize_with_types ~raise : Environment.Protocols.t -> 'l michelson -> 'l michelson =
+  fun proto x ->
+  ignore proto; ignore raise;
+  let c, locs = Tezos_micheline.Micheline.extract_locations x in
+  let c = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> failwith "foo A") @@
+            Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.prims_of_strings c in
+  let c = Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
+  match c with
+    | Seq (rl, _p :: _s :: expr :: tl) ->
+       let map, _ = Proto_alpha_utils.Trace.trace_tzresult_lwt ~raise (fun errs ->
+                        let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
+                        Format.printf "@[Error(s) occurred while translating to Michelson:@.%a@]"
+                          (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs;
+                        failwith "foo B"
+                      ) @@
+                      Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract c in
+       let map = List.map ~f:(fun (i, (l, r)) -> (i, List.map ~f:(fun (c, _) ->
+                                                         let c = Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims c in
+                                                         let c = Tezos_micheline.Micheline_printer.printable (fun prim -> prim) c in
+                                                         c) l,
+                                                  List.map ~f:(fun (c, _) ->
+                                                      let c = Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims c in
+                                                      let c = Tezos_micheline.Micheline_printer.printable (fun prim -> prim) c in
+                                                      c) r)) map in
+       let expr = Tezos_micheline.Micheline.map_node (fun l -> l) (fun v -> Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.string_of_prim v) expr in
+       let mapl = (List.map ~f:(fun (a, b, _) -> (a, b)) map) in
+       let dance _s =
+         let _s,_ = Tezos_micheline.Micheline.extract_locations _s in
+         let _s = Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims _s in
+         let _s = Tezos_micheline.Micheline.inject_locations (fun x -> x) _s in
+         Tezos_micheline.Micheline.map_node (fun l -> List.Assoc.find_exn locs ~equal:Int.equal l) (fun x -> x) _s in
+       let changed = ref false in
+       let _, expr = on_seqs (peephole (peep1 @@ opt_cond ~changed ~type_map:mapl)) expr in
+       let expr = if ! changed then optimize proto expr else expr in
+       let expr = Tezos_micheline.Micheline.map_node (fun l -> List.Assoc.find_exn locs ~equal:Int.equal l) (fun x -> x) expr in
+       let _s = dance _s in
+       let _p = dance _p in
+       let tl = List.map ~f:dance tl in
+       let rl = List.Assoc.find_exn locs ~equal:Int.equal rl in
+       let r = Seq (rl, [_p ; _s; expr] @ tl) in
+       if ! changed then optimize_with_types ~raise proto r else r
+    | _ -> x
