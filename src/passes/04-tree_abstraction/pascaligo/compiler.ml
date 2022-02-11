@@ -45,13 +45,14 @@ let rec get_var : CST.expr -> (string * location) option =
 let compile_var_opt : CST.expr -> AST.expression_variable option = fun expr ->
   Option.map (get_var expr) ~f:(fun (v,loc) -> mk_var ~loc v)
 
-let compile_attributes : CST.attribute list -> AST.attributes =
-  fun attributes ->
-    let attrs = List.map ~f:(fst <@ r_split) attributes
-    and f = function
-      x, Some (Attr.String value) -> (x^":"^value)
-    | x, None -> x
-    in List.map attrs ~f
+let compile_attributes : CST.attribute list -> AST.attributes = fun attr ->
+  let f : Attr.attribute Region.reg -> string =
+    fun x ->
+      let ((k,v_opt),_loc) = r_split x in
+      match v_opt with
+      | Some (String v) -> String.concat ~sep:":" [k;v]
+      | None -> k
+  in List.map ~f attr
 
 let compile_selection : CST.selection -> 'a access * location = function
   | FieldName name ->
