@@ -38,10 +38,9 @@ let compile_attributes : CST.attributes -> string list = fun attr ->
     fun x ->
       let ((k,v_opt),_loc) = r_split x in
       match v_opt with
-      | Some (String v) -> String.concat [k;v]
+      | Some (String v) -> String.concat ~sep:":" [k;v]
       | None -> k
-  in
-  List.map ~f attr
+    in List.map ~f attr
 
 let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = fun te ->
   let self = compile_type_expression ~raise in
