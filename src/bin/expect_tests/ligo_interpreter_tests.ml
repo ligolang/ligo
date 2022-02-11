@@ -37,7 +37,6 @@ let%expect_test _ =
     - test_var_neg exited with value ().
     - test_sizes exited with value ().
     - test_modi exited with value ().
-    - test_fold_while exited with value ().
     - test_assertion_pass exited with value ().
     - test_map_finds exited with value ().
     - test_map_fold exited with value ().

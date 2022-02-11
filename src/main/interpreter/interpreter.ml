@@ -227,10 +227,6 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       if Z.Compare.(>) a' Z.zero then return_some @@ V_Ct (C_nat a')
       else return_none ()
     | ( C_IS_NAT , _  ) -> fail @@ error_type
-    | ( C_FOLD_CONTINUE  , [ v ] ) -> return @@ v_pair (v_bool true  , v)
-    | ( C_FOLD_CONTINUE , _  ) -> fail @@ error_type
-    | ( C_FOLD_STOP      , [ v ] ) -> return @@ v_pair (v_bool false , v)
-    | ( C_FOLD_STOP , _  ) -> fail @@ error_type
     | ( C_ADDRESS , [ V_Ct (C_contract { address ; entrypoint=_}) ] ) ->
       return (V_Ct (C_address address))
     | ( C_ADDRESS , _  ) -> fail @@ error_type
@@ -472,16 +468,6 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
         )
         (V_Ct C_unit) elts
     | ( C_MAP_ITER , _  ) -> fail @@ error_type
-    | ( C_FOLD_WHILE , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; init ] ) -> (
-      let* arg_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let rec aux b el =
-        let env' = Env.extend env arg_binder (arg_ty, el) in
-        let* res = eval_ligo body calltrace env' in
-        let (b',el') = try Option.value_exn (extract_fold_while_result res) with _ -> (failwith "bad pair") in
-        if b then aux b' el' else return el' in
-      aux true init
-    )
-    | ( C_FOLD_WHILE , _  ) -> fail @@ error_type
     (* ternary *)
     | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
       (*TODO : allign with tezos*)
@@ -969,11 +955,11 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
       return @@ V_Ct (C_bytes chest_key)
-    | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) -> 
+    | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) ->
       let>> vp = Get_voting_power (loc, calltrace, hk) in
       return vp
     | ( C_TEST_GET_VOTING_POWER , _ ) -> fail @@ error_type
-    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) -> 
+    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) ->
       let>> tvp = Get_total_voting_power (loc, calltrace) in
       return tvp
     | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type

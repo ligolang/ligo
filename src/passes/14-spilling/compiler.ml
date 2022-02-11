@@ -40,9 +40,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_UPDATE -> C_UPDATE
   (* Loops *)
   | C_ITER -> C_ITER
-  | C_FOLD_WHILE -> C_FOLD_WHILE
-  | C_FOLD_CONTINUE -> C_FOLD_CONTINUE
-  | C_FOLD_STOP -> C_FOLD_STOP
   | C_LOOP_LEFT -> C_LOOP_LEFT
   | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
   | C_LOOP_STOP -> C_LOOP_STOP
@@ -590,13 +587,20 @@ and compile_expression ~raise (ae:AST.expression) : expression =
               let collection' = self collection in
               return @@ E_fold_right (f' , (collection',elem_type) , initial')
             )
+          | [ f ; i], C_LOOP_LEFT -> (
+              let f' = expression_to_iterator_body f in
+              let i' = self i in
+              return @@ E_iterator (iterator_name , f' , i')
+          )
           | _ -> raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
-      let (iter , map , fold, fold_left, fold_right) = iterator_generator C_ITER,
+      let (iter , map , fold, fold_left, fold_right,loop_left) = iterator_generator C_ITER,
                                                        iterator_generator C_MAP,
                                                        iterator_generator C_FOLD,
                                                        iterator_generator C_FOLD_LEFT,
-                                                       iterator_generator C_FOLD_RIGHT in
+                                                       iterator_generator C_FOLD_RIGHT,
+                                                       iterator_generator C_LOOP_LEFT
+                                                       in
       match (name , lst) with
       | (C_SET_ITER , lst) -> iter lst
       | (C_LIST_ITER , lst) -> iter lst
@@ -610,6 +614,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       | (C_LIST_FOLD_LEFT, lst) -> fold_left lst
       | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
       | (C_SET_FOLD_DESC , lst) -> fold_right lst
+      | (C_LOOP_LEFT, lst) -> loop_left lst
       | _ -> (
           let lst' = List.map ~f:(self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}

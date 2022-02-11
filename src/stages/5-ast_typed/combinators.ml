@@ -164,12 +164,21 @@ let get_t_tuple (t:type_expression) : type_expression list option = match t.type
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
   | T_record m ->
       let lst = tuple_of_record m.content in
-      ( match List.(length lst = 2) with
-        | true -> Some (List.(nth_exn lst 0 , nth_exn lst 1))
-        | false -> None
+      ( match lst with
+        | [fst;snd] -> Some (fst,snd)
+        | _ -> None
       )
   | _ -> None
 
+let get_t_or (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
+  | T_sum m ->
+      let lst = List.map ~f:(fun (a,{associated_type;_}) -> a,associated_type) @@ LMap.to_kv_list m.content in
+      ( match lst with
+        | [(Label "left",l);(Label "right",r)]
+        | [(Label "right",r);(Label "left",l)] -> Some (l,r)
+        | _ -> None
+      )
+  | _ -> None
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map -> Some (k,v)

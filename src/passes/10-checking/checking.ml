@@ -575,7 +575,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let (opname', tv) =
         type_constant ~raise ~test ~protocol_version opname e.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
-  | E_constant {cons_name=C_FOLD_WHILE | C_LOOP_LEFT as opname;
+  | E_constant {cons_name= C_LOOP_LEFT as opname;
                 arguments = [
                     ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None ; attributes=_};
                                                    output_type = None ;
@@ -586,8 +586,9 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let v_initr = type_expression' ~raise ~test ~protocol_version context init_record in
       let tv_out = get_type v_initr in
       let input_type  = tv_out in
-      let e' = Context.add_value context lname input_type in
-      let body = type_expression' ~raise ~test ~protocol_version e' result in
+      (* let (input_type,_)  = trace_option ~raise (expected_variant tv_out.location tv_out) @@ get_t_or  tv_out in *)
+      let context = Context.add_value context lname input_type in
+      let body = type_expression' ~raise ~test ~protocol_version context result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda';v_initr] in
