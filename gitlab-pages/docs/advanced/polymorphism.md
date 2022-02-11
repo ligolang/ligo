@@ -104,7 +104,7 @@ let id (type a) (x : a) : a = x
 ```
 
 Here we introduce a type variable `a` which can be generalised using
-`(type a)` in the declaration.
+`(type a)` after the function name in the declaration.
 
 </Syntax>
 <Syntax syntax="reasonligo">
