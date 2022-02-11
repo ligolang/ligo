@@ -136,6 +136,7 @@ let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
    env |-I expr : a, and translate_expression expr env = (expr', us), then
    select us env |-O expr' : a. *)
 let rec translate_expression (expr : I.expression) (env : I.environment) =
+  Format.printf "Translat expression : %a\n%! with env: %a \n%!" I.PP.expression expr I.PP.environment env;
   let meta : meta =
     { location = expr.location;
       env = [];
