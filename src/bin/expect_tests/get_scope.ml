@@ -32,7 +32,7 @@ references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 6-7
 (b#6 -> b) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 3, characters 4-5 |resolved: int|
 references: []
-(f#5 -> f) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 6-7 |resolved: int -> int -> int|
+(f#5 -> f) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 6-7 |core: int -> int -> int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 2-3
 (g#3 -> g) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 8-9 |resolved: int|
@@ -120,7 +120,7 @@ Variable definitions:
 references: []
 (b#4 -> b) File "../../test/contracts/get_scope_tests/lambda.mligo", line 3, characters 4-5 |resolved: int|
 references: []
-(f#3 -> f) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 6-7 |resolved: int -> int -> int|
+(f#3 -> f) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 6-7 |core: int -> int -> int|
 references:
   File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 2-3
 (i#1 -> i) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 36-37 |core: int|
@@ -228,7 +228,7 @@ let%expect_test _ =
     ( int * int ) -> int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-5
-    (c#5 -> c) File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11 |resolved:
+    (c#5 -> c) File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11 |core:
     ( int * int ) -> int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-3
@@ -389,7 +389,7 @@ let%expect_test _ =
     (c#4 -> c) File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 26-27 |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 35-36
-    (f#2 -> f) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 6-7 |resolved: int -> int -> int|
+    (f#2 -> f) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 6-7 |core: int -> int -> int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 16-17
     (i#0 -> i) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 36-37 |core: int|
@@ -507,9 +507,7 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 10, characters 8-9
     (c#4 -> c) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 8, characters 4-5 |resolved: foo_record|
     references: []
-    (main#6 -> main) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-8 |resolved:
-    record[bar -> sum[Bar -> string , Foo -> int] , foo -> sum[Bar -> string , Foo -> int]] ->
-    sum[Bar -> string , Foo -> int]|
+    (main#6 -> main) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-8 |core: foo_record -> foo_variant|
     references: []
     (p#5 -> p) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 10-11 |core: foo_record|
     references:

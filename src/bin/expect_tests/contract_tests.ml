@@ -1615,10 +1615,11 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.mligo"];
   [%expect {|
 type storage = (int , int)
-const main =
-  lambda (n : (int , storage)) return let x = let x = 7 : int in
-                                              (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) : (int , int) in
-                                      (list[] : list (operation) , x) : (list (operation) , storage)
+const main : (int , storage) -> (list (operation) , storage) =
+  lambda (n : (int , storage)) : (list (operation) , storage) return
+  let x : (int , int) = let x : int = 7 in
+                        (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
+  (list[] : list (operation) , x)
 const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
@@ -2249,11 +2250,11 @@ let%expect_test _ =
                      NONE() ,
                      0mutez ,
                      unit)
-                     const foo = let gen#12 = (c)@(unit) in  match gen#12 with
+                     const foo = let gen#13 = (c)@(unit) in  match gen#13 with
                                                               | ( _a , _b ) ->
                                                               unit
                      const c = lambda (gen#7) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let gen#15 = (c)@(unit) in  match gen#15 with
+                     const foo = let gen#16 = (c)@(unit) in  match gen#16 with
                                                               | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
                                                               unit |} ]
 

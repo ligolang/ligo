@@ -463,7 +463,6 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let {type_params;binders;lhs_type;eq=_;let_rhs} : CST.let_binding = binding in
     let let_rhs = compile_expression ~raise let_rhs in
     let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
-    let let_rhs = Option.value_map ~default:let_rhs ~f:(e_annotation let_rhs) lhs_type in
     (match binders with
       pattern, [] when pattern_is_matching pattern -> (* matchin *)
         let matchee = match lhs_type with
@@ -476,12 +475,14 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     | pattern, args -> (* functoin *)
     let let_binder, fun_ = compile_parameter ~raise pattern in
     let binders = List.map ~f:(compile_parameter ~raise) args in
-    let let_rhs = List.fold_right binders ~init:let_rhs ~f:(fun (b,fun_) e ->
-      e_lambda ~loc b None @@ fun_ e) in
+    (* collect type annotation for let function declaration *)
+    let let_rhs, lhs_type = List.fold_right ~init:(let_rhs,lhs_type) ~f:(fun (b,fun_) (e,a) ->
+      e_lambda ~loc:(Var.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
+    let let_binder   = {let_binder with ascr = lhs_type} in
     (* This handle the recursion *)
     let let_rhs = match kwd_rec with
       Some reg ->
-        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ List.fold_right ~init:lhs_type ~f:(fun (b,_) a -> Option.map2 ~f:t_arrow b.ascr a) binders in
+        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
         let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.anno_expr) @@ get_e_annotation e  in
         let lambda = trace_option ~raise (recursion_on_non_function loc) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
         e_recursive ~loc:(Location.lift reg#region) let_binder.var fun_type lambda
@@ -775,15 +776,16 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
     | _,_ ->
       let let_rhs = compile_expression ~raise let_rhs in
       let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
-      let let_rhs = Option.value_map ~default:let_rhs ~f:(e_annotation let_rhs) lhs_type in
       let binder,_fun_ = compile_parameter ~raise pattern in
       let binders = List.map ~f:(compile_parameter ~raise) args in
-      let let_rhs = List.fold_right binders ~init:let_rhs ~f:(fun (b,fun_) e ->
-        e_lambda ~loc:(Var.get_location b.var) b None @@ fun_ e) in
+      (* collect type annotation for let function declaration *)
+      let let_rhs,lhs_type = List.fold_right ~init:(let_rhs,lhs_type) ~f:(fun (b,fun_) (e,a) ->
+        e_lambda ~loc:(Var.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
+      let binder   = {binder with ascr = lhs_type} in
       (* This handle the recursion *)
       let let_rhs = match kwd_rec with
         Some reg ->
-          let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ List.fold_right ~init:lhs_type ~f:(fun (b,_) a -> Option.map2 ~f:t_arrow b.ascr a) binders in
+          let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
           let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.anno_expr) @@ get_e_annotation e  in
           let lambda = trace_option ~raise (recursion_on_non_function @@ Location.lift region) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
           e_recursive ~loc:(Location.lift reg#region) binder.var fun_type lambda

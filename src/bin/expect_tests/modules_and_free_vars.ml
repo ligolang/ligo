@@ -21,9 +21,9 @@ let%expect_test _ =
     const main = lambda (gen#3) return  match gen#3 with
                                          | ( action , gen#4 ) ->
                                          ( LIST_EMPTY() ,  match action with
-                                                            | Decrement unit_proj#8 ->
+                                                            | Decrement unit_proj#11 ->
                                                               amt
-                                                            | Increment unit_proj#9 ->
+                                                            | Increment unit_proj#12 ->
                                                               bal ) |}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
@@ -47,9 +47,9 @@ let%expect_test _ =
     const main = lambda (gen#3) return  match gen#3 with
                                          | ( action , gen#4 ) ->
                                          ( LIST_EMPTY() ,  match action with
-                                                            | Decrement unit_proj#8 ->
+                                                            | Decrement unit_proj#11 ->
                                                               amt
-                                                            | Increment unit_proj#9 ->
+                                                            | Increment unit_proj#12 ->
                                                               bal ) |}]
 
 let%expect_test _ =
@@ -71,9 +71,9 @@ let%expect_test _ =
     const main = lambda (gen#3) return  match gen#3 with
                                          | ( action , gen#4 ) ->
                                          ( LIST_EMPTY() ,  match action with
-                                                            | Decrement unit_proj#8 ->
+                                                            | Decrement unit_proj#11 ->
                                                               amt
-                                                            | Increment unit_proj#9 ->
+                                                            | Increment unit_proj#12 ->
                                                               bal ) |}]
 
 let%expect_test _ =
@@ -101,7 +101,7 @@ run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules_with_free_vars.
   const main = lambda (gen#3) return  match gen#3 with
                                        | ( action , gen#4 ) ->
                                        ( LIST_EMPTY() ,  match action with
-                                                          | Decrement unit_proj#8 ->
+                                                          | Decrement unit_proj#11 ->
                                                             1000000mutez
-                                                          | Increment unit_proj#9 ->
+                                                          | Increment unit_proj#12 ->
                                                             used ) |}]
