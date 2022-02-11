@@ -49,7 +49,7 @@ let compile_attributes : CST.attribute list -> AST.attributes =
   fun attributes ->
     let attrs = List.map ~f:(fst <@ r_split) attributes
     and f = function
-      _, Some (Attr.String value) -> Some value
+      x, Some (Attr.String value) -> Some (x^":"^value)
     | x, None -> Some x
     in List.filter_map attrs ~f
 
