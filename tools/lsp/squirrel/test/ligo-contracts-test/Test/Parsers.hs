@@ -61,6 +61,31 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/modules.mligo"
       , "polymorphism/modules.religo"
 
+        -- LIGO-446
+      , "match.ligo"
+      , "loop.ligo"
+      , "failwith.ligo"
+      , "type_puning.ligo"
+      , "heap.ligo"
+      , "tutorials/optimisation/LargeEntrypointV2.ligo"
+      , "tutorials/optimisation/EffectfulBindingV1.ligo"
+      , "tutorials/optimisation/EffectfulBindingV2.ligo"
+      , "tutorials/optimisation/LargeEntrypointV1.ligo"
+      , "tutorials/optimisation/EffectfulBindingV3.ligo"
+      , "multisig-v2.ligo"
+      , "polymorphism/comb.ligo" -- LIGO-331
+      , "pascaligo_long_remove.ligo"
+      , "patch_long_path.ligo"
+      , "long_remove.ligo"
+      , "record.ligo"
+      , "basic_multisig/multisig.ligo"
+      , "loop14.ligo"
+      , "loop17.ligo"
+      , "multisig.ligo"
+      , "hashlock.ligo"
+      , "id.ligo"
+      , "long_assign.ligo"
+
         -- LIGO-432
       , "tutorials/inter-contract-calls/CreateAndCall.religo"
       ]

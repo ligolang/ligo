@@ -6,13 +6,12 @@ open Simple_utils.PP_helpers
 include Stage_common.PP
 
 (* TODO: move to common *)
-let lmap_sep value sep ppf m =
-  let lst = LMap.to_kv_list m in
-  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+let sum_set_t value sep ppf m =
+  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
-let lmap_sep_d x = lmap_sep x (tag " ,@ ")
+let sum_set_t x = sum_set_t x (tag " ,@ ")
 
 let attributes_2 (attr: string list) : string =
   List.map ~f:(fun s -> "[@@" ^ s ^ "]") attr |> String.concat
@@ -21,9 +20,8 @@ let attributes_1 (attr: string list) : string =
   List.map ~f:(fun s -> "[@" ^ s ^ "]") attr |> String.concat
 
 
-let record_sep_t value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list m in
-  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+let record_sep_t value sep ppf (m : (label * type_expression row_element) list) =
+  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
   let new_pp ppf (k, {associated_type; attributes; _}) =
     let attr = attributes_2 attributes in
     fprintf ppf "@[<h>%a -> %a %s@]" label k value associated_type attr
@@ -32,18 +30,21 @@ let record_sep_t value sep ppf (m : 'a label_map) =
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
-  | T_sum m ->
-    let s ppf = fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) in
-    (match m.attributes with [] -> fprintf ppf "%a" s m.fields
+  | T_sum m -> (
+    let s ppf = fprintf ppf "@[<hv 4>sum[%a]@]" (sum_set_t type_expression) in
+    match m.attributes with [] -> fprintf ppf "%a" s m.fields
     |_ ->
       let attr = attributes_1 m.attributes in
-      fprintf ppf "(%a %s)" s m.fields attr)
-  | T_record m ->
+      fprintf ppf "(%a %s)" s m.fields attr
+  )
+  | T_record m -> (
     let r = record_sep_t type_expression (const ";") in
-    (match m.attributes with [] -> fprintf ppf "{%a}" r m.fields
-    | _ -> let attr : string = attributes_1 m.attributes in
-      fprintf ppf "({%a} %s)" r m.fields attr)
-
+    match m.attributes with
+    | [] -> fprintf ppf "{%a}" r m.fields
+    | _ ->
+      let attr : string = attributes_1 m.attributes in
+      fprintf ppf "({%a} %s)" r m.fields attr
+  )
   | T_variable        tv -> type_variable ppf tv
   | T_tuple            t -> type_tuple    type_expression ppf t
   | T_arrow            a -> arrow         type_expression ppf a
@@ -68,8 +69,8 @@ and expression_content ppf (ec : expression_content) =
   | E_constant c ->
       fprintf ppf "%a(%a)"
         constant' (const_name c.cons_name)
-        (list_sep_d expression) c.arguments
-  | E_record      r -> record      expression ppf r
+        (list_sep expression (tag " ,")) c.arguments
+  | E_record      r -> record ppf r
   | E_tuple       t -> tuple       expression ppf t
   | E_accessor    a -> accessor    expression ppf a
   | E_update      u -> update      expression ppf u
@@ -94,6 +95,9 @@ and expression_content ppf (ec : expression_content) =
   | E_for        f -> for_       expression ppf f
   | E_for_each   f -> for_each   expression ppf f
   | E_while      w -> while_     expression ppf w
+
+and record ppf kvl =
+  fprintf ppf "@[<v>{ %a }@]" (list_sep (fun ppf (l,e)-> Format.fprintf ppf "%a : %a" label l expression e) (tag " ;")) kvl
 
 and attributes ppf attributes =
   let attr =

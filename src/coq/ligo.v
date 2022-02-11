@@ -9,8 +9,6 @@ Context {A : Set}.
 Context {op : Set}.
 Context {lit : Set}.
 
-Context {raw_typed : node A string -> list (node A string) -> (node A string) -> Prop}.
-
 Inductive expr : Set :=
 | E_var : A -> expr
 | E_let_in : A -> splitting -> expr -> binds -> expr
@@ -49,6 +47,12 @@ Inductive expr : Set :=
 | E_failwith : A -> expr -> expr
 
 | E_raw_michelson : A -> node A string -> node A string -> list (node A string) -> expr
+(* [E_global_constant _ b hash args] means to evaluate [args], then
+   apply the "global constant" Michelson code identified by [hash] to
+   them, which should consume the args and push a result of type [b]
+   to the stack. The hashed code is expected to be a Seq, though it
+   could also be a bare instruction. *)
+| E_global_constant : A -> node A string -> string -> args -> expr
 
 with args : Set :=
 | Args_nil : args
@@ -215,6 +219,11 @@ Inductive expr_typed : list (node A string) -> expr -> node A string -> Prop :=
 | E_raw_michelson_typed {code a b} :
     `{prog_typed code [a] [b] ->
       expr_typed [] (E_raw_michelson l1 a b code) (Prim l2 "lambda" [a; b] n2)}
+| E_global_constant_typed {g az b hash args} :
+    `{args_typed g args az ->
+      (* meh, whatever *)
+      (* global_constant_typed hash az b -> *)
+      expr_typed g (E_global_constant l1 b hash args) b}
 
 with args_typed : list (node A string) -> args -> list (node A string) -> Prop :=
 | Args_nil_typed :

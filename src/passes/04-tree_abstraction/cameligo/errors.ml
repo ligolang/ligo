@@ -123,8 +123,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("location", `String loc) ] in
     json_error ~stage ~content
   | `Concrete_cameligo_michelson_type_wrong (texpr,name) ->
-    let message = Format.asprintf "Argument %s of %s must be a string singleton"
-        (Cst_cameligo.Printer.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
+    let message = Format.asprintf "Type argument %s must be a string singleton" name in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );

@@ -217,6 +217,7 @@ type constant' =
   | C_TEST_RUN [@only_interpreter]
   | C_TEST_EVAL [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT [@only_interpreter]
+  | C_TEST_DECOMPILE [@only_interpreter]
   | C_TEST_TO_CONTRACT [@only_interpreter]
   | C_TEST_TO_ENTRYPOINT [@only_interpreter]
   | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]
@@ -227,6 +228,10 @@ type constant' =
   | C_TEST_CREATE_CHEST [@only_interpreter]
   | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
   | C_TEST_RANDOM [@only_interpreter]
+  | C_TEST_ADD_ACCOUNT [@only_interpreter]
+  | C_TEST_NEW_ACCOUNT [@only_interpreter]
+  | C_TEST_GET_VOTING_POWER [@only_interpreter]
+  | C_TEST_GET_TOTAL_VOTING_POWER [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
@@ -240,6 +245,7 @@ type constant' =
   | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
+  | C_GLOBAL_CONSTANT
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
 [@@deriving enum, yojson, print_constant, only_interpreter_tags ]

@@ -23,7 +23,7 @@ let tuple_of_record (m: _ LMap.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
-let is_generalizable_variable name = String.equal (String.sub (Var.to_name name) ~pos:0 ~len:1) "_"
+let is_generalizable_variable = Var.is_generalizable 
 
 (* This function transforms an application expression `l e1 ... en` into the pair `([ e1 ; ... ; en ] , l)` *)
 let destruct_applications (e : expression) =
@@ -39,7 +39,7 @@ let destruct_applications (e : expression) =
 let destruct_for_alls (t : type_expression) =
   let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
     | T_for_all { ty_binder ; type_ ; _ } ->
-       destruct_for_alls (Location.unwrap ty_binder :: type_vars) type_
+       destruct_for_alls (ty_binder :: type_vars) type_
     | _ -> (type_vars, t)
   in destruct_for_alls [] t
 
@@ -78,10 +78,10 @@ module Free_type_variables = struct
     | T_singleton _ -> VarSet.empty
     | T_abstraction { ty_binder ; type_ ; _ } ->
        let v = self type_ in
-       VarSet.remove (Location.unwrap ty_binder) v
+       VarSet.remove ty_binder v
     | T_for_all { ty_binder ; type_ ; _ } ->
        let v = self type_ in
-       VarSet.remove (Location.unwrap ty_binder) v
+       VarSet.remove ty_binder v
 
   let type_expression : type_variable list -> type_expression -> type_variable list = fun type_env t ->
     VarSet.fold (fun v r -> v :: r) (map_type_expression type_env t) []
@@ -94,7 +94,7 @@ let generalize_free_vars (type_env : type_variable list) (t : type_expression) =
   let rec aux t = function
     | [] -> t
     | (abs_var :: abs_vars) ->
-       let type_content = T_for_all { ty_binder = Location.wrap abs_var ;
+       let type_content = T_for_all { ty_binder = abs_var ;
                                       kind = () ;
                                       type_ = aux t abs_vars } in
        { type_content ; location = Location.generated ; sugar = None } in

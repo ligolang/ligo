@@ -13,7 +13,7 @@ let test =
 
   let contr = Test.to_contract typed_addr in
   let addr = Tezos.address contr in
-  let () = Test.transfer_to_contract_exn contr () 10tez in
+  let _ = Test.transfer_to_contract_exn contr () 10tez in
 
   let () = Test.log "storage after calling" in
   let st : timestamp = Test.get_storage typed_addr in

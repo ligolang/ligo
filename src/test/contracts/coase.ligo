@@ -49,10 +49,10 @@ function transfer_single (const action : action_transfer_single;
   block {
     var cards : cards := s.cards;
     var card : card :=
-      case cards[action.card_to_transfer] of
+      case cards[action.card_to_transfer] of [
         Some (card) -> card
       | None -> (failwith ("transfer_single: No card.") : card)
-      end;
+      ];
     if card.card_owner =/= sender then
       failwith ("This card doesn't belong to you")
     else skip;
@@ -65,18 +65,18 @@ function sell_single (const action : action_sell_single;
                       var s : storage) : return is
   block {
     const card : card =
-      case s.cards[action.card_to_sell] of
+      case s.cards[action.card_to_sell] of [
         Some (card) -> card
       | None -> (failwith ("sell_single: No card.") : card)
-      end;
+      ];
     if card.card_owner =/= sender
     then failwith ("This card doesn't belong to you")
     else skip;
     var card_pattern : card_pattern :=
-      case s.card_patterns[card.card_pattern] of
+      case s.card_patterns[card.card_pattern] of [
         Some (pattern) -> pattern
       | None -> (failwith ("sell_single: No card pattern.") : card_pattern)
-      end;
+      ];
     card_pattern.quantity := abs (card_pattern.quantity - 1n);
     var card_patterns : card_patterns := s.card_patterns;
     card_patterns[card.card_pattern] := card_pattern;
@@ -86,10 +86,10 @@ function sell_single (const action : action_sell_single;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
     const receiver : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of
+      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("sell_single: No contract.") : contract (unit))
-      end;
+      ];
     const op : operation = Tezos.transaction (unit, price, receiver);
     const operations : list (operation) = list [op]
   } with (operations, s)
@@ -99,10 +99,10 @@ function buy_single (const action : action_buy_single;
   block {
     // Check funds
     var card_pattern : card_pattern :=
-      case s.card_patterns[action.card_to_buy] of
+      case s.card_patterns[action.card_to_buy] of [
         Some (pattern) -> pattern
       | None -> (failwith ("buy_single: No card pattern.") : card_pattern)
-      end;
+      ];
     const price : tez =
       card_pattern.coefficient * (card_pattern.quantity + 1n);
     if price > amount then failwith ("Not enough money") else skip;
@@ -122,8 +122,8 @@ function buy_single (const action : action_buy_single;
   } with ((nil : list (operation)), s)
 
 function main (const action : parameter; const s : storage) : return is
-  case action of
+  case action of [
     Buy_single (bs)      -> buy_single (bs, s)
   | Sell_single (as)     -> sell_single (as, s)
   | Transfer_single (at) -> transfer_single (at, s)
-  end
+  ]

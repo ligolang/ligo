@@ -28,7 +28,8 @@
       "advanced/michelson_testing",
       "advanced/inline",
       "advanced/interop",
-      "advanced/embedded-michelson"
+      "advanced/embedded-michelson",
+      "advanced/package-management"
     ],
     "Reference": [
       "api/cli-commands",

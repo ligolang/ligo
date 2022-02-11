@@ -5,12 +5,12 @@ let dry_run_options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(t
 let init_state_cameligo = Repl.make_initial_state
                             (CameLIGO: Ligo_compile.Helpers.v_syntax)
                             Environment.Protocols.Edo
-                            dry_run_options
+                            dry_run_options None
 
 let init_state_jsligo = Repl.make_initial_state
                           (JsLIGO: Ligo_compile.Helpers.v_syntax)
                           Environment.Protocols.Edo
-                          dry_run_options
+                          dry_run_options None
 
 let apply_repl_sequence init_state commands =
   let f state command =

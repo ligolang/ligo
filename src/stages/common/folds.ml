@@ -46,7 +46,7 @@ let binder : ('acc -> 'a -> 'acc) -> 'acc -> 'a binder -> 'acc
   let acc = option f acc ascr in
    acc
 
-let let_in : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) let_in -> 'acc 
+let let_in : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) let_in -> 'acc
 = fun f g acc { let_binder; rhs ; let_result; attributes=_} ->
   let acc = binder g acc let_binder in
   let acc = f acc rhs in
@@ -59,7 +59,7 @@ let type_in : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) ty
   let acc = f acc let_result in
   acc
 
-let lambda : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) lambda -> 'acc 
+let lambda : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) lambda -> 'acc
 = fun f g acc {binder=b;output_type;result}->
   let acc = binder g acc b in
   let acc = option g acc output_type in
@@ -156,7 +156,7 @@ let for_ : ('acc -> 'a -> 'b) -> 'acc -> 'a for_ -> 'acc
   acc
 
 let for_each : ('acc -> 'a -> 'b) -> 'acc -> 'a for_each -> 'acc
-= fun f acc {fe_binder=_;collection;collection_type=_;fe_body} ->
+= fun f acc {fe_binder=_;collection;fe_body;collection_type=_} ->
   let acc = f acc collection in
   let acc = f acc fe_body in
   acc
@@ -174,7 +174,7 @@ let declaration_type : ('acc -> 'a -> 'acc) -> 'acc -> 'a declaration_type -> 'a
   acc
 
 let declaration_constant : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) declaration_constant -> 'acc
-= fun f g acc {name = _; binder=b; attr=_; expr} ->
+= fun f g acc {binder=b; attr=_; expr} ->
   let acc = binder g acc b in
   let acc = f acc expr     in
   acc
@@ -199,13 +199,13 @@ and module' : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) mo
 = fun f g acc prg ->
   List.fold ~f:(fun init a -> (declaration f g) init @@ Location.unwrap a) ~init:acc prg
 
-let mod_in : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) mod_in -> 'acc 
+let mod_in : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) mod_in -> 'acc
 = fun f g acc { module_binder=_; rhs ; let_result} ->
   let acc = (module' f g) acc rhs in
   let acc = f acc let_result in
    acc
 
-let mod_alias : ('acc -> 'a -> 'acc) -> 'acc -> 'a mod_alias -> 'acc 
+let mod_alias : ('acc -> 'a -> 'acc) -> 'acc -> 'a mod_alias -> 'acc
 = fun f acc { alias=_; binders=_; result} ->
   let acc = f acc result in
    acc

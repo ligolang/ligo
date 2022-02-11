@@ -8,7 +8,7 @@ open Simple_utils.Trace
 let rec check_block_scope ~raise vars types e = 
    match e.expression_content with
    | E_let_in {let_binder; rhs; let_result; _} -> 
-      let var = Location.unwrap let_binder.var in
+      let var = let_binder.var in
       if (List.mem ~equal:Var.equal vars var) then
          raise.raise @@ no_shadowing e.location
       else (
@@ -21,7 +21,7 @@ let rec check_block_scope ~raise vars types e =
       else 
          check_block_scope ~raise vars (type_binder :: types) let_result
    | E_mod_in {module_binder; let_result; _} ->
-      let var = Var.of_name module_binder in
+      let var = module_binder in
       if (List.mem ~equal:Var.equal vars var) then
          raise.raise @@ no_shadowing e.location
       else (
@@ -41,13 +41,13 @@ let peephole_module ~raise : module_ -> module_ = fun m ->
          else 
             aux vars (t.type_binder :: types) remaining
    |  {wrap_content = Declaration_constant t; location} :: remaining ->
-         let var = Location.unwrap t.binder.var in
+         let var = t.binder.var in
          if (List.mem ~equal:Var.equal vars var) then 
             raise.raise @@ no_shadowing location
          else 
             aux (var :: vars) types remaining
    |  {wrap_content = Declaration_module t; location} :: remaining ->
-            let var = Var.of_name t.module_binder in
+            let var = t.module_binder in
             if (List.mem ~equal:Var.equal vars var) then 
                raise.raise @@ no_shadowing location
             else 

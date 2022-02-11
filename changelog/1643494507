@@ -1,0 +1,4 @@
+author: tomjack
+title: Improve optimisation of some rare examples involving tuple/record destructuring
+type: changed
+merge_request: '1520'

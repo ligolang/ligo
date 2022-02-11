@@ -34,16 +34,13 @@ contract:
 // This is mockup_testme.ligo
 type storage is string
 
-type parameter is
-  Append of string
+type parameter is Append of string
 
 type return is list (operation) * storage
 
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
-  case action of
-    Append (s) -> store ^ s
-  end)
+  case action of [Append (s) -> store ^ s])
 ```
 
 </Syntax>
@@ -53,15 +50,13 @@ function main (const action : parameter; const store : storage) : return is
 // This is mockup_testme.mligo
 type storage = string
 
-type parameter =
-  Append of string
+type parameter = Append of string
 
 type return = operation list * storage
 
 let main (action, store : parameter * storage) : return =
  ([] : operation list),    // No operations
- (match action with
-   Append (s) -> store ^ s)
+ (match action with Append s -> store ^ s)
 ```
 
 </Syntax>
@@ -71,8 +66,7 @@ let main (action, store : parameter * storage) : return =
 // This is mockup_testme.religo
 type storage = string;
 
-type parameter =
-  Append (string)
+type parameter = Append (string)
 
 type return = (list (operation), storage);
 

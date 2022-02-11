@@ -36,10 +36,10 @@ the given currency, as well as constants for zero and one.
 
 ```pascaligo group=EURO
 module EURO is {
-    type t is nat
-    function add (const a : t; const b : t) : t is a + b
-    const zero : t = 0n
-    const one : t = 1n
+  type t is nat
+  function add (const a : t; const b : t) : t is a + b
+  const zero : t = 0n
+  const one : t = 1n
 }
 ```
 
@@ -52,12 +52,13 @@ called `t`, together with an operation `add` that sums two values of
 the given currency, as well as constants for zero and one.
 
 ```cameligo group=EURO
-module EURO = struct
+module EURO =
+  struct
     type t = nat
     let add (a , b : t * t) : t = a + b
     let zero : t = 0n
     let one : t = 1n
-end
+  end
 ```
 
 As we can see, in CameLIGO we also use a `struct ... end` block to
@@ -73,10 +74,10 @@ the given currency, as well as constants for zero and one.
 
 ```reasonligo group=EURO
 module EURO = {
-    type t = nat
-    let add = ((a, b) : (t, t)) : t => a + b
-    let zero : t = 0n
-    let one : t = 1n
+  type t = nat
+  let add = ((a, b) : (t, t)) : t => a + b
+  let zero : t = 0n
+  let one : t = 1n
 }
 ```
 
@@ -90,10 +91,10 @@ the given currency, as well as constants for zero and one.
 
 ```jsligo group=EURO
 namespace EURO {
-    export type t = nat;
-    export let add = ([a, b]: [t, t]): t => a + b;
-    export let zero: t = 0 as nat;
-    export let one: t = 1 as nat
+  export type t = nat;
+  export let add = ([a, b]: [t, t]): t => a + b;
+  export let zero: t = 0 as nat;
+  export let one: t = 1 as nat
 }
 ```
 
@@ -115,7 +116,7 @@ increments the storage value each time it is called.
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add(store, EURO.one))
+ ((nil : list (operation)), EURO.add (store, EURO.one))
 ```
 
 </Syntax>
@@ -144,7 +145,7 @@ let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
 type storage = EURO.t;
 
 let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
- [list([]) as list<operation>, EURO.add(store, EURO.one)];
+  [list([]) as list<operation>, EURO.add(store, EURO.one)];
 ```
 
 </Syntax>
@@ -158,10 +159,10 @@ negative values, we could change `EURO` as follows:
 
 ```pascaligo group=EURO2
 module EURO is {
-    type t is int
-    function add (const a : t; const b : t) : t is a + b
-    const zero : t = 0
-    const one : t = 1
+  type t is int
+  function add (const a : t; const b : t) : t is a + b
+  const zero : t = 0
+  const one : t = 1
 }
 ```
 
@@ -182,10 +183,10 @@ end
 
 ```reasonligo group=EURO2
 module EURO = {
-    type t = int
-    let add = ((a, b) : (t, t)) : t => a + b
-    let zero : t = 0
-    let one : t = 1
+  type t = int
+  let add = ((a, b) : (t, t)) : t => a + b
+  let zero : t = 0
+  let one : t = 1
 }
 ```
 
@@ -194,10 +195,10 @@ module EURO = {
 
 ```jsligo group=EURO2
 namespace EURO {
-    export type t = int;
-    export let add = ([a, b]: [t, t]): t => a + b;
-    export let zero: t = 0;
-    export let one: t = 1;
+  export type t = int;
+  export let add = ([a, b]: [t, t]): t => a + b;
+  export let zero: t = 0;
+  export let one: t = 1;
 }
 ```
 
@@ -222,12 +223,14 @@ another module. Let's see how that works, and define a variant of
 
 ```pascaligo group=EURO3
 module EURO is {
-    type t is nat
-    function add (const a : t; const b : t) : t is a + b
-    module CONST is {
-        const zero : t = 0n
-        const one : t = 1n
-    }
+  type t is nat
+
+  function add (const a : t; const b : t) : t is a + b
+
+  module CONST is {
+    const zero : t = 0n
+    const one : t = 1n
+  }
 }
 ```
 
@@ -235,14 +238,18 @@ module EURO is {
 <Syntax syntax="cameligo">
 
 ```cameligo group=EURO3
-module EURO = struct
+module EURO =
+  struct
     type t = nat
+
     let add (a, b : t * t) : t = a + b
-    module CONST = struct
+
+    module CONST =
+      struct
         let zero : t = 0n
         let one : t = 1n
-    end
-end
+      end
+  end
 ```
 
 </Syntax>
@@ -264,12 +271,14 @@ module EURO = {
 
 ```jsligo group=EURO3
 namespace EURO {
-    export type t = nat;
-    export let add = ([a, b]: [t, t]): t => a + b;
-    export namespace CONST {
-        export let zero: t = 0 as nat;
-        export let one: t = 1 as nat;
-    };
+  export type t = nat;
+
+  export let add = ([a, b]: [t, t]): t => a + b;
+
+  export namespace CONST {
+    export let zero: t = 0 as nat;
+    export let one: t = 1 as nat;
+  };
 };
 ```
 
@@ -284,7 +293,7 @@ than once:
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add(store, EURO.CONST.one))
+ ((nil : list (operation)), EURO.add (store, EURO.CONST.one))
 ```
 
 </Syntax>
@@ -401,7 +410,7 @@ that imports all definitions from `imported.ligo` as the module
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add(store, EURO.one))
+ ((nil : list (operation)), EURO.add (store, EURO.one))
 ```
 
 </Syntax>

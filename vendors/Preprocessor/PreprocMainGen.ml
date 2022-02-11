@@ -43,6 +43,7 @@ module Make (CLI : CLI.S) =
         method input   = CLI.input
         method offsets = CLI.offsets
         method dirs    = CLI.dirs
+        method mod_res = None
       end
 
     let preprocess () : API.result =

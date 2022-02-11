@@ -1,0 +1,6 @@
+---
+  title: "Add support for package management to ligo using esy package manager"
+  merge_request: "1394"
+  author: "melwyn95"
+  type: "added"
+

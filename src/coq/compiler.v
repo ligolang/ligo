@@ -227,6 +227,9 @@ Fixpoint compile_expr
      Seq nil (compile_usages (Keep :: right_usages inner2))]
   | E_failwith x e => [Seq nil (compile_expr env outer e); Prim x "FAILWITH" [] []]
   | E_raw_michelson _ a b code => [Prim nil "PUSH" [Prim nil "lambda" [a; b] []; Seq nil code] []]
+  | E_global_constant _ b hash args =>
+    [Seq nil (compile_args env outer args);
+     Prim nil "constant" [String nil hash] []]
   end
 with
 compile_args

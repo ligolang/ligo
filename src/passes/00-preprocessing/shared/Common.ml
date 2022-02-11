@@ -8,8 +8,9 @@ type dirs = file_path list (* #include and #import *)
 module type FILE =
   sig
     include File.S
-    val input : file_path option
-    val dirs  : dirs
+    val input            : file_path option
+    val dirs             : dirs
+    val project_root     : file_path option
   end
 
 module Config (File : FILE) (Comments : Comments.S) =
@@ -20,11 +21,12 @@ module Config (File : FILE) (Comments : Comments.S) =
       struct
         include Comments
 
-        let input     = File.input
-        let extension = Some File.extension
-        let dirs      = File.dirs
-        let show_pp   = false
-        let offsets   = true  (* TODO: Should flow from CLI *)
+        let input        = File.input
+        let extension    = Some File.extension
+        let dirs         = File.dirs
+        let project_root = File.project_root
+        let show_pp      = false
+        let offsets      = true
 
         type status = [
           `Done
@@ -48,6 +50,8 @@ module Config (File : FILE) (Comments : Comments.S) =
         method input   = Preprocessor_CLI.input
         method offsets = Preprocessor_CLI.offsets
         method dirs    = Preprocessor_CLI.dirs
+        method mod_res = Option.bind ~f:Preprocessor.ModRes.make
+                                     Preprocessor_CLI.project_root
       end
   end
 
@@ -80,12 +84,13 @@ module Make (File : File.S) (Comments : Comments.S) =
 
     (* Preprocessing a file *)
 
-    let from_file dirs file_path =
+    let from_file ?project_root dirs file_path =
       let module File : FILE =
         struct
-          let extension = File.extension
-          let input     = Some file_path
-          let dirs      = dirs
+          let extension    = File.extension
+          let input        = Some file_path
+          let dirs         = dirs
+          let project_root = project_root
         end in
       let module Config = Config (File) (Comments) in
       let config = Config.preprocessor in
@@ -97,12 +102,13 @@ module Make (File : File.S) (Comments : Comments.S) =
 
     (* Preprocessing a string *)
 
-    let from_string dirs string =
+    let from_string ?project_root dirs string =
       let module File : FILE =
         struct
-          let extension = File.extension
-          let input     = None
-          let dirs      = dirs
+          let extension    = File.extension
+          let input        = None
+          let dirs         = dirs
+          let project_root = project_root
         end in
       let module Config = Config (File) (Comments) in
       let config = Config.preprocessor in
@@ -114,12 +120,13 @@ module Make (File : File.S) (Comments : Comments.S) =
 
     (* Preprocessing a channel *)
 
-    let from_channel dirs channel =
+    let from_channel ?project_root dirs channel =
       let module File : FILE =
         struct
-          let extension = File.extension
-          let input     = None
-          let dirs      = dirs
+          let extension    = File.extension
+          let input        = None
+          let dirs         = dirs
+          let project_root = project_root
         end in
       let module Config = Config (File) (Comments) in
       let config = Config.preprocessor in

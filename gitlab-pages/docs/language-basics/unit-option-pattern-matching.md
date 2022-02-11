@@ -5,13 +5,12 @@ title: Unit, Option, Pattern matching
 
 import Syntax from '@theme/Syntax';
 
-
-Optionals are a pervasive programming pattern in OCaml. Since Michelson
-and LIGO are both inspired by OCaml, *optional types* are available in
-LIGO as well. Similarly, OCaml features a *unit* type, and LIGO
-features it as well. Both the option type and the unit types are
-instances of a more general kind of types: *variant types* (sometimes
-called *sum types*).
+Optional values are a pervasive programming pattern in OCaml. Since
+Michelson and LIGO are both inspired by OCaml, *optional types* are
+available in LIGO as well. Similarly, OCaml features a *unit* type,
+and LIGO features it as well. Both the option type and the unit types
+are instances of a more general kind of types: *variant types*
+(sometimes called *sum types*).
 
 ## The unit Type
 
@@ -140,8 +139,6 @@ In general, it is interesting for variants to carry some information,
 and thus go beyond enumerated types. In the following, we show how to
 define different kinds of users of a system.
 
-
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=c
@@ -259,10 +256,10 @@ let div = ((a, b) : (nat, nat)) : option (nat) =>
 
 ```jsligo group=d
 let div = ([a, b]: [nat, nat]): option<nat> => {
-  if(b == (0 as nat)){ 
-    return (None() as option <nat>); 
-  } else { 
-    return (Some (a/b)); 
+  if(b == (0 as nat)){
+    return (None() as option <nat>);
+  } else {
+    return (Some (a/b));
   };
 };
 ```
@@ -307,16 +304,16 @@ Here is a function that transforms a colour variant type to an int.
 
 ```pascaligo group=pm_variant
 type color is
-  | RGB   of int * int * int
-  | Gray  of int 
-  | Default
+  RGB     of int * int * int
+| Gray    of int
+| Default
 
 function int_of_color (const c : color) : int is
-  case c of
+  case c of [
   | RGB (r,g,b) -> 16 + b + g * 6 + r * 36
-  | Gray (i) -> 232 + i
-  | Default -> 0
-  end
+  | Gray (i)    -> 232 + i
+  | Default     -> 0
+  ]
 ```
 
 </Syntax>
@@ -325,7 +322,7 @@ function int_of_color (const c : color) : int is
 ```cameligo group=pm_variant
 type color =
   | RGB   of int * int * int
-  | Gray  of int 
+  | Gray  of int
   | Default
 
 let int_of_color (c : color) : int =
@@ -370,7 +367,7 @@ let int_of_color = (c : color) : int =>
 
 </Syntax>
 
-### Match on records or tuples
+### Matching records or tuples
 
 Fields of records and components of tuples can be destructured. Record pattern variables can be renamed.
 
@@ -394,18 +391,19 @@ let on_tuple (v : my_tuple) : int =
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=pm_rec_tuple
-type my_record is record [ a : int ; b : nat ; c : string ]
-type my_tuple is (int * nat * string)
+type my_record is record [a : int; b : nat; c : string]
+
+type my_tuple is int * nat * string
 
 function on_record (const v : my_record) : int is
-  case v of
-   record [ a ; b = b_renamed ; c = _ ] -> a + int(b_renamed)
-  end
+  case v of [
+   record [a; b = b_renamed ; c = _] -> a + int (b_renamed)
+  ]
 
 function on_tuple (const v : my_tuple) : int is
-  case v of
-  | ( x , y , _ ) -> x + int(y)
-  end
+  case v of [
+   (x, y, _) -> x + int (y)
+  ]
 ```
 
 </Syntax>
@@ -439,7 +437,7 @@ Pattern-matching on records and tuples are not supported in JsLIGO yet.
 
 ```cameligo group=pm_lists
 let weird_length (v : int list) : int =
-  match v with 
+  match v with
   | [] -> -1
   | [ a; b ; c] -> -2
   | x -> int (List.length x)
@@ -449,12 +447,12 @@ let weird_length (v : int list) : int =
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=pm_lists
-function weird_length (const v : list(int)) : int is
-  case v of 
-  | nil -> -1
-  | list [ a; b ; c] -> -2
+function weird_length (const v : list (int)) : int is
+  case v of [
+    nil -> -1
+  | list [a; b; c] -> -2
   | x -> int (List.length (x))
-  end
+  ]
 ```
 
 </Syntax>
@@ -506,15 +504,15 @@ let complex = fun (x:complex_t) (y:complex_t) ->
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=pm_complex
-type complex_t is record [ a : option(list(int)) ; b : list(int) ]
+type complex_t is record [a : option (list (int)); b : list (int)]
 
-function complex (const x:complex_t ; const y:complex_t) is
-  case (x,y) of
-  | (record [ a=None;b=_] , record [ a = _ ; b = _ ]) -> -1
-  | (record [ a=_;b=_]    , record [ a = Some (nil) ; b = (hd#tl) ]) -> hd
-  | (record [ a=_;b=_]    , record [ a = Some ((hd#tl)) ; b = nil ]) -> hd
-  | (record [ a=Some (a);b=_] , _) -> int ( List.length(a) )
-  end
+function complex (const x : complex_t; const y : complex_t) is
+  case (x, y) of [
+    (record [a=None; b=_], _)               -> -1
+  | (_, record [a = Some (nil); b = hd#tl]) -> hd
+  | (_, record [a = Some (hd#tl); b=nil])   -> hd
+  | (record [a = Some (a); b=_], _)         -> int (List.length (a))
+  ]
 ```
 
 </Syntax>
@@ -523,16 +521,14 @@ function complex (const x:complex_t ; const y:complex_t) is
 ```reasonligo group=pm_complex
 type complex_t = { a : option(list(int)) , b : list(int) };
 
-let t13 = 
-  ((x: complex_t) => 
-     ((y: complex_t) => 
+let t13 =
+  ((x: complex_t) =>
+     ((y: complex_t) =>
         switch (x, y) {
-        | {a : None, b : _ }, {a : _, b : _ } => -1
-        | { a : _, b : _ }, {a : Some([]), b : [hd, ...tl] } =>
-            hd
-        | { a : _, b : _ }, {a : Some([hd, ...tl]), b : [] } =>
-            hd
-        | { a : Some(a), b : _}, _ => int(Bytes.length(a))
+        | {a : None, b : _}, {a : _, b : _} => -1
+        | {a : _, b : _ }, {a : Some([]), b : [hd, ...tl]} => hd
+        | {a : _, b : _ }, {a : Some([hd, ...tl]), b : []} => hd
+        | {a : Some(a), b : _}, _ => int(List.length(a))
         }));
 ```
 

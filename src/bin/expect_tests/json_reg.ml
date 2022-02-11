@@ -9,9 +9,44 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "threshold" },
+        "type_binder": {
+          "name": "threshold",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 3,
+                  "pos_bol": 17,
+                  "pos_cnum": 22
+                },
+                "point_num": 22,
+                "point_bol": 17
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 3,
+                  "pos_bol": 17,
+                  "pos_cnum": 31
+                },
+                "point_num": 31,
+                "point_bol": 17
+              }
+            }
+          ]
+        },
         "type_expr": {
-          "type_content": [ "t_variable", { "name": "nat" } ],
+          "type_content": [
+            "t_variable",
+            {
+              "name": "nat",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
+          ],
           "location": [
             "File",
             {
@@ -71,9 +106,44 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "max_proposal" },
+        "type_binder": {
+          "name": "max_proposal",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 4,
+                  "pos_bol": 39,
+                  "pos_cnum": 44
+                },
+                "point_num": 44,
+                "point_bol": 39
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 4,
+                  "pos_bol": 39,
+                  "pos_cnum": 56
+                },
+                "point_num": 56,
+                "point_bol": 39
+              }
+            }
+          ]
+        },
         "type_expr": {
-          "type_content": [ "t_variable", { "name": "nat" } ],
+          "type_content": [
+            "t_variable",
+            {
+              "name": "nat",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
+          ],
           "location": [
             "File",
             {
@@ -133,9 +203,44 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "max_message_size" },
+        "type_binder": {
+          "name": "max_message_size",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 5,
+                  "pos_bol": 64,
+                  "pos_cnum": 69
+                },
+                "point_num": 69,
+                "point_bol": 64
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 5,
+                  "pos_bol": 64,
+                  "pos_cnum": 85
+                },
+                "point_num": 85,
+                "point_bol": 64
+              }
+            }
+          ]
+        },
         "type_expr": {
-          "type_content": [ "t_variable", { "name": "nat" } ],
+          "type_content": [
+            "t_variable",
+            {
+              "name": "nat",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
+          ],
           "location": [
             "File",
             {
@@ -195,9 +300,44 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "state_hash" },
+        "type_binder": {
+          "name": "state_hash",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 6,
+                  "pos_bol": 93,
+                  "pos_cnum": 98
+                },
+                "point_num": 98,
+                "point_bol": 93
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 6,
+                  "pos_bol": 93,
+                  "pos_cnum": 108
+                },
+                "point_num": 108,
+                "point_bol": 93
+              }
+            }
+          ]
+        },
         "type_expr": {
-          "type_content": [ "t_variable", { "name": "bytes" } ],
+          "type_content": [
+            "t_variable",
+            {
+              "name": "bytes",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
+          ],
           "location": [
             "File",
             {
@@ -257,15 +397,78 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "addr_set" },
+        "type_binder": {
+          "name": "addr_set",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 7,
+                  "pos_bol": 118,
+                  "pos_cnum": 123
+                },
+                "point_num": 123,
+                "point_bol": 118
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 7,
+                  "pos_bol": 118,
+                  "pos_cnum": 131
+                },
+                "point_num": 131,
+                "point_bol": 118
+              }
+            }
+          ]
+        },
         "type_expr": {
           "type_content": [
             "t_app",
             {
-              "type_operator": { "name": "set" },
+              "type_operator": {
+                "name": "set",
+                "counter": null,
+                "location": [
+                  "File",
+                  {
+                    "start": {
+                      "byte": {
+                        "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                        "pos_lnum": 7,
+                        "pos_bol": 118,
+                        "pos_cnum": 135
+                      },
+                      "point_num": 135,
+                      "point_bol": 118
+                    },
+                    "stop": {
+                      "byte": {
+                        "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                        "pos_lnum": 7,
+                        "pos_bol": 118,
+                        "pos_cnum": 138
+                      },
+                      "point_num": 138,
+                      "point_bol": 118
+                    }
+                  }
+                ]
+              },
               "arguments": [
                 {
-                  "type_content": [ "t_variable", { "name": "address" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "address",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -356,15 +559,78 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "message_store" },
+        "type_binder": {
+          "name": "message_store",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 8,
+                  "pos_bol": 149,
+                  "pos_cnum": 154
+                },
+                "point_num": 154,
+                "point_bol": 149
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 8,
+                  "pos_bol": 149,
+                  "pos_cnum": 167
+                },
+                "point_num": 167,
+                "point_bol": 149
+              }
+            }
+          ]
+        },
         "type_expr": {
           "type_content": [
             "t_app",
             {
-              "type_operator": { "name": "map" },
+              "type_operator": {
+                "name": "map",
+                "counter": null,
+                "location": [
+                  "File",
+                  {
+                    "start": {
+                      "byte": {
+                        "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                        "pos_lnum": 8,
+                        "pos_bol": 149,
+                        "pos_cnum": 171
+                      },
+                      "point_num": 171,
+                      "point_bol": 149
+                    },
+                    "stop": {
+                      "byte": {
+                        "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                        "pos_lnum": 8,
+                        "pos_bol": 149,
+                        "pos_cnum": 174
+                      },
+                      "point_num": 174,
+                      "point_bol": 149
+                    }
+                  }
+                ]
+              },
               "arguments": [
                 {
-                  "type_content": [ "t_variable", { "name": "bytes" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "bytes",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -394,7 +660,14 @@ let%expect_test _ =
                   ]
                 },
                 {
-                  "type_content": [ "t_variable", { "name": "addr_set" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "addr_set",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -485,15 +758,78 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "proposal_counters" },
+        "type_binder": {
+          "name": "proposal_counters",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 9,
+                  "pos_bol": 193,
+                  "pos_cnum": 198
+                },
+                "point_num": 198,
+                "point_bol": 193
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 9,
+                  "pos_bol": 193,
+                  "pos_cnum": 215
+                },
+                "point_num": 215,
+                "point_bol": 193
+              }
+            }
+          ]
+        },
         "type_expr": {
           "type_content": [
             "t_app",
             {
-              "type_operator": { "name": "map" },
+              "type_operator": {
+                "name": "map",
+                "counter": null,
+                "location": [
+                  "File",
+                  {
+                    "start": {
+                      "byte": {
+                        "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                        "pos_lnum": 9,
+                        "pos_bol": 193,
+                        "pos_cnum": 219
+                      },
+                      "point_num": 219,
+                      "point_bol": 193
+                    },
+                    "stop": {
+                      "byte": {
+                        "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                        "pos_lnum": 9,
+                        "pos_bol": 193,
+                        "pos_cnum": 222
+                      },
+                      "point_num": 222,
+                      "point_bol": 193
+                    }
+                  }
+                ]
+              },
               "arguments": [
                 {
-                  "type_content": [ "t_variable", { "name": "address" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "address",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -523,7 +859,14 @@ let%expect_test _ =
                   ]
                 },
                 {
-                  "type_content": [ "t_variable", { "name": "nat" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "nat",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -614,262 +957,334 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "storage" },
+        "type_binder": {
+          "name": "storage",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 11,
+                  "pos_bol": 239,
+                  "pos_cnum": 244
+                },
+                "point_num": 244,
+                "point_bol": 239
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 11,
+                  "pos_bol": 239,
+                  "pos_cnum": 251
+                },
+                "point_num": 251,
+                "point_bol": 239
+              }
+            }
+          ]
+        },
         "type_expr": {
           "type_content": [
             "t_record",
-            {
-              "threshold": {
-                "associated_type": {
-                  "type_content": [ "t_variable", { "name": "threshold" } ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 14,
-                          "pos_bol": 305,
-                          "pos_cnum": 332
-                        },
-                        "point_num": 332,
-                        "point_bol": 305
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 14,
-                          "pos_bol": 305,
-                          "pos_cnum": 341
-                        },
-                        "point_num": 341,
-                        "point_bol": 305
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 1
-              },
-              "state_hash": {
-                "associated_type": {
-                  "type_content": [ "t_variable", { "name": "state_hash" } ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 13,
-                          "pos_bol": 266,
-                          "pos_cnum": 293
-                        },
-                        "point_num": 293,
-                        "point_bol": 266
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 13,
-                          "pos_bol": 266,
-                          "pos_cnum": 303
-                        },
-                        "point_num": 303,
-                        "point_bol": 266
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 0
-              },
-              "proposal_counters": {
-                "associated_type": {
-                  "type_content": [
-                    "t_variable",
-                    { "name": "proposal_counters" }
-                  ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 19,
-                          "pos_bol": 508,
-                          "pos_cnum": 535
-                        },
-                        "point_num": 535,
-                        "point_bol": 508
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 19,
-                          "pos_bol": 508,
-                          "pos_cnum": 552
-                        },
-                        "point_num": 552,
-                        "point_bol": 508
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 6
-              },
-              "message_store": {
-                "associated_type": {
-                  "type_content": [
-                    "t_variable",
-                    { "name": "message_store" }
-                  ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 18,
-                          "pos_bol": 466,
-                          "pos_cnum": 493
-                        },
-                        "point_num": 493,
-                        "point_bol": 466
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 18,
-                          "pos_bol": 466,
-                          "pos_cnum": 506
-                        },
-                        "point_num": 506,
-                        "point_bol": 466
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 5
-              },
-              "max_proposal": {
-                "associated_type": {
-                  "type_content": [
-                    "t_variable",
-                    { "name": "max_proposal" }
-                  ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 15,
-                          "pos_bol": 343,
-                          "pos_cnum": 370
-                        },
-                        "point_num": 370,
-                        "point_bol": 343
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 15,
-                          "pos_bol": 343,
-                          "pos_cnum": 382
-                        },
-                        "point_num": 382,
-                        "point_bol": 343
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 2
-              },
-              "max_message_size": {
-                "associated_type": {
-                  "type_content": [
-                    "t_variable",
-                    { "name": "max_message_size" }
-                  ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 16,
-                          "pos_bol": 384,
-                          "pos_cnum": 411
-                        },
-                        "point_num": 411,
-                        "point_bol": 384
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 16,
-                          "pos_bol": 384,
-                          "pos_cnum": 427
-                        },
-                        "point_num": 427,
-                        "point_bol": 384
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 3
-              },
-              "authorized_addresses": {
-                "associated_type": {
-                  "type_content": [ "t_variable", { "name": "addr_set" } ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 17,
-                          "pos_bol": 429,
-                          "pos_cnum": 456
-                        },
-                        "point_num": 456,
-                        "point_bol": 429
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 17,
-                          "pos_bol": 429,
-                          "pos_cnum": 464
-                        },
-                        "point_num": 464,
-                        "point_bol": 429
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 4
-              }
-            },
+            [
+              ([ "Label", "state_hash" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "state_hash",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 13,
+                           "pos_bol": 266,
+                           "pos_cnum": 293
+                         },
+                         "point_num": 293,
+                         "point_bol": 266
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 13,
+                           "pos_bol": 266,
+                           "pos_cnum": 303
+                         },
+                         "point_num": 303,
+                         "point_bol": 266
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 0
+               }),
+              ([ "Label", "threshold" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "threshold",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 14,
+                           "pos_bol": 305,
+                           "pos_cnum": 332
+                         },
+                         "point_num": 332,
+                         "point_bol": 305
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 14,
+                           "pos_bol": 305,
+                           "pos_cnum": 341
+                         },
+                         "point_num": 341,
+                         "point_bol": 305
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 1
+               }),
+              ([ "Label", "max_proposal" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "max_proposal",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 15,
+                           "pos_bol": 343,
+                           "pos_cnum": 370
+                         },
+                         "point_num": 370,
+                         "point_bol": 343
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 15,
+                           "pos_bol": 343,
+                           "pos_cnum": 382
+                         },
+                         "point_num": 382,
+                         "point_bol": 343
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 2
+               }),
+              ([ "Label", "max_message_size" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "max_message_size",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 16,
+                           "pos_bol": 384,
+                           "pos_cnum": 411
+                         },
+                         "point_num": 411,
+                         "point_bol": 384
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 16,
+                           "pos_bol": 384,
+                           "pos_cnum": 427
+                         },
+                         "point_num": 427,
+                         "point_bol": 384
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 3
+               }),
+              ([ "Label", "authorized_addresses" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "addr_set",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 17,
+                           "pos_bol": 429,
+                           "pos_cnum": 456
+                         },
+                         "point_num": 456,
+                         "point_bol": 429
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 17,
+                           "pos_bol": 429,
+                           "pos_cnum": 464
+                         },
+                         "point_num": 464,
+                         "point_bol": 429
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 4
+               }),
+              ([ "Label", "message_store" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "message_store",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 18,
+                           "pos_bol": 466,
+                           "pos_cnum": 493
+                         },
+                         "point_num": 493,
+                         "point_bol": 466
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 18,
+                           "pos_bol": 466,
+                           "pos_cnum": 506
+                         },
+                         "point_num": 506,
+                         "point_bol": 466
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 5
+               }),
+              ([ "Label", "proposal_counters" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "proposal_counters",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 19,
+                           "pos_bol": 508,
+                           "pos_cnum": 535
+                         },
+                         "point_num": 535,
+                         "point_bol": 508
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 19,
+                           "pos_bol": 508,
+                           "pos_cnum": 552
+                         },
+                         "point_num": 552,
+                         "point_bol": 508
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 6
+               })
+            ],
             { "attributes": [] }
           ],
           "location": [
@@ -931,13 +1346,48 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "message" },
+        "type_binder": {
+          "name": "message",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 24,
+                  "pos_bol": 572,
+                  "pos_cnum": 577
+                },
+                "point_num": 577,
+                "point_bol": 572
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 24,
+                  "pos_bol": 572,
+                  "pos_cnum": 584
+                },
+                "point_num": 584,
+                "point_bol": 572
+              }
+            }
+          ]
+        },
         "type_expr": {
           "type_content": [
             "t_arrow",
             {
               "type1": {
-                "type_content": [ "t_variable", { "name": "bytes" } ],
+                "type_content": [
+                  "t_variable",
+                  {
+                    "name": "bytes",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
+                ],
                 "location": [
                   "File",
                   {
@@ -968,12 +1418,46 @@ let%expect_test _ =
                 "type_content": [
                   "t_app",
                   {
-                    "type_operator": { "name": "list" },
+                    "type_operator": {
+                      "name": "list",
+                      "counter": null,
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 24,
+                              "pos_bol": 572,
+                              "pos_cnum": 597
+                            },
+                            "point_num": 597,
+                            "point_bol": 572
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 24,
+                              "pos_bol": 572,
+                              "pos_cnum": 601
+                            },
+                            "point_num": 601,
+                            "point_bol": 572
+                          }
+                        }
+                      ]
+                    },
                     "arguments": [
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "operation" }
+                          {
+                            "name": "operation",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -1093,9 +1577,44 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "send_pt" },
+        "type_binder": {
+          "name": "send_pt",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 25,
+                  "pos_bol": 614,
+                  "pos_cnum": 619
+                },
+                "point_num": 619,
+                "point_bol": 614
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 25,
+                  "pos_bol": 614,
+                  "pos_cnum": 626
+                },
+                "point_num": 626,
+                "point_bol": 614
+              }
+            }
+          ]
+        },
         "type_expr": {
-          "type_content": [ "t_variable", { "name": "message" } ],
+          "type_content": [
+            "t_variable",
+            {
+              "name": "message",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
+          ],
           "location": [
             "File",
             {
@@ -1155,9 +1674,44 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "withdraw_pt" },
+        "type_binder": {
+          "name": "withdraw_pt",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 26,
+                  "pos_bol": 638,
+                  "pos_cnum": 643
+                },
+                "point_num": 643,
+                "point_bol": 638
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 26,
+                  "pos_bol": 638,
+                  "pos_cnum": 654
+                },
+                "point_num": 654,
+                "point_bol": 638
+              }
+            }
+          ]
+        },
         "type_expr": {
-          "type_content": [ "t_variable", { "name": "message" } ],
+          "type_content": [
+            "t_variable",
+            {
+              "name": "message",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
+          ],
           "location": [
             "File",
             {
@@ -1217,9 +1771,44 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "default_pt" },
+        "type_binder": {
+          "name": "default_pt",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 27,
+                  "pos_bol": 666,
+                  "pos_cnum": 671
+                },
+                "point_num": 671,
+                "point_bol": 666
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 27,
+                  "pos_bol": 666,
+                  "pos_cnum": 681
+                },
+                "point_num": 681,
+                "point_bol": 666
+              }
+            }
+          ]
+        },
         "type_expr": {
-          "type_content": [ "t_variable", { "name": "unit" } ],
+          "type_content": [
+            "t_variable",
+            {
+              "name": "unit",
+              "counter": null,
+              "location": [ "Virtual", "dummy" ]
+            }
+          ],
           "location": [
             "File",
             {
@@ -1279,7 +1868,35 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "return" },
+        "type_binder": {
+          "name": "return",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 29,
+                  "pos_bol": 691,
+                  "pos_cnum": 696
+                },
+                "point_num": 696,
+                "point_bol": 691
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 29,
+                  "pos_bol": 691,
+                  "pos_cnum": 702
+                },
+                "point_num": 702,
+                "point_bol": 691
+              }
+            }
+          ]
+        },
         "type_expr": {
           "type_content": [
             "t_tuple",
@@ -1288,12 +1905,46 @@ let%expect_test _ =
                 "type_content": [
                   "t_app",
                   {
-                    "type_operator": { "name": "list" },
+                    "type_operator": {
+                      "name": "list",
+                      "counter": null,
+                      "location": [
+                        "File",
+                        {
+                          "start": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 29,
+                              "pos_bol": 691,
+                              "pos_cnum": 706
+                            },
+                            "point_num": 706,
+                            "point_bol": 691
+                          },
+                          "stop": {
+                            "byte": {
+                              "pos_fname":
+                                "../../test/contracts/multisig-v2.ligo",
+                              "pos_lnum": 29,
+                              "pos_bol": 691,
+                              "pos_cnum": 710
+                            },
+                            "point_num": 710,
+                            "point_bol": 691
+                          }
+                        }
+                      ]
+                    },
                     "arguments": [
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "operation" }
+                          {
+                            "name": "operation",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -1353,7 +2004,14 @@ let%expect_test _ =
                 ]
               },
               {
-                "type_content": [ "t_variable", { "name": "storage" } ],
+                "type_content": [
+                  "t_variable",
+                  {
+                    "name": "storage",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
+                ],
                 "location": [
                   "File",
                   {
@@ -1441,114 +2099,166 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_type",
       {
-        "type_binder": { "name": "parameter" },
+        "type_binder": {
+          "name": "parameter",
+          "counter": null,
+          "location": [
+            "File",
+            {
+              "start": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 31,
+                  "pos_bol": 734,
+                  "pos_cnum": 739
+                },
+                "point_num": 739,
+                "point_bol": 734
+              },
+              "stop": {
+                "byte": {
+                  "pos_fname": "../../test/contracts/multisig-v2.ligo",
+                  "pos_lnum": 31,
+                  "pos_bol": 734,
+                  "pos_cnum": 748
+                },
+                "point_num": 748,
+                "point_bol": 734
+              }
+            }
+          ]
+        },
         "type_expr": {
           "type_content": [
             "t_sum",
-            {
-              "Withdraw": {
-                "associated_type": {
-                  "type_content": [ "t_variable", { "name": "withdraw_pt" } ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 33,
-                          "pos_bol": 774,
-                          "pos_cnum": 788
-                        },
-                        "point_num": 788,
-                        "point_bol": 774
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 33,
-                          "pos_bol": 774,
-                          "pos_cnum": 799
-                        },
-                        "point_num": 799,
-                        "point_bol": 774
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 1
-              },
-              "Send": {
-                "associated_type": {
-                  "type_content": [ "t_variable", { "name": "send_pt" } ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 32,
-                          "pos_bol": 752,
-                          "pos_cnum": 766
-                        },
-                        "point_num": 766,
-                        "point_bol": 752
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 32,
-                          "pos_bol": 752,
-                          "pos_cnum": 773
-                        },
-                        "point_num": 773,
-                        "point_bol": 752
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 0
-              },
-              "Default": {
-                "associated_type": {
-                  "type_content": [ "t_variable", { "name": "default_pt" } ],
-                  "location": [
-                    "File",
-                    {
-                      "start": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 34,
-                          "pos_bol": 800,
-                          "pos_cnum": 814
-                        },
-                        "point_num": 814,
-                        "point_bol": 800
-                      },
-                      "stop": {
-                        "byte": {
-                          "pos_fname":
-                            "../../test/contracts/multisig-v2.ligo",
-                          "pos_lnum": 34,
-                          "pos_bol": 800,
-                          "pos_cnum": 824
-                        },
-                        "point_num": 824,
-                        "point_bol": 800
-                      }
-                    }
-                  ]
-                },
-                "attributes": { "attributes": [] },
-                "decl_pos": 2
-              }
-            },
+            [
+              ([ "Label", "Send" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "send_pt",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 32,
+                           "pos_bol": 752,
+                           "pos_cnum": 766
+                         },
+                         "point_num": 766,
+                         "point_bol": 752
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 32,
+                           "pos_bol": 752,
+                           "pos_cnum": 773
+                         },
+                         "point_num": 773,
+                         "point_bol": 752
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 0
+               }),
+              ([ "Label", "Withdraw" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "withdraw_pt",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 33,
+                           "pos_bol": 774,
+                           "pos_cnum": 788
+                         },
+                         "point_num": 788,
+                         "point_bol": 774
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 33,
+                           "pos_bol": 774,
+                           "pos_cnum": 799
+                         },
+                         "point_num": 799,
+                         "point_bol": 774
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 1
+               }),
+              ([ "Label", "Default" ],
+               {
+                 "associated_type": {
+                   "type_content": [
+                     "t_variable",
+                     {
+                       "name": "default_pt",
+                       "counter": null,
+                       "location": [ "Virtual", "dummy" ]
+                     }
+                   ],
+                   "location": [
+                     "File",
+                     {
+                       "start": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 34,
+                           "pos_bol": 800,
+                           "pos_cnum": 814
+                         },
+                         "point_num": 814,
+                         "point_bol": 800
+                       },
+                       "stop": {
+                         "byte": {
+                           "pos_fname":
+                             "../../test/contracts/multisig-v2.ligo",
+                           "pos_lnum": 34,
+                           "pos_bol": 800,
+                           "pos_cnum": 824
+                         },
+                         "point_num": 824,
+                         "point_bol": 800
+                       }
+                     }
+                   ]
+                 },
+                 "attributes": { "attributes": [] },
+                 "decl_pos": 2
+               })
+            ],
             { "attributes": [] }
           ],
           "location": [
@@ -1610,10 +2320,10 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_constant",
       {
-        "name": "send",
         "binder": {
           "var": {
-            "wrap_content": { "name": "send" },
+            "name": "send",
+            "counter": null,
             "location": [
               "File",
               {
@@ -1651,7 +2361,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "send_pt" }
+                          {
+                            "name": "send_pt",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -1684,7 +2398,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -1719,7 +2437,14 @@ let%expect_test _ =
                   "location": [ "Virtual", "generated" ]
                 },
                 "type2": {
-                  "type_content": [ "t_variable", { "name": "return" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -1759,8 +2484,9 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "wrap_content": { "name": "parameters", "counter": 1 },
-                  "location": [ "Virtual", "generated" ]
+                  "name": "parameters",
+                  "counter": 1,
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -1769,7 +2495,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "send_pt" }
+                          {
+                            "name": "send_pt",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -1802,7 +2532,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -1835,10 +2569,18 @@ let%expect_test _ =
                     ]
                   ],
                   "location": [ "Virtual", "generated" ]
-                }
+                },
+                "const_or_var": "const"
               },
               "output_type": {
-                "type_content": [ "t_variable", { "name": "return" } ],
+                "type_content": [
+                  "t_variable",
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
+                ],
                 "location": [
                   "File",
                   {
@@ -1873,11 +2615,9 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "wrap_content": {
-                            "name": "parameters",
-                            "counter": 1
-                          },
-                          "location": [ "Virtual", "generated" ]
+                          "name": "parameters",
+                          "counter": 1,
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -1891,7 +2631,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "param" },
+                                  "name": "param",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -1923,7 +2664,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "send_pt" }
+                                    {
+                                      "name": "send_pt",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -1960,7 +2705,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "s" },
+                                  "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -1992,7 +2738,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "storage" }
+                                    {
+                                      "name": "storage",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -2100,9 +2850,9 @@ let%expect_test _ =
                                                             "expression_content": [
                                                               "E_variable",
                                                               {
-                                                                "wrap_content": {
-                                                                  "name": "s"
-                                                                },
+                                                                "name": "s",
+                                                                "counter":
+                                                                  null,
                                                                 "location": [
                                                                   "File",
                                                                   {
@@ -2426,7 +3176,8 @@ let%expect_test _ =
                                   {
                                     "let_binder": {
                                       "var": {
-                                        "wrap_content": { "name": "message" },
+                                        "name": "message",
+                                        "counter": null,
                                         "location": [
                                           "File",
                                           {
@@ -2458,7 +3209,13 @@ let%expect_test _ =
                                       "ty": {
                                         "type_content": [
                                           "t_variable",
-                                          { "name": "message" }
+                                          {
+                                            "name": "message",
+                                            "counter": null,
+                                            "location": [
+                                              "Virtual", "dummy"
+                                            ]
+                                          }
                                         ],
                                         "location": [
                                           "File",
@@ -2494,7 +3251,8 @@ let%expect_test _ =
                                       "expression_content": [
                                         "E_variable",
                                         {
-                                          "wrap_content": { "name": "param" },
+                                          "name": "param",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -2558,9 +3316,8 @@ let%expect_test _ =
                                         {
                                           "let_binder": {
                                             "var": {
-                                              "wrap_content": {
-                                                "name": "packed_msg"
-                                              },
+                                              "name": "packed_msg",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -2592,7 +3349,13 @@ let%expect_test _ =
                                             "ty": {
                                               "type_content": [
                                                 "t_variable",
-                                                { "name": "bytes" }
+                                                {
+                                                  "name": "bytes",
+                                                  "counter": null,
+                                                  "location": [
+                                                    "Virtual", "dummy"
+                                                  ]
+                                                }
                                               ],
                                               "location": [
                                                 "File",
@@ -2637,9 +3400,8 @@ let%expect_test _ =
                                                     "expression_content": [
                                                       "E_variable",
                                                       {
-                                                        "wrap_content": {
-                                                          "name": "message"
-                                                        },
+                                                        "name": "message",
+                                                        "counter": null,
                                                         "location": [
                                                           "File",
                                                           {
@@ -2770,10 +3532,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "packed_msg"
-                                                                    },
+                                                                    "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -2900,10 +3662,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3247,10 +4009,8 @@ let%expect_test _ =
                                                     {
                                                       "let_binder": {
                                                         "var": {
-                                                          "wrap_content": {
-                                                            "name":
-                                                              "new_store"
-                                                          },
+                                                          "name": "new_store",
+                                                          "counter": null,
                                                           "location": [
                                                             "File",
                                                             {
@@ -3294,7 +4054,12 @@ let%expect_test _ =
                                                             "t_variable",
                                                             {
                                                               "name":
-                                                                "addr_set"
+                                                                "addr_set",
+                                                              "counter": null,
+                                                              "location": [
+                                                                "Virtual",
+                                                                "dummy"
+                                                              ]
                                                             }
                                                           ],
                                                           "location": [
@@ -3406,10 +4171,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "packed_msg"
-                                                                    },
+                                                                    "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3495,10 +4260,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3675,10 +4440,10 @@ let%expect_test _ =
                                                                     "Var",
                                                                     {
                                                                     "var": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "voters"
-                                                                    },
+                                                                    "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3689,14 +4454,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     58,
                                                                     "pos_bol":
-                                                                    1530,
+                                                                    1532,
                                                                     "pos_cnum":
-                                                                    1542
+                                                                    1544
                                                                     },
                                                                     "point_num":
-                                                                    1542,
+                                                                    1544,
                                                                     "point_bol":
-                                                                    1530
+                                                                    1532
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -3705,14 +4470,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     58,
                                                                     "pos_bol":
-                                                                    1530,
+                                                                    1532,
                                                                     "pos_cnum":
-                                                                    1548
+                                                                    1550
                                                                     },
                                                                     "point_num":
-                                                                    1548,
+                                                                    1550,
                                                                     "point_bol":
-                                                                    1530
+                                                                    1532
                                                                     }
                                                                     }
                                                                     ]
@@ -3767,14 +4532,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1749
+                                                                    1751
                                                                     },
                                                                     "point_num":
-                                                                    1749,
+                                                                    1751,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -3783,14 +4548,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1761
+                                                                    1763
                                                                     },
                                                                     "point_num":
-                                                                    1761,
+                                                                    1763,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     }
                                                                     }
                                                                     ]
@@ -3799,10 +4564,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "voters"
-                                                                    },
+                                                                    "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3813,14 +4578,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1763
+                                                                    1765
                                                                     },
                                                                     "point_num":
-                                                                    1763,
+                                                                    1765,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -3829,14 +4594,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1769
+                                                                    1771
                                                                     },
                                                                     "point_num":
-                                                                    1769,
+                                                                    1771,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     }
                                                                     }
                                                                     ]
@@ -3852,14 +4617,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1763
+                                                                    1765
                                                                     },
                                                                     "point_num":
-                                                                    1763,
+                                                                    1765,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -3868,14 +4633,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1769
+                                                                    1771
                                                                     },
                                                                     "point_num":
-                                                                    1769,
+                                                                    1771,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     }
                                                                     }
                                                                     ]
@@ -3893,14 +4658,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1740
+                                                                    1742
                                                                     },
                                                                     "point_num":
-                                                                    1740,
+                                                                    1742,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -3909,14 +4674,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1770
+                                                                    1772
                                                                     },
                                                                     "point_num":
-                                                                    1770,
+                                                                    1772,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     }
                                                                     }
                                                                     ]
@@ -3936,14 +4701,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     64,
                                                                     "pos_bol":
-                                                                    1771,
+                                                                    1773,
                                                                     "pos_cnum":
-                                                                    1786
+                                                                    1788
                                                                     },
                                                                     "point_num":
-                                                                    1786,
+                                                                    1788,
                                                                     "point_bol":
-                                                                    1771
+                                                                    1773
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -3952,14 +4717,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     64,
                                                                     "pos_bol":
-                                                                    1771,
+                                                                    1773,
                                                                     "pos_cnum":
-                                                                    1790
+                                                                    1792
                                                                     },
                                                                     "point_num":
-                                                                    1790,
+                                                                    1792,
                                                                     "point_bol":
-                                                                    1771
+                                                                    1773
                                                                     }
                                                                     }
                                                                     ]
@@ -3969,10 +4734,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3983,14 +4748,105 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     65,
                                                                     "pos_bol":
-                                                                    1791,
+                                                                    1793,
                                                                     "pos_cnum":
-                                                                    1806
+                                                                    1808
                                                                     },
                                                                     "point_num":
-                                                                    1806,
+                                                                    1808,
                                                                     "point_bol":
-                                                                    1791
+                                                                    1793
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1809
+                                                                    },
+                                                                    "point_num":
+                                                                    1809,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1808
+                                                                    },
+                                                                    "point_num":
+                                                                    1808,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1809
+                                                                    },
+                                                                    "point_num":
+                                                                    1809,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1808
+                                                                    },
+                                                                    "point_num":
+                                                                    1808,
+                                                                    "point_bol":
+                                                                    1793
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -3999,25 +4855,35 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1910
+                                                                    1912
                                                                     },
                                                                     "point_num":
-                                                                    1910,
+                                                                    1912,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "proposal_counters"
+                                                                    ]
                                                                     ],
+                                                                    "update": {
+                                                                    "expression_content": [
+                                                                    "E_constant",
+                                                                    {
+                                                                    "cons_name": [
+                                                                    "Const",
                                                                     [
-                                                                    "Access_tuple",
+                                                                    "C_MAP_ADD"
+                                                                    ]
+                                                                    ],
+                                                                    "arguments": [
                                                                     {
                                                                     "expression_content": [
                                                                     "E_constant",
@@ -4042,14 +4908,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     65,
                                                                     "pos_bol":
-                                                                    1791,
+                                                                    1793,
                                                                     "pos_cnum":
-                                                                    1826
+                                                                    1828
                                                                     },
                                                                     "point_num":
-                                                                    1826,
+                                                                    1828,
                                                                     "point_bol":
-                                                                    1791
+                                                                    1793
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4058,21 +4924,19 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     65,
                                                                     "pos_bol":
-                                                                    1791,
+                                                                    1793,
                                                                     "pos_cnum":
-                                                                    1838
+                                                                    1840
                                                                     },
                                                                     "point_num":
-                                                                    1838,
+                                                                    1840,
                                                                     "point_bol":
-                                                                    1791
+                                                                    1793
                                                                     }
                                                                     }
                                                                     ]
-                                                                    }
-                                                                    ]
-                                                                    ],
-                                                                    "expression": {
+                                                                    },
+                                                                    {
                                                                     "expression_content": [
                                                                     "E_constant",
                                                                     {
@@ -4122,14 +4986,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1871
+                                                                    1873
                                                                     },
                                                                     "point_num":
-                                                                    1871,
+                                                                    1873,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4138,14 +5002,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1883
+                                                                    1885
                                                                     },
                                                                     "point_num":
-                                                                    1883,
+                                                                    1885,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4158,10 +5022,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4172,14 +5036,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1885
+                                                                    1887
                                                                     },
                                                                     "point_num":
-                                                                    1885,
+                                                                    1887,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4188,14 +5052,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1886
+                                                                    1888
                                                                     },
                                                                     "point_num":
-                                                                    1886,
+                                                                    1888,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4211,14 +5075,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1885
+                                                                    1887
                                                                     },
                                                                     "point_num":
-                                                                    1885,
+                                                                    1887,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4227,14 +5091,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1886
+                                                                    1888
                                                                     },
                                                                     "point_num":
-                                                                    1886,
+                                                                    1888,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4257,14 +5121,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1885
+                                                                    1887
                                                                     },
                                                                     "point_num":
-                                                                    1885,
+                                                                    1887,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4273,14 +5137,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1904
+                                                                    1906
                                                                     },
                                                                     "point_num":
-                                                                    1904,
+                                                                    1906,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4298,14 +5162,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1860
+                                                                    1862
                                                                     },
                                                                     "point_num":
-                                                                    1860,
+                                                                    1862,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4314,14 +5178,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1905
+                                                                    1907
                                                                     },
                                                                     "point_num":
-                                                                    1905,
+                                                                    1907,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4344,14 +5208,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1908
+                                                                    1910
                                                                     },
                                                                     "point_num":
-                                                                    1908,
+                                                                    1910,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4360,14 +5224,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1910
+                                                                    1912
                                                                     },
                                                                     "point_num":
-                                                                    1910,
+                                                                    1912,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4385,14 +5249,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1860
+                                                                    1862
                                                                     },
                                                                     "point_num":
-                                                                    1860,
+                                                                    1862,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4401,14 +5265,190 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1910
+                                                                    1912
                                                                     },
                                                                     "point_num":
-                                                                    1910,
+                                                                    1912,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_record_accessor",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1808
+                                                                    },
+                                                                    "point_num":
+                                                                    1808,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1809
+                                                                    },
+                                                                    "point_num":
+                                                                    1809,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1808
+                                                                    },
+                                                                    "point_num":
+                                                                    1808,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    66,
+                                                                    "pos_bol":
+                                                                    1845,
+                                                                    "pos_cnum":
+                                                                    1912
+                                                                    },
+                                                                    "point_num":
+                                                                    1912,
+                                                                    "point_bol":
+                                                                    1845
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
+                                                                    [
+                                                                    "Access_tuple",
+                                                                    "proposal_counters"
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1808
+                                                                    },
+                                                                    "point_num":
+                                                                    1808,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    66,
+                                                                    "pos_bol":
+                                                                    1845,
+                                                                    "pos_cnum":
+                                                                    1912
+                                                                    },
+                                                                    "point_num":
+                                                                    1912,
+                                                                    "point_bol":
+                                                                    1845
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1808
+                                                                    },
+                                                                    "point_num":
+                                                                    1808,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    66,
+                                                                    "pos_bol":
+                                                                    1845,
+                                                                    "pos_cnum":
+                                                                    1912
+                                                                    },
+                                                                    "point_num":
+                                                                    1912,
+                                                                    "point_bol":
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4425,14 +5465,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     65,
                                                                     "pos_bol":
-                                                                    1791,
+                                                                    1793,
                                                                     "pos_cnum":
-                                                                    1806
+                                                                    1808
                                                                     },
                                                                     "point_num":
-                                                                    1806,
+                                                                    1808,
                                                                     "point_bol":
-                                                                    1791
+                                                                    1793
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4441,14 +5481,54 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1910
+                                                                    1912
                                                                     },
                                                                     "point_num":
-                                                                    1910,
+                                                                    1912,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    65,
+                                                                    "pos_bol":
+                                                                    1793,
+                                                                    "pos_cnum":
+                                                                    1808
+                                                                    },
+                                                                    "point_num":
+                                                                    1808,
+                                                                    "point_bol":
+                                                                    1793
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    66,
+                                                                    "pos_bol":
+                                                                    1845,
+                                                                    "pos_cnum":
+                                                                    1912
+                                                                    },
+                                                                    "point_num":
+                                                                    1912,
+                                                                    "point_bol":
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4465,14 +5545,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     63,
                                                                     "pos_bol":
-                                                                    1727,
+                                                                    1729,
                                                                     "pos_cnum":
-                                                                    1737
+                                                                    1739
                                                                     },
                                                                     "point_num":
-                                                                    1737,
+                                                                    1739,
                                                                     "point_bol":
-                                                                    1727
+                                                                    1729
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4481,14 +5561,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     66,
                                                                     "pos_bol":
-                                                                    1843,
+                                                                    1845,
                                                                     "pos_cnum":
-                                                                    1910
+                                                                    1912
                                                                     },
                                                                     "point_num":
-                                                                    1910,
+                                                                    1912,
                                                                     "point_bol":
-                                                                    1843
+                                                                    1845
                                                                     }
                                                                     }
                                                                     ]
@@ -4498,10 +5578,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "new_store"
-                                                                    },
+                                                                    "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4512,14 +5592,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1929
+                                                                    1931
                                                                     },
                                                                     "point_num":
-                                                                    1929,
+                                                                    1931,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4528,14 +5608,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1971
+                                                                    1940
                                                                     },
                                                                     "point_num":
-                                                                    1971,
+                                                                    1940,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     }
                                                                     }
                                                                     ]
@@ -4577,14 +5657,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1951
+                                                                    1953
                                                                     },
                                                                     "point_num":
-                                                                    1951,
+                                                                    1953,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4593,14 +5673,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1963
+                                                                    1965
                                                                     },
                                                                     "point_num":
-                                                                    1963,
+                                                                    1965,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     }
                                                                     }
                                                                     ]
@@ -4609,10 +5689,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "voters"
-                                                                    },
+                                                                    "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4623,14 +5703,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1964
+                                                                    1966
                                                                     },
                                                                     "point_num":
-                                                                    1964,
+                                                                    1966,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4639,14 +5719,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1970
+                                                                    1972
                                                                     },
                                                                     "point_num":
-                                                                    1970,
+                                                                    1972,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     }
                                                                     }
                                                                     ]
@@ -4662,14 +5742,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1964
+                                                                    1966
                                                                     },
                                                                     "point_num":
-                                                                    1964,
+                                                                    1966,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4678,14 +5758,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1970
+                                                                    1972
                                                                     },
                                                                     "point_num":
-                                                                    1970,
+                                                                    1972,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     }
                                                                     }
                                                                     ]
@@ -4703,14 +5783,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1942
+                                                                    1944
                                                                     },
                                                                     "point_num":
-                                                                    1942,
+                                                                    1944,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4719,14 +5799,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1971
+                                                                    1973
                                                                     },
                                                                     "point_num":
-                                                                    1971,
+                                                                    1973,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     }
                                                                     }
                                                                     ]
@@ -4743,14 +5823,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1929
+                                                                    1931
                                                                     },
                                                                     "point_num":
-                                                                    1929,
+                                                                    1931,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4759,14 +5839,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     67,
                                                                     "pos_bol":
-                                                                    1912,
+                                                                    1914,
                                                                     "pos_cnum":
-                                                                    1971
+                                                                    1973
                                                                     },
                                                                     "point_num":
-                                                                    1971,
+                                                                    1973,
                                                                     "point_bol":
-                                                                    1912
+                                                                    1914
                                                                     }
                                                                     }
                                                                     ]
@@ -4800,10 +5880,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4814,14 +5894,105 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     72,
                                                                     "pos_bol":
-                                                                    2068,
+                                                                    2070,
                                                                     "pos_cnum":
-                                                                    2078
+                                                                    2080
                                                                     },
                                                                     "point_num":
-                                                                    2078,
+                                                                    2080,
                                                                     "point_bol":
-                                                                    2068
+                                                                    2070
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2081
+                                                                    },
+                                                                    "point_num":
+                                                                    2081,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2080
+                                                                    },
+                                                                    "point_num":
+                                                                    2080,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2081
+                                                                    },
+                                                                    "point_num":
+                                                                    2081,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2080
+                                                                    },
+                                                                    "point_num":
+                                                                    2080,
+                                                                    "point_bol":
+                                                                    2070
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4830,25 +6001,35 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2172
+                                                                    2174
                                                                     },
                                                                     "point_num":
-                                                                    2172,
+                                                                    2174,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "proposal_counters"
+                                                                    ]
                                                                     ],
+                                                                    "update": {
+                                                                    "expression_content": [
+                                                                    "E_constant",
+                                                                    {
+                                                                    "cons_name": [
+                                                                    "Const",
                                                                     [
-                                                                    "Access_tuple",
+                                                                    "C_MAP_ADD"
+                                                                    ]
+                                                                    ],
+                                                                    "arguments": [
                                                                     {
                                                                     "expression_content": [
                                                                     "E_constant",
@@ -4877,14 +6058,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     72,
                                                                     "pos_bol":
-                                                                    2068,
+                                                                    2070,
                                                                     "pos_cnum":
-                                                                    2098
+                                                                    2100
                                                                     },
                                                                     "point_num":
-                                                                    2098,
+                                                                    2100,
                                                                     "point_bol":
-                                                                    2068
+                                                                    2070
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4893,21 +6074,19 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     72,
                                                                     "pos_bol":
-                                                                    2068,
+                                                                    2070,
                                                                     "pos_cnum":
-                                                                    2104
+                                                                    2106
                                                                     },
                                                                     "point_num":
-                                                                    2104,
+                                                                    2106,
                                                                     "point_bol":
-                                                                    2068
+                                                                    2070
                                                                     }
                                                                     }
                                                                     ]
-                                                                    }
-                                                                    ]
-                                                                    ],
-                                                                    "expression": {
+                                                                    },
+                                                                    {
                                                                     "expression_content": [
                                                                     "E_constant",
                                                                     {
@@ -4957,14 +6136,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2133
+                                                                    2135
                                                                     },
                                                                     "point_num":
-                                                                    2133,
+                                                                    2135,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -4973,14 +6152,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2145
+                                                                    2147
                                                                     },
                                                                     "point_num":
-                                                                    2145,
+                                                                    2147,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -4993,10 +6172,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5007,14 +6186,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2147
+                                                                    2149
                                                                     },
                                                                     "point_num":
-                                                                    2147,
+                                                                    2149,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5023,14 +6202,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2148
+                                                                    2150
                                                                     },
                                                                     "point_num":
-                                                                    2148,
+                                                                    2150,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -5046,14 +6225,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2147
+                                                                    2149
                                                                     },
                                                                     "point_num":
-                                                                    2147,
+                                                                    2149,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5062,14 +6241,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2148
+                                                                    2150
                                                                     },
                                                                     "point_num":
-                                                                    2148,
+                                                                    2150,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -5092,14 +6271,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2147
+                                                                    2149
                                                                     },
                                                                     "point_num":
-                                                                    2147,
+                                                                    2149,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5108,14 +6287,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2166
+                                                                    2168
                                                                     },
                                                                     "point_num":
-                                                                    2166,
+                                                                    2168,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -5133,14 +6312,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2122
+                                                                    2124
                                                                     },
                                                                     "point_num":
-                                                                    2122,
+                                                                    2124,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5149,14 +6328,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2167
+                                                                    2169
                                                                     },
                                                                     "point_num":
-                                                                    2167,
+                                                                    2169,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -5179,14 +6358,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2170
+                                                                    2172
                                                                     },
                                                                     "point_num":
-                                                                    2170,
+                                                                    2172,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5195,14 +6374,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2172
+                                                                    2174
                                                                     },
                                                                     "point_num":
-                                                                    2172,
+                                                                    2174,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -5220,14 +6399,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2122
+                                                                    2124
                                                                     },
                                                                     "point_num":
-                                                                    2122,
+                                                                    2124,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5236,14 +6415,190 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2172
+                                                                    2174
                                                                     },
                                                                     "point_num":
-                                                                    2172,
+                                                                    2174,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_record_accessor",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2080
+                                                                    },
+                                                                    "point_num":
+                                                                    2080,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2081
+                                                                    },
+                                                                    "point_num":
+                                                                    2081,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2080
+                                                                    },
+                                                                    "point_num":
+                                                                    2080,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    73,
+                                                                    "pos_bol":
+                                                                    2111,
+                                                                    "pos_cnum":
+                                                                    2174
+                                                                    },
+                                                                    "point_num":
+                                                                    2174,
+                                                                    "point_bol":
+                                                                    2111
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
+                                                                    [
+                                                                    "Access_tuple",
+                                                                    "proposal_counters"
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2080
+                                                                    },
+                                                                    "point_num":
+                                                                    2080,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    73,
+                                                                    "pos_bol":
+                                                                    2111,
+                                                                    "pos_cnum":
+                                                                    2174
+                                                                    },
+                                                                    "point_num":
+                                                                    2174,
+                                                                    "point_bol":
+                                                                    2111
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2080
+                                                                    },
+                                                                    "point_num":
+                                                                    2080,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    73,
+                                                                    "pos_bol":
+                                                                    2111,
+                                                                    "pos_cnum":
+                                                                    2174
+                                                                    },
+                                                                    "point_num":
+                                                                    2174,
+                                                                    "point_bol":
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -5260,14 +6615,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     72,
                                                                     "pos_bol":
-                                                                    2068,
+                                                                    2070,
                                                                     "pos_cnum":
-                                                                    2078
+                                                                    2080
                                                                     },
                                                                     "point_num":
-                                                                    2078,
+                                                                    2080,
                                                                     "point_bol":
-                                                                    2068
+                                                                    2070
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5276,14 +6631,54 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     73,
                                                                     "pos_bol":
-                                                                    2109,
+                                                                    2111,
                                                                     "pos_cnum":
-                                                                    2172
+                                                                    2174
                                                                     },
                                                                     "point_num":
-                                                                    2172,
+                                                                    2174,
                                                                     "point_bol":
-                                                                    2109
+                                                                    2111
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    72,
+                                                                    "pos_bol":
+                                                                    2070,
+                                                                    "pos_cnum":
+                                                                    2080
+                                                                    },
+                                                                    "point_num":
+                                                                    2080,
+                                                                    "point_bol":
+                                                                    2070
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    73,
+                                                                    "pos_bol":
+                                                                    2111,
+                                                                    "pos_cnum":
+                                                                    2174
+                                                                    },
+                                                                    "point_num":
+                                                                    2174,
+                                                                    "point_bol":
+                                                                    2111
                                                                     }
                                                                     }
                                                                     ]
@@ -5293,10 +6688,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "new_store"
-                                                                    },
+                                                                    "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5307,14 +6702,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2187
+                                                                    2189
                                                                     },
                                                                     "point_num":
-                                                                    2187,
+                                                                    2189,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5323,14 +6718,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2218
+                                                                    2198
                                                                     },
                                                                     "point_num":
-                                                                    2218,
+                                                                    2198,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     }
                                                                     }
                                                                     ]
@@ -5365,14 +6760,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2205
+                                                                    2207
                                                                     },
                                                                     "point_num":
-                                                                    2205,
+                                                                    2207,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5381,14 +6776,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2217
+                                                                    2219
                                                                     },
                                                                     "point_num":
-                                                                    2217,
+                                                                    2219,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     }
                                                                     }
                                                                     ]
@@ -5405,14 +6800,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2200
+                                                                    2202
                                                                     },
                                                                     "point_num":
-                                                                    2200,
+                                                                    2202,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5421,14 +6816,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2218
+                                                                    2220
                                                                     },
                                                                     "point_num":
-                                                                    2218,
+                                                                    2220,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     }
                                                                     }
                                                                     ]
@@ -5445,14 +6840,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2187
+                                                                    2189
                                                                     },
                                                                     "point_num":
-                                                                    2187,
+                                                                    2189,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -5461,14 +6856,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     74,
                                                                     "pos_bol":
-                                                                    2174,
+                                                                    2176,
                                                                     "pos_cnum":
-                                                                    2218
+                                                                    2220
                                                                     },
                                                                     "point_num":
-                                                                    2218,
+                                                                    2220,
                                                                     "point_bol":
-                                                                    2174
+                                                                    2176
                                                                     }
                                                                     }
                                                                     ]
@@ -5510,14 +6905,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     76,
                                                                     "pos_bol":
-                                                                    2229,
+                                                                    2231,
                                                                     "pos_cnum":
                                                                     2236
                                                                     },
                                                                     "point_num":
                                                                     2236,
                                                                     "point_bol":
-                                                                    2229
+                                                                    2231
                                                                   }
                                                                 }
                                                               ]
@@ -5528,10 +6923,10 @@ let%expect_test _ =
                                                                 {
                                                                   "let_binder": {
                                                                     "var": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "sender_proposal_counter"
-                                                                    },
+                                                                    "sender_proposal_counter",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5575,7 +6970,13 @@ let%expect_test _ =
                                                                     "t_variable",
                                                                     {
                                                                     "name":
-                                                                    "nat"
+                                                                    "nat",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "Virtual",
+                                                                    "dummy"
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5694,10 +7095,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5885,10 +7286,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "sender_proposal_counter"
-                                                                    },
+                                                                    "sender_proposal_counter",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5974,10 +7375,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6332,10 +7733,10 @@ let%expect_test _ =
                                                                     {
                                                                     "let_binder": {
                                                                     "var": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "ret_ops"
-                                                                    },
+                                                                    "ret_ops",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6380,7 +7781,46 @@ let%expect_test _ =
                                                                     {
                                                                     "type_operator": {
                                                                     "name":
-                                                                    "list"
+                                                                    "list",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    89,
+                                                                    "pos_bol":
+                                                                    2552,
+                                                                    "pos_cnum":
+                                                                    2570
+                                                                    },
+                                                                    "point_num":
+                                                                    2570,
+                                                                    "point_bol":
+                                                                    2552
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    89,
+                                                                    "pos_bol":
+                                                                    2552,
+                                                                    "pos_cnum":
+                                                                    2574
+                                                                    },
+                                                                    "point_num":
+                                                                    2574,
+                                                                    "point_bol":
+                                                                    2552
+                                                                    }
+                                                                    }
+                                                                    ]
                                                                     },
                                                                     "arguments": [
                                                                     {
@@ -6388,7 +7828,13 @@ let%expect_test _ =
                                                                     "t_variable",
                                                                     {
                                                                     "name":
-                                                                    "operation"
+                                                                    "operation",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "Virtual",
+                                                                    "dummy"
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6550,10 +7996,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "new_store"
-                                                                    },
+                                                                    "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6680,10 +8126,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6857,10 +8303,101 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    92,
+                                                                    "pos_bol":
+                                                                    2650,
+                                                                    "pos_cnum":
+                                                                    2683
                                                                     },
+                                                                    "point_num":
+                                                                    2683,
+                                                                    "point_bol":
+                                                                    2650
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    92,
+                                                                    "pos_bol":
+                                                                    2650,
+                                                                    "pos_cnum":
+                                                                    2684
+                                                                    },
+                                                                    "point_num":
+                                                                    2684,
+                                                                    "point_bol":
+                                                                    2650
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    92,
+                                                                    "pos_bol":
+                                                                    2650,
+                                                                    "pos_cnum":
+                                                                    2683
+                                                                    },
+                                                                    "point_num":
+                                                                    2683,
+                                                                    "point_bol":
+                                                                    2650
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    92,
+                                                                    "pos_bol":
+                                                                    2650,
+                                                                    "pos_cnum":
+                                                                    2684
+                                                                    },
+                                                                    "point_num":
+                                                                    2684,
+                                                                    "point_bol":
+                                                                    2650
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6899,13 +8436,13 @@ let%expect_test _ =
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "message_store"
                                                                     ]
                                                                     ],
-                                                                    "expression": {
+                                                                    "update": {
                                                                     "expression_content": [
                                                                     "E_constant",
                                                                     {
@@ -6920,10 +8457,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "packed_msg"
-                                                                    },
+                                                                    "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7009,10 +8546,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7064,10 +8601,10 @@ let%expect_test _ =
                                                                     "pos_bol":
                                                                     2650,
                                                                     "pos_cnum":
-                                                                    2683
+                                                                    2656
                                                                     },
                                                                     "point_num":
-                                                                    2683,
+                                                                    2656,
                                                                     "point_bol":
                                                                     2650
                                                                     },
@@ -7080,10 +8617,10 @@ let%expect_test _ =
                                                                     "pos_bol":
                                                                     2650,
                                                                     "pos_cnum":
-                                                                    2684
+                                                                    2698
                                                                     },
                                                                     "point_num":
-                                                                    2684,
+                                                                    2698,
                                                                     "point_bol":
                                                                     2650
                                                                     }
@@ -7110,10 +8647,10 @@ let%expect_test _ =
                                                                     "pos_bol":
                                                                     2650,
                                                                     "pos_cnum":
-                                                                    2683
+                                                                    2656
                                                                     },
                                                                     "point_num":
-                                                                    2683,
+                                                                    2656,
                                                                     "point_bol":
                                                                     2650
                                                                     },
@@ -7137,6 +8674,46 @@ let%expect_test _ =
                                                                     ]
                                                                     }
                                                                     ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    92,
+                                                                    "pos_bol":
+                                                                    2650,
+                                                                    "pos_cnum":
+                                                                    2656
+                                                                    },
+                                                                    "point_num":
+                                                                    2656,
+                                                                    "point_bol":
+                                                                    2650
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    92,
+                                                                    "pos_bol":
+                                                                    2650,
+                                                                    "pos_cnum":
+                                                                    2698
+                                                                    },
+                                                                    "point_num":
+                                                                    2698,
+                                                                    "point_bol":
+                                                                    2650
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7226,10 +8803,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "ret_ops"
-                                                                    },
+                                                                    "ret_ops",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7258,10 +8835,10 @@ let%expect_test _ =
                                                                     "pos_bol":
                                                                     2700,
                                                                     "pos_cnum":
-                                                                    2739
+                                                                    2713
                                                                     },
                                                                     "point_num":
-                                                                    2739,
+                                                                    2713,
                                                                     "point_bol":
                                                                     2700
                                                                     }
@@ -7278,10 +8855,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "message"
-                                                                    },
+                                                                    "message",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7367,10 +8944,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7583,10 +9160,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7615,23 +9192,81 @@ let%expect_test _ =
                                                                     "pos_bol":
                                                                     2772,
                                                                     "pos_cnum":
-                                                                    2849
+                                                                    2779
                                                                     },
                                                                     "point_num":
-                                                                    2849,
+                                                                    2779,
                                                                     "point_bol":
                                                                     2772
                                                                     }
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    95,
+                                                                    "pos_bol":
+                                                                    2772,
+                                                                    "pos_cnum":
+                                                                    2778
+                                                                    },
+                                                                    "point_num":
+                                                                    2778,
+                                                                    "point_bol":
+                                                                    2772
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    95,
+                                                                    "pos_bol":
+                                                                    2772,
+                                                                    "pos_cnum":
+                                                                    2779
+                                                                    },
+                                                                    "point_num":
+                                                                    2779,
+                                                                    "point_bol":
+                                                                    2772
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "Virtual",
+                                                                    "generated"
+                                                                    ]
+                                                                    },
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "state_hash"
                                                                     ]
                                                                     ],
-                                                                    "expression": {
+                                                                    "update": {
                                                                     "expression_content": [
                                                                     "E_constant",
                                                                     {
@@ -7661,10 +9296,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7792,10 +9427,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "packed_msg"
-                                                                    },
+                                                                    "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7994,6 +9629,46 @@ let%expect_test _ =
                                                                     }
                                                                     }
                                                                     ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    95,
+                                                                    "pos_bol":
+                                                                    2772,
+                                                                    "pos_cnum":
+                                                                    2778
+                                                                    },
+                                                                    "point_num":
+                                                                    2778,
+                                                                    "point_bol":
+                                                                    2772
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    95,
+                                                                    "pos_bol":
+                                                                    2772,
+                                                                    "pos_cnum":
+                                                                    2849
+                                                                    },
+                                                                    "point_num":
+                                                                    2849,
+                                                                    "point_bol":
+                                                                    2772
+                                                                    }
+                                                                    }
+                                                                    ]
                                                                     },
                                                                     "expr2": {
                                                                     "expression_content": [
@@ -8001,10 +9676,10 @@ let%expect_test _ =
                                                                     {
                                                                     "binder": [
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "addr"
-                                                                    },
+                                                                    "addr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8046,10 +9721,10 @@ let%expect_test _ =
                                                                     [
                                                                     "Some",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "ctr"
-                                                                    },
+                                                                    "ctr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8098,10 +9773,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8248,10 +9923,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "addr"
-                                                                    },
+                                                                    "addr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8333,10 +10008,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "new_store"
-                                                                    },
+                                                                    "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8460,10 +10135,101 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2992
                                                                     },
+                                                                    "point_num":
+                                                                    2992,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2993
+                                                                    },
+                                                                    "point_num":
+                                                                    2993,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2992
+                                                                    },
+                                                                    "point_num":
+                                                                    2992,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2993
+                                                                    },
+                                                                    "point_num":
+                                                                    2993,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8502,21 +10268,31 @@ let%expect_test _ =
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "proposal_counters"
+                                                                    ]
                                                                     ],
+                                                                    "update": {
+                                                                    "expression_content": [
+                                                                    "E_constant",
+                                                                    {
+                                                                    "cons_name": [
+                                                                    "Const",
                                                                     [
-                                                                    "Access_tuple",
+                                                                    "C_MAP_ADD"
+                                                                    ]
+                                                                    ],
+                                                                    "arguments": [
                                                                     {
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "addr"
-                                                                    },
+                                                                    "addr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8593,10 +10369,8 @@ let%expect_test _ =
                                                                     }
                                                                     }
                                                                     ]
-                                                                    }
-                                                                    ]
-                                                                    ],
-                                                                    "expression": {
+                                                                    },
+                                                                    {
                                                                     "expression_content": [
                                                                     "E_constant",
                                                                     {
@@ -8622,10 +10396,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "ctr"
-                                                                    },
+                                                                    "ctr",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8809,6 +10583,222 @@ let%expect_test _ =
                                                                     },
                                                                     "point_num":
                                                                     3021,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    3035
+                                                                    },
+                                                                    "point_num":
+                                                                    3035,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_record_accessor",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2992
+                                                                    },
+                                                                    "point_num":
+                                                                    2992,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2993
+                                                                    },
+                                                                    "point_num":
+                                                                    2993,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2992
+                                                                    },
+                                                                    "point_num":
+                                                                    2992,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    3035
+                                                                    },
+                                                                    "point_num":
+                                                                    3035,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
+                                                                    [
+                                                                    "Access_tuple",
+                                                                    "proposal_counters"
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2992
+                                                                    },
+                                                                    "point_num":
+                                                                    2992,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    3035
+                                                                    },
+                                                                    "point_num":
+                                                                    3035,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2992
+                                                                    },
+                                                                    "point_num":
+                                                                    2992,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    3035
+                                                                    },
+                                                                    "point_num":
+                                                                    3035,
+                                                                    "point_bol":
+                                                                    2982
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    99,
+                                                                    "pos_bol":
+                                                                    2982,
+                                                                    "pos_cnum":
+                                                                    2992
+                                                                    },
+                                                                    "point_num":
+                                                                    2992,
                                                                     "point_bol":
                                                                     2982
                                                                     },
@@ -9020,10 +11010,101 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3073
                                                                     },
+                                                                    "point_num":
+                                                                    3073,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3074
+                                                                    },
+                                                                    "point_num":
+                                                                    3074,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3073
+                                                                    },
+                                                                    "point_num":
+                                                                    3073,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3074
+                                                                    },
+                                                                    "point_num":
+                                                                    3074,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9062,21 +11143,31 @@ let%expect_test _ =
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "message_store"
+                                                                    ]
                                                                     ],
+                                                                    "update": {
+                                                                    "expression_content": [
+                                                                    "E_constant",
+                                                                    {
+                                                                    "cons_name": [
+                                                                    "Const",
                                                                     [
-                                                                    "Access_tuple",
+                                                                    "C_MAP_ADD"
+                                                                    ]
+                                                                    ],
+                                                                    "arguments": [
                                                                     {
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "packed_msg"
-                                                                    },
+                                                                    "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9153,17 +11244,15 @@ let%expect_test _ =
                                                                     }
                                                                     }
                                                                     ]
-                                                                    }
-                                                                    ]
-                                                                    ],
-                                                                    "expression": {
+                                                                    },
+                                                                    {
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "new_store"
-                                                                    },
+                                                                    "new_store",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9219,6 +11308,222 @@ let%expect_test _ =
                                                                     },
                                                                     "point_num":
                                                                     3104,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3113
+                                                                    },
+                                                                    "point_num":
+                                                                    3113,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_record_accessor",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3073
+                                                                    },
+                                                                    "point_num":
+                                                                    3073,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3074
+                                                                    },
+                                                                    "point_num":
+                                                                    3074,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3073
+                                                                    },
+                                                                    "point_num":
+                                                                    3073,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3113
+                                                                    },
+                                                                    "point_num":
+                                                                    3113,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
+                                                                    [
+                                                                    "Access_tuple",
+                                                                    "message_store"
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3073
+                                                                    },
+                                                                    "point_num":
+                                                                    3073,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3113
+                                                                    },
+                                                                    "point_num":
+                                                                    3113,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3073
+                                                                    },
+                                                                    "point_num":
+                                                                    3073,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3113
+                                                                    },
+                                                                    "point_num":
+                                                                    3113,
+                                                                    "point_bol":
+                                                                    3062
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    102,
+                                                                    "pos_bol":
+                                                                    3062,
+                                                                    "pos_cnum":
+                                                                    3073
+                                                                    },
+                                                                    "point_num":
+                                                                    3073,
                                                                     "point_bol":
                                                                     3062
                                                                     },
@@ -9329,10 +11634,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "ret_ops"
-                                                                    },
+                                                                    "ret_ops",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9414,10 +11719,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9816,10 +12121,10 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_constant",
       {
-        "name": "withdraw",
         "binder": {
           "var": {
-            "wrap_content": { "name": "withdraw" },
+            "name": "withdraw",
+            "counter": null,
             "location": [
               "File",
               {
@@ -9857,7 +12162,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "withdraw_pt" }
+                          {
+                            "name": "withdraw_pt",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -9890,7 +12199,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -9925,7 +12238,14 @@ let%expect_test _ =
                   "location": [ "Virtual", "generated" ]
                 },
                 "type2": {
-                  "type_content": [ "t_variable", { "name": "return" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -9965,8 +12285,9 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "wrap_content": { "name": "parameters", "counter": 2 },
-                  "location": [ "Virtual", "generated" ]
+                  "name": "parameters",
+                  "counter": 2,
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -9975,7 +12296,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "withdraw_pt" }
+                          {
+                            "name": "withdraw_pt",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -10008,7 +12333,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -10041,10 +12370,18 @@ let%expect_test _ =
                     ]
                   ],
                   "location": [ "Virtual", "generated" ]
-                }
+                },
+                "const_or_var": "const"
               },
               "output_type": {
-                "type_content": [ "t_variable", { "name": "return" } ],
+                "type_content": [
+                  "t_variable",
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
+                ],
                 "location": [
                   "File",
                   {
@@ -10079,11 +12416,9 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "wrap_content": {
-                            "name": "parameters",
-                            "counter": 2
-                          },
-                          "location": [ "Virtual", "generated" ]
+                          "name": "parameters",
+                          "counter": 2,
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -10097,7 +12432,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "param" },
+                                  "name": "param",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -10129,7 +12465,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "withdraw_pt" }
+                                    {
+                                      "name": "withdraw_pt",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -10166,7 +12506,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "s" },
+                                  "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -10198,7 +12539,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "storage" }
+                                    {
+                                      "name": "storage",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -10239,7 +12584,8 @@ let%expect_test _ =
                             {
                               "let_binder": {
                                 "var": {
-                                  "wrap_content": { "name": "message" },
+                                  "name": "message",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -10271,7 +12617,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "message" }
+                                    {
+                                      "name": "message",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -10307,7 +12657,8 @@ let%expect_test _ =
                                 "expression_content": [
                                   "E_variable",
                                   {
-                                    "wrap_content": { "name": "param" },
+                                    "name": "param",
+                                    "counter": null,
                                     "location": [
                                       "File",
                                       {
@@ -10371,9 +12722,8 @@ let%expect_test _ =
                                   {
                                     "let_binder": {
                                       "var": {
-                                        "wrap_content": {
-                                          "name": "packed_msg"
-                                        },
+                                        "name": "packed_msg",
+                                        "counter": null,
                                         "location": [
                                           "File",
                                           {
@@ -10405,7 +12755,13 @@ let%expect_test _ =
                                       "ty": {
                                         "type_content": [
                                           "t_variable",
-                                          { "name": "bytes" }
+                                          {
+                                            "name": "bytes",
+                                            "counter": null,
+                                            "location": [
+                                              "Virtual", "dummy"
+                                            ]
+                                          }
                                         ],
                                         "location": [
                                           "File",
@@ -10450,9 +12806,8 @@ let%expect_test _ =
                                               "expression_content": [
                                                 "E_variable",
                                                 {
-                                                  "wrap_content": {
-                                                    "name": "message"
-                                                  },
+                                                  "name": "message",
+                                                  "counter": null,
                                                   "location": [
                                                     "File",
                                                     {
@@ -10561,10 +12916,9 @@ let%expect_test _ =
                                                               "expression_content": [
                                                                 "E_variable",
                                                                 {
-                                                                  "wrap_content": {
-                                                                    "name":
-                                                                    "s"
-                                                                  },
+                                                                  "name": "s",
+                                                                  "counter":
+                                                                    null,
                                                                   "location": [
                                                                     "File",
                                                                     {
@@ -10593,10 +12947,10 @@ let%expect_test _ =
                                                                     "pos_bol":
                                                                     3312,
                                                                     "pos_cnum":
-                                                                    3336
+                                                                    3322
                                                                     },
                                                                     "point_num":
-                                                                    3336,
+                                                                    3322,
                                                                     "point_bol":
                                                                     3312
                                                                     }
@@ -10632,10 +12986,10 @@ let%expect_test _ =
                                                                     "pos_bol":
                                                                     3312,
                                                                     "pos_cnum":
-                                                                    3336
+                                                                    3322
                                                                     },
                                                                     "point_num":
-                                                                    3336,
+                                                                    3322,
                                                                     "point_bol":
                                                                     3312
                                                                   }
@@ -10651,8 +13005,41 @@ let%expect_test _ =
                                                           }
                                                         ],
                                                         "location": [
-                                                          "Virtual",
-                                                          "generated"
+                                                          "File",
+                                                          {
+                                                            "start": {
+                                                              "byte": {
+                                                                "pos_fname":
+                                                                  "../../test/contracts/multisig-v2.ligo",
+                                                                "pos_lnum":
+                                                                  110,
+                                                                "pos_bol":
+                                                                  3312,
+                                                                "pos_cnum":
+                                                                  3321
+                                                              },
+                                                              "point_num":
+                                                                3321,
+                                                              "point_bol":
+                                                                3312
+                                                            },
+                                                            "stop": {
+                                                              "byte": {
+                                                                "pos_fname":
+                                                                  "../../test/contracts/multisig-v2.ligo",
+                                                                "pos_lnum":
+                                                                  110,
+                                                                "pos_bol":
+                                                                  3312,
+                                                                "pos_cnum":
+                                                                  3336
+                                                              },
+                                                              "point_num":
+                                                                3336,
+                                                              "point_bol":
+                                                                3312
+                                                            }
+                                                          }
                                                         ]
                                                       },
                                                       "path": [
@@ -10662,10 +13049,10 @@ let%expect_test _ =
                                                             "expression_content": [
                                                               "E_variable",
                                                               {
-                                                                "wrap_content": {
-                                                                  "name":
-                                                                    "packed_msg"
-                                                                },
+                                                                "name":
+                                                                  "packed_msg",
+                                                                "counter":
+                                                                  null,
                                                                 "location": [
                                                                   "File",
                                                                   {
@@ -10767,9 +13154,9 @@ let%expect_test _ =
                                                             "../../test/contracts/multisig-v2.ligo",
                                                           "pos_lnum": 110,
                                                           "pos_bol": 3312,
-                                                          "pos_cnum": 3348
+                                                          "pos_cnum": 3347
                                                         },
-                                                        "point_num": 3348,
+                                                        "point_num": 3347,
                                                         "point_bol": 3312
                                                       }
                                                     }
@@ -10784,10 +13171,8 @@ let%expect_test _ =
                                                         "Var",
                                                         {
                                                           "var": {
-                                                            "wrap_content": {
-                                                              "name":
-                                                                "voters"
-                                                            },
+                                                            "name": "voters",
+                                                            "counter": null,
                                                             "location": [
                                                               "File",
                                                               {
@@ -10798,14 +13183,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     111,
                                                                     "pos_bol":
-                                                                    3352,
+                                                                    3354,
                                                                     "pos_cnum":
-                                                                    3364
+                                                                    3366
                                                                   },
                                                                   "point_num":
-                                                                    3364,
+                                                                    3366,
                                                                   "point_bol":
-                                                                    3352
+                                                                    3354
                                                                 },
                                                                 "stop": {
                                                                   "byte": {
@@ -10814,14 +13199,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     111,
                                                                     "pos_bol":
-                                                                    3352,
+                                                                    3354,
                                                                     "pos_cnum":
-                                                                    3370
+                                                                    3372
                                                                   },
                                                                   "point_num":
-                                                                    3370,
+                                                                    3372,
                                                                   "point_bol":
-                                                                    3352
+                                                                    3354
                                                                 }
                                                               }
                                                             ]
@@ -10838,10 +13223,9 @@ let%expect_test _ =
                                                         {
                                                           "let_binder": {
                                                             "var": {
-                                                              "wrap_content": {
-                                                                "name":
-                                                                  "new_set"
-                                                              },
+                                                              "name":
+                                                                "new_set",
+                                                              "counter": null,
                                                               "location": [
                                                                 "File",
                                                                 {
@@ -10852,14 +13236,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3442
+                                                                    3444
                                                                     },
                                                                     "point_num":
-                                                                    3442,
+                                                                    3444,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                   },
                                                                   "stop": {
                                                                     "byte": {
@@ -10868,14 +13252,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3449
+                                                                    3451
                                                                     },
                                                                     "point_num":
-                                                                    3449,
+                                                                    3451,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                   }
                                                                 }
                                                               ]
@@ -10885,7 +13269,13 @@ let%expect_test _ =
                                                                 "t_variable",
                                                                 {
                                                                   "name":
-                                                                    "addr_set"
+                                                                    "addr_set",
+                                                                  "counter":
+                                                                    null,
+                                                                  "location": [
+                                                                    "Virtual",
+                                                                    "dummy"
+                                                                  ]
                                                                 }
                                                               ],
                                                               "location": [
@@ -10898,14 +13288,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3452
+                                                                    3454
                                                                     },
                                                                     "point_num":
-                                                                    3452,
+                                                                    3454,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                   },
                                                                   "stop": {
                                                                     "byte": {
@@ -10914,14 +13304,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3460
+                                                                    3462
                                                                     },
                                                                     "point_num":
-                                                                    3460,
+                                                                    3462,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                   }
                                                                 }
                                                               ]
@@ -10964,14 +13354,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3475
+                                                                    3477
                                                                     },
                                                                     "point_num":
-                                                                    3475,
+                                                                    3477,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -10980,14 +13370,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3487
+                                                                    3489
                                                                     },
                                                                     "point_num":
-                                                                    3487,
+                                                                    3489,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                     }
                                                                     }
                                                                     ]
@@ -10996,10 +13386,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "voters"
-                                                                    },
+                                                                    "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11010,14 +13400,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3489
+                                                                    3491
                                                                     },
                                                                     "point_num":
-                                                                    3489,
+                                                                    3491,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11026,14 +13416,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3495
+                                                                    3497
                                                                     },
                                                                     "point_num":
-                                                                    3495,
+                                                                    3497,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                     }
                                                                     }
                                                                     ]
@@ -11049,14 +13439,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3489
+                                                                    3491
                                                                     },
                                                                     "point_num":
-                                                                    3489,
+                                                                    3491,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11065,14 +13455,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3495
+                                                                    3497
                                                                     },
                                                                     "point_num":
-                                                                    3495,
+                                                                    3497,
                                                                     "point_bol":
-                                                                    3426
+                                                                    3428
                                                                     }
                                                                     }
                                                                     ]
@@ -11090,14 +13480,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3463
+                                                                    3465
                                                                   },
                                                                   "point_num":
-                                                                    3463,
+                                                                    3465,
                                                                   "point_bol":
-                                                                    3426
+                                                                    3428
                                                                 },
                                                                 "stop": {
                                                                   "byte": {
@@ -11106,14 +13496,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     114,
                                                                     "pos_bol":
-                                                                    3426,
+                                                                    3428,
                                                                     "pos_cnum":
-                                                                    3496
+                                                                    3498
                                                                   },
                                                                   "point_num":
-                                                                    3496,
+                                                                    3498,
                                                                   "point_bol":
-                                                                    3426
+                                                                    3428
                                                                 }
                                                               }
                                                             ]
@@ -11152,10 +13542,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "voters"
-                                                                    },
+                                                                    "voters",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11166,14 +13556,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3637
+                                                                    3639
                                                                     },
                                                                     "point_num":
-                                                                    3637,
+                                                                    3639,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11182,14 +13572,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3643
+                                                                    3645
                                                                     },
                                                                     "point_num":
-                                                                    3643,
+                                                                    3645,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     }
                                                                     }
                                                                     ]
@@ -11205,14 +13595,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3637
+                                                                    3639
                                                                     },
                                                                     "point_num":
-                                                                    3637,
+                                                                    3639,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11221,14 +13611,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3643
+                                                                    3645
                                                                     },
                                                                     "point_num":
-                                                                    3643,
+                                                                    3645,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     }
                                                                     }
                                                                     ]
@@ -11246,14 +13636,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3623
+                                                                    3625
                                                                     },
                                                                     "point_num":
-                                                                    3623,
+                                                                    3625,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11262,14 +13652,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3644
+                                                                    3646
                                                                     },
                                                                     "point_num":
-                                                                    3644,
+                                                                    3646,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     }
                                                                     }
                                                                     ]
@@ -11289,10 +13679,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "new_set"
-                                                                    },
+                                                                    "new_set",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11303,14 +13693,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3663
+                                                                    3665
                                                                     },
                                                                     "point_num":
-                                                                    3663,
+                                                                    3665,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11319,14 +13709,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3670
+                                                                    3672
                                                                     },
                                                                     "point_num":
-                                                                    3670,
+                                                                    3672,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     }
                                                                     }
                                                                     ]
@@ -11342,14 +13732,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3663
+                                                                    3665
                                                                     },
                                                                     "point_num":
-                                                                    3663,
+                                                                    3665,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11358,55 +13748,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3670
+                                                                    3672
                                                                     },
                                                                     "point_num":
-                                                                    3670,
+                                                                    3672,
                                                                     "point_bol":
-                                                                    3610
-                                                                    }
-                                                                    }
-                                                                    ]
-                                                                    }
-                                                                    ]
-                                                                    }
-                                                                    ],
-                                                                    "location": [
-                                                                    "File",
-                                                                    {
-                                                                    "start": {
-                                                                    "byte": {
-                                                                    "pos_fname":
-                                                                    "../../test/contracts/multisig-v2.ligo",
-                                                                    "pos_lnum":
-                                                                    119,
-                                                                    "pos_bol":
-                                                                    3610,
-                                                                    "pos_cnum":
-                                                                    3649
-                                                                    },
-                                                                    "point_num":
-                                                                    3649,
-                                                                    "point_bol":
-                                                                    3610
-                                                                    },
-                                                                    "stop": {
-                                                                    "byte": {
-                                                                    "pos_fname":
-                                                                    "../../test/contracts/multisig-v2.ligo",
-                                                                    "pos_lnum":
-                                                                    119,
-                                                                    "pos_bol":
-                                                                    3610,
-                                                                    "pos_cnum":
-                                                                    3671
-                                                                    },
-                                                                    "point_num":
-                                                                    3671,
-                                                                    "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     }
                                                                     }
                                                                     ]
@@ -11424,14 +13773,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3623
+                                                                    3651
                                                                     },
                                                                     "point_num":
-                                                                    3623,
+                                                                    3651,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11440,14 +13789,55 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3671
+                                                                    3673
                                                                     },
                                                                     "point_num":
-                                                                    3671,
+                                                                    3673,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    119,
+                                                                    "pos_bol":
+                                                                    3612,
+                                                                    "pos_cnum":
+                                                                    3625
+                                                                    },
+                                                                    "point_num":
+                                                                    3625,
+                                                                    "point_bol":
+                                                                    3612
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    119,
+                                                                    "pos_bol":
+                                                                    3612,
+                                                                    "pos_cnum":
+                                                                    3673
+                                                                    },
+                                                                    "point_num":
+                                                                    3673,
+                                                                    "point_bol":
+                                                                    3612
                                                                     }
                                                                     }
                                                                     ]
@@ -11457,10 +13847,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11471,14 +13861,105 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     120,
                                                                     "pos_bol":
-                                                                    3672,
+                                                                    3674,
                                                                     "pos_cnum":
-                                                                    3687
+                                                                    3689
                                                                     },
                                                                     "point_num":
-                                                                    3687,
+                                                                    3689,
                                                                     "point_bol":
-                                                                    3672
+                                                                    3674
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3690
+                                                                    },
+                                                                    "point_num":
+                                                                    3690,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3689
+                                                                    },
+                                                                    "point_num":
+                                                                    3689,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3690
+                                                                    },
+                                                                    "point_num":
+                                                                    3690,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3689
+                                                                    },
+                                                                    "point_num":
+                                                                    3689,
+                                                                    "point_bol":
+                                                                    3674
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11487,25 +13968,35 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3797
+                                                                    3799
                                                                     },
                                                                     "point_num":
-                                                                    3797,
+                                                                    3799,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "proposal_counters"
+                                                                    ]
                                                                     ],
+                                                                    "update": {
+                                                                    "expression_content": [
+                                                                    "E_constant",
+                                                                    {
+                                                                    "cons_name": [
+                                                                    "Const",
                                                                     [
-                                                                    "Access_tuple",
+                                                                    "C_MAP_ADD"
+                                                                    ]
+                                                                    ],
+                                                                    "arguments": [
                                                                     {
                                                                     "expression_content": [
                                                                     "E_constant",
@@ -11530,14 +14021,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     120,
                                                                     "pos_bol":
-                                                                    3672,
+                                                                    3674,
                                                                     "pos_cnum":
-                                                                    3707
+                                                                    3709
                                                                     },
                                                                     "point_num":
-                                                                    3707,
+                                                                    3709,
                                                                     "point_bol":
-                                                                    3672
+                                                                    3674
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11546,21 +14037,19 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     120,
                                                                     "pos_bol":
-                                                                    3672,
+                                                                    3674,
                                                                     "pos_cnum":
-                                                                    3719
+                                                                    3721
                                                                     },
                                                                     "point_num":
-                                                                    3719,
+                                                                    3721,
                                                                     "point_bol":
-                                                                    3672
+                                                                    3674
                                                                     }
                                                                     }
                                                                     ]
-                                                                    }
-                                                                    ]
-                                                                    ],
-                                                                    "expression": {
+                                                                    },
+                                                                    {
                                                                     "expression_content": [
                                                                     "E_constant",
                                                                     {
@@ -11621,14 +14110,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3757
+                                                                    3759
                                                                     },
                                                                     "point_num":
-                                                                    3757,
+                                                                    3759,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11637,14 +14126,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3769
+                                                                    3771
                                                                     },
                                                                     "point_num":
-                                                                    3769,
+                                                                    3771,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11657,10 +14146,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11671,14 +14160,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3771
+                                                                    3773
                                                                     },
                                                                     "point_num":
-                                                                    3771,
+                                                                    3773,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11687,14 +14176,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3772
+                                                                    3774
                                                                     },
                                                                     "point_num":
-                                                                    3772,
+                                                                    3774,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11710,14 +14199,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3771
+                                                                    3773
                                                                     },
                                                                     "point_num":
-                                                                    3771,
+                                                                    3773,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11726,14 +14215,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3772
+                                                                    3774
                                                                     },
                                                                     "point_num":
-                                                                    3772,
+                                                                    3774,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11756,14 +14245,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3771
+                                                                    3773
                                                                     },
                                                                     "point_num":
-                                                                    3771,
+                                                                    3773,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11772,14 +14261,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3790
+                                                                    3792
                                                                     },
                                                                     "point_num":
-                                                                    3790,
+                                                                    3792,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11797,14 +14286,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3746
+                                                                    3748
                                                                     },
                                                                     "point_num":
-                                                                    3746,
+                                                                    3748,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11813,14 +14302,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3791
+                                                                    3793
                                                                     },
                                                                     "point_num":
-                                                                    3791,
+                                                                    3793,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11843,14 +14332,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3794
+                                                                    3796
                                                                     },
                                                                     "point_num":
-                                                                    3794,
+                                                                    3796,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11859,14 +14348,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3796
+                                                                    3798
                                                                     },
                                                                     "point_num":
-                                                                    3796,
+                                                                    3798,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11884,14 +14373,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3746
+                                                                    3748
                                                                     },
                                                                     "point_num":
-                                                                    3746,
+                                                                    3748,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11900,14 +14389,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3796
+                                                                    3798
                                                                     },
                                                                     "point_num":
-                                                                    3796,
+                                                                    3798,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11925,14 +14414,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3741
+                                                                    3743
                                                                     },
                                                                     "point_num":
-                                                                    3741,
+                                                                    3743,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11941,14 +14430,190 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3797
+                                                                    3799
                                                                     },
                                                                     "point_num":
-                                                                    3797,
+                                                                    3799,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_record_accessor",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3689
+                                                                    },
+                                                                    "point_num":
+                                                                    3689,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3690
+                                                                    },
+                                                                    "point_num":
+                                                                    3690,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3689
+                                                                    },
+                                                                    "point_num":
+                                                                    3689,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    121,
+                                                                    "pos_bol":
+                                                                    3726,
+                                                                    "pos_cnum":
+                                                                    3799
+                                                                    },
+                                                                    "point_num":
+                                                                    3799,
+                                                                    "point_bol":
+                                                                    3726
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
+                                                                    [
+                                                                    "Access_tuple",
+                                                                    "proposal_counters"
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3689
+                                                                    },
+                                                                    "point_num":
+                                                                    3689,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    121,
+                                                                    "pos_bol":
+                                                                    3726,
+                                                                    "pos_cnum":
+                                                                    3799
+                                                                    },
+                                                                    "point_num":
+                                                                    3799,
+                                                                    "point_bol":
+                                                                    3726
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3689
+                                                                    },
+                                                                    "point_num":
+                                                                    3689,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    121,
+                                                                    "pos_bol":
+                                                                    3726,
+                                                                    "pos_cnum":
+                                                                    3799
+                                                                    },
+                                                                    "point_num":
+                                                                    3799,
+                                                                    "point_bol":
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -11965,14 +14630,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     120,
                                                                     "pos_bol":
-                                                                    3672,
+                                                                    3674,
                                                                     "pos_cnum":
-                                                                    3687
+                                                                    3689
                                                                     },
                                                                     "point_num":
-                                                                    3687,
+                                                                    3689,
                                                                     "point_bol":
-                                                                    3672
+                                                                    3674
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -11981,14 +14646,54 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     121,
                                                                     "pos_bol":
-                                                                    3724,
+                                                                    3726,
                                                                     "pos_cnum":
-                                                                    3797
+                                                                    3799
                                                                     },
                                                                     "point_num":
-                                                                    3797,
+                                                                    3799,
                                                                     "point_bol":
-                                                                    3724
+                                                                    3726
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    120,
+                                                                    "pos_bol":
+                                                                    3674,
+                                                                    "pos_cnum":
+                                                                    3689
+                                                                    },
+                                                                    "point_num":
+                                                                    3689,
+                                                                    "point_bol":
+                                                                    3674
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    121,
+                                                                    "pos_bol":
+                                                                    3726,
+                                                                    "pos_cnum":
+                                                                    3799
+                                                                    },
+                                                                    "point_num":
+                                                                    3799,
+                                                                    "point_bol":
+                                                                    3726
                                                                     }
                                                                     }
                                                                     ]
@@ -12008,14 +14713,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     122,
                                                                     "pos_bol":
-                                                                    3798,
+                                                                    3800,
                                                                     "pos_cnum":
-                                                                    3813
+                                                                    3815
                                                                     },
                                                                     "point_num":
-                                                                    3813,
+                                                                    3815,
                                                                     "point_bol":
-                                                                    3798
+                                                                    3800
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12024,14 +14729,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     122,
                                                                     "pos_bol":
-                                                                    3798,
+                                                                    3800,
                                                                     "pos_cnum":
-                                                                    3817
+                                                                    3819
                                                                     },
                                                                     "point_num":
-                                                                    3817,
+                                                                    3819,
                                                                     "point_bol":
-                                                                    3798
+                                                                    3800
                                                                     }
                                                                     }
                                                                     ]
@@ -12048,14 +14753,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     119,
                                                                     "pos_bol":
-                                                                    3610,
+                                                                    3612,
                                                                     "pos_cnum":
-                                                                    3620
+                                                                    3622
                                                                     },
                                                                     "point_num":
-                                                                    3620,
+                                                                    3622,
                                                                     "point_bol":
-                                                                    3610
+                                                                    3612
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12064,14 +14769,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     122,
                                                                     "pos_bol":
-                                                                    3798,
+                                                                    3800,
                                                                     "pos_cnum":
-                                                                    3817
+                                                                    3819
                                                                     },
                                                                     "point_num":
-                                                                    3817,
+                                                                    3819,
                                                                     "point_bol":
-                                                                    3798
+                                                                    3800
                                                                     }
                                                                     }
                                                                   ]
@@ -12106,10 +14811,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "new_set"
-                                                                    },
+                                                                    "new_set",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12120,14 +14825,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3979
+                                                                    3981
                                                                     },
                                                                     "point_num":
-                                                                    3979,
+                                                                    3981,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12136,14 +14841,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3986
+                                                                    3988
                                                                     },
                                                                     "point_num":
-                                                                    3986,
+                                                                    3988,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     }
                                                                     }
                                                                     ]
@@ -12159,14 +14864,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3979
+                                                                    3981
                                                                     },
                                                                     "point_num":
-                                                                    3979,
+                                                                    3981,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12175,14 +14880,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3986
+                                                                    3988
                                                                     },
                                                                     "point_num":
-                                                                    3986,
+                                                                    3988,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     }
                                                                     }
                                                                     ]
@@ -12200,14 +14905,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3965
+                                                                    3967
                                                                     },
                                                                     "point_num":
-                                                                    3965,
+                                                                    3967,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12216,14 +14921,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3987
+                                                                    3989
                                                                     },
                                                                     "point_num":
-                                                                    3987,
+                                                                    3989,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     }
                                                                     }
                                                                     ]
@@ -12246,14 +14951,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3990
+                                                                    3992
                                                                     },
                                                                     "point_num":
-                                                                    3990,
+                                                                    3992,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12262,14 +14967,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3992
+                                                                    3994
                                                                     },
                                                                     "point_num":
-                                                                    3992,
+                                                                    3994,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     }
                                                                     }
                                                                     ]
@@ -12287,14 +14992,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3965
+                                                                    3967
                                                                     },
                                                                     "point_num":
-                                                                    3965,
+                                                                    3967,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12303,14 +15008,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3992
+                                                                    3994
                                                                     },
                                                                     "point_num":
-                                                                    3992,
+                                                                    3994,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     }
                                                                     }
                                                                     ]
@@ -12320,10 +15025,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12334,14 +15039,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4008
+                                                                    4037
                                                                     },
                                                                     "point_num":
-                                                                    4008,
+                                                                    4037,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12350,25 +15055,116 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4050
+                                                                    4038
                                                                     },
                                                                     "point_num":
-                                                                    4050,
+                                                                    4038,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    128,
+                                                                    "pos_bol":
+                                                                    3995,
+                                                                    "pos_cnum":
+                                                                    4037
+                                                                    },
+                                                                    "point_num":
+                                                                    4037,
+                                                                    "point_bol":
+                                                                    3995
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    128,
+                                                                    "pos_bol":
+                                                                    3995,
+                                                                    "pos_cnum":
+                                                                    4038
+                                                                    },
+                                                                    "point_num":
+                                                                    4038,
+                                                                    "point_bol":
+                                                                    3995
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    128,
+                                                                    "pos_bol":
+                                                                    3995,
+                                                                    "pos_cnum":
+                                                                    4010
+                                                                    },
+                                                                    "point_num":
+                                                                    4010,
+                                                                    "point_bol":
+                                                                    3995
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    128,
+                                                                    "pos_bol":
+                                                                    3995,
+                                                                    "pos_cnum":
+                                                                    4052
+                                                                    },
+                                                                    "point_num":
+                                                                    4052,
+                                                                    "point_bol":
+                                                                    3995
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "message_store"
                                                                     ]
                                                                     ],
-                                                                    "expression": {
+                                                                    "update": {
                                                                     "expression_content": [
                                                                     "E_constant",
                                                                     {
@@ -12383,10 +15179,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "packed_msg"
-                                                                    },
+                                                                    "packed_msg",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12397,14 +15193,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4015
+                                                                    4017
                                                                     },
                                                                     "point_num":
-                                                                    4015,
+                                                                    4017,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12413,14 +15209,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4025
+                                                                    4027
                                                                     },
                                                                     "point_num":
-                                                                    4025,
+                                                                    4027,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
@@ -12436,14 +15232,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4015
+                                                                    4017
                                                                     },
                                                                     "point_num":
-                                                                    4015,
+                                                                    4017,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12452,14 +15248,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4025
+                                                                    4027
                                                                     },
                                                                     "point_num":
-                                                                    4025,
+                                                                    4027,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
@@ -12472,10 +15268,10 @@ let%expect_test _ =
                                                                     "expression_content": [
                                                                     "E_variable",
                                                                     {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12486,14 +15282,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4035
+                                                                    4037
                                                                     },
                                                                     "point_num":
-                                                                    4035,
+                                                                    4037,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12502,14 +15298,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4036
+                                                                    4038
                                                                     },
                                                                     "point_num":
-                                                                    4036,
+                                                                    4038,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
@@ -12525,14 +15321,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4035
+                                                                    4010
                                                                     },
                                                                     "point_num":
-                                                                    4035,
+                                                                    4010,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12541,14 +15337,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4036
+                                                                    4052
                                                                     },
                                                                     "point_num":
-                                                                    4036,
+                                                                    4052,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
@@ -12571,14 +15367,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4035
+                                                                    4010
                                                                     },
                                                                     "point_num":
-                                                                    4035,
+                                                                    4010,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12587,14 +15383,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4050
+                                                                    4052
                                                                     },
                                                                     "point_num":
-                                                                    4050,
+                                                                    4052,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
@@ -12612,14 +15408,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4008
+                                                                    4010
                                                                     },
                                                                     "point_num":
-                                                                    4008,
+                                                                    4010,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12628,14 +15424,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4050
+                                                                    4052
                                                                     },
                                                                     "point_num":
-                                                                    4050,
+                                                                    4052,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
@@ -12652,14 +15448,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4008
+                                                                    4010
                                                                     },
                                                                     "point_num":
-                                                                    4008,
+                                                                    4010,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12668,14 +15464,54 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     128,
                                                                     "pos_bol":
-                                                                    3993,
+                                                                    3995,
                                                                     "pos_cnum":
-                                                                    4050
+                                                                    4052
                                                                     },
                                                                     "point_num":
-                                                                    4050,
+                                                                    4052,
                                                                     "point_bol":
-                                                                    3993
+                                                                    3995
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    128,
+                                                                    "pos_bol":
+                                                                    3995,
+                                                                    "pos_cnum":
+                                                                    4010
+                                                                    },
+                                                                    "point_num":
+                                                                    4010,
+                                                                    "point_bol":
+                                                                    3995
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    128,
+                                                                    "pos_bol":
+                                                                    3995,
+                                                                    "pos_cnum":
+                                                                    4052
+                                                                    },
+                                                                    "point_num":
+                                                                    4052,
+                                                                    "point_bol":
+                                                                    3995
                                                                     }
                                                                     }
                                                                     ]
@@ -12685,10 +15521,10 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
-                                                                    "wrap_content": {
                                                                     "name":
-                                                                    "s"
-                                                                    },
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12699,14 +15535,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4066
+                                                                    4068
                                                                     },
                                                                     "point_num":
-                                                                    4066,
+                                                                    4068,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12715,33 +15551,393 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4104
+                                                                    4069
                                                                     },
                                                                     "point_num":
-                                                                    4104,
+                                                                    4069,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     }
                                                                     }
                                                                     ]
                                                                     },
-                                                                    "access_path": [
+                                                                    "access_path":
+                                                                    [],
+                                                                    "expression": {
+                                                                    "expression_content": [
+                                                                    "E_record_update",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4068
+                                                                    },
+                                                                    "point_num":
+                                                                    4068,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4069
+                                                                    },
+                                                                    "point_num":
+                                                                    4069,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4068
+                                                                    },
+                                                                    "point_num":
+                                                                    4068,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4106
+                                                                    },
+                                                                    "point_num":
+                                                                    4106,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
                                                                     "message_store"
+                                                                    ]
                                                                     ],
+                                                                    "update": {
+                                                                    "expression_content": [
+                                                                    "E_constant",
+                                                                    {
+                                                                    "cons_name": [
+                                                                    "Const",
+                                                                    [
+                                                                    "C_MAP_ADD"
+                                                                    ]
+                                                                    ],
+                                                                    "arguments": [
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "packed_msg",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4084
+                                                                    },
+                                                                    "point_num":
+                                                                    4084,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4094
+                                                                    },
+                                                                    "point_num":
+                                                                    4094,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4084
+                                                                    },
+                                                                    "point_num":
+                                                                    4084,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4094
+                                                                    },
+                                                                    "point_num":
+                                                                    4094,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "new_set",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4099
+                                                                    },
+                                                                    "point_num":
+                                                                    4099,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4106
+                                                                    },
+                                                                    "point_num":
+                                                                    4106,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4099
+                                                                    },
+                                                                    "point_num":
+                                                                    4099,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4106
+                                                                    },
+                                                                    "point_num":
+                                                                    4106,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    {
+                                                                    "expression_content": [
+                                                                    "E_record_accessor",
+                                                                    {
+                                                                    "record": {
+                                                                    "expression_content": [
+                                                                    "E_variable",
+                                                                    {
+                                                                    "name":
+                                                                    "s",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4068
+                                                                    },
+                                                                    "point_num":
+                                                                    4068,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4069
+                                                                    },
+                                                                    "point_num":
+                                                                    4069,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4068
+                                                                    },
+                                                                    "point_num":
+                                                                    4068,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4106
+                                                                    },
+                                                                    "point_num":
+                                                                    4106,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    },
+                                                                    "path": [
                                                                     [
                                                                     "Access_tuple",
-                                                                    {
-                                                                    "expression_content": [
-                                                                    "E_variable",
-                                                                    {
-                                                                    "wrap_content": {
-                                                                    "name":
-                                                                    "packed_msg"
-                                                                    },
+                                                                    "message_store"
+                                                                    ]
+                                                                    ]
+                                                                    }
+                                                                    ],
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12752,14 +15948,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4082
+                                                                    4068
                                                                     },
                                                                     "point_num":
-                                                                    4082,
+                                                                    4068,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12768,15 +15964,17 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4092
+                                                                    4106
                                                                     },
                                                                     "point_num":
-                                                                    4092,
+                                                                    4106,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     }
+                                                                    }
+                                                                    ]
                                                                     }
                                                                     ]
                                                                     }
@@ -12791,14 +15989,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4082
+                                                                    4068
                                                                     },
                                                                     "point_num":
-                                                                    4082,
+                                                                    4068,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12807,101 +16005,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4092
+                                                                    4106
                                                                     },
                                                                     "point_num":
-                                                                    4092,
+                                                                    4106,
                                                                     "point_bol":
-                                                                    4051
-                                                                    }
-                                                                    }
-                                                                    ]
-                                                                    }
-                                                                    ]
-                                                                    ],
-                                                                    "expression": {
-                                                                    "expression_content": [
-                                                                    "E_variable",
-                                                                    {
-                                                                    "wrap_content": {
-                                                                    "name":
-                                                                    "new_set"
-                                                                    },
-                                                                    "location": [
-                                                                    "File",
-                                                                    {
-                                                                    "start": {
-                                                                    "byte": {
-                                                                    "pos_fname":
-                                                                    "../../test/contracts/multisig-v2.ligo",
-                                                                    "pos_lnum":
-                                                                    129,
-                                                                    "pos_bol":
-                                                                    4051,
-                                                                    "pos_cnum":
-                                                                    4097
-                                                                    },
-                                                                    "point_num":
-                                                                    4097,
-                                                                    "point_bol":
-                                                                    4051
-                                                                    },
-                                                                    "stop": {
-                                                                    "byte": {
-                                                                    "pos_fname":
-                                                                    "../../test/contracts/multisig-v2.ligo",
-                                                                    "pos_lnum":
-                                                                    129,
-                                                                    "pos_bol":
-                                                                    4051,
-                                                                    "pos_cnum":
-                                                                    4104
-                                                                    },
-                                                                    "point_num":
-                                                                    4104,
-                                                                    "point_bol":
-                                                                    4051
-                                                                    }
-                                                                    }
-                                                                    ]
-                                                                    }
-                                                                    ],
-                                                                    "location": [
-                                                                    "File",
-                                                                    {
-                                                                    "start": {
-                                                                    "byte": {
-                                                                    "pos_fname":
-                                                                    "../../test/contracts/multisig-v2.ligo",
-                                                                    "pos_lnum":
-                                                                    129,
-                                                                    "pos_bol":
-                                                                    4051,
-                                                                    "pos_cnum":
-                                                                    4097
-                                                                    },
-                                                                    "point_num":
-                                                                    4097,
-                                                                    "point_bol":
-                                                                    4051
-                                                                    },
-                                                                    "stop": {
-                                                                    "byte": {
-                                                                    "pos_fname":
-                                                                    "../../test/contracts/multisig-v2.ligo",
-                                                                    "pos_lnum":
-                                                                    129,
-                                                                    "pos_bol":
-                                                                    4051,
-                                                                    "pos_cnum":
-                                                                    4104
-                                                                    },
-                                                                    "point_num":
-                                                                    4104,
-                                                                    "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     }
                                                                     }
                                                                     ]
@@ -12918,14 +16029,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4066
+                                                                    4068
                                                                     },
                                                                     "point_num":
-                                                                    4066,
+                                                                    4068,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12934,14 +16045,54 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4104
+                                                                    4106
                                                                     },
                                                                     "point_num":
-                                                                    4104,
+                                                                    4106,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
+                                                                    }
+                                                                    }
+                                                                    ]
+                                                                    }
+                                                                    }
+                                                                    ],
+                                                                    "location": [
+                                                                    "File",
+                                                                    {
+                                                                    "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4068
+                                                                    },
+                                                                    "point_num":
+                                                                    4068,
+                                                                    "point_bol":
+                                                                    4053
+                                                                    },
+                                                                    "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    129,
+                                                                    "pos_bol":
+                                                                    4053,
+                                                                    "pos_cnum":
+                                                                    4106
+                                                                    },
+                                                                    "point_num":
+                                                                    4106,
+                                                                    "point_bol":
+                                                                    4053
                                                                     }
                                                                     }
                                                                     ]
@@ -12958,14 +16109,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     127,
                                                                     "pos_bol":
-                                                                    3952,
+                                                                    3954,
                                                                     "pos_cnum":
-                                                                    3962
+                                                                    3964
                                                                     },
                                                                     "point_num":
-                                                                    3962,
+                                                                    3964,
                                                                     "point_bol":
-                                                                    3952
+                                                                    3954
                                                                     },
                                                                     "stop": {
                                                                     "byte": {
@@ -12974,14 +16125,14 @@ let%expect_test _ =
                                                                     "pos_lnum":
                                                                     129,
                                                                     "pos_bol":
-                                                                    4051,
+                                                                    4053,
                                                                     "pos_cnum":
-                                                                    4104
+                                                                    4106
                                                                     },
                                                                     "point_num":
-                                                                    4104,
+                                                                    4106,
                                                                     "point_bol":
-                                                                    4051
+                                                                    4053
                                                                     }
                                                                     }
                                                                   ]
@@ -13006,24 +16157,24 @@ let%expect_test _ =
                                                               "pos_fname":
                                                                 "../../test/contracts/multisig-v2.ligo",
                                                               "pos_lnum": 114,
-                                                              "pos_bol": 3426,
+                                                              "pos_bol": 3428,
                                                               "pos_cnum":
-                                                                3436
+                                                                3438
                                                             },
-                                                            "point_num": 3436,
-                                                            "point_bol": 3426
+                                                            "point_num": 3438,
+                                                            "point_bol": 3428
                                                           },
                                                           "stop": {
                                                             "byte": {
                                                               "pos_fname":
                                                                 "../../test/contracts/multisig-v2.ligo",
                                                               "pos_lnum": 114,
-                                                              "pos_bol": 3426,
+                                                              "pos_bol": 3428,
                                                               "pos_cnum":
-                                                                3496
+                                                                3498
                                                             },
-                                                            "point_num": 3496,
-                                                            "point_bol": 3426
+                                                            "point_num": 3498,
+                                                            "point_bol": 3428
                                                           }
                                                         }
                                                       ]
@@ -13047,24 +16198,24 @@ let%expect_test _ =
                                                               "pos_fname":
                                                                 "../../test/contracts/multisig-v2.ligo",
                                                               "pos_lnum": 131,
-                                                              "pos_bol": 4115,
+                                                              "pos_bol": 4117,
                                                               "pos_cnum":
-                                                                4129
+                                                                4131
                                                             },
-                                                            "point_num": 4129,
-                                                            "point_bol": 4115
+                                                            "point_num": 4131,
+                                                            "point_bol": 4117
                                                           },
                                                           "stop": {
                                                             "byte": {
                                                               "pos_fname":
                                                                 "../../test/contracts/multisig-v2.ligo",
                                                               "pos_lnum": 131,
-                                                              "pos_bol": 4115,
+                                                              "pos_bol": 4117,
                                                               "pos_cnum":
-                                                                4133
+                                                                4135
                                                             },
-                                                            "point_num": 4133,
-                                                            "point_bol": 4115
+                                                            "point_num": 4135,
+                                                            "point_bol": 4117
                                                           }
                                                         }
                                                       ]
@@ -13092,11 +16243,11 @@ let%expect_test _ =
                                                     "pos_fname":
                                                       "../../test/contracts/multisig-v2.ligo",
                                                     "pos_lnum": 132,
-                                                    "pos_bol": 4134,
+                                                    "pos_bol": 4136,
                                                     "pos_cnum": 4141
                                                   },
                                                   "point_num": 4141,
-                                                  "point_bol": 4134
+                                                  "point_bol": 4136
                                                 }
                                               }
                                             ]
@@ -13156,7 +16307,45 @@ let%expect_test _ =
                                                           "t_app",
                                                           {
                                                             "type_operator": {
-                                                              "name": "list"
+                                                              "name": "list",
+                                                              "counter": null,
+                                                              "location": [
+                                                                "File",
+                                                                {
+                                                                  "start": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    133,
+                                                                    "pos_bol":
+                                                                    4180,
+                                                                    "pos_cnum":
+                                                                    4197
+                                                                    },
+                                                                    "point_num":
+                                                                    4197,
+                                                                    "point_bol":
+                                                                    4180
+                                                                  },
+                                                                  "stop": {
+                                                                    "byte": {
+                                                                    "pos_fname":
+                                                                    "../../test/contracts/multisig-v2.ligo",
+                                                                    "pos_lnum":
+                                                                    133,
+                                                                    "pos_bol":
+                                                                    4180,
+                                                                    "pos_cnum":
+                                                                    4201
+                                                                    },
+                                                                    "point_num":
+                                                                    4201,
+                                                                    "point_bol":
+                                                                    4180
+                                                                  }
+                                                                }
+                                                              ]
                                                             },
                                                             "arguments": [
                                                               {
@@ -13164,7 +16353,13 @@ let%expect_test _ =
                                                                   "t_variable",
                                                                   {
                                                                     "name":
-                                                                    "operation"
+                                                                    "operation",
+                                                                    "counter":
+                                                                    null,
+                                                                    "location": [
+                                                                    "Virtual",
+                                                                    "dummy"
+                                                                    ]
                                                                   }
                                                                 ],
                                                                 "location": [
@@ -13280,9 +16475,8 @@ let%expect_test _ =
                                                   "expression_content": [
                                                     "E_variable",
                                                     {
-                                                      "wrap_content": {
-                                                        "name": "s"
-                                                      },
+                                                      "name": "s",
+                                                      "counter": null,
                                                       "location": [
                                                         "File",
                                                         {
@@ -13505,10 +16699,10 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_constant",
       {
-        "name": "default",
         "binder": {
           "var": {
-            "wrap_content": { "name": "default" },
+            "name": "default",
+            "counter": null,
             "location": [
               "File",
               {
@@ -13546,7 +16740,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "default_pt" }
+                          {
+                            "name": "default_pt",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -13579,7 +16777,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -13614,7 +16816,14 @@ let%expect_test _ =
                   "location": [ "Virtual", "generated" ]
                 },
                 "type2": {
-                  "type_content": [ "t_variable", { "name": "return" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -13654,8 +16863,9 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "wrap_content": { "name": "parameters", "counter": 3 },
-                  "location": [ "Virtual", "generated" ]
+                  "name": "parameters",
+                  "counter": 4,
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -13664,7 +16874,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "default_pt" }
+                          {
+                            "name": "default_pt",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -13697,7 +16911,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -13730,10 +16948,18 @@ let%expect_test _ =
                     ]
                   ],
                   "location": [ "Virtual", "generated" ]
-                }
+                },
+                "const_or_var": "const"
               },
               "output_type": {
-                "type_content": [ "t_variable", { "name": "return" } ],
+                "type_content": [
+                  "t_variable",
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
+                ],
                 "location": [
                   "File",
                   {
@@ -13768,11 +16994,9 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "wrap_content": {
-                            "name": "parameters",
-                            "counter": 3
-                          },
-                          "location": [ "Virtual", "generated" ]
+                          "name": "parameters",
+                          "counter": 4,
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -13786,7 +17010,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "_" },
+                                  "name": "_",
+                                  "counter": 3,
                                   "location": [
                                     "File",
                                     {
@@ -13818,7 +17043,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "default_pt" }
+                                    {
+                                      "name": "default_pt",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -13855,7 +17084,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "s" },
+                                  "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -13887,7 +17117,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "storage" }
+                                    {
+                                      "name": "storage",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -13964,12 +17198,48 @@ let%expect_test _ =
                                       "type_content": [
                                         "t_app",
                                         {
-                                          "type_operator": { "name": "list" },
+                                          "type_operator": {
+                                            "name": "list",
+                                            "counter": null,
+                                            "location": [
+                                              "File",
+                                              {
+                                                "start": {
+                                                  "byte": {
+                                                    "pos_fname":
+                                                      "../../test/contracts/multisig-v2.ligo",
+                                                    "pos_lnum": 136,
+                                                    "pos_bol": 4291,
+                                                    "pos_cnum": 4303
+                                                  },
+                                                  "point_num": 4303,
+                                                  "point_bol": 4291
+                                                },
+                                                "stop": {
+                                                  "byte": {
+                                                    "pos_fname":
+                                                      "../../test/contracts/multisig-v2.ligo",
+                                                    "pos_lnum": 136,
+                                                    "pos_bol": 4291,
+                                                    "pos_cnum": 4307
+                                                  },
+                                                  "point_num": 4307,
+                                                  "point_bol": 4291
+                                                }
+                                              }
+                                            ]
+                                          },
                                           "arguments": [
                                             {
                                               "type_content": [
                                                 "t_variable",
-                                                { "name": "operation" }
+                                                {
+                                                  "name": "operation",
+                                                  "counter": null,
+                                                  "location": [
+                                                    "Virtual", "dummy"
+                                                  ]
+                                                }
                                               ],
                                               "location": [
                                                 "File",
@@ -14064,7 +17334,8 @@ let%expect_test _ =
                                 "expression_content": [
                                   "E_variable",
                                   {
-                                    "wrap_content": { "name": "s" },
+                                    "name": "s",
+                                    "counter": null,
                                     "location": [
                                       "File",
                                       {
@@ -14219,10 +17490,10 @@ let%expect_test _ =
     "wrap_content": [
       "Declaration_constant",
       {
-        "name": "main",
         "binder": {
           "var": {
-            "wrap_content": { "name": "main" },
+            "name": "main",
+            "counter": null,
             "location": [
               "File",
               {
@@ -14260,7 +17531,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "parameter" }
+                          {
+                            "name": "parameter",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -14293,7 +17568,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -14328,7 +17607,14 @@ let%expect_test _ =
                   "location": [ "Virtual", "generated" ]
                 },
                 "type2": {
-                  "type_content": [ "t_variable", { "name": "return" } ],
+                  "type_content": [
+                    "t_variable",
+                    {
+                      "name": "return",
+                      "counter": null,
+                      "location": [ "Virtual", "dummy" ]
+                    }
+                  ],
                   "location": [
                     "File",
                     {
@@ -14368,8 +17654,9 @@ let%expect_test _ =
             {
               "binder": {
                 "var": {
-                  "wrap_content": { "name": "parameters", "counter": 4 },
-                  "location": [ "Virtual", "generated" ]
+                  "name": "parameters",
+                  "counter": 5,
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -14378,7 +17665,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "parameter" }
+                          {
+                            "name": "parameter",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -14411,7 +17702,11 @@ let%expect_test _ =
                       {
                         "type_content": [
                           "t_variable",
-                          { "name": "storage" }
+                          {
+                            "name": "storage",
+                            "counter": null,
+                            "location": [ "Virtual", "dummy" ]
+                          }
                         ],
                         "location": [
                           "File",
@@ -14444,10 +17739,18 @@ let%expect_test _ =
                     ]
                   ],
                   "location": [ "Virtual", "generated" ]
-                }
+                },
+                "const_or_var": "const"
               },
               "output_type": {
-                "type_content": [ "t_variable", { "name": "return" } ],
+                "type_content": [
+                  "t_variable",
+                  {
+                    "name": "return",
+                    "counter": null,
+                    "location": [ "Virtual", "dummy" ]
+                  }
+                ],
                 "location": [
                   "File",
                   {
@@ -14482,11 +17785,9 @@ let%expect_test _ =
                       "expression_content": [
                         "E_variable",
                         {
-                          "wrap_content": {
-                            "name": "parameters",
-                            "counter": 4
-                          },
-                          "location": [ "Virtual", "generated" ]
+                          "name": "parameters",
+                          "counter": 5,
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -14500,7 +17801,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "param" },
+                                  "name": "param",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -14532,7 +17834,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "parameter" }
+                                    {
+                                      "name": "parameter",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -14569,7 +17875,8 @@ let%expect_test _ =
                               "Var",
                               {
                                 "var": {
-                                  "wrap_content": { "name": "s" },
+                                  "name": "s",
+                                  "counter": null,
                                   "location": [
                                     "File",
                                     {
@@ -14601,7 +17908,11 @@ let%expect_test _ =
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
-                                    { "name": "storage" }
+                                    {
+                                      "name": "storage",
+                                      "counter": null,
+                                      "location": [ "Virtual", "dummy" ]
+                                    }
                                   ],
                                   "location": [
                                     "File",
@@ -14644,7 +17955,8 @@ let%expect_test _ =
                                 "expression_content": [
                                   "E_variable",
                                   {
-                                    "wrap_content": { "name": "param" },
+                                    "name": "param",
+                                    "counter": null,
                                     "location": [
                                       "File",
                                       {
@@ -14711,7 +18023,8 @@ let%expect_test _ =
                                       "Var",
                                       {
                                         "var": {
-                                          "wrap_content": { "name": "p" },
+                                          "name": "p",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -14720,22 +18033,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 142,
-                                                  "pos_bol": 4547,
-                                                  "pos_cnum": 4559
+                                                  "pos_bol": 4549,
+                                                  "pos_cnum": 4561
                                                 },
-                                                "point_num": 4559,
-                                                "point_bol": 4547
+                                                "point_num": 4561,
+                                                "point_bol": 4549
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 142,
-                                                  "pos_bol": 4547,
-                                                  "pos_cnum": 4560
+                                                  "pos_bol": 4549,
+                                                  "pos_cnum": 4562
                                                 },
-                                                "point_num": 4560,
-                                                "point_bol": 4547
+                                                "point_num": 4562,
+                                                "point_bol": 4549
                                               }
                                             }
                                           ]
@@ -14753,9 +18066,8 @@ let%expect_test _ =
                                           "expression_content": [
                                             "E_variable",
                                             {
-                                              "wrap_content": {
-                                                "name": "send"
-                                              },
+                                              "name": "send",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -14764,22 +18076,22 @@ let%expect_test _ =
                                                       "pos_fname":
                                                         "../../test/contracts/multisig-v2.ligo",
                                                       "pos_lnum": 142,
-                                                      "pos_bol": 4547,
-                                                      "pos_cnum": 4565
+                                                      "pos_bol": 4549,
+                                                      "pos_cnum": 4567
                                                     },
-                                                    "point_num": 4565,
-                                                    "point_bol": 4547
+                                                    "point_num": 4567,
+                                                    "point_bol": 4549
                                                   },
                                                   "stop": {
                                                     "byte": {
                                                       "pos_fname":
                                                         "../../test/contracts/multisig-v2.ligo",
                                                       "pos_lnum": 142,
-                                                      "pos_bol": 4547,
-                                                      "pos_cnum": 4569
+                                                      "pos_bol": 4549,
+                                                      "pos_cnum": 4571
                                                     },
-                                                    "point_num": 4569,
-                                                    "point_bol": 4547
+                                                    "point_num": 4571,
+                                                    "point_bol": 4549
                                                   }
                                                 }
                                               ]
@@ -14793,22 +18105,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 142,
-                                                  "pos_bol": 4547,
-                                                  "pos_cnum": 4565
+                                                  "pos_bol": 4549,
+                                                  "pos_cnum": 4567
                                                 },
-                                                "point_num": 4565,
-                                                "point_bol": 4547
+                                                "point_num": 4567,
+                                                "point_bol": 4549
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 142,
-                                                  "pos_bol": 4547,
-                                                  "pos_cnum": 4569
+                                                  "pos_bol": 4549,
+                                                  "pos_cnum": 4571
                                                 },
-                                                "point_num": 4569,
-                                                "point_bol": 4547
+                                                "point_num": 4571,
+                                                "point_bol": 4549
                                               }
                                             }
                                           ]
@@ -14821,9 +18133,8 @@ let%expect_test _ =
                                                 "expression_content": [
                                                   "E_variable",
                                                   {
-                                                    "wrap_content": {
-                                                      "name": "p"
-                                                    },
+                                                    "name": "p",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -14832,22 +18143,22 @@ let%expect_test _ =
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 142,
-                                                            "pos_bol": 4547,
-                                                            "pos_cnum": 4571
+                                                            "pos_bol": 4549,
+                                                            "pos_cnum": 4573
                                                           },
-                                                          "point_num": 4571,
-                                                          "point_bol": 4547
+                                                          "point_num": 4573,
+                                                          "point_bol": 4549
                                                         },
                                                         "stop": {
                                                           "byte": {
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 142,
-                                                            "pos_bol": 4547,
-                                                            "pos_cnum": 4572
+                                                            "pos_bol": 4549,
+                                                            "pos_cnum": 4574
                                                           },
-                                                          "point_num": 4572,
-                                                          "point_bol": 4547
+                                                          "point_num": 4574,
+                                                          "point_bol": 4549
                                                         }
                                                       }
                                                     ]
@@ -14861,22 +18172,22 @@ let%expect_test _ =
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 142,
-                                                        "pos_bol": 4547,
-                                                        "pos_cnum": 4571
+                                                        "pos_bol": 4549,
+                                                        "pos_cnum": 4573
                                                       },
-                                                      "point_num": 4571,
-                                                      "point_bol": 4547
+                                                      "point_num": 4573,
+                                                      "point_bol": 4549
                                                     },
                                                     "stop": {
                                                       "byte": {
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 142,
-                                                        "pos_bol": 4547,
-                                                        "pos_cnum": 4572
+                                                        "pos_bol": 4549,
+                                                        "pos_cnum": 4574
                                                       },
-                                                      "point_num": 4572,
-                                                      "point_bol": 4547
+                                                      "point_num": 4574,
+                                                      "point_bol": 4549
                                                     }
                                                   }
                                                 ]
@@ -14885,9 +18196,8 @@ let%expect_test _ =
                                                 "expression_content": [
                                                   "E_variable",
                                                   {
-                                                    "wrap_content": {
-                                                      "name": "s"
-                                                    },
+                                                    "name": "s",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -14896,22 +18206,22 @@ let%expect_test _ =
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 142,
-                                                            "pos_bol": 4547,
-                                                            "pos_cnum": 4574
+                                                            "pos_bol": 4549,
+                                                            "pos_cnum": 4576
                                                           },
-                                                          "point_num": 4574,
-                                                          "point_bol": 4547
+                                                          "point_num": 4576,
+                                                          "point_bol": 4549
                                                         },
                                                         "stop": {
                                                           "byte": {
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 142,
-                                                            "pos_bol": 4547,
-                                                            "pos_cnum": 4575
+                                                            "pos_bol": 4549,
+                                                            "pos_cnum": 4577
                                                           },
-                                                          "point_num": 4575,
-                                                          "point_bol": 4547
+                                                          "point_num": 4577,
+                                                          "point_bol": 4549
                                                         }
                                                       }
                                                     ]
@@ -14925,22 +18235,22 @@ let%expect_test _ =
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 142,
-                                                        "pos_bol": 4547,
-                                                        "pos_cnum": 4574
+                                                        "pos_bol": 4549,
+                                                        "pos_cnum": 4576
                                                       },
-                                                      "point_num": 4574,
-                                                      "point_bol": 4547
+                                                      "point_num": 4576,
+                                                      "point_bol": 4549
                                                     },
                                                     "stop": {
                                                       "byte": {
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 142,
-                                                        "pos_bol": 4547,
-                                                        "pos_cnum": 4575
+                                                        "pos_bol": 4549,
+                                                        "pos_cnum": 4577
                                                       },
-                                                      "point_num": 4575,
-                                                      "point_bol": 4547
+                                                      "point_num": 4577,
+                                                      "point_bol": 4549
                                                     }
                                                   }
                                                 ]
@@ -14955,22 +18265,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 142,
-                                                  "pos_bol": 4547,
-                                                  "pos_cnum": 4570
+                                                  "pos_bol": 4549,
+                                                  "pos_cnum": 4572
                                                 },
-                                                "point_num": 4570,
-                                                "point_bol": 4547
+                                                "point_num": 4572,
+                                                "point_bol": 4549
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 142,
-                                                  "pos_bol": 4547,
-                                                  "pos_cnum": 4576
+                                                  "pos_bol": 4549,
+                                                  "pos_cnum": 4578
                                                 },
-                                                "point_num": 4576,
-                                                "point_bol": 4547
+                                                "point_num": 4578,
+                                                "point_bol": 4549
                                               }
                                             }
                                           ]
@@ -14985,22 +18295,22 @@ let%expect_test _ =
                                             "pos_fname":
                                               "../../test/contracts/multisig-v2.ligo",
                                             "pos_lnum": 142,
-                                            "pos_bol": 4547,
-                                            "pos_cnum": 4565
+                                            "pos_bol": 4549,
+                                            "pos_cnum": 4567
                                           },
-                                          "point_num": 4565,
-                                          "point_bol": 4547
+                                          "point_num": 4567,
+                                          "point_bol": 4549
                                         },
                                         "stop": {
                                           "byte": {
                                             "pos_fname":
                                               "../../test/contracts/multisig-v2.ligo",
                                             "pos_lnum": 142,
-                                            "pos_bol": 4547,
-                                            "pos_cnum": 4576
+                                            "pos_bol": 4549,
+                                            "pos_cnum": 4578
                                           },
-                                          "point_num": 4576,
-                                          "point_bol": 4547
+                                          "point_num": 4578,
+                                          "point_bol": 4549
                                         }
                                       }
                                     ]
@@ -15014,7 +18324,8 @@ let%expect_test _ =
                                       "Var",
                                       {
                                         "var": {
-                                          "wrap_content": { "name": "p" },
+                                          "name": "p",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -15023,22 +18334,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 145,
-                                                  "pos_bol": 4615,
-                                                  "pos_cnum": 4631
+                                                  "pos_bol": 4617,
+                                                  "pos_cnum": 4633
                                                 },
-                                                "point_num": 4631,
-                                                "point_bol": 4615
+                                                "point_num": 4633,
+                                                "point_bol": 4617
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 145,
-                                                  "pos_bol": 4615,
-                                                  "pos_cnum": 4632
+                                                  "pos_bol": 4617,
+                                                  "pos_cnum": 4634
                                                 },
-                                                "point_num": 4632,
-                                                "point_bol": 4615
+                                                "point_num": 4634,
+                                                "point_bol": 4617
                                               }
                                             }
                                           ]
@@ -15056,9 +18367,8 @@ let%expect_test _ =
                                           "expression_content": [
                                             "E_variable",
                                             {
-                                              "wrap_content": {
-                                                "name": "withdraw"
-                                              },
+                                              "name": "withdraw",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -15067,22 +18377,22 @@ let%expect_test _ =
                                                       "pos_fname":
                                                         "../../test/contracts/multisig-v2.ligo",
                                                       "pos_lnum": 145,
-                                                      "pos_bol": 4615,
-                                                      "pos_cnum": 4637
+                                                      "pos_bol": 4617,
+                                                      "pos_cnum": 4639
                                                     },
-                                                    "point_num": 4637,
-                                                    "point_bol": 4615
+                                                    "point_num": 4639,
+                                                    "point_bol": 4617
                                                   },
                                                   "stop": {
                                                     "byte": {
                                                       "pos_fname":
                                                         "../../test/contracts/multisig-v2.ligo",
                                                       "pos_lnum": 145,
-                                                      "pos_bol": 4615,
-                                                      "pos_cnum": 4645
+                                                      "pos_bol": 4617,
+                                                      "pos_cnum": 4647
                                                     },
-                                                    "point_num": 4645,
-                                                    "point_bol": 4615
+                                                    "point_num": 4647,
+                                                    "point_bol": 4617
                                                   }
                                                 }
                                               ]
@@ -15096,22 +18406,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 145,
-                                                  "pos_bol": 4615,
-                                                  "pos_cnum": 4637
+                                                  "pos_bol": 4617,
+                                                  "pos_cnum": 4639
                                                 },
-                                                "point_num": 4637,
-                                                "point_bol": 4615
+                                                "point_num": 4639,
+                                                "point_bol": 4617
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 145,
-                                                  "pos_bol": 4615,
-                                                  "pos_cnum": 4645
+                                                  "pos_bol": 4617,
+                                                  "pos_cnum": 4647
                                                 },
-                                                "point_num": 4645,
-                                                "point_bol": 4615
+                                                "point_num": 4647,
+                                                "point_bol": 4617
                                               }
                                             }
                                           ]
@@ -15124,9 +18434,8 @@ let%expect_test _ =
                                                 "expression_content": [
                                                   "E_variable",
                                                   {
-                                                    "wrap_content": {
-                                                      "name": "p"
-                                                    },
+                                                    "name": "p",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15135,22 +18444,22 @@ let%expect_test _ =
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 145,
-                                                            "pos_bol": 4615,
-                                                            "pos_cnum": 4647
+                                                            "pos_bol": 4617,
+                                                            "pos_cnum": 4649
                                                           },
-                                                          "point_num": 4647,
-                                                          "point_bol": 4615
+                                                          "point_num": 4649,
+                                                          "point_bol": 4617
                                                         },
                                                         "stop": {
                                                           "byte": {
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 145,
-                                                            "pos_bol": 4615,
-                                                            "pos_cnum": 4648
+                                                            "pos_bol": 4617,
+                                                            "pos_cnum": 4650
                                                           },
-                                                          "point_num": 4648,
-                                                          "point_bol": 4615
+                                                          "point_num": 4650,
+                                                          "point_bol": 4617
                                                         }
                                                       }
                                                     ]
@@ -15164,22 +18473,22 @@ let%expect_test _ =
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 145,
-                                                        "pos_bol": 4615,
-                                                        "pos_cnum": 4647
+                                                        "pos_bol": 4617,
+                                                        "pos_cnum": 4649
                                                       },
-                                                      "point_num": 4647,
-                                                      "point_bol": 4615
+                                                      "point_num": 4649,
+                                                      "point_bol": 4617
                                                     },
                                                     "stop": {
                                                       "byte": {
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 145,
-                                                        "pos_bol": 4615,
-                                                        "pos_cnum": 4648
+                                                        "pos_bol": 4617,
+                                                        "pos_cnum": 4650
                                                       },
-                                                      "point_num": 4648,
-                                                      "point_bol": 4615
+                                                      "point_num": 4650,
+                                                      "point_bol": 4617
                                                     }
                                                   }
                                                 ]
@@ -15188,9 +18497,8 @@ let%expect_test _ =
                                                 "expression_content": [
                                                   "E_variable",
                                                   {
-                                                    "wrap_content": {
-                                                      "name": "s"
-                                                    },
+                                                    "name": "s",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15199,22 +18507,22 @@ let%expect_test _ =
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 145,
-                                                            "pos_bol": 4615,
-                                                            "pos_cnum": 4650
+                                                            "pos_bol": 4617,
+                                                            "pos_cnum": 4652
                                                           },
-                                                          "point_num": 4650,
-                                                          "point_bol": 4615
+                                                          "point_num": 4652,
+                                                          "point_bol": 4617
                                                         },
                                                         "stop": {
                                                           "byte": {
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 145,
-                                                            "pos_bol": 4615,
-                                                            "pos_cnum": 4651
+                                                            "pos_bol": 4617,
+                                                            "pos_cnum": 4653
                                                           },
-                                                          "point_num": 4651,
-                                                          "point_bol": 4615
+                                                          "point_num": 4653,
+                                                          "point_bol": 4617
                                                         }
                                                       }
                                                     ]
@@ -15228,22 +18536,22 @@ let%expect_test _ =
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 145,
-                                                        "pos_bol": 4615,
-                                                        "pos_cnum": 4650
+                                                        "pos_bol": 4617,
+                                                        "pos_cnum": 4652
                                                       },
-                                                      "point_num": 4650,
-                                                      "point_bol": 4615
+                                                      "point_num": 4652,
+                                                      "point_bol": 4617
                                                     },
                                                     "stop": {
                                                       "byte": {
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 145,
-                                                        "pos_bol": 4615,
-                                                        "pos_cnum": 4651
+                                                        "pos_bol": 4617,
+                                                        "pos_cnum": 4653
                                                       },
-                                                      "point_num": 4651,
-                                                      "point_bol": 4615
+                                                      "point_num": 4653,
+                                                      "point_bol": 4617
                                                     }
                                                   }
                                                 ]
@@ -15258,22 +18566,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 145,
-                                                  "pos_bol": 4615,
-                                                  "pos_cnum": 4646
+                                                  "pos_bol": 4617,
+                                                  "pos_cnum": 4648
                                                 },
-                                                "point_num": 4646,
-                                                "point_bol": 4615
+                                                "point_num": 4648,
+                                                "point_bol": 4617
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 145,
-                                                  "pos_bol": 4615,
-                                                  "pos_cnum": 4652
+                                                  "pos_bol": 4617,
+                                                  "pos_cnum": 4654
                                                 },
-                                                "point_num": 4652,
-                                                "point_bol": 4615
+                                                "point_num": 4654,
+                                                "point_bol": 4617
                                               }
                                             }
                                           ]
@@ -15288,22 +18596,22 @@ let%expect_test _ =
                                             "pos_fname":
                                               "../../test/contracts/multisig-v2.ligo",
                                             "pos_lnum": 145,
-                                            "pos_bol": 4615,
-                                            "pos_cnum": 4637
+                                            "pos_bol": 4617,
+                                            "pos_cnum": 4639
                                           },
-                                          "point_num": 4637,
-                                          "point_bol": 4615
+                                          "point_num": 4639,
+                                          "point_bol": 4617
                                         },
                                         "stop": {
                                           "byte": {
                                             "pos_fname":
                                               "../../test/contracts/multisig-v2.ligo",
                                             "pos_lnum": 145,
-                                            "pos_bol": 4615,
-                                            "pos_cnum": 4652
+                                            "pos_bol": 4617,
+                                            "pos_cnum": 4654
                                           },
-                                          "point_num": 4652,
-                                          "point_bol": 4615
+                                          "point_num": 4654,
+                                          "point_bol": 4617
                                         }
                                       }
                                     ]
@@ -15317,7 +18625,8 @@ let%expect_test _ =
                                       "Var",
                                       {
                                         "var": {
-                                          "wrap_content": { "name": "p" },
+                                          "name": "p",
+                                          "counter": null,
                                           "location": [
                                             "File",
                                             {
@@ -15326,22 +18635,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 148,
-                                                  "pos_bol": 4712,
-                                                  "pos_cnum": 4727
+                                                  "pos_bol": 4714,
+                                                  "pos_cnum": 4729
                                                 },
-                                                "point_num": 4727,
-                                                "point_bol": 4712
+                                                "point_num": 4729,
+                                                "point_bol": 4714
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 148,
-                                                  "pos_bol": 4712,
-                                                  "pos_cnum": 4728
+                                                  "pos_bol": 4714,
+                                                  "pos_cnum": 4730
                                                 },
-                                                "point_num": 4728,
-                                                "point_bol": 4712
+                                                "point_num": 4730,
+                                                "point_bol": 4714
                                               }
                                             }
                                           ]
@@ -15359,9 +18668,8 @@ let%expect_test _ =
                                           "expression_content": [
                                             "E_variable",
                                             {
-                                              "wrap_content": {
-                                                "name": "default"
-                                              },
+                                              "name": "default",
+                                              "counter": null,
                                               "location": [
                                                 "File",
                                                 {
@@ -15370,22 +18678,22 @@ let%expect_test _ =
                                                       "pos_fname":
                                                         "../../test/contracts/multisig-v2.ligo",
                                                       "pos_lnum": 148,
-                                                      "pos_bol": 4712,
-                                                      "pos_cnum": 4733
+                                                      "pos_bol": 4714,
+                                                      "pos_cnum": 4735
                                                     },
-                                                    "point_num": 4733,
-                                                    "point_bol": 4712
+                                                    "point_num": 4735,
+                                                    "point_bol": 4714
                                                   },
                                                   "stop": {
                                                     "byte": {
                                                       "pos_fname":
                                                         "../../test/contracts/multisig-v2.ligo",
                                                       "pos_lnum": 148,
-                                                      "pos_bol": 4712,
-                                                      "pos_cnum": 4740
+                                                      "pos_bol": 4714,
+                                                      "pos_cnum": 4742
                                                     },
-                                                    "point_num": 4740,
-                                                    "point_bol": 4712
+                                                    "point_num": 4742,
+                                                    "point_bol": 4714
                                                   }
                                                 }
                                               ]
@@ -15399,22 +18707,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 148,
-                                                  "pos_bol": 4712,
-                                                  "pos_cnum": 4733
+                                                  "pos_bol": 4714,
+                                                  "pos_cnum": 4735
                                                 },
-                                                "point_num": 4733,
-                                                "point_bol": 4712
+                                                "point_num": 4735,
+                                                "point_bol": 4714
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 148,
-                                                  "pos_bol": 4712,
-                                                  "pos_cnum": 4740
+                                                  "pos_bol": 4714,
+                                                  "pos_cnum": 4742
                                                 },
-                                                "point_num": 4740,
-                                                "point_bol": 4712
+                                                "point_num": 4742,
+                                                "point_bol": 4714
                                               }
                                             }
                                           ]
@@ -15427,9 +18735,8 @@ let%expect_test _ =
                                                 "expression_content": [
                                                   "E_variable",
                                                   {
-                                                    "wrap_content": {
-                                                      "name": "p"
-                                                    },
+                                                    "name": "p",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15438,22 +18745,22 @@ let%expect_test _ =
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 148,
-                                                            "pos_bol": 4712,
-                                                            "pos_cnum": 4742
+                                                            "pos_bol": 4714,
+                                                            "pos_cnum": 4744
                                                           },
-                                                          "point_num": 4742,
-                                                          "point_bol": 4712
+                                                          "point_num": 4744,
+                                                          "point_bol": 4714
                                                         },
                                                         "stop": {
                                                           "byte": {
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 148,
-                                                            "pos_bol": 4712,
-                                                            "pos_cnum": 4743
+                                                            "pos_bol": 4714,
+                                                            "pos_cnum": 4745
                                                           },
-                                                          "point_num": 4743,
-                                                          "point_bol": 4712
+                                                          "point_num": 4745,
+                                                          "point_bol": 4714
                                                         }
                                                       }
                                                     ]
@@ -15467,22 +18774,22 @@ let%expect_test _ =
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 148,
-                                                        "pos_bol": 4712,
-                                                        "pos_cnum": 4742
+                                                        "pos_bol": 4714,
+                                                        "pos_cnum": 4744
                                                       },
-                                                      "point_num": 4742,
-                                                      "point_bol": 4712
+                                                      "point_num": 4744,
+                                                      "point_bol": 4714
                                                     },
                                                     "stop": {
                                                       "byte": {
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 148,
-                                                        "pos_bol": 4712,
-                                                        "pos_cnum": 4743
+                                                        "pos_bol": 4714,
+                                                        "pos_cnum": 4745
                                                       },
-                                                      "point_num": 4743,
-                                                      "point_bol": 4712
+                                                      "point_num": 4745,
+                                                      "point_bol": 4714
                                                     }
                                                   }
                                                 ]
@@ -15491,9 +18798,8 @@ let%expect_test _ =
                                                 "expression_content": [
                                                   "E_variable",
                                                   {
-                                                    "wrap_content": {
-                                                      "name": "s"
-                                                    },
+                                                    "name": "s",
+                                                    "counter": null,
                                                     "location": [
                                                       "File",
                                                       {
@@ -15502,22 +18808,22 @@ let%expect_test _ =
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 148,
-                                                            "pos_bol": 4712,
-                                                            "pos_cnum": 4745
+                                                            "pos_bol": 4714,
+                                                            "pos_cnum": 4747
                                                           },
-                                                          "point_num": 4745,
-                                                          "point_bol": 4712
+                                                          "point_num": 4747,
+                                                          "point_bol": 4714
                                                         },
                                                         "stop": {
                                                           "byte": {
                                                             "pos_fname":
                                                               "../../test/contracts/multisig-v2.ligo",
                                                             "pos_lnum": 148,
-                                                            "pos_bol": 4712,
-                                                            "pos_cnum": 4746
+                                                            "pos_bol": 4714,
+                                                            "pos_cnum": 4748
                                                           },
-                                                          "point_num": 4746,
-                                                          "point_bol": 4712
+                                                          "point_num": 4748,
+                                                          "point_bol": 4714
                                                         }
                                                       }
                                                     ]
@@ -15531,22 +18837,22 @@ let%expect_test _ =
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 148,
-                                                        "pos_bol": 4712,
-                                                        "pos_cnum": 4745
+                                                        "pos_bol": 4714,
+                                                        "pos_cnum": 4747
                                                       },
-                                                      "point_num": 4745,
-                                                      "point_bol": 4712
+                                                      "point_num": 4747,
+                                                      "point_bol": 4714
                                                     },
                                                     "stop": {
                                                       "byte": {
                                                         "pos_fname":
                                                           "../../test/contracts/multisig-v2.ligo",
                                                         "pos_lnum": 148,
-                                                        "pos_bol": 4712,
-                                                        "pos_cnum": 4746
+                                                        "pos_bol": 4714,
+                                                        "pos_cnum": 4748
                                                       },
-                                                      "point_num": 4746,
-                                                      "point_bol": 4712
+                                                      "point_num": 4748,
+                                                      "point_bol": 4714
                                                     }
                                                   }
                                                 ]
@@ -15561,22 +18867,22 @@ let%expect_test _ =
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 148,
-                                                  "pos_bol": 4712,
-                                                  "pos_cnum": 4741
+                                                  "pos_bol": 4714,
+                                                  "pos_cnum": 4743
                                                 },
-                                                "point_num": 4741,
-                                                "point_bol": 4712
+                                                "point_num": 4743,
+                                                "point_bol": 4714
                                               },
                                               "stop": {
                                                 "byte": {
                                                   "pos_fname":
                                                     "../../test/contracts/multisig-v2.ligo",
                                                   "pos_lnum": 148,
-                                                  "pos_bol": 4712,
-                                                  "pos_cnum": 4747
+                                                  "pos_bol": 4714,
+                                                  "pos_cnum": 4749
                                                 },
-                                                "point_num": 4747,
-                                                "point_bol": 4712
+                                                "point_num": 4749,
+                                                "point_bol": 4714
                                               }
                                             }
                                           ]
@@ -15591,22 +18897,22 @@ let%expect_test _ =
                                             "pos_fname":
                                               "../../test/contracts/multisig-v2.ligo",
                                             "pos_lnum": 148,
-                                            "pos_bol": 4712,
-                                            "pos_cnum": 4733
+                                            "pos_bol": 4714,
+                                            "pos_cnum": 4735
                                           },
-                                          "point_num": 4733,
-                                          "point_bol": 4712
+                                          "point_num": 4735,
+                                          "point_bol": 4714
                                         },
                                         "stop": {
                                           "byte": {
                                             "pos_fname":
                                               "../../test/contracts/multisig-v2.ligo",
                                             "pos_lnum": 148,
-                                            "pos_bol": 4712,
-                                            "pos_cnum": 4747
+                                            "pos_bol": 4714,
+                                            "pos_cnum": 4749
                                           },
-                                          "point_num": 4747,
-                                          "point_bol": 4712
+                                          "point_num": 4749,
+                                          "point_bol": 4714
                                         }
                                       }
                                     ]
@@ -15634,11 +18940,11 @@ let%expect_test _ =
                                   "pos_fname":
                                     "../../test/contracts/multisig-v2.ligo",
                                   "pos_lnum": 149,
-                                  "pos_bol": 4748,
+                                  "pos_bol": 4750,
                                   "pos_cnum": 4753
                                 },
                                 "point_num": 4753,
-                                "point_bol": 4748
+                                "point_bol": 4750
                               }
                             }
                           ]
@@ -15697,11 +19003,11 @@ let%expect_test _ =
           "byte": {
             "pos_fname": "../../test/contracts/multisig-v2.ligo",
             "pos_lnum": 149,
-            "pos_bol": 4748,
+            "pos_bol": 4750,
             "pos_cnum": 4753
           },
           "point_num": 4753,
-          "point_bol": 4748
+          "point_bol": 4750
         }
       }
     ]

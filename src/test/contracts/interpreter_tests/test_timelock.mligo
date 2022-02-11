@@ -21,7 +21,7 @@ let test =
 
   let test_open (cc : chest_key * chest) (expected : bytes) : unit =
     let x : parameter contract = Test.to_contract addr in
-    let () = Test.transfer_to_contract_exn x cc 0tez in
+    let _ = Test.transfer_to_contract_exn x cc 0tez in
     let s = Test.get_storage addr in
     assert (s = expected)
   in

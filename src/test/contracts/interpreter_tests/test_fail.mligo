@@ -7,7 +7,7 @@ let test =
   let addr = Tezos.address contr in
 
   match Test.transfer_to_contract contr () 10tez with
-  | Success -> (failwith "Should fail !" : michelson_program )
+  | Success _ -> (failwith "Should fail !" : michelson_program )
   | Fail e -> (
     match e with
     | Rejected x ->

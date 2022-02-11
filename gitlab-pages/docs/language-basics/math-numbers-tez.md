@@ -51,16 +51,16 @@ separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 <Syntax syntax="jsligo">
 
   * Natural numbers are written as digits followed by the annotation `as nat`,
-    like so: `12 as nat`, `0 as nat`, and the same restriction on zero as 
+    like so: `12 as nat`, `0 as nat`, and the same restriction on zero as
     integers applies: `0 as nat` is the only way to specify the natural zero.
 
   * Tezos tokens can be specified using literals of three kinds:
       * units of millionth of `tez`, using the annotation `as mutez` after a
         natural literal, like `10000 as mutez` or `0 as mutez`;
       * units of `tez`, using the annotation `as tez`, like `3 as tez`;
-      * decimal amounts of `tez` are not supported by JsLIGO, instead the 
+      * decimal amounts of `tez` are not supported by JsLIGO, instead the
         amount should be written as `mutez`.
-      
+
 
 Note that large integral values can be expressed using underscores to
 separate groups of digits, like `1_000 as mutez`.
@@ -421,11 +421,11 @@ let rem4 : nat = a mod d;  // 3
 </Syntax>
 <Syntax syntax="jsligo">
 
-> The behaviour of the `%` operator in JsLIGO is different from JavaScript. 
-> In JsLIGO, `%` is a modulus operator and in JavaScript it's a remainder 
+> The behaviour of the `%` operator in JsLIGO is different from JavaScript.
+> In JsLIGO, `%` is a modulus operator and in JavaScript it's a remainder
 > operator. In the case of positive numbers everything is the same, but
 > not with negative numbers.
- 
+
 ```jsligo group=e
 let a: int = 120;
 let b: int = 9;
@@ -450,12 +450,12 @@ is zero, in which case it returns `None`
 ```pascaligo group=f
 const a : int = 37
 const b : int = 5
-const ediv1 : option (int * nat) = ediv(a, b)  // Some (7, 2)
+const ediv1 : option (int * nat) = ediv (a, b)  // Some (7, 2)
 const c : nat = 37n
-const ediv2 : option (int * nat) = ediv(c, b)  // Some (7, 2)
+const ediv2 : option (int * nat) = ediv (c, b)  // Some (7, 2)
 const d : nat = 5n
-const ediv3 : option (nat * nat) = ediv(c, d)  // Some (7, 2)
-const ediv4 : option (int * nat) = ediv(a, d)  // Some (7, 2)
+const ediv3 : option (nat * nat) = ediv (c, d)  // Some (7, 2)
+const ediv4 : option (int * nat) = ediv (a, d)  // Some (7, 2)
 ```
 
 </Syntax>
@@ -592,7 +592,7 @@ You can perform bitwise operations as follows:
 // Bitwise and (first operand can be int or nat)
 let four : nat = 4n land 4n // 4
 let four_ : nat = 7 land 4n // 4
-// Bitwise or 
+// Bitwise or
 let seven : nat = 7n lor 4n // 7
 // Bitwise xor
 let three : nat = 7n lxor 4n // 3

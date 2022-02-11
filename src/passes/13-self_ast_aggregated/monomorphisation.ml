@@ -4,10 +4,10 @@ module AST = Ast_aggregated
 let fold_map_expression = Helpers.fold_map_expression
 
 let to_name_safe v =
-  fst (Var.internal_get_name_and_counter v)
+  fst (AST.Var.internal_get_name_and_counter v)
 let poly_counter = ref 0
 let poly_name v = poly_counter := ! poly_counter + 1 ;
-                  Var.of_name ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
+                  AST.Var.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
 
 module Longident = struct
   type t = { variable : AST.expression_variable }
@@ -212,7 +212,7 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
      let vid, data = match Data.instance_lookup_opt lid type_instances type_ data with
        | Some (vid, _) -> vid, data
        | None ->
-          let vid = Longident.of_variable (Location.wrap (poly_name (Location.unwrap lid.variable))) in
+          let vid = Longident.of_variable (poly_name lid.variable) in
           vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
      data, Longident.to_expression vid type_
 

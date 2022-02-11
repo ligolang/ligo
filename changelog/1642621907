@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1503'
+title: 'Testing framework: keep no_mutation in environment reconstruction'
+type: fixed

@@ -17,13 +17,14 @@ let type_app : ('a -> 'b) -> 'a type_app -> 'b type_app
   let arguments = List.map ~f:g arguments in
   {type_operator; arguments}
 
+let row_element : ('a -> 'b) -> 'a row_element -> 'b row_element
+= fun g {associated_type ; attributes ; decl_pos}  ->
+  let associated_type = g associated_type in
+  ({associated_type ; attributes ; decl_pos}: 'b row_element)
+
 let rows : ('a -> 'b) -> 'a rows -> 'b rows
 = fun g {fields; attributes} ->
-  let fields = LMap.map
-  (fun {associated_type ; attributes ; decl_pos} ->
-    let associated_type = g associated_type in
-    ({associated_type ; attributes ; decl_pos}: 'b row_element)
-  ) fields in
+  let fields = LMap.map (row_element g) fields in
   {fields; attributes}
 
 let arrow : ('a -> 'b) -> 'a arrow -> 'b arrow
@@ -156,10 +157,10 @@ let for_
   {binder; start; final; incr; f_body}
 
 let for_each
-= fun f {fe_binder; collection; collection_type; fe_body} ->
+= fun f {fe_binder; collection; fe_body; collection_type} ->
   let collection = f collection in
   let fe_body    = f fe_body in
-  {fe_binder; collection; collection_type; fe_body}
+  {fe_binder; collection; fe_body ; collection_type}
 
 let while_loop
 = fun f {cond; body} ->
@@ -174,10 +175,10 @@ let declaration_type : ('a -> 'b) -> 'a declaration_type -> 'b declaration_type
   {type_binder; type_expr; type_attr}
 
 let declaration_constant : ('a -> 'b) -> ('c -> 'd) -> ('a,'c) declaration_constant -> ('b,'d) declaration_constant
-= fun f g {name; binder=b; attr; expr} ->
+= fun f g {binder=b; attr; expr} ->
   let binder = binder g b in
   let expr   = f expr     in
-  {name;binder;attr;expr}
+  {binder;attr;expr}
 
 let rec declaration_module : ('a -> 'b) -> ('c -> 'd) -> ('a,'c) declaration_module -> ('b,'d) declaration_module
 = fun f g {module_binder; module_; module_attr} ->

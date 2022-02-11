@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1493'
+title: 'Test.run: add missing type-checking conditions'
+type: fixed

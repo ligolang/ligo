@@ -2,6 +2,7 @@ open Ast_core.Types
 open Ast_core.Misc
 open Ast_core.Reasons
 open Types
+module Var = Stage_common.Var
 
 (* TODO: remove this () argument, it is just here to make sure that
    the ~bound and ~constraints arguments are given (while adding the
@@ -97,28 +98,28 @@ let never         = p_constant C_never      []
 let ( * ) a b = pair a b
 
 (* type value of recursive types *)
-let comparable = Var.of_name "comparable"
-let tc_comparable = 
-  let a =Var.fresh () in
+let comparable = Var.fresh ~name:"comparable" ()
+let tc_comparable =
+  let a = Var.fresh () in
    P_abs {arg = a; ret =
     let x = Var.fresh () in
     let y = Var.fresh () in
     Location.wrap @@ P_constraint { pc = { c = C_typeclass {
       tc_bound = [x;y] ;
-      tc_constraints =[c_apply comparable x "tc_comparable:bound"; 
+      tc_constraints =[c_apply comparable x "tc_comparable:bound";
                       c_apply comparable y "tc_comparable:bound"];
       tc_args = [p_var a];
       original_id = None;
-      typeclass  =  [ 
+      typeclass  =  [
                 [address] ;
                 [bool] ;
                 [bytes] ;
                 [chain_id] ;
-                [int] ; 
-                [key] ; 
+                [int] ;
+                [key] ;
                 [key_hash] ;
-                [mutez] ; 
-                [nat] ; 
+                [mutez] ;
+                [nat] ;
                 [never] ;
                 [option (p_var x)] ;
                 [variant] ;
@@ -127,14 +128,14 @@ let tc_comparable =
                 [signature] ;
                 [string] ;
                 [timestamp] ;
-                [unit] ; 
+                [unit] ;
                 (* pair of comparable *)
               ]
     }; reason = "default tc"}
   }
 }
 
-let storable = Var.of_name "storable" 
+let storable = Var.fresh ~name:"storable" ()
 
 let tc_storable =
   let a = Var.fresh () in
@@ -147,11 +148,11 @@ let tc_storable =
       tc_constraints =[
                                  c_apply comparable c "tc_storable:comparable bound";
                                  c_apply storable c "tc_storable:bound";
-                                 c_apply storable x "tc_storable:bound"; 
+                                 c_apply storable x "tc_storable:bound";
                                  c_apply storable y "tc_storable:bound"];
       tc_args = [p_var a];
       original_id = None;
-      typeclass = [ 
+      typeclass = [
                 [address] ;
                 [big_map (p_var x) (p_var y)] ;
                 [bls12_381_fr] ;
@@ -160,14 +161,14 @@ let tc_storable =
                 [bool] ;
                 [bytes] ;
                 [chain_id] ;
-                [int] ; 
-                [key] ; 
-                [key_hash] ; 
+                [int] ;
+                [key] ;
+                [key_hash] ;
                 [(p_var x) --> (p_var y)] ;
                 [list (p_var x)] ;
                 [map (p_var c) (p_var y)] ;
-                [mutez] ; 
-                [nat] ; 
+                [mutez] ;
+                [nat] ;
                 [never] ;
                 [option (p_var x)] ;
                 [variant] ;
@@ -179,16 +180,16 @@ let tc_storable =
                 [string] ;
                 (* [ticket (var x)] ; *)
                 [timestamp] ;
-                [unit] ; 
+                [unit] ;
               ]
       };reason = ""
     }
   }
 }
 
-let packable = Var.of_name "packable"
+let packable = Var.fresh ~name:"packable" ()
 
-let tc_packable =  
+let tc_packable =
   let a = Var.fresh () in
    P_abs {arg = a; ret =
     let c = Var.fresh () in
@@ -199,11 +200,11 @@ let tc_packable =
       tc_constraints = [
                                       c_apply comparable c "tc_packable: comparable bound";
                                       c_apply packable c "tc_packable:bound";
-                                      c_apply packable x "tc_packable:bound"; 
+                                      c_apply packable x "tc_packable:bound";
                                       c_apply packable y "tc_packable:bound"];
       tc_args = [p_var a];
       original_id = None;
-      typeclass = [ 
+      typeclass = [
                 [address] ;
                 [bls12_381_fr] ;
                 [bls12_381_g1] ;
@@ -212,14 +213,14 @@ let tc_packable =
                 [bytes] ;
                 [chain_id] ;
                 [contract (p_var x)] ;
-                [int] ; 
-                [key] ; 
-                [key_hash] ; 
+                [int] ;
+                [key] ;
+                [key_hash] ;
                 [(p_var x) --> (p_var y)] ;
                 [list (p_var x)] ;
                 [map (p_var c) (p_var y)] ;
-                [mutez] ; 
-                [nat] ; 
+                [mutez] ;
+                [nat] ;
                 [never] ;
                 [option (p_var x)] ;
                 [variant] ;
@@ -228,7 +229,7 @@ let tc_packable =
                 [signature] ;
                 [string] ;
                 [timestamp] ;
-                [unit] ; 
+                [unit] ;
               ]
       };
     reason = ""

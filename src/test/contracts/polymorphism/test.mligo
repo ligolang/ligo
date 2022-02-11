@@ -5,5 +5,5 @@ let main (m, n : int * int) : operation list * int =
 
 let test =
   let (taddr, _, _) = Test.originate main 0 0tez in
-  let () = Test.transfer_to_contract_exn (Test.to_contract taddr) 42 0tez in
+  let _ = Test.transfer_to_contract_exn (Test.to_contract taddr) 42 0tez in
   assert (Test.get_storage taddr = 42)

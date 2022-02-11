@@ -5,8 +5,8 @@ open Simple_utils.Trace
 
 let get_of m l =
   List.filter_map ~f:(fun v ->
-      match List.find ~f:(equal_vars v) l with
-      | Some d -> Some (d.location, v)
+      match List.find ~f:(Var.equal v) l with
+      | Some d -> Some (Var.get_location d, v)
       | None -> None) m
 
 let is_var = fun x -> match x with

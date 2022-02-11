@@ -17,8 +17,7 @@ type a_complex_record is
 (* A function that doesn't perform a lot of computations
    but has a complex type *)
 function plus_one (const r : a_complex_record) is
-  r with
-    record [counter = r.counter + 1]
+  r with record [counter = r.counter + 1]
 
 function main (const p : int; const s : a_complex_record) is
   ((list [] : list (operation)), plus_one (plus_one (s)))

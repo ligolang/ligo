@@ -32,9 +32,9 @@ let label_map ~compare lma lmb =
 
 let typeVariableMap compare a b = List.compare (compare_tvmap_entry compare) a b
 
-let expression_variable = Location.compare_wrap ~compare:Var.compare
+let expression_variable = Var.compare
 let type_variable       = Var.compare
-let module_variable     = String.compare
+let module_variable     = Var.compare
 
 let module_access f {module_name=mna; element=ea}
                     {module_name=mnb; element=eb} =
@@ -104,7 +104,7 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
 and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _ ; type_ = tb } =
   cmp2
     type_expression ta tb
-    type_variable ba.wrap_content bb.wrap_content
+    type_variable ba bb
 
 let option = Option.compare
 
@@ -145,7 +145,7 @@ and declaration_tag = function
 let rec expression a b =
   expression_content a.expression_content b.expression_content
 
-and expression_content a b = 
+and expression_content a b =
   match a,b with
     E_literal  a, E_literal  b -> literal a b
   | E_constant a, E_constant b -> constant a b
@@ -181,8 +181,8 @@ and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
   cmp2 expression la lb expression a b
 
 and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
-  cmp2 
-    expression_variable ba bb 
+  cmp2
+    expression_variable ba bb
     expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =
@@ -287,9 +287,8 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and declaration_constant {name=na;binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {name=nb;binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
-  cmp7
-    (Option.compare String.compare) na nb
+and declaration_constant {binder=ba;expr=ea;attr={inline=ia;no_mutation=nma;view=va;public=pua}} {binder=bb;expr=eb;attr={inline=ib;no_mutation=nmb;view=vb;public=pub}} =
+  cmp6
     expression_variable ba bb
     expression ea eb
     bool ia ib

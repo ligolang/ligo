@@ -1,0 +1,6 @@
+---
+  title: "Add voting_power & total_voting_power to test interpreter"
+  merge_request: "1542"
+  author: "melwyn95"
+  type: "added"
+

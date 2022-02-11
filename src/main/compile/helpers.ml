@@ -46,6 +46,7 @@ type options = Compiler_options.t
 let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
   : Preprocessing.Pascaligo.success =
   let open Preprocessing in
+  let project_root = options.project_root in
   let preprocess_file =
     match meta.syntax with
       PascaLIGO  -> Pascaligo.preprocess_file
@@ -53,10 +54,11 @@ let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
     | ReasonLIGO -> Reasonligo.preprocess_file
     | JsLIGO     -> Jsligo.preprocess_file
   in trace ~raise preproc_tracer @@
-      Simple_utils.Trace.from_result (preprocess_file options.libs file_path)
+      Simple_utils.Trace.from_result (preprocess_file ?project_root options.libs file_path)
 
 let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
   let open Preprocessing in
+  let project_root = options.project_root in
   let preprocess_string =
     match meta.syntax with
       PascaLIGO  -> Pascaligo.preprocess_string
@@ -64,7 +66,7 @@ let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
     | ReasonLIGO -> Reasonligo.preprocess_string
     | JsLIGO     -> Jsligo.preprocess_string
   in trace ~raise preproc_tracer @@
-     from_result (preprocess_string options.libs file_path)
+     from_result (preprocess_string ?project_root options.libs file_path)
 
 (* Front-end compilation *)
 
@@ -74,96 +76,72 @@ let parse_and_abstract_pascaligo ~raise buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Pascaligo.parse_file buffer file_path in
-  let applied =
-    trace ~raise self_cst_pascaligo_tracer @@
-    Self_cst.Pascaligo.all_module raw in
   let imperative =
     trace ~raise cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_module applied
+    Tree_abstraction.Pascaligo.compile_module raw.decl
   in imperative
 
 let parse_and_abstract_expression_pascaligo ~raise buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Pascaligo.parse_expression buffer in
-  let applied =
-    trace ~raise self_cst_pascaligo_tracer @@
-    Self_cst.Pascaligo.all_expression raw in
   let imperative =
     trace ~raise cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_expression applied
+    Tree_abstraction.Pascaligo.compile_expression raw
   in imperative
 
 let parse_and_abstract_cameligo ~raise buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Cameligo.parse_file buffer file_path in
-  let applied =
-    trace ~raise self_cst_cameligo_tracer @@
-    Self_cst.Cameligo.all_module raw in
   let imperative =
     trace ~raise cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_module applied
+    Tree_abstraction.Cameligo.compile_module raw
   in imperative
 
 let parse_and_abstract_expression_cameligo ~raise buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Cameligo.parse_expression buffer in
-  let applied =
-    trace ~raise self_cst_cameligo_tracer @@
-    Self_cst.Cameligo.all_expression raw in
   let imperative =
     trace ~raise cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_expression applied
+    Tree_abstraction.Cameligo.compile_expression raw
   in imperative
 
 let parse_and_abstract_reasonligo ~raise buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Reasonligo.parse_file buffer file_path in
-  let applied =
-    trace ~raise self_cst_reasonligo_tracer @@
-    Self_cst.Reasonligo.all_module raw in
   let imperative =
     trace ~raise cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_module applied
+    Tree_abstraction.Reasonligo.compile_module raw
   in imperative
 
 let parse_and_abstract_expression_reasonligo ~raise buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Reasonligo.parse_expression buffer in
-  let applied =
-    trace ~raise self_cst_reasonligo_tracer @@
-    Self_cst.Reasonligo.all_expression raw in
   let imperative =
     trace ~raise cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_expression applied
+    Tree_abstraction.Reasonligo.compile_expression raw
   in imperative
 
 let parse_and_abstract_jsligo ~raise buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_file buffer file_path in
-  let applied =
-    trace ~raise self_cst_jsligo_tracer @@
-    Self_cst.Jsligo.all_module raw in
   let imperative =
     trace ~raise cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_module applied
+    Tree_abstraction.Jsligo.compile_module raw
   in imperative
 
 let parse_and_abstract_expression_jsligo ~raise buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_expression buffer in
-  let applied =
-    trace ~raise self_cst_jsligo_tracer @@
-    Self_cst.Jsligo.all_expression raw in
   let imperative =
     trace ~raise cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_expression applied
+    Tree_abstraction.Jsligo.compile_expression raw
   in imperative
 
 let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
@@ -213,7 +191,7 @@ let parse_and_abstract_string_pascaligo ~raise buffer =
     Parsing.Pascaligo.parse_string buffer in
   let imperative =
     trace ~raise cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_module raw
+    Tree_abstraction.Pascaligo.compile_module raw.decl
   in imperative
 
 let parse_and_abstract_string_cameligo ~raise buffer =

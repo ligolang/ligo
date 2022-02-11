@@ -7,5 +7,5 @@ let test =
   let addr = Tezos.address contr in
   let () = Test.log addr in
   let () = Test.set_source addr in
-  let () = Test.transfer_exn addr (Test.eval ()) 0tez in
+  let _ = Test.transfer_exn addr (Test.eval ()) 0tez in
   ()

@@ -249,7 +249,7 @@ module Free_variables :
   = struct
   module Var = struct
     type t = expression_variable
-    let compare e e' = Location.compare_content ~compare:Var.compare e e'
+    let compare e e' = Ast_aggregated.Var.compare e e'
   end
 
   module VarSet = Caml.Set.Make(Var)
@@ -264,7 +264,7 @@ module Free_variables :
   and moduleEnv = moduleEnv' SMap.t
 
   let rec merge =fun {modVarSet=x1;moduleEnv=y1;varSet=z1} {modVarSet=x2;moduleEnv=y2;varSet=z2} ->
-    let aux : module_variable -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
+    let aux : string -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
       fun _ a b -> Some (merge a b)
     in
       {modVarSet=ModVarSet.union x1 x2;moduleEnv=SMap.union aux y1 y2;varSet=VarSet.union z1 z2}

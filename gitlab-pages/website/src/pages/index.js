@@ -153,6 +153,11 @@ function HomePage() {
                 </a>
               </li>
               <li className="secondary">
+                <a href="https://gitpod.io/#https://gitlab.com/ligolang/template-ligo" target="_blank">
+                  Try on Gitpod
+                </a>
+              </li>
+              <li className="secondary">
                 <a href={useBaseUrl('/docs/intro/installation')}>
                   Install
                 </a>
