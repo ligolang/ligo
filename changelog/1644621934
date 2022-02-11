@@ -1,0 +1,5 @@
+author: Pierre-Emmanuel Wulfman
+merge_request: '1556'
+title: 'BugFix : Use Loop_left instead of Fold_while in compilng imperative loop;
+  remove Fold_while completely'
+type: fixed
