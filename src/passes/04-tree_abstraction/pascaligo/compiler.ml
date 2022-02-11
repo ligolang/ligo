@@ -50,7 +50,7 @@ let compile_attributes : CST.attribute list -> AST.attributes =
     let attrs = List.map ~f:(fst <@ r_split) attributes
     and f = function
       _, Some (Attr.String value) -> Some value
-    | _, None -> None
+    | x, None -> Some x
     in List.filter_map attrs ~f
 
 let compile_selection : CST.selection -> 'a access * location = function
