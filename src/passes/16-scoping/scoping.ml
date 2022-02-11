@@ -120,6 +120,7 @@ let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
    env |-I expr : a, and translate_expression expr env = (expr', us), then
    select us env |-O expr' : a. *)
 let rec translate_expression (expr : I.expression) (env : I.environment) =
+  Format.printf "Translat expression : %a\n%! with env: %a \n%!" I.PP.expression expr I.PP.environment env;
   let meta = expr.location in
   let ty = expr.type_expression in
   match expr.content with
@@ -313,6 +314,13 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
     | C_NIL | C_LIST_EMPTY ->
       let* a = Mini_c.get_t_list ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
+    | C_LOOP_LEFT ->
+      (match expr.arguments with
+       | { content= E_closure body ; type_expression = closure_ty ; location =_ } :: arg :: [] ->
+         let* (input_ty, _) = Mini_c.get_t_function closure_ty in
+         let body = translate_closed_function ~env body input_ty in
+         return (O.Instr_arg body, [{ content = E_constant {cons_name = C_LEFT; arguments=[arg]} ; type_expression = Mini_c.(t_union (None,t_unit ())  (None,arg.type_expression)); location = arg.location}] )
+       | _ -> None)
     | C_LOOP_CONTINUE | C_LEFT ->
       let* (_, b) = Mini_c.get_t_or ty in
       return (Type_args (None, [translate_type b]), expr.arguments)
@@ -378,6 +386,6 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   let (arguments, usages) = translate_args arguments env in
   ((expr.cons_name, static_args, arguments), usages)
 
-and translate_closed_function ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
-  let (body, usages) = translate_expression body (Mini_c.Environment.add (binder, input_ty) []) in
+and translate_closed_function ?(env=[]) ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
+  let (body, usages) = translate_expression body (Mini_c.Environment.add (binder, input_ty) env) in
   Binds (usages, [translate_type input_ty], body)

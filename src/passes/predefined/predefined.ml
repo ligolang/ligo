@@ -261,8 +261,8 @@ module Tree_abstraction = struct
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
     | C_NEVER                   -> "Tezos.never"
-    | C_OPEN_CHEST              -> "Tezos.open_chest" 
-    | C_VIEW                    -> "Tezos.call_view" 
+    | C_OPEN_CHEST              -> "Tezos.open_chest"
+    | C_VIEW                    -> "Tezos.call_view"
     | C_GLOBAL_CONSTANT         -> "Tezos.constant"
 
     (* Operator module *)
@@ -859,6 +859,7 @@ module Stacking = struct
     | C_SELF               , _   -> Some (trivial_special "SELF")
     | C_NONE               , _   -> Some (trivial_special "NONE")
     | C_NIL                , _   -> Some (trivial_special "NIL")
+    | C_LOOP_LEFT          , _   -> Some (trivial_special "LOOP_LEFT")
     | C_LOOP_CONTINUE      , _   -> Some (trivial_special "LEFT")
     | C_LOOP_STOP          , _   -> Some (trivial_special "RIGHT")
     | C_LIST_EMPTY         , _   -> Some (trivial_special "NIL")
@@ -908,7 +909,7 @@ module Stacking = struct
           ( i_if
             (seq [ i_push_unit ; prim "LEFT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
             (seq [ i_push_unit ; prim "RIGHT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
-          ) 
+          )
       ])
     )
     | C_VIEW , Hangzhou -> Some (trivial_special "VIEW")

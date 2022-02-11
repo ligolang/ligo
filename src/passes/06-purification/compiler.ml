@@ -392,13 +392,13 @@ and compile_while ~raise ~last I.{cond;body} =
   in
   let init_rec = O.e_tuple [store_mutable_variable @@ captured_name_list] in
   let restore = fun expr -> VMap.fold aux captured_name_list expr in
-  let continue_expr = O.e_constant C_FOLD_CONTINUE [for_body] in
-  let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable binder] in
+  let continue_expr = O.e_constant C_LOOP_CONTINUE [for_body] in
+  let stop_expr = O.e_constant C_LOOP_STOP [O.e_variable binder] in
   let aux_func =
     O.e_lambda_ez binder None @@
     restore @@
     O.e_cond cond continue_expr stop_expr in
-  let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
+  let loop = O.e_constant C_LOOP_LEFT [aux_func; O.e_variable env_rec] in
   let return_expr = fun expr ->
     O.e_let_in_ez env_rec false [] init_rec @@
     O.e_let_in_ez env_rec false [] loop @@

@@ -545,7 +545,7 @@ let add ~raise loc = typer_2 ~raise loc "ADD" @@ fun a b ->
   if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
   then t_timestamp () else
     raise.raise @@ typeclass_error loc
-              [ 
+              [
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
                 [t_bls12_381_g2();t_bls12_381_g2()] ;
                 [t_bls12_381_fr();t_bls12_381_fr()] ;
@@ -579,7 +579,7 @@ let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b
   if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
   then t_timestamp () else
     raise.raise @@ typeclass_error loc
-              [ 
+              [
                 [t_string();t_string()] ;
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
                 [t_bls12_381_g2();t_bls12_381_g2()] ;
@@ -716,15 +716,15 @@ let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
 let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let () = assert_eq_1 ~raise ~loc arg init in
-  let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
+  let () = assert_eq_1 ~raise ~loc init result
   in init
 
 (* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
 let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
-  t_pair (t_bool ()) arg
+  arg
 
 let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
-  (t_pair (t_bool ()) arg)
+  arg
 
 let not_ ~raise loc = typer_1 ~raise loc "NOT" @@ fun elt ->
   if eq_1 elt (t_bool ())
@@ -1234,6 +1234,9 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_FOLD_WHILE          -> fold_while ~raise loc ;
   | C_FOLD_CONTINUE       -> continue ~raise loc ;
   | C_FOLD_STOP           -> stop ~raise loc ;
+  | C_LOOP_LEFT           -> fold_while ~raise loc ;
+  | C_LOOP_CONTINUE       -> continue ~raise loc ;
+  | C_LOOP_STOP           -> stop ~raise loc ;
   | C_FOLD                -> fold ~raise loc ;
    (* MATH *)
   | C_NEG                 -> neg ~raise loc ;

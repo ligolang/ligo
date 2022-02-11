@@ -575,7 +575,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let (opname', tv) =
         type_constant ~raise ~test ~protocol_version opname e.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
-  | E_constant {cons_name=C_FOLD_WHILE as opname;
+  | E_constant {cons_name=C_FOLD_WHILE | C_LOOP_LEFT as opname;
                 arguments = [
                     ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None ; attributes=_};
                                                    output_type = None ;
