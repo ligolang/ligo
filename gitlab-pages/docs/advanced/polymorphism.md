@@ -94,7 +94,7 @@ function id<a> (const x : a) : a is x
 ```
 
 Here we introduce a type variable `a` which can be generalised using
-`<a>` in the declaration.
+`<a>` after the function name in the declaration.
 
 </Syntax>
 <Syntax syntax="cameligo">
