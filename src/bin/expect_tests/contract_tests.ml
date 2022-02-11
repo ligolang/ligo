@@ -1710,10 +1710,10 @@ Missing a type annotation for argument "b". |}];
       1 | let a (b, c, d: int * int) = d
       2 | let a (((b, c, d)): ((((int))) * int)) = d
 
-    Pattern do not conform type ( int * int ) |}];
+    Pattern not of the expected type ( int * int ) |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
-    Pattern (b,c,d) do not conform type ( int * int ) |}];
+    Pattern (b,c,d) not of the expected type ( int * int ) |}];
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "duplicate_record_field.mligo" ] ;
   [%expect {|
