@@ -85,6 +85,9 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "hashlock.ligo"
       , "id.ligo"
       , "long_assign.ligo"
+
+        -- LIGO-432
+      , "tutorials/inter-contract-calls/CreateAndCall.religo"
       ]
 
 okayIgnoreDirs :: [FilePath]
@@ -93,7 +96,6 @@ okayIgnoreDirs = map (contractsDir </>) compilerTests
     compilerTests =
       [ -- TODO: Figure out which negative tests are for parsing and which are not
         "negative"
-      , "tutorials"
       ]
 
 badContractsDirs :: [FilePath]
