@@ -32,6 +32,8 @@ let mk_var ~loc var =
   if String.equal var "_" then Var.fresh ~loc ~name:"_" ()
   else Var.of_input_var ~loc var
 
+let compile_variable (var : CST.variable) =
+  let (var,loc) = w_split var in mk_var ~loc var
 let rec e_unpar : CST.expr -> CST.expr =
   function
     E_Par e -> e_unpar e.value.inside
@@ -1072,6 +1074,13 @@ and compile_fun_decl ~raise : CST.fun_decl -> expression_variable * type_express
       e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None -> make_e ~loc @@ E_lambda lambda
   in
+  (* This handle polymorphic annotation *)
+  let func = Option.value_map ~default:func ~f:(fun tp ->
+    let (tp,loc) = r_split tp in
+    let tp : CST.type_params = tp.inside in
+    let type_vars = List.Ne.map compile_variable @@ npseq_to_ne_list tp in
+    List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:func type_vars
+  ) type_params in
   (fun_binder, fun_type, func)
 
 and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> (expression, type_expression) declaration' location_wrap list =
@@ -1106,6 +1115,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
       let name, loc = w_split name in
       let var = mk_var ~loc name in
       let ascr =
+        (* drop the polymorphic variable *)
         Option.map ~f:(compile_type_expression ~raise <@ snd) const_type in
       let expr = compile_expression ~raise init in
       let attributes = Stage_common.Helpers.const_attribute in

@@ -244,6 +244,10 @@ module Mutator = struct
       let+ result, mutation = self result in
       return @@ E_lambda { binder ; result }, mutation
     )
+    | E_type_abstraction {type_binder; result} -> (
+      let+ result, mutation = self result in
+      return @@ E_type_abstraction {type_binder;result}, mutation
+    )
     | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
       let+ result, mutation = self result in
       return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}, mutation

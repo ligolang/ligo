@@ -19,6 +19,9 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
     | E_lambda { binder ; result } ->
        let result = decompile ~raise result in
        return (O.E_lambda { binder ; result })
+    | E_type_abstraction { type_binder ; result } ->
+       let result = decompile ~raise result in
+       return (O.E_type_abstraction { type_binder ; result })
     | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
        let fun_type = decompile_type ~raise fun_type in
        let result = decompile ~raise result in

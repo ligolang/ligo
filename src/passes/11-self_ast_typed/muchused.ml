@@ -124,6 +124,8 @@ let rec muchuse_of_expr expr : muchuse =
        | None -> muchuse_neutral (* something's wrong in the tree? *)
        | Some (l, (t, _))  -> muchuse_of_lambda t l
      end
+  | E_type_abstraction {result;_} ->
+     muchuse_of_expr result
   | E_let_in {let_binder;rhs;let_result;_} ->
      muchuse_union (muchuse_of_expr rhs)
        (muchuse_of_binder let_binder rhs.type_expression

@@ -1690,10 +1690,10 @@ const x =  match (+1 , (+2 , +3)) with
     Missing a type annotation for argument "_". |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
   [%expect {|
-    File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 2, characters 6-7:
-      1 | (* these should give a missing type annotation error *)
-      2 | let a b = b
-      3 | let a (b,c) = b
+    File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 5, characters 12-13:
+      4 | let a ((b)) = b
+      5 | let a = fun b -> b
+      6 | let a = fun (b,c) -> b
 
     Missing a type annotation for argument "b". |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.religo"];
@@ -1710,10 +1710,10 @@ Missing a type annotation for argument "b". |}];
       1 | let a (b, c, d: int * int) = d
       2 | let a (((b, c, d)): ((((int))) * int)) = d
 
-    The tuple "b, c, d" does not match the type "int * int". |}];
+    Pattern not of the expected type ( int * int ) |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
-    Pattern (b,c,d) do not conform type ( int * int ) |}];
+    Pattern (b,c,d) not of the expected type ( int * int ) |}];
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "duplicate_record_field.mligo" ] ;
   [%expect {|

@@ -22,5 +22,8 @@ let bind_pair = fun (a , b) ->
   let* b' = b in
   Some (a' , b')
 
+let unzip = function
+  Some (a,b) -> Some (a), Some(b)
+| None       -> None    , None
 
 let bind_map_pair = fun f (a , b) -> bind_pair (f a , f b)

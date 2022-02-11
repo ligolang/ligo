@@ -26,6 +26,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   )
   | E_application app -> Folds.application self init app
   | E_lambda l -> Folds.lambda self (fun _ a -> a) init l
+  | E_type_abstraction ta -> Folds.type_abs self init ta
   | E_ascription a -> Folds.ascription self (fun _ a -> a) init a
   | E_constructor c -> Folds.constructor self init c
   | E_matching {matchee=e; cases} -> (
@@ -137,6 +138,10 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
   | E_lambda l -> (
       let l = Maps.lambda self (fun a -> a) l in
       return @@ E_lambda l
+    )
+  | E_type_abstraction ta -> (
+      let ta = Maps.type_abs self ta in
+      return @@ E_type_abstraction ta
     )
   | E_recursive r ->
       let r = Maps.recursive self (fun a -> a) r in
@@ -318,6 +323,10 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
       let res,l = Fold_maps.lambda self idle init l in
       ( res, return @@ E_lambda l)
     )
+  | E_type_abstraction ta -> (
+      let res, ta = Fold_maps.type_abs self init ta in
+      res, return @@ E_type_abstraction ta
+    )
   | E_recursive r ->
       let res,r = Fold_maps.recursive self idle init r in
       ( res, return @@ E_recursive r)
@@ -432,6 +441,8 @@ module Free_variables :
       self result
     | E_lambda {binder = {var;ascr=_;attributes=_}; result;output_type=_} ->
       VarSet.remove var @@ self result
+    | E_type_abstraction {type_binder=_;result} ->
+      self result
     | E_recursive {fun_name; lambda = {binder = {var;ascr=_;attributes=_}; result;_};fun_type=_} ->
       VarSet.remove fun_name @@ VarSet.remove var @@ self result
     | E_constant {arguments;cons_name=_} ->
