@@ -20,6 +20,10 @@ let const const : formatter -> unit -> unit = fun ppf () -> fprintf ppf "%s" con
 let comment : formatter -> string -> unit = fun ppf s -> fprintf ppf "(* %s *)" s
 
 let list_sep value separator = pp_print_list ~pp_sep:separator value
+let list_sep_prep value separator ppf lst =
+  match lst with
+  | [] -> ()
+  | _ -> Format.fprintf ppf "%a%a" separator () (pp_print_list ~pp_sep:separator value) lst
 let list_sep_d x = list_sep x (tag " ,@ ")
 let list_sep_d_par f ppf lst =
   match lst with 

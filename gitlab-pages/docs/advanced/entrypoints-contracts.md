@@ -150,10 +150,11 @@ type parameter is
   Action_A of nat
 | Action_B of string
 
-type storage is record [
-  counter : nat;
-  name    : string
-]
+type storage is
+  record [
+    counter : nat;
+    name    : string
+  ]
 
 type return is list (operation) * storage
 
@@ -164,10 +165,10 @@ function entry_B (const s : string; const store : storage) : return is
   ((nil : list (operation)), store with record [name = s])
 
 function main (const action : parameter; const store : storage): return is
-  case action of
+  case action of [
     Action_A (n) -> entry_A (n, store)
   | Action_B (s) -> entry_B (s, store)
-  end
+  ]
 ```
 
 </Syntax>
@@ -238,15 +239,15 @@ type storage = {
   name    : string
 };
 
-type return_ = [list<operation>, storage];
+type @return = [list<operation>, storage];
 
-let entry_A = ([n, store]: [nat, storage]): return_ =>
+let entry_A = ([n, store]: [nat, storage]): @return =>
   [(list([]) as list<operation>), {...store, counter: n}];
 
-let entry_B = ([s, store]: [string, storage]): return_ =>
+let entry_B = ([s, store]: [string, storage]): @return =>
   [(list([]) as list<operation>), {...store, name: s}];
 
-let main = ([action, store]: [parameter, storage]): return_ =>
+let main = ([action, store]: [parameter, storage]): @return =>
   match(action, {
     Action_A: (n: nat) => entry_A([n, store]),
     Action_B: (s: string) => entry_B([s, store])
@@ -319,14 +320,14 @@ let deny = ((action, store): (parameter, storage)) : return => {
 ```jsligo group=c
 type parameter = unit;
 type storage = unit;
-type return_ = [list<operation>, storage];
+type @return = [list<operation>, storage];
 
-let deny = ([action, store]: [parameter, storage]): return_ => {
+let deny = ([action, store]: [parameter, storage]): @return => {
   if (Tezos.amount > (0 as tez)) {
-    failwith("This contract does not accept tokens.") as return_;
+    failwith("This contract does not accept tokens.") as @return;
   }
-  else { 
-    return [list([]) as list<operation>, store]; 
+  else {
+    return [list([]) as list<operation>, store];
   };
 };
 ```
@@ -337,14 +338,14 @@ let deny = ([action, store]: [parameter, storage]): return_ => {
 ```jsligo group=d
 type parameter = unit;
 type storage = unit;
-type return_ = [list<operation>, storage];
+type @return = [list<operation>, storage];
 
-let deny = ([action, store]: [parameter, storage]): return_ => {
+let deny = ([action, store]: [parameter, storage]): @return => {
   if (Tezos.amount > (0 as tez)) {
-    failwith("This contract does not accept tokens.") as return_;
+    failwith("This contract does not accept tokens.") as @return;
   }
-  else { 
-    return [(list([]) as list<operation>), store]; 
+  else {
+    return [(list([]) as list<operation>), store];
   };
 };
 ```
@@ -398,8 +399,8 @@ let main = ((action, store) : (parameter, storage)) : return => {
 ```jsligo group=c
 let owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
-let main = ([action, store]: [parameter, storage]): return_ => {
-  if(Tezos.source != owner) { failwith("Access denied.") as return_; }
+let main = ([action, store]: [parameter, storage]): @return => {
+  if(Tezos.source != owner) { failwith("Access denied.") as @return; }
   else { return [list([]) as list<operation>, store]; };
 };
 ```
@@ -461,19 +462,20 @@ type return is list (operation) * storage
 
 const dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address)
 
-function proxy (const action : parameter; const store : storage): return is
-  block {
-    const counter : contract (parameter) =
-      case (Tezos.get_contract_opt (dest) : option (contract (parameter))) of
-        Some (contract) -> contract
-      | None -> (failwith ("Contract not found.") : contract (parameter))
-      end;
-    (* Reuse the parameter in the subsequent
-       transaction or use another one, `mock_param`. *)
-    const mock_param : parameter = Increment (5n);
-    const op : operation = Tezos.transaction (action, 0tez, counter);
-    const ops : list (operation) = list [op]
-  } with (ops, store)
+function proxy (const action : parameter; const store : storage): return is {
+  const counter : contract (parameter) =
+    case (Tezos.get_contract_opt (dest) : option (contract (parameter))) of [
+      Some (contract) -> contract
+    | None -> (failwith ("Contract not found.") : contract (parameter))
+    ];
+
+  (* Reuse the parameter in the subsequent
+     transaction or use another one, `mock_param`. *)
+
+  const mock_param : parameter = Increment (5n);
+  const op : operation = Tezos.transaction (action, 0tez, counter);
+  const ops : list (operation) = list [op]
+} with (ops, store)
 ```
 
 </Syntax>
@@ -509,10 +511,12 @@ let proxy (action, store : parameter * storage) : return =
     match (Tezos.get_contract_opt (dest) : parameter contract option) with
       Some contract -> contract
     | None -> (failwith "Contract not found." : parameter contract) in
+
   (* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. *)
+
   let mock_param : parameter = Increment (5n) in
-  let op : operation = Tezos.transaction action 0tez counter
+    let op : operation = Tezos.transaction action 0tez counter
   in [op], store
 ```
 
@@ -582,11 +586,11 @@ type parameter =
 
 type storage = unit;
 
-type return_ = [list<operation>, storage];
+type @return = [list<operation>, storage];
 
 let dest : address = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
 
-let proxy = ([action, store]: [parameter, storage]): return_ => {
+let proxy = ([action, store]: [parameter, storage]): @return => {
   let counter: contract<parameter> =
     match ((Tezos.get_contract_opt(dest) as option<contract<parameter>>), {
     Some: (contract: any) => contract,

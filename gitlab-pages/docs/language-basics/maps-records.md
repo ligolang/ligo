@@ -168,9 +168,9 @@ points on a plane.
 <Syntax syntax="pascaligo">
 
 In PascaLIGO, the shape of that expression is
-`<record variable> with <record value>`.
+`<record variable> with <record expression>`.
 The record variable is the record to update, and the
-record value is the update itself.
+record expression is the update itself.
 
 ```pascaligo group=records2
 type point is record [x : int; y : int; z : int]
@@ -194,6 +194,41 @@ gitlab-pages/docs/language-basics/src/maps-records/record_update.ligo
 > You have to understand that `p` has not been changed by the functional
 > update: a nameless new version of it has been created and returned by
 > the block-less function.
+
+The previous example features a frequent design pattern when updating
+records:
+
+```pascaligo skip
+  p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+```
+
+To shorten those functional updates, PascaLIGO features **lenses**:
+
+```pascaligo skip
+  p with record [x += vec.dx; y += vec.dy]
+```
+
+The available arithmetic lenses are `+=`, `-=`, `*=`, `/=`. There is a
+general lens, when a field is updated by a function call that takes
+the old field value and produces the new, like so:
+
+```pascaligo skip
+function lens (const old_field : int) : int (* new field *) is ...
+
+function update (var p : point; const vec : vector) : point is
+  p with record [x |= lens; y |= lens]
+```
+
+Of course, in general, you can use a different lens for different
+fields. Also a lens may need arguments beyond the old field:
+
+```pascaligo skip
+function lens (const extra : int) : int -> int is
+  function (const old_field : int) : int is old_field + extra
+
+function update (var p : point; const vec : vector) : point is
+  p with record [x |= lens (1); y |= lens (2)]
+```
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -290,24 +325,23 @@ gitlab-pages/docs/language-basics/src/maps-records/record_update.jsligo
 
 <Syntax syntax="pascaligo">
 
-A unique feature of LIGO is the ability to perform nested updates on records.
-
-For example if you have the following record structure:
+A unique feature of LIGO is the ability to perform nested updates on
+ records. For example if you have the following record structure:
 
 ```pascaligo
-type color is
-| Blue
-| Green
+type color is Blue | Green
 
-type preferences is record [
-  color : color;
-  other : int;
-]
+type preferences is
+  record [
+    color : color;
+    other : int
+  ]
 
-type account is record [
-  id : int;
-  preferences : preferences;
-]
+type account is
+  record [
+    id          : int;
+    preferences : preferences
+  ]
 ```
 
 </Syntax>
@@ -318,18 +352,16 @@ A unique feature of LIGO is the ability to perform nested updates on records.
 For example if you have the following record structure:
 
 ```cameligo
-type color =
-  Blue
-| Green
+type color = Blue | Green
 
 type preferences = {
   color : color;
-  other : int;
+  other : int
 }
 
 type account = {
-  id: int;
-  preferences: preferences;
+  id          : int;
+  preferences : preferences
 }
 ```
 
@@ -341,9 +373,7 @@ A unique feature of LIGO is the ability to perform nested updates on records.
 For example if you have the following record structure:
 
 ```reasonligo
-type color =
-  Blue
-| Green;
+type color = Blue | Green;
 
 type preferences = {
   color : color,
@@ -351,7 +381,7 @@ type preferences = {
 }
 
 type account = {
-  id : int,
+  id          : int,
   preferences : preferences
 }
 ```
@@ -359,25 +389,23 @@ type account = {
 </Syntax>
 <Syntax syntax="jsligo">
 
-A unique feature of LIGO is the ability to perform nested updates on records. 
-JsLIGO however does not support the specialised syntax as the other syntaxes. 
+A unique feature of LIGO is the ability to perform nested updates on records.
+JsLIGO however does not support the specialised syntax as the other syntaxes.
 The following however also does the trick.
 
 For example if you have the following record structure:
 
 ```jsligo
-type color =
-  ["Blue"]
-| ["Green"];
+type color = ["Blue"] | ["Green"];
 
 type preferences = {
-  color: color,
-  other: int
+  color : color,
+  other : int
 };
 
 type account = {
-  id: int,
-  preferences: preferences
+  id          : int,
+  preferences : preferences
 };
 ```
 
@@ -389,10 +417,9 @@ You can update the nested record with the following code:
 
 ```pascaligo
 
-function change_color_preference (var account : account; const color : color ) : account is
-  block {
-      account := account with record [preferences.color = color]
-  } with account
+function change_color_preference (var account : account; const color : color ) : account is {
+  account := account with record [preferences.color = color]
+} with account
 
 ```
 
@@ -422,14 +449,14 @@ let change_color_preference = (account : account, color : color): account =>
 
 </Syntax>
 
-Note that all the records in the path will get updated. In this example that's
-`account` and `preferences`.
+Note that all the records in the path will get updated. In this
+example, those are `account` and `preferences`.
 
 You can call the function `change_color_preference` defined above by running the
 following command:
 
 ```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo 
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo
 "(record [id=1001; preferences=record [color=Blue; other=1]], Green)" --entry-point change_color_preference
 # Outputs: record[id -> 1001 , preferences -> record[color -> Green(unit) , other -> 1]]
 ```
@@ -454,11 +481,10 @@ points on a plane.
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
-function xy_translate (var p : point; const vec : vector) : point is
-  block {
-    patch p with record [x = p.x + vec.dx];
-    patch p with record [y = p.y + vec.dy]
-  } with p
+function xy_translate (var p : point; const vec : vector) : point is {
+  patch p with record [x = p.x + vec.dx];
+  patch p with record [y = p.y + vec.dy]
+} with p
 ```
 
 You can call the function `xy_translate` defined above by running the
@@ -479,10 +505,9 @@ the value of `p` indeed changed. So, a shorter version would be
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
-function xy_translate (var p : point; const vec : vector) : point is
-  block {
-    patch p with record [x = p.x + vec.dx; y = p.y + vec.dy]
-  } with p
+function xy_translate (var p : point; const vec : vector) : point is {
+  patch p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+} with p
 ```
 
 You can call the new function `xy_translate` defined above by running the
@@ -503,10 +528,9 @@ one we want to update* and use a functional update, like so:
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
-function xy_translate (var p : point; const vec : vector) : point is
-  block {
-    const p : point = p with record [x = p.x + vec.dx; y = p.y + vec.dy]
-  } with p
+function xy_translate (var p : point; const vec : vector) : point is {
+  const p : point = p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+} with p
 ```
 
 You can call the new function `xy_translate` defined above by running the
@@ -647,7 +671,7 @@ let moves : register =
 The `Map.literal` predefined function builds a map from a list of
 key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
 separate individual map entries.  `("<string value>": address)` means
-that we type-cast a string into an address. 
+that we type-cast a string into an address.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -662,7 +686,7 @@ let moves : register =
 The `Map.literal` predefined function builds a map from a list of
 key-value pair tuples, `(<key>, <value>)`.  Note also the `,` to
 separate individual map entries.  `("<string value>": address)` means
-that we type-cast a string into an address. 
+that we type-cast a string into an address.
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -733,10 +757,10 @@ the reader to account for a missing key in the map. This requires
 
 ```pascaligo group=maps
 function force_access (const key : address; const moves : register) : move is
-  case moves[key] of
+  case moves[key] of [
     Some (move) -> move
   | None -> (failwith ("No move.") : move)
-  end
+  ]
 ```
 
 </Syntax>
@@ -791,23 +815,21 @@ assignment syntax `<map variable>[<key>] := <new value>`. Let us
 consider an example.
 
 ```pascaligo group=maps
-function assign (var m : register) : register is
-  block {
-    m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
-  } with m
+function assign (var m : register) : register is {
+  m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
+} with m
 ```
 
 If multiple bindings need to be updated, PascaLIGO offers a *patch
 instruction* for maps, similar to that for records.
 
 ```pascaligo group=maps
-function assignments (var m : register) : register is
-  block {
-    patch m with map [
-      ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
-      ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
-    ]
-  } with m
+function assignments (var m : register) : register is {
+  patch m with map [
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
+  ]
+} with m
 ```
 
 See further for the removal of bindings.
@@ -892,10 +914,9 @@ To remove a binding from a map, we need its key.
 In PascaLIGO, there is a special instruction to remove a binding from
 a map.
 ```pascaligo group=maps
-function delete (const key : address; var moves : register) : register is
-  block {
-    remove key from map moves
-  } with moves
+function delete (const key : address; var moves : register) : register is {
+  remove key from map moves
+} with moves
 ```
 
 </Syntax>
@@ -960,11 +981,10 @@ of moves is iterated to check that the start of each move is above
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=maps
-function iter_op (const m : register) : unit is
-  block {
-    function iterated (const i : address; const j : move) : unit is
-      if j.1 > 3 then Unit else (failwith ("Below range.") : unit)
-  } with Map.iter (iterated, m)
+function iter_op (const m : register) : unit is {
+  function iterated (const i : address; const j : move) : unit is
+    if j.1 <= 3 then (failwith ("Below range.") : unit)
+} with Map.iter (iterated, m)
 ```
 
 </Syntax>
@@ -1008,16 +1028,13 @@ implementing the map operation over maps is called `Map.map`. In the
 following example, we add `1` to the ordinate of the moves in the
 register.
 
-
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=maps
-function map_op (const m : register) : register is
-  block {
-    function increment (const i : address; const j : move) : move is
-      (j.0, j.1 + 1)
-  } with Map.map (increment, m)
+function map_op (const m : register) : register is {
+  function increment (const i : address; const j : move) : move is
+    (j.0, j.1 + 1)
+} with Map.map (increment, m)
 ```
 
 </Syntax>
@@ -1068,11 +1085,10 @@ over maps is called `Map.fold` and is used as follows.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=maps
-function fold_op (const m : register) : int is
-  block {
-    function folded (const i : int; const j : address * move) : int is
-      i + j.1.1
-  } with Map.fold (folded, m, 5)
+function fold_op (const m : register) : int is {
+  function folded (const i : int; const j : address * move) : int is
+    i + j.1.1
+} with Map.fold (folded, m, 5)
 ```
 
 </Syntax>
@@ -1305,31 +1321,27 @@ let my_balance: option<move> =
 
 ### Updating Big Maps
 
-
-
 <Syntax syntax="pascaligo">
 
 The values of a PascaLIGO big map can be updated using the
 assignment syntax for ordinary maps
 
 ```pascaligo group=big_maps
-function assign (var m : register) : register is
-  block {
-    m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
-  } with m
+function assign (var m : register) : register is {
+  m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
+} with m
 ```
 
 If multiple bindings need to be updated, PascaLIGO offers a *patch
 instruction* for maps, similar to that for records.
 
 ```pascaligo group=big_maps
-function assignments (var m : register) : register is
-  block {
-    patch m with map [
-      ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
-      ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
-    ]
-  } with m
+function assignments (var m : register) : register is {
+  patch m with map [
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
+  ]
+} with m
 ```
 
 </Syntax>
@@ -1376,18 +1388,16 @@ let updated_map: register =
 Removing a binding in a map is done differently according to the LIGO
 syntax.
 
-
-
 <Syntax syntax="pascaligo">
 
 PascaLIGO features a special syntactic construct to remove bindings
-from maps, of the form `remove <key> from map <map>`. For example,
+from maps, of the form `remove <key> from map <map expression>`. For
+example,
 
 ```pascaligo group=big_maps
-function rem (var m : register) : register is
-  block {
-    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
-  } with m
+function rem (var m : register) : register is {
+  remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+} with m
 
 const updated_map : register = rem (moves)
 ```

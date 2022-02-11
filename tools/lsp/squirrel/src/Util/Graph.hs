@@ -61,7 +61,7 @@ data StateWCC a = WCC
   , innerEdges :: IntMap (DList (a, a))  -- ^ Relates labels to their adjacency (difference) list.
   , mergedIn   :: IntMap Int  -- ^ Allows fast lookup of which labels have been joined with other label.
                               -- For instance, while performing the DFS, if we meet an older label,
-                              -- we set that the current label was "marged" with the previous one.
+                              -- we set that the current label was "merged" with the previous one.
   }
 
 -- | Find all weakly connected components of a graph, that is, the disconnected subgraphs of a graph.

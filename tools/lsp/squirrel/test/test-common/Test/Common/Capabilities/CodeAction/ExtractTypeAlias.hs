@@ -18,12 +18,11 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import AST.Capabilities.CodeAction.ExtractTypeAlias
-import AST.Scope
 import Range
 
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
-import Test.Common.Util (readContractWithScopes)
+import Test.Common.Util (ScopeTester, readContractWithScopes)
 
 data TestInfo = TestInfo
   { tiContract :: String
@@ -73,10 +72,10 @@ constructExpectedWorkspaceEdit = map constructCodeAction
 extractTypeAliasDriver :: TestTree -> TestTree
 extractTypeAliasDriver = testGroup "Extract type extractedTypeNameAlias code action" . pure
 
-testCases :: forall parser. HasScopeForest parser IO => [TestTree]
+testCases :: forall parser. ScopeTester parser => [TestTree]
 testCases = map (makeTestCase @parser) testInfos
 
-makeTestCase :: forall parser. HasScopeForest parser IO => TestInfo -> TestTree
+makeTestCase :: forall parser. ScopeTester parser => TestInfo -> TestTree
 makeTestCase testInfo = testCase (tiContract testInfo) (makeTest @parser testInfo)
 
 extractTextEdits :: J.CodeAction -> [J.TextEdit]
@@ -91,7 +90,7 @@ extractTextEdits action = unwrapEdits edits
       [(_, J.List e)] -> e
       _ -> error "unwrapEdits: malformed list"
 
-makeTest :: forall parser. HasScopeForest parser IO => TestInfo -> Assertion
+makeTest :: forall parser. ScopeTester parser => TestInfo -> Assertion
 makeTest TestInfo{tiContract, tiCursor, tiExpectedEdits} = do
   let contractPath = contractsDir </> "code-action" </> "extract-type-definition" </> tiContract
   tree <- readContractWithScopes @parser contractPath

@@ -1,7 +1,6 @@
-function multiply (const a : int; const b : int) : int is
-  block {
-    const result : int = a * b
-  } with result
+function multiply (const a : int; const b : int) : int is {
+  const result : int = a * b
+} with result
 
 function add (const a : int; const b : int) : int is a + b
 

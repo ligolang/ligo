@@ -28,7 +28,7 @@ callForFormat source =
 
     getResult = callLigo
       ["print", "pretty", path]
-      (Path path)
+      source
 
 formatDocument :: HasLigoClient m => SomeLIGO Info' -> m (J.List J.TextEdit)
 formatDocument (SomeLIGO _lang (extract -> info)) = do

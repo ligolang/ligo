@@ -54,7 +54,6 @@ module type PARSER =
 
     (* The incremental API. *)
 
-
     module MenhirInterpreter : MenhirLib.IncrementalEngine.EVERYTHING
            with type token = token
 
@@ -92,14 +91,16 @@ module type CONFIG =
        It mostly affects the position of synthesized tokens in the error recovery
        mode because menhir requires to convert [Pos.t] type to the poorer
        representation - [Lexing.position]. *)
+
     val mode : [`Byte | `Point]
 
-    (* Debug options *)
-
     (* Enable debug printing in the recovery algorithm *)
+
     val error_recovery_tracing : bool
+
     (* Path to a log file or [None] that means to use stdout *)
-    val tracing_output         : string option
+
+    val tracing_output : string option
   end
 
 (* The functor integrating the parser with its errors *)
@@ -135,17 +136,22 @@ module Make (Lexer  : LEXER)
 
     (* Incremental API with recovery *)
 
-    type 'src recovery_parser =
-      'src -> (Parser.tree * message list, message Utils.nseq) Stdlib.result
     (* returns [Ok (tree, [])] if ['src] contains correct contract
             or [Ok (repaired_tree, errors)] if any syntax error was encountered
             or [Error (errors)] if non-syntax error happened and we cannot
                return any tree (e. g. file does not found or lexer error) *)
 
-    val extract_recovery_results
-        :  (Parser.tree * message list, message Utils.nseq) Stdlib.result
-        -> Parser.tree option * message list
-    (* helper function that converts original type to weaker one *)
+    type 'src recovery_parser =
+      'src -> (Parser.tree * message list, message Utils.nseq) Stdlib.result
+
+
+    (* Helper function that converts original type to simple one *)
+
+    val extract_recovery_results :
+      (Parser.tree * message list, message Utils.nseq) Stdlib.result ->
+      Parser.tree option * message list
+
+    (* Parsing with recovery from various sources *)
 
     val recov_from_lexbuf  : (module PAR_ERR) -> Lexing.lexbuf recovery_parser
     val recov_from_channel : (module PAR_ERR) -> in_channel    recovery_parser

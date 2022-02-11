@@ -28,7 +28,7 @@ function distribute (const p: (unit -> list(operation)); const s: storage) : lis
   end with result
 
 function main (const p: parameter; const s: storage) : list(operation) * storage is
-  case p of
+  case p of [
   | Donate -> donate((unit,s))
   | Distribute (msg) -> distribute((msg,s))
-  end
+  ]

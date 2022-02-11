@@ -37,12 +37,6 @@ let a : string = "Hello Alice";
 let a: string = "Hello Alice";
 ```
 
-or with single quotes:
-
-```jsligo
-let a_: string = 'Hello Alice';
-```
-
 </Syntax>
 
 

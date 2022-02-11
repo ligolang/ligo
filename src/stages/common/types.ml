@@ -9,6 +9,7 @@ type location = Location.t
 type 'a location_wrap = 'a Location.wrap
 
 type attributes = string list
+
 type known_attributes = {
   inline: bool ;
   no_mutation: bool;

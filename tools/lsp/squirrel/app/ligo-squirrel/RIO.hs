@@ -2,7 +2,7 @@
 
 module RIO
   ( RIO
-  , RioEnv
+  , RioEnv (..)
   , run
 
   , getCustomConfig
@@ -35,28 +35,30 @@ module RIO
 
 import Prelude hiding (log)
 
-import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import Algebra.Graph.AdjacencyMap qualified as G
+import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
+import Algebra.Graph.Class qualified as G hiding (overlay)
 
 import Control.Arrow
 import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
 import Control.Lens ((??))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, runReaderT)
+import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, mapReaderT, runReaderT)
+import Control.Monad.Trans (lift)
 
 import Data.Aeson qualified as Aeson (Result (..), Value, fromJSON)
 import Data.Bool (bool)
 import Data.Default (def)
 import Data.Foldable (find, toList, traverse_)
 import Data.Function (on)
-import Data.HashMap.Strict (HashMap)
-import Data.Int (Int32)
+import Data.HashSet (HashSet)
 import Data.List (groupBy, nubBy, sortOn)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe, isJust, isNothing)
 import Data.Set qualified as Set
 import Data.String.Interpolate.IsString (i)
+
+import Katip (Katip (..), KatipContext (..))
 
 import Language.LSP.Diagnostics qualified as D
 import Language.LSP.Server qualified as J
@@ -84,10 +86,10 @@ import Config (Config (..), getConfigFromNotification)
 import Duplo.Lattice (Lattice (leq))
 import Extension (extGlobs)
 import Language.LSP.Util (sendWarning, reverseUriMap)
+import Log (LogT)
 import Log qualified
 import Parser
-import Product
-import Progress ((%))
+import Progress (Progress (..), (%))
 import Range
 import Util.Graph (wcc)
 
@@ -96,17 +98,16 @@ data Contract = Contract
   , cDeps :: [J.NormalizedUri]
   }
 
-type RioEnv =
-  Product
-    '[ MVar Config
-     , ASTMap J.NormalizedUri Contract RIO
-     , MVar (HashMap J.NormalizedUri Int32)
-     , "includes" := MVar (AdjacencyMap ParsedContractInfo)
-     , "temp files" := StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
-     ]
+data RioEnv = RioEnv
+  { reConfig :: MVar Config
+  , reCache :: ASTMap J.NormalizedUri Contract RIO
+  , reOpenDocs :: MVar (HashSet J.NormalizedUri)
+  , reIncludes :: MVar (Includes ParsedContractInfo)
+  , reTempFiles :: StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
+  }
 
 newtype RIO a = RIO
-  { _unRio :: ReaderT RioEnv (J.LspM Config) a
+  { unRio :: ReaderT RioEnv (J.LspT Config (LogT IO)) a
   }
   deriving newtype
     ( Functor
@@ -120,6 +121,16 @@ newtype RIO a = RIO
     , J.MonadLsp Config.Config
     )
 
+instance Katip RIO where
+  getLogEnv = RIO $ lift $ lift getLogEnv
+  localLogEnv f = RIO . mapReaderT (J.LspT . localLogEnv f . J.unLspT) . unRio
+
+instance KatipContext RIO where
+  getKatipContext = RIO $ lift $ lift getKatipContext
+  localKatipContext f = RIO . mapReaderT (J.LspT . localKatipContext f . J.unLspT) . unRio
+  getKatipNamespace = RIO $ lift $ lift getKatipNamespace
+  localKatipNamespace f = RIO . mapReaderT (J.LspT . localKatipNamespace f . J.unLspT) . unRio
+
 instance HasLigoClient RIO where
   getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) getCustomConfig
 
@@ -128,8 +139,8 @@ instance HasLigoClient RIO where
 -- `workspace/configuration` requests. We should get this fixed by the
 -- maintainers, if possible.
 getCustomConfig :: RIO Config
-getCustomConfig = do
-  mConfig <- asks getElem
+getCustomConfig = Log.addNamespace "getCustomConfig" do
+  mConfig <- asks reConfig
   contents <- tryReadMVar mConfig
   case contents of
     -- TODO: The lsp library only sends the `workspace/configuration` request
@@ -137,16 +148,16 @@ getCustomConfig = do
     -- way to know the client configuration. We need to get this fixed by the
     -- library maintainers, if possible.
     Nothing -> do
-      Log.debug "getCustomConfig" "No config fetched yet, resorting to default"
+      $(Log.warning) "No config fetched yet, resorting to default"
       pure def
     Just config -> pure config
 
 -- Fetch the configuration from the server and write it to the Config MVar
 fetchCustomConfig :: RIO (Maybe Config)
-fetchCustomConfig = do
+fetchCustomConfig = Log.addNamespace "fetchCustomConfig" do
   void $
     J.sendRequest J.SWorkspaceConfiguration configRequestParams handleResponse
-  tryReadMVar =<< asks getElem
+  tryReadMVar =<< asks reConfig
   where
     configRequestParams =
       J.ConfigurationParams (J.List [J.ConfigurationItem Nothing Nothing])
@@ -156,7 +167,7 @@ fetchCustomConfig = do
         -> RIO ()
     handleResponse response = do
       config <- parseResponse response
-      mConfig <- asks getElem
+      mConfig <- asks reConfig
       _oldConfig <- tryTakeMVar mConfig
       void $ tryPutMVar mConfig config
 
@@ -171,26 +182,23 @@ fetchCustomConfig = do
 
     useDefault :: RIO Config
     useDefault = do
-      Log.debug
-        "fetchCustomConfig"
+      $(Log.warning)
         "Couldn't parse config from server, using default"
       pure def
 
 updateCustomConfig :: Aeson.Value -> RIO ()
-updateCustomConfig config = do
-  mConfig <- asks getElem
+updateCustomConfig config = Log.addNamespace "updateCustomConfig" do
+  mConfig <- asks reConfig
   tryTakeMVar mConfig >>= \case
     Nothing -> decodeConfig def mConfig
     Just oldConfig -> decodeConfig oldConfig mConfig
   where
-    log = Log.debug "updateCustomConfig"
-
     decodeConfig old mConfig = case getConfigFromNotification old config of
       Left err -> do
-        log [i|Failed to decode configuration: #{err}|]
+        $(Log.err) [i|Failed to decode configuration: #{err}|]
         maybe (void $ tryPutMVar mConfig old) (const $ pure ()) =<< fetchCustomConfig
       Right newConfig -> do
-        log [i|Set new configuration: #{newConfig}|]
+        $(Log.debug) [i|Set new configuration: #{newConfig}|]
         void $ tryPutMVar mConfig newConfig
 
 registerDidChangeConfiguration :: RIO ()
@@ -221,7 +229,7 @@ registerFileWatcher = do
 source :: Maybe J.DiagnosticSource
 source = Just "ligo-lsp"
 
-run :: (J.LanguageContextEnv Config, RioEnv) -> RIO a -> IO a
+run :: (J.LanguageContextEnv Config, RioEnv) -> RIO a -> LogT IO a
 run (lcEnv, env) (RIO action) = J.runLspT lcEnv $ runReaderT action env
 
 -- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
@@ -242,8 +250,8 @@ fetch effort = fmap cTree . fetch' effort
 forceFetch effort = fmap cTree . forceFetch' effort
 
 fetch', forceFetch' :: FetchEffort -> J.NormalizedUri -> RIO Contract
-fetch' effort uri = do
-  tmap <- asks getElem
+fetch' effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
+  tmap <- asks reCache
   case effort of
     LeastEffort  -> ASTMap.fetchFast uri tmap
     NormalEffort -> ASTMap.fetchCurrent uri tmap
@@ -251,8 +259,8 @@ fetch' effort uri = do
 forceFetch' = forceFetchAndNotify (const $ pure ())
 
 forceFetchAndNotify :: (Contract -> RIO ()) -> FetchEffort -> J.NormalizedUri -> RIO Contract
-forceFetchAndNotify notify effort uri = do
-  tmap <- asks getElem
+forceFetchAndNotify notify effort uri = Log.addContext (Log.sl "uri" $ J.fromNormalizedUri uri) do
+  tmap <- asks reCache
   ASTMap.invalidate uri tmap
   case effort of
     LeastEffort  -> ASTMap.fetchFastAndNotify notify uri tmap
@@ -264,15 +272,15 @@ forceFetchAndNotify notify effort uri = do
       v <$ notify v
 
 diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
-diagnostic ver = traverse_ \(nuri, diags) -> do
+diagnostic ver = Log.addNamespace "diagnostic" . traverse_ \(nuri, diags) -> do
   let diags' = D.partitionBySource diags
   maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
-  Log.debug "LOOP.DIAG" [i|Diags #{diags'}|]
+  $(Log.debug) [i|Diags #{diags'}|]
   J.publishDiagnostics maxDiagnostics nuri ver diags'
 
 delete :: J.NormalizedUri -> RIO ()
 delete uri = do
-  imap <- asks $ getTag @"includes"
+  imap <- asks reIncludes
   let fpM = J.uriToFilePath $ J.fromNormalizedUri uri
   case fpM of
     Nothing -> pure ()
@@ -283,9 +291,9 @@ delete uri = do
           (Path fp)
           (SomeLIGO Caml $ make (emptyParsedInfo, Error "Impossible" []))
           []
-      modifyMVar_ imap $ pure . G.removeVertex c
+      modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
 
-  tmap <- asks $ getElem @(ASTMap J.NormalizedUri Contract RIO)
+  tmap <- asks reCache
   deleted <- ASTMap.delete uri tmap
 
   -- Invalidate contracts that are in the same group as the deleted one, as
@@ -295,20 +303,19 @@ delete uri = do
       (`ASTMap.invalidate` tmap)
 
 invalidate :: J.NormalizedUri -> RIO ()
-invalidate uri =
-  ASTMap.invalidate uri =<< asks (getElem @(ASTMap J.NormalizedUri Contract RIO))
+invalidate uri = ASTMap.invalidate uri =<< asks reCache
 
 preload
   :: J.NormalizedUri
   -> RIO Source
-preload uri = do
+preload uri = Log.addNamespace "preload" do
   let Just fin = J.uriToFilePath $ J.fromNormalizedUri uri  -- FIXME: non-exhaustive
   let
     mkReadOnly path = do
       p <- getPermissions path
       setPermissions path p { writable = False }
     createTemp new = do
-      Log.debug "preload" [i|#{fin} not found. Creating temp file: #{new}|]
+      $(Log.warning) [i|#{fin} not found. Creating temp file: #{new}|]
       -- We make the file read-only so the user is aware that it should not be
       -- changed. Note we can't make fin read-only, since it doesn't exist in
       -- the disk anymore, and also because LSP has no such request.
@@ -316,7 +323,7 @@ preload uri = do
         [i|File #{fin} was removed. The LIGO LSP server may not work as expected. Creating temporary file: #{new}|]
       new <$ mkReadOnly new
     handlePersistedFile = do
-      tempMap <- asks $ getTag @"temp files"
+      tempMap <- asks reTempFiles
       let nFin = J.toNormalizedFilePath fin
       atomically (StmMap.lookup nFin tempMap) >>= \case
         Nothing -> do
@@ -335,10 +342,10 @@ preload uri = do
 loadWithoutScopes
   :: J.NormalizedUri
   -> RIO ContractInfo
-loadWithoutScopes uri = do
+loadWithoutScopes uri = Log.addNamespace "loadWithoutScopes" do
   src <- preload uri
   ligoEnv <- getLigoClientEnv
-  Log.debug "LOAD" [i|running with env #{ligoEnv}|]
+  $(Log.debug) [i|running with env #{ligoEnv}|]
   parsePreprocessed src
 
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
@@ -351,7 +358,7 @@ tryLoadWithoutScopes uri =
 normalizeFilePath :: FilePath -> J.NormalizedUri
 normalizeFilePath = J.toNormalizedUri . J.filePathToUri
 
-loadDirectory :: FilePath -> RIO (AdjacencyMap ParsedContractInfo)
+loadDirectory :: FilePath -> RIO (Includes ParsedContractInfo)
 loadDirectory root = do
   J.withProgress "Indexing directory" J.NotCancellable \reportProgress ->
     parseContractsWithDependencies
@@ -362,26 +369,26 @@ loadDirectory root = do
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
   -> J.NormalizedUri  -- ^ Open contract to be loaded
-  -> RIO (AdjacencyMap ParsedContractInfo)
-getInclusionsGraph root uri = do
+  -> RIO (Includes ParsedContractInfo)
+getInclusionsGraph root uri = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes uri
-  includesVar <- asks (getTag @"includes")
+  includesVar <- asks reIncludes
   modifyMVar includesVar \includes -> do
     let rootFileName = contractFile rootContract
-    let groups = wcc includes
+    let groups = Includes <$> wcc (getIncludes includes)
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
-        Log.debug "getInclusionsGraph" [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
+        $(Log.debug) [i|Can't find #{uri} in inclusions graph, loading #{root}...|]
         loadDirectory root
-      Just oldIncludes -> do
+      Just (Includes oldIncludes) -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
         let
           numNewContracts = length includeEdges
           lookupOrLoad fp = maybe
             (tryLoadWithoutScopes $ normalizeFilePath fp)
             (pure . Just)
-            (lookupContract fp oldIncludes)
+            (lookupContract fp (Includes oldIncludes))
 
         newIncludes <- J.withProgress "Indexing new files" J.NotCancellable \reportProgress ->
           iwither
@@ -401,14 +408,14 @@ getInclusionsGraph root uri = do
             G.overlay (G.fromAdjacencySets [(rootContract', newVertices)])
             $ G.replaceVertex rootContract' rootContract'
             $ foldr (G.removeEdge rootContract') oldIncludes removedVertices
-        pure $ G.overlays (newGroup : groups')
+        pure $ G.overlays (Includes newGroup : groups')
 
 load
   :: forall parser
    . HasScopeForest parser RIO
   => J.NormalizedUri
   -> RIO Contract
-load uri = do
+load uri = Log.addNamespace "load" do
   rootM <- J.getRootPath
   dirExists <- maybe (pure False) doesDirectoryExist rootM
 
@@ -433,7 +440,7 @@ load uri = do
 
       rawGraph <- getInclusionsGraph revRoot revUri
 
-      (graph, result) <- J.withProgress "Scoping project" J.NotCancellable \reportProgress -> do
+      (Includes graph, result) <- J.withProgress "Scoping project" J.NotCancellable \reportProgress -> do
         let
           addScopesWithProgress = addScopes @parser
             (\Progress {..} -> reportProgress $ J.ProgressAmount (Just pTotal) (Just pMessage))
@@ -441,18 +448,22 @@ load uri = do
           Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault
           Just fp -> do
             let
-              raw = fromMaybe rawGraph $ find (isJust . lookupContract fp) (wcc rawGraph)
+              raw = fromMaybe rawGraph $ find
+                (isJust . lookupContract fp)
+                (Includes <$> wcc (getIncludes rawGraph))
             scoped <- addScopesWithProgress raw
             (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
 
       let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
       let nuris = snd <$> contracts
-      tmap <- asks getElem
+      tmap <- asks reCache
       forM_ contracts \(contract, nuri) ->
         ASTMap.insert nuri (Contract contract nuris) time tmap
 
       pure $ Contract result nuris
-    _ -> Contract <$> loadDefault <*> pure [revUri]
+    _ -> do
+      $(Log.warning) [i|Directory to load #{rootM} doesn't exist or was not set.|]
+      Contract <$> loadDefault <*> pure [revUri]
 
 collectErrors
   :: ContractInfo'
@@ -474,13 +485,13 @@ clearDiagnostics :: Foldable f => f J.NormalizedUri -> RIO ()
 clearDiagnostics uris = do
   maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
   forM_ uris $ \nuri ->
-    J.publishDiagnostics maxDiagnostics nuri Nothing mempty
+    J.publishDiagnostics maxDiagnostics nuri Nothing (Map.singleton source mempty)
 
 errorToDiag :: (Range, Error a) -> (J.NormalizedUri, J.Diagnostic)
-errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =
-  ( J.toNormalizedUri $ J.filePathToUri f
+errorToDiag (getRange -> r, Error what _) =
+  ( J.toNormalizedUri $ J.filePathToUri $ _rFile r
   , J.Diagnostic
-    (J.Range begin end)
+    (toLspRange r)
     (Just J.DsError)
     Nothing
     source
@@ -488,6 +499,3 @@ errorToDiag (getRange -> (Range (sl, sc, _) (el, ec, _) f), Error what _) =
     (Just $ J.List [])
     Nothing
   )
-  where
-    begin = J.Position (sl - 1) (sc - 1)
-    end   = J.Position (el - 1) (ec - 1)

@@ -11,16 +11,16 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 Sets are unordered collections of unique values of the same type.
 
 <SyntaxTitle syntax="pascaligo">
-function empty : set('value)
+val empty&lt;elt&gt; : set (elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val empty : 'value set
+val empty : 'elt set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let empty: set('value)
+let empty: set('elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let empty: set&lt;&apos;value&gt;
+let empty: set&lt;&apos;elt&gt;
 </SyntaxTitle>
 
 Create an empty set.
@@ -61,16 +61,16 @@ let my_set: set<int> = Set.empty;
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function literal : list('value) -> set('value)
+val literal&lt;elt&gt; : list (elt) -> set (elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val literal : 'value list -> 'value set
+val literal : 'elt list -> 'elt set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let literal: list('value) => set('value)
+let literal: list('elt) => set('elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let literal: (input: list&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
+let literal: (input: list&lt;&apos;elt&gt;) => set&lt;&apos;elt&gt;
 </SyntaxTitle>
 
 Create a non-empty set.
@@ -91,39 +91,36 @@ const my_set : set (int) = set [3; 2; 2; 1]
 <Syntax syntax="cameligo">
 
 ```cameligo group=sets
-let my_set : int set =
-  Set.literal [3; 2; 2; 1]
+let my_set : int set = Set.literal [3; 2; 2; 1]
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=sets
-let my_set : set (int) =
-  Set.literal ([3, 2, 2, 1]);
+let my_set : set (int) = Set.literal ([3, 2, 2, 1]);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets2
-let my_set : set<int> =
-  Set.literal(list([3, 2, 2, 1]));
+let my_set : set<int> = Set.literal(list([3, 2, 2, 1]));
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function mem : 'value -> set('value) -> 'bool
+val mem&lt;elt&gt; : elt * set (elt) -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val mem : 'value -> 'value set -> bool
+val mem : 'elt -> 'elt set -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let mem: ('value, set('value)) => bool
+let mem: ('elt, set('elt)) => bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let mem: (v: &apos;value, set: set&lt;&apos;value&gt;) => bool
+let mem: (v: &apos;elt, set: set&lt;&apos;elt&gt;) => bool
 </SyntaxTitle>
 
 Checks if a value exists in the set.
@@ -131,7 +128,7 @@ Checks if a value exists in the set.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=sets
-const contains_3 : bool = Set.mem(3, my_set)
+const contains_3 : bool = Set.mem (3, my_set)
 ```
 
 Or:
@@ -164,16 +161,16 @@ let contains_3 : bool = Set.mem (3, my_set);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function cardinal : set('value) -> nat
+val cardinal&lt;elt&gt; : set (elt) -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val cardinal : 'value set -> nat
+val cardinal : 'elt set -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let cardinal: set('value) => nat
+let cardinal: set('elt) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let cardinal: (set: set&lt;&apos;value&gt;) => nat
+let cardinal: (set: set&lt;&apos;elt&gt;) => nat
 </SyntaxTitle>
 
 Number of elements in a set.
@@ -208,16 +205,16 @@ let cardinal: nat = Set.size(my_set);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function add : 'value -> set('value) -> set('value)
+val add&lt;elt&gt; : elt * set (elt) -> set(elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val add : 'value -> 'value set -> 'value set
+val add : 'elt -> 'elt set -> 'elt set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let add: ('value, set('value)) => set('value)
+let add: ('elt, set('elt)) => set('elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let add: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
+let add: (elt: &apos;elt, set: set&lt;&apos;elt&gt;) => set&lt;&apos;elt&gt;
 </SyntaxTitle>
 
 Add a value to a set.
@@ -252,16 +249,16 @@ let updated_set = Set.add (4, my_set);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function remove : 'value -> set('value) -> set('value)
+val remove&lt;elt&gt; : elt * set (elt) -> set (elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val remove : 'value -> 'value set -> 'value set
+val remove : 'elt -> 'elt set -> 'elt set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let remove: ('value, set('value)) => set('value)
+let remove: ('elt, set('elt)) => set('elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let remove: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
+let remove: (elt: &apos;elt, set: set&lt;&apos;elt&gt;) => set&lt;&apos;elt&gt;
 </SyntaxTitle>
 
 Remove a value from a set.
@@ -296,16 +293,16 @@ let updated_set = Set.remove (3, my_set);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function update : 'a -> bool -> set('a) -> set('a)
+val update&lt;elt&gt; : elt * bool * set (elt) -> set (elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val update : 'a -> bool -> 'a set -> 'a set
+val update : 'elt -> bool -> 'elt set -> 'elt set
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let update: ('a, bool, set('a)) => set('a)
+let update: ('elt, bool, set('elt)) => set('elt)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let update: (value : 'a, flag : bool, set : set&lt;'a&gt;) => set&lt;'a&gt;
+let update: (elt : 'elt, flag : bool, set : set&lt;'elt&gt;) => set&lt;'elt&gt;
 </SyntaxTitle>
 
 
@@ -314,10 +311,10 @@ add or remove an element in a set based on the boolean value being passed.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=sets
-// in case of True value will be added to the set 
+// in case of True value will be added to the set
 const updated_set = Set.update (4, True, my_set)
 
-// in case of False value will be removed from the set 
+// in case of False value will be removed from the set
 const updated_set = Set.update (4, False, my_set)
 ```
 
@@ -348,10 +345,10 @@ let updated_set = Set.update (4, false, my_set);
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-// in case of true value will be added to the set 
+// in case of true value will be added to the set
 let updated_set2 = Set.update (4, true, my_set);
 
-// in case of false value will be removed from the set 
+// in case of false value will be removed from the set
 let updated_set3 = Set.update (4, false, my_set);
 ```
 
@@ -359,13 +356,13 @@ let updated_set3 = Set.update (4, false, my_set);
 
 
 <SyntaxTitle syntax="pascaligo">
-function iter : ('a -> unit) -> set('a) -> unit
+val iter&lt;elt&gt; : (elt -> unit) * set (elt) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val iter : ('a -> unit) -> 'a set -> unit
+val iter : ('elt -> unit) -> 'elt set -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let iter: (('a => unit), set('a)) => unit
+let iter: (('elt => unit), set('elt)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 let iter: (iterator: ((item: &apos;a) => unit), set: set&lt;&apos;a&gt;) => unit
@@ -378,11 +375,10 @@ Iterate over values in a set.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=sets
-function iter_op (const s : set (int)) : unit is
-  block {
-    function iterated (const i : int) : unit is
-      if i > 2 then Unit else (failwith ("Below range.") : unit)
-  } with Set.iter (iterated, s)
+function iter_op (const s : set (int)) : unit is {
+  function iterated (const i : int) : unit is
+    if i <= 2 then (failwith ("Below range.") : unit)
+} with Set.iter (iterated, s)
 ```
 
 > Note that `set_iter` is *deprecated*.
@@ -419,16 +415,16 @@ let iter_op = (s: set<int>): unit => {
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function fold : (('accumulator -> 'item -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
+val fold&lt;item,acc&gt; : ((acc -> item -> acc) * set (item) * acc) -> acc
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold : (('accumulator * 'item) -> 'accumulator) -> 'item set -> 'accumulator -> 'accumulator
+val fold : ('acc * 'item -> 'acc) -> 'item set -> 'acc -> 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let fold: ((('accumulator, 'item) => 'accumulator), set('item), 'accumulator) => 'accumulator
+let fold: ((('acc, 'item) => 'acc), set('item), 'acc) => 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold: ((iterator: [accumulator: &apos;accumulator, item: &apos;item]) => &apos;accumulator), set: set&lt;&apos;item&gt;, accumulator: &apos;accumulator) => &apos;accumulator
+let fold: ((iterator: [acc: &apos;acc, item: &apos;item]) => &apos;acc), set: set&lt;&apos;item&gt;, acc: &apos;acc) => &apos;acc
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
@@ -469,16 +465,16 @@ let sum_of_elements: int = Set.fold(sum, my_set, 0);
 
 </Syntax>
 <SyntaxTitle syntax="pascaligo">
-function fold_desc: (('item -> 'accumulator -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
+val fold_desc&lt;item,acc&gt; : (item * acc -> acc) * set (item) * acc -> acc
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold_desc : (('item * 'accumulator) -> 'accumulator) -> 'item set -> 'accumulator -> 'accumulator
+val fold_desc : (('item * 'acc) -> 'acc) -> 'item set -> 'acc -> 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let fold_desc: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulator) => 'accumulator
+let fold_desc: ((('item, 'acc) => 'acc), set('item), 'acc) => 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold_desc: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), set&lt;&apos;item&gt;, &apos;accumulator) => &apos;accumulator
+let fold_desc: (((a: [&apos;item, &apos;acc]) => &apos;acc), set&lt;&apos;item&gt;, &apos;acc) => &apos;acc
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
@@ -487,7 +483,7 @@ let fold_desc: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), set
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=sets
-function sum_right (const i : int; const acc : int): int is acc + i
+function sum_right (const i : int; const acc : int) : int is acc + i
 const sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0)
 ```
 

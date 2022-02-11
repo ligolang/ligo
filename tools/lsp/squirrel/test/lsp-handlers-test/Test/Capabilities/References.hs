@@ -2,18 +2,21 @@ module Test.Capabilities.References
   ( unit_references
   , unit_close_open_docs
   , unit_fileChanges
+  , unit_changingUnsavedBufferAffectsBaseFile
+  , unit_changingUnsavedBufferAffectsIncludedFile
+  , unit_changingUnsavedBufferMakesGlobalLoseReference
   ) where
 
 import Control.Monad.IO.Class (liftIO)
 import Language.LSP.Test
-import Language.LSP.Types (List (..), Location (..), Position (..), Range (..), filePathToUri)
+import Language.LSP.Types
 import System.Directory (makeAbsolute, removeFile)
 import System.FilePath ((</>))
 
 import Test.HUnit (Assertion)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
-import Test.Common.FixedExpectations (shouldMatchList)
+import Test.Common.FixedExpectations (shouldBe, shouldMatchList)
 import Test.Common.LSP (openLigoDoc, runHandlersTest)
 
 contractsDir :: FilePath
@@ -123,3 +126,61 @@ unit_fileChanges = do
   refsCreate `shouldMatchList` [fstRef, sndRef]
   refsChange `shouldMatchList` [fstRef, sndRef, trdRef]
   refsDelete `shouldMatchList` [fstRef]
+
+-- 1. Check that changing an included file doesn't stop the base references from appearing.
+unit_changingUnsavedBufferAffectsBaseFile :: Assertion
+unit_changingUnsavedBufferAffectsBaseFile = runHandlersTest contractsDir do
+  let c2 = "includes" </> "C2.religo"
+  doc <- openLigoDoc c2
+
+  List oldRefs <- getReferences doc (Position 0 4) True
+
+  let changeRange = Range (Position 0 10) (Position 0 11)
+  changeDoc doc [TextDocumentContentChangeEvent (Just changeRange) Nothing "4\n"]
+
+  contents <- documentContents doc
+
+  List newRefs <- getReferences doc (Position 0 4) True
+
+  -- Can we still preprocess files even if one of them is changed?
+  liftIO do
+    -- Sanity test: assert that we did the changes correctly:
+    contents `shouldBe` "let c2 = 24\n"
+    newRefs `shouldMatchList` oldRefs
+
+-- 2. Check that changing a file doesn't stop the included references from appearing.
+unit_changingUnsavedBufferAffectsIncludedFile :: Assertion
+unit_changingUnsavedBufferAffectsIncludedFile = runHandlersTest contractsDir do
+  let c1 = "includes" </> "C1.mligo"
+  doc <- openLigoDoc c1
+
+  List oldRefs <- getReferences doc (Position 3 14) True
+
+  let changeRange = Range (Position 3 16) (Position 3 17)
+  changeDoc doc [TextDocumentContentChangeEvent (Just changeRange) Nothing " * 2\n"]
+
+  contents <- documentContents doc
+
+  List newRefs <- getReferences doc (Position 3 14) True
+
+  liftIO do
+    contents `shouldBe` "#include \"C2.religo\"\n#include \"C3.mligo\"\n\nlet c1 = c3 - c2 * 2\n"
+    newRefs `shouldMatchList` oldRefs
+
+-- 3. Check that we lose references if we rename a global identifier.
+unit_changingUnsavedBufferMakesGlobalLoseReference :: Assertion
+unit_changingUnsavedBufferMakesGlobalLoseReference = runHandlersTest contractsDir do
+  let c2 = "includes" </> "C2.religo"
+  doc <- openLigoDoc c2
+
+  let changeRange = Range (Position 0 5) (Position 0 6)
+  changeDoc doc [TextDocumentContentChangeEvent (Just changeRange) Nothing ""]
+
+  contents <- documentContents doc
+
+  List refs <- getReferences doc (Position 0 4) True
+
+  liftIO do
+    contents `shouldBe` "let c = 2\n"
+    uri <- filePathToUri <$> makeAbsolute (contractsDir </> c2)
+    refs `shouldMatchList` [Location uri (Range (Position 0 4) (Position 0 5))]

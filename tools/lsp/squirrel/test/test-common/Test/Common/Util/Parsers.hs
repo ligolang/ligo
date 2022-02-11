@@ -12,6 +12,7 @@ import ParseTree (Source (Path))
 import Progress (noProgress)
 
 import Test.Common.FixedExpectations (Expectation, HasCallStack, expectationFailure)
+import Test.Common.Util (withoutLogger)
 
 checkFile
   :: forall parser
@@ -19,8 +20,8 @@ checkFile
   => Bool
   -> FilePath
   -> Expectation
-checkFile True (Path -> path) = do
-  res <- try (parsePreprocessed path)
+checkFile True (Path -> path) = withoutLogger \runLogger -> do
+  res <- try (runLogger $ parsePreprocessed path)
   case res of
     Left (err :: HandlerFailed) -> expectationFailure $
       "Parsing failed, but it shouldn't have. " <>
@@ -44,8 +45,8 @@ checkFile True (Path -> path) = do
               msgs''' = collectTreeErrors tree' <> msgs''
       where
         msgs' = collectTreeErrors tree <> msgs
-checkFile False (Path -> path) = do
-  res <- try @_ @HandlerFailed (parsePreprocessed path)
+checkFile False (Path -> path) = withoutLogger \runLogger -> do
+  res <- try @_ @HandlerFailed (runLogger $ parsePreprocessed path)
   case res of
     Right c@(FindContract _file tree []) -> case collectTreeErrors tree of
       [] -> expectationFailure "Parsing succeeded, but it shouldn't have."

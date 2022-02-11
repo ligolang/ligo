@@ -6,10 +6,10 @@ module AST.Includes
   , insertPreprocessorRanges
   , getMarkers
   , getMarkerInfos
+  , Includes (..)
   , MarkerInfo (..)
   ) where
 
-import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow (first)
 import Control.Lens (Lens', _1, to, view, (&), (+~), (-~), (.~), (^.))
@@ -32,7 +32,10 @@ import Duplo.Tree (Cofree ((:<)), inject)
 import System.FilePath ((</>), takeDirectory)
 import UnliftIO.Directory (canonicalizePath)
 
-import AST.Scope.Common (ContractInfo, pattern FindContract, ParsedContractInfo, contractFile, MarkerInfo (..))
+import AST.Scope.Common
+  ( ContractInfo, pattern FindContract, Includes (..), MarkerInfo (..), ParsedContractInfo
+  , contractFile
+  )
 import AST.Scope.Fallback (loopM, loopM_)
 import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
 
@@ -181,7 +184,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
 
 -- | Given a list of contracts, builds a graph that represents how they are
 -- included.
-includesGraph :: forall m. MonadIO m => [ContractInfo] -> m (AdjacencyMap ParsedContractInfo)
+includesGraph :: forall m. MonadIO m => [ContractInfo] -> m (Includes ParsedContractInfo)
 includesGraph contracts = do
   knownContracts :: Map FilePath (ParsedContractInfo, DList (FilePath, FilePath))
     <- fmap Map.fromList $ forM contracts $ \c -> do
@@ -203,7 +206,7 @@ includesGraph contracts = do
         in
         (edges'' <> edges, vertex' : vertices)
 
-  pure (uncurry G.overlay $ bimap (G.edges . toList) G.vertices $ foldr go ([], []) contracts)
+  pure $ Includes $ uncurry G.overlay $ bimap (G.edges . toList) G.vertices $ foldr go ([], []) contracts
 
   where
     emptyContract :: FilePath -> ParsedContractInfo

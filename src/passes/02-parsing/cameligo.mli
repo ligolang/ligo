@@ -1,4 +1,4 @@
-(* This file provides an interface to the CameLIGO parser. *)
+(* Interfacing the CameLIGO parser with the compiler *)
 
 (* Vendor dependencies *)
 

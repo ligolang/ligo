@@ -139,10 +139,10 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {binder; start; final; incr; f_body}
 
   let for_each
-    = fun f {fe_binder; collection; collection_type; fe_body} ->
+    = fun f {fe_binder; collection; fe_body ; collection_type} ->
     let* collection = f collection in
     let* fe_body    = f fe_body in
-    ok @@ {fe_binder; collection; collection_type; fe_body}
+    ok @@ {fe_binder; collection; fe_body ; collection_type}
 
   let while_loop
     = fun f {cond; body} ->
@@ -233,7 +233,7 @@ module Fold_helpers(M : Monad) = struct
        let* cases' = bind_map_list aux cases in
        return @@ E_matching {matchee=e';cases=cases'}
     | E_record m -> (
-      let* m' = bind_map_lmap self m in
+      let* m' = bind_map_list (fun (l,e) -> let* e = self e in ok (l,e)) m in
       return @@ E_record m'
     )
     | E_accessor acc -> (

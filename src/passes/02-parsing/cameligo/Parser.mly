@@ -15,17 +15,13 @@ module Wrap = Lexing_shared.Wrap
 
 (* Utilities *)
 
-let unwrap = Wrap.payload
+let unwrap wrap = Region.{region=wrap#region; value=wrap#payload}
 let wrap   = Wrap.wrap
 
 let mk_wild region =
   let variable = {value="_"; region} in
   let value = {variable; attributes=[]}
   in {region; value}
-
-let list_of_option = function
-       None -> []
-| Some list -> list
 
 (* END HEADER *)
 %}
@@ -52,15 +48,15 @@ let list_of_option = function
 %on_error_reduce nsepseq(module_name,DOT)
 %on_error_reduce core_expr
 %on_error_reduce match_expr(base_cond)
-%on_error_reduce constr_expr
+%on_error_reduce ctor_expr
 %on_error_reduce nsepseq(disj_expr_level,COMMA)
-%on_error_reduce constant_constr_expr
-%on_error_reduce constant_constr_pattern
+%on_error_reduce const_ctor_expr
+%on_error_reduce const_ctor_pattern
 %on_error_reduce arguments
 %on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
 %on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
 %on_error_reduce seq(Attr)
-%on_error_reduce constr_pattern
+%on_error_reduce ctor_pattern
 %on_error_reduce cons_pattern_level
 %on_error_reduce nsepseq(cons_pattern_level,COMMA)
 %on_error_reduce pattern
@@ -264,20 +260,20 @@ core_type:
 | "_"              { TVar {value="_"; region=$1#region} }
 | type_name        {    TVar $1 }
 | module_access_t  {   TModA $1 }
-| type_constr_app  {    TApp $1 }
+| type_ctor_app    {    TApp $1 }
 | record_type      { TRecord $1 }
 | type_var         {    TArg $1 }
 | par(type_expr)   {    TPar $1 }
 
-type_constr_app:
-  type_constr_arg type_name {
-    let start  = type_constr_arg_to_region $1
+type_ctor_app:
+  type_ctor_arg type_name {
+    let start  = type_ctor_arg_to_region $1
     and stop   = $2.region in
     let region = cover start stop
     and value  = $2, $1
     in {region; value} }
 
-type_constr_arg:
+type_ctor_arg:
   core_type             { CArg      $1 }
 | par(tuple(type_expr)) { CArgTuple $1 }
 
@@ -374,11 +370,10 @@ let_declaration:
     let region     = cover kwd_let#region stop
     in {region; value} }
 
-%inline attributes:
+%inline
+attributes:
   ioption(nseq("[@attr]") { Utils.nseq_to_list $1 }) {
-    let l = list_of_option $1 in
-    List.map ~f:unwrap l
-  }
+    match $1 with None -> [] | Some list -> list }
 
 let_binding:
   var_pattern type_parameters parameters let_lhs_type "=" expr {
@@ -425,7 +420,8 @@ core_irrefutable:
 | record_pattern(irrefutable) { PRecord $1 }
 | par(typed_irrefutable)
 | par(irrefutable)            { PPar    $1 }
-| constr_irrefutable          { $1 }
+| ctor_irrefutable            { $1 }
+(* TODO: int, nat, bytes etc.? *)
 
 var_pattern:
   attributes "<ident>" {
@@ -442,16 +438,16 @@ typed_irrefutable:
     let value  = {pattern=$1; colon; type_expr}
     in PTyped {region; value} }
 
-constr_irrefutable:
-  par(non_const_constr_irrefutable) {    PPar $1 }
-| constant_constr_pattern           { PConstr $1 }
+ctor_irrefutable:
+  par(non_const_ctor_irrefutable) {    PPar $1 }
+| const_ctor_pattern           { PConstr $1 }
 
-constant_constr_pattern:
+const_ctor_pattern:
   "<uident>" {
     let constr = unwrap $1 in
     {constr with value = constr,None} }
 
-non_const_constr_irrefutable:
+non_const_ctor_irrefutable:
   "<uident>" core_irrefutable {
     let constr = unwrap $1 in
     let stop   = pattern_to_region $2 in
@@ -486,7 +482,7 @@ core_pattern:
 | "<verbatim>"                    {                      PVerbatim (unwrap $1) }
 | unit                            {                          PUnit $1 }
 | list_of(cons_pattern_level)     {              PList (PListComp $1) }
-| constr_pattern                  {                        PConstr $1 }
+| ctor_pattern                  {                        PConstr $1 }
 | record_pattern(core_pattern)    {                        PRecord $1 }
 | par(pattern)
 | par(typed_pattern)              { PPar $1}
@@ -528,7 +524,7 @@ field_pattern(rhs_pattern):
     and value  = {field_name=$1; eq; pattern=$3}
     in {region; value} }
 
-constr_pattern:
+ctor_pattern:
   "<uident>" ioption(core_pattern) {
     let constr = unwrap $1 in
     let region =
@@ -788,17 +784,17 @@ unary_expr_level:
 | call_expr_level { $1 }
 
 call_expr_level:
-  call_expr | core_expr | constr_expr { $1 }
+  call_expr | core_expr | ctor_expr { $1 }
 
-constr_expr:
+ctor_expr:
   "<uident>" argument {
     let constr = unwrap $1 in
     let region = cover constr.region (expr_to_region $2)
     in EConstr {region; value = (constr, Some $2)}
   }
-| constant_constr_expr { $1 }
+| const_ctor_expr { $1 }
 
-constant_constr_expr:
+const_ctor_expr:
   "<uident>" {
     let constr = unwrap $1 in
     EConstr {constr with value=(constr,None)} }
@@ -809,7 +805,7 @@ arguments:
 
 argument:
   core_expr
-| constant_constr_expr { $1 }
+| const_ctor_expr { $1 }
 
 call_expr:
   core_expr arguments {

@@ -2216,6 +2216,16 @@ let tuple_fun_religo ~raise ~add_warning () : unit =
  let _ = type_file ~raise ~add_warning "./contracts/tuple_fun.religo" in
  ()
 
+let while_and_for_loops_jsligo ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/loops.jsligo" in
+  let _ = expect_eq ~raise program "for_of_single_statement" (e_list [e_int 1;e_int 2;e_int 3]) (e_list [e_int 3;e_int 2;e_int 1]) in
+  let _ = expect_eq ~raise program "for_of_multi_statements_1" (e_list [e_int 1;e_int 2;e_int 3]) (e_list [e_int 5;e_int 4;e_int 3]) in
+  let _ = expect_eq ~raise program "for_of_multi_statements_2" (e_list [e_int 1;e_int 2;e_int 3]) (e_list [e_int 6;e_int 4;e_int 2]) in
+  let _ = expect_eq ~raise program "while_single_statement" (e_int 10) (e_int 10) in
+  let _ = expect_eq ~raise program "while_multi_statements_1" (e_int 10) (e_int 55) in
+  let _ = expect_eq ~raise program "while_multi_statements_2" (e_int 10) (e_int 55) in
+  ()
+
 let main = test_suite "Integration (End to End)"
   @@ [
 
@@ -2399,5 +2409,6 @@ let main = test_suite "Integration (End to End)"
     test_w "assignment_operators (jsligo)" assignment_operators_jsligo;
     test_w "if_if_return (jsligo)" if_if_return_jsligo;
     test_w "switch case (jsligo)" switch_cases_jsligo;
-    test_w "tuple fun (religo)" tuple_fun_religo
+    test_w "tuple fun (religo)" tuple_fun_religo;
+    test_w "for-of & while loop (jsligo)"while_and_for_loops_jsligo
   ]

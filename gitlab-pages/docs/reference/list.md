@@ -9,7 +9,7 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-function length : nat
+val length : nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val length : nat
@@ -28,7 +28,7 @@ Get the number of elements in a list.
 ```pascaligo group=lists
 const xs: list (int) = list [1; 2; 3]
 
-const length : nat = List.length (xs);
+const length : nat = List.length (xs)
 ```
 
 </Syntax>
@@ -61,7 +61,7 @@ let length : nat = List.length (xs);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function size : nat
+val size : nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val size : nat
@@ -80,7 +80,7 @@ Synonym for `List.length`.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-const size_ : nat = List.size (xs);
+const size : nat = List.size (xs)
 ```
 
 </Syntax>
@@ -107,7 +107,7 @@ let size : nat = List.size (xs);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function head_opt : list ('a) -> option ('a)
+val head_opt&lt;a&gt; : list (a) -> option (a)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val head_opt : 'a list -> 'a option
@@ -124,7 +124,7 @@ Get the head of a list
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-const head_opt : option (int)  = List.head_opt (xs);
+const head_opt : option (int) = List.head_opt (xs)
 ```
 
 </Syntax>
@@ -151,7 +151,7 @@ let head_opt : option<int>  = List.head_opt (xs);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function tail_opt : list ('a) -> option (list ('a))
+val tail_opt&lt;a&gt; : list (a) -> option (list (a))
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val tail_opt : 'a list -> 'a list option
@@ -168,7 +168,7 @@ Get the tail of a list
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-const tail_opt : option(list(int)) = List.tail_opt (xs);
+const tail_opt : option (list (int)) = List.tail_opt (xs)
 ```
 
 </Syntax>
@@ -195,7 +195,7 @@ let tail_opt : option<list<int>> = List.tail_opt (xs);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function iter : ('a -> unit) -> list('a) -> unit
+val iter&lt;a&gt; : (a -> unit) -> list(a) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val iter : ('a -> unit) -> 'a list -> unit
@@ -212,11 +212,10 @@ Iterate over items in a list.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-function iter_op (const l : list (int)) : unit is
-  block {
-    function iterated (const i : int) : unit is
-      if i > 3 then Unit else (failwith ("Below range.") : unit)
-  } with List.iter (iterated, l)
+function iter_op (const l : list (int)) : unit is {
+  function iterated (const i : int) : unit is
+    if i <= 3 then (failwith ("Below range.") : unit)
+} with List.iter (iterated, l)
 ```
 
 Alternatively it's also possible to use [loops](../language-basics/loops.md).
@@ -254,7 +253,7 @@ let iter_op = (l: list<int>): unit => {
 
 
 <SyntaxTitle syntax="pascaligo">
-function map : ('a -> 'b) -> list('a) -> list('b)
+val map&lt;a,b&gt; : (a -> b) -> list (a) -> list (b)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val map : ('a -> 'b) -> 'a list -> 'b list
@@ -271,7 +270,7 @@ Apply a function to items of a list to create a new list.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-const larger_list: list(int) = list [1; 2; 3]
+const larger_list: list (int) = list [1; 2; 3]
 
 function increment (const i : int): int is i + 1
 
@@ -318,16 +317,16 @@ let plus_one : list<int> = List.map(increment, larger_list);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function fold : (('accumulator -> 'item -> 'accumulator) -> list('item) -> 'accumulator) -> 'accumulator
+val fold&lt;item,acc&gt : (acc * item -> acc) * list (item) * acc -> acc
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold : (('accumulator * 'item) -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
+val fold : ('acc * 'item -> 'acc) -> 'item list -> 'acc -> 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let fold: ((('accumulator, 'item) => 'accumulator), list('item), 'accumulator) => 'accumulator
+let fold: ((('acc, 'item) => 'acc), list('item), 'acc) => 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold: ((folder: [accumulator: &apos;accumulator, item: &apos;item]) => &apos;accumulator, list: list&lt;&apos;item&gt;, accumulator: &apos;accumulator) => &apos;accumulator
+let fold: ((folder: [acc: &apos;acc, item: &apos;item]) => &apos;acc, list: list&lt;&apos;item&gt;, acc: &apos;acc) => &apos;acc
 </SyntaxTitle>
 
 [Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
@@ -335,7 +334,7 @@ let fold: ((folder: [accumulator: &apos;accumulator, item: &apos;item]) => &apos
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-const my_list: list(int) = list [1; 2; 3]
+const my_list : list (int) = list [1; 2; 3]
 
 function sum (const acc : int; const i : int): int is acc + i
 
@@ -377,16 +376,16 @@ let sum_of_elements_fold: int = List.fold(sum_fold, my_list_fold, 0);
 
 </Syntax>
 <SyntaxTitle syntax="pascaligo">
-function fold_left : (('accumulator -> 'item -> 'accumulator) -> 'accumulator -> list('item)) -> 'accumulator
+val fold_left&lt;item,acc&gt; : (acc * item -> acc) * acc * list (item) -> acc
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold_left : (('accumulator * 'item) -> 'accumulator) -> 'accumulator -> 'item list -> 'accumulator
+val fold_left : ('acc * 'item -> 'acc) -> 'acc -> 'item list -> 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let fold_left: ((('accumulator, 'item) => 'accumulator), 'accumulator, list('item)) => 'accumulator
+let fold_left: ((('acc, 'item) => 'acc), 'acc, list('item)) => 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold_left: (((a: [&apos;accumulator, &apos;item]) => &apos;accumulator), &apos;accumulator, list&lt;&apos;item&gt;) => &apos;accumulator
+let fold_left: (((a: [&apos;acc, &apos;item]) => &apos;acc), &apos;acc, list&lt;&apos;item&gt;) => &apos;acc
 </SyntaxTitle>
 
 [Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
@@ -394,9 +393,9 @@ let fold_left: (((a: [&apos;accumulator, &apos;item]) => &apos;accumulator), &ap
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-const my_list: list(int) = list [1; 2; 3]
+const my_list : list (int) = list [1; 2; 3]
 
-function sum (const acc : int; const i : int): int is acc + i
+function sum (const acc : int; const i : int) : int is acc + i
 
 const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 ```
@@ -437,16 +436,16 @@ let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function fold_right : (('item -> 'accumulator -> 'accumulator) -> list('item) -> 'accumulator) -> 'accumulator
+val fold_right&lt;item,acc&gt; : (item * acc -> acc) * list (item) * acc -> acc
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold_right : (('item * 'accumulator) -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
+val fold_right : ('item * 'acc -> 'acc) -> 'item list -> 'acc -> 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let fold_right: ((('item, 'accumulator) => 'accumulator), list('item), 'accumulator) => 'accumulator
+let fold_right: ((('item, 'acc) => 'acc), list('item), 'acc) => 'acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold_right: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), list&lt;&apos;item&gt;, &apos;accumulator) => &apos;accumulator
+let fold_right: (((a: [&apos;item, &apos;acc]) => &apos;acc), list&lt;&apos;item&gt;, &apos;acc) => &apos;acc
 </SyntaxTitle>
 
 [Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
@@ -454,9 +453,9 @@ let fold_right: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), li
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-const my_list: list(int) = list [1; 2; 3]
+const my_list : list (int) = list [1; 2; 3]
 
-function sum_right (const i : int; const acc : int): int is acc + i
+function sum_right (const i : int; const acc : int) : int is acc + i
 
 const sum_of_elements : int = List.fold_right (sum_right, my_list, 0)
 ```

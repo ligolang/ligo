@@ -16,6 +16,13 @@ type t =
 
 type directive = t
 
+(* Ghosts *)
+
+let ghost_linemarker =
+  Region.wrap_ghost (1, "file_path", None)
+
+let ghost_Linemarker = Linemarker ghost_linemarker
+
 (* Printing *)
 
 type lexeme = string

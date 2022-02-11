@@ -30,10 +30,6 @@ type all =
  | `Preproc_tracer of Preprocessing.Errors.t
  | `Parser_tracer of Parsing.Errors.t
  | `Pretty_tracer of Parsing.Errors.t
- | `Self_cst_cameligo_tracer of Self_cst.Cameligo.Errors.self_cst_cameligo_error
- | `Self_cst_pascaligo_tracer of Self_cst.Pascaligo.Errors.self_cst_pascaligo_error
- | `Self_cst_reasonligo_tracer of Self_cst.Reasonligo.Errors.self_cst_reasonligo_error
- | `Self_cst_jsligo_tracer of Self_cst.Jsligo.Errors.self_cst_jsligo_error
  | `Cit_pascaligo_tracer of Tree_abstraction.Pascaligo.Errors.abs_error
  | `Cit_cameligo_tracer of Tree_abstraction.Cameligo.Errors.abs_error
  | `Cit_reasonligo_tracer of Tree_abstraction.Reasonligo.Errors.abs_error

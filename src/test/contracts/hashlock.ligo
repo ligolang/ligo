@@ -37,27 +37,26 @@ function reveal (const p: reveal; var s: storage) : return is
     then failwith("This contract has already been used.")
     else skip;
     var commit : commit := record [date = (0: timestamp); salted_hash = ("": bytes)];
-    case Big_map.find_opt(sender, s.commits) of
+    case Big_map.find_opt(sender, s.commits) of [
     | Some (c) -> commit := c
     | None -> failwith("You have not made a commitment to hash against yet.")
-    end;
-    if Tezos.now < commit.date
-    then failwith("It has not been 24 hours since your commit yet.");
-    else skip;
+    ];
+    if Tezos.now < commit.date then
+      failwith("It has not been 24 hours since your commit yet.") ;
     const salted : bytes =
       Crypto.sha256(
         Bytes.concat(p.hashable, Bytes.pack(sender))
       );
-    if salted =/= commit.salted_hash
-    then failwith("This reveal does not match your commitment.")
-    else skip;
-    if s.hashed = Crypto.sha256(p.hashable)
-    then s := s with record [unused = False]
-    else failwith("Your commitment did not match the storage hash.");
+    if salted =/= commit.salted_hash then
+      failwith("This reveal does not match your commitment.") ;
+    if s.hashed = Crypto.sha256(p.hashable) then
+      s := s with record [unused = False]
+    else
+      failwith("Your commitment did not match the storage hash.");
   end with (p.message(unit), s)
 
 function main (const p: parameter; const s: storage) : return is
-  case p of
+  case p of [
   | Commit (c) -> commit (c,s)
   | Reveal (r) -> reveal (r,s)
-  end
+  ]

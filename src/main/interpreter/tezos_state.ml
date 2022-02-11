@@ -62,6 +62,16 @@ let contract_exists : context ->  Memory_proto_alpha.Protocol.Alpha_context.Cont
     Tezos_raw_protocol.Alpha_services.Contract.info Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
   Trace.tz_result_to_bool info
 
+let get_voting_power ~raise ~loc ~calltrace (ctxt :context) key_hash =
+  let vp =
+    Tezos_alpha_test_helpers.Context.get_voting_power (B ctxt.raw) key_hash in
+  Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) vp
+
+let get_total_voting_power ~raise ~loc ~calltrace (ctxt :context) =
+  let tvp =
+    Tezos_alpha_test_helpers.Context.get_total_voting_power (B ctxt.raw) in
+  Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) tvp
+
 let equal_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.equal
 let compare_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare
 
@@ -164,6 +174,9 @@ let unwrap_source ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contra
   fun x ->
     let _ = Trace.trace_option ~raise (generic_error loc "The source address is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x in
     x
+let implicit_account ~raise ~loc : string -> Tezos_protocol.Protocol.Alpha_context.Contract.t  =
+  fun x ->
+    Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error loc "Cannot convert to implicit account") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check x
 
 let script_of_compiled_code ~raise ~loc ~calltrace (contract : unit Tezos_utils.Michelson.michelson) (storage : unit Tezos_utils.Michelson.michelson) : Tezos_protocol.Protocol.Alpha_context.Script.t  =
   let open! Tezos_protocol.Protocol.Alpha_context.Script in
@@ -384,6 +397,18 @@ let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tez
       Success ({ ctxt with raw ; transduced }, consum)
     | Error errs ->
       Fail errs
+
+let add_account ~raise ~loc sk pk pkh : unit =
+  let open Tezos_alpha_test_helpers in
+  let sk = Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
+  let account = Account.{ sk ; pk ; pkh } in
+  Account.add_account account
+
+let new_account : unit -> string * Signature.public_key = fun () ->
+  let open Tezos_alpha_test_helpers.Account in
+  let account = new_account () in
+  let sk = Signature.Secret_key.to_b58check account.sk in
+  (sk, account.pk)
 
 let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt : add_operation_outcome =
   let open Tezos_alpha_test_helpers in

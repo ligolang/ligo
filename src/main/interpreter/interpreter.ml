@@ -675,6 +675,10 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       let>> value = Pairing_check l in
       return @@ value
     | ( C_PAIRING_CHECK , _  ) -> fail @@ error_type
+    | ( C_IMPLICIT_ACCOUNT, [ V_Ct (C_key_hash kh) ] )->
+      let>> value = Implicit_account (loc, kh) in
+      return @@ value
+    | ( C_IMPLICIT_ACCOUNT , _  ) -> fail @@ error_type
     | ( C_FAILWITH , [ a ] ) ->
       fail @@ Errors.meta_lang_failwith loc calltrace a
     | ( C_FAILWITH , _  ) -> fail @@ error_type
@@ -940,6 +944,14 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     | ( C_TEST_CAST_ADDRESS , [ V_Ct (C_address x) ] ) ->
       return_ct (C_address x)
     | ( C_TEST_CAST_ADDRESS , _  ) -> fail @@ error_type
+    | ( C_TEST_ADD_ACCOUNT , [ V_Ct (C_string sk) ; V_Ct (C_key pk) ] ) ->
+      let>> () = Add_account (loc, sk, pk) in
+      return @@ v_unit ()
+    | ( C_TEST_ADD_ACCOUNT , _ ) -> fail @@ error_type
+    | ( C_TEST_NEW_ACCOUNT , [ V_Ct (C_unit) ] ) ->
+      let>> v = New_account () in
+      return @@ v
+    | ( C_TEST_NEW_ACCOUNT , _ ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST , [ V_Ct (C_bytes payload) ; V_Ct (C_nat time)] ) ->
       let (chest,chest_key) = Michelson_backend.create_chest payload (Z.to_int time) in
       return @@ v_pair (V_Ct (C_bytes chest) , V_Ct (C_bytes chest_key))
@@ -947,6 +959,14 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
       return @@ V_Ct (C_bytes chest_key)
+    | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) -> 
+      let>> vp = Get_voting_power (loc, calltrace, hk) in
+      return vp
+    | ( C_TEST_GET_VOTING_POWER , _ ) -> fail @@ error_type
+    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) -> 
+      let>> tvp = Get_total_voting_power (loc, calltrace) in
+      return tvp
+    | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
@@ -960,7 +980,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
-         C_CONTRACT_ENTRYPOINT_OPT | C_IMPLICIT_ACCOUNT | C_SET_DELEGATE |
+         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_TEST_COMPILE_CONTRACT | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )

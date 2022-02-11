@@ -43,9 +43,9 @@ module Pretty =
     type tree = CST.t
   end
 
-module Printer =
+module Print =
   struct
-    include Cst_reasonligo.Printer
+    include Cst_reasonligo.Print
     type tree = CST.t
   end
 
@@ -59,7 +59,7 @@ module Main = ParserMainGen.Make
                 (Self_tokens)
                 (CST)
                 (Parser)
-                (Printer)
+                (Print)
                 (Pretty)
                 (Parser_CLI)
 

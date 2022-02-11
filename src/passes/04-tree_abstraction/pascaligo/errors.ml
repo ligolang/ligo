@@ -16,6 +16,16 @@ type abs_error = [
   | `Concrete_pascaligo_untyped_recursive_fun of Location.t
   | `Concrete_pascaligo_block_start_with_attribute of Raw.block Region.reg
   | `Concrete_pascaligo_unsupported_top_level_destructuring of Region.t
+  | `Concrete_pascaligo_unsupported_type_ann_on_patterns of Region.t
+  | `Concrete_pascaligo_ignored_attribute of Location.t
+  | `Concrete_pascaligo_expected_variable of Location.t
+  | `Concrete_pascaligo_expected_field_name of Region.t
+  | `Concrete_pascaligo_expected_field_or_access of Region.t
+  | `Concrete_pascaligo_wrong_functional_lens of Region.t
+  | `Concrete_pascaligo_unexpected_wildcard of Region.t
+  | `Concrete_pascaligo_wrong_functional_updator of Region.t
+  | `Concrete_pascaligo_unsuported_pattern_in_function of Region.t
+  | `Concrete_pascaligo_wrong_lvalue of Region.t
   ] [@@deriving poly_constructor { prefix = "concrete_pascaligo_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -24,6 +34,46 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Concrete_pascaligo_wrong_lvalue reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Effectful updates must be performed on identified objects that are not accessed through a module@]"
+        Snippet.pp_lift reg 
+    | `Concrete_pascaligo_unsupported_type_ann_on_patterns reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Type annotations on this kind of patterns are not supported yet@]"
+        Snippet.pp_lift reg 
+    | `Concrete_pascaligo_unsuported_pattern_in_function reg ->
+      Format.fprintf f
+        "@[<hv>%a@.These kind of patterns are not supported in function parameters@]"
+        Snippet.pp_lift reg 
+    | `Concrete_pascaligo_unexpected_wildcard reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Wildcards ('_') are not supported yet@]"
+        Snippet.pp_lift reg 
+    | `Concrete_pascaligo_expected_field_name reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Expected a field name@]"
+        Snippet.pp_lift reg 
+    | `Concrete_pascaligo_expected_field_or_access reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Expected a field name or an accessor@]"
+        Snippet.pp_lift reg
+    | `Concrete_pascaligo_wrong_functional_lens reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Functional lenses can't be used in record expressions@]"
+        Snippet.pp_lift reg
+    | `Concrete_pascaligo_ignored_attribute loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Attribute being ignored@]"
+        Snippet.pp loc
+    | `Concrete_pascaligo_expected_variable loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Attribute being ignored@]"
+        Snippet.pp loc
+    | `Concrete_pascaligo_wrong_functional_updator reg ->
+      Format.fprintf f
+        "@[<hv>%a@.Functional update only work on records@]"
+        Snippet.pp_lift reg
     | `Concrete_pascaligo_unknown_constant (s,loc) ->
       Format.fprintf f
       "@[<hv>%a@.Unknown constant: %s"
@@ -70,6 +120,17 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Concrete_pascaligo_wrong_lvalue _
+  | `Concrete_pascaligo_unsupported_type_ann_on_patterns _
+  | `Concrete_pascaligo_unsuported_pattern_in_function _
+  | `Concrete_pascaligo_expected_field_or_access _
+  | `Concrete_pascaligo_unexpected_wildcard _
+  | `Concrete_pascaligo_wrong_functional_lens _
+  | `Concrete_pascaligo_expected_variable _
+  | `Concrete_pascaligo_expected_field_name _
+  | `Concrete_pascaligo_ignored_attribute _
+  | `Concrete_pascaligo_wrong_functional_updator _
+    -> failwith "WAIT"
   | `Concrete_pascaligo_unsupported_top_level_destructuring loc ->
     let message = `String "Unsupported destructuring at top-level" in
     let content = `Assoc [
@@ -106,11 +167,11 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_pascaligo_michelson_type_wrong (texpr,name) ->
-    let message = Format.asprintf "Argument %s of %s must be a string singleton"
-        (Cst_pascaligo.Printer.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
+    let message = Format.asprintf "Argument must be a string singleton" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );
+      ("name"   , `String name );
       ("location", `String loc); ] in
     json_error ~stage ~content
   | `Concrete_pascaligo_michelson_type_wrong_arity (loc,name) ->

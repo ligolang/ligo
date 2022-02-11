@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1539'
+title: 'Testing framework: add functions to register/generate (sk, pk) pairs for implicit addresses'
+type: added

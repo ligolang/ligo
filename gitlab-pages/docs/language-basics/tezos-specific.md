@@ -28,7 +28,7 @@ return type of `Byte.unpack` is an option that needs to be annotated.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=a
-function id_string (const p : string) : option (string) is block {
+function id_string (const p : string) : option (string) is {
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (string))
 ```
@@ -78,12 +78,11 @@ a predefined functions returning a value of type `key_hash`.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=b
-function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is
-  block {
-    var ret : bool := False;
-    var kh2 : key_hash := Crypto.hash_key (k2);
-    if kh1 = kh2 then ret := True else skip
-  } with (ret, kh2)
+function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is {
+  var ret : bool := False;
+  var kh2 : key_hash := Crypto.hash_key (k2);
+  if kh1 = kh2 then ret := True
+} with (ret, kh2)
 ```
 
 </Syntax>
@@ -91,7 +90,7 @@ function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash
 
 ```cameligo group=b
 let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
-  let kh2 : key_hash = Crypto.hash_key k2 in 
+  let kh2 : key_hash = Crypto.hash_key k2 in
   (kh1 = kh2), kh2
 ```
 
@@ -235,8 +234,8 @@ const origination : operation * address = Tezos.create_contract (
 ```cameligo group=e
 let origination : operation * address = Tezos.create_contract
   (fun (p, s : nat * string) -> (([] : operation list), s))
-  (None: key_hash option) 
-  3tz 
+  (None: key_hash option)
+  3tz
   "initial_storage"
 ```
 
@@ -263,4 +262,3 @@ let origination : [operation, address] = Tezos.create_contract (
 ```
 
 </Syntax>
-

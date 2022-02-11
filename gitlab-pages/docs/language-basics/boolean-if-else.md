@@ -57,7 +57,7 @@ Common operations:
   <div className="example">
 
 ```pascaligo
-const logical_and: bool = True and True;
+const logical_and : bool = True and True;
 ```
 
   </div>
@@ -70,7 +70,7 @@ const logical_and: bool = True and True;
   <div className="example">
 
 ```pascaligo
-const logical_or: bool = False or True;
+const logical_or : bool = False or True;
 ```
 
   </div>
@@ -83,7 +83,7 @@ const logical_or: bool = False or True;
   <div className="example">
 
 ```pascaligo
-const logical_not: bool = not False;
+const logical_not : bool = not False;
 ```
 
   </div>
@@ -96,10 +96,10 @@ const logical_not: bool = not False;
   <div className="example">
 
 ```pascaligo
-const eq: bool = 2 = 3;
+const eq : bool = 2 = 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     =/=
   </div>
@@ -109,7 +109,7 @@ const eq: bool = 2 = 3;
   <div className="example">
 
 ```pascaligo
-const not_eq: bool = 2 =/= 3;
+const not_eq : bool = 2 =/= 3;
 ```
 
   </div>
@@ -122,10 +122,10 @@ const not_eq: bool = 2 =/= 3;
   <div className="example">
 
 ```pascaligo
-const gt: bool = 4 > 3;
+const gt : bool = 4 > 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &lt;
   </div>
@@ -135,10 +135,10 @@ const gt: bool = 4 > 3;
   <div className="example">
 
 ```pascaligo
-const lt: bool = 4 < 3;
+const lt : bool = 4 < 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &gt;=
   </div>
@@ -148,10 +148,10 @@ const lt: bool = 4 < 3;
   <div className="example">
 
 ```pascaligo
-const gte: bool = 4 >= 3;
+const gte : bool = 4 >= 3;
 ```
 
-  </div>    
+  </div>
   <div className="operation">
     &lt;=
   </div>
@@ -161,10 +161,10 @@ const gte: bool = 4 >= 3;
   <div className="example">
 
 ```pascaligo
-const lte: bool = 4 <= 3;
+const lte : bool = 4 <= 3;
 ```
 
-  </div>    
+  </div>
 </div>
 </Syntax>
 
@@ -221,7 +221,7 @@ let logical_not: bool = not false
 let eq: bool = 2 = 3
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &lt;&gt;
   </div>
@@ -247,7 +247,7 @@ let not_eq: bool = 2 <> 3
 let gt: bool = 4 > 3
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &lt;
   </div>
@@ -260,7 +260,7 @@ let gt: bool = 4 > 3
 let lt: bool = 4 < 3
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &gt;=
   </div>
@@ -273,7 +273,7 @@ let lt: bool = 4 < 3
 let gte: bool = 4 >= 3
 ```
 
-  </div>    
+  </div>
   <div className="operation">
     &lt;=
   </div>
@@ -286,7 +286,7 @@ let gte: bool = 4 >= 3
 let lte: bool = 4 <= 3
 ```
 
-  </div>    
+  </div>
 </div>
 </Syntax>
 
@@ -343,7 +343,7 @@ let logical_not: bool = !false;
 let eq: bool = 2 == 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     !=
   </div>
@@ -369,7 +369,7 @@ let not_eq: bool = 2 != 3;
 let gt: bool = 4 > 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &lt;
   </div>
@@ -382,7 +382,7 @@ let gt: bool = 4 > 3;
 let lt: bool = 4 < 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &gt;=
   </div>
@@ -395,7 +395,7 @@ let lt: bool = 4 < 3;
 let gte: bool = 4 >= 3;
 ```
 
-  </div>    
+  </div>
   <div className="operation">
     &lt;=
   </div>
@@ -408,7 +408,7 @@ let gte: bool = 4 >= 3;
 let lte: bool = 4 <= 3;
 ```
 
-  </div>    
+  </div>
 </div>
 </Syntax>
 
@@ -466,7 +466,7 @@ let logical_not: bool = !false;
 let eq: bool = 2 == 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     !=
   </div>
@@ -492,7 +492,7 @@ let not_eq: bool = 2 != 3;
 let gt: bool = 4 > 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &lt;
   </div>
@@ -505,7 +505,7 @@ let gt: bool = 4 > 3;
 let lt: bool = 4 < 3;
 ```
 
-  </div>  
+  </div>
   <div className="operation">
     &gt;=
   </div>
@@ -518,7 +518,7 @@ let lt: bool = 4 < 3;
 let gte: bool = 4 >= 3;
 ```
 
-  </div>    
+  </div>
   <div className="operation">
     &lt;=
   </div>
@@ -531,7 +531,7 @@ let gte: bool = 4 >= 3;
 let lte: bool = 4 <= 3;
 ```
 
-  </div>    
+  </div>
 </div>
 </Syntax>
 
@@ -720,24 +720,32 @@ When the branches of the conditional are not a single expression, as
 above, we need a block:
 
 ```pascaligo skip
-if x < y then
-  block {
-    const z : nat = x;
-    x := y; y := z
-  }
-else skip;
+if x < y then {
+  const z : nat = x;
+  x := y; y := z
+}
+else skip
 ```
 
-As an exception to the rule, the blocks in a conditional branch do not
-need to be introduced by the keyword `block`, so we could have written
-instead:
+> Notice that if a conditional has a branch `else skip`, that branch can
+> be omitted. The resulting so-called *dangling else* problem is
+> parsed by associating any `else` to the closest preceding `then`.
+
+The conditional above is better written as follows:
+
 ```pascaligo skip
 if x < y then {
   const z : nat = x;
   x := y; y := z
 }
-else skip;
 ```
+
+> Until recently, conditionals in PascaLIGO required an `else` branch,
+> and, as a consequence, conditional instructions could have a
+> single-instruction `then` branch be terminated with a semicolon `;`,
+> like `if a then skip; else skip;`.  This is no longer allowed, as
+> the prefix `if a then skip;` could be interpreted as a statement in
+> a block.
 
 </Syntax>
 <Syntax syntax="cameligo">

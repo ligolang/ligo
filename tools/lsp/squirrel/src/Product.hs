@@ -1,6 +1,3 @@
-
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 {-|
   The heterogeneous list.
 -}
@@ -16,7 +13,11 @@ module Product
 
 import GHC.Types
 
+import Duplo.Lattice (Lattice (..))
 import Duplo.Pretty
+import Duplo.Tree (Apply, Tree, extract)
+
+import Range
 
 -- | `Product xs` contains elements of each of the types from the `xs` list.
 data Product xs where
@@ -24,6 +25,17 @@ data Product xs where
   Nil  :: Product '[]
 
 infixr 5 :>
+
+instance (Contains Range xs, Eq (Product xs)) => Ord (Product xs) where (<=) = leq
+
+instance (Contains Range xs, Eq (Product xs)) => Lattice (Product xs) where
+  a `leq` b = getElem @Range a `leq` getElem @Range b
+
+instance Contains Range xs => HasRange (Product xs) where
+  getRange = getElem
+
+instance (Contains Range xs, Apply Functor fs) => HasRange (Tree fs (Product xs)) where
+  getRange = getElem . extract
 
 -- | Find/modify the element with a given type.
 --
@@ -82,6 +94,3 @@ instance Pretty (Product '[]) where
 
 instance PrettyProd xs => Pretty (Product xs) where
   pp = braces . ppProd
-
-instance (Pretty a, Pretty b) => Pretty (a, b) where
-  pp (a, b) = pp a <.> ":" `indent` pp b

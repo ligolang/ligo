@@ -7,8 +7,6 @@ import Syntax from '@theme/Syntax';
 
 ## General Iteration
 
-
-
 <Syntax syntax="pascaligo">
 
 General iteration in PascaLIGO takes the shape of general loops, which
@@ -25,20 +23,18 @@ Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm:
 
 ```pascaligo group=a
-function gcd (var x : nat; var y : nat) : nat is
-  block {
-    if x < y then {
-      const z : nat = x;
-      x := y; y := z
-    }
-    else skip;
-    var r : nat := 0n;
-    while y =/= 0n block {
-      r := x mod y;
-      x := y;
-      y := r
-    }
-  } with x
+function gcd (var x : nat; var y : nat) : nat is {
+  if x < y then {
+    const z : nat = x;
+    x := y; y := z
+  };
+  var r : nat := 0n;
+  while y =/= 0n {
+    r := x mod y;
+    x := y;
+    y := r
+  }
+} with x
 ```
 
 You can call the function `gcd` defined above using the LIGO compiler
@@ -63,12 +59,12 @@ Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm:
 
 ```cameligo group=a
-let rec iter (x,y : nat * nat) : nat =
+let rec iter (x, y : nat * nat) : nat =
   if y = 0n then x else iter (y, x mod y)
 
-let gcd (x,y : nat * nat) : nat =
-  let x,y = if x < y then y,x else x,y in
-  iter (x,y)
+let gcd (x, y : nat * nat) : nat =
+  let x, y = if x < y then y,x else x,y
+  in iter (x, y)
 ```
 
 You can call the function `gcd` defined above using the LIGO compiler
@@ -134,15 +130,15 @@ numbers by means of Euclid's algorithm using tail recursion:
 
 ```jsligo group=a
 let iter = ([x,y]: [nat, nat]): nat => {
-  if (y == (0 as nat)) { 
-    return x; 
-  } else { 
-    return iter ([y, x % y]); 
+  if (y == (0 as nat)) {
+    return x;
+  } else {
+    return iter ([y, x % y]);
   };
 };
 
 let gcd2 = ([x,y] : [nat, nat]) : nat => {
-  if (x < y) { 
+  if (x < y) {
     return iter ([y, x]);
   } else {
     return iter ([x, y]);
@@ -180,9 +176,9 @@ to <upper bound> <block>`, as found in imperative languages.
 Consider how to sum the natural numbers up to `n`:
 
 ```pascaligo group=c
-function sum (var n : nat) : int is block {
+function sum (var n : nat) : int is {
   var acc : int := 0;
-  for i := 1 to int (n) block {
+  for i := 1 to int (n) {
     acc := acc + i
   }
 } with acc
@@ -199,19 +195,19 @@ gitlab-pages/docs/language-basics/src/loops/sum.ligo 7n --entry-point sum
 ```
 
 PascaLIGO "for" loops can also iterate through the contents of a
-collection, that is, a list, a set or a map. This is done with a loop
-of the form `for <element var> in <collection type> <collection var> <block>`, 
-where `<collection type>` is any of the following keywords:
-`list`, `set` or `map`.
+collection, that is, a list, a set or a map. For iterating over lists
+or sets, this is done with a loop of the form `for <element var> in
+list/set <collection> <block>`, where `<collection>` is an expression
+denoting a list or a set, respectively. For iterating over maps, it is
+of the form: `for <key> -> <value> in map <collection> <block>`, where
+`<collection>` is an expression denoting a map.
 
 Here is an example where the integers in a list are summed up.
 
 ```pascaligo group=d
-function sum_list (var l : list (int)) : int is block {
+function sum_list (var l : list (int)) : int is {
   var total : int := 0;
-  for i in list l block {
-    total := total + i
-  }
+  for i in list l { total := total + i }
 } with total
 ```
 
@@ -227,11 +223,9 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo --entry-point sum_li
 Here is an example where the integers in a set are summed up.
 
 ```pascaligo group=d
-function sum_set (var s : set (int)) : int is block {
+function sum_set (var s : set (int)) : int is {
   var total : int := 0;
-  for i in set s block {
-    total := total + i
-  }
+  for i in set s { total := total + i }
 } with total
 ```
 
@@ -253,10 +247,10 @@ Here is an example where the keys are concatenated and the values are
 summed up.
 
 ```pascaligo group=d
-function sum_map (var m : map (string, int)) : string * int is block {
+function sum_map (var m : map (string, int)) : string * int is {
   var string_total : string := "";
   var int_total : int := 0;
-  for key -> value in map m block {
+  for key -> value in map m {
     string_total := string_total ^ key;
     int_total := int_total + value
   }
@@ -277,7 +271,6 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo --entry-point sum_ma
 
 ## for-of Loops
 
-
 JsLIGO "for-of" loops can iterate through the contents of a
 collection, that is, a list, a set or a map. This is done with a loop
 of the form `for (const <element var> of <collection var>) <block>`.
@@ -291,7 +284,7 @@ let sum_list = (l: list<int>): int => {
     total = total + i
   }
   return total
-} 
+}
 ```
 
 You can call the function `sum_list` defined above using the LIGO compiler

@@ -52,6 +52,8 @@ module Command = struct
     | Set_now : Location.t * Ligo_interpreter.Types.calltrace * Z.t -> unit t
     | Set_source : LT.value -> unit t
     | Set_baker : LT.value -> unit t
+    | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Sha256 : bytes -> LT.value t
@@ -60,8 +62,11 @@ module Command = struct
     | Keccak : bytes -> LT.value t
     | Sha3 : bytes -> LT.value t
     | Hash_key : Tezos_protocol.Protocol.Alpha_context.public_key -> LT.value t
+    | Implicit_account : Location.t * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Check_signature : Tezos_protocol.Protocol.Alpha_context.public_key * Tezos_protocol.Protocol.Alpha_context.signature * bytes -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
+    | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
+    | New_account : unit -> LT.value t
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
@@ -291,6 +296,12 @@ module Command = struct
     | Set_baker baker ->
       let baker = trace_option ~raise (corner_case ()) @@ LC.get_address baker in
       ((), {ctxt with internals = { ctxt.internals with baker }})
+    | Get_voting_power (loc, calltrace, key_hash) ->
+      let vp = Tezos_state.get_voting_power ~raise ~loc ~calltrace ctxt key_hash in
+      ((LT.V_Ct (LT.C_nat (Z.of_int32 vp))), ctxt)
+    | Get_total_voting_power (loc, calltrace) ->
+      let tvp = Tezos_state.get_total_voting_power ~raise ~loc ~calltrace ctxt in
+      ((LT.V_Ct (LT.C_nat (Z.of_int32 tvp))), ctxt)
     | Get_bootstrap (loc,x) -> (
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
       match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
@@ -341,6 +352,12 @@ module Command = struct
       let v = LT.V_Ct (LT.C_key_hash kh) in
       (v, ctxt)
     )
+    | Implicit_account (loc, kh) -> (
+      let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
+      let address = Tezos_state.implicit_account ~raise ~loc address in
+      let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
+      (v, ctxt)
+    )
     | Check_signature (k, s, b) -> (
       let b = Tezos_protocol.Protocol.Environment.Signature.check k s b in
       let v = LC.v_bool b in
@@ -355,6 +372,16 @@ module Command = struct
                |> Option.map ~f:Fq12.(eq one))
            |> Option.value ~default:false in
       (LC.v_bool check, ctxt)
+    )
+    | Add_account (loc, sk, pk) -> (
+      let pkh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash pk in
+      Tezos_state.add_account ~raise ~loc sk pk pkh;
+      ((), ctxt)
+    )
+    | New_account () -> (
+      let (sk, pk) = Tezos_state.new_account () in
+      let value = LC.v_pair ((V_Ct (C_string sk)), (V_Ct (C_key pk))) in
+      (value, ctxt)
     )
 end
 
