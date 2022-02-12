@@ -586,7 +586,6 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let v_initr = type_expression' ~raise ~test ~protocol_version context init_record in
       let tv_out = get_type v_initr in
       let input_type  = tv_out in
-      (* let (input_type,_)  = trace_option ~raise (expected_variant tv_out.location tv_out) @@ get_t_or  tv_out in *)
       let context = Context.add_value context lname input_type in
       let body = type_expression' ~raise ~test ~protocol_version context result in
       let output_type = body.type_expression in

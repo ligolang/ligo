@@ -707,12 +707,6 @@ let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
   let () = assert_eq_1 ~raise ~loc res init in
   res
 
-(** FOLD_WHILE is a fold operation that takes an initial value of a certain type
-    and then iterates on it until a condition is reached. The auxillary function
-    that does the fold returns either boolean true or boolean false to indicate
-    whether the fold should continue or not. Necessarily then the initial value
-    must match the input parameter of the auxillary function, and the auxillary
-    should return type (bool * input) *)
 let loop_left ~raise loc = typer_2 ~raise loc "LOOP_LEFT" @@ fun body init ->
   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (left,right) = trace_option ~raise (expected_variant loc result) @@ get_t_or result in
@@ -720,11 +714,10 @@ let loop_left ~raise loc = typer_2 ~raise loc "LOOP_LEFT" @@ fun body init ->
   let () = assert_eq_1 ~raise ~loc init left
   in right
 
-(* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
-let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
+let loop_continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
   t_sum_ez [("left",arg);("right",arg)]
 
-let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
+let loop_stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
   t_sum_ez [("left",arg);("right",arg)]
 
 let not_ ~raise loc = typer_1 ~raise loc "NOT" @@ fun elt ->
@@ -1233,9 +1226,9 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_FAILWITH            -> failwith_ ~raise loc ;
     (* LOOPS *)
   | C_LOOP_LEFT           -> loop_left ~raise loc ;
-  | C_LEFT                -> continue ~raise loc ;
-  | C_LOOP_CONTINUE       -> continue ~raise loc ;
-  | C_LOOP_STOP           -> stop ~raise loc ;
+  | C_LEFT                -> loop_continue ~raise loc ;
+  | C_LOOP_CONTINUE       -> loop_continue ~raise loc ;
+  | C_LOOP_STOP           -> loop_stop ~raise loc ;
   | C_FOLD                -> fold ~raise loc ;
    (* MATH *)
   | C_NEG                 -> neg ~raise loc ;
