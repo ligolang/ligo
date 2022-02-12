@@ -3,7 +3,6 @@
 module Main (main) where
 
 import Algebra.Graph.Class qualified as G (empty)
-import Control.Exception.Safe (catchAny, displayException)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
@@ -19,6 +18,7 @@ import Language.LSP.Types.Lens qualified as J
 import StmContainers.Map (newIO)
 import System.Exit
 import System.Log qualified as L
+import UnliftIO.Exception (SomeException (..), displayException, withException)
 import UnliftIO.MVar (modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
 
 import AST
@@ -69,7 +69,11 @@ mainLoop =
       , S.signatureHelpRetriggerCharacters = Just [',']
       }
 
-    -- | Handle all uncaught exceptions.
+    -- | Show a error message to the user if an exception crashes the server.
+    -- The LSP protocol defines that the client should handle server crashes and
+    -- attempt to reasonably restart it. For example, Visual Studio Code will
+    -- attempt to restart the server 5 times within 3 minutes, and will leave it
+    -- dead if it continues crashing within that time frame.
     catchExceptions :: S.Handlers RIO -> S.Handlers RIO
     catchExceptions = S.mapHandlers
       (wrapReq . handleDisabledReq . addReqLogging)
@@ -79,7 +83,7 @@ mainLoop =
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
              S.Handler RIO meth -> S.Handler RIO meth
         wrapReq handler msg@J.RequestMessage{_method} resp = Log.addNamespace "wrapReq" $
-          handler msg resp `catchAny` \e -> do
+          handler msg resp `withException` \(SomeException e) -> do
             $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
             resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
 
@@ -87,7 +91,7 @@ mainLoop =
           :: forall (meth :: J.Method 'J.FromClient 'J.Notification).
              S.Handler RIO meth -> S.Handler RIO meth
         wrapNotif handler msg@J.NotificationMessage{_method} = Log.addNamespace "wrapNotif" $
-          handler msg `catchAny` \e -> do
+          handler msg `withException` \(SomeException e) -> do
             $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
 
@@ -296,7 +300,7 @@ handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
 handleFoldingRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
-    actions <- foldingAST (tree ^. nestedLIGO)
+    let actions = foldingAST (tree ^. nestedLIGO)
     respond . Right . J.List $ toFoldingRange <$> actions
 
 handleTextDocumentCodeAction :: S.Handler RIO 'J.TextDocumentCodeAction
@@ -306,7 +310,7 @@ handleTextDocumentCodeAction req respond = do
       r = req ^. J.params . J.range . to fromLspRange
       con = req ^. J.params . J.context
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
-    actions <- collectCodeActions r con (J.fromNormalizedUri uri) tree
+    let actions = collectCodeActions r con (J.fromNormalizedUri uri) tree
     let response = Right . J.List . fmap J.InR $ actions
     respond response
 
@@ -332,7 +336,7 @@ handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol
 handleDocumentSymbolsRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
-    result <- extractDocumentSymbols (J.fromNormalizedUri uri) tree
+    let result = extractDocumentSymbols (J.fromNormalizedUri uri) tree
     respond . Right . J.InR . J.List $ result
 
 handleHoverRequest :: S.Handler RIO 'J.TextDocumentHover

@@ -120,7 +120,6 @@ library
     , directory
     , dlist
     , duplo
-    , exceptions
     , fastsum
     , filepath
     , ghc-prim
@@ -132,7 +131,6 @@ library
     , pretty
     , process
     , regex-tdfa
-    , safe-exceptions
     , template-haskell
     , temporary
     , text
@@ -204,7 +202,6 @@ executable ligo-squirrel
     , containers
     , data-default
     , duplo
-    , exceptions
     , focus
     , ghc-prim
     , hashable
@@ -215,7 +212,6 @@ executable ligo-squirrel
     , ligo-squirrel
     , lsp
     , mtl
-    , safe-exceptions
     , stm
     , stm-containers
     , text
@@ -370,11 +366,11 @@ test-suite integration-test
     , lens
     , ligo-squirrel
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -457,11 +453,11 @@ test-suite ligo-contracts-test
     , lens
     , ligo-squirrel
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -563,11 +559,11 @@ test-suite lsp-handlers-test
     , ligo-squirrel
     , lsp-test
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -661,10 +657,10 @@ test-suite lsp-test
     , lens
     , ligo-squirrel
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010
