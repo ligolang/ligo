@@ -19,7 +19,7 @@ let contract ?werror source_file entry_point declared_views syntax protocol_vers
       let views =
         Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file
       in
-      Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck code views
+      Ligo_compile.Of_michelson.build_contract ~raise ~options ~disable_typecheck code views
 
 let expression expression syntax protocol_version init_file display_format without_run michelson_format werror project_root () =
     Trace.warning_with @@ fun add_warning get_warnings ->

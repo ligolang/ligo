@@ -93,7 +93,7 @@ let compile_contract ~raise ~add_warning ~options source_file entry_point declar
   let syntax = "auto" in
   let michelson,env = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
   let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file in
-  Of_michelson.build_contract ~raise ~disable_typecheck:false michelson views
+  Of_michelson.build_contract ~raise ~options ~disable_typecheck:false michelson views
 
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in

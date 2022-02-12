@@ -368,8 +368,7 @@ let opt_dip3 : _ peep3 = function
             proj1 ]
   | _ -> None
 
-let opt_cond ~type_map ~changed : _ peep1 = function
-  | _ when ! changed  -> None
+let opt_cond ~type_map : _ peep1 = function
   | Prim (l, p, [bt; bf], annot) when is_cond p -> (
     let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"; "CONS"; "SIZE"; "UPDATE"; "ADD"; "SUB"; "MUL"; "EDIV"; "ABS"; "ISNAT"; "INT"; "NEG"; "LSL"; "LSR"; "OR"; "AND"; "XOR"; "NOT"; "COMPARE"; "EQ"; "NEQ"; "LT"; "GT"; "LE"; "GE"; "SLICE"; "CONCAT"; "PACK"; "SENDER"; "AMOUNT"; "ADDRESS"; "SOURCE"; "BALANCE"; "LEVEL"; "NOW"] in
     let force_z = ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"; "UPDATE"] in
@@ -378,7 +377,7 @@ let opt_cond ~type_map ~changed : _ peep1 = function
       let rec aux_eq l r =
         let open Tezos_micheline.Micheline in
         match l, r with
-        | Prim (_, s, l, _), Prim (_, s', l', _) when String.equal s s' -> (
+        | Prim (_, s, l, a), Prim (_, s', l', a') when String.equal s s' && List.equal String.equal a a' -> (
            match List.zip l l' with
            | List.Or_unequal_lengths.Unequal_lengths ->
               false
@@ -412,7 +411,6 @@ let opt_cond ~type_map ~changed : _ peep1 = function
     | Some l_op, Some r_op when eq l_op r_op ->
        let bt = remove_last pred bt in
        let bf = remove_last pred bf in
-       changed := true;
        Some [Prim (l, p, [bt; bf], annot); l_op]
     | _ -> None)
   | _ -> None
@@ -765,44 +763,27 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
   x
 
 let rec optimize_with_types ~raise : Environment.Protocols.t -> 'l michelson -> 'l michelson =
-  fun proto x ->
-  ignore proto; ignore raise;
-  let c, locs = Tezos_micheline.Micheline.extract_locations x in
-  let c = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> failwith "foo A") @@
-            Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.prims_of_strings c in
-  let c = Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
-  match c with
-    | Seq (rl, _p :: _s :: expr :: tl) ->
-       let map, _ = Proto_alpha_utils.Trace.trace_tzresult_lwt ~raise (fun errs ->
-                        let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
-                        Format.printf "@[Error(s) occurred while translating to Michelson:@.%a@]"
-                          (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs;
-                        failwith "foo B"
-                      ) @@
-                      Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract c in
-       let map = List.map ~f:(fun (i, (l, r)) -> (i, List.map ~f:(fun (c, _) ->
-                                                         let c = Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims c in
-                                                         let c = Tezos_micheline.Micheline_printer.printable (fun prim -> prim) c in
-                                                         c) l,
-                                                  List.map ~f:(fun (c, _) ->
-                                                      let c = Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims c in
-                                                      let c = Tezos_micheline.Micheline_printer.printable (fun prim -> prim) c in
-                                                      c) r)) map in
-       let expr = Tezos_micheline.Micheline.map_node (fun l -> l) (fun v -> Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.string_of_prim v) expr in
-       let mapl = (List.map ~f:(fun (a, b, _) -> (a, b)) map) in
-       let dance _s =
-         let _s,_ = Tezos_micheline.Micheline.extract_locations _s in
-         let _s = Tezos_protocol_011_PtHangz2.Protocol.Michelson_v1_primitives.strings_of_prims _s in
-         let _s = Tezos_micheline.Micheline.inject_locations (fun x -> x) _s in
-         Tezos_micheline.Micheline.map_node (fun l -> List.Assoc.find_exn locs ~equal:Int.equal l) (fun x -> x) _s in
-       let changed = ref false in
-       let _, expr = on_seqs (peephole (peep1 @@ opt_cond ~changed ~type_map:mapl)) expr in
-       let expr = if ! changed then optimize proto expr else expr in
+  fun proto contract ->
+  let node_string_of_canonical c = let c = Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.strings_of_prims c in
+                                   Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
+  let canonical, locs = Tezos_micheline.Micheline.extract_locations contract in
+  let canonical = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> failwith "Could not parse primitives from strings") @@
+            Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.prims_of_strings canonical in
+  let canonical = Tezos_micheline.Micheline.inject_locations (fun x -> x) canonical in
+  match canonical with
+    | Seq (l, parameter :: storage :: expr :: rest) ->
+       let map, _ = Proto_alpha_utils.Trace.trace_tzresult_lwt ~raise (fun _ -> failwith "Could not type-check Michelson contract") @@
+                      Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract canonical in
+       let type_map = List.map ~f:(fun (i, (l, _)) -> (i, List.map ~f:(fun (c, _) -> node_string_of_canonical c) l)) map in
+       let expr = Tezos_micheline.Micheline.map_node (fun l -> l)
+                    (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) expr in
+       let changed, expr = on_seqs (peephole (peep1 @@ opt_cond ~type_map)) expr in
+       let expr = if changed then optimize proto expr else expr in
        let expr = Tezos_micheline.Micheline.map_node (fun l -> List.Assoc.find_exn locs ~equal:Int.equal l) (fun x -> x) expr in
-       let _s = dance _s in
-       let _p = dance _p in
-       let tl = List.map ~f:dance tl in
-       let rl = List.Assoc.find_exn locs ~equal:Int.equal rl in
-       let r = Seq (rl, [_p ; _s; expr] @ tl) in
-       if ! changed then optimize_with_types ~raise proto r else r
-    | _ -> x
+       let l = List.Assoc.find_exn locs ~equal:Int.equal l in
+       let recover_locs node =
+         Tezos_micheline.Micheline.map_node (fun l -> List.Assoc.find_exn locs ~equal:Int.equal l)
+           (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) node in
+       let contract = Seq (l, [recover_locs parameter ; recover_locs storage; expr] @ (List.map ~f:recover_locs rest)) in
+       if changed then optimize_with_types ~raise proto contract else contract
+    | _ -> contract

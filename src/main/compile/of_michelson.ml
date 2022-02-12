@@ -4,7 +4,7 @@ open Proto_alpha_utils
 open Trace
 
 (* should preserve locations, currently wipes them *)
-let build_contract ~raise :
+let build_contract ~raise ~options :
   ?disable_typecheck:bool ->
   Stacking.compiled_expression ->
   (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
@@ -37,7 +37,7 @@ let build_contract ~raise :
             (Memory_proto_alpha.prims_of_strings contract) in
         let _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
           Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract' in
-        let contract = Self_michelson.optimize_with_types ~raise Hangzhou contract in
+        let contract = Self_michelson.optimize_with_types ~raise options.Compiler_options.protocol_version contract in
         contract
 
 let measure ~raise = fun m ->
