@@ -11,8 +11,7 @@ module Name = struct
   let numeric_literals          = "numericliterals"
   let operators                 = "operators"
   let identifier_constructor    = "identifierconstructor"
-  let module_access             = "moduleaccess"
-  let module_declaration        = "moduledeclaration"
+  let module_                   = "module"
   let attribute                 = "attribute"
 end
 
@@ -110,8 +109,7 @@ let syntax_highlighting =
       Name.numeric_literals;
       Name.operators;
       Name.identifier_constructor;
-      Name.module_access;
-      Name.module_declaration;
+      Name.module_
     ];
     repository = [
       Helpers.attribute;
@@ -167,21 +165,11 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.module_access;
+        name = Name.module_;
         kind = Match {
           match_     = [
-            (Regexp.module_access_match1, Some Structure);
-            (Regexp.module_access_match2, Some Identifier)
-          ];
-          match_name = None
-        }
-      };
-      {
-        name = Name.module_declaration;
-        kind = Match {
-          match_ = [
-            (Regexp.module_declaration_match1, Some Keyword);
-            (Regexp.module_declaration_match2, Some Structure);
+            (Regexp.module_match1, Some Structure);
+            (Regexp.module_match2, Some Identifier)
           ];
           match_name = None
         }
