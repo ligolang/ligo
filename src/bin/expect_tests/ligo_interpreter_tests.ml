@@ -218,8 +218,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fresh.mligo" ] ;
-  [%expect {|
-    Everything at the top-level was executed. |}]
+  [%expect{| Everything at the top-level was executed. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_rec_contract.mligo" ] ;

@@ -87,7 +87,6 @@ library:
     - data-default
     - directory
     - dlist
-    - exceptions
     - fastsum
     - filepath
     - interpolate
@@ -98,7 +97,6 @@ library:
     - pretty
     - process
     - regex-tdfa
-    - safe-exceptions
     - template-haskell
     - temporary
     - th-compat
@@ -120,7 +118,6 @@ executables:
       - clock
       - containers
       - data-default
-      - exceptions
       - focus
       - hashable
       - hslogger
@@ -130,7 +127,6 @@ executables:
       - ligo-squirrel
       - lsp
       - mtl
-      - safe-exceptions
       - stm
       - stm-containers
       - text
@@ -188,13 +184,13 @@ tests:
       - HUnit
       - hspec-expectations
       - tasty-hunit
-      - safe-exceptions
       - filepath
       - directory
       - lsp-types
       - text
       - lens
       - template-haskell
+      - unliftio
       - unordered-containers
 
     ghc-options:
@@ -229,11 +225,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
-      - safe-exceptions
       - tasty
       - tasty-hunit
       - template-haskell
       - text
+      - unliftio
       - unordered-containers
 
     build-tools:
@@ -261,11 +257,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
-      - safe-exceptions
       - tasty
       - tasty-hunit
       - template-haskell
       - text
+      - unliftio
       - unordered-containers
 
     build-tools:
@@ -293,11 +289,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
-      - safe-exceptions
       - tasty
       - tasty-hunit
       - template-haskell
       - text
+      - unliftio
       - unordered-containers
 
     build-tools:

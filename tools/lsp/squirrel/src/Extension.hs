@@ -8,7 +8,8 @@ module Extension
   , supportedExtensions
   ) where
 
-import Control.Monad.Catch
+import Control.Exception (Exception)
+import Control.Monad.Except (MonadError (throwError))
 import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -32,15 +33,15 @@ newtype UnsupportedExtension = UnsupportedExtension String
 extGlobs :: [Text]
 extGlobs = Text.pack . (("**" </>) . ("*" <>)) <$> supportedExtensions
 
-getExt :: MonadThrow m => FilePath -> m Lang
+getExt :: MonadError UnsupportedExtension m => FilePath -> m Lang
 getExt path =
   case takeExtension path of
     ".religo" -> return Reason
     ".ligo"   -> return Pascal
     ".mligo"  -> return Caml
-    ext       -> throwM $ UnsupportedExtension ext
+    ext       -> throwError $ UnsupportedExtension ext
 
-onExt :: MonadThrow m => ElimExt a -> FilePath -> m a
+onExt :: MonadError UnsupportedExtension m => ElimExt a -> FilePath -> m a
 onExt ee path =
   getExt path <&> \case
     Pascal -> eePascal ee

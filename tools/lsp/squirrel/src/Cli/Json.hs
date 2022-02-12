@@ -1,7 +1,7 @@
--- | ligo version: a98a94dd5cadb791a2d4db1d60dde73b1a132811
+-- | ligo version: 0.34.0
 -- | The definition of type as is represented in ligo JSON output
 
-{-# LANGUAGE DeriveGeneric, RecordWildCards, TupleSections #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Cli.Json
   ( LigoError (..)
@@ -23,13 +23,12 @@ module Cli.Json
   , fromLigoErrorToMsg
   , fromLigoTypeFull
   , mkLigoError
-  , toScopedDecl
   , prepareField
   )
 where
 
 import Control.Applicative (Alternative ((<|>)), liftA2)
-import Control.Lens.Operators
+import Control.Lens.Operators ((??))
 import Control.Monad.State
 import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
@@ -45,8 +44,6 @@ import GHC.Generics
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
-import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton hiding (String)
 import Duplo.Lattice
 import Duplo.Pretty
@@ -605,8 +602,8 @@ parseLigoTypeMeta _ = do
 ----------------------------------------------------------------------------
 
 instance Pretty LigoError where
-  pp (LigoError _ stage (LigoErrorContent msg at)) = mconcat
-    [ text "Error in ", text $ show stage
+  pp (LigoError status stage (LigoErrorContent msg at)) = mconcat
+    [ pp status <+> " in ", text $ show stage
     , case at of
         Nothing -> mempty
         Just at' -> text "\n\nat: " <> pp (fromLigoRangeOrDef at')
@@ -792,7 +789,7 @@ fromLigoTypeFull = enclose . \case
     enclose = flip evalState defaultState
 
     defaultState :: Product Info
-    defaultState = [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
+    defaultState = [] :> [] :> point 1 1 :> CodeSource "" :> Nil
 
 mkLigoError :: Product Info -> Text -> LIGO Info
 mkLigoError p msg = make' . (p,) $ Error msg [p :< inject (Name "ligo error")]
@@ -815,25 +812,3 @@ make' (i, f)
     ges = List.filter (not . (`leq` i)) (extract <$> toList f)
     r = getElem (List.minimum ges) `merged` getElem (List.maximum ges)
     i' = putElem r i
-
--- | Converts ligo scope to our internal representation.
-toScopedDecl :: LigoDefinitionScope -> ScopedDecl
-toScopedDecl
-  LigoDefinitionScope
-    { _ldsName = _sdName
-    , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
-    , _ldsBodyRange = (mbFromLigoRange -> _vdsInitRange)
-    , _ldsT
-    } =
-    ScopedDecl -- TODO fill in full information when we actually use ligo scopes
-      { _sdName
-      , _sdOrigin
-      , _sdRefs = []
-      , _sdDoc = []
-      , _sdDialect = Pascal -- TODO: we have no information regarding dealect in scope output
-      , _sdSpec = ValueSpec $ ValueDeclSpecifics
-        { _vdsInitRange
-        , _vdsParams = Nothing
-        , _vdsTspec = parseTypeDeclSpecifics . fromLigoTypeFull <$> _ldsT
-        }
-      }

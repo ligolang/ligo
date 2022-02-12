@@ -10,7 +10,6 @@ module Test.Common.Util
   ) where
 
 import Control.Arrow ((&&&))
-import Control.Exception.Safe (catch, throwIO)
 import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
 import Data.List (isSuffixOf)
@@ -19,6 +18,7 @@ import System.Directory (listDirectory)
 import System.Environment (getEnv)
 import System.FilePath ((</>))
 import System.IO.Error (isDoesNotExistError)
+import UnliftIO.Exception (catch, throwIO)
 
 import AST.Includes (insertPreprocessorRanges)
 import AST.Parser (Source (Path), parsePreprocessed, parseWithScopes)

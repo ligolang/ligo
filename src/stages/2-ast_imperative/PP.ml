@@ -75,6 +75,7 @@ and expression_content ppf (ec : expression_content) =
   | E_accessor    a -> accessor    expression ppf a
   | E_update      u -> update      expression ppf u
   | E_lambda      l -> lambda      expression type_expression ppf l
+  | E_type_abstraction e -> type_abs expression ppf e
   | E_matching    m -> match_exp expression type_expression ppf m
   | E_recursive  r -> recursive expression type_expression ppf r
   | E_let_in    li -> let_in  expression type_expression ppf li

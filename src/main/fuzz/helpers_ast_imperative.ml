@@ -58,6 +58,11 @@ module Fold_helpers(M : Monad) = struct
     let* result = f result in
     ok @@ {binder;output_type;result}
 
+  let type_abs : ('a -> 'b monad) -> 'a type_abs -> ('b type_abs) monad
+    = fun f {type_binder;result}->
+    let* result = f result in
+    ok @@ {type_binder;result}
+
   let path : ('a -> 'b monad) -> 'a access list -> ('b access list) monad
     = fun f path ->
     let aux a = match a with
@@ -275,6 +280,10 @@ module Fold_helpers(M : Monad) = struct
     | E_lambda l -> (
       let* l = lambda self ok l in
       return @@ E_lambda l
+    )
+    | E_type_abstraction ta -> (
+      let* ta = type_abs self ta in
+      return @@ E_type_abstraction ta
     )
     | E_recursive r ->
        let* r = recursive self ok r in

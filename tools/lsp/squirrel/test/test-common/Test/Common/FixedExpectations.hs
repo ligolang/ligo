@@ -10,12 +10,12 @@ module Test.Common.FixedExpectations
   , shouldThrow
   ) where
 
-import Control.Exception.Safe (catch, impureThrow, Exception)
 import Test.Hspec.Expectations (Expectation, HasCallStack)
 import Test.Hspec.Expectations qualified as H
   (expectationFailure, shouldBe, shouldContain, shouldMatchList, shouldSatisfy, shouldThrow, Selector, anyException)
 import Test.HUnit.Lang qualified as H (HUnitFailure (..), formatFailureReason)
 import Test.Tasty.HUnit (HUnitFailure (..))
+import UnliftIO.Exception (Exception, catch, impureThrow)
 
 expectationFailure :: HasCallStack => String -> Expectation
 expectationFailure s = tastify (H.expectationFailure s)

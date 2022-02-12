@@ -157,6 +157,9 @@ module Substitution = struct
         let output_type = Option.map ~f:(s_type_expression ~substs) output_type in
         let result = s_expression ~substs result in
         T.E_lambda { binder; output_type; result }
+      | T.E_type_abstraction { type_binder; result } ->
+        let result = s_expression ~substs result in
+        T.E_type_abstraction { type_binder; result }
       | T.E_let_in          { let_binder; rhs; let_result; attr} ->
         let let_binder = s_binder ~substs let_binder in
         let rhs = s_expression ~substs rhs in

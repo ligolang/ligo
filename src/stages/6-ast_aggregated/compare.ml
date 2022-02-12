@@ -121,18 +121,19 @@ let expression_tag expr =
   | E_variable        _ -> 3
   | E_application     _ -> 4
   | E_lambda          _ -> 5
-  | E_recursive       _ -> 6
-  | E_let_in          _ -> 7
-  | E_type_in         _ -> 8
-  | E_raw_code        _ -> 9
-  | E_type_inst       _ -> 10
+  | E_type_abstraction _ -> 6
+  | E_recursive       _ -> 7
+  | E_let_in          _ -> 8
+  | E_type_in         _ -> 9
+  | E_raw_code        _ -> 10
+  | E_type_inst       _ -> 11
   (* Variant *)
-  | E_constructor     _ -> 13
-  | E_matching        _ -> 14
+  | E_constructor     _ -> 14
+  | E_matching        _ -> 15
   (* Record *)
-  | E_record          _ -> 15
-  | E_record_accessor _ -> 16
-  | E_record_update   _ -> 17
+  | E_record          _ -> 16
+  | E_record_accessor _ -> 17
+  | E_record_update   _ -> 18
 
 and declaration_tag = function
   | Declaration_constant _ -> 1
@@ -150,6 +151,7 @@ and expression_content a b =
   | E_variable a, E_variable b -> expression_variable a b
   | E_application a, E_application b -> application a b
   | E_lambda a, E_lambda b -> lambda a b
+  | E_type_abstraction a, E_type_abstraction b -> type_abs a b
   | E_recursive a, E_recursive b -> recursive a b
   | E_let_in a, E_let_in b -> let_in a b
   | E_type_in a, E_type_in b -> type_in a b
@@ -160,8 +162,8 @@ and expression_content a b =
   | E_record a, E_record b -> record a b
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _ | E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _) ->
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _ | E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
@@ -178,6 +180,11 @@ and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
 and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
   cmp2
     expression_variable ba bb
+    expression ra rb
+
+and type_abs ({type_binder=ba;result=ra}) ({type_binder=bb;result=rb}) =
+  cmp2
+    type_variable ba bb 
     expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =

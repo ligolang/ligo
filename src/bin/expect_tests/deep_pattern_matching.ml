@@ -14,7 +14,7 @@ let%expect_test _ =
       5 |   match action with
       6 |   | {one = _ ; three = _} -> 0
 
-    Pattern do not conform type record[one -> int , two -> int] |}]
+    Pattern not of the expected type record[one -> int , two -> int] |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -25,7 +25,7 @@ let%expect_test _ =
       8 |   | Increment (n, m) -> 0
       9 |   | Reset            -> 0
 
-    Pattern do not conform type ( int * int * int ) |}]
+    Pattern not of the expected type ( int * int * int ) |}]
 
 (* wrong unit pattern in a let destructuring *)
 let%expect_test _ =
@@ -71,7 +71,7 @@ let%expect_test _ =
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
       7 |   | xs  , Nil -> 2
 
-    Pattern do not conform type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
@@ -81,7 +81,7 @@ let%expect_test _ =
       5 |   | Nil , (a,b,c) -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern do not conform type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
@@ -90,7 +90,7 @@ let%expect_test _ =
       5 |   | Some_fake x -> x
       6 |   | None_fake -> 1
 
-    Pattern do not conform type option (int) |}]
+    Pattern not of the expected type option (int) |}]
 
 (* wrong body type *)
 

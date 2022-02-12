@@ -402,6 +402,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
   let return ?(tv = tv) expr =
     Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
   match ae.expression_content with
+  | E_type_abstraction _
   | E_type_inst _ ->
     raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ } } ->

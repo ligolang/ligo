@@ -23,7 +23,7 @@ let tuple_of_record (m: _ LMap.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
-let is_generalizable_variable = Var.is_generalizable 
+let is_generalizable_variable = Var.is_generalizable
 
 (* This function transforms an application expression `l e1 ... en` into the pair `([ e1 ; ... ; en ] , l)` *)
 let destruct_applications (e : expression) =
@@ -86,16 +86,3 @@ module Free_type_variables = struct
   let type_expression : type_variable list -> type_expression -> type_variable list = fun type_env t ->
     VarSet.fold (fun v r -> v :: r) (map_type_expression type_env t) []
 end
-
-(* This function finds free variables `_a`, `_b`, etc. in `t` that can
-   be generalized, and transforms `t` into `∀ _a _b ... . t` *)
-let generalize_free_vars (type_env : type_variable list) (t : type_expression) =
-  let av = Free_type_variables.type_expression type_env t in
-  let rec aux t = function
-    | [] -> t
-    | (abs_var :: abs_vars) ->
-       let type_content = T_for_all { ty_binder = abs_var ;
-                                      kind = () ;
-                                      type_ = aux t abs_vars } in
-       { type_content ; location = Location.generated ; sugar = None } in
-  aux t av

@@ -66,7 +66,7 @@ rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
 
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
-    text f <.> ":"
+    text f <.> "@"
     <.> int (fromIntegral ll) <.> ":"
     <.> int (fromIntegral lc) <.> "-"
     <.> int (fromIntegral rl) <.> ":"
