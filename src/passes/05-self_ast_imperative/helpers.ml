@@ -26,6 +26,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   )
   | E_application app -> Folds.application self init app
   | E_lambda l -> Folds.lambda self (fun _ a -> a) init l
+  | E_type_abstraction ta -> Folds.type_abs self init ta
   | E_ascription a -> Folds.ascription self (fun _ a -> a) init a
   | E_constructor c -> Folds.constructor self init c
   | E_matching {matchee=e; cases} -> (
@@ -34,7 +35,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
       let res = List.fold ~f:aux ~init:res cases in
       res
     )
-  | E_record m -> Folds.record self init m
+  | E_record m -> List.fold ~f:(fun acc (_,e) -> self acc e) ~init m
   | E_update u -> Folds.update self init u
   | E_accessor a -> Folds.accessor self init a
   | E_tuple t -> Folds.tuple self init t
@@ -95,7 +96,7 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
     let cases' = List.map ~f:aux cases in
     return @@ E_matching {matchee=e';cases=cases'}
   | E_record m -> (
-    let m' = LMap.map self m in
+    let m' = List.map ~f:(fun (k,v) -> (k,self v)) m in
     return @@ E_record m'
   )
   | E_accessor acc -> (
@@ -138,6 +139,10 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
       let l = Maps.lambda self (fun a -> a) l in
       return @@ E_lambda l
     )
+  | E_type_abstraction ta -> (
+      let ta = Maps.type_abs self ta in
+      return @@ E_type_abstraction ta
+    )
   | E_recursive r ->
       let r = Maps.recursive self (fun a -> a) r in
       return @@ E_recursive r
@@ -177,11 +182,11 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
   let return type_content = { type_content; location=te.location } in
   match te'.type_content with
   | T_sum temap ->
-    let temap' = Maps.rows self temap in
-    return @@ T_sum temap'
+    let fields = List.map ~f:(fun (k,v) -> (k, Maps.row_element self v)) temap.fields in
+    return @@ T_sum {temap with fields}
   | T_record temap ->
-    let temap' = Maps.rows self temap in
-    return @@ T_record temap'
+    let fields = List.map ~f:(fun (k,v) -> (k, Maps.row_element self v)) temap.fields in
+    return @@ T_record {temap with fields}
   | T_tuple telst ->
     let telst' = List.map ~f:self telst in
     return @@ T_tuple telst'
@@ -274,9 +279,9 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
     in
     let (res, cases') = List.fold_map ~f:aux ~init:res cases in
     (res, return @@ E_matching {matchee=e';cases=cases'})
-  | E_record m -> (
-    let (res, m') = LMap.fold_map ~f:(fun _ e res -> self res e) ~init m in
-    (res, return @@ E_record m')
+  | E_record r -> (
+    let (res, t') = List.fold_map ~f:(fun res (_,v) -> self res v) ~init r in
+    (res, return @@ E_tuple t')
   )
   | E_accessor acc -> (
       let (res, acc) = Fold_maps.accessor self init acc in
@@ -317,6 +322,10 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
   | E_lambda l -> (
       let res,l = Fold_maps.lambda self idle init l in
       ( res, return @@ E_lambda l)
+    )
+  | E_type_abstraction ta -> (
+      let res, ta = Fold_maps.type_abs self init ta in
+      res, return @@ E_type_abstraction ta
     )
   | E_recursive r ->
       let res,r = Fold_maps.recursive self idle init r in
@@ -404,8 +413,7 @@ module Free_variables :
       in
       VarSet.union (self matchee) (unions @@ List.map ~f:aux cases)
     | E_record m ->
-      let res = LMap.map self m in
-      let res = LMap.to_list res in
+      let res = List.map ~f:(fun (_,v) -> self v) m in
       unions res
     | E_accessor {record;path} ->
       let aux = function
@@ -433,6 +441,8 @@ module Free_variables :
       self result
     | E_lambda {binder = {var;ascr=_;attributes=_}; result;output_type=_} ->
       VarSet.remove var @@ self result
+    | E_type_abstraction {type_binder=_;result} ->
+      self result
     | E_recursive {fun_name; lambda = {binder = {var;ascr=_;attributes=_}; result;_};fun_type=_} ->
       VarSet.remove fun_name @@ VarSet.remove var @@ self result
     | E_constant {arguments;cons_name=_} ->
@@ -448,7 +458,7 @@ module Free_variables :
       unions @@ [VarSet.singleton variable; self expression] @ List.map ~f:aux access_path
     | E_for {binder; start; final; incr; f_body} ->
       VarSet.remove binder @@ unions [self start; self final; self incr; self f_body]
-    | E_for_each {fe_binder = (binder, None); collection; fe_body;collection_type=_} ->
+    | E_for_each {fe_binder = (binder, None); collection; fe_body; collection_type = _} ->
       unions [self collection; VarSet.remove binder @@ self fe_body]
     | E_for_each {fe_binder = (binder, Some binder'); collection; fe_body;_} ->
       unions [self collection; VarSet.remove binder @@ VarSet.remove binder' @@ self fe_body]

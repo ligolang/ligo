@@ -71,6 +71,11 @@ let lambda : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> (
   let acc,result = f acc result in
   (acc,{binder;output_type;result})
 
+let type_abs : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a type_abs -> 'acc * 'b type_abs
+= fun f acc {type_binder;result}->
+  let acc,result = f acc result in
+  acc,{type_binder;result}
+
 let path : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a access list -> 'acc * 'b access list
 = fun f acc path ->
   let aux acc a = match a with
@@ -154,10 +159,10 @@ let for_
   (acc, {binder; start; final; incr; f_body})
 
 let for_each
-= fun f acc {fe_binder; collection; collection_type; fe_body} ->
+= fun f acc {fe_binder; collection; fe_body ;  collection_type} ->
   let acc,collection = f acc collection in
   let acc,fe_body    = f acc fe_body in
-  (acc, {fe_binder; collection; collection_type; fe_body})
+  (acc, {fe_binder; collection; fe_body ; collection_type})
 
 let while_loop
 = fun f acc {cond; body} ->

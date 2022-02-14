@@ -1,4 +1,5 @@
 {
+
   nixConfig = {
     flake-registry = "https://github.com/serokell/flake-registry/raw/master/flake-registry.json";
   };
@@ -127,7 +128,7 @@
               cp ${gmp}/lib/* $out/lib
               chmod -R 777 $out/lib/
               install_name_tool -change ${gmp}/lib/libgmp.10.dylib @executable_path/../lib/libgmp.dylib $out/bin/ligo-squirrel
-              install_name_tool -change ${libffi}/lib/libffi.7.dylib /usr/lib/libffi.dylib $out/bin/ligo-squirrel
+              install_name_tool -change ${libffi}/lib/libffi.8.dylib /usr/lib/libffi.dylib $out/bin/ligo-squirrel
               install_name_tool -change ${libiconv}/lib/libiconv.dylib /usr/lib/libiconv.dylib $out/bin/ligo-squirrel
               install_name_tool -change ${darwin.Libsystem}/lib/libSystem.B.dylib /usr/lib/libSystem.B.dylib $out/bin/ligo-squirrel
               install_name_tool -change ${darwin.Libsystem}/lib/libSystem.B.dylib /usr/lib/libSystem.B.dylib $out/lib/libgmp.dylib

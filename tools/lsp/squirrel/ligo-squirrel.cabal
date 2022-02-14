@@ -43,7 +43,6 @@ library
       Cli.Json
       Cli.Types
       Config
-      Debouncer
       Extension
       ListZipper
       Log
@@ -121,18 +120,19 @@ library
     , directory
     , dlist
     , duplo
-    , exceptions
     , fastsum
     , filepath
     , ghc-prim
     , interpolate
+    , katip
     , lens
     , lsp-types
     , mtl
     , pretty
     , process
     , regex-tdfa
-    , safe-exceptions
+    , template-haskell
+    , temporary
     , text
     , th-compat
     , transformers
@@ -202,17 +202,16 @@ executable ligo-squirrel
     , containers
     , data-default
     , duplo
-    , exceptions
     , focus
     , ghc-prim
     , hashable
     , hslogger
     , interpolate
+    , katip
     , lens
     , ligo-squirrel
     , lsp
     , mtl
-    , safe-exceptions
     , stm
     , stm-containers
     , text
@@ -274,6 +273,7 @@ executable ligo-vet
     , duplo
     , ghc-prim
     , ligo-squirrel
+    , mtl
     , optparse-applicative
     , with-utf8
   default-language: Haskell2010
@@ -366,11 +366,11 @@ test-suite integration-test
     , lens
     , ligo-squirrel
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -453,11 +453,11 @@ test-suite ligo-contracts-test
     , lens
     , ligo-squirrel
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -559,11 +559,11 @@ test-suite lsp-handlers-test
     , ligo-squirrel
     , lsp-test
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010
 
@@ -657,10 +657,10 @@ test-suite lsp-test
     , lens
     , ligo-squirrel
     , lsp-types
-    , safe-exceptions
     , tasty
     , tasty-hunit
     , template-haskell
     , text
+    , unliftio
     , unordered-containers
   default-language: Haskell2010

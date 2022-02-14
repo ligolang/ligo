@@ -17,13 +17,14 @@ let type_app : ('a -> 'b) -> 'a type_app -> 'b type_app
   let arguments = List.map ~f:g arguments in
   {type_operator; arguments}
 
+let row_element : ('a -> 'b) -> 'a row_element -> 'b row_element
+= fun g {associated_type ; attributes ; decl_pos}  ->
+  let associated_type = g associated_type in
+  ({associated_type ; attributes ; decl_pos}: 'b row_element)
+
 let rows : ('a -> 'b) -> 'a rows -> 'b rows
 = fun g {fields; attributes} ->
-  let fields = LMap.map
-  (fun {associated_type ; attributes ; decl_pos} ->
-    let associated_type = g associated_type in
-    ({associated_type ; attributes ; decl_pos}: 'b row_element)
-  ) fields in
+  let fields = LMap.map (row_element g) fields in
   {fields; attributes}
 
 let arrow : ('a -> 'b) -> 'a arrow -> 'b arrow
@@ -74,6 +75,11 @@ let lambda : ('a -> 'b) -> ('c -> 'd) -> ('a,'c) lambda -> ('b,'d) lambda
   let output_type = Option.map ~f:g output_type in
   let result = f result in
   {binder;output_type;result}
+
+let type_abs : ('a -> 'b) -> 'a type_abs -> 'b type_abs
+= fun f {type_binder;result}->
+  let result = f result in
+  {type_binder;result}
 
 let path : ('a -> 'b) -> 'a access list -> 'b access list
 = fun f path ->
@@ -156,10 +162,10 @@ let for_
   {binder; start; final; incr; f_body}
 
 let for_each
-= fun f {fe_binder; collection; collection_type; fe_body} ->
+= fun f {fe_binder; collection; fe_body; collection_type} ->
   let collection = f collection in
   let fe_body    = f fe_body in
-  {fe_binder; collection; collection_type; fe_body}
+  {fe_binder; collection; fe_body ; collection_type}
 
 let while_loop
 = fun f {cond; body} ->

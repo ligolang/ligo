@@ -46,6 +46,28 @@ type mode = Copy | Skip
 type cond  = If of mode | Elif of mode | Else
 type trace = cond list
 
+type line_comment  = string (* Opening of a line comment *)
+type block_comment = <opening : string; closing : string>
+
+type file_path = string
+type module_name = string
+
+(* Configuration
+
+     * The field [dirs] is the list of directories to search for
+       #include files.
+     * The field [mod_res] is a data structure used for
+       resolving path to external packages/modules *)
+
+type config = <
+  block   : block_comment option;
+  line    : line_comment option;
+  input   : file_path option;
+  offsets : bool;
+  dirs    : file_path list;
+  mod_res : ModRes.t option
+>
+
 (* The type [state] groups the information that needs to be
    threaded along the scanning functions:
      * the field [cfg] records the source configuration;
@@ -66,23 +88,6 @@ type trace = cond list
        nested #include;
      *)
 
-type line_comment  = string (* Opening of a line comment *)
-type block_comment = <opening : string; closing : string>
-
-type file_path = string
-type module_name = string
-
-type config = <
-  block              : block_comment option;
-  line               : line_comment option;
-  input              : file_path option;
-  offsets            : bool;
-  dirs               : file_path list; (* Directories to search for #include files *)
-
-  (* Data structure used for resolving path to external packages/modules *)
-  module_resolutions : ModuleResolutions.t option; 
->
-
 type state = {
   config : config;
   env    : E_AST.Env.t;
@@ -92,14 +97,15 @@ type state = {
   chans  : in_channel list;
   incl   : file_path;
   import : (file_path * module_name) list;
-  parent : file_path option;
+  parent : file_path option
 }
 
 (* Directories *)
 
-(* The function call [set_incl_dir dir state] sets the field [state.incl] which is the 
-   directory of the file that is being processed, this is used by
-   the [find] function to search for files required by #include & #import. *)
+(* The function call [set_incl_dir dir state] sets the field
+   [state.incl] which is the directory of the file that is being
+   processed, this is used by the [find] function to search for files
+   required by #include & #import. *)
 
 let set_incl_dir dir state =
   if dir = "." then state else {state with incl = dir}
@@ -236,9 +242,10 @@ let rec last_mode = function
 
 (* Finding a file to #include & #import *)
 
-(* The function [find_in_cli_paths file_path dirs] tries to find a valid path
-   by prepending a directory from [dirs] to [file_path], The list [dirs] is a 
-   list of directories passed via the -I CLI option. *)
+(* The function [find_in_cli_paths file_path dirs] tries to find a
+   valid path by prepending a directory from [dirs] to [file_path],
+   The list [dirs] is a list of directories passed via the -I CLI
+   option. *)
 
 let rec find_in_cli_paths file_path = function
          [] -> None
@@ -249,32 +256,28 @@ let rec find_in_cli_paths file_path = function
     try Some (path, open_in path) with
       Sys_error _ -> find_in_cli_paths file_path dirs
 
-(* The function [find dir file dirs] tries to find [file] in [dir], if it is
-   unable to find such a file then it tries to look for the file
-   in [dirs] using the [find_in_cli_paths] function. *)
+(* The call [find dir file dirs inclusion_list] looks for [file] in
+   [dir]. If the file is not found, it is sought in the directories
+   [dirs] (passed by the -I flag). If the file is still not found, we
+   try to search for the file using the [inclusion_list] with the help
+   of [ModRes] *)
 
-(* The [find] function looks for [file] in [dir] if the file does not
-   exist then we look for the file in the directories [dirs] (
-   passed by the -I flag) if the file is still not found we try to
-   search for the file using the [inclusion_list] with the help of
-   ModuleResolutions *)
 let find dir file dirs inclusion_list =
   let path =
     if dir = "." || dir = "" then file
     else dir ^ Filename.dir_sep ^ file in
   try Some (path, open_in path) with
-    Sys_error _ -> 
+    Sys_error _ ->
       match find_in_cli_paths file dirs with
-        Some (path, ic) -> Some (path, ic)
-      | None -> (
-        let file_opt = 
-          ModuleResolutions.find_external_file ~file ~inclusion_list in
-        match file_opt with
-          Some file -> 
-            (try Some (file, open_in file) with 
-              Sys_error _ -> None)
-        | None -> None
-      )
+        None ->
+          let file_opt =
+            ModRes.find_external_file ~file ~inclusion_list
+          in (match file_opt with
+                None -> None
+              | Some file ->
+                  try Some (file, open_in file) with
+                    Sys_error _ -> None)
+      | some -> some
 
 (* PRINTING *)
 
@@ -354,6 +357,10 @@ let reasonligo_block_comment_opening = "/*"
 let reasonligo_block_comment_closing = "*/"
 let reasonligo_line_comment          = "//"
 
+let jsligo_block_comment_opening     = "/*"
+let jsligo_block_comment_closing     = "*/"
+let jsligo_line_comment_opening      = "//"
+
 let michelson_block_comment_opening = "/*"
 let michelson_block_comment_closing = "*/"
 let michelson_line_comment          = "#"
@@ -362,18 +369,21 @@ let block_comment_openings =
   pascaligo_block_comment_opening
 | cameligo_block_comment_opening
 | reasonligo_block_comment_opening
+| jsligo_block_comment_opening
 | michelson_block_comment_opening
 
 let block_comment_closings =
   pascaligo_block_comment_closing
 | cameligo_block_comment_closing
 | reasonligo_block_comment_closing
+| jsligo_block_comment_closing
 | michelson_block_comment_closing
 
 let line_comments =
   pascaligo_line_comment
 | cameligo_line_comment
 | reasonligo_line_comment
+| jsligo_line_comment_opening
 | michelson_line_comment
 
 (* Rules *)
@@ -521,7 +531,7 @@ rule scan state = parse
         in
         if state.mode = Copy then
           let path = get_incl_dir state in
-          let external_dirs = ModuleResolutions.get_inclusion_list ~file:parent state.config#module_resolutions in
+          let external_dirs = ModRes.get_inclusion_list ~file:parent state.config#mod_res in
           let incl_path, incl_chan =
             match find path incl_file state.config#dirs external_dirs with
               Some p -> p
@@ -533,7 +543,7 @@ rule scan state = parse
             incl_buf.lex_curr_p <-
               {incl_buf.lex_curr_p with pos_fname = incl_file} in
           let state  = {state with chans = incl_chan::state.chans} in
-          let state' = {state with mode=Copy; trace=[]; parent=Some incl_path} in
+          let state' = {state with mode=Copy; trace=[]; parent = Some incl_path} in
           let state' = scan (set_incl_dir (Filename.dirname incl_path) state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans;import=state'.import} in
           let path   = if path = "" || path = "." then base
@@ -543,13 +553,15 @@ rule scan state = parse
         else scan state lexbuf
     | "import" ->
         let reg, import_file, imported_module = scan_import state lexbuf in
-        let file = match state.parent with
-          Some parent -> parent
-        | None        -> Lexing.(lexbuf.lex_curr_p.pos_fname)
+        let file =
+          match state.parent with
+            Some parent -> parent
+          | None        -> Lexing.(lexbuf.lex_curr_p.pos_fname)
         in
         if state.mode = Copy then
           let path = get_incl_dir state in
-          let external_dirs = ModuleResolutions.get_inclusion_list ~file state.config#module_resolutions in
+          let external_dirs =
+            ModRes.get_inclusion_list ~file state.config#mod_res in
           let import_path =
             match find path import_file state.config#dirs external_dirs with
               Some p -> fst p
@@ -825,7 +837,7 @@ let from_lexbuf config buffer =
     chans  = [];
     incl   = Filename.dirname path;
     import = [];
-    parent = None;
+    parent = None
   } in
   match preproc state buffer with
     state ->

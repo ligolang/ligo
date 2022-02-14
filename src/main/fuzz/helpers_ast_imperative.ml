@@ -58,6 +58,11 @@ module Fold_helpers(M : Monad) = struct
     let* result = f result in
     ok @@ {binder;output_type;result}
 
+  let type_abs : ('a -> 'b monad) -> 'a type_abs -> ('b type_abs) monad
+    = fun f {type_binder;result}->
+    let* result = f result in
+    ok @@ {type_binder;result}
+
   let path : ('a -> 'b monad) -> 'a access list -> ('b access list) monad
     = fun f path ->
     let aux a = match a with
@@ -139,10 +144,10 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {binder; start; final; incr; f_body}
 
   let for_each
-    = fun f {fe_binder; collection; collection_type; fe_body} ->
+    = fun f {fe_binder; collection; fe_body ; collection_type} ->
     let* collection = f collection in
     let* fe_body    = f fe_body in
-    ok @@ {fe_binder; collection; collection_type; fe_body}
+    ok @@ {fe_binder; collection; fe_body ; collection_type}
 
   let while_loop
     = fun f {cond; body} ->
@@ -233,7 +238,7 @@ module Fold_helpers(M : Monad) = struct
        let* cases' = bind_map_list aux cases in
        return @@ E_matching {matchee=e';cases=cases'}
     | E_record m -> (
-      let* m' = bind_map_lmap self m in
+      let* m' = bind_map_list (fun (l,e) -> let* e = self e in ok (l,e)) m in
       return @@ E_record m'
     )
     | E_accessor acc -> (
@@ -275,6 +280,10 @@ module Fold_helpers(M : Monad) = struct
     | E_lambda l -> (
       let* l = lambda self ok l in
       return @@ E_lambda l
+    )
+    | E_type_abstraction ta -> (
+      let* ta = type_abs self ta in
+      return @@ E_type_abstraction ta
     )
     | E_recursive r ->
        let* r = recursive self ok r in

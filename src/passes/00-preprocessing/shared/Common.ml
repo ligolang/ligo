@@ -5,17 +5,6 @@
 type file_path = string
 type dirs = file_path list (* #include and #import *)
 
-let module_resolutions = ref None
-
-let module_resolutions project_root =
-  match !module_resolutions with
-    Some module_resolutions -> module_resolutions
-  | None -> 
-    let open Preprocessor in
-    let m = ModuleResolutions.make project_root in
-    let () = module_resolutions := Some m in
-    m
-
 module type FILE =
   sig
     include File.S
@@ -32,12 +21,12 @@ module Config (File : FILE) (Comments : Comments.S) =
       struct
         include Comments
 
-        let input            = File.input
-        let extension        = Some File.extension
-        let dirs             = File.dirs
-        let project_root     = File.project_root
-        let show_pp          = false
-        let offsets          = true  (* TODO: Should flow from CLI *)
+        let input        = File.input
+        let extension    = Some File.extension
+        let dirs         = File.dirs
+        let project_root = File.project_root
+        let show_pp      = false
+        let offsets      = true
 
         type status = [
           `Done
@@ -56,12 +45,13 @@ module Config (File : FILE) (Comments : Comments.S) =
 
     let preprocessor =
       object
-        method block              = Preprocessor_CLI.block
-        method line               = Preprocessor_CLI.line
-        method input              = Preprocessor_CLI.input
-        method offsets            = Preprocessor_CLI.offsets
-        method dirs               = Preprocessor_CLI.dirs
-        method module_resolutions = Option.bind ~f:module_resolutions Preprocessor_CLI.project_root
+        method block   = Preprocessor_CLI.block
+        method line    = Preprocessor_CLI.line
+        method input   = Preprocessor_CLI.input
+        method offsets = Preprocessor_CLI.offsets
+        method dirs    = Preprocessor_CLI.dirs
+        method mod_res = Option.bind ~f:Preprocessor.ModRes.make
+                                     Preprocessor_CLI.project_root
       end
   end
 
@@ -97,10 +87,10 @@ module Make (File : File.S) (Comments : Comments.S) =
     let from_file ?project_root dirs file_path =
       let module File : FILE =
         struct
-          let extension        = File.extension
-          let input            = Some file_path
-          let dirs             = dirs
-          let project_root     = project_root
+          let extension    = File.extension
+          let input        = Some file_path
+          let dirs         = dirs
+          let project_root = project_root
         end in
       let module Config = Config (File) (Comments) in
       let config = Config.preprocessor in
@@ -115,10 +105,10 @@ module Make (File : File.S) (Comments : Comments.S) =
     let from_string ?project_root dirs string =
       let module File : FILE =
         struct
-          let extension        = File.extension
-          let input            = None
-          let dirs             = dirs
-          let project_root     = project_root 
+          let extension    = File.extension
+          let input        = None
+          let dirs         = dirs
+          let project_root = project_root
         end in
       let module Config = Config (File) (Comments) in
       let config = Config.preprocessor in

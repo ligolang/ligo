@@ -41,12 +41,11 @@ let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']
 [@@map (_type_, ("map", "big_map"))]
 
 let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
-let t_record_ez_attr ?loc ?(attr=[]) lst =
+let t_record_ez_attr ?loc ?(attr=[]) fields =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
-  let lst = List.mapi ~f:aux lst in
-  let fields : ty_expr row_element label_map = LMap.of_list lst
-  in t_record ?loc {fields; attributes=attr}
+  let fields = List.mapi ~f:aux fields in
+  t_record ?loc {fields; attributes=attr}
 let t_record_ez ?loc ?attr lst =
   let aux (a,b) = a,b,[] in
   let lst' = List.map ~f:aux lst in
@@ -56,12 +55,11 @@ let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 
 let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
-let t_sum_ez_attr ?loc ?(attr=[]) lst =
+let t_sum_ez_attr ?loc ?(attr=[]) fields =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
-  let lst = List.mapi ~f:aux lst in
-  let fields : ty_expr row_element label_map = LMap.of_list lst
-  in t_sum ?loc {fields; attributes=attr}
+  let fields = List.mapi ~f:aux fields in
+  t_sum ?loc {fields; attributes=attr}
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 let t_module_accessor ?loc module_name element = make_t ?loc @@ T_module_accessor {module_name;element}
@@ -109,6 +107,10 @@ let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = Const C
 let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = Const C_NONE; arguments = []}
 let e_string_cat ?loc sl sr : expression = make_e ?loc @@ E_constant {cons_name = Const C_CONCAT; arguments = [sl ; sr ]}
 let e_map_add ?loc k v old  : expression = make_e ?loc @@ E_constant {cons_name = Const C_MAP_ADD; arguments = [k ; v ; old]}
+let e_add ?loc a b : expression = make_e ?loc @@ E_constant {cons_name = Const C_ADD; arguments = [a ; b]}
+let e_sub ?loc a b : expression = make_e ?loc @@ E_constant {cons_name = Const C_SUB; arguments = [a ; b]}
+let e_mult ?loc a b : expression = make_e ?loc @@ E_constant {cons_name = Const C_MUL; arguments = [a ; b]}
+let e_div ?loc a b : expression = make_e ?loc @@ E_constant {cons_name = Const C_DIV; arguments = [a ; b]}
 let e_binop ?loc name a b  = make_e ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
 
 let e_constant    ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
@@ -116,6 +118,7 @@ let e_variable    ?loc v = make_e ?loc @@ E_variable v
 let e_variable_ez ?loc v = e_variable ?loc @@ Var.of_input_var ?loc v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
+let e_type_abs  ?loc type_binder result : expression = e_type_abstraction ?loc {type_binder;result} ()
 let e_lambda_ez ?loc var ?ascr ?const_or_var output_type result : expression = e_lambda ?loc {var;ascr;attributes={const_or_var}} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
@@ -134,8 +137,15 @@ let e_true  ?loc (): expression = e_constructor ?loc "True"  @@ e_unit ?loc ()
 let e_false ?loc (): expression = e_constructor ?loc "False" @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
+  let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap ?loc @@ (P_var b)) binders in
+  let pattern = Location.wrap ?loc @@ P_tuple pv_lst in
+  let cases = [ { pattern ; body } ] in
+  make_e ?loc @@ E_matching {matchee;cases}
+let e_matching_record ?loc matchee (binders: (string * _ binder) list) body : expression =
+  let labels,binders = List.unzip binders in
   let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
-  let pattern = Location.wrap @@ P_tuple pv_lst in
+  let labels = List.map ~f:(fun s -> Label s) labels in
+  let pattern = Location.wrap @@ P_record (labels,pv_lst) in
   let cases = [ { pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
@@ -165,13 +175,18 @@ let e_bool ?loc   b : expression =
   else e_constructor ?loc "False" (e_unit ())
 let e_record ?loc map = make_e ?loc @@ E_record map
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
-  let map = List.fold_left ~f:(fun m (x, y) -> LMap.add (Label x) y m) ~init:LMap.empty lst in
+  let map = List.fold_right ~f:(fun (x, y) acc -> ((Label x),y) :: acc) ~init:[] lst in
   e_record ?loc map
 
 let make_option_typed ?loc e t_opt =
   match t_opt with
   | None -> e
   | Some t -> e_annotation ?loc e t
+let e_map_find_opt ?loc k map = e_constant ?loc (Const C_MAP_FIND_OPT) [k;map]
+let e_set_remove ?loc ele set = e_constant ?loc (Const C_SET_REMOVE) [ele;set]
+let e_map_remove ?loc ele map = e_constant ?loc (Const C_MAP_REMOVE) [ele;map]
+let e_set_add ?loc ele set = e_constant ?loc (Const C_SET_ADD) [ele; set]
+
 
 let e_typed_none ?loc t_opt =
   let type_annotation = t_option t_opt in
@@ -189,6 +204,22 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression}
 let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Var.of_input_var ?loc variable) access_path expression
 
+let e_unopt ?loc matchee none_body (var_some,some_body) =
+  let attributes = {const_or_var = None} in
+  let ascr = None in
+  let some_case =
+    let pattern = Location.wrap @@
+      P_variant (Label "Some", Location.wrap @@ P_var {var = var_some ; ascr ; attributes })
+    in
+    { pattern ; body = some_body }
+  in
+  let none_case =
+    let pattern = Location.wrap @@
+      P_variant (Label "None", Location.wrap @@ P_unit)
+    in
+    { pattern ; body = none_body }
+  in
+  e_matching ?loc matchee [some_case ; none_case]
 
 let get_e_accessor = fun t ->
   match t with
@@ -220,6 +251,11 @@ let get_e_lambda = fun e ->
     E_lambda e -> Some e
   | _ -> None
 
+let get_e_annotation = fun e ->
+  match e.expression_content with
+    E_ascription e -> Some e
+  | _ -> None
+
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.expression_content with
@@ -233,7 +269,7 @@ let extract_list : expression -> expression list option = fun e ->
 
 let extract_record : expression -> (label * expression) list option = fun e ->
   match e.expression_content with
-  | E_record lst -> Some (LMap.to_kv_list lst)
+  | E_record lst -> Some lst
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->

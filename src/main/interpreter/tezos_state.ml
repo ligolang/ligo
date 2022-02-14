@@ -62,6 +62,16 @@ let contract_exists : context ->  Memory_proto_alpha.Protocol.Alpha_context.Cont
     Tezos_raw_protocol.Alpha_services.Contract.info Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
   Trace.tz_result_to_bool info
 
+let get_voting_power ~raise ~loc ~calltrace (ctxt :context) key_hash =
+  let vp =
+    Tezos_alpha_test_helpers.Context.get_voting_power (B ctxt.raw) key_hash in
+  Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) vp
+
+let get_total_voting_power ~raise ~loc ~calltrace (ctxt :context) =
+  let tvp =
+    Tezos_alpha_test_helpers.Context.get_total_voting_power (B ctxt.raw) in
+  Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) tvp
+
 let equal_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.equal
 let compare_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare
 

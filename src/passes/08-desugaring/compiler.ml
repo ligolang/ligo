@@ -116,6 +116,9 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_lambda lamb ->
       let lamb = lambda self self_type lamb in
       return @@ O.E_lambda lamb
+    | I.E_type_abstraction ty_abs ->
+      let ty_abs = type_abs self ty_abs in
+      return @@ O.E_type_abstraction ty_abs
     | I.E_recursive recs ->
       let recs = recursive self self_type recs in
       return @@ O.E_recursive recs
@@ -194,8 +197,8 @@ let rec compile_expression : I.expression -> O.expression =
       let aux (s, e : O.expression * _) lst =
         let s' = accessor ~loc:s.location s lst in
         let e' = fun expr ->
-          let u = updator ~loc:s.location s lst (expr)
-          in e u
+          let u = updator ~loc:s.location s lst (expr) in
+          e u
         in
         (s',e')
       in

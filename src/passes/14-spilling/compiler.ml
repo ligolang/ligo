@@ -206,7 +206,9 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_CREATE_CHEST_KEY
       | C_TEST_ADD_ACCOUNT
       | C_TEST_NEW_ACCOUNT
-      | C_TEST_SAVE_MUTATION) as c ->
+      | C_TEST_SAVE_MUTATION
+      | C_TEST_GET_VOTING_POWER
+      | C_TEST_GET_TOTAL_VOTING_POWER) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type ~raise (t:AST.type_expression) : type_expression =
@@ -400,6 +402,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
   let return ?(tv = tv) expr =
     Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
   match ae.expression_content with
+  | E_type_abstraction _
   | E_type_inst _ ->
     raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ } } ->

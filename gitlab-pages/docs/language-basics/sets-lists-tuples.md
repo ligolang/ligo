@@ -330,17 +330,18 @@ let larger_list: list<int> = list([5, ...my_list]); // [5,1,2,2]
 
 </Syntax>
 
-### Accessing list element
+### Accessing list elements
 
-You cannot access element directly in list but you can access the first element, the head or the rest of the list, the tail.
-The two function to access those are `List.head_opt` and `List.tail_opt`
+You cannot access element directly in list but you can access the
+first element, the head or the rest of the list, the tail.  The two
+function to access those are `List.head_opt` and `List.tail_opt`
 
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
 const head : option (int) = List.head_opt (my_list) // 1
-const tail : option (list(int)) = List.tail_opt (my_list) // [2;2]
+const tail : option (list (int)) = List.tail_opt (my_list) // [2;2]
 ```
 
 </Syntax>
@@ -402,11 +403,10 @@ elements (integers) are strictly greater than `3`.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-function iter_op (const l : list (int)) : unit is
-  block {
-    function iterated (const i : int) : unit is
-      if i > 3 then Unit else (failwith ("Below range.") : unit)
-  } with List.iter (iterated, l)
+function iter_op (const l : list (int)) : unit is {
+  function iterated (const i : int) : unit is
+    if i <= 3 then (failwith ("Below range.") : unit)
+} with List.iter (iterated, l)
 ```
 
 </Syntax>
@@ -455,7 +455,7 @@ is used as follows.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-function increment (const i : int): int is i + 1
+function increment (const i : int) : int is i + 1
 
 // Creates a new list with all elements incremented by 1
 const plus_one : list (int) = List.map (increment, larger_list)
@@ -504,13 +504,13 @@ enables having a partial result that becomes complete when the
 traversal of the data structure is over. Folding can be done in two
 ways, labelled with the directions left and right. One way to tell them
 apart is to look where the folded function, and the fold itself, keep
-the accumulator in their signatures. Take for example a function `f`, 
+the accumulator in their signatures. Take for example a function `f`,
 a list `[1; 2; 3; 4; 5]`, and an accumulator that's just an empty
 list. A rough approximation of the result of a left fold would look
-like `f(f(f(f(f([], 1), 2), 3), 4), 5)`, while a right fold would 
+like `f(f(f(f(f([], 1), 2), 3), 4), 5)`, while a right fold would
 instead look like `f(1, f(2, f(3, f(4, f(5, [])))))`.
 
-The left fold operation has a function signature of 
+The left fold operation has a function signature of
 `List.fold_left (a -> x -> a) -> a -> x list -> a`, while the right
 fold operation has `List.fold_right (x -> a -> a) -> x list -> a -> a`.
 Here is an example of their use.
@@ -518,7 +518,7 @@ Here is an example of their use.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
-function sum (const acc : int; const i : int): int is acc + i
+function sum (const acc : int; const i : int) : int is acc + i
 const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 ```
 
@@ -801,7 +801,7 @@ that is modified in-place, and the other given as a literal
 (extensional definition).
 
 ```pascaligo group=sets
-function update (var s : set (int)) : set (int) is block {
+function update (var s : set (int)) : set (int) is {
   patch s with set [4; 7]
 } with s
 
@@ -876,11 +876,10 @@ iterated to check that all its elements (integers) are greater than
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=sets
-function iter_op (const s : set (int)) : unit is
-  block {
-    function iterated (const i : int) : unit is
-      if i > 2 then Unit else (failwith ("Below range.") : unit)
-  } with Set.iter (iterated, s)
+function iter_op (const s : set (int)) : unit is {
+  function iterated (const i : int) : unit is
+    if i <= 2 then (failwith ("Below range.") : unit)
+} with Set.iter (iterated, s)
 ```
 
 </Syntax>
@@ -968,33 +967,40 @@ A *folded operation* is the most general of iterations. The folded
 function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
-traversal of the data structure is over. The predefined fold over sets
-is called `Set.fold`, however an additional function, `Set.fold_right`,
-has been added to properly conform to the function signature of OCaml's
-`Set.fold` operation, and it has the function signature
-`Set.fold_right (x -> a -> a) -> x Set -> a -> a`.
+traversal of the data structure is over.
 
 
 <Syntax syntax="pascaligo">
 
+The predefined fold over sets is called `Set.fold`, however an
+additional function, `Set.fold_right`, has been added to properly
+conform to the function signature of OCaml's `Set.fold` operation, and
+it has the function signature `val fold_right&lt;elt,acc&gt; : (elt *
+acc -> acc) -> elt set -> acc -> acc`.
+
 ```pascaligo group=sets
-function sum (const acc : int; const i : int): int is acc + i
+function sum (const acc : int; const i : int) : int is acc + i
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
 ```
 
 It is possible to use a *loop* over a set as well.
 
 ```pascaligo group=sets
-function loop (const s : set (int)) : int is block {
+function loop (const s : set (int)) : int is {
   var sum : int := 0;
-  for element in set s block {
-    sum := sum + element
-  }
+  for element in set s { sum := sum + element }
 } with sum
 ```
 
 </Syntax>
+
 <Syntax syntax="cameligo">
+
+The predefined fold over sets is called `Set.fold`, however an
+additional function, `Set.fold_right`, has been added to properly
+conform to the function signature of OCaml's `Set.fold` operation, and
+it has the signature `val fold_right : ('acc * 'elt -> 'acc) -> 'elt
+set -> 'acc -> 'acc`.
 
 ```cameligo group=sets
 let sum (acc, i : int * int) : int = acc + i
@@ -1002,7 +1008,13 @@ let sum_of_elements : int = Set.fold sum my_set 0
 ```
 
 </Syntax>
+
 <Syntax syntax="reasonligo">
+
+The predefined fold over sets is called `Set.fold`, however an
+additional function, `Set.fold_right`, has been added with the
+signature `val fold_right : ('acc * 'elt -> 'acc) * 'elt set * 'acc ->
+'acc`.
 
 ```reasonligo group=sets
 let sum = ((acc, i) : (int, int)) : int => acc + i;
@@ -1010,11 +1022,17 @@ let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
 
 </Syntax>
+
 <Syntax syntax="jsligo">
+
+The predefined fold over sets is called `Set.fold`, however an
+additional function, `Set.fold_right`, has been added with the
+signature `val fold_right : ('acc * 'elt -> 'acc) * 'elt set * 'acc ->
+'acc`.
 
 ```jsligo group=sets
 let sum = ([acc, i]: [int, int]): int => acc + i;
-let sum_of_elements: int = Set.fold(sum, my_set, 0);
+let sum_of_elements: int = Set.fold (sum, my_set, 0);
 ```
 
 </Syntax>

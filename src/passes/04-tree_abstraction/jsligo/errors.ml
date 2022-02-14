@@ -89,7 +89,7 @@ let error_ppformat : display_format:string display_format ->
       let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
       Format.fprintf
         f
-        "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
+        "@[<hv>%a@.The tuple \"%s\" does not have the expected type \"%s\". @]"
         Snippet.pp_lift region
         p
         t
@@ -220,8 +220,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("location", `String loc) ] in
     json_error ~stage ~content
   | `Concrete_jsligo_michelson_type_wrong (texpr,name) ->
-    let message = Format.asprintf "Argument %s of %s must be a string singleton"
-        (Cst_jsligo.Printer.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
+    let message = Format.asprintf "Argument of %s must be a string singleton" name in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );
@@ -235,7 +234,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("location", `String loc); ] in
     json_error ~stage ~content
   | `Concrete_jsligo_funarg_tuple_type_mismatch (r, _, _) ->
-    let message = Format.asprintf "The tuple does not match the type." in
+    let message = Format.asprintf "The tuple does not have the expected type." in
     let loc = Format.asprintf "%a" Location.pp_lift r in
     let content = `Assoc [
       ("message", `String message );

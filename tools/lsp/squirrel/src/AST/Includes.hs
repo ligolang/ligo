@@ -6,10 +6,10 @@ module AST.Includes
   , insertPreprocessorRanges
   , getMarkers
   , getMarkerInfos
+  , Includes (..)
   , MarkerInfo (..)
   ) where
 
-import Algebra.Graph.AdjacencyMap (AdjacencyMap)
 import Algebra.Graph.AdjacencyMap qualified as G
 import Control.Arrow (first)
 import Control.Lens (Lens', _1, to, view, (&), (+~), (-~), (.~), (^.))
@@ -28,17 +28,19 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as Text (pack)
 import Data.Word (Word32)
-import Duplo.Tree (Cofree ((:<)), inject)
+import Duplo.Tree (Cofree ((:<)), fastMake)
 import System.FilePath ((</>), takeDirectory)
 import UnliftIO.Directory (canonicalizePath)
 
-import AST.Scope.Common (ContractInfo, pattern FindContract, ParsedContractInfo, contractFile, MarkerInfo (..))
+import AST.Scope.Common
+  ( ContractInfo, pattern FindContract, Includes (..), MarkerInfo (..), ParsedContractInfo
+  , contractFile
+  )
 import AST.Scope.Fallback (loopM, loopM_)
 import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
 
 import Parser
   ( CodeSource (..), Info, LineMarker (..), LineMarkerType (..), ParsedInfo
-  , ShowRange (N)
   )
 import ParseTree (Source (..))
 import Product (Contains, Product (..), getElem, modElem, putElem)
@@ -181,7 +183,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
 
 -- | Given a list of contracts, builds a graph that represents how they are
 -- included.
-includesGraph :: forall m. MonadIO m => [ContractInfo] -> m (AdjacencyMap ParsedContractInfo)
+includesGraph :: forall m. MonadIO m => [ContractInfo] -> m (Includes ParsedContractInfo)
 includesGraph contracts = do
   knownContracts :: Map FilePath (ParsedContractInfo, DList (FilePath, FilePath))
     <- fmap Map.fromList $ forM contracts $ \c -> do
@@ -203,16 +205,16 @@ includesGraph contracts = do
         in
         (edges'' <> edges, vertex' : vertices)
 
-  pure (uncurry G.overlay $ bimap (G.edges . toList) G.vertices $ foldr go ([], []) contracts)
+  pure $ Includes $ uncurry G.overlay $ bimap (G.edges . toList) G.vertices $ foldr go ([], []) contracts
 
   where
     emptyContract :: FilePath -> ParsedContractInfo
     emptyContract name =
       let
         p = point 0 0
-        info = PreprocessedRange p :> [] :> [] :> p :> N :> CodeSource "" :> Nil
+        info = PreprocessedRange p :> [] :> [] :> p :> CodeSource "" :> Nil
       in
       FindContract
         (Path name)
-        (SomeLIGO Caml (info :< inject (Error ("Missing contract: " <> Text.pack name) [])))
+        (SomeLIGO Caml (fastMake info (Error ("Missing contract: " <> Text.pack name) [])))
         []

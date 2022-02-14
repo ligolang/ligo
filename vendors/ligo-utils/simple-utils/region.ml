@@ -38,13 +38,13 @@ type region = t
 
 (* A convenience *)
 
-type 'a reg = {region: t; value: 'a}
+type 'a reg = {region : t; value : 'a}
 
 (* Injections *)
 
 exception Invalid
 
-let make ~(start: Pos.t) ~(stop: Pos.t) =
+let make ~(start : Pos.t) ~(stop : Pos.t) =
   if String.(<>) start#file stop#file || start#byte_offset > stop#byte_offset
   then raise Invalid
   else
@@ -130,7 +130,7 @@ let min ~file = make ~start:(Pos.min ~file) ~stop:(Pos.min ~file)
 
 (* Comparisons *)
 
-let equal (r1 : t) (r2 :t) =
+let equal (r1 : t) (r2 : t) =
   String.equal r1#file r2#file
 && Pos.equal r1#start r2#start
 && Pos.equal r1#stop  r2#stop

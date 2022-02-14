@@ -108,6 +108,7 @@ and expression_content =
   | E_variable of expression_variable
   | E_application of application
   | E_lambda of lambda
+  | E_type_abstraction of expr type_abs
   | E_recursive of recursive
   | E_let_in of let_in
   | E_type_in of (expr, ty_expr) type_in

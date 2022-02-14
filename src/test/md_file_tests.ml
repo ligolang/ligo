@@ -11,6 +11,10 @@ module SnippetsGroup = Caml.Map.Make(struct type t = (syntax * group_name * Envi
 
 type snippetsmap = (lang * string) SnippetsGroup.t
 
+let arg_to_string x =
+  match x with
+  | Md.Field s -> s
+  | Md.NameValue (k,v) -> Format.asprintf "%s=%s" k v
 let get_proto p =
   let opt = try Environment.Protocols.protocols_to_variant p with
     _ -> None
@@ -40,7 +44,10 @@ let get_groups md_file : snippetsmap =
             (fun arg ->
               match arg with
               | Md.Field "" | Md.Field "skip" | Md.NameValue ("group",_) | Md.Field "test-ligo" | Md.NameValue ("protocol",_) -> ()
-              | Md.Field _ | Md.NameValue _ -> failwith "unknown argument"
+              | Md.Field _ | Md.NameValue (_,_) ->
+                failwith (
+                  Format.asprintf "unknown argument '%s' in code block at line %d of file %s" (arg_to_string arg) el.line el.file
+                )
             )
             el.arguments
         in

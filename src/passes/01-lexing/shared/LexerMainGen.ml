@@ -44,7 +44,7 @@ module Make (File        : FILE)
            cli_error (Printf.sprintf "Choose either %s or %s." o1 o2)
       | `Done ->
            match CLI.Preprocessor_CLI.extension with
-             Some ext when String.(<>) ext File.extension ->
+             Some ext when String.(ext <> File.extension) ->
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
                in cli_error msg
@@ -179,7 +179,7 @@ module Make (File        : FILE)
           match config#input with
             Some path -> Scan.LexUnits.from_file config path
           |      None -> Scan.LexUnits.from_channel config In_channel.stdin
-      in 
+      in
       match Self_tokens.filter lex_units with
         Stdlib.Ok _ -> ()
       | Error msg   -> print_in_red msg

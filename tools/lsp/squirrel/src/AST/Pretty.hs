@@ -28,7 +28,7 @@ import Duplo.Tree (Tree)
 
 import AST.Skeleton hiding (Type)
 import AST.Skeleton qualified as AST
-import Parser (LineMarker (..), LineMarkerType (..), ShowRange)
+import Parser (LineMarker (..), LineMarkerType (..))
 import Product (Contains)
 import Range (Range)
 
@@ -167,6 +167,8 @@ instance Pretty1 Binding where
     BAttribute    name          -> sexpr "attr"  [name]
     BInclude      fname         -> sexpr "#include" [fname]
     BImport       fname alias   -> sexpr "#import" [fname, alias]
+    BModuleDecl   mname body    -> sexpr "module" [mname, pp body]
+    BModuleAlias  mname alias   -> sexpr "module" [mname, alias]
 
     BFunction isRec name params ty body ->
       sexpr "fun" $ concat
@@ -443,6 +445,8 @@ instance LPP1 'Pascal Binding where
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    n t           -> "const" <+> n <+> ":" <+> lpp t
+    BModuleDecl   mname body    -> "module" <+> lpp mname <+> "is" <+> lpp body
+    BModuleAlias  mname alias    -> "module" <+> lpp mname <+> lpp alias
 
     BFunction _ name params ty body ->
       foldr (<+>) empty $ concat
@@ -804,5 +808,4 @@ docToText = Text.pack . show
 type PPableLIGO info =
   ( Contains [Text] info
   , Contains Range info
-  , Contains ShowRange info
   )

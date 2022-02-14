@@ -66,6 +66,11 @@ let lambda : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) lam
   let acc = f acc result in
   acc
 
+let type_abs : ('acc -> 'a -> 'acc) -> 'acc -> ('a) type_abs -> 'acc 
+= fun f acc {type_binder=_;result}->
+  let acc = f acc result in
+  acc
+
 let path : ('acc -> 'a -> 'acc) -> 'acc -> 'a access list -> 'acc
 = fun f acc path ->
   let aux acc a = match a with
@@ -156,7 +161,7 @@ let for_ : ('acc -> 'a -> 'b) -> 'acc -> 'a for_ -> 'acc
   acc
 
 let for_each : ('acc -> 'a -> 'b) -> 'acc -> 'a for_each -> 'acc
-= fun f acc {fe_binder=_;collection;collection_type=_;fe_body} ->
+= fun f acc {fe_binder=_;collection;fe_body;collection_type=_} ->
   let acc = f acc collection in
   let acc = f acc fe_body in
   acc

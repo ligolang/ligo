@@ -26,7 +26,7 @@ let%expect_test _ =
       4 |   let { a = a ; f = b }  = { a = 1 ; b = 1n } in
       5 |   (a,b)
 
-    Pattern do not conform type record[a -> int , b -> nat] |}]
+    Pattern not of the expected type record[a -> int , b -> nat] |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret" ; "t1"; "--init-file";(test "let_destructuring.religo") ] ;
@@ -64,10 +64,10 @@ let%expect_test _ =
       4 |   var record [ a = a ; f = b ] := record [ a = 1 ; b = 1n ] ;
       5 | } with (a,b)
 
-    Pattern do not conform type record[a -> int , b -> nat] |}] ;
+    Pattern not of the expected type record[a -> int , b -> nat] |}] ;
   run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a} = x in a" ; "--syntax" ; "cameligo" ] ;
   [%expect{|
-    Pattern do not conform type record[a -> int , b -> int] |}] ;
+    Pattern not of the expected type record[a -> int , b -> int] |}] ;
   run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a ; b ; c} = x in a" ; "--syntax" ; "cameligo" ] ;
   [%expect{|
-    Pattern do not conform type record[a -> int , b -> int] |}]
+    Pattern not of the expected type record[a -> int , b -> int] |}]

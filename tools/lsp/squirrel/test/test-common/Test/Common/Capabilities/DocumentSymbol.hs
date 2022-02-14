@@ -17,11 +17,10 @@ import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
 import AST.Capabilities.DocumentSymbol (extractDocumentSymbols)
-import AST.Scope (HasScopeForest)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
-import Test.Common.Util (readContractWithScopes)
+import Test.Common.Util (ScopeTester, readContractWithScopes)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "document-symbol"
@@ -36,10 +35,10 @@ simplify SymbolInformation{_name, _kind, _location = Location{_range}} =
   , (_range ^. end . line, _range ^. end . character)
   )
 
-documentSymbolsExampleHeapDriver :: forall impl. HasScopeForest impl IO => Assertion
+documentSymbolsExampleHeapDriver :: forall impl. ScopeTester impl => Assertion
 documentSymbolsExampleHeapDriver = do
   tree <- readContractWithScopes @impl (contractsDir </> "heap.ligo")
-  symbols <- extractDocumentSymbols (Uri "<test>") tree
+  let symbols = extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
     [ ("heap", SkTypeParameter, (3, 5), (3, 9))
     , ("is_empty", SkFunction, (5,9), (5,17))
@@ -51,19 +50,19 @@ documentSymbolsExampleHeapDriver = do
     , ("const empty",SkConstant,(105,6),(105,11))
     ]
 
-documentSymbolsExampleAccessDriver :: forall impl. HasScopeForest impl IO => Assertion
+documentSymbolsExampleAccessDriver :: forall impl. ScopeTester impl => Assertion
 documentSymbolsExampleAccessDriver = do
   tree <- readContractWithScopes @impl (contractsDir </> "access.ligo")
-  symbols <- extractDocumentSymbols (Uri "<test>") tree
+  let symbols = extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
     [ ("const owner", SkConstant , (2, 6), (2, 11))
     , ("main", SkFunction, (4,9), (4,13))
     ]
 
-documentSymbolsExampleLetCamligoDriver :: forall impl. HasScopeForest impl IO => Assertion
+documentSymbolsExampleLetCamligoDriver :: forall impl. ScopeTester impl => Assertion
 documentSymbolsExampleLetCamligoDriver = do
   tree <- readContractWithScopes @impl (contractsDir </> "let.mligo")
-  symbols <- extractDocumentSymbols (Uri "<test>") tree
+  let symbols = extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
     [ ("const a", SkConstant, (0, 4), (0, 5))
 
@@ -82,10 +81,10 @@ documentSymbolsExampleLetCamligoDriver = do
     , ("const n", SkConstant, (4, 26), (4, 27))
     ]
 
-documentSymbolsExampleLetReligoDriver :: forall impl. HasScopeForest impl IO => Assertion
+documentSymbolsExampleLetReligoDriver :: forall impl. ScopeTester impl => Assertion
 documentSymbolsExampleLetReligoDriver = do
   tree <- readContractWithScopes @impl (contractsDir </> "let.religo")
-  symbols <- extractDocumentSymbols (Uri "<test>") tree
+  let symbols = extractDocumentSymbols (Uri "<test>") tree
   map simplify symbols `shouldBe`
     [ ("const a", SkConstant, (0, 4), (0, 5))
 

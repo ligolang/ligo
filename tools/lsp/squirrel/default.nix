@@ -11,6 +11,10 @@ let
     subDir = "tools/lsp/squirrel";
   };
 
+  clearSymlinks = with haskell-nix.pkgs; contracts: path: (runCommand "cleaned" {} ''
+     cp -rL ${contracts}/${path} $out
+  '');
+
   # haskell.nix can generate .cabal file automatically, but it uses a custom
   # build of hpack which requires rebuilding GHC and all haskell dependencies.
   # We use hpack from nixpkgs instead to avoid big rebuilds.
@@ -37,7 +41,7 @@ let
 
           # Thanks, I Hate It.
           components.tests.ligo-contracts-test = {
-            preBuild = "export CONTRACTS_DIR=${../../../src/test/contracts}";
+            preBuild = "export CONTRACTS_DIR=${clearSymlinks ../../.. "src/test/contracts"}";
           };
 
           ghcOptions = ["-Werror"];

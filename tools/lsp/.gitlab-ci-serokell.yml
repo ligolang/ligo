@@ -30,6 +30,9 @@ ligo-build:
     # extract ligo binary from the image
     - docker create --name ligo-$CI_JOB_ID ligo:$CI_JOB_ID
     - docker cp ligo-$CI_JOB_ID:/root/ligo ./ligo
+    # Some paths for highlighting checks
+    - docker cp ligo-$CI_JOB_ID:/root/highlighting ./highlighting
+
     - chmod u+w ./ligo
     # pin built images to cache them for future builds; use a distinct tag for
     # "tooling" branch so it won't be overriden by an image from an MR
@@ -46,6 +49,7 @@ ligo-build:
   artifacts:
     paths:
       - ligo
+      - highlighting
 
 lsp-lint:
   stage: lsp
@@ -107,6 +111,16 @@ lsp-docker-image:
   only: [merge_requests, tooling]
   script:
     - nix-build tools/lsp -A lsp-docker-image
+
+lsp-check-generated-highlighting:
+  stage: lsp
+  only: [merge_requests, tooling]
+  dependencies:
+    - ligo-build
+  script:
+    - scripts/diff_dir.sh highlighting/emacs tools/emacs
+    - scripts/diff_dir.sh highlighting/vim tools/vim/ligo/start/ligo/syntax
+    - scripts/diff_dir.sh highlighting/vscode tools/lsp/vscode-plugin/syntaxes
 
 # publish vscode extension to the extension marketplace
 vscode-extension-publish:

@@ -9,7 +9,7 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-function concat : bytes -> bytes -> bytes
+val concat : bytes -> bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val concat : bytes -> bytes -> bytes
@@ -27,15 +27,14 @@ Concatenate together two `bytes` arguments and return the result.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function concat_op (const s : bytes) : bytes is Bytes.concat(s , 0x7070)
+function concat_op (const s : bytes) : bytes is Bytes.concat (s , 0x7070)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let concat_op (s : bytes) : bytes =
-   Bytes.concat s 0x7070
+let concat_op (s : bytes) : bytes = Bytes.concat s 0x7070
 ```
 
 </Syntax>
@@ -55,7 +54,7 @@ let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function sub : nat -> nat -> bytes -> bytes
+val sub : nat -> nat -> bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sub : nat -> nat -> bytes -> bytes
@@ -67,13 +66,13 @@ let sub : (nat, nat, bytes) => bytes
 let sub : (start: nat, length: nat, input: bytes) => bytes
 </SyntaxTitle>
 
-Extract bytes from `start` to `length`. For example if you gave the 
+Extract bytes from `start` to `length`. For example if you gave the
 input "ff7a7aff" to the following function:
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function slice_op (const s : bytes) : bytes is Bytes.sub(1n , 2n , s)
+function slice_op (const s : bytes) : bytes is Bytes.sub (1n , 2n , s)
 ```
 
 </Syntax>
@@ -102,7 +101,7 @@ let slice_op = (s: bytes): bytes => Bytes.sub(1 as nat, 2 as nat, s);
 It would return "7a7a".
 
 <SyntaxTitle syntax="pascaligo">
-function pack : 'a -> bytes
+val pack&lt;a&gt; : a -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val pack : 'a -> bytes
@@ -123,18 +122,18 @@ Converts Michelson data structures to a binary format for serialisation.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function id_string (const p : string) : option(string) is block {
-  const packed : bytes = Bytes.pack(p) ;
-} with (Bytes.unpack(packed): option(string))
+function id_string (const p : string) : option (string) is {
+  const packed : bytes = Bytes.pack (p);
+} with (Bytes.unpack (packed) : option (string))
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let id_string (p: string) : string option =
-  let packed: bytes = Bytes.pack p in
-  ((Bytes.unpack packed): string option)
+let id_string (p : string) : string option =
+  let packed : bytes = Bytes.pack p in
+  (Bytes.unpack packed : string option)
 ```
 
 </Syntax>
@@ -161,7 +160,7 @@ let id_string = (p: string) : option<string> => {
 
 
 <SyntaxTitle syntax="pascaligo">
-function unpack : bytes -> option 'a
+val unpack&lt;a&gt; : bytes -> option (a)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val unpack : bytes -> 'a option
@@ -173,7 +172,7 @@ let unpack: bytes => option('a)
 let unpack: (serialized_data: bytes) => option&lt;&apos;a&gt;
 </SyntaxTitle>
 
-Reverses the result of using `pack` on data. 
+Reverses the result of using `pack` on data.
 
 As the conversion might fail an option type is returned.
 
@@ -184,18 +183,18 @@ As the conversion might fail an option type is returned.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function id_string (const p : string) : option(string) is block {
-  const packed : bytes = Bytes.pack(p) ;
-} with (Bytes.unpack(packed): option(string))
+function id_string (const p : string) : option (string) is {
+  const packed : bytes = Bytes.pack (p);
+} with (Bytes.unpack (packed) : option (string))
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let id_string (p: string) : string option =
-  let packed: bytes = Bytes.pack p in
-  ((Bytes.unpack packed): string option)
+let id_string (p : string) : string option =
+  let packed : bytes = Bytes.pack p in
+  (Bytes.unpack packed : string option)
 ```
 
 </Syntax>
@@ -221,7 +220,7 @@ let id_string = (p: string) : option<string> => {
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function length : bytes -> nat
+val length : bytes -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val length : bytes -> nat

@@ -11,14 +11,17 @@ warning_with @@ fun add_warning get_warnings ->
 val warning_with : (('a -> unit) -> (unit -> 'a list) -> 'b) -> 'b
 
 
-(*
-try_with is a wrapper for error.
-The wrapper define a raise function that raise a local exception to be use in case of error.
-Generally the wrapper will be use as such :
-let result = try_with f handler
-where f is a function that will use the raise function to throw error
-and handler is called with the error parameter is the exception was raised
-*)
+(* The function [try_with] is a wrapper for errors.
+
+   The wrapper defines a raise function that raise a local exception to
+   be used in case of error.  Generally the wrapper will be use as follows:
+
+     [let result = try_with f handler]
+
+   where [f] is a function that will use the raise function to throw
+   error and handler is called with the error parameter is the
+   exception was raised *)
+
 type 't raise = { raise : 'a . 't -> 'a }
 val try_with : (raise:'t raise -> 'b) -> ('t -> 'b) -> 'b
 

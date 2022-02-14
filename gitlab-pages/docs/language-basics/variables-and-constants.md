@@ -5,7 +5,6 @@ title: Constants & Variables
 
 import Syntax from '@theme/Syntax';
 
-
 The next building block after types are *constants* and *variables*.
 
 ## Constants
@@ -63,18 +62,18 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-const
 > Constants in JsLIGO are enforced:
 
 ```jsligo skip
-let x = (a: int): int => {
+let x = (a : int) : int => {
   const age : int = 25;
-  age = 3; // gives an error
+  age = 3; // Yields an error
 };
 ```
 
 Unlike the other syntaxes, JsLIGO doesn't allow variable names to be reused in the same block scope:
 
 ```jsligo skip
-let x = (a: int): int => {
-  const age: int = 25;
-  const age: int = 3; // will give an error
+let x = (a : int) : int => {
+  const age : int = 25;
+  const age : int = 3; // Yields an error
 };
 ```
 
@@ -84,8 +83,8 @@ However, the following does work:
 let x = (a: int): int => {
   const age: int = 25;
   {
-     const age: int = 3; // does not give an error
-     return age;
+   const age : int = 3; // does not give an error
+   return age;
   }
 };
 ```
@@ -120,14 +119,13 @@ or as function parameters.
 // The following is invalid: use `const` for global values instead.
 // var four : int := 4
 
-function add (const a : int; const b : int) : int is
-  block {
-    var c : int := a + 2*b;
-    c := c - b
-  } with c
+function add (const a : int; const b : int) : int is {
+  var c : int := a + 2 * b;
+  c := c - b
+} with c
 ```
 
-> ⚠️ Notice the assignment operator `:=` for `var`, instead of `=` for
+> ⚠ Notice the assignment operator `:=` for `var`, instead of `=` for
 > constants.
 
 You can run the `add` function defined above using the LIGO compiler
@@ -146,7 +144,7 @@ features *constant values*: once they are declared, the value cannot
 be changed (or "mutated").
 
 ```cameligo group=c
-let add (a : int) (b : int) : int =
+let add (a, b : int * int) : int =
   let c : int = a + b in c
 ```
 
@@ -181,7 +179,7 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-const
 </Syntax>
 <Syntax syntax="jsligo">
 
-Variables, unlike constants, are *mutable*. 
+Variables, unlike constants, are *mutable*.
 
 > ⚠️ Please be wary that mutation only works within the function scope
 > itself, values outside of the function scope will not be
@@ -206,6 +204,18 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-const
 # Outputs: 2
 ```
 
+## Escaped Identifiers
+
+Both variables and constants are, at the level of the lexicon,
+_identifiers_. Each flavour of LIGO has its own set of keywords,
+PascaLIGO with the most. Sometimes we need an identifier that is the
+same as a keyword, or, perhaps, we do not want to shadow a predefined
+identifier, like `amount`. In those cases, you could suffix your
+identifier with an underscore, like `amount_`. (Beware that if you
+prefix with an underscore, like `_amount`, the compiler will not
+complain about the value being not used.) But this is not a good
+practice because we do not pronounce aloud the underscores, and there
+is the issue of one or two underscores. To solve all those problems,
+in LIGO, you can prefix you identifier with `@`, like `@amount`.
 
 </Syntax>
-

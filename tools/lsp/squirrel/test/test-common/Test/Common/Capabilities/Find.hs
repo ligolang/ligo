@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Test.Common.Capabilities.Find
   ( DefinitionReferenceInvariant (..)
 
@@ -28,14 +26,13 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
-import AST (HasScopeForest)
 import AST.Capabilities.Find (definitionOf, referencesOf, typeDefinitionAt)
 import Range (Range (..), interval, point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations
   (expectationFailure, shouldBe, shouldContain, shouldMatchList)
-import Test.Common.Util (readContractWithScopes)
+import Test.Common.Util (ScopeTester, readContractWithScopes)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "find"
@@ -65,7 +62,7 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
 
 -- | Check that the given @DefinitionReferenceInvariant@ holds.
 checkDefinitionReferenceInvariant
-  :: forall parser. HasScopeForest parser IO => DefinitionReferenceInvariant -> Assertion
+  :: forall parser. ScopeTester parser => DefinitionReferenceInvariant -> Assertion
 checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = test
   where
     test :: Assertion
@@ -94,7 +91,7 @@ label filepath r
 
 -- | Check if the given range corresponds to a definition of the given
 -- entity in the given file.
-checkIfDefinition :: forall parser. HasScopeForest parser IO => FilePath -> Range -> Range -> Assertion
+checkIfDefinition :: forall parser. ScopeTester parser => FilePath -> Range -> Range -> Assertion
 checkIfDefinition filepath expectedDef mention = test
   where
     test :: Assertion
@@ -107,7 +104,7 @@ checkIfDefinition filepath expectedDef mention = test
 
 -- | Check if the given range corresponds to a reference of the given
 -- entity in the given file.
-checkIfReference :: forall parser. HasScopeForest parser IO => FilePath -> Range -> Range -> Assertion
+checkIfReference :: forall parser. ScopeTester parser => FilePath -> Range -> Range -> Assertion
 checkIfReference filepath expectedRef mention = test
   where
     test :: Assertion
@@ -145,26 +142,20 @@ invariants =
                 , interval 12 30 37
                 ]
     }
-  -- TODO: There seems to be a bug in `ligo get-scope`'s references where it
-  -- will say the range of one variable is much longer than it should be (one
-  -- expression bigger it seems). For now, I'm separating this into two separate
-  -- tests, for the integration and lsp tests. Once this is fixed, this test and
-  -- its counterpart for `lsp-test` should be deleted and this test should be
-  -- uncommented.
-  --, DefinitionReferenceInvariant
-  --  { driFile = contractsDir </> "heap.ligo"
-  --  , driDesc = "left, local"
-  --  , driDef = Just (interval 77 9 13)
-  --  , driRefs = [ interval 99 15 19
-  --              , interval 90 13 17
-  --              , interval 89 30 34
-  --              , interval 87 22 26
-  --              , interval 86 36 40
-  --              , interval 85 10 14
-  --              , interval 84 16 20
-  --              , interval 83 7 11
-  --              ]
-  --  }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "heap.ligo"
+    , driDesc = "left, local"
+    , driDef = Just (interval 77 9 13)
+    , driRefs = [ interval 99 15 19
+                , interval 90 13 17
+                , interval 89 30 34
+                , interval 87 22 26
+                , interval 86 36 40
+                , interval 85 10 14
+                , interval 84 16 20
+                , interval 83 7 11
+                ]
+    }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "params.mligo"
     , driDesc = "a, function"
@@ -309,7 +300,7 @@ invariants =
 
 findDefinitionAndGoToReferencesCorrespondence
   :: forall impl
-   . HasScopeForest impl IO
+   . ScopeTester impl
   => [DefinitionReferenceInvariant]
   -> TestTree
 findDefinitionAndGoToReferencesCorrespondence testInvariants =
@@ -319,44 +310,44 @@ findDefinitionAndGoToReferencesCorrespondence testInvariants =
     makeTestCase inv = testCase name (checkDefinitionReferenceInvariant @impl inv)
       where name = driFile inv <> ": " <> driDesc inv
 
-definitionOfId :: forall impl. HasScopeForest impl IO => Assertion
+definitionOfId :: forall impl. ScopeTester impl => Assertion
 definitionOfId = checkIfDefinition @impl
                         (contractsDir </> "id.ligo")
                         (interval 1 20 21)
                         (interval 1 38 39)
 
-referenceOfId :: forall impl. HasScopeForest impl IO => Assertion
+referenceOfId :: forall impl. ScopeTester impl => Assertion
 referenceOfId = checkIfReference @impl
                        (contractsDir </> "id.ligo")
                        (interval 1 38 39)
                        (interval 1 20 21)
 
-definitionOfLeft :: forall impl. HasScopeForest impl IO => Assertion
+definitionOfLeft :: forall impl. ScopeTester impl => Assertion
 definitionOfLeft = checkIfDefinition @impl
                           (contractsDir </> "heap.ligo")
                           (interval 77 9 13)
                           (interval 86 36 40)
 
-referenceOfLeft :: forall impl. HasScopeForest impl IO => Assertion
+referenceOfLeft :: forall impl. ScopeTester impl => Assertion
 referenceOfLeft = checkIfReference @impl
                          (contractsDir </> "heap.ligo")
                          (interval 89 30 34)
                          (interval 77 9 13)
 
-definitionOfXInWildcard :: forall impl. HasScopeForest impl IO => Assertion
+definitionOfXInWildcard :: forall impl. ScopeTester impl => Assertion
 definitionOfXInWildcard = checkIfDefinition @impl
   (contractsDir </> "wildcard.mligo")
   (interval 1 5 6)
   (interval 2 13 14)
 
-referenceOfXInWildcard :: forall impl. HasScopeForest impl IO => Assertion
+referenceOfXInWildcard :: forall impl. ScopeTester impl => Assertion
 referenceOfXInWildcard = checkIfReference @impl
   (contractsDir </> "wildcard.mligo")
   (interval 2 13 14)
   (interval 1 5 6)
 
 typeOf
-  :: forall impl. HasScopeForest impl IO
+  :: forall impl. ScopeTester impl
   => FilePath
   -> Range
   -> Range
@@ -369,19 +360,19 @@ typeOf filepath mention definition = do
     Nothing -> expectationFailure "Should find type definition"
     Just range -> range{_rFile=_rFile mention'} `shouldBe` definition'
 
-typeOfHeapConst :: forall impl. HasScopeForest impl IO => Assertion
+typeOfHeapConst :: forall impl. ScopeTester impl => Assertion
 typeOfHeapConst = typeOf @impl (contractsDir </> "heap.ligo") (point 106 8) (interval 4 6 10)
 
-typeOfHeapArg :: forall impl. HasScopeForest impl IO => Assertion
+typeOfHeapArg :: forall impl. ScopeTester impl => Assertion
 typeOfHeapArg = typeOf @impl (contractsDir </> "heap.ligo") (point 8 25) (interval 4 6 10)
 
-typeOfLet :: forall impl. HasScopeForest impl IO => Assertion
+typeOfLet :: forall impl. ScopeTester impl => Assertion
 typeOfLet = typeOf @impl (contractsDir </> "type-attributes.mligo") (point 7 10) (interval 1 6 20)
 
-typeOfPascaligoLambdaArg :: forall impl. HasScopeForest impl IO => Assertion
+typeOfPascaligoLambdaArg :: forall impl. ScopeTester impl => Assertion
 typeOfPascaligoLambdaArg = typeOf @impl (contractsDir </> "lambda.ligo") (point 4 21) (interval 1 6 12)
 
-pascaligoLocalType :: forall impl. HasScopeForest impl IO => Assertion
+pascaligoLocalType :: forall impl. ScopeTester impl => Assertion
 pascaligoLocalType = typeOf @impl (contractsDir </> "local_type.ligo") (point 3 23) (interval 2 8 12)
 
 -- See LIGO-110

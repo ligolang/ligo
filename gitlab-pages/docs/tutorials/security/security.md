@@ -20,36 +20,36 @@ Let us look at a seemingly innocent wallet contract that stores an event log:
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-type parameter is Fund | Send of address * tez
+type parameter is
+  Fund
+| Send of address * tez
 
-type tx is Incoming of address * tez | Outgoing of address * tez
+type tx is
+  Incoming of address * tez
+| Outgoing of address * tez
 
 type storage is record [owner : address; transactionLog : list (tx)]
 
-function send (const dst : address; const amount_ : tez) is
-block {
+function send (const dst : address; const @amount : tez) is {
   const callee : option (contract (unit)) = Tezos.get_contract_opt (dst)
 } with
     case callee of [
-      Some (contract) ->
-        block {
-          const op = Tezos.transaction (Unit, amount_, contract)
-        } with (Outgoing (dst, amount_), list [op])
+      Some (contract) -> {
+        const op = Tezos.transaction (Unit, @amount, contract)
+      } with (Outgoing (dst, @amount), list [op])
     | None -> (failwith ("Could not send tokens") : tx * list (operation))
     ]
 
-function receive (const src : address; const amount_ : tez) is
-  (Incoming (src, amount_), (list [] : list (operation)))
+function receive (const src : address; const @amount : tez) is
+  (Incoming (src, @amount), (list [] : list (operation)))
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const result
   = case p of [
       Fund -> receive (Tezos.sender, Tezos.amount)
-    | Send (args) ->
-        block {
-          assert (Tezos.sender = s.owner and Tezos.amount = 0mutez)
-        } with send (args)
+    | Send (args) -> {
+        assert (Tezos.sender = s.owner and Tezos.amount = 0mutez)
+      } with send (args)
     ];
   const tx = result.0;
   const ops = result.1
@@ -66,16 +66,16 @@ type transaction = Incoming of address * tez | Outgoing of address * tez
 
 type storage = {owner : address; transactionLog : transaction list}
 
-let send (dst, amount_ : address * tez) =
+let send (dst, @amount : address * tez) =
   let callee : unit contract option = Tezos.get_contract_opt dst in
   match callee with
     Some contract ->
-      let op = Tezos.transaction () amount_ contract in
-      Outgoing (dst, amount_), [op]
+      let op = Tezos.transaction () @amount contract in
+      Outgoing (dst, @amount), [op]
   | None -> (failwith "Could not send tokens" : transaction * operation list)
 
-let receive (from, amount_ : address * tez) =
-  Incoming (from, amount_), ([] : operation list)
+let receive (from, @amount : address * tez) =
+  Incoming (from, @amount), ([] : operation list)
 
 let main (p, s : parameter * storage) =
   let tx, ops =
@@ -97,20 +97,20 @@ type transaction = Incoming((address, tez)) | Outgoing((address, tez));
 
 type storage = {owner: address, transactionLog: list(transaction) };
 
-let send = ((dst, amount_): (address, tez)) => {
+let send = ((dst, @amount): (address, tez)) => {
   let callee: option(contract(unit)) = Tezos.get_contract_opt(dst);
   switch(callee){
   | Some (contract) =>
       {
-        let op = Tezos.transaction((), amount_, contract);
-        (Outgoing (dst, amount_), [op])
+        let op = Tezos.transaction((), @amount, contract);
+        (Outgoing (dst, @amount), [op])
       }
   | None => (failwith("Could not send tokens") : (transaction, list(operation)))
   }
 };
 
-let receive = ((from, amount_): (address, tez)) =>
-  (Incoming (from, amount_), ([] : list(operation)));
+let receive = ((from, @amount): (address, tez)) =>
+  (Incoming (from, @amount), ([] : list(operation)));
 
 let main = ((p, s): (parameter, storage)) => {
   let tx, ops =
@@ -247,19 +247,18 @@ type storage is record [beneficiary : address; balances : map (address, tez)]
 
 type parameter is tez * contract (unit)
 
-function withdraw (const param : parameter; var s : storage) is
-block {
-  const amount_ = param.0;
+function withdraw (const param : parameter; var s : storage) is {
+  const @amount = param.0;
   const beneficiary = param.1;
   const beneficiary_addr = Tezos.address (beneficiary);
-  const balance_
+  const @balance
   = case Map.find_opt (beneficiary_addr, s.balances) of [
       Some (v) -> v
     | None -> 0mutez
     ];
-  if (balance < amount_) then failwith ("Insufficient balance") else skip;
-  const new_balance = balance_ - amount_;
-  const op = Tezos.transaction (Unit, amount_, beneficiary);
+  if balance < @amount then failwith ("Insufficient balance");
+  const new_balance = @balance - @amount;
+  const op = Tezos.transaction (Unit, @amount, beneficiary);
   s.balances [beneficiary_addr] := new_balance
 } with (list [op], s)
 ```
@@ -273,17 +272,17 @@ type storage = {beneficiary : address; balances : (address, tez) map}
 type parameter = tez * (unit contract)
 
 let withdraw (param, s : parameter * storage) =
-  let amount_, beneficiary = param in
+  let @amount, beneficiary = param in
   let beneficiary_addr = Tezos.address beneficiary in
-  let balance_ =
+  let @balance =
     match (Map.find_opt beneficiary_addr s.balances) with
       Some v -> v
     | None -> 0mutez in
   let new_balance =
-    if (balance_ >= amount_)
-    then balance_ - amount_
+    if (@balance >= @amount)
+    then @balance - @amount
     else (failwith "Insufficient balance" : tez) in
-  let op = Tezos.transaction () amount_ beneficiary in
+  let op = Tezos.transaction () @amount beneficiary in
   let new_balances =
     Map.update beneficiary_addr (Some new_balance) s.balances in
   [op], {s with balances = new_balances}
@@ -298,20 +297,20 @@ type storage = {beneficiary: address, balances: map(address, tez) };
 type parameter = (tez, contract(unit));
 
 let withdraw = ((param, s): (parameter, storage)) => {
-  let amount_, beneficiary = param;
+  let @amount, beneficiary = param;
   let beneficiary_addr = Tezos.address(beneficiary);
-  let balance_ =
+  let @balance =
     switch(Map.find_opt(beneficiary_addr, s.balances)){
     | Some (v) => v
     | None => 0mutez
     };
   let new_balance =
-    if (balance_ >= amount_) {
-      balance_ - amount_
+    if (@balance >= @amount) {
+      @balance - @amount
     } else {
       (failwith("Insufficient balance") : tez)
     };
-  let op = Tezos.transaction((), amount_, beneficiary);
+  let op = Tezos.transaction((), @amount, beneficiary);
   let new_balances =
     Map.update(beneficiary_addr, (Some new_balance), s.balances);
   ([op], {...s, balances: new_balances})
@@ -363,8 +362,7 @@ Let us consider the following example:
 ```pascaligo
 type storage is record [owner : address; beneficiaries : list (address)]
 
-function send_rewards (const beneficiary_addr : address) is
-block {
+function send_rewards (const beneficiary_addr : address) is {
   const maybe_contract : option (contract (unit))
   = Tezos.get_contract_opt (beneficiary_addr);
   const beneficiary
@@ -377,10 +375,9 @@ block {
 function main (const p : unit; const s : storage) is
   if Tezos.sender =/= s.owner
   then (failwith ("ACCESS_DENIED") : list (operation) * storage)
-  else
-    block {
-      const ops = List.map (send_rewards, s.beneficiaries)
-    } with (ops, s)
+  else {
+    const ops = List.map (send_rewards, s.beneficiaries)
+  } with (ops, s)
 ```
 
 </Syntax>
@@ -413,9 +410,9 @@ let main (p, s : unit * storage) =
 type storage = {owner: address, beneficiaries: list(address) };
 
 let send_rewards = (beneficiary_addr: address) => {
-  let maybe_contract: option(contract(unit)) = 
+  let maybe_contract: option(contract(unit)) =
     Tezos.get_contract_opt(beneficiary_addr);
-  let beneficiary = 
+  let beneficiary =
     switch(maybe_contract){
     | Some contract => contract
     | None => (failwith("CONTRACT_NOT_FOUND") : contract(unit))
@@ -423,11 +420,11 @@ let send_rewards = (beneficiary_addr: address) => {
   Tezos.transaction((), 5000000mutez, beneficiary)
 };
 
-let main = ((p, s): (unit, storage)) => 
+let main = ((p, s): (unit, storage)) =>
   if (Tezos.sender != s.owner) {
     (failwith("ACCESS_DENIED") : (list(operation), storage))
   } else {
-  
+
     let ops = List.map(send_rewards, s.beneficiaries);
     (ops, s)
   };

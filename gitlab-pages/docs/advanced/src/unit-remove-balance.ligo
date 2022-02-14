@@ -1,9 +1,13 @@
 // PART 0
-const under_test : option (string) = Some ("./gitlab-pages/docs/advanced/src/remove-balance.ligo")
+
+const under_test : option (string) =
+  Some ("./gitlab-pages/docs/advanced/src/remove-balance.ligo")
+
 const _u = Test.reset_state (5n, (list [] : list (nat)))
 
 // PART 1
-function bs_addr (const i : int) is Test.compile_value (Test.nth_bootstrap_account (i))
+function bs_addr (const i : int) is
+  Test.compile_value (Test.nth_bootstrap_account (i))
 
 const balances : michelson_program =
   Test.compile_expression_subst
@@ -20,13 +24,12 @@ function to_tez (const i : nat) is
 
 const test =
   List.iter (
-    (function (const threshold : nat ; const expected_size : nat) is
-      block {
-        const expected_size = Test.compile_value (expected_size);
-        const size_ = Test.compile_expression_subst
-          ( under_test,
-            [%pascaligo ({| Map.size (balances_under ($b, $threshold)) |} : ligo_program)],
-            list [("b", balances); ("threshold", to_tez (threshold))]
+    (function (const threshold : nat ; const expected_size : nat) is {
+       const expected_size = Test.compile_value (expected_size);
+       const size_ = Test.compile_expression_subst
+          (under_test,
+           [%pascaligo ({| Map.size (balances_under ($b, $threshold)) |} : ligo_program)],
+           list [("b", balances); ("threshold", to_tez (threshold))]
           );
         Test.log (("expected", expected_size));
         Test.log (("actual", size_));

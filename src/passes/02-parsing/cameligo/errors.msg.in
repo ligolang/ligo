@@ -11,7 +11,7 @@ interactive_expr: Begin Fun WILD ARROW Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1296,7 +1296,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If Verbatim Th
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1323,7 +1323,7 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes W
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1353,7 +1353,7 @@ interactive_expr: Begin If Verbatim Then Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1381,7 +1381,7 @@ interactive_expr: If Verbatim Then If Verbatim Then Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1408,7 +1408,7 @@ interactive_expr: If Verbatim Then Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1436,7 +1436,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW If Verbatim Th
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1464,7 +1464,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim Then Verbatim
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1491,7 +1491,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Verbatim WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1523,7 +1523,7 @@ interactive_expr: Begin If Verbatim Then If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1550,7 +1550,7 @@ interactive_expr: Begin If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1579,7 +1579,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1608,7 +1608,7 @@ interactive_expr: If Verbatim Then If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1637,7 +1637,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW If Verbatim Wi
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1665,7 +1665,7 @@ interactive_expr: If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1694,7 +1694,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If Verbatim Wi
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1722,7 +1722,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1755,9 +1755,9 @@ interactive_expr: Match UIdent With UIdent ARROW If UIdent Then Attr Let Rec Ide
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1786,9 +1786,9 @@ interactive_expr: Match UIdent With UIdent ARROW If UIdent Then Attr Let Ident E
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1816,9 +1816,9 @@ interactive_expr: Begin If UIdent Then Attr Let Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1846,9 +1846,9 @@ interactive_expr: Begin Attr Let Rec Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1876,9 +1876,9 @@ interactive_expr: Begin Attr Let Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1907,9 +1907,9 @@ interactive_expr: Begin Match UIdent With UIdent ARROW Attr Let Ident EQ UIdent 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1937,9 +1937,9 @@ interactive_expr: Match UIdent With UIdent ARROW Attr Let Rec Ident EQ UIdent Wi
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1968,9 +1968,9 @@ interactive_expr: If UIdent Then Match UIdent With UIdent ARROW Attr Let Rec Ide
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -1999,9 +1999,9 @@ interactive_expr: If UIdent Then Match UIdent With UIdent ARROW Attr Let Ident E
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2029,9 +2029,9 @@ interactive_expr: Match UIdent With UIdent ARROW Attr Let Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2060,9 +2060,9 @@ interactive_expr: Begin Match UIdent With UIdent ARROW Attr Let Rec Ident EQ UId
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2090,9 +2090,9 @@ interactive_expr: Begin If UIdent Then Attr Let Rec Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2120,7 +2120,7 @@ interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2148,7 +2148,7 @@ interactive_expr: Begin Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2177,7 +2177,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Wit
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2206,7 +2206,7 @@ interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2235,7 +2235,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec WILD E
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2263,7 +2263,7 @@ interactive_expr: Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2292,7 +2292,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec WILD E
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2320,7 +2320,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2348,7 +2348,7 @@ interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2376,7 +2376,7 @@ interactive_expr: Begin Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2405,7 +2405,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2434,7 +2434,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let WILD EQ By
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2463,7 +2463,7 @@ interactive_expr: If Verbatim Then Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2491,7 +2491,7 @@ interactive_expr: Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2520,7 +2520,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let WILD EQ By
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2548,7 +2548,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2576,9 +2576,9 @@ interactive_expr: Attr Let Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2607,9 +2607,9 @@ interactive_expr: If UIdent Then Attr Let Rec Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2638,9 +2638,9 @@ interactive_expr: If UIdent Then Attr Let Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -2668,9 +2668,9 @@ interactive_expr: Attr Let Rec Ident EQ UIdent With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 124, spurious reduction of production constant_constr_expr -> UIdent
-## In state 337, spurious reduction of production constr_expr -> constant_constr_expr
-## In state 336, spurious reduction of production call_expr_level -> constr_expr
+## In state 124, spurious reduction of production const_ctor_expr -> UIdent
+## In state 337, spurious reduction of production ctor_expr -> const_ctor_expr
+## In state 329, spurious reduction of production call_expr_level -> ctor_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3079,7 +3079,7 @@ interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3106,7 +3106,7 @@ interactive_expr: Begin Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3133,7 +3133,7 @@ interactive_expr: Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3161,7 +3161,7 @@ interactive_expr: If Verbatim Then Match Verbatim Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3194,7 +3194,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3224,7 +3224,7 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes Wi
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3372,7 +3372,7 @@ interactive_expr: Begin Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3506,7 +3506,7 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3536,7 +3536,7 @@ interactive_expr: LBRACE Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3573,7 +3573,7 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3603,7 +3603,7 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3769,7 +3769,7 @@ interactive_expr: LBRACKET Verbatim SEMI Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3798,7 +3798,7 @@ interactive_expr: LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3856,7 +3856,7 @@ interactive_expr: LPAR Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -3890,7 +3890,7 @@ interactive_expr: Lang Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -4384,10 +4384,10 @@ contract: Let UIdent COLON Ident With
 ##
 ## Ends in an error in state: 504.
 ##
-## let_binding -> constr_irrefutable type_annotation(type_expr) . EQ expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable type_annotation(type_expr) . EQ expr [ Type Module Let In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable type_annotation(type_expr)
+## ctor_irrefutable type_annotation(type_expr)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -4402,10 +4402,10 @@ contract: Let UIdent LPAR Type Ident RPAR COLON Ident With
 ##
 ## Ends in an error in state: 510.
 ##
-## let_binding -> constr_irrefutable par(type_param_list) type_annotation(type_expr) . EQ expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable par(type_param_list) type_annotation(type_expr) . EQ expr [ Type Module Let In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable par(type_param_list) type_annotation(type_expr)
+## ctor_irrefutable par(type_param_list) type_annotation(type_expr)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -4505,7 +4505,7 @@ contract: Let LBRACE Ident With
 ## field_pattern(irrefutable) -> Ident . EQ record_pattern(irrefutable) [ SEMI RBRACE ]
 ## field_pattern(irrefutable) -> Ident . EQ par(typed_irrefutable) [ SEMI RBRACE ]
 ## field_pattern(irrefutable) -> Ident . EQ par(irrefutable) [ SEMI RBRACE ]
-## field_pattern(irrefutable) -> Ident . EQ constr_irrefutable [ SEMI RBRACE ]
+## field_pattern(irrefutable) -> Ident . EQ ctor_irrefutable [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident
@@ -4554,10 +4554,10 @@ contract: Let LPAR UIdent UIdent With
 ##
 ## Ends in an error in state: 249.
 ##
-## par(non_const_constr_irrefutable) -> LPAR non_const_constr_irrefutable . RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
+## par(non_const_ctor_irrefutable) -> LPAR non_const_ctor_irrefutable . RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## LPAR non_const_constr_irrefutable
+## LPAR non_const_ctor_irrefutable
 ##
 
 Ill-formed parenthesised pattern.
@@ -5074,7 +5074,7 @@ contract: Directive Directive With
 ##
 
 Ill-formed contract.
-At this point, if the declaration is complete, one the following is
+At this point, if the declaration is complete, one of the following is
 expected:
   * another declaration;
   * the end of the file.
@@ -5104,7 +5104,7 @@ contract: Module UIdent EQ Struct Type Ident EQ UIdent EOF
 ##
 
 Ill-formed module declaration.
-At this point, if the declaration is complete, one the following is
+At this point, if the declaration is complete, one of the following is
 expected:
   * another declaration;
   * the end of the file.
@@ -5644,10 +5644,10 @@ interactive_expr: LPAR UIdent COLON LPAR Ident COMMA Ident RPAR With
 ##
 ## Ends in an error in state: 45.
 ##
-## type_constr_app -> type_constr_arg . Ident [ VBAR Type TIMES SEMI RPAR RBRACE Module Let In Ident End EQ EOF Directive COMMA Attr ARROW ]
+## type_ctor_app -> type_ctor_arg . Ident [ VBAR Type TIMES SEMI RPAR RBRACE Module Let In Ident End EQ EOF Directive COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## type_constr_arg
+## type_ctor_arg
 ##
 
 Ill-formed type expression.
@@ -5830,8 +5830,8 @@ contract: Let LPAR With
 ## par(irrefutable) -> LPAR . record_pattern(irrefutable) RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
 ## par(irrefutable) -> LPAR . par(typed_irrefutable) RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
 ## par(irrefutable) -> LPAR . par(irrefutable) RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
-## par(irrefutable) -> LPAR . constr_irrefutable RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
-## par(non_const_constr_irrefutable) -> LPAR . non_const_constr_irrefutable RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
+## par(irrefutable) -> LPAR . ctor_irrefutable RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
+## par(non_const_ctor_irrefutable) -> LPAR . non_const_ctor_irrefutable RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
 ## par(typed_irrefutable) -> LPAR . typed_irrefutable RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
 ## unit -> LPAR . RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
 ##
@@ -5866,7 +5866,7 @@ contract: Let LBRACE Ident EQ With
 ## field_pattern(irrefutable) -> Ident EQ . record_pattern(irrefutable) [ SEMI RBRACE ]
 ## field_pattern(irrefutable) -> Ident EQ . par(typed_irrefutable) [ SEMI RBRACE ]
 ## field_pattern(irrefutable) -> Ident EQ . par(irrefutable) [ SEMI RBRACE ]
-## field_pattern(irrefutable) -> Ident EQ . constr_irrefutable [ SEMI RBRACE ]
+## field_pattern(irrefutable) -> Ident EQ . ctor_irrefutable [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident EQ
@@ -6139,37 +6139,37 @@ contract: Let UIdent EQ With
 ##
 ## Ends in an error in state: 502.
 ##
-## let_binding -> constr_irrefutable EQ . expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable EQ . expr [ Type Module Let In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable EQ
+## ctor_irrefutable EQ
 ##
 contract: Let UIdent COLON Ident EQ With
 ##
 ## Ends in an error in state: 505.
 ##
-## let_binding -> constr_irrefutable type_annotation(type_expr) EQ . expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable type_annotation(type_expr) EQ . expr [ Type Module Let In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable type_annotation(type_expr) EQ
+## ctor_irrefutable type_annotation(type_expr) EQ
 ##
 contract: Let UIdent LPAR Type Ident RPAR EQ With
 ##
 ## Ends in an error in state: 508.
 ##
-## let_binding -> constr_irrefutable par(type_param_list) EQ . expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable par(type_param_list) EQ . expr [ Type Module Let In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable par(type_param_list) EQ
+## ctor_irrefutable par(type_param_list) EQ
 ##
 contract: Let UIdent LPAR Type Ident RPAR COLON Ident EQ With
 ##
 ## Ends in an error in state: 511.
 ##
-## let_binding -> constr_irrefutable par(type_param_list) type_annotation(type_expr) EQ . expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable par(type_param_list) type_annotation(type_expr) EQ . expr [ Type Module Let In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable par(type_param_list) type_annotation(type_expr) EQ
+## ctor_irrefutable par(type_param_list) type_annotation(type_expr) EQ
 ##
 contract: Let Ident LPAR Type Ident RPAR EQ With
 ##
@@ -6351,10 +6351,10 @@ contract: Let WILD COMMA UIdent COMMA With
 ##
 ## Ends in an error in state: 181.
 ##
-## nsepseq(core_irrefutable,COMMA) -> constr_irrefutable COMMA . nsepseq(core_irrefutable,COMMA) [ SEMI RPAR RBRACE LPAR EQ COLON ]
+## nsepseq(core_irrefutable,COMMA) -> ctor_irrefutable COMMA . nsepseq(core_irrefutable,COMMA) [ SEMI RPAR RBRACE LPAR EQ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable COMMA
+## ctor_irrefutable COMMA
 ##
 contract: Let LPAR RPAR COMMA With
 ##
@@ -6396,10 +6396,10 @@ contract: Let UIdent COMMA With
 ##
 ## Ends in an error in state: 203.
 ##
-## tuple(core_irrefutable) -> constr_irrefutable COMMA . nsepseq(core_irrefutable,COMMA) [ SEMI RPAR RBRACE LPAR EQ COLON ]
+## tuple(core_irrefutable) -> ctor_irrefutable COMMA . nsepseq(core_irrefutable,COMMA) [ SEMI RPAR RBRACE LPAR EQ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable COMMA
+## ctor_irrefutable COMMA
 ##
 contract: Let WILD COMMA With
 ##
@@ -7028,8 +7028,8 @@ contract: Let Ident LPAR With
 ## par(irrefutable) -> LPAR . record_pattern(irrefutable) RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
 ## par(irrefutable) -> LPAR . par(typed_irrefutable) RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
 ## par(irrefutable) -> LPAR . par(irrefutable) RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
-## par(irrefutable) -> LPAR . constr_irrefutable RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
-## par(non_const_constr_irrefutable) -> LPAR . non_const_constr_irrefutable RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
+## par(irrefutable) -> LPAR . ctor_irrefutable RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
+## par(non_const_ctor_irrefutable) -> LPAR . non_const_ctor_irrefutable RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
 ## par(type_param_list) -> LPAR . type_param_list RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ]
 ## par(typed_irrefutable) -> LPAR . typed_irrefutable RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
 ## unit -> LPAR . RPAR [ WILD UIdent LPAR LBRACE Ident EQ COLON Attr ARROW ]
@@ -7161,10 +7161,10 @@ interactive_expr: Fun WILD UIdent With
 ##
 ## Ends in an error in state: 266.
 ##
-## seq(core_irrefutable) -> constr_irrefutable . seq(core_irrefutable) [ EQ COLON ARROW ]
+## seq(core_irrefutable) -> ctor_irrefutable . seq(core_irrefutable) [ EQ COLON ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable
+## ctor_irrefutable
 ##
 interactive_expr: Fun LPAR RPAR With
 ##
@@ -7206,10 +7206,10 @@ interactive_expr: Fun UIdent With
 ##
 ## Ends in an error in state: 524.
 ##
-## nseq(core_irrefutable) -> constr_irrefutable . seq(core_irrefutable) [ EQ COLON ARROW ]
+## nseq(core_irrefutable) -> ctor_irrefutable . seq(core_irrefutable) [ EQ COLON ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable
+## ctor_irrefutable
 ##
 
 Ill-formed function parameters.
@@ -8405,7 +8405,7 @@ contract: Let LPAR UIdent COLON Ident With
 ## In state 50, spurious reduction of production fun_type_level -> prod_type_level
 ## In state 68, spurious reduction of production type_expr -> fun_type_level
 ## In state 219, spurious reduction of production type_annotation(type_expr) -> COLON type_expr
-## In state 253, spurious reduction of production typed_irrefutable -> constr_irrefutable type_annotation(type_expr)
+## In state 253, spurious reduction of production typed_irrefutable -> ctor_irrefutable type_annotation(type_expr)
 ##
 
 Ill-formed typed pattern.
@@ -8425,7 +8425,7 @@ interactive_expr: Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 329, spurious reduction of production call_expr_level -> core_expr
+## In state 330, spurious reduction of production call_expr_level -> core_expr
 ## In state 338, spurious reduction of production unary_expr_level -> call_expr_level
 ## In state 319, spurious reduction of production shift_expr_level -> unary_expr_level
 ## In state 348, spurious reduction of production mult_expr_level -> shift_expr_level
@@ -8462,11 +8462,11 @@ interactive_expr: Fun LBRACE Ident EQ UIdent With
 ##
 ## Ends in an error in state: 202.
 ##
-## field_pattern(irrefutable) -> Ident EQ constr_irrefutable . [ SEMI RBRACE ]
-## tuple(core_irrefutable) -> constr_irrefutable . COMMA nsepseq(core_irrefutable,COMMA) [ SEMI RBRACE ]
+## field_pattern(irrefutable) -> Ident EQ ctor_irrefutable . [ SEMI RBRACE ]
+## tuple(core_irrefutable) -> ctor_irrefutable . COMMA nsepseq(core_irrefutable,COMMA) [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident EQ constr_irrefutable
+## Ident EQ ctor_irrefutable
 ##
 contract: Let LBRACE Ident EQ WILD With
 ##
@@ -8607,19 +8607,19 @@ contract: Let LPAR UIdent With
 ##
 ## Ends in an error in state: 251.
 ##
-## par(irrefutable) -> LPAR constr_irrefutable . RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
-## tuple(core_irrefutable) -> constr_irrefutable . COMMA nsepseq(core_irrefutable,COMMA) [ RPAR COLON ]
-## typed_irrefutable -> constr_irrefutable . type_annotation(type_expr) [ RPAR ]
+## par(irrefutable) -> LPAR ctor_irrefutable . RPAR [ WILD UIdent SEMI RPAR RBRACE LPAR LBRACE Ident EQ COMMA COLON Attr ARROW ]
+## tuple(core_irrefutable) -> ctor_irrefutable . COMMA nsepseq(core_irrefutable,COMMA) [ RPAR COLON ]
+## typed_irrefutable -> ctor_irrefutable . type_annotation(type_expr) [ RPAR ]
 ##
 ## The known suffix of the stack is as follows:
-## LPAR constr_irrefutable
+## LPAR ctor_irrefutable
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 221, spurious reduction of production constant_constr_pattern -> UIdent
-## In state 183, spurious reduction of production constr_irrefutable -> constant_constr_pattern
+## In state 221, spurious reduction of production const_ctor_pattern -> UIdent
+## In state 183, spurious reduction of production ctor_irrefutable -> const_ctor_pattern
 ##
 
 Ill-formed pattern.
@@ -8710,11 +8710,11 @@ contract: Let UIdent LPAR Type Ident RPAR With
 ##
 ## Ends in an error in state: 507.
 ##
-## let_binding -> constr_irrefutable par(type_param_list) . EQ expr [ Type Module Let In End EOF Directive Attr ]
-## let_binding -> constr_irrefutable par(type_param_list) . type_annotation(type_expr) EQ expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable par(type_param_list) . EQ expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable par(type_param_list) . type_annotation(type_expr) EQ expr [ Type Module Let In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable par(type_param_list)
+## ctor_irrefutable par(type_param_list)
 ##
 contract: Let WILD LPAR Type Ident RPAR With
 ##
@@ -8845,14 +8845,14 @@ contract: Let UIdent With
 ##
 ## Ends in an error in state: 501.
 ##
-## let_binding -> constr_irrefutable . EQ expr [ Type Module Let In End EOF Directive Attr ]
-## let_binding -> constr_irrefutable . type_annotation(type_expr) EQ expr [ Type Module Let In End EOF Directive Attr ]
-## let_binding -> constr_irrefutable . par(type_param_list) EQ expr [ Type Module Let In End EOF Directive Attr ]
-## let_binding -> constr_irrefutable . par(type_param_list) type_annotation(type_expr) EQ expr [ Type Module Let In End EOF Directive Attr ]
-## tuple(core_irrefutable) -> constr_irrefutable . COMMA nsepseq(core_irrefutable,COMMA) [ LPAR EQ COLON ]
+## let_binding -> ctor_irrefutable . EQ expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable . type_annotation(type_expr) EQ expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable . par(type_param_list) EQ expr [ Type Module Let In End EOF Directive Attr ]
+## let_binding -> ctor_irrefutable . par(type_param_list) type_annotation(type_expr) EQ expr [ Type Module Let In End EOF Directive Attr ]
+## tuple(core_irrefutable) -> ctor_irrefutable . COMMA nsepseq(core_irrefutable,COMMA) [ LPAR EQ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## constr_irrefutable
+## ctor_irrefutable
 ##
 
 Ill-formed tuple declaration.

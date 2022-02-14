@@ -2,7 +2,6 @@
 module Language.LSP.Util
   ( sendError
   , sendWarning
-  , logShowId
   , reverseUriMap
   ) where
 
@@ -11,16 +10,6 @@ import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Language.LSP.Types qualified as J
 import Language.LSP.Server qualified as S
-
-import System.IO.Unsafe
-
-import Log qualified
-
--- | Unsafely log some message to the output.
--- This is made to mimic `Debug.Trace.traceShowId`'s behavior.
--- TODO: See LIGO-187.
-logShowId :: Show a => a -> a
-logShowId a = unsafePerformIO (a <$ Log.debug "DEBUG" (show a))
 
 -- | Ask the LSP client to display an error to the user.
 sendError :: S.MonadLsp config m => Text -> m ()

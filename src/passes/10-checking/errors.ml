@@ -514,7 +514,7 @@ let rec error_ppformat : display_format:string display_format ->
         | File _ -> ()
       in
       Format.fprintf f
-        "@[<hv>%a@.Pattern %ado not conform type %a @]"
+        "@[<hv>%a@.Pattern %anot of the expected type %a @]"
         Snippet.pp p.location pf p Ast_typed.PP.type_expression t
     | `Typer_redundant_pattern loc ->
       Format.fprintf f
@@ -823,8 +823,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_assert_equal (loc,expected,actual) ->
     let message = `String "bad types" in
-    let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression expected) in
-    let actual = `String (Format.asprintf "%a" Ast_typed.PP.type_expression actual) in
+    let expected = Ast_typed.Yojson.type_expression expected in
+    let actual = Ast_typed.Yojson.type_expression actual in
     let content = `Assoc [
       ("location", Location.to_yojson loc);
       ("message" , message);
@@ -1281,7 +1281,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_pattern_do_not_conform_type (p,t) ->
-    let message = `String "pattern do not conform type" in
+    let message = `String "pattern not of the expected type" in
     let pattern = (Stage_common.To_yojson.pattern Ast_core.Yojson.type_expression) p in
     let t = Ast_typed.Yojson.type_expression t in
     let content = `Assoc [

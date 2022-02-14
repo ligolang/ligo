@@ -20,6 +20,7 @@ let option' f o =
 let string s = `String s
 
 let list f lst = `List (List.map ~f:f lst)
+let pair fa fb (a,b) = `Tuple [ fa a ; fb b ]
 
 let label_map f lmap =
   let lst = List.sort ~compare:(fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
@@ -90,6 +91,12 @@ let lambda expression type_expression {binder=b;output_type;result} : json =
   `Assoc [
     ("binder", binder type_expression b);
     ("output_type", option' type_expression output_type);
+    ("result", expression result);
+  ]
+
+let type_abs expression {type_binder;result} : json =
+  `Assoc [
+    ("type_binder", type_variable_to_yojson type_binder);
     ("result", expression result);
   ]
 
@@ -198,8 +205,7 @@ let collect_type = function
   | Set  -> `List [ `String "Set"; `Null]
   | List -> `List [ `String "List"; `Null]
   | Any  -> `List [ `String "Any"; `Null]
-
-let for_each expression {fe_binder;collection;collection_type;fe_body} =
+let for_each expression {fe_binder;collection;fe_body;collection_type} =
   `Assoc [
     ("binder",  `List [ expression_variable_to_yojson @@ fst fe_binder; option expression_variable_to_yojson @@ snd fe_binder]);
     ("collection", expression collection);

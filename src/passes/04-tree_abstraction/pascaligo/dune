@@ -3,6 +3,15 @@
  (public_name ligo.pascaligo)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils cst ast_imperative predefined)
+ (libraries
+    ;; Vendor
+    simple-utils
+    tezos-utils
+    ;; LIGO
+    cst
+    lexing_shared
+    ast_imperative
+    tree_abstraction_shared
+    predefined)
  (preprocess
   (pps ppx_poly_constructor)))

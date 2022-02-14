@@ -15,13 +15,13 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
     | O.T_app tc ->
       let tc = type_app self tc in
       return @@ I.T_app tc
-    | O.T_sum sum->
+    | O.T_sum {fields ; attributes} ->
       (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
-      let sum = rows self sum in
-      return @@ I.T_sum sum
-    | O.T_record record ->
-      let record = rows self record in
-      return @@ I.T_record record
+      let fields = List.map ~f:(fun (k,v) -> (k,row_element self v)) (O.LMap.to_kv_list fields) in
+      return @@ I.T_sum { fields ; attributes }
+    | O.T_record {fields ; attributes} ->
+      let fields = List.map ~f:(fun (k,v) -> (k,row_element self v)) (O.LMap.to_kv_list fields) in
+      return @@ I.T_record { fields ; attributes }
     | O.T_tuple tuple ->
       let tuple = List.map ~f:self tuple in
       return @@ I.T_tuple tuple
@@ -58,6 +58,9 @@ let rec decompile_expression : O.expression -> I.expression =
   | O.E_lambda lamb ->
     let lamb = lambda self self_type lamb in
     return @@ I.E_lambda lamb
+  | O.E_type_abstraction ta ->
+    let ta = type_abs self ta in
+    return @@ I.E_type_abstraction ta
   | O.E_recursive recs ->
     let recs = recursive self self_type recs in
     return @@ I.E_recursive recs
@@ -95,7 +98,7 @@ let rec decompile_expression : O.expression -> I.expression =
     return @@ I.E_matching {matchee ; cases}
   | O.E_record recd ->
     let recd = record self recd in
-    return @@ I.E_record recd
+    return @@ I.E_record (I.LMap.to_kv_list recd)
   | O.E_accessor acc ->
     let acc = accessor self acc in
     return @@ I.E_accessor acc

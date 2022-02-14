@@ -87,17 +87,18 @@ library:
     - data-default
     - directory
     - dlist
-    - exceptions
     - fastsum
     - filepath
     - interpolate
+    - katip
     - lens
     - lsp-types
     - mtl
     - pretty
     - process
     - regex-tdfa
-    - safe-exceptions
+    - template-haskell
+    - temporary
     - th-compat
     - text
     - transformers
@@ -117,16 +118,15 @@ executables:
       - clock
       - containers
       - data-default
-      - exceptions
       - focus
       - hashable
       - hslogger
       - interpolate
+      - katip
       - lens
       - ligo-squirrel
       - lsp
       - mtl
-      - safe-exceptions
       - stm
       - stm-containers
       - text
@@ -158,6 +158,7 @@ executables:
 
     dependencies:
       - ligo-squirrel
+      - mtl
       - optparse-applicative
       - with-utf8
 
@@ -183,13 +184,13 @@ tests:
       - HUnit
       - hspec-expectations
       - tasty-hunit
-      - safe-exceptions
       - filepath
       - directory
       - lsp-types
       - text
       - lens
       - template-haskell
+      - unliftio
       - unordered-containers
 
     ghc-options:
@@ -224,11 +225,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
-      - safe-exceptions
       - tasty
       - tasty-hunit
       - template-haskell
       - text
+      - unliftio
       - unordered-containers
 
     build-tools:
@@ -256,11 +257,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
-      - safe-exceptions
       - tasty
       - tasty-hunit
       - template-haskell
       - text
+      - unliftio
       - unordered-containers
 
     build-tools:
@@ -288,11 +289,11 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
-      - safe-exceptions
       - tasty
       - tasty-hunit
       - template-haskell
       - text
+      - unliftio
       - unordered-containers
 
     build-tools:

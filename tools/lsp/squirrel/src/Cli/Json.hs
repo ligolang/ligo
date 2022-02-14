@@ -1,7 +1,7 @@
--- | ligo version: a98a94dd5cadb791a2d4db1d60dde73b1a132811
+-- | ligo version: 0.34.0
 -- | The definition of type as is represented in ligo JSON output
 
-{-# LANGUAGE DeriveGeneric, RecordWildCards, TupleSections #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Cli.Json
   ( LigoError (..)
@@ -23,13 +23,12 @@ module Cli.Json
   , fromLigoErrorToMsg
   , fromLigoTypeFull
   , mkLigoError
-  , toScopedDecl
   , prepareField
   )
 where
 
 import Control.Applicative (Alternative ((<|>)), liftA2)
-import Control.Lens.Operators
+import Control.Lens.Operators ((??))
 import Control.Monad.State
 import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
@@ -45,8 +44,6 @@ import GHC.Generics
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
-import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton hiding (String)
 import Duplo.Lattice
 import Duplo.Pretty
@@ -79,7 +76,7 @@ data LigoErrorContent = LigoErrorContent
     _lecMessage :: Text
     -- | Location of the error
     -- `"location"`
-  , _lecLocation :: LigoRange
+  , _lecLocation :: Maybe LigoRange
   }
   deriving stock (Eq, Generic, Show)
 
@@ -314,10 +311,19 @@ instance ToJSON LigoError where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 instance FromJSON LigoErrorContent where
-  parseJSON = withObject "error_content" $ \o -> do
-    _lecMessage <- o .: "message"
-    _lecLocation <- parseLigoRange "location_error_inner_range" =<< o .: "location"
-    return LigoErrorContent {..}
+  parseJSON = asum . (parsers ??)
+    where
+      parsers =
+        [ withObject "error_content" \o -> do
+          _lecMessage <- o .: "message"
+          _lecLocation <- traverse (parseLigoRange "location_error_inner_range") =<< o .:? "location"
+          return LigoErrorContent {..}
+        , withText "error_content" \t -> do
+          let
+            _lecMessage = t
+            _lecLocation = Nothing
+          pure LigoErrorContent {..}
+        ]
 
 instance ToJSON LigoErrorContent where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 3}
@@ -596,15 +602,13 @@ parseLigoTypeMeta _ = do
 ----------------------------------------------------------------------------
 
 instance Pretty LigoError where
-  pp (LigoError _ stage (LigoErrorContent msg at)) = mconcat
-    [ text "Error in ", text $ show stage
-    , text "\n\nat: ", pp $ fromLigoRangeOrDef at
+  pp (LigoError status stage (LigoErrorContent msg at)) = mconcat
+    [ pp status <+> " in ", text $ show stage
+    , case at of
+        Nothing -> mempty
+        Just at' -> text "\n\nat: " <> pp (fromLigoRangeOrDef at')
     , text "\n\n" <> pp msg
     ]
-    where
-      _fromLigoRange r@(LigoRange _ _) =
-        "[" <> pp (fromMaybe (error "impossible") (mbFromLigoRange r)) <> "]"
-      _fromLigoRange (Virtual _) = text "virtual"
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -615,9 +619,9 @@ fromLigoErrorToMsg :: LigoError -> Msg
 fromLigoErrorToMsg LigoError
   { _leContent = LigoErrorContent
       { _lecMessage = err
-      , _lecLocation = fromLigoRangeOrDef -> at
+      , _lecLocation = fmap fromLigoRangeOrDef -> at
       }
-  } = (at, Error (err :: Text) [])
+  } = (fromMaybe (point 0 0) at, Error (err :: Text) [])
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --
@@ -785,7 +789,7 @@ fromLigoTypeFull = enclose . \case
     enclose = flip evalState defaultState
 
     defaultState :: Product Info
-    defaultState = [] :> [] :> point 1 1 :> N :> CodeSource "" :> Nil
+    defaultState = [] :> [] :> point 1 1 :> CodeSource "" :> Nil
 
 mkLigoError :: Product Info -> Text -> LIGO Info
 mkLigoError p msg = make' . (p,) $ Error msg [p :< inject (Name "ligo error")]
@@ -808,25 +812,3 @@ make' (i, f)
     ges = List.filter (not . (`leq` i)) (extract <$> toList f)
     r = getElem (List.minimum ges) `merged` getElem (List.maximum ges)
     i' = putElem r i
-
--- | Converts ligo scope to our internal representation.
-toScopedDecl :: LigoDefinitionScope -> ScopedDecl
-toScopedDecl
-  LigoDefinitionScope
-    { _ldsName = _sdName
-    , _ldsRange = (fromMaybe (error "no origin range") . mbFromLigoRange -> _sdOrigin)
-    , _ldsBodyRange = (mbFromLigoRange -> _vdsInitRange)
-    , _ldsT
-    } =
-    ScopedDecl -- TODO fill in full information when we actually use ligo scopes
-      { _sdName
-      , _sdOrigin
-      , _sdRefs = []
-      , _sdDoc = []
-      , _sdDialect = Pascal -- TODO: we have no information regarding dealect in scope output
-      , _sdSpec = ValueSpec $ ValueDeclSpecifics
-        { _vdsInitRange
-        , _vdsParams = Nothing
-        , _vdsTspec = parseTypeDeclSpecifics . fromLigoTypeFull <$> _ldsT
-        }
-      }

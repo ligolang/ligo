@@ -21,7 +21,6 @@ import Test.HUnit (Assertion)
 
 import AST.Capabilities.Hover (hoverDecl)
 import AST.Pretty (docToText, ppToText)
-import AST.Scope (HasScopeForest)
 import AST.Scope.ScopedDecl (Type (..), lppLigoLike)
 import AST.Skeleton (Lang (..))
 
@@ -29,7 +28,7 @@ import Range (Range (..), interval, point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldBe)
-import Test.Common.Util (readContractWithScopes)
+import Test.Common.Util (ScopeTester, readContractWithScopes)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "hover"
@@ -45,7 +44,7 @@ data HoverTest = HoverTest
 hover' :: Range -> Text -> Type -> Lang -> HoverTest
 hover' definition name type' = HoverTest definition name type' []
 
-checkHover :: forall parser. HasScopeForest parser IO => FilePath -> Range -> HoverTest -> Assertion
+checkHover :: forall parser. ScopeTester parser => FilePath -> Range -> HoverTest -> Assertion
 checkHover fp reference HoverTest{..} = do
   contract <- readContractWithScopes @parser fp
   case hoverDecl reference contract of
@@ -58,19 +57,19 @@ checkHover fp reference HoverTest{..} = do
         _  -> Just (ppToText htDoc) `shouldBe` find (/= "") doc
     _ -> expectationFailure "Hover definition is not of the expected type"
 
-unit_hover_apply_type :: forall parser. HasScopeForest parser IO => Assertion
+unit_hover_apply_type :: forall parser. ScopeTester parser => Assertion
 unit_hover_apply_type = do
   fp <- makeAbsolute $ contractsDir </> "apply-type.ligo"
   let type' = ApplyType (AliasType "contract") [AliasType "unit"]
   checkHover @parser fp (point 3 23){_rFile = fp} (hover' (interval 2 9 10){_rFile = fp} "c" type' Pascal)
 
-unit_hover_inferred_simple :: forall parser. HasScopeForest parser IO => Assertion
+unit_hover_inferred_simple :: forall parser. ScopeTester parser => Assertion
 unit_hover_inferred_simple = do
   fp <- makeAbsolute $ contractsDir </> "simple.mligo"
   let type' = AliasType "int"
   checkHover @parser fp (point 2 9){_rFile = fp} (hover' (interval 1 5 6){_rFile = fp} "x" type' Caml)
 
-unit_hover_inferred_recursion :: forall parser. HasScopeForest parser IO => Assertion
+unit_hover_inferred_recursion :: forall parser. ScopeTester parser => Assertion
 unit_hover_inferred_recursion = do
   fp <- makeAbsolute $ contractsDir </> "recursion.mligo"
   let type' = AliasType "int"

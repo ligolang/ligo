@@ -1,9 +1,10 @@
 PACKAGE := squirrel
 
-LIGO_LOG_LEVEL = LIGO_LOG_LEVEL="DEBUG"
-BUILD_FLAGS = $(LIGO_LOG_LEVEL)
+LIGO_SEVERITY = LIGO_SEVERITY="debug"
+LIGO_ENV = LIGO_ENV="development"
+BUILD_FLAGS = $(LIGO_SEVERITY) $(LIGO_ENV)
 
-STACK_DEV_OPTIONS = --fast --ghc-options '-Werror -freverse-errors'
+STACK_DEV_OPTIONS = --fast --ghc-options '-Werror -freverse-errors' --test --no-run-tests
 STACK_DEV = $(BUILD_FLAGS) stack build $(STACK_DEV_OPTIONS)
 
 .DEFAULT_GOAL := all

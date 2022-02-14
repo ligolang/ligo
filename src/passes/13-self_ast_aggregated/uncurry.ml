@@ -87,6 +87,8 @@ let rec usage_in_expr ~raise (f : expression_variable) (expr : expression) : usa
     usages (List.map ~f:self arguments)
   | E_lambda { binder; result } ->
     self_binder [binder] result
+  | E_type_abstraction { type_binder = _; result } ->
+    self result
   | E_recursive { fun_name; fun_type = _; lambda = { binder; result } } ->
     self_binder [fun_name; binder] result
   | E_let_in { let_binder; rhs; let_result; attr = _ } ->
@@ -198,6 +200,9 @@ let rec uncurry_in_expression ~raise
   | E_lambda { binder; result } ->
     let result = self_binder [binder] result in
     return (E_lambda { binder; result })
+  | E_type_abstraction { type_binder; result } ->
+    let result = self result in
+    return (E_type_abstraction { type_binder; result })
   | E_recursive { fun_name; fun_type; lambda = { binder; result } } ->
     let result = self_binder [fun_name; binder] result in
     return (E_recursive { fun_name; fun_type; lambda = { binder; result } })
