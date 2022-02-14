@@ -142,6 +142,98 @@ let is_binary_op op : bool =
 let is_ternary_op op : bool =
   get_arity op |> Option.exists ~f:((=) 3)
 
+let is_injective : string -> bool = function
+ (* stack things *)
+ | "DIP" -> false
+ | "DROP" -> false
+ | "DUP" -> true
+ | "SWAP" -> true
+ | "DIG" -> true
+ | "DUG" -> true
+ (* control *)
+ | "FAILWITH" -> false
+ | "EXEC" -> false
+ | "IF" -> false
+ | "IF_CONS" -> false
+ | "IF_LEFT" -> false
+ | "IF_NONE" -> false
+ | "LOOP" -> false
+ | "MAP" -> false
+ | "ITER" -> false
+ | "LOOP_LEFT" -> false
+ (* internal ops *)
+ | "CREATE_ACCOUNT" -> true
+ | "CREATE_CONTRACT" -> false
+ | "TRANSFER_TOKENS" -> false
+ | "SET_DELEGATE" -> true
+ (* tez arithmetic (can fail) *)
+ | "ADD" -> false
+ | "MUL" -> false
+ | "SUB" -> false (* can fail for tez *)
+ (* etc *)
+ | "CONCAT" -> false (* sometimes 1, sometimes 2 :( *)
+ | "CAST" -> false
+ | "RENAME" -> true
+ (* stuff *)
+ | "PACK" -> false
+ | "UNPACK" -> true
+ | "BLAKE2B" -> true
+ | "SHA256" -> true
+ | "SHA512" -> true
+ | "ABS" -> true
+ | "AMOUNT" -> true
+ | "AND" -> false
+ | "BALANCE" -> true
+ | "CAR" -> false
+ | "CDR" -> false
+ | "CHECK_SIGNATURE" -> true
+ | "COMPARE" -> false
+ | "CONS" -> true
+ | "IMPLICIT_ACCOUNT" -> true
+ | "EDIV" -> false
+ | "EMPTY_MAP" -> true
+ | "EMPTY_SET" -> true
+ | "EQ" -> false
+ | "GE" -> false
+ | "GET" -> false
+ | "GT" -> false
+ | "HASH_KEY" -> true
+ | "INT" -> true
+ | "LAMBDA" -> true
+ | "LE" -> false
+ | "LEFT" -> true
+ | "LSL" -> true
+ | "LSR" -> true
+ | "LT" -> false
+ | "MEM" -> false
+ | "NEG" -> false
+ | "NEQ" -> false
+ | "NIL" -> true
+ | "NONE" -> true
+ | "NOT" -> false
+ | "NOW" -> true
+ | "OR" -> false
+ | "PAIR" -> true
+ | "PUSH" -> true
+ | "RIGHT" -> true
+ | "SIZE" -> false
+ | "SOME" -> true
+ | "SOURCE" -> true
+ | "SENDER" -> true
+ | "SELF" -> true
+ | "SLICE" -> true
+ | "STEPS_TO_QUOTA" -> true
+ | "UNIT" -> true
+ | "UPDATE" -> false
+ | "XOR" -> true
+ | "ADDRESS" -> false
+ | "CONTRACT" -> true
+ | "ISNAT" -> true
+ | "CHAIN_ID" -> true
+ | "EMPTY_BIG_MAP" -> true
+ | "APPLY" -> false
+ | _ -> false
+
 let unseq : _ michelson -> _ michelson list = function
   | Seq (_, args) -> args
   | x -> [x]
