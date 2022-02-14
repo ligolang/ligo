@@ -472,37 +472,13 @@ let opt_dip3 : _ peep3 = function
             proj1 ]
   | _ -> None
 
-let opt_cond ~type_map : _ peep1 = function
+let opt_cond ?pre_type : _ peep1 = function
   | Prim (l, p, [bt; bf], annot) when is_cond p -> (
-    let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"; "CONS"; "SIZE"; "UPDATE"; "ADD"; "SUB"; "MUL"; "EDIV"; "ABS"; "ISNAT"; "INT"; "NEG"; "LSL"; "LSR"; "OR"; "AND"; "XOR"; "NOT"; "COMPARE"; "EQ"; "NEQ"; "LT"; "GT"; "LE"; "GE"; "SLICE"; "CONCAT"; "PACK"; "SENDER"; "AMOUNT"; "ADDRESS"; "SOURCE"; "BALANCE"; "LEVEL"; "NOW"] in
-    let force_z = ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"; "UPDATE"] in
-    let no_force = ["NIL"; "NONE"; "LEFT"; "RIGHT"] in
-    let eq_type ll lr =
-      let rec aux_eq l r =
-        let open Tezos_micheline.Micheline in
-        match l, r with
-        | Prim (_, s, l, a), Prim (_, s', l', a') when String.equal s s' && List.equal String.equal a a' -> (
-           match List.zip l l' with
-           | List.Or_unequal_lengths.Unequal_lengths ->
-              false
-           | Ok l ->
-              List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) l)
-        )
-        | Seq (_, l), Seq (_, l') -> (
-           match List.zip l l' with
-           | List.Or_unequal_lengths.Unequal_lengths ->
-              false
-           | Ok l ->
-              List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) l)
-        )
-        | _, _ -> false in
-      let _tl = List.Assoc.find_exn type_map ~equal:Int.equal ll in
-      let _tr = List.Assoc.find_exn type_map ~equal:Int.equal lr in
-      match List.zip _tl _tr with
-      | List.Or_unequal_lengths.Unequal_lengths ->
-         false
-      | Ok l ->
-         List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) l) in
+    let eq_type ll lr = match pre_type with | None -> true | Some pre_type -> eq_type (pre_type ll) (pre_type lr) in
+    let f = match pre_type with | Some _ -> (fun _ -> true) | None -> is_injective in
+    let force_nil = List.filter ~f ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"; "CONS"; "SIZE"; "UPDATE"; "ADD"; "SUB"; "MUL"; "EDIV"; "ABS"; "ISNAT"; "INT"; "NEG"; "LSL"; "LSR"; "OR"; "AND"; "XOR"; "NOT"; "COMPARE"; "EQ"; "NEQ"; "LT"; "GT"; "LE"; "GE"; "SLICE"; "CONCAT"; "PACK"; "SENDER"; "AMOUNT"; "ADDRESS"; "SOURCE"; "BALANCE"; "LEVEL"; "NOW"] in
+    let force_z = List.filter ~f ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"; "UPDATE"] in
+    let no_force = List.filter ~f ["NIL"; "NONE"; "LEFT"; "RIGHT"] in
     let pred = function
         Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_z @ no_force) l -> true
       | _ -> false in
@@ -510,27 +486,6 @@ let opt_cond ~type_map : _ peep1 = function
         Prim (ll, l, [], _), Prim (lr, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r && eq_type ll lr -> true
       | Prim (ll, l, _, _), Prim (lr, r, _, _) when List.mem ~equal:String.equal no_force l && String.equal l r && eq_type ll lr -> true
       | Prim (ll, l, [Int (_, n)], _), Prim (lr, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_z l && String.equal l r && Z.equal n m && eq_type ll lr -> true
-      | _ -> false in
-    match last_is eq pred bt, last_is eq pred bf with
-    | Some l_op, Some r_op when eq l_op r_op ->
-       let bt = remove_last pred bt in
-       let bf = remove_last pred bf in
-       Some [Prim (l, p, [bt; bf], annot); l_op]
-    | _ -> None)
-  | _ -> None
-
-let opt_cond_inj  : _ peep1 = function
-  | Prim (l, p, [bt; bf], annot) when is_cond p -> (
-    let force_nil = ["SWAP"; "PAIR"; "UNPAIR"; "DUP"; "UNIT"; "SOME"] in
-    let force_z = ["PAIR"; "UNPAIR"; "DUP"; "DIG"; "DUG"] in
-    let no_force = ["NIL"; "NONE"] in
-    let pred = function
-        Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_z @ no_force) l -> true
-      | _ -> false in
-    let eq = fun m1 m2 -> match m1, m2 with
-        Prim (_ll, l, [], _), Prim (_lr, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r -> true
-      | Prim (_ll, l, _, _), Prim (_lr, r, _, _) when List.mem ~equal:String.equal no_force l && String.equal l r -> true
-      | Prim (_ll, l, [Int (_, n)], _), Prim (_lr, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_z l && String.equal l r && Z.equal n m -> true
       | _ -> false in
     match last_is eq pred bt, last_is eq pred bf with
     | Some l_op, Some r_op when eq l_op r_op ->
@@ -828,7 +783,7 @@ let rec opt_strip_annots (x : _ michelson) : _ michelson =
     end
   | x -> x
 
-let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
+let optimize : Environment.Protocols.t -> 'l michelson -> 'l michelson =
   fun proto x ->
   ignore proto;
   let x = flatten_seqs x in
@@ -839,7 +794,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep3 opt_dip3 ;
                      peephole @@ peep2 opt_dip2 ;
                      peephole @@ peep1 opt_dip1 ;
-                     peephole @@ peep1 opt_cond_inj ;
+                     peephole @@ peep1 opt_cond ;
                      peephole @@ peep2 opt_swap2 ;
                      peephole @@ peep3 opt_beta3 ;
                      peephole @@ peep5 opt_beta5 ;
