@@ -294,6 +294,12 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "func_michelson_loop.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_many_imports.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
