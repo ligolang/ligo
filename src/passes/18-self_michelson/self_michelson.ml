@@ -826,23 +826,24 @@ let rec optimize_with_types ~raise : Environment.Protocols.t -> 'l michelson -> 
   let node_string_of_canonical c = let c = Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.strings_of_prims c in
                                    Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
   let canonical, locs = Tezos_micheline.Micheline.extract_locations contract in
+  let recover_loc l = List.Assoc.find_exn locs ~equal:Int.equal l in
   let canonical = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> failwith "Could not parse primitives from strings") @@
             Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.prims_of_strings canonical in
   let canonical = Tezos_micheline.Micheline.inject_locations (fun x -> x) canonical in
   match canonical with
-    | Seq (l, parameter :: storage :: expr :: rest) ->
+    | Seq (l, parameter :: storage :: code :: rest) ->
        let map, _ = Proto_alpha_utils.Trace.trace_tzresult_lwt ~raise (fun _ -> failwith "Could not type-check Michelson contract") @@
                       Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract canonical in
        let type_map = List.map ~f:(fun (i, (l, _)) -> (i, List.map ~f:(fun (c, _) -> node_string_of_canonical c) l)) map in
-       let expr = Tezos_micheline.Micheline.map_node (fun l -> l)
-                    (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) expr in
-       let changed, expr = on_seqs (peephole (peep1 @@ opt_cond ~type_map)) expr in
-       let expr = if changed then optimize proto expr else expr in
-       let expr = Tezos_micheline.Micheline.map_node (fun l -> List.Assoc.find_exn locs ~equal:Int.equal l) (fun x -> x) expr in
-       let l = List.Assoc.find_exn locs ~equal:Int.equal l in
+       let code = Tezos_micheline.Micheline.map_node (fun l -> l)
+                    (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) code in
+       let pre_type l = List.Assoc.find_exn type_map ~equal:Int.equal l in
+       let changed, code = on_seqs (peephole (peep1 @@ opt_cond ~pre_type)) code in
+       let code = if changed then optimize proto code else code in
+       let code = Tezos_micheline.Micheline.map_node recover_loc (fun x -> x) code in
        let recover_locs node =
-         Tezos_micheline.Micheline.map_node (fun l -> List.Assoc.find_exn locs ~equal:Int.equal l)
+         Tezos_micheline.Micheline.map_node recover_loc
            (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) node in
-       let contract = Seq (l, [recover_locs parameter ; recover_locs storage; expr] @ (List.map ~f:recover_locs rest)) in
+       let contract = Seq (recover_loc l, [recover_locs parameter ; recover_locs storage; code] @ (List.map ~f:recover_locs rest)) in
        if changed then optimize_with_types ~raise proto contract else contract
     | _ -> contract
