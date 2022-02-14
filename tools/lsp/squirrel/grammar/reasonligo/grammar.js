@@ -217,7 +217,7 @@ module.exports = grammar({
       "module",
       field("moduleName", $.ModuleName),
       "=",
-      common.sepBy('.', field("module", $.ModuleName))
+      common.sepBy1('.', field("module", $.ModuleName))
     ),
 
     /// STATEMENTS
