@@ -306,7 +306,7 @@ module.exports = grammar({
         ),
         seq(
           'case',
-          $._expr,
+          field("subject", $._expr),
           'of',
           '[',
           optional('|'),
