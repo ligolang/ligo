@@ -234,9 +234,9 @@ let (<$>) f a = Command.Param.return f <*> a
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
-  let f source_file entry_point oc_views syntax protocol_version display_format disable_typecheck enabled_typed_opt michelson_format output_file warn werror michelson_comments project_root  () =
+  let f source_file entry_point oc_views syntax protocol_version display_format disable_typecheck enable_typed_opt michelson_format output_file warn werror michelson_comments project_root  () =
     return_result ~return ~warn ?output_file @@
-    Api.Compile.contract ~werror source_file entry_point oc_views syntax protocol_version display_format disable_typecheck enabled_typed_opt michelson_format michelson_comments project_root  in
+    Api.Compile.contract ~werror source_file entry_point oc_views syntax protocol_version display_format disable_typecheck enable_typed_opt michelson_format michelson_comments project_root  in
   let summary   = "compile a contract." in
   let readme () = "This sub-command compiles a contract to Michelson \
                   code. It expects a source file and an entrypoint \
@@ -444,15 +444,15 @@ let list_declarations =
   (f <$> source_file <*> syntax <*> display_format)
 
 let measure_contract =
-  let f source_file entry_point oc_views syntax protocol_version display_format warn werror project_root  () =
+  let f source_file entry_point oc_views syntax protocol_version display_format enable_typed_opt warn werror project_root  () =
     return_result ~return ~warn @@
-    Api.Info.measure_contract source_file entry_point oc_views syntax protocol_version display_format werror project_root 
+    Api.Info.measure_contract source_file entry_point oc_views syntax protocol_version display_format enable_typed_opt werror project_root
   in
   let summary   = "measure a contract's compiled size in bytes." in
   let readme () = "This sub-command compiles a source file and measures \
                   the contract's compiled size in bytes." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> enable_michelson_typed_opt <*> warn <*> werror <*> project_root )
 
 let get_scope =
   let f source_file protocol_version libs display_format with_types () =

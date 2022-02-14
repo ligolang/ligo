@@ -18,6 +18,10 @@ let%expect_test _ =
   [%expect {|
     1531 bytes |}] ;
 
+  run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ; "--enable-michelson-typed-opt" ] ;
+  [%expect {|
+    1503 bytes |}] ;
+
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
     420 bytes |}] ;
