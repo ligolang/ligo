@@ -6,9 +6,10 @@ open Trace
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise ~options :
   ?disable_typecheck:bool ->
+  ?enable_typed_opt:bool ->
   Stacking.compiled_expression ->
   (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
-    fun ?(disable_typecheck= false) compiled views ->
+    fun ?(disable_typecheck= false) ?(enable_typed_opt = false) compiled views ->
       let views =
         List.map
           ~f:(fun (name, view) ->
@@ -37,8 +38,14 @@ let build_contract ~raise ~options :
             (Memory_proto_alpha.prims_of_strings contract) in
         let _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
           Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract' in
-        let contract = Self_michelson.optimize_with_types ~raise options.Compiler_options.protocol_version contract in
-        contract
+        if enable_typed_opt then
+          let typer_oracle c =
+            let map, _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
+                           Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract c in
+            map in
+          Self_michelson.optimize_with_types ~raise ~typer_oracle options.Compiler_options.protocol_version contract
+        else
+          contract
 
 let measure ~raise = fun m ->
   Trace.trace_tzresult_lwt ~raise (main_could_not_serialize) @@

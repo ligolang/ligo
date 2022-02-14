@@ -7,7 +7,7 @@ module Run = Ligo_run.Of_michelson
 let no_comment node =
   Tezos_micheline.Micheline.(inject_locations (fun _ -> Simple_utils.Location.generated) (strip_locations node))
 
-let contract ?werror source_file entry_point declared_views syntax protocol_version display_format disable_typecheck michelson_code_format michelson_comments project_root () =
+let contract ?werror source_file entry_point declared_views syntax protocol_version display_format disable_typecheck enable_typed_opt michelson_code_format michelson_comments project_root () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ?werror ~display_format (Formatter.Michelson_formatter.michelson_format michelson_code_format michelson_comments) get_warnings @@
       fun ~raise ->
@@ -19,7 +19,7 @@ let contract ?werror source_file entry_point declared_views syntax protocol_vers
       let views =
         Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file
       in
-      Ligo_compile.Of_michelson.build_contract ~raise ~options ~disable_typecheck code views
+      Ligo_compile.Of_michelson.build_contract ~raise ~options ~disable_typecheck ~enable_typed_opt code views
 
 let expression expression syntax protocol_version init_file display_format without_run michelson_format werror project_root () =
     Trace.warning_with @@ fun add_warning get_warnings ->

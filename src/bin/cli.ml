@@ -109,6 +109,12 @@ let disable_michelson_typechecking =
   let doc  = "Disable Michelson typecking, this might produce ill-typed Michelson code." in
   flag ~doc name no_arg
 
+let enable_michelson_typed_opt =
+  let open Command.Param in
+  let name = "--enable-michelson-typed-opt" in
+  let doc  = "Enable Michelson optimizations that work using typecking." in
+  flag ~doc name no_arg
+
 let without_run =
   let open Command.Param in
   let name = "--without-run" in
@@ -228,16 +234,16 @@ let (<$>) f a = Command.Param.return f <*> a
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
-  let f source_file entry_point oc_views syntax protocol_version display_format disable_typecheck michelson_format output_file warn werror michelson_comments project_root  () =
+  let f source_file entry_point oc_views syntax protocol_version display_format disable_typecheck enabled_typed_opt michelson_format output_file warn werror michelson_comments project_root  () =
     return_result ~return ~warn ?output_file @@
-    Api.Compile.contract ~werror source_file entry_point oc_views syntax protocol_version display_format disable_typecheck michelson_format michelson_comments project_root  in
+    Api.Compile.contract ~werror source_file entry_point oc_views syntax protocol_version display_format disable_typecheck enabled_typed_opt michelson_format michelson_comments project_root  in
   let summary   = "compile a contract." in
   let readme () = "This sub-command compiles a contract to Michelson \
                   code. It expects a source file and an entrypoint \
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> project_root )
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> enable_michelson_typed_opt <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> project_root )
 
 
 let compile_parameter =

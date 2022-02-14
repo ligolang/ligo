@@ -821,7 +821,7 @@ let optimize : Environment.Protocols.t -> 'l michelson -> 'l michelson =
   let x = use_lambda_instr x in
   x
 
-let rec optimize_with_types ~raise : Environment.Protocols.t -> 'l michelson -> 'l michelson =
+let rec optimize_with_types ~raise ~typer_oracle : Environment.Protocols.t -> 'l michelson -> 'l michelson =
   fun proto contract ->
   let node_string_of_canonical c = let c = Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.strings_of_prims c in
                                    Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
@@ -832,8 +832,7 @@ let rec optimize_with_types ~raise : Environment.Protocols.t -> 'l michelson -> 
   let canonical = Tezos_micheline.Micheline.inject_locations (fun x -> x) canonical in
   match canonical with
     | Seq (l, parameter :: storage :: code :: rest) ->
-       let map, _ = Proto_alpha_utils.Trace.trace_tzresult_lwt ~raise (fun _ -> failwith "Could not type-check Michelson contract") @@
-                      Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract canonical in
+       let map = typer_oracle canonical in
        let type_map = List.map ~f:(fun (i, (l, _)) -> (i, List.map ~f:(fun (c, _) -> node_string_of_canonical c) l)) map in
        let code = Tezos_micheline.Micheline.map_node (fun l -> l)
                     (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) code in
@@ -845,5 +844,5 @@ let rec optimize_with_types ~raise : Environment.Protocols.t -> 'l michelson -> 
          Tezos_micheline.Micheline.map_node recover_loc
            (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) node in
        let contract = Seq (recover_loc l, [recover_locs parameter ; recover_locs storage; code] @ (List.map ~f:recover_locs rest)) in
-       if changed then optimize_with_types ~raise proto contract else contract
+       if changed then optimize_with_types ~raise ~typer_oracle proto contract else contract
     | _ -> contract
