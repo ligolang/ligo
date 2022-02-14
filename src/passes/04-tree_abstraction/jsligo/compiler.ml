@@ -39,7 +39,6 @@ let mk_var ~loc var =
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
-  @ ["Michelson"]
 
 open Predefined.Tree_abstraction.Jsligo
 
