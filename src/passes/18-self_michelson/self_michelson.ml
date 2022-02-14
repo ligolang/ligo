@@ -234,6 +234,18 @@ let is_injective : string -> bool = function
  | "APPLY" -> false
  | _ -> false
 
+let eq_type ll lr =
+  let rec compare_list l r = match List.zip l r with
+    | List.Or_unequal_lengths.Unequal_lengths -> false
+    | Ok lr -> List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) lr)
+  and aux_eq l r =
+    let open Tezos_micheline.Micheline in
+    match l, r with
+    | Prim (_, s, l, a), Prim (_, s', l', a') when String.equal s s' && List.equal String.equal a a' -> compare_list l l'
+    | Seq (_, l), Seq (_, l') -> compare_list l l'
+    | _, _ -> false in
+  compare_list ll lr
+
 let unseq : _ michelson -> _ michelson list = function
   | Seq (_, args) -> args
   | x -> [x]
