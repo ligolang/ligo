@@ -289,8 +289,9 @@ let compile_group = Command.group ~summary:"compile a ligo program to michelson"
 (** Transpile commands *)
 let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format output_file () =
+    let options         = Compiler_options.make () in
     return_result ~return ?output_file @@
-    Api.Transpile.contract source_file new_syntax syntax new_dialect display_format
+    Api.Transpile.contract source_file new_syntax syntax new_dialect display_format options
   in
   let summary   = "transpile a contract to another syntax (BETA)." in
   let readme () = "This sub-command transpiles a source file to another \
@@ -303,8 +304,9 @@ let transpile_contract =
 
 let transpile_expression =
   let f syntax expression new_syntax new_dialect display_format () =
+    let options         = Compiler_options.make () in
     return_result ~return @@
-    Api.Transpile.expression expression new_syntax syntax new_dialect display_format
+    Api.Transpile.expression expression new_syntax syntax new_dialect display_format options
   in
   let summary   = "transpile an expression to another syntax (BETA)." in
   let readme () = "This sub-command transpiles a LIGO expression to \
@@ -349,9 +351,10 @@ let mutate_group =
 
 (** Run commands *)
 let test =
-  let f source_file syntax steps protocol_version display_format project_root  () =
-    return_result ~return @@
-    Api.Run.test source_file syntax steps protocol_version display_format project_root 
+  let f source_file syntax steps protocol_version display_format project_root () =
+  return_result ~return @@
+    let with_options = Api.with_compiler_options ~protocol_version ~project_root in
+    fun () -> Api.Run.test source_file syntax steps display_format with_options 
   in
   let summary   = "test a contract with the LIGO test framework (BETA)." in
   let readme () = "This sub-command tests a LIGO contract using a LIGO \

@@ -39,3 +39,9 @@ let format_result : ?werror:bool -> display_format:ex_display_format -> 'value f
     let format = bind_format value_format Main_errors.Formatter.error_format in
     let value = Trace.to_stdlib_result value in
     toplevel ~werror ~display_format (Displayable {value ; format}) warns value
+
+let with_compiler_options ~protocol_version ~project_root =
+  fun ~raise -> 
+    let protocol_version = Ligo_compile.Helpers.protocol_to_variant ~raise protocol_version in
+    let options = Compiler_options.make ~test:true ~protocol_version ?project_root () in
+    options

@@ -4,14 +4,15 @@ module Compile = Ligo_compile
 module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
-let test source_file syntax steps protocol_version display_format project_root () =
+let test source_file syntax steps display_format with_options =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) get_warnings @@
       fun ~raise ->
-      let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
-      let options = Compiler_options.make ~test:true ~protocol_version ?project_root () in
+      (* let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in *)
+      (* let options = Compiler_options.make ~test:true ~protocol_version ?project_root () in *)
+      let options = with_options ~raise in
       let typed   = Build.build_context ~raise ~add_warning ~options syntax source_file in
-      Interpreter.eval_test ~raise ~steps ~options ~protocol_version typed
+      Interpreter.eval_test ~raise ~steps ~options ~protocol_version:options.backend.protocol_version typed
 
 let dry_run source_file entry_point parameter storage amount balance sender source now syntax protocol_version display_format werror project_root () =
     Trace.warning_with @@ fun add_warning get_warnings ->
