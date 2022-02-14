@@ -574,7 +574,7 @@ let is_a_nat : option (nat) = Michelson.is_nat (1);
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-let is_a_nat: option<nat> = Michelson.is_nat(1);
+let is_a_nat: option<nat> = is_nat(1);
 ```
 
 </Syntax>
