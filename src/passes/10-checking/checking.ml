@@ -51,12 +51,21 @@ module Constant_types = struct
                               ]);
                     (C_BYTES_PACK, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_bytes ()) ()))]);
                     (C_BYTES_UNPACK, [O.(t_for_all a_var () (t_arrow (t_bytes ()) (t_option (t_variable a_var ())) ()))]);
+                    (* CRYPTO *)
+                    (C_SHA256, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_SHA512, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_SHA3, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_KECCAK, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_BLAKE2b, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_HASH_KEY, [O.(t_arrow (t_key ()) (t_key_hash ()) ())]);
+                    (C_CHECK_SIGNATURE, [O.(t_arrow (t_key ()) (t_arrow (t_signature ()) (t_arrow (t_bytes ()) (t_bool ()) ()) ()) ())]);
                     (* OPTION *)
                     (C_NONE, [O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
                     (C_SOME, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_option (t_variable a_var ())) ()))]);
                     (* GLOBAL *)
                     (C_ABS, [O.(t_arrow (t_int ()) (t_nat ()) ())]);
                     (C_NOW, [O.(t_timestamp ())]);
+                    (C_CHAIN_ID, [O.(t_chain_id ())]);
                     (C_INT, [O.(t_arrow (t_nat ()) (t_int ()) ());
                              O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
                             ]);
