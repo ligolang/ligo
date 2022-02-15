@@ -432,7 +432,7 @@ let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
     let gas_limit = (Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.integral_of_int_exn 999_999) in
-    Op.transaction ~gas_limit ~fee:(Test_tez.Tez.of_int 23) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.Tez.of_mutez_exn amt)
+    Op.transaction ~gas_limit ~fee:(Test_tez.Tez.of_int 1) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.Tez.of_mutez_exn amt)
   in
   bake_op ~raise ~loc ~calltrace ctxt operation
 
@@ -446,7 +446,7 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
     let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
     let (operation, dst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       (* TODO : fee ? *)
-      Op.origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.Tez.of_int 10) ~script
+      Op.origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.Tez.of_int 1) ~script
     in
     match bake_op ~raise ~loc ~calltrace ctxt operation with
     | Success (ctxt,_) ->
