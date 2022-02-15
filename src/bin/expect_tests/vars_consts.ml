@@ -249,10 +249,12 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "shadowing.ligo") ] ;
   [%expect{|
     const foo =
-      lambda (toto : int) return let toto[@var] = 2 in let toto = 3 in toto
+      lambda (toto : int) return let toto[@var] = 2 in
+                                 let ()#2 : unit = toto := 3 in toto
     const bar =
       lambda (_u[@var] : unit) return let toto = 1 in
-                                      let toto[@var] = 2 in let toto = 3 in toto |}]
+                                      let toto[@var] = 2 in
+                                      let ()#3 : unit = toto := 3 in toto |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_const_var.ligo") ] ;
@@ -269,7 +271,7 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let bar : int -> int =
                                       lambda (x[@var] : int) : int return
-                                      let x = ADD(x , 1) in x in
+                                      let ()#2 : unit = x := ADD(x , 1) in x in
                                     (bar)@(42) |}]
 
 let%expect_test _ =

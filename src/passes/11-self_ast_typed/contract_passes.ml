@@ -153,6 +153,8 @@ and get_fv expr =
     let init = {env=MVarMap.empty ;used_var=VVarSet.singleton element} in
     let env = List.fold_right module_path ~f:(fun module_name env -> {env=MVarMap.singleton module_name env;used_var=VVarSet.empty}) ~init in
     return env @@ E_module_accessor {module_path;element}
+  | E_assign { variable=_; access_path=_; expression } ->
+    self expression
 and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
   match m with
   | Match_variant {cases;tv} ->

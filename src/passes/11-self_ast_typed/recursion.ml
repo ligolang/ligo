@@ -44,10 +44,9 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
   | E_record_update {record;update;_} ->
     check_recursive_call ~raise n false record;
     check_recursive_call ~raise n false update
-  | E_module_accessor _ ->
-    ()
-  | E_type_inst _ ->
-    ()
+  | E_module_accessor _
+  | E_type_inst _
+  | E_assign _ -> ()
 
 and check_recursive_call_in_matching ~raise = fun n final_path c ->
   match c with

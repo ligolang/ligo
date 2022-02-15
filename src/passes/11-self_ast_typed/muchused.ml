@@ -156,6 +156,8 @@ let rec muchuse_of_expr expr : muchuse =
     let name = V.of_input_var ~loc:expr.location @@
       pref ^ "." ^ (Format.asprintf "%a" ValueVar.pp element) in
     (M.add name 1 M.empty,[])
+  | E_assign { variable=_; access_path=_; expression } ->
+    muchuse_of_expr expression
 
 and muchuse_of_lambda t {binder; result} =
   muchuse_of_binder binder t (muchuse_of_expr result)

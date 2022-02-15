@@ -120,6 +120,7 @@ and expression_content =
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
   | E_module_accessor of expression_variable module_access
+  | E_assign   of expr assign
 
 and type_inst = {
     forall: expression ;

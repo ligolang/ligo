@@ -236,6 +236,7 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       let x = Data.resolve_path data [module_binder] in
       aggregate_scope x ~leaf:(self ~data let_result)
     )
+    | I.E_assign _ -> failwith "assign should be compiled to let in self-ast-typed"
 
 and compile_cases ~raise : Data.scope -> Data.path -> I.matching_expr -> O.matching_expr =
   fun scope path m ->

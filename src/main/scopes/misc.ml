@@ -16,7 +16,7 @@ let extract_variable_types :
     let aux : bindings_map -> Ast_typed.expression -> bindings_map = fun env exp ->
       let return = add env in
       match exp.expression_content with
-      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
+      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _ | E_assign _
       | E_type_in _ | E_type_abstraction _ | E_mod_in _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
       | E_module_accessor _ -> return []

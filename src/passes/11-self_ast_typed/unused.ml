@@ -101,6 +101,9 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse, []
   | E_type_inst {forall;_} ->
      defuse_of_expr defuse forall
+  | E_assign { variable=_; access_path=_; expression } ->
+     defuse_of_expr defuse expression
+
 
 and defuse_of_lambda defuse {binder; result} =
   remove_defined_var_after defuse binder defuse_of_expr result

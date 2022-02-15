@@ -627,6 +627,29 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let tc , tv = infer_t_insts ~raise ~options ~loc:e.location app_context (E_module_accessor {module_path; element}, tv') in
     return tc tv
   )
+  | E_assign {variable; access_path; expression} ->
+    let variable_type = trace_option ~raise (unbound_variable variable (O.ValueVar.get_location variable)) @@ Typing_context.get_value context variable in
+    let access_path   = List.map access_path ~f:(function Access_map e -> O.Access_map (type_expression' ~raise ~add_warning ~options (app_context, context) e) | Access_tuple z -> Access_tuple z | Access_record s -> Access_record s) in
+    let variable_type = List.fold ~init:variable_type access_path ~f:(
+      fun ty a -> match a with
+        Access_tuple z ->
+        let tuple_ty = trace_option ~raise (expected_record ty.location ty) @@ get_t_record ty in
+        let tuple_ty = trace_option ~raise (internal_error __LOC__ "access_tuple failed") @@ I.LMap.find_opt (Label (Z.to_string z)) tuple_ty.content in
+        tuple_ty.associated_type
+      | Access_record s ->
+        let record_ty = trace_option ~raise (expected_record ty.location ty) @@ get_t_record ty in
+        let record_ty = trace_option ~raise (internal_error __LOC__ "access_record failed") @@ I.LMap.find_opt (Label s) record_ty.content in
+        record_ty.associated_type
+      | Access_map e ->
+        let k_ty,v_ty = trace_option ~raise (expected_map ty.location ty) @@ get_t_map ty in
+        let () = assert_type_expression_eq ~raise e.location (k_ty,get_type e) in
+        v_ty
+    )  in
+    let expression = type_expression' ~raise ~add_warning ~options (app_context,context) expression in
+    let expression_type = expression.type_expression in
+    let () = assert_type_expression_eq ~raise e.location (variable_type,expression_type) in
+
+    return (E_assign {variable; access_path; expression}) @@ O.t_unit ()
 
 
 and type_lambda ~raise ~add_warning ~options ~loc ~tv_opt (ac, e) { binder ; output_type ; result } =

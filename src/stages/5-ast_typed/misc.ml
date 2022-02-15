@@ -45,6 +45,9 @@ module Free_variables = struct
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
     | E_module_accessor _ -> empty
+    | E_assign {variable;access_path=_;expression=e} ->
+      let b' = union (singleton variable) b in
+      expression b' e
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
