@@ -116,7 +116,7 @@ let type_contract ~raise ~add_warning : options:Compiler_options.t -> string -> 
     end) in
     trace ~raise build_error_tracer @@ from_result (compile_separate file_name)
 
-let combined_contract ~raise ~add_warning : options:Compiler_options.t -> 'a -> file_name -> Ast_typed.program =
+let build_context ~raise ~add_warning : options:Compiler_options.t -> 'a -> file_name -> Ast_typed.program =
   fun ~options _syntax file_name ->
     let open BuildSystem.Make(Infer(struct
       let raise = raise
@@ -135,7 +135,7 @@ let build_typed ~raise ~add_warning :
         let add_warning = add_warning
         let options = options
       end) in
-      let contract = combined_contract ~raise ~add_warning ~options _syntax file_name in
+      let contract = build_context ~raise ~add_warning ~options _syntax file_name in
       let applied =
         match entry_point with
         | Ligo_compile.Of_core.Contract entrypoint ->
@@ -151,7 +151,7 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
     let contract, aggregated_prg =
       match file_name with
       | Some init_file ->
-         let module_ = combined_contract ~raise ~add_warning ~options syntax init_file in
+         let module_ = build_context ~raise ~add_warning ~options syntax init_file in
          let contract = Ligo_compile.Of_typed.compile_program ~raise module_ in
          (module_, contract)
       | None -> ([], fun x -> Ligo_compile.Of_typed.compile_expression ~raise x)
@@ -209,15 +209,3 @@ let build_views ~raise ~add_warning :
     let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
     let michelsons = List.map ~f:aux views in
     michelsons
-
-(* build_context builds a context to be used later for evaluation *)
-let build_context ~raise ~add_warning :
-  options:Compiler_options.t -> string -> file_name -> Ast_typed.program =
-    fun ~options _syntax file_name ->
-      let open Build(struct
-        let raise = raise
-        let add_warning = add_warning
-        let options = options
-      end) in
-      let contract = trace ~raise build_error_tracer @@ Trace.from_result (compile_combined file_name) in
-      contract
