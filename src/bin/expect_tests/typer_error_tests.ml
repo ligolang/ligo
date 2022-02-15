@@ -80,13 +80,8 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_2.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_typer_2.mligo", line 3, characters 24-39:
-      2 |
-      3 | let foo : string list = Some (42 + 127)
-      4 |
-
-    Invalid type(s).
-    Expected: "list (string)", but got: "option (int)". |} ] ;
+    A type system corner case occurred:
+    No of types works... SOME: int |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_3.mligo" ] ;
   [%expect {|

@@ -36,8 +36,6 @@ module Constant_types = struct
                     (C_SET_ITER, [O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ()))]);
                     (C_SET_FOLD, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
                     (C_SET_FOLD_DESC, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
-                    (* OPTION *)
-                    (C_NONE, [O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
                     (* ADHOC POLY *)
                     (C_SIZE, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
                               O.(t_arrow (t_bytes ()) (t_nat ()) ());
@@ -45,8 +43,20 @@ module Constant_types = struct
                               O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
                               O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
                              ]);
+                    (* OPTION *)
+                    (C_NONE, [O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
+                    (C_SOME, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_option (t_variable a_var ())) ()))]);
                     (* GLOBAL *)
                     (C_ABS, [O.(t_arrow (t_int ()) (t_nat ()) ())]);
+                    (C_NOW, [O.(t_timestamp ())]);
+                    (C_INT, [O.(t_arrow (t_nat ()) (t_int ()) ());
+                             O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
+                            ]);
+                    (C_UNIT, [O.(t_unit ())]);
+                    (C_NEVER, [O.(t_for_all a_var () (t_arrow (t_never ()) (t_variable a_var ()) ()))]);
+                    (C_TRUE, [O.(t_bool ())]);
+                    (C_FALSE, [O.(t_bool ())]);
+                    (C_IS_NAT, [O.(t_arrow (t_int ()) (t_option (t_nat ())) ())]);
                   ]
   let find c = CTMap.find_opt c tbl
 end
