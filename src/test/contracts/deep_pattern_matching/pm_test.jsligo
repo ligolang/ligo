@@ -1,0 +1,34 @@
+type myt =
+  | ["Nil"]
+  | ["Cons", [int, int]];
+
+// this essentially test variable substitution (see var rule)
+let t2 = (x: myt, y: myt): int => {
+  return match(x, {
+    Nil: () => {
+      return match(y, {
+        Nil: () => 1,
+        Cons: (p: [int, int]) => {
+          let [_a, b] = p;
+          let a1 = "a";
+          return (int(String.length(a1))) + b;
+        }
+      });
+    },
+    Cons: (p: [int, int]) => {
+      let [a, b]: [int, int] = p;
+      let old_b = b;
+      let b_fn = (a: int, b: int): int => {
+        return match(y, {
+          Nil: () => {
+            let f = (b: int): int => b + a;
+            return f(b + 1)
+          },
+          Cons: (_: [int, int]) => a + b
+        })
+      };
+      let b = b_fn(a, b);
+      return a + b + old_b;
+    }
+  })
+}
