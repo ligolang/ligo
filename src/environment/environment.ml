@@ -68,8 +68,6 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_bls12_381_fr ,  t_bls12_381_fr ()) ;
     (v_never , t_never ()) ;
     (v_ticket , t_abstraction1 ticket_name star) ;
-    (v_custom_length, t_abstraction1 custom_length_name star);
-    (v_custom_add, t_abstraction2 custom_add_name star star);
 ]
 
 let hangzhou_extra : (type_variable * type_expression) list = [

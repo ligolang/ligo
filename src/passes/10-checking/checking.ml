@@ -444,63 +444,12 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
         trace_option ~raise (unbound_variable name e.location)
         @@ Context.get_value context name in
       (match tv' with
-       | { type_content = T_for_all _ ; type_meta = _; orig_var=_ ; location=_} -> (
+       | { type_content = T_for_all _ ; type_meta = _; orig_var=_ ; location=_} ->
           (* TODO: This is some inference, and we should reconcile it with the inference pass. *)
           let avs, type_ = O.Helpers.destruct_for_alls tv' in
-          match get_t_custom_length type_ with
-          | Some _ ->
-             let av0 = List.hd_exn avs in
-             let a = List.hd_exn args in
-             let a_type = a.O.type_expression in
-             let table = TMap.of_list [(av0, a_type)] in
-             (match get_t_list a_type with
-              | Some _t ->
-                 let lamb = make_e ~location:e.location (E_variable name) tv' in
-                 let e = build_type_insts ~raise ~loc:e.location lamb table avs in
-                 return_e @@ { e with type_expression = t_arrow (t_list _t) (t_nat ()) () }
-              | None ->
-              match get_t_bytes a_type with
-              | Some _ ->
-                  let lamb = make_e ~location:e.location (E_variable name) tv' in
-                  let e = build_type_insts ~raise ~loc:e.location lamb table avs in
-                  return_e @@ { e with type_expression = t_arrow (t_bytes ()) (t_nat ()) () }
-              | None ->
-                 failwith "foo1")
-          | None ->
-          match  get_t_custom_add type_ with
-          | Some _ ->
-             let av0 = List.nth_exn avs 1 in
-             let av1 = List.nth_exn avs 0 in
-             let a = List.nth_exn args 0 in
-             let a_type = a.O.type_expression in 
-             (match get_t_pair a_type with
-              | None -> failwith "tuple"
-              | Some (a_type, b_type) ->
-                let table = TMap.of_list [(av0, a_type); (av1, b_type)] in
-                (match get_t_int a_type, get_t_nat b_type with
-                 | Some _t, Some _t' ->
-                    let lamb = make_e ~location:e.location (E_variable name) tv' in
-                    let e = build_type_insts ~raise ~loc:e.location lamb table avs in
-                    return_e @@ { e with type_expression = t_arrow (t_pair (t_int ()) (t_nat ())) (t_int ()) () }
-                 | _, _ ->
-                 match get_t_int a_type, get_t_int b_type with
-                 | Some _, Some _ ->
-                    let lamb = make_e ~location:e.location (E_variable name) tv' in
-                    let e = build_type_insts ~raise ~loc:e.location lamb table avs in
-                    return_e @@ { e with type_expression = t_arrow (t_pair (t_int ()) (t_int ())) (t_int ()) () }
-                 | _, _ ->
-                 match get_t_nat a_type, get_t_nat b_type with
-                 | Some _, Some _ ->
-                    let lamb = make_e ~location:e.location (E_variable name) tv' in
-                    let e = build_type_insts ~raise ~loc:e.location lamb table avs in
-                    return_e @@ { e with type_expression = t_arrow (t_pair (t_nat ()) (t_nat ())) (t_nat ()) () }
-                 | _, _ ->
-                 failwith "foo"))
-          | None ->
-             let table = infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
-             let lamb = make_e ~location:e.location (E_variable name) tv' in
-             return_e @@ build_type_insts ~raise ~loc:e.location lamb table avs
-       )
+          let table = infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
+          let lamb = make_e ~location:e.location (E_variable name) tv' in
+          return_e @@ build_type_insts ~raise ~loc:e.location lamb table avs
        | _ ->
           return (E_variable name) tv')
   | E_literal Literal_unit ->
@@ -756,7 +705,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let (name', tv) =
         type_constant ~raise ~test ~protocol_version cons_name e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
-  | E_application { lamb = ilamb ; args=_} -> (
+  | E_application { lamb = ilamb ; args=_} ->
      (* TODO: This currently does not handle constraints (as those in inference). *)
      (* Get lambda and applications: (..((lamb arg1) arg2) ...) argk) *)
      let lamb, args = I.Helpers.destruct_applications e in
@@ -773,7 +722,6 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
      let app = trace_option ~raise (should_be_a_function_type lamb.type_expression ilamb) @@
                  O.Helpers.build_applications_opt lamb args in
      return_e app
-  )
   (* Advanced *)
   | E_matching {matchee;cases} -> (
     let matchee' = type_expression' ~raise ~test ~protocol_version context matchee in

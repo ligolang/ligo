@@ -694,9 +694,8 @@ and compile_expression ~raise (ae:AST.expression) : expression =
         (corner_case ~loc:__LOC__ "Language insert - backend mismatch only provide code insertion in the language you are compiling to")
         (String.equal language backend)
     in
-    (* let type_anno  = get_type code in
-     * let type_anno' = compile_type ~raise type_anno in *)
-    let type_anno' = tv in
+    let type_anno  = get_type code in
+    let type_anno' = compile_type ~raise type_anno in
     let code = trace_option ~raise (corner_case ~loc:__LOC__ "could not get a string") @@ get_a_string code in
     let open Tezos_micheline in
     let orig_code = code in
