@@ -30,25 +30,6 @@ open H
   Various helpers are defined bellow.
 *)
 
-
-let sub ~raise loc = typer_2 ~raise loc "SUB" @@ fun a b ->
-  if eq_2 (a , b) (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_2 (a , b) (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_2 (a , b) (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
-  && (eq_1 b (t_int ()) || eq_1 b (t_nat ()))
-  then t_int () else
-  if (eq_2 (a , b) (t_timestamp ()))
-  then t_int () else
-  if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ()))
-  then t_timestamp () else
-  if (eq_2 (a , b) (t_mutez ()))
-  then t_mutez () else
-    raise.raise (bad_substraction loc)
-
 let map_remove ~raise loc : typer = typer_2 ~raise loc "MAP_REMOVE" @@ fun k m ->
   let (src , _) = trace_option ~raise (expected_big_map loc m) @@
       Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
@@ -251,33 +232,6 @@ let set_delegate ~raise loc = typer_1 ~raise loc "SET_DELEGATE" @@ fun delegate_
   let () = assert_eq_1 ~raise ~loc delegate_opt kh_opt in
   t_operation ()
 
-let abs ~raise loc = typer_1 ~raise loc "ABS" @@ fun t ->
-  let () = trace_option ~raise (expected_int loc t) @@ assert_t_int t in
-  t_nat ()
-
-let neg ~raise loc = typer_1 ~raise loc "NEG" @@ fun t ->
-  if eq_1 t (t_int ())
-  then (t_int ()) else
-  if eq_1 t (t_nat ())
-  then (t_int ()) else
-  if eq_1 t (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_1 t (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_1 t (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if eq_1 t (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-    raise.raise @@ typeclass_error loc
-              [
-                [t_int()] ;
-                [t_nat()] ;
-                [t_bls12_381_g1()] ;
-                [t_bls12_381_g2()] ;
-                [t_bls12_381_fr()] ;
-              ]
-              [t]
-
 let unopt ~raise loc = typer_1 ~raise loc "UNOPT" @@ fun a ->
   let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
   a
@@ -313,145 +267,6 @@ let assert_none_with_error ~raise loc = typer_2 ~raise loc "ASSERT_NONE_WITH_ERR
   let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
   let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
   t_unit ()
-
-let times ~raise loc = typer_2 ~raise loc "TIMES" @@ fun a b ->
-  if (eq_1 a (t_bls12_381_g1 ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_g1 ()) else
-  if (eq_1 a (t_bls12_381_g2 ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_g2 ()) else
-  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_int ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_nat ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_int ()))
-  then (t_bls12_381_fr ()) else
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_mutez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_mutez ()))
-  then t_mutez () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_int () else
-    raise.raise @@ typeclass_error loc
-              [
-                [t_bls12_381_g1();t_bls12_381_g1()] ;
-                [t_bls12_381_g2();t_bls12_381_g2()] ;
-                [t_bls12_381_fr();t_bls12_381_fr()] ;
-                [t_nat();t_bls12_381_fr()] ;
-                [t_int();t_bls12_381_fr()] ;
-                [t_bls12_381_fr();t_nat()] ;
-                [t_bls12_381_fr();t_int()] ;
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_nat();t_mutez()] ;
-                [t_mutez();t_nat()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-              ]
-              [a; b]
-
-let ediv ~raise loc = typer_2 ~raise loc "EDIV" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_option (t_pair (t_nat ()) (t_nat ()) ) else
-  if eq_2 (a , b) (t_int ())
-  then t_option (t_pair (t_int ()) (t_nat ()) ) else
-  if eq_1 a (t_nat ()) && eq_1 b (t_int ())
-  then t_option (t_pair (t_int ()) (t_nat ()) ) else
-  if eq_1 a (t_int ()) && eq_1 b (t_nat ())
-  then t_option (t_pair (t_int ()) (t_nat ()) ) else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
-  then t_option (t_pair (t_nat ()) (t_mutez ()) ) else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
-  then t_option (t_pair (t_mutez ()) (t_mutez ()) ) else
-    raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-        [t_int();t_int()] ;
-        [t_nat();t_int()] ;
-        [t_int();t_nat()] ;
-        [t_mutez();t_nat()] ;
-        [t_mutez();t_mutez()] ;
-      ]
-      [a; b]
-
-let div ~raise loc = typer_2 ~raise loc "DIV" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if eq_1 a (t_int ()) && eq_1 b (t_nat ())
-  then t_int () else
-  if eq_1 a (t_nat ()) && eq_1 b (t_int ())
-  then t_int () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
-  then t_mutez () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
-  then t_nat () else
-    raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-        [t_int();t_int()] ;
-        [t_nat();t_int()] ;
-        [t_int();t_nat()] ;
-        [t_mutez();t_nat()] ;
-        [t_mutez();t_mutez()] ;
-      ]
-      [a; b]
-
-let mod_ ~raise loc = typer_2 ~raise loc "MOD" @@ fun a b ->
-  if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
-  then t_nat () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
-  then t_mutez () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
-  then t_mutez () else
-    raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-        [t_nat();t_int()] ;
-        [t_int();t_nat()] ;
-        [t_int();t_int()] ;
-        [t_mutez();t_nat()] ;
-        [t_mutez();t_mutez()] ;
-      ]
-      [a; b]
-
-let add ~raise loc = typer_2 ~raise loc "ADD" @@ fun a b ->
-  if eq_2 (a , b) (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_2 (a , b) (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_2 (a , b) (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if eq_2 (a , b) (t_mutez ())
-  then t_mutez () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_int () else
-  if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
-  then t_timestamp () else
-    raise.raise @@ typeclass_error loc
-              [ 
-                [t_bls12_381_g1();t_bls12_381_g1()] ;
-                [t_bls12_381_g2();t_bls12_381_g2()] ;
-                [t_bls12_381_fr();t_bls12_381_fr()] ;
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_mutez();t_mutez()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-                [t_timestamp();t_int()] ;
-                [t_int();t_timestamp()] ;
-              ]
-              [a; b]
 
 let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b ->
   if eq_2 (a , b) (t_string ())
@@ -1052,15 +867,6 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_FOLD_CONTINUE       -> continue ~raise loc ;
   | C_FOLD_STOP           -> stop ~raise loc ;
   | C_FOLD                -> fold ~raise loc ;
-   (* MATH *)
-  | C_NEG                 -> neg ~raise loc ;
-  | C_ABS                 -> abs ~raise loc ;
-  | C_ADD                 -> add ~raise loc ;
-  | C_SUB                 -> sub ~raise loc ;
-  | C_MUL                 -> times ~raise loc ;
-  | C_EDIV                -> ediv ~raise loc ;
-  | C_DIV                 -> div ~raise loc ;
-  | C_MOD                 -> mod_ ~raise loc ;
     (* LOGIC *)
   | C_NOT                 -> not_ ~raise loc ;
   | C_AND                 -> and_ ~raise loc ;

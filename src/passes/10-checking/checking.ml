@@ -63,7 +63,6 @@ module Constant_types = struct
                     (C_NONE, [O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
                     (C_SOME, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_option (t_variable a_var ())) ()))]);
                     (* GLOBAL *)
-                    (C_ABS, [O.(t_arrow (t_int ()) (t_nat ()) ())]);
                     (C_NOW, [O.(t_timestamp ())]);
                     (C_CHAIN_ID, [O.(t_chain_id ())]);
                     (C_INT, [O.(t_arrow (t_nat ()) (t_int ()) ());
@@ -74,6 +73,70 @@ module Constant_types = struct
                     (C_TRUE, [O.(t_bool ())]);
                     (C_FALSE, [O.(t_bool ())]);
                     (C_IS_NAT, [O.(t_arrow (t_int ()) (t_option (t_nat ())) ())]);
+                    (C_ADD, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
+                             O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
+                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                             O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                            ]);
+                    (C_MUL, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
+                             O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
+                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_nat ()) (t_bls12_381_fr ()) ()) ());
+                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_int ()) (t_bls12_381_fr ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                             O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                            ]);
+                    (C_SUB, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
+                             O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
+                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_timestamp ()) (t_arrow (t_timestamp ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                            ]);
+                    (C_EDIV, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_option (t_pair (t_nat ()) (t_nat ()))) ()) ());
+                              O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                              O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                              O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                              O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_option (t_pair (t_nat ()) (t_mutez ()))) ()) ());
+                              O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_option (t_pair (t_mutez ()) (t_mutez ()))) ()) ());
+                            ]);
+                    (C_DIV, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ());
+                            ]);
+                    (C_MOD, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                            ]);
+                    (C_ABS, [O.(t_arrow (t_int ()) (t_nat ()) ())]);
+                    (C_NEG, [O.(t_arrow (t_int ()) (t_int ()) ());
+                             O.(t_arrow (t_nat ()) (t_int ()) ());
+                             O.(t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ());
+                             O.(t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ());
+                             O.(t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ());
+                             ]);
                   ]
   let find c = CTMap.find_opt c tbl
 end
@@ -887,15 +950,36 @@ and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Locatio
           match errs with
           | [] ->
              raise.raise @@ (corner_case (Format.asprintf "No of types works... %a: %a" O.PP.constant' name Simple_utils.PP_helpers.(list_sep_d O.PP.type_expression) lst))
-          | x :: _ -> raise.raise x)
+          | xs -> raise.raise @@ typeclass_error loc (List.rev xs) lst)
        | lamb_type :: xs ->
+          let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
           Simple_utils.Trace.try_with (fun ~raise ->
-              let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
-              let table = infer_type_applications ~raise ~loc lamb_type lst tv_opt in
+              let table =
+                let table, lamb_type = List.fold_left lst ~init:(TMap.empty, lamb_type)
+                                         ~f:(fun ((table, lamb_type) : _ TMap.t * O.type_expression) matched ->
+                                           match lamb_type.type_content with
+                                           | T_arrow { type1 ; type2 } ->
+                                              infer_type_application ~raise ~loc table type1 matched, type2
+                                           | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ |
+                                              T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
+                                              table, lamb_type) in
+                match tv_opt with
+                | Some t ->
+                   Simple_utils.Trace.try_with (fun ~raise ->
+                       infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Foo (loc, t', t)) table lamb_type t)
+                     (function `Foo (loc, t', t) -> raise.raise (`Foo (loc, t', t))
+                             | `Typer_assert_equal e -> raise.raise (`Typer_assert_equal e)
+                             | `Typer_not_matching e -> raise.raise (`Typer_not_matching e))
+                | None -> table in
+              (* let table = infer_type_applications ~raise ~loc lamb_type lst tv_opt in *)
               let lamb_type = TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
               let _, tv = Ast_typed.Helpers.destruct_arrows lamb_type in
               (name, tv))
-            (fun err -> aux (err :: errs) xs)
+            (function
+             | `Foo (loc, t', t) -> raise.raise (assert_equal loc t' t)
+             | _ ->
+              let arrs, _ = O.Helpers.destruct_arrows lamb_type in
+              aux (arrs :: errs) xs)
      in
      aux [] xs
   | _ ->
