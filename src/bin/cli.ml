@@ -228,7 +228,8 @@ let (<$>) f a = Command.Param.return f <*> a
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
-  let f source_file entry_point oc_views syntax protocol_version display_format disable_typecheck michelson_format output_file warn werror michelson_comments project_root  () =
+  let f source_file entry_point oc_views syntax protocol_version display_format disable_typecheck michelson_format output_file warn werror michelson_comments project_root () =
+    let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~views:oc_views ~syntax ~protocol_version ~display_format ~disable_typecheck ?output_file ~warn ~werror ?project_root () in
     return_result ~return ~warn ?output_file @@
     Api.Compile.contract ~werror source_file entry_point oc_views syntax protocol_version display_format disable_typecheck michelson_format michelson_comments project_root  in
   let summary   = "compile a contract." in
@@ -242,6 +243,7 @@ let compile_file =
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root  () =
+  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~syntax ~protocol_version ~display_format ?output_file ~warn ~werror ?project_root () in
     return_result ~return ~warn ?output_file @@
     Api.Compile.parameter source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format werror project_root 
   in
@@ -255,6 +257,7 @@ let compile_parameter =
 
 let compile_expression =
   let f syntax expression protocol_version init_file display_format without_run michelson_format warn werror project_root  () =
+  let raw_options = Compiler_options.make_raw ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root () in
     return_result ~return ~warn @@
     Api.Compile.expression expression syntax protocol_version init_file display_format without_run michelson_format werror project_root 
     in
@@ -268,6 +271,7 @@ let compile_expression =
 
 let compile_storage =
   let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root  () =
+  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~syntax ~protocol_version ~display_format ?output_file ~warn ~werror ?project_root () in
     return_result ~return ~warn ?output_file @@
     Api.Compile.storage source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format werror project_root 
   in
@@ -289,6 +293,7 @@ let compile_group = Command.group ~summary:"compile a ligo program to michelson"
 (** Transpile commands *)
 let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format output_file () =
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format ?output_file ~new_syntax ~new_dialect  () in
     let options         = Compiler_options.make () in
     return_result ~return ?output_file @@
     Api.Transpile.contract source_file new_syntax syntax new_dialect display_format options
@@ -304,6 +309,7 @@ let transpile_contract =
 
 let transpile_expression =
   let f syntax expression new_syntax new_dialect display_format () =
+    let raw_options = Compiler_options.make_raw ~syntax ~display_format ~new_syntax ~new_dialect () in
     let options         = Compiler_options.make () in
     return_result ~return @@
     Api.Transpile.expression expression new_syntax syntax new_dialect display_format options
@@ -324,6 +330,7 @@ let transpile_group =
 (** Mutate commands *)
 let mutate_cst =
   let f source_file syntax protocol_version libs display_format seed generator () =
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?seed ~generator () in
     return_result ~return @@
     Api.Mutate.mutate_cst source_file syntax protocol_version libs display_format seed generator in
   let summary   = "return a mutated version for a given file." in
@@ -334,6 +341,7 @@ let mutate_cst =
 
 let mutate_ast =
   let f source_file syntax protocol_version libs display_format seed generator () =
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?seed ~generator () in
     return_result ~return @@
     Api.Mutate.mutate_ast source_file syntax protocol_version libs display_format seed generator
   in
@@ -352,6 +360,7 @@ let mutate_group =
 (** Run commands *)
 let test =
   let f source_file syntax steps protocol_version display_format project_root () =
+  let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ~steps ?project_root () in
   return_result ~return @@
     let with_options = Api.with_compiler_options ~protocol_version ~project_root in
     fun () -> Api.Run.test source_file syntax steps display_format with_options 

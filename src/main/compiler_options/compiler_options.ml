@@ -1,5 +1,61 @@
 open Environment
 
+type raw = {
+  source_file : string option ;
+  entry_point : string option ; 
+  views : string list ;
+  syntax : string ;
+  protocol_version : string option ;
+  display_format : Simple_utils.Display.ex_display_format ;
+  disable_typecheck : bool ;
+  output_file : string option ;
+  warn : bool ;
+  werror : bool ;
+  project_root : string option ;
+  new_syntax : string option ;
+  new_dialect : string option ;
+  seed : int option ;
+  generator : string option ;
+  steps : int option ;
+}
+
+let make_raw
+ ?source_file
+ ?entry_point
+ ?(views=[])
+ ~syntax
+ ?protocol_version
+ ~display_format
+ ?(disable_typecheck=false)
+ ?output_file
+ ?(warn=false)
+ ?(werror=false)
+ ?project_root
+ ?new_syntax
+ ?new_dialect
+ ?seed
+ ?generator
+ ?steps
+ ()
+  = {
+  source_file ;
+  entry_point ;
+  views ;
+  syntax ;
+  protocol_version ;
+  display_format ;
+  disable_typecheck ;
+  output_file ;
+  warn ;
+  werror ;
+  project_root ;
+  new_syntax ;
+  new_dialect ;
+  seed ;
+  generator ;
+  steps ;
+}
+
 type frontend = {
   syntax : string ;
   dialect : string ; (* this does not exist *)  
