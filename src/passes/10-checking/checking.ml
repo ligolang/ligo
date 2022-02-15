@@ -43,6 +43,14 @@ module Constant_types = struct
                               O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
                               O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
                              ]);
+                    (C_CONCAT, [O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
+                                O.(t_arrow (t_bytes ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ());
+                               ]);
+                    (C_SLICE, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_string ()) (t_string ()) ()) ()) ());
+                               O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ()) ());
+                              ]);
+                    (C_BYTES_PACK, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_bytes ()) ()))]);
+                    (C_BYTES_UNPACK, [O.(t_for_all a_var () (t_arrow (t_bytes ()) (t_option (t_variable a_var ())) ()))]);
                     (* OPTION *)
                     (C_NONE, [O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
                     (C_SOME, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_option (t_variable a_var ())) ()))]);

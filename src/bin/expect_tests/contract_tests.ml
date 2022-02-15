@@ -1985,8 +1985,8 @@ let%expect_test _ =
     File "../../test/contracts/negative/bad_annotation_unpack.mligo", line 1, characters 9-42:
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
 
-    Incorrect argument.
-    Expected an option, but got an argument of type "string". |}]
+    Invalid type(s).
+    Expected: "string", but got: "option (a)". |}]
 
 (* check annotations' capitalization *)
 let%expect_test _ =

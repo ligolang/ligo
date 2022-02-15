@@ -132,27 +132,6 @@ let big_map_get_and_update ~raise loc : typer = typer_3 ~raise loc "BIG_MAP_GET_
   let () = assert_eq_1 ~raise ~loc dst v in
   t_pair opt_v m
 
-let size ~raise loc = typer_1 ~raise loc "SIZE" @@ fun t ->
-  let () =
-    Assert.assert_true ~raise (wrong_size loc t) @@
-    (is_t_map t || is_t_list t || is_t_string t || is_t_bytes t || is_t_set t ) in
-  t_nat ()
-
-let slice ~raise loc = typer_3 ~raise loc "SLICE" @@ fun i j s ->
-  let t_nat = t_nat () in
-  let () = assert_eq_1 ~raise ~loc i t_nat in
-  let () = assert_eq_1 ~raise ~loc j t_nat in
-  if eq_1 s (t_string ())
-  then t_string ()
-  else if eq_1 s (t_bytes ())
-  then t_bytes ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_nat;t_nat;t_string()] ;
-        [t_nat;t_nat;t_bytes()] ;
-      ]
-      [i ; j ; s]
-
 let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
   let _ =
     if eq_1 t (t_string ())
@@ -171,17 +150,6 @@ let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
         [t] in
   let default = t_unit () in
   Simple_utils.Option.value ~default opt
-
-let bytes_pack ~raise loc : typer = typer_1 ~raise loc "PACK" @@ fun _t ->
-  t_bytes ()
-
-let bytes_unpack ~raise loc = typer_1_opt ~raise loc "UNPACK" @@ fun input tv_opt ->
-  let () = trace_option ~raise (expected_bytes loc input) @@ assert_t_bytes input in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let t = trace_option ~raise (expected_option loc t) @@ get_t_option t in
-    t_option t
 
 let hash256 ~raise loc = typer_1 ~raise loc "SHA256" @@ fun t ->
   let () = trace_option ~raise (expected_bytes loc t) @@ assert_t_bytes t in
@@ -704,18 +672,6 @@ let lsr_ ~raise loc = typer_2 ~raise loc "LSR" @@ fun a b ->
       ]
       [a; b]
 
-let concat ~raise loc = typer_2 ~raise loc "CONCAT" @@ fun a b ->
-  if eq_2 (a , b) (t_string ())
-  then t_string ()
-  else if eq_2 (a , b) (t_bytes ())
-  then t_bytes ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_string();t_string()] ;
-        [t_bytes();t_bytes()] ;
-      ]
-      [a; b]
-
 let cons ~raise loc = typer_2 ~raise loc "CONS" @@ fun hd tl ->
   let elt = trace_option ~raise (expected_list loc tl) @@ get_t_list tl in
   let () = assert_eq_1 ~raise ~loc hd elt in
@@ -1149,12 +1105,6 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_GT                  -> comparator ~raise ~test loc "GT" ;
   | C_LE                  -> comparator ~raise ~test loc "LE" ;
   | C_GE                  -> comparator ~raise ~test loc "GE" ;
-    (* BYTES / STRING *)
-  | C_SIZE                -> size ~raise loc ;
-  | C_CONCAT              -> concat ~raise loc ;
-  | C_SLICE               -> slice ~raise loc ;
-  | C_BYTES_PACK          -> bytes_pack ~raise loc ;
-  | C_BYTES_UNPACK        -> bytes_unpack ~raise loc ;
   (* LIST *)
   | C_CONS                -> cons ~raise loc ;
   | C_LIST_EMPTY          -> list_empty ~raise loc;
