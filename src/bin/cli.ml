@@ -242,8 +242,8 @@ let compile_file =
 
 
 let compile_parameter =
-  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root  () =
-  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~syntax ~protocol_version ~display_format ?output_file ~warn ~werror ?project_root () in
+  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root () =
+  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~expression ~syntax ~protocol_version ~amount ~balance ?sender ?source ?now ~display_format ?output_file ~warn ~werror ?project_root () in
     return_result ~return ~warn ?output_file @@
     Api.Compile.parameter source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format werror project_root 
   in
@@ -256,8 +256,8 @@ let compile_parameter =
   (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> project_root )
 
 let compile_expression =
-  let f syntax expression protocol_version init_file display_format without_run michelson_format warn werror project_root  () =
-  let raw_options = Compiler_options.make_raw ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root () in
+  let f syntax expression protocol_version init_file display_format without_run michelson_format warn werror project_root () =
+  let raw_options = Compiler_options.make_raw ~syntax ~expression ~protocol_version ?init_file ~display_format ~without_run ~warn ~werror ?project_root () in
     return_result ~return ~warn @@
     Api.Compile.expression expression syntax protocol_version init_file display_format without_run michelson_format werror project_root 
     in
@@ -270,8 +270,8 @@ let compile_expression =
   (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> project_root )
 
 let compile_storage =
-  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root  () =
-  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~syntax ~protocol_version ~display_format ?output_file ~warn ~werror ?project_root () in
+  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root () =
+  let raw_options = Compiler_options.make_raw ~source_file ~expression ~entry_point ~syntax ~protocol_version ~amount ~balance ?sender ?source ?now ~display_format ?output_file ~warn ~werror ?project_root () in
     return_result ~return ~warn ?output_file @@
     Api.Compile.storage source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format werror project_root 
   in
@@ -293,7 +293,7 @@ let compile_group = Command.group ~summary:"compile a ligo program to michelson"
 (** Transpile commands *)
 let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format output_file () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format ?output_file ~new_syntax ~new_dialect  () in
+    let raw_options = Compiler_options.make_raw ~source_file ~new_syntax ~syntax ~new_dialect ~display_format ?output_file () in
     let options         = Compiler_options.make () in
     return_result ~return ?output_file @@
     Api.Transpile.contract source_file new_syntax syntax new_dialect display_format options
@@ -309,7 +309,7 @@ let transpile_contract =
 
 let transpile_expression =
   let f syntax expression new_syntax new_dialect display_format () =
-    let raw_options = Compiler_options.make_raw ~syntax ~display_format ~new_syntax ~new_dialect () in
+    let raw_options = Compiler_options.make_raw ~syntax ~expression ~new_syntax ~new_dialect ~display_format () in
     let options         = Compiler_options.make () in
     return_result ~return @@
     Api.Transpile.expression expression new_syntax syntax new_dialect display_format options
@@ -330,7 +330,7 @@ let transpile_group =
 (** Mutate commands *)
 let mutate_cst =
   let f source_file syntax protocol_version libs display_format seed generator () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?seed ~generator () in
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~libs ~display_format ?seed ~generator () in
     return_result ~return @@
     Api.Mutate.mutate_cst source_file syntax protocol_version libs display_format seed generator in
   let summary   = "return a mutated version for a given file." in
@@ -341,7 +341,7 @@ let mutate_cst =
 
 let mutate_ast =
   let f source_file syntax protocol_version libs display_format seed generator () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?seed ~generator () in
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~libs ~display_format ?seed ~generator () in
     return_result ~return @@
     Api.Mutate.mutate_ast source_file syntax protocol_version libs display_format seed generator
   in
@@ -360,7 +360,7 @@ let mutate_group =
 (** Run commands *)
 let test =
   let f source_file syntax steps protocol_version display_format project_root () =
-  let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ~steps ?project_root () in
+  let raw_options = Compiler_options.make_raw ~source_file ~syntax ~steps ~protocol_version ~display_format ?project_root () in
   return_result ~return @@
     let with_options = Api.with_compiler_options ~protocol_version ~project_root in
     fun () -> Api.Run.test source_file syntax steps display_format with_options 
@@ -375,8 +375,8 @@ let test =
   (f <$> source_file <*> syntax <*> steps <*> protocol_version <*> display_format <*> project_root )
 
 let dry_run =
-  let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root  () =
-  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root ~amount ~balance ?sender ?source ?now ~parameter ~storage () in
+  let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root () =
+  let raw_options = Compiler_options.make_raw ~source_file ~parameter ~storage ~entry_point ~amount ~balance ?sender ?source ?now ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root () in
     return_result ~return ~warn @@
     Api.Run.dry_run source_file entry_point parameter storage amount balance sender source now syntax protocol_version display_format werror project_root 
     in
@@ -390,8 +390,8 @@ let dry_run =
   (f <$> source_file <*> expression "PARAMETER" <*> expression "STORAGE" <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
 
 let evaluate_call =
-  let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root  () =
-  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root ~amount ~balance ?sender ?source ?now ~parameter () in
+  let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root () =
+  let raw_options = Compiler_options.make_raw ~source_file ~parameter ~entry_point ~amount ~balance ?sender ?source ?now ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root () in
     return_result ~return ~warn @@
     Api.Run.evaluate_call source_file entry_point parameter amount balance sender source now syntax protocol_version display_format werror project_root 
     in
@@ -404,8 +404,8 @@ let evaluate_call =
   (f <$> source_file <*> expression "PARAMETER" <*>  entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
 
 let evaluate_expr =
-  let f source_file entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root  () =
-  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root ~amount ~balance ?sender ?source ?now () in
+  let f source_file entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root () =
+  let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~amount ~balance ?sender ?source ?now ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root () in
     return_result ~return ~warn @@
     Api.Run.evaluate_expr source_file entry_point amount balance sender source now syntax protocol_version display_format werror project_root 
     in
@@ -418,8 +418,8 @@ let evaluate_expr =
   (f <$> source_file <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
 
 let interpret =
-  let f expression init_file syntax protocol_version amount balance sender source now display_format project_root  () =
-    let raw_options = Compiler_options.make_raw ~syntax ~protocol_version ~display_format ?project_root ~amount ~balance ?sender ?source ?now ~expression ?init_file () in
+  let f expression init_file syntax protocol_version amount balance sender source now display_format project_root () =
+    let raw_options = Compiler_options.make_raw ~expression ?init_file ~syntax ~protocol_version ~amount ~balance ?sender ?source ?now ~display_format ?project_root () in
     return_result ~return @@
     Api.Run.interpret expression init_file syntax protocol_version amount balance sender source now display_format project_root 
   in
@@ -444,7 +444,7 @@ let run_group =
 (** Info commands *)
 let list_declarations =
   let f source_file syntax display_format () =
-    let raw_options = Compiler_options.make_raw ~syntax ~source_file ~display_format () in
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format () in
     return_result ~return @@
     Api.Info.list_declarations source_file syntax display_format
   in
@@ -455,8 +455,8 @@ let list_declarations =
   (f <$> source_file <*> syntax <*> display_format)
 
 let measure_contract =
-  let f source_file entry_point oc_views syntax protocol_version display_format warn werror project_root  () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?project_root ~entry_point ~views:oc_views ~warn ~werror () in
+  let f source_file entry_point oc_views syntax protocol_version display_format warn werror project_root () =
+    let raw_options = Compiler_options.make_raw ~source_file ~entry_point ~views:oc_views ~syntax ~protocol_version ~display_format ~warn ~werror ?project_root in
     return_result ~return ~warn @@
     Api.Info.measure_contract source_file entry_point oc_views syntax protocol_version display_format werror project_root 
   in
@@ -468,7 +468,7 @@ let measure_contract =
 
 let get_scope =
   let f source_file protocol_version libs display_format with_types () =
-    let raw_options = Compiler_options.make_raw ~source_file ~protocol_version ~display_format ~libs ~with_types () in
+    let raw_options = Compiler_options.make_raw ~source_file ~protocol_version ~libs ~display_format ~with_types () in
     return_result ~return @@
     Api.Info.get_scope source_file protocol_version libs display_format with_types
   in
@@ -541,7 +541,7 @@ let print_cst =
 
 let print_ast =
   let f source_file syntax display_format () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format in
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format () in
     return_result ~return@@
     Api.Print.ast source_file syntax display_format
   in
@@ -554,7 +554,7 @@ let print_ast =
 
 let print_ast_sugar =
   let f source_file syntax display_format self_pass () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format ~self_pass in
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format ~self_pass () in
     return_result ~return @@
     Api.Print.ast_sugar source_file syntax display_format self_pass
   in
@@ -565,8 +565,8 @@ let print_ast_sugar =
   (f <$> source_file <*> syntax <*> display_format <*> self_pass)
 
 let print_ast_core =
-  let f source_file syntax display_format self_pass project_root  () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format ~self_pass ?project_root in
+  let f source_file syntax display_format self_pass project_root () =
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~display_format ~self_pass ?project_root () in
     return_result ~return @@
     Api.Print.ast_core source_file syntax display_format self_pass project_root 
   in
@@ -577,8 +577,8 @@ let print_ast_core =
   (f <$> source_file <*> syntax <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_typed =
-  let f source_file syntax protocol_version display_format self_pass project_root  () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ~self_pass ?project_root in
+  let f source_file syntax protocol_version display_format self_pass project_root () =
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ~self_pass ?project_root () in
     return_result ~return @@
     Api.Print.ast_typed source_file syntax protocol_version display_format self_pass project_root 
   in
@@ -591,8 +591,8 @@ let print_ast_typed =
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_aggregated =
-  let f source_file syntax protocol_version display_format self_pass project_root  () =
-    let raw_options = Compiler_options.make_raw ~syntax ~protocol_version ~display_format ~self_pass ?project_root in
+  let f source_file syntax protocol_version display_format self_pass project_root () =
+    let raw_options = Compiler_options.make_raw ~syntax ~protocol_version ~display_format ~self_pass ?project_root () in
     return_result ~return @@
       Api.Print.ast_aggregated source_file syntax protocol_version display_format self_pass project_root 
   in
@@ -603,8 +603,8 @@ let print_ast_aggregated =
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_combined =
-  let f source_file syntax protocol_version display_format project_root  () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?project_root in
+  let f source_file syntax protocol_version display_format project_root () =
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?project_root () in
     return_result ~return @@
     Api.Print.ast_combined source_file syntax protocol_version display_format project_root 
   in
@@ -617,8 +617,8 @@ let print_ast_combined =
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> project_root )
 
 let print_mini_c =
-  let f source_file syntax protocol_version display_format optimize project_root  () =
-    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?optimize ?project_root in
+  let f source_file syntax protocol_version display_format optimize project_root () =
+    let raw_options = Compiler_options.make_raw ~source_file ~syntax ~protocol_version ~display_format ?optimize ?project_root () in
     return_result ~return @@
     Api.Print.mini_c source_file syntax protocol_version display_format optimize project_root 
   in
@@ -648,7 +648,7 @@ let print_group =
 (** other *)
 let changelog =
   let f display_format () =
-    let raw_options = Compiler_options.make_raw ~display_format in
+    let raw_options = Compiler_options.make_raw ~display_format () in
     return_result ~return @@ Api.dump_changelog display_format in
   let summary   = "print the ligo changelog" in
   let readme () = "Dump the LIGO changelog to stdout." in
@@ -656,8 +656,8 @@ let changelog =
   (f <$> display_format)
 
 let repl =
-  let f syntax protocol_version amount balance sender source now display_format init_file project_root  () =
-    let raw_options = Compiler_options.make_raw ~syntax ~protocol_version ~amount ~balance ?sender ?source ?now ~display_format ?init_file ?project_root in
+  let f syntax protocol_version amount balance sender source now display_format init_file project_root () =
+    let raw_options = Compiler_options.make_raw ~syntax ~protocol_version ~amount ~balance ?sender ?source ?now ~display_format ?init_file ?project_root () in
      return_result ~return @@ fun () ->
     (let protocol = Environment.Protocols.protocols_to_variant protocol_version in
     let syntax = Ligo_compile.Helpers.syntax_to_variant (Syntax_name syntax) None in
@@ -677,6 +677,7 @@ let install =
   let summary   = "install ligo packages declared in package.json" in
   let readme () = "This command invokes the package manager to install the external packages declared in package.json" in
   let f package_name cache_path () =
+    let raw_options = Compiler_options.make_raw ?package_name ~cache_path () in
     return_result ~return @@ fun () -> Install.install ~package_name ~cache_path in
   Command.basic ~summary ~readme (f <$> package_name <*> cache_path)
 

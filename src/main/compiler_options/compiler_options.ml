@@ -30,6 +30,9 @@ type raw = {
   libs : string list ;
   self_pass : bool ;
   optimize : string option ;
+  without_run : bool ;
+  package_name : string option ;
+  cache_path : string option ;
 }
 
 let make_raw
@@ -62,6 +65,9 @@ let make_raw
  ?(libs = [])
  ?(self_pass = false)
  ?optimize
+ ?(without_run = false)
+ ?package_name
+ ?cache_path
  ()
   = {
   source_file ;
@@ -93,6 +99,9 @@ let make_raw
   libs ;
   self_pass ;
   optimize ;
+  without_run ;
+  package_name ;
+  cache_path ;
 }
 
 type frontend = {
