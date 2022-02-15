@@ -80,8 +80,13 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_2.mligo" ] ;
   [%expect {|
-    A type system corner case occurred:
-    No of types works... SOME: int |} ] ;
+    File "../../test/contracts/negative/error_typer_2.mligo", line 3, characters 24-39:
+      2 |
+      3 | let foo : string list = Some (42 + 127)
+      4 |
+
+    Invalid type(s).
+    Expected: "list (string)", but got: "option (a)". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_3.mligo" ] ;
   [%expect {|
@@ -192,8 +197,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/override_option.mligo" ] ;
   [%expect {|
-    A type system corner case occurred:
-    No of types works... NONE: |} ]
+    File "../../test/contracts/negative/override_option.mligo", line 3, characters 53-57:
+      2 |
+      3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
+
+    Invalid type(s).
+    Expected: "int", but got: "option (a)". |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;

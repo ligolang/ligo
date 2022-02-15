@@ -863,8 +863,14 @@ and type_lambda ~raise ~test ~protocol_version e {
 and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
   match Constant_types.find name with
   | Some xs ->
-     let rec aux = function
-       | [] -> raise.raise (corner_case (Format.asprintf "No of types works... %a: %a" O.PP.constant' name Simple_utils.PP_helpers.(list_sep_d O.PP.type_expression) lst))
+     let rec aux errs = function
+       | [] -> (* raise.raise @@ typeclass_error loc
+                *   l
+                *   [t] *) (
+          match errs with
+          | [] ->
+             raise.raise @@ (corner_case (Format.asprintf "No of types works... %a: %a" O.PP.constant' name Simple_utils.PP_helpers.(list_sep_d O.PP.type_expression) lst))
+          | x :: _ -> raise.raise x)
        | lamb_type :: xs ->
           Simple_utils.Trace.try_with (fun ~raise ->
               let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
@@ -872,9 +878,9 @@ and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Locatio
               let lamb_type = TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
               let _, tv = Ast_typed.Helpers.destruct_arrows lamb_type in
               (name, tv))
-            (fun _ -> aux xs)
+            (fun err -> aux (err :: errs) xs)
      in
-     aux xs
+     aux [] xs
   | _ ->
      let typer = Constant_typers.constant_typers ~raise ~test ~protocol_version loc name in
      let tv = typer lst tv_opt in
