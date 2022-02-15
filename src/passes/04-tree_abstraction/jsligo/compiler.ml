@@ -468,7 +468,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     ) items in
     return @@ e_list ~loc lst
   )
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
+  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; region=finish})]); _}; _}); region=start} ->
     (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
        JavaScript and TypeScript don't have native pattern matching. *)
     let fields' = Utils.nsepseq_to_list fields in
@@ -484,29 +484,30 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       aux p
     in
     let compile_constr_pattern = function
-      CST.Property {value = {name = EVar {value = constr; _}; value; _}; _} -> (
+      CST.Property {value = {name = EVar {value = constr; region}; value; _}; _} -> (
         match value with
           EFun {value = {parameters; body; _}; _} ->
             let parameters_opt = compile_simple_pattern parameters in
             let expr = compile_function_body_to_expression ~raise body in
-            ((Label constr, parameters_opt), expr)
+            (region, (Label constr, parameters_opt), expr)
         | _ as e -> raise.raise @@ invalid_case constr e (* TODO: improve error message *)
       )
     | _ as f -> raise.raise @@ unsupported_match_object_property f
     in
-    let loc = Location.lift region in
+    let loc1 = Location.lift start in
+    let loc2 = Location.lift finish in
+    let loc = Location.cover loc1 loc2 in
     let matchee = compile_expression ~raise input in
     let constrs = List.map ~f:compile_constr_pattern fields' in
     let cases = List.map
-      ~f:(fun ((constructor,p_opt),body) ->
-        (* TODO: location should be fetch*)
-        let whole_pattern_loc = Location.generated in
+      ~f:(fun (region, (constructor,p_opt),body) ->
+        let loc = Location.lift region in
         let pvar = match p_opt with
           | Some (var) ->
             P_var ({var ; ascr = None ; attributes = Stage_common.Helpers.const_attribute}:_ AST.binder)
           | None -> P_unit
         in
-        let pattern = Location.wrap ~loc:whole_pattern_loc @@ P_variant (constructor,Location.wrap pvar) in
+        let pattern = Location.wrap ~loc @@ P_variant (constructor,Location.wrap ~loc pvar) in
         ({body ; pattern} : _ AST.match_case)
       )
       constrs
