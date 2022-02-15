@@ -103,6 +103,9 @@ and get_fv expr =
   | E_lambda {binder ; result} ->
      let {env;used_var},result = self result in
      return {env;used_var=VSet.remove binder @@ used_var} @@ E_lambda {binder;result}
+  | E_type_abstraction {type_binder;result} ->
+     let env,result = self result in
+     return env @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name; lambda = {binder; result};fun_type} ->
      let {env;used_var},result = self result in
      return {env;used_var=VSet.remove fun_name @@ VSet.remove binder @@ used_var} @@

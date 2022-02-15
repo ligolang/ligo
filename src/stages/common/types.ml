@@ -145,6 +145,8 @@ type 'exp update   = {record: 'exp; path: 'exp access list; update: 'exp}
 type 'exp record_accessor = {record: 'exp; path: label}
 type 'exp record_update   = {record: 'exp; path: label; update: 'exp}
 
+type ('exp) type_abs = {type_binder:type_variable;result:'exp}
+
 type ('exp,'ty_exp) ascription = {anno_expr: 'exp; type_annotation: 'ty_exp}
 
 type 'exp conditional = {

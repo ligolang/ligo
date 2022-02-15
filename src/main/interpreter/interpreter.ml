@@ -236,14 +236,12 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     | ( C_ADDRESS , _  ) -> fail @@ error_type
     | ( C_BYTES_PACK , [ value ] ) ->
       let value_ty = List.nth_exn types 0 in
-      let>> ret = Pack (loc, value, value_ty) in
-      let* value = eval_ligo ret calltrace env in
+      let>> value = Pack (loc, value, value_ty) in
       return value
     | ( C_BYTES_PACK , _  ) -> fail @@ error_type
     | ( C_BYTES_UNPACK , [ V_Ct (C_bytes bytes) ] ) ->
       let value_ty = expr_ty in
-      let>> typed_exp = Unpack (loc, bytes, value_ty) in
-      let* value = eval_ligo typed_exp calltrace env in
+      let>> value = Unpack (loc, bytes, value_ty) in
       return value
     | ( C_BYTES_UNPACK , _  ) -> fail @@ error_type
     | ( C_ASSERTION , [ v ] ) ->
@@ -1054,11 +1052,17 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
             eval_ligo body (term.location :: calltrace) f_env''
           | V_Ligo (_, code) ->
             let>> ctxt = Get_state () in
-            return @@ Michelson_backend.run_michelson_code ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
+            return @@ Michelson_backend.parse_and_run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
+          | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
+            let>> ctxt = Get_state () in
+            return @@ Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder ; body=result ; env}
+    | E_type_abstraction {type_binder=_ ; result} -> (
+      eval_ligo (result) calltrace env
+    )
     | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_}} -> (
       let* rhs' = eval_ligo rhs calltrace env in
       eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
@@ -1186,22 +1190,19 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
     | E_raw_code {language ; code} -> (
       let open AST in
       match code.expression_content with
-      | E_literal (Literal_string _) when String.equal language Stage_common.Backends.michelson &&
-                                           is_t_arrow (get_type code) ->
-        let AST.{ type1 = in_type ; type2 = out_type } = trace_option ~raise (Errors.generic_error term.location "Expected function") @@
-                                   get_t_arrow (get_type code) in
-        let arg_binder = Var.fresh () in
-        let body = e_a_application term (e_a_variable arg_binder in_type) out_type in
-        let orig_lambda = e_a_lambda { binder = arg_binder ; result = body } in_type out_type in
-        return @@ V_Func_val { rec_name = None ; orig_lambda ; body ; env ; arg_binder }
-      | E_literal (Literal_string x) when is_t_arrow (get_type term) ->
+      | E_literal (Literal_string x) when String.equal language Stage_common.Backends.michelson && (is_t_arrow (get_type code) || is_t_arrow (term.type_expression)) ->
+        let ast_ty = get_type code in
         let exp_as_string = Ligo_string.extract x in
-        return @@ V_Ligo (language , exp_as_string)
+        let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
+        return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
       | E_literal (Literal_string x) when String.equal language Stage_common.Backends.michelson ->
         let ast_ty = get_type code in
         let exp_as_string = Ligo_string.extract x in
-        let code_ty, code = Michelson_backend.run_raw_michelson_code ~raise ~loc:term.location exp_as_string ast_ty in
+        let code_ty, code = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
+      | E_literal (Literal_string x) when is_t_arrow (get_type term) ->
+        let exp_as_string = Ligo_string.extract x in
+        return @@ V_Ligo (language , exp_as_string)
       | E_literal (Literal_string x) ->
         let exp_as_string = Ligo_string.extract x in
         return @@ V_Ligo (language , exp_as_string)

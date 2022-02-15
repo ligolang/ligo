@@ -42,10 +42,10 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-You can get the rolling release [here](https://ligolang.org/bin/linux/ligo), make it executable, and you are done!
+You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/2045251914/artifacts/raw/ligo), make it executable, and you are done!
 
 ```zsh
-wget https://ligolang.org/bin/linux/ligo
+wget https://gitlab.com/ligolang/ligo/-/jobs/2045251914/artifacts/raw/ligo
 chmod +x ./ligo
 ```
 
@@ -59,7 +59,7 @@ sudo cp ./ligo /usr/local/bin
 ## Debian Linux package installation
 
 A `.deb` package containing the static `ligo` executable is also available.
-First, download [the package](https://ligolang.org/deb/ligo.deb), and then install using: 
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/2045251914/artifacts/raw/ligo.deb), and then install using: 
 
 ```zsh
 sudo apt install ./ligo.deb
@@ -67,6 +67,6 @@ sudo apt install ./ligo.deb
 
 ## Releases
 
-Releases are available at the [releases page of GitLab project](https://gitlab.com/ligolang/ligo/-/releases). All the artifacts are attached there.
+Releases are available at the [releases page of GitLab project](https://gitlab.com/ligolang/ligo/-/releases/). All the artifacts are attached there.
 
 If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](https://ligolang.org/docs/next/intro/changelog). It contains links to corresponding releases, should you wish to download the artifacts.

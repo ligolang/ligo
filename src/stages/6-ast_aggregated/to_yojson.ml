@@ -82,6 +82,7 @@ and expression_content = function
   | E_variable    e -> `List [ `String "E_variable"; expression_variable_to_yojson e ]
   | E_application e -> `List [ `String "E_application"; application e ]
   | E_lambda      e -> `List [ `String "E_lambda"; lambda e ]
+  | E_type_abstraction e -> `List [ `String "E_type_abstraction"; type_abs expression e ]
   | E_recursive   e -> `List [ `String "E_recursive"; recursive e ]
   | E_let_in      e -> `List [ `String "E_let_in"; let_in e ]
   | E_type_in     e -> `List [ `String "E_type_in"; type_in e ]

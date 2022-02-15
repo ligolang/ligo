@@ -362,6 +362,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     }) in
     let body = decompile_expression_in let_result in
     return_expr @@ Statement const :: body
+  | E_type_abstraction _ -> failwith "type_abstraction not supported yet"
   | E_type_in {type_binder;rhs;let_result} ->
     let name = decompile_variable type_binder in
     let type_expr = decompile_type_expr rhs in

@@ -71,6 +71,11 @@ let lambda : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> (
   let acc,result = f acc result in
   (acc,{binder;output_type;result})
 
+let type_abs : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a type_abs -> 'acc * 'b type_abs
+= fun f acc {type_binder;result}->
+  let acc,result = f acc result in
+  acc,{type_binder;result}
+
 let path : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a access list -> 'acc * 'b access list
 = fun f acc path ->
   let aux acc a = match a with

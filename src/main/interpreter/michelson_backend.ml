@@ -290,9 +290,10 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.raise @@ Errors.generic_error loc (Format.asprintf "Expected sum type but got %a" Ast_aggregated.PP.type_expression ty)
   | V_Func_val v ->
      make_ast_func ~raise ?name:v.rec_name v.env v.arg_binder v.body v.orig_lambda
-  | V_Michelson (Ty_code { code = expr ; code_ty = expr_ty ; ast_ty = ty_exp }) ->
-     let mini_c = trace ~raise Main_errors.main_decompile_michelson @@ Stacking.Decompiler.decompile_value expr_ty expr in
-     trace ~raise Main_errors.main_decompile_mini_c @@ Spilling.decompile mini_c ty_exp
+  | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty }) ->
+     let s = Format.asprintf "%a" Tezos_utils.Michelson.pp code in
+     let s = Ligo_string.verbatim s in
+     e_a_raw_code Stage_common.Backends.michelson (make_e (e_string s) ast_ty) ast_ty
   | V_Record map when is_t_record ty ->
      let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)) @@  get_t_record_opt ty in
      make_ast_record ~raise ~loc map_ty map
@@ -431,37 +432,22 @@ let compile_literal ~raise ~loc : Ast_aggregated.literal -> _ =
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
-let run_michelson_code ~raise ~loc (ctxt : Tezos_state.context) code func_ty arg arg_ty =
+let run_michelson_func ~raise ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
   let open Ligo_interpreter.Types in
-  let { code = a ; code_ty = b ; _ } = compile_simple_value ~raise ~loc arg arg_ty in
+  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~loc arg arg_ty in
   let func_ty = compile_type ~raise func_ty in
-  let open Tezos_micheline in
-  let (code, errs) = Micheline_parser.tokenize code in
-  let func = (match errs with
-              | _ :: _ -> raise.raise (Errors.generic_error Location.generated "Could not parse")
-              | [] ->
-                 let (code, errs) = Micheline_parser.parse_expression ~check:false code in
-                 match errs with
-                 | _ :: _ -> raise.raise (Errors.generic_error Location.generated "Could not parse")
-                 | [] ->
-                    let code = Micheline.strip_locations code in
-                    (* hmm *)
-                    let code = Micheline.inject_locations (fun _ -> ()) code in
-                    match code with
-                    | Seq (_, s) ->
-                       Tezos_utils.Michelson.(seq ([i_push b a] @ s))
-                    | _ ->
-                       raise.raise (Errors.generic_error Location.generated "Could not parse")
-             ) in
-  let r = Ligo_run.Of_michelson.run_expression ~raise func func_ty in
-  match r with
+  let func = match code with
+  | Seq (_, s) ->
+     Tezos_utils.Michelson.(seq ([i_push arg_ty arg] @ s))
+  | _ ->
+     raise.raise (Errors.generic_error Location.generated "Could not parse") in
+  match Ligo_run.Of_michelson.run_expression ~raise func func_ty with
   | Success (ty, value) ->
       Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
   | _ ->
      raise.raise (Errors.generic_error loc "Could not execute Michelson function")
 
-let run_raw_michelson_code ~raise ~loc code ty =
-  let ty = compile_type ~raise ty in
+let parse_code ~raise code =
   let open Tezos_micheline in
   let (code, errs) = Micheline_parser.tokenize code in
   let code = (match errs with
@@ -471,20 +457,33 @@ let run_raw_michelson_code ~raise ~loc code ty =
                  match errs with
                  | _ :: _ -> raise.raise (Errors.generic_error Location.generated "Could not parse")
                  | [] ->
-                    let code = Micheline.strip_locations code in
-                    (* hmm *)
-                    let code = Micheline.inject_locations (fun _ -> ()) code in
+                    let code = Micheline.map_node (fun _ -> ()) (fun x -> x) code in
                     match code with
                     | Seq (_, s) ->
                        Tezos_utils.Michelson.(seq s)
                     | _ ->
                        raise.raise (Errors.generic_error Location.generated "Could not parse")
              ) in
-  let r = Ligo_run.Of_michelson.run_expression ~raise code ty in
-  match r with
+  code
+
+let parse_and_run_michelson_func ~raise ~loc (ctxt : Tezos_state.context) code func_ty arg arg_ty =
+  let code = parse_code ~raise code in
+  run_michelson_func ~raise ~loc ctxt code func_ty arg arg_ty
+
+let parse_raw_michelson_code ~raise code ty =
+  let open Tezos_micheline in
+  let ty = compile_type ~raise ty in
+  let code = parse_code ~raise code in
+  let code_ty = Micheline.map_node (fun _ -> ()) (fun x -> x) ty in
+  (code, code_ty)
+
+let parse_and_run_raw_michelson_code ~raise ~loc code ty =
+  let open Tezos_micheline in
+  let code, code_ty = parse_raw_michelson_code ~raise code ty in
+  match Ligo_run.Of_michelson.run_expression ~raise code code_ty with
   | Success (ty, value) ->
     let code = Micheline.map_node (fun _ -> ()) (fun x -> x) value in
     let code_ty = Micheline.map_node (fun _ -> ()) (fun x -> x) ty in
     (code_ty, code)
   | _ ->
-     raise.raise (Errors.generic_error loc "Could not execute Michelson function")
+     raise.raise (Errors.generic_error loc "Could not execute Michelson code")

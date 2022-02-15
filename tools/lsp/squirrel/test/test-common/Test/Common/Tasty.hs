@@ -9,7 +9,7 @@ import Driver (main)
 
 data TestWithLigo = WithoutLigo | WithLigo
 
--- | A default main function that can be used by ligo-squirrel.
+-- | A default main function that can be used by ligo-squirrel's test suite.
 defaultMain :: TestWithLigo -> IO ()
 defaultMain testWithLigo = do
   setEnv "LIGO_ENV" "testing"

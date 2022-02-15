@@ -138,6 +138,7 @@ let e_constant ?loc ?sugar cons_name arguments = e_constant ?loc ?sugar { cons_n
 let e_variable v : expression = e_variable v ()
 let e_application lamb args : expression = e_application {lamb;args} ()
 let e_lambda ?loc ?sugar binder output_type result = e_lambda ?loc ?sugar {binder; output_type; result ;  } ()
+let e_type_abs ?loc ?sugar type_binder result = e_type_abstraction ?loc ?sugar {type_binder; result ;  } ()
 let e_recursive ?loc ?sugar fun_name fun_type lambda = e_recursive ?loc ?sugar {fun_name; fun_type; lambda} ()
 let e_let_in ?loc ?sugar let_binder rhs let_result attr = e_let_in ?loc ?sugar { let_binder ; rhs ; let_result; attr } ()
 let e_type_in type_binder rhs let_result = e_type_in { type_binder ; rhs ; let_result } ()
@@ -248,6 +249,13 @@ let get_e_ascription = fun a ->
   match a with
   | E_ascription {anno_expr; type_annotation} -> Some (anno_expr,type_annotation)
   | _ -> None
+
+let get_type_abstractions (e : expression) =
+  let rec aux tv e = match get_e_type_abstraction e with
+  | None -> tv, e
+  | Some { type_binder ; result } ->
+     aux (type_binder :: tv) result in
+  aux [] e
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->

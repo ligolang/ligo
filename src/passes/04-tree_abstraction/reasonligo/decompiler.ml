@@ -292,6 +292,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let (binders,lhs_type,body) = decompile_lambda lambda in
     let fun_expr : CST.fun_expr = {attributes=[]; binders;lhs_type;arrow=ghost;body} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
+  | E_type_abstraction _ -> failwith "type_abstraction not supported yet"
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder={var;ascr;attributes=var_attributes};rhs;let_result;attributes} ->

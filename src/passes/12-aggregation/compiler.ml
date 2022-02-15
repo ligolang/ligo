@@ -206,6 +206,10 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       let result = self ~data result in
       return @@ O.E_lambda { binder ; result }
     )
+    | I.E_type_abstraction {type_binder; result} -> (
+      let result = self result in
+      return @@ O.E_type_abstraction {type_binder; result}
+    )
     | I.E_type_inst { forall ; type_ } -> (
       let forall = self forall in
       let type_ = compile_type ~raise type_ in

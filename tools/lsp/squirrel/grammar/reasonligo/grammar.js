@@ -90,6 +90,8 @@ module.exports = grammar({
         $.type_decl,
         $.let_decl,
         $.preprocessor,
+        $.module_decl,
+        $.module_alias
        ),
 
     /// TYPE DECLARATIONS
@@ -200,12 +202,32 @@ module.exports = grammar({
       field("value", $._program),
     ))),
 
+    /// MODULES
+
+    module_decl: $ => seq(
+      "module",
+      field("moduleName", $.ModuleName),
+      "=",
+      "{",
+      common.sepEndBy(optional(';'), field("declaration", $._declaration)),
+      "}"
+    ),
+
+    module_alias: $ => seq(
+      "module",
+      field("moduleName", $.ModuleName),
+      "=",
+      common.sepBy('.', field("module", $.ModuleName))
+    ),
+
     /// STATEMENTS
 
     _statement: $ => prec(1, choice(
       $.let_decl,
       $.type_decl,
       $._expr,
+      $.module_decl,
+      $.module_alias,
     )),
 
     /// PATTERNS
@@ -264,7 +286,7 @@ module.exports = grammar({
 
     constr_pattern: $ => prec(1, seq(
       field("constructor", $.ConstrName),
-      optional(field("arg", $._pattern)),
+      optional(field("arg", $._unannotated_pattern)),
     )),
 
     list_pattern: $ => common.brackets(

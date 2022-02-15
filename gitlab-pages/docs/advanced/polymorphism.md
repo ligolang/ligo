@@ -90,11 +90,11 @@ declaration that works for both cases.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-function id (const x : _a) : _a is x
+function id<a> (const x : a) : a is x
 ```
 
 Here we introduce a type variable `a` which can be generalised using
-`<a>` in the declaration.
+`<a>` after the function name in the declaration.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -104,7 +104,7 @@ let id (type a) (x : a) : a = x
 ```
 
 Here we introduce a type variable `a` which can be generalised using
-`(type a)` in the declaration.
+`(type a)` after the function name in the declaration.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -186,8 +186,8 @@ variations by using `List` combinators.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
-function rev (const xs : list (_a)) : list (_a) is {
-  var acc := (nil : list (_a));
+function rev<a> (const xs : list (a)) : list (a) is {
+  var acc := (nil : list (a));
   for x in list xs { acc := x # acc; };
 } with acc
 ```
