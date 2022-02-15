@@ -197,12 +197,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/override_option.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/override_option.mligo", line 3, characters 53-57:
-      2 |
-      3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
-
-    Invalid type(s).
-    Expected: "int", but got: "option (a)". |} ]
+    A type system corner case occurred:
+    No of types works... NONE: |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;

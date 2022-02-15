@@ -20,28 +20,33 @@ module TMap = Simple_utils.Map.Make(struct type t = O.type_variable let compare 
 
 module Constant_types = struct
   module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
-  type t = O.type_expression CTMap.t
+  type t = (O.type_expression list) CTMap.t
 
   let a_var = O.Var.of_input_var "a"
   let b_var = O.Var.of_input_var "b"
 
   let tbl : t = CTMap.of_list [
                     (* SET *)
-                    (C_SET_EMPTY, O.(t_for_all a_var () (t_set (t_variable a_var ()))));
-                    (C_SET_LITERAL, O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ())));
-                    (C_SET_MEM, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_bool ()) ()) ())));
-                    (C_SET_ADD, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ())));
-                    (C_SET_REMOVE, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ())));
-                    (C_SET_UPDATE, O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_bool ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()) ())));
-                    (C_SET_ITER, O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ())));
-                    (C_SET_FOLD, O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ()))));
-                    (C_SET_FOLD_DESC, O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ()))));
+                    (C_SET_EMPTY, [O.(t_for_all a_var () (t_set (t_variable a_var ())))]);
+                    (C_SET_LITERAL, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ()))]);
+                    (C_SET_MEM, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_bool ()) ()) ()))]);
+                    (C_SET_ADD, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()))]);
+                    (C_SET_REMOVE, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()))]);
+                    (C_SET_UPDATE, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_bool ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()) ()))]);
+                    (C_SET_ITER, [O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ()))]);
+                    (C_SET_FOLD, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_SET_FOLD_DESC, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
                     (* OPTION *)
-                    (C_NONE, O.(t_for_all a_var () (t_option (t_variable a_var ()))));
+                    (C_NONE, [O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
                     (* ADHOC POLY *)
-                    (* (C_SIZE, O.(t_for_all a_var () (t_custom_length (t_variable a_var ())))); *)
+                    (C_SIZE, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
+                              O.(t_arrow (t_bytes ()) (t_nat ()) ());
+                              O.(t_arrow (t_string ()) (t_nat ()) ());
+                              O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
+                              O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
+                             ]);
                     (* GLOBAL *)
-                    (C_ABS, O.(t_arrow (t_int ()) (t_nat ()) ()));
+                    (C_ABS, [O.(t_arrow (t_int ()) (t_nat ()) ())]);
                   ]
   let find c = CTMap.find_opt c tbl
 end
@@ -899,13 +904,20 @@ and type_lambda ~raise ~test ~protocol_version e {
 
 and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
   match Constant_types.find name with
-  | Some lamb_type ->
-     let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
-     let table = infer_type_applications ~raise ~loc lamb_type lst tv_opt in
-     let lamb_type = TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
-     let _, tv = Ast_typed.Helpers.destruct_arrows lamb_type in
-     (name, tv)
-  | None ->
+  | Some xs ->
+     let rec aux = function
+       | [] -> raise.raise (corner_case (Format.asprintf "No of types works... %a: %a" O.PP.constant' name Simple_utils.PP_helpers.(list_sep_d O.PP.type_expression) lst))
+       | lamb_type :: xs ->
+          Simple_utils.Trace.try_with (fun ~raise ->
+              let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
+              let table = infer_type_applications ~raise ~loc lamb_type lst tv_opt in
+              let lamb_type = TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
+              let _, tv = Ast_typed.Helpers.destruct_arrows lamb_type in
+              (name, tv))
+            (fun _ -> aux xs)
+     in
+     aux xs
+  | _ ->
      let typer = Constant_typers.constant_typers ~raise ~test ~protocol_version loc name in
      let tv = typer lst tv_opt in
      (name, tv)
