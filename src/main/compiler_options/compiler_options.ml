@@ -17,6 +17,19 @@ type raw = {
   seed : int option ;
   generator : string option ;
   steps : int option ;
+  amount : string option ;
+  balance : string option ;
+  sender : string option ;
+  source : string option ;
+  now : string option ;
+  parameter : string option ;
+  storage : string option ;
+  expression : string option ;
+  init_file : string option ;
+  with_types : bool ;
+  libs : string list ;
+  self_pass : bool ;
+  optimize : string option ;
 }
 
 let make_raw
@@ -36,6 +49,19 @@ let make_raw
  ?seed
  ?generator
  ?steps
+ ?amount
+ ?balance
+ ?sender
+ ?source
+ ?now
+ ?parameter
+ ?storage
+ ?expression
+ ?init_file
+ ?(with_types = false)
+ ?(libs = [])
+ ?(self_pass = false)
+ ?optimize
  ()
   = {
   source_file ;
@@ -54,6 +80,19 @@ let make_raw
   seed ;
   generator ;
   steps ;
+  amount ;
+  balance ;
+  sender ;
+  source ;
+  now ;
+  parameter ;
+  storage ;
+  expression ;
+  init_file ;
+  with_types ;
+  libs ;
+  self_pass ;
+  optimize ;
 }
 
 type frontend = {
