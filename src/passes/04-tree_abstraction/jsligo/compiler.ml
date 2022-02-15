@@ -474,11 +474,11 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let fields' = Utils.nsepseq_to_list fields in
     let compile_simple_pattern p =
       let rec aux = function
-        CST.EVar v -> Some (compile_variable v)
+        CST.EVar v -> Some (compile_variable v), v.region
       | EPar par -> aux par.value.inside
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
-      | EUnit _ -> None
+      | EUnit u -> None, u.region
       | _ as e -> raise.raise @@ unsupported_match_pattern e
       in
       aux p
@@ -487,9 +487,9 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       CST.Property {value = {name = EVar {value = constr; region}; value; _}; _} -> (
         match value with
           EFun {value = {parameters; body; _}; _} ->
-            let parameters_opt = compile_simple_pattern parameters in
+            let parameters_opt, parameters_region = compile_simple_pattern parameters in
             let expr = compile_function_body_to_expression ~raise body in
-            (region, (Label constr, parameters_opt), expr)
+            (region, (Label constr, parameters_opt, parameters_region), expr)
         | _ as e -> raise.raise @@ invalid_case constr e (* TODO: improve error message *)
       )
     | _ as f -> raise.raise @@ unsupported_match_object_property f
@@ -500,14 +500,15 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let matchee = compile_expression ~raise input in
     let constrs = List.map ~f:compile_constr_pattern fields' in
     let cases = List.map
-      ~f:(fun (region, (constructor,p_opt),body) ->
+      ~f:(fun (region, (constructor,p_opt,p_region),body) ->
         let loc = Location.lift region in
+        let ploc = Location.lift p_region in
         let pvar = match p_opt with
           | Some (var) ->
             P_var ({var ; ascr = None ; attributes = Stage_common.Helpers.const_attribute}:_ AST.binder)
           | None -> P_unit
         in
-        let pattern = Location.wrap ~loc @@ P_variant (constructor,Location.wrap ~loc pvar) in
+        let pattern = Location.wrap ~loc @@ P_variant (constructor,Location.wrap ~loc:ploc pvar) in
         ({body ; pattern} : _ AST.match_case)
       )
       constrs

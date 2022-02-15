@@ -15,12 +15,22 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match2.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 4-11:
+    File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 13-15:
       2 |   match(x, {
       3 |     Success: () => "",
       4 |     Fail: (_ : test_exec_error) => ""
 
     Variant pattern argument is expected of type nat but is of type unit. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match5.jsligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative/pattern_match5.jsligo", line 3, characters 14-30:
+      2 |   match(x, {
+      3 |     Success: (x : nat, y : nat) => "",
+      4 |     Fail: (_ : test_exec_error) => ""
+
+    Unsupported match pattern. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match3.jsligo") ] ;
