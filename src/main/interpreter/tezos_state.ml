@@ -386,7 +386,10 @@ let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tez
     let open Tezos_alpha_test_helpers in
     let baker = unwrap_baker ~raise ~loc ctxt.internals.baker in
     let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-      Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw
+      try
+        Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw
+      with
+        (Invalid_argument _) -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls?")
     in
     let incr : Incremental.t Tezos_base.TzPervasives.tzresult Lwt.t  = Incremental.add_operation incr operation in
     match Lwt_main.run @@ incr with
