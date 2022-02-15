@@ -49,3 +49,24 @@ let%expect_test _ =
                                          | Fail _#4 ->
                                            "" | Success _#3 ->
                                                 ""[@private] |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
+  [%expect{|
+    1 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Cons([1,2])])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
+  [%expect{|
+    3 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "t2([Cons([1,2]), Cons([1,2])])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
+  [%expect{|
+    6 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "t2([Cons([1,2]), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
+  [%expect{|
+    7 |}]
+                                              
