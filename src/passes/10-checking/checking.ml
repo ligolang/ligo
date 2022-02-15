@@ -73,16 +73,17 @@ module Constant_types = struct
                     (C_TRUE, [O.(t_bool ())]);
                     (C_FALSE, [O.(t_bool ())]);
                     (C_IS_NAT, [O.(t_arrow (t_int ()) (t_option (t_nat ())) ())]);
+                    (* MATH *)
                     (C_ADD, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
                              O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
                              O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
                              O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
                              O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
                              O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
                              O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
                              O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
                             ]);
                     (C_MUL, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
                              O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
@@ -137,6 +138,23 @@ module Constant_types = struct
                              O.(t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ());
                              O.(t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ());
                              ]);
+                    (* LOGIC *)
+                    (C_NOT, [O.(t_arrow (t_bool ()) (t_bool ()) ());
+                             O.(t_arrow (t_int ()) (t_int ()) ());
+                             O.(t_arrow (t_nat ()) (t_int ()) ());
+                            ]);
+                    (C_OR, [O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                            O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                           ]);
+                    (C_AND, [O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                            ]);
+                    (C_XOR, [O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                            ]);
+                    (C_LSL, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ())]);
+                    (C_LSR, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ())]);
                   ]
   let find c = CTMap.find_opt c tbl
 end
@@ -950,7 +968,7 @@ and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Locatio
           match errs with
           | [] ->
              raise.raise @@ (corner_case (Format.asprintf "No of types works... %a: %a" O.PP.constant' name Simple_utils.PP_helpers.(list_sep_d O.PP.type_expression) lst))
-          | xs -> raise.raise @@ typeclass_error loc (List.rev xs) lst)
+          | xs -> raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev xs)) lst)
        | lamb_type :: xs ->
           let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
           Simple_utils.Trace.try_with (fun ~raise ->

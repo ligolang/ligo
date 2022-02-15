@@ -395,68 +395,6 @@ let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
 let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
   (t_pair (t_bool ()) arg)
 
-let not_ ~raise loc = typer_1 ~raise loc "NOT" @@ fun elt ->
-  if eq_1 elt (t_bool ())
-  then t_bool ()
-  else if eq_1 elt (t_nat ()) || eq_1 elt (t_int ())
-  then t_int ()
-  else raise.raise @@ wrong_not loc elt
-
-let or_ ~raise loc = typer_2 ~raise loc "OR" @@ fun a b ->
-  if eq_2 (a , b) (t_bool ())
-  then t_bool ()
-  else if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_bool();t_bool()] ;
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
-let xor ~raise loc = typer_2 ~raise loc "XOR" @@ fun a b ->
-  if eq_2 (a , b) (t_bool ())
-  then t_bool ()
-  else if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_bool();t_bool()] ;
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
-let and_ ~raise loc = typer_2 ~raise loc "AND" @@ fun a b ->
-  if eq_2 (a , b) (t_bool ())
-  then t_bool ()
-  else if eq_2 (a , b) (t_nat ()) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_bool();t_bool()] ;
-        [t_nat();t_nat()] ;
-        [t_int();t_nat()] ;
-      ]
-      [a; b]
-
-let lsl_ ~raise loc = typer_2 ~raise loc "LSL" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
-let lsr_ ~raise loc = typer_2 ~raise loc "LSR" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
 let cons ~raise loc = typer_2 ~raise loc "CONS" @@ fun hd tl ->
   let elt = trace_option ~raise (expected_list loc tl) @@ get_t_list tl in
   let () = assert_eq_1 ~raise ~loc hd elt in
@@ -867,13 +805,6 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_FOLD_CONTINUE       -> continue ~raise loc ;
   | C_FOLD_STOP           -> stop ~raise loc ;
   | C_FOLD                -> fold ~raise loc ;
-    (* LOGIC *)
-  | C_NOT                 -> not_ ~raise loc ;
-  | C_AND                 -> and_ ~raise loc ;
-  | C_OR                  -> or_ ~raise loc ;
-  | C_XOR                 -> xor ~raise loc ;
-  | C_LSL                 -> lsl_ ~raise loc;
-  | C_LSR                 -> lsr_ ~raise loc;
     (* COMPARATOR *)
   | C_EQ                  -> comparator ~raise ~test loc "EQ" ;
   | C_NEQ                 -> comparator ~raise ~test loc "NEQ" ;
