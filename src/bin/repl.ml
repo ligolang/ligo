@@ -131,7 +131,7 @@ let try_declaration ~raise state s =
 let import_file ~raise state file_name module_name =
   let options = Compiler_options.make ~protocol_version:state.protocol () in
   let options = {options with init_env = state.env } in
-  let module_ = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
+  let module_ = Build.build_context ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.Var.of_input_var module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
@@ -141,7 +141,7 @@ let use_file ~raise state s =
   let options = Compiler_options.make ~protocol_version:state.protocol () in
   let options = {options with init_env = state.env } in
   (* Missing typer environment? *)
-  let module' = Build.combined_contract ~raise ~add_warning ~options (variant_to_syntax state.syntax) s in
+  let module' = Build.build_context ~raise ~add_warning ~options (variant_to_syntax state.syntax) s in
   let env = Environment.append module' state.env in
   let state = { state with env = env;
                             top_level = concat_modules ~declaration:false state.top_level module'
