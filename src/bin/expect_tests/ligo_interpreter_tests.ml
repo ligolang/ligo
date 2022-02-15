@@ -474,8 +474,8 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_accounts.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test_new exited with value 88000000mutez.
-    - test_add exited with value 88000000mutez. |}]
+    - test_new exited with value 110000000mutez.
+    - test_add exited with value 110000000mutez. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_baker_account.mligo" ] ;
@@ -598,7 +598,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1EaZdMJaW3jgoYLwKJSjuUFA6qoKCPjiie |}]
+    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source2.mligo" ] ;
@@ -609,7 +609,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1EaZdMJaW3jgoYLwKJSjuUFA6qoKCPjiie |}]
+    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
