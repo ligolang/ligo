@@ -31,11 +31,6 @@ open H
 *)
 
 
-let none ~raise loc = typer_0 ~raise loc "NONE" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> trace_option ~raise (expected_option loc t) @@ assert_t_option t; t
-
 let sub ~raise loc = typer_2 ~raise loc "SUB" @@ fun a b ->
   if eq_2 (a , b) (t_bls12_381_g1 ())
   then (t_bls12_381_g1 ()) else
@@ -53,8 +48,6 @@ let sub ~raise loc = typer_2 ~raise loc "SUB" @@ fun a b ->
   if (eq_2 (a , b) (t_mutez ()))
   then t_mutez () else
     raise.raise (bad_substraction loc)
-
-let some ~raise loc = typer_1 ~raise loc "SOME" @@ fun a -> t_option a
 
 let map_remove ~raise loc : typer = typer_2 ~raise loc "MAP_REMOVE" @@ fun k m ->
   let (src , _) = trace_option ~raise (expected_big_map loc m) @@
@@ -179,16 +172,6 @@ let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
   let default = t_unit () in
   Simple_utils.Option.value ~default opt
 
-let int ~raise loc : typer = typer_1 ~raise loc "INT" @@ fun t ->
-  if (eq_1 t (t_nat ()) || eq_1 t (t_bls12_381_fr ()))
-  then (t_int ()) else
-    raise.raise @@ typeclass_error loc
-              [
-                [t_bls12_381_fr()] ;
-                [t_nat ()] ;
-              ]
-              [t]
-
 let bytes_pack ~raise loc : typer = typer_1 ~raise loc "PACK" @@ fun _t ->
   t_bytes ()
 
@@ -234,14 +217,6 @@ let sender ~raise loc = constant' ~raise loc "SENDER" @@ t_address ()
 
 let source ~raise loc = constant' ~raise loc "SOURCE" @@ t_address ()
 
-let unit ~raise loc = constant' ~raise loc "UNIT" @@ t_unit ()
-
-let never ~raise loc = typer_1_opt ~raise loc "NEVER" @@ fun nev tv_opt ->
-  let () = assert_eq_1 ~raise ~loc nev (t_never ()) in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> t
-
 let amount ~raise loc = constant' ~raise loc "AMOUNT" @@ t_mutez ()
 
 let balance ~raise loc = constant' ~raise loc "BALANCE" @@ t_mutez ()
@@ -272,10 +247,6 @@ let self ~raise loc = typer_1_opt ~raise loc "SELF" @@ fun entrypoint_as_string 
 let implicit_account ~raise loc = typer_1 ~raise loc "IMPLICIT_ACCOUNT" @@ fun key_hash ->
   let () = trace_option ~raise (expected_key_hash loc key_hash) @@ assert_t_key_hash key_hash in
   t_contract (t_unit () )
-
-let now ~raise loc = constant' ~raise loc "NOW" @@ t_timestamp ()
-let ctrue ~raise loc = constant' ~raise loc "TRUE" @@ t_bool ()
-let cfalse ~raise loc = constant' ~raise loc "FALSE" @@ t_bool ()
 
 let transaction ~raise loc = typer_3 ~raise loc "CALL" @@ fun param amount contract ->
   let () = trace_option ~raise (expected_mutez loc amount) @@ assert_t_mutez amount in
@@ -345,10 +316,6 @@ let set_delegate ~raise loc = typer_1 ~raise loc "SET_DELEGATE" @@ fun delegate_
 let abs ~raise loc = typer_1 ~raise loc "ABS" @@ fun t ->
   let () = trace_option ~raise (expected_int loc t) @@ assert_t_int t in
   t_nat ()
-
-let is_nat ~raise loc = typer_1 ~raise loc "ISNAT" @@ fun t ->
-  let () = trace_option ~raise (expected_int loc t) @@ assert_t_int t in
-  t_option (t_nat ())
 
 let neg ~raise loc = typer_1 ~raise loc "NEG" @@ fun t ->
   if eq_1 t (t_int ())
@@ -1145,15 +1112,6 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   ret_t
 
 let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
-  | C_INT                 -> int ~raise loc ;
-  | C_UNIT                -> unit ~raise loc ;
-  | C_NEVER               -> never ~raise loc ;
-  | C_NOW                 -> now ~raise loc ;
-  | C_TRUE                -> ctrue ~raise loc ;
-  | C_FALSE               -> cfalse ~raise loc ;
-  | C_IS_NAT              -> is_nat ~raise loc ;
-  | C_SOME                -> some ~raise loc ;
-  | C_NONE                -> none ~raise loc ;
   | C_UNOPT               -> unopt ~raise loc ;
   | C_UNOPT_WITH_ERROR    -> unopt_with_error ~raise loc ;
   | C_ASSERTION           -> assertion ~raise loc ;
