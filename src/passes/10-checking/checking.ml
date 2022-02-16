@@ -106,7 +106,19 @@ module Constant_types = struct
                     (C_SENDER, [O.(t_address ())]);
                     (C_SOURCE, [O.(t_address ())]);
                     (C_ADDRESS, [O.(t_for_all a_var () (t_arrow (t_contract (t_variable a_var ())) (t_address ()) ()))]);
+                    (C_CONTRACT, [O.(t_for_all a_var () (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()))]);
+                    (C_CONTRACT_OPT, [O.(t_for_all a_var () (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()))]);
+                    (C_CONTRACT_WITH_ERROR, [O.(t_for_all a_var () (t_arrow (t_address ()) (t_arrow (t_string ()) (t_option (t_contract (t_variable a_var ()))) ()) ()))]);
+                    (C_CONTRACT_ENTRYPOINT_OPT, [O.(t_for_all a_var () (t_arrow (t_string ()) (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()) ()))]);
+                    (C_CONTRACT_ENTRYPOINT, [O.(t_for_all a_var () (t_arrow (t_string ()) (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()) ()))]);
+                    (C_IMPLICIT_ACCOUNT, [O.(t_arrow (t_key_hash ()) (t_contract (t_unit ())) ())]);
+                    (C_SET_DELEGATE, [O.(t_arrow (t_option (t_key_hash ())) (t_operation ()) ())]);
+                    (C_SELF, [O.(t_for_all a_var () (t_arrow (t_string ()) (t_contract (t_variable a_var ())) ()))]);
                     (C_SELF_ADDRESS, [O.(t_address ())]);
+                    (C_TOTAL_VOTING_POWER, [O.(t_nat ())]);
+                    (C_VOTING_POWER, [O.(t_arrow (t_key_hash ()) (t_nat ()) ())]);
+                    (C_CALL, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_arrow (t_contract (t_variable a_var ())) (t_operation ()) ()) ()) ()))]);
+                    (C_CREATE_CONTRACT, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow (t_variable b_var ()) (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())))]);
                     (C_NOW, [O.(t_timestamp ())]);
                     (C_CHAIN_ID, [O.(t_chain_id ())]);
                     (C_INT, [O.(t_arrow (t_nat ()) (t_int ()) ());
@@ -117,6 +129,14 @@ module Constant_types = struct
                     (C_TRUE, [O.(t_bool ())]);
                     (C_FALSE, [O.(t_bool ())]);
                     (C_IS_NAT, [O.(t_arrow (t_int ()) (t_option (t_nat ())) ())]);
+                    (C_PAIRING_CHECK, [O.(t_arrow (t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ()))) (t_bool ()) ())]);
+                    (C_OPEN_CHEST, [O.(t_arrow (t_chest_key ()) (t_arrow (t_chest ()) (t_arrow (t_nat ()) (t_chest_opening_result ()) ()) ()) ())]);
+                    (C_VIEW, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_string ()) (t_arrow (t_variable a_var ()) (t_arrow (t_address ()) (t_option (t_variable b_var ())) ()) ()) ())))]);
+                    (* TICKET *)
+                    (C_TICKET, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_nat ()) (t_ticket (t_variable a_var ())) ()) ()))]);
+                    (C_READ_TICKET, [O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_pair (t_pair (t_address ()) (t_pair (t_variable a_var ()) (t_nat ()))) (t_ticket (t_variable a_var ()))) ()))]);
+                    (C_SPLIT_TICKET, [O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ())))) ()) ()))]);
+                    (C_JOIN_TICKET, [O.(t_for_all a_var () (t_arrow (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ()))) (t_option (t_ticket (t_variable a_var ()))) ()))]);
                     (* MATH *)
                     (C_ADD, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
                              O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());

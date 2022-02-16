@@ -220,10 +220,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;
   [%expect {|
-      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 6, characters 9-45:
-        5 | let get_add_entrypoint (addr : address) =
-        6 |   match (Tezos.get_entrypoint_opt "%add" addr) with
+      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 8, characters 13-53:
         7 |     Some contract -> contract
+        8 |   | None -> (failwith "The entrypoint does not exist" : int contract)
+        9 |
   
-      Can't infer the complete type of this value, please add a type annotation.
-      The value has type 'a contract option, here 'a can't be inferred |}]
+      Invalid type(s).
+      Expected: "contract (a)", but got: "contract (int)". |}]

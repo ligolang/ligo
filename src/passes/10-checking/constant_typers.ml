@@ -49,87 +49,6 @@ let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
   let default = t_unit () in
   Simple_utils.Option.value ~default opt
 
-let total_voting_power ~raise loc = constant' ~raise loc "TOTAL_VOTING_POWER" @@ t_nat ()
-
-let voting_power ~raise loc = typer_1 ~raise loc "VOTING_POWER" @@ fun t ->
-  let () = trace_option ~raise (expected_key_hash loc t) @@ assert_t_key_hash t in
-  t_nat ()
-
-let self ~raise loc = typer_1_opt ~raise loc "SELF" @@ fun entrypoint_as_string tv_opt ->
-  let () = trace_option ~raise (expected_string loc entrypoint_as_string) @@ assert_t_string entrypoint_as_string in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> t
-
-let implicit_account ~raise loc = typer_1 ~raise loc "IMPLICIT_ACCOUNT" @@ fun key_hash ->
-  let () = trace_option ~raise (expected_key_hash loc key_hash) @@ assert_t_key_hash key_hash in
-  t_contract (t_unit () )
-
-let transaction ~raise loc = typer_3 ~raise loc "CALL" @@ fun param amount contract ->
-  let () = trace_option ~raise (expected_mutez loc amount) @@ assert_t_mutez amount in
-  let contract_param = trace_option ~raise (expected_contract loc contract) @@ get_t_contract contract in
-  let () = assert_eq_1 ~raise ~loc param contract_param in
-  t_operation ()
-
-let create_contract ~raise loc = typer_4 ~raise loc "CREATE_CONTRACT" @@ fun f kh_opt amount init_storage  ->
-  let { type1 = args ; type2 = ret } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
-  let (_,s) = trace_option ~raise (expected_pair loc args) @@ get_t_pair args in
-  let (oplist,s') = trace_option ~raise (expected_pair loc ret) @@ get_t_pair ret in
-  let () = trace_option ~raise (expected_mutez loc amount) @@ assert_t_mutez amount in
-  let (delegate) = trace_option ~raise (expected_option loc kh_opt) @@ get_t_option kh_opt in
-  let () = assert_eq_1 ~raise ~loc s s' in
-  let () = assert_eq_1 ~raise ~loc s init_storage in
-  let () = trace_option ~raise (expected_op_list loc oplist) @@ assert_t_list_operation oplist in
-  let () = trace_option ~raise (expected_key_hash loc delegate) @@ assert_t_key_hash delegate in
-  t_pair (t_operation ()) (t_address ())
-
-let get_contract ~raise loc = typer_1_opt ~raise loc "CONTRACT" @@ fun addr_tv tv_opt ->
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_contract tv'
-
-let get_contract_with_error ~raise loc = typer_2_opt ~raise loc "CONTRACT" @@ fun addr_tv err_str tv_opt ->
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  let () = trace_option ~raise (expected_string loc err_str) @@ get_t_string err_str in
-  t_contract tv'
-
-let get_contract_opt ~raise loc = typer_1_opt ~raise loc "CONTRACT OPT" @@ fun addr_tv tv_opt ->
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
-  let tv = trace_option ~raise (expected_option loc tv) @@ get_t_option tv in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_option (t_contract tv')
-
-let get_entrypoint ~raise loc = typer_2_opt ~raise loc "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
-  let t_string = t_string () in
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc entry_tv t_string in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_contract tv'
-
-let get_entrypoint_opt ~raise loc = typer_2_opt ~raise loc "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
-  let t_string = t_string () in
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc entry_tv t_string in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
-  let tv = trace_option ~raise (expected_option loc tv) @@ get_t_option tv in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_option (t_contract tv' )
-
-let set_delegate ~raise loc = typer_1 ~raise loc "SET_DELEGATE" @@ fun delegate_opt ->
-  let kh_opt = (t_option (t_key_hash ()) ) in
-  let () = assert_eq_1 ~raise ~loc delegate_opt kh_opt in
-  t_operation ()
-
 let unopt ~raise loc = typer_1 ~raise loc "UNOPT" @@ fun a ->
   let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
   a
@@ -350,36 +269,6 @@ and comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer
                                            record_comparator ~test loc s [a;b] None;
                                            sum_comparator ~test loc s [a;b] None]
 
-let ticket ~raise loc = typer_2 ~raise loc "TICKET" @@ fun dat amt ->
-  let () = assert_eq_1 ~raise ~loc amt (t_nat ()) in
-  t_ticket dat
-
-let read_ticket ~raise loc = typer_1 ~raise loc "READ_TICKET" @@ fun ticket ->
-  let payload = trace_option ~raise (expected_ticket loc ticket) @@ get_t_ticket ticket in
-  t_pair (t_pair (t_address ()) (t_pair payload (t_nat ()))) ticket
-
-let split_ticket ~raise loc = typer_2 ~raise loc "SPLIT_TICKET" @@ fun ticket amts ->
-  let t_nat = t_nat () in
-  let (a,b) = trace_option ~raise (expected_pair loc amts) @@ get_t_pair amts in
-  let () = assert_eq_1 ~raise ~loc a t_nat in
-  let () = assert_eq_1 ~raise ~loc b t_nat in
-  let _ = trace_option ~raise (expected_ticket loc ticket) @@ get_t_ticket ticket in
-  t_option (t_pair ticket ticket)
-
-let join_ticket ~raise loc = typer_1 ~raise loc "JOIN_TICKET" @@ fun ticks ->
-  let (ticka,tickb) = trace_option ~raise (expected_pair loc ticks) @@ get_t_pair ticks in
-  let data = trace_option ~raise (expected_ticket loc ticka) @@ get_t_ticket ticka in
-  let datb = trace_option ~raise (expected_ticket loc tickb) @@ get_t_ticket tickb in
-  let () = assert_eq_1 ~raise ~loc data datb in
-  t_option ticka
-
-let pairing_check ~raise loc = typer_1 ~raise loc "PAIRING_CHECK" @@ fun lst ->
-  let p = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let (g1,g2) = trace_option ~raise (expected_list loc p) @@ get_t_pair p in
-  let () = assert_eq_1 ~raise ~loc g1 (t_bls12_381_g1 ()) in (*TODO expected_tbls .. ? *)
-  let () = assert_eq_1 ~raise ~loc g2 (t_bls12_381_g2 ()) in
-  (t_bool ())
-
 let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE" @@ fun tr state ->
   let singleton_tr = trace_option ~raise (expected_sapling_transaction loc tr) @@ get_t_sapling_transaction tr in
   let singleton_state = trace_option ~raise (expected_sapling_state loc state) @@ get_t_sapling_state state in
@@ -388,12 +277,6 @@ let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE
 
 let sapling_empty_state ~raise loc = typer_0 ~raise loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
   trace_option ~raise (not_annotated loc) @@ tv_opt
-
-let open_chest ~raise loc = typer_3 ~raise loc "OPEN_CHEST" @@ fun key chest n ->
-  let () = assert_eq_1 ~raise ~loc key (t_chest_key ()) in
-  let () = assert_eq_1 ~raise ~loc chest (t_chest ()) in
-  let () = trace_option ~raise (expected_nat loc n) @@ get_t_nat n in
-  t_chest_opening_result ()
 
 let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main storage balance ->
   let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
@@ -607,13 +490,6 @@ let test_create_chest_key ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST_KEY
   let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
   (t_chest_key ())
 
-let view ~raise loc = typer_3_opt ~raise loc "TEST_VIEW" @@ fun name _arg addr tv_opt ->
-  let () = trace_option ~raise (expected_string loc name) @@ get_t_string name in
-  let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
-  let view_ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
-  let _ : type_expression = trace_option ~raise (expected_option loc view_ret_t) @@ get_t_option view_ret_t in
-  view_ret_t
-
 let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTANT" @@ fun hash_str tv_opt ->
   let () = trace_option ~raise (expected_string loc hash_str) @@ get_t_string hash_str in
   let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
@@ -642,27 +518,8 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_LE                  -> comparator ~raise ~test loc "LE" ;
   | C_GE                  -> comparator ~raise ~test loc "GE" ;
   (* BLOCKCHAIN *)
-  | C_CONTRACT            -> get_contract ~raise loc ;
-  | C_CONTRACT_WITH_ERROR -> get_contract_with_error ~raise loc ;
-  | C_CONTRACT_OPT        -> get_contract_opt ~raise loc ;
-  | C_CONTRACT_ENTRYPOINT -> get_entrypoint ~raise loc ;
-  | C_CONTRACT_ENTRYPOINT_OPT -> get_entrypoint_opt ~raise loc ;
-  | C_CALL                -> transaction ~raise loc ;
-  | C_SELF                -> self ~raise loc ;
-  | C_IMPLICIT_ACCOUNT    -> implicit_account ~raise loc ;
-  | C_SET_DELEGATE        -> set_delegate ~raise loc ;
-  | C_CREATE_CONTRACT     -> create_contract ~raise loc ;
-  | C_VOTING_POWER      -> voting_power ~raise loc ;
-  | C_TOTAL_VOTING_POWER -> total_voting_power ~raise loc ;
-  | C_TICKET -> ticket ~raise loc ;
-  | C_READ_TICKET -> read_ticket ~raise loc ;
-  | C_SPLIT_TICKET -> split_ticket ~raise loc ;
-  | C_JOIN_TICKET -> join_ticket ~raise loc ;
-  | C_PAIRING_CHECK -> pairing_check ~raise loc ;
   | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
   | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
-  | C_OPEN_CHEST -> open_chest ~raise loc ;
-  | C_VIEW -> view ~raise loc ;
   (* TEST *)
   | C_TEST_ORIGINATE -> test_originate ~raise loc ;
   | C_TEST_SET_NOW -> test_set_now ~raise loc ;
