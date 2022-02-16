@@ -20,8 +20,6 @@ if [[ $# -eq 0 ]] || [[ $# -eq 1 ]] ; then
     exit 1
 fi
 
-RETURN_CODE=0
-
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
@@ -32,7 +30,7 @@ RESULTS=results.csv
 mkdir -p recovered
 mkdir -p original_generated
 
-echo "FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS" > $RESULTS
+echo "STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS" > $RESULTS
 
 for f in $1; do
     CURRENT_FILE_ERROR=0
@@ -51,8 +49,10 @@ for f in $1; do
     if [[ $(cat recovered/"$f") ]]; then
         $PARSER -- recovered/"$f"
     else
-        echo -e $RED"ERROR:$f recovery output is empty."$NC
-        cat recovered/"$f.errors"
+        if [ "$3" = "-v" ]; then
+            echo -e $RED"ERROR:$f recovery output is empty."$NC
+            cat recovered/"$f.errors"
+        fi
         CURRENT_FILE_ERROR=1
     fi
 
@@ -92,13 +92,11 @@ for f in $1; do
         CURRENT_FILE_ERROR=1
     fi
 
-    echo "$f,$LOC_DIFF,$CST_DIFF,$SYMBOLS_DIFF,$TOKENS_DIFF,$ERR_DIFF" >> $RESULTS
 
     if [ $CURRENT_FILE_ERROR != "0" ]; then
-        echo -e "$RED$f$NC"
-        RETURN_CODE=1
+        echo "FAIL,$f,-1,-1,-1,-1,-1" >> $RESULTS
     else
-        echo -e "$GREEN$f$NC"
+        echo "PASS,$f,$LOC_DIFF,$CST_DIFF,$SYMBOLS_DIFF,$TOKENS_DIFF,$ERR_DIFF" >> $RESULTS
     fi
 
     if [ "$3" = "-v" ]; then
@@ -124,4 +122,8 @@ if [ "$3" = "-v" ]; then
     cat $RESULTS
 fi
 
-exit $RETURN_CODE
+pass=$(grep -c PASS results.csv)
+fail=$(grep -c FAIL results.csv)
+echo "PASS: $pass, FAIL: $fail"
+
+exit 0
