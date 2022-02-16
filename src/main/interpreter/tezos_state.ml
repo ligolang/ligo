@@ -415,8 +415,7 @@ let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
   let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.delegation (B ctxt.raw) contract (Some pkh) in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt,_) ->
-    let n = Tezos_protocol_parameters.Default_parameters.constants_test.preserved_cycles + 2 in
-    bake_until_n_cycle_end ~raise ~loc ~calltrace ctxt n
+    ctxt
   | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
 
 

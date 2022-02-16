@@ -492,6 +492,21 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
+  [%expect {|
+    "STARTING BALANCE AND VOTING POWER"
+    100000000000mutez
+    12n
+    "BALANCE AND VOTING POWER AFTER ORIGINATE"
+    99360000000mutez
+    12n
+    "BALANCE AND VOTING POWER AFTER TRANSFER"
+    98720000000mutez
+    12n
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
