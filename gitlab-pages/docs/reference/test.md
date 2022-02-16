@@ -399,6 +399,34 @@ Generate a number of random bootstrapped accounts with a default amount of 40000
 By default, the state only has two bootstrapped accounts.
 
 <SyntaxTitle syntax="pascaligo">
+val baker_account : (string * key) -> tez option -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val baker_account : (string * key) -> tez option -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let baker_account: ((string, key), tez option) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let baker_account = ([string, key], amount : option&lt;tez&gt;) => unit
+</SyntaxTitle>
+Adds an account `(sk, pk)` as a baker. The change is only effective after `Test.reset_state`.
+
+<SyntaxTitle syntax="pascaligo">
+val register_delegate : key_hash -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val register_delegate : key_hash -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let register_delegate: key_hash => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let register_delegate = (account : key_hash) => unit
+</SyntaxTitle>
+Registers a `key_hash` corresponding to an account as a delegate. It bakes until `preserved_cycles + 2` cycles pass, so that the `pkh` can be used as a baker.
+
+<SyntaxTitle syntax="pascaligo">
 val new_account : unit -> (string * key)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
