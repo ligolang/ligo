@@ -7,7 +7,7 @@ let pretty_print ?werror source_file syntax display_format () =
     fun ~raise ->
     let options = Compiler_options.make () in
     let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
-    Compile.Utils.pretty_print ~raise ~options ~meta source_file
+    Compile.Utils.pretty_print ~raise ~options:options.frontend ~meta source_file
 
 let dependency_graph source_file syntax display_format project_root () =
     Trace.warning_with @@ fun add_warning get_warnings ->
@@ -23,14 +23,14 @@ let preprocess source_file syntax libs display_format project_root () =
     fst @@
     let options   = Compiler_options.make ~libs ?project_root () in
     let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
-    Compile.Of_source.compile ~raise ~options ~meta source_file
+    Compile.Of_source.compile ~raise ~options:options.frontend ~meta source_file
 
 let cst source_file syntax display_format () =
     format_result ~display_format (Parsing.Formatter.ppx_format) (fun _ -> []) @@
       fun ~raise ->
       let options = Compiler_options.make () in
       let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
-      Compile.Utils.pretty_print_cst ~raise ~options ~meta source_file
+      Compile.Utils.pretty_print_cst ~raise ~options:options.frontend ~meta source_file
 
 let ast source_file syntax display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
@@ -38,7 +38,7 @@ let ast source_file syntax display_format () =
       fun ~raise ->
       let options       = Compiler_options.make () in
       let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
+      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       Compile.Utils.to_imperative ~raise ~add_warning ~options ~meta c_unit source_file
 
 let ast_sugar source_file syntax display_format self_pass () =
@@ -47,7 +47,7 @@ let ast_sugar source_file syntax display_format self_pass () =
       fun ~raise ->
       let options = Compiler_options.make () in
       let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
+      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let sugar = Compile.Utils.to_sugar ~raise ~add_warning ~options ~meta c_unit source_file in
       if self_pass then
         Self_ast_sugar.all_module sugar
@@ -60,7 +60,7 @@ let ast_core source_file syntax display_format self_pass project_root () =
     fun ~raise ->
       let options = Compiler_options.make ?project_root () in
       let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
+      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let core = Compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit source_file in
       if self_pass then
         Self_ast_core.all_module ~raise ~init:core

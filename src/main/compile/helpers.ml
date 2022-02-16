@@ -45,10 +45,10 @@ let variant_to_syntax (v: v_syntax) =
 
 type options = Compiler_options.t
 
-let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
+let preprocess_file ~raise ~(options:Compiler_options.frontend) ~(meta: meta) file_path
   : Preprocessing.Pascaligo.success =
   let open Preprocessing in
-  let project_root = options.frontend.project_root in
+  let project_root = options.project_root in
   let preprocess_file =
     match meta.syntax with
       PascaLIGO  -> Pascaligo.preprocess_file
@@ -56,7 +56,7 @@ let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
     | ReasonLIGO -> Reasonligo.preprocess_file
     | JsLIGO     -> Jsligo.preprocess_file
   in trace ~raise preproc_tracer @@
-      Simple_utils.Trace.from_result (preprocess_file ?project_root options.frontend.libs file_path)
+      Simple_utils.Trace.from_result (preprocess_file ?project_root options.libs file_path)
 
 let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
   let open Preprocessing in

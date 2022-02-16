@@ -7,15 +7,15 @@ type form =
   | View of Ast_typed.expression_variable list * Ast_typed.expression_variable
   | Env
 
-let infer ~raise ~(options: Compiler_options.t) (m : Ast_core.module_) =
-  match options.middle_end.infer with
+let infer ~raise ~(options: Compiler_options.middle_end) (m : Ast_core.module_) =
+  match options.infer with
     | true  ->
-       let env_inf = Inference.decompile_env @@ Environment.to_program options.middle_end.init_env in
+       let env_inf = Inference.decompile_env @@ Environment.to_program options.init_env in
        let (_,e,_,_) = trace ~raise inference_tracer @@ Inference.type_module ~init_env:env_inf m in e
     | false -> m
 
 let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
-  let typed = trace ~raise checking_tracer @@ Checking.type_program ~test:options.middle_end.test ~env:options.middle_end.init_env ~protocol_version:options.backend.protocol_version m in
+  let typed = trace ~raise checking_tracer @@ Checking.type_program ~middle_end_options:options.middle_end ~env:options.middle_end.init_env ~backend_options:options.backend m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
     let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
@@ -36,7 +36,7 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
       expr
     | false -> expr
   in
-  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~test:false ~protocol_version:options.backend.protocol_version ~env inferred in
+  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~middle_end_options:options.middle_end ~backend_options:options.backend ~env inferred in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
   applied
 

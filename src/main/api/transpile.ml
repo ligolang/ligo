@@ -8,7 +8,7 @@ let contract source_file new_syntax syntax new_dialect display_format () =
       fun ~raise ->
       let options         = Compiler_options.make () in
       let meta       = Compile.Of_source.extract_meta ~raise syntax source_file in
-      let c_unit,_   = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
+      let c_unit,_   = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let core       = Compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit source_file in
       let sugar      = Decompile.Of_core.decompile core in
       let imperative = Decompile.Of_sugar.decompile sugar in

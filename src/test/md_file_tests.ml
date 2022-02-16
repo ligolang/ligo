@@ -126,13 +126,15 @@ let compile_groups ~raise filename grp_list =
       let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
       let core       = Ligo_compile.Of_sugar.compile sugar in
-      let inferred   = Ligo_compile.Of_core.infer ~raise ~options core in
+      let inferred   = Ligo_compile.Of_core.infer ~raise ~options:options.middle_end core in
       match lang with
       | Meta ->
-        let init_env = Environment.default_with_test options.protocol_version in
-        let options = { options with init_env ; test = true } in
+        let init_env = Environment.default_with_test protocol_version in
+        let middle_end_opts = options.middle_end in
+        let middle_end_opts = { middle_end_opts with init_env ; test = true } in
+        let options = { options with middle_end = middle_end_opts } in
         let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
-        let _ = Interpreter.eval_test ~protocol_version ~options ~raise ~steps:5000 typed in
+        let _ = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()
       | Object ->
         let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in

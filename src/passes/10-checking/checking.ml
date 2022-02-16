@@ -6,7 +6,6 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
-type protocol_version = Environment.Protocols.t
 module Pair = Simple_utils.Pair
 
 type context = Context.t
@@ -119,9 +118,9 @@ let build_type_insts ~raise ~loc (forall : O.expression) table bound_variables =
        build_type_insts (make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_type av type_ t)) avs' in
   build_type_insts forall bound_variables
 
-let rec type_module ~raise ~test ~init_context ~protocol_version (p:I.module_) : O.module_ =
+let rec type_module ~raise ~middle_end_options ~init_context ~backend_options (p:I.module_) : O.module_ =
   let aux (c, acc:(context * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let (c, d') = type_declaration' ~raise ~test ~protocol_version c d in
+    let (c, d') = type_declaration' ~raise ~middle_end_options ~backend_options c d in
     (c, d' :: acc)
   in
   (* This context use all the declaration so you can use private declaration to type the module. It should not be returned*)
@@ -130,8 +129,8 @@ let rec type_module ~raise ~test ~init_context ~protocol_version (p:I.module_) :
   List.rev lst
 
 
-and type_declaration' : raise: typer_error raise -> protocol_version:protocol_version -> test: bool -> context -> I.declaration Location.wrap -> context * O.declaration Location.wrap =
-fun ~raise ~protocol_version ~test c d ->
+and type_declaration' : raise: typer_error raise -> backend_options:Compiler_options.backend -> middle_end_options: Compiler_options.middle_end -> context -> I.declaration Location.wrap -> context * O.declaration Location.wrap =
+fun ~raise ~backend_options ~middle_end_options c d ->
 let loc = d.location in
 let return ?(loc = loc) c (d : O.declaration) = c,Location.wrap ~loc d in
 match Location.unwrap d with
@@ -148,7 +147,7 @@ match Location.unwrap d with
     let c = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:c in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr None) @@
-      type_expression' ~test ~protocol_version c expr in
+      type_expression' ~middle_end_options ~backend_options c expr in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
@@ -166,7 +165,7 @@ match Location.unwrap d with
     let tv = evaluate_type ~raise env tv in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr (Some tv)) @@
-      type_expression' ~test ~protocol_version ~tv_opt:tv env expr in
+      type_expression' ~middle_end_options ~backend_options ~tv_opt:tv env expr in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
@@ -176,7 +175,7 @@ match Location.unwrap d with
     let c = Context.add_value c binder expr.type_expression in
     return c @@ Declaration_constant { binder ; expr ; attr }
   | Declaration_module {module_binder;module_; module_attr = {public}} -> (
-    let module_ = type_module ~raise ~test ~protocol_version ~init_context:c module_ in
+    let module_ = type_module ~raise ~middle_end_options ~backend_options ~init_context:c module_ in
     let post_env = Context.add_ez_module c module_binder module_ in
     return post_env @@ Declaration_module { module_binder; module_; module_attr = {public}}
   )
@@ -388,13 +387,13 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
     let type_ = evaluate_type ~raise c x.type_ in
     return (T_for_all {x with type_})
 
-and type_expression ~raise ~test ~protocol_version : ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
+and type_expression ~raise ~middle_end_options ~backend_options : ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
   = fun ?env ?tv_opt e ->
     let c   = Context.init ?env () in
-    let res = type_expression' ~raise ~test ~protocol_version c ?tv_opt e in
+    let res = type_expression' ~raise ~middle_end_options ~backend_options c ?tv_opt e in
     res
 
-and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun context ?tv_opt e ->
+and type_expression' ~raise ~middle_end_options ~backend_options ?(args = []) ?last : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun context ?tv_opt e ->
   let return expr tv =
     let () =
       match tv_opt with
@@ -452,7 +451,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   | E_literal (Literal_bls12_381_fr b) ->
       return (e_bls12_381_fr b) (t_bls12_381_fr ())
   | E_record_accessor {record;path} ->
-      let e' = type_expression' ~raise ~test ~protocol_version context record in
+      let e' = type_expression' ~raise ~middle_end_options ~backend_options context record in
       let aux (prev:O.expression) (a:I.label) : O.expression =
           let property = a in
           let r_tv = trace_option ~raise (expected_record e.location @@ get_type prev) @@
@@ -472,7 +471,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       e
   | E_constructor {constructor = Label s as constructor ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
     let t = trace_option ~raise (michelson_or_no_annotation constructor e.location) @@ tv_opt in
-    let expr' = type_expression' ~raise ~test ~protocol_version context element in
+    let expr' = type_expression' ~raise ~middle_end_options ~backend_options context element in
     ( match t.type_content with
       | T_sum c ->
         let {associated_type ; _} : O.row_element = O.LMap.find (Label s) c.content in
@@ -485,7 +484,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   | E_constructor {constructor; element} ->
       let (avs, c_tv, sum_tv) = trace_option ~raise (unbound_constructor constructor e.location) @@
         Context.get_constructor_parametric constructor context in
-      let expr' = type_expression' ~raise ~test ~protocol_version context element in
+      let expr' = type_expression' ~raise ~middle_end_options ~backend_options context element in
       let table = infer_type_application ~raise ~loc:element.location TMap.empty c_tv expr'.type_expression in
       let table = match tv_opt with
         | Some tv_opt -> infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) table sum_tv tv_opt
@@ -498,7 +497,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       return (E_constructor {constructor; element=expr'}) sum_tv
   (* Record *)
   | E_record m ->
-      let m' = O.LMap.map (type_expression' ~raise ~test ~protocol_version context) m in
+      let m' = O.LMap.map (type_expression' ~raise ~middle_end_options ~backend_options context) m in
       let _,lmap = O.LMap.fold_map ~f:(
         fun (Label k) e i ->
           let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
@@ -510,8 +509,8 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       in
       return (E_record m') record_type
   | E_record_update {record; path; update} ->
-    let record = type_expression' ~raise ~test ~protocol_version context record in
-    let update = type_expression' ~raise ~test ~protocol_version context update in
+    let record = type_expression' ~raise ~middle_end_options ~backend_options context record in
+    let update = type_expression' ~raise ~middle_end_options ~backend_options context update in
     let wrapped = get_type record in
     let tv =
       match wrapped.type_content with
@@ -538,11 +537,11 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
                | None -> let binder = {lambda.binder with ascr = Some input_type } in
                          { lambda with binder = binder }
                | Some _ -> lambda in
-     let (lambda,lambda_type) = type_lambda ~raise ~test ~protocol_version context lambda in
+     let (lambda,lambda_type) = type_lambda ~raise ~middle_end_options ~backend_options context lambda in
      return (E_lambda lambda ) lambda_type
   | I.E_type_abstraction {type_binder;result} ->
     let context = Context.add_type_var context type_binder () in
-    let result  = type_expression' ~raise ~test ~protocol_version context result in
+    let result  = type_expression' ~raise ~middle_end_options ~backend_options context result in
     return (E_type_abstraction {type_binder;result}) result.type_expression
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
@@ -556,7 +555,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let open Stage_common.Constant in
       (* this special case is here to force annotation of the untyped lambda
          generated by pascaligo's for_collect loop *)
-      let (v_col , v_initr ) = Pair.map ~f:(type_expression' ~raise ~test ~protocol_version context) (collect , init_record ) in
+      let (v_col , v_initr ) = Pair.map ~f:(type_expression' ~raise ~middle_end_options ~backend_options context) (collect , init_record ) in
       let tv_col = get_type v_col   in (* this is the type of the collection  *)
       let tv_out = get_type v_initr in (* this is the output type of the lambda*)
       let input_type = match tv_col.type_content with
@@ -570,13 +569,13 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
           make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> raise.raise @@ bad_collect_loop tv_col e.location in
       let e' = Context.add_value context lname input_type in
-      let body = type_expression' ~raise ~test ~protocol_version ?tv_opt:(Some tv_out) e' result in
+      let body = type_expression' ~raise ~middle_end_options ~backend_options ?tv_opt:(Some tv_out) e' result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda'; v_col; v_initr] in
       let tv_lst = List.map ~f:get_type lst' in
       let (opname', tv) =
-        type_constant ~raise ~test ~protocol_version opname e.location tv_lst tv_opt in
+        type_constant ~raise ~middle_end_options ~backend_options opname e.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_FOLD_WHILE as opname;
                 arguments = [
@@ -586,19 +585,19 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
                         location = _ ; sugar=_}) as _lambda ;
                     init_record ;
                 ]} ->
-      let v_initr = type_expression' ~raise ~test ~protocol_version context init_record in
+      let v_initr = type_expression' ~raise ~middle_end_options ~backend_options context init_record in
       let tv_out = get_type v_initr in
       let input_type  = tv_out in
       let e' = Context.add_value context lname input_type in
-      let body = type_expression' ~raise ~test ~protocol_version e' result in
+      let body = type_expression' ~raise ~middle_end_options ~backend_options e' result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda';v_initr] in
       let tv_lst = List.map ~f:get_type lst' in
-      let (opname',tv) = type_constant ~raise ~test ~protocol_version opname e.location tv_lst tv_opt in
+      let (opname',tv) = type_constant ~raise ~middle_end_options ~backend_options opname e.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_CREATE_CONTRACT as cons_name;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~test ~protocol_version context) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~middle_end_options ~backend_options context) arguments in
       let () = match lst' with
         | { expression_content = O.E_lambda l ; _ } :: _ ->
           let open Ast_typed.Misc in
@@ -609,10 +608,10 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       in
       let tv_lst = List.map ~f:get_type lst' in
       let (name', tv) =
-        type_constant ~raise ~test ~protocol_version cons_name e.location tv_lst tv_opt in
+        type_constant ~raise ~middle_end_options ~backend_options cons_name e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name=C_SET_ADD|C_CONS as cst;arguments=[key;set]} ->
-      let key' =  type_expression' ~raise ~test ~protocol_version context key in
+      let key' =  type_expression' ~raise ~middle_end_options ~backend_options context key in
       let tv_key = get_type key' in
       let tv = match tv_opt with
           Some tv -> tv
@@ -621,27 +620,27 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
           | C_CONS -> t_list tv_key
           | _ -> failwith "Only C_SET_ADD and C_CONS are possible because those were the two cases matched above"
       in
-      let set' =  type_expression' ~raise ~test ~protocol_version context ~tv_opt:tv set in
+      let set' =  type_expression' ~raise ~middle_end_options ~backend_options context ~tv_opt:tv set in
       let tv_set = get_type set' in
       let tv_lst = [tv_key;tv_set] in
-      let (name', tv) = type_constant ~raise ~test ~protocol_version cst e.location tv_lst tv_opt in
+      let (name', tv) = type_constant ~raise ~middle_end_options ~backend_options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';set']}) tv
   | E_constant {cons_name=C_MAP_ADD as cst; arguments=[key;value;map]} ->
-      let key' = type_expression' ~raise ~test ~protocol_version context key in
-      let val' = type_expression' ~raise ~test ~protocol_version context value in
+      let key' = type_expression' ~raise ~middle_end_options ~backend_options context key in
+      let val' = type_expression' ~raise ~middle_end_options ~backend_options context value in
       let tv_key = get_type key' in
       let tv_val = get_type val' in
       let tv = match tv_opt with
           Some tv -> tv
         | None -> t_map_or_big_map tv_key tv_val
       in
-      let map' =  type_expression' ~raise ~test ~protocol_version context ~tv_opt:tv map in
+      let map' =  type_expression' ~raise ~middle_end_options ~backend_options context ~tv_opt:tv map in
       let tv_map = get_type map' in
       let tv_lst = [tv_key;tv_val;tv_map] in
-      let (name', tv) = type_constant ~raise ~test ~protocol_version cst e.location tv_lst tv_opt in
+      let (name', tv) = type_constant ~raise ~middle_end_options ~backend_options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
   | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~test ~protocol_version context) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~middle_end_options ~backend_options context) arguments in
       let tv_lst = List.map ~f:get_type lst' in
       let decide = function
         | {O.expression_content = E_literal (Literal_string _); _ } -> Some S.C_CONCAT
@@ -664,21 +663,21 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let cst =
         Option.value ~default:S.C_ADD @@ List.find_map lst' ~f:decide in
       let (name', tv) =
-        type_constant ~raise ~test ~protocol_version cst e.location tv_lst tv_opt in
+        type_constant ~raise ~middle_end_options ~backend_options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~test ~protocol_version context) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~middle_end_options ~backend_options context) arguments in
       let tv_lst = List.map ~f:get_type lst' in
       let (name', tv) =
-        type_constant ~raise ~test ~protocol_version cons_name e.location tv_lst tv_opt in
+        type_constant ~raise ~middle_end_options ~backend_options cons_name e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_application { lamb = ilamb ; args=_} ->
      (* TODO: This currently does not handle constraints (as those in inference). *)
      (* Get lambda and applications: (..((lamb arg1) arg2) ...) argk) *)
      let lamb, args = I.Helpers.destruct_applications e in
      (* Type-check all the involved subexpressions *)
-     let args = List.map ~f:(type_expression' ~raise ~protocol_version ~test context) args in
-     let lamb = type_expression' ~raise ~protocol_version ~test ~args ?last:tv_opt context lamb in
+     let args = List.map ~f:(type_expression' ~raise ~backend_options ~middle_end_options context) args in
+     let lamb = type_expression' ~raise ~backend_options ~middle_end_options ~args ?last:tv_opt context lamb in
      (* Remove and save prefix for_alls in the lambda *)
      let avs, lamb_type = O.Helpers.destruct_for_alls lamb.type_expression in
      (* Try to infer/check types for the type variables *)
@@ -691,19 +690,19 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
      return_e app
   (* Advanced *)
   | E_matching {matchee;cases} -> (
-    let matchee' = type_expression' ~raise ~test ~protocol_version context matchee in
+    let matchee' = type_expression' ~raise ~middle_end_options ~backend_options context matchee in
     let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * context)) =
       fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,context))
     in
     let eqs = List.map ~f:aux cases in
     match matchee.expression_content with
     | E_variable matcheevar ->
-      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~test ~protocol_version ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~middle_end_options ~backend_options ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       return case_exp.expression_content case_exp.type_expression
     | _ ->
       let matcheevar = I.Var.fresh () in
-      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~test ~protocol_version ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~middle_end_options ~backend_options ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       let x = O.E_let_in { let_binder = matcheevar ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false } } in
       return x case_exp.type_expression
@@ -711,7 +710,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
   | E_let_in {let_binder = {var ; ascr = None ; attributes=_} ; rhs ; let_result; attr } ->
      let av, rhs = Ast_core.Combinators.get_type_abstractions rhs in
      let context = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:context in
-     let rhs = type_expression' ~raise ~protocol_version ~test context rhs in
+     let rhs = type_expression' ~raise ~backend_options ~middle_end_options context rhs in
      let binder = var in
      let rec aux t = function
        | [] -> t
@@ -719,7 +718,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
      let type_expression = aux rhs.type_expression (List.rev av) in
      let rhs = { rhs with type_expression } in
      let e' = Context.add_value context binder rhs.type_expression in
-     let let_result = type_expression' ~raise ~protocol_version ~test e' let_result in
+     let let_result = type_expression' ~raise ~backend_options ~middle_end_options e' let_result in
      return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_let_in {let_binder = {var ; ascr = Some tv ; attributes=_} ; rhs ; let_result; attr } ->
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
@@ -728,7 +727,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let pre_context = context in
     let context = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:context in
     let tv = evaluate_type ~raise context tv in
-    let rhs = type_expression' ~raise ~protocol_version ~test ~tv_opt:tv context rhs in
+    let rhs = type_expression' ~raise ~backend_options ~middle_end_options ~tv_opt:tv context rhs in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
@@ -736,19 +735,19 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let rhs = { rhs with type_expression } in
     let binder  = var in
     let context = Context.add_value pre_context binder type_expression in
-    let let_result = type_expression' ~raise ~protocol_version ~test context let_result in
+    let let_result = type_expression' ~raise ~backend_options ~middle_end_options context let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_type_in {type_binder; _} when Ast_core.Helpers.is_generalizable_variable type_binder ->
     raise.raise (wrong_generalizable e.location type_binder)
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise context rhs in
     let e' = Context.add_type context type_binder rhs in
-    let let_result = type_expression' ~raise ~protocol_version ~test e' let_result in
+    let let_result = type_expression' ~raise ~backend_options ~middle_end_options e' let_result in
     return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
   | E_mod_in {module_binder; rhs; let_result} ->
-    let rhs = type_module ~raise ~protocol_version ~test ~init_context:context rhs in
+    let rhs = type_module ~raise ~backend_options ~middle_end_options ~init_context:context rhs in
     let e' = Context.add_ez_module context module_binder rhs in
-    let let_result = type_expression' ~raise ~protocol_version ~test e' let_result in
+    let let_result = type_expression' ~raise ~backend_options ~middle_end_options e' let_result in
     return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
   | E_mod_alias {alias; binders; result} ->
     let aux c binder =
@@ -756,12 +755,12 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       Context.get_module c binder in
     let env = List.Ne.fold_left ~f:aux ~init:context binders in
     let e' = Context.add_module context alias env in
-    let result = type_expression' ~raise ~test ~protocol_version e' result in
+    let result = type_expression' ~raise ~middle_end_options ~backend_options e' result in
     return (E_mod_alias {alias; binders; result}) result.type_expression
   | E_raw_code {language;code} ->
     let (code,type_expression) = trace_option ~raise (expected_ascription code) @@
       I.get_e_ascription code.expression_content in
-    let code = type_expression' ~raise ~test ~protocol_version context code in
+    let code = type_expression' ~raise ~middle_end_options ~backend_options context code in
     let type_expression = evaluate_type ~raise context type_expression in
     let code = {code with type_expression} in
     return (E_raw_code {language;code}) code.type_expression
@@ -771,12 +770,12 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let fun_type = evaluate_type ~raise context fun_type in
     let e' = Context.add_value context fun_name fun_type in
     let e' = List.fold_left av ~init:e' ~f:(fun e v -> Context.add_type_var e v ()) in
-    let (lambda,lambda_type) = type_lambda ~raise ~test ~protocol_version e' lambda in
+    let (lambda,lambda_type) = type_lambda ~raise ~middle_end_options ~backend_options e' lambda in
     let () = assert_type_expression_eq ~raise fun_type.location (fun_type,lambda_type) in
     return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
     let tv = evaluate_type ~raise context type_annotation in
-    let expr' = type_expression' ~raise ~protocol_version ~test ~last:tv ~tv_opt:tv context anno_expr in
+    let expr' = type_expression' ~raise ~backend_options ~middle_end_options ~last:tv ~tv_opt:tv context anno_expr in
     let type_annotation =
       trace_option ~raise (corner_case "merge_annotations (Some ...) (Some ...) failed") @@
       O.merge_annotation
@@ -794,11 +793,11 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       Some m -> m
     | None   -> raise.raise @@ unbound_module_variable module_name e.location
     in
-    let element = type_expression' ~raise ~test  ~protocol_version ~args ?last ?tv_opt module_env element in
+    let element = type_expression' ~raise ~middle_end_options  ~backend_options ~args ?last ?tv_opt module_env element in
     return (E_module_accessor {module_name; element}) element.type_expression
 
 
-and type_lambda ~raise ~test ~protocol_version e {
+and type_lambda ~raise ~middle_end_options ~backend_options e {
       binder ;
       output_type ;
       result ;
@@ -811,19 +810,19 @@ and type_lambda ~raise ~test ~protocol_version e {
       let binder = binder.var in
       let input_type = trace_option ~raise (missing_funarg_annotation binder) input_type in
       let e' = Context.add_value e binder input_type in
-      let body = type_expression' ~raise ~test ~protocol_version ?tv_opt:output_type e' result in
+      let body = type_expression' ~raise ~middle_end_options ~backend_options ?tv_opt:output_type e' result in
       let output_type = body.type_expression in
       (({binder; result=body}:O.lambda),(t_arrow input_type output_type ()))
 
 
 
-and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
-  let typer = Constant_typers.constant_typers ~raise ~test ~protocol_version loc name in
+and type_constant ~raise ~middle_end_options ~backend_options (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
+  let typer = Constant_typers.constant_typers ~raise ~middle_end_options ~backend_options loc name in
   let tv = typer lst tv_opt in
   (name, tv)
 
-let type_program ~raise ~test ~protocol_version ?env m = type_module ~raise ~test ~init_context:(Context.init ?env ()) ~protocol_version m
-let type_declaration ~raise ~test ~protocol_version ?env d = snd @@ type_declaration' ~raise ~test (Context.init ?env ()) ~protocol_version d
+let type_program ~raise ~middle_end_options ~backend_options ?env m = type_module ~raise ~middle_end_options ~init_context:(Context.init ?env ()) ~backend_options m
+let type_declaration ~raise ~middle_end_options ~backend_options ?env d = snd @@ type_declaration' ~raise ~middle_end_options (Context.init ?env ()) ~backend_options d
 let untype_literal (l:O.literal) : I.literal =
   let open I in
   match l with

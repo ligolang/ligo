@@ -349,7 +349,7 @@ let mutate_group =
 
 (** Run commands *)
 let test =
-  let f source_file syntax steps display_format protocol_version project_root  () =
+  let f source_file syntax steps protocol_version display_format project_root  () =
     return_result ~return @@
     Api.Run.test source_file syntax steps protocol_version display_format project_root
   in

@@ -87,7 +87,6 @@ module Command = struct
     | Pack (loc, value, value_ty) ->
       let expr = Michelson_backend.val_to_ast ~raise ~loc value value_ty in
       let expr = Ast_aggregated.e_a_pack expr in
-      let options = Compiler_options.make () in
       let mich = Michelson_backend.compile_value ~raise ~options expr in
       let ret_co, ret_ty = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
@@ -95,7 +94,6 @@ module Command = struct
     | Unpack (loc, bytes, value_ty) ->
       let value_ty = trace_option ~raise (Errors.generic_error loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option value_ty in
       let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
-      let options = Compiler_options.make () in
       let mich = Michelson_backend.compile_value ~raise ~options expr in
       let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
@@ -241,8 +239,8 @@ module Command = struct
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
             let compiled_expr =
-              let protocol_version = ctxt.internals.protocol_version in
-              let options = Compiler_options.make ~protocol_version () in
+              (* let protocol_version = ctxt.internals.protocol_version in *)
+              (* let options = Compiler_options.make ~protocol_version () in *)
               Michelson_backend.compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty body in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)

@@ -17,11 +17,11 @@ let to_core ~raise ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
   let core   = Of_sugar.compile sugar in
   core
 
-let type_file ~raise ~add_warning ~options f stx form : Ast_typed.program =
+let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : Ast_typed.program =
   let meta          = Of_source.extract_meta ~raise stx f in
-  let c_unit,_      = Of_source.compile ~raise ~options ~meta f in
+  let c_unit,_      = Of_source.compile ~raise ~options:options.frontend ~meta f in
   let core          = to_core ~raise ~add_warning ~options ~meta c_unit f in
-  let inferred      = Of_core.infer ~raise ~options core in
+  let inferred      = Of_core.infer ~raise ~options:options.middle_end core in
   let typed         = Of_core.typecheck ~raise ~add_warning ~options form inferred in
   typed
 
@@ -53,8 +53,9 @@ let type_contract_string ~raise ~add_warning ~options syntax expression env =
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
   let core          = Of_sugar.compile sugar in
-  let options       = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = env }} in
-  let inferred      = Of_core.infer ~raise ~options core in
+  let middle_end_opt = options.Compiler_options.middle_end in
+  let middle_end_opt = { middle_end_opt with init_env = env } in
+  let inferred      = Of_core.infer ~raise ~options:middle_end_opt core in
   let typed         = Of_core.typecheck ~raise ~add_warning ~options Env inferred in
   typed,core
 

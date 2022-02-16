@@ -7,8 +7,10 @@ let all_expression_mapper ~raise ~js_style_no_shadowing = [
   None_variant.peephole_expression ;
   Literals.peephole_expression ~raise ;
   Expression_soundness.linearity ~raise ;
-] @ (if js_style_no_shadowing then [No_shadowing.peephole_expression ~raise]
-    else [])
+] @ 
+  (if js_style_no_shadowing 
+  then [ No_shadowing.peephole_expression ~raise ]
+  else [])
 
 let all_type_expression_mapper ~raise ~add_warning = ignore add_warning ;
   [
@@ -19,11 +21,12 @@ let all_type_expression_mapper ~raise ~add_warning = ignore add_warning ;
   ]
 
 let all_module_mapper ~raise ~js_style_no_shadowing =
+  if js_style_no_shadowing then [ No_shadowing.peephole_module ~raise ] else []
+
+let all_module ~raise ~js_style_no_shadowing =
   List.map 
     ~f:(fun el -> Helpers.Module el)
-      (if js_style_no_shadowing then [
-      No_shadowing.peephole_module ~raise ;
-    ] else [])
+    (all_module_mapper ~raise ~js_style_no_shadowing)
 
 let all_exp ~raise ~js_style_no_shadowing = 
   List.map 
@@ -35,7 +38,7 @@ let all_ty ~raise ~add_warning = List.map ~f:(fun el -> Helpers.Type_expression 
 let all_module ~raise ~add_warning ~js_style_no_shadowing init =
   let all_p  = List.map ~f:Helpers.map_module @@ all_exp ~raise ~js_style_no_shadowing in
   let all_p2 = List.map ~f:Helpers.map_module @@ all_ty ~raise ~add_warning in
-  let all_p3 = List.map ~f:Helpers.map_module @@ all_module_mapper ~raise ~js_style_no_shadowing in
+  let all_p3 = List.map ~f:Helpers.map_module @@ all_module ~raise ~js_style_no_shadowing in
   List.fold ~f:(|>) (all_p @ all_p2 @ all_p3) ~init
 
 let all_expression ~raise ~js_style_no_shadowing init =

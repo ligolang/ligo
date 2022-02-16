@@ -21,7 +21,7 @@ module M (Params : Params) =
     let preprocess : file_name -> compilation_unit * meta_data * (file_name * module_name) list =
       fun file_name ->
       let meta = Ligo_compile.Of_source.extract_meta ~raise "auto" file_name in
-      let c_unit, deps = Ligo_compile.Helpers.preprocess_file ~raise ~meta ~options file_name in
+      let c_unit, deps = Ligo_compile.Helpers.preprocess_file ~raise ~meta ~options:options.frontend file_name in
       c_unit,meta,deps
     module AST = struct
       type declaration = Ast_typed.declaration_loc
@@ -46,9 +46,11 @@ module M (Params : Params) =
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
-      let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = env }} in
+      let middle_end_opts =  options.middle_end in
+      let middle_end_opts = { middle_end_opts with init_env = env } in
+      let options = { options with middle_end = middle_end_opts } in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-      let inferred = Ligo_compile.Of_core.infer ~raise ~options ast_core in
+      let inferred = Ligo_compile.Of_core.infer ~raise ~options:middle_end_opts ast_core in
       let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env inferred in
       ast_typed
 
