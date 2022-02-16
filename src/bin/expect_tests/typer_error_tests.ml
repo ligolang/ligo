@@ -226,4 +226,4 @@ let%expect_test _ =
         9 |
   
       Invalid type(s).
-      Expected: "contract (a)", but got: "contract (int)". |}]
+      Expected: "contract (int)", but got: "unit". |}]
