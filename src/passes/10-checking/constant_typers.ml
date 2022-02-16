@@ -30,89 +30,6 @@ open H
   Various helpers are defined bellow.
 *)
 
-let map_remove ~raise loc : typer = typer_2 ~raise loc "MAP_REMOVE" @@ fun k m ->
-  let (src , _) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  m
-
-let map_empty ~raise loc = typer_0 ~raise loc "MAP_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let (src, dst) = trace_option ~raise (expected_map loc t) @@ get_t_map t in
-    t_map src dst
-
-let big_map_empty ~raise loc = typer_0 ~raise loc "BIG_MAP_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let (src, dst) = trace_option ~raise (expected_big_map loc t) @@ get_t_big_map t in
-    t_big_map src dst
-
-let map_add ~raise loc : typer = typer_3 loc ~raise "MAP_ADD" @@ fun k v m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let () = assert_eq_1 ~raise ~loc dst v in
-  m
-
-let map_update ~raise loc : typer = typer_3 ~raise loc "MAP_UPDATE" @@ fun k v m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let v' = trace_option ~raise (expected_option loc v) @@ get_t_option v in
-  let () = assert_eq_1 ~raise ~loc dst v' in
-  m
-
-let map_mem ~raise loc : typer = typer_2 ~raise loc "MAP_MEM" @@ fun k m ->
-  let (src , _) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  t_bool ()
-
-let map_find ~raise loc : typer = typer_2 ~raise loc "MAP_FIND" @@ fun k m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  dst
-
-let map_find_opt ~raise loc : typer = typer_2 ~raise loc "MAP_FIND_OPT" @@ fun k m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  t_option dst
-
-let map_iter ~raise loc : typer = typer_2 ~raise loc "MAP_ITER" @@ fun f m ->
-  let (k, v) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
-  let kv = t_pair k v in
-  let unit = t_unit () in
-  let () = assert_eq_1 ~raise ~loc arg kv in
-  let () = assert_eq_1 ~raise ~loc res unit in
-  t_unit ()
-
-let map_map ~raise loc : typer = typer_2 ~raise loc "MAP_MAP" @@ fun f m ->
-  let (k, v) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
-  let kv = t_pair k v in
-  let () = assert_eq_1 ~raise ~loc arg kv in
-  t_map k res
-
-let map_get_and_update ~raise loc : typer = typer_3 ~raise loc "MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
-  let v = trace_option ~raise (expected_option loc opt_v) @@ get_t_option opt_v in
-  let (src , dst) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let () = assert_eq_1 ~raise ~loc dst v in
-  t_pair opt_v m
-
-let big_map_get_and_update ~raise loc : typer = typer_3 ~raise loc "BIG_MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
-  let v = trace_option ~raise (expected_option loc opt_v) @@ get_t_option opt_v in
-  let (src , dst) = trace_option ~raise (expected_map loc m) @@ get_t_big_map m in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let () = assert_eq_1 ~raise ~loc dst v in
-  t_pair opt_v m
-
 let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
   let _ =
     if eq_1 t (t_string ())
@@ -132,30 +49,11 @@ let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
   let default = t_unit () in
   Simple_utils.Option.value ~default opt
 
-let sender ~raise loc = constant' ~raise loc "SENDER" @@ t_address ()
-
-let source ~raise loc = constant' ~raise loc "SOURCE" @@ t_address ()
-
-let amount ~raise loc = constant' ~raise loc "AMOUNT" @@ t_mutez ()
-
-let balance ~raise loc = constant' ~raise loc "BALANCE" @@ t_mutez ()
-
-let chain_id ~raise loc = constant' ~raise loc "CHAIN_ID" @@ t_chain_id ()
-
-let level ~raise loc = constant' ~raise loc "LEVEL" @@ t_nat ()
-
 let total_voting_power ~raise loc = constant' ~raise loc "TOTAL_VOTING_POWER" @@ t_nat ()
 
 let voting_power ~raise loc = typer_1 ~raise loc "VOTING_POWER" @@ fun t ->
   let () = trace_option ~raise (expected_key_hash loc t) @@ assert_t_key_hash t in
   t_nat ()
-
-let address ~raise loc = typer_1 ~raise loc "ADDRESS" @@ fun c ->
-  let () = trace_option ~raise (expected_contract loc c) @@ assert_t_contract c in
-  t_address ()
-
-let self_address ~raise loc = typer_0 ~raise loc "SELF_ADDRESS" @@ fun _ ->
-  t_address ()
 
 let self ~raise loc = typer_1_opt ~raise loc "SELF" @@ fun entrypoint_as_string tv_opt ->
   let () = trace_option ~raise (expected_string loc entrypoint_as_string) @@ assert_t_string entrypoint_as_string in
@@ -308,16 +206,6 @@ let fold ~raise loc = typer_3 ~raise loc "FOLD" @@ fun body container init ->
   let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
   let key = trace_option ~raise (expected_list loc container) @@ Option.map_pair_or (get_t_list,get_t_set) container in
   let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let (key , value) = trace_option ~raise (expected_map loc map) @@ get_t_map map in
-  let kv = t_pair key value in
-  let () = assert_eq_1 ~raise ~loc kv cur in
   let () = assert_eq_1 ~raise ~loc prec res in
   let () = assert_eq_1 ~raise ~loc res init in
   res
@@ -753,39 +641,17 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_GT                  -> comparator ~raise ~test loc "GT" ;
   | C_LE                  -> comparator ~raise ~test loc "LE" ;
   | C_GE                  -> comparator ~raise ~test loc "GE" ;
-    (* MAP *)
-  | C_MAP_EMPTY           -> map_empty ~raise loc;
-  | C_BIG_MAP_EMPTY       -> big_map_empty ~raise loc;
-  | C_MAP_ADD             -> map_add ~raise loc ;
-  | C_MAP_REMOVE          -> map_remove ~raise loc ;
-  | C_MAP_UPDATE          -> map_update ~raise loc ;
-  | C_MAP_ITER            -> map_iter ~raise loc ;
-  | C_MAP_MAP             -> map_map ~raise loc ;
-  | C_MAP_FOLD            -> map_fold ~raise loc ;
-  | C_MAP_MEM             -> map_mem ~raise loc ;
-  | C_MAP_FIND            -> map_find ~raise loc ;
-  | C_MAP_FIND_OPT        -> map_find_opt ~raise loc ;
-  | C_MAP_GET_AND_UPDATE -> map_get_and_update ~raise loc ;
-  (* BIG MAP *)
-  | C_BIG_MAP_GET_AND_UPDATE -> big_map_get_and_update ~raise loc;
   (* BLOCKCHAIN *)
   | C_CONTRACT            -> get_contract ~raise loc ;
   | C_CONTRACT_WITH_ERROR -> get_contract_with_error ~raise loc ;
   | C_CONTRACT_OPT        -> get_contract_opt ~raise loc ;
   | C_CONTRACT_ENTRYPOINT -> get_entrypoint ~raise loc ;
   | C_CONTRACT_ENTRYPOINT_OPT -> get_entrypoint_opt ~raise loc ;
-  | C_AMOUNT              -> amount ~raise loc ;
-  | C_BALANCE             -> balance ~raise loc ;
   | C_CALL                -> transaction ~raise loc ;
-  | C_SENDER              -> sender ~raise loc ;
-  | C_SOURCE              -> source ~raise loc ;
-  | C_ADDRESS             -> address ~raise loc ;
   | C_SELF                -> self ~raise loc ;
-  | C_SELF_ADDRESS        -> self_address ~raise loc ;
   | C_IMPLICIT_ACCOUNT    -> implicit_account ~raise loc ;
   | C_SET_DELEGATE        -> set_delegate ~raise loc ;
   | C_CREATE_CONTRACT     -> create_contract ~raise loc ;
-  | C_LEVEL             -> level ~raise loc ;
   | C_VOTING_POWER      -> voting_power ~raise loc ;
   | C_TOTAL_VOTING_POWER -> total_voting_power ~raise loc ;
   | C_TICKET -> ticket ~raise loc ;

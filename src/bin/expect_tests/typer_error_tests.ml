@@ -153,8 +153,11 @@ let%expect_test _ =
      45 |     Big_map.update new_id new_id_details identities
      46 |   in
 
-    Incorrect argument.
-    Expected an option, but got an argument of type "record[controller -> address , owner -> address , profile -> bytes]". |}]
+    Invalid arguments.
+    Expected an argument of type (a, option (b), map (a ,
+    b)) or (a, option (b), big_map (a ,
+    b)), but got an argument of type int, record[controller -> address , owner -> address , profile -> bytes], big_map (int ,
+    record[controller -> address , owner -> address , profile -> bytes]). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
