@@ -1,112 +1,8 @@
 open Environment
 
-type raw = {
-  source_file : string option ;
-  entry_point : string option ; 
-  views : string list ;
-  syntax : string ;
-  protocol_version : string option ;
-  display_format : Simple_utils.Display.ex_display_format ;
-  disable_typecheck : bool ;
-  output_file : string option ;
-  warn : bool ;
-  werror : bool ;
-  project_root : string option ;
-  new_syntax : string option ;
-  new_dialect : string option ;
-  seed : int option ;
-  generator : string option ;
-  steps : int option ;
-  amount : string option ;
-  balance : string option ;
-  sender : string option ;
-  source : string option ;
-  now : string option ;
-  parameter : string option ;
-  storage : string option ;
-  expression : string option ;
-  init_file : string option ;
-  with_types : bool ;
-  libs : string list ;
-  self_pass : bool ;
-  optimize : string option ;
-  without_run : bool ;
-  package_name : string option ;
-  cache_path : string option ;
-}
-
-let make_raw
- ?source_file
- ?entry_point
- ?(views=[])
- ~syntax
- ?protocol_version
- ~display_format
- ?(disable_typecheck=false)
- ?output_file
- ?(warn=false)
- ?(werror=false)
- ?project_root
- ?new_syntax
- ?new_dialect
- ?seed
- ?generator
- ?steps
- ?amount
- ?balance
- ?sender
- ?source
- ?now
- ?parameter
- ?storage
- ?expression
- ?init_file
- ?(with_types = false)
- ?(libs = [])
- ?(self_pass = false)
- ?optimize
- ?(without_run = false)
- ?package_name
- ?cache_path
- ()
-  = {
-  source_file ;
-  entry_point ;
-  views ;
-  syntax ;
-  protocol_version ;
-  display_format ;
-  disable_typecheck ;
-  output_file ;
-  warn ;
-  werror ;
-  project_root ;
-  new_syntax ;
-  new_dialect ;
-  seed ;
-  generator ;
-  steps ;
-  amount ;
-  balance ;
-  sender ;
-  source ;
-  now ;
-  parameter ;
-  storage ;
-  expression ;
-  init_file ;
-  with_types ;
-  libs ;
-  self_pass ;
-  optimize ;
-  without_run ;
-  package_name ;
-  cache_path ;
-}
-
 type frontend = {
   syntax : string ;
-  dialect : string ; (* this does not exist *)  
+  (* dialect : string ; this does not exist   *)
   libs : string list ;
   project_root : string option ;
 }
@@ -141,7 +37,7 @@ let make :
     ?(project_root) () ->
       let frontend = {
         syntax = "" ;
-        dialect = "" ;
+        (* dialect = "" ; *)
         libs;
         project_root
       } in
