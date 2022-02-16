@@ -85,9 +85,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "hashlock.ligo"
       , "id.ligo"
       , "long_assign.ligo"
-
-        -- LIGO-432
-      , "tutorials/inter-contract-calls/CreateAndCall.religo"
       ]
 
 okayIgnoreDirs :: [FilePath]
