@@ -1178,6 +1178,10 @@ let test_register_delegate ~raise loc = typer_1 ~raise loc "TEST_REGISTER_DELEGA
   let () = trace_option ~raise (expected_key_hash loc pkh) @@ assert_t_key_hash pkh in
   t_unit ()
 
+let test_bake_until_n_cycle_end ~raise loc = typer_1 ~raise loc "TEST_BAKE_UNTIL_N_CYCLE_END" @@ fun n ->
+  let () = trace_option ~raise (expected_nat loc n) @@ assert_t_nat n in
+  t_unit ()
+
 let test_get_voting_power ~raise loc = typer_1 ~raise loc "C_TEST_GET_VOTING_POWER" @@ fun u ->
   let _ = trace_option ~raise (expected_string loc u) @@ get_t_key_hash u in
   t_nat ()
@@ -1374,6 +1378,7 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_NEW_ACCOUNT -> test_new_account ~raise loc;
   | C_TEST_BAKER_ACCOUNT -> test_baker_account ~raise loc;
   | C_TEST_REGISTER_DELEGATE -> test_register_delegate ~raise loc;
+  | C_TEST_BAKE_UNTIL_N_CYCLE_END -> test_bake_until_n_cycle_end ~raise loc;
   | C_TEST_GET_VOTING_POWER -> test_get_voting_power ~raise loc;
   | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
   | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
