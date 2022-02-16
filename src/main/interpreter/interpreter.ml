@@ -988,7 +988,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
-         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
+         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE | C_TEST_BAKE_UNTIL_N_CYCLE_END |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_TEST_COMPILE_CONTRACT | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )

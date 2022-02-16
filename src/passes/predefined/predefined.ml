@@ -214,6 +214,7 @@ module Tree_abstraction = struct
     | "Test.new_account" -> some_const C_TEST_NEW_ACCOUNT
     | "Test.baker_account" -> some_const C_TEST_BAKER_ACCOUNT
     | "Test.register_delegate" -> some_const C_TEST_REGISTER_DELEGATE
+    | "Test.bake_until_n_cycle_end" -> some_const C_TEST_BAKE_UNTIL_N_CYCLE_END
     | "Test.get_voting_power" -> some_const C_TEST_GET_VOTING_POWER
     | "Test.get_total_voting_power" -> some_const C_TEST_GET_TOTAL_VOTING_POWER
 
@@ -408,6 +409,7 @@ module Tree_abstraction = struct
     | C_TEST_NEW_ACCOUNT -> "Test.new_account"
     | C_TEST_BAKER_ACCOUNT -> "Test.baker_account"
     | C_TEST_REGISTER_DELEGATE -> "Test.register_delegate"
+    | C_TEST_BAKE_UNTIL_N_CYCLE_END -> "Test.bake_until_n_cycle_end"
     | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power"
     | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power"
 
