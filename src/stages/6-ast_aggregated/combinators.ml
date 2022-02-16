@@ -224,7 +224,7 @@ let e_pack e : expression_content = E_constant {cons_name=C_BYTES_PACK; argument
 let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
-[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
 let e_unit () : expression_content = E_literal (Literal_unit)
 
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
@@ -237,7 +237,7 @@ let e_bool b : expression_content =
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
-[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )

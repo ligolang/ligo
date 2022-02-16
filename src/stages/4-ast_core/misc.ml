@@ -188,6 +188,12 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_bls12_381_fr a, Literal_bls12_381_fr b when Bytes.equal a b -> Some ()
   | Literal_bls12_381_fr _, Literal_bls12_381_fr _ -> None
   | Literal_bls12_381_fr _, _ -> None
+  | Literal_chest a, Literal_chest b when Bytes.equal a b -> Some ()
+  | Literal_chest _, Literal_chest _ -> None
+  | Literal_chest _, _ -> None
+  | Literal_chest_key a, Literal_chest_key b when Bytes.equal a b -> Some ()
+  | Literal_chest_key _, Literal_chest_key _ -> None
+  | Literal_chest_key _, _ -> None
 
 (* TODO this was supposed to mean equality of _values_; if
    assert_value_eq (a, b) = Some (), then a and b should be values *)
