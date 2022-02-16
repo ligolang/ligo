@@ -960,6 +960,10 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       let>> v = Register_delegate (loc, calltrace, pkh) in
       return @@ v
     | ( C_TEST_REGISTER_DELEGATE , _ ) -> fail @@ error_type
+    | ( C_TEST_BAKE_UNTIL_N_CYCLE_END , [ V_Ct (C_nat n) ] ) ->
+      let>> v = Bake_until_n_cycle_end (loc, calltrace, n) in
+      return @@ v
+    | ( C_TEST_BAKE_UNTIL_N_CYCLE_END , _ ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST , [ V_Ct (C_bytes payload) ; V_Ct (C_nat time)] ) ->
       let (chest,chest_key) = Michelson_backend.create_chest payload (Z.to_int time) in
       return @@ v_pair (V_Ct (C_bytes chest) , V_Ct (C_bytes chest_key))
@@ -988,7 +992,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
-         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE | C_TEST_BAKE_UNTIL_N_CYCLE_END |
+         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_TEST_COMPILE_CONTRACT | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )

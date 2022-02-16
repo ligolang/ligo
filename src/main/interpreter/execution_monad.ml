@@ -69,6 +69,7 @@ module Command = struct
     | New_account : unit -> LT.value t
     | Baker_account : LT.value * LT.value -> unit t
     | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Bake_until_n_cycle_end : Location.t * Ligo_interpreter.Types.calltrace *  Z.t -> LT.value t
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
@@ -399,6 +400,11 @@ module Command = struct
     )
     | Register_delegate (loc, calltrace, pkh) -> (
       let ctxt = Tezos_state.register_delegate ~raise ~loc ~calltrace ctxt pkh in
+      let value = LC.v_unit () in
+      (value, ctxt)
+    )
+    | Bake_until_n_cycle_end (loc, calltrace, n) -> (
+      let ctxt = Tezos_state.bake_until_n_cycle_end ~raise ~loc ~calltrace ctxt (Z.to_int n) in
       let value = LC.v_unit () in
       (value, ctxt)
     )
