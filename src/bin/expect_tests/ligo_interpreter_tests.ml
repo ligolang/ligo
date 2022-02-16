@@ -669,3 +669,16 @@ let%expect_test _ =
       4 |   ()
 
     This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run"; "test" ; bad_test "test_register_delegate.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
+     18 |   let () = Test.set_baker a in
+     19 |   let (ta, _, _) = Test.originate main 41 5tez in
+     20 |
+
+    Baker cannot bake. Enough rolls? Enough cycles passed?
+    "STARTING BALANCE AND VOTING POWER"
+    100000000000mutez
+    12n |}]
