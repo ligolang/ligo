@@ -288,30 +288,16 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
-                                    let env_rec#8 = ( ( i ) ) in
-                                    let env_rec#9 =
-                                      LOOP_LEFT(lambda (binder#10) return
-                                                let i = binder#10.0.0 in
-                                                 match AND(LT(i , x) , GT(b , 0)) with
-                                                  | True () -> LOOP_CONTINUE
-                                                               (let i =
-                                                                  ADD(i , 1) in
-                                                                let binder#13 =
-                                                                  { binder#10
-                                                                    with
-                                                                    { 0 =
-                                                                  { binder#10.0
-                                                                    with
-                                                                    { 0 =
-                                                                  i } } } } in
-                                                                let ()#14 : unit =
-                                                                  unit in
-                                                                binder#13)
-                                                  | False () -> LOOP_STOP
-                                                                (binder#10) ,
-                                                env_rec#8) in
-                                    let env_rec#15 = env_rec#9.0 in
-                                    let i = env_rec#15.0 in i |}]
+                                    let ()#5 : unit =
+                                      let fun_while_loop#2 =
+                                        rec (fun_while_loop#2:unit -> unit => lambda (()#3 : unit) return
+                                         match AND(LT(i , x) , GT(b , 0)) with
+                                          | True () -> let ()#4 : unit =
+                                                         i := ADD(i , 1) in
+                                                       (fun_while_loop#2)@(unit)
+                                          | False () -> unit ) in
+                                      (fun_while_loop#2)@(unit) in
+                                    i |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.ligo") ] ;

@@ -186,115 +186,78 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let access_path = path self access_path in
       let expression = self expression in
       return @@ O.E_assign {variable; access_path; expression}
-    | I.E_for f ->
-      let f = compile_for ~raise ~last f in
-      f
-    | I.E_for_each fe ->
-      let fe = compile_for_each ~raise ~last fe in
-      fe
-    | I.E_while w ->
-      let w = compile_while ~raise ~last w in
-      w
+    | I.E_for {binder;start;final;incr;f_body} ->
+      (*Make the cond and the step *)
+      let final = compile_expression ~raise ~last final in
+      let start = compile_expression ~raise ~last start in
+      let step = compile_expression ~raise ~last incr in
+      let for_body = compile_expression ~raise ~last f_body in
 
-and compile_while ~raise ~last I.{cond;body} =
-  let env_rec = I.ValueVar.fresh ~name:"env_rec" () in
-  let binder  = I.ValueVar.fresh ~name:"binder"  () in
+      let rec_func = I.ValueVar.fresh ~name:"fun_for_loop" () in
+      let recursive_call arg = O.e_application (O.e_variable rec_func) arg in
 
-  let cond = compile_expression ~raise ~last cond in
-  let ctrl =
-    (O.e_variable binder)
-  in
+      (* Modify the body loop*)
+      let ctrl =
+          O.e_let_in_ez binder false [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
+          recursive_call (O.e_variable binder)
+      in
+      let cond = O.e_annotation (O.e_constant (C_LE) [O.e_variable binder ; final]) (O.t_bool ()) in
+      let continue_expr = add_to_end for_body ctrl in
+      let stop_expr      = (O.e_unit ()) in
+        let loop = O.e_recursive rec_func (O.t_arrow (O.t_int ()) (O.t_unit ())) @@
+          {
+            binder={
+              var=binder;
+              ascr=Some(O.t_int ());
+              attributes={const_or_var=None}};
+            output_type=None;
+            result=O.e_cond cond continue_expr stop_expr
+          } in
+        return @@
+          O.E_let_in {let_binder={var=rec_func;ascr=None;attributes={const_or_var=None}}; rhs=loop; mut=false; let_result=recursive_call start;attributes=[]}
+    | I.E_for_each {fe_binder;collection;collection_type; fe_body} ->
+      let body = compile_expression ~raise ~last fe_body in
+      let collection = compile_expression ~raise ~last collection in
+      let op_name =
+        match collection_type with
+      | Map -> O.C_MAP_FOLD | Set -> O.C_SET_FOLD | List -> O.C_LIST_FOLD | Any -> O.C_FOLD
+      in
 
-  let for_body = compile_expression ~raise ~last body in
-  let for_body = add_to_end for_body ctrl in
+      let args    = I.ValueVar.fresh ~name:"args" () in
+      let k,v = fe_binder in
+      let element_names : O.type_expression O.pattern = match v with
+        | Some v -> Location.wrap @@ O.P_tuple [Location.wrap @@ O.P_var {var=k;ascr=None;attributes={const_or_var=None}}; Location.wrap @@ O.P_var {var=v;ascr=None;attributes={const_or_var=None}}]
+        | None -> Location.wrap @@ O.P_var {var=k;ascr=None;attributes={const_or_var=None}}
+      in
 
-  let init_rec = O.e_unit () in
-  let continue_expr = O.e_constant C_LOOP_CONTINUE [for_body] in
-  let stop_expr = O.e_constant C_LOOP_STOP [O.e_variable binder] in
-  let aux_func =
-    O.e_lambda_ez binder None @@
-    O.e_cond cond continue_expr stop_expr in
-  let loop = O.e_constant C_LOOP_LEFT [aux_func; O.e_variable env_rec] in
-  let return expr = function
-    | None -> expr
-    | Some e -> O.e_sequence expr e
-  in
-    return (
-      O.e_let_in_ez env_rec false [] init_rec @@
-      O.e_let_in_ez env_rec false [] loop @@
-      (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero]))
+      let pattern = Location.wrap @@ O.P_tuple [Location.wrap @@ O.P_unit;element_names] in
+      let lambda = O.e_lambda_ez (args) None @@
+                  O.e_matching (O.e_variable args) [
+                    {pattern;body}
+                  ] in
+      return @@
+        O.E_constant {cons_name=op_name;arguments=[lambda;collection;O.e_unit ()]}
 
+    | I.E_while {cond;body} ->
+      (* compile while*)
+      let cond = compile_expression ~raise ~last cond in
+      let body = compile_expression ~raise ~last body in
 
-and compile_for ~raise ~last I.{binder;start;final;incr;f_body} =
-  let env_rec     = I.ValueVar.fresh ~name:"env_rec" () in
-  let loop_binder = I.ValueVar.fresh ~name:"loop_binder" () in
-  (*Make the cond and the step *)
-  let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
-  let cond = compile_expression ~raise ~last cond in
-  let step = compile_expression ~raise ~last incr in
-  let continue_expr = O.e_constant C_LOOP_CONTINUE [(O.e_variable loop_binder)] in
-  let ctrl =
-    O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
-    O.e_let_in_ez loop_binder false [] (O.e_update (O.e_variable loop_binder) [Access_tuple Z.one] @@ O.e_variable binder)@@
-    continue_expr
-  in
-  (* Modify the body loop*)
-  let body = compile_expression ~raise ~last f_body in
-  let for_body = add_to_end body ctrl in
-
-  (*Prep the lambda for the fold*)
-  let stop_expr = O.e_constant C_LOOP_STOP [O.e_variable loop_binder] in
-  let aux_func = O.e_lambda_ez loop_binder None @@
-                 O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.one]) @@
-                 O.e_cond cond (for_body) (stop_expr) in
-
-  (* Make the fold_while en precharge the vakye *)
-  let loop = O.e_constant C_LOOP_LEFT [aux_func; O.e_variable env_rec] in
-  let init_rec = O.e_variable binder in
-
-  let start = compile_expression ~raise ~last start in
-  let return expr = function
-    | None -> expr
-    | Some e -> O.e_sequence expr e
-  in
-    return (
-      O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] start @@
-      O.e_let_in_ez env_rec false [] init_rec @@
-      O.e_let_in_ez env_rec false [] loop @@
-      (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.zero])
-    )
-
-and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_body} =
-  let args    = I.ValueVar.fresh ~name:"args" () in
-
-  let element_names = match snd fe_binder with
-    | Some v -> [(fst fe_binder,Z.zero);(v,Z.one)]
-    | None -> [fst fe_binder,Z.zero]
-  in
-
-  let body = compile_expression ~raise ~last fe_body in
-  let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
-
-  let init_record = store_mutable_variable @@ VMap.of_list element_names in
-  let collect = compile_expression ~raise ~last collection in
-  let restore = match collection_type with
-    | Map -> (match snd fe_binder with
-      | Some v -> fun expr -> (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero])
-                                    (O.e_let_in_ez v false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.one]) expr))
-      | None -> fun expr -> (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero]) expr)
-    )
-    | _ -> fun expr -> (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
-  in
-  let lambda = O.e_lambda_ez args None (restore for_body) in
-  let op_name =
-    match collection_type with
-   | Map -> O.C_MAP_FOLD | Set -> O.C_SET_FOLD | List -> O.C_LIST_FOLD | Any -> O.C_FOLD
-  in
-  let return expr = function
-    | None -> expr
-    | Some e -> O.e_sequence expr e
-  in
-    return (O.e_constant op_name [lambda; collect ; init_record])
+      let rec_func = I.ValueVar.fresh ~name:"fun_while_loop" () in
+      let recursive_call = O.e_application (O.e_variable rec_func) (O.e_unit ()) in
+      let continue_expr  = add_to_end body recursive_call in
+      let stop_expr      = (O.e_unit ()) in
+      let loop = O.e_recursive rec_func (O.t_arrow (O.t_unit ()) (O.t_unit ())) @@
+        {
+          binder={
+            var=I.ValueVar.fresh ~name:"()" ();
+            ascr=Some(O.t_unit ());
+            attributes={const_or_var=None}};
+          output_type=None;
+          result=O.e_cond cond continue_expr stop_expr
+        } in
+      return @@
+        O.E_let_in {let_binder={var=rec_func;ascr=None;attributes={const_or_var=None}}; rhs=loop; mut=false; let_result=recursive_call;attributes=[]}
 
 and compile_module ~raise : I.module_ -> O.module_ = fun m ->
   Maps.declarations (compile_expression ~raise ~last:true) (compile_type_expression ~raise) (fun a -> a) (fun a -> a) (fun a -> a) m
