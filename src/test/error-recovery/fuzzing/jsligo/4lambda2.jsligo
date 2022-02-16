@@ -1,0 +1,15 @@
+ type storage = unit ;
+
+
+
+
+
+ let main = ( [ _unit , _storage ] : [ => unit , ] ) : unit =>
+ ( ( f : ( ( a : unit ) => unit ) ) => f ( unit ) ) ( ( _useless : unit ) => unit ) ;
+
+/*
+Mutation chance is 4
+
+Add => in line 7
+Delete storage in line 7
+*/
