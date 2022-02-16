@@ -18,211 +18,6 @@ let assert_type_expression_eq = Helpers.assert_type_expression_eq
    it should have information such as `[a ↦ int; b ↦ bool]`. *)
 module TMap = Simple_utils.Map.Make(struct type t = O.type_variable let compare x y = I.Var.compare x y end)
 
-module Constant_types = struct
-  module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
-  type t = (O.type_expression list) CTMap.t
-
-  let a_var = O.Var.of_input_var "a"
-  let b_var = O.Var.of_input_var "b"
-  let c_var = O.Var.of_input_var "c"
-
-  let tbl : t = CTMap.of_list [
-                    (* MAP *)
-                    (C_MAP_EMPTY, [O.(t_for_all a_var () (t_for_all b_var () (t_map (t_variable a_var ()) (t_variable b_var ()))))]);
-                    (C_BIG_MAP_EMPTY, [O.(t_for_all a_var () (t_for_all b_var () (t_big_map (t_variable a_var ()) (t_variable b_var ()))))]);
-                    (C_MAP_ADD, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                 O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                ]);
-                    (C_MAP_REMOVE, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
-                                    O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
-                                ]);
-                    (C_MAP_UPDATE, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                    O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                ]);
-                    (C_MAP_GET_AND_UPDATE, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())))]);
-                    (C_BIG_MAP_GET_AND_UPDATE, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())))]);
-                    (C_MAP_FIND_OPT, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
-                                      O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
-                                      ]);
-                    (C_MAP_FIND, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
-                                  O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
-                                 ]);
-                    (C_MAP_MEM, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
-                                 O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
-                                ]);
-                    (C_MAP_MAP, [O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable c_var ())) ()) ()))))]);
-                    (C_MAP_ITER, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ())))]);
-                    (C_MAP_FOLD, [O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_arrow (t_pair (t_variable c_var ()) (t_pair (t_variable a_var ()) (t_variable b_var ()))) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_arrow (t_variable c_var ()) (t_variable c_var ()) ()) ()) ()))))]);
-                    (* LIST *)
-                    (C_LIST_EMPTY, [O.(t_for_all a_var () (t_list (t_variable a_var ())))]);
-                    (C_CONS, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable a_var ())) ()) ()))]);
-                    (C_LIST_MAP, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable b_var ())) ()) ())))]);
-                    (C_LIST_ITER, [O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_unit ()) ()) ()))]);
-                    (C_LIST_FOLD, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
-                    (C_LIST_FOLD_LEFT, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_list (t_variable a_var ())) (t_variable b_var ()) ()) ()) ())))]);
-                    (C_LIST_FOLD_RIGHT, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
-                    (C_LIST_HEAD_OPT, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_variable a_var ())) ()))]);
-                    (C_LIST_TAIL_OPT, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_list (t_variable a_var ()))) ()))]);
-                    (* SET *)
-                    (C_SET_EMPTY, [O.(t_for_all a_var () (t_set (t_variable a_var ())))]);
-                    (C_SET_LITERAL, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ()))]);
-                    (C_SET_MEM, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_bool ()) ()) ()))]);
-                    (C_SET_ADD, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()))]);
-                    (C_SET_REMOVE, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()))]);
-                    (C_SET_UPDATE, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_bool ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()) ()))]);
-                    (C_SET_ITER, [O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ()))]);
-                    (C_SET_FOLD, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
-                    (C_SET_FOLD_DESC, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
-                    (* ADHOC POLY *)
-                    (C_SIZE, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
-                              O.(t_arrow (t_bytes ()) (t_nat ()) ());
-                              O.(t_arrow (t_string ()) (t_nat ()) ());
-                              O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
-                              O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
-                             ]);
-                    (C_CONCAT, [O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
-                                O.(t_arrow (t_bytes ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ());
-                               ]);
-                    (C_SLICE, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_string ()) (t_string ()) ()) ()) ());
-                               O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ()) ());
-                              ]);
-                    (C_BYTES_PACK, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_bytes ()) ()))]);
-                    (C_BYTES_UNPACK, [O.(t_for_all a_var () (t_arrow (t_bytes ()) (t_option (t_variable a_var ())) ()))]);
-                    (* CRYPTO *)
-                    (C_SHA256, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
-                    (C_SHA512, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
-                    (C_SHA3, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
-                    (C_KECCAK, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
-                    (C_BLAKE2b, [O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
-                    (C_HASH_KEY, [O.(t_arrow (t_key ()) (t_key_hash ()) ())]);
-                    (C_CHECK_SIGNATURE, [O.(t_arrow (t_key ()) (t_arrow (t_signature ()) (t_arrow (t_bytes ()) (t_bool ()) ()) ()) ())]);
-                    (* OPTION *)
-                    (C_NONE, [O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
-                    (C_SOME, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_option (t_variable a_var ())) ()))]);
-                    (* GLOBAL *)
-                    (C_AMOUNT, [O.(t_mutez ())]);
-                    (C_BALANCE, [O.(t_mutez ())]);
-                    (C_LEVEL, [O.(t_nat ())]);
-                    (C_SENDER, [O.(t_address ())]);
-                    (C_SOURCE, [O.(t_address ())]);
-                    (C_ADDRESS, [O.(t_for_all a_var () (t_arrow (t_contract (t_variable a_var ())) (t_address ()) ()))]);
-                    (C_CONTRACT, [O.(t_for_all a_var () (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()))]);
-                    (C_CONTRACT_OPT, [O.(t_for_all a_var () (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()))]);
-                    (C_CONTRACT_WITH_ERROR, [O.(t_for_all a_var () (t_arrow (t_address ()) (t_arrow (t_string ()) (t_option (t_contract (t_variable a_var ()))) ()) ()))]);
-                    (C_CONTRACT_ENTRYPOINT_OPT, [O.(t_for_all a_var () (t_arrow (t_string ()) (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()) ()))]);
-                    (C_CONTRACT_ENTRYPOINT, [O.(t_for_all a_var () (t_arrow (t_string ()) (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()) ()))]);
-                    (C_IMPLICIT_ACCOUNT, [O.(t_arrow (t_key_hash ()) (t_contract (t_unit ())) ())]);
-                    (C_SET_DELEGATE, [O.(t_arrow (t_option (t_key_hash ())) (t_operation ()) ())]);
-                    (C_SELF, [O.(t_for_all a_var () (t_arrow (t_string ()) (t_contract (t_variable a_var ())) ()))]);
-                    (C_SELF_ADDRESS, [O.(t_address ())]);
-                    (C_TOTAL_VOTING_POWER, [O.(t_nat ())]);
-                    (C_VOTING_POWER, [O.(t_arrow (t_key_hash ()) (t_nat ()) ())]);
-                    (C_CALL, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_arrow (t_contract (t_variable a_var ())) (t_operation ()) ()) ()) ()))]);
-                    (C_CREATE_CONTRACT, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow (t_variable b_var ()) (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())))]);
-                    (C_NOW, [O.(t_timestamp ())]);
-                    (C_CHAIN_ID, [O.(t_chain_id ())]);
-                    (C_INT, [O.(t_arrow (t_nat ()) (t_int ()) ());
-                             O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
-                            ]);
-                    (C_UNIT, [O.(t_unit ())]);
-                    (C_NEVER, [O.(t_for_all a_var () (t_arrow (t_never ()) (t_variable a_var ()) ()))]);
-                    (C_TRUE, [O.(t_bool ())]);
-                    (C_FALSE, [O.(t_bool ())]);
-                    (C_IS_NAT, [O.(t_arrow (t_int ()) (t_option (t_nat ())) ())]);
-                    (C_PAIRING_CHECK, [O.(t_arrow (t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ()))) (t_bool ()) ())]);
-                    (C_OPEN_CHEST, [O.(t_arrow (t_chest_key ()) (t_arrow (t_chest ()) (t_arrow (t_nat ()) (t_chest_opening_result ()) ()) ()) ())]);
-                    (C_VIEW, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_string ()) (t_arrow (t_variable a_var ()) (t_arrow (t_address ()) (t_option (t_variable b_var ())) ()) ()) ())))]);
-                    (* TICKET *)
-                    (C_TICKET, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_nat ()) (t_ticket (t_variable a_var ())) ()) ()))]);
-                    (C_READ_TICKET, [O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_pair (t_pair (t_address ()) (t_pair (t_variable a_var ()) (t_nat ()))) (t_ticket (t_variable a_var ()))) ()))]);
-                    (C_SPLIT_TICKET, [O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ())))) ()) ()))]);
-                    (C_JOIN_TICKET, [O.(t_for_all a_var () (t_arrow (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ()))) (t_option (t_ticket (t_variable a_var ()))) ()))]);
-                    (* MATH *)
-                    (C_ADD, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
-                             O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
-                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
-                            ]);
-                    (C_MUL, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
-                             O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
-                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_nat ()) (t_bls12_381_fr ()) ()) ());
-                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_int ()) (t_bls12_381_fr ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                             O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                            ]);
-                    (C_SUB, [O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
-                             O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
-                             O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_timestamp ()) (t_arrow (t_timestamp ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                            ]);
-                    (C_EDIV, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_option (t_pair (t_nat ()) (t_nat ()))) ()) ());
-                              O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                              O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                              O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                              O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_option (t_pair (t_nat ()) (t_mutez ()))) ()) ());
-                              O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_option (t_pair (t_mutez ()) (t_mutez ()))) ()) ());
-                            ]);
-                    (C_DIV, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ());
-                            ]);
-                    (C_MOD, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                             O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                            ]);
-                    (C_ABS, [O.(t_arrow (t_int ()) (t_nat ()) ())]);
-                    (C_NEG, [O.(t_arrow (t_int ()) (t_int ()) ());
-                             O.(t_arrow (t_nat ()) (t_int ()) ());
-                             O.(t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ());
-                             O.(t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ());
-                             O.(t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ());
-                             ]);
-                    (* LOGIC *)
-                    (C_NOT, [O.(t_arrow (t_bool ()) (t_bool ()) ());
-                             O.(t_arrow (t_int ()) (t_int ()) ());
-                             O.(t_arrow (t_nat ()) (t_int ()) ());
-                            ]);
-                    (C_OR, [O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                            O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                           ]);
-                    (C_AND, [O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                            ]);
-                    (C_XOR, [O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                             O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                            ]);
-                    (C_LSL, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ())]);
-                    (C_LSR, [O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ())]);
-                  ]
-  let find c = CTMap.find_opt c tbl
-end
-
 let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') table (type_matched : O.type_expression) (type_ : O.type_expression) =
   let open O in
   let self = infer_type_application ~raise ~loc ~default_error in
@@ -323,6 +118,273 @@ let build_type_insts ~raise ~loc (forall : O.expression) table bound_variables =
        let type_ = trace_option ~raise (Errors.not_annotated loc) @@ TMap.find_opt av table in
        build_type_insts (make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_type av type_ t)) avs' in
   build_type_insts forall bound_variables
+
+
+type typer = raise:Errors.typer_error raise -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression list -> O.type_expression
+
+let typer_of_ligo_type ~tc name : typer = fun ~raise ~loc lst tv_opt xs ->
+  let rec aux = function
+    | [] -> (
+      let errs = ! tc in
+      match errs with
+      | [] ->
+         raise.raise @@ (corner_case (Format.asprintf "No of types works... %a: %a" O.PP.constant' name Simple_utils.PP_helpers.(list_sep_d O.PP.type_expression) lst))
+      | xs -> raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev xs)) lst)
+    | lamb_type :: xs ->
+       let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
+       Simple_utils.Trace.try_with (fun ~raise ->
+           let table =
+             let table, lamb_type = List.fold_left lst ~init:(TMap.empty, lamb_type)
+                                      ~f:(fun ((table, lamb_type) : _ TMap.t * O.type_expression) matched ->
+                                        match lamb_type.type_content with
+                                        | T_arrow { type1 ; type2 } ->
+                                           infer_type_application ~raise ~loc table type1 matched, type2
+                                        | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ |
+                                           T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
+                                           table, lamb_type) in
+             match tv_opt with
+             | Some t ->
+                Simple_utils.Trace.try_with (fun ~raise ->
+                    infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Foo (loc, t', t)) table lamb_type t)
+                  (function `Foo (loc, t', t) -> raise.raise (`Foo (loc, t', t))
+                          | `Typer_assert_equal e -> raise.raise (`Typer_assert_equal e)
+                          | `Typer_not_matching e -> raise.raise (`Typer_not_matching e))
+             | None -> table in
+           (* let table = infer_type_applications ~raise ~loc lamb_type lst tv_opt in *)
+           let lamb_type = TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
+           let _, tv = Ast_typed.Helpers.destruct_arrows lamb_type in
+           tv)
+         (function
+          | `Foo (loc, t', t) -> raise.raise (assert_equal loc t' t)
+          | _ ->
+             let arrs, _ = O.Helpers.destruct_arrows lamb_type in
+             let () = tc := arrs :: ! tc in
+             aux xs)
+  in
+  aux xs
+
+module Constant_types = struct
+  module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
+
+  type t = (O.type_expression list) CTMap.t
+
+  let a_var = O.Var.of_input_var "a"
+  let b_var = O.Var.of_input_var "b"
+  let c_var = O.Var.of_input_var "c"
+
+  let of_ligo_type t = t
+
+  let tbl : t = CTMap.of_list [
+                    (* MAP *)
+                    (C_MAP_EMPTY, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_map (t_variable a_var ()) (t_variable b_var ()))))]);
+                    (C_BIG_MAP_EMPTY, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_big_map (t_variable a_var ()) (t_variable b_var ()))))]);
+                    (C_MAP_ADD, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                                 of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                                ]);
+                    (C_MAP_REMOVE, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
+                                    of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
+                                ]);
+                    (C_MAP_UPDATE, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                                    of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                                ]);
+                    (C_MAP_GET_AND_UPDATE, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())))]);
+                    (C_BIG_MAP_GET_AND_UPDATE, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())))]);
+                    (C_MAP_FIND_OPT, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
+                                      of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
+                                      ]);
+                    (C_MAP_FIND, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
+                                  of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
+                                 ]);
+                    (C_MAP_MEM, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
+                                 of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
+                                ]);
+                    (C_MAP_MAP, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable c_var ())) ()) ()))))]);
+                    (C_MAP_ITER, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ())))]);
+                    (C_MAP_FOLD, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_arrow (t_pair (t_variable c_var ()) (t_pair (t_variable a_var ()) (t_variable b_var ()))) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_arrow (t_variable c_var ()) (t_variable c_var ()) ()) ()) ()))))]);
+                    (* LIST *)
+                    (C_LIST_EMPTY, [of_ligo_type @@ O.(t_for_all a_var () (t_list (t_variable a_var ())))]);
+                    (C_CONS, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable a_var ())) ()) ()))]);
+                    (C_LIST_MAP, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable b_var ())) ()) ())))]);
+                    (C_LIST_ITER, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_unit ()) ()) ()))]);
+                    (C_LIST_FOLD, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_LIST_FOLD_LEFT, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_list (t_variable a_var ())) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_LIST_FOLD_RIGHT, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_LIST_HEAD_OPT, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_variable a_var ())) ()))]);
+                    (C_LIST_TAIL_OPT, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_list (t_variable a_var ()))) ()))]);
+                    (* SET *)
+                    (C_SET_EMPTY, [of_ligo_type @@ O.(t_for_all a_var () (t_set (t_variable a_var ())))]);
+                    (C_SET_LITERAL, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ()))]);
+                    (C_SET_MEM, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_bool ()) ()) ()))]);
+                    (C_SET_ADD, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()))]);
+                    (C_SET_REMOVE, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()))]);
+                    (C_SET_UPDATE, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_bool ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()) ()))]);
+                    (C_SET_ITER, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ()))]);
+                    (C_SET_FOLD, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_SET_FOLD_DESC, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
+                    (* ADHOC POLY *)
+                    (C_SIZE, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
+                              of_ligo_type @@ O.(t_arrow (t_bytes ()) (t_nat ()) ());
+                              of_ligo_type @@ O.(t_arrow (t_string ()) (t_nat ()) ());
+                              of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
+                              of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
+                             ]);
+                    (C_CONCAT, [of_ligo_type @@ O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
+                                of_ligo_type @@ O.(t_arrow (t_bytes ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ());
+                               ]);
+                    (C_SLICE, [of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_string ()) (t_string ()) ()) ()) ());
+                               of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ()) ());
+                              ]);
+                    (C_BYTES_PACK, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_bytes ()) ()))]);
+                    (C_BYTES_UNPACK, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_bytes ()) (t_option (t_variable a_var ())) ()))]);
+                    (* CRYPTO *)
+                    (C_SHA256, [of_ligo_type @@ O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_SHA512, [of_ligo_type @@ O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_SHA3, [of_ligo_type @@ O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_KECCAK, [of_ligo_type @@ O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_BLAKE2b, [of_ligo_type @@ O.(t_arrow (t_bytes ()) (t_bytes ()) ())]);
+                    (C_HASH_KEY, [of_ligo_type @@ O.(t_arrow (t_key ()) (t_key_hash ()) ())]);
+                    (C_CHECK_SIGNATURE, [of_ligo_type @@ O.(t_arrow (t_key ()) (t_arrow (t_signature ()) (t_arrow (t_bytes ()) (t_bool ()) ()) ()) ())]);
+                    (* OPTION *)
+                    (C_NONE, [of_ligo_type @@ O.(t_for_all a_var () (t_option (t_variable a_var ())))]);
+                    (C_SOME, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_option (t_variable a_var ())) ()))]);
+                    (C_UNOPT, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_variable a_var ()) ()))]);
+                    (C_UNOPT_WITH_ERROR, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_variable a_var ()) ()) ()))]);
+                    (* GLOBAL *)
+                    (C_ASSERTION, [of_ligo_type @@ O.(t_arrow (t_bool ()) (t_unit ()) ())]);
+                    (C_ASSERTION_WITH_ERROR, [of_ligo_type @@ O.(t_arrow (t_bool ()) (t_arrow (t_string ()) (t_unit ()) ()) ())]);
+                    (C_ASSERT_SOME, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_unit ()) ()))]);
+                    (C_ASSERT_SOME_WITH_ERROR, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_unit ()) ()) ()))]);
+                    (C_ASSERT_NONE, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_unit ()) ()))]);
+                    (C_ASSERT_NONE_WITH_ERROR, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_unit ()) ()) ()))]);
+                    (* (C_FAILWITH, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_string ()) (t_variable a_var ()) ()));
+                     *               of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_nat ()) (t_variable a_var ()) ()));
+                     *               of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_int ()) (t_variable a_var ()) ()));
+                     *               of_ligo_type @@ O.(t_arrow (t_string ()) (t_unit ()) ());
+                     *               of_ligo_type @@ O.(t_arrow (t_nat ()) (t_unit ()) ());
+                     *               of_ligo_type @@ O.(t_arrow (t_int ()) (t_unit ()) ());
+                     *              ]); *)
+                    (C_AMOUNT, [of_ligo_type @@ O.(t_mutez ())]);
+                    (C_BALANCE, [of_ligo_type @@ O.(t_mutez ())]);
+                    (C_LEVEL, [of_ligo_type @@ O.(t_nat ())]);
+                    (C_SENDER, [of_ligo_type @@ O.(t_address ())]);
+                    (C_SOURCE, [of_ligo_type @@ O.(t_address ())]);
+                    (C_ADDRESS, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_contract (t_variable a_var ())) (t_address ()) ()))]);
+                    (C_CONTRACT, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()))]);
+                    (C_CONTRACT_OPT, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()))]);
+                    (C_CONTRACT_WITH_ERROR, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_address ()) (t_arrow (t_string ()) (t_option (t_contract (t_variable a_var ()))) ()) ()))]);
+                    (C_CONTRACT_ENTRYPOINT_OPT, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_string ()) (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()) ()))]);
+                    (C_CONTRACT_ENTRYPOINT, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_string ()) (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()) ()))]);
+                    (C_IMPLICIT_ACCOUNT, [of_ligo_type @@ O.(t_arrow (t_key_hash ()) (t_contract (t_unit ())) ())]);
+                    (C_SET_DELEGATE, [of_ligo_type @@ O.(t_arrow (t_option (t_key_hash ())) (t_operation ()) ())]);
+                    (C_SELF, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_string ()) (t_contract (t_variable a_var ())) ()))]);
+                    (C_SELF_ADDRESS, [of_ligo_type @@ O.(t_address ())]);
+                    (C_TOTAL_VOTING_POWER, [of_ligo_type @@ O.(t_nat ())]);
+                    (C_VOTING_POWER, [of_ligo_type @@ O.(t_arrow (t_key_hash ()) (t_nat ()) ())]);
+                    (C_CALL, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_arrow (t_contract (t_variable a_var ())) (t_operation ()) ()) ()) ()))]);
+                    (C_CREATE_CONTRACT, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow (t_variable b_var ()) (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())))]);
+                    (C_NOW, [of_ligo_type @@ O.(t_timestamp ())]);
+                    (C_CHAIN_ID, [of_ligo_type @@ O.(t_chain_id ())]);
+                    (C_INT, [of_ligo_type @@ O.(t_arrow (t_nat ()) (t_int ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
+                            ]);
+                    (C_UNIT, [of_ligo_type @@ O.(t_unit ())]);
+                    (C_NEVER, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_never ()) (t_variable a_var ()) ()))]);
+                    (C_TRUE, [of_ligo_type @@ O.(t_bool ())]);
+                    (C_FALSE, [of_ligo_type @@ O.(t_bool ())]);
+                    (C_IS_NAT, [of_ligo_type @@ O.(t_arrow (t_int ()) (t_option (t_nat ())) ())]);
+                    (C_PAIRING_CHECK, [of_ligo_type @@ O.(t_arrow (t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ()))) (t_bool ()) ())]);
+                    (C_OPEN_CHEST, [of_ligo_type @@ O.(t_arrow (t_chest_key ()) (t_arrow (t_chest ()) (t_arrow (t_nat ()) (t_chest_opening_result ()) ()) ()) ())]);
+                    (C_VIEW, [of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_string ()) (t_arrow (t_variable a_var ()) (t_arrow (t_address ()) (t_option (t_variable b_var ())) ()) ()) ())))]);
+                    (* TICKET *)
+                    (C_TICKET, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_nat ()) (t_ticket (t_variable a_var ())) ()) ()))]);
+                    (C_READ_TICKET, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_pair (t_pair (t_address ()) (t_pair (t_variable a_var ()) (t_nat ()))) (t_ticket (t_variable a_var ()))) ()))]);
+                    (C_SPLIT_TICKET, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ())))) ()) ()))]);
+                    (C_JOIN_TICKET, [of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ()))) (t_option (t_ticket (t_variable a_var ()))) ()))]);
+                    (* MATH *)
+                    (C_ADD, [of_ligo_type @@ O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                            ]);
+                    (C_MUL, [of_ligo_type @@ O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_nat ()) (t_bls12_381_fr ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_int ()) (t_bls12_381_fr ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                            ]);
+                    (C_SUB, [of_ligo_type @@ O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_timestamp ()) (t_arrow (t_timestamp ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                            ]);
+                    (C_EDIV, [of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_option (t_pair (t_nat ()) (t_nat ()))) ()) ());
+                              of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                              of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                              of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                              of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_option (t_pair (t_nat ()) (t_mutez ()))) ()) ());
+                              of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_option (t_pair (t_mutez ()) (t_mutez ()))) ()) ());
+                            ]);
+                    (C_DIV, [of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ());
+                            ]);
+                    (C_MOD, [of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                            ]);
+                    (C_ABS, [of_ligo_type @@ O.(t_arrow (t_int ()) (t_nat ()) ())]);
+                    (C_NEG, [of_ligo_type @@ O.(t_arrow (t_int ()) (t_int ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_int ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ());
+                             ]);
+                    (* LOGIC *)
+                    (C_NOT, [of_ligo_type @@ O.(t_arrow (t_bool ()) (t_bool ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_int ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_int ()) ());
+                            ]);
+                    (C_OR, [of_ligo_type @@ O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                            of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                           ]);
+                    (C_AND, [of_ligo_type @@ O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                            ]);
+                    (C_XOR, [of_ligo_type @@ O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                             of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                            ]);
+                    (C_LSL, [of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ())]);
+                    (C_LSR, [of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ())]);
+                  ]
+  let find c = CTMap.find_opt c tbl
+end
 
 let rec type_module ~raise ~test ~init_context ~protocol_version (p:I.module_) : O.module_ =
   let aux (c, acc:(context * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -1025,45 +1087,8 @@ and type_lambda ~raise ~test ~protocol_version e {
 and type_constant ~raise ~test ~protocol_version (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
   match Constant_types.find name with
   | Some xs ->
-     let rec aux errs = function
-       | [] -> (* raise.raise @@ typeclass_error loc
-                *   l
-                *   [t] *) (
-          match errs with
-          | [] ->
-             raise.raise @@ (corner_case (Format.asprintf "No of types works... %a: %a" O.PP.constant' name Simple_utils.PP_helpers.(list_sep_d O.PP.type_expression) lst))
-          | xs -> raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev xs)) lst)
-       | lamb_type :: xs ->
-          let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
-          Simple_utils.Trace.try_with (fun ~raise ->
-              let table =
-                let table, lamb_type = List.fold_left lst ~init:(TMap.empty, lamb_type)
-                                         ~f:(fun ((table, lamb_type) : _ TMap.t * O.type_expression) matched ->
-                                           match lamb_type.type_content with
-                                           | T_arrow { type1 ; type2 } ->
-                                              infer_type_application ~raise ~loc table type1 matched, type2
-                                           | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ |
-                                              T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
-                                              table, lamb_type) in
-                match tv_opt with
-                | Some t ->
-                   Simple_utils.Trace.try_with (fun ~raise ->
-                       infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Foo (loc, t', t)) table lamb_type t)
-                     (function `Foo (loc, t', t) -> raise.raise (`Foo (loc, t', t))
-                             | `Typer_assert_equal e -> raise.raise (`Typer_assert_equal e)
-                             | `Typer_not_matching e -> raise.raise (`Typer_not_matching e))
-                | None -> table in
-              (* let table = infer_type_applications ~raise ~loc lamb_type lst tv_opt in *)
-              let lamb_type = TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
-              let _, tv = Ast_typed.Helpers.destruct_arrows lamb_type in
-              (name, tv))
-            (function
-             | `Foo (loc, t', t) -> raise.raise (assert_equal loc t' t)
-             | _ ->
-              let arrs, _ = O.Helpers.destruct_arrows lamb_type in
-              aux (arrs :: errs) xs)
-     in
-     aux [] xs
+     let tc = ref [] in
+     (name, typer_of_ligo_type ~tc name ~raise ~loc lst tv_opt xs)
   | _ ->
      let typer = Constant_typers.constant_typers ~raise ~test ~protocol_version loc name in
      let tv = typer lst tv_opt in
