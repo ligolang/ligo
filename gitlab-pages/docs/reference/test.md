@@ -424,7 +424,21 @@ let register_delegate: key_hash => unit
 <SyntaxTitle syntax="jsligo">
 let register_delegate = (account : key_hash) => unit
 </SyntaxTitle>
-Registers a `key_hash` corresponding to an account as a delegate. It bakes until `preserved_cycles + 2` cycles pass, so that the `pkh` can be used as a baker.
+Registers a `key_hash` corresponding to an account as a delegate.
+
+<SyntaxTitle syntax="pascaligo">
+val bake_until_n_cycle_end : nat -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val bake_until_n_cycle_end : nat -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let bake_until_n_cycle_end: nat => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let bake_until_n_cycle_end = (cycles : nat) => unit
+</SyntaxTitle>
+It bakes until a number of cycles pass, so that an account registered as delegate can effectively act as a baker.
 
 <SyntaxTitle syntax="pascaligo">
 val new_account : unit -> (string * key)
