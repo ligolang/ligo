@@ -1,0 +1,5 @@
+author: Rémi Lesénéchal
+title: 'Ligo test: fixing a bug where chest and chest_key values were not compiled
+  correctly to michelson (their type were bytes instead of chest/chest_key)'
+type: fixed
+merge_request: '1564'
