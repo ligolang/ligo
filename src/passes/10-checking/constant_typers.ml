@@ -48,43 +48,6 @@ let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
         [t] in
   let default = t_unit () in
   Simple_utils.Option.value ~default opt
-
-let unopt ~raise loc = typer_1 ~raise loc "UNOPT" @@ fun a ->
-  let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
-  a
-
-let unopt_with_error ~raise loc = typer_2 ~raise loc "UNOPT_WITH_ERROR" @@ fun a b ->
-  let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_string b in
-  a
-
-let assertion ~raise loc = typer_1 ~raise loc "ASSERT" @@ fun a ->
-  let () = trace_option ~raise (expected_bool loc a) @@ assert_t_bool a in
-  t_unit ()
-
-let assertion_with_error ~raise loc = typer_2 ~raise loc "ASSERT_WITH_ERROR" @@ fun a b ->
-  let () = trace_option ~raise (expected_bool loc a) @@ assert_t_bool a in
-  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
-  t_unit ()
-
-let assert_some ~raise loc = typer_1 ~raise loc "ASSERT_SOME" @@ fun a ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  t_unit ()
-
-let assert_some_with_error ~raise loc = typer_2 ~raise loc "ASSERT_SOME_WITH_ERROR" @@ fun a b ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
-  t_unit ()
-
-let assert_none ~raise loc = typer_1 ~raise loc "ASSERT_NONE" @@ fun a ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  t_unit ()
-
-let assert_none_with_error ~raise loc = typer_2 ~raise loc "ASSERT_NONE_WITH_ERROR" @@ fun a b ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
-  t_unit ()
-
 let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b ->
   if eq_2 (a , b) (t_string ())
   then t_string () else
@@ -496,14 +459,6 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   ret_t
 
 let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
-  | C_UNOPT               -> unopt ~raise loc ;
-  | C_UNOPT_WITH_ERROR    -> unopt_with_error ~raise loc ;
-  | C_ASSERTION           -> assertion ~raise loc ;
-  | C_ASSERTION_WITH_ERROR-> assertion_with_error ~raise loc ;
-  | C_ASSERT_SOME         -> assert_some ~raise loc ;
-  | C_ASSERT_SOME_WITH_ERROR -> assert_some_with_error ~raise loc ;
-  | C_ASSERT_NONE         -> assert_none ~raise loc ;
-  | C_ASSERT_NONE_WITH_ERROR -> assert_none_with_error ~raise loc ;
   | C_FAILWITH            -> failwith_ ~raise loc ;
     (* LOOPS *)
   | C_FOLD_WHILE          -> fold_while ~raise loc ;
