@@ -26,6 +26,16 @@ module Constant_types = struct
   let b_var = O.Var.of_input_var "b"
 
   let tbl : t = CTMap.of_list [
+                    (* LIST *)
+                    (C_LIST_EMPTY, [O.(t_for_all a_var () (t_list (t_variable a_var ())))]);
+                    (C_CONS, [O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable a_var ())) ()) ()))]);
+                    (C_LIST_MAP, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable b_var ())) ()) ())))]);
+                    (C_LIST_ITER, [O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_unit ()) ()) ()))]);
+                    (C_LIST_FOLD, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_LIST_FOLD_LEFT, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_list (t_variable a_var ())) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_LIST_FOLD_RIGHT, [O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())))]);
+                    (C_LIST_HEAD_OPT, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_variable a_var ())) ()))]);
+                    (C_LIST_TAIL_OPT, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_list (t_variable a_var ()))) ()))]);
                     (* SET *)
                     (C_SET_EMPTY, [O.(t_for_all a_var () (t_set (t_variable a_var ())))]);
                     (C_SET_LITERAL, [O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ()))]);

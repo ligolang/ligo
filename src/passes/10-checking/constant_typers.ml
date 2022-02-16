@@ -303,26 +303,6 @@ let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b
               ]
               [a; b]
 
-let list_empty ~raise loc = typer_0 ~raise loc "LIST_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let () = trace_option ~raise (expected_list loc t) @@ assert_t_list t in
-    t
-
-let list_iter ~raise loc = typer_2 ~raise loc "LIST_ITER" @@ fun body lst ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let () = assert_eq_1 ~raise ~loc res (t_unit ()) in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key arg in
-  (t_unit ())
-
-let list_map ~raise loc = typer_2 ~raise loc "LIST_MAP" @@ fun body lst ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key arg in
-  (t_list res )
-
 let fold ~raise loc = typer_3 ~raise loc "FOLD" @@ fun body container init ->
   let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
   let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
@@ -331,40 +311,6 @@ let fold ~raise loc = typer_3 ~raise loc "FOLD" @@ fun body container init ->
   let () = assert_eq_1 ~raise ~loc prec res in
   let () = assert_eq_1 ~raise ~loc res init in
   res
-let list_fold ~raise loc = typer_3 ~raise loc "LIST_FOLD" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let list_fold_left ~raise loc = typer_3 ~raise loc "LIST_FOLD_LEFT" @@ fun body init lst ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let list_fold_right ~raise loc = typer_3 ~raise loc "LIST_FOLD_RIGHT" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (cur , prec) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let list_head_opt ~raise loc = typer_1 ~raise loc "LIST_HEAD_OPT" @@ fun lst ->
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  t_option ~loc key
-
-let list_tail_opt ~raise loc = typer_1 ~raise loc "LIST_TAIL_OPT" @@ fun lst ->
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  t_option ~loc @@ t_list ~loc key
 
 let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
   let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
@@ -394,11 +340,6 @@ let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
 
 let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
   (t_pair (t_bool ()) arg)
-
-let cons ~raise loc = typer_2 ~raise loc "CONS" @@ fun hd tl ->
-  let elt = trace_option ~raise (expected_list loc tl) @@ get_t_list tl in
-  let () = assert_eq_1 ~raise ~loc hd elt in
-  tl
 
 let simple_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
   let () =
@@ -812,16 +753,6 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_GT                  -> comparator ~raise ~test loc "GT" ;
   | C_LE                  -> comparator ~raise ~test loc "LE" ;
   | C_GE                  -> comparator ~raise ~test loc "GE" ;
-  (* LIST *)
-  | C_CONS                -> cons ~raise loc ;
-  | C_LIST_EMPTY          -> list_empty ~raise loc;
-  | C_LIST_ITER           -> list_iter ~raise loc ;
-  | C_LIST_MAP            -> list_map ~raise loc ;
-  | C_LIST_FOLD           -> list_fold ~raise loc ;
-  | C_LIST_FOLD_LEFT      -> list_fold_left ~raise loc ;
-  | C_LIST_FOLD_RIGHT     -> list_fold_right ~raise loc ;
-  | C_LIST_HEAD_OPT       -> list_head_opt ~raise loc;
-  | C_LIST_TAIL_OPT       -> list_tail_opt ~raise loc;
     (* MAP *)
   | C_MAP_EMPTY           -> map_empty ~raise loc;
   | C_BIG_MAP_EMPTY       -> big_map_empty ~raise loc;
