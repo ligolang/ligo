@@ -195,41 +195,12 @@ let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE
 let sapling_empty_state ~raise loc = typer_0 ~raise loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
   trace_option ~raise (not_annotated loc) @@ tv_opt
 
-let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main storage balance ->
-  let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
-  let param_ty,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
-  let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc storage storage_ty in
-  (t_triplet (t_typed_address param_ty storage_ty) (t_michelson_code ()) (t_int ()))
-
-let test_state_reset ~raise loc = typer_2 ~raise loc "TEST_STATE_RESET" @@ fun n amts ->
-  let amt = trace_option ~raise (expected_list loc amts) @@ get_t_list amts in
-  let () = trace_option ~raise (expected_mutez loc amt) @@ get_t_mutez amt in
-  let () = trace_option ~raise (expected_nat loc n) @@ get_t_nat n in
-  (t_unit ())
-
 let test_bootstrap_contract ~raise loc = typer_3 ~raise loc "TEST_BOOTSTRAP_CONTRACT" @@ fun balance main storage ->
   let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
   let _,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
   let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
   let () = assert_eq_1 ~raise ~loc storage storage_ty in
   (t_unit ())
-
-let test_nth_bootstrap_contract ~raise loc = typer_1 ~raise loc "TEST_NTH_BOOTSTRAP_CONTRACT" @@ fun n ->
-  let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
-  (t_address ())
-
-let test_set_now ~raise loc = typer_1 ~raise loc "TEST_SET_NOW" @@ fun time ->
-  let () = assert_eq_1 ~raise ~loc time (t_timestamp ()) in
-  (t_unit ())
-
-let test_set_source ~raise loc = typer_1 ~raise loc "TEST_SET" @@ fun s ->
-  let () = assert_eq_1 ~raise ~loc s (t_address ()) in
-  (t_unit ())
-
-let test_get_nth ~raise loc = typer_1 ~raise loc "TEST_GET_NTH" @@ fun n ->
-  let () = trace_option ~raise (expected_int loc n) @@ assert_t_int n in
-  (t_address ())
 
 let test_external_call_to_contract_exn ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_CONTRACT_EXN" @@ fun addr p amt  ->
   let contract_ty = trace_option ~raise (expected_contract loc addr) @@ get_t_contract addr in
@@ -255,31 +226,9 @@ let test_external_call_to_address ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL
   let () = assert_eq_1 ~raise ~loc p (t_michelson_code ()) in
   (t_test_exec_result ())
 
-let test_get_storage ~raise loc = typer_1 ~raise loc "TEST_GET_STORAGE" @@ fun c ->
-  let (_, storage_ty) = trace_option ~raise (expected_typed_address loc c) @@ get_t_typed_address c in
-  storage_ty
-
-let test_get_storage_of_address ~raise loc = typer_1 ~raise loc "TEST_GET_STORAGE_OF_ADDRESS" @@ fun addr ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  (t_michelson_code ())
-
-let test_get_balance ~raise loc = typer_1 ~raise loc "TEST_GET_BALANCE" @@ fun addr ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  (t_mutez ())
-
-let test_michelson_equal ~raise loc = typer_2 ~raise loc "TEST_ASSERT_EQUAL" @@ fun x y ->
-  let () = trace_option ~raise (expected_michelson_code loc x) @@ assert_t_michelson_code x in
-  let () = trace_option ~raise (expected_michelson_code loc y) @@ assert_t_michelson_code y in
-  (t_bool ())
-
-let test_log ~raise loc = typer_1 ~raise loc "TEST_LOG" @@ fun _ -> t_unit ()
-
 let test_last_originations ~raise loc = typer_1 ~raise loc "TEST_LAST_ORIGINATIONS" @@ fun u ->
   let () = trace_option ~raise (expected_unit loc u) @@ assert_t_unit u in
   (t_map (t_address ()) (t_list (t_address ())))
-
-let test_compile_meta_value ~raise loc = typer_1 ~raise loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->
-  (t_michelson_code ())
 
 let test_mutate_value ~raise loc = typer_2 ~raise loc "TEST_MUTATE_VALUE" @@ fun n expr ->
   let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
@@ -299,20 +248,6 @@ let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ f
   let () = assert_eq_1 ~raise ~loc mutation (t_mutation ()) in
   let () = assert_eq_1 ~raise ~loc dir (t_string ()) in
   (t_option (t_string ()))
-
-let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun lambda expr ->
-  let { type1 = arg ; type2 = _ } = trace_option ~raise (expected_function loc lambda) @@ get_t_arrow lambda in
-  let () = assert_eq_1 ~raise ~loc arg expr in
-  (t_michelson_code ())
-
-let test_eval ~raise loc = typer_1 ~raise loc "TEST_EVAL" @@ fun _ ->
-  (t_michelson_code ())
-
-let test_decompile ~raise loc = typer_1_opt ~raise loc "TEST_DECOMPILE" @@ fun mich tv_opt ->
-  let () = trace_option ~raise (expected_michelson_code loc mich) @@ get_t_michelson_code mich in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> t
 
 let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
   let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
@@ -335,24 +270,6 @@ let test_to_entrypoint ~raise loc = typer_2_opt ~raise loc "TEST_TO_ENTRYPOINT" 
   let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
   t_contract tv'
 
-let test_to_typed_address ~raise loc = typer_1_opt ~raise loc "TEST_TO_TYPED_ADDRESS" @@ fun contract_tv tv_opt ->
-  let parameter_ty = trace_option ~raise (expected_contract loc contract_tv) @@
-             get_t_contract contract_tv in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let (parameter_ty', storage_ty) = trace_option ~raise (expected_contract loc tv) @@ get_t_typed_address tv in
-  let () = assert_eq_1 ~raise ~loc parameter_ty parameter_ty' in
-  t_typed_address parameter_ty storage_ty
-
-let test_random ~raise loc = typer_1_opt ~raise loc "TEST_RANDOM" @@ fun unit tv_opt ->
-  let () = assert_eq_1 ~raise ~loc unit (t_unit ()) in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  tv
-
-let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun id bm ->
-  let () = assert_eq_1 ~raise ~loc id (t_int ()) in
-  let _ = trace_option ~raise (expected_big_map loc bm) @@ get_t_big_map bm in
-  t_unit ()
-
 let test_originate_from_file ~protocol_version ~raise loc =
   match (protocol_version : Ligo_proto.t) with
   | Edo ->
@@ -372,31 +289,6 @@ let test_originate_from_file ~protocol_version ~raise loc =
       let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
       (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
-let test_compile_contract ~raise loc = typer_1 ~raise loc "TEST_COMPILE_CONTRACT" @@ fun _ ->
-  (t_michelson_code ())
-
-let test_cast_address ~raise loc = typer_1_opt ~raise loc "TEST_CAST_ADDRESS" @@ fun addr tv_opt ->
-  let cast_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
-  let (pty,sty) = trace_option ~raise (expected_typed_address loc cast_t) @@ get_t_typed_address cast_t in
-  let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
-  t_typed_address pty sty
-
-let test_add_account ~raise loc = typer_2 ~raise loc "TEST_ADD_ACCOUNT" @@ fun sk pk ->
-  let _ = trace_option ~raise (expected_string loc pk) @@ get_t_string sk in
-  let _ = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
-  (t_unit ())
-
-let test_new_account ~raise loc = typer_1 ~raise loc "TEST_NEW_ACCOUNT" @@ fun u ->
-  let _ = trace_option ~raise (expected_unit loc u) @@ get_t_unit u in
-  (t_pair (t_string ()) (t_key ()))
-
-let test_get_voting_power ~raise loc = typer_1 ~raise loc "C_TEST_GET_VOTING_POWER" @@ fun u ->
-  let _ = trace_option ~raise (expected_string loc u) @@ get_t_key_hash u in
-  t_nat ()
-
-let test_get_total_voting_power ~raise loc = typer_0 ~raise loc "C_TEST_GET_TOTAL_VOTING_POWER" @@ fun _ ->
-  t_nat ()
-
 let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
   let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
   let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
@@ -412,77 +304,10 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
   ret_t
 
-let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
-  (* COMPARATOR *)
-  | C_EQ                  -> comparator ~raise ~test loc "EQ" ;
-  | C_NEQ                 -> comparator ~raise ~test loc "NEQ" ;
-  | C_LT                  -> comparator ~raise ~test loc "LT" ;
-  | C_GT                  -> comparator ~raise ~test loc "GT" ;
-  | C_LE                  -> comparator ~raise ~test loc "LE" ;
-  | C_GE                  -> comparator ~raise ~test loc "GE" ;
-  (* BLOCKCHAIN *)
-  | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
-  | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
-  (* TEST *)
-  | C_TEST_ORIGINATE -> test_originate ~raise loc ;
-  | C_TEST_SET_NOW -> test_set_now ~raise loc ;
-  | C_TEST_SET_SOURCE -> test_set_source ~raise loc ;
-  | C_TEST_SET_BAKER -> test_set_source ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> test_external_call_to_contract ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> test_external_call_to_contract_exn ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> test_external_call_to_address ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> test_external_call_to_address_exn ~raise loc ;
-  | C_TEST_GET_STORAGE -> test_get_storage ~raise loc ;
-  | C_TEST_GET_STORAGE_OF_ADDRESS -> test_get_storage_of_address ~raise loc ;
-  | C_TEST_GET_BALANCE -> test_get_balance ~raise loc ;
-  | C_TEST_MICHELSON_EQUAL -> test_michelson_equal ~raise loc ;
-  | C_TEST_GET_NTH_BS -> test_get_nth ~raise loc ;
-  | C_TEST_LOG -> test_log ~raise loc ;
-  | C_TEST_STATE_RESET -> test_state_reset ~raise loc ;
-  | C_TEST_BOOTSTRAP_CONTRACT -> test_bootstrap_contract ~raise loc ;
-  | C_TEST_NTH_BOOTSTRAP_CONTRACT -> test_nth_bootstrap_contract ~raise loc ;
-  | C_TEST_LAST_ORIGINATIONS -> test_last_originations ~raise loc ;
-  | C_TEST_COMPILE_META_VALUE -> test_compile_meta_value ~raise loc ;
-  | C_TEST_MUTATE_VALUE -> test_mutate_value ~raise loc ;
-  | C_TEST_MUTATION_TEST -> test_mutation_test ~raise loc ;
-  | C_TEST_MUTATION_TEST_ALL -> test_mutation_test_all ~raise loc ;
-  | C_TEST_RUN -> test_run ~raise loc ;
-  | C_TEST_EVAL -> test_eval ~raise loc ;
-  | C_TEST_COMPILE_CONTRACT -> test_compile_contract ~raise loc ;
-  | C_TEST_DECOMPILE -> test_decompile ~raise loc ;
-  | C_TEST_TO_CONTRACT -> test_to_contract ~raise loc ;
-  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
-  | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
-  | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
-  | C_TEST_RANDOM -> test_random ~raise loc ;
-  | C_TEST_SET_BIG_MAP -> test_set_big_map ~raise loc ;
-  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
-  | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
-  | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
-  | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
-  | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
-  | C_TEST_ADD_ACCOUNT -> test_add_account ~raise loc;
-  | C_TEST_NEW_ACCOUNT -> test_new_account ~raise loc;
-  | C_TEST_GET_VOTING_POWER -> test_get_voting_power ~raise loc;
-  | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
-  | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
-  (* JsLIGO *)
-  | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
-  | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
+type typer = string option * (error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> test:bool -> protocol_version:Ligo_proto.t -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option)
 
-and only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
-  match protocol_version with
-  | Ligo_proto.Hangzhou -> default
-  | Ligo_proto.Edo ->
-    raise.raise @@ corner_case (
-      Format.asprintf "Unsupported constant %a in protocol %s"
-        PP.constant' c
-        (Ligo_proto.variant_to_string protocol_version)
-    )
-
-type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
-
-let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~loc lst tv_opt ->
+let typer_of_ligo_type ?name ?(add_tc = true) ?(fail = true) lamb_type : typer = name, fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
+  ignore test; ignore protocol_version;
   let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
   Simple_utils.Trace.try_with (fun ~raise ->
       let table =
@@ -519,8 +344,8 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
                    () in
         None)
 
-let wrap_typer_of_ligo typer : typer = fun ~error ~raise ~loc lst tv_opt ->
-  match typer ~error ~raise ~loc lst tv_opt with
+let wrap_typer_of_ligo ?name typer : typer = name, fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
+  match typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
   | Some tv -> Some tv
   | None ->
      match ! error with
@@ -530,12 +355,13 @@ let wrap_typer_of_ligo typer : typer = fun ~error ~raise ~loc lst tv_opt ->
         let tc = List.filter_map ~f:(function `TC v -> Some v) xs in
         raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev tc)) lst
 
-let typer_of_old_typer (typer : O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
-  fun ~error ~raise ~loc lst tv_opt ->
-  ignore error; ignore raise; ignore loc;
+let typer_of_old_typer ?name (typer : O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
+  name, fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
+  ignore error; ignore raise; ignore loc; ignore test; ignore protocol_version;
   Some (typer lst tv_opt)
 
-let rec typer_of_typers : typer list -> typer = fun typers ~error ~raise ~loc lst tv_opt ->
+let rec typer_of_typers ?name : typer list -> typer = fun typers ->
+  name, fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
   match typers with
   | [] -> (
      match ! error with
@@ -546,9 +372,9 @@ let rec typer_of_typers : typer list -> typer = fun typers ~error ~raise ~loc ls
          raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev tc)) lst
   )
   | typer :: typers ->
-     match typer ~error ~raise ~loc lst tv_opt with
+     match (snd @@ typer) ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
      | Some tv -> Some tv
-     | None -> typer_of_typers ~error typers ~raise ~loc lst tv_opt
+     | None -> (snd @@ typer_of_typers typers) ~error ~raise ~test ~protocol_version ~loc lst tv_opt
 
 module Constant_types = struct
   module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
@@ -559,8 +385,8 @@ module Constant_types = struct
   let b_var = O.Var.of_input_var "b"
   let c_var = O.Var.of_input_var "c"
 
-  let of_ligo_type t =
-    wrap_typer_of_ligo (typer_of_ligo_type t)
+  let of_ligo_type ?name t =
+    wrap_typer_of_ligo ?name @@ snd (typer_of_ligo_type t)
 
   let typer_of_ligo_type_no_tc t =
     typer_of_ligo_type ~add_tc:false ~fail:false t
@@ -785,6 +611,90 @@ module Constant_types = struct
                             ]);
                     (C_LSL, of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
                     (C_LSR, of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
+                    (* COMPARATOR *)
+                    (* (C_EQ, fun ~error ~raise ~test ~protocol_version ~loc ->
+                     *        typer_of_old_typer (comparator ~raise ~test loc "EQ") ~error ~raise ~test ~protocol_version ~loc); *)
+                    (* TEST *)
+                    (C_TEST_ORIGINATE, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_triplet (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_michelson_code ()) (t_int ())) ()) ()) ()))));
+                    (C_TEST_SET_NOW, of_ligo_type @@ O.(t_arrow (t_timestamp ()) (t_unit ()) ()));
+                    (C_TEST_SET_SOURCE, of_ligo_type @@ O.(t_arrow (t_address ()) (t_unit ()) ()));
+                    (C_TEST_SET_BAKER, of_ligo_type @@ O.(t_arrow (t_address ()) (t_unit ()) ()));
+                    (C_TEST_NTH_BOOTSTRAP_CONTRACT, of_ligo_type @@ O.(t_arrow (t_nat ()) (t_address ()) ()));
+                    (C_TEST_GET_STORAGE, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()))));
+                    (C_TEST_GET_STORAGE_OF_ADDRESS, of_ligo_type @@ O.(t_arrow (t_address ()) (t_michelson_code ()) ()));
+                    (C_TEST_GET_BALANCE, of_ligo_type @@ O.(t_arrow (t_address ()) (t_mutez ()) ()));
+                    (C_TEST_MICHELSON_EQUAL, of_ligo_type @@ O.(t_arrow (t_michelson_code ()) (t_arrow (t_michelson_code ()) (t_bool ()) ()) ()));
+                    (C_TEST_GET_NTH_BS, of_ligo_type @@ O.(t_arrow (t_int ()) (t_address ()) ()));
+                    (C_TEST_LOG, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_unit ()) ())));
+                    (C_TEST_STATE_RESET, of_ligo_type @@ O.(t_arrow (t_nat ()) (t_arrow (t_list (t_mutez ())) (t_unit ()) ()) ()));
+                    (C_TEST_GET_VOTING_POWER, of_ligo_type @@ O.(t_arrow (t_key_hash ()) (t_nat ()) ()));
+                    (C_TEST_GET_TOTAL_VOTING_POWER, of_ligo_type @@ O.(t_nat ()));
+                    (C_TEST_CAST_ADDRESS, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_address ()) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ()))));
+                    (C_TEST_RANDOM, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_unit ()) (t_option (t_variable a_var ())) ())));
+                    (* (C_TEST_MUTATE_VALUE, of_ligo_type @@ O._) *)
+                    (C_TEST_ADD_ACCOUNT, of_ligo_type @@ O.(t_arrow (t_string ())(t_arrow (t_key ()) (t_unit ()) ()) ()));
+                    (C_TEST_NEW_ACCOUNT, of_ligo_type @@ O.(t_arrow (t_unit ()) (t_pair (t_string ()) (t_key ())) ()));
+                    (C_TEST_RUN, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_arrow (t_variable a_var ()) (t_michelson_code ()) ()) ()))));
+                    (C_TEST_EVAL, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_michelson_code ()) ())));
+                    (C_TEST_COMPILE_META_VALUE, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_michelson_code ()) ())));
+                    (C_TEST_DECOMPILE, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_michelson_code ()) (t_variable a_var ()) ())));
+                    (* (C_TEST_TO_CONTRACT, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) _ ())))); *)
+                    (C_TEST_TO_TYPED_ADDRESS, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_contract (t_variable a_var ())) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ()))));
+                    (C_TEST_SET_BIG_MAP, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_int ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ()))));
                   ]
   let find c = CTMap.find_opt c tbl
 end
+
+
+let rec constant_typers ~raise ~test ~protocol_version loc c =
+  match Constant_types.find c with
+  | Some xs ->
+     fun lst tv_opt ->
+     let error = ref [] in
+     (match (snd xs) ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
+      | Some tv -> tv
+      | None -> failwith "oops")
+  | _ ->
+  match c with
+  (* COMPARATOR *)
+  | C_EQ                  -> comparator ~raise ~test loc "EQ" ;
+  | C_NEQ                 -> comparator ~raise ~test loc "NEQ" ;
+  | C_LT                  -> comparator ~raise ~test loc "LT" ;
+  | C_GT                  -> comparator ~raise ~test loc "GT" ;
+  | C_LE                  -> comparator ~raise ~test loc "LE" ;
+  | C_GE                  -> comparator ~raise ~test loc "GE" ;
+  (* BLOCKCHAIN *)
+  | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
+  | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
+  (* TEST *)
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> test_external_call_to_contract ~raise loc ;
+  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> test_external_call_to_contract_exn ~raise loc ;
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> test_external_call_to_address ~raise loc ;
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> test_external_call_to_address_exn ~raise loc ;
+  | C_TEST_BOOTSTRAP_CONTRACT -> test_bootstrap_contract ~raise loc ;
+  | C_TEST_LAST_ORIGINATIONS -> test_last_originations ~raise loc ;
+  | C_TEST_MUTATE_VALUE -> test_mutate_value ~raise loc ;
+  | C_TEST_MUTATION_TEST -> test_mutation_test ~raise loc ;
+  | C_TEST_MUTATION_TEST_ALL -> test_mutation_test_all ~raise loc ;
+  | C_TEST_TO_CONTRACT -> test_to_contract ~raise loc ;
+  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
+  | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
+  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
+  | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
+  | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
+  | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
+  | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
+  | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
+
+and only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
+  match protocol_version with
+  | Ligo_proto.Hangzhou -> default
+  | Ligo_proto.Edo ->
+    raise.raise @@ corner_case (
+      Format.asprintf "Unsupported constant %a in protocol %s"
+        PP.constant' c
+        (Ligo_proto.variant_to_string protocol_version)
+    )
+
