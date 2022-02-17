@@ -20,7 +20,7 @@ import System.FilePath ((</>))
 import AST.Scope (Fallback, Standard)
 
 import Test.Common.Capabilities.Find
-import Test.Tasty (TestTree)
+import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Range (_rFile, interval)
@@ -95,7 +95,13 @@ includeInvariants =
 
 test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
 test_findDefinitionAndGoToReferencesCorrespondence =
-  findDefinitionAndGoToReferencesCorrespondence @Standard (invariants <> includeInvariants)
+  testGroup "Find definition and go to references correspondence"
+    [ findDefinitionAndGoToReferencesCorrespondence @Standard allVariants
+    --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants  -- FIXME (LIGO-93)
+    --  (also LIGO-446 and LIGO-208 on some).
+    ]
+  where
+    allVariants = invariants <> includeInvariants
 
 -- Since we require `ligo preprocess` for includes, we run `Fallback` tests for
 -- includes in integration tests.
@@ -104,37 +110,59 @@ test_findDefinitionAndGoToReferencesCorrespondenceIncludesFallback =
   findDefinitionAndGoToReferencesCorrespondence @Fallback includeInvariants
 
 unit_definitionOfId :: Assertion
-unit_definitionOfId = definitionOfId @Standard
+unit_definitionOfId = do
+  definitionOfId @Standard
+  -- definitionOfId @FromCompiler
 
 unit_referenceOfId :: Assertion
-unit_referenceOfId = referenceOfId @Standard
+unit_referenceOfId = do
+  referenceOfId @Standard
+  --referenceOfId @FromCompiler  -- FIXME (LIGO-93)
 
 unit_definitionOfLeft :: Assertion
-unit_definitionOfLeft = definitionOfLeft @Standard
+unit_definitionOfLeft = do
+  definitionOfLeft @Standard
+  --definitionOfLeft @FromCompiler  -- FIXME (LIGO-93) (LIGO-446)
 
 unit_referenceOfLeft :: Assertion
-unit_referenceOfLeft = referenceOfLeft @Standard
+unit_referenceOfLeft = do
+  referenceOfLeft @Standard
+  --referenceOfLeft @FromCompiler  -- FIXME (LIGO-93) (LIGO-446)
 
 unit_definitionOfXInWildcard :: Assertion
-unit_definitionOfXInWildcard = definitionOfXInWildcard @Standard
+unit_definitionOfXInWildcard = do
+  definitionOfXInWildcard @Standard
+  --definitionOfXInWildcard @FromCompiler  -- FIXME (LIGO-93)
 
 unit_referenceOfXInWildcard :: Assertion
-unit_referenceOfXInWildcard = referenceOfXInWildcard @Standard
+unit_referenceOfXInWildcard = do
+  referenceOfXInWildcard @Standard
+  -- referenceOfXInWildcard @FromCompiler  -- FIXME (LIGO-93)
 
 unit_type_of_heap_const :: Assertion
-unit_type_of_heap_const = typeOfHeapConst @Standard
+unit_type_of_heap_const = do
+  typeOfHeapConst @Standard
+  --typeOfHeapConst @FromCompiler  -- FIXME (LIGO-203) (LIGO-446)
 
 unit_type_of_heap_arg :: Assertion
-unit_type_of_heap_arg = typeOfHeapArg @Standard
+unit_type_of_heap_arg = do
+  typeOfHeapArg @Standard
+  --typeOfHeapArg @FromCompiler  -- FIXME (LIGO-93)
 
 unit_type_of_let :: Assertion
-unit_type_of_let = typeOfLet @Standard
+unit_type_of_let = do
+  typeOfLet @Standard
+  --typeOfLet @FromCompiler  -- FIXME (LIGO-93)
 
 unit_type_of_pascaligo_lambda_arg :: Assertion
-unit_type_of_pascaligo_lambda_arg = typeOfPascaligoLambdaArg @Standard
+unit_type_of_pascaligo_lambda_arg = do
+  typeOfPascaligoLambdaArg @Standard
+  --typeOfPascaligoLambdaArg @FromCompiler  -- FIXME (LIGO-93)
 
 unit_pascaligo_local_type :: Assertion
-unit_pascaligo_local_type = pascaligoLocalType @Standard
+unit_pascaligo_local_type = do
+  pascaligoLocalType @Standard
+  --pascaligoLocalType @FromCompiler  -- FIXME (LIGO-93)
 
 -- See LIGO-110
 -- unit_type_of_camligo_lambda_arg :: Assertion
