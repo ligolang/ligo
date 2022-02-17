@@ -349,7 +349,7 @@ and pp_seq {value; _} =
 
 and pp_type_expr: type_expr -> document = function
   TProd   t -> pp_cartesian t
-| TSum    t -> break 0 ^^ pp_sum_type t
+| TSum    t -> pp_sum_type t
 | TObject t -> pp_object_type t
 | TApp    t -> pp_type_app t
 | TFun    t -> pp_fun_type t
@@ -375,15 +375,15 @@ and pp_sum_type (node : sum_type reg) =
   let head, tail = variants.value in
   let head = pp_variant head
   and padding_flat =
-    if attributes = [] then string "| " else empty
+    if List.is_empty attributes then string "| " else empty
   and padding_non_flat =
-    if attributes = [] then string "| " else blank 2 in
+    if List.is_empty attributes then string "| " else blank 2 in
   let head =
     if List.is_empty tail then head
     else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head)
   and tail = List.map ~f:snd tail
   and app variant =
-    group (break 1 ^^ string "| " ^^ pp_variant variant) in
+    break 1 ^^ string "| " ^^ pp_variant variant in
   let thread = head ^^ concat_map app tail in
   if attributes = [] then thread
   else group (pp_attributes attributes ^/^ thread)
@@ -404,8 +404,8 @@ and pp_variant_comp (node: variant_comp) =
     | Some (_comma, params) ->
        pp_string constr , Utils.nsepseq_to_list params
   in if params = [] then constr
-     else let sep = string "," ^^ break 1
-          in constr ^^ sep ^^ separate_map sep pp_type_expr params
+     else let sep = string "," ^/^ break 0
+          in group (constr ^^ sep ^^ separate_map sep pp_type_expr params)
 
 and pp_attributes = function
   [] -> empty
