@@ -229,6 +229,22 @@ let test_originate_from_file ~protocol_version ~raise loc =
       let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
       (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
+let test_baker_account ~raise loc = typer_2 ~raise loc "TEST_BAKER_ACCOUNT" @@ fun acc opt ->
+  let bkamt = trace_option ~raise (expected_option loc opt) @@ get_t_option opt in
+  let () = trace_option ~raise (expected_mutez loc bkamt) @@ get_t_mutez bkamt in
+  let sk, pk = trace_option ~raise (expected_pair loc acc) @@ get_t_pair acc in
+  let () = trace_option ~raise (expected_string loc sk) @@ get_t_string sk in
+  let () = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
+  (t_unit ())
+
+let test_register_delegate ~raise loc = typer_1 ~raise loc "TEST_REGISTER_DELEGATE" @@ fun pkh ->
+  let () = trace_option ~raise (expected_key_hash loc pkh) @@ assert_t_key_hash pkh in
+  t_unit ()
+
+let test_bake_until_n_cycle_end ~raise loc = typer_1 ~raise loc "TEST_BAKE_UNTIL_N_CYCLE_END" @@ fun n ->
+  let () = trace_option ~raise (expected_nat loc n) @@ assert_t_nat n in
+  t_unit ()
+
 let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
   let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
   let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
@@ -622,6 +638,9 @@ let rec constant_typers ~raise ~test ~protocol_version loc c =
 
   | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
   | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
+  | C_TEST_BAKER_ACCOUNT -> test_baker_account ~raise loc;
+  | C_TEST_REGISTER_DELEGATE -> test_register_delegate ~raise loc;
+  | C_TEST_BAKE_UNTIL_N_CYCLE_END -> test_bake_until_n_cycle_end ~raise loc;
   | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
 
   (* JsLIGO *)
