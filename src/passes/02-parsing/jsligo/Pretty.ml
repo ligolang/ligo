@@ -402,9 +402,10 @@ and pp_variant_comp (node: variant_comp) =
     match params with
       None -> pp_string constr, []
     | Some (_comma, params) ->
-       pp_string constr , Utils.nsepseq_to_list params in
-  let sep = string "," ^^ break 1
-  in constr ^^ sep ^^ separate_map sep pp_type_expr params
+       pp_string constr , Utils.nsepseq_to_list params
+  in if params = [] then constr
+     else let sep = string "," ^^ break 1
+          in constr ^^ sep ^^ separate_map sep pp_type_expr params
 
 and pp_attributes = function
   [] -> empty
