@@ -172,6 +172,8 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       in
       V_Set lst''
     )
+  | Prim (_, "chest", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
+  | Prim (_, "chest_key", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
   (* | Prim (_, "operation", [], _), Bytes (_, op) -> (
    *     D_operation op
    *   ) *)
