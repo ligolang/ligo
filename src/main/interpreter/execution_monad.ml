@@ -69,6 +69,9 @@ module Command = struct
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
     | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
+    | Baker_account : LT.value * LT.value -> unit t
+    | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Bake_until_n_cycle_end : Location.t * Ligo_interpreter.Types.calltrace *  Z.t -> LT.value t
 
   let eval
     : type a.
@@ -132,10 +135,11 @@ module Command = struct
         amts
       in
       let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
-      let bootstrap_contract = List.rev ctxt.internals.next_bootstrapped_contracts in
+      let bootstrap_contracts = List.rev ctxt.internals.next_bootstrapped_contracts in
+      let baker_accounts = List.rev ctxt.internals.next_baker_accounts in
       let ctxt = Tezos_state.init_ctxt
         ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n)
-        ctxt.internals.protocol_version bootstrap_contract
+        ctxt.internals.protocol_version bootstrap_contracts ~baker_accounts
       in
       ((),ctxt)
     | Get_state () ->
@@ -382,6 +386,27 @@ module Command = struct
     | New_account () -> (
       let (sk, pk) = Tezos_state.new_account () in
       let value = LC.v_pair ((V_Ct (C_string sk)), (V_Ct (C_key pk))) in
+      (value, ctxt)
+    )
+    | Baker_account (acc, opt) -> (
+      let tez = trace_option ~raise (corner_case ()) @@ LC.get_option opt in
+      let tez = Option.map ~f:(fun v -> trace_option ~raise (corner_case ()) @@ LC.get_mutez v) tez in
+      let tez = Option.map ~f:(fun t -> Z.to_int64 t) tez in
+      let sk, pk = trace_option ~raise (corner_case ()) @@ LC.get_pair acc in
+      let sk = trace_option ~raise (corner_case ()) @@ LC.get_string sk in
+      let pk = trace_option ~raise (corner_case ()) @@ LC.get_key pk in
+      let next_baker_accounts = (sk, pk, tez) :: ctxt.internals.next_baker_accounts in
+      let ctxt = { ctxt with internals = { ctxt.internals with next_baker_accounts } } in
+      ((),ctxt)
+    )
+    | Register_delegate (loc, calltrace, pkh) -> (
+      let ctxt = Tezos_state.register_delegate ~raise ~loc ~calltrace ctxt pkh in
+      let value = LC.v_unit () in
+      (value, ctxt)
+    )
+    | Bake_until_n_cycle_end (loc, calltrace, n) -> (
+      let ctxt = Tezos_state.bake_until_n_cycle_end ~raise ~loc ~calltrace ctxt (Z.to_int n) in
+      let value = LC.v_unit () in
       (value, ctxt)
     )
 end
