@@ -44,8 +44,8 @@ let types new_syntax new_dialect display_format () =
         let core = Decompile.Of_typed.decompile_type_expression t in
         let sugar = Decompile.Of_core.decompile_type_expression core in
         let imperative = Decompile.Of_sugar.decompile_type_expression sugar in
-        let      dialect       = Decompile.Helpers.Dialect_name new_dialect in
-        let n_syntax      = Decompile.Helpers.syntax_to_variant ~raise ~dialect (Syntax_name new_syntax) None in
+        let dialect       = Syntax_types.Dialect_name new_dialect in
+        let n_syntax      = Syntax.of_string_opt ~raise ~dialect (Syntax_name new_syntax) None in
         let buffer_inner = Decompile.Of_imperative.decompile_type_expression imperative n_syntax in
         Buffer.add_string buffer @@ Format.asprintf "val %s : %s\n" name (Buffer.contents buffer_inner)) in
       buffer

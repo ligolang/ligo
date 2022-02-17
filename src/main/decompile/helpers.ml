@@ -96,7 +96,7 @@ let specialise_and_print_expression (syntax : Syntax_types.t) source =
   | JsLIGO     -> specialise_and_print_expression_jsligo in
   specialise_and_print source
 
-let specialise_and_print_type_expression syntax source =
+let specialise_and_print_type_expression (syntax : Syntax_types.t) source =
   let specialise_and_print = match syntax with
     PascaLIGO dialect -> specialise_and_print_type_expression_pascaligo dialect
   | CameLIGO   -> specialise_and_print_type_expression_cameligo

@@ -10,4 +10,4 @@ let compile_expression   = Compiler.compile_expression ~attr:[]
 
 let decompile_module    = Decompiler.decompile_module
 let decompile_expression = Decompiler.decompile_expression
-let decompile_type_expression ?(dialect=Decompiler.Verbose) = Decompiler.decompile_type_expr dialect
+let decompile_type_expression ?(dialect=Syntax_types.Verbose) = Decompiler.decompile_type_expr dialect

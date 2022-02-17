@@ -552,7 +552,7 @@ let%expect_test _ =
       3 |   Test.originate f () 0tez
 
     Invalid arguments.
-    Expected an argument of type (( a * b ) -> ( list (operation) * b ), b, tez), but got an argument of type
+    Expected an argument of type (( 'a * 'b ) -> ( list (operation) * 'b ), 'b, tez), but got an argument of type
     ( unit * unit ) -> unit, unit, tez. |}]
 
 let%expect_test _ =
@@ -633,7 +633,7 @@ let%expect_test _ =
       3 |
 
     Invalid arguments.
-    Expected an argument of type (a -> b, a), but got an argument of type
+    Expected an argument of type ('a -> 'b, 'a), but got an argument of type
     record[field -> int] -> record[field -> int], record[property -> string]. |}]
 
 let%expect_test _ =
@@ -644,7 +644,7 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, "toto");
 
     Invalid arguments.
-    Expected an argument of type (a -> b, a), but got an argument of type
+    Expected an argument of type ('a -> 'b, 'a), but got an argument of type
     record[b -> int] -> record[b -> int], string. |}]
 
 let%expect_test _ =
@@ -655,7 +655,7 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, {field: "toto"});
 
     Invalid arguments.
-    Expected an argument of type (a -> b, a), but got an argument of type int -> int,
+    Expected an argument of type ('a -> 'b, 'a), but got an argument of type int -> int,
     record[field -> string]. |}]
 
 let%expect_test _ =
