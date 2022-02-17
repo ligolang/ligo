@@ -1,43 +1,14 @@
 open Simple_utils.Trace
 open Main_errors
 
-type s_syntax = Syntax_name of string
-type v_syntax = Self_ast_imperative.Syntax.v_syntax
-
-type meta = Self_ast_imperative.Syntax.meta
+type meta = {
+  syntax : Syntax_types.t;
+}
 
 let protocol_to_variant ~raise : string -> Environment.Protocols.t =
   fun s ->
   trace_option ~raise (main_invalid_protocol_version Environment.Protocols.protocols_str s)
   @@ Environment.Protocols.protocols_to_variant s
-
-(*TODO : move this function to src/helpers so that src/build/.. can use it *)
-let file_extension_to_variant sf : v_syntax option =
-  match sf with
-  | ".ligo" | ".pligo" -> Some PascaLIGO
-  | ".mligo"           -> Some CameLIGO
-  | ".religo"          -> Some ReasonLIGO
-  | ".jsligo"          -> Some JsLIGO
-  | _                  -> None
-
-let syntax_to_variant ~raise (Syntax_name syntax) source =
-  match syntax, source with
-  | "auto", Some sf ->
-    let sf = Caml.Filename.extension sf in
-    trace_option ~raise (main_invalid_extension sf) @@
-      file_extension_to_variant sf
-  | ("pascaligo" | "PascaLIGO"),   _ -> PascaLIGO
-  | ("cameligo" | "CameLIGO"),     _ -> CameLIGO
-  | ("reasonligo" | "ReasonLIGO"), _ -> ReasonLIGO
-  | ("jsligo" | "JsLIGO"),         _ -> JsLIGO
-  | _ -> raise.raise (main_invalid_syntax_name syntax)
-
-let variant_to_syntax (v: v_syntax) =
-  match v with
-  | PascaLIGO -> "pascaligo"
-  | CameLIGO -> "cameligo"
-  | ReasonLIGO -> "reasonligo"
-  | JsLIGO -> "jsligo"
 
 (* Preprocessing *)
 
@@ -49,10 +20,10 @@ let preprocess_file ~raise ~(options:options) ~(meta: meta) file_path
   let project_root = options.project_root in
   let preprocess_file =
     match meta.syntax with
-      PascaLIGO  -> Pascaligo.preprocess_file
-    | CameLIGO   -> Cameligo.preprocess_file
-    | ReasonLIGO -> Reasonligo.preprocess_file
-    | JsLIGO     -> Jsligo.preprocess_file
+      PascaLIGO _ -> Pascaligo.preprocess_file
+    | CameLIGO    -> Cameligo.preprocess_file
+    | ReasonLIGO  -> Reasonligo.preprocess_file
+    | JsLIGO      -> Jsligo.preprocess_file
   in trace ~raise preproc_tracer @@
       Simple_utils.Trace.from_result (preprocess_file ?project_root options.libs file_path)
 
@@ -61,10 +32,10 @@ let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
   let project_root = options.project_root in
   let preprocess_string =
     match meta.syntax with
-      PascaLIGO  -> Pascaligo.preprocess_string
-    | CameLIGO   -> Cameligo.preprocess_string
-    | ReasonLIGO -> Reasonligo.preprocess_string
-    | JsLIGO     -> Jsligo.preprocess_string
+      PascaLIGO _ -> Pascaligo.preprocess_string
+    | CameLIGO    -> Cameligo.preprocess_string
+    | ReasonLIGO  -> Reasonligo.preprocess_string
+    | JsLIGO      -> Jsligo.preprocess_string
   in trace ~raise preproc_tracer @@
      from_result (preprocess_string ?project_root options.libs file_path)
 
@@ -148,10 +119,10 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     : Ast_imperative.module_ =
   let parse_and_abstract =
     match meta.syntax with
-      PascaLIGO  -> parse_and_abstract_pascaligo
-    | CameLIGO   -> parse_and_abstract_cameligo
-    | ReasonLIGO -> parse_and_abstract_reasonligo
-    | JsLIGO     -> parse_and_abstract_jsligo in
+      PascaLIGO _ -> parse_and_abstract_pascaligo
+    | CameLIGO    -> parse_and_abstract_cameligo
+    | ReasonLIGO  -> parse_and_abstract_reasonligo
+    | JsLIGO      -> parse_and_abstract_jsligo in
   let abstracted =
     parse_and_abstract ~raise buffer file_path in
   let applied =
@@ -162,13 +133,13 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
 let parse_and_abstract_expression ~raise ~(meta: meta) buffer =
   let parse_and_abstract =
     match meta.syntax with
-      PascaLIGO ->
+      PascaLIGO _ ->
         parse_and_abstract_expression_pascaligo
-    | CameLIGO ->
+    | CameLIGO    ->
         parse_and_abstract_expression_cameligo
-    | ReasonLIGO ->
+    | ReasonLIGO  ->
         parse_and_abstract_expression_reasonligo
-    | JsLIGO ->
+    | JsLIGO      ->
         parse_and_abstract_expression_jsligo
       in
   let abstracted =
@@ -212,16 +183,16 @@ let parse_and_abstract_string_jsligo ~raise buffer =
     Tree_abstraction.Jsligo.compile_module raw
   in imperative
 
-let parse_and_abstract_string ~raise ~add_warning (syntax: v_syntax) buffer =
+let parse_and_abstract_string ~raise ~add_warning (syntax: Syntax_types.t) buffer =
   let parse_and_abstract =
     match syntax with
-      PascaLIGO ->
+      PascaLIGO _ ->
         parse_and_abstract_string_pascaligo
-    | CameLIGO ->
+    | CameLIGO    ->
         parse_and_abstract_string_cameligo
-    | ReasonLIGO ->
+    | ReasonLIGO  ->
         parse_and_abstract_string_reasonligo
-    | JsLIGO ->
+    | JsLIGO      ->
         parse_and_abstract_string_jsligo in
   let abstracted =
     parse_and_abstract ~raise buffer in
@@ -245,10 +216,10 @@ let pretty_print_jsligo_cst =
 let pretty_print_cst ~raise ~(meta: meta) buffer file_path=
   let print =
     match meta.syntax with
-      PascaLIGO  -> pretty_print_pascaligo_cst
-    | CameLIGO   -> pretty_print_cameligo_cst
-    | ReasonLIGO -> pretty_print_reasonligo_cst
-    | JsLIGO     -> pretty_print_jsligo_cst
+      PascaLIGO _ -> pretty_print_pascaligo_cst
+    | CameLIGO    -> pretty_print_cameligo_cst
+    | ReasonLIGO  -> pretty_print_reasonligo_cst
+    | JsLIGO      -> pretty_print_jsligo_cst
   in trace ~raise parser_tracer @@ print buffer file_path
 
 let pretty_print_pascaligo =
@@ -266,8 +237,8 @@ let pretty_print_jsligo =
 let pretty_print ~raise ~(meta: meta) buffer file_path =
   let print =
     match meta.syntax with
-      PascaLIGO  -> pretty_print_pascaligo
-    | CameLIGO   -> pretty_print_cameligo
-    | ReasonLIGO -> pretty_print_reasonligo
-    | JsLIGO     -> pretty_print_jsligo
+      PascaLIGO _ -> pretty_print_pascaligo
+    | CameLIGO    -> pretty_print_cameligo
+    | ReasonLIGO  -> pretty_print_reasonligo
+    | JsLIGO      -> pretty_print_jsligo
   in trace ~raise parser_tracer @@ print buffer file_path
