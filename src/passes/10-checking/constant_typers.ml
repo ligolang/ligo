@@ -195,71 +195,11 @@ let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE
 let sapling_empty_state ~raise loc = typer_0 ~raise loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
   trace_option ~raise (not_annotated loc) @@ tv_opt
 
-let test_bootstrap_contract ~raise loc = typer_3 ~raise loc "TEST_BOOTSTRAP_CONTRACT" @@ fun balance main storage ->
-  let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
-  let _,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
-  let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc storage storage_ty in
-  (t_unit ())
-
-let test_external_call_to_contract_exn ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_CONTRACT_EXN" @@ fun addr p amt  ->
-  let contract_ty = trace_option ~raise (expected_contract loc addr) @@ get_t_contract addr in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p contract_ty in
-  (t_nat ())
-
-let test_external_call_to_contract ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_CONTRACT" @@ fun addr p amt  ->
-  let contract_ty = trace_option ~raise (expected_contract loc addr) @@ get_t_contract addr in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p contract_ty in
-  (t_test_exec_result ())
-
-let test_external_call_to_address_exn ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN" @@ fun addr p amt  ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p (t_michelson_code ()) in
-  (t_nat ())
-
-let test_external_call_to_address ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_ADDRESS" @@ fun addr p amt  ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p (t_michelson_code ()) in
-  (t_test_exec_result ())
-
-let test_last_originations ~raise loc = typer_1 ~raise loc "TEST_LAST_ORIGINATIONS" @@ fun u ->
-  let () = trace_option ~raise (expected_unit loc u) @@ assert_t_unit u in
-  (t_map (t_address ()) (t_list (t_address ())))
-
-let test_mutate_value ~raise loc = typer_2 ~raise loc "TEST_MUTATE_VALUE" @@ fun n expr ->
-  let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
-  (t_option (t_pair expr (t_mutation ())))
-
-let test_mutation_test ~raise loc = typer_2 ~raise loc "TEST_MUTATION_TEST" @@ fun expr tester ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc tester) @@ get_t_arrow tester in
-  let () = assert_eq_1 ~raise ~loc arg expr in
-  (t_option (t_pair res (t_mutation ())))
-
-let test_mutation_test_all ~raise loc = typer_2 ~raise loc "TEST_MUTATION_TEST_ALL" @@ fun expr tester ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc tester) @@ get_t_arrow tester in
-  let () = assert_eq_1 ~raise ~loc arg expr in
-  (t_list (t_pair res (t_mutation ())))
-
-let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ fun dir mutation ->
-  let () = assert_eq_1 ~raise ~loc mutation (t_mutation ()) in
-  let () = assert_eq_1 ~raise ~loc dir (t_string ()) in
-  (t_option (t_string ()))
-
 let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
   let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
                        get_t_typed_address t in
   let param_ty = Option.value (Ast_typed.Helpers.get_entrypoint "default" param_ty) ~default:param_ty in
   (t_contract param_ty)
-
-let test_nth_bootstrap_typed_address ~raise loc = typer_1_opt ~raise loc "TEST_NTH_BOOTSTRAP_TYPED_ADDRESS" @@ fun nat tv_opt ->
-  let () = trace_option ~raise (expected_nat loc nat) @@ get_t_nat nat in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv_parameter, tv_storage = trace_option ~raise (expected_option loc tv) @@ get_t_typed_address tv in
-  (t_typed_address tv_parameter tv_storage)
 
 let test_to_entrypoint ~raise loc = typer_2_opt ~raise loc "TEST_TO_ENTRYPOINT" @@ fun entry_tv contract_tv tv_opt ->
   let t_string = t_string () in
@@ -436,7 +376,7 @@ module Constant_types = struct
                     (C_LIST_HEAD_OPT, of_ligo_type O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_variable a_var ())) ())));
                     (C_LIST_TAIL_OPT, of_ligo_type O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_option (t_list (t_variable a_var ()))) ())));
                     (* SET *)
-                    (C_SET_EMPTY, of_ligo_type O.(t_for_all a_var () (t_set (t_variable a_var ()))));
+                    (C_SET_EMPTY, of_ligo_type ~name:"Set.empty" O.(t_for_all a_var () (t_set (t_variable a_var ()))));
                     (C_SET_LITERAL, of_ligo_type O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ())));
                     (C_SET_MEM, of_ligo_type O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_bool ()) ()) ())));
                     (C_SET_ADD, of_ligo_type O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ())));
@@ -446,11 +386,12 @@ module Constant_types = struct
                     (C_SET_FOLD, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ()))));
                     (C_SET_FOLD_DESC, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ()))));
                     (* ADHOC POLY *)
-                    (C_SIZE, typer_of_typers [typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
-                              typer_of_ligo_type O.(t_arrow (t_bytes ()) (t_nat ()) ());
-                              typer_of_ligo_type O.(t_arrow (t_string ()) (t_nat ()) ());
-                              typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
-                              typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
+                    (C_SIZE, typer_of_typers [
+                                 typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
+                                 typer_of_ligo_type O.(t_arrow (t_bytes ()) (t_nat ()) ());
+                                 typer_of_ligo_type O.(t_arrow (t_string ()) (t_nat ()) ());
+                                 typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
+                                 typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
                              ]);
                     (C_CONCAT, typer_of_typers [
                                    typer_of_ligo_type O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
@@ -614,6 +555,9 @@ module Constant_types = struct
                      *        typer_of_old_typer (comparator ~raise ~test loc "EQ") ~error ~raise ~test ~protocol_version ~loc); *)
                     (* TEST *)
                     (C_TEST_ORIGINATE, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_triplet (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_michelson_code ()) (t_int ())) ()) ()) ()))));
+                    (C_TEST_BOOTSTRAP_CONTRACT, of_ligo_type ~name:"Test.bootstrap_contract" O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_unit ()) ()) ()) ()))));
+                    (C_TEST_LAST_ORIGINATIONS, of_ligo_type O.(t_arrow (t_unit ()) (t_map (t_address ()) (t_list (t_address ()))) ()));
+                    (C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_nat ()) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ()))));
                     (C_TEST_SET_NOW, of_ligo_type O.(t_arrow (t_timestamp ()) (t_unit ()) ()));
                     (C_TEST_SET_SOURCE, of_ligo_type O.(t_arrow (t_address ()) (t_unit ()) ()));
                     (C_TEST_SET_BAKER, of_ligo_type O.(t_arrow (t_address ()) (t_unit ()) ()));
@@ -629,7 +573,10 @@ module Constant_types = struct
                     (C_TEST_GET_TOTAL_VOTING_POWER, of_ligo_type O.(t_nat ()));
                     (C_TEST_CAST_ADDRESS, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_address ()) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ()))));
                     (C_TEST_RANDOM, of_ligo_type O.(t_for_all a_var () (t_arrow (t_unit ()) (t_option (t_variable a_var ())) ())));
-                    (* (C_TEST_MUTATE_VALUE, of_ligo_type @@ O._) *)
+                    (C_TEST_MUTATE_VALUE, of_ligo_type O.(t_for_all a_var () (t_arrow (t_nat ()) (t_arrow (t_variable a_var ()) (t_option (t_pair (t_variable a_var ()) (t_mutation ()))) ()) ())));
+                    (C_TEST_MUTATION_TEST, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_option (t_pair (t_variable b_var ()) (t_mutation ()))) ()) ()))));
+                    (C_TEST_MUTATION_TEST_ALL, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_option (t_pair (t_variable b_var ()) (t_mutation ()))) ()) ()))));
+                    (C_TEST_SAVE_MUTATION, of_ligo_type O.(t_arrow (t_string ()) (t_arrow (t_mutation ()) (t_option (t_string ())) ()) ()));
                     (C_TEST_ADD_ACCOUNT, of_ligo_type O.(t_arrow (t_string ())(t_arrow (t_key ()) (t_unit ()) ()) ()));
                     (C_TEST_NEW_ACCOUNT, of_ligo_type O.(t_arrow (t_unit ()) (t_pair (t_string ()) (t_key ())) ()));
                     (C_TEST_RUN, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_arrow (t_variable a_var ()) (t_michelson_code ()) ()) ()))));
@@ -638,6 +585,10 @@ module Constant_types = struct
                     (C_TEST_DECOMPILE, of_ligo_type O.(t_for_all a_var () (t_arrow (t_michelson_code ()) (t_variable a_var ()) ())));
                     (* (C_TEST_TO_CONTRACT, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) _ ())))); *)
                     (C_TEST_TO_TYPED_ADDRESS, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_contract (t_variable a_var ())) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ()))));
+                    (C_TEST_EXTERNAL_CALL_TO_CONTRACT, of_ligo_type ~name:"Test.transfer_to_contract" O.(t_for_all a_var () (t_arrow (t_contract (t_variable a_var ())) (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_test_exec_result ()) ()) ()) ())));
+                    (C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN, of_ligo_type ~name:"Test.transfer_to_contract_exn" O.(t_for_all a_var () (t_arrow (t_contract (t_variable a_var ())) (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ()) ())));
+                    (C_TEST_EXTERNAL_CALL_TO_ADDRESS, of_ligo_type ~name:"Test.transfer" O.(t_arrow (t_address ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_test_exec_result ()) ()) ()) ()));
+                    (C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN, of_ligo_type ~name:"Test.transfer_exn" O.(t_arrow (t_address ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_int ()) ()) ()) ()));
                     (C_TEST_SET_BIG_MAP, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_int ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ()))));
                   ]
   let find c = CTMap.find_opt c tbl
@@ -665,23 +616,14 @@ let rec constant_typers ~raise ~test ~protocol_version loc c =
   | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
   | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
   (* TEST *)
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> test_external_call_to_contract ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> test_external_call_to_contract_exn ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> test_external_call_to_address ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> test_external_call_to_address_exn ~raise loc ;
-  | C_TEST_BOOTSTRAP_CONTRACT -> test_bootstrap_contract ~raise loc ;
-  | C_TEST_LAST_ORIGINATIONS -> test_last_originations ~raise loc ;
-  | C_TEST_MUTATE_VALUE -> test_mutate_value ~raise loc ;
-  | C_TEST_MUTATION_TEST -> test_mutation_test ~raise loc ;
-  | C_TEST_MUTATION_TEST_ALL -> test_mutation_test_all ~raise loc ;
   | C_TEST_TO_CONTRACT -> test_to_contract ~raise loc ;
-  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
   | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
   | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
-  | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
+
   | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
   | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
   | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
+
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
