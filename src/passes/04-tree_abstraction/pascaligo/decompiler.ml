@@ -41,8 +41,9 @@ let prefix_colon a = (Wrap.ghost "", a)
 let suffix_with a = (a, Wrap.ghost "")
 
 (* Dialect-relevant functions *)
+open Syntax_types
 
-type dialect = Terse | Verbose
+type dialect = Syntax_types.pascaligo_dialect 
 let terminator = function
   | Terse -> Some Token.ghost_semi
   | Verbose -> None
