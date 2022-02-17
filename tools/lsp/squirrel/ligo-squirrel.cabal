@@ -152,6 +152,7 @@ executable ligo-squirrel
       RIO
       RIO.Diagnostic
       RIO.Document
+      RIO.Indexing
       RIO.Registration
       RIO.Types
       Paths_ligo_squirrel
@@ -207,6 +208,7 @@ executable ligo-squirrel
     , containers
     , data-default
     , duplo
+    , filepath
     , focus
     , ghc-prim
     , hashable

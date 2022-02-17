@@ -17,7 +17,7 @@ import Data.String.Interpolate.IsString (i)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
-import UnliftIO.MVar (newMVar, newEmptyMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
+import UnliftIO.MVar (newEmptyMVar, newMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
 
 import AST (Fallback)
 import ASTMap qualified
@@ -34,6 +34,7 @@ newRioEnv = do
   reOpenDocs <- newMVar HashSet.empty
   reIncludes <- newMVar G.empty
   reTempFiles <- newIO
+  reIndexOpts <- newEmptyMVar
   pure RioEnv {..}
 
 -- Fetch the configuration from the server and write it to the Config MVar

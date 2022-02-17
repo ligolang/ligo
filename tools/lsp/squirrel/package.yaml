@@ -119,6 +119,7 @@ executables:
       - clock
       - containers
       - data-default
+      - filepath
       - focus
       - hashable
       - hslogger

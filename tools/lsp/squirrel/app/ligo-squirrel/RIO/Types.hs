@@ -1,5 +1,6 @@
 module RIO.Types
   ( Contract (..)
+  , IndexOptions (..)
   , RioEnv (..)
   , RIO (..)
 
@@ -29,12 +30,44 @@ data Contract = Contract
   , cDeps :: [J.NormalizedUri]
   }
 
+-- | Represents the user's choice on how to index the project.
+data IndexOptions
+  = IndexChoicePending
+  -- ^ The choice was not yet processed and is pending. Only the currently
+  -- opened contract is indexed.
+  | DoNotIndex
+  -- ^ The project should not be indexed. Like when the choice is pending, only
+  -- the currently opened contract is indexed.
+  | FromRoot FilePath
+  -- ^ Index the project starting from the root directory. That is, the
+  -- directory that is currently open in Visual Studio Code, if any.
+  | FromGitProject FilePath
+  -- ^ Index the project from the output of `git rev-parse --show-toplevel`, if
+  -- Git is set.
+  | FromLigoProject FilePath
+  -- ^ Index from the directory where the first `.ligoproject` file is found, if
+  -- it exists. This option has precedence over all others, and if this file is
+  -- present, all other options will be ignored.
+
+-- | Stores information about the current language server environment, such as
+-- loaded files, files in the project, etc. This is meant to be used inside a
+-- `ReaderT`, and its internal `MVar`s updated as needed.
 data RioEnv = RioEnv
   { reConfig :: MVar Config
+  -- ^ Contains the current configuration of the language server, such as the
+  -- path to LIGO.
   , reCache :: ASTMap J.NormalizedUri Contract RIO
+  -- ^ Caches parsed and scoped contracts, as well as their include dependencies.
+  -- Also contains metadata about contracts, such as when they were loaded, when
+  -- they were invalidated, etc.
   , reOpenDocs :: MVar (HashSet J.NormalizedUri)
+  -- ^ Records which files are current open in the editor.
   , reIncludes :: MVar (Includes ParsedContractInfo)
+  -- ^ Stores the inclusion graph with respect to the currently open file.
   , reTempFiles :: StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
+  -- ^ Provides a way to look which temporary files correspond to which open files.
+  , reIndexOpts :: MVar IndexOptions
+  -- ^ Contains the saved indexing options.
   }
 
 -- TODO: The lsp library provides no way to update the Config in the LspM monad
