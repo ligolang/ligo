@@ -11,7 +11,6 @@ module AST.Parser
   , collectAllErrors
   ) where
 
-import Control.Lens ((%~))
 import Control.Monad ((<=<))
 import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Bifunctor (second)
@@ -32,7 +31,8 @@ import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
 import AST.Scope
   ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
-  , ParsedContractInfo, addScopes, contractNotFoundException, cMsgs, getContract, lookupContract
+  , ParsedContractInfo, addLigoErrToMsg, addScopes, contractNotFoundException
+  , lookupContract
   )
 import Cli
   ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
@@ -77,8 +77,6 @@ parsePreprocessed src = do
     else
       parse src'
   where
-    addLigoErrToMsg err = getContract . cMsgs %~ (err :)
-
     -- If the user has hand written any line markers, they will get removed here.
     -- Also query whether we need to do any preprocessing at all in the first place.
     prePreprocess :: Text -> (Source, Bool)

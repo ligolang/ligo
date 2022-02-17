@@ -34,7 +34,7 @@ import Util.Graph (forAMConcurrently)
 data FromCompiler
 
 -- FIXME: If one contract throws an exception, the entire thing will fail. Standard
--- scopes will use Fallback.
+-- scopes will use Fallback. (LIGO-208)
 instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
   scopeForest reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
