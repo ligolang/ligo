@@ -34,3 +34,18 @@ let expression expression new_syntax syntax new_dialect display_format () =
       let imperative    = Decompile.Of_sugar.decompile_expression sugar in
       let buffer        = Decompile.Of_imperative.decompile_expression imperative n_syntax in
       buffer
+
+let types new_syntax new_dialect display_format () =
+    format_result ~display_format (Parsing.Formatter.ppx_format) (fun _ -> []) @@
+      fun ~raise ->
+      let names = Checking.get_table () in
+      let buffer = Buffer.create 1024 in
+      let () = List.iter names ~f:(fun (name, t) ->
+        let core = Decompile.Of_typed.decompile_type_expression t in
+        let sugar = Decompile.Of_core.decompile_type_expression core in
+        let imperative = Decompile.Of_sugar.decompile_type_expression sugar in
+        let      dialect       = Decompile.Helpers.Dialect_name new_dialect in
+        let n_syntax      = Decompile.Helpers.syntax_to_variant ~raise ~dialect (Syntax_name new_syntax) None in
+        let buffer_inner = Decompile.Of_imperative.decompile_type_expression imperative n_syntax in
+        Buffer.add_string buffer @@ Format.asprintf "val %s : %s\n" name (Buffer.contents buffer_inner)) in
+      buffer

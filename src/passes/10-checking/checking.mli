@@ -18,3 +18,4 @@ val untype_expression : O.expression -> I.expression
 val untype_program : O.program -> I.module_
 
 val assert_type_expression_eq : raise:typer_error raise -> Location.t -> O.type_expression * O.type_expression -> unit
+val get_table : unit -> (string * O.type_expression) list

@@ -760,9 +760,12 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   | O.T_arrow arr ->
     let arr = Stage_common.Maps.arrow self arr in
     return @@ I.T_arrow arr
+  | O.T_constant {language=_;injection;parameters} when List.is_empty parameters ->
+    let type_operator = I.Var.of_input_var(Ligo_string.extract injection) in
+    return @@ I.T_variable type_operator
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
+    let type_operator = I.Var.of_input_var (Ligo_string.extract injection) in
     return @@ I.T_app {type_operator;arguments}
   | O.T_module_accessor ma ->
     let ma = Stage_common.Maps.module_access self ma in
@@ -918,3 +921,7 @@ function
 and untype_module : O.module_ -> I.module_ = fun p -> List.map ~f:(Location.map untype_declaration) p
 
 let untype_program = untype_module
+
+let get_table () =
+  let v = Constant_typers.Constant_types.names in
+  ! v

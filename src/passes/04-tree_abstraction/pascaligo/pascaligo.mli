@@ -17,3 +17,5 @@ val compile_module     : raise:Errors.abs_error Simple_utils.Trace.raise -> CST.
 val decompile_expression : ?dialect:Decompiler.dialect -> AST.expr -> CST.expr
 
 val decompile_module : ?dialect:Decompiler.dialect -> AST.module_ -> CST.declarations
+
+val decompile_type_expression : ?dialect:Decompiler.dialect -> AST.type_expression -> CST.type_expr
