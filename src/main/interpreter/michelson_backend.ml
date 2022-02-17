@@ -215,10 +215,10 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
     | Some () -> e_a_bytes b
     | None -> (
       match get_t_chest ty with
-      | Some () -> e_a_bytes b
+      | Some () -> e_a_chest b
       | None -> (
         match get_t_chest_key ty with
-        | Some () -> e_a_bytes b
+        | Some () -> e_a_chest_key b
         | None -> raise.raise (Errors.generic_error loc (Format.asprintf "Expected bytes, chest, or chest_key but got %a" Ast_aggregated.PP.type_expression ty))
         )
     )
@@ -374,7 +374,7 @@ and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->
                       Ligo_interpreter.Types.typed_michelson_code =
   fun v ty ->
   let typed_exp = val_to_ast ~raise ~loc v ty in
-  let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj typed_exp in
+  let (_: Ast_aggregated.expression) = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj typed_exp in
   let compiled_exp = compile_value ~raise typed_exp in
   let expr, _ = run_expression_unwrap ~raise ?ctxt ~loc compiled_exp in
   (* TODO-er: check the ignored second component: *)
@@ -418,6 +418,8 @@ let get_literal_type : Ast_aggregated.literal -> Ast_aggregated.type_expression 
   | (Literal_bls12_381_g1 _) -> t_bls12_381_g1 ()
   | (Literal_bls12_381_g2 _) -> t_bls12_381_g2 ()
   | (Literal_bls12_381_fr _) -> t_bls12_381_fr ()
+  | (Literal_chest _) -> t_chest ()
+  | (Literal_chest_key _) -> t_chest_key ()
 
 let compile_literal ~raise ~loc : Ast_aggregated.literal -> _ =
   fun v ->

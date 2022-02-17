@@ -24,3 +24,5 @@ let literal ppf (l : literal) =
   | Literal_bls12_381_g1 b -> fprintf ppf "bls12_381_g1 0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_bls12_381_g2 b -> fprintf ppf "bls12_381_g2 0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_bls12_381_fr b -> fprintf ppf "bls12_381_fr 0x%a" Hex.pp (Hex.of_bytes b)
+  | Literal_chest b -> fprintf ppf "chest 0x%a" Hex.pp (Hex.of_bytes b)
+  | Literal_chest_key b -> fprintf ppf "chest_key 0x%a" Hex.pp (Hex.of_bytes b)

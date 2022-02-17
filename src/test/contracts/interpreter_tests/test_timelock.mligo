@@ -1,10 +1,12 @@
 type storage = bytes
-type parameter = chest_key * chest
+
+type revealParam = chest_key * chest
+type parameter = Reveal of revealParam | Nothing of unit 
 
 type return = operation list * storage
 
-let main (p , _ : parameter * storage) : return =
-  let (ck,c) = p in
+let reveal (pp, _s : (chest_key * chest) * storage) : return =
+  let (ck,c) = pp in
   let new_s =
     match Tezos.open_chest ck c 10n with
     | Ok_opening b -> b
@@ -13,6 +15,10 @@ let main (p , _ : parameter * storage) : return =
   in
   (([] : operation list), new_s)
 
+let main (p , s : parameter * storage) : return =
+  match p with
+  | Nothing -> (([] : operation list), s)
+  | Reveal pp -> reveal(pp, s)
 
 let test =
   let init_storage : bytes = 0x00 in
@@ -21,7 +27,7 @@ let test =
 
   let test_open (cc : chest_key * chest) (expected : bytes) : unit =
     let x : parameter contract = Test.to_contract addr in
-    let _ = Test.transfer_to_contract_exn x cc 0tez in
+    let _ = Test.transfer_to_contract_exn x (Reveal cc) 0tez in
     let s = Test.get_storage addr in
     assert (s = expected)
   in

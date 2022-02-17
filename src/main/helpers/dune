@@ -1,0 +1,15 @@
+(library
+ (name syntax_types)
+ (public_name ligo.syntax_types)
+ (modules syntax_types)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils))
+
+(library
+ (name syntax)
+ (public_name ligo.syntax)
+ (modules syntax)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils main_errors syntax_types))

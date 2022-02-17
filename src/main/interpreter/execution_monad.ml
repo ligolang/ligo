@@ -19,6 +19,7 @@ let add_warning _ = ()
 
 let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations ty)
 
+(* Command should _only_ contains instruction that needs or modify the tezos context *)
 module Command = struct
   type 'a t =
     | Set_big_map : Z.t * (LT.value * LT.value) list * Ast_aggregated.type_expression -> unit t
@@ -55,6 +56,7 @@ module Command = struct
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
+    (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Sha256 : bytes -> LT.value t
     | Sha512 : bytes -> LT.value t
@@ -67,6 +69,7 @@ module Command = struct
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
     | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
+
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->

@@ -125,7 +125,9 @@ module Substitution = struct
       | (T.Literal_operation _ as x)
       | (T.Literal_bls12_381_g1 _ as x)
       | (T.Literal_bls12_381_g2 _ as x)
-      | (T.Literal_bls12_381_fr _ as x) ->
+      | (T.Literal_bls12_381_fr _ as x)
+      | (T.Literal_chest _ as x)
+      | (T.Literal_chest_key _ as x) ->
         x
     and s_matching_expr : (_ T.match_case list,_) w = fun ~(substs : substs) ->
       fun x ->

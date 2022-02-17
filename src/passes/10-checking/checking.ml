@@ -345,6 +345,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       return (e_bls12_381_g2 b) (t_bls12_381_g2 ())
   | E_literal (Literal_bls12_381_fr b) ->
       return (e_bls12_381_fr b) (t_bls12_381_fr ())
+  | E_literal (Literal_chest _ | Literal_chest_key _) -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
   | E_record_accessor {record;path} ->
       let e' = type_expression' ~raise ~test ~protocol_version context record in
       let aux (prev:O.expression) (a:I.label) : O.expression =
@@ -736,6 +737,8 @@ let untype_literal (l:O.literal) : I.literal =
   | Literal_bls12_381_g1 b -> (Literal_bls12_381_g1 b)
   | Literal_bls12_381_g2 b -> (Literal_bls12_381_g2 b)
   | Literal_bls12_381_fr b -> (Literal_bls12_381_fr b)
+  | Literal_chest b -> Literal_chest b
+  | Literal_chest_key b -> Literal_chest_key b
 
 let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   let self = untype_type_expression in

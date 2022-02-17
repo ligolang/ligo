@@ -41,8 +41,9 @@ let prefix_colon a = (Wrap.ghost "", a)
 let suffix_with a = (a, Wrap.ghost "")
 
 (* Dialect-relevant functions *)
+open Syntax_types
 
-type dialect = Terse | Verbose
+type dialect = Syntax_types.pascaligo_dialect 
 let terminator = function
   | Terse -> Some Token.ghost_semi
   | Verbose -> None
@@ -355,6 +356,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
         let b = CST.E_Bytes (Wrap.ghost (s, b)) in
         let ty = decompile_type_expr dialect @@ AST.t_bls12_381_fr ()
         in return_typed b ty
+      | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
     )
   | E_application {lamb;args} ->
     let lamb = decompile_expression ~dialect lamb in
