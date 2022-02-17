@@ -89,7 +89,7 @@ let ast_aggregated source_file syntax protocol_version display_format self_pass 
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~protocol_version ?project_root ()
       in
-      let typed = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
+      let typed = Build.build_context ~raise ~add_warning ~options syntax source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       let aggregated = Aggregation.compile_expression_in_context (Ast_typed.e_a_unit ()) aggregated in
       if self_pass then
@@ -105,7 +105,7 @@ let ast_combined  source_file syntax protocol_version display_format project_roo
       let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
       Compiler_options.make ~protocol_version ?project_root ()
     in
-    let typed = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
+    let typed = Build.build_context ~raise ~add_warning ~options syntax source_file in
     typed
 
 let mini_c source_file syntax protocol_version display_format optimize project_root () =
@@ -116,7 +116,7 @@ let mini_c source_file syntax protocol_version display_format optimize project_r
         let protocol_version = Helpers.protocol_to_variant ~raise protocol_version in
         Compiler_options.make ~protocol_version ?project_root ()
       in
-      let typed = Build.combined_contract ~raise ~add_warning ~options syntax source_file in
+      let typed = Build.build_context ~raise ~add_warning ~options syntax source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       match optimize with
         | None ->

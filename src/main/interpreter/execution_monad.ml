@@ -19,11 +19,12 @@ let add_warning _ = ()
 
 let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations ty)
 
+(* Command should _only_ contains instruction that needs or modify the tezos context *)
 module Command = struct
   type 'a t =
     | Set_big_map : Z.t * (LT.value * LT.value) list * Ast_aggregated.type_expression -> unit t
-    | Pack : Location.t * LT.value * Ast_aggregated.type_expression -> Ast_aggregated.expression t
-    | Unpack : Location.t * bytes * Ast_aggregated.type_expression -> Ast_aggregated.expression t
+    | Pack : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Unpack : Location.t * bytes * Ast_aggregated.type_expression -> LT.value t
     | Bootstrap_contract : int * LT.value * LT.value * Ast_aggregated.type_expression  -> unit t
     | Nth_bootstrap_contract : int -> Tezos_protocol.Protocol.Alpha_context.Contract.t t
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression * Ast_aggregated.type_expression) t
@@ -55,6 +56,7 @@ module Command = struct
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
+    (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Sha256 : bytes -> LT.value t
     | Sha512 : bytes -> LT.value t
@@ -70,6 +72,7 @@ module Command = struct
     | Baker_account : LT.value * LT.value -> unit t
     | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Bake_until_n_cycle_end : Location.t * Ligo_interpreter.Types.calltrace *  Z.t -> LT.value t
+
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
@@ -92,16 +95,14 @@ module Command = struct
       let expr = Ast_aggregated.e_a_pack expr in
       let mich = Michelson_backend.compile_value ~raise expr in
       let ret_co, ret_ty = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
-      let ret = LT.V_Michelson (Ty_code { code = ret_co ; code_ty = ret_ty ; ast_ty = Ast_aggregated.t_bytes () }) in
-      let ret = Michelson_backend.val_to_ast ~raise ~loc ret (Ast_aggregated.t_bytes ()) in
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
     | Unpack (loc, bytes, value_ty) ->
       let value_ty = trace_option ~raise (Errors.generic_error loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option value_ty in
       let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
       let mich = Michelson_backend.compile_value ~raise expr in
       let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
-      let ret = LT.V_Michelson (Ty_code { code = ret_co ; code_ty = ret_ty ; ast_ty = Ast_aggregated.t_option value_ty }) in
-      let ret = Michelson_backend.val_to_ast ~raise ~loc ret (Ast_aggregated.t_option value_ty) in
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
     | Nth_bootstrap_contract (n) ->
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in

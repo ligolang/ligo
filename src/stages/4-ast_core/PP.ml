@@ -108,6 +108,7 @@ and expression_content ppf (ec : expression_content) =
   | E_record_accessor ra -> record_accessor expression ppf ra
   | E_record_update   ru -> record_update   expression ppf ru
   | E_lambda    l -> lambda expression type_expression ppf l
+  | E_type_abstraction e -> type_abs expression ppf e
   | E_recursive r -> recursive expression type_expression ppf r
   | E_matching x -> fprintf ppf "%a" (match_exp expression type_expression) x
   | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation ; view; _ }} ->

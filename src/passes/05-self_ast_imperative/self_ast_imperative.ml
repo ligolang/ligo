@@ -1,5 +1,4 @@
 module Errors = Errors
-module Syntax = Syntax
 
 let all_expression_mapper ~raise = [
   Vars.capture_expression ~raise ;
@@ -26,7 +25,7 @@ let all_module_mapper ~raise = [
   No_shadowing.peephole_module ~raise ;
 ]
 
-let all_exp ~raise ~(lang:Syntax.v_syntax) = 
+let all_exp ~raise ~(lang:Syntax_types.t) = 
   List.map 
     ~f:(fun el -> Helpers.Expression el) 
     (all_expression_mapper ~raise @ 
@@ -37,13 +36,13 @@ let all_exp ~raise ~(lang:Syntax.v_syntax) =
 let all_ty ~raise ~add_warning = List.map ~f:(fun el -> Helpers.Type_expression el) @@ all_type_expression_mapper ~raise ~add_warning
 let all_module ~raise = List.map ~f:(fun m -> Helpers.Module m) (all_module_mapper ~raise)
 
-let all_module ~raise ~add_warning ~(lang:Syntax.v_syntax) init =
+let all_module ~raise ~add_warning ~(lang:Syntax_types.t) init =
   let all_p  = List.map ~f:Helpers.map_module @@ all_exp ~raise ~lang in
   let all_p2 = List.map ~f:Helpers.map_module @@ all_ty ~raise ~add_warning in
   let all_p3 = List.map ~f:Helpers.map_module @@ all_module ~raise in
   List.fold ~f:(|>) (all_p @ all_p2 @ (if Caml.(=) lang JsLIGO then all_p3 else [])) ~init
 
-let all_expression ~raise ~(lang:Syntax.v_syntax) init =
+let all_expression ~raise ~(lang:Syntax_types.t) init =
   let all_p = List.map ~f:Helpers.map_expression @@ (all_expression_mapper ~raise @ (if Caml.(=) lang JsLIGO then all_expression_mapper_jsligo  ~raise else [])) in
   List.fold ~f:(|>) all_p ~init
 

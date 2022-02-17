@@ -120,6 +120,7 @@ and expression_content ppf (ec: expression_content) =
   | E_lambda {binder; result} ->
       fprintf ppf "lambda (%a) return %a" expression_variable binder
         expression result
+  | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "match %a with %a" expression matchee (matching expression) cases
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=_ ; view = _ } } ->

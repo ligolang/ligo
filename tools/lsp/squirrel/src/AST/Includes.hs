@@ -28,7 +28,7 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as Text (pack)
 import Data.Word (Word32)
-import Duplo.Tree (Cofree ((:<)), inject)
+import Duplo.Tree (Cofree ((:<)), fastMake)
 import System.FilePath ((</>), takeDirectory)
 import UnliftIO.Directory (canonicalizePath)
 
@@ -41,7 +41,6 @@ import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
 
 import Parser
   ( CodeSource (..), Info, LineMarker (..), LineMarkerType (..), ParsedInfo
-  , ShowRange (N)
   )
 import ParseTree (Source (..))
 import Product (Contains, Product (..), getElem, modElem, putElem)
@@ -213,9 +212,9 @@ includesGraph contracts = do
     emptyContract name =
       let
         p = point 0 0
-        info = PreprocessedRange p :> [] :> [] :> p :> N :> CodeSource "" :> Nil
+        info = PreprocessedRange p :> [] :> [] :> p :> CodeSource "" :> Nil
       in
       FindContract
         (Path name)
-        (SomeLIGO Caml (info :< inject (Error ("Missing contract: " <> Text.pack name) [])))
+        (SomeLIGO Caml (fastMake info (Error ("Missing contract: " <> Text.pack name) [])))
         []

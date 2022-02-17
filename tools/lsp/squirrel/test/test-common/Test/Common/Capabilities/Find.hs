@@ -142,26 +142,20 @@ invariants =
                 , interval 12 30 37
                 ]
     }
-  -- TODO: There seems to be a bug in `ligo get-scope`'s references where it
-  -- will say the range of one variable is much longer than it should be (one
-  -- expression bigger it seems). For now, I'm separating this into two separate
-  -- tests, for the integration and lsp tests. Once this is fixed, this test and
-  -- its counterpart for `lsp-test` should be deleted and this test should be
-  -- uncommented.
-  --, DefinitionReferenceInvariant
-  --  { driFile = contractsDir </> "heap.ligo"
-  --  , driDesc = "left, local"
-  --  , driDef = Just (interval 77 9 13)
-  --  , driRefs = [ interval 99 15 19
-  --              , interval 90 13 17
-  --              , interval 89 30 34
-  --              , interval 87 22 26
-  --              , interval 86 36 40
-  --              , interval 85 10 14
-  --              , interval 84 16 20
-  --              , interval 83 7 11
-  --              ]
-  --  }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "heap.ligo"
+    , driDesc = "left, local"
+    , driDef = Just (interval 77 9 13)
+    , driRefs = [ interval 99 15 19
+                , interval 90 13 17
+                , interval 89 30 34
+                , interval 87 22 26
+                , interval 86 36 40
+                , interval 85 10 14
+                , interval 84 16 20
+                , interval 83 7 11
+                ]
+    }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "params.mligo"
     , driDesc = "a, function"

@@ -34,6 +34,8 @@ type literal =
   | Literal_bls12_381_g1 of bytes
   | Literal_bls12_381_g2 of bytes
   | Literal_bls12_381_fr of bytes
+  | Literal_chest of bytes
+  | Literal_chest_key of bytes
 [@@deriving yojson, ord]
 
 let literal_to_enum = function
@@ -53,6 +55,8 @@ let literal_to_enum = function
   | Literal_bls12_381_g1 _ -> 14
   | Literal_bls12_381_g2 _ -> 15
   | Literal_bls12_381_fr _ -> 16
+  | Literal_chest _ -> 17
+  | Literal_chest_key _ -> 18
 
 type constant' =
   | C_INT

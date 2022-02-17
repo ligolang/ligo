@@ -75,17 +75,19 @@ let rec translate_type : I.type_expression -> (meta, string) node =
 
 (* could consider delaying this to the next pass, in Coq, but
    currently the Coq pass type translation is the identity *)
-and tuple_comb_ann ts =
-  match ts with
-  | [] -> (None, Prim (nil, "unit", [], []))
-  | [(ann, t)] -> (ann, translate_type t)
-  | (ann1, t1) :: ts ->
-    let t1 = translate_type t1 in
-    let (ann, ts) = tuple_comb_ann ts in
-    (None, Prim (nil, "pair", [annotate ann1 t1; annotate ann ts], []))
-
 and tuple_comb ts =
-  snd (tuple_comb_ann ts)
+  match ts with
+  | [] -> Prim (nil, "unit", [], [])
+  | [(_ann, t)] -> translate_type t
+  | ts ->
+    (* It is convenient to emit "comb" n-ary pairs like [pair a b c]
+       here for code size efficiency. The next phase in Coq currently
+       doesn't consider [pair a b c] to be a type, but the compiler
+       will still work correctly since it is not at all
+       type-directed. We could alternatively do it in a peephole
+       optimiser, or do it using Tezos. *)
+    let ts = List.map ~f:(fun (ann, t) -> annotate ann (translate_type t)) ts in
+    Prim (nil, "pair", ts, [])
 
 let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
   let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Mini_c.Var.pp x in

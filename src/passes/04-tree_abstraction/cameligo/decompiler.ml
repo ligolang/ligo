@@ -147,6 +147,7 @@ let get_e_tuple : AST.expression -> _  = fun expr ->
   | E_literal _
   | E_constant _
   | E_lambda _ -> ([expr], false)
+  | E_type_abstraction _ -> ([expr], false)
   | E_application _ -> ([expr], true)
   | E_accessor _
   | E_module_accessor _ -> ([expr], false)
@@ -284,6 +285,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let b = CST.EBytes (wrap (s, b)) in
         let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
         return_expr @@ CST.EAnnot (Region.wrap_ghost @@ par (b,Token.ghost_colon,ty))
+      | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
     )
   | E_application {lamb;args} ->
     let f (expr, b) = if b then CST.EPar (wrap @@ par @@ expr) else expr in
@@ -300,6 +302,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let (binders,_lhs_type,_block_with,body) = decompile_lambda lambda in
     let fun_expr : CST.fun_expr = {kwd_fun=Token.ghost_fun;binders;lhs_type=None;arrow=Token.ghost_arrow;body;type_params=None;attributes=[]} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
+  | E_type_abstraction _ -> failwith "corner case : annonymous type abstraction"
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder={var;ascr;attributes=var_attributes};rhs;let_result;attributes} ->

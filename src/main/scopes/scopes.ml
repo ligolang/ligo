@@ -57,6 +57,12 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
       let all_defs = merge_defs env all_defs in
       find_scopes' (i,all_defs,env,scopes,result.location) bindings result
     )
+    | E_type_abstraction { type_binder; result } -> (
+      let def = make_t_def (get_binder_name type_binder) e.location (Ast_core.t_variable type_binder ()) in
+      let (i,env) = add_shadowing_def (i,type_binder) def env in
+      let all_defs = merge_defs env all_defs in
+      find_scopes' (i,all_defs,env,scopes,result.location) bindings result
+    )
     | E_matching {matchee; cases} -> (
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,matchee.location) bindings matchee in
       let aux = fun (i,all_defs,scopes) ({pattern;body}: (Ast_core.expression,_) Ast_core.match_case) ->
@@ -128,10 +134,14 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
 
   and declaration ~options i core_prg =
     let test = options.test in
-    (* Note : Why do we need to compile here ? Is it just about handling the environment ? *)
     let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version ~env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
+        (*
+          if --with-types optional flag is enabled, we try typing the declaration
+          to build a partial Ast_typed program.
+          if a declaration do not type, we will still try to type the next one
+        *)
         if with_types then Simple_utils.Trace.to_option (compile_declaration partials.type_env decl ())
         else None
       in

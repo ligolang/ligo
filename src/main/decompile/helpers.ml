@@ -1,49 +1,10 @@
-open Simple_utils.Trace
-open Main_errors
-
-type s_syntax = Syntax_name of string
-type s_dialect = Dialect_name of string
-
-type v_syntax =
-  | PascaLIGO of Tree_abstraction.Pascaligo.Decompiler.dialect option
-  | CameLIGO
-  | ReasonLIGO
-  | JsLIGO
-
-let dialect_to_variant ~raise dialect =
-  match dialect with
-  | None -> None
-  | Some (Dialect_name dialect) ->
-     match dialect with
-     | "terse" -> (Some Tree_abstraction.Pascaligo.Decompiler.Terse)
-     | "verbose" -> (Some Tree_abstraction.Pascaligo.Decompiler.Verbose)
-     | _ -> raise.raise (`Main_invalid_dialect_name dialect)
-
-let syntax_to_variant ~raise ?dialect (Syntax_name syntax) source =
-  match syntax, source with
-    "auto", Some sf ->
-      (match Caml.Filename.extension sf with
-         ".ligo" | ".pligo" ->
-                    let dialect = dialect_to_variant ~raise dialect in
-                    (PascaLIGO dialect)
-       | ".mligo"           -> CameLIGO
-       | ".religo"          -> ReasonLIGO
-       | ".jsligo"          -> JsLIGO
-       | ext                -> raise.raise (main_invalid_extension ext))
-  | ("pascaligo" | "PascaLIGO"),   _ ->
-     let dialect = dialect_to_variant ~raise dialect in
-     (PascaLIGO dialect)
-  | ("cameligo" | "CameLIGO"),     _ -> CameLIGO
-  | ("reasonligo" | "ReasonLIGO"), _ -> ReasonLIGO
-  | ("jsligo" | "JsLIGO"),         _ -> JsLIGO
-  | _ -> raise.raise (main_invalid_syntax_name syntax)
 let specialise_and_print_pascaligo dialect m =
   let ast = Self_ast_imperative.decompile_imperative m in
   let cst = Tree_abstraction.Pascaligo.decompile_module ?dialect ast in
   let source = Parsing.Pascaligo.pretty_print Parsing.Pascaligo.CST.{decl=cst ; eof = Lexing_pascaligo.Token.ghost_eof}
   in source
 
-let specialise_and_print_expression_pascaligo dialect expression =
+let specialise_and_print_expression_pascaligo (dialect : Syntax_types.pascaligo_dialect option) expression =
   let ast = Self_ast_imperative.decompile_imperative_expression expression in
   let cst = Tree_abstraction.Pascaligo.decompile_expression ?dialect ast in
   let source =(Parsing.Pascaligo.pretty_print_expression cst)
@@ -94,7 +55,7 @@ let specialise_and_print_expression_jsligo expression =
   ) ~init:b cst
 
 
-let specialise_and_print syntax source : Buffer.t =
+let specialise_and_print (syntax : Syntax_types.t) source : Buffer.t =
   let specialise_and_print =
     match syntax with
       PascaLIGO dialect -> specialise_and_print_pascaligo dialect
@@ -103,7 +64,7 @@ let specialise_and_print syntax source : Buffer.t =
     | JsLIGO     -> specialise_and_print_jsligo in
   specialise_and_print source
 
-let specialise_and_print_expression syntax source =
+let specialise_and_print_expression (syntax : Syntax_types.t) source =
   let specialise_and_print = match syntax with
     PascaLIGO dialect -> specialise_and_print_expression_pascaligo dialect
   | CameLIGO   -> specialise_and_print_expression_cameligo

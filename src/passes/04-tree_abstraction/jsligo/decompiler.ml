@@ -317,6 +317,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
         let b = CST.EBytes (Region.wrap_ghost (s, b)) in
         let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
         return_expr @@ [Expr (CST.EAnnot (Region.wrap_ghost (b,Token.ghost_colon,ty)))]
+      | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
       )
 
   | E_application {lamb;args} ->
@@ -362,6 +363,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     }) in
     let body = decompile_expression_in let_result in
     return_expr @@ Statement const :: body
+  | E_type_abstraction _ -> failwith "type_abstraction not supported yet"
   | E_type_in {type_binder;rhs;let_result} ->
     let name = decompile_variable type_binder in
     let type_expr = decompile_type_expr rhs in

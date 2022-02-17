@@ -158,21 +158,22 @@ let expression_tag expr =
   | E_variable        _ -> 3
   | E_application     _ -> 4
   | E_lambda          _ -> 5
-  | E_recursive       _ -> 6
-  | E_let_in          _ -> 7
-  | E_type_in         _ -> 8
-  | E_mod_in          _ -> 9
-  | E_mod_alias       _ -> 10
-  | E_raw_code        _ -> 11
+  | E_type_abstraction _ -> 6
+  | E_recursive       _ -> 7
+  | E_let_in          _ -> 8
+  | E_type_in         _ -> 9
+  | E_mod_in          _ -> 10
+  | E_mod_alias       _ -> 11
+  | E_raw_code        _ -> 12
   (* Variant *)
-  | E_constructor     _ -> 12
-  | E_matching        _ -> 13
+  | E_constructor     _ -> 13
+  | E_matching        _ -> 14
   (* Record *)
-  | E_record          _ -> 14
-  | E_record_accessor _ -> 15
-  | E_record_update   _ -> 16
-  | E_module_accessor _ -> 17
-  | E_ascription      _ -> 18
+  | E_record          _ -> 15
+  | E_record_accessor _ -> 16
+  | E_record_update   _ -> 17
+  | E_module_accessor _ -> 18
+  | E_ascription      _ -> 19
 
 and pattern_tag = function
 | P_unit -> 1
@@ -198,6 +199,7 @@ and expression_content a b =
   | E_variable a, E_variable b -> expression_variable a b
   | E_application a, E_application b -> application a b
   | E_lambda a, E_lambda b -> lambda a b
+  | E_type_abstraction a, E_type_abstraction b -> type_abs a b
   | E_recursive a, E_recursive b -> recursive a b
   | E_let_in a, E_let_in b -> let_in a b
   | E_type_in a, E_type_in b -> type_in a b
@@ -211,8 +213,8 @@ and expression_content a b =
   | E_record_update  a, E_record_update b -> record_update a b
   | E_module_accessor a, E_module_accessor b -> module_access expression a b
   | E_ascription a, E_ascription b -> ascription a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _ | E_ascription _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _ | E_ascription _) ->
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _ | E_ascription _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_mod_in _| E_mod_alias _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _ | E_ascription _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: _ constant) ({cons_name=cb;arguments=b}: _ constant) =
@@ -225,6 +227,11 @@ and lambda ({binder=ba;output_type=ta;result=ra}) ({binder=bb;output_type=tb;res
   cmp3
     (binder type_expression) ba bb
     (option type_expression) ta tb
+    expression ra rb
+
+and type_abs ({type_binder=ba;result=ra}) ({type_binder=bb;result=rb}) =
+  cmp2
+    type_variable ba bb 
     expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =

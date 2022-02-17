@@ -60,7 +60,7 @@ let error_ppformat : display_format:string display_format ->
       let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
       Format.fprintf
         f
-        "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
+        "@[<hv>%a@.The tuple \"%s\" does not have the expected type \"%s\". @]"
         Snippet.pp_lift region
         p
         t
@@ -127,7 +127,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("location", `String loc); ] in
     json_error ~stage ~content
   | `Concrete_reasonligo_funarg_tuple_type_mismatch (r, _, _) ->
-    let message = Format.asprintf "The tuple does not match the type." in
+    let message = Format.asprintf "The tuple does not have the expected type." in
     let loc = Format.asprintf "%a" Location.pp_lift r in
     let content = `Assoc [
       ("message", `String message );

@@ -277,6 +277,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let b = CST.EBytes (wrap (s, b)) in
         let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
         return_expr @@ CST.EAnnot (wrap @@ (b,ghost,ty))
+      | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
     )
   | E_application {lamb;args} ->
     let lamb = decompile_expression lamb in
@@ -292,6 +293,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let (binders,lhs_type,body) = decompile_lambda lambda in
     let fun_expr : CST.fun_expr = {attributes=[]; binders;lhs_type;arrow=ghost;body} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
+  | E_type_abstraction _ -> failwith "type_abstraction not supported yet"
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
   | E_let_in {let_binder={var;ascr;attributes=var_attributes};rhs;let_result;attributes} ->

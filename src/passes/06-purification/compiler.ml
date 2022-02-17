@@ -49,7 +49,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
       | E_skip
       | E_literal _ | E_variable _
       | E_type_in _ | E_mod_in _ |  E_mod_alias _
-      | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
+      | E_application _ | E_lambda _| E_type_abstraction _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _|E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
       | E_map _ | E_big_map _ |E_list _ | E_set _
@@ -100,7 +100,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
       | E_skip
       | E_literal _ | E_variable _
       | E_type_in _ | E_mod_in _ | E_mod_alias _
-      | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
+      | E_application _ | E_lambda _| E_type_abstraction _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _| E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
       | E_map _ | E_big_map _ |E_list _ | E_set _
@@ -223,6 +223,9 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
     | I.E_lambda lamb ->
       let lamb = lambda self self_type lamb in
       return @@ O.E_lambda lamb
+    | I.E_type_abstraction ta ->
+      let ta = type_abs self ta in
+      return @@ O.E_type_abstraction ta
     | I.E_recursive recs ->
       let recs = recursive self self_type recs in
       return @@ O.E_recursive recs

@@ -156,6 +156,7 @@ and expression_content =
   | E_mod_alias of expr mod_alias
   | E_raw_code of raw_code
   | E_type_inst of type_inst
+  | E_type_abstraction of expr type_abs
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
   | E_matching of matching

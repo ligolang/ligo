@@ -218,8 +218,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fresh.mligo" ] ;
-  [%expect {|
-    Everything at the top-level was executed. |}]
+  [%expect{| Everything at the top-level was executed. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_rec_contract.mligo" ] ;
@@ -291,6 +290,12 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "func_michelson.mligo" ] ;
   [%expect {|
     42
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "func_michelson_loop.mligo" ] ;
+  [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 

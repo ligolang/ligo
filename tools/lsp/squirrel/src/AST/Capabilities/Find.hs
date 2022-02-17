@@ -33,8 +33,6 @@ type CanSearch xs =
   , Contains Range xs
   , Contains (Maybe Level) xs
   , Contains [Text] xs
-  , Modifies (Product xs)
-  , Eq (Product xs)
   )
 
 findScopedDecl
@@ -51,12 +49,12 @@ findScopedDecl pos tree = do
   lookupEnv (ppToText $ void node) filtered
 
 findInfoAtPoint
-  :: (Contains Range xs, Eq (Product xs))
+  :: Contains Range xs
   => Range -> SomeLIGO xs -> Maybe (Product xs)
 findInfoAtPoint pos tree = extract <$> findNodeAtPoint pos tree
 
 findNodeAtPoint
-  :: (Contains Range xs, Eq (Product xs))
+  :: Contains Range xs
   => Range -> SomeLIGO xs -> Maybe (LIGO xs)
 findNodeAtPoint pos tree =
   listToMaybe (spineTo (\i -> pos `leq` getRange i) (tree ^. nestedLIGO))

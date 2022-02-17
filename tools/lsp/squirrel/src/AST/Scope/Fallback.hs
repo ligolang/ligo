@@ -1,5 +1,6 @@
 module AST.Scope.Fallback
   ( Fallback
+  , TreeDoesNotContainNameException (..)
   , loop
   , loopM
   , loopM_
@@ -8,22 +9,21 @@ module AST.Scope.Fallback
 import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&), _Just, _head)
-import Control.Monad.Catch.Pure hiding (throwM)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.State
-import Control.Monad.Writer (Writer, WriterT, execWriterT, runWriter, tell)
+import Control.Monad.Trans.Reader
+import Control.Monad.Writer (Writer, execWriter, runWriter, tell)
 
-import Data.Bifunctor (first)
-import Data.Foldable (for_, toList)
+import Data.Foldable (foldrM, for_, toList)
 import Data.Functor ((<&>))
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Set qualified as Set
 import Data.Text (Text)
-import Duplo.Lattice
-import Duplo.Pretty
+import Duplo.Pretty (Doc, pp, ppToText)
 import Duplo.Tree hiding (loop)
+import UnliftIO.Exception (Exception (..), throwIO)
 import UnliftIO.MVar (modifyMVar, newMVar)
 
 import AST.Pretty (PPableLIGO)
@@ -36,8 +36,6 @@ import AST.Scope.ScopedDecl
 import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics, parseTypeParams)
 import AST.Skeleton hiding (Type, TypeParams (..))
 import Cli.Types
-import Control.Monad.Except
-import Control.Monad.Trans.Reader
 import Log (i)
 import Parser
 import ParseTree (srcPath)
@@ -49,6 +47,18 @@ import Util.Graph (forAMConcurrently)
 
 data Fallback
 
+data TreeDoesNotContainNameException =
+  TreeDoesNotContainNameException
+    Doc  -- ^ pprinted tree (used for simplifying purposes for not stacking
+         -- type parameters for `ScopeM` which brings plethora of confusion)
+    Range -- ^ location where the error has occurred
+    Text -- ^ variable name
+  deriving stock (Show)
+
+instance Exception TreeDoesNotContainNameException where
+  displayException (TreeDoesNotContainNameException tree range name) =
+    [i|Given tree does not contain #{name}: #{tree} (#{range})|]
+
 instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
   scopeForest reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
@@ -58,13 +68,8 @@ instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
     forAMConcurrently graph \(FindContract src (SomeLIGO dialect ligo) msg) -> do
       n <- modifyMVar counter (pure . (succ &&& id))
       reportProgress $ Progress (n % nContracts) [i|Adding scopes for #{srcPath src}|]
-      let
-        runLigoEnv = first singleton . flip runReader dialect . runExceptT . getEnv
-        fallbackErrorMsg e@(TreeDoesNotContainName _ r _) = (r, Error (ppToText e) [])
-        sf = case runLigoEnv ligo of
-          Left  e   -> FindContract src emptyScopeForest (msg ++ map fallbackErrorMsg e)
-          Right sf' -> FindContract src sf' msg
-      pure sf
+      sf <- liftIO $ flip runReaderT dialect $ getEnv ligo
+      pure $ FindContract src sf msg
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo
@@ -100,6 +105,8 @@ addReferences ligo = execState $ loopM_ addRef ligo
     addRefToDecl :: Range -> ScopedDecl -> ScopedDecl
     addRefToDecl r sd = sd { _sdRefs = r : _sdRefs sd }
 
+type ScopeM = ReaderT Lang IO
+
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv tree
   = addReferences tree
@@ -113,9 +120,9 @@ prepareTree
   -> ScopeM (LIGO (Scope ': Bool ': Range ': ParsedInfo))
 prepareTree
   = assignDecls
-  . wildcardToName
-  . unSeq
-  . unLetRec
+  <=< pure . wildcardToName
+  <=< unSeq
+  <=< unLetRec
 
 loop :: Functor f => (Cofree f a -> Cofree f a) -> Cofree f a -> Cofree f a
 loop go = aux
@@ -138,68 +145,61 @@ loopM go = aux
 -- with 'TreeDoesNotContainName'. This is also necessary so that we are able to
 -- use capabilities inside wildcards declarations, such as the definition of `x`
 -- in `let _ = x * x`.
-wildcardToName
-  :: ( Contains Range xs
-     , Eq (Product xs)
-     )
-  => LIGO xs
-  -> LIGO xs
+wildcardToName :: LIGO xs -> LIGO xs
 wildcardToName = loop go
   where
-    go (match -> Just (r, IsWildcard)) = make (r, NameDecl "_")
+    go (match -> Just (r, IsWildcard)) = fastMake r (NameDecl "_")
     go it = it
 
 unLetRec
-  :: ( Contains  Range     xs
+  :: ( Contains Range xs
      , Eq (Product xs)
      )
-  => LIGO xs
-  -> LIGO xs
-unLetRec = loop go
+  => LIGO xs -> ScopeM (LIGO xs)
+unLetRec = loopM go
   where
     go = \case
       (match -> Just (r, expr)) -> do
         case expr of
           Let (match -> Just (_, Seq decls)) body -> do
-            foldr joinWithLet body decls
-          _ -> make (r, expr)
+            foldrM joinWithLet body decls
+          _ -> pure $ fastMake r expr
 
       -- TODO: somehow append Unit to the end
       (match -> Just (r, RawContract decls)) ->
         case unconsFromEnd decls of
-          Nothing -> make (r, RawContract [])
-          Just (initDecls, lastDecl) -> foldr joinWithLet lastDecl initDecls
+          Nothing -> pure $ fastMake r (RawContract [])
+          Just (initDecls, lastDecl) -> foldrM joinWithLet lastDecl initDecls
 
-      it -> it
+      it -> pure it
 
 -- | Turn all 'Seq'uences of nodes into a tree of 'Let's, so that each
 -- subsequent node turned out to be in the scope of the previous one.
 unSeq
-  :: ( Contains  Range     xs
+  :: ( Contains Range xs
      , Eq (Product xs)
      )
-  => LIGO xs
-  -> LIGO xs
-unSeq = loop go
+  => LIGO xs -> ScopeM (LIGO xs)
+unSeq = loopM go
   where
     go = \case
       (match -> Just (r, Seq decls)) -> do
         case unconsFromEnd decls of
-          Nothing -> make (r, Seq [])
-          Just (initDecls, lastDecl) -> foldr joinWithLet lastDecl initDecls
+          Nothing -> pure $ fastMake r (Seq [])
+          Just (initDecls, lastDecl) -> foldrM joinWithLet lastDecl initDecls
 
-      it -> it
+      it -> pure it
 
 -- | Combine two tree nodes with 'Let', so that the second node turns out to be
 -- in the scope of the first node.
 joinWithLet
   :: ( Contains Range xs
-     , Apply Functor fs
      , Eq (Product xs)
+     , Apply Functor fs
      , Element Expr fs
      )
-  => Tree' fs xs -> Tree' fs xs -> Tree' fs xs
-joinWithLet decl body = make (r', Let decl body)
+  => Tree' fs xs -> Tree' fs xs -> ScopeM (Tree' fs xs)
+joinWithLet decl body = makeIO r' (Let decl body)
   where
     r' = putElem (getRange decl `merged` getRange body)
         $ extract body
@@ -207,7 +207,6 @@ joinWithLet decl body = make (r', Let decl body)
 assignDecls
   :: ( Contains  Range     xs
      , Contains [Text]     xs
-     , Contains  ShowRange xs
      , Contains  PreprocessedRange xs
      , Eq (Product xs)
      )
@@ -235,32 +234,32 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
         let l' :< decl' = decl
         let r'' = putElem (getRange body) $ putElem True $ modElem (imm <>) r'
         let l'' = putElem (getRange decl) $ putElem True l'
-        pure (make (r, Let (l'' :< decl') (r'' :< body')))
+        makeIO r (Let (l'' :< decl') (r'' :< body'))
 
       (match -> Just (r, Lambda args ty body)) -> do
         imms <- foldMapM getImmediateDecls args
         let r' :< body' = body
         let r'' = putElem True $ modElem (imms <>) r'
-        pure (make (r, Lambda args ty (r'' :< body')))
+        makeIO r (Lambda args ty (r'' :< body'))
 
       (match -> Just (r, Alt pat body)) -> do
         imms <- getImmediateDecls pat
         let r' :< body' = body
         let r'' = putElem True $ modElem (imms <>) r'
-        pure (make (r, Alt pat (r'' :< body')))
+        makeIO r (Alt pat (r'' :< body'))
 
       (match -> Just (r, BFunction True n params ty b)) -> do
         imms <- foldMapM getImmediateDecls params
         fDecl <- functionScopedDecl (getElem r) n params ty (Just b)
         let r' = putElem True $ modElem ((fDecl : imms) <>) r
-        pure (make (r', BFunction True n params ty b))
+        makeIO r' (BFunction True n params ty b)
 
       (match -> Just (r, BFunction False n params ty b)) -> do
         imms <- foldMapM getImmediateDecls params
         fDecl <- functionScopedDecl (getElem r) n params ty (Just b)
         let r' = putElem True (modElem (fDecl :) r)
         let b' = b & _extract %~ (putElem True . modElem (imms <>))
-        pure (make (r', BFunction False n params ty b'))
+        makeIO r' (BFunction False n params ty b')
 
       node@(match -> Just (r, BTypeDecl t tyVars b)) -> do
         imms <- getImmediateDecls node
@@ -271,7 +270,7 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
         let r' = putElem True $ modElem (imms' <>) r
         let tyVars' = tyVars & _Just . _extract %~ (putElem True . modElem (varDecls <>))
         let b' = b & _extract %~ (putElem True . modElem (varDecls <>))
-        pure (make (r', BTypeDecl t tyVars' b'))
+        makeIO r' (BTypeDecl t tyVars' b')
 
       (match -> Just (r, node@BVar{})) -> markAsScope r node
       (match -> Just (r, node@BConst{})) -> markAsScope r node
@@ -281,13 +280,12 @@ assignDecls = loopM go . fmap (\r -> [] :> False :> getRange r :> r)
       it -> pure it
 
     markAsScope range node = do
-      imms <- getImmediateDecls (make (range, node))
+      imms <- getImmediateDecls =<< makeIO range node
       let range' = putElem True (modElem (imms <>) range)
-      pure (make (range', node))
+      makeIO range' node
 
 functionScopedDecl
-  :: ( Eq (Product info)
-     , PPableLIGO info
+  :: ( PPableLIGO info
      , Contains PreprocessedRange info
      )
   => [Text] -- ^ documentation comments
@@ -297,7 +295,7 @@ functionScopedDecl
   -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM ScopedDecl
 functionScopedDecl docs nameNode paramNodes typ body = do
-  dialect <- lift ask
+  dialect <- ask
   (PreprocessedRange origin, name) <- getName nameNode
   let _vdsInitRange = getRange <$> body
       _vdsParams = pure $ parseParameters paramNodes
@@ -312,8 +310,7 @@ functionScopedDecl docs nameNode paramNodes typ body = do
     }
 
 valueScopedDecl
-  :: ( Eq (Product info)
-     , PPableLIGO info
+  :: ( PPableLIGO info
      , Contains PreprocessedRange info
      )
   => [Text] -- ^ documentation comments
@@ -322,7 +319,7 @@ valueScopedDecl
   -> Maybe (LIGO info) -- ^ initializer node
   -> ScopeM ScopedDecl
 valueScopedDecl docs nameNode typ body = do
-  dialect <- lift ask
+  dialect <- ask
   (PreprocessedRange origin, name) <- getName nameNode
   pure ScopedDecl
     { _sdName = name
@@ -338,8 +335,7 @@ valueScopedDecl docs nameNode typ body = do
     _vdsTspec = parseTypeDeclSpecifics <$> typ
 
 typeScopedDecl
-  :: ( Eq (Product info)
-     , PPableLIGO info
+  :: ( PPableLIGO info
      , Contains PreprocessedRange info
      )
   => [Text]  -- ^ documentation comments
@@ -347,7 +343,7 @@ typeScopedDecl
   -> LIGO info  -- ^ type body node
   -> ScopeM ScopedDecl
 typeScopedDecl docs nameNode body = do
-  dialect <- lift ask
+  dialect <- ask
   (PreprocessedRange origin, name) <- getTypeName nameNode
   pure ScopedDecl
     { _sdName = name
@@ -360,7 +356,7 @@ typeScopedDecl docs nameNode body = do
 
 typeVariableScopedDecl :: TypeParams -> ScopeM Scope
 typeVariableScopedDecl tyVars = do
-  dialect <- lift ask
+  dialect <- ask
   pure case tyVars of
     TypeParam var -> [mkTyVarScope dialect var]
     TypeParams vars -> map (mkTyVarScope dialect) vars
@@ -384,7 +380,7 @@ extractScopeTree
   :: LIGO (Scope : Bool : Range : xs)
   -> Tree' '[[]] '[Scope, Bool, Range]
 extractScopeTree ((decls :> visible :> r :> _) :< fs)
-  = make (decls :> visible :> r :> Nil, map extractScopeTree (toList fs))
+  = fastMake (decls :> visible :> r :> Nil) (map extractScopeTree (toList fs))
 
 -- 'Bool' in the node list denotes whether this part of a tree is a scope
 compressScopeTree
@@ -400,7 +396,7 @@ compressScopeTree = go
 
     go (only -> (decls :> True :> r :> Nil, rest)) =
       let rest' = rest >>= go
-      in [ make (decls :> r :> Nil, rest')
+      in [ fastMake (decls :> r :> Nil) rest'
          | not (null decls) || not (null rest')
          ]
 
@@ -419,7 +415,7 @@ extractScopeForest = uncurry ScopeForest . runWriter . mapM go
       let refs    = Map.keysSet extracted
       let r'      = refs :> r :> Nil
       ts' <- mapM go ts
-      return $ make (r', ts')
+      pure $ fastMake r' ts'
 
 getImmediateDecls
   :: ( PPableLIGO info
@@ -491,6 +487,8 @@ getImmediateDecls = \case
       BAttribute _ -> pure []
       BInclude _ -> pure []
       BImport _ _ -> pure []
+      BModuleDecl _ _ -> pure []
+      BModuleAlias _ _ -> pure []
 
   (match -> Just (_, pat)) -> case pat of
     TRecord typeFields -> foldMapM getImmediateDecls typeFields
@@ -513,51 +511,48 @@ getImmediateDecls = \case
 
 select
   :: ( PPableLIGO info
-     , MonadError ScopeError m
+     , MonadIO m
      , Contains PreprocessedRange info
      )
   => Text
-  -> [Visit RawLigoList (Product info) (WriterT [LIGO info] Catch)]
+  -> [Visit RawLigoList (Product info) (Writer [LIGO info])]
   -> LIGO info
   -> m (PreprocessedRange, Text)
 select what handlers t
   = maybe
-      (throwError $ TreeDoesNotContainName (pp t) (extractRange $ getElem @PreprocessedRange $ extract t) what)
+      (throwIO $ TreeDoesNotContainNameException (pp t) (extractRange $ getElem $ extract t) what)
       (return . (getElem . extract &&& ppToText))
-  $ either (const Nothing) listToMaybe
-  $ runCatch
-  $ execWriterT
-  $ visit handlers
+  $ listToMaybe
+  $ execWriter
+  $ visit' handlers
     t
   where
     extractRange (PreprocessedRange r) = r
 
 getName
-  :: ( Lattice  (Product info)
-     , PPableLIGO info
-     , MonadError ScopeError m
+  :: ( PPableLIGO info
+     , MonadIO m
      , Contains PreprocessedRange info
      )
   => LIGO info
   -> m (PreprocessedRange, Text)
 getName = select "name"
-  [ Visit \(r, NameDecl t) -> do
-      tell [make (r, Name t)]
-  , Visit \(r, Ctor t) -> do
-      tell [make (r, Name t)]
-  , Visit \(r, FieldName t) ->
-      tell [make (r, Name t)]
+  [ Visit \r (NameDecl t) ->
+      tell [fastMake r (Name t)]
+  , Visit \r (Ctor t) ->
+      tell [fastMake r (Name t)]
+  , Visit \r (FieldName t) ->
+      tell [fastMake r (Name t)]
   ]
 
 getTypeName
-  :: ( Lattice  (Product info)
-     , PPableLIGO info
-     , MonadError ScopeError m
+  :: ( PPableLIGO info
+     , MonadIO m
      , Contains PreprocessedRange info
      )
   => LIGO info
   -> m (PreprocessedRange, Text)
 getTypeName = select "type name"
-  [ Visit \(r, TypeName t) -> do
-      tell [make (r, TypeName t)]
+  [ Visit \r (TypeName t) ->
+      tell [fastMake r (TypeName t)]
   ]
