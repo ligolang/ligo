@@ -30,24 +30,6 @@ open H
   Various helpers are defined bellow.
 *)
 
-let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
-  let _ =
-    if eq_1 t (t_string ())
-    then ()
-    else if eq_1 t (t_nat ())
-    then ()
-    else if eq_1 t (t_int ())
-    then ()
-    else
-      raise.raise @@ typeclass_error loc
-        [
-          [t_string()] ;
-          [t_nat()] ;
-          [t_int()] ;
-        ]
-        [t] in
-  let default = t_unit () in
-  Simple_utils.Option.value ~default opt
 let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b ->
   if eq_2 (a , b) (t_string ())
   then t_string () else
@@ -82,34 +64,6 @@ let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b
                 [t_int();t_timestamp()] ;
               ]
               [a; b]
-
-let fold ~raise loc = typer_3 ~raise loc "FOLD" @@ fun body container init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc container) @@ Option.map_pair_or (get_t_list,get_t_set) container in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-(** FOLD_WHILE is a fold operation that takes an initial value of a certain type
-    and then iterates on it until a condition is reached. The auxillary function
-    that does the fold returns either boolean true or boolean false to indicate
-    whether the fold should continue or not. Necessarily then the initial value
-    must match the input parameter of the auxillary function, and the auxillary
-    should return type (bool * input) *)
-let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
-  let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let () = assert_eq_1 ~raise ~loc arg init in
-  let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
-  in init
-
-(* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
-let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
-  t_pair (t_bool ()) arg
-
-let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
-  (t_pair (t_bool ()) arg)
 
 let simple_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
   let () =
@@ -459,13 +413,7 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   ret_t
 
 let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
-  | C_FAILWITH            -> failwith_ ~raise loc ;
-    (* LOOPS *)
-  | C_FOLD_WHILE          -> fold_while ~raise loc ;
-  | C_FOLD_CONTINUE       -> continue ~raise loc ;
-  | C_FOLD_STOP           -> stop ~raise loc ;
-  | C_FOLD                -> fold ~raise loc ;
-    (* COMPARATOR *)
+  (* COMPARATOR *)
   | C_EQ                  -> comparator ~raise ~test loc "EQ" ;
   | C_NEQ                 -> comparator ~raise ~test loc "NEQ" ;
   | C_LT                  -> comparator ~raise ~test loc "LT" ;

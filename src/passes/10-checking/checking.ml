@@ -203,15 +203,15 @@ module Constant_types = struct
   let typer_of_ligo_type t =
     typer_of_ligo_type t
 
-
-  (* let of_ligo_type_no_tc t =
-   *   typer_of_ligo_type ~fail:false t *)
-  (* let of_ligo_type_no_tc_no_fail t =
-   *   typer_of_ligo_type ~add_tc:false t
-   * let of_ligo_type_no_fail t =
-   *   typer_of_ligo_type t *)
-
   let tbl : t = CTMap.of_list [
+                    (* LOOPS *)
+                    (C_FOLD_WHILE, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ()) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ())));
+                    (C_FOLD_CONTINUE, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ())));
+                    (C_FOLD_STOP, of_ligo_type @@ O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ())));
+                    (C_FOLD, typer_of_typers [
+                                 typer_of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable a_var ()) ()) (t_arrow (t_list (t_variable b_var ())) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()) ())));
+                                 typer_of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable a_var ()) ()) (t_arrow (t_set (t_variable b_var ())) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()) ())));
+                    ]);
                     (* MAP *)
                     (C_MAP_EMPTY, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_map (t_variable a_var ()) (t_variable b_var ())))));
                     (C_BIG_MAP_EMPTY, of_ligo_type @@ O.(t_for_all a_var () (t_for_all b_var () (t_big_map (t_variable a_var ()) (t_variable b_var ())))));
