@@ -262,11 +262,8 @@ module Constant_types = struct
   let b_var = O.Var.of_input_var "'b"
   let c_var = O.Var.of_input_var "'c"
 
-  let of_ligo_type t =
-    any_of [typer_of_ligo_type t]
-
   let of_type c t =
-    c, of_ligo_type t
+    c, any_of [typer_of_ligo_type t]
 
   let of_type_only_hangzhou c t =
     let _, t = of_type c t in
