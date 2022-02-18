@@ -62,7 +62,7 @@ const siteConfig = {
   //   ]
   // },
 
-  favicon: 'img/circle.svg',
+  favicon: 'img/favicon.svg',
 
   /* highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
