@@ -26,7 +26,7 @@ let%expect_test _ =
       9 |   | Sub si -> Sub si
 
     Invalid type(s).
-    Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "op". |}];
+    Expected: "( list (operation) * op )", but got: "op". |}];
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "--entry-point"; "unvalid"];
   [%expect {|
@@ -143,7 +143,7 @@ let%expect_test _ =
      11 |     return [list([]) as list<operation>, newStorage];
 
     Invalid type(s).
-    Expected: "nat", but got: "( nat * nat )". |} ] ;
+    Expected: "nat", but got: "( storage * nat )". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|
