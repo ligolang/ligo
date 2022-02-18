@@ -194,21 +194,6 @@ let test_originate_from_file ~protocol_version ~raise loc =
       let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
       (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
-let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
-  let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
-  let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
-  t_pair (t_chest ()) (t_chest_key ())
-
-let test_create_chest_key ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST_KEY" @@ fun chest time ->
-  let () = assert_eq_1 ~raise ~loc (t_chest ()) chest in
-  let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
-  (t_chest_key ())
-
-let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTANT" @@ fun hash_str tv_opt ->
-  let () = trace_option ~raise (expected_string loc hash_str) @@ get_t_string hash_str in
-  let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
-  ret_t
-
 type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> test:bool -> protocol_version:Ligo_proto.t -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
 
 let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
@@ -275,9 +260,10 @@ let rec typer_of_typers : typer list -> typer = fun typers ->
      | Some tv -> Some tv
      | None -> typer_of_typers typers ~error ~raise ~test ~protocol_version ~loc lst tv_opt
 
-let only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
+let only_supported_hangzhou c (typer : typer) : typer =
+  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
   match protocol_version with
-  | Ligo_proto.Hangzhou -> default
+  | Ligo_proto.Hangzhou -> typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt
   | Ligo_proto.Edo ->
     raise.raise @@ corner_case (
       Format.asprintf "Unsupported constant %a in protocol %s"
@@ -308,6 +294,13 @@ module Constant_types = struct
       (c, of_ligo_type ~name t)
     with
       (Failure _) -> (c, of_ligo_type t)
+
+  let mk_typer_only_hangzhou c t =
+    try
+      let name = Predefined.Tree_abstraction.pseudo_module_to_string c in
+      (c, only_supported_hangzhou c @@ of_ligo_type ~name t)
+    with
+      (Failure _) -> (c, only_supported_hangzhou c @@ of_ligo_type t)
 
   let typer_of_ligo_type_no_tc t =
     typer_of_ligo_type ~add_tc:false ~fail:false t
@@ -598,6 +591,9 @@ module Constant_types = struct
                     mk_typer C_TEST_BAKER_ACCOUNT O.(t_arrow (t_pair (t_string ()) (t_key ())) (t_arrow (t_option (t_mutez ())) (t_unit ()) ()) ());
                     mk_typer C_TEST_REGISTER_DELEGATE O.(t_arrow (t_key_hash ()) (t_unit ()) ());
                     mk_typer C_TEST_BAKE_UNTIL_N_CYCLE_END O.(t_arrow (t_nat ()) (t_unit ()) ());
+                    mk_typer_only_hangzhou C_TEST_CREATE_CHEST O.(t_arrow (t_bytes ()) (t_arrow (t_nat ()) (t_pair (t_chest ()) (t_chest_key ())) ()) ());
+                    mk_typer_only_hangzhou C_TEST_CREATE_CHEST_KEY O.(t_arrow (t_chest ()) (t_arrow (t_nat ()) (t_chest_key ()) ()) ());
+                    mk_typer_only_hangzhou C_GLOBAL_CONSTANT O.(t_for_all a_var () (t_arrow (t_string ()) (t_variable a_var ()) ()));
                     (* CUSTOM *)
                     (* BLOCKCHAIN *)
                     (C_SAPLING_VERIFY_UPDATE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; sapling_verify_update ~raise loc));
@@ -606,12 +602,8 @@ module Constant_types = struct
                     (C_TEST_TO_CONTRACT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_contract ~raise loc));
                     (C_TEST_TO_ENTRYPOINT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_entrypoint ~raise loc));
                     (C_TEST_ORIGINATE_FROM_FILE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; test_originate_from_file ~protocol_version ~raise loc));
-                    (C_TEST_CREATE_CHEST, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; only_supported_hangzhou ~raise ~protocol_version C_TEST_CREATE_CHEST @@ test_create_chest ~raise loc));
-                    (C_TEST_CREATE_CHEST_KEY, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; only_supported_hangzhou ~raise ~protocol_version C_TEST_CREATE_CHEST_KEY @@ test_create_chest_key ~raise loc));
-                    (C_GLOBAL_CONSTANT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; only_supported_hangzhou ~raise ~protocol_version C_GLOBAL_CONSTANT @@ test_global_constant ~raise loc));
                   ]
 end
-
 
 let constant_typers ~raise ~test ~protocol_version loc c =
   match CTMap.find_opt c Constant_types.tbl with
