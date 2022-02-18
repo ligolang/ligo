@@ -175,29 +175,11 @@ let test_to_entrypoint ~raise loc = typer_2_opt ~raise loc "TEST_TO_ENTRYPOINT" 
   let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
   t_contract tv'
 
-let test_originate_from_file ~protocol_version ~raise loc =
-  match (protocol_version : Ligo_proto.t) with
-  | Edo ->
-    typer_4 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
-      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
-  | Hangzhou ->
-    typer_5 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint views storage balance ->
-      let tlist = trace_option ~raise (expected_list loc views) @@ get_t_list views in
-      let () = trace_option ~raise (expected_string loc tlist) @@ assert_t_string tlist in
-      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
-
 module O = Ast_typed
 
 type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> test:bool -> protocol_version:Ligo_proto.t -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
 
+(* Given a ligo type, construct the corresponding typer *)
 let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
   ignore test; ignore protocol_version;
   let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
@@ -241,6 +223,10 @@ let rec any_of : typer list -> typer = fun typers ->
      | Some tv -> Some tv
      | None -> any_of typers ~error ~raise ~test ~protocol_version ~loc lst tv_opt
 
+let per_protocol (typer_per_protocol : Ligo_proto.t -> typer) : typer  =
+  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
+  typer_per_protocol protocol_version ~error ~raise ~test ~protocol_version ~loc lst tv_opt
+
 (* This prevents wraps a typer, allowing usage only in Hangzhou *)
 let only_supported_hangzhou c (typer : typer) : typer =
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
@@ -274,6 +260,9 @@ module Constant_types = struct
 
   let any_of' c ts =
     (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
+
+  let per_protocol c f =
+    (c, per_protocol @@ fun protocol -> any_of [typer_of_ligo_type (f protocol)])
 
   let tbl : t = CTMap.of_list [
                     (* LOOPS *)
@@ -574,6 +563,9 @@ module Constant_types = struct
                     of_type_only_hangzhou C_TEST_CREATE_CHEST O.(t_arrow (t_bytes ()) (t_arrow (t_nat ()) (t_pair (t_chest ()) (t_chest_key ())) ()) ());
                     of_type_only_hangzhou C_TEST_CREATE_CHEST_KEY O.(t_arrow (t_chest ()) (t_arrow (t_nat ()) (t_chest_key ()) ()) ());
                     of_type_only_hangzhou C_GLOBAL_CONSTANT O.(t_for_all a_var () (t_arrow (t_string ()) (t_variable a_var ()) ()));
+                    per_protocol C_TEST_ORIGINATE_FROM_FILE (function
+                        | Edo -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ())
+                        | Hangzhou -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_list (t_string ())) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ()) ()));
                     (* CUSTOM *)
                     (* BLOCKCHAIN *)
                     (C_SAPLING_VERIFY_UPDATE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; sapling_verify_update ~raise loc));
@@ -581,7 +573,6 @@ module Constant_types = struct
                     (* TEST*)
                     (C_TEST_TO_CONTRACT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_contract ~raise loc));
                     (C_TEST_TO_ENTRYPOINT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_entrypoint ~raise loc));
-                    (C_TEST_ORIGINATE_FROM_FILE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; test_originate_from_file ~protocol_version ~raise loc));
                   ]
 end
 
