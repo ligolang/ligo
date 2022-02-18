@@ -24,17 +24,11 @@ type getBalance = {owner: address, callback: contract<nat>};
 type getTotalSupply = {callback: contract<nat>};
 
 type action =
-
-  ["Transfer",
-   transfer]|
-  ["Approve",
-   approve]|
-  ["GetAllowance",
-   getAllowance]|
-  ["GetBalance",
-   getBalance]|
-  ["GetTotalSupply",
-   getTotalSupply];
+  | ["Transfer", transfer]
+  | ["Approve", approve]
+  | ["GetAllowance", getAllowance]
+  | ["GetBalance", getBalance]
+  | ["GetTotalSupply", getTotalSupply];
 
 let transfer = 
   ([p, s]: 
