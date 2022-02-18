@@ -313,23 +313,10 @@ let transpile_expression =
   Command.basic ~summary ~readme
   (f <$> req_syntax <*> expression "" <*> req_syntax <*> dialect <*> display_format)
 
-let transpile_types =
-  let f new_syntax new_dialect display_format () =
-    return_result ~return @@
-    Api.Transpile.types new_syntax new_dialect display_format
-  in
-  let summary   = "print types for operations (BETA)." in
-  let readme () = "This sub-command transpiles the LIGO types of operations to \
-                  syntax.Please use at your own risk." in
-  Command.basic ~summary ~readme
-  (f <$> req_syntax <*> dialect <*> display_format)
-
-
 let transpile_group =
   Command.group ~summary:"transpile ligo code from a syntax to another (BETA)" @@
   [ "contract"  , transpile_contract;
-    "expression", transpile_expression;
-    "types", transpile_types;]
+    "expression", transpile_expression;]
 
 
 (** Mutate commands *)

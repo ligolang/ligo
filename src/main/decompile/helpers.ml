@@ -10,11 +10,6 @@ let specialise_and_print_expression_pascaligo (dialect : Syntax_types.pascaligo_
   let source =(Parsing.Pascaligo.pretty_print_expression cst)
   in source
 
-let specialise_and_print_type_expression_pascaligo dialect expression =
-  let cst = Tree_abstraction.Pascaligo.decompile_type_expression ?dialect expression in
-  let source =(Parsing.Pascaligo.pretty_print_type_expr cst)
-  in source
-
 let specialise_and_print_cameligo m =
   let cst = Tree_abstraction.Cameligo.decompile_module m in
   let source = (Parsing.Cameligo.pretty_print cst)
@@ -23,11 +18,6 @@ let specialise_and_print_cameligo m =
 let specialise_and_print_expression_cameligo expression =
   let cst = Tree_abstraction.Cameligo.decompile_expression expression in
   let source = (Parsing.Cameligo.pretty_print_expression cst)
-  in source
-
-let specialise_and_print_type_expression_cameligo expression =
-  let cst = Tree_abstraction.Cameligo.decompile_type_expression expression in
-  let source = (Parsing.Cameligo.pretty_print_type_expr cst)
   in source
 
 let specialise_and_print_reasonligo m =
@@ -40,13 +30,6 @@ let specialise_and_print_expression_reasonligo expression =
     Tree_abstraction.Reasonligo.decompile_expression expression in
   let source =
     (Parsing.Reasonligo.pretty_print_expression cst)
-  in source
-
-let specialise_and_print_type_expression_reasonligo expression =
-  let cst =
-    Tree_abstraction.Reasonligo.decompile_type_expression expression in
-  let source =
-    (Parsing.Reasonligo.pretty_print_type_expr cst)
   in source
 
 let specialise_and_print_jsligo m =
@@ -71,13 +54,6 @@ let specialise_and_print_expression_jsligo expression =
     b
   ) ~init:b cst
 
-let specialise_and_print_type_expression_jsligo expression =
-  let cst =
-    Tree_abstraction.Jsligo.decompile_type_expression expression in
-  let source =
-    (Parsing.Jsligo.pretty_print_type_expr cst) in
-  source
-
 
 let specialise_and_print (syntax : Syntax_types.t) source : Buffer.t =
   let specialise_and_print =
@@ -94,12 +70,4 @@ let specialise_and_print_expression (syntax : Syntax_types.t) source =
   | CameLIGO   -> specialise_and_print_expression_cameligo
   | ReasonLIGO -> specialise_and_print_expression_reasonligo
   | JsLIGO     -> specialise_and_print_expression_jsligo in
-  specialise_and_print source
-
-let specialise_and_print_type_expression (syntax : Syntax_types.t) source =
-  let specialise_and_print = match syntax with
-    PascaLIGO dialect -> specialise_and_print_type_expression_pascaligo dialect
-  | CameLIGO   -> specialise_and_print_type_expression_cameligo
-  | ReasonLIGO -> specialise_and_print_type_expression_reasonligo
-  | JsLIGO     -> specialise_and_print_type_expression_jsligo in
   specialise_and_print source
