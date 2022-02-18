@@ -212,8 +212,8 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
         match tv_opt with
         | Some t ->
            Simple_utils.Trace.try_with (fun ~raise ->
-               H.infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Foo (loc, t', t)) table lamb_type t)
-             (function `Foo (loc, t', t) -> raise.raise (`Foo (loc, t', t))
+               H.infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) table lamb_type t)
+             (function `Outer_error (loc, t', t) -> raise.raise (`Outer_error (loc, t', t))
                      | `Typer_assert_equal e -> raise.raise (`Typer_assert_equal e)
                      | `Typer_not_matching e -> raise.raise (`Typer_not_matching e))
         | None -> table in
@@ -221,17 +221,11 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
       let _, tv = Ast_typed.Helpers.destruct_arrows_n lamb_type (List.length lst) in
       Some tv)
     (function
-     | `Foo (loc, t', t) ->
-        if fail then
-          raise.raise (assert_equal loc t' t)
-        else
-          None
+     | `Outer_error (loc, t', t) ->
+        if fail then raise.raise (assert_equal loc t' t) else None
      | _ ->
         let arrs, _ = O.Helpers.destruct_arrows lamb_type in
-        let () = if add_tc then
-                   error := `TC arrs :: ! error
-                 else
-                   () in
+        if add_tc then error := `TC arrs :: ! error else ();
         None)
 
 let typer_of_old_typer (typer : protocol_version:_ -> raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
