@@ -1,0 +1,46 @@
+JsLIGO tests
+
+operators:  
++ - * / %
+= += -= *= /= %=
+== != >= <= > <
+
+types:
+option<int>
+
+[x, ...xs]
+
+[] all preprocessor directives 
+#include ... preprocessor ...
+#import
+#if else elif
+#endif
+#define
+#undef
+#error
+
+namespace
+export
+
+
+if else 
+switch case default
+
+
+for of
+
+while 
+
+
+michelson interop
+
+[x] export + type
+[] export + let
+[] export + module decl
+[] export + module alias
+
+let 
+const
+
+
+return
