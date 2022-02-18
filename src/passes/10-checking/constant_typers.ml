@@ -252,9 +252,7 @@ let only_supported_hangzhou c (typer : typer) : typer =
     )
 
 module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
-
 type t = typer CTMap.t
-let names : (string * O.type_expression) list ref = ref []
 
 module Constant_types = struct
 
@@ -262,34 +260,17 @@ module Constant_types = struct
   let b_var = O.Var.of_input_var "'b"
   let c_var = O.Var.of_input_var "'c"
 
-  let of_ligo_type ?name t =
-    let () = match name with
-      | None -> ()
-      | Some name -> names := (name, t) :: ! names in
+  let of_ligo_type t =
     any_of [typer_of_ligo_type t]
 
   let mk_typer c t =
-    try
-      let name = Predefined.Tree_abstraction.pseudo_module_to_string c in
-      (c, of_ligo_type ~name t)
-    with
-      (Failure _) -> (c, of_ligo_type t)
+    (c, of_ligo_type t)
 
   let mk_typer_only_hangzhou c t =
-    try
-      let name = Predefined.Tree_abstraction.pseudo_module_to_string c in
-      (c, only_supported_hangzhou c @@ of_ligo_type ~name t)
-    with
-      (Failure _) -> (c, only_supported_hangzhou c @@ of_ligo_type t)
+    (c, only_supported_hangzhou c @@ of_ligo_type t)
 
   let typer_of_ligo_type_no_tc t =
     typer_of_ligo_type ~add_tc:false ~fail:false t
-
-  let typer_of_ligo_type ?name t =
-    let () = match name with
-      | None -> ()
-      | Some name -> names := (name, t) :: ! names in
-    typer_of_ligo_type t
 
   let any_of' c ts =
     (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
@@ -422,10 +403,10 @@ module Constant_types = struct
                     mk_typer C_CREATE_CONTRACT O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow (t_variable b_var ()) (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())));
                     mk_typer C_NOW O.(t_timestamp ());
                     mk_typer C_CHAIN_ID O.(t_chain_id ());
-                    (C_INT, any_of [
-                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_int ()) ());
-                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
-                    ]);
+                    any_of' C_INT [
+                        O.(t_arrow (t_nat ()) (t_int ()) ());
+                        O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
+                      ];
                     mk_typer C_UNIT O.(t_unit ());
                     mk_typer C_NEVER O.(t_for_all a_var () (t_arrow (t_never ()) (t_variable a_var ()) ()));
                     mk_typer C_TRUE O.(t_bool ());
