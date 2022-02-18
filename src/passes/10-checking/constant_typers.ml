@@ -211,11 +211,7 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
                                       table, lamb_type) in
         match tv_opt with
         | Some t ->
-           Simple_utils.Trace.try_with (fun ~raise ->
-               H.infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) table lamb_type t)
-             (function `Outer_error (loc, t', t) -> raise.raise (`Outer_error (loc, t', t))
-                     | `Typer_assert_equal e -> raise.raise (`Typer_assert_equal e)
-                     | `Typer_not_matching e -> raise.raise (`Typer_not_matching e))
+           H.infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) table lamb_type t
         | None -> table in
       let lamb_type = H.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
       let _, tv = Ast_typed.Helpers.destruct_arrows_n lamb_type (List.length lst) in
