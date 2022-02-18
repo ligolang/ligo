@@ -23,7 +23,6 @@ let rec type_module ~raise ~test ~init_context ~protocol_version (p:I.module_) :
       List.fold ~f:aux ~init:(init_context, []) p in
   List.rev lst
 
-
 and type_declaration' : raise: typer_error raise -> protocol_version:protocol_version -> test: bool -> context -> I.declaration Location.wrap -> context * O.declaration Location.wrap =
 fun ~raise ~protocol_version ~test c d ->
 let loc = d.location in
@@ -308,9 +307,9 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
        | { type_content = T_for_all _ ; type_meta = _; orig_var=_ ; location=_} ->
           (* TODO: This is some inference, and we should reconcile it with the inference pass. *)
           let avs, type_ = O.Helpers.destruct_for_alls tv' in
-          let table = Helpers.infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
+          let table = Inference.infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
           let lamb = make_e ~location:e.location (E_variable name) tv' in
-          return_e @@ Helpers.build_type_insts ~raise ~loc:e.location lamb table avs
+          return_e @@ Inference.build_type_insts ~raise ~loc:e.location lamb table avs
        | _ ->
           return (E_variable name) tv')
   | E_literal Literal_unit ->
@@ -381,14 +380,14 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let (avs, c_tv, sum_tv) = trace_option ~raise (unbound_constructor constructor e.location) @@
         Context.get_constructor_parametric constructor context in
       let expr' = type_expression' ~raise ~test ~protocol_version context element in
-      let table = Helpers.infer_type_application ~raise ~loc:element.location Helpers.TMap.empty c_tv expr'.type_expression in
+      let table = Inference.infer_type_application ~raise ~loc:element.location Inference.TMap.empty c_tv expr'.type_expression in
       let table = match tv_opt with
-        | Some tv_opt -> Helpers.infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) table sum_tv tv_opt
+        | Some tv_opt -> Inference.infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) table sum_tv tv_opt
         | None -> table in
       let () = trace_option ~raise (not_annotated e.location) @@
-                 if (List.for_all avs ~f:(fun v -> Helpers.TMap.mem v table)) then Some () else None in
-      let c_tv = Helpers.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table c_tv in
-      let sum_tv = Helpers.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table sum_tv in
+                 if (List.for_all avs ~f:(fun v -> Inference.TMap.mem v table)) then Some () else None in
+      let c_tv = Inference.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table c_tv in
+      let sum_tv = Inference.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table sum_tv in
       let () = assert_type_expression_eq ~raise expr'.location (c_tv, expr'.type_expression) in
       return (E_constructor {constructor; element=expr'}) sum_tv
   (* Record *)
@@ -577,9 +576,9 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
      (* Remove and save prefix for_alls in the lambda *)
      let avs, lamb_type = O.Helpers.destruct_for_alls lamb.type_expression in
      (* Try to infer/check types for the type variables *)
-     let table = Helpers.infer_type_applications ~raise ~loc:e.location lamb_type (List.map ~f:(fun v -> v.type_expression) args) tv_opt in
+     let table = Inference.infer_type_applications ~raise ~loc:e.location lamb_type (List.map ~f:(fun v -> v.type_expression) args) tv_opt in
      (* Build lambda with type instantiations *)
-     let lamb = Helpers.build_type_insts ~raise ~loc:e.location lamb table avs in
+     let lamb = Inference.build_type_insts ~raise ~loc:e.location lamb table avs in
      (* Re-build term (i.e. re-add applications) *)
      let app = trace_option ~raise (should_be_a_function_type lamb.type_expression ilamb) @@
                  O.Helpers.build_applications_opt lamb args in

@@ -194,14 +194,16 @@ let test_originate_from_file ~protocol_version ~raise loc =
       let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
       (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
+module O = Ast_typed
+
 type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> test:bool -> protocol_version:Ligo_proto.t -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
 
 let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
   ignore test; ignore protocol_version;
   let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
   Simple_utils.Trace.try_with (fun ~raise ->
-      let table = infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) lamb_type lst tv_opt in
-      let lamb_type = H.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
+      let table = Inference.infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) lamb_type lst tv_opt in
+      let lamb_type = Inference.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
       let _, tv = Ast_typed.Helpers.destruct_arrows_n lamb_type (List.length lst) in
       Some tv)
     (function
