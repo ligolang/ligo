@@ -200,19 +200,7 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
   ignore test; ignore protocol_version;
   let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
   Simple_utils.Trace.try_with (fun ~raise ->
-      let table =
-        let table, lamb_type = List.fold_left lst ~init:(H.TMap.empty, lamb_type)
-                                 ~f:(fun ((table, lamb_type) : _ H.TMap.t * O.type_expression) matched ->
-                                   match lamb_type.type_content with
-                                   | T_arrow { type1 ; type2 } ->
-                                      H.infer_type_application ~raise ~loc table type1 matched, type2
-                                   | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ |
-                                      T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
-                                      table, lamb_type) in
-        match tv_opt with
-        | Some t ->
-           H.infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) table lamb_type t
-        | None -> table in
+      let table = infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) lamb_type lst tv_opt in
       let lamb_type = H.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
       let _, tv = Ast_typed.Helpers.destruct_arrows_n lamb_type (List.length lst) in
       Some tv)

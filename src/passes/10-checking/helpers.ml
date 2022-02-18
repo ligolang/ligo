@@ -149,7 +149,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
    `t1 -> ... -> tn -> t`, we get `t'1 -> ... > t'n -> t'`. It works
    by matching iteratively on each type: `t1` with `t'1`, ..., `tn`
    with `t'n`, and finally `t` with `t'`. *)
-let infer_type_applications ~raise ~loc type_matched args tv_opt =
+let infer_type_applications ~raise ~loc ?(default_error = (fun loc t t' -> assert_equal loc t' t)) type_matched args tv_opt =
   let table, type_matched = List.fold_left args ~init:(TMap.empty, type_matched) ~f:(fun ((table, type_matched) : _ TMap.t * O.type_expression) matched ->
                   match type_matched.type_content with
                   | T_arrow { type1 ; type2 } ->
@@ -157,7 +157,7 @@ let infer_type_applications ~raise ~loc type_matched args tv_opt =
                   | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
                      table, type_matched) in
   match tv_opt with
-  | Some t -> infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> assert_equal loc t' t) table type_matched t
+  | Some t -> infer_type_application ~raise ~loc ~default_error table type_matched t
   | None -> table
 
 (* This wraps a `∀ a . (∀ b . (∀ c . some_type))` with type instantiations,
