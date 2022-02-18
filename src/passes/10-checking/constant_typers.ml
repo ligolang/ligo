@@ -61,7 +61,7 @@ let rec record_comparator ~raise ~test : Location.t -> string -> typer = fun loc
     get_t_record a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_record b in
   let aux a b : type_expression =
-    comparator ~s ~raise ~test loc [a.associated_type;b.associated_type] None
+    comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
@@ -75,7 +75,7 @@ and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     get_t_sum a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_sum b in
   let aux a b : type_expression =
-    comparator ~s ~raise ~test loc [a.associated_type;b.associated_type] None
+    comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
@@ -88,7 +88,7 @@ and list_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> 
     trace_option ~raise (comparator_composed loc a_lst) @@
     get_t_list a_lst in
   let b = trace_option ~raise (expected_option loc b_lst) @@ get_t_list b_lst in
-  comparator ~s ~raise ~test loc [a;b] None
+  comparator ~cmp:s ~raise ~test loc [a;b] None
 
 and set_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_set b_set ->
   let () =
@@ -98,7 +98,7 @@ and set_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a_set) @@
     get_t_set a_set in
   let b = trace_option ~raise (expected_option loc b_set) @@ get_t_set b_set in
-  comparator ~s ~raise ~test loc [a;b] None
+  comparator ~cmp:s ~raise ~test loc [a;b] None
 
 and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
   let () =
@@ -108,8 +108,8 @@ and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a_map) @@
     get_t_map a_map in
   let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_map b_map in
-  let _ = comparator ~s ~raise ~test loc [a_key;b_key] None in
-  let _ = comparator ~s ~raise ~test loc [a_value;b_value] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_key;b_key] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
 and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
@@ -120,8 +120,8 @@ and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s 
     trace_option ~raise (comparator_composed loc a_map) @@
     get_t_big_map a_map in
   let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_big_map b_map in
-  let _ = comparator ~s ~raise ~test loc [a_key;b_key] None in
-  let _ = comparator ~s ~raise ~test loc [a_value;b_value] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_key;b_key] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
 and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
@@ -132,24 +132,24 @@ and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -
     trace_option ~raise (comparator_composed loc a_opt) @@
     get_t_option a_opt in
   let b = trace_option ~raise (expected_option loc b_opt) @@ get_t_option b_opt in
-  comparator ~s ~raise ~test loc [a;b] None
+  comparator ~cmp:s ~raise ~test loc [a;b] None
 
-and comparator ~s ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~raise loc s @@ fun a b ->
+and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~raise loc cmp @@ fun a b ->
   if test
   then
-    bind_exists ~raise @@ List.Ne.of_list [list_comparator ~test loc s [a;b] None;
-                                           set_comparator ~test loc s [a;b] None;
-                                           map_comparator ~test loc s [a;b] None;
-                                           simple_comparator loc s [a;b] None;
-                                           option_comparator ~test loc s [a;b] None;
-                                           record_comparator ~test loc s [a;b] None;
-                                           sum_comparator ~test loc s [a;b] None;
-                                           big_map_comparator ~test loc s [a;b] None]
+    bind_exists ~raise @@ List.Ne.of_list [list_comparator ~test loc cmp [a;b] None;
+                                           set_comparator ~test loc cmp [a;b] None;
+                                           map_comparator ~test loc cmp [a;b] None;
+                                           simple_comparator loc cmp [a;b] None;
+                                           option_comparator ~test loc cmp [a;b] None;
+                                           record_comparator ~test loc cmp [a;b] None;
+                                           sum_comparator ~test loc cmp [a;b] None;
+                                           big_map_comparator ~test loc cmp [a;b] None]
   else
-    bind_exists ~raise @@ List.Ne.of_list [simple_comparator loc s [a;b] None;
-                                           option_comparator ~test loc s [a;b] None;
-                                           record_comparator ~test loc s [a;b] None;
-                                           sum_comparator ~test loc s [a;b] None]
+    bind_exists ~raise @@ List.Ne.of_list [simple_comparator loc cmp [a;b] None;
+                                           option_comparator ~test loc cmp [a;b] None;
+                                           record_comparator ~test loc cmp [a;b] None;
+                                           sum_comparator ~test loc cmp [a;b] None]
 
 let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE" @@ fun tr state ->
   let singleton_tr = trace_option ~raise (expected_sapling_transaction loc tr) @@ get_t_sapling_transaction tr in
@@ -238,17 +238,17 @@ let typer_of_comparator (typer : raise:_ -> test:_ -> _ -> O.type_expression lis
   ignore error; ignore protocol_version;
   Some (typer ~raise ~test loc lst tv_opt)
 
+let raise_of_errors ~raise ~loc lst = function
+  | [] ->
+     raise.raise @@ (corner_case "Cannot find a suitable type for expression")
+  | xs ->
+     let tc = List.filter_map ~f:(function `TC v -> Some v) xs in
+     raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev tc)) lst
+
 let rec typer_of_typers : typer list -> typer = fun typers ->
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
   match typers with
-  | [] -> (
-     match ! error with
-      | [] ->
-         raise.raise @@ (corner_case "putt")
-      | xs ->
-         let tc = List.filter_map ~f:(function `TC v -> Some v) xs in
-         raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev tc)) lst
-  )
+  | [] -> raise_of_errors ~raise ~loc lst (! error)
   | typer :: typers ->
      match typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
      | Some tv -> Some tv
@@ -539,12 +539,12 @@ module Constant_types = struct
                     (C_LSL, of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
                     (C_LSR, of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
                     (* COMPARATOR *)
-                    (C_EQ, typer_of_comparator (comparator ~s:"EQ"));
-                    (C_NEQ, typer_of_comparator (comparator ~s:"NEQ"));
-                    (C_LT, typer_of_comparator (comparator ~s:"LT"));
-                    (C_GT, typer_of_comparator (comparator ~s:"GT"));
-                    (C_LE, typer_of_comparator (comparator ~s:"LE"));
-                    (C_GE, typer_of_comparator (comparator ~s:"GE"));
+                    (C_EQ, typer_of_comparator (comparator ~cmp:"EQ"));
+                    (C_NEQ, typer_of_comparator (comparator ~cmp:"NEQ"));
+                    (C_LT, typer_of_comparator (comparator ~cmp:"LT"));
+                    (C_GT, typer_of_comparator (comparator ~cmp:"GT"));
+                    (C_LE, typer_of_comparator (comparator ~cmp:"LE"));
+                    (C_GE, typer_of_comparator (comparator ~cmp:"GE"));
                     (* TEST *)
                     mk_typer C_TEST_ORIGINATE O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_triplet (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_michelson_code ()) (t_int ())) ()) ()) ())));
                     mk_typer C_TEST_BOOTSTRAP_CONTRACT O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_unit ()) ()) ()) ())));
