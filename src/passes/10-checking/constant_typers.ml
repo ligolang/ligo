@@ -210,7 +210,7 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
      | `Outer_error (loc, t', t) ->
         if fail then raise.raise (assert_equal loc t' t) else None
      | _ ->
-        let arrs, _ = O.Helpers.destruct_arrows lamb_type in
+        let arrs, _ = O.Helpers.destruct_arrows_n lamb_type (List.length lst) in
         if add_tc then error := `TC arrs :: ! error else ();
         None)
 
