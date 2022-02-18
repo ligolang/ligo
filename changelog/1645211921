@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1544'
+title: Use LIGO representation and polymorphism to type (most of) constants
+type: internal
