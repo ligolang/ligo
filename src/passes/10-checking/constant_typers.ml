@@ -336,7 +336,6 @@ module Constant_types = struct
                     of_type C_SET_ITER O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ()));
                     of_type C_SET_FOLD O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
                     of_type C_SET_FOLD_DESC O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
-                    (* ADHOC POLY *)
                     any_of' C_SIZE [
                         O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
                         O.(t_arrow (t_bytes ()) (t_nat ()) ());
@@ -563,7 +562,6 @@ module Constant_types = struct
                     of_type C_TEST_EVAL O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_michelson_code ()) ()));
                     of_type C_TEST_COMPILE_META_VALUE O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_michelson_code ()) ()));
                     of_type C_TEST_DECOMPILE O.(t_for_all a_var () (t_arrow (t_michelson_code ()) (t_variable a_var ()) ()));
-                    (* of_type C_TEST_TO_CONTRACT O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) _ ()))); *)
                     of_type C_TEST_TO_TYPED_ADDRESS O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_contract (t_variable a_var ())) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ())));
                     of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT O.(t_for_all a_var () (t_arrow (t_contract (t_variable a_var ())) (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_test_exec_result ()) ()) ()) ()));
                     of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN O.(t_for_all a_var () (t_arrow (t_contract (t_variable a_var ())) (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ()) ()));
