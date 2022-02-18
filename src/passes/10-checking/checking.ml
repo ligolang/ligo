@@ -925,6 +925,4 @@ and untype_module : O.module_ -> I.module_ = fun p -> List.map ~f:(Location.map 
 
 let untype_program = untype_module
 
-let get_table () =
-  let v = Constant_typers.Constant_types.names in
-  ! v
+let get_table () = ! Constant_typers.names

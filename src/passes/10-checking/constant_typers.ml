@@ -30,41 +30,6 @@ open H
   Various helpers are defined bellow.
 *)
 
-let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b ->
-  if eq_2 (a , b) (t_string ())
-  then t_string () else
-  if eq_2 (a , b) (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_2 (a , b) (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_2 (a , b) (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if eq_2 (a , b) (t_mutez ())
-  then t_mutez () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_int () else
-  if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
-  then t_timestamp () else
-    raise.raise @@ typeclass_error loc
-              [ 
-                [t_string();t_string()] ;
-                [t_bls12_381_g1();t_bls12_381_g1()] ;
-                [t_bls12_381_g2();t_bls12_381_g2()] ;
-                [t_bls12_381_fr();t_bls12_381_fr()] ;
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_mutez();t_mutez()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-                [t_timestamp();t_int()] ;
-                [t_int();t_timestamp()] ;
-              ]
-              [a; b]
-
 let simple_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
   let () =
     Assert.assert_true ~raise (uncomparable_types loc a b) @@
@@ -96,7 +61,7 @@ let rec record_comparator ~raise ~test : Location.t -> string -> typer = fun loc
     get_t_record a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_record b in
   let aux a b : type_expression =
-    comparator ~raise ~test loc s [a.associated_type;b.associated_type] None
+    comparator ~s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
@@ -110,7 +75,7 @@ and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     get_t_sum a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_sum b in
   let aux a b : type_expression =
-    comparator ~raise ~test loc s [a.associated_type;b.associated_type] None
+    comparator ~s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
@@ -123,7 +88,7 @@ and list_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> 
     trace_option ~raise (comparator_composed loc a_lst) @@
     get_t_list a_lst in
   let b = trace_option ~raise (expected_option loc b_lst) @@ get_t_list b_lst in
-  comparator ~raise ~test loc s [a;b] None
+  comparator ~s ~raise ~test loc [a;b] None
 
 and set_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_set b_set ->
   let () =
@@ -133,7 +98,7 @@ and set_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a_set) @@
     get_t_set a_set in
   let b = trace_option ~raise (expected_option loc b_set) @@ get_t_set b_set in
-  comparator ~raise ~test loc s [a;b] None
+  comparator ~s ~raise ~test loc [a;b] None
 
 and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
   let () =
@@ -143,8 +108,8 @@ and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a_map) @@
     get_t_map a_map in
   let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_map b_map in
-  let _ = comparator ~raise ~test loc s [a_key;b_key] None in
-  let _ = comparator ~raise ~test loc s [a_value;b_value] None in
+  let _ = comparator ~s ~raise ~test loc [a_key;b_key] None in
+  let _ = comparator ~s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
 and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
@@ -155,8 +120,8 @@ and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s 
     trace_option ~raise (comparator_composed loc a_map) @@
     get_t_big_map a_map in
   let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_big_map b_map in
-  let _ = comparator ~raise ~test loc s [a_key;b_key] None in
-  let _ = comparator ~raise ~test loc s [a_value;b_value] None in
+  let _ = comparator ~s ~raise ~test loc [a_key;b_key] None in
+  let _ = comparator ~s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
 and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
@@ -167,9 +132,9 @@ and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -
     trace_option ~raise (comparator_composed loc a_opt) @@
     get_t_option a_opt in
   let b = trace_option ~raise (expected_option loc b_opt) @@ get_t_option b_opt in
-  comparator ~raise ~test loc s [a;b] None
+  comparator ~s ~raise ~test loc [a;b] None
 
-and comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
+and comparator ~s ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~raise loc s @@ fun a b ->
   if test
   then
     bind_exists ~raise @@ List.Ne.of_list [list_comparator ~test loc s [a;b] None;
@@ -229,22 +194,6 @@ let test_originate_from_file ~protocol_version ~raise loc =
       let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
       (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
-let test_baker_account ~raise loc = typer_2 ~raise loc "TEST_BAKER_ACCOUNT" @@ fun acc opt ->
-  let bkamt = trace_option ~raise (expected_option loc opt) @@ get_t_option opt in
-  let () = trace_option ~raise (expected_mutez loc bkamt) @@ get_t_mutez bkamt in
-  let sk, pk = trace_option ~raise (expected_pair loc acc) @@ get_t_pair acc in
-  let () = trace_option ~raise (expected_string loc sk) @@ get_t_string sk in
-  let () = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
-  (t_unit ())
-
-let test_register_delegate ~raise loc = typer_1 ~raise loc "TEST_REGISTER_DELEGATE" @@ fun pkh ->
-  let () = trace_option ~raise (expected_key_hash loc pkh) @@ assert_t_key_hash pkh in
-  t_unit ()
-
-let test_bake_until_n_cycle_end ~raise loc = typer_1 ~raise loc "TEST_BAKE_UNTIL_N_CYCLE_END" @@ fun n ->
-  let () = trace_option ~raise (expected_nat loc n) @@ assert_t_nat n in
-  t_unit ()
-
 let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
   let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
   let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
@@ -300,10 +249,15 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
                    () in
         None)
 
-let typer_of_old_typer (typer : O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
+let typer_of_old_typer (typer : protocol_version:_ -> raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
-  ignore error; ignore raise; ignore loc; ignore test; ignore protocol_version;
-  Some (typer lst tv_opt)
+  ignore error;
+  Some (typer ~protocol_version ~raise ~test loc lst tv_opt)
+
+let typer_of_comparator (typer : raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
+  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
+  ignore error; ignore protocol_version;
+  Some (typer ~raise ~test loc lst tv_opt)
 
 let rec typer_of_typers : typer list -> typer = fun typers ->
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
@@ -321,11 +275,22 @@ let rec typer_of_typers : typer list -> typer = fun typers ->
      | Some tv -> Some tv
      | None -> typer_of_typers typers ~error ~raise ~test ~protocol_version ~loc lst tv_opt
 
-module Constant_types = struct
-  module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
+let only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
+  match protocol_version with
+  | Ligo_proto.Hangzhou -> default
+  | Ligo_proto.Edo ->
+    raise.raise @@ corner_case (
+      Format.asprintf "Unsupported constant %a in protocol %s"
+        PP.constant' c
+        (Ligo_proto.variant_to_string protocol_version)
+    )
 
-  type t = typer CTMap.t
-  let names : (string * O.type_expression) list ref = ref []
+module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
+
+type t = typer CTMap.t
+let names : (string * O.type_expression) list ref = ref []
+
+module Constant_types = struct
 
   let a_var = O.Var.of_input_var "'a"
   let b_var = O.Var.of_input_var "'b"
@@ -492,6 +457,19 @@ module Constant_types = struct
                     mk_typer C_SPLIT_TICKET O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ())))) ()) ()));
                     mk_typer C_JOIN_TICKET O.(t_for_all a_var () (t_arrow (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ()))) (t_option (t_ticket (t_variable a_var ()))) ()));
                     (* MATH *)
+                    (C_POLYMORPHIC_ADD, typer_of_typers [
+                             typer_of_ligo_type O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                            ]);
                     (C_ADD, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
                              typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
                              typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
@@ -574,8 +552,12 @@ module Constant_types = struct
                     (C_LSL, of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
                     (C_LSR, of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
                     (* COMPARATOR *)
-                    (* (C_EQ, fun ~error ~raise ~test ~protocol_version ~loc ->
-                     *        typer_of_old_typer (comparator ~raise ~test loc "EQ") ~error ~raise ~test ~protocol_version ~loc); *)
+                    (C_EQ, typer_of_comparator (comparator ~s:"EQ"));
+                    (C_NEQ, typer_of_comparator (comparator ~s:"NEQ"));
+                    (C_LT, typer_of_comparator (comparator ~s:"LT"));
+                    (C_GT, typer_of_comparator (comparator ~s:"GT"));
+                    (C_LE, typer_of_comparator (comparator ~s:"LE"));
+                    (C_GE, typer_of_comparator (comparator ~s:"GE"));
                     (* TEST *)
                     mk_typer C_TEST_ORIGINATE O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_triplet (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_michelson_code ()) (t_int ())) ()) ()) ())));
                     mk_typer C_TEST_BOOTSTRAP_CONTRACT O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_unit ()) ()) ()) ())));
@@ -613,56 +595,31 @@ module Constant_types = struct
                     mk_typer C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_arrow (t_address ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_test_exec_result ()) ()) ()) ());
                     mk_typer C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_arrow (t_address ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_int ()) ()) ()) ());
                     mk_typer C_TEST_SET_BIG_MAP O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_int ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ())));
+                    mk_typer C_TEST_BAKER_ACCOUNT O.(t_arrow (t_pair (t_string ()) (t_key ())) (t_arrow (t_option (t_mutez ())) (t_unit ()) ()) ());
+                    mk_typer C_TEST_REGISTER_DELEGATE O.(t_arrow (t_key_hash ()) (t_unit ()) ());
+                    mk_typer C_TEST_BAKE_UNTIL_N_CYCLE_END O.(t_arrow (t_nat ()) (t_unit ()) ());
+                    (* CUSTOM *)
+                    (* BLOCKCHAIN *)
+                    (C_SAPLING_VERIFY_UPDATE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; sapling_verify_update ~raise loc));
+                    (C_SAPLING_EMPTY_STATE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; sapling_empty_state ~raise loc));
+                    (* TEST*)
+                    (C_TEST_TO_CONTRACT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_contract ~raise loc));
+                    (C_TEST_TO_ENTRYPOINT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_entrypoint ~raise loc));
+                    (C_TEST_ORIGINATE_FROM_FILE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; test_originate_from_file ~protocol_version ~raise loc));
+                    (C_TEST_CREATE_CHEST, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; only_supported_hangzhou ~raise ~protocol_version C_TEST_CREATE_CHEST @@ test_create_chest ~raise loc));
+                    (C_TEST_CREATE_CHEST_KEY, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; only_supported_hangzhou ~raise ~protocol_version C_TEST_CREATE_CHEST_KEY @@ test_create_chest_key ~raise loc));
+                    (C_GLOBAL_CONSTANT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore test; only_supported_hangzhou ~raise ~protocol_version C_GLOBAL_CONSTANT @@ test_global_constant ~raise loc));
                   ]
-  let find c = CTMap.find_opt c tbl
 end
 
 
-let rec constant_typers ~raise ~test ~protocol_version loc c =
-  match Constant_types.find c with
-  | Some xs ->
+let constant_typers ~raise ~test ~protocol_version loc c =
+  match CTMap.find_opt c Constant_types.tbl with
+  | Some typer ->
      fun lst tv_opt ->
      let error = ref [] in
-     (match xs ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
+     (match typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
       | Some tv -> tv
-      | None -> failwith "oops")
+      | None -> raise.raise (corner_case @@ Format.asprintf "Cannot type constant %a" PP.constant' c))
   | _ ->
-  match c with
-  (* COMPARATOR *)
-  | C_EQ                  -> comparator ~raise ~test loc "EQ" ;
-  | C_NEQ                 -> comparator ~raise ~test loc "NEQ" ;
-  | C_LT                  -> comparator ~raise ~test loc "LT" ;
-  | C_GT                  -> comparator ~raise ~test loc "GT" ;
-  | C_LE                  -> comparator ~raise ~test loc "LE" ;
-  | C_GE                  -> comparator ~raise ~test loc "GE" ;
-  (* BLOCKCHAIN *)
-  | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
-  | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
-  (* TEST *)
-  | C_TEST_TO_CONTRACT -> test_to_contract ~raise loc ;
-  | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
-  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
-
-  | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
-  | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
-
-  | C_TEST_BAKER_ACCOUNT -> test_baker_account ~raise loc;
-  | C_TEST_REGISTER_DELEGATE -> test_register_delegate ~raise loc;
-  | C_TEST_BAKE_UNTIL_N_CYCLE_END -> test_bake_until_n_cycle_end ~raise loc;
-
-  | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
-
-  (* JsLIGO *)
-  | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
-  | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
-
-and only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
-  match protocol_version with
-  | Ligo_proto.Hangzhou -> default
-  | Ligo_proto.Edo ->
-    raise.raise @@ corner_case (
-      Format.asprintf "Unsupported constant %a in protocol %s"
-        PP.constant' c
-        (Ligo_proto.variant_to_string protocol_version)
-    )
-
+     raise.raise (corner_case @@ Format.asprintf "Typer not implemented for constant %a" PP.constant' c)
