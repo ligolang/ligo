@@ -26,8 +26,7 @@ let%expect_test _ =
       9 |   | Sub si -> Sub si
 
     Invalid type(s).
-    Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "
-    sum[Add -> int , Sub -> int]". |}];
+    Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "op". |}];
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "--entry-point"; "unvalid"];
   [%expect {|
@@ -96,7 +95,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s).
-    Expected: "( int * string * bool )", but got: "( int * string )". |} ] ;
+    Expected: "( int * string * bool )", but got: "toto". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|
@@ -106,7 +105,7 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , c -> bool , d -> string]", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
+    Expected: "tata", but got: "toto". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_5.mligo" ] ;
   [%expect {|
@@ -134,7 +133,7 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
+    Expected: "toto", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.jsligo" ] ;
   [%expect {|
@@ -205,7 +204,7 @@ let%expect_test _ =
       3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
 
     Invalid type(s).
-    Expected: "int", but got: "option ('a)". |} ]
+    Expected: "option", but got: "option ('a)". |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;

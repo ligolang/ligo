@@ -323,8 +323,8 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression expected
-        Ast_typed.PP.type_expression actual
+        Ast_typed.PP.type_expression_orig expected
+        Ast_typed.PP.type_expression_orig actual
     | `Typer_expected_record (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid argument.@.Expected a record, but got an argument of type \"%a\". @]"

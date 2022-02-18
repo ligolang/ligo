@@ -117,13 +117,20 @@ and type_injection ppf {language;injection;parameters} =
   ignore language;
   fprintf ppf "%s%a" (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters
 
-
 and type_expression ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
   if Option.is_some (Combinators.get_t_bool te) then
     fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
   else
     fprintf ppf "%a" type_content te.type_content
+
+and type_expression_orig ppf (te : type_expression) : unit =
+  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
+  match te.orig_var with
+  | None ->
+     type_expression ppf te
+  | Some v ->
+     Ast_core.(PP.type_expression ppf (t_variable v ()))
 
 let rec expression ppf (e : expression) =
   fprintf ppf "%a"
