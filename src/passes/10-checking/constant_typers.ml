@@ -245,14 +245,14 @@ let raise_of_errors ~raise ~loc lst = function
      let tc = List.filter_map ~f:(function `TC v -> Some v) xs in
      raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev tc)) lst
 
-let rec typer_of_typers : typer list -> typer = fun typers ->
+let rec any_of : typer list -> typer = fun typers ->
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
   match typers with
   | [] -> raise_of_errors ~raise ~loc lst (! error)
   | typer :: typers ->
      match typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
      | Some tv -> Some tv
-     | None -> typer_of_typers typers ~error ~raise ~test ~protocol_version ~loc lst tv_opt
+     | None -> any_of typers ~error ~raise ~test ~protocol_version ~loc lst tv_opt
 
 let only_supported_hangzhou c (typer : typer) : typer =
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
@@ -280,7 +280,7 @@ module Constant_types = struct
     let () = match name with
       | None -> ()
       | Some name -> names := (name, t) :: ! names in
-    typer_of_typers [typer_of_ligo_type t]
+    any_of [typer_of_ligo_type t]
 
   let mk_typer c t =
     try
@@ -310,33 +310,39 @@ module Constant_types = struct
                     mk_typer C_FOLD_WHILE O.(t_for_all a_var () (t_arrow (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ()) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()));
                     mk_typer C_FOLD_CONTINUE O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ()));
                     mk_typer C_FOLD_STOP O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ()));
-                    (C_FOLD, typer_of_typers [
+                    (C_FOLD, any_of [
                                  typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable a_var ()) ()) (t_arrow (t_list (t_variable b_var ())) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()) ())));
                                  typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable a_var ()) ()) (t_arrow (t_set (t_variable b_var ())) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()) ())));
                     ]);
                     (* MAP *)
                     mk_typer C_MAP_EMPTY O.(t_for_all a_var () (t_for_all b_var () (t_map (t_variable a_var ()) (t_variable b_var ()))));
                     mk_typer C_BIG_MAP_EMPTY O.(t_for_all a_var () (t_for_all b_var () (t_big_map (t_variable a_var ()) (t_variable b_var ()))));
-                    (C_MAP_ADD, typer_of_typers [typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                 typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                ]);
-                    (C_MAP_REMOVE, typer_of_typers [typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
-                                    typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
-                                ]);
-                    (C_MAP_UPDATE, typer_of_typers [typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                    typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                                ]);
+                    (C_MAP_ADD, any_of [
+                                    typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                                    typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                    ]);
+                    (C_MAP_REMOVE, any_of [
+                                       typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
+                                       typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
+                    ]);
+                    (C_MAP_UPDATE, any_of [
+                                       typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                                       typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                    ]);
                     mk_typer C_MAP_GET_AND_UPDATE O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())));
                     mk_typer C_BIG_MAP_GET_AND_UPDATE O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())));
-                    (C_MAP_FIND_OPT, typer_of_typers [typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
-                                      typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
-                                      ]);
-                    (C_MAP_FIND, typer_of_typers [typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
-                                  typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
-                                 ]);
-                    (C_MAP_MEM, typer_of_typers [typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
-                                 typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
-                                ]);
+                    (C_MAP_FIND_OPT, any_of [
+                                         typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
+                                         typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
+                    ]);
+                    (C_MAP_FIND, any_of [
+                                     typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
+                                     typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
+                    ]);
+                    (C_MAP_MEM, any_of [
+                                    typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
+                                    typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
+                    ]);
                     (C_MAP_MAP, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable c_var ())) ()) ())))));
                     (C_MAP_ITER, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ()))));
                     (C_MAP_FOLD, of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_arrow (t_pair (t_variable c_var ()) (t_pair (t_variable a_var ()) (t_variable b_var ()))) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_arrow (t_variable c_var ()) (t_variable c_var ()) ()) ()) ())))));
@@ -361,21 +367,21 @@ module Constant_types = struct
                     mk_typer C_SET_FOLD O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
                     mk_typer C_SET_FOLD_DESC O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
                     (* ADHOC POLY *)
-                    (C_SIZE, typer_of_typers [
+                    (C_SIZE, any_of [
                                  typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
                                  typer_of_ligo_type O.(t_arrow (t_bytes ()) (t_nat ()) ());
                                  typer_of_ligo_type O.(t_arrow (t_string ()) (t_nat ()) ());
                                  typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
                                  typer_of_ligo_type O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
-                             ]);
-                    (C_CONCAT, typer_of_typers [
+                    ]);
+                    (C_CONCAT, any_of [
                                    typer_of_ligo_type ~name:"String.concat" O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
                                    typer_of_ligo_type ~name:"Bytes.concat"  O.(t_arrow (t_bytes ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ());
-                               ]);
-                    (C_SLICE, typer_of_typers [
+                    ]);
+                    (C_SLICE, any_of [
                                   typer_of_ligo_type ~name:"String.sub" O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_string ()) (t_string ()) ()) ()) ());
                                   typer_of_ligo_type ~name:"Bytes.sub" O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ()) ());
-                              ]);
+                    ]);
                     mk_typer C_BYTES_PACK O.(t_for_all a_var () (t_arrow (t_variable a_var ()) (t_bytes ()) ()));
                     mk_typer C_BYTES_UNPACK O.(t_for_all a_var () (t_arrow (t_bytes ()) (t_option (t_variable a_var ())) ()));
                     (* CRYPTO *)
@@ -398,14 +404,14 @@ module Constant_types = struct
                     mk_typer C_ASSERT_SOME_WITH_ERROR O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_unit ()) ()) ()));
                     mk_typer C_ASSERT_NONE O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_unit ()) ()));
                     mk_typer C_ASSERT_NONE_WITH_ERROR O.(t_for_all a_var () (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_unit ()) ()) ()));
-                    (C_FAILWITH, typer_of_typers [
-                                  typer_of_ligo_type_no_tc @@ O.(t_arrow (t_string ()) (t_unit ()) ());
-                                  typer_of_ligo_type_no_tc @@ O.(t_arrow (t_nat ()) (t_unit ()) ());
-                                  typer_of_ligo_type_no_tc @@ O.(t_arrow (t_int ()) (t_unit ()) ());
-                                  typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_string ()) (t_variable a_var ()) ()));
-                                  typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_nat ()) (t_variable a_var ()) ()));
-                                  typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_int ()) (t_variable a_var ()) ()));
-                                 ]);
+                    (C_FAILWITH, any_of [
+                                     typer_of_ligo_type_no_tc @@ O.(t_arrow (t_string ()) (t_unit ()) ());
+                                     typer_of_ligo_type_no_tc @@ O.(t_arrow (t_nat ()) (t_unit ()) ());
+                                     typer_of_ligo_type_no_tc @@ O.(t_arrow (t_int ()) (t_unit ()) ());
+                                     typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_string ()) (t_variable a_var ()) ()));
+                                     typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_nat ()) (t_variable a_var ()) ()));
+                                     typer_of_ligo_type O.(t_for_all a_var () (t_arrow (t_int ()) (t_variable a_var ()) ()));
+                    ]);
                     mk_typer C_AMOUNT O.(t_mutez ());
                     mk_typer C_BALANCE O.(t_mutez ());
                     mk_typer C_LEVEL O.(t_nat ());
@@ -427,9 +433,10 @@ module Constant_types = struct
                     mk_typer C_CREATE_CONTRACT O.(t_for_all a_var () (t_for_all b_var () (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow (t_variable b_var ()) (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())));
                     mk_typer C_NOW O.(t_timestamp ());
                     mk_typer C_CHAIN_ID O.(t_chain_id ());
-                    (C_INT, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_nat ()) (t_int ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
-                            ]);
+                    (C_INT, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_int ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
+                    ]);
                     mk_typer C_UNIT O.(t_unit ());
                     mk_typer C_NEVER O.(t_for_all a_var () (t_arrow (t_never ()) (t_variable a_var ()) ()));
                     mk_typer C_TRUE O.(t_bool ());
@@ -444,100 +451,111 @@ module Constant_types = struct
                     mk_typer C_SPLIT_TICKET O.(t_for_all a_var () (t_arrow (t_ticket (t_variable a_var ())) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ())))) ()) ()));
                     mk_typer C_JOIN_TICKET O.(t_for_all a_var () (t_arrow (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ()))) (t_option (t_ticket (t_variable a_var ()))) ()));
                     (* MATH *)
-                    (C_POLYMORPHIC_ADD, typer_of_typers [
-                             typer_of_ligo_type O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
-                            ]);
-                    (C_ADD, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
-                            ]);
-                    (C_MUL, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_nat ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_int ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                            ]);
-                    (C_SUB, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_timestamp ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                            ]);
-                    (C_EDIV, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_option (t_pair (t_nat ()) (t_nat ()))) ()) ());
-                              typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                              typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                              typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                              typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_option (t_pair (t_nat ()) (t_mutez ()))) ()) ());
-                              typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_option (t_pair (t_mutez ()) (t_mutez ()))) ()) ());
-                            ]);
-                    (C_DIV, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ());
-                            ]);
-                    (C_MOD, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                            ]);
-                    (C_ABS, of_ligo_type O.(t_arrow (t_int ()) (t_nat ()) ()));
-                    (C_NEG, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_int ()) (t_int ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_int ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ());
-                             ]);
+                    (C_POLYMORPHIC_ADD, any_of [
+                                            typer_of_ligo_type O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                                            typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                    ]);
+                    (C_ADD, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                    ]);
+                    (C_MUL, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_nat ()) (t_bls12_381_fr ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_int ()) (t_bls12_381_fr ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                    ]);
+                    (C_SUB, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_timestamp ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                    ]);
+                    (C_EDIV, any_of [
+                                 typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_option (t_pair (t_nat ()) (t_nat ()))) ()) ());
+                                 typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                                 typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                                 typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
+                                 typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_option (t_pair (t_nat ()) (t_mutez ()))) ()) ());
+                                 typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_option (t_pair (t_mutez ()) (t_mutez ()))) ()) ());
+                    ]);
+                    (C_DIV, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ());
+                    ]);
+                    (C_MOD, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                    ]);
+                    mk_typer C_ABS O.(t_arrow (t_int ()) (t_nat ()) ());
+                    (C_NEG, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_int ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_int ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ());
+                    ]);
                     (* LOGIC *)
-                    (C_NOT, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bool ()) (t_bool ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_int ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_int ()) ());
-                            ]);
-                    (C_OR, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                            typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                           ]);
-                    (C_AND, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                            ]);
-                    (C_XOR, typer_of_typers [typer_of_ligo_type O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                             typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                            ]);
-                    (C_LSL, of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
-                    (C_LSR, of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ()));
+                    (C_NOT, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_bool ()) (t_bool ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_int ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_int ()) ());
+                    ]);
+                    (C_OR, any_of [
+                               typer_of_ligo_type O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                               typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                    ]);
+                    (C_AND, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                    ]);
+                    (C_XOR, any_of [
+                                typer_of_ligo_type O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
+                                typer_of_ligo_type O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                    ]);
+                    mk_typer C_LSL O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                    mk_typer C_LSR O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
                     (* COMPARATOR *)
                     (C_EQ, typer_of_comparator (comparator ~cmp:"EQ"));
                     (C_NEQ, typer_of_comparator (comparator ~cmp:"NEQ"));
