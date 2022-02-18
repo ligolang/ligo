@@ -33,7 +33,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ; "--protocol"; "edo" ] ;
-  [%expect{|
+  [%expect {|
     File "../../test/contracts/sapling.mligo", line 8, characters 14-19:
       7 |
       8 | let main (tr, store : parameter * storage) : return =
