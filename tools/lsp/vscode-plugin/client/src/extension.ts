@@ -4,8 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-// import {exec} from 'childe_process'
-
+import { extname } from 'path';
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -38,7 +37,10 @@ export async function activate(context: vscode.ExtensionContext) {
   compileButton.command = compileCommandId;
   compileButton.text = "Compile";
   context.subscriptions.push(compileButton);
-  compileButton.show();
+
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateCompileButton));
+  context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateCompileButton));
+  updateCompileButton();
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
@@ -74,4 +76,12 @@ export function deactivate(): Thenable<void> | undefined {
     return undefined;
   }
   return client.stop();
+}
+
+function updateCompileButton() {
+  const ext = extname(vscode.window.activeTextEditor.document.uri.fsPath);
+  if (ext == '.ligo' || ext == '.mligo' || ext == '.religo')
+    compileButton.show();
+  else
+    compileButton.hide();
 }

@@ -127,8 +127,8 @@
             },
             {
                 "command": "ligo.compileContract",
-                "title": "LIGO: Compile current ligo contract",
-                "description": "Compiles current ligo contract and prints output to the console"
+                "title": "LIGO: Compile current LIGO contract",
+                "description": "Compiles the current LIGO contract and prints output to the console"
             }
         ]
     },

@@ -5,6 +5,7 @@ import {
   LanguageClient,
 } from 'vscode-languageclient/node'
 
+import getLigoPath from './updateLigo'
 
 const ligoOutput = vscode.window.createOutputChannel('LIGO compiler')
 
@@ -48,7 +49,8 @@ const LigoCommands = {
     name: 'ligo.compileContract',
     run: async () => {
       const path = vscode.window.activeTextEditor.document.uri.fsPath;
-      exec(`ligo compile contract ${path}`, (error, stdout, stderr) => {
+      const ligoPath = getLigoPath();
+      exec(`${ligoPath} compile contract ${path}`, (error, stdout, stderr) => {
         if (error) {
           ligoOutput.appendLine(`error: ${error.message}`);
         } else if (stderr) {
