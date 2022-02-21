@@ -151,15 +151,6 @@ and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~rai
                                            record_comparator ~test loc cmp [a;b] None;
                                            sum_comparator ~test loc cmp [a;b] None]
 
-let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE" @@ fun tr state ->
-  let singleton_tr = trace_option ~raise (expected_sapling_transaction loc tr) @@ get_t_sapling_transaction tr in
-  let singleton_state = trace_option ~raise (expected_sapling_state loc state) @@ get_t_sapling_state state in
-  let () = assert_eq_1 ~raise ~loc singleton_tr singleton_state in
-  (t_option (t_pair (t_int ()) state))
-
-let sapling_empty_state ~raise loc = typer_0 ~raise loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
-  trace_option ~raise (not_annotated loc) @@ tv_opt
-
 let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
   let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
                        get_t_typed_address t in
@@ -558,10 +549,10 @@ module Constant_types = struct
                         | Edo -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ())
                         | Hangzhou -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_list (t_string ())) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ()) ()));
                     of_type C_TEST_TO_ENTRYPOINT O.(t_for_all a_var Type (t_for_all b_var Type (t_for_all c_var Type (t_arrow (t_string ()) (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_contract (t_variable c_var ())) ()) ()))));
+                    (* SAPLING *)
+                    of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
+                    of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_arrow (t_sapling_transaction (t_variable a_var ())) (t_arrow (t_sapling_state (t_variable a_var ())) (t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))) ()) ()));
                     (* CUSTOM *)
-                    (* BLOCKCHAIN *)
-                    (C_SAPLING_VERIFY_UPDATE, typer_of_old_typer sapling_verify_update);
-                    (C_SAPLING_EMPTY_STATE, typer_of_old_typer sapling_empty_state);
                     (* TEST*)
                     (C_TEST_TO_CONTRACT, typer_of_old_typer test_to_contract);
                   ]
