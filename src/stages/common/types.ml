@@ -21,7 +21,8 @@ type expression_variable = Var.t [@@deriving yojson, equal, compare]
 type type_variable       = Var.t [@@deriving yojson, equal, compare]
 type module_variable     = Var.t [@@deriving yojson, equal, compare]
 
-type kind = unit [@@deriving yojson,equal,compare]
+type kind = | Type
+            | Singleton [@@deriving yojson,equal,compare]
 
 type label = Label of string
 let label_to_yojson (Label l) = `List [`String "Label"; `String l]

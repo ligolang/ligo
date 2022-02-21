@@ -44,7 +44,7 @@ match Location.unwrap d with
       type_expression' ~test ~protocol_version c expr in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux expr.type_expression (List.rev av) in
     let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
@@ -62,7 +62,7 @@ match Location.unwrap d with
       type_expression' ~test ~protocol_version ~tv_opt:tv env expr in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux expr.type_expression (List.rev av) in
     let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
@@ -609,7 +609,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
      let binder = var in
      let rec aux t = function
        | [] -> t
-       | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
      let type_expression = aux rhs.type_expression (List.rev av) in
      let rhs = { rhs with type_expression } in
      let e' = Context.add_value context binder rhs.type_expression in
@@ -625,7 +625,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
     let rhs = type_expression' ~raise ~protocol_version ~test ~tv_opt:tv context rhs in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux rhs.type_expression (List.rev av) in
     let rhs = { rhs with type_expression } in
     let binder  = var in

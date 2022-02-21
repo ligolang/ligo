@@ -1100,7 +1100,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
             fun param type_ ->
               let (param,ploc) = w_split param in
               let ty_binder = mk_var ~loc:ploc param in
-              t_abstraction ~loc:(Location.lift region) ty_binder () type_
+              t_abstraction ~loc:(Location.lift region) ty_binder Type type_
           in
           List.fold_right ~f:aux ~init:rhs lst in
       let ast =
