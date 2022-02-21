@@ -496,13 +496,6 @@ module Constant_types = struct
                       ];
                     of_type C_LSL O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
                     of_type C_LSR O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                    (* COMPARATOR *)
-                    (C_EQ, typer_of_comparator (comparator ~cmp:"EQ"));
-                    (C_NEQ, typer_of_comparator (comparator ~cmp:"NEQ"));
-                    (C_LT, typer_of_comparator (comparator ~cmp:"LT"));
-                    (C_GT, typer_of_comparator (comparator ~cmp:"GT"));
-                    (C_LE, typer_of_comparator (comparator ~cmp:"LE"));
-                    (C_GE, typer_of_comparator (comparator ~cmp:"GE"));
                     (* TEST *)
                     of_type C_TEST_ORIGINATE O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_triplet (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_michelson_code ()) (t_int ())) ()) ()) ())));
                     of_type C_TEST_BOOTSTRAP_CONTRACT O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_unit ()) ()) ()) ())));
@@ -553,6 +546,13 @@ module Constant_types = struct
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
                     of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_arrow (t_sapling_transaction (t_variable a_var ())) (t_arrow (t_sapling_state (t_variable a_var ())) (t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))) ()) ()));
                     (* CUSTOM *)
+                    (* COMPARATOR *)
+                    (C_EQ, typer_of_comparator (comparator ~cmp:"EQ"));
+                    (C_NEQ, typer_of_comparator (comparator ~cmp:"NEQ"));
+                    (C_LT, typer_of_comparator (comparator ~cmp:"LT"));
+                    (C_GT, typer_of_comparator (comparator ~cmp:"GT"));
+                    (C_LE, typer_of_comparator (comparator ~cmp:"LE"));
+                    (C_GE, typer_of_comparator (comparator ~cmp:"GE"));
                     (* TEST*)
                     (C_TEST_TO_CONTRACT, typer_of_old_typer test_to_contract);
                   ]
