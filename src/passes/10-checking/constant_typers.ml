@@ -187,10 +187,10 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
         if add_tc then error := `TC arrs :: ! error else ();
         None)
 
-let typer_of_old_typer (typer : protocol_version:_ -> raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
+let typer_of_old_typer (typer : raise:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
-  ignore error;
-  Some (typer ~protocol_version ~raise ~test loc lst tv_opt)
+  ignore error; ignore test; ignore protocol_version;
+  Some (typer ~raise loc lst tv_opt)
 
 let typer_of_comparator (typer : raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
   fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
@@ -560,11 +560,10 @@ module Constant_types = struct
                     of_type C_TEST_TO_ENTRYPOINT O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_string ()) (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_contract (t_variable c_var ())) ()) ()))));
                     (* CUSTOM *)
                     (* BLOCKCHAIN *)
-                    (C_SAPLING_VERIFY_UPDATE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; sapling_verify_update ~raise loc));
-                    (C_SAPLING_EMPTY_STATE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; sapling_empty_state ~raise loc));
+                    (C_SAPLING_VERIFY_UPDATE, typer_of_old_typer sapling_verify_update);
+                    (C_SAPLING_EMPTY_STATE, typer_of_old_typer sapling_empty_state);
                     (* TEST*)
-                    (C_TEST_TO_CONTRACT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_contract ~raise loc));
-                    (C_TEST_TO_ENTRYPOINT, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; test_to_entrypoint ~raise loc));
+                    (C_TEST_TO_CONTRACT, typer_of_old_typer test_to_contract);
                   ]
 end
 
