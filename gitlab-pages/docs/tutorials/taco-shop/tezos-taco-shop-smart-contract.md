@@ -681,7 +681,7 @@ function assert_string_failure (const res : test_exec_result ; const expected : 
 } with
     case res of [
     | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal (actual, expected))
-    | Fail (Other) -> failwith ("contract failed for an unknown reason")
+    | Fail (_) -> failwith ("contract failed for an unknown reason")
     | Success (_) -> failwith ("bad price check")
     ]
 
@@ -739,7 +739,7 @@ let assert_string_failure (res : test_exec_result) (expected : string) : unit =
   let expected = Test.eval expected in
   match res with
   | Fail (Rejected (actual,_)) -> assert (Test.michelson_equal actual expected)
-  | Fail (Other) -> failwith "contract failed for an unknown reason"
+  | Fail _ -> failwith "contract failed for an unknown reason"
   | Success _ -> failwith "bad price check"
 
 let test =
@@ -794,7 +794,7 @@ let assert_string_failure = ((res,expected) : (test_exec_result, string)) : unit
   let expected = Test.eval (expected) ;
   switch (res) {
   | Fail (Rejected (actual,_)) => assert (Test.michelson_equal (actual, expected))
-  | Fail (Other) => failwith ("contract failed for an unknown reason")
+  | Fail _ => failwith ("contract failed for an unknown reason")
   | Success (_) => failwith ("bad price check")
   }
 } ;
@@ -853,7 +853,8 @@ let assert_string_failure = ([res,expected] : [test_exec_result, string]) : unit
     Fail: (x: test_exec_error) => (
       match (x, {
         Rejected: (x:[michelson_code,address]) => assert (Test.michelson_equal (x[0], expected_bis)),
-        Other: (_:unit) => failwith ("contract failed for an unknown reason")
+        Balance_too_low: (_: { contract_too_low : address , contract_balance : tez , spend_request : tez }) => failwith ("contract failed for an unknown reason"),
+        Other: (_:string) => failwith ("contract failed for an unknown reason")
       })),
     Success: (_:nat) => failwith ("bad price check")
   } );

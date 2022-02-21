@@ -28,24 +28,32 @@ A type for code that is compiled to Michelson.
 <SyntaxTitle syntax="pascaligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Other
+| Balance_too_low of record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
+| Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Other
+| Balance_too_low of { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+| Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type test_exec_error =
   Rejected(michelson_program, address)
-| Other
+| Balance_too_low of { contract_too_low : address , contract_balance : tez , spend_request : tez }
+| Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 type test_exec_error =
   ["Rejected", michelson_program, address]
-| ["Other"]
+| ["Balance_too_low", { contract_too_low : address , contract_balance : tez , spend_request : tez }]
+| ["Other", string]
 </SyntaxTitle>
-A test error.
+A test error:
+  - The `Rejected` case means a contract (second constructor argument) failed with some data (first constructor argument)
+  - The `Balance_too_low` case means a contract tried to push an operation but did not have enough balance.
+    `contract_too_low` is the address of the contract, `contract_balance` is the actual balance of the contract and `spend_request` is the amount of tez that was required for the operation
+  - The `Other` case wraps all the other possible reasons. Its argument is a string representation of the tezos_client error
 
 <SyntaxTitle syntax="pascaligo">
 type test_exec_result =
@@ -67,7 +75,9 @@ type test_exec_result =
   ["Success", nat]
 | ["Fail", test_exec_error]
 </SyntaxTitle>
-A test execution result.
+A test execution result:
+ - The `Success` case means the transaction went through without an issue. Its argument represent the total amount of gas consumed by the transaction
+ - The "Fail reason" case means something went wrong. Its argument encode the causes of the failure (see type `test_exec_error`)
 
 <SyntaxTitle syntax="pascaligo">
 type typed_address (param, storage)

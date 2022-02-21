@@ -1,5 +1,3 @@
-let cut = "./contract_under_test/contract_create.mligo"
-
 #include "./contract_under_test/contract_create.mligo"
 
 let check_new_origination (src :address) : address =
@@ -41,7 +39,7 @@ let test =
       let () = assert (addr = new_account2) in
       let () = assert (Test.michelson_equal v (Test.eval 111)) in
       v
-    | Other -> (failwith "contract failed for another reason" : michelson_program)
+    | _ -> (failwith "contract failed for another reason" : michelson_program)
   )
 
 let test2 =

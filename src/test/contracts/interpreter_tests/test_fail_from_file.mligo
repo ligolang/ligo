@@ -14,5 +14,5 @@ let test =
       let (x, addr_fail) = x in
       let () = assert (addr_fail = addr) in
       x
-    | Other -> (failwith "Failed, but wrong reason" : michelson_program )
+    | _ -> (failwith "Failed, but wrong reason" : michelson_program )
   )
