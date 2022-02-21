@@ -166,15 +166,6 @@ let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t
   let param_ty = Option.value (Ast_typed.Helpers.get_entrypoint "default" param_ty) ~default:param_ty in
   (t_contract param_ty)
 
-let test_to_entrypoint ~raise loc = typer_2_opt ~raise loc "TEST_TO_ENTRYPOINT" @@ fun entry_tv contract_tv tv_opt ->
-  let t_string = t_string () in
-  let () = assert_eq_1 ~raise ~loc entry_tv t_string in
-  let _ = trace_option ~raise (expected_contract loc contract_tv) @@
-             get_t_typed_address contract_tv in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_contract tv'
-
 module O = Ast_typed
 
 type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> test:bool -> protocol_version:Ligo_proto.t -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
@@ -566,6 +557,7 @@ module Constant_types = struct
                     per_protocol C_TEST_ORIGINATE_FROM_FILE (function
                         | Edo -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ())
                         | Hangzhou -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_list (t_string ())) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ()) ()));
+                    of_type C_TEST_TO_ENTRYPOINT O.(t_for_all a_var () (t_for_all b_var () (t_for_all c_var () (t_arrow (t_string ()) (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_contract (t_variable c_var ())) ()) ()))));
                     (* CUSTOM *)
                     (* BLOCKCHAIN *)
                     (C_SAPLING_VERIFY_UPDATE, typer_of_old_typer (fun ~protocol_version ~raise ~test loc -> ignore protocol_version; ignore test; sapling_verify_update ~raise loc));
