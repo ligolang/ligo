@@ -42,7 +42,7 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type__name
 [@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type__name [t]
-[@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
+[@@map (_type_, ("option", "list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
 
 let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type__name [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
