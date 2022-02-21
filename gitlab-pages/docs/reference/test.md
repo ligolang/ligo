@@ -50,7 +50,7 @@ type test_exec_error =
 | ["Other", string]
 </SyntaxTitle>
 A test error:
-  - The `Rejected` case means a contract (second constructor argument) failed with some data (first constructor argument)
+  - The `Rejected` case means the called contract or its transitive callees (identified by the address in the second constructor argument) failed with some data (first constructor argument)
   - The `Balance_too_low` case means a contract tried to push an operation but did not have enough balance.
     `contract_too_low` is the address of the contract, `contract_balance` is the actual balance of the contract and `spend_request` is the amount of tez that was required for the operation
   - The `Other` case wraps all the other possible reasons. Its argument is a string representation of the tezos_client error
