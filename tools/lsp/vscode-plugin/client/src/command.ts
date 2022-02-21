@@ -1,8 +1,12 @@
 import * as vscode from 'vscode'
+import { exec } from 'child_process'
 
 import {
   LanguageClient,
 } from 'vscode-languageclient/node'
+
+
+const ligoOutput = vscode.window.createOutputChannel('LIGO compiler')
 
 const LigoCommands = {
   StartServer: {
@@ -40,6 +44,26 @@ const LigoCommands = {
       async () => LigoCommands.RestartServer.run(client),
     ),
   },
+  CompileCode: {
+    name: 'ligo.compileContract',
+    run: async () => {
+      const path = vscode.window.activeTextEditor.document.uri.fsPath;
+      exec(`ligo compile contract ${path}`, (error, stdout, stderr) => {
+        if (error) {
+          ligoOutput.appendLine(`error: ${error.message}`);
+        } else if (stderr) {
+          ligoOutput.appendLine(`stderr: ${stderr}`)
+        } else {
+          ligoOutput.appendLine(stdout)
+        }
+      });
+      ligoOutput.show();
+    },
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.CompileCode.name,
+      async () => LigoCommands.CompileCode.run(),
+    )
+  },
 }
 
 export default LigoCommands
@@ -48,4 +72,5 @@ export function registerCommands(client: LanguageClient) {
   LigoCommands.StartServer.register(client)
   LigoCommands.StopServer.register(client)
   LigoCommands.RestartServer.register(client)
+  LigoCommands.CompileCode.register()
 }

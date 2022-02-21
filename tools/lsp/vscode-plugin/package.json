@@ -124,6 +124,11 @@
                 "command": "ligo.restartServer",
                 "title": "LIGO: Restart LIGO LSP server",
                 "description": "Stops then starts the LIGO LSP server"
+            },
+            {
+                "command": "ligo.compileContract",
+                "title": "LIGO: Compile current ligo contract",
+                "description": "Compiles current ligo contract and prints output to the console"
             }
         ]
     },

@@ -3,7 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ExtensionContext, ExtensionMode } from 'vscode';
+import * as vscode from 'vscode';
+// import {exec} from 'childe_process'
 
 import {
   LanguageClient,
@@ -16,9 +17,11 @@ import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
 let client: LanguageClient;
+let compileButton: vscode.StatusBarItem;
 
-export async function activate(context: ExtensionContext) {
-  if (context.extensionMode === ExtensionMode.Production) {
+
+export async function activate(context: vscode.ExtensionContext) {
+  if (context.extensionMode === vscode.ExtensionMode.Production) {
     await updateLigo()
     await updateExtension(context)
   }
@@ -29,6 +32,13 @@ export async function activate(context: ExtensionContext) {
       cwd: `${context.extensionPath}`,
     },
   };
+
+  const compileCommandId = 'ligo.compileContract';
+  compileButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+  compileButton.command = compileCommandId;
+  compileButton.text = "Compile";
+  context.subscriptions.push(compileButton);
+  compileButton.show();
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
@@ -53,7 +63,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   // Register VSC-specific server commands
-  registerCommands(client)
+  registerCommands(client);
 
   // Start the client. This will also launch the server
   client.start();
