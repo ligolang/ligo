@@ -169,11 +169,17 @@ let%expect_test _ =
   - test2 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_example_from_file.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value 111.
   - test2 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "not_enough_balance.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage.mligo" ] ;

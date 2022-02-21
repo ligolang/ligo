@@ -94,19 +94,6 @@ let canonical_to_ligo : canonical_repr -> ligo_repr =
   x |> Tezos_protocol.Protocol.Michelson_v1_primitives.strings_of_prims
     |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
 
-(* REMITODO: NOT STATE RELATED, move out ? *)
-let get_contract_rejection_data :
-  state_error -> (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * unit Tezos_utils.Michelson.michelson) option =
-  fun errs ->
-    let open Tezos_protocol.Protocol in
-    let open Script_interpreter in
-    let open Environment in
-    match errs with
-    | [ Ecoproto_error (Runtime_contract_error (contract,_)) ; Ecoproto_error (Reject (_,x,_)) ] ->
-      let x = canonical_to_ligo x in
-      Some (contract,x)
-    | _ -> None
-
 let get_big_map ~raise (ctxt : context) id key key_ty  =
   let data = List.Assoc.find_exn ctxt.transduced.bigmaps ~equal:Int.equal id in
   let key_value = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps key_ty key in
