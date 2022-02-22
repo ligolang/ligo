@@ -284,8 +284,8 @@ module Constant_types = struct
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_option b);
                       ];
                     of_types C_MAP_FIND [
-                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_arrow (t_map a b) b ()));
-                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_arrow (t_big_map a b) b ()));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_map a b ^-> b));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> b));
                       ];
                     of_types C_MAP_MEM [
                         O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_bool ()));
@@ -504,10 +504,10 @@ module Constant_types = struct
                     of_type C_LSL O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     of_type C_LSR O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     (* TEST *)
-                    of_type C_TEST_ORIGINATE O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_pair (t_list (t_operation ())) b) ()) (t_arrow b (t_arrow (t_mutez ()) (t_triplet (t_typed_address a b) (t_michelson_code ()) (t_int ())) ()) ()) ())));
-                    of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_pair (t_list (t_operation ())) b) ()) (t_arrow b (t_arrow (t_mutez ()) (t_unit ()) ()) ()) ())));
-                    of_type C_TEST_LAST_ORIGINATIONS O.(t_arrow (t_unit ()) (t_map (t_address ()) (t_list (t_address ()))) ());
-                    of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_nat ()) (t_typed_address a b) ())));
+                    of_type C_TEST_ORIGINATE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_triplet (t_typed_address a b) (t_michelson_code ()) (t_int ()));
+                    of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_unit ());
+                    of_type C_TEST_LAST_ORIGINATIONS O.(t_unit () ^-> t_map (t_address ()) (t_list (t_address ())));
+                    of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_nat () ^-> t_typed_address a b);
                     of_type C_TEST_SET_NOW O.(t_timestamp () ^-> t_unit ());
                     of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
                     of_type C_TEST_SET_BAKER O.(t_address () ^-> t_unit ());
@@ -524,12 +524,12 @@ module Constant_types = struct
                     of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
                     of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_unit () ^-> t_option a);
                     of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
-                    of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_arrow (a) b ()) (t_option (t_pair b (t_mutation ()))) ()) ())));
-                    of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_arrow (a) b ()) (t_option (t_pair b (t_mutation ()))) ()) ())));
-                    of_type C_TEST_SAVE_MUTATION O.(t_arrow (t_string ()) (t_arrow (t_mutation ()) (t_option (t_string ())) ()) ());
-                    of_type C_TEST_ADD_ACCOUNT O.(t_arrow (t_string ())(t_arrow (t_key ()) (t_unit ()) ()) ());
-                    of_type C_TEST_NEW_ACCOUNT O.(t_arrow (t_unit ()) (t_pair (t_string ()) (t_key ())) ());
-                    of_type C_TEST_RUN O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (a) b ()) (t_arrow (a) (t_michelson_code ()) ()) ())));
+                    of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ())));
+                    of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ()))));
+                    of_type C_TEST_SAVE_MUTATION O.(t_string () ^-> t_mutation () ^-> t_option (t_string ()));
+                    of_type C_TEST_ADD_ACCOUNT O.(t_string () ^-> t_key () ^-> t_unit ());
+                    of_type C_TEST_NEW_ACCOUNT O.(t_unit () ^-> t_pair (t_string ()) (t_key ()));
+                    of_type C_TEST_RUN O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> a ^-> t_michelson_code ());
                     of_type C_TEST_EVAL O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
                     of_type C_TEST_COMPILE_META_VALUE O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
                     of_type C_TEST_DECOMPILE O.(for_all "a" @@ fun a -> t_michelson_code () ^-> a);
@@ -538,21 +538,21 @@ module Constant_types = struct
                     of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_nat ());
                     of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_test_exec_result ());
                     of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_int ());
-                    of_type C_TEST_SET_BIG_MAP O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_int ()) (t_arrow (t_big_map a b) (t_unit ()) ()) ())));
-                    of_type C_TEST_BAKER_ACCOUNT O.(t_arrow (t_pair (t_string ()) (t_key ())) (t_arrow (t_option (t_mutez ())) (t_unit ()) ()) ());
+                    of_type C_TEST_SET_BIG_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_int () ^-> t_big_map a b ^-> t_unit ());
+                    of_type C_TEST_BAKER_ACCOUNT O.(t_pair (t_string ()) (t_key ()) ^-> t_option (t_mutez ()) ^-> t_unit ());
                     of_type C_TEST_REGISTER_DELEGATE O.(t_key_hash () ^-> t_unit ());
                     of_type C_TEST_BAKE_UNTIL_N_CYCLE_END O.(t_nat () ^-> t_unit ());
-                    of_type C_TEST_TO_CONTRACT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_typed_address a b) (t_contract a) ())));
-                    of_type_only_hangzhou C_TEST_CREATE_CHEST O.(t_arrow (t_bytes ()) (t_arrow (t_nat ()) (t_pair (t_chest ()) (t_chest_key ())) ()) ());
+                    of_type C_TEST_TO_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_typed_address a b ^-> t_contract a);
+                    of_type_only_hangzhou C_TEST_CREATE_CHEST O.(t_bytes () ^-> t_nat () ^-> t_pair (t_chest ()) (t_chest_key ()));
                     of_type_only_hangzhou C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
-                    of_type_only_hangzhou C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> (t_arrow (t_string ()) a ()));
+                    of_type_only_hangzhou C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
                     per_protocol C_TEST_ORIGINATE_FROM_FILE (function
-                        | Edo -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ())
-                        | Hangzhou -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_list (t_string ())) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ()) ()));
-                    of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (for_all "c" @@ fun c -> (t_arrow (t_string ()) (t_arrow (t_typed_address a b) (t_contract c) ()) ()))));
+                        | Edo -> O.(t_string () ^-> t_string () ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+                        | Hangzhou -> O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ())));
+                    of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_string () ^-> t_typed_address a b ^-> t_contract c));
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
-                    of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_arrow (t_sapling_transaction (t_variable a_var ())) (t_arrow (t_sapling_state (t_variable a_var ())) (t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))) ()) ()));
+                    of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_sapling_transaction (t_variable a_var ()) ^-> t_sapling_state (t_variable a_var ()) ^-> t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))));
                     (* CUSTOM *)
                     (* COMPARATOR *)
                     (C_EQ, typer_of_comparator (comparator ~cmp:"EQ"));
