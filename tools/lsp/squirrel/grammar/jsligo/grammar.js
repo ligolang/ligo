@@ -1,38 +1,39 @@
-const PREC = {
-  OR: 0,
-  AND: 1,
-  COMPARE: 3,
-  CONCAT: 5,
-  PLUS: 6,
-  MINUS: 6,
-  MUL: 7,
-  SHIFT: 8,
-  TYPE: 101,
-  LET: 100,
-};
+// const PREC = {
+//   OR: 0,
+//   AND: 1,
+//   COMPARE: 3,
+//   CONCAT: 5,
+//   PLUS: 6,
+//   MINUS: 6,
+//   MUL: 7,
+//   SHIFT: 8,
+//   TYPE: 101,
+//   LET: 100,
+// };
 
-const OPS = [
-  ['+', PREC.PLUS],
-  ['-', PREC.MINUS],
-  ['%', PREC.MUL],
-  ['/', PREC.MUL],
-  ['*', PREC.MUL],
-  // ['&', PREC.MUL],
-  // ['|', PREC.MUL],
-  // ['^', PREC.MUL],
-  // ['<<', PREC.SHIFT],
-  // ['>>', PREC.SHIFT],
-  // ['++', PREC.CONCAT],
-  ['<', PREC.COMPARE],
-  ['>', PREC.COMPARE],
-  ['<=', PREC.COMPARE],
-  ['>=', PREC.COMPARE],
-  ['==', PREC.COMPARE],
-  ['!=', PREC.COMPARE],
-  ['&&', PREC.COMPARE],
-  ['||', PREC.OR],
-]
+// const OPS = [
+//   ['+', PREC.PLUS],
+//   ['-', PREC.MINUS],
+//   ['%', PREC.MUL],
+//   ['/', PREC.MUL],
+//   ['*', PREC.MUL],
+//   // ['&', PREC.MUL],
+//   // ['|', PREC.MUL],
+//   // ['^', PREC.MUL],
+//   // ['<<', PREC.SHIFT],
+//   // ['>>', PREC.SHIFT],
+//   // ['++', PREC.CONCAT],
+//   ['<', PREC.COMPARE],
+//   ['>', PREC.COMPARE],
+//   ['<=', PREC.COMPARE],
+//   ['>=', PREC.COMPARE],
+//   ['==', PREC.COMPARE],
+//   ['!=', PREC.COMPARE],
+//   ['&&', PREC.COMPARE],
+//   ['||', PREC.OR],
+// ]
 
+const { sepBy } = require('../common.js');
 const common = require('../common.js')
 
 module.exports = grammar({
@@ -62,27 +63,211 @@ module.exports = grammar({
   // by combining conflicting rules together, but it leads to problems in Reasonligo.hs.
   // Also, there is a combination of two major conflicts, for example for z in (x) : y => (z . )
 
-  conflicts: $ =>
-    [ // Pattern/Expr conflicts
-      [$._expr_term, $._unannotated_pattern]
-    , [$._pattern, $.fun_arg]
-    , [$.FieldName, $.NameDecl]
-    , [$.Name, $.NameDecl]
-    , [$.list, $.list_pattern]
+  // conflicts: $ =>
+  //   [ // Pattern/Expr conflicts
+  //     [$._expr_term, $._unannotated_pattern]
+  //   , [$._pattern, $.fun_arg]
+  //   , [$.FieldName, $.NameDecl]
+  //   , [$.Name, $.NameDecl]
+  //   , [$.list, $.list_pattern]
 
-      // Type/Expr conflicts
-    , [$.Name, $.TypeName]
-    , [$.FieldName, $.TypeName]
-    , [$.string_type, $._literal]
-    // , [$.TypeWildcard, $.wildcard]
-    , [$._core_type, $._literal]
+  //     // Type/Expr conflicts
+  //   , [$.Name, $.TypeName]
+  //   , [$.FieldName, $.TypeName]
+  //   , [$.string_type, $._literal]
+  //   , [$.TypeWildcard, $.wildcard]
+  //   , [$._core_type, $._literal]
 
-      // Pattern/Expr + Type/Expr conflicts
-    , [$.Name, $.NameDecl, $.TypeName]
-    , [$.NameDecl, $.TypeName]
-    ],
+  //     // Pattern/Expr + Type/Expr conflicts
+  //   , [$.Name, $.NameDecl, $.TypeName]
+  //   , [$.NameDecl, $.TypeName]
+  //   ],
 
   rules: {
+    source_file: $ => choice(
+      common.sepEndBy(';', field("toplevel", $.statement_or_namespace)),
+      seq(field("toplevel", statement_or_namespace), optional(";"))),
+
+    statement_or_namespace: $ => choice($.statement, $.namespace_statement),
+
+    namespace_statement: $ => seq(optional("export"), $.namespace),
+
+    namespace: $ => seq("namespace", field("moduleName", $.ModuleName), common.block($.statements_or_namespace)),
+
+    statements_or_namespace: $ => sepBy(";", statement_or_namespace),
+
+    statement: $ => choice($.base_statement, $.if_statement),
+
+    if_statement: $ => seq("if", common.par($.expr), $.statement),
+
+    base_statement: $ => choice(
+      $.expr_statement,
+      $.return_statement,
+      $.block_statement,
+      $.switch_statement,
+      $.import_statement,
+      $.export_statement,
+      $.declaration_statement,
+      $.if_else_statement,
+      $.for_of_statement,
+      $.while_statement,
+    ),
+
+    expr_statement: $ => choice(
+      seq($.assignment_expr_level, "=", $.expr_statement),
+      seq($.assignment_expr_level, "*=", $.expr_statement),
+      seq($.assignment_expr_level, "/=", $.expr_statement),
+      seq($.assignment_expr_level, "%=", $.expr_statement),
+      seq($.assignment_expr_level, "+=", $.expr_statement),
+      seq($.assignment_expr_level, "-=", $.expr_statement),
+      $.fun_expr,
+      $.assignment_expr_level
+    ),
+
+    assignment_expr_level: $ => choice(
+      seq($.assignment_expr_level, "as", $.type_expr),
+      $.disjunction_expr_level
+    ),
+
+    disjunction_expr_level: $ => choice(
+      seq($.disjunction_expr_level, "||", conjunction_expr_level),
+      $.conjunction_expr_level
+    ),
+
+    conjunction_expr_level: $ => choice(
+      seq($.conjunction_expr_level, "&&", $.comparison_exp_level),
+      $.comparison_expr_level
+    ),
+
+    comparison_expr_level: $ => choice(
+      seq($.comparison_expr_level, "<", $.addition_expr_level),
+      seq($.comparison_expr_level, "<=", $.addition_expr_level),
+      seq($.comparison_expr_level, ">", $.addition_expr_level),
+      seq($.comparison_expr_level, ">=", $.addition_expr_level),
+      seq($.comparison_expr_level, "==", $.addition_expr_level),
+      seq($.comparison_expr_level, "!=", $.addition_expr_level),
+      $.addition_expr_level
+    ),
+
+    addition_expr_level: $ => choice(
+      seq($.addition_expr_level, "+", $.multiplication_expr_level),
+      seq($.addition_expr_level, "-", $.multiplication_expr_level),
+      $.multiplication_expr_level
+    ),
+
+    multiplication_expr_level: $ => choice(
+      seq($.multiplication_expr_level, "*", $.unary_expr_level),
+      seq($.multiplication_expr_level, "/", $.unary_expr_level),
+      seq($.multiplication_expr_level, "%", $.unary_expr_level),
+      $.unary_expr_level
+    ),
+
+    unary_expr_level: $ => choice(
+      seq("-", $.call_expr_level),
+      seq("!", $.call_expr_level),
+      $.call_expr_level
+    ),
+
+    call_expr_level: $ => choice($.call_expr, $.member_expr),
+
+    call_expr: $ => seq($.lambda, common.par(optional(sepBy(",", $.expr)))),
+
+    lambda: $ => choice($.call_expr, $.member_expr),
+
+    expr: $ => choice($.expr_statement, $.object_literal),
+
+    member_expr: $ => choice(
+      $.Name,
+      $.Int,
+      $.Bytes,
+      $.String,
+      $.ctor_expr,
+      $.projection,
+      $.michelson_interop,
+      common.par($.expr),
+      $.module_access,
+      $.array_literal,
+      $.wildcard
+    ),
+
+    ctor_expr: $ => seq($.ConstrName, common.par(optional($.ctor_args))),
+
+    ctor_args: $ => sepBy(",", $.expr),
+
+    projection: $ => choice(
+      seq($.member_expr, common.brackets($.expr)),
+      seq($.member_expr, ".", $.Name)
+    ),
+
+    michelson_interop: $ => seq(
+      '(Michelson',
+        seq(
+          field("code", $.michelson_code),
+          'as',
+          field("type", $._type_expr),
+        ),
+      ')'
+    ),
+
+    michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'), // check ???
+
+    module_access: $ => seq($.ModuleName, ".", $.module_var),
+
+    module_var: $ => choice($.module_access, $.Name),
+
+    array_literal: $ => common.brackets(optional(sepBy(",", $.array_item))),
+
+    array_item: $ => choice($.expr, seq("...", $.expr)), 
+
+    fun_expr: $ => choice(
+      seq(common.par($.parameters), optional($.type_annotation), "=>", $.body),
+      seq("(", ")", optional($.type_annotation), "=>", $.body),
+      seq($.Name, "=>", $.body)
+    ),
+
+    body: $ => choice(common.block($.statements), $.expr_stmt),
+
+    statements: $ => sepBy(";", $.statement),
+
+    type_annotation: $ => seq(":", $.type_expr),
+
+    parameters: $ => sepBy(",", $.parameter),
+
+    parameter: $ => seq($.expr, $.type_annotation),
+
+    type_expr: $ => ,
+
+    return_statement: $ => choice("return", seq("return", $.expr)),
+
+    block_statement: $ => common.block($.statements),
+
+    object_literal: $ => common.block(optional(sepBy(",", $.property))),
+
+    property: $ => choice($.Name, seq($.property_name, ":", $.expr), seq("...", $.expr_statement)),
+
+    property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     source_file: $ => common.sepEndBy(optional(';'), field("declaration", $._declaration)),
 
     _declaration: $ =>
@@ -110,7 +295,7 @@ module.exports = grammar({
 
     _type_expr: $ =>
       choice(
-        // $.TypeWildcard,
+        $.TypeWildcard,
         $.fun_type,
         $.param_type,
         $.sum_type,
@@ -206,7 +391,8 @@ module.exports = grammar({
         field("type", $._type_expr)
       )),
       '=',
-      field("value", $._program),
+      field("value", $._expr),
+      optional(seq('as', field("type", $._type_expr)))
     ))),
 
     /// MODULES
@@ -248,7 +434,7 @@ module.exports = grammar({
 
     _unannotated_pattern: $ =>
       choice(
-        // $.wildcard,
+        $.wildcard,
         $._literal,
         $.paren_pattern,
         $.var_pattern,
@@ -264,10 +450,10 @@ module.exports = grammar({
 
     _literal: $ =>
       choice(
-        // $.Nat,
+        $.Nat,
         $.Int,
         $.Bool,
-        // $.Tez,
+        $.Tez,
         $.String,
         $.Bytes,
         $.Unit,
@@ -331,16 +517,16 @@ module.exports = grammar({
     /// PROGRAM
 
     _program: $ => prec(1, choice(
-      $.let_in,
+      // $.let_in,
       $._expr
     )),
 
-    let_in: $ => seq(
-      field("declaration", $._declaration),
-      optional(seq('as', field("type", $._type_expr))),
-      ';',
-      field("body", $._program),
-    ),
+    // let_in: $ => seq(
+    //   field("declaration", $._declaration),
+    //   optional(seq('as', field("type", $._type_expr))),
+    //   ';',
+    //   // field("body", $._program),
+    // ),
 
     /// EXPRESSIONS
 
@@ -406,6 +592,7 @@ module.exports = grammar({
       common.par(common.sepBy(',', field("argument", $._program))),
     )),
 
+    // ???
     Some_call: $ => prec.right(10, seq(
       field("some", $.Some),
       field("argument", $._expr),
@@ -421,16 +608,16 @@ module.exports = grammar({
       $.ConstrName,
       $.Name,
       $._literal,
-      $.block,
+      // $.block,
       $.tuple,
       $.list,
       $.data_projection,
-      $.if,
-      $.switch,
+      // $.if,
+      // $.switch,
       $._record_expr, // check ???
       $.michelson_interop,
       $.paren_expr,
-      $.let_in,
+      // $.let_in,
     ),
 
     tuple: $ => common.brackets(seq(
@@ -450,8 +637,9 @@ module.exports = grammar({
       field("type", $._type_expr),
     ),
 
-    list: $ => common.brackets(
+    list: $ => seq("list([",
       common.sepEndBy(',', field("element", $._spread_expr)),
+      "])"
     ),
 
     _spread_expr: $ => choice(
@@ -512,7 +700,7 @@ module.exports = grammar({
     _record_expr: $ => choice(
       $.record,
       $.record_update,
-      $.record_punning,
+      // $.record_punning,
     ),
 
     record: $ => common.block(seq(
@@ -531,18 +719,18 @@ module.exports = grammar({
     )),
 
     // ReasonLIGO disallows a record which consists of only one capture.
-    record_punning: $ => common.block(seq(
-      field("assignment", $.capture),
-      ',',
-      common.sepEndBy1(',', field("assignment", $._record_field)),
-    )),
+    // record_punning: $ => common.block(seq(
+    //   field("assignment", $.capture),
+    //   ',',
+    //   common.sepEndBy1(',', field("assignment", $._record_field)),
+    // )),
 
     _record_field: $ => choice(
       $.record_field,
-      $.capture,
+      // $.capture,
     ),
 
-    capture: $ => field("accessor", $.FieldName),
+    // capture: $ => field("accessor", $.FieldName),
 
     record_field: $ => seq(
       field("accessor", $.FieldName),
@@ -555,18 +743,6 @@ module.exports = grammar({
       ':',
       field("value", $._program),
     ),
-
-    michelson_interop: $ => seq(
-      '(Michelson',
-        seq(
-          field("code", $.michelson_code),
-          'as',
-          field("type", $._type_expr),
-        ),
-      ')'
-    ),
-
-    michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'), // check ???
 
     paren_expr: $ => prec(8, common.par(field("expr", $._annot_expr))),
 
@@ -631,17 +807,20 @@ module.exports = grammar({
 
     _till_newline: $ => /[^\n]*\n/,
 
-    attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
+    attr: $ => choice(
+      /\/\*\s+@[a-zA-Z][a-zA-Z0-9_:]*\s*\*\//,
+      /\/\/\s+@[a-zA-Z][a-zA-Z0-9_:]*/),
 
     String: $ => /\"(\\.|[^"])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,
     PositiveInt: $ => /([1-9][0-9_]*|0)/,
-    // Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
+    Tez: $ => seq($.PositiveInt, "as", "tez"),
+    Nat: $ => seq($.PositiveInt, "as", "nat"),
     Bytes: $ => /0x[0-9a-fA-F]+/,
 
     _Name: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,
     _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,
-    // TypeWildcard: $ => '_',
+    TypeWildcard: $ => '_',
     Keyword: $ => /[A-Za-z][a-z]*/,
     Bool: $ => choice($.False, $.True),
 
@@ -654,6 +833,10 @@ module.exports = grammar({
     Return: $ => 'return',
     // skip: $ => 'skip',
     // rec: $ => 'rec',
-    // wildcard: $ => '_',
+    wildcard: $ => '_',
   }
 });
+
+// Fix patterns
+// Add statements (if-else, switch, for, while, assignment...)
+// 
