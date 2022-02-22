@@ -33,7 +33,7 @@
 //   ['||', PREC.OR],
 // ]
 
-const { sepBy } = require('../common.js');
+const { sepBy, sepBy1 } = require('../common.js');
 const common = require('../common.js')
 
 module.exports = grammar({
@@ -94,7 +94,7 @@ module.exports = grammar({
 
     namespace: $ => seq("namespace", field("moduleName", $.ModuleName), common.block($.statements_or_namespace)),
 
-    statements_or_namespace: $ => sepBy(";", statement_or_namespace),
+    statements_or_namespace: $ => common.sepBy1(";", statement_or_namespace),
 
     statement: $ => choice($.base_statement, $.if_statement),
 
@@ -170,7 +170,7 @@ module.exports = grammar({
 
     call_expr_level: $ => choice($.call_expr, $.member_expr),
 
-    call_expr: $ => seq($.lambda, common.par(optional(sepBy(",", $.expr)))),
+    call_expr: $ => seq($.lambda, common.par(common.sepBy(",", $.expr))),
 
     lambda: $ => choice($.call_expr, $.member_expr),
 
@@ -190,9 +190,9 @@ module.exports = grammar({
       $.wildcard
     ),
 
-    ctor_expr: $ => seq($.ConstrName, common.par(optional($.ctor_args))),
+    ctor_expr: $ => seq($.ConstrName, common.par($.ctor_args)),
 
-    ctor_args: $ => sepBy(",", $.expr),
+    ctor_args: $ => common.sepBy(",", $.expr),
 
     projection: $ => choice(
       seq($.member_expr, common.brackets($.expr)),
@@ -215,7 +215,7 @@ module.exports = grammar({
 
     module_var: $ => choice($.module_access, $.Name),
 
-    array_literal: $ => common.brackets(optional(sepBy(",", $.array_item))),
+    array_literal: $ => common.brackets(common.sepBy1(",", $.array_item)),
 
     array_item: $ => choice($.expr, seq("...", $.expr)), 
 
@@ -227,36 +227,88 @@ module.exports = grammar({
 
     body: $ => choice(common.block($.statements), $.expr_stmt),
 
-    statements: $ => sepBy(";", $.statement),
+    statements: $ => common.sepBy1(";", $.statement),
 
     type_annotation: $ => seq(":", $.type_expr),
 
-    parameters: $ => sepBy(",", $.parameter),
+    parameters: $ => common.sepBy1(",", $.parameter),
 
     parameter: $ => seq($.expr, $.type_annotation),
-
-    type_expr: $ => ,
 
     return_statement: $ => choice("return", seq("return", $.expr)),
 
     block_statement: $ => common.block($.statements),
 
-    object_literal: $ => common.block(optional(sepBy(",", $.property))),
+    object_literal: $ => common.block(common.sepBy(",", $.property)),
 
     property: $ => choice($.Name, seq($.property_name, ":", $.expr), seq("...", $.expr_statement)),
 
     property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 
+    type_expr: $ => choice(
+      $.fun_type,
+      $.sum_type,
+      $.core_type
+    ),
+
+    fun_type: $ => seq(common.par(common.sepBy(",", $.fun_param)), "=>", $.type_expr),
+
+    fun_param: $ => seq($.Name, $.type_annotation),
+
+    sum_type: $ => common.withAttrs($, seq("|", common.sepBy("|", $.variant))),
+
+    variant: $ => common.withAttrs($, common.brackets(
+      choice(
+        seq('"', $.ConstrName, '"'),
+        seq('"', $.ConstrName, '"', ",", common.sepBy(",", $.type_expr))
+      )
+    )),
+
+    core_type: $ => choice(
+      $.String,
+      $.Int,
+      $.wildcard,
+      $.TypeName,
+      $.module_access_t,
+      $.object_type,
+      $.type_ctor_app,
+      common.withAttrs($.type_tuple),
+      common.par($.type_expr)
+    ),
+
+    module_access_t: $ => seq($.ModuleName, ".", $.module_var_t),
+
+    module_var_t: $ => choice($.module_access_t, $.Name),
+
+    object_type: $ => common.withAttrs(common.block(common.sepBy1(",", field_decl))),
+
+    field_decl: $ => common.withAttrs(choice(
+      $.FieldName,
+      seq($.FieldName, $.type_annotation)
+    )),
+
+    type_ctor_app: $ => seq($.TypeName, common.chev(common.sepBy1(",", $.type_expr))),
+
+    type_tuple: $ => common.brackets(common.sepBy1(",", $.type_expr)),
+
+    import_statement: $ => seq("import", $.ModuleName, "=", common.sepBy(".", $.ModuleName)),
+
+    export_statement: $ => seq("export", $.declaration_statement),
+
+    declaration_statement: $ => choice(
+      $.let_decl,
+      $.const_decl,
+      $.type_decl
+    ),
+
+    type_decl: $ => seq("type", $.TypeName, "=", $.type_expr),
+
+    // let 
+    // const
+
+    // pattern
+
     
-
-
-
-
-
-
-
-
-
 
 
 
