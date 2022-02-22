@@ -183,11 +183,11 @@ module Command = struct
           (fail_other (), ctxt)
       )
       | (Ecoproto_error (Contract_storage.Balance_too_low (contract_too_low,contract_balance,spend_request))) :: _ -> (
-        let contract_too_low : LT.mcontract = Michelson_backend.magic_to_contract contract_too_low in
+        let contract_too_low : LT.mcontract = Michelson_backend.contract_to_contract contract_too_low in
         let contract_too_low = LT.V_Ct (C_address contract_too_low) in
         let contract_balance,spend_request =
-          let contract_balance = Michelson_backend.magic_to_tez contract_balance in
-          let spend_request = Michelson_backend.magic_to_tez spend_request in
+          let contract_balance = Michelson_backend.tez_to_z contract_balance in
+          let spend_request = Michelson_backend.tez_to_z spend_request in
           LT.V_Ct (C_mutez contract_balance), LT.V_Ct (C_mutez spend_request)
         in
         let rej_data = LC.v_record [ ("contract_too_low",contract_too_low) ; ("contract_balance",contract_balance)  ; ("spend_request",spend_request)] in
