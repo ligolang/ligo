@@ -338,7 +338,7 @@ module Constant_types = struct
                     of_type C_KECCAK O.(t_bytes () ^-> t_bytes ());
                     of_type C_BLAKE2b O.(t_bytes () ^-> t_bytes ());
                     of_type C_HASH_KEY O.(t_key () ^-> t_key_hash ());
-                    of_type C_CHECK_SIGNATURE O.(t_arrow (t_key ()) (t_arrow (t_signature ()) (t_arrow (t_bytes ()) (t_bool ()) ()) ()) ());
+                    of_type C_CHECK_SIGNATURE O.(t_key () ^-> t_signature () ^-> t_bytes () ^-> t_bool ());
                     (* OPTION *)
                     of_type C_NONE O.(for_all "a" @@ fun a -> t_option a);
                     of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);
@@ -377,12 +377,12 @@ module Constant_types = struct
                     of_type C_TOTAL_VOTING_POWER O.(t_nat ());
                     of_type C_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_CALL O.(for_all "a" @@ fun a -> (a ^-> t_mutez () ^-> t_contract a ^-> t_operation ()));
-                    of_type C_CREATE_CONTRACT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_pair (t_list (t_operation ())) b) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow b (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())));
+                    of_type C_CREATE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_option (t_key_hash ()) ^-> t_mutez () ^-> b ^-> t_pair (t_operation ()) (t_address ()));
                     of_type C_NOW O.(t_timestamp ());
                     of_type C_CHAIN_ID O.(t_chain_id ());
                     of_types C_INT [
-                        O.(t_arrow (t_nat ()) (t_int ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
+                        O.(t_nat () ^-> t_int ());
+                        O.(t_bls12_381_fr () ^-> t_int ());
                       ];
                     of_type C_UNIT O.(t_unit ());
                     of_type C_NEVER O.(for_all "a" @@ fun a -> t_never () ^-> a);
@@ -394,8 +394,8 @@ module Constant_types = struct
                     of_type C_VIEW O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_string () ^-> a ^-> t_address () ^-> t_option b);
                     (* TICKET *)
                     of_type C_TICKET O.(for_all "a" @@ fun a -> a ^-> t_nat () ^-> t_ticket a);
-                    of_type C_READ_TICKET O.(for_all "a" @@ fun a -> (t_arrow (t_ticket a) (t_pair (t_pair (t_address ()) (t_pair a (t_nat ()))) (t_ticket a)) ()));
-                    of_type C_SPLIT_TICKET O.(for_all "a" @@ fun a -> (t_arrow (t_ticket a) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket a) (t_ticket a))) ()) ()));
+                    of_type C_READ_TICKET O.(for_all "a" @@ fun a -> t_ticket a ^-> t_pair (t_pair (t_address ()) (t_pair a (t_nat ()))) (t_ticket a));
+                    of_type C_SPLIT_TICKET O.(for_all "a" @@ fun a -> t_ticket a ^-> t_pair (t_nat ()) (t_nat ()) ^-> t_option (t_pair (t_ticket a) (t_ticket a)));
                     of_type C_JOIN_TICKET O.(for_all "a" @@ fun a -> t_pair (t_ticket a) (t_ticket a) ^-> t_option (t_ticket a));
                     (* MATH *)
                     of_types C_POLYMORPHIC_ADD [
@@ -474,7 +474,7 @@ module Constant_types = struct
                         O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
                         O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
                       ];
-                    of_type C_ABS O.(t_arrow (t_int ()) (t_nat ()) ());
+                    of_type C_ABS O.(t_int () ^-> t_nat ());
                     of_types C_NEG [
                         O.(t_int () ^-> t_int ());
                         O.(t_nat () ^-> t_int ());
