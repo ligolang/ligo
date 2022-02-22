@@ -277,8 +277,8 @@ module Constant_types = struct
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_map a b ^-> t_map a b);
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_big_map a b ^-> t_big_map a b);
                       ];
-                    of_type C_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_option b) (t_arrow (t_map a b) (t_pair (t_option b) (t_map a b)) ()) ()) ())));
-                    of_type C_BIG_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_option b) (t_arrow (t_big_map a b) (t_pair (t_option b) (t_big_map a b)) ()) ()) ())));
+                    of_type C_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_map a b ^-> t_pair (t_option b) (t_map a b));
+                    of_type C_BIG_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_big_map a b ^-> t_pair (t_option b) (t_big_map a b));
                     of_types C_MAP_FIND_OPT [
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_option b);
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_option b);
@@ -291,19 +291,19 @@ module Constant_types = struct
                         O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_bool ()));
                         O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_bool ()));
                       ];
-                    of_type C_MAP_MAP O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (for_all "c" @@ fun c -> (t_arrow (t_arrow (t_pair a b) c ()) (t_arrow (t_map a b) (t_map a c) ()) ()))));
-                    of_type C_MAP_ITER O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_unit ()) ()) (t_arrow (t_map a b) (t_unit ()) ()) ())));
-                    of_type C_MAP_FOLD O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (for_all "c" @@ fun c -> (t_arrow (t_arrow (t_pair c (t_pair a b)) c ()) (t_arrow (t_map a b) (t_arrow c c ()) ()) ()))));
+                    of_type C_MAP_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_pair a b ^-> c) ^-> t_map a b ^-> t_map a c);
+                    of_type C_MAP_ITER O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_unit ()) ^-> t_map a b ^-> t_unit ());
+                    of_type C_MAP_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_pair c (t_pair a b) ^-> c) ^-> t_map a b ^-> c ^-> c);
                     (* LIST *)
                     of_type C_LIST_EMPTY O.(for_all "a" @@ fun a -> t_list a);
                     of_type C_CONS O.(for_all "a" @@ fun a -> a ^-> t_list a ^-> t_list a);
                     of_type C_LIST_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_list a ^-> t_list b);
-                    of_type C_LIST_ITER O.(for_all "a" @@ fun a -> (t_arrow (t_arrow (a) (t_unit ()) ()) (t_arrow (t_list a) (t_unit ()) ()) ()));
-                    of_type C_LIST_FOLD O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair b a) b ()) (t_arrow (t_list a) (t_arrow b b ()) ()) ())));
-                    of_type C_LIST_FOLD_LEFT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair b a) b ()) (t_arrow b (t_arrow (t_list a) b ()) ()) ())));
-                    of_type C_LIST_FOLD_RIGHT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) b ()) (t_arrow (t_list a) (t_arrow b b ()) ()) ())));
-                    of_type C_LIST_HEAD_OPT O.(for_all "a" @@ fun a -> (t_arrow (t_list a) (t_option a) ()));
-                    of_type C_LIST_TAIL_OPT O.(for_all "a" @@ fun a -> (t_arrow (t_list a) (t_option (t_list a)) ()));
+                    of_type C_LIST_ITER O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> t_list a ^-> t_unit ());
+                    of_type C_LIST_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> t_list a ^-> b ^-> b);
+                    of_type C_LIST_FOLD_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> b ^-> t_list a ^-> b);
+                    of_type C_LIST_FOLD_RIGHT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> b) ^-> t_list a ^-> b ^-> b);
+                    of_type C_LIST_HEAD_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option a);
+                    of_type C_LIST_TAIL_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option (t_list a));
                     (* SET *)
                     of_type C_SET_EMPTY O.(for_all "a" @@ fun a -> t_set a);
                     of_type C_SET_LITERAL O.(for_all "a" @@ fun a -> t_list a ^-> t_set a);
@@ -311,9 +311,9 @@ module Constant_types = struct
                     of_type C_SET_ADD O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_set a);
                     of_type C_SET_REMOVE O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_set a);
                     of_type C_SET_UPDATE O.(for_all "a" @@ fun a -> a ^-> t_bool () ^-> t_set a ^-> t_set a);
-                    of_type C_SET_ITER O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> (t_set a ^-> t_unit ()));
-                    of_type C_SET_FOLD O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair b a) b ()) (t_arrow (t_set a) (t_arrow b b ()) ()) ())));
-                    of_type C_SET_FOLD_DESC O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) b ()) (t_arrow (t_set a) (t_arrow b b ()) ()) ())));
+                    of_type C_SET_ITER O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> t_set a ^-> t_unit ());
+                    of_type C_SET_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> t_set a ^-> b ^-> b);
+                    of_type C_SET_FOLD_DESC O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> b) ^-> t_set a ^-> b ^-> b);
                     of_types C_SIZE [
                         O.(for_all "a" @@ fun a -> t_list a ^-> t_nat ());
                         O.(t_bytes () ^-> t_nat ());
@@ -343,14 +343,14 @@ module Constant_types = struct
                     of_type C_NONE O.(for_all "a" @@ fun a -> t_option a);
                     of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);
                     of_type C_UNOPT O.(for_all "a" @@ fun a -> t_option a ^-> a);
-                    of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> (t_arrow (t_option a) (t_arrow (t_string ()) a ()) ()));
+                    of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> a);
                     (* GLOBAL *)
                     of_type C_ASSERTION O.(t_bool () ^-> t_unit ());
                     of_type C_ASSERTION_WITH_ERROR O.(t_bool () ^-> t_string () ^-> t_unit ());
                     of_type C_ASSERT_SOME O.(for_all "a" @@ fun a -> t_option a ^-> t_unit ());
                     of_type C_ASSERT_SOME_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> t_unit ());
-                    of_type C_ASSERT_NONE O.(for_all "a" @@ fun a -> (t_arrow (t_option a) (t_unit ()) ()));
-                    of_type C_ASSERT_NONE_WITH_ERROR O.(for_all "a" @@ fun a -> (t_arrow (t_option a) (t_arrow (t_string ()) (t_unit ()) ()) ()));
+                    of_type C_ASSERT_NONE O.(for_all "a" @@ fun a -> t_option a ^-> t_unit ());
+                    of_type C_ASSERT_NONE_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> t_unit ());
                     (C_FAILWITH, any_of [
                                      typer_of_type_no_tc @@ O.(t_string () ^-> t_unit ());
                                      typer_of_type_no_tc @@ O.(t_nat () ^-> t_unit ());
