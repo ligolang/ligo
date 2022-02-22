@@ -230,6 +230,13 @@ module Constant_types = struct
   let b_var = O.Var.of_input_var "'b"
   let c_var = O.Var.of_input_var "'c"
 
+  (* Helpers *)
+  let for_all binder f =
+    let binder = O.Var.of_input_var ("'" ^ binder) in
+    t_for_all binder Type (f (t_variable binder ()))
+
+  let (^->) arg ret = t_arrow arg ret ()
+
   let of_type c t =
     c, any_of [typer_of_ligo_type t]
 
@@ -248,129 +255,129 @@ module Constant_types = struct
 
   let tbl : t = CTMap.of_list [
                     (* LOOPS *)
-                    of_type C_FOLD_WHILE O.(t_for_all a_var Type (t_arrow (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ()) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()));
-                    of_type C_FOLD_CONTINUE O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ()));
-                    of_type C_FOLD_STOP O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_pair (t_bool ()) (t_variable a_var ())) ()));
+                    of_type C_FOLD_WHILE O.(for_all "a" @@ fun a -> (a ^-> t_pair (t_bool ()) a) ^-> a ^-> a);
+                    of_type C_FOLD_CONTINUE O.(for_all "a" @@ fun a -> a ^-> t_pair (t_bool ()) a);
+                    of_type C_FOLD_STOP O.(for_all "a" @@ fun a -> a ^-> t_pair (t_bool ()) a);
                     of_types C_FOLD [
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable a_var ()) ()) (t_arrow (t_list (t_variable b_var ())) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()) ())));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable a_var ()) ()) (t_arrow (t_set (t_variable b_var ())) (t_arrow (t_variable a_var ()) (t_variable a_var ()) ()) ()) ())));
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_list b ^-> a ^-> a);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_set b ^-> a ^-> a);
                       ];
                     (* MAP *)
-                    of_type C_MAP_EMPTY O.(t_for_all a_var Type (t_for_all b_var Type (t_map (t_variable a_var ()) (t_variable b_var ()))));
-                    of_type C_BIG_MAP_EMPTY O.(t_for_all a_var Type (t_for_all b_var Type (t_big_map (t_variable a_var ()) (t_variable b_var ()))));
+                    of_type C_MAP_EMPTY O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_map a b);
+                    of_type C_BIG_MAP_EMPTY O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_big_map a b);
                     of_types C_MAP_ADD [
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_variable b_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> b ^-> t_map a b ^-> t_map a b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> b ^-> t_big_map a b ^-> t_big_map a b);
                       ];
                     of_types C_MAP_REMOVE [
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ())));
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_map a b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_big_map a b);
                       ];
                     of_types C_MAP_UPDATE [
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ())) ()) ()) ())));
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_map a b ^-> t_map a b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_big_map a b ^-> t_big_map a b);
                       ];
-                    of_type C_MAP_GET_AND_UPDATE O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())));
-                    of_type C_BIG_MAP_GET_AND_UPDATE O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_option (t_variable b_var ())) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_option (t_variable b_var ())) (t_big_map (t_variable a_var ()) (t_variable b_var ()))) ()) ()) ())));
+                    of_type C_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_option b) (t_arrow (t_map a b) (t_pair (t_option b) (t_map a b)) ()) ()) ())));
+                    of_type C_BIG_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_option b) (t_arrow (t_big_map a b) (t_pair (t_option b) (t_big_map a b)) ()) ()) ())));
                     of_types C_MAP_FIND_OPT [
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_option (t_variable b_var ())) ()) ())));
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_option b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_option b);
                       ];
                     of_types C_MAP_FIND [
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) ())));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_arrow (t_map a b) b ()));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_arrow (t_big_map a b) b ()));
                       ];
                     of_types C_MAP_MEM [
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_bool ()) ()) ())));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_bool ()));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_bool ()));
                       ];
-                    of_type C_MAP_MAP O.(t_for_all a_var Type (t_for_all b_var Type (t_for_all c_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_map (t_variable a_var ()) (t_variable c_var ())) ()) ()))));
-                    of_type C_MAP_ITER O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ())));
-                    of_type C_MAP_FOLD O.(t_for_all a_var Type (t_for_all b_var Type (t_for_all c_var Type (t_arrow (t_arrow (t_pair (t_variable c_var ()) (t_pair (t_variable a_var ()) (t_variable b_var ()))) (t_variable c_var ()) ()) (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_arrow (t_variable c_var ()) (t_variable c_var ()) ()) ()) ()))));
+                    of_type C_MAP_MAP O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (for_all "c" @@ fun c -> (t_arrow (t_arrow (t_pair a b) c ()) (t_arrow (t_map a b) (t_map a c) ()) ()))));
+                    of_type C_MAP_ITER O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_unit ()) ()) (t_arrow (t_map a b) (t_unit ()) ()) ())));
+                    of_type C_MAP_FOLD O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (for_all "c" @@ fun c -> (t_arrow (t_arrow (t_pair c (t_pair a b)) c ()) (t_arrow (t_map a b) (t_arrow c c ()) ()) ()))));
                     (* LIST *)
-                    of_type C_LIST_EMPTY O.(t_for_all a_var Type (t_list (t_variable a_var ())));
-                    of_type C_CONS O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable a_var ())) ()) ()));
-                    of_type C_LIST_MAP O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_list (t_variable b_var ())) ()) ())));
-                    of_type C_LIST_ITER O.(t_for_all a_var Type (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_unit ()) ()) ()));
-                    of_type C_LIST_FOLD O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
-                    of_type C_LIST_FOLD_LEFT O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_list (t_variable a_var ())) (t_variable b_var ()) ()) ()) ())));
-                    of_type C_LIST_FOLD_RIGHT O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_list (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
-                    of_type C_LIST_HEAD_OPT O.(t_for_all a_var Type (t_arrow (t_list (t_variable a_var ())) (t_option (t_variable a_var ())) ()));
-                    of_type C_LIST_TAIL_OPT O.(t_for_all a_var Type (t_arrow (t_list (t_variable a_var ())) (t_option (t_list (t_variable a_var ()))) ()));
+                    of_type C_LIST_EMPTY O.(for_all "a" @@ fun a -> t_list a);
+                    of_type C_CONS O.(for_all "a" @@ fun a -> a ^-> t_list a ^-> t_list a);
+                    of_type C_LIST_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_list a ^-> t_list b);
+                    of_type C_LIST_ITER O.(for_all "a" @@ fun a -> (t_arrow (t_arrow (a) (t_unit ()) ()) (t_arrow (t_list a) (t_unit ()) ()) ()));
+                    of_type C_LIST_FOLD O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair b a) b ()) (t_arrow (t_list a) (t_arrow b b ()) ()) ())));
+                    of_type C_LIST_FOLD_LEFT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair b a) b ()) (t_arrow b (t_arrow (t_list a) b ()) ()) ())));
+                    of_type C_LIST_FOLD_RIGHT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) b ()) (t_arrow (t_list a) (t_arrow b b ()) ()) ())));
+                    of_type C_LIST_HEAD_OPT O.(for_all "a" @@ fun a -> (t_arrow (t_list a) (t_option a) ()));
+                    of_type C_LIST_TAIL_OPT O.(for_all "a" @@ fun a -> (t_arrow (t_list a) (t_option (t_list a)) ()));
                     (* SET *)
-                    of_type C_SET_EMPTY O.(t_for_all a_var Type (t_set (t_variable a_var ())));
-                    of_type C_SET_LITERAL O.(t_for_all a_var Type (t_arrow (t_list (t_variable a_var ())) (t_set (t_variable a_var ())) ()));
-                    of_type C_SET_MEM O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_bool ()) ()) ()));
-                    of_type C_SET_ADD O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()));
-                    of_type C_SET_REMOVE O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()));
-                    of_type C_SET_UPDATE O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_bool ()) (t_arrow (t_set (t_variable a_var ())) (t_set (t_variable a_var ())) ()) ()) ()));
-                    of_type C_SET_ITER O.(t_for_all a_var Type (t_arrow (t_arrow (t_variable a_var ()) (t_unit ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_unit ()) ()) ()));
-                    of_type C_SET_FOLD O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable b_var ()) (t_variable a_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
-                    of_type C_SET_FOLD_DESC O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ()) (t_arrow (t_set (t_variable a_var ())) (t_arrow (t_variable b_var ()) (t_variable b_var ()) ()) ()) ())));
+                    of_type C_SET_EMPTY O.(for_all "a" @@ fun a -> t_set a);
+                    of_type C_SET_LITERAL O.(for_all "a" @@ fun a -> t_list a ^-> t_set a);
+                    of_type C_SET_MEM O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_bool ());
+                    of_type C_SET_ADD O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_set a);
+                    of_type C_SET_REMOVE O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_set a);
+                    of_type C_SET_UPDATE O.(for_all "a" @@ fun a -> a ^-> t_bool () ^-> t_set a ^-> t_set a);
+                    of_type C_SET_ITER O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> (t_set a ^-> t_unit ()));
+                    of_type C_SET_FOLD O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair b a) b ()) (t_arrow (t_set a) (t_arrow b b ()) ()) ())));
+                    of_type C_SET_FOLD_DESC O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) b ()) (t_arrow (t_set a) (t_arrow b b ()) ()) ())));
                     of_types C_SIZE [
-                        O.(t_for_all a_var Type (t_arrow (t_list (t_variable a_var ())) (t_nat ()) ()));
-                        O.(t_arrow (t_bytes ()) (t_nat ()) ());
-                        O.(t_arrow (t_string ()) (t_nat ()) ());
-                        O.(t_for_all a_var Type (t_arrow (t_set (t_variable a_var ())) (t_nat ()) ()));
-                        O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_map (t_variable a_var ()) (t_variable b_var ())) (t_nat ()) ())))
+                        O.(for_all "a" @@ fun a -> t_list a ^-> t_nat ());
+                        O.(t_bytes () ^-> t_nat ());
+                        O.(t_string () ^-> t_nat ());
+                        O.(for_all "a" @@ fun a -> t_set a ^-> t_nat ());
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_map a b ^-> t_nat ())
                       ];
                     of_types C_CONCAT [
-                        O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
-                        O.(t_arrow (t_bytes ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ());
+                        O.(t_string () ^-> t_string () ^-> t_string ());
+                        O.(t_bytes () ^-> t_bytes () ^-> t_bytes ());
                       ];
                     of_types C_SLICE [
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_string ()) (t_string ()) ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_arrow (t_bytes ()) (t_bytes ()) ()) ()) ());
+                        O.(t_nat () ^-> t_nat () ^-> t_string () ^-> t_string ());
+                        O.(t_nat () ^-> t_nat () ^-> t_bytes () ^-> t_bytes ());
                       ];
-                    of_type C_BYTES_PACK O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_bytes ()) ()));
-                    of_type C_BYTES_UNPACK O.(t_for_all a_var Type (t_arrow (t_bytes ()) (t_option (t_variable a_var ())) ()));
+                    of_type C_BYTES_PACK O.(for_all "a" @@ fun a -> a ^-> t_bytes ());
+                    of_type C_BYTES_UNPACK O.(for_all "a" @@ fun a -> t_bytes () ^-> t_option a);
                     (* CRYPTO *)
-                    of_type C_SHA256 O.(t_arrow (t_bytes ()) (t_bytes ()) ());
-                    of_type C_SHA512 O.(t_arrow (t_bytes ()) (t_bytes ()) ());
-                    of_type C_SHA3 O.(t_arrow (t_bytes ()) (t_bytes ()) ());
-                    of_type C_KECCAK O.(t_arrow (t_bytes ()) (t_bytes ()) ());
-                    of_type C_BLAKE2b O.(t_arrow (t_bytes ()) (t_bytes ()) ());
-                    of_type C_HASH_KEY O.(t_arrow (t_key ()) (t_key_hash ()) ());
+                    of_type C_SHA256 O.(t_bytes () ^-> t_bytes ());
+                    of_type C_SHA512 O.(t_bytes () ^-> t_bytes ());
+                    of_type C_SHA3 O.(t_bytes () ^-> t_bytes ());
+                    of_type C_KECCAK O.(t_bytes () ^-> t_bytes ());
+                    of_type C_BLAKE2b O.(t_bytes () ^-> t_bytes ());
+                    of_type C_HASH_KEY O.(t_key () ^-> t_key_hash ());
                     of_type C_CHECK_SIGNATURE O.(t_arrow (t_key ()) (t_arrow (t_signature ()) (t_arrow (t_bytes ()) (t_bool ()) ()) ()) ());
                     (* OPTION *)
-                    of_type C_NONE O.(t_for_all a_var Type (t_option (t_variable a_var ())));
-                    of_type C_SOME O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_option (t_variable a_var ())) ()));
-                    of_type C_UNOPT O.(t_for_all a_var Type (t_arrow (t_option (t_variable a_var ())) (t_variable a_var ()) ()));
-                    of_type C_UNOPT_WITH_ERROR O.(t_for_all a_var Type (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_variable a_var ()) ()) ()));
+                    of_type C_NONE O.(for_all "a" @@ fun a -> t_option a);
+                    of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);
+                    of_type C_UNOPT O.(for_all "a" @@ fun a -> t_option a ^-> a);
+                    of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> (t_arrow (t_option a) (t_arrow (t_string ()) a ()) ()));
                     (* GLOBAL *)
-                    of_type C_ASSERTION O.(t_arrow (t_bool ()) (t_unit ()) ());
-                    of_type C_ASSERTION_WITH_ERROR O.(t_arrow (t_bool ()) (t_arrow (t_string ()) (t_unit ()) ()) ());
-                    of_type C_ASSERT_SOME O.(t_for_all a_var Type (t_arrow (t_option (t_variable a_var ())) (t_unit ()) ()));
-                    of_type C_ASSERT_SOME_WITH_ERROR O.(t_for_all a_var Type (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_unit ()) ()) ()));
-                    of_type C_ASSERT_NONE O.(t_for_all a_var Type (t_arrow (t_option (t_variable a_var ())) (t_unit ()) ()));
-                    of_type C_ASSERT_NONE_WITH_ERROR O.(t_for_all a_var Type (t_arrow (t_option (t_variable a_var ())) (t_arrow (t_string ()) (t_unit ()) ()) ()));
+                    of_type C_ASSERTION O.(t_bool () ^-> t_unit ());
+                    of_type C_ASSERTION_WITH_ERROR O.(t_bool () ^-> t_string () ^-> t_unit ());
+                    of_type C_ASSERT_SOME O.(for_all "a" @@ fun a -> t_option a ^-> t_unit ());
+                    of_type C_ASSERT_SOME_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> t_unit ());
+                    of_type C_ASSERT_NONE O.(for_all "a" @@ fun a -> (t_arrow (t_option a) (t_unit ()) ()));
+                    of_type C_ASSERT_NONE_WITH_ERROR O.(for_all "a" @@ fun a -> (t_arrow (t_option a) (t_arrow (t_string ()) (t_unit ()) ()) ()));
                     (C_FAILWITH, any_of [
-                                     typer_of_type_no_tc @@ O.(t_arrow (t_string ()) (t_unit ()) ());
-                                     typer_of_type_no_tc @@ O.(t_arrow (t_nat ()) (t_unit ()) ());
-                                     typer_of_type_no_tc @@ O.(t_arrow (t_int ()) (t_unit ()) ());
-                                     typer_of_ligo_type O.(t_for_all a_var Type (t_arrow (t_string ()) (t_variable a_var ()) ()));
-                                     typer_of_ligo_type O.(t_for_all a_var Type (t_arrow (t_nat ()) (t_variable a_var ()) ()));
-                                     typer_of_ligo_type O.(t_for_all a_var Type (t_arrow (t_int ()) (t_variable a_var ()) ()));
+                                     typer_of_type_no_tc @@ O.(t_string () ^-> t_unit ());
+                                     typer_of_type_no_tc @@ O.(t_nat () ^-> t_unit ());
+                                     typer_of_type_no_tc @@ O.(t_int () ^-> t_unit ());
+                                     typer_of_ligo_type O.(for_all "a" @@ fun a -> t_string () ^-> a);
+                                     typer_of_ligo_type O.(for_all "a" @@ fun a -> t_nat () ^-> a);
+                                     typer_of_ligo_type O.(for_all "a" @@ fun a -> t_int () ^-> a);
                     ]);
                     of_type C_AMOUNT O.(t_mutez ());
                     of_type C_BALANCE O.(t_mutez ());
                     of_type C_LEVEL O.(t_nat ());
                     of_type C_SENDER O.(t_address ());
                     of_type C_SOURCE O.(t_address ());
-                    of_type C_ADDRESS O.(t_for_all a_var Type (t_arrow (t_contract (t_variable a_var ())) (t_address ()) ()));
-                    of_type C_CONTRACT O.(t_for_all a_var Type (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()));
-                    of_type C_CONTRACT_OPT O.(t_for_all a_var Type (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()));
-                    of_type C_CONTRACT_WITH_ERROR O.(t_for_all a_var Type (t_arrow (t_address ()) (t_arrow (t_string ()) (t_option (t_contract (t_variable a_var ()))) ()) ()));
-                    of_type C_CONTRACT_ENTRYPOINT_OPT O.(t_for_all a_var Type (t_arrow (t_string ()) (t_arrow (t_address ()) (t_option (t_contract (t_variable a_var ()))) ()) ()));
-                    of_type C_CONTRACT_ENTRYPOINT O.(t_for_all a_var Type (t_arrow (t_string ()) (t_arrow (t_address ()) (t_contract (t_variable a_var ())) ()) ()));
-                    of_type C_IMPLICIT_ACCOUNT O.(t_arrow (t_key_hash ()) (t_contract (t_unit ())) ());
-                    of_type C_SET_DELEGATE O.(t_arrow (t_option (t_key_hash ())) (t_operation ()) ());
-                    of_type C_SELF O.(t_for_all a_var Type (t_arrow (t_string ()) (t_contract (t_variable a_var ())) ()));
+                    of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
+                    of_type C_CONTRACT O.(for_all "a" @@ fun a -> t_address () ^-> t_contract a);
+                    of_type C_CONTRACT_OPT O.(for_all "a" @@ fun a -> t_address () ^-> t_option (t_contract a));
+                    of_type C_CONTRACT_WITH_ERROR O.(for_all "a" @@ fun a -> t_address () ^-> t_string () ^-> t_option (t_contract a));
+                    of_type C_CONTRACT_ENTRYPOINT_OPT O.(for_all "a" @@ fun a -> (t_string () ^-> t_address () ^-> t_option (t_contract a)));
+                    of_type C_CONTRACT_ENTRYPOINT O.(for_all "a" @@ fun a -> (t_string () ^-> t_address () ^-> t_contract a));
+                    of_type C_IMPLICIT_ACCOUNT O.(t_key_hash () ^-> t_contract (t_unit ()));
+                    of_type C_SET_DELEGATE O.(t_option (t_key_hash ()) ^-> t_operation ());
+                    of_type C_SELF O.(for_all "a" @@ fun a -> (t_string () ^-> t_contract a));
                     of_type C_SELF_ADDRESS O.(t_address ());
                     of_type C_TOTAL_VOTING_POWER O.(t_nat ());
-                    of_type C_VOTING_POWER O.(t_arrow (t_key_hash ()) (t_nat ()) ());
-                    of_type C_CALL O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_arrow (t_contract (t_variable a_var ())) (t_operation ()) ()) ()) ()));
-                    of_type C_CREATE_CONTRACT O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow (t_variable b_var ()) (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())));
+                    of_type C_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
+                    of_type C_CALL O.(for_all "a" @@ fun a -> (a ^-> t_mutez () ^-> t_contract a ^-> t_operation ()));
+                    of_type C_CREATE_CONTRACT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_pair (t_list (t_operation ())) b) ()) (t_arrow (t_option (t_key_hash ())) (t_arrow (t_mutez ()) (t_arrow b (t_pair (t_operation ()) (t_address ())) ()) ()) ()) ())));
                     of_type C_NOW O.(t_timestamp ());
                     of_type C_CHAIN_ID O.(t_chain_id ());
                     of_types C_INT [
@@ -378,170 +385,171 @@ module Constant_types = struct
                         O.(t_arrow (t_bls12_381_fr ()) (t_int ()) ());
                       ];
                     of_type C_UNIT O.(t_unit ());
-                    of_type C_NEVER O.(t_for_all a_var Type (t_arrow (t_never ()) (t_variable a_var ()) ()));
+                    of_type C_NEVER O.(for_all "a" @@ fun a -> t_never () ^-> a);
                     of_type C_TRUE O.(t_bool ());
                     of_type C_FALSE O.(t_bool ());
-                    of_type C_IS_NAT O.(t_arrow (t_int ()) (t_option (t_nat ())) ());
-                    of_type C_PAIRING_CHECK O.(t_arrow (t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ()))) (t_bool ()) ());
-                    of_type C_OPEN_CHEST O.(t_arrow (t_chest_key ()) (t_arrow (t_chest ()) (t_arrow (t_nat ()) (t_chest_opening_result ()) ()) ()) ());
-                    of_type C_VIEW O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_string ()) (t_arrow (t_variable a_var ()) (t_arrow (t_address ()) (t_option (t_variable b_var ())) ()) ()) ())));
+                    of_type C_IS_NAT O.(t_int () ^-> t_option (t_nat ()));
+                    of_type C_PAIRING_CHECK O.(t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ())) ^-> t_bool ());
+                    of_type C_OPEN_CHEST O.(t_chest_key () ^-> t_chest () ^-> t_nat () ^-> t_chest_opening_result ());
+                    of_type C_VIEW O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_string () ^-> a ^-> t_address () ^-> t_option b);
                     (* TICKET *)
-                    of_type C_TICKET O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_nat ()) (t_ticket (t_variable a_var ())) ()) ()));
-                    of_type C_READ_TICKET O.(t_for_all a_var Type (t_arrow (t_ticket (t_variable a_var ())) (t_pair (t_pair (t_address ()) (t_pair (t_variable a_var ()) (t_nat ()))) (t_ticket (t_variable a_var ()))) ()));
-                    of_type C_SPLIT_TICKET O.(t_for_all a_var Type (t_arrow (t_ticket (t_variable a_var ())) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ())))) ()) ()));
-                    of_type C_JOIN_TICKET O.(t_for_all a_var Type (t_arrow (t_pair (t_ticket (t_variable a_var ())) (t_ticket (t_variable a_var ()))) (t_option (t_ticket (t_variable a_var ()))) ()));
+                    of_type C_TICKET O.(for_all "a" @@ fun a -> a ^-> t_nat () ^-> t_ticket a);
+                    of_type C_READ_TICKET O.(for_all "a" @@ fun a -> (t_arrow (t_ticket a) (t_pair (t_pair (t_address ()) (t_pair a (t_nat ()))) (t_ticket a)) ()));
+                    of_type C_SPLIT_TICKET O.(for_all "a" @@ fun a -> (t_arrow (t_ticket a) (t_arrow (t_pair (t_nat ()) (t_nat ())) (t_option (t_pair (t_ticket a) (t_ticket a))) ()) ()));
+                    of_type C_JOIN_TICKET O.(for_all "a" @@ fun a -> t_pair (t_ticket a) (t_ticket a) ^-> t_option (t_ticket a));
                     (* MATH *)
                     of_types C_POLYMORPHIC_ADD [
-                        O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_string ()) ()) ());
-                        O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                        O.(t_string () ^-> t_string () ^-> t_string ());
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_int () ^-> t_timestamp () ^-> t_timestamp ());
                       ];
                     of_types C_ADD [
-                        O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_timestamp ()) (t_timestamp ()) ()) ());
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_int () ^-> t_timestamp () ^-> t_timestamp ());
                       ];
                     of_types C_MUL [
-                        O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_nat ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_int ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_int () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_bls12_381_fr () ^-> t_nat () ^-> t_bls12_381_fr ());
+                        O.(t_bls12_381_fr () ^-> t_int () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_mutez () ^-> t_mutez ());
+                        O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
                       ];
                     of_types C_SUB [
-                        O.(t_arrow (t_bls12_381_g1 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g1 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_g2 ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_g2 ()) ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_timestamp ()) (t_arrow (t_timestamp ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_timestamp ()) (t_arrow (t_int ()) (t_timestamp ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_int ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
                       ];
                     of_types C_EDIV [
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_option (t_pair (t_nat ()) (t_nat ()))) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_option (t_pair (t_int ()) (t_nat ()))) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_option (t_pair (t_nat ()) (t_mutez ()))) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_option (t_pair (t_mutez ()) (t_mutez ()))) ()) ());
+                        O.(t_nat () ^-> t_nat () ^-> t_option (t_pair (t_nat ()) (t_nat ())));
+                        O.(t_int () ^-> t_int () ^-> t_option (t_pair (t_int ()) (t_nat ())));
+                        O.(t_nat () ^-> t_int () ^-> t_option (t_pair (t_int ()) (t_nat ())));
+                        O.(t_int () ^-> t_nat () ^-> t_option (t_pair (t_int ()) (t_nat ())));
+                        O.(t_mutez () ^-> t_mutez () ^-> t_option (t_pair (t_nat ()) (t_mutez ())));
+                        O.(t_mutez () ^-> t_nat () ^-> t_option (t_pair (t_mutez ()) (t_mutez ())));
                       ];
                     of_types C_DIV [
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_int ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_nat ());
                       ];
                     of_types C_MOD [
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_int ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_nat ()) (t_mutez ()) ()) ());
-                        O.(t_arrow (t_mutez ()) (t_arrow (t_mutez ()) (t_mutez ()) ()) ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_nat () ^-> t_int () ^-> t_nat ());
+                        O.(t_int () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_nat ());
+                        O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
                       ];
                     of_type C_ABS O.(t_arrow (t_int ()) (t_nat ()) ());
                     of_types C_NEG [
-                        O.(t_arrow (t_int ()) (t_int ()) ());
-                        O.(t_arrow (t_nat ()) (t_int ()) ());
-                        O.(t_arrow (t_bls12_381_g1 ()) (t_bls12_381_g1 ()) ());
-                        O.(t_arrow (t_bls12_381_g2 ()) (t_bls12_381_g2 ()) ());
-                        O.(t_arrow (t_bls12_381_fr ()) (t_bls12_381_fr ()) ());
+                        O.(t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int ());
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr ());
                       ];
                     (* LOGIC *)
                     of_types C_NOT [
-                        O.(t_arrow (t_bool ()) (t_bool ()) ());
-                        O.(t_arrow (t_int ()) (t_int ()) ());
-                        O.(t_arrow (t_nat ()) (t_int ()) ());
+                        O.(t_bool () ^-> t_bool ());
+                        O.(t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int ());
                       ];
                     of_types C_OR [
-                        O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                        O.(t_bool () ^-> t_bool () ^-> t_bool ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
                       ];
                     of_types C_AND [
-                        O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                        O.(t_arrow (t_int ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                        O.(t_bool () ^-> t_bool () ^-> t_bool ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_nat () ^-> t_nat ());
                       ];
                     of_types C_XOR [
-                        O.(t_arrow (t_bool ()) (t_arrow (t_bool ()) (t_bool ()) ()) ());
-                        O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                        O.(t_bool () ^-> t_bool () ^-> t_bool ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
                       ];
-                    of_type C_LSL O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
-                    of_type C_LSR O.(t_arrow (t_nat ()) (t_arrow (t_nat ()) (t_nat ()) ()) ());
+                    of_type C_LSL O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                    of_type C_LSR O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     (* TEST *)
-                    of_type C_TEST_ORIGINATE O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_triplet (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_michelson_code ()) (t_int ())) ()) ()) ())));
-                    of_type C_TEST_BOOTSTRAP_CONTRACT O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_pair (t_variable a_var ()) (t_variable b_var ())) (t_pair (t_list (t_operation ())) (t_variable b_var ())) ()) (t_arrow (t_variable b_var ()) (t_arrow (t_mutez ()) (t_unit ()) ()) ()) ())));
+                    of_type C_TEST_ORIGINATE O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_pair (t_list (t_operation ())) b) ()) (t_arrow b (t_arrow (t_mutez ()) (t_triplet (t_typed_address a b) (t_michelson_code ()) (t_int ())) ()) ()) ())));
+                    of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (t_pair a b) (t_pair (t_list (t_operation ())) b) ()) (t_arrow b (t_arrow (t_mutez ()) (t_unit ()) ()) ()) ())));
                     of_type C_TEST_LAST_ORIGINATIONS O.(t_arrow (t_unit ()) (t_map (t_address ()) (t_list (t_address ()))) ());
-                    of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_nat ()) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ())));
-                    of_type C_TEST_SET_NOW O.(t_arrow (t_timestamp ()) (t_unit ()) ());
-                    of_type C_TEST_SET_SOURCE O.(t_arrow (t_address ()) (t_unit ()) ());
-                    of_type C_TEST_SET_BAKER O.(t_arrow (t_address ()) (t_unit ()) ());
-                    of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_arrow (t_nat ()) (t_address ()) ());
-                    of_type C_TEST_GET_STORAGE O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_variable b_var ()) ())));
-                    of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_arrow (t_address ()) (t_michelson_code ()) ());
-                    of_type C_TEST_GET_BALANCE O.(t_arrow (t_address ()) (t_mutez ()) ());
-                    of_type C_TEST_MICHELSON_EQUAL O.(t_arrow (t_michelson_code ()) (t_arrow (t_michelson_code ()) (t_bool ()) ()) ());
-                    of_type C_TEST_GET_NTH_BS O.(t_arrow (t_int ()) (t_address ()) ());
-                    of_type C_TEST_LOG O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_unit ()) ()));
-                    of_type C_TEST_STATE_RESET O.(t_arrow (t_nat ()) (t_arrow (t_list (t_mutez ())) (t_unit ()) ()) ());
-                    of_type C_TEST_GET_VOTING_POWER O.(t_arrow (t_key_hash ()) (t_nat ()) ());
+                    of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_nat ()) (t_typed_address a b) ())));
+                    of_type C_TEST_SET_NOW O.(t_timestamp () ^-> t_unit ());
+                    of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
+                    of_type C_TEST_SET_BAKER O.(t_address () ^-> t_unit ());
+                    of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_nat () ^-> t_address ());
+                    of_type C_TEST_GET_STORAGE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_typed_address a b ^-> b);
+                    of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_address () ^-> t_michelson_code ());
+                    of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());
+                    of_type C_TEST_MICHELSON_EQUAL O.(t_michelson_code () ^-> t_michelson_code () ^-> t_bool ());
+                    of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_address ());
+                    of_type C_TEST_LOG O.(for_all "a" @@ fun a -> a ^-> t_unit ());
+                    of_type C_TEST_STATE_RESET O.(t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
+                    of_type C_TEST_GET_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_TEST_GET_TOTAL_VOTING_POWER O.(t_nat ());
-                    of_type C_TEST_CAST_ADDRESS O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_address ()) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ())));
-                    of_type C_TEST_RANDOM O.(t_for_all a_var Type (t_arrow (t_unit ()) (t_option (t_variable a_var ())) ()));
-                    of_type C_TEST_MUTATE_VALUE O.(t_for_all a_var Type (t_arrow (t_nat ()) (t_arrow (t_variable a_var ()) (t_option (t_pair (t_variable a_var ()) (t_mutation ()))) ()) ()));
-                    of_type C_TEST_MUTATION_TEST O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_option (t_pair (t_variable b_var ()) (t_mutation ()))) ()) ())));
-                    of_type C_TEST_MUTATION_TEST_ALL O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_variable a_var ()) (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_option (t_pair (t_variable b_var ()) (t_mutation ()))) ()) ())));
+                    of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
+                    of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_unit () ^-> t_option a);
+                    of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
+                    of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_arrow (a) b ()) (t_option (t_pair b (t_mutation ()))) ()) ())));
+                    of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (a) (t_arrow (t_arrow (a) b ()) (t_option (t_pair b (t_mutation ()))) ()) ())));
                     of_type C_TEST_SAVE_MUTATION O.(t_arrow (t_string ()) (t_arrow (t_mutation ()) (t_option (t_string ())) ()) ());
                     of_type C_TEST_ADD_ACCOUNT O.(t_arrow (t_string ())(t_arrow (t_key ()) (t_unit ()) ()) ());
                     of_type C_TEST_NEW_ACCOUNT O.(t_arrow (t_unit ()) (t_pair (t_string ()) (t_key ())) ());
-                    of_type C_TEST_RUN O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_arrow (t_variable a_var ()) (t_variable b_var ()) ()) (t_arrow (t_variable a_var ()) (t_michelson_code ()) ()) ())));
-                    of_type C_TEST_EVAL O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_michelson_code ()) ()));
-                    of_type C_TEST_COMPILE_META_VALUE O.(t_for_all a_var Type (t_arrow (t_variable a_var ()) (t_michelson_code ()) ()));
-                    of_type C_TEST_DECOMPILE O.(t_for_all a_var Type (t_arrow (t_michelson_code ()) (t_variable a_var ()) ()));
-                    of_type C_TEST_TO_TYPED_ADDRESS O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_contract (t_variable a_var ())) (t_typed_address (t_variable a_var ()) (t_variable b_var ())) ())));
-                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT O.(t_for_all a_var Type (t_arrow (t_contract (t_variable a_var ())) (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_test_exec_result ()) ()) ()) ()));
-                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN O.(t_for_all a_var Type (t_arrow (t_contract (t_variable a_var ())) (t_arrow (t_variable a_var ()) (t_arrow (t_mutez ()) (t_nat ()) ()) ()) ()));
-                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_arrow (t_address ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_test_exec_result ()) ()) ()) ());
-                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_arrow (t_address ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_int ()) ()) ()) ());
-                    of_type C_TEST_SET_BIG_MAP O.(t_for_all a_var Type (t_for_all b_var Type (t_arrow (t_int ()) (t_arrow (t_big_map (t_variable a_var ()) (t_variable b_var ())) (t_unit ()) ()) ())));
+                    of_type C_TEST_RUN O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_arrow (a) b ()) (t_arrow (a) (t_michelson_code ()) ()) ())));
+                    of_type C_TEST_EVAL O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
+                    of_type C_TEST_COMPILE_META_VALUE O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
+                    of_type C_TEST_DECOMPILE O.(for_all "a" @@ fun a -> t_michelson_code () ^-> a);
+                    of_type C_TEST_TO_TYPED_ADDRESS O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> t_contract a ^-> t_typed_address a b));
+                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_test_exec_result ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_nat ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_test_exec_result ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_int ());
+                    of_type C_TEST_SET_BIG_MAP O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_int ()) (t_arrow (t_big_map a b) (t_unit ()) ()) ())));
                     of_type C_TEST_BAKER_ACCOUNT O.(t_arrow (t_pair (t_string ()) (t_key ())) (t_arrow (t_option (t_mutez ())) (t_unit ()) ()) ());
-                    of_type C_TEST_REGISTER_DELEGATE O.(t_arrow (t_key_hash ()) (t_unit ()) ());
-                    of_type C_TEST_BAKE_UNTIL_N_CYCLE_END O.(t_arrow (t_nat ()) (t_unit ()) ());
+                    of_type C_TEST_REGISTER_DELEGATE O.(t_key_hash () ^-> t_unit ());
+                    of_type C_TEST_BAKE_UNTIL_N_CYCLE_END O.(t_nat () ^-> t_unit ());
+                    of_type C_TEST_TO_CONTRACT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (t_arrow (t_typed_address a b) (t_contract a) ())));
                     of_type_only_hangzhou C_TEST_CREATE_CHEST O.(t_arrow (t_bytes ()) (t_arrow (t_nat ()) (t_pair (t_chest ()) (t_chest_key ())) ()) ());
-                    of_type_only_hangzhou C_TEST_CREATE_CHEST_KEY O.(t_arrow (t_chest ()) (t_arrow (t_nat ()) (t_chest_key ()) ()) ());
-                    of_type_only_hangzhou C_GLOBAL_CONSTANT O.(t_for_all a_var Type (t_arrow (t_string ()) (t_variable a_var ()) ()));
+                    of_type_only_hangzhou C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
+                    of_type_only_hangzhou C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> (t_arrow (t_string ()) a ()));
                     per_protocol C_TEST_ORIGINATE_FROM_FILE (function
                         | Edo -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ())
                         | Hangzhou -> O.(t_arrow (t_string ()) (t_arrow (t_string ()) (t_arrow (t_list (t_string ())) (t_arrow (t_michelson_code ()) (t_arrow (t_mutez ()) (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) ()) ()) ()) ()) ()));
-                    of_type C_TEST_TO_ENTRYPOINT O.(t_for_all a_var Type (t_for_all b_var Type (t_for_all c_var Type (t_arrow (t_string ()) (t_arrow (t_typed_address (t_variable a_var ()) (t_variable b_var ())) (t_contract (t_variable c_var ())) ()) ()))));
+                    of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> (for_all "c" @@ fun c -> (t_arrow (t_string ()) (t_arrow (t_typed_address a b) (t_contract c) ()) ()))));
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
                     of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_arrow (t_sapling_transaction (t_variable a_var ())) (t_arrow (t_sapling_state (t_variable a_var ())) (t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))) ()) ()));
@@ -553,8 +561,6 @@ module Constant_types = struct
                     (C_GT, typer_of_comparator (comparator ~cmp:"GT"));
                     (C_LE, typer_of_comparator (comparator ~cmp:"LE"));
                     (C_GE, typer_of_comparator (comparator ~cmp:"GE"));
-                    (* TEST*)
-                    (C_TEST_TO_CONTRACT, typer_of_old_typer test_to_contract);
                   ]
 end
 
