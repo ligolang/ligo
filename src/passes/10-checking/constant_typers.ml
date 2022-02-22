@@ -151,12 +151,6 @@ and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~rai
                                            record_comparator ~test loc cmp [a;b] None;
                                            sum_comparator ~test loc cmp [a;b] None]
 
-let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
-  let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
-                       get_t_typed_address t in
-  let param_ty = Option.value (Ast_typed.Helpers.get_entrypoint "default" param_ty) ~default:param_ty in
-  (t_contract param_ty)
-
 module O = Ast_typed
 
 type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> test:bool -> protocol_version:Ligo_proto.t -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
