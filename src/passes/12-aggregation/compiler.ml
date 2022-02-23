@@ -236,7 +236,16 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       let x = Data.resolve_path data [module_binder] in
       aggregate_scope x ~leaf:(self ~data let_result)
     )
-    | I.E_assign _ -> failwith "assign should be compiled to let in self-ast-typed"
+    | I.E_assign {variable;access_path;expression} ->
+      let aux_ap = function
+        Access_record s -> Access_record s
+      | Access_tuple  i -> Access_tuple  i
+      | Access_map    e -> Access_map (self e)
+      in
+      let variable = Data.resolve_variable scope variable in
+      let access_path = List.map ~f:aux_ap access_path in
+      let expression = self expression in
+      return @@ O.E_assign {variable;access_path;expression}
 
 and compile_cases ~raise : Data.scope -> Data.path -> I.matching_expr -> O.matching_expr =
   fun scope path m ->

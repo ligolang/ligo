@@ -634,11 +634,11 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       fun ty a -> match a with
         Access_tuple z ->
         let tuple_ty = trace_option ~raise (expected_record ty.location ty) @@ get_t_record ty in
-        let tuple_ty = trace_option ~raise (internal_error __LOC__ "access_tuple failed") @@ I.LMap.find_opt (Label (Z.to_string z)) tuple_ty.content in
+        let tuple_ty = trace_option ~raise (bad_record_access (O.Label (Z.to_string z)) (O.e_variable variable ty) ty.location) @@ I.LMap.find_opt (Label (Z.to_string z)) tuple_ty.content in
         tuple_ty.associated_type
       | Access_record s ->
         let record_ty = trace_option ~raise (expected_record ty.location ty) @@ get_t_record ty in
-        let record_ty = trace_option ~raise (internal_error __LOC__ "access_record failed") @@ I.LMap.find_opt (Label s) record_ty.content in
+        let record_ty = trace_option ~raise (bad_record_access (O.Label s) (O.e_variable variable ty) ty.location) @@ I.LMap.find_opt (Label s) record_ty.content in
         record_ty.associated_type
       | Access_map e ->
         let k_ty,v_ty = trace_option ~raise (expected_map ty.location ty) @@ get_t_map ty in

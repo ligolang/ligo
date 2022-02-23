@@ -735,6 +735,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | _ ->
           raise.raise (raw_michelson_must_be_seq ae.location code)
     )
+    | E_assign _ -> failwith "assign should be compiled to let in self-ast-aggregated"
 
 and compile_lambda ~raise l fun_type =
   let { binder ; result } : AST.lambda = l in

@@ -106,6 +106,8 @@ and expression_content =
   | E_record of expression_label_map
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
+  (* assignation *)
+  | E_assign of expression assign
 
 and type_inst = {
     forall: expression ;

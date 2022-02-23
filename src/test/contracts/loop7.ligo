@@ -8,6 +8,6 @@ function for_collection_list (var _ : unit) : (int * string) is
     for x in list mylist
       block {
         acc := acc + x;
-        st := st ^ "to"
+        st := st ^ "to";
       }
   } with (acc, st)

@@ -94,6 +94,7 @@ and expression_content = function
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
   | E_type_inst       e -> `List [ `String "E_type_inst"; type_inst e ]
+  | E_assign          e -> `List [ `String "E_assign";   assign expression e ]
 
 and constant {cons_name;arguments} =
   `Assoc [

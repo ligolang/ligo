@@ -1243,6 +1243,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
       | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
+    | E_assign _ -> failwith "todo"
 
 and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
 

@@ -133,6 +133,7 @@ let expression_tag expr =
   | E_record          _ -> 16
   | E_record_accessor _ -> 17
   | E_record_update   _ -> 18
+  | E_assign          _ -> 19
 
 and declaration_tag = function
   | Declaration_constant _ -> 1
@@ -160,8 +161,9 @@ and expression_content a b =
   | E_record a, E_record b -> record a b
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _ | E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _) ->
+  | E_assign a, E_assign b -> assign a b
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _ | E_assign _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _ | E_assign _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
@@ -271,3 +273,22 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
   cmp2
     expression aa ab
     type_expression ta tb
+
+and assign {variable=va;access_path=pa;expression=ea} {variable=vb;access_path=pb;expression=eb} =
+  cmp3
+        expression_variable va vb
+        (List.compare access_path) pa pb
+        expression ea eb
+
+and access_path_tag = function
+  | Access_tuple _ -> 1
+  | Access_record _ -> 2
+  | Access_map _ -> 3
+
+and access_path pa pb = match pa,pb with
+  | Access_tuple  a, Access_tuple  b -> Z.compare a b
+  | Access_record a, Access_record b -> String.compare a b
+  | Access_map    a, Access_map    b -> expression a b
+  | (Access_tuple _ | Access_record _ | Access_map _) ,
+    (Access_tuple  _ | Access_record _ | Access_map _) ->
+    Int.compare (access_path_tag pa) (access_path_tag pb)

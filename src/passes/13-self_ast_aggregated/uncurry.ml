@@ -111,6 +111,7 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     usages [self record; self update]
   | E_type_inst { forall; type_ = _} ->
     self forall
+  | E_assign _ -> failwith "Assignation is purified before" (* Todo: maybe add for commutativity *)
 
 (* Actually doing one instance of uncurrying *)
 
@@ -249,6 +250,7 @@ let rec uncurry_in_expression ~raise
   | E_type_inst {forall;type_} ->
     let forall = self forall in
     return @@ E_type_inst {forall;type_}
+  | E_assign _ -> failwith "Assignation is purified before" (* Todo: maybe add for commutativity *)
 
 (* Uncurrying as much as possible throughout an expression *)
 

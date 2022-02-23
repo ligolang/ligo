@@ -168,6 +168,11 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
           let has_subst = has_subst' || has_subst in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin} has_subst
+        | I.E_assign assign when I.ValueVar.equal assign.variable to_subst ->
+          let has_subst',expression = substitute_var_in_body ~raise to_subst new_var assign.expression in
+          let has_subst = has_subst' || has_subst in
+          let assign = { assign with expression } in
+          ret false { exp with expression_content = E_assign assign} has_subst
         | I.E_lambda lamb when I.ValueVar.equal lamb.binder.var to_subst -> ret false exp has_subst
         | I.E_recursive r when I.ValueVar.equal r.fun_name to_subst -> ret false exp has_subst
         | I.E_matching m -> (
@@ -196,7 +201,7 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
         | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ |
            E_type_abstraction _|E_recursive _|E_let_in _|E_type_in _ | E_mod_in _ |
            E_raw_code _ | E_constructor _ | E_record _ | E_record_accessor _ |
-           E_record_update _ | E_ascription _ | E_module_accessor _ ) -> ret true exp has_subst
+           E_record_update _ | E_ascription _ | E_module_accessor _ | E_assign _) -> ret true exp has_subst
     in
     let (has_subst, res) = Self_ast_core.fold_map_expression (aux ~raise) false body in
     (has_subst,res)
