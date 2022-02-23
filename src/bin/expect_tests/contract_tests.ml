@@ -1846,13 +1846,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "warning_duplicate3.mligo" ; "--protocol" ; "hangzhou" ] ;
   [%expect{|
-    File "../../test/contracts/warning_duplicate3.mligo", line 8, characters 11-12:
-      7 |
-      8 | let main ((f,_) : (Foo.t * int)) : (operation list * int) =
-      9 |     let _ = f.ck in
-    :
-    Warning: variable "f" cannot be used more than once.
-
     { parameter (pair (chest %c) (chest_key %ck)) ;
       storage int ;
       code { DROP ; PUSH int 1 ; NIL operation ; PAIR } } |}]
