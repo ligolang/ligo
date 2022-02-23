@@ -551,9 +551,15 @@ let%expect_test _ =
       2 |   let f = (fun (_ : (unit * unit)) -> ()) in
       3 |   Test.originate f () 0tez
 
-    Invalid arguments.
-    Expected an argument of type (( 'a * 'b ) -> ( list (operation) * 'b ), 'b, tez), but got an argument of type
-    ( unit * unit ) -> unit, unit, tez. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - ( 'a * 'b ) -> ( list (operation) * 'b )
+    - 'b
+    - tez
+    but got arguments with types:
+    - ( unit * unit ) -> unit
+    - unit
+    - tez. |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
@@ -632,9 +638,13 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, {property: "toto"});
       3 |
 
-    Invalid arguments.
-    Expected an argument of type ('a -> 'b, 'a), but got an argument of type
-    record[field -> int] -> record[field -> int], record[property -> string]. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - 'a -> 'b
+    - 'a
+    but got arguments with types:
+    - record[field -> int] -> record[field -> int]
+    - record[property -> string]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
@@ -643,9 +653,13 @@ let%expect_test _ =
       1 | const foo = (x:  {b:int}):  {b:int} => {return x};
       2 | const bar = Test.run(foo, "toto");
 
-    Invalid arguments.
-    Expected an argument of type ('a -> 'b, 'a), but got an argument of type
-    record[b -> int] -> record[b -> int], string. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - 'a -> 'b
+    - 'a
+    but got arguments with types:
+    - record[b -> int] -> record[b -> int]
+    - string. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
@@ -654,9 +668,13 @@ let%expect_test _ =
       1 | const foo = (x: int): int => {return x};
       2 | const bar = Test.run(foo, {field: "toto"});
 
-    Invalid arguments.
-    Expected an argument of type ('a -> 'b, 'a), but got an argument of type int -> int,
-    record[field -> string]. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - 'a -> 'b
+    - 'a
+    but got arguments with types:
+    - int -> int
+    - record[field -> string]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;

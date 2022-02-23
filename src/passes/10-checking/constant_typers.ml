@@ -185,6 +185,8 @@ let typer_of_comparator (typer : raise:_ -> test:_ -> _ -> O.type_expression lis
 let raise_of_errors ~raise ~loc lst = function
   | [] ->
      raise.raise @@ (corner_case "Cannot find a suitable type for expression")
+  | [`TC v] ->
+     raise.raise @@ expected loc (List.rev v) lst
   | xs ->
      let tc = List.filter_map ~f:(function `TC v -> Some v) xs in
      raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev tc)) lst

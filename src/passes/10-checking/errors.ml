@@ -69,6 +69,7 @@ type typer_error = [
   | `Typer_wrong_size of Location.t * Ast_typed.type_expression
   | `Typer_wrong_neg of Location.t * Ast_typed.type_expression
   | `Typer_wrong_not of Location.t * Ast_typed.type_expression
+  | `Typer_expected of Location.t * Ast_typed.type_expression list * Ast_typed.type_expression list
   | `Typer_typeclass_error of Location.t * Ast_typed.type_expression list list * Ast_typed.type_expression list
   | `Typer_converter of Ast_typed.type_expression
   | `Typer_uncomparable_types of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
@@ -487,11 +488,18 @@ let rec error_ppformat : display_format:string display_format ->
       let open Simple_utils.PP_helpers in
       let printl printer ppf args =
         Format.fprintf ppf "(%a)" (list_sep printer (const ", ")) args in
-        Format.fprintf f
+      Format.fprintf f
         "@[<hv>%a@.Invalid arguments.@.Expected an argument of type %a, but got an argument of type %a. @]"
         Snippet.pp loc
         (list_sep (printl Ast_typed.PP.type_expression) (const " or ")) exps
         (list_sep Ast_typed.PP.type_expression (const ", ")) acts
+    | `Typer_expected (loc,exps,acts) ->
+      let open Simple_utils.PP_helpers in
+      Format.fprintf f
+        "@[<hv>%a@.Cannot match arguments for operation.@.Expected arguments with types:%a@.but got arguments with types:%a. @]"
+        Snippet.pp loc
+        (list_sep_prep Ast_typed.PP.type_expression (tag "@.- ")) exps
+        (list_sep_prep Ast_typed.PP.type_expression (tag "@.- ")) acts
     | `Typer_declaration_order_record loc ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The given argument must be annotated with the type of the value. @]"
@@ -1177,6 +1185,18 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let message = `String "typeclass error" in
     let expected = `String (Format.asprintf "%a" (list_sep (printl Ast_typed.PP.type_expression) (const " or ")) exps) in
     let actual = `String (Format.asprintf "%a" (list_sep Ast_typed.PP.type_expression (const " or ")) acts) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("expected", expected);
+      ("actual", actual);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected (loc,exps,acts) ->
+    let open Simple_utils.PP_helpers in
+    let message = `String "expected type" in
+    let expected = `String (Format.asprintf "%a" (list_sep Ast_typed.PP.type_expression (const ", ")) exps) in
+    let actual = `String (Format.asprintf "%a" (list_sep Ast_typed.PP.type_expression (const ", ")) acts) in
     let content = `Assoc [
       ("message", message);
       ("location", Location.to_yojson loc);
