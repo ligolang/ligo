@@ -70,7 +70,8 @@
   (alias parser-negative-tests)
   (alias repl-test)
   (alias inference_test)
-  (alias contract_test)))
+  (alias contract_test)
+  (alias error-recovery/recovery-test)))
 
 (rule
  (alias manual-test)

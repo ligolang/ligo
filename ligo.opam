@@ -28,7 +28,7 @@ depends: [
   "terminal_size"
   "pprint"
   "yojson"
-  "ocaml-recovery-parser" { = "0.2.2" }
+  "ocaml-recovery-parser" { = "0.2.3" }
   # Tezos libs
   "tezos-base"
   "tezos-crypto"
@@ -103,5 +103,5 @@ pin-depends: [
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/src/lib_test" ]
   [ "tezos-version.dev" "./vendors/tezos-ligo/src/lib_version" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/src/lib_workers" ]
-  [ "ocaml-recovery-parser.0.2.2" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.2" ]
+  [ "ocaml-recovery-parser.0.2.3" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.3" ]
 ]
