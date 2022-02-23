@@ -25,46 +25,47 @@ let muchuse_neutral : muchuse = M.empty, []
 
 let rec is_dup (t : type_expression) =
   let open Stage_common.Constant in
-  let eq_name i n = String.equal (Ligo_string.extract i) n in
   match t.type_content with
-  | T_constant {injection; _}
-       when eq_name injection never_name ||
-            eq_name injection int_name ||
-            eq_name injection nat_name ||
-            eq_name injection bool_name ||
-            eq_name injection unit_name ||
-            eq_name injection string_name ||
-            eq_name injection bytes_name ||
-            eq_name injection chain_id_name ||
-            eq_name injection tez_name ||
-            eq_name injection key_hash_name ||
-            eq_name injection key_name ||
-            eq_name injection signature_name ||
-            eq_name injection timestamp_name ||
-            eq_name injection address_name ||
-            eq_name injection operation_name ||
-            eq_name injection bls12_381_g1_name ||
-            eq_name injection bls12_381_g2_name ||
-            eq_name injection bls12_381_fr_name ||
-            eq_name injection sapling_transaction_name ||
-            eq_name injection sapling_state_name ||
-            (* Test primitives are dup *)
-            eq_name injection account_name ||
-            eq_name injection failure_name ||
-            eq_name injection typed_address_name ||
-            eq_name injection mutation_name ->
+  | T_constant {injection = (
+    Never               |
+    Int                 |
+    Nat                 |
+    Chest               |
+    Chest_key           |
+    Bool                |
+    Unit                |
+    String              |
+    Bytes               |
+    Chain_id            |
+    Tez                 |
+    Key_hash            |
+    Key                 |
+    Signature           |
+    Timestamp           |
+    Address             |
+    Operation           |
+    Bls12_381_g1        |
+    Bls12_381_g2        |
+    Bls12_381_fr        |
+    Sapling_transaction |
+    Sapling_state       |
+    (* Test primitives are dup *)
+    Account             |
+    Failure             |
+    Typed_address       |
+    Mutation
+  ); _} ->
      true
-  | T_constant {injection; parameters = [t]; _}
-       when eq_name injection option_name ||
-            eq_name injection list_name ||
-            eq_name injection set_name ->
+  | T_constant {injection=
+    (Option  | 
+     List    | 
+     Set    ); parameters = [t]; _} ->
       is_dup t
-  | T_constant {injection;_}
-       when eq_name injection contract_name ->
+  | T_constant {injection=Contract;_} ->
       true
-  | T_constant {injection; parameters = [t1;t2]; _}
-       when eq_name injection big_map_name ||
-            eq_name injection map_name ->
+  | T_constant {injection=
+      (Big_map | 
+       Map    ); parameters = [t1;t2]; _} ->
       is_dup t1 && is_dup t2
   | T_record rows
   | T_sum rows ->
@@ -76,7 +77,13 @@ let rec is_dup (t : type_expression) =
   | T_variable _ -> true
   | T_abstraction {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_for_all {type_;ty_binder=_;kind=_} -> is_dup type_
-  | _ -> false
+  | T_constant { injection=(
+    Option         | Map              | Big_map              | List            | 
+    Map_or_big_map | Set              | Michelson_program    | Michelson_or    | 
+    Michelson_pair | Test_exec_error  |  Pvss_key            | Baker_operation | 
+    Ticket         | Test_exec_result | Chest_opening_result | Baker_hash | Time);_ }  -> false 
+  | T_singleton _
+  | T_module_accessor _ -> false
 
 let muchuse_union (x,a) (y,b) =
   M.union (fun _ x y -> Some (x + y)) x y, a@b

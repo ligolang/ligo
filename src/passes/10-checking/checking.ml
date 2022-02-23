@@ -23,15 +23,15 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
   let self = infer_type_application ~raise ~loc ~default_error in
   let default_error = default_error loc type_matched type_ in
   let inj_mod_equal a b = (* TODO: cleanup with polymorphic functions in value env *)
-    let a = Ligo_string.extract a in
-    let b = Ligo_string.extract b in
-    let ad_hoc_maps_unification a b = match a,b with
-      | "map_or_big_map", x -> (x,x)
-      | x, "map_or_big_map" -> (x,x)
-      | _ -> a,b
+    let ad_hoc_maps_unification a b =
+      let open Stage_common.Constant in
+      match a,b with
+      | Map_or_big_map, x              -> (x, x)
+      | x             , Map_or_big_map -> (x, x)
+      | _                              -> (a, b)
     in
     let (a,b) = ad_hoc_maps_unification a b in
-    String.equal a b
+    Stage_common.Constant.equal a b
   in
   match type_matched.type_content, type_.type_content with
   | T_variable v, _ -> (
@@ -561,13 +561,9 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let tv_col = get_type v_col   in (* this is the type of the collection  *)
       let tv_out = get_type v_initr in (* this is the output type of the lambda*)
       let input_type = match tv_col.type_content with
-        | O.T_constant {language=_ ; injection ; parameters=[t]}
-            when String.equal (Ligo_string.extract injection) list_name
-              || String.equal (Ligo_string.extract injection) set_name ->
+        | O.T_constant {language=_ ; injection = (List | Set); parameters=[t]} ->
           make_t_ez_record (("0",tv_out)::[("1",t)])
-        | O.T_constant {language=_ ; injection ; parameters=[k;v]}
-          when String.equal (Ligo_string.extract injection) map_name
-            || String.equal (Ligo_string.extract injection) big_map_name ->
+        | O.T_constant {language=_ ; injection = (Map | Big_map) ; parameters=[k;v]} ->
           make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> raise.raise @@ bad_collect_loop tv_col e.location in
       let e' = Context.add_value context lname input_type in
@@ -873,7 +869,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
+    let type_operator = I.Var.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_module_accessor ma ->
     let ma = Stage_common.Maps.module_access self ma in
