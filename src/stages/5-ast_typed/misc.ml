@@ -87,12 +87,10 @@ let layout_eq a b = match (a,b) with
 
 let constant_compare ia ib =
   let open Stage_common.Constant in
-  let ia' = Ligo_string.extract ia in
-  let ib' = Ligo_string.extract ib in
-  match ia',ib' with
-  | a,b when (String.equal a map_name || String.equal a map_or_big_map_name) && (String.equal b map_name || String.equal b map_or_big_map_name) -> 0
-  | a,b when (String.equal a big_map_name || String.equal a map_or_big_map_name) && (String.equal b big_map_name || String.equal b map_or_big_map_name) -> 0
-  | _ -> Ligo_string.compare ia ib
+  match ia,ib with
+  | (Map     | Map_or_big_map), (Map     | Map_or_big_map) -> 0
+  | (Big_map | Map_or_big_map), (Big_map | Map_or_big_map) -> 0
+  | _ -> Stage_common.Constant.compare ia ib
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
