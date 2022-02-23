@@ -31,8 +31,6 @@ let rec is_dup (t : type_expression) =
        when eq_name injection never_name ||
             eq_name injection int_name ||
             eq_name injection nat_name ||
-            eq_name injection chest_name ||
-            eq_name injection chest_key_name ||
             eq_name injection bool_name ||
             eq_name injection unit_name ||
             eq_name injection string_name ||
@@ -244,7 +242,6 @@ let muchused_map_module ~add_warning : module_ -> module_ = function module_ ->
   let update_annotations annots =
     List.iter ~f:(fun a -> add_warning a) annots in
   let _,muchused = muchused_helper muchuse_neutral module_ in
-  let () = List.iter ~f:(fun m -> Format.printf "%a\n" Var.pp m) muchused in
   let warn_var v =
     `Self_ast_typed_warning_muchused
       (Var.get_location v, Format.asprintf "%a" Var.pp v) in

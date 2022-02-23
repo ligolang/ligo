@@ -1843,6 +1843,20 @@ let%expect_test _ =
     At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
     At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "warning_duplicate3.mligo" ; "--protocol" ; "hangzhou" ] ;
+  [%expect{|
+    File "../../test/contracts/warning_duplicate3.mligo", line 8, characters 11-12:
+      7 |
+      8 | let main ((f,_) : (Foo.t * int)) : (operation list * int) =
+      9 |     let _ = f.ck in
+    :
+    Warning: variable "f" cannot be used more than once.
+
+    { parameter (pair (chest %c) (chest_key %ck)) ;
+      storage int ;
+      code { DROP ; PUSH int 1 ; NIL operation ; PAIR } } |}]
+
 (* warning layout attribute on constructor *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "B 42n" ; "--init-file" ; contract "warning_layout.mligo" ] ;
