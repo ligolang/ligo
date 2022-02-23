@@ -301,14 +301,101 @@ module.exports = grammar({
       $.type_decl
     ),
 
-    type_decl: $ => seq("type", $.TypeName, "=", $.type_expr),
+    type_decl: $ => seq("type", $.TypeName, optional($.type_params), "=", $.type_expr),
 
-    // let 
-    // const
+    type_params: $ => common.chev(common.sepBy1(",", $.TypeVariableName)),
 
-    // pattern
+    let_decl: $ => common.withAttrs(seq("let", $.binding_list)),
 
+    const_decl: $ => common.withAttrs(seq("const", $.binding_list)),
     
+    binding_list: $ => common.sepBy1(",", $.binding_initializer),
+    
+    binding_initializer: $ => seq($.binding_pattern, optional($.type_annotation), "=", $.expr),
+
+    binding_pattern: $ => choice(
+      $.var_pattern,
+      $.wildcard,
+      $.object_pattern,
+      $.array_pattern
+    ),
+
+    var_pattern: $ => common.withAttrs($.Name),
+
+    object_pattern: $ => common.block($.property_patterns),
+
+    property_patterns: $ => choice(
+      $.property_pattern,
+      seq($.property_patterns, $.property_pattern),
+      seq($.property_patterns, $.object_rest_pattern)
+    ),
+
+    property_pattern: $ => choice(
+      seq($.Name, "=", $.expr),
+      seq($.Name, ":", $.binding_initializer),
+      $.var_pattern
+    ),
+
+    object_rest_pattern: $ => seq("...", $.Name),
+
+    switch_statement: $ => seq("switch", common.par($.expr), common.block($.cases)),
+
+    cases: $ => choice(
+      seq(seq($.case, repeat($.case)), optional($.default_case)),
+      $.default_case
+    ),
+
+    case: $ => seq("case", $.expr, ":", optional($.case_statements)),
+
+    default_case: $ => seq("default", ":", optional($.case_statements)),
+
+    case_statements: $ => common.sepBy(";", $.case_statement),
+
+    case_statement: $ => choice(
+      $.statement,
+      "break"
+    ),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
