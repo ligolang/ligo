@@ -2,163 +2,194 @@
 sum
 =========
 
-type foo = [@boom] | True | False
+type foo = /* @boom */ | ["True"] | ["False"]
 
 ----
 
 (source_file
-  (type_decl
-    (TypeName)
-    (sum_type
-      (attr)
-      (variant (ConstrName))
-      (variant (ConstrName))
-    )
-  )
-)
-
-
-=========
-constr
-=========
-
-type foo = [@boom] True | False
-
-----
-
-(source_file
-  (type_decl
-    (TypeName)
-    (sum_type
-      (variant (attr) (ConstrName))
-      (variant (ConstrName))
-    )
-  )
-)
-
-
+  (statement_or_namespace
+    (statement
+      (base_statement
+        (declaration_statement
+          (type_decl
+            (TypeName)
+            (ocaml_comment)
+            (type_expr
+              (sum_type
+                (variant
+                  (ConstrName))
+                (variant
+                  (ConstrName))))))))))
+//
+//=========
+//constr
+//=========
+//
+//type foo = /* @boom */ ["True"] | ["False"]
+//
+//----
+//
+//(source_file
+//  (type_decl
+//    (TypeName)
+//    (sum_type
+//      (variant (attr) (ConstrName))
+//      (variant (ConstrName))
+//    )
+//  )
+//)
+//
 =========
 constr with bar
 =========
 
-type foo = | [@boom] True | False
+type foo = | /* @boom */ ["True"] | ["False"]
 
 ----
 
 (source_file
-  (type_decl
-    (TypeName)
-    (sum_type
-      (variant (attr) (ConstrName))
-      (variant (ConstrName))
-    )
-  )
-)
-
+  (statement_or_namespace
+    (statement
+      (base_statement
+        (declaration_statement
+          (type_decl
+            (TypeName)
+            (type_expr
+              (sum_type
+                (ocaml_comment)
+                (variant
+                  (ConstrName))
+                (variant
+                  (ConstrName))))))))))
 
 =========
 record
 =========
 
-type person = [@layout:comb] {
+type person = /* @layout:comb */ {
   name: string,
 }
 
 ----
 
 (source_file
-  (type_decl
-    (TypeName)
-    (record_type
-      (attr)
-      (field_decl (FieldName) (TypeName))
-    )
-  )
-)
-
+  (statement_or_namespace
+    (statement
+      (base_statement
+        (declaration_statement
+          (type_decl
+            (TypeName)
+            (ocaml_comment)
+            (type_expr
+              (core_type
+                (object_type
+                  (field_decl
+                    (FieldName)
+                    (type_annotation
+                      (type_expr
+                        (core_type
+                          (TypeName))))))))))))))
 
 =========
 field twice
 =========
 
 type person = {
-  [@foo][@bar] name: string,
+  /* @foo *//* @bar */ name: string,
 }
 
 ----
 
 (source_file
-  (type_decl
-    (TypeName)
-    (record_type
-      (field_decl (attr) (attr) (FieldName) (TypeName))
-    )
-  )
-)
-
+  (statement_or_namespace
+    (statement
+      (base_statement
+        (declaration_statement
+          (type_decl
+            (TypeName)
+            (type_expr
+              (core_type
+                (object_type
+                  (ocaml_comment)
+                  (ocaml_comment)
+                  (field_decl
+                    (FieldName)
+                    (type_annotation
+                      (type_expr
+                        (core_type
+                          (TypeName))))))))))))))
 
 =========
 let decl
 =========
 
-[@annot] let x : int = 1
+/* @annot */ let x : int = 1;
 
 ---
 
 (source_file
-  (let_decl
-    (attr)
-    (var_pattern (NameDecl))
-    (TypeName)
-    (Int)
-  )
-)
-
+  (ocaml_comment)
+  (statement_or_namespace
+    (statement
+      (base_statement
+        (declaration_statement
+          (let_decl
+            (binding_list
+              (binding_initializer
+                (binding_pattern
+                  (var_pattern
+                    (Name)))
+                (type_annotation
+                  (type_expr
+                    (core_type
+                      (TypeName))))
+                (expr
+                  (expr_statement
+                    (assignment_expr_level
+                      (disjunction_expr_level
+                        (conjunction_expr_level
+                          (comparison_expr_level
+                            (addition_expr_level
+                              (multiplication_expr_level
+                                (unary_expr_level
+                                  (call_expr_level
+                                    (member_expr
+                                      (Int))))))))))))))))))))
 
 =========
 let decl twice
 =========
 
-[@annot1][@annot2] let x : int = 1
+/* @annot1 *//* @annot2 */ let x : int = 1;
 
 ---
 
 (source_file
-  (let_decl
-    (attr) (attr)
-    (var_pattern (NameDecl))
-    (TypeName)
-    (Int)
-  )
-)
-
-
-=========
-let expr
-=========
-
-let bar = (b : int) : int => {
-  [@foo][@bar]
-  let test = 2;
-  test;
-};
-
-
----
-
-(source_file
-  (let_decl
-    (var_pattern (NameDecl))
-    (lambda
-      (fun_arg (var_pattern (NameDecl)) (TypeName))
-      (TypeName)
-      (block
-        (let_decl
-          (attr) (attr)
-          (var_pattern (NameDecl)) (Int)
-        )
-        (Name)
-      )
-    )
-  )
-)
+  (ocaml_comment)
+  (ocaml_comment)
+  (statement_or_namespace
+    (statement
+      (base_statement
+        (declaration_statement
+          (let_decl
+            (binding_list
+              (binding_initializer
+                (binding_pattern
+                  (var_pattern
+                    (Name)))
+                (type_annotation
+                  (type_expr
+                    (core_type
+                      (TypeName))))
+                (expr
+                  (expr_statement
+                    (assignment_expr_level
+                      (disjunction_expr_level
+                        (conjunction_expr_level
+                          (comparison_expr_level
+                            (addition_expr_level
+                              (multiplication_expr_level
+                                (unary_expr_level
+                                  (call_expr_level
+                                    (member_expr
+                                      (Int))))))))))))))))))))

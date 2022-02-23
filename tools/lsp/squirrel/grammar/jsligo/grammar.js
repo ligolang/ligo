@@ -9,7 +9,7 @@ module.exports = grammar({
 
   rules: {
     source_file: $ => choice(
-      common.sepEndBy(';', field("toplevel", $.statement_or_namespace)),
+      common.sepEndBy(optional(';'), field("toplevel", $.statement_or_namespace)),
       seq(field("toplevel", $.statement_or_namespace), optional(";"))
     ),
 
@@ -50,7 +50,7 @@ module.exports = grammar({
     ),
 
     assignment_expr_level: $ => choice(
-      seq($.assignment_expr_level, "as", $.type_expr),
+      seq($.assignment_expr_level, "as", $.core_type),
       $.disjunction_expr_level
     ),
 
@@ -74,11 +74,11 @@ module.exports = grammar({
       $.addition_expr_level
     ),
 
-    addition_expr_level: $ => choice(
+    addition_expr_level: $ => prec.left(2, choice(
       seq($.addition_expr_level, "+", $.multiplication_expr_level),
       seq($.addition_expr_level, "-", $.multiplication_expr_level),
       $.multiplication_expr_level
-    ),
+    )),
 
     multiplication_expr_level: $ => choice(
       seq($.multiplication_expr_level, "*", $.unary_expr_level),
@@ -93,7 +93,7 @@ module.exports = grammar({
       $.call_expr_level
     ),
 
-    call_expr_level: $ => choice($.call_expr, $.member_expr),
+    call_expr_level: $ => prec.left(2, choice($.call_expr, $.member_expr)),
 
     call_expr: $ => seq($.lambda, common.par(common.sepBy(",", $.expr))),
 
@@ -125,13 +125,13 @@ module.exports = grammar({
     ),
 
     michelson_interop: $ => seq(
-      '(Michelson',
+      "(Michelson",
         seq(
           field("code", $.michelson_code),
-          'as',
-          field("type", $.type_expr),
+          "as",
+          field("type", $.core_type),
         ),
-      ')'
+      ")"
     ),
 
     michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'), // check ???
@@ -160,7 +160,7 @@ module.exports = grammar({
 
     parameter: $ => seq($.expr, $.type_annotation),
 
-    return_statement: $ => choice("return", seq("return", $.expr)),
+    return_statement: $ => prec.left(2, choice("return", seq("return", $.expr))),
 
     block_statement: $ => common.block($.statements),
 
@@ -180,7 +180,7 @@ module.exports = grammar({
 
     fun_param: $ => seq($.Name, $.type_annotation),
 
-    sum_type: $ => common.withAttrs($, seq("|", common.sepBy("|", $.variant))),
+    sum_type: $ => prec.left(1, common.withAttrs($, seq("|", common.sepBy("|", $.variant)))),
 
     variant: $ => common.withAttrs($, common.brackets(
       choice(
@@ -205,7 +205,7 @@ module.exports = grammar({
 
     module_var_t: $ => choice($.module_access_t, $.Name),
 
-    object_type: $ => common.withAttrs($, common.block(common.sepBy1(",", $.field_decl))),
+    object_type: $ => common.withAttrs($, common.block(common.sepEndBy(",", $.field_decl))),
 
     field_decl: $ => common.withAttrs($, choice(
       $.FieldName,
@@ -216,7 +216,7 @@ module.exports = grammar({
 
     type_tuple: $ => common.brackets(common.sepBy1(",", $.type_expr)),
 
-    import_statement: $ => seq("import", $.ModuleName, "=", common.sepBy(".", $.ModuleName)),
+    import_statement: $ => prec.left(1, seq("import", $.ModuleName, "=", common.sepBy(".", $.ModuleName))),
 
     export_statement: $ => seq("export", $.declaration_statement),
 
