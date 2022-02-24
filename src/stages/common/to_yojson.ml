@@ -94,6 +94,12 @@ let lambda expression type_expression {binder=b;output_type;result} : json =
     ("result", expression result);
   ]
 
+let type_abs expression {type_binder;result} : json =
+  `Assoc [
+    ("type_binder", type_variable_to_yojson type_binder);
+    ("result", expression result);
+  ]
+
 let recursive expression type_expression {fun_name;fun_type;lambda=l} =
   `Assoc [
     ("fun_name", expression_variable_to_yojson fun_name);

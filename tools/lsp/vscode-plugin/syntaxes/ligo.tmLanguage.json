@@ -12,8 +12,7 @@
     { "include": "#function" },
     { "include": "#operators" },
     { "include": "#typedefinition" },
-    { "include": "#moduleaccess" },
-    { "include": "#moduledeclaration" },
+    { "include": "#module" },
     { "include": "#identifierconstructor" },
     { "include": "#constorvar" },
     { "include": "#numericliterals" }
@@ -79,18 +78,11 @@
       "match": "\\b(type)\\b",
       "captures": {}
     },
-    "moduleaccess": {
+    "module": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.ligo" },
         "1": { "name": "storage.class.ligo" }
-      }
-    },
-    "moduledeclaration": {
-      "match": "\\b(module)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
-      "captures": {
-        "2": { "name": "storage.class.ligo" },
-        "1": { "name": "keyword.other.ligo" }
       }
     },
     "identifierconstructor": {

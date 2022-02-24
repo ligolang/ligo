@@ -29,20 +29,20 @@ type type_content = [%import: Types.type_content]
     } ]
 
 let t_constant ?loc ?sugar type_operator arguments : type_expression =
-  make_t ?loc ?sugar (T_app {type_operator=Var.of_input_var type_operator;arguments})
+  make_t ?loc ?sugar (T_app {type_operator=Var.of_input_var (Stage_common.Constant.to_string type_operator);arguments})
 let t_abstraction ?loc ?sugar ty_binder kind type_ =
   make_t ?loc ?sugar (T_abstraction {ty_binder ; kind ; type_})
 let t_for_all ?loc ?sugar ty_binder kind type_ =
   make_t ?loc ?sugar (T_for_all {ty_binder ; kind ; type_})
 
 (* TODO?: X_name here should be replaced by X_injection *)
-let t__type_ ?loc ?sugar () : type_expression = t_constant ?loc ?sugar _type__name []
+let t__type_ ?loc ?sugar () : type_expression = t_constant ?loc ?sugar _type_ []
 [@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
-let t__type_ ?loc ?sugar t : type_expression = t_constant ?loc ?sugar _type__name [t]
+let t__type_ ?loc ?sugar t : type_expression = t_constant ?loc ?sugar _type_ [t]
 [@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
 
-let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type__name [t; t']
+let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type_ [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
 
 let t_mutez = t_tez
@@ -138,6 +138,7 @@ let e_constant ?loc ?sugar cons_name arguments = e_constant ?loc ?sugar { cons_n
 let e_variable v : expression = e_variable v ()
 let e_application lamb args : expression = e_application {lamb;args} ()
 let e_lambda ?loc ?sugar binder output_type result = e_lambda ?loc ?sugar {binder; output_type; result ;  } ()
+let e_type_abs ?loc ?sugar type_binder result = e_type_abstraction ?loc ?sugar {type_binder; result ;  } ()
 let e_recursive ?loc ?sugar fun_name fun_type lambda = e_recursive ?loc ?sugar {fun_name; fun_type; lambda} ()
 let e_let_in ?loc ?sugar let_binder rhs let_result attr = e_let_in ?loc ?sugar { let_binder ; rhs ; let_result; attr } ()
 let e_type_in type_binder rhs let_result = e_type_in { type_binder ; rhs ; let_result } ()
@@ -248,6 +249,13 @@ let get_e_ascription = fun a ->
   match a with
   | E_ascription {anno_expr; type_annotation} -> Some (anno_expr,type_annotation)
   | _ -> None
+
+let get_type_abstractions (e : expression) =
+  let rec aux tv e = match get_e_type_abstraction e with
+  | None -> tv, e
+  | Some { type_binder ; result } ->
+     aux (type_binder :: tv) result in
+  aux [] e
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option = fun e ->

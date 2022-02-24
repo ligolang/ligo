@@ -12,6 +12,7 @@
     lexing_shared
     ast_imperative
     tree_abstraction_shared
-    predefined)
+    predefined
+    syntax_types)
  (preprocess
   (pps ppx_poly_constructor)))

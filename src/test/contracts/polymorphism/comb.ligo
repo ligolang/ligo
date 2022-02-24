@@ -1,19 +1,19 @@
 type dup(a) is a * a
 
-function diag(const x : _a) : dup(_a) is (x, x)
+function diag<a>(const x : a) : dup(a) is (x, x)
 
-function rev(const xs : list (_a)) : list (_a) is block {
-  var zs := (nil : list (_a));
+function rev<a>(const xs : list (a)) : list (a) is block {
+  var zs := (nil : list (a));
   for x in list xs block {
     zs := x # zs;
   };
 } with zs
 
-function zip(const xs : list(_a); var ys : list(_b)) : list(_a * _b) is block {
-  var zs := (nil : list(_a * _b));
+function zip<a,b>(const xs : list(a); var ys : list(b)) : list(a * b) is block {
+  var zs := (nil : list(a * b));
   for x in list xs block {
     var t := case ys of [
-      | nil -> (failwith("error") : _b * list(_b))
+      | nil -> (failwith("error") : b * list(b))
       | (y # ys) -> (y, ys)
     ];
     zs := ((x, t.0) # zs);
@@ -23,7 +23,7 @@ function zip(const xs : list(_a); var ys : list(_b)) : list(_a * _b) is block {
   zs := rev(zs);
 } with zs
 
-function self_zip(const xs : list(_a)) : list(_a * _a) is block {
+function self_zip<a>(const xs : list(a)) : list(a * a) is block {
   const (xs, ys) = diag(xs);
 } with zip(xs, ys)
 

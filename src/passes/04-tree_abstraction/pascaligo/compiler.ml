@@ -32,6 +32,8 @@ let mk_var ~loc var =
   if String.equal var "_" then Var.fresh ~loc ~name:"_" ()
   else Var.of_input_var ~loc var
 
+let compile_variable (var : CST.variable) =
+  let (var,loc) = w_split var in mk_var ~loc var
 let rec e_unpar : CST.expr -> CST.expr =
   function
     E_Par e -> e_unpar e.value.inside
@@ -45,13 +47,14 @@ let rec get_var : CST.expr -> (string * location) option =
 let compile_var_opt : CST.expr -> AST.expression_variable option = fun expr ->
   Option.map (get_var expr) ~f:(fun (v,loc) -> mk_var ~loc v)
 
-let compile_attributes : CST.attribute list -> AST.attributes =
-  fun attributes ->
-    let attrs = List.map ~f:(fst <@ r_split) attributes
-    and f = function
-      _, Some (Attr.String value) -> Some value
-    | _, None -> None
-    in List.filter_map attrs ~f
+let compile_attributes : CST.attribute list -> AST.attributes = fun attr ->
+  let f : Attr.attribute Region.reg -> string =
+    fun x ->
+      let ((k,v_opt),_loc) = r_split x in
+      match v_opt with
+      | Some (String v) -> String.concat ~sep:":" [k;v]
+      | None -> k
+  in List.map ~f attr
 
 let compile_selection : CST.selection -> 'a access * location = function
   | FieldName name ->
@@ -376,7 +379,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
           match field_lhs with
           | CST.E_Var x -> (
             let label = fst @@ w_split x in
-            let self_accessor = e_accessor ~loc structure [AST.Access_record label] in 
+            let self_accessor = e_accessor ~loc structure [AST.Access_record label] in
             e_update ~loc acc [AST.Access_record label] (func_update self_accessor)
           )
           | CST.E_Proj {region ; value = {record_or_tuple ; selector = _ ; field_path }} -> (
@@ -387,7 +390,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
               in
               (AST.Access_record label::path)
             in
-            let self_accessor = e_accessor ~loc:(Location.lift region) structure path in 
+            let self_accessor = e_accessor ~loc:(Location.lift region) structure path in
             e_update ~loc acc path (func_update self_accessor)
           )
           | x -> raise.raise (expected_field_or_access @@ CST.expr_to_region x)
@@ -1071,6 +1074,13 @@ and compile_fun_decl ~raise : CST.fun_decl -> expression_variable * type_express
       e_recursive ~loc:(Location.lift reg#region) fun_binder fun_type lambda
     | None -> make_e ~loc @@ E_lambda lambda
   in
+  (* This handle polymorphic annotation *)
+  let func = Option.value_map ~default:func ~f:(fun tp ->
+    let (tp,loc) = r_split tp in
+    let tp : CST.type_params = tp.inside in
+    let type_vars = List.Ne.map compile_variable @@ npseq_to_ne_list tp in
+    List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:func type_vars
+  ) type_params in
   (fun_binder, fun_type, func)
 
 and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> (expression, type_expression) declaration' location_wrap list =
@@ -1105,6 +1115,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
       let name, loc = w_split name in
       let var = mk_var ~loc name in
       let ascr =
+        (* drop the polymorphic variable *)
         Option.map ~f:(compile_type_expression ~raise <@ snd) const_type in
       let expr = compile_expression ~raise init in
       let attributes = Stage_common.Helpers.const_attribute in

@@ -684,11 +684,12 @@ object_rest_pattern:
 (* Type declarations *)
 
 type_decl:
-  "type" type_name ioption(type_params) "=" type_expr {
-    let kwd_type = $1 in
-    let eq = $4 in
-    let region = cover kwd_type#region (type_expr_to_region $5) in
-    let value  = {kwd_type; name=$2; params=$3; eq; type_expr=$5; attributes=[private_attribute]}
+  attributes "type" type_name ioption(type_params) "=" type_expr {
+    let kwd_type = $2 in
+    let eq = $5 in
+    let region = cover kwd_type#region (type_expr_to_region $6) in
+    let value  = {kwd_type; name=$3; params=$4; eq; type_expr=$6;
+                  attributes=private_attribute::$1}
     in SType {region; value} }
 
 type_params:

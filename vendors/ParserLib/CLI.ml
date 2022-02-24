@@ -96,14 +96,13 @@ module Make (Lexer_CLI: LEXER_CLI) : S =
 
     let make_help buffer : Buffer.t =
       let options = [
-        "      --mono       Use Menhir monolithic API";
-        "      --cst        Print the CST";
-        "      --pretty     Pretty-print the input";
-        "      --recovery   Enable error recovery";
-        "      debug options:";
+        "      --mono         Use Menhir monolithic API";
+        "      --cst          Print the CST";
+        "      --pretty       Pretty-print the input";
+        "      --recovery     Enable error recovery";
+        "      Debug options:";
         "      --trace-recovery [output_file]";
-        "                   Enable verbose printing of intermediate steps of error recovery algorithm to";
-        "                   output_file if it is passed or stdout otherwise"
+        "                     Enable verbose printing of intermediate steps\n                     of error recovery algorithm to output_file\n                     if provided, or stdout otherwise"
       ] in
       begin
         Buffer.add_string buffer (String.concat "\n" options);

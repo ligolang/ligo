@@ -41,6 +41,11 @@
 
 ]
 
+(* Make the recovery pay more attention to the number of synthesized tokens than
+   production reducing because the latter often means only precedence level *)
+%[@recover.default_cost_of_symbol     1000]
+%[@recover.default_cost_of_production 1]
+
 (* Literals *)
 
 %token             <string Wrap.t> BlockCom  "<block_comment>" [@recover.expr mk_block_com $loc]
@@ -48,10 +53,11 @@
 
 %token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive  $loc]
 %token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string     $loc]
-%token                <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim   $loc]
+(* TODO: recovery annotation is turned off because it isn't supported in the pretty printer (see Pretty.pp_expr) *)
+%token                <string Wrap.t> Verbatim  "<verbatim>"  (* [@recover.expr mk_verbatim   $loc] *)
 %token      <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes      $loc]
 %token        <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int        $loc]
-%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident      $loc]
+%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident      $loc] [@recover.cost 900]
 %token                <string Wrap.t> UIdent    "<uident>"    [@recover.expr mk_uident     $loc]
 %token            <Attr.t Region.reg> Attr      "[@attr]"     [@recover.expr mk_attr       $loc]
 (*
@@ -113,7 +119,7 @@
 *)
 %token <string Wrap.t> VBAR     "|"   [@recover.expr Token.wrap_vbar     $loc]
 %token <string Wrap.t> ARROW    "=>"  [@recover.expr Token.wrap_arrow    $loc]
-%token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc]
+%token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc] [@recover.cost 700]
 
 (* JavaScript Keywords *)
 

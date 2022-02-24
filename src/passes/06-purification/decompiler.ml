@@ -58,6 +58,9 @@ let rec decompile_expression : O.expression -> I.expression =
   | O.E_lambda lamb ->
     let lamb = lambda self self_type lamb in
     return @@ I.E_lambda lamb
+  | O.E_type_abstraction ta ->
+    let ta = type_abs self ta in
+    return @@ I.E_type_abstraction ta
   | O.E_recursive recs ->
     let recs = recursive self self_type recs in
     return @@ I.E_recursive recs

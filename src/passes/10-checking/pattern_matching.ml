@@ -75,13 +75,13 @@ let extract_variant_type ~raise : pattern -> O.label -> O.type_expression -> O.t
     | Some t -> t.associated_type
     | None -> raise.raise @@ pattern_do_not_conform_type p t
   )
-  | O.T_constant { injection ; parameters = [proj_t] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> (
+  | O.T_constant { injection = Stage_common.Constant.Option ; parameters = [proj_t] ; language=_} -> (
     match label with
     | Label "Some" -> proj_t
     | Label "None" -> (O.t_unit ())
     | Label _ -> raise.raise @@ pattern_do_not_conform_type p t
   )
-  | O.T_constant { injection ; parameters = [proj_t] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> (
+  | O.T_constant { injection = Stage_common.Constant.List ; parameters = [proj_t] ; language=_} -> (
     match label with
     | Label "Cons" -> O.make_t_ez_record [("0",proj_t);("1",t)]
     | Label "Nil" -> (O.t_unit ())
@@ -119,7 +119,7 @@ let type_matchee ~raise : equations -> O.type_expression =
         if O.LMap.mem label sum_type.content then ()
         else raise.raise @@ pattern_do_not_conform_type p t
       )
-      | I.P_variant _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> ()
+      | I.P_variant _ , O.T_constant { injection = Stage_common.Constant.Option ; _ } -> ()
       | P_tuple tupl , O.T_record record_type -> (
         if (List.length tupl) <> (O.LMap.cardinal record_type.content) then
           raise.raise @@ pattern_do_not_conform_type p t
@@ -140,8 +140,8 @@ let type_matchee ~raise : equations -> O.type_expression =
         | Ok () -> ()
         | Unequal_lengths -> raise.raise @@ pattern_do_not_conform_type p t
       )
-      | I.P_unit , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.unit_name -> ()
-      | I.P_list _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> ()
+      | I.P_unit , O.T_constant { injection = Stage_common.Constant.Unit ; _ } -> ()
+      | I.P_list _ , O.T_constant { injection = Stage_common.Constant.List ; _ } -> ()
       | _ -> raise.raise @@ pattern_do_not_conform_type p t
     in
     let aux : O.type_expression option -> typed_pattern -> O.type_expression option = fun t_opt (p,t) ->

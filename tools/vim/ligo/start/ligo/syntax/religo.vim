@@ -15,17 +15,11 @@ highlight link comment Comment
 syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\s\+" 
 highlight link identifierconstructor Label 
 
-" moduledeclaration
-syntax match moduledeclaration_ "\<\([A-Z][a-zA-Z0-9_$]*\)" contained 
-highlight link moduledeclaration_ Structure 
-syntax match moduledeclaration "\(module\)\W" nextgroup=moduledeclaration_ 
-highlight link moduledeclaration Keyword 
-
-" moduleaccess
-syntax match moduleaccess_ "[a-z_][a-zA-Z0-9_$]*" contained 
-highlight link moduleaccess_ Identifier 
-syntax match moduleaccess "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=moduleaccess_ 
-highlight link moduleaccess Structure 
+" module
+syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
+highlight link module_ Identifier 
+syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_ 
+highlight link module Structure 
 
 " typedefinition
 syntax match typedefinition "\(type\)\>" 

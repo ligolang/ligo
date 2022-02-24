@@ -3,6 +3,7 @@ open Ast_typed
 open Simple_utils.Trace
 open Ast_typed.Helpers
 module Pair = Simple_utils.Pair
+open Stage_common
 
 type ('a ,'err) decl_folder = 'a -> declaration -> 'a
 type ('a ,'err) folder = 'a -> expression -> 'a
@@ -22,6 +23,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
   )
   | E_type_inst { forall = e; type_ = _}
   | E_lambda { binder = _ ; result = e }
+  | E_type_abstraction { type_binder = _ ; result = e}
   | E_recursive {lambda= {result=e;binder=_};fun_name=_;fun_type=_}
   | E_constructor {element=e;constructor=_} -> (
     let res = self init e in
@@ -172,6 +174,10 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let result = self result in
     return @@ E_lambda { binder ; result }
   )
+  | E_type_abstraction ta -> (
+      let ta = Maps.type_abs self ta in
+      return @@ E_type_abstraction ta
+  )
   | E_type_inst { forall ; type_ } -> (
     let forall = self forall in
     return @@ E_type_inst { forall ; type_ }
@@ -281,6 +287,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   | E_lambda { binder ; result } -> (
       let (res,result) = self init result in
       ( res, return @@ E_lambda { binder ; result })
+    )
+  | E_type_abstraction ta -> (
+      let res, ta = Fold_maps.type_abs self init ta in
+      res, return @@ E_type_abstraction ta
     )
   | E_recursive { fun_name; fun_type; lambda={binder;result}} -> (
       let (res,result) = self init result in
@@ -476,6 +486,8 @@ module Free_variables :
     | E_lambda {binder ; result} ->
       let {modVarSet=fmv;moduleEnv;varSet=fv} = self result in
       {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder @@ fv}
+    | E_type_abstraction {type_binder=_ ; result} ->
+      self result
     | E_recursive {fun_name; lambda = {binder; result};fun_type=_} ->
       let {modVarSet;moduleEnv;varSet=fv} = self result in
       {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder @@ fv}
@@ -575,6 +587,8 @@ module Free_module_variables :
     | E_lambda {binder; result} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove binder fv)
+    | E_type_abstraction { type_binder=_;result} ->
+      self result
     | E_recursive {fun_name; fun_type=_; lambda = {binder;result}} ->
       let fmv, fv = self result in
       (fmv, VarSet.remove fun_name @@ VarSet.remove binder fv)

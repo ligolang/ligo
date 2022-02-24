@@ -95,6 +95,11 @@ let get_string : value -> string option =
   | V_Ct (C_string x) -> Some x
   | _ -> None
 
+let get_key : value -> _ option =
+  function
+  | V_Ct (C_key x) -> Some x
+  | _ -> None
+
 let get_string_option : value -> string option option =
   function
   | V_Construct ("Some", V_Ct (C_string x)) -> Some (Some x)

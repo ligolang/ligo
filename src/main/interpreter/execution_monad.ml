@@ -19,11 +19,12 @@ let add_warning _ = ()
 
 let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations ty)
 
+(* Command should _only_ contains instruction that needs or modify the tezos context *)
 module Command = struct
   type 'a t =
     | Set_big_map : Z.t * (LT.value * LT.value) list * Ast_aggregated.type_expression -> unit t
-    | Pack : Location.t * LT.value * Ast_aggregated.type_expression -> Ast_aggregated.expression t
-    | Unpack : Location.t * bytes * Ast_aggregated.type_expression -> Ast_aggregated.expression t
+    | Pack : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Unpack : Location.t * bytes * Ast_aggregated.type_expression -> LT.value t
     | Bootstrap_contract : int * LT.value * LT.value * Ast_aggregated.type_expression  -> unit t
     | Nth_bootstrap_contract : int -> Tezos_protocol.Protocol.Alpha_context.Contract.t t
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression * Ast_aggregated.type_expression) t
@@ -55,6 +56,7 @@ module Command = struct
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
+    (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Sha256 : bytes -> LT.value t
     | Sha512 : bytes -> LT.value t
@@ -67,6 +69,10 @@ module Command = struct
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
     | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
+    | Baker_account : LT.value * LT.value -> unit t
+    | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Bake_until_n_cycle_end : Location.t * Ligo_interpreter.Types.calltrace *  Z.t -> LT.value t
+
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
@@ -89,16 +95,14 @@ module Command = struct
       let expr = Ast_aggregated.e_a_pack expr in
       let mich = Michelson_backend.compile_value ~raise expr in
       let ret_co, ret_ty = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
-      let ret = LT.V_Michelson (Ty_code { code = ret_co ; code_ty = ret_ty ; ast_ty = Ast_aggregated.t_bytes () }) in
-      let ret = Michelson_backend.val_to_ast ~raise ~loc ret (Ast_aggregated.t_bytes ()) in
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
     | Unpack (loc, bytes, value_ty) ->
       let value_ty = trace_option ~raise (Errors.generic_error loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option value_ty in
       let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
       let mich = Michelson_backend.compile_value ~raise expr in
       let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
-      let ret = LT.V_Michelson (Ty_code { code = ret_co ; code_ty = ret_ty ; ast_ty = Ast_aggregated.t_option value_ty }) in
-      let ret = Michelson_backend.val_to_ast ~raise ~loc ret (Ast_aggregated.t_option value_ty) in
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
     | Nth_bootstrap_contract (n) ->
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in
@@ -131,10 +135,11 @@ module Command = struct
         amts
       in
       let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
-      let bootstrap_contract = List.rev ctxt.internals.next_bootstrapped_contracts in
+      let bootstrap_contracts = List.rev ctxt.internals.next_bootstrapped_contracts in
+      let baker_accounts = List.rev ctxt.internals.next_baker_accounts in
       let ctxt = Tezos_state.init_ctxt
         ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n)
-        ctxt.internals.protocol_version bootstrap_contract
+        ctxt.internals.protocol_version bootstrap_contracts ~baker_accounts
       in
       ((),ctxt)
     | Get_state () ->
@@ -381,6 +386,27 @@ module Command = struct
     | New_account () -> (
       let (sk, pk) = Tezos_state.new_account () in
       let value = LC.v_pair ((V_Ct (C_string sk)), (V_Ct (C_key pk))) in
+      (value, ctxt)
+    )
+    | Baker_account (acc, opt) -> (
+      let tez = trace_option ~raise (corner_case ()) @@ LC.get_option opt in
+      let tez = Option.map ~f:(fun v -> trace_option ~raise (corner_case ()) @@ LC.get_mutez v) tez in
+      let tez = Option.map ~f:(fun t -> Z.to_int64 t) tez in
+      let sk, pk = trace_option ~raise (corner_case ()) @@ LC.get_pair acc in
+      let sk = trace_option ~raise (corner_case ()) @@ LC.get_string sk in
+      let pk = trace_option ~raise (corner_case ()) @@ LC.get_key pk in
+      let next_baker_accounts = (sk, pk, tez) :: ctxt.internals.next_baker_accounts in
+      let ctxt = { ctxt with internals = { ctxt.internals with next_baker_accounts } } in
+      ((),ctxt)
+    )
+    | Register_delegate (loc, calltrace, pkh) -> (
+      let ctxt = Tezos_state.register_delegate ~raise ~loc ~calltrace ctxt pkh in
+      let value = LC.v_unit () in
+      (value, ctxt)
+    )
+    | Bake_until_n_cycle_end (loc, calltrace, n) -> (
+      let ctxt = Tezos_state.bake_until_n_cycle_end ~raise ~loc ~calltrace ctxt (Z.to_int n) in
+      let value = LC.v_unit () in
       (value, ctxt)
     )
 end

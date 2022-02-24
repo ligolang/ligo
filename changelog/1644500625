@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1549'
+title: 'Testing framework: fix loop on embedded Michelson (#1356)'
+type: fixed
