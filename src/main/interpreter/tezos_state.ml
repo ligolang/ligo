@@ -471,12 +471,18 @@ let get_bootstrapped_contract ~raise (n : int) =
   let contract = Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check contract in
   Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error Location.generated "Error parsing address") @@ contract
 
-let init ?rng_state ?endorsers_per_block ?with_commitments
-    ?(initial_balances = []) ?initial_endorsers ?min_proposal_quorum
-    ?time_between_blocks ?minimal_block_delay ?delay_per_missing_endorsement
-    ?bootstrap_contracts ?level ?cost_per_byte ?liquidity_baking_subsidy ?(baker_accounts = []) n =
+let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = []) ?consensus_threshold
+    ?min_proposal_quorum ?bootstrap_contracts ?level ?cost_per_byte
+    ?liquidity_baking_subsidy ?endorsing_reward_per_slot
+    ?baking_reward_bonus_per_slot ?baking_reward_fixed_portion ?origination_size
+    ?blocks_per_cycle n =
   let open Tezos_alpha_test_helpers in
   let accounts = Account.generate_accounts ?rng_state ~initial_balances n in
+  let contracts =
+    List.map
+      ~f:(fun (a, _) -> Tezos_raw_protocol.Alpha_context.Contract.implicit_contract Account.(a.pkh))
+      accounts
+  in
   let baker_accounts = List.map baker_accounts ~f:(fun (sk, pk, amt) ->
                             let pkh = Signature.Public_key.hash pk in
                             let amt = match amt with
@@ -487,22 +493,19 @@ let init ?rng_state ?endorsers_per_block ?with_commitments
                Account.(add_account acc)) in
   let accounts = accounts @ baker_accounts in
   let raw = Block.genesis
-              (* ?endorsers_per_block
-              ?with_commitments
-              ?initial_endorsers *)
-              ?min_proposal_quorum
-              (* ?time_between_blocks *)
-              (* ?minimal_block_delay *)
-              (* ?delay_per_missing_endorsement *)
-              ?bootstrap_contracts
-              ?level
-              ?cost_per_byte
-              ?liquidity_baking_subsidy
-              accounts in
-  let contracts =
-    List.map
-      ~f:(fun (a, _) -> Tezos_raw_protocol.Alpha_context.Contract.implicit_contract Account.(a.pkh))
-      accounts in
+    ?commitments
+    ?consensus_threshold
+    ?min_proposal_quorum
+    ?bootstrap_contracts
+    ?level
+    ?cost_per_byte
+    ?liquidity_baking_subsidy
+    ?endorsing_reward_per_slot
+    ?baking_reward_bonus_per_slot
+    ?baking_reward_fixed_portion
+    ?origination_size
+    ?blocks_per_cycle
+    accounts in
   (raw, contracts)
 
 let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balances=[]) ?(baker_accounts = []) ?(n=2) protocol_version bootstrapped_contracts =
