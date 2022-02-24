@@ -288,29 +288,25 @@ let%expect_test _ =
                                     let b[@var] = 5 in
                                     let env_rec#1 = ( ( i ) ) in
                                     let env_rec#1 =
-                                      FOLD_WHILE(lambda (binder#2) return
-                                                 let i = binder#2.0.0 in
-                                                  match AND(LT(i , x) ,
-                                                            GT(b , 0)) with
-                                                   | True () -> CONTINUE(let i =
-                                                                        ADD
-                                                                        (i ,
-                                                                        1) in
-                                                                        let binder#2 =
-                                                                        {
-                                                                        binder#2
-                                                                        with
-                                                                        { 0 =
-                                                                        {
-                                                                        binder#2.0
-                                                                        with
-                                                                        { 0 =
-                                                                        i } } } } in
-                                                                        let ()#3 : unit =
-                                                                        unit in
-                                                                        binder#2)
-                                                   | False () -> STOP(binder#2) ,
-                                                 env_rec#1) in
+                                      LOOP_LEFT(lambda (binder#2) return
+                                                let i = binder#2.0.0 in
+                                                 match AND(LT(i , x) , GT(b , 0)) with
+                                                  | True () -> LOOP_CONTINUE
+                                                               (let i =
+                                                                  ADD(i , 1) in
+                                                                let binder#2 =
+                                                                  { binder#2 with
+                                                                    { 0 =
+                                                                  { binder#2.0
+                                                                    with
+                                                                    { 0 =
+                                                                  i } } } } in
+                                                                let ()#3 : unit =
+                                                                  unit in
+                                                                binder#2)
+                                                  | False () -> LOOP_STOP
+                                                                (binder#2) ,
+                                                env_rec#1) in
                                     let env_rec#1 = env_rec#1.0 in
                                     let i = env_rec#1.0 in i |}]
 

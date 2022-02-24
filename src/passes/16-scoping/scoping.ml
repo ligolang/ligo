@@ -378,6 +378,6 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   let (arguments, usages) = translate_args arguments env in
   ((expr.cons_name, static_args, arguments), usages)
 
-and translate_closed_function ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
-  let (body, usages) = translate_expression body (Mini_c.Environment.add (binder, input_ty) []) in
+and translate_closed_function ?(env=[]) ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
+  let (body, usages) = translate_expression body (Mini_c.Environment.add (binder, input_ty) env) in
   Binds (usages, [translate_type input_ty], body)

@@ -41,7 +41,7 @@ type action =
 |	GetTotalSupply of getTotalSupply
 
 let transfer (p,s : transfer * storage) : operation list * storage =
-   let new_allowances =   
+   let new_allowances =
 		if Tezos.sender = p.address_from then s.allowances
 		else
 			let authorized_value = match Big_map.find_opt (Tezos.sender,p.address_from) s.allowances with
@@ -51,7 +51,7 @@ let transfer (p,s : transfer * storage) : operation list * storage =
 			if (authorized_value < p.value)
 			then (failwith "Not Enough Allowance" : allowances)
 			else Big_map.update (Tezos.sender,p.address_from) (Some (abs(authorized_value - p.value))) s.allowances
-   in    
+   in
 	let sender_balance = match Big_map.find_opt p.address_from s.tokens with
 		Some value -> value
 	|	None        -> 0n
@@ -100,7 +100,7 @@ let getTotalSupply (p,s : getTotalSupply * storage) : operation list * storage =
   ([op],s)
 
 
-let main (a,s:action * storage) = 
+let main (a,s:action * storage) =
  	match a with
    	Transfer p -> transfer (p,s)
 	|	Approve  p -> approve (p,s)
@@ -134,7 +134,7 @@ type comb_three = [@layout:comb] {
   a : int ;
   [@annot:anb]
   b : string ;
-  [@annot:anc] 
+  [@annot:anc]
   c : nat ;
 }
 
@@ -179,7 +179,7 @@ type comb_three = [@layout:tree] {
   a : int ;
   [@annot:anb]
   b : string ;
-  [@annot:anc] 
+  [@annot:anc]
   c : nat ;
 }
 
@@ -235,11 +235,11 @@ let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
     | Bar j -> Foo 1
   in
  ([] : operation list), o
- 
+
 let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
   let o = (C 1n) in
   ([] : operation list), o
-  
+
 let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
   let o = match store with
     | One a -> Five (1)
@@ -275,11 +275,11 @@ let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
     | Bar j -> Foo 1
   in
  ([] : operation list), o
- 
+
 let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
   let o = (C 1n) in
   ([] : operation list), o
-  
+
 let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
   let o = match store with
     | One a -> Five (1)
@@ -432,7 +432,7 @@ type comp_pair = int * int
 
 let comp_pair (a: comp_pair) = a < a
 
-(* 
+(*
 type uncomp_pair_1 = int * int * int
 
 let uncomp_pair_1 (a: uncomp_pair_1) = a < a
@@ -465,9 +465,9 @@ type return = operation list * string
 
 let main (action, store : string * string) : return =
   let toto : operation * address = Tezos.create_contract
-    (fun (p, s : nat * string) -> (([] : operation list), "one")) 
-    (None: key_hash option) 
-    300tz 
+    (fun (p, s : nat * string) -> (([] : operation list), "one"))
+    (None: key_hash option)
+    300tz
     "un"
   in
   ([toto.0], store)let hasherman512 (s : bytes) : bytes = Crypto.sha512 s
@@ -477,7 +477,7 @@ let main (i : int) : int = conv_test i 10
 let partial (a : int) (b : int) : int = a + b
 let mk_partial (j : int) : int -> int = partial j
 let partial_apply (i : int) : int = mk_partial 10 i
-type storage = (int,"foo",string,"bar") michelson_or 
+type storage = (int,"foo",string,"bar") michelson_or
 type foobar = (int,"baz", int, "fooo" ) michelson_or
 
 type return = operation list * storage
@@ -725,9 +725,9 @@ calculations for how expensive skipping needs to be to deter people
 from doing it just to chew up address space.  *)
 
 let buy (parameter, storage: buy * storage) =
-  let void: unit = 
-    if amount = storage.name_price 
-    then () 
+  let void: unit =
+    if amount = storage.name_price
+    then ()
     else (failwith "Incorrect amount paid.": unit)
   in
   let profile = parameter.profile in
@@ -746,7 +746,7 @@ let buy (parameter, storage: buy * storage) =
     Big_map.update new_id (Some new_id_details) identities
   in
   ([]: operation list), {storage with identities = updated_identities;
-                         next_id = new_id + 1; 
+                         next_id = new_id + 1;
                         }
 
 let update_owner (parameter, storage: update_owner * storage) =
@@ -905,7 +905,7 @@ let record_concat =
 
 let record_patch =
   let ab : foo_record = {a="a"; b="b"} in
-  let res = {ab with b = "c"} in 
+  let res = {ab with b = "c"} in
   (res.b = "c")
 
 type bar_record = {
@@ -984,7 +984,7 @@ let is_nat_yes =
   match (is_nat i) with
   | Some i -> true
   | None -> false
-  
+
 let is_nat_no =
   let j : int = -1 in
   match (is_nat j) with
@@ -1003,7 +1003,7 @@ let map_list =
   match (List.map add_one a) with
   | hd::tl -> (hd = 2)
   | [] -> false
-  
+
 let fold_list =
   let a = [1; 2; 3; 4] in
   let acc : int * int -> int =
@@ -1052,13 +1052,6 @@ let sizes =
   (Bytes.length e = 2n)
 
 let modi = (3 mod 2 = 1n)
-
-let fold_while =
-  let aux : int -> bool * int =
-    fun (i : int) ->
-    if i < 10 then Loop.resume (i + 1) else Loop.stop i
-  in
-  (Loop.fold_while aux 20 = 20) &&  (Loop.fold_while aux 0 = 10)
 
 let assertion_pass =
   let unitt = assert (1=1) in
@@ -1185,13 +1178,13 @@ let letin_nesting (_: unit) =
     s
   end
 
-let letin_nesting2 (x: int) = 
-  let y = 2 in 
+let letin_nesting2 (x: int) =
+  let y = 2 in
   let z = 3 in
   x + y + z
 
 let x =
-  let (_, (x, _)) = (1n, (2n, 3n)) in 
+  let (_, (x, _)) = (1n, (2n, 3n)) in
   x
 type storage = int * int list
 
@@ -1246,7 +1239,7 @@ let counter (n : int) : int =
       aggregate {counter = prev.counter + 1;
                    sum = prev.counter + prev.sum}
     else
-      prev.sum 
+      prev.sum
   in
   aggregate initial
 
@@ -1410,7 +1403,7 @@ let vl : tl1 = M_left (M_right "eq":tl2)
 let michelson_add (n : nat * nat) : nat =
   [%Michelson ({| { UNPAIR;ADD } |} : nat * nat -> nat) ] n
 type inner_storage = (int,"one",nat,"two") michelson_or
-type storage = (int,"three",inner_storage,"four") michelson_or 
+type storage = (int,"three",inner_storage,"four") michelson_or
 
 type return = operation list * storage
 
@@ -1502,11 +1495,11 @@ let n : foobar = None
 type bls_l = (bls12_381_g1 * bls12_381_g2) list
 type bool_option = bool option
 
-let a = [%Michelson ({| 
+let a = [%Michelson ({|
   { PUSH @vk_gamma_c bls12_381_g1 0x063bd6e11e2fcaac1dd8cf68c6b1925a73c3c583e298ed37c41c3715115cf96358a42dbe85a0228cbfd8a6c8a8c54cd015b5ae2860d1cc47f84698d951f14d9448d03f04df2ca0ffe609a2067d6f1a892163a5e05e541279134cae52b1f23c6b; }
-  |} : bls12_381_g1)]  
+  |} : bls12_381_g1)]
 
-let b = [%Michelson ({| 
+let b = [%Michelson ({|
     { PUSH @vk_delta bls12_381_g2 0x10c6d5cdca84fc3c7f33061add256f48e0ab03a697832b338901898b650419eb6f334b28153fb73ad2ecd1cd2ac67053161e9f46cfbdaf7b1132a4654a55162850249650f9b873ac3113fa8c02ef1cd1df481480a4457f351d28f4da89d19fa405c3d77f686dc9a24d2681c9184bf2b091f62e6b24df651a3da8bd7067e14e7908fb02f8955b84af5081614cb5bc49b416d9edf914fc608c441b3f2eb8b6043736ddb9d4e4d62334a23b5625c14ef3e1a7e99258386310221b22d83a5eac035c; }
   |} : bls12_381_g2)]
 
@@ -1555,8 +1548,8 @@ let modify_inner (r : double_record) : double_record =
 
 let rec sum ((n,acc):int * int) : int =
     if (n < 1) then acc else sum (n-1, acc+n)
- 
-let rec fibo ((n,n_1,n_0):int*int*int) : int = 
+
+let rec fibo ((n,n_1,n_0):int*int*int) : int =
     if (n < 2) then n_1 else fibo (n-1, n_1 + n_0, n_1)
 type ss = 8 sapling_state
 

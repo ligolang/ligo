@@ -338,10 +338,6 @@ tc "arguments for (+)"
     | C_ASSERT_NONE_WITH_ERROR -> t_assert_none_with_error ;
     | C_FAILWITH            -> t_failwith ;
     | C_NEVER               -> t_never ;
-    (* LOOPS *)
-    | C_FOLD_WHILE          -> t_fold_while ;
-    | C_FOLD_CONTINUE       -> t_continuation ;
-    | C_FOLD_STOP           -> t_continuation ;
     (* MATH *)
     | C_NEG                 -> t_neg ;
     | C_ABS                 -> t_abs ;

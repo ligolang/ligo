@@ -545,7 +545,7 @@ let add ~raise loc = typer_2 ~raise loc "ADD" @@ fun a b ->
   if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
   then t_timestamp () else
     raise.raise @@ typeclass_error loc
-              [ 
+              [
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
                 [t_bls12_381_g2();t_bls12_381_g2()] ;
                 [t_bls12_381_fr();t_bls12_381_fr()] ;
@@ -579,7 +579,7 @@ let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b
   if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
   then t_timestamp () else
     raise.raise @@ typeclass_error loc
-              [ 
+              [
                 [t_string();t_string()] ;
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
                 [t_bls12_381_g2();t_bls12_381_g2()] ;
@@ -707,24 +707,18 @@ let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
   let () = assert_eq_1 ~raise ~loc res init in
   res
 
-(** FOLD_WHILE is a fold operation that takes an initial value of a certain type
-    and then iterates on it until a condition is reached. The auxillary function
-    that does the fold returns either boolean true or boolean false to indicate
-    whether the fold should continue or not. Necessarily then the initial value
-    must match the input parameter of the auxillary function, and the auxillary
-    should return type (bool * input) *)
-let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
+let loop_left ~raise loc = typer_2 ~raise loc "LOOP_LEFT" @@ fun body init ->
   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
+  let (left,right) = trace_option ~raise (expected_variant loc result) @@ get_t_or result in
   let () = assert_eq_1 ~raise ~loc arg init in
-  let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
-  in init
+  let () = assert_eq_1 ~raise ~loc init left
+  in right
 
-(* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
-let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
-  t_pair (t_bool ()) arg
+let loop_continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
+  t_sum_ez [("left",arg);("right",arg)]
 
-let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
-  (t_pair (t_bool ()) arg)
+let loop_stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
+  t_sum_ez [("left",arg);("right",arg)]
 
 let not_ ~raise loc = typer_1 ~raise loc "NOT" @@ fun elt ->
   if eq_1 elt (t_bool ())
@@ -1231,9 +1225,10 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_ASSERT_NONE_WITH_ERROR -> assert_none_with_error ~raise loc ;
   | C_FAILWITH            -> failwith_ ~raise loc ;
     (* LOOPS *)
-  | C_FOLD_WHILE          -> fold_while ~raise loc ;
-  | C_FOLD_CONTINUE       -> continue ~raise loc ;
-  | C_FOLD_STOP           -> stop ~raise loc ;
+  | C_LOOP_LEFT           -> loop_left ~raise loc ;
+  | C_LEFT                -> loop_continue ~raise loc ;
+  | C_LOOP_CONTINUE       -> loop_continue ~raise loc ;
+  | C_LOOP_STOP           -> loop_stop ~raise loc ;
   | C_FOLD                -> fold ~raise loc ;
    (* MATH *)
   | C_NEG                 -> neg ~raise loc ;
