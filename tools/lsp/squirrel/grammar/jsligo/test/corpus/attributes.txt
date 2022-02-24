@@ -20,7 +20,7 @@ type foo = /* @boom */ | ["True"] | ["False"]
                   (ConstrName))
                 (variant
                   (ConstrName))))))))))
-//
+
 //=========
 //constr
 //=========
@@ -30,14 +30,20 @@ type foo = /* @boom */ | ["True"] | ["False"]
 //----
 //
 //(source_file
-//  (type_decl
-//    (TypeName)
-//    (sum_type
-//      (variant (attr) (ConstrName))
-//      (variant (ConstrName))
-//    )
-//  )
-//)
+//  (statement_or_namespace
+//    (statement
+//      (base_statement
+//        (declaration_statement
+//          (type_decl
+//            (TypeName)
+//            (type_expr
+//              (sum_type
+//                (ocaml_comment)
+//                (variant
+//                  (ConstrName))
+//                (variant
+//                  (ConstrName))))))))))
+//
 //
 =========
 constr with bar
@@ -193,3 +199,93 @@ let decl twice
                                   (call_expr_level
                                     (member_expr
                                       (Int))))))))))))))))))))
+
+=========
+let expr
+=========
+
+let bar = (b : int) : int => {
+  /* @foo *//* @bar */
+  let test = 2;
+  return test;
+};
+
+
+---
+
+(source_file
+  (statement_or_namespace
+    (statement
+      (base_statement
+        (declaration_statement
+          (let_decl
+            (binding_list
+              (binding_initializer
+                (binding_pattern
+                  (var_pattern
+                    (Name)))
+                (expr
+                  (expr_statement
+                    (fun_expr
+                      (parameters
+                        (parameter
+                          (expr
+                            (expr_statement
+                              (assignment_expr_level
+                                (disjunction_expr_level
+                                  (conjunction_expr_level
+                                    (comparison_expr_level
+                                      (addition_expr_level
+                                        (multiplication_expr_level
+                                          (unary_expr_level
+                                            (call_expr_level
+                                              (member_expr
+                                                (Name))))))))))))
+                          (type_annotation
+                            (type_expr
+                              (core_type
+                                (TypeName))))))
+                      (type_annotation
+                        (type_expr
+                          (core_type
+                            (TypeName))))
+                      (body
+                        (ocaml_comment)
+                        (ocaml_comment)
+                        (statements
+                          (statement
+                            (base_statement
+                              (declaration_statement
+                                (let_decl
+                                  (binding_list
+                                    (binding_initializer
+                                      (binding_pattern
+                                        (var_pattern
+                                          (Name)))
+                                      (expr
+                                        (expr_statement
+                                          (assignment_expr_level
+                                            (disjunction_expr_level
+                                              (conjunction_expr_level
+                                                (comparison_expr_level
+                                                  (addition_expr_level
+                                                    (multiplication_expr_level
+                                                      (unary_expr_level
+                                                        (call_expr_level
+                                                          (member_expr
+                                                            (Int))))))))))))))))))
+                          (statement
+                            (base_statement
+                              (return_statement
+                                (expr
+                                  (expr_statement
+                                    (assignment_expr_level
+                                      (disjunction_expr_level
+                                        (conjunction_expr_level
+                                          (comparison_expr_level
+                                            (addition_expr_level
+                                              (multiplication_expr_level
+                                                (unary_expr_level
+                                                  (call_expr_level
+                                                    (member_expr
+                                                      (Name))))))))))))))))))))))))))))

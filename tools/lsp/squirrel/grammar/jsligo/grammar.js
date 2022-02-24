@@ -8,10 +8,8 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
   rules: {
-    source_file: $ => choice(
+    source_file: $ => 
       common.sepEndBy(optional(';'), field("toplevel", $.statement_or_namespace)),
-      seq(field("toplevel", $.statement_or_namespace), optional(";"))
-    ),
 
     statement_or_namespace: $ => choice($.statement, $.namespace_statement),
 
@@ -19,7 +17,7 @@ module.exports = grammar({
 
     namespace: $ => seq("namespace", field("moduleName", $.ModuleName), common.block($.statements_or_namespace)),
 
-    statements_or_namespace: $ => common.sepBy1(";", $.statement_or_namespace),
+    statements_or_namespace: $ => common.sepEndBy1(";", $.statement_or_namespace),
 
     statement: $ => prec.right(1, choice($.base_statement, $.if_statement)),
 
@@ -152,7 +150,7 @@ module.exports = grammar({
 
     body: $ => choice(common.block($.statements), $.expr_statement),
 
-    statements: $ => common.sepBy1(";", $.statement),
+    statements: $ => common.sepEndBy1(";", $.statement),
 
     type_annotation: $ => seq(":", $.type_expr),
 
@@ -180,7 +178,7 @@ module.exports = grammar({
 
     fun_param: $ => seq($.Name, $.type_annotation),
 
-    sum_type: $ => prec.left(1, common.withAttrs($, seq("|", common.sepBy("|", $.variant)))),
+    sum_type: $ => prec.right(1, common.withAttrs($, seq("|", common.sepBy("|", $.variant)))),
 
     variant: $ => common.withAttrs($, common.brackets(
       choice(
@@ -216,7 +214,7 @@ module.exports = grammar({
 
     type_tuple: $ => common.brackets(common.sepBy1(",", $.type_expr)),
 
-    import_statement: $ => prec.left(1, seq("import", $.ModuleName, "=", common.sepBy(".", $.ModuleName))),
+    import_statement: $ => prec.left(1, seq("import", $.ModuleName, "=", common.sepEndBy1(".", $.ModuleName))),
 
     export_statement: $ => seq("export", $.declaration_statement),
 
