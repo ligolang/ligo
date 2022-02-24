@@ -49,11 +49,12 @@ depends: [
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # dependencies of vendored dependencies
   "bls12-381-legacy"
-  "bls12-381"
+  "bls12-381" { >= "1.1.0" & < "1.2.0" }
   "alcotest-lwt"
   "qcheck-alcotest"
   "irmin-pack"
   "ringo-lwt"
+  "pure-splitmix"
   "resto-cohttp-self-serving-client" { >= "0.6" & < "0.7" }
 ]
 build: [
