@@ -18,6 +18,24 @@ import updateLigo from './updateLigo'
 let client: LanguageClient;
 let compileButton: vscode.StatusBarItem;
 
+// Hides compilation button in case current active text editor is not .(m/re)ligo file.
+// If currently active text window is not an opened file (terminal, explorer, etc.)
+// button will remain in it's previous state.
+function updateCompileButton() {
+  const path = vscode.window.activeTextEditor.document.uri.fsPath;
+  const ext = extname(path);
+
+  // Ignore vscode windows
+  if (path.startsWith('extension')) {
+    return;
+  }
+
+  if (ext === '.ligo' || ext === '.mligo' || ext === '.religo') {
+    compileButton.show();
+  } else {
+    compileButton.hide();
+  }
+}
 
 export async function activate(context: vscode.ExtensionContext) {
   if (context.extensionMode === vscode.ExtensionMode.Production) {
@@ -32,10 +50,12 @@ export async function activate(context: vscode.ExtensionContext) {
     },
   };
 
+  // This section adds "Compile LIGO" status bar button,
+  // which allows to compile ligo from inside the extension
   const compileCommandId = 'ligo.compileContract';
   compileButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
   compileButton.command = compileCommandId;
-  compileButton.text = "Compile";
+  compileButton.text = 'Compile LIGO';
   context.subscriptions.push(compileButton);
 
   context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateCompileButton));
@@ -76,12 +96,4 @@ export function deactivate(): Thenable<void> | undefined {
     return undefined;
   }
   return client.stop();
-}
-
-function updateCompileButton() {
-  const ext = extname(vscode.window.activeTextEditor.document.uri.fsPath);
-  if (ext == '.ligo' || ext == '.mligo' || ext == '.religo')
-    compileButton.show();
-  else
-    compileButton.hide();
 }
