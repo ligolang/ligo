@@ -1,13 +1,13 @@
 open Simple_utils.Trace
 open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Tezos_011_PtHangz2_test_helpers
+module Tezos_alpha_test_helpers = Tezos_012_Psithaca_test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-module Tezos_protocol = Tezos_protocol_011_PtHangz2
-module Tezos_raw_protocol = Tezos_raw_protocol_011_PtHangz2
-module Tezos_protocol_parameters = Tezos_protocol_011_PtHangz2_parameters
+module Tezos_protocol = Tezos_protocol_012_Psithaca
+module Tezos_raw_protocol = Tezos_raw_protocol_012_Psithaca
+module Tezos_protocol_parameters = Tezos_protocol_012_Psithaca_parameters
 
 type r = Errors.interpreter_error raise
 
@@ -102,7 +102,7 @@ let get_contract_rejection_data :
     let open Script_interpreter in
     let open Environment in
     match errs with
-    | [ Ecoproto_error (Runtime_contract_error (contract,_)) ; Ecoproto_error (Reject (_,x,_)) ] ->
+    | [ Ecoproto_error (Runtime_contract_error contract) ; Ecoproto_error (Reject (_,x,_)) ] ->
       let x = canonical_to_ligo x in
       Some (contract,x)
     | _ -> None
@@ -146,7 +146,7 @@ let get_storage ~raise ~loc ~calltrace ctxt addr =
           ~level:ctxt.raw.header.shell.level
           ~predecessor_timestamp:ctxt.raw.header.shell.timestamp
           ~timestamp:(get_timestamp ctxt)
-          ~fitness:ctxt.raw.header.shell.fitness
+          (* ~fitness:ctxt.raw.header.shell.fitness *)
           ctxt.raw.context
     in
     fst @@ Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ 
@@ -165,7 +165,7 @@ let get_alpha_context ~raise ctxt =
         ~level:ctxt.raw.header.shell.level
         ~predecessor_timestamp:ctxt.raw.header.shell.timestamp
         ~timestamp:(get_timestamp ctxt)
-        ~fitness:ctxt.raw.header.shell.fitness
+        (* ~fitness:ctxt.raw.header.shell.fitness *)
         ctxt.raw.context in
   alpha_context
 
@@ -439,7 +439,7 @@ let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
     let gas_limit = (Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.integral_of_int_exn 999_999) in
-    Op.transaction ~gas_limit ~fee:(Test_tez.Tez.of_int 1) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.Tez.of_mutez_exn amt)
+    Op.transaction ~gas_limit ~fee:(Test_tez.of_int 1) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.of_mutez_exn amt)
   in
   bake_op ~raise ~loc ~calltrace ctxt operation
 
@@ -449,11 +449,12 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
     let { code = storage ; ast_ty = ligo_ty ; _ } = trace_option ~raise (corner_case ()) @@ get_michelson_expr storage in
     let open Tezos_alpha_test_helpers in
     let source = unwrap_source ~raise ~loc ctxt.internals.source in
-    let amt = Test_tez.Tez.of_mutez (Int64.of_int (Z.to_int amt)) in
+    (* FIXME: search for proper function of_mutez *)
+    let amt = try Some (Test_tez.of_mutez_exn (Int64.of_int (Z.to_int amt))) with _ -> None in
     let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
     let (operation, dst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       (* TODO : fee ? *)
-      Op.origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.Tez.of_int 1) ~script
+      Op.origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.of_int 1) ~script
     in
     match bake_op ~raise ~loc ~calltrace ctxt operation with
     | Success (ctxt,_) ->
@@ -489,13 +490,13 @@ let init ?rng_state ?endorsers_per_block ?with_commitments
                Account.(add_account acc)) in
   let accounts = accounts @ baker_accounts in
   let raw = Block.genesis
-              ?endorsers_per_block
+              (* ?endorsers_per_block
               ?with_commitments
-              ?initial_endorsers
+              ?initial_endorsers *)
               ?min_proposal_quorum
-              ?time_between_blocks
-              ?minimal_block_delay
-              ?delay_per_missing_endorsement
+              (* ?time_between_blocks *)
+              (* ?minimal_block_delay *)
+              (* ?delay_per_missing_endorsement *)
               ?bootstrap_contracts
               ?level
               ?cost_per_byte

@@ -99,7 +99,7 @@ let fetch_lambda_types ~raise (contract_ty : _ Michelson.t) =
   | _ -> raise.raise Errors.main_unknown (*TODO*)
 
 let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_011_PtHangz2 in
+  let open! Tezos_raw_protocol_012_Psithaca in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -132,7 +132,7 @@ let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
   in
   let top_level = Script_ir_translator.Toplevel
     { storage_type ; param_type ;
-      root_name = None ; legacy_create_contract_literal = false } in
+      root_name = None } in
   let ty_stack_before = Script_typed_ir.Item_t (input_ty, Bot_t, None) in
   let ty_stack_after = Script_typed_ir.Item_t (output_ty, Bot_t, None) in
   let (descr : (_,_,_,_) descr) =
@@ -153,7 +153,7 @@ let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     | _              -> raise.raise @@ Errors.main_unknown_failwith_type )
 
 let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_011_PtHangz2 in
+  let open! Tezos_raw_protocol_012_Psithaca in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -198,7 +198,7 @@ let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     | _              -> raise.raise @@ Errors.main_unknown_failwith_type )
 
 let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
-  let open! Tezos_raw_protocol_011_PtHangz2 in
+  let open! Tezos_raw_protocol_012_Psithaca in
   let exp_type =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings exp_type in
