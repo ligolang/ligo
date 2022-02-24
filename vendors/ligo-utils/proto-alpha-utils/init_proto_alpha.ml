@@ -162,7 +162,7 @@ module Context_init = struct
         contents ;
         signature = Signature.zero ;
       } in
-    let timestamp = Alpha_environment.Time.add timestamp @@ Int64.of_int 180 in
+    (* let timestamp = Alpha_environment.Time.add timestamp @@ Int64.of_int 180 in *)
     Main.begin_construction
       ~chain_id: Alpha_environment.Chain_id.zero
       ~predecessor_context: ctxt
@@ -177,7 +177,8 @@ module Context_init = struct
 
   let main n =
     init n >>=? fun ((ctxt, header, hash), accounts, contracts) ->
-    let timestamp = Environment.Time.of_seconds @@ Int64.of_float @@ Unix.time () in
+    let timestamp = Environment.Time.of_seconds @@ 1645576185L
+(* Int64.of_float @@ Unix.time () *) in
     begin_construction ~timestamp ~header ~hash ctxt >>=? fun ctxt ->
     return (ctxt, accounts, contracts)
 
