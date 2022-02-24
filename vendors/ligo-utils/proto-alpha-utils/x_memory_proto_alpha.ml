@@ -145,11 +145,11 @@ let default_self =
     (Alpha_context.Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG")
 
 (* fake bake a block in order to set the predecessor timestamp *)
-let fake_bake tezos_context fitness chain_id now =
-  let tezos_context = (Alpha_context.finalize tezos_context fitness).context in
+let fake_bake tezos_context chain_id now =
   let ((_, header, hash), _, _) =
     force_lwt ~msg:("bad init"^__LOC__)
       (Init_proto_alpha.Context_init.init 1) in
+  let tezos_context = (Alpha_context.finalize tezos_context header.fitness).context in
   let contents = Init_proto_alpha.Context_init.contents ~predecessor:hash () in
   let protocol_data =
     let open! Alpha_context.Block_header in {
@@ -222,17 +222,14 @@ let make_options
         tezos_context
         ~prepaid_bootstrap_storage:false
         self
-        (* ~balance *)
-        (* ~delegate:None *)
         ~script:(script, None)) in
   (* fake bake to set the predecessor timestamp *)
   let time_between_blocks = 1 in
-  let fitness = Obj.magic 1 in
   let level =
     (Level.current tezos_context).level |> Raw_level.to_int32
     |> Script_int.of_int32 |> Script_int.abs
   in
-  let tezos_context = fake_bake tezos_context fitness chain_id (Script_timestamp.sub_delta now (Script_int_repr.of_int time_between_blocks)) in
+  let tezos_context = fake_bake tezos_context chain_id (Script_timestamp.sub_delta now (Script_int_repr.of_int time_between_blocks)) in
   {
     tezos_context ;
     source = sender ;

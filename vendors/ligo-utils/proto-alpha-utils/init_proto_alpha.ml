@@ -116,7 +116,7 @@ module Context_init = struct
                   ~level:0l
                   ~predecessor:hash
                   ~timestamp:Tezos_base.TzPervasives.Time.Protocol.epoch
-                  ~fitness:(Obj.magic 1)
+                  ~fitness:[]
                   ~operations_hash: Alpha_environment.Operation_list_list_hash.zero in
     initial_context
       constants

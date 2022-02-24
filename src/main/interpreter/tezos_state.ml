@@ -146,7 +146,6 @@ let get_storage ~raise ~loc ~calltrace ctxt addr =
           ~level:ctxt.raw.header.shell.level
           ~predecessor_timestamp:ctxt.raw.header.shell.timestamp
           ~timestamp:(get_timestamp ctxt)
-          (* ~fitness:ctxt.raw.header.shell.fitness *)
           ctxt.raw.context
     in
     fst @@ Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ 
@@ -165,7 +164,6 @@ let get_alpha_context ~raise ctxt =
         ~level:ctxt.raw.header.shell.level
         ~predecessor_timestamp:ctxt.raw.header.shell.timestamp
         ~timestamp:(get_timestamp ctxt)
-        (* ~fitness:ctxt.raw.header.shell.fitness *)
         ctxt.raw.context in
   alpha_context
 
@@ -449,7 +447,6 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
     let { code = storage ; ast_ty = ligo_ty ; _ } = trace_option ~raise (corner_case ()) @@ get_michelson_expr storage in
     let open Tezos_alpha_test_helpers in
     let source = unwrap_source ~raise ~loc ctxt.internals.source in
-    (* FIXME: search for proper function of_mutez *)
     let amt = try Some (Test_tez.of_mutez_exn (Int64.of_int (Z.to_int amt))) with _ -> None in
     let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
     let (operation, dst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
