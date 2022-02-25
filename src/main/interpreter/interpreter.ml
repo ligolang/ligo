@@ -689,10 +689,10 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     *)
     | ( C_TEST_ORIGINATE_FROM_FILE, args) -> (
       match protocol_version, args with
-      | Environment.Protocols.Edo , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ->
+      (* | Environment.Protocols.Edo , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ->
         let>> (code,size) = Compile_contract_from_file (source_file,entryp,[]) in
         let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
-        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
+        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ]) *)
       | Environment.Protocols.Hangzhou , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ] ->
         let views = List.map
           ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)

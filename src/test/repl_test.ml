@@ -4,12 +4,12 @@ open Simple_utils.Trace
 let dry_run_options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
 let init_state_cameligo = Repl.make_initial_state
                             (CameLIGO: Syntax_types.t)
-                            Environment.Protocols.Edo
+                            Environment.Protocols.Hangzhou
                             dry_run_options None
 
 let init_state_jsligo = Repl.make_initial_state
                           (JsLIGO: Syntax_types.t)
-                          Environment.Protocols.Edo
+                          Environment.Protocols.Hangzhou
                           dry_run_options None
 
 let apply_repl_sequence init_state commands =

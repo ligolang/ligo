@@ -88,13 +88,13 @@ let%expect_test _ =
     - test1 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "views_test.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good ["run"; "test" ; test "views_test.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]

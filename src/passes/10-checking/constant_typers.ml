@@ -1131,13 +1131,14 @@ let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun i
 
 let test_originate_from_file ~protocol_version ~raise loc =
   match (protocol_version : Ligo_proto.t) with
-  | Edo ->
+  (* | Edo ->
     typer_4 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
       let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
       let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
       let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
       let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) *)
+  | Ithaca
   | Hangzhou ->
     typer_5 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint views storage balance ->
       let tlist = trace_option ~raise (expected_list loc views) @@ get_t_list views in
@@ -1211,7 +1212,7 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
   ret_t
 
-let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
+let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_INT                 -> int ~raise loc ;
   | C_UNIT                -> unit ~raise loc ;
   | C_NEVER               -> never ~raise loc ;
@@ -1372,8 +1373,8 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
   | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
   | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
-  | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
-  | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
+  | C_TEST_CREATE_CHEST -> test_create_chest ~raise loc
+  | C_TEST_CREATE_CHEST_KEY -> test_create_chest_key ~raise loc
   | C_TEST_ADD_ACCOUNT -> test_add_account ~raise loc;
   | C_TEST_NEW_ACCOUNT -> test_new_account ~raise loc;
   | C_TEST_BAKER_ACCOUNT -> test_baker_account ~raise loc;
@@ -1381,17 +1382,7 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_BAKE_UNTIL_N_CYCLE_END -> test_bake_until_n_cycle_end ~raise loc;
   | C_TEST_GET_VOTING_POWER -> test_get_voting_power ~raise loc;
   | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
-  | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
+  | C_GLOBAL_CONSTANT -> test_global_constant ~raise loc
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
-
-and only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
-  match protocol_version with
-  | Ligo_proto.Hangzhou -> default
-  | Ligo_proto.Edo ->
-    raise.raise @@ corner_case (
-      Format.asprintf "Unsupported constant %a in protocol %s"
-        PP.constant' c
-        (Ligo_proto.variant_to_string protocol_version)
-    )

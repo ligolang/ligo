@@ -1,6 +1,7 @@
 const add_tez : tez = 21mutez + 0.000_021tez
 
-const sub_tez : tez = 21mutez - 20mutez
+(* Will be fixed in next commit *)
+(* const sub_tez : tez = 21mutez - 20mutez *)
 
 (* This is not enough. *)
 
