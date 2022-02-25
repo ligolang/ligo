@@ -559,8 +559,7 @@ let%expect_test _ =
       - expected return stack type:
         [ pair (list operation) unit ],
       - actual stack type:
-        [].
-    Type unit is not compatible with type pair (list operation) unit.
+        [ unit ].
     Type unit is not compatible with type pair (list operation) unit. |}]
 
 let%expect_test _ =
