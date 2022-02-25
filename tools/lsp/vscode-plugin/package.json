@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version":  "0.4.7",
+    "version":  "0.4.8",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -133,7 +133,7 @@
         "esbuild-base": "esbuild ./client/src/extension.ts --bundle --outfile=./client/out/extension.js --external:vscode --format=cjs --platform=node",
         "watch": "tsc -b -w",
         "package": "vsce package",
-        "lint": "eslint . --ext .ts",
+        "lint": "eslint client --ext .ts",
         "build-tests": "tsc -p ./test/",
         "test": "npm run build-tests && node client/out/test/driver.js"
     },

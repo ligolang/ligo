@@ -60,6 +60,7 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/test.mligo"
       , "polymorphism/modules.mligo"
       , "polymorphism/modules.religo"
+      , "polymorphism/annotate.mligo"
 
         -- LIGO-446
       , "match.ligo"
@@ -85,9 +86,6 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "hashlock.ligo"
       , "id.ligo"
       , "long_assign.ligo"
-
-        -- LIGO-432
-      , "tutorials/inter-contract-calls/CreateAndCall.religo"
       ]
 
 okayIgnoreDirs :: [FilePath]
