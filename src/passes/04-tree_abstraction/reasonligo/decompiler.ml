@@ -277,6 +277,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let b = CST.EBytes (wrap (s, b)) in
         let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
         return_expr @@ CST.EAnnot (wrap @@ (b,ghost,ty))
+      | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
     )
   | E_application {lamb;args} ->
     let lamb = decompile_expression lamb in

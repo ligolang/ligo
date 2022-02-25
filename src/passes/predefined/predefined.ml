@@ -212,6 +212,9 @@ module Tree_abstraction = struct
     | "Test.create_chest_key" -> some_const C_TEST_CREATE_CHEST_KEY
     | "Test.add_account" -> some_const C_TEST_ADD_ACCOUNT
     | "Test.new_account" -> some_const C_TEST_NEW_ACCOUNT
+    | "Test.baker_account" -> some_const C_TEST_BAKER_ACCOUNT
+    | "Test.register_delegate" -> some_const C_TEST_REGISTER_DELEGATE
+    | "Test.bake_until_n_cycle_end" -> some_const C_TEST_BAKE_UNTIL_N_CYCLE_END
     | "Test.get_voting_power" -> some_const C_TEST_GET_VOTING_POWER
     | "Test.get_total_voting_power" -> some_const C_TEST_GET_TOTAL_VOTING_POWER
 
@@ -258,8 +261,8 @@ module Tree_abstraction = struct
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
     | C_NEVER                   -> "Tezos.never"
-    | C_OPEN_CHEST              -> "Tezos.open_chest" 
-    | C_VIEW                    -> "Tezos.call_view" 
+    | C_OPEN_CHEST              -> "Tezos.open_chest"
+    | C_VIEW                    -> "Tezos.call_view"
     | C_GLOBAL_CONSTANT         -> "Tezos.constant"
 
     (* Operator module *)
@@ -404,8 +407,11 @@ module Tree_abstraction = struct
     | C_TEST_CREATE_CHEST -> "Test.create_chest"
     | C_TEST_ADD_ACCOUNT -> "Test.add_account"
     | C_TEST_NEW_ACCOUNT -> "Test.new_account"
-    | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power" 
-    | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power" 
+    | C_TEST_BAKER_ACCOUNT -> "Test.baker_account"
+    | C_TEST_REGISTER_DELEGATE -> "Test.register_delegate"
+    | C_TEST_BAKE_UNTIL_N_CYCLE_END -> "Test.bake_until_n_cycle_end"
+    | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power"
+    | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power"
 
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
@@ -595,14 +601,6 @@ module Tree_abstraction = struct
       | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
       | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
 
-      (* Loop module *)
-
-      | "Loop.fold_while" -> some_deprecated C_FOLD_WHILE    (* Deprecated *)
-      | "Loop.resume"     -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "continue"        -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "Loop.stop"       -> some_deprecated C_FOLD_STOP     (* Deprecated *)
-      | "stop"            -> some_deprecated C_FOLD_STOP     (* Deprecated *)
-
       (* Others *)
 
       | "assert"                 -> some_const C_ASSERTION
@@ -695,14 +693,6 @@ module Tree_abstraction = struct
       | "Bitwise.lor"         -> some_deprecated C_OR  (* Deprecated *)
       | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
       | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
-
-      (* Loop module *)
-
-      | "Loop.fold_while" -> some_deprecated C_FOLD_WHILE    (* Deprecated *)
-      | "Loop.resume"     -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "continue"        -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "Loop.stop"       -> some_deprecated C_FOLD_STOP     (* Deprecated *)
-      | "stop"            -> some_deprecated C_FOLD_STOP     (* Deprecated *)
 
       (* Others *)
 
@@ -800,10 +790,6 @@ module Stacking = struct
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
-    | C_FOLD_WHILE         , _   ->
-      Some ( simple_binary @@ seq [i_swap ; (i_push (prim "bool") (prim "True"));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] "LOOP" ;i_swap ; i_drop])
-    | C_FOLD_CONTINUE         , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "True")); i_pair])
-    | C_FOLD_STOP             , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
     | C_SIZE                  , _   -> Some ( simple_unary @@ prim "SIZE")
     | C_FAILWITH              , _   -> Some ( simple_unary @@ prim "FAILWITH")
     | C_NEVER                 , _   -> Some ( simple_unary @@ prim "NEVER")
@@ -902,7 +888,7 @@ module Stacking = struct
           ( i_if
             (seq [ i_push_unit ; prim "LEFT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
             (seq [ i_push_unit ; prim "RIGHT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
-          ) 
+          )
       ])
     )
     | C_VIEW , Hangzhou -> Some (trivial_special "VIEW")

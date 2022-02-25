@@ -285,6 +285,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
         let b = CST.EBytes (wrap (s, b)) in
         let ty = decompile_type_expr @@ AST.t_bls12_381_fr () in
         return_expr @@ CST.EAnnot (Region.wrap_ghost @@ par (b,Token.ghost_colon,ty))
+      | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
     )
   | E_application {lamb;args} ->
     let f (expr, b) = if b then CST.EPar (wrap @@ par @@ expr) else expr in

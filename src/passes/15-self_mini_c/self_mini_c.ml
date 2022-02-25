@@ -93,7 +93,6 @@ let is_pure_constant : constant' -> bool =
   | C_SHA256 | C_SHA512 | C_BLAKE2b | C_CHECK_SIGNATURE
   | C_SHA3 | C_KECCAK
   | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
-  | C_FOLD_CONTINUE | C_FOLD_STOP
   | C_LOOP_CONTINUE | C_LOOP_STOP
   | C_EDIV
   | C_SIZE
@@ -130,7 +129,6 @@ let is_pure_constant : constant' -> bool =
   | C_ASSERT_NONE_WITH_ERROR
   | C_ASSERT_INFERRED
   | C_MAP_FIND
-  | C_FOLD_WHILE
   | C_CALL
   | C_FAILWITH
   | C_ITER
@@ -206,6 +204,9 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_CREATE_CHEST_KEY
   | C_TEST_ADD_ACCOUNT
   | C_TEST_NEW_ACCOUNT
+  | C_TEST_BAKER_ACCOUNT
+  | C_TEST_REGISTER_DELEGATE
+  | C_TEST_BAKE_UNTIL_N_CYCLE_END
   | C_TEST_GET_VOTING_POWER
   | C_TEST_GET_TOTAL_VOTING_POWER
     -> false

@@ -1,0 +1,9 @@
+author: Pierre-Emmanuel Wulfman
+merge_request: '1556'
+title: 'BugFix : Use Loop_left instead of Fold_while in compiling imperative loop;
+  remove the Loop package which was deprecated and can be replace by recursive variable like this :
+   - Loop.Fold_while f x  => f (x) and add make f recursive,
+   - Loop.continue x (in f) => f (x),
+   - Loop.stop x => x'
+   the code for purification of the code is still ongoing, which mean the code of this MR will be removed soon
+type: fixed

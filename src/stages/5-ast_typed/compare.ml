@@ -82,7 +82,7 @@ and type_content a b =
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
   cmp3
     String.compare la lb
-    Ligo_string.compare ia ib
+    Stage_common.Constant.compare ia ib
     (List.compare type_expression) pa pb
 
 and rows {content=ca; layout=la} {content=cb; layout=lb} =

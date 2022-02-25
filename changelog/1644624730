@@ -1,0 +1,4 @@
+author: "tomjack"
+merge_request: "1372"
+title: "Emit n-ary pair types `pair a b c...` for comb records"
+type: "changed"

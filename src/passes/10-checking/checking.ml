@@ -22,15 +22,15 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
   let self = infer_type_application ~raise ~loc ~default_error in
   let default_error = default_error loc type_matched type_ in
   let inj_mod_equal a b = (* TODO: cleanup with polymorphic functions in value env *)
-    let a = Ligo_string.extract a in
-    let b = Ligo_string.extract b in
-    let ad_hoc_maps_unification a b = match a,b with
-      | "map_or_big_map", x -> (x,x)
-      | x, "map_or_big_map" -> (x,x)
-      | _ -> a,b
+    let ad_hoc_maps_unification a b =
+      let open Stage_common.Constant in
+      match a,b with
+      | Map_or_big_map, x              -> (x, x)
+      | x             , Map_or_big_map -> (x, x)
+      | _                              -> (a, b)
     in
     let (a,b) = ad_hoc_maps_unification a b in
-    String.equal a b
+    Stage_common.Constant.equal a b
   in
   match type_matched.type_content, type_.type_content with
   | T_variable v, _ -> (
@@ -450,6 +450,7 @@ and type_expression' ~raise ~middle_end_options ~backend_options ?(args = []) ?l
       return (e_bls12_381_g2 b) (t_bls12_381_g2 ())
   | E_literal (Literal_bls12_381_fr b) ->
       return (e_bls12_381_fr b) (t_bls12_381_fr ())
+  | E_literal (Literal_chest _ | Literal_chest_key _) -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
   | E_record_accessor {record;path} ->
       let e' = type_expression' ~raise ~middle_end_options ~backend_options context record in
       let aux (prev:O.expression) (a:I.label) : O.expression =
@@ -559,13 +560,9 @@ and type_expression' ~raise ~middle_end_options ~backend_options ?(args = []) ?l
       let tv_col = get_type v_col   in (* this is the type of the collection  *)
       let tv_out = get_type v_initr in (* this is the output type of the lambda*)
       let input_type = match tv_col.type_content with
-        | O.T_constant {language=_ ; injection ; parameters=[t]}
-            when String.equal (Ligo_string.extract injection) list_name
-              || String.equal (Ligo_string.extract injection) set_name ->
+        | O.T_constant {language=_ ; injection = (List | Set); parameters=[t]} ->
           make_t_ez_record (("0",tv_out)::[("1",t)])
-        | O.T_constant {language=_ ; injection ; parameters=[k;v]}
-          when String.equal (Ligo_string.extract injection) map_name
-            || String.equal (Ligo_string.extract injection) big_map_name ->
+        | O.T_constant {language=_ ; injection = (Map | Big_map) ; parameters=[k;v]} ->
           make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> raise.raise @@ bad_collect_loop tv_col e.location in
       let e' = Context.add_value context lname input_type in
@@ -577,7 +574,7 @@ and type_expression' ~raise ~middle_end_options ~backend_options ?(args = []) ?l
       let (opname', tv) =
         type_constant ~raise ~middle_end_options ~backend_options opname e.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
-  | E_constant {cons_name=C_FOLD_WHILE as opname;
+  | E_constant {cons_name= C_LOOP_LEFT as opname;
                 arguments = [
                     ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None ; attributes=_};
                                                    output_type = None ;
@@ -588,8 +585,8 @@ and type_expression' ~raise ~middle_end_options ~backend_options ?(args = []) ?l
       let v_initr = type_expression' ~raise ~middle_end_options ~backend_options context init_record in
       let tv_out = get_type v_initr in
       let input_type  = tv_out in
-      let e' = Context.add_value context lname input_type in
-      let body = type_expression' ~raise ~middle_end_options ~backend_options e' result in
+      let context = Context.add_value context lname input_type in
+      let body = type_expression' ~raise ~middle_end_options ~backend_options context result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda';v_initr] in
@@ -843,6 +840,8 @@ let untype_literal (l:O.literal) : I.literal =
   | Literal_bls12_381_g1 b -> (Literal_bls12_381_g1 b)
   | Literal_bls12_381_g2 b -> (Literal_bls12_381_g2 b)
   | Literal_bls12_381_fr b -> (Literal_bls12_381_fr b)
+  | Literal_chest b -> Literal_chest b
+  | Literal_chest_key b -> Literal_chest_key b
 
 let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   let self = untype_type_expression in
@@ -869,7 +868,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
+    let type_operator = I.Var.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_module_accessor ma ->
     let ma = Stage_common.Maps.module_access self ma in

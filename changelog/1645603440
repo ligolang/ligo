@@ -1,0 +1,6 @@
+---
+  title: "Fix unnecessary warning emitted from muchused check"
+  merge_request: "1579"
+  author: "melwyn95"
+  type: "fixed"
+
