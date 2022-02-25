@@ -19,6 +19,7 @@ const Container = styled.div`
 const Group = styled.div`
   display: flex;
   align-items: center;
+  margin-top: -5px;
 `;
 
 const Logo = styled.img`

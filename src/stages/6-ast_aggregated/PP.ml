@@ -114,7 +114,7 @@ and row : formatter -> row_element -> unit =
 and type_injection ppf {language;injection;parameters} =
   (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
-  fprintf ppf "%s%a" (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters
+  fprintf ppf "%s%a" (Stage_common.Constant.to_string injection) (list_sep_d_par type_expression) parameters
 
 
 and type_expression ppf (te : type_expression) : unit =
@@ -154,6 +154,7 @@ and expression_content ppf (ec: expression_content) =
   | E_lambda {binder; result} ->
       fprintf ppf "lambda (%a) return %a" expression_variable binder
         expression result
+  | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _} } ->

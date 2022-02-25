@@ -1,0 +1,6 @@
+---
+  title: "Refactor: Move type syntax to a common place"
+  merge_request: "1567"
+  author: "melwyn95"
+  type: "internal"
+

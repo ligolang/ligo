@@ -1,0 +1,6 @@
+---
+  title: "Fixed conversion of byte tokens to lexemes."
+  merge_request: "1570"
+  author: "Christian Rinderknecht"
+  type: "fixed"
+

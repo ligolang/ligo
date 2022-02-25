@@ -25,14 +25,14 @@ let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pas
       type_content =
         T_constant {
           language=Stage_common.Backends.michelson;
-          injection=Ligo_string.verbatim Stage_common.Constant.contract_name;
+          injection=Stage_common.Constant.Contract;
           parameters=[dat.contract_type.parameter]
         }
     }
     e.location
   in
   match e.expression_content , e.type_expression with
-  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection;parameters=[t]} ; _}) when String.equal (Ligo_string.extract injection) Stage_common.Constant.contract_name ->
+  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection=Stage_common.Constant.Contract;parameters=[t]} ; _}) ->
     let entrypoint =
       match entrypoint_exp.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
@@ -103,6 +103,9 @@ and get_fv expr =
   | E_lambda {binder ; result} ->
      let {env;used_var},result = self result in
      return {env;used_var=VSet.remove binder @@ used_var} @@ E_lambda {binder;result}
+  | E_type_abstraction {type_binder;result} ->
+     let env,result = self result in
+     return env @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name; lambda = {binder; result};fun_type} ->
      let {env;used_var},result = self result in
      return {env;used_var=VSet.remove fun_name @@ VSet.remove binder @@ used_var} @@

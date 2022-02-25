@@ -41,8 +41,9 @@ let prefix_colon a = (Wrap.ghost "", a)
 let suffix_with a = (a, Wrap.ghost "")
 
 (* Dialect-relevant functions *)
+open Syntax_types
 
-type dialect = Terse | Verbose
+type dialect = Syntax_types.pascaligo_dialect 
 let terminator = function
   | Terse -> Some Token.ghost_semi
   | Verbose -> None
@@ -355,6 +356,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
         let b = CST.E_Bytes (Wrap.ghost (s, b)) in
         let ty = decompile_type_expr dialect @@ AST.t_bls12_381_fr ()
         in return_typed b ty
+      | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
     )
   | E_application {lamb;args} ->
     let lamb = decompile_expression ~dialect lamb in
@@ -369,6 +371,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let (parameters,ret_type,return) = decompile_lambda dialect lambda in
     let fun_expr : CST.fun_expr = { kwd_function = Token.ghost_function ; type_params=None ; parameters ; ret_type ; kwd_is = Wrap.ghost ""; return } in
     return_expr_with_par @@ CST.E_Fun (Region.wrap_ghost @@ fun_expr)
+  | E_type_abstraction _ -> failwith "type_abstraction not supported yet"
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function" (* TODO : REMOVE THIS!! *)
   | E_let_in {let_binder;rhs;let_result;attributes} ->
@@ -504,7 +507,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let structure =
       let aux = fun (access:AST.expression AST.access) ->
         match access with
-        | Access_record field -> CST.FieldName (Wrap.ghost field) 
+        | Access_record field -> CST.FieldName (Wrap.ghost field)
         | Access_tuple z -> CST.Component (Wrap.ghost (Z.to_string z , z))
         | Access_map _ -> failwith "map access in record update"
       in

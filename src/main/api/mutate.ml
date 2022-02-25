@@ -27,9 +27,9 @@ let mutate_ast source_file syntax protocol_version libs display_format seed gene
     let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options ~meta source_file in
     let imperative_prg = Compile.Utils.to_imperative ~raise ~add_warning ~options ~meta c_unit source_file in
     let _, imperative_prg = Fuzzer.mutate_module_ ?n:seed imperative_prg in
-    let dialect         = Decompile.Helpers.Dialect_name "verbose" in
-    let syntax = Helpers.variant_to_syntax meta.syntax in
-    let buffer     =
+    let dialect = Syntax_types.Dialect_name "verbose" in
+    let syntax  = Syntax.to_string meta.syntax in
+    let buffer  =
         Decompile.Of_imperative.decompile ~raise ~dialect imperative_prg (Syntax_name syntax) in
     buffer
 
@@ -66,7 +66,7 @@ let mutate_cst source_file syntax protocol_version libs display_format seed gene
            let buffer = (Parsing.Reasonligo.pretty_print mutated_prg) in
            buffer
          end
-      | {syntax = PascaLIGO} ->
+      | {syntax = PascaLIGO _ } ->
          begin
            let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
            let raw =

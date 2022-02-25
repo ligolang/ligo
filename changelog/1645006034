@@ -1,0 +1,6 @@
+---
+  title: "Enabled attributes on type declarations."
+  merge_request: "1562"
+  author: "Christian Rinderknecht"
+  type: "fixed"
+

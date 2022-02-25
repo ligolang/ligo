@@ -125,7 +125,9 @@ module Substitution = struct
       | (T.Literal_operation _ as x)
       | (T.Literal_bls12_381_g1 _ as x)
       | (T.Literal_bls12_381_g2 _ as x)
-      | (T.Literal_bls12_381_fr _ as x) ->
+      | (T.Literal_bls12_381_fr _ as x)
+      | (T.Literal_chest _ as x)
+      | (T.Literal_chest_key _ as x) ->
         x
     and s_matching_expr : (_ T.match_case list,_) w = fun ~(substs : substs) ->
       fun x ->
@@ -157,6 +159,9 @@ module Substitution = struct
         let output_type = Option.map ~f:(s_type_expression ~substs) output_type in
         let result = s_expression ~substs result in
         T.E_lambda { binder; output_type; result }
+      | T.E_type_abstraction { type_binder; result } ->
+        let result = s_expression ~substs result in
+        T.E_type_abstraction { type_binder; result }
       | T.E_let_in          { let_binder; rhs; let_result; attr} ->
         let let_binder = s_binder ~substs let_binder in
         let rhs = s_expression ~substs rhs in

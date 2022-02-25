@@ -34,6 +34,8 @@ type literal =
   | Literal_bls12_381_g1 of bytes
   | Literal_bls12_381_g2 of bytes
   | Literal_bls12_381_fr of bytes
+  | Literal_chest of bytes
+  | Literal_chest_key of bytes
 [@@deriving yojson, ord]
 
 let literal_to_enum = function
@@ -53,6 +55,8 @@ let literal_to_enum = function
   | Literal_bls12_381_g1 _ -> 14
   | Literal_bls12_381_g2 _ -> 15
   | Literal_bls12_381_fr _ -> 16
+  | Literal_chest _ -> 17
+  | Literal_chest_key _ -> 18
 
 type constant' =
   | C_INT
@@ -230,6 +234,9 @@ type constant' =
   | C_TEST_RANDOM [@only_interpreter]
   | C_TEST_ADD_ACCOUNT [@only_interpreter]
   | C_TEST_NEW_ACCOUNT [@only_interpreter]
+  | C_TEST_BAKER_ACCOUNT [@only_interpreter]
+  | C_TEST_REGISTER_DELEGATE [@only_interpreter]
+  | C_TEST_BAKE_UNTIL_N_CYCLE_END [@only_interpreter]
   | C_TEST_GET_VOTING_POWER [@only_interpreter]
   | C_TEST_GET_TOTAL_VOTING_POWER [@only_interpreter]
   (* New with EDO*)

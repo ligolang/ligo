@@ -73,11 +73,8 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "list[%a]" (list_sep_d expression) lst
   | E_set lst ->
       fprintf ppf "set[%a]" (list_sep_d expression) lst
-  | E_lambda {binder; output_type; result} ->
-      fprintf ppf "lambda (%a) : %a return %a"
-        option_type_name binder
-        (Simple_utils.PP_helpers.option type_expression) output_type
-        expression result
+  | E_lambda l -> lambda expression type_expression ppf l
+  | E_type_abstraction e -> type_abs expression ppf e
   | E_recursive { fun_name; fun_type; lambda} ->
       fprintf ppf "rec (%a:%a => %a )"
         expression_variable fun_name

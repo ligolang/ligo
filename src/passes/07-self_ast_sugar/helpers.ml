@@ -19,6 +19,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   | E_constant c -> Folds.constant self init c
   | E_application app -> Folds.application self init app
   | E_lambda l -> Folds.lambda self (fun _ a -> a) init l
+  | E_type_abstraction ta -> Folds.type_abs self init ta
   | E_ascription a -> Folds.ascription self (fun _ a -> a) init a
   | E_constructor c -> Folds.constructor self init c
   | E_matching {matchee=e; cases} -> (
@@ -126,6 +127,10 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
       let l = Maps.lambda self (fun a -> a) l in
       return @@ E_lambda l
     )
+  | E_type_abstraction ta -> (
+      let ta = Maps.type_abs self ta in
+      return @@ E_type_abstraction ta
+    )
   | E_recursive r ->
       let r = Maps.recursive self (fun a-> a) r in
       return @@ E_recursive r
@@ -202,33 +207,33 @@ type ('a, 'err) fold_mapper = 'a -> expression -> bool * 'a * expression
 let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
   let self = fold_map_expression f in
   let idle acc a = (acc,a) in
-  let (continue, init',e') = f a e in
-  if (not continue) then (init',e')
+  let (continue, init,e') = f a e in
+  if (not continue) then (init,e')
   else
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
   | E_list lst -> (
-    let (res, lst') = List.fold_map ~f:self ~init:init' lst in
+    let (res, lst') = List.fold_map ~f:self ~init:init lst in
     (res, return @@ E_list lst')
   )
   | E_set lst -> (
-    let (res, lst') = List.fold_map ~f:self ~init:init' lst in
+    let (res, lst') = List.fold_map ~f:self ~init:init lst in
     (res, return @@ E_set lst')
   )
   | E_map lst -> (
-    let (res, lst') = List.fold_map ~f:(fun init -> Pair.fold_map ~f:self ~init) ~init:init' lst in
+    let (res, lst') = List.fold_map ~f:(fun init -> Pair.fold_map ~f:self ~init) ~init:init lst in
     (res, return @@ E_map lst')
   )
   | E_big_map lst -> (
-    let (res, lst') = List.fold_map ~f:(fun init -> Pair.fold_map ~f:self ~init) ~init:init' lst in
+    let (res, lst') = List.fold_map ~f:(fun init -> Pair.fold_map ~f:self ~init) ~init:init lst in
     (res, return @@ E_big_map lst')
   )
   | E_ascription ascr -> (
-      let (res,ascr) = Fold_maps.ascription self idle init' ascr in
+      let (res,ascr) = Fold_maps.ascription self idle init ascr in
       (res, return @@ E_ascription ascr)
     )
   | E_matching {matchee=e;cases} ->
-    let (res,e') = self init' e in
+    let (res,e') = self init e in
     let aux acc { pattern ; body } =
       let (res,body') = self acc body in
       (res,{ pattern ; body = body'})
@@ -236,66 +241,70 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
     let (res, cases') = List.fold_map ~f:aux ~init:res cases in
     (res, return @@ E_matching {matchee=e';cases=cases'})
   | E_record m -> (
-    let (res, m') = LMap.fold_map ~f:(fun _ e res -> self res e) ~init:init' m in
+    let (res, m') = LMap.fold_map ~f:(fun _ e res -> self res e) ~init:init m in
     (res, return @@ E_record m')
   )
   | E_accessor acc -> (
-      let (res, acc) = Fold_maps.accessor self init' acc in
+      let (res, acc) = Fold_maps.accessor self init acc in
       (res, return @@ E_accessor acc)
     )
   | E_update u -> (
-    let res,u = Fold_maps.update self init' u in
+    let res,u = Fold_maps.update self init u in
     (res, return @@ E_update u)
   )
   | E_tuple t -> (
-    let (res, t') = List.fold_map ~f:self ~init:init' t in
+    let (res, t') = List.fold_map ~f:self ~init:init t in
     (res, return @@ E_tuple t')
   )
   | E_constructor c -> (
-      let (res,c) = Fold_maps.constructor self init' c in
+      let (res,c) = Fold_maps.constructor self init c in
       (res, return @@ E_constructor c)
   )
   | E_application app -> (
-      let res,app = Fold_maps.application self init' app in
+      let res,app = Fold_maps.application self init app in
       (res, return @@ E_application app)
     )
   | E_let_in { let_binder ; mut; rhs ; let_result; attributes } -> (
-      let (res,rhs) = self init' rhs in
+      let (res,rhs) = self init rhs in
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; mut; rhs ; let_result ; attributes })
     )
   | E_type_in ti -> (
-      let res,ti = Fold_maps.type_in self idle init' ti in
+      let res,ti = Fold_maps.type_in self idle init ti in
       (res, return @@ E_type_in ti)
     )
   | E_mod_in mi -> (
-      let res,mi = Fold_maps.mod_in self idle init' mi in
+      let res,mi = Fold_maps.mod_in self idle init mi in
       (res, return @@ E_mod_in mi)
     )
   | E_mod_alias ma -> (
-      let res,ma = Fold_maps.mod_alias self init' ma in
+      let res,ma = Fold_maps.mod_alias self init ma in
       (res, return @@ E_mod_alias ma)
     )
   | E_lambda l -> (
-      let res,l = Fold_maps.lambda self idle init' l in
+      let res,l = Fold_maps.lambda self idle init l in
       ( res, return @@ E_lambda l)
     )
+  | E_type_abstraction ta -> (
+      let res, ta = Fold_maps.type_abs self init ta in
+      res, return @@ E_type_abstraction ta
+    )
   | E_recursive r ->
-      let res,r = Fold_maps.recursive self idle init' r in
+      let res,r = Fold_maps.recursive self idle init r in
       ( res, return @@ E_recursive r)
   | E_constant c -> (
-      let res,c = Fold_maps.constant self init' c in
+      let res,c = Fold_maps.constant self init c in
       (res, return @@ E_constant c)
     )
   | E_cond c ->
-      let res,c = Fold_maps.conditional self init' c in
+      let res,c = Fold_maps.conditional self init c in
       (res, return @@ E_cond c)
   | E_sequence s -> (
-      let res,s = Fold_maps.sequence self init' s in
+      let res,s = Fold_maps.sequence self init s in
       (res, return @@ E_sequence s)
     )
   | E_module_accessor { module_name; element } -> (
-    let (res,element) = self init' element in
+    let (res,element) = self init element in
     (res, return @@ E_module_accessor { module_name; element })
   )
-  | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> (init', return e')
+  | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> (init, return e')

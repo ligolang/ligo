@@ -3,12 +3,12 @@ open Simple_utils.Trace
 
 let dry_run_options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
 let init_state_cameligo = Repl.make_initial_state
-                            (CameLIGO: Ligo_compile.Helpers.v_syntax)
+                            (CameLIGO: Syntax_types.t)
                             Environment.Protocols.Edo
                             dry_run_options None
 
 let init_state_jsligo = Repl.make_initial_state
-                          (JsLIGO: Ligo_compile.Helpers.v_syntax)
+                          (JsLIGO: Syntax_types.t)
                           Environment.Protocols.Edo
                           dry_run_options None
 

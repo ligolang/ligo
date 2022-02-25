@@ -16,8 +16,7 @@
     { "include": "#numericliterals" },
     { "include": "#operators" },
     { "include": "#identifierconstructor" },
-    { "include": "#moduleaccess" },
-    { "include": "#moduledeclaration" }
+    { "include": "#module" }
   ],
   "repository": {
     "string": {
@@ -80,18 +79,11 @@
       "match": "\\b(type)\\b",
       "captures": {}
     },
-    "moduleaccess": {
+    "module": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.religo" },
         "1": { "name": "storage.class.religo" }
-      }
-    },
-    "moduledeclaration": {
-      "match": "\\b(module)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
-      "captures": {
-        "2": { "name": "storage.class.religo" },
-        "1": { "name": "keyword.other.religo" }
       }
     },
     "identifierconstructor": {

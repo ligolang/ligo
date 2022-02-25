@@ -1,9 +1,5 @@
 module AST = Ast_aggregated
 
-let type_constants =
-  let open Stage_common.Constant in
-  [test_michelson_name; account_name; time_name ; typed_address_name ; mutation_name ; failure_name]
-
 type 'err ty_exp_mapper = AST.type_expression -> unit
 
 let rows : ('a -> unit) -> AST.rows -> unit = fun g {content; _} ->
@@ -37,8 +33,13 @@ let check_obj_ligo ~raise (t : AST.expression) =
        raise.Trace.raise @@ Errors.expected_obj_ligo expr.location
     | _ -> () in
   let traverser_types loc expr = match expr.AST.type_content with
-    | T_constant { injection ; _ } when List.mem type_constants (Ligo_string.extract injection) ~equal:String.equal ->
-       raise.raise @@ Errors.expected_obj_ligo loc
+    | T_constant { injection = Stage_common.Constant.Michelson_program ; _ }
+    | T_constant { injection = Stage_common.Constant.Account           ; _ }
+    | T_constant { injection = Stage_common.Constant.Time              ; _ }
+    | T_constant { injection = Stage_common.Constant.Typed_address     ; _ }
+    | T_constant { injection = Stage_common.Constant.Mutation          ; _ }
+    | T_constant { injection = Stage_common.Constant.Failure           ; _ } 
+        -> raise.raise @@ Errors.expected_obj_ligo loc
     | _ -> () in
   let folder_types () (expr : AST.expression) =
     traverse_type_expression (traverser_types expr.type_expression.location) expr.type_expression in

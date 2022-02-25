@@ -33,6 +33,7 @@ module Free_variables = struct
         (expression b' let_result)
         (self rhs)
     | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
+    | E_type_abstraction {type_binder=_;result} -> self result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
     | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
@@ -187,6 +188,12 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_bls12_381_fr a, Literal_bls12_381_fr b when Bytes.equal a b -> Some ()
   | Literal_bls12_381_fr _, Literal_bls12_381_fr _ -> None
   | Literal_bls12_381_fr _, _ -> None
+  | Literal_chest a, Literal_chest b when Bytes.equal a b -> Some ()
+  | Literal_chest _, Literal_chest _ -> None
+  | Literal_chest _, _ -> None
+  | Literal_chest_key a, Literal_chest_key b when Bytes.equal a b -> Some ()
+  | Literal_chest_key _, Literal_chest_key _ -> None
+  | Literal_chest_key _, _ -> None
 
 (* TODO this was supposed to mean equality of _values_; if
    assert_value_eq (a, b) = Some (), then a and b should be values *)
@@ -231,7 +238,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | (E_ascription a ,  _b') -> assert_value_eq (a.anno_expr , b)
   | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)
 
-  | (E_variable _, _) | (E_lambda _, _)
+  | (E_variable _, _) | (E_lambda _, _) | (E_type_abstraction _, _)
   | (E_application _, _) | (E_let_in _, _)
   | (E_type_in _, _) | (E_mod_in _, _) | (E_mod_alias _, _)
   | (E_raw_code _, _)
