@@ -1713,13 +1713,13 @@ let jsligo_let_multiple ~raise ~add_warning () : unit =
 
 let balance_test_options ~raise () =
   let balance = trace_option ~raise (test_internal "could not convert balance") @@
-    Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "4000000" in
+    Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "0" in
   Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~balance ())
 
 let balance_constant ~raise ~add_warning f : unit =
   let program = type_file ~raise ~add_warning f in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
-  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  let expected = e_tuple [e_list []; e_mutez 0] in
   let options = balance_test_options ~raise () in
   expect_eq ~raise ~options program "main" input expected
 
