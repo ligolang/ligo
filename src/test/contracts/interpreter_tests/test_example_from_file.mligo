@@ -17,7 +17,7 @@ let test =
   let src = Test.nth_bootstrap_account 1 in
 
   let init_storage = Test.run (fun () -> (None : storage)) () in
-  let (addr, code, size) = Test.originate_from_file cut "main" init_storage 0tez in
+  let (addr, code, size) = Test.originate_from_file cut "main" ([] : string list) init_storage 0tez in
   let () = assert (Test.michelson_equal init_storage (Test.get_storage_of_address addr)) in
   let () = assert (size < 300) in
   let new_account1 = check_new_origination src in

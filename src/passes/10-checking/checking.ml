@@ -667,6 +667,23 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let (name', tv) =
         type_constant ~raise ~test ~protocol_version cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
+  | E_constant {cons_name = C_POLYMORPHIC_SUB;arguments} ->
+      let lst' = List.map ~f:(type_expression' ~raise ~test ~protocol_version context) arguments in
+      let tv_lst = List.map ~f:get_type lst' in
+      let decide = function
+        | Environment.Protocols.Ithaca, {O.expression_content = E_literal (Literal_mutez _); _ } -> Some S.C_SUB_MUTEZ
+        | Environment.Protocols.Ithaca, {expression_content = E_variable _; type_expression = texpr ; location = _} ->
+          if is_t_mutez texpr then Some S.C_SUB_MUTEZ else None
+        | Environment.Protocols.Ithaca, {expression_content = E_record_accessor {record; path}; _ } ->
+          (match get_record_field_type record.type_expression path with
+            Some s when is_t_mutez s -> Some S.C_SUB_MUTEZ
+          | _ -> None )
+        | _ -> None in
+      let cst =
+        Option.value ~default:S.C_SUB @@ List.find_map lst' ~f:(fun e -> decide (protocol_version, e)) in
+      let (name', tv) =
+        type_constant ~raise ~test ~protocol_version cst e.location tv_lst tv_opt in
+      return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
       let lst' = List.map ~f:(type_expression' ~raise ~test ~protocol_version context) arguments in
       let tv_lst = List.map ~f:get_type lst' in

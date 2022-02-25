@@ -58,6 +58,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
+  | C_SUB_MUTEZ -> C_SUB_MUTEZ 
   (* LOGIC *)
   | C_NOT -> C_NOT
   | C_AND -> C_AND
@@ -165,6 +166,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE -> C_SAPLING_VERIFY_UPDATE
   | C_POLYMORPHIC_ADD -> C_POLYMORPHIC_ADD
+  | C_POLYMORPHIC_SUB -> C_POLYMORPHIC_SUB
   | C_OPEN_CHEST -> C_OPEN_CHEST
   | C_VIEW -> C_VIEW
   | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT

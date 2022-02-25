@@ -3,7 +3,7 @@ let under_test = "./contract_under_test/now_contract.mligo"
 
 let test =
   let init_storage = Test.run (fun (x:storage) -> x) test_ts in
-  let (addr,code,_) = Test.originate_from_file under_test "main" init_storage 0tez in
+  let (addr,code,_) = Test.originate_from_file under_test "main" ([] : string list) init_storage 0tez in
 
   let () = Test.log "storage at origination" in
   let st = Test.get_storage_of_address addr in

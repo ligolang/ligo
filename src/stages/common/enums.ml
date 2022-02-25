@@ -255,6 +255,9 @@ type constant' =
   | C_GLOBAL_CONSTANT
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
+  (* New with Ithaca *)
+  | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
+  | C_SUB_MUTEZ
 [@@deriving enum, yojson, print_constant, only_interpreter_tags ]
 
 type deprecated = {

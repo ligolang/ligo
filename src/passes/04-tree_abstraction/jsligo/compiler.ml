@@ -406,7 +406,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EArith arth ->
     ( match arth with
       Add plus   -> compile_bin_op ~raise C_POLYMORPHIC_ADD plus
-    | Sub minus  -> compile_bin_op ~raise C_SUB minus
+    | Sub minus  -> compile_bin_op ~raise C_POLYMORPHIC_SUB minus
     | Mult times -> compile_bin_op ~raise C_MUL times
     | Div slash  -> compile_bin_op ~raise C_DIV slash
     | Mod mod_   -> compile_bin_op ~raise C_MOD mod_
@@ -771,7 +771,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         Times_eq -> C_MUL
       | Div_eq -> C_DIV
       | Plus_eq -> C_POLYMORPHIC_ADD
-      | Min_eq -> C_SUB
+      | Min_eq -> C_POLYMORPHIC_SUB
       | Mod_eq -> C_MOD
       )
       in

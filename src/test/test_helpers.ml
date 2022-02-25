@@ -9,7 +9,7 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let options = Compiler_options.make ~infer:false ()
+let options = Compiler_options.make ~infer:false ~protocol_version:Environment.Protocols.Ithaca ()
 
 let test_format : 'a Simple_utils.Display.format = {
   (* do not display anything if test succeed *)

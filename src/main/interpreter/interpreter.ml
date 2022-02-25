@@ -315,7 +315,13 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       | Some res -> return_ct @@ C_mutez res
       | None -> fail (Errors.meta_lang_eval loc calltrace "Mutez underflow/overflow")
     )
+    | ( C_SUB_MUTEZ    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
+      match Michelson_backend.Tezos_eq.mutez_sub a' b' with
+      | Some res -> return @@ v_some @@ V_Ct (C_mutez res)
+      | None -> return @@ v_none ()
+    )
     | ( C_SUB , _  ) -> fail @@ error_type
+    | ( C_SUB_MUTEZ , _  ) -> fail @@ error_type
     | ( C_CONS   , [ v                  ; V_List vl          ] ) -> return @@ V_List (v::vl)
     | ( C_CONS , _  ) -> fail @@ error_type
     | ( C_ADD    , [ V_Ct (C_int a  )  ; V_Ct (C_int b  )  ] )
@@ -985,6 +991,8 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
     | ( C_POLYMORPHIC_ADD , _ ) ->
       fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
+    | ( C_POLYMORPHIC_SUB , _ ) ->
+      fail @@ Errors.generic_error loc "POLYMORPHIC_SUB is solved in checking."
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER | C_LOOP_LEFT | C_LOOP_CONTINUE | C_LOOP_STOP |
          C_FOLD_LEFT | C_FOLD_RIGHT | C_EDIV | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |

@@ -65,6 +65,11 @@ let sub ~raise loc = typer_2 ~raise loc "SUB" @@ fun a b ->
   then t_mutez () else
     raise.raise (bad_substraction loc)
 
+let sub_mutez ~raise loc = typer_2 ~raise loc "SUB_MUTEZ" @@ fun a b ->
+  if (eq_2 (a , b) (t_mutez ()))
+  then t_option (t_mutez ()) 
+  else raise.raise (bad_substraction loc)
+
 let some ~raise loc = typer_1 ~raise loc "SOME" @@ fun a -> t_option a
 
 let map_remove ~raise loc : typer = typer_2 ~raise loc "MAP_REMOVE" @@ fun k m ->
@@ -593,6 +598,28 @@ let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b
                 [t_int();t_timestamp()] ;
               ]
               [a; b]
+
+let polymorphic_sub ~raise ~protocol_version loc = 
+  match protocol_version with
+    Environment.Protocols.Ithaca ->
+      typer_2 ~raise loc "POLYMORPHIC_SUB" @@ fun a b ->
+      if eq_2 (a , b) (t_bls12_381_g1 ())
+      then (t_bls12_381_g1 ()) else
+      if eq_2 (a , b) (t_bls12_381_g2 ())
+      then (t_bls12_381_g2 ()) else
+      if eq_2 (a , b) (t_bls12_381_fr ())
+      then (t_bls12_381_fr ()) else
+      if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
+      && (eq_1 b (t_int ()) || eq_1 b (t_nat ()))
+      then t_int () else
+      if (eq_2 (a , b) (t_timestamp ()))
+      then t_int () else
+      if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ()))
+      then t_timestamp () else
+      if (eq_2 (a , b) (t_mutez ()))
+      then t_option (t_mutez ()) 
+      else raise.raise (bad_substraction loc)
+    | Environment.Protocols.Hangzhou -> sub ~raise loc
 
 let set_mem ~raise loc = typer_2 ~raise loc "SET_MEM" @@ fun elt set ->
   let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
@@ -1384,5 +1411,8 @@ let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
   | C_GLOBAL_CONSTANT -> test_global_constant ~raise loc
   (* JsLIGO *)
-  | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
+  | C_POLYMORPHIC_ADD -> polymorphic_add ~raise loc ;
+  (* Ithaca *)
+  | C_POLYMORPHIC_SUB -> polymorphic_sub ~raise ~protocol_version loc ;
+  | C_SUB_MUTEZ -> sub_mutez ~raise loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

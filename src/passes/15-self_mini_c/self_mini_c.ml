@@ -96,6 +96,7 @@ let is_pure_constant : constant' -> bool =
   | C_FOLD_CONTINUE | C_FOLD_STOP
   | C_LOOP_CONTINUE | C_LOOP_STOP
   | C_EDIV
+  | C_SUB_MUTEZ
   | C_SIZE
   | C_BYTES_UNPACK
   | C_SET_EMPTY | C_SET_LITERAL
@@ -118,7 +119,8 @@ let is_pure_constant : constant' -> bool =
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER | C_POLYMORPHIC_ADD
+  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER 
+  | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
   (* impure: *)
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
