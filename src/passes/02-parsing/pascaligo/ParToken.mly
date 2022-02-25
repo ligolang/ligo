@@ -36,6 +36,11 @@
   let mk_attr     = Token.wrap_attr     "ghost_attr" None
 ]
 
+(* Make the recovery pay more attention to the number of synthesized tokens than
+   production reducing because the latter often means only precedence level *)
+%[@recover.default_cost_of_symbol     1000]
+%[@recover.default_cost_of_production 1]
+
 (* Literals *)
 
 %token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
@@ -45,7 +50,7 @@
 %token        <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int       $loc]
 %token        <(string * Z.t) Wrap.t> Nat       "<nat>"       [@recover.expr mk_nat       $loc]
 %token    <(string * Int64.t) Wrap.t> Mutez     "<mutez>"     [@recover.expr mk_mutez     $loc]
-%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc]
+%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc] [@recover.cost 900]
 %token                <string Wrap.t> UIdent    "<uident>"    [@recover.expr mk_uident    $loc]
 %token            <Attr.t Region.reg> Attr      "[@attr]"     [@recover.expr mk_attr      $loc]
 %token <string Region.reg Region.reg> Lang      "[%lang"      [@recover.expr mk_lang      $loc]
@@ -76,7 +81,7 @@
 %token <string Wrap.t> SLASH    "/"   [@recover.expr Token.wrap_slash    $loc]
 %token <string Wrap.t> TIMES    "*"   [@recover.expr Token.wrap_times    $loc]
 %token <string Wrap.t> DOT      "."   [@recover.expr Token.wrap_dot      $loc]
-%token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc]
+%token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc] [@recover.cost 700]
 %token <string Wrap.t> CARET    "^"   [@recover.expr Token.wrap_caret    $loc]
 %token <string Wrap.t> PLUS_EQ  "+="  [@recover.expr Token.wrap_plus_eq  $loc]
 %token <string Wrap.t> MINUS_EQ "-="  [@recover.expr Token.wrap_minus_eq $loc]
@@ -113,7 +118,7 @@
 %token <string Wrap.t> Record    "record"    [@recover.expr Token.wrap_record    $loc]
 %token <string Wrap.t> Remove    "remove"    [@recover.expr Token.wrap_remove    $loc]
 %token <string Wrap.t> Set       "set"       [@recover.expr Token.wrap_set       $loc]
-%token <string Wrap.t> Skip      "skip"      [@recover.expr Token.wrap_skip      $loc]
+%token <string Wrap.t> Skip      "skip"      [@recover.expr Token.wrap_skip      $loc] [@recover.cost 800]
 %token <string Wrap.t> Step      "step"      [@recover.expr Token.wrap_step      $loc]
 %token <string Wrap.t> Then      "then"      [@recover.expr Token.wrap_then      $loc]
 %token <string Wrap.t> To        "to"        [@recover.expr Token.wrap_to        $loc]

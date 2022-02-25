@@ -1,0 +1,10 @@
+ let check_signature = const param : [ key , signature , bytes ] ) : bool => {
+ let [ pk , signed , msg ] = param ;
+ return Crypto . check ( pk , signed , msg ) ;
+ } ;
+
+/*
+Mutation chance is 4
+
+Replace ( with const in line 1
+*/

@@ -118,6 +118,7 @@ let e_variable    ?loc v = make_e ?loc @@ E_variable v
 let e_variable_ez ?loc v = e_variable ?loc @@ Var.of_input_var ?loc v
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
+let e_type_abs  ?loc type_binder result : expression = e_type_abstraction ?loc {type_binder;result} ()
 let e_lambda_ez ?loc var ?ascr ?const_or_var output_type result : expression = e_lambda ?loc {var;ascr;attributes={const_or_var}} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
@@ -136,8 +137,15 @@ let e_true  ?loc (): expression = e_constructor ?loc "True"  @@ e_unit ?loc ()
 let e_false ?loc (): expression = e_constructor ?loc "False" @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
+  let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap ?loc @@ (P_var b)) binders in
+  let pattern = Location.wrap ?loc @@ P_tuple pv_lst in
+  let cases = [ { pattern ; body } ] in
+  make_e ?loc @@ E_matching {matchee;cases}
+let e_matching_record ?loc matchee (binders: (string * _ binder) list) body : expression =
+  let labels,binders = List.unzip binders in
   let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
-  let pattern = Location.wrap @@ P_tuple pv_lst in
+  let labels = List.map ~f:(fun s -> Label s) labels in
+  let pattern = Location.wrap @@ P_record (labels,pv_lst) in
   let cases = [ { pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
@@ -241,6 +249,11 @@ let get_e_tuple = fun t ->
 let get_e_lambda = fun e ->
   match e with
     E_lambda e -> Some e
+  | _ -> None
+
+let get_e_annotation = fun e ->
+  match e.expression_content with
+    E_ascription e -> Some e
   | _ -> None
 
 (* Same as get_e_pair *)

@@ -46,7 +46,7 @@ and type_content = function
 and type_injection {language;injection;parameters} =
   `Assoc [
     ("language", `String language);
-    ("injection", `String (Simple_utils.Ligo_string.extract injection));
+    ("injection", `String (Stage_common.Constant.to_string injection));
     ("parameters", list type_expression parameters)
   ]
 
@@ -82,6 +82,7 @@ and expression_content = function
   | E_variable    e -> `List [ `String "E_variable"; expression_variable_to_yojson e ]
   | E_application e -> `List [ `String "E_application"; application e ]
   | E_lambda      e -> `List [ `String "E_lambda"; lambda e ]
+  | E_type_abstraction e -> `List [ `String "E_type_abstraction"; type_abs expression e ]
   | E_recursive   e -> `List [ `String "E_recursive"; recursive e ]
   | E_let_in      e -> `List [ `String "E_let_in"; let_in e ]
   | E_type_in     e -> `List [ `String "E_type_in"; type_in e ]

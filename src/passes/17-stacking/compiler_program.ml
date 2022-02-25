@@ -34,6 +34,8 @@ let literal_type_prim (l : literal) : string =
   | Literal_bls12_381_g1 _ -> "bls12_381_g1"
   | Literal_bls12_381_g2 _ -> "bls12_381_g2"
   | Literal_bls12_381_fr _ -> "bls12_381_fr"
+  | Literal_chest _ -> "chest"
+  | Literal_chest_key _ -> "chest_key"
 
 let literal_type (l : literal) : (Location.t, string) node =
   Prim (generated, literal_type_prim l, [], [])
@@ -56,6 +58,8 @@ let literal_value (l : literal) : (Location.t, string) node =
   | Literal_bls12_381_g1 x -> Bytes (generated, x)
   | Literal_bls12_381_g2 x -> Bytes (generated, x)
   | Literal_bls12_381_fr x -> Bytes (generated, x)
+  | Literal_chest x -> Bytes (generated,x)
+  | Literal_chest_key x -> Bytes (generated,x)
 
 let compile_binds' = compile_binds
 let compile_expr' = compile_expr

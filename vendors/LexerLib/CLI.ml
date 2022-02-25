@@ -72,11 +72,11 @@ module Make (Preprocessor_CLI: PREPROCESSOR_CLI) : S =
 
     let make_help buffer : Buffer.t =
       let options = [
-        "  -t, --tokens     Print tokens";
-        "  -u, --units      Print lexical units";
-        "  -c, --copy       Print lexemes and markup";
-        "      --bytes      Bytes for source locations";
-        "      --preprocess Run the preprocessor"
+        "  -t, --tokens       Print tokens";
+        "  -u, --units        Print lexical units";
+        "  -c, --copy         Print lexemes and markup";
+        "      --bytes        Bytes for source locations";
+        "      --preprocess   Run the preprocessor"
       ] in
       begin
         Buffer.add_string buffer (String.concat ~sep:"\n" options);

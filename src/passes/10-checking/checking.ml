@@ -23,15 +23,15 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
   let self = infer_type_application ~raise ~loc ~default_error in
   let default_error = default_error loc type_matched type_ in
   let inj_mod_equal a b = (* TODO: cleanup with polymorphic functions in value env *)
-    let a = Ligo_string.extract a in
-    let b = Ligo_string.extract b in
-    let ad_hoc_maps_unification a b = match a,b with
-      | "map_or_big_map", x -> (x,x)
-      | x, "map_or_big_map" -> (x,x)
-      | _ -> a,b
+    let ad_hoc_maps_unification a b =
+      let open Stage_common.Constant in
+      match a,b with
+      | Map_or_big_map, x              -> (x, x)
+      | x             , Map_or_big_map -> (x, x)
+      | _                              -> (a, b)
     in
     let (a,b) = ad_hoc_maps_unification a b in
-    String.equal a b
+    Stage_common.Constant.equal a b
   in
   match type_matched.type_content, type_.type_content with
   | T_variable v, _ -> (
@@ -143,18 +143,25 @@ match Location.unwrap d with
     let env' = Context.add_type c type_binder tv in
     return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public} }
   )
-  | Declaration_constant {binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
+  | Declaration_constant { binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
+    let av, expr = Ast_core.Combinators.get_type_abstractions expr in
+    let c = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:c in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr None) @@
       type_expression' ~test ~protocol_version c expr in
+    let rec aux t = function
+      | [] -> t
+      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+    let type_expression = aux expr.type_expression (List.rev av) in
+    let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
     let post_env = Context.add_value c binder expr.type_expression in
     return post_env @@ Declaration_constant { binder ; expr ; attr }
   )
   | Declaration_constant { binder = { ascr = Some tv ; var ; attributes=_ } ; attr ; expr } ->
-    let type_env = Context.get_type_vars c in
-    let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
+    let av', expr = Ast_core.Combinators.get_type_abstractions expr in
+    let av = av @ av' in
     let env = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:c in
     let tv = evaluate_type ~raise env tv in
     let expr =
@@ -444,6 +451,7 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       return (e_bls12_381_g2 b) (t_bls12_381_g2 ())
   | E_literal (Literal_bls12_381_fr b) ->
       return (e_bls12_381_fr b) (t_bls12_381_fr ())
+  | E_literal (Literal_chest _ | Literal_chest_key _) -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
   | E_record_accessor {record;path} ->
       let e' = type_expression' ~raise ~test ~protocol_version context record in
       let aux (prev:O.expression) (a:I.label) : O.expression =
@@ -533,6 +541,10 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
                | Some _ -> lambda in
      let (lambda,lambda_type) = type_lambda ~raise ~test ~protocol_version context lambda in
      return (E_lambda lambda ) lambda_type
+  | I.E_type_abstraction {type_binder;result} ->
+    let context = Context.add_type_var context type_binder () in
+    let result  = type_expression' ~raise ~test ~protocol_version context result in
+    return (E_type_abstraction {type_binder;result}) result.type_expression
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
                     ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None;attributes=_};
@@ -549,13 +561,9 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       let tv_col = get_type v_col   in (* this is the type of the collection  *)
       let tv_out = get_type v_initr in (* this is the output type of the lambda*)
       let input_type = match tv_col.type_content with
-        | O.T_constant {language=_ ; injection ; parameters=[t]}
-            when String.equal (Ligo_string.extract injection) list_name
-              || String.equal (Ligo_string.extract injection) set_name ->
+        | O.T_constant {language=_ ; injection = (List | Set); parameters=[t]} ->
           make_t_ez_record (("0",tv_out)::[("1",t)])
-        | O.T_constant {language=_ ; injection ; parameters=[k;v]}
-          when String.equal (Ligo_string.extract injection) map_name
-            || String.equal (Ligo_string.extract injection) big_map_name ->
+        | O.T_constant {language=_ ; injection = (Map | Big_map) ; parameters=[k;v]} ->
           make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> raise.raise @@ bad_collect_loop tv_col e.location in
       let e' = Context.add_value context lname input_type in
@@ -698,15 +706,22 @@ and type_expression' ~raise ~test ~protocol_version ?(args = []) ?last : context
       return x case_exp.type_expression
   )
   | E_let_in {let_binder = {var ; ascr = None ; attributes=_} ; rhs ; let_result; attr } ->
+     let av, rhs = Ast_core.Combinators.get_type_abstractions rhs in
+     let context = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:context in
      let rhs = type_expression' ~raise ~protocol_version ~test context rhs in
      let binder = var in
+     let rec aux t = function
+       | [] -> t
+       | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+     let type_expression = aux rhs.type_expression (List.rev av) in
+     let rhs = { rhs with type_expression } in
      let e' = Context.add_value context binder rhs.type_expression in
      let let_result = type_expression' ~raise ~protocol_version ~test e' let_result in
      return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_let_in {let_binder = {var ; ascr = Some tv ; attributes=_} ; rhs ; let_result; attr } ->
-    let type_env = Context.get_type_vars context in
-    let tv = Ast_core.Helpers.generalize_free_vars type_env tv in
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
+    let av', rhs = Ast_core.Combinators.get_type_abstractions rhs in
+    let av = av @ av' in
     let pre_context = context in
     let context = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:context in
     let tv = evaluate_type ~raise context tv in
@@ -826,6 +841,8 @@ let untype_literal (l:O.literal) : I.literal =
   | Literal_bls12_381_g1 b -> (Literal_bls12_381_g1 b)
   | Literal_bls12_381_g2 b -> (Literal_bls12_381_g2 b)
   | Literal_bls12_381_fr b -> (Literal_bls12_381_fr b)
+  | Literal_chest b -> Literal_chest b
+  | Literal_chest_key b -> Literal_chest_key b
 
 let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   let self = untype_type_expression in
@@ -852,7 +869,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
+    let type_operator = I.Var.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_module_accessor ma ->
     let ma = Stage_common.Maps.module_access self ma in
@@ -892,6 +909,10 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let result = untype_expression result in
       return (e_lambda {var=binder;ascr=Some input_type;attributes=Stage_common.Helpers.empty_attribute} (Some output_type) result)
     )
+  | E_type_abstraction {type_binder;result} -> (
+    let result = untype_expression result in
+    return (e_type_abs type_binder result)
+  )
   | E_constructor {constructor; element} ->
       let p' = untype_expression element in
       return (e_constructor constructor p')

@@ -1166,6 +1166,22 @@ let test_new_account ~raise loc = typer_1 ~raise loc "TEST_NEW_ACCOUNT" @@ fun u
   let _ = trace_option ~raise (expected_unit loc u) @@ get_t_unit u in
   (t_pair (t_string ()) (t_key ()))
 
+let test_baker_account ~raise loc = typer_2 ~raise loc "TEST_BAKER_ACCOUNT" @@ fun acc opt ->
+  let bkamt = trace_option ~raise (expected_option loc opt) @@ get_t_option opt in
+  let () = trace_option ~raise (expected_mutez loc bkamt) @@ get_t_mutez bkamt in
+  let sk, pk = trace_option ~raise (expected_pair loc acc) @@ get_t_pair acc in
+  let () = trace_option ~raise (expected_string loc sk) @@ get_t_string sk in
+  let () = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
+  (t_unit ())
+
+let test_register_delegate ~raise loc = typer_1 ~raise loc "TEST_REGISTER_DELEGATE" @@ fun pkh ->
+  let () = trace_option ~raise (expected_key_hash loc pkh) @@ assert_t_key_hash pkh in
+  t_unit ()
+
+let test_bake_until_n_cycle_end ~raise loc = typer_1 ~raise loc "TEST_BAKE_UNTIL_N_CYCLE_END" @@ fun n ->
+  let () = trace_option ~raise (expected_nat loc n) @@ assert_t_nat n in
+  t_unit ()
+
 let test_get_voting_power ~raise loc = typer_1 ~raise loc "C_TEST_GET_VOTING_POWER" @@ fun u ->
   let _ = trace_option ~raise (expected_string loc u) @@ get_t_key_hash u in
   t_nat ()
@@ -1360,6 +1376,9 @@ let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c w
   | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
   | C_TEST_ADD_ACCOUNT -> test_add_account ~raise loc;
   | C_TEST_NEW_ACCOUNT -> test_new_account ~raise loc;
+  | C_TEST_BAKER_ACCOUNT -> test_baker_account ~raise loc;
+  | C_TEST_REGISTER_DELEGATE -> test_register_delegate ~raise loc;
+  | C_TEST_BAKE_UNTIL_N_CYCLE_END -> test_bake_until_n_cycle_end ~raise loc;
   | C_TEST_GET_VOTING_POWER -> test_get_voting_power ~raise loc;
   | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
   | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc

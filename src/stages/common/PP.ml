@@ -182,6 +182,11 @@ let lambda expression type_expression ppf = fun {binder=b; output_type; result} 
     (option_type_expression type_expression) output_type
     expression result
 
+let type_abs expression ppf = fun {type_binder;result} ->
+  fprintf ppf "Λ %a -> @;@[%a@]"
+    type_variable type_binder
+    expression result
+
 let _option_map ppf (k,v_opt) =
   match v_opt with
   | None -> fprintf ppf "%a" expression_variable k

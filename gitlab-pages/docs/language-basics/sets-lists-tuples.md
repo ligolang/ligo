@@ -626,13 +626,11 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo --entry-point 
 </Syntax>
 <Syntax syntax="cameligo">
 
-In CameLIGO, there is no predefined syntactic construct for sets: you
-must build your set by adding to the empty set. (This is the way in
-OCaml.)
+In CameLIGO, you can create a non-empty set using the `Set.literal` function
+which takes a list of elements & returns a set.
 
 ```cameligo group=sets
-let my_set : int set =
-  Set.add 3 (Set.add 2 (Set.add 2 (Set.add 1 (Set.empty : int set))))
+let my_set : int set = Set.literal [3; 2; 2; 1]
 ```
 You can check that `2` is not repeated in `my_set` by using the LIGO
 compiler like this (the output will sort the elements of the set, but
@@ -647,13 +645,11 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo --entry-point
 </Syntax>
 <Syntax syntax="reasonligo">
 
-In ReasonLIGO, there is no predefined syntactic construct for sets:
-you must build your set by adding to the empty set. (This is the way
-in OCaml.)
+In ReasonLIGO, you can create a non-empty set using the `Set.literal` function
+which takes a list of elements & returns a set.
 
 ```reasonligo group=sets
-let my_set : set (int) =
-  Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
+let my_set : set (int) = Set.literal([3, 2, 2, 1]);
 ```
 
 You can check that `2` is not repeated in `my_set` by using the LIGO
@@ -669,9 +665,11 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo --entry-poin
 </Syntax>
 <Syntax syntax="jsligo">
 
+In JsLIGO, you can define a non-empty set using the `Set.literal` function
+which takes a list of elements & returns a set.
+
 ```jsligo group=sets
-let my_set: set<int> =
-  Set.add(3, Set.add(2, Set.add(2, Set.add(1, Set.empty as set<int>))));
+let my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
 ```
 
 You can check that `2` is not repeated in `my_set` by using the LIGO
@@ -686,6 +684,38 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo --entry-poin
 
 </Syntax>
 
+### Adding an element to a Set
+
+You can add an element to a set, using `Set.add` function.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=sets
+const add_999 : set (int) = Set.add (999, my_set)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=sets
+let add_999 : int set = Set.add 999 my_set
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=sets
+let add_999 : set(int) = Set.add(999, my_set);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=sets
+let add_999: set<int> = Set.add(999, my_set);
+```
+
+</Syntax>
 
 ### Set Membership
 

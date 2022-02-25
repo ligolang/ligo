@@ -153,16 +153,13 @@ let%expect_test _ =
   [%expect{|
     (Some { Elt "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" 0 }) |}]
 
+let%expect_test _ =
+  run_ligo_good [ "print" ; "ast-core" ; (test "annotate.mligo") ] ;
+  [%expect{| const f = Λ a ->  lambda (x : a) return x |}]
+
+
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"
-
-let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (test "annotate.mligo") ] ;
-  [%expect{|
-    File "./annotate.mligo", line 1, characters 0-26:
-      1 | let f (type a) (x : a) = x
-
-    Functions with type parameters need to be annotated. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (test "annotate2.mligo") ] ;

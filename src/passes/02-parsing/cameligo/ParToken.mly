@@ -36,6 +36,13 @@
   let mk_attr     = Token.wrap_attr     "ghost_attr" None
 ]
 
+(* Make the recovery pay more attention to the number of synthesized tokens than
+   production reducing because the latter often means only precedence level *)
+%[@recover.default_cost_of_symbol     1000]
+%[@recover.default_cost_of_production 1]
+
+(* Tokens (mirroring thise defined in module Token) *)
+
 (* Literals *)
 
 %token         <LexerLib.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
@@ -45,7 +52,7 @@
 %token        <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int       $loc]
 %token        <(string * Z.t) Wrap.t> Nat       "<nat>"       [@recover.expr mk_nat       $loc]
 %token    <(string * Int64.t) Wrap.t> Mutez     "<mutez>"     [@recover.expr mk_mutez     $loc]
-%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc]
+%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc] [@recover.cost 900]
 %token                <string Wrap.t> UIdent    "<uident>"    [@recover.expr mk_uident    $loc]
 %token            <Attr.t Region.reg> Attr      "[@attr]"     [@recover.expr mk_attr      $loc]
 %token <string Region.reg Region.reg> Lang      "[%lang"      [@recover.expr mk_lang      $loc]
@@ -70,7 +77,7 @@
 %token <string Wrap.t> SEMI     ";"  [@recover.expr Token.wrap_semi      $loc]
 %token <string Wrap.t> COLON    ":"  [@recover.expr Token.wrap_colon     $loc]
 %token <string Wrap.t> VBAR     "|"  [@recover.expr Token.wrap_vbar      $loc]
-%token <string Wrap.t> WILD     "_"  [@recover.expr Token.wrap_wild      $loc]
+%token <string Wrap.t> WILD     "_"  [@recover.expr Token.wrap_wild      $loc] [@recover.cost 700]
 %token <string Wrap.t> EQ       "="  [@recover.expr Token.wrap_eq        $loc]
 %token <string Wrap.t> NE       "<>" [@recover.expr Token.wrap_ne        $loc]
 %token <string Wrap.t> LT       "<"  [@recover.expr Token.wrap_lt        $loc]

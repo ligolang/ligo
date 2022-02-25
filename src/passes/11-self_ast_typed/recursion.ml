@@ -20,6 +20,8 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
     check_recursive_call ~raise n false args
   | E_lambda {result;_} ->
     check_recursive_call ~raise n final_path result
+  | E_type_abstraction {result;_} ->
+    check_recursive_call ~raise n final_path result
   | E_recursive { fun_name; fun_type=_; lambda} ->
     check_recursive_call ~raise fun_name true lambda.result
   | E_let_in {rhs;let_result;_} ->

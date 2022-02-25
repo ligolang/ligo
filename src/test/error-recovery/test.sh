@@ -2,8 +2,7 @@
 
 diff_lines () {
     stat=$(git diff --numstat --minimal --no-index -- "$1" "$2")
-    if [ -z "$stat" ]
-    then
+    if [ -z "$stat" ]; then
         echo 0
     else
         read insertion deletion rest <<<$stat
@@ -21,8 +20,6 @@ if [[ $# -eq 0 ]] || [[ $# -eq 1 ]] ; then
     exit 1
 fi
 
-RETURN_CODE=0
-
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
@@ -33,63 +30,73 @@ RESULTS=results.csv
 mkdir -p recovered
 mkdir -p original_generated
 
-echo "FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS" > $RESULTS
+echo "STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS" > $RESULTS
 
 for f in $1; do
     CURRENT_FILE_ERROR=0
-    trap 'RETURN_CODE=1 ; CURRENT_FILE_ERROR=1' ERR
+    # enable trap to catch all nonzero exit code
+    trap 'CURRENT_FILE_ERROR=1' ERR
 
     # run parser in different mode to catch errors and the result of error recovery
     $PARSER -- "$f"                     2>&1 > /dev/null \
                  | sed -e $'s/\x1b\[[0-9;]*m//g' > original_generated/"$f.errors" # remove red color
     $PARSER --recovery --pretty -- "$f" 2>&1 > recovered/"$f"\
                  | sed -e $'s/\x1b\[[0-9;]*m//g' > recovered/"$f.errors"
-    # NOTE: original/*.errors contains errors that is returned by parser in general mode (without recovery)
+    # NOTE: original_generated/*.errors contains errors that is returned by parser in general
+    #       mode (without recovery)
+
+    # run parser on the recovery output and check that it is not empty
+    if [[ $(cat recovered/"$f") ]]; then
+        $PARSER -- recovered/"$f"
+    else
+        if [ "$3" = "-v" ]; then
+            echo -e $RED"ERROR:$f recovery output is empty."$NC
+            cat recovered/"$f.errors"
+        fi
+        CURRENT_FILE_ERROR=1
+    fi
 
     # formate original/ to reduce diff
     $PARSER --pretty -- original/"$f" > original_generated/formatted_"$f"
 
     # compare string representation of CST
     $PARSER --cst -- original/"$f"                | sed 's/([^()]*)$//' > original_generated/"$f".cst
-
     $PARSER --recovery --cst -- "$f" 2> /dev/null | sed 's/([^()]*)$//' > recovered/"$f".cst
 
     # compare list of symbols (nodes of CST)
     cat original_generated/"$f".cst  | sed 's/^\([-|` ]\)*//' > original_generated/"$f".cst_symbols
-
     cat recovered/"$f".cst | sed 's/^\([-|` ]\)*//' > recovered/"$f".cst_symbols
 
     # compare list of tokens
-    $PARSER --tokens -- original_generated/formatted_"$f"      | sed 's/^[^\ ]*://' > original_generated/"$f".tokens
-
+    $PARSER --tokens -- original_generated/formatted_"$f" | sed 's/^[^\ ]*://' > original_generated/"$f".tokens
     $PARSER --tokens --\
             `#workaround: suppress spliting "<invalid-*>" into several tokens`\
             <(sed 's/<invalid-\([^<>]*\)>/_invalid_\1/' recovered/"$f") \
             2> /dev/null  | sed 's/^[^\ ]*://' > recovered/"$f".tokens
 
+    # disable trap because diff utilities return nonzero code if files aren't the same
     trap - ERR
 
     LOC_DIFF=$(    diff_lines original_generated/formatted_"$f"   recovered/"$f")
     CST_DIFF=$(    diff_lines original_generated/"$f".cst         recovered/"$f".cst)
     SYMBOLS_DIFF=$(diff_lines original_generated/"$f".cst_symbols recovered/"$f".cst_symbols)
     TOKENS_DIFF=$( diff_lines original_generated/"$f".tokens      recovered/"$f".tokens)
-    ERR_DIFF=$(    diff_lines original_generated/"$f".errors      recovered/"$f".errors)
+    ERR_DIFF=$(git diff --no-index -U0 -- original_generated/"$f".errors recovered/"$f".errors \
+                | tail -n +6 | grep -c "$f")
 
     # check that old error is preserved
     ERR_DELETED=$(git diff --no-index -- original_generated/"$f".errors recovered/"$f".errors \
-            | grep ^-[^-] | grep -c "$f")
+            | grep '^-[^-]' | grep -c "$f")
     if [ $ERR_DELETED != "0" ]; then
-        echo "Error is lost!!!"
-        RETURN_CODE=1
+        echo -e $RED"ERROR:$f: the recovery lost the original error!!!"$NC
+        CURRENT_FILE_ERROR=1
     fi
 
-    echo "$f,$LOC_DIFF,$CST_DIFF,$SYMBOLS_DIFF,$TOKENS_DIFF,$ERR_DIFF" >> $RESULTS
 
-    if [ $CURRENT_FILE_ERROR != "0" ];
-    then
-        echo -e "$RED$f$NC"
+    if [ $CURRENT_FILE_ERROR != "0" ]; then
+        echo "FAIL,$f,-1,-1,-1,-1,-1" >> $RESULTS
     else
-        echo -e "$GREEN$f$NC"
+        echo "PASS,$f,$LOC_DIFF,$CST_DIFF,$SYMBOLS_DIFF,$TOKENS_DIFF,$ERR_DIFF" >> $RESULTS
     fi
 
     if [ "$3" = "-v" ]; then
@@ -115,4 +122,8 @@ if [ "$3" = "-v" ]; then
     cat $RESULTS
 fi
 
-exit $RETURN_CODE
+pass=$(grep -c PASS results.csv)
+fail=$(grep -c FAIL results.csv)
+echo "PASS: $pass, FAIL: $fail"
+
+exit 0
