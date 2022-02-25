@@ -541,7 +541,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
       1 | let test = Test.reset_state 2n [4000tez;4000tez]
 
-     baker account initial balance must at least reach 8000 tez |}]
+     baker account initial balance must at least reach 6000 tez |}]
 
 let%expect_test _ =
 (* TODO: this error is not ideal, we should trace that*)
@@ -559,7 +559,8 @@ let%expect_test _ =
       - expected return stack type:
         [ pair (list operation) unit ],
       - actual stack type:
-        [ unit ].
+        [].
+    Type unit is not compatible with type pair (list operation) unit.
     Type unit is not compatible with type pair (list operation) unit. |}]
 
 let%expect_test _ =
