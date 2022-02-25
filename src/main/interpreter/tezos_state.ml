@@ -471,7 +471,7 @@ let get_bootstrapped_contract ~raise (n : int) =
   let contract = Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check contract in
   Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error Location.generated "Error parsing address") @@ contract
 
-let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = []) ?consensus_threshold
+let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = []) ?(consensus_threshold=0)
     ?min_proposal_quorum ?bootstrap_contracts ?level ?cost_per_byte
     ?liquidity_baking_subsidy ?endorsing_reward_per_slot
     ?baking_reward_bonus_per_slot ?baking_reward_fixed_portion ?origination_size
@@ -494,7 +494,7 @@ let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = [])
   let accounts = accounts @ baker_accounts in
   let raw = Block.genesis
     ?commitments
-    ?consensus_threshold
+    ~consensus_threshold
     ?min_proposal_quorum
     ?bootstrap_contracts
     ?level
