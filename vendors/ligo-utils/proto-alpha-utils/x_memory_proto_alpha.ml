@@ -167,7 +167,7 @@ let fake_bake tezos_context chain_id now =
         ~predecessor_fitness:header.fitness
         ~predecessor_level:header.level
         ~predecessor:hash
-        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add Z.one (Alpha_context.Script_timestamp.to_zint now))) with
+        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add (Z.of_int 30) (Alpha_context.Script_timestamp.to_zint now))) with
                     | Some t -> t
                     | _ -> Stdlib.failwith "bad timestamp")
         ~protocol_data
