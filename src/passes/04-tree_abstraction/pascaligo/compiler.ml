@@ -989,11 +989,16 @@ and compile_data_declaration ~raise : ?attr:CST.attribute list -> next:AST.expre
     e_type_in ~loc name rhs next
   )
   | D_Module module_decl -> (
-    let md,loc = r_split module_decl in
-    let name,loc_name = w_split md.name in
-    let rhs = compile_module ~raise md.declarations in
-    e_mod_in ~loc (mk_var ~loc:loc_name name) rhs next
-  )
+      let md, loc = r_split module_decl in
+      let name, loc_name = w_split md.name in
+      let var = mk_var ~loc:loc_name name in
+      e_module_expr ~raise ~loc var md.module_expr next
+(*
+      let rhs = compile_module ~raise md.module_expr in
+      e_mod_in ~loc (mk_var ~loc:loc_name name) rhs next
+ *)
+    )
+(*
   | D_ModAlias module_alias -> (
     let ma,loc = r_split module_alias in
     let alias,loc_alias = w_split ma.alias in
@@ -1001,6 +1006,22 @@ and compile_data_declaration ~raise : ?attr:CST.attribute list -> next:AST.expre
     let binders = List.map lst ~f:(fun x -> let (x,loc) = (w_split x) in mk_var ~loc x) in
     e_mod_alias ~loc (mk_var ~loc:loc_alias alias) (List.Ne.of_list binders) next
   )
+*)
+and e_module_expr ~raise ~loc var module_expr next =
+  match module_expr with
+    M_Body {declarations; _} ->
+      e_mod_in ~loc var (compile_module ~raise declarations) next
+  | M_Path m_path ->
+      let path, loc = r_split m_path in
+      let nseq = Utils.nsepseq_foldr
+                   Utils.nseq_cons
+                   path.module_path
+                   (path.field, []) in
+      let mapped x = let x, loc = w_split x in mk_var ~loc x
+      in e_mod_alias ~loc var (Utils.nseq_map mapped nseq) next
+  | M_Var module_name ->
+      let name, name_loc = w_split module_name in
+      e_mod_alias ~loc var (mk_var ~loc:name_loc name, []) next
 
 and compile_statement ~raise : ?next:AST.expression -> CST.statement -> AST.expression option =
   fun ?next statement ->
@@ -1134,7 +1155,15 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
     return region ast
 
   | D_Module {value; region} ->
-    let { name; declarations ; _ } : CST.module_decl = value in
+      let {name; module_expr; _} = value in
+      let name, loc = w_split name in
+      let module_expr = compile_module_expr ~raise module_expr in
+      let module_binder = mk_var ~loc name in
+      let ast = AST.Declaration_module
+                  {module_binder; module_; module_attr=[]}
+      in return region ast
+
+(*     let { name; declarations ; _ } : CST.module_decl = value in
     let name, loc = w_split name in
     let module_ = compile_module ~raise declarations in
     let ast = AST.Declaration_module {module_binder= mk_var ~loc name; module_; module_attr=[]} in
@@ -1148,6 +1177,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
     let binders = List.Ne.of_list @@ List.map lst ~f:(fun x -> let x,loc = (w_split x) in mk_var ~loc x) in
     let ast = AST.Module_alias {alias; binders} in
     return region ast
+ *)
 
   | D_Directive _ -> []
 
