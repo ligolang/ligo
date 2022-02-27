@@ -169,6 +169,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_POLYMORPHIC_SUB -> C_POLYMORPHIC_SUB
   | C_OPEN_CHEST -> C_OPEN_CHEST
   | C_VIEW -> C_VIEW
+  | C_OPTION_MAP -> C_OPTION_MAP
   | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT
   | (   C_TEST_ORIGINATE
       | C_TEST_SET_NOW
@@ -586,6 +587,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       | (C_MAP_ITER , lst) -> iter lst
       | (C_LIST_MAP , lst) -> map lst
       | (C_MAP_MAP , lst) -> map lst
+      | (C_OPTION_MAP , lst) -> map lst
       | (C_LIST_FOLD , lst) -> fold lst
       | (C_SET_FOLD , lst) -> fold lst
       | (C_MAP_FOLD , lst) -> fold lst

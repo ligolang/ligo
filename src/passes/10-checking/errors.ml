@@ -88,6 +88,7 @@ type typer_error = [
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
   | `Typer_poly_not_applied of Location.t
   | `Typer_wrong_generalizable of Location.t * Ast_core.type_variable
+  | `Typer_option_map_wrong_protocol of Location.t
 ] [@@deriving poly_constructor { prefix = "typer_" }]
 
 let match_error ~(expected: Ast_typed.type_expression) ~(actual: Ast_typed.type_expression) (loc:Location.t) =
@@ -528,6 +529,10 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type name: %a is a generalizable variable@]"
         Snippet.pp loc Ast_core.PP.type_variable t
+    | `Typer_option_map_wrong_protocol loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Option.map is supported in protocol ithaca onwards.@.Pass the compiler option --protocol ithaca@]"
+        Snippet.pp loc
   )
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   let json_error ~stage ~content =
@@ -1300,6 +1305,13 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_wrong_generalizable (loc, t) ->
     let message = `String (Format.asprintf "invalid type name: generalizable variable %a" Ast_core.PP.type_variable t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+    ] in
+    json_error ~stage ~content
+  | `Typer_option_map_wrong_protocol loc ->
+    let message = `String "Option.map is supported in protocol ithaca onwards. Pass the compiler option --protocol ithaca" in
     let content = `Assoc [
       ("message", message);
       ("location", Location.to_yojson loc);

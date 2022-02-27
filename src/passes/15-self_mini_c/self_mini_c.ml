@@ -124,6 +124,7 @@ let is_pure_constant : constant' -> bool =
   (* impure: *)
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
+  | C_OPTION_MAP
   | C_ASSERTION
   | C_ASSERTION_WITH_ERROR
   | C_ASSERT_SOME

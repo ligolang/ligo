@@ -635,6 +635,17 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       then return @@ V_Set (List.dedup_and_sort ~compare:LC.compare_value (v::elts))
       else return @@ V_Set (List.filter ~f:(fun el -> not (equal_value el v)) elts)
     | ( C_SET_UPDATE , _  ) -> fail @@ error_type
+    | ( C_OPTION_MAP , [ V_Func_val {arg_binder ; body ; env ; rec_name=_ ; orig_lambda=_}  ; V_Construct ("Some" , v) ] ) ->
+      let* opt_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* ty = monad_option (Errors.generic_error opt_ty.location "Expected option type") @@ AST.get_t_option opt_ty in
+      let* new_v =
+        let env' = Env.extend env arg_binder (ty,v) in
+        eval_ligo body calltrace env'
+      in
+      return (V_Construct ("Some" , new_v))
+    | ( C_OPTION_MAP , [ V_Func_val _  ; V_Construct ("None" , V_Ct C_unit) as v ] ) ->
+      return v
+    | ( C_OPTION_MAP , _  ) -> fail @@ error_type
     | ( C_SHA256, [ V_Ct (C_bytes b) ] )->
       let>> value = Sha256 b in
       return @@ value

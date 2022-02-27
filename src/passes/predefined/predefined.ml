@@ -99,6 +99,7 @@ module Tree_abstraction = struct
 
     | "Option.unopt"            -> some_const C_UNOPT
     | "Option.unopt_with_error" -> some_const C_UNOPT_WITH_ERROR
+    | "Option.map"              -> some_const C_OPTION_MAP
 
     (* List module *)
 

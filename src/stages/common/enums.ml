@@ -258,6 +258,7 @@ type constant' =
   (* New with Ithaca *)
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
   | C_SUB_MUTEZ
+  | C_OPTION_MAP
 [@@deriving enum, yojson, print_constant, only_interpreter_tags ]
 
 type deprecated = {
