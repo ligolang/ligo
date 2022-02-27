@@ -192,179 +192,176 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_jsligo_untyped_recursive_fun reg ->
     let message = `String "Untyped recursive functions are not supported yet" in
-    let loc = Format.asprintf "%a" Location.pp_lift reg in
+    let loc = Location.lift reg in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_unsupported_pattern_type pl ->
-    let loc = Format.asprintf "%a"
-      Location.pp_lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
+    let loc = Location.lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
     let message = `String "Currently, only booleans, lists, options, and constructors are supported in patterns" in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_unsupported_string_singleton te ->
     let message = `String "Unsupported singleton string type" in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
+    let loc = Location.lift (Raw.type_expr_to_region te) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
-  | `Concrete_jsligo_recursion_on_non_function reg ->
+  | `Concrete_jsligo_recursion_on_non_function loc ->
     let message = Format.asprintf "Only functions can be recursive." in
-    let loc = Format.asprintf "%a" Location.pp reg in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc) ] in
+      ("location", Location.to_yojson loc) ] in
     json_error ~stage ~content
   | `Concrete_jsligo_michelson_type_wrong (texpr,name) ->
     let message = Format.asprintf "Argument of %s must be a string singleton" name in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
+    let loc = Location.lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc); ] in
+      ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
   | `Concrete_jsligo_michelson_type_wrong_arity (loc,name) ->
     let message = Format.asprintf "%s does not have the right number of argument" name in
-    let loc = Format.asprintf "%a" Location.pp loc in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc); ] in
+      ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
   | `Concrete_jsligo_funarg_tuple_type_mismatch (r, _, _) ->
     let message = Format.asprintf "The tuple does not have the expected type." in
-    let loc = Format.asprintf "%a" Location.pp_lift r in
+    let loc = Location.lift r in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc);
+      ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content
   | `Concrete_jsligo_not_in_switch_or_loop reg ->
     let message = `String "Not in switch or loop." in
-    let loc = Format.asprintf "%a" Location.pp_lift reg in
+    let loc = Location.lift reg in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_statement_not_supported_at_toplevel statement ->
     let message = `String "Statement not supported at toplevel." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.statement_to_region statement) in
+    let loc = Location.lift (Raw.statement_to_region statement) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_not_a_valid_parameter expr ->
     let message = `String "Not a valid function parameter." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region expr) in
+    let loc = Location.lift (Raw.expr_to_region expr) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_rest_not_supported_here p ->
     let message = `String "Rest property not supported here." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.property_to_region p) in
+    let loc = Location.lift (Raw.property_to_region p) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_property_not_supported p ->
     let message = `String "This kind of property not supported here." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.property_to_region p) in
+    let loc = Location.lift (Raw.property_to_region p) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_expected_an_expression p ->
     let message = `String "Expected an expression." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.array_item_to_region p) in
+    let loc = Location.lift (Raw.array_item_to_region p) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_new_not_supported p ->
     let message = `String "'new' keyword not supported." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region p) in
+    let loc = Location.lift (Raw.expr_to_region p) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_invalid_case (_, e) ->
     let message = `String "Invalid case." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let loc = Location.lift (Raw.expr_to_region e) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_invalid_constructor e ->
     let message = `String "Invalid constructor." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region e) in
+    let loc = Location.lift (Raw.type_expr_to_region e) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_unsupported_match_pattern e ->
     let message = `String "Unsupported match pattern." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let loc = Location.lift (Raw.expr_to_region e) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_unsupported_match_object_property p ->
     let message = `String "Unsupported pattern match object property." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.property_to_region p) in
+    let loc = Location.lift (Raw.property_to_region p) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_expected_a_function e ->
     let message = `String "Expected a function." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let loc = Location.lift (Raw.expr_to_region e) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_not_supported_assignment e ->
     let message = `String "Not supported asignment." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let loc = Location.lift (Raw.expr_to_region e) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_array_rest_not_supported e ->
     let message = `String "Rest property not supported here." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.array_item_to_region e) in
+    let loc = Location.lift (Raw.array_item_to_region e) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_expected_a_variable reg ->
     let message = `String "Expected a variable." in
-    let loc = Format.asprintf "%a" Location.pp_lift reg in
+    let loc = Location.lift reg in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_expected_a_field_name s ->
     let message = `String "Expected a field name." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.selection_to_region s) in
+    let loc = Location.lift (Raw.selection_to_region s) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_expected_an_int e ->
     let message = `String "Expected an int." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let loc = Location.lift (Raw.expr_to_region e) in
     let content = `Assoc [
       ("message", message);
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_jsligo_invalid_list_pattern_match _l ->
     let message = `String "Expected an int." in
-    (* let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in *)
+    (* let loc = Location.lift (Raw.expr_to_region e) in *)
     let content = `Assoc [
       ("message", message);
-      (* ("location", `String loc); *)
+      (* ("location", Location.to_yojson loc); *)
       ] in
     json_error ~stage ~content
