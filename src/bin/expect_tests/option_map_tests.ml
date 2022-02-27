@@ -26,8 +26,8 @@ let%expect_test _ =
       6 |   ([] : operation list), Option.map to_int (Option.map to_tup store)
       7 |
 
-    Option.map is supported in protocol ithaca onwards.
-    Pass the compiler option --protocol ithaca |}]
+    Option.map is supported in protocol Ithaca onwards.
+    Hint: pass the compiler option `--protocol ithaca`. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; (test "option_map.mligo") ] ;
@@ -37,5 +37,5 @@ let%expect_test _ =
       6 |   ([] : operation list), Option.map to_int (Option.map to_tup store)
       7 |
 
-    Option.map is supported in protocol ithaca onwards.
-    Pass the compiler option --protocol ithaca |}]
+    Option.map is supported in protocol Ithaca onwards.
+    Hint: pass the compiler option `--protocol ithaca`. |}]

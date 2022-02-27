@@ -65,19 +65,26 @@ let sub ~raise loc = typer_2 ~raise loc "SUB" @@ fun a b ->
   then t_mutez () else
     raise.raise (bad_substraction loc)
 
-let sub_mutez ~raise loc = typer_2 ~raise loc "SUB_MUTEZ" @@ fun a b ->
-  if (eq_2 (a , b) (t_mutez ()))
-  then t_option (t_mutez ()) 
-  else raise.raise (bad_substraction loc)
+let constant_since_protocol ~since ~constant ~raise ~protocol_version loc typer =
+  if (Environment.Protocols.compare protocol_version since) >= 0 then
+    typer
+  else
+    raise.raise (constant_since_protocol loc constant since)
 
-let option_map ~raise ~protocol_version loc = 
-  match protocol_version with
-    Environment.Protocols.Ithaca -> typer_2 ~raise loc "OPTION_MAP" @@ fun body opt ->
+let sub_mutez ~raise ~protocol_version loc =
+  constant_since_protocol ~since:Environment.Protocols.Ithaca ~constant:"Operator.sub_mutez" ~raise ~protocol_version loc @@
+    typer_2 ~raise loc "SUB_MUTEZ" @@ fun a b ->
+                                      if (eq_2 (a , b) (t_mutez ()))
+                                      then t_option (t_mutez ())
+                                      else raise.raise (bad_substraction loc)
+
+let option_map ~raise ~protocol_version loc =
+  constant_since_protocol ~since:Environment.Protocols.Ithaca ~constant:"Option.map" ~raise ~protocol_version loc @@
+    typer_2 ~raise loc "OPTION_MAP" @@ fun body opt ->
       let { type1 = arg ; type2 = b } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
       let a = trace_option ~raise (expected_list loc opt) @@ get_t_option opt in
       let () = assert_eq_1 ~raise ~loc a arg in
       (t_option b)
-  | Environment.Protocols.Hangzhou -> raise.raise (option_map_wrong_protocol loc)
 
 let some ~raise loc = typer_1 ~raise loc "SOME" @@ fun a -> t_option a
 
@@ -1423,6 +1430,6 @@ let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_POLYMORPHIC_ADD -> polymorphic_add ~raise loc ;
   (* Ithaca *)
   | C_POLYMORPHIC_SUB -> polymorphic_sub ~raise ~protocol_version loc ;
-  | C_SUB_MUTEZ       -> sub_mutez ~raise loc ;
+  | C_SUB_MUTEZ       -> sub_mutez ~raise ~protocol_version loc ;
   | C_OPTION_MAP      -> option_map ~raise ~protocol_version loc ;
   | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

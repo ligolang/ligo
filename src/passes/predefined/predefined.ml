@@ -224,6 +224,7 @@ module Tree_abstraction = struct
     | "Operator.neg"   -> some_const C_NEG
     | "Operator.add"   -> some_const C_ADD
     | "Operator.sub"   -> some_const C_POLYMORPHIC_SUB
+    | "Operator.sub_mutez" -> some_const C_SUB_MUTEZ
     | "Operator.times" -> some_const C_MUL
     | "Operator.div"   -> some_const C_DIV
     | "Operator.modulus" -> some_const C_MOD
@@ -271,7 +272,8 @@ module Tree_abstraction = struct
     | C_NEG  -> "Operator.neg"
     | C_ADD  -> "Operator.add"
     | C_SUB  -> "Operator.sub"
-    | C_POLYMORPHIC_SUB -> "Operator.sub" 
+    | C_SUB_MUTEZ -> "Operator.sub_mutez"
+    | C_POLYMORPHIC_SUB -> "Operator.sub"
     | C_MUL  -> "Operator.times"
     | C_DIV  -> "Operator.div"
     | C_MOD  -> "Operator.modulus"
