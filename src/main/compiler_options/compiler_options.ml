@@ -108,3 +108,9 @@ let set_init_env opts init_env =
 
 let set_test_flag opts test =
   { opts with middle_end = { opts.middle_end with test } }
+
+let set_entry_point opts entry_point =
+  { opts with frontend = { opts.frontend with entry_point } }
+
+let set_views opts views =
+  { opts with backend = { opts.backend with views } }
