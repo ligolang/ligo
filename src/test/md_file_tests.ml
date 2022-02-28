@@ -130,9 +130,8 @@ let compile_groups ~raise filename grp_list =
       match lang with
       | Meta ->
         let init_env = Environment.default_with_test protocol_version in
-        let middle_end_opts = options.middle_end in
-        let middle_end_opts = { middle_end_opts with init_env ; test = true } in
-        let options = { options with middle_end = middle_end_opts } in
+        let options = Compiler_options.set_init_env options init_env in
+        let options = Compiler_options.set_test_flag options true in
         let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
         let _ = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()

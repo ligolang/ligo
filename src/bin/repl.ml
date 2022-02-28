@@ -79,7 +79,7 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
 
 let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options () in
-  let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
+  let options = Compiler_options.set_init_env options state.env in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
   let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp module_ in
@@ -101,7 +101,7 @@ let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program
 
 let try_declaration ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options () in
-  let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
+  let options = Compiler_options.set_init_env options state.env in
   try
     try_with (fun ~raise ->
       let typed_prg,core_prg =
@@ -123,7 +123,7 @@ let try_declaration ~raise ~raw_options state s =
 
 let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
-  let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
+  let options = Compiler_options.set_init_env options state.env in
   let module_ = Build.build_context ~raise ~add_warning ~options file_name in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.Var.of_input_var module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
@@ -132,7 +132,7 @@ let import_file ~raise ~raw_options state file_name module_name =
 
 let use_file ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
-  let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
+  let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
   let module' = Build.build_context ~raise ~add_warning ~options s in
   let env = Environment.append module' state.env in

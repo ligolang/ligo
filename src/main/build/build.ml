@@ -46,11 +46,9 @@ module M (Params : Params) =
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
-      let middle_end_opts =  options.middle_end in
-      let middle_end_opts = { middle_end_opts with init_env = env } in
-      let options = { options with middle_end = middle_end_opts } in
+      let options = Compiler_options.set_init_env options env in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-      let inferred = Ligo_compile.Of_core.infer ~raise ~options:middle_end_opts ast_core in
+      let inferred = Ligo_compile.Of_core.infer ~raise ~options:options.middle_end ast_core in
       let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env inferred in
       ast_typed
 

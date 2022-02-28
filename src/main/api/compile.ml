@@ -16,7 +16,7 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
           Compiler_options.make ~raw_options ~protocol_version ()
       in
-      let Compiler_options.{ views ; disable_michelson_typechecking = disable_typecheck ; _ } = options.backend in
+      let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; _ } = options.backend in
       let code,env = Build.build_contract ~raise ~add_warning ~options source_file in
       let views =
         Build.build_views ~raise ~add_warning ~options env source_file

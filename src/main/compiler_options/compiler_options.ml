@@ -102,3 +102,9 @@ let make :
         middle_end ;
         backend ;
       }
+
+let set_init_env opts init_env = 
+  { opts with middle_end = { opts.middle_end with init_env } }
+
+let set_test_flag opts test =
+  { opts with middle_end = { opts.middle_end with test } }
