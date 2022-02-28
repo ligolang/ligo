@@ -225,7 +225,7 @@ module.exports = grammar({
       "module",
       field("moduleName", $.ModuleName),
       "is",
-      common.sepBy('.', field("module", $.ModuleName))
+      common.sepBy1('.', field("module", $.ModuleName))
     ),
 
     /// STATEMENTS
@@ -306,7 +306,7 @@ module.exports = grammar({
         ),
         seq(
           'case',
-          $._expr,
+          field("subject", $._expr),
           'of',
           '[',
           optional('|'),

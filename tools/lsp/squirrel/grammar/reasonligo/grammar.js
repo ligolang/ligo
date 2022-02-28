@@ -217,7 +217,7 @@ module.exports = grammar({
       "module",
       field("moduleName", $.ModuleName),
       "=",
-      common.sepBy('.', field("module", $.ModuleName))
+      common.sepBy1('.', field("module", $.ModuleName))
     ),
 
     /// STATEMENTS
@@ -416,8 +416,8 @@ module.exports = grammar({
       $.tuple,
       $.list,
       $.data_projection,
-      $.if,
-      $.switch,
+      $.if_then_else,
+      $.switch_case,
       $._record_expr,
       $.michelson_interop,
       $.paren_expr,
@@ -467,7 +467,7 @@ module.exports = grammar({
     // 'tools/lsp/squirrel/test/contracts/sexps/single_record_item.religo'.
     _accessor_chain: $ => prec.right(11, common.sepBy1('.', field("accessor", $.FieldName))),
 
-    if: $ => seq(
+    if_then_else: $ => seq(
       'if',
       field("selector", $._expr),
       field("then", $.block),
@@ -477,7 +477,7 @@ module.exports = grammar({
       ))
     ),
 
-    switch: $ => seq(
+    switch_case: $ => seq(
       'switch',
       field("subject", $._expr_term),
       common.block(seq(
