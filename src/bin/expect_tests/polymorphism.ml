@@ -157,6 +157,9 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "annotate.mligo") ] ;
   [%expect{| const f = Λ a ->  lambda (x : a) return x |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; (test "same_vars.mligo") ] ;
+  [%expect{| 4 |}]
 
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"
