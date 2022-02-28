@@ -9,8 +9,10 @@ let measure_contract (raw_options : Compiler_options.raw) source_file display_fo
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
       let options = Compiler_options.make ~protocol_version ~raw_options () in
-      let michelson,e =  Build.build_contract ~raise ~add_warning ~options source_file in
-      let views = Build.build_views ~raise ~add_warning ~options e source_file in
+      let Compiler_options.{ entry_point ; _ } = options.frontend in
+      let Compiler_options.{ views ; _ } = options.backend in
+      let michelson,e =  Build.build_contract ~raise ~add_warning ~options entry_point source_file in
+      let views = Build.build_views ~raise ~add_warning ~options entry_point (views,e) source_file in
       let contract = Compile.Of_michelson.build_contract ~raise michelson views in
       Compile.Of_michelson.measure ~raise contract
 

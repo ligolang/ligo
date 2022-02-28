@@ -16,10 +16,11 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
           Compiler_options.make ~raw_options ~protocol_version ()
       in
-      let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; _ } = options.backend in
-      let code,env = Build.build_contract ~raise ~add_warning ~options source_file in
+      let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; views  ; _ } = options.backend in
+      let Compiler_options.{ entry_point ; _ } = options.frontend in
+      let code,env = Build.build_contract ~raise ~add_warning ~options entry_point source_file in
       let views =
-        Build.build_views ~raise ~add_warning ~options env source_file
+        Build.build_views ~raise ~add_warning ~options entry_point (views,env) source_file
       in
       Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck code views
 
@@ -32,8 +33,9 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make ~protocol_version ~raw_options ()
       in
+      let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ without_run ; _ } = options.backend in
-      let (mini_c_exp,_) = Build.build_expression ~raise ~add_warning ~options expression init_file in
+      let (mini_c_exp,_) = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
       no_comment @@
       if without_run then

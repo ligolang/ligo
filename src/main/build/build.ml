@@ -146,9 +146,8 @@ let build_typed ~raise ~add_warning :
       in
       applied, contract
 
-let build_expression ~raise ~add_warning : options:Compiler_options.t -> string -> file_name option -> _ =
-  fun ~options expression file_name ->
-    let Compiler_options.{ syntax ; _ } = options.frontend in
+let build_expression ~raise ~add_warning : options:Compiler_options.t -> string -> string -> file_name option -> _ =
+  fun ~options syntax expression file_name ->
     let contract, aggregated_prg =
       match file_name with
       | Some init_file ->
@@ -163,9 +162,8 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
     (mini_c_exp ,aggregated)
 
 (* TODO: this function could be called build_michelson_code since it does not really reflect a "contract" (no views, parameter/storage types) *)
-let build_contract ~raise ~add_warning : options:Compiler_options.t -> file_name -> Stacking.compiled_expression * Ast_typed.program =
-  fun ~options file_name ->
-    let Compiler_options.{ entry_point ; _ } = options.frontend in
+let build_contract ~raise ~add_warning : options:Compiler_options.t -> string -> file_name -> Stacking.compiled_expression * Ast_typed.program =
+  fun ~options entry_point file_name ->
     let entry_point = Stage_common.Var.of_input_var entry_point in
     let typed_prg, contract = build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise typed_prg entry_point in
@@ -174,10 +172,8 @@ let build_contract ~raise ~add_warning : options:Compiler_options.t -> file_name
     michelson, contract
 
 let build_views ~raise ~add_warning :
-  options:Compiler_options.t -> Ast_typed.program -> file_name -> (Stage_common.Var.t * Stacking.compiled_expression) list =
-  fun ~options program source_file ->
-    let Compiler_options.{ entry_point = main_name ; _ } = options.frontend in
-    let Compiler_options.{ views = declared_views ; _  } = options.backend in
+  options:Compiler_options.t -> string -> string list * Ast_typed.program -> file_name -> (Stage_common.Var.t * Stacking.compiled_expression) list =
+  fun ~options main_name (declared_views,program) source_file ->  
     let main_name = Stage_common.Var.of_input_var main_name in
     let views =
       let annotated_views = Ligo_compile.Of_typed.get_views @@ program in

@@ -46,7 +46,8 @@ let interpret (raw_options : Compiler_options.raw) expression init_file amount b
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make ~protocol_version ~raw_options ()
       in
-      let (mini_c_exp, typed_exp) = Build.build_expression ~raise ~add_warning ~options expression init_file in
+      let Compiler_options.{ syntax ; _ } = options.frontend in
+      let (mini_c_exp, typed_exp) = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
       let compiled_exp = Compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
       let options           = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
       let runres  = Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty in
@@ -90,8 +91,8 @@ let evaluate_expr (raw_options : Compiler_options.raw) source_file amount balanc
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
           Compiler_options.make ~protocol_version ~raw_options ()
         in
-        let Compiler_options.{ entry_point ; _ } = options.frontend in
-        let (mini_c_exp, typed_exp) = Build.build_expression ~raise ~add_warning ~options entry_point (Some source_file) in
+        let Compiler_options.{ entry_point ; syntax ; _ } = options.frontend in
+        let (mini_c_exp, typed_exp) = Build.build_expression ~raise ~add_warning ~options syntax entry_point (Some source_file) in
         let compiled_exp = Compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
         let options           = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
         let runres  = Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty in

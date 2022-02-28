@@ -125,7 +125,7 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     | JsLIGO      -> parse_and_abstract_jsligo in
   let abstracted =
     parse_and_abstract ~raise buffer file_path in
-  let js_style_no_shadowing = Caml.(=) meta.syntax JsLIGO in
+  let js_style_no_shadowing = Syntax_types.equal meta.syntax JsLIGO in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
     Self_ast_imperative.all_module abstracted ~js_style_no_shadowing ~add_warning in
