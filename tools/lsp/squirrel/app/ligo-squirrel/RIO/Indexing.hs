@@ -133,8 +133,7 @@ askForIndexDirectory contractDir = do
     mkRequest :: [IndexOptions] -> J.ShowMessageRequestParams
     mkRequest suggestions = J.ShowMessageRequestParams
       { _xtype = J.MtInfo
-      -- TODO: improve this message
-      , _message = "The LIGO Language Server would like to know where to start indexing the project from."
+      , _message = "Choose a directory to index LIGO files. See [docs/project-indexing.md](https://gitlab.com/serokell/ligo/ligo/-/tree/tooling/tools/lsp/vscode-plugin/docs/project-indexing.md) for more details."
       , _actions = Just $ J.MessageActionItem . T.pack . prettyIndexOptions <$> suggestions
       }
 
