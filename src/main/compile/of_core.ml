@@ -15,7 +15,7 @@ let infer ~raise ~(options: Compiler_options.middle_end) (m : Ast_core.module_) 
     | false -> m
 
 let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
-  let typed = trace ~raise checking_tracer @@ Checking.type_program ~middle_end_options:options.middle_end ~env:options.middle_end.init_env ~backend_options:options.backend m in
+  let typed = trace ~raise checking_tracer @@ Checking.type_program ~options:options.middle_end ~env:options.middle_end.init_env m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
     let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
@@ -36,7 +36,7 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
       expr
     | false -> expr
   in
-  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~middle_end_options:options.middle_end ~backend_options:options.backend ~env inferred in
+  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~options:options.middle_end ~env inferred in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
   applied
 

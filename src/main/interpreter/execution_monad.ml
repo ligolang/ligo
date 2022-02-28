@@ -224,7 +224,7 @@ module Command = struct
                             Ast_aggregated.get_t_arrow f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
       let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj func_typed_exp in
-      let options = Compiler_options.make () in
+      let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
       let func_code = Michelson_backend.compile_value ~raise ~options func_typed_exp in
       let { code = arg_code ; _ } = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc v in_ty in
       let input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty in
@@ -246,8 +246,6 @@ module Command = struct
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
             let compiled_expr =
-              (* let protocol_version = ctxt.internals.protocol_version in *)
-              (* let options = Compiler_options.make ~protocol_version () in *)
               Michelson_backend.compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty body in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)

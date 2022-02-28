@@ -152,7 +152,6 @@ let run_expression_unwrap ~raise ?ctxt ?(loc = Location.generated) (c_expr : Sta
 
 let compile_value ~raise ~options aggregated_exp =
   let open Ligo_compile in
-  (* let options = Compiler_options.make () in *)
   let mini_c_exp = Of_aggregated.compile_expression ~raise aggregated_exp in
   Of_mini_c.compile_expression ~raise ~options mini_c_exp
 
@@ -163,7 +162,6 @@ let compile_type ~raise type_exp =
 
 let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let open Ligo_compile in
-  (* let options = Compiler_options.make ~protocol_version () in *)
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp = match rec_name with
     | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = arg_binder } in_ty out_ty
@@ -375,7 +373,7 @@ and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->
   fun v ty ->
   let typed_exp = val_to_ast ~raise ~loc v ty in
   let (_: Ast_aggregated.expression) = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj typed_exp in
-  let options = Compiler_options.make () in
+  let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
   let compiled_exp = compile_value ~raise ~options typed_exp in
   let expr, _ = run_expression_unwrap ~raise ?ctxt ~loc compiled_exp in
   (* TODO-er: check the ignored second component: *)
@@ -427,7 +425,7 @@ let compile_literal ~raise ~loc : Ast_aggregated.literal -> _ =
   let open Ligo_interpreter.Types in
   let type_lit = get_literal_type v in
   let typed_exp = Ast_aggregated.e_a_literal v type_lit in
-  let options = Compiler_options.make () in
+  let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
   let compiled_exp = compile_value ~raise ~options typed_exp in
   let expr, expr_ty = run_expression_unwrap ~raise ~loc compiled_exp in
   (expr, expr_ty, typed_exp.type_expression)

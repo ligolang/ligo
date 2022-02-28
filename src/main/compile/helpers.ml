@@ -17,7 +17,7 @@ type options = Compiler_options.t
 let preprocess_file ~raise ~(options:Compiler_options.frontend) ~(meta: meta) file_path
   : Preprocessing.Pascaligo.success =
   let open Preprocessing in
-  let project_root = options.project_root in
+  let Compiler_options.{ project_root ; libraries ; _ } = options in
   let preprocess_file =
     match meta.syntax with
       PascaLIGO _ -> Pascaligo.preprocess_file
@@ -25,11 +25,11 @@ let preprocess_file ~raise ~(options:Compiler_options.frontend) ~(meta: meta) fi
     | ReasonLIGO  -> Reasonligo.preprocess_file
     | JsLIGO      -> Jsligo.preprocess_file
   in trace ~raise preproc_tracer @@
-      Simple_utils.Trace.from_result (preprocess_file ?project_root options.libs file_path)
+      Simple_utils.Trace.from_result (preprocess_file ?project_root libraries file_path)
 
-let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
+let preprocess_string ~raise ~(options:Compiler_options.frontend) ~(meta: meta) file_path =
   let open Preprocessing in
-  let project_root = options.frontend.project_root in
+  let Compiler_options.{ project_root ; libraries ; _ } = options in
   let preprocess_string =
     match meta.syntax with
       PascaLIGO _ -> Pascaligo.preprocess_string
@@ -37,7 +37,7 @@ let preprocess_string ~raise ~(options:options) ~(meta: meta) file_path =
     | ReasonLIGO  -> Reasonligo.preprocess_string
     | JsLIGO      -> Jsligo.preprocess_string
   in trace ~raise preproc_tracer @@
-     from_result (preprocess_string ?project_root options.frontend.libs file_path)
+     from_result (preprocess_string ?project_root libraries file_path)
 
 (* Front-end compilation *)
 

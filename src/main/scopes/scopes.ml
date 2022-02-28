@@ -5,7 +5,7 @@ module Formatter = Formatter
 
 type sub_module = { type_env : tenv  ; bindings : bindings_map }
 
-let scopes : with_types:bool -> middle_end_options:Compiler_options.middle_end -> backend_options:Compiler_options.backend -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~middle_end_options ~backend_options core_prg ->
+let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
 
@@ -25,7 +25,7 @@ let scopes : with_types:bool -> middle_end_options:Compiler_options.middle_end -
       find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
     )
     | E_mod_in { module_binder; rhs; let_result } -> (
-      let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~middle_end_options ~backend_options i rhs in
+      let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~options i rhs in
       let def = make_m_def (get_binder_name module_binder) e.location new_outer_def_map in
       let env = Def_map.add (get_binder_name module_binder) def env in
       let all_defs = merge_defs env all_defs in
@@ -132,9 +132,9 @@ let scopes : with_types:bool -> middle_end_options:Compiler_options.middle_end -
     let (i,defs,_,scopes) = find_scopes' (i,top_lvl_defs,top_lvl_defs,scopes,loc) bindings e in
     (i,defs,scopes)
 
-  and declaration ~middle_end_options ~backend_options i core_prg =
+  and declaration ~options i core_prg =
     (* Note : Why do we need to compile here ? Is it just about handling the environment ? *)
-    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~middle_end_options ~backend_options:backend_options ~env decl in
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~options ~env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
         (*
@@ -166,7 +166,7 @@ let scopes : with_types:bool -> middle_end_options:Compiler_options.middle_end -
         ( i, top_def_map, inner_def_map, scopes, partials )
       )
       | Declaration_module {module_binder; module_ ; module_attr=_} -> (
-        let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~middle_end_options ~backend_options i module_ in
+        let (i,new_outer_def_map,_new_inner_def_map,scopes,_) = declaration ~options i module_ in
         let def = make_m_def (get_binder_name module_binder) decl.location new_outer_def_map in
         let top_def_map = Def_map.add (get_binder_name module_binder) def top_def_map in
         ( i, top_def_map, inner_def_map, scopes, partials )
@@ -185,9 +185,9 @@ let scopes : with_types:bool -> middle_end_options:Compiler_options.middle_end -
         ( i, top_def_map, inner_def_map, scopes, partials )
       )
     in
-    let init = { type_env = middle_end_options.init_env ; bindings = Bindings_map.empty } in
+    let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in
     List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg
   in
-  let (_,top_d,inner_d,s,_) = declaration ~middle_end_options ~backend_options 0 core_prg in
+  let (_,top_d,inner_d,s,_) = declaration ~options 0 core_prg in
   let d = Def_map.union merge_refs top_d inner_d in
   (d,s)

@@ -77,8 +77,8 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
                project_root : string option;
               }
 
-let try_eval ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
+let try_eval ~raise ~raw_options state s =
+  let options = Compiler_options.make ~raw_options () in
   let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
@@ -99,8 +99,8 @@ let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program
   let () = if declaration then assert (List.length m2 = 1) in
   (m1 @ m2)
 
-let try_declaration ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
+let try_declaration ~raise ~raw_options state s =
+  let options = Compiler_options.make ~raw_options () in
   let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
   try
     try_with (fun ~raise ->
@@ -115,14 +115,14 @@ let try_declaration ~raise state s =
       | (`Cit_pascaligo_tracer _ : Main_errors.all)
       | (`Cit_cameligo_tracer _ : Main_errors.all)
       | (`Cit_reasonligo_tracer _ : Main_errors.all) ->
-         try_eval ~raise state s
+         try_eval ~raise ~raw_options state s
       | e -> raise.raise e)
   with
   | Failure _ ->
      raise.raise `Repl_unexpected
 
-let import_file ~raise state file_name module_name =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
+let import_file ~raise ~raw_options state file_name module_name =
+  let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
   let module_ = Build.build_context ~raise ~add_warning ~options (Syntax.to_string state.syntax) file_name in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.Var.of_input_var module_name;module_;module_attr={public=true}}]) in
@@ -130,8 +130,8 @@ let import_file ~raise state file_name module_name =
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
 
-let use_file ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
+let use_file ~raise ~raw_options state s =
+  let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = {options with Compiler_options.middle_end = { options.Compiler_options.middle_end with init_env = state.env }} in
   (* Missing typer environment? *)
   let module' = Build.build_context ~raise ~add_warning ~options (Syntax.to_string state.syntax) s in
@@ -180,11 +180,11 @@ let eval display_format state c =
         | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp in
       (0, state, out)
 
-let parse_and_eval display_format state s =
+let parse_and_eval ~raw_options display_format state s =
   let c = match parse s with
-    | Use s -> use_file state s
-    | Import (fn, mn) -> import_file state fn mn
-    | Expr s -> try_declaration state s in
+    | Use s -> use_file ~raw_options state s
+    | Import (fn, mn) -> import_file state ~raw_options fn mn
+    | Expr s -> try_declaration ~raw_options state s in
   eval display_format state c                    
 
 let welcome_msg = "Welcome to LIGO's interpreter!
@@ -214,24 +214,35 @@ let rec read_input prompt delim =
                  some @@ s ^ "\n" ^ i
               | hd :: _ -> some @@ hd
 
-let rec loop syntax display_format state n =
+let rec loop ~raw_options display_format state n =
   let prompt = Format.sprintf "In  [%d]: " n in
   let s = read_input prompt ";;" in
   match s with
   | Some s ->
-     let k, state, out = parse_and_eval display_format state s in
+     let k, state, out = parse_and_eval ~raw_options display_format state s in
      let out = Format.sprintf "Out [%d]: %s" n out in
      print_endline out;
-     loop syntax display_format state (n + k)
+     loop ~raw_options display_format state (n + k)
   | None -> ()
 
-let main syntax display_format protocol dry_run_opts init_file project_root =
-  print_endline welcome_msg;
-  let state = make_initial_state syntax protocol dry_run_opts project_root in
-  let state = match init_file with
-    | None -> state
-    | Some file_name -> let c = use_file state file_name in
-                        let _, state, _ = eval (Ex_display_format Dev) state c in
-                        state in
-  LNoise.set_multiline true;
-  loop syntax display_format state 1
+let main (raw_options : Compiler_options.raw) display_format now amount balance sender source init_file () =
+  let protocol = Environment.Protocols.protocols_to_variant raw_options.protocol_version in
+  let syntax = Syntax.of_string_opt (Syntax_name raw_options.syntax) None in
+  let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
+  match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
+  | _, None, _ -> Error ("", "Please check syntax name.")
+  | None, _, _ -> Error ("", "Please check protocol name.")
+  | _, _, None -> Error ("", "Please check run options.")
+  | Some protocol, Some syntax, Some dry_run_opts ->
+    begin
+      print_endline welcome_msg;
+      let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root in
+      let state = match init_file with
+        | None -> state
+        | Some file_name -> let c = use_file state ~raw_options file_name in
+                            let _, state, _ = eval (Ex_display_format Dev) state c in
+                            state in
+      LNoise.set_multiline true;
+      loop ~raw_options display_format state 1;
+      Ok("","")
+    end
