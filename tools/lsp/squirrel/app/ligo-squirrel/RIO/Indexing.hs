@@ -5,19 +5,26 @@ module RIO.Indexing
   , getIndexDirectory
   ) where
 
+import Control.Applicative ((<|>))
 import Control.Lens (view)
 import Control.Monad (void)
 import Control.Monad.Reader (asks)
+import Control.Monad.IO.Class (liftIO)
+import Data.Bool (bool)
+import Data.List (inits)
 import Data.Maybe (catMaybes)
 import Data.Text qualified as T
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
+import UnliftIO.Directory (findFile)
 import UnliftIO.Environment (lookupEnv)
 import UnliftIO.Exception (displayException, tryIO)
 import UnliftIO.MVar (tryPutMVar, tryReadMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
 
+import Language.LSP.Util (sendInfo)
 import Log qualified
 import RIO.Types (IndexOptions (..), RIO, RioEnv (..))
 
@@ -37,12 +44,25 @@ prettyIndexOptions = \case
   FromGitProject path -> path
   FromLigoProject path -> path
 
+-- | Given a path /foo/bar/baz, check for a `.ligoproject` file in the specified
+-- path and all of its parent directories, in this order, for the first matching
+-- file found. Returns the directory where the file was found.
+checkForLigoProjectFile :: FilePath -> RIO (Maybe FilePath)
+checkForLigoProjectFile = liftIO
+  . fmap (fmap takeDirectory)
+  . flip findFile fileName . map joinPath . reverse . drop 1 . inits . splitPath
+  where
+    fileName :: String
+    fileName = ".ligoproject"
+
 -- FIXME: The user choice is not updated right away due to a limitation in LSP.
 -- Check the comment in `askForIndexDirectory` for more information.
 getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
-  indexVar <- asks reIndexOpts
-  maybe (askForIndexDirectory contractDir) pure =<< tryReadMVar indexVar
+  indexOptsM <- tryReadMVar =<< asks reIndexOpts
+  -- TODO: Handle file moved/deleted/added
+  ligoProjectFileM <- checkForLigoProjectFile contractDir
+  maybe (askForIndexDirectory contractDir) pure (indexOptsM <|> fmap FromLigoProject ligoProjectFileM)
 
 -- TODO: Write config to root directory, if set
 askForIndexDirectory :: FilePath -> RIO IndexOptions
@@ -70,13 +90,35 @@ askForIndexDirectory contractDir = do
       -- Wait for user input before proceeding.
       void $ S.sendRequest J.SWindowShowMessageRequest
         (mkRequest suggestions)
-        (void . tryPutMVar indexVar . handleParams gitDirectoryM rootDirectoryM)
-      -- lsp provides not easy way to get the callback of a request and MVars
+        (\response -> do
+          let choice = handleParams gitDirectoryM rootDirectoryM response
+          _ <- tryPutMVar indexVar choice
+          handleChosenOption choice)
+      -- lsp provides no easy way to get the callback of a request and MVars
       -- will block indefinitely. We don't index for now with the hope that it
       -- will be indexed later.
       -- https://github.com/haskell/lsp/issues/405
       pure IndexChoicePending
   where
+    handleChosenOption :: IndexOptions -> RIO ()
+    handleChosenOption (indexOptionsPath -> Just path) = do
+      let
+        projectPath = path </> ".ligoproject"
+        don'tCreate =
+          sendInfo [Log.i|To remember the directory, create an empty .ligoproject file in #{path}|]
+        doCreate = do
+          liftIO $ writeFile projectPath ""
+          sendInfo [Log.i|Created #{projectPath}|]
+      void $ S.sendRequest J.SWindowShowMessageRequest
+        J.ShowMessageRequestParams
+          { _xtype = J.MtInfo
+          , _message = "Create LIGO Language Server project file?"
+          , _actions = Just [J.MessageActionItem "Yes", J.MessageActionItem "No"]
+          }
+        (\(fmap (fmap (view J.title)) -> choice) ->
+          bool don'tCreate doCreate (choice == Right (Just "Yes")))
+    handleChosenOption _ = pure ()
+
     mkGitDirectory :: RIO (Maybe FilePath)
     mkGitDirectory = tryIO (readCreateProcess git "") >>= either
       (\e -> Nothing <$ $(Log.warning) [Log.i|#{displayException e}|])
