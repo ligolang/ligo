@@ -8,46 +8,51 @@ let no_comment node =
   Tezos_micheline.Micheline.(inject_locations (fun _ -> Simple_utils.Location.generated) (strip_locations node))
 
 let contract (raw_options : Compiler_options.raw) source_file display_format michelson_code_format michelson_comments () =
+    let warning_as_error = raw_options.warning_as_error in
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~werror:raw_options.warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_code_format michelson_comments) get_warnings @@
+    format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_code_format michelson_comments) get_warnings @@
       fun ~raise ->
       let options =
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
           Compiler_options.make ~raw_options ~protocol_version ()
       in
       let Compiler_options.{ views ; disable_michelson_typechecking = disable_typecheck ; _ } = options.backend in
-      let code,env = Build.build_contract ~raise ~add_warning ~options raw_options.syntax raw_options.entry_point source_file in
+      let code,env = Build.build_contract ~raise ~add_warning ~options source_file in
       let views =
-        Build.build_views ~raise ~add_warning ~options raw_options.syntax raw_options.entry_point (views,env) source_file
+        Build.build_views ~raise ~add_warning ~options env source_file
       in
       Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck code views
 
 let expression (raw_options : Compiler_options.raw) expression init_file display_format michelson_format () =
+    let warning_as_error = raw_options.warning_as_error in
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~werror:raw_options.warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
+    format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make ~protocol_version ~raw_options ()
       in
-      let (mini_c_exp,_) = Build.build_expression ~raise ~add_warning ~options raw_options.syntax expression init_file in
+      let Compiler_options.{ without_run ; _ } = options.backend in
+      let (mini_c_exp,_) = Build.build_expression ~raise ~add_warning ~options expression init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
       no_comment @@
-      if raw_options.without_run then
+      if without_run then
         Run.clean_expression compiled_exp.expr
       else
         Run.evaluate_expression ~raise compiled_exp.expr compiled_exp.expr_ty
 
 let parameter (raw_options : Compiler_options.raw) source_file entry_point expression amount balance sender source now display_format michelson_format () =
+    let warning_as_error = raw_options.warning_as_error in
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~werror:raw_options.warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
+    format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
         let entry_point = Stage_common.Var.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         let options = Compiler_options.make ~protocol_version ~raw_options () in
+        let Compiler_options.{ syntax ; _ } = options.frontend in
         let app_typed_prg, typed_prg =
-          Build.build_typed ~raise ~add_warning ~options raw_options.syntax (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) raw_options.syntax expression typed_prg in
+          Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract =
@@ -64,15 +69,17 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)
 
 let storage (raw_options : Compiler_options.raw) source_file expression amount balance sender source now display_format michelson_format () =
+    let warning_as_error = raw_options.warning_as_error in
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~werror:raw_options.warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
+    format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
-        let entry_point = Stage_common.Var.of_input_var raw_options.entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         let options = Compiler_options.make ~protocol_version ~raw_options () in
+        let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in
+        let entry_point = Stage_common.Var.of_input_var entry_point in
         let app_typed_prg, typed_prg =
-          Build.build_typed ~raise ~add_warning ~options raw_options.syntax (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) raw_options.syntax expression typed_prg in
+          Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract =

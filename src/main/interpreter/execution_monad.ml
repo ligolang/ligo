@@ -207,9 +207,9 @@ module Command = struct
       | _ -> raise.raise @@ Errors.generic_error Location.generated
                               "Trying to measure a non-contract"
     )
-    | Compile_contract_from_file (source_file, entrypoint, views) ->
+    | Compile_contract_from_file (source_file, _, _) ->
       let contract_code =
-        Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entrypoint views in
+        Michelson_backend.compile_contract ~raise ~add_warning ~options source_file in
       let size =
         let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
         LT.V_Ct (C_int (Z.of_int s))

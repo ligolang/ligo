@@ -27,8 +27,9 @@ let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) 
 
 let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
     : Ast_typed.expression =
-  let env = Environment.append init_prog options.middle_end.init_env in
-  let inferred = match options.middle_end.infer with
+  let Compiler_options.{ init_env ; infer ; _ } = options.middle_end in
+  let env = Environment.append init_prog init_env in
+  let inferred = match infer with
     | true  ->
       let env_inf = Inference.decompile_env @@ Environment.to_program env in
       let (_,expr,_,_) =

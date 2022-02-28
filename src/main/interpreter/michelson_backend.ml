@@ -88,11 +88,10 @@ let create_chest (payload:Bytes.t) (time:int) : _ =
   let chest_bytes = Data_encoding.Binary.to_bytes_exn Timelock.chest_encoding chest in
   (chest_bytes, chest_key_bytes)
 
-let compile_contract ~raise ~add_warning ~options source_file entry_point declared_views =
+let compile_contract ~raise ~add_warning ~options source_file =
   let open Ligo_compile in
-  let syntax = "auto" in
-  let michelson,env = Build.build_contract ~raise ~add_warning ~options syntax entry_point source_file in
-  let views = Build.build_views ~raise ~add_warning ~options syntax entry_point (declared_views,env) source_file in
+  let michelson,env = Build.build_contract ~raise ~add_warning ~options source_file in
+  let views = Build.build_views ~raise ~add_warning ~options env source_file in
   Of_michelson.build_contract ~raise ~disable_typecheck:false michelson views
 
 let clean_location_with v x =

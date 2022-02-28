@@ -91,8 +91,8 @@ module Build(Params : Params) = BuildSystem.Make(M(Params))
 
 type file_name = string
 
-let dependency_graph ~raise ~add_warning : options:Compiler_options.t -> string -> Ligo_compile.Of_core.form -> file_name -> _ =
-  fun ~options _syntax _form file_name ->
+let dependency_graph ~raise ~add_warning : options:Compiler_options.t -> Ligo_compile.Of_core.form -> file_name -> _ =
+  fun ~options _form file_name ->
     let open Build(struct
       let raise = raise
       let add_warning = add_warning
@@ -109,8 +109,8 @@ let infer_contract ~raise ~add_warning : options:Compiler_options.t -> file_name
     end)) in
     trace ~raise build_error_tracer @@ from_result (compile_separate main_file_name)
 
-let type_contract ~raise ~add_warning : options:Compiler_options.t -> string -> Ligo_compile.Of_core.form -> file_name -> _ =
-  fun ~options _syntax _entry_point file_name ->
+let type_contract ~raise ~add_warning : options:Compiler_options.t -> file_name -> _ =
+  fun ~options file_name ->
     let open Build(struct
       let raise = raise
       let add_warning = add_warning
@@ -118,8 +118,8 @@ let type_contract ~raise ~add_warning : options:Compiler_options.t -> string -> 
     end) in
     trace ~raise build_error_tracer @@ from_result (compile_separate file_name)
 
-let build_context ~raise ~add_warning : options:Compiler_options.t -> 'a -> file_name -> Ast_typed.program =
-  fun ~options _syntax file_name ->
+let build_context ~raise ~add_warning : options:Compiler_options.t -> file_name -> Ast_typed.program =
+  fun ~options file_name ->
     let open BuildSystem.Make(Infer(struct
       let raise = raise
       let add_warning = add_warning
@@ -130,14 +130,14 @@ let build_context ~raise ~add_warning : options:Compiler_options.t -> 'a -> file
     contract
 
 let build_typed ~raise ~add_warning :
-  options:Compiler_options.t -> string -> Ligo_compile.Of_core.form -> file_name -> Ast_typed.program * Ast_typed.program =
-    fun ~options _syntax entry_point file_name ->
+  options:Compiler_options.t -> Ligo_compile.Of_core.form -> file_name -> Ast_typed.program * Ast_typed.program =
+    fun ~options entry_point file_name ->
       let open Build(struct
         let raise = raise
         let add_warning = add_warning
         let options = options
       end) in
-      let contract = build_context ~raise ~add_warning ~options _syntax file_name in
+      let contract = build_context ~raise ~add_warning ~options file_name in
       let applied =
         match entry_point with
         | Ligo_compile.Of_core.Contract entrypoint ->
@@ -148,12 +148,13 @@ let build_typed ~raise ~add_warning :
       in
       applied, contract
 
-let build_expression ~raise ~add_warning : options:Compiler_options.t -> string -> string -> file_name option -> _ =
-  fun ~options syntax expression file_name ->
+let build_expression ~raise ~add_warning : options:Compiler_options.t -> string -> file_name option -> _ =
+  fun ~options expression file_name ->
+    let Compiler_options.{ syntax ; _ } = options.frontend in
     let contract, aggregated_prg =
       match file_name with
       | Some init_file ->
-         let module_ = build_context ~raise ~add_warning ~options syntax init_file in
+         let module_ = build_context ~raise ~add_warning ~options init_file in
          let contract = Ligo_compile.Of_typed.compile_program ~raise module_ in
          (module_, contract)
       | None -> ([], fun x -> Ligo_compile.Of_typed.compile_expression ~raise x)
@@ -164,18 +165,21 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
     (mini_c_exp ,aggregated)
 
 (* TODO: this function could be called build_michelson_code since it does not really reflect a "contract" (no views, parameter/storage types) *)
-let build_contract ~raise ~add_warning : options:Compiler_options.t -> string -> string -> file_name -> Stacking.compiled_expression * Ast_typed.program =
-  fun ~options syntax entry_point file_name ->
+let build_contract ~raise ~add_warning : options:Compiler_options.t -> file_name -> Stacking.compiled_expression * Ast_typed.program =
+  fun ~options file_name ->
+    let Compiler_options.{ entry_point ; _ } = options.frontend in
     let entry_point = Stage_common.Var.of_input_var entry_point in
-    let typed_prg, contract = build_typed ~raise ~add_warning ~options syntax (Ligo_compile.Of_core.Contract entry_point) file_name in
+    let typed_prg, contract = build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise typed_prg entry_point in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let michelson  = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
     michelson, contract
 
 let build_views ~raise ~add_warning :
-  options:Compiler_options.t -> string -> string -> string list * Ast_typed.program -> file_name -> (Stage_common.Var.t * Stacking.compiled_expression) list =
-  fun ~options syntax main_name (declared_views,program) source_file ->
+  options:Compiler_options.t -> Ast_typed.program -> file_name -> (Stage_common.Var.t * Stacking.compiled_expression) list =
+  fun ~options program source_file ->
+    let Compiler_options.{ entry_point = main_name ; _ } = options.frontend in
+    let Compiler_options.{ views = declared_views ; _  } = options.backend in
     let main_name = Stage_common.Var.of_input_var main_name in
     let views =
       let annotated_views = Ligo_compile.Of_typed.get_views @@ program in
@@ -195,7 +199,7 @@ let build_views ~raise ~add_warning :
     match views with
     | [] -> []
     | _ ->
-    let _, contract  = build_typed ~raise ~add_warning:(fun _ -> ()) ~options syntax (Ligo_compile.Of_core.View (views,main_name)) source_file in
+    let _, contract  = build_typed ~raise ~add_warning:(fun _ -> ()) ~options (Ligo_compile.Of_core.View (views,main_name)) source_file in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise contract views in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let mini_c = Self_mini_c.all_expression ~raise mini_c in
