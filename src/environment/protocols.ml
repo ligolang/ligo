@@ -10,7 +10,7 @@ let protocols_to_variant : string -> t option = fun p ->
 	match p with
 	| "current" -> Some current
 	| "ithaca" -> Some Ithaca
-  | "hangzhou" -> Some Hangzhou
+        | "hangzhou" -> Some Hangzhou
 	| i when not (List.exists ~f:(String.equal i) protocols_str) -> None
 	| _ -> failwith "internal error: forgot to add the protocol string form to the list ?"
 
