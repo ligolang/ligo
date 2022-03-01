@@ -27,7 +27,8 @@ This function fails if the value is `None`.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=option protocol=ithaca
+```pascaligo group=option_unopt
+
 const value_opt: option (int) = Some (1);
 
 const value : int = Option.unopt (value_opt); (* 1 *)
@@ -39,7 +40,8 @@ const none : int = Option.unopt ((None : option (int))); (* fails with "option i
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=option protocol=ithaca
+```cameligo group=option_unopt
+
 let value_opt : int option = Some 1
 
 let value : int = Option.unopt value_opt (* 1 *)
@@ -51,7 +53,8 @@ let none : int = Option.unopt (None : int option) (* fails with "option is None"
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=option protocol=ithaca
+```reasonligo group=option_unopt
+
 let value_opt : option(int) = Some(1)
 
 let value : int = Option.unopt (value_opt) /* 1 */
@@ -63,7 +66,8 @@ let none : int = Option.unopt ((None : option(int))) /* fails with "option is No
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=option protocol=ithaca
+```jsligo group=option_unopt
+
 let value_opt : option<int> = Some(1);
 
 let value : int = Option.unopt (value_opt); /* 1 */
@@ -95,7 +99,8 @@ This function fails with the provided message if the value is `None`.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=option protocol=ithaca
+```pascaligo group=option_unopt_with_error
+
 const value_opt: option (int) = Some (1);
 
 const value : int = Option.unopt_with_error (value_opt, "FooBar"); (* 1 *)
@@ -107,7 +112,8 @@ const none : int = Option.unopt_with_error ((None : option (int)), "FooBar"); (*
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=option protocol=ithaca
+```cameligo group=option_unopt_with_error
+
 let value_opt : int option = Some 1
 
 let value : int = Option.unopt_with_error value_opt "FooBar" (* 1 *)
@@ -119,7 +125,7 @@ let none : int = Option.unopt_with_error (None : int option) "FooBar" (* fails w
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=option protocol=ithaca
+```reasonligo group=option_unopt_with_error
 let value_opt : option(int) = Some(1)
 
 let value : int = Option.unopt_with_error (value_opt, "FooBar") /* 1 */
@@ -131,7 +137,8 @@ let none : int = Option.unopt_with_error ((None : option(int)), "FooBar") /* fai
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=option protocol=ithaca
+```jsligo group=option_unopt_with_error
+
 let value_opt : option<int> = Some(1);
 
 let value : int = Option.unopt_with_error (value_opt, "FooBar"); /* 1 */
@@ -161,7 +168,8 @@ If the value is `None` the function is not executed/applied.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=option protocol=ithaca
+```pascaligo group=option_map protocol=ithaca
+
 const value: option (int) = Some (1);
 
 function foo (const _ : int): string is "foo"
@@ -174,7 +182,8 @@ const none : option (string) = Option.map (foo, (None : option (int))) (* None *
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=option protocol=ithaca
+```cameligo group=option_map protocol=ithaca
+
 let value : int option = Some 1
 
 let foo (_ : int) : string = "foo"
@@ -188,7 +197,8 @@ let none : string option = Option.map foo (None : int option) (* None *)
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=option protocol=ithaca
+```reasonligo group=option_map protocol=ithaca
+
 let value : option(int) = Some(1)
 
 let foo = (_ : int) : string => "foo"
@@ -202,7 +212,8 @@ let none : option(string) = Option.map (foo, (None : option(int))) /* None */
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=option protocol=ithaca
+```jsligo group=option_map protocol=ithaca
+
 let value : option<int> = Some(1);
 
 let foo = (_ : int) : string => "foo";
