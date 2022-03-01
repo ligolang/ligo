@@ -440,7 +440,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value (1801n , 2125n , 2125n). |}]
+    - test exited with value (1801n , 2165n , 2165n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
@@ -461,14 +461,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_baker_account.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    4000000000000mutez
-    500n
+    3800000000000mutez
+    666n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    3999360000000mutez
-    500n
+    3800011000000mutez
+    666n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    3998720000000mutez
-    500n
+    3800022000000mutez
+    666n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -534,7 +534,8 @@ let%expect_test _ =
       - expected return stack type:
         [ pair (list operation) unit ],
       - actual stack type:
-        [ unit ].
+        [].
+    Type unit is not compatible with type pair (list operation) unit.
     Type unit is not compatible with type pair (list operation) unit. |}]
 
 let%expect_test _ =
