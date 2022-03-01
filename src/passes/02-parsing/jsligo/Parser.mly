@@ -38,6 +38,9 @@ let private_attribute = {
 (* END HEADER *)
 %}
 
+%attribute nsepseq(case_statement,SEMI) [@recover.cost 1004]
+%attribute nsepseq(statement,SEMI)      [@recover.cost 1004]
+
 (* Reductions on error *)
 
 %on_error_reduce gt
@@ -390,8 +393,7 @@ call_expr:
 fun_arg:
   expr { $1 }
 
-(* Note: [cost inf] is needed to avoid cycle in error recovery *)
-lambda [@recover.cost inf]:
+lambda:
   call_expr | member_expr { $1 }
 
 (* General expressions *)

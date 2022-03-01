@@ -32,6 +32,8 @@ let list_of_option = function
 (* END HEADER *)
 %}
 
+%attribute last_expr [@recover.cost 1004]
+
 (* Reductions on error *)
 (* TODO *)
 
