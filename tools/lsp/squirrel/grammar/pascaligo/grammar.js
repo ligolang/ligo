@@ -87,7 +87,7 @@ module.exports = grammar({
     _variant_args: $ => seq(
       field("constructor", $.ConstrName),
       'of',
-      field("arguments", $._simple_type)
+      field("arguments", $._param_type)
     ),
 
     // Record type
@@ -197,7 +197,7 @@ module.exports = grammar({
 
     _access: $ => choice('var', 'const'),
 
-    _param_type: $ => $._simple_type,
+    _param_type: $ => choice($._simple_type, $.record_type),
 
     /// MODULES
 
