@@ -167,10 +167,10 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
-  let eval_ligo = eval_ligo ~raise ~steps ~protocol_version ~options in
+  let eval_ligo = eval_ligo ~raise ~steps ~options in
   let locs = List.map ~f:(fun (_, _, c) -> c) operands in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
@@ -691,7 +691,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     >>>>>>>>
     *)
     | ( C_TEST_ORIGINATE_FROM_FILE, args) -> (
-      match protocol_version, args with
+      match options.Compiler_options.backend.protocol_version, args with
       | Environment.Protocols.Edo , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ->
         let>> (code,size) = Compile_contract_from_file (source_file,entryp,[]) in
         let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
@@ -1044,9 +1044,9 @@ and eval_literal : AST.literal -> value Monad.t = function
   )
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~protocol_version ~options in
+    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
     let open Monad in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace "Out of fuel") else return () in
     match term.expression_content with
@@ -1123,7 +1123,7 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
           let* value = eval_ligo ae calltrace env in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
-      apply_operator ~raise ~steps ~protocol_version ~options term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label c ; element = { expression_content = E_literal (Literal_unit) ; _ } } when String.equal c "True" ->
       return @@ V_Ct (C_bool true)
@@ -1224,9 +1224,9 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
       | _ -> failwith "impossible"
     )
 
-and try_eval ~raise ~steps ~protocol_version ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~protocol_version ~options expr [] env) state r
+and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
 
-let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((string * value) list) =
+let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) list) =
   fun prg ->
   let decl_lst = prg in
   (* Pass over declarations, for each "test"-prefixed one, add a new
@@ -1245,7 +1245,7 @@ let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
-  let initial_state = Tezos_state.init_ctxt ~raise protocol_version [] in
+  let initial_state = Tezos_state.init_ctxt ~raise options.Compiler_options.backend.protocol_version [] in
   let f (n, t) r =
     let s, _ = Var.internal_get_name_and_counter n in
     LMap.add (Label s) (Ast_typed.e_a_variable n t) r in
@@ -1253,7 +1253,7 @@ let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
   let expr = Self_ast_aggregated.expression_mono expr in
-  let value, _ = try_eval ~raise ~steps ~protocol_version ~options expr Env.empty_env initial_state None in
+  let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->
     let f (n, _) r =

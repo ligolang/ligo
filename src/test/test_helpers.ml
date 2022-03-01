@@ -9,7 +9,7 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let options = Compiler_options.make ~infer:false ()
+let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options ()
 
 let test_format : 'a Simple_utils.Display.format = {
   (* do not display anything if test succeed *)
@@ -118,7 +118,6 @@ let type_file ~raise ?(st = "auto") f entry options =
 
 let get_program ~raise ~add_warning ?(st = "auto") f entry =
   wrap_ref f (fun s ->
-      let options = Compiler_options.make () in
       let program = type_file ~raise ~add_warning ~st f entry options in
       s := Some (program,f) ;
       program
