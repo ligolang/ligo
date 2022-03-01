@@ -280,7 +280,7 @@ From protocol *`Ithaca`* onwards subtracting values of type `tez` yeilds on opti
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=b
+```pascaligo group=b protocol=ithaca
 
 const d : option (tez) = 5mutez - 1mutez (* Some (4mutez) *)
 
@@ -291,7 +291,7 @@ const e : option (tez) = 1mutez - 5mutez (* None *)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=b
+```cameligo group=b protocol=ithaca
 
 let d : tez option = 5mutez - 1mutez (* Some (4mutez) *)
 
@@ -302,7 +302,7 @@ let e : tez option = 1mutez - 5mutez (* None *)
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=b
+```reasonligo group=b protocol=ithaca
 
 let d : option(tez) = 5mutez - 1mutez /* Some (4mutez) */
 
@@ -313,11 +313,11 @@ let e : option(tez) = 1mutez - 5mutez /* None */
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=b
+```jsligo group=b protocol=ithaca
 
-let d : option<tez> = (5 as mutez) - (1 as mutez) /* Some (4mutez) */
+let d : option<tez> = (5 as mutez) - (1 as mutez); /* Some (4mutez) */
 
-let e : option<tez> = (1 as mutez) - (5 as mutez) /* None */
+let e : option<tez> = (1 as mutez) - (5 as mutez); /* None */
 
 ```
 

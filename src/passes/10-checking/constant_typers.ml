@@ -1239,7 +1239,7 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
   ret_t
 
-let rec constant_typers ~raise ~(options : Compiler_options.middle_end) loc c : typer = 
+let constant_typers ~raise ~(options : Compiler_options.middle_end) loc c : typer = 
   let test = options.test in
   let protocol_version = options.protocol_version in
   match c with
