@@ -371,12 +371,10 @@ let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tez
   fun ~raise ~loc ~calltrace ctxt operation ->
     let open Tezos_alpha_test_helpers in
     let baker = unwrap_baker ~raise ~loc ctxt.internals.baker in
-    let open Tezos_protocol.Protocol in
-    let open Environment in
-    let incr = Trace.trace_tzresult_lwt ~raise (function
-                   | ((`Tezos_alpha_error v) :: _) when Core.String.is_prefix (Format.asprintf "%a" Tezos_error_monad.TzCore.pp v) ~prefix:"No slots found" ->
-                      raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")
-                   | v -> throw_obj_exc loc calltrace v) @@
+    (* First check if baker is going to be successfully selected *)
+    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@
+              Block.(get_next_baker ~policy:(By_account baker) ctxt.raw) in
+    let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
                  Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw in
     let incr = Incremental.add_operation incr operation in
     match Lwt_main.run @@ incr with
