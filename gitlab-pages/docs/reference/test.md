@@ -121,16 +121,16 @@ entrypoint, it needs to be annotated, entrypoint string should omit
 the prefix "%".
 
 <SyntaxTitle syntax="pascaligo">
-val originate_from_file : string -> string -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> address * michelson_program * int
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val originate_from_file : string -> string -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> string list -> michelson_program -> tez -> address * michelson_program * int
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let originate_from_file : string => string => michelson_program => tez => (address, michelson_program, int)
+let originate_from_file : string => string => list(string) => michelson_program => tez => (address, michelson_program, int)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let originate_from_file = (filepath: string, entrypoint: string, init: michelson_program, balance: tez) => [address, michelson_program, int]
+let originate_from_file = (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez) => [address, michelson_program, int]
 </SyntaxTitle>
 
 Originate a contract with a path to the contract file, an entrypoint, an initial storage and an initial balance.
@@ -139,7 +139,7 @@ Originate a contract with a path to the contract file, an entrypoint, an initial
 
 ```pascaligo skip
 const originated =
-  Test.originate_from_file (testme_test, "main", init_storage, 0tez)
+  Test.originate_from_file (testme_test, "main", nil : list (string), init_storage, 0tez)
 const addr = originated.0
 const program = originated.1
 const size = originated.2
@@ -150,7 +150,7 @@ const size = originated.2
 
 ```cameligo skip
 let addr, program, size =
-  Test.originate_from_file testme_test "main" init_storage 0tez
+  Test.originate_from_file testme_test "main" ([] : string list) init_storage 0tez
 ...
 ```
 
@@ -158,14 +158,14 @@ let addr, program, size =
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-let (addr, program, size) = Test.originate_from_file(testme_test,"main", init_storage, 0tez);
+let (addr, program, size) = Test.originate_from_file(testme_test, "main", ([] : list(string)), init_storage, 0tez);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [addr, program, size] = Test.originate_from_file(testme_test,"main", init_storage, 0 as tez);
+let [addr, program, size] = Test.originate_from_file(testme_test, "main", (list([]) : list<string>), init_storage, 0 as tez);
 ```
 
 </Syntax>

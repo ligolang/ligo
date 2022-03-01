@@ -1166,18 +1166,15 @@ let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun i
   let _ = trace_option ~raise (expected_big_map loc bm) @@ get_t_big_map bm in
   t_unit ()
 
-let test_originate_from_file ~raise ~(options : Compiler_options.middle_end) loc =
-  match (options.protocol_version : Ligo_proto.t) with
-  | Ithaca
-  | Hangzhou ->
-    typer_5 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint views storage balance ->
-      let tlist = trace_option ~raise (expected_list loc views) @@ get_t_list views in
-      let () = trace_option ~raise (expected_string loc tlist) @@ assert_t_string tlist in
-      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
+let test_originate_from_file ~raise loc =
+  typer_5 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint views storage balance ->
+    let tlist = trace_option ~raise (expected_list loc views) @@ get_t_list views in
+    let () = trace_option ~raise (expected_string loc tlist) @@ assert_t_string tlist in
+    let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
+    let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
+    let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
+    let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
+    (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
 
 let test_compile_contract ~raise loc = typer_1 ~raise loc "TEST_COMPILE_CONTRACT" @@ fun _ ->
   (t_michelson_code ())
@@ -1404,7 +1401,7 @@ let rec constant_typers ~raise ~(options : Compiler_options.middle_end) loc c : 
   | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
   | C_TEST_RANDOM -> test_random ~raise loc ;
   | C_TEST_SET_BIG_MAP -> test_set_big_map ~raise loc ;
-  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~raise ~options loc ;
+  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~raise loc ;
   | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
   | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
   | C_TEST_CREATE_CHEST -> test_create_chest ~raise loc
