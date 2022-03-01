@@ -371,13 +371,14 @@ let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tez
   fun ~raise ~loc ~calltrace ctxt operation ->
     let open Tezos_alpha_test_helpers in
     let baker = unwrap_baker ~raise ~loc ctxt.internals.baker in
-    let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-      try
-        Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw
-      with
-        (Invalid_argument _) -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")
-    in
-    let incr : Incremental.t Tezos_base.TzPervasives.tzresult Lwt.t  = Incremental.add_operation incr operation in
+    let open Tezos_protocol.Protocol in
+    let open Environment in
+    let incr = Trace.trace_tzresult_lwt ~raise (function
+                   | ((`Tezos_alpha_error v) :: _) when Core.String.is_prefix (Format.asprintf "%a" Tezos_error_monad.TzCore.pp v) ~prefix:"No slots found" ->
+                      raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")
+                   | v -> throw_obj_exc loc calltrace v) @@
+                 Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw in
+    let incr = Incremental.add_operation incr operation in
     match Lwt_main.run @@ incr with
     | Ok incr ->
       let consum = get_consumed_gas (get_last_operation_result incr) in

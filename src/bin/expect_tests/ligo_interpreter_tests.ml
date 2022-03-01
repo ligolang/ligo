@@ -659,8 +659,7 @@ let%expect_test _ =
      19 |   let (ta, _, _) = Test.originate main 41 5tez in
      20 |
 
-    An uncaught error occured:
-    No slots found for tz1c65vpmTQc3TS6qYB7SukwDAQmWXmzCiUh
+    Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
     16n |}]
