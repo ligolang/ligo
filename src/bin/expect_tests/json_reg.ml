@@ -10388,7 +10388,7 @@ let%expect_test _ =
                                                                     "cons_name": [
                                                                     "Const",
                                                                     [
-                                                                    "C_SUB"
+                                                                    "C_POLYMORPHIC_SUB"
                                                                     ]
                                                                     ],
                                                                     "arguments": [
@@ -14067,7 +14067,7 @@ let%expect_test _ =
                                                                     "cons_name": [
                                                                     "Const",
                                                                     [
-                                                                    "C_SUB"
+                                                                    "C_POLYMORPHIC_SUB"
                                                                     ]
                                                                     ],
                                                                     "arguments": [
