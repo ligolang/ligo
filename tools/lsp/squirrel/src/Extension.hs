@@ -4,12 +4,14 @@ module Extension
   , UnsupportedExtension (..)
   , extGlobs
   , getExt
+  , isLigoFile
   , onExt
   , supportedExtensions
   ) where
 
 import Control.Exception (Exception)
 import Control.Monad.Except (MonadError (throwError))
+import Data.Either (isRight)
 import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -40,6 +42,9 @@ getExt path =
     ".ligo"   -> return Pascal
     ".mligo"  -> return Caml
     ext       -> throwError $ UnsupportedExtension ext
+
+isLigoFile :: FilePath -> Bool
+isLigoFile = isRight . getExt
 
 onExt :: MonadError UnsupportedExtension m => ElimExt a -> FilePath -> m a
 onExt ee path =

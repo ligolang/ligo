@@ -16,7 +16,6 @@ module AST.Parser
 import Control.Monad ((<=<))
 import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Bifunctor (second)
-import Data.Either (isRight)
 import Data.List (find)
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -141,7 +140,7 @@ scanContractsImpl seen top = do
     exists <- doesDirectoryExist p
     if exists
       then scanContractsImpl seen p
-      else if isRight (getExt p)
+      else if isLigoFile p
         then pure $ p : seen
         else pure seen
 

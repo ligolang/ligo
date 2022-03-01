@@ -67,7 +67,7 @@ data RioEnv = RioEnv
   , reTempFiles :: StmMap.Map J.NormalizedFilePath J.NormalizedFilePath
   -- ^ Provides a way to look which temporary files correspond to which open files.
   , reIndexOpts :: MVar IndexOptions
-  -- ^ Contains the saved indexing options.
+  -- ^ Stores the user's choice (or lack of) in how the project should be indexed.
   }
 
 -- TODO: The lsp library provides no way to update the Config in the LspM monad

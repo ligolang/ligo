@@ -5,6 +5,7 @@ module Main (main) where
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
+import Data.Bool (bool)
 import Data.Default
 import Data.Foldable (for_)
 import Data.HashSet qualified as HashSet
@@ -17,12 +18,13 @@ import Language.LSP.Types.Lens qualified as J
 import System.Exit
 import System.Log qualified as L
 import UnliftIO.Exception (SomeException (..), displayException, withException)
-import UnliftIO.MVar (modifyMVar_, tryReadMVar)
+import UnliftIO.MVar (modifyMVar_)
 
 import AST
 import Cli.Impl (getLigoVersion)
 import Config (Config (..))
 import Config qualified
+import Extension (isLigoFile)
 import Language.LSP.Util (sendError)
 import Log (i)
 import Log qualified
@@ -30,6 +32,7 @@ import RIO (RIO, RioEnv (..))
 import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
+import RIO.Indexing qualified as Indexing
 import Range
 import Util (toLocation)
 
@@ -389,21 +392,10 @@ handleDidChangeConfiguration notif = do
 handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
 handleDidChangeWatchedFiles notif = do
   let J.List changes = notif ^. J.params . J.changes
-  for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) -> case change of
-    J.FcCreated -> do
-      $(Log.debug) [i|Created #{uri}|]
-      void $ Document.forceFetch' Document.BestEffort uri
-    J.FcChanged -> do
-      openDocsVar <- asks reOpenDocs
-      mOpenDocs <- tryReadMVar openDocsVar
-      case mOpenDocs of
-        Just openDocs | not $ HashSet.member uri openDocs -> do
-          $(Log.debug) [i|Changed #{uri}|]
-          void $ Document.forceFetch' Document.BestEffort uri
-        _ -> pure ()
-    J.FcDeleted -> do
-      $(Log.debug) [i|Deleted #{uri}|]
-      Document.delete uri
+  for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) ->
+    for_ (J.uriToNormalizedFilePath uri) \nfp -> do
+      let fp = J.fromNormalizedFilePath nfp
+      bool Indexing.handleProjectFileChanged Document.handleLigoFileChanged (isLigoFile fp) nfp change
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

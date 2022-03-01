@@ -2,7 +2,9 @@ module RIO.Indexing
   ( IndexOptions (..)
   , indexOptionsPath
   , prettyIndexOptions
+  , ligoProjectName
   , getIndexDirectory
+  , handleProjectFileChanged
   ) where
 
 import Control.Applicative ((<|>))
@@ -21,7 +23,7 @@ import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
 import UnliftIO.Directory (findFile)
 import UnliftIO.Environment (lookupEnv)
 import UnliftIO.Exception (displayException, tryIO)
-import UnliftIO.MVar (tryPutMVar, tryReadMVar)
+import UnliftIO.MVar (tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
 
 import Language.LSP.Util (sendInfo)
@@ -44,23 +46,23 @@ prettyIndexOptions = \case
   FromGitProject path -> path
   FromLigoProject path -> path
 
+ligoProjectName :: FilePath
+ligoProjectName = ".ligoproject"
+
 -- | Given a path /foo/bar/baz, check for a `.ligoproject` file in the specified
 -- path and all of its parent directories, in this order, for the first matching
 -- file found. Returns the directory where the file was found.
 checkForLigoProjectFile :: FilePath -> RIO (Maybe FilePath)
 checkForLigoProjectFile = liftIO
   . fmap (fmap takeDirectory)
-  . flip findFile fileName . map joinPath . reverse . drop 1 . inits . splitPath
-  where
-    fileName :: String
-    fileName = ".ligoproject"
+  . flip findFile ligoProjectName
+  . map joinPath . reverse . drop 1 . inits . splitPath
 
 -- FIXME: The user choice is not updated right away due to a limitation in LSP.
 -- Check the comment in `askForIndexDirectory` for more information.
 getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
   indexOptsM <- tryReadMVar =<< asks reIndexOpts
-  -- TODO: Handle file moved/deleted/added
   ligoProjectFileM <- checkForLigoProjectFile contractDir
   maybe (askForIndexDirectory contractDir) pure (indexOptsM <|> fmap FromLigoProject ligoProjectFileM)
 
@@ -153,3 +155,19 @@ askForIndexDirectory contractDir = do
           | Just path <- rootProject
           , chosen == path = FromRoot path
           | otherwise = DoNotIndex
+
+handleProjectFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
+handleProjectFileChanged nfp change = do
+  indexOptsVar <- asks reIndexOpts
+  -- Regardless of the change, try to empty this MVar and let the project
+  -- indexing mechanism take care of it.
+  -- FIXME: Should probably invalidate contracts as well. Changing this file
+  -- should hopefully be uncommon enough that taking care of it is not worth
+  -- the trouble.
+  _ <- tryTakeMVar indexOptsVar
+  let fp = J.fromNormalizedFilePath nfp
+  $(Log.debug) case change of
+    J.FcCreated -> [Log.i|Created #{fp}|]
+    -- XXX: Should not trigger, see note in registerFileWatcher.
+    J.FcChanged -> [Log.i|Changed #{fp}|]
+    J.FcDeleted -> [Log.i|Deleted #{fp}|]

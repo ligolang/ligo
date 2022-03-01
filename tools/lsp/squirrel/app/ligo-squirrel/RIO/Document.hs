@@ -14,16 +14,19 @@ module RIO.Document
   , invalidate
   , preload
   , load
+
+  , handleLigoFileChanged
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
 import Algebra.Graph.Class qualified as G hiding (overlay)
 import Control.Arrow ((&&&))
 import Control.Lens ((??))
-import Control.Monad (join, (<=<))
+import Control.Monad (join, void, (<=<))
 import Control.Monad.Reader (asks)
 import Data.Bool (bool)
 import Data.Foldable (find, for_, toList)
+import Data.HashSet qualified as HashSet
 import Data.Set qualified as Set
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -39,7 +42,7 @@ import UnliftIO.Directory
   , setPermissions
   )
 import UnliftIO.Exception (throwIO, tryIO)
-import UnliftIO.MVar (modifyMVar, modifyMVar_)
+import UnliftIO.MVar (modifyMVar, modifyMVar_, tryReadMVar)
 import UnliftIO.STM (atomically)
 import Witherable (iwither)
 
@@ -298,3 +301,23 @@ load uri = Log.addNamespace "load" do
     _ -> do
       $(Log.warning) [Log.i|Directory to load #{rootM} doesn't exist or was not set.|]
       Contract <$> loadDefault <*> pure [revUri]
+
+handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
+handleLigoFileChanged nfp = \case
+  J.FcCreated -> do
+    $(Log.debug) [Log.i|Created #{fp}|]
+    void $ forceFetch' BestEffort uri
+  J.FcChanged -> do
+    openDocsVar <- asks reOpenDocs
+    mOpenDocs <- tryReadMVar openDocsVar
+    case mOpenDocs of
+      Just openDocs | not $ HashSet.member uri openDocs -> do
+        $(Log.debug) [Log.i|Changed #{fp}|]
+        void $ forceFetch' BestEffort uri
+      _ -> pure ()
+  J.FcDeleted -> do
+    $(Log.debug) [Log.i|Deleted #{fp}|]
+    delete uri
+  where
+    uri = J.normalizedFilePathToUri nfp
+    fp = J.fromNormalizedFilePath nfp
