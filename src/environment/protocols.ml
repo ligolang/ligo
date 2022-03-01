@@ -3,7 +3,7 @@ let current = Hangzhou
 
 (* this list is used to print the list of protocols in the CLI help *)
 let protocols_str : string list = [
-  "edo" ; "hangzhou"
+  "hangzhou" ; "ithaca"
 ]
 
 let protocols_to_variant : string -> t option = fun p ->
