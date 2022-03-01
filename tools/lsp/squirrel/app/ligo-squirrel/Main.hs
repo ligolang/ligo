@@ -30,7 +30,6 @@ import RIO (RIO, RioEnv (..))
 import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
-import RIO.Registration qualified as Registration
 import Range
 import Util (toLocation)
 
@@ -150,10 +149,7 @@ handlers = mconcat
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
-handleInitialized _ = do
-  Registration.registerDidChangeConfiguration
-  void RIO.fetchCustomConfig
-  Registration.registerFileWatcher
+handleInitialized _ = RIO.initializeRio
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do

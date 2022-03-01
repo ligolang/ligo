@@ -1,9 +1,9 @@
 module RIO
   ( module RIO.Types
   , newRioEnv
+  , initializeRio
   , run
 
-  , fetchCustomConfig
   , updateCustomConfig
   ) where
 
@@ -25,6 +25,7 @@ import Config (Config (..), getConfigFromNotification)
 import Log (LogT)
 import Log qualified
 import RIO.Document qualified (load)
+import RIO.Registration qualified
 import RIO.Types (Contract (..), RIO (..), RioEnv (..), getCustomConfig)
 
 newRioEnv :: IO RioEnv
@@ -36,6 +37,12 @@ newRioEnv = do
   reTempFiles <- newIO
   reIndexOpts <- newEmptyMVar
   pure RioEnv {..}
+
+initializeRio :: RIO ()
+initializeRio = do
+  RIO.Registration.registerDidChangeConfiguration
+  void fetchCustomConfig
+  RIO.Registration.registerFileWatcher
 
 -- Fetch the configuration from the server and write it to the Config MVar
 fetchCustomConfig :: RIO (Maybe Config)
