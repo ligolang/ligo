@@ -75,7 +75,7 @@ let%expect_test _  =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    "2042-01-01T00:00:00Z" |}]
+    "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "coase.ligo" ] ;
@@ -2261,7 +2261,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let #Foo#x#35 = L(54) in let #Foo#y#36 = #Foo#x#35 in L(unit) |}]
+    let #Foo#x#40 = L(54) in let #Foo#y#41 = #Foo#x#40 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
