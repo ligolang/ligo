@@ -476,14 +476,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    99360000000mutez
-    12n
+    950038000000mutez
+    166n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    98720000000mutez
-    12n
+    950049000000mutez
+    166n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    98080000000mutez
-    12n
+    950060000000mutez
+    166n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -659,7 +659,8 @@ let%expect_test _ =
      19 |   let (ta, _, _) = Test.originate main 41 5tez in
      20 |
 
-    Baker cannot bake. Enough rolls? Enough cycles passed?
+    An uncaught error occured:
+    No slots found for tz1c65vpmTQc3TS6qYB7SukwDAQmWXmzCiUh
     "STARTING BALANCE AND VOTING POWER"
-    100000000000mutez
-    12n |}]
+    95000000000mutez
+    16n |}]
