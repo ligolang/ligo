@@ -566,7 +566,7 @@ let add ~raise loc = typer_2 ~raise loc "ADD" @@ fun a b ->
   if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
   then t_timestamp () else
     raise.raise @@ typeclass_error loc
-              [ 
+              [
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
                 [t_bls12_381_g2();t_bls12_381_g2()] ;
                 [t_bls12_381_fr();t_bls12_381_fr()] ;
@@ -600,7 +600,7 @@ let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b
   if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
   then t_timestamp () else
     raise.raise @@ typeclass_error loc
-              [ 
+              [
                 [t_string();t_string()] ;
                 [t_bls12_381_g1();t_bls12_381_g1()] ;
                 [t_bls12_381_g2();t_bls12_381_g2()] ;
@@ -750,24 +750,18 @@ let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
   let () = assert_eq_1 ~raise ~loc res init in
   res
 
-(** FOLD_WHILE is a fold operation that takes an initial value of a certain type
-    and then iterates on it until a condition is reached. The auxillary function
-    that does the fold returns either boolean true or boolean false to indicate
-    whether the fold should continue or not. Necessarily then the initial value
-    must match the input parameter of the auxillary function, and the auxillary
-    should return type (bool * input) *)
-let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
+let loop_left ~raise loc = typer_2 ~raise loc "LOOP_LEFT" @@ fun body init ->
   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
+  let (left,right) = trace_option ~raise (expected_variant loc result) @@ get_t_or result in
   let () = assert_eq_1 ~raise ~loc arg init in
-  let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
-  in init
+  let () = assert_eq_1 ~raise ~loc init left
+  in right
 
-(* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
-let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
-  t_pair (t_bool ()) arg
+let loop_continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
+  t_sum_ez [("left",arg);("right",arg)]
 
-let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
-  (t_pair (t_bool ()) arg)
+let loop_stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
+  t_sum_ez [("left",arg);("right",arg)]
 
 let not_ ~raise loc = typer_1 ~raise loc "NOT" @@ fun elt ->
   if eq_1 elt (t_bool ())
@@ -1172,15 +1166,8 @@ let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun i
   let _ = trace_option ~raise (expected_big_map loc bm) @@ get_t_big_map bm in
   t_unit ()
 
-let test_originate_from_file ~protocol_version ~raise loc =
-  match (protocol_version : Ligo_proto.t) with
-  (* | Edo ->
-    typer_4 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
-      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ())) *)
+let test_originate_from_file ~raise ~(options : Compiler_options.middle_end) loc =
+  match (options.protocol_version : Ligo_proto.t) with
   | Ithaca
   | Hangzhou ->
     typer_5 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint views storage balance ->
@@ -1255,7 +1242,10 @@ let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTA
   let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
   ret_t
 
-let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
+let rec constant_typers ~raise ~(options : Compiler_options.middle_end) loc c : typer = 
+  let test = options.test in
+  let protocol_version = options.protocol_version in
+  match c with
   | C_INT                 -> int ~raise loc ;
   | C_UNIT                -> unit ~raise loc ;
   | C_NEVER               -> never ~raise loc ;
@@ -1275,9 +1265,10 @@ let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_ASSERT_NONE_WITH_ERROR -> assert_none_with_error ~raise loc ;
   | C_FAILWITH            -> failwith_ ~raise loc ;
     (* LOOPS *)
-  | C_FOLD_WHILE          -> fold_while ~raise loc ;
-  | C_FOLD_CONTINUE       -> continue ~raise loc ;
-  | C_FOLD_STOP           -> stop ~raise loc ;
+  | C_LOOP_LEFT           -> loop_left ~raise loc ;
+  | C_LEFT                -> loop_continue ~raise loc ;
+  | C_LOOP_CONTINUE       -> loop_continue ~raise loc ;
+  | C_LOOP_STOP           -> loop_stop ~raise loc ;
   | C_FOLD                -> fold ~raise loc ;
    (* MATH *)
   | C_NEG                 -> neg ~raise loc ;
@@ -1413,7 +1404,7 @@ let constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
   | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
   | C_TEST_RANDOM -> test_random ~raise loc ;
   | C_TEST_SET_BIG_MAP -> test_set_big_map ~raise loc ;
-  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
+  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~raise ~options loc ;
   | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
   | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
   | C_TEST_CREATE_CHEST -> test_create_chest ~raise loc

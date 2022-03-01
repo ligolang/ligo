@@ -5,7 +5,7 @@ module Formatter = Formatter
 
 type sub_module = { type_env : tenv  ; bindings : bindings_map }
 
-let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
+let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
 
@@ -133,8 +133,8 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     (i,defs,scopes)
 
   and declaration ~options i core_prg =
-    let test = options.test in
-    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~test ~protocol_version:options.protocol_version ~env decl in
+    (* Note : Why do we need to compile here ? Is it just about handling the environment ? *)
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~options ~env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration Location.wrap) ->
       let typed_prg =
         (*

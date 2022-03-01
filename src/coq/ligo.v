@@ -68,6 +68,7 @@ with cond : Set :=
 
 with static_args : Set :=
 | Type_args : option string -> list (node A string) -> static_args
+| Instr_arg : binds -> static_args
 | Script_arg : script -> static_args
 
 with script : Set :=

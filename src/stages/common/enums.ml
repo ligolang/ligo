@@ -80,9 +80,6 @@ type constant' =
   | C_UPDATE
   (* Loops *)
   | C_ITER
-  | C_FOLD_WHILE
-  | C_FOLD_CONTINUE [@print "CONTINUE"]
-  | C_FOLD_STOP [@print "STOP"]
   | C_LOOP_LEFT
   | C_LOOP_CONTINUE
   | C_LOOP_STOP

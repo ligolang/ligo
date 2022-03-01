@@ -40,9 +40,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_UPDATE -> C_UPDATE
   (* Loops *)
   | C_ITER -> C_ITER
-  | C_FOLD_WHILE -> C_FOLD_WHILE
-  | C_FOLD_CONTINUE -> C_FOLD_CONTINUE
-  | C_FOLD_STOP -> C_FOLD_STOP
   | C_LOOP_LEFT -> C_LOOP_LEFT
   | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
   | C_LOOP_STOP -> C_LOOP_STOP
@@ -226,64 +223,83 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   | T_constant {language ; injection ; parameters} -> (
     let open Stage_common.Constant in
     let () = Assert.assert_true ~raise (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
-    match Ligo_string.extract injection , parameters with
-    | (i, []) when String.equal i bool_name -> return (T_base TB_bool)
-    | (i, []) when String.equal i unit_name -> return (T_base TB_unit)
-    | (i, []) when String.equal i int_name -> return (T_base TB_int)
-    | (i, []) when String.equal i nat_name -> return (T_base TB_nat)
-    | (i, []) when String.equal i timestamp_name -> return (T_base TB_timestamp)
-    | (i, []) when String.equal i tez_name -> return (T_base TB_mutez)
-    | (i, []) when String.equal i string_name -> return (T_base TB_string)
-    | (i, []) when String.equal i bytes_name -> return (T_base TB_bytes)
-    | (i, []) when String.equal i address_name -> return (T_base TB_address)
-    | (i, []) when String.equal i operation_name -> return (T_base TB_operation)
-    | (i, []) when String.equal i key_name -> return (T_base TB_key)
-    | (i, []) when String.equal i key_hash_name -> return (T_base TB_key_hash)
-    | (i, []) when String.equal i chain_id_name -> return (T_base TB_chain_id)
-    | (i, []) when String.equal i signature_name -> return (T_base TB_signature)
-    | (i, []) when String.equal i baker_hash_name -> return (T_base TB_baker_hash)
-    | (i, []) when String.equal i pvss_key_name -> return (T_base TB_pvss_key)
-    | (i, []) when String.equal i chest_name -> return (T_base TB_chest)
-    | (i, []) when String.equal i chest_key_name -> return (T_base TB_chest_key)
-    | (i, []) when String.equal i baker_operation_name -> return (T_base TB_baker_operation)
-    | (i, []) when String.equal i bls12_381_g1_name -> return (T_base TB_bls12_381_g1)
-    | (i, []) when String.equal i bls12_381_g2_name -> return (T_base TB_bls12_381_g2)
-    | (i, []) when String.equal i bls12_381_fr_name -> return (T_base TB_bls12_381_fr)
-    | (i, []) when String.equal i never_name -> return (T_base TB_never)
-    | (i, [x]) when String.equal i ticket_name ->
-      let x' = compile_type x in
-      return (T_ticket x')
-    | (i, [x]) when String.equal i sapling_transaction_name -> (
+    match injection , parameters with
+    | (Bool,            []) -> return (T_base TB_bool)
+    | (Unit,            []) -> return (T_base TB_unit)
+    | (Int,             []) -> return (T_base TB_int)
+    | (Nat,             []) -> return (T_base TB_nat)
+    | (Timestamp,       []) -> return (T_base TB_timestamp)
+    | (Tez,             []) -> return (T_base TB_mutez)
+    | (String,          []) -> return (T_base TB_string)
+    | (Bytes,           []) -> return (T_base TB_bytes)
+    | (Address,         []) -> return (T_base TB_address)
+    | (Operation,       []) -> return (T_base TB_operation)
+    | (Key,             []) -> return (T_base TB_key)
+    | (Key_hash,        []) -> return (T_base TB_key_hash)
+    | (Chain_id,        []) -> return (T_base TB_chain_id)
+    | (Signature,       []) -> return (T_base TB_signature)
+    | (Baker_hash,      []) -> return (T_base TB_baker_hash)
+    | (Pvss_key,        []) -> return (T_base TB_pvss_key)
+    | (Chest,           []) -> return (T_base TB_chest)
+    | (Chest_key,       []) -> return (T_base TB_chest_key)
+    | (Baker_operation, []) -> return (T_base TB_baker_operation)
+    | (Bls12_381_g1,    []) -> return (T_base TB_bls12_381_g1)
+    | (Bls12_381_g2,    []) -> return (T_base TB_bls12_381_g2)
+    | (Bls12_381_fr,    []) -> return (T_base TB_bls12_381_fr)
+    | (Never,           []) -> return (T_base TB_never)
+    | (Ticket,         [x]) -> let x' = compile_type x in
+                               return (T_ticket x')
+    | (Sapling_transaction, [x]) -> (
       match x.type_content with
       | AST.T_singleton (Literal_int x') -> return (T_sapling_transaction x')
       | _ -> failwith "wrong sapling_transaction"
     )
-    | (i, [x]) when String.equal i sapling_state_name -> (
+    | (Sapling_state, [x]) -> (
       match x.type_content with
       | AST.T_singleton (Literal_int x') -> return (T_sapling_state x')
       | _ -> failwith "wrong sapling_state"
     )
-    | (i, [x]) when String.equal i contract_name ->
+    | (Contract, [x]) ->
       let x' = compile_type x in
       return (T_contract x')
-    | (i, [o]) when String.equal i option_name ->
+    | (Option, [o]) ->
       let o' = compile_type o in
       return (T_option o')
-    | (i, [k;v]) when String.equal i map_name ->
+    | (Map, [k;v]) ->
       let kv' = Pair.map ~f:compile_type (k, v) in
       return (T_map kv')
-    | (i, [k; v]) when String.equal i big_map_name ->
+    | (Big_map, [k; v]) ->
       let kv' = Pair.map ~f:compile_type (k, v) in
       return (T_big_map kv')
-    | (i, _) when String.equal i map_or_big_map_name ->
+    | (Map_or_big_map, _) ->
       raise.raise @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
-    | (i, [t]) when String.equal i list_name ->
+    | (List, [t]) ->
       let t' = compile_type t in
       return (T_list t')
-    | (i, [t]) when String.equal i set_name ->
+    | (Set, [t]) ->
       let t' = compile_type t in
       return (T_set t')
-    | _ -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+    | ((Michelson_or    | Option   | Chest_opening_result | Sapling_transaction |
+        Test_exec_error | Ticket   | Michelson_program    | Sapling_state       |
+        Contract        | Map      | Big_map              | Typed_address       |
+        Michelson_pair  | Set      | Test_exec_result     | Account             | 
+        Time            | Mutation | Failure              | List), []) 
+        -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+    | ((Bool       | Unit      | Baker_operation      |
+      Nat          | Timestamp | Michelson_or         |
+      Option       | String    | Chest_opening_result |
+      Address      | Operation | Bls12_381_fr         |
+      Key_hash     | Chain_id  | Sapling_transaction  |
+      Baker_hash   | Pvss_key  | Test_exec_error      |
+      Chest        | Int       | Bls12_381_g1         |
+      Bls12_381_g2 | Key       | Michelson_program    |
+      Ticket       | Signature | Sapling_state        |
+      Contract     | Map       | Big_map              |
+      Set          | Tez       | Michelson_pair       |
+      Never        | Chest_key | Test_exec_result     |
+      Account      | Time      | Typed_address        |
+      Mutation     | Bytes     | Failure              |
+      List), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
   | T_sum { content = m ; layout } -> (
       let open AST.Helpers in
@@ -574,13 +590,20 @@ and compile_expression ~raise (ae:AST.expression) : expression =
               let collection' = self collection in
               return @@ E_fold_right (f' , (collection',elem_type) , initial')
             )
+          | [ f ; i], C_LOOP_LEFT -> (
+              let f' = expression_to_iterator_body f in
+              let i' = self i in
+              return @@ E_iterator (iterator_name , f' , i')
+          )
           | _ -> raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
-      let (iter , map , fold, fold_left, fold_right) = iterator_generator C_ITER,
+      let (iter , map , fold, fold_left, fold_right,loop_left) = iterator_generator C_ITER,
                                                        iterator_generator C_MAP,
                                                        iterator_generator C_FOLD,
                                                        iterator_generator C_FOLD_LEFT,
-                                                       iterator_generator C_FOLD_RIGHT in
+                                                       iterator_generator C_FOLD_RIGHT,
+                                                       iterator_generator C_LOOP_LEFT
+                                                       in
       match (name , lst) with
       | (C_SET_ITER , lst) -> iter lst
       | (C_LIST_ITER , lst) -> iter lst
@@ -595,6 +618,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       | (C_LIST_FOLD_LEFT, lst) -> fold_left lst
       | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
       | (C_SET_FOLD_DESC , lst) -> fold_right lst
+      | (C_LOOP_LEFT, lst) -> loop_left lst
       | _ -> (
           let lst' = List.map ~f:(self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}
@@ -611,7 +635,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       match m with
       | Match_variant {cases ; tv} -> (
           match expr.type_expression.type_content with
-          | T_constant { injection ; parameters = [list_ty];language =_ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+          | T_constant { injection = Stage_common.Constant.List ; parameters = [list_ty];language =_ } ->
             let list_ty = compile_type ~raise list_ty in
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
@@ -632,7 +656,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
               (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
             in
             return @@ E_if_cons (expr' , nil , cons)
-          | T_constant { injection ; parameters = [opt_tv]; language=_ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
+          | T_constant { injection = Stage_common.Constant.Option ; parameters = [opt_tv]; language=_ } ->
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
             let get_case c =
@@ -779,7 +803,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
     match m.cases with
     | Match_variant {cases ; tv} -> (
         match m.matchee.type_expression.type_content with
-        | T_constant { injection ; parameters = [list_ty];language=_ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+        | T_constant { injection = Stage_common.Constant.List ; parameters = [list_ty];language=_ } ->
           let list_ty = compile_type ~raise list_ty in
           let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
           let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
@@ -800,7 +824,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
             (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
           in
           return @@ E_if_cons (expr' , nil , cons)
-        | T_constant { injection ; parameters = [opt_tv] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
+        | T_constant { injection = Stage_common.Constant.Option; parameters = [opt_tv] ; language=_} ->
           let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
           let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
           let get_case c =

@@ -46,7 +46,7 @@ and type_content = function
 and type_injection {language;injection;parameters} =
   `Assoc [
     ("language", `String language);
-    ("injection", `String (Simple_utils.Ligo_string.extract injection));
+    ("injection", `String (Stage_common.Constant.to_string injection));
     ("parameters", list type_expression parameters)
   ]
 

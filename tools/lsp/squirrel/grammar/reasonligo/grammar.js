@@ -394,7 +394,7 @@ module.exports = grammar({
 
     apply: $ => prec.left(20, seq(
       field("function", $._expr),
-      common.par(common.sepBy(',', field("argument", $._program))),
+      common.par(common.sepBy(',', field("argument", $._annot_expr))),
     )),
 
     Some_call: $ => prec.right(10, seq(

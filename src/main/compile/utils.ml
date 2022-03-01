@@ -17,11 +17,11 @@ let to_core ~raise ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
   let core   = Of_sugar.compile sugar in
   core
 
-let type_file ~raise ~add_warning ~options f stx form : Ast_typed.program =
+let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : Ast_typed.program =
   let meta          = Of_source.extract_meta ~raise stx f in
-  let c_unit,_      = Of_source.compile ~raise ~options ~meta f in
+  let c_unit,_      = Of_source.compile ~raise ~options:options.frontend ~meta f in
   let core          = to_core ~raise ~add_warning ~options ~meta c_unit f in
-  let inferred      = Of_core.infer ~raise ~options core in
+  let inferred      = Of_core.infer ~raise ~options:options.middle_end core in
   let typed         = Of_core.typecheck ~raise ~add_warning ~options form inferred in
   typed
 
@@ -53,13 +53,15 @@ let type_contract_string ~raise ~add_warning ~options syntax expression env =
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
   let core          = Of_sugar.compile sugar in
-  let inferred      = Of_core.infer ~raise ~options:{options with init_env = env} core in
-  let typed         = Of_core.typecheck ~raise ~add_warning ~options:{options with init_env = env} Env inferred in
+  let middle_end_opt = options.Compiler_options.middle_end in
+  let middle_end_opt = { middle_end_opt with init_env = env } in
+  let inferred      = Of_core.infer ~raise ~options:middle_end_opt core in
+  let typed         = Of_core.typecheck ~raise ~add_warning ~options Env inferred in
   typed,core
 
 let type_expression ~raise ~options source_file syntax expression init_prog =
   let meta              = Of_source.make_meta ~raise syntax source_file in (* TODO: should be computed outside *)
-  let c_unit_exp, _     = Of_source.compile_string ~raise ~options ~meta expression in
+  let c_unit_exp, _     = Of_source.compile_string ~raise ~options:options.Compiler_options.frontend ~meta expression in
   let imperative_exp    = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
   let core_exp          = Of_sugar.compile_expression sugar_exp in

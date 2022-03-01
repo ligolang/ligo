@@ -89,12 +89,15 @@ and compile_expr ~raise protocol_version env outer expr =
        (List.map ~f:backward env)
        outer
        expr)
-       
+
 and apply_static_args ~raise : Environment.Protocols.t -> string -> (_, constant', literal) static_args -> _ node =
   fun protocol_version prim args ->
   match args with
   | Type_args (annot, types) ->
     Prim (generated, prim, List.map ~f:forward types, Option.to_list annot)
+  | Instr_arg (code) ->
+    let code = compile_binds ~raise protocol_version [] [] [] code in
+    Prim (generated, prim, code, [])
   | Script_arg (Script (p, s, e)) ->
     (* prim will always be CREATE_CONTRACT, recursively compile the
        contract here *)

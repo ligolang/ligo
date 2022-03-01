@@ -93,14 +93,14 @@ module Command = struct
     | Pack (loc, value, value_ty) ->
       let expr = Michelson_backend.val_to_ast ~raise ~loc value value_ty in
       let expr = Ast_aggregated.e_a_pack expr in
-      let mich = Michelson_backend.compile_value ~raise expr in
+      let mich = Michelson_backend.compile_value ~raise ~options expr in
       let ret_co, ret_ty = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
     | Unpack (loc, bytes, value_ty) ->
       let value_ty = trace_option ~raise (Errors.generic_error loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option value_ty in
       let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in
-      let mich = Michelson_backend.compile_value ~raise expr in
+      let mich = Michelson_backend.compile_value ~raise ~options expr in
       let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
       (ret, ctxt)
@@ -207,9 +207,11 @@ module Command = struct
       | _ -> raise.raise @@ Errors.generic_error Location.generated
                               "Trying to measure a non-contract"
     )
-    | Compile_contract_from_file (source_file, entrypoint, views) ->
+    | Compile_contract_from_file (source_file, entry_point, views) ->
+      let options = Compiler_options.set_entry_point options entry_point in
+      let options = Compiler_options.set_views options views in
       let contract_code =
-        Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entrypoint views in
+        Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entry_point views in
       let size =
         let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
         LT.V_Ct (C_int (Z.of_int s))
@@ -224,7 +226,8 @@ module Command = struct
                             Ast_aggregated.get_t_arrow f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
       let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj func_typed_exp in
-      let func_code = Michelson_backend.compile_value ~raise func_typed_exp in
+      let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
+      let func_code = Michelson_backend.compile_value ~raise ~options func_typed_exp in
       let { code = arg_code ; _ } = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc v in_ty in
       let input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty in
       let options = Michelson_backend.make_options ~raise ~param:input_ty (Some ctxt) in
@@ -245,8 +248,7 @@ module Command = struct
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
             let compiled_expr =
-              let protocol_version = ctxt.internals.protocol_version in
-              Michelson_backend.compile_contract_ ~raise ~protocol_version subst_lst arg_binder rec_name in_ty out_ty body in
+              Michelson_backend.compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty body in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)
             let expr_ty = clean_locations compiled_expr.expr_ty in

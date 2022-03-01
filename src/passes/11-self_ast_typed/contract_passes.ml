@@ -25,14 +25,14 @@ let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pas
       type_content =
         T_constant {
           language=Stage_common.Backends.michelson;
-          injection=Ligo_string.verbatim Stage_common.Constant.contract_name;
+          injection=Stage_common.Constant.Contract;
           parameters=[dat.contract_type.parameter]
         }
     }
     e.location
   in
   match e.expression_content , e.type_expression with
-  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection;parameters=[t]} ; _}) when String.equal (Ligo_string.extract injection) Stage_common.Constant.contract_name ->
+  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection=Stage_common.Constant.Contract;parameters=[t]} ; _}) ->
     let entrypoint =
       match entrypoint_exp.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
