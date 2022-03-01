@@ -169,7 +169,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_OPTION_MAP -> C_OPTION_MAP
   | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT
   | (   C_TEST_ORIGINATE
-      | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
       | C_TEST_SET_BAKER
       | C_TEST_EXTERNAL_CALL_TO_CONTRACT

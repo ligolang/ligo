@@ -196,7 +196,6 @@ type constant' =
   | C_TEST_GET_STORAGE [@only_interpreter]
   | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
   | C_TEST_GET_BALANCE [@only_interpreter]
-  | C_TEST_SET_NOW [@only_interpreter]
   | C_TEST_SET_SOURCE [@only_interpreter]
   | C_TEST_SET_BAKER [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_CONTRACT [@only_interpreter]

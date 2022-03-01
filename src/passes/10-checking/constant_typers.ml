@@ -1032,10 +1032,6 @@ let test_nth_bootstrap_contract ~raise loc = typer_1 ~raise loc "TEST_NTH_BOOTST
   let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
   (t_address ())
 
-let test_set_now ~raise loc = typer_1 ~raise loc "TEST_SET_NOW" @@ fun time ->
-  let () = assert_eq_1 ~raise ~loc time (t_timestamp ()) in
-  (t_unit ())
-
 let test_set_source ~raise loc = typer_1 ~raise loc "TEST_SET" @@ fun s ->
   let () = assert_eq_1 ~raise ~loc s (t_address ()) in
   (t_unit ())
@@ -1370,7 +1366,6 @@ let constant_typers ~raise ~(options : Compiler_options.middle_end) loc c : type
   | C_VIEW -> view ~raise loc ;
   (* TEST *)
   | C_TEST_ORIGINATE -> test_originate ~raise loc ;
-  | C_TEST_SET_NOW -> test_set_now ~raise loc ;
   | C_TEST_SET_SOURCE -> test_set_source ~raise loc ;
   | C_TEST_SET_BAKER -> test_set_source ~raise loc ;
   | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> test_external_call_to_contract ~raise loc ;

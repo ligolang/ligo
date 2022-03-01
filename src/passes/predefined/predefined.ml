@@ -176,7 +176,6 @@ module Tree_abstraction = struct
 
     | "Test.originate" -> some_const C_TEST_ORIGINATE
     | "Test.originate_from_file" -> some_const C_TEST_ORIGINATE_FROM_FILE
-    | "Test.set_now" -> some_const C_TEST_SET_NOW
     | "Test.set_source" -> some_const C_TEST_SET_SOURCE
     | "Test.set_baker" -> some_const C_TEST_SET_BAKER
     | "Test.transfer_to_contract" -> some_const C_TEST_EXTERNAL_CALL_TO_CONTRACT
@@ -375,7 +374,6 @@ module Tree_abstraction = struct
 
     | C_TEST_ORIGINATE -> "Test.originate"
     | C_TEST_ORIGINATE_FROM_FILE -> "Test.originate_from_file"
-    | C_TEST_SET_NOW -> "Test.set_now"
     | C_TEST_SET_SOURCE -> "Test.set_source"
     | C_TEST_SET_BAKER -> "Test.set_baker"
     | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> "Test.transfer_to_contract"

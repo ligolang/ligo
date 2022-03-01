@@ -185,18 +185,6 @@ let script_of_compiled_code ~raise ~loc ~calltrace (contract : unit Tezos_utils.
   let storage = ligo_to_canonical ~raise ~loc ~calltrace storage in
   { code ; storage }
 
-let set_timestamp ~raise ~loc ~calltrace ({raw;internals = {baker;_}; _} as context :context) (timestamp:Z.t) =
-  let open Tezos_alpha_test_helpers in
-  let baker = unwrap_baker ~raise ~loc baker in
-  let (timestamp:Time.Protocol.t) = Time.Protocol.of_seconds (Z.to_int64 timestamp) in
-  let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-    Incremental.begin_construction ~timestamp ~policy:Block.(By_account baker) raw
-  in
-  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-    Incremental.finalize_block incr
-  in
-  { context with raw }
-
 let extract_origination_from_result :
   type a .
     Memory_proto_alpha.Protocol.Alpha_context.Contract.t ->

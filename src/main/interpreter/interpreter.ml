@@ -736,10 +736,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       return_contract_exec res
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_TEST_SET_NOW , [ V_Ct (C_timestamp t) ] ) ->
-      let>> () = Set_now (loc,calltrace,t) in
-      return_ct C_unit
-    | ( C_TEST_SET_NOW , _  ) -> fail @@ error_type
     | ( C_TEST_SET_SOURCE , [ addr ] ) ->
       let>> () = Set_source addr in
       return_ct C_unit

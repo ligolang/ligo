@@ -106,30 +106,6 @@ let%expect_test _ =
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "test_now.mligo" ] ;
-  [%expect {|
-    "storage at origination"
-    "2000-01-01T10:10:10Z"
-    "setting now at:"
-    "storage after calling"
-    "2010-01-01T10:10:11Z"
-    Everything at the top-level was executed.
-    - test_ts exited with value timestamp(946721410).
-    - test exited with value true. |}]
-
-let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_now_from_file.mligo" ] ;
-  [%expect {|
-    "storage at origination"
-    "2000-01-01T10:10:10Z"
-    "setting now at:"
-    "storage after calling"
-    "2010-01-01T10:10:11Z"
-    Everything at the top-level was executed.
-    - test_ts exited with value timestamp(946721410).
-    - test exited with value true. |}]
-
-let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fail.mligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
