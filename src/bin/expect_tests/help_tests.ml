@@ -112,9 +112,9 @@ let%expect_test _ =
       [-e ENTRY-POINT]                    the entry-point that will be compiled.
                                           (alias: --entry-point)
       [-p PROTOCOL]                       choose protocol's types/values pre-loaded
-                                          into the LIGO environment (edo ,
-                                          hangzhou). By default, the current
-                                          protocol (edo) will be used
+                                          into the LIGO environment (hangzhou ,
+                                          ithaca). By default, the current protocol
+                                          (hangzhou) will be used
                                           (alias: --protocol)
       [-help]                             print this help text and exit
                                           (alias: -?)
@@ -168,9 +168,9 @@ let%expect_test _ =
       [-e ENTRY-POINT]             the entry-point that will be compiled.
                                    (alias: --entry-point)
       [-p PROTOCOL]                choose protocol's types/values pre-loaded into
-                                   the LIGO environment (edo ,
-                                   hangzhou). By default, the current protocol (edo)
-                                   will be used
+                                   the LIGO environment (hangzhou ,
+                                   ithaca). By default, the current protocol
+                                   (hangzhou) will be used
                                    (alias: --protocol)
       [-help]                      print this help text and exit
                                    (alias: -?)
@@ -224,9 +224,9 @@ let%expect_test _ =
       [-e ENTRY-POINT]             the entry-point that will be compiled.
                                    (alias: --entry-point)
       [-p PROTOCOL]                choose protocol's types/values pre-loaded into
-                                   the LIGO environment (edo ,
-                                   hangzhou). By default, the current protocol (edo)
-                                   will be used
+                                   the LIGO environment (hangzhou ,
+                                   ithaca). By default, the current protocol
+                                   (hangzhou) will be used
                                    (alias: --protocol)
       [-help]                      print this help text and exit
                                    (alias: -?)
@@ -272,9 +272,9 @@ let%expect_test _ =
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (edo ,
-                                 hangzhou). By default, the current protocol (edo)
-                                 will be used
+                                 LIGO environment (hangzhou ,
+                                 ithaca). By default, the current protocol
+                                 (hangzhou) will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -320,9 +320,9 @@ let%expect_test _ =
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (edo ,
-                                 hangzhou). By default, the current protocol (edo)
-                                 will be used
+                                 LIGO environment (hangzhou ,
+                                 ithaca). By default, the current protocol
+                                 (hangzhou) will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -369,9 +369,9 @@ let%expect_test _ =
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (edo ,
-                                 hangzhou). By default, the current protocol (edo)
-                                 will be used
+                                 LIGO environment (hangzhou ,
+                                 ithaca). By default, the current protocol
+                                 (hangzhou) will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -407,9 +407,9 @@ let%expect_test _ =
       [--werror]                   treat warnings as errors
       [--without-run]              disable running of compiled expression.
       [-p PROTOCOL]                choose protocol's types/values pre-loaded into
-                                   the LIGO environment (edo ,
-                                   hangzhou). By default, the current protocol (edo)
-                                   will be used
+                                   the LIGO environment (hangzhou ,
+                                   ithaca). By default, the current protocol
+                                   (hangzhou) will be used
                                    (alias: --protocol)
       [-help]                      print this help text and exit
                                    (alias: -?)
