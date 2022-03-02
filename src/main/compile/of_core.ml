@@ -7,13 +7,6 @@ type form =
   | View of Ast_typed.expression_variable list * Ast_typed.expression_variable
   | Env
 
-let infer ~raise ~(options: Compiler_options.middle_end) (m : Ast_core.module_) =
-  match options.infer with
-    | true  ->
-       let env_inf = Inference.decompile_env @@ Environment.to_program options.init_env in
-       let (_,e,_,_) = trace ~raise inference_tracer @@ Inference.type_module ~init_env:env_inf m in e
-    | false -> m
-
 let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
   let typed = trace ~raise checking_tracer @@ Checking.type_program ~options:options.middle_end ~env:options.middle_end.init_env m in
   let applied = trace ~raise self_ast_typed_tracer @@
@@ -29,15 +22,8 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
     : Ast_typed.expression =
   let Compiler_options.{ init_env ; infer ; _ } = options.middle_end in
   let env = Environment.append init_prog init_env in
-  let inferred = match infer with
-    | true  ->
-      let env_inf = Inference.decompile_env @@ Environment.to_program env in
-      let (_,expr,_,_) =
-        trace ~raise inference_tracer @@ Inference.type_expression_subst env_inf Inference.Solver.initial_state expr in
-      expr
-    | false -> expr
-  in
-  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~options:options.middle_end ~env inferred in
+
+  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~options:options.middle_end ~env expr in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
   applied
 
@@ -80,7 +66,6 @@ let list_mod_declarations (m : Ast_core.module_) : Ast_core.type_variable list =
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration) with
       | Declaration_module {module_binder;_} -> module_binder::prev
-      | Module_alias {alias;_} -> alias::prev
       | _ -> prev)
     ~init:[] m
 
