@@ -395,8 +395,16 @@ let reset_state: (nat, list(tez)) => unit
 <SyntaxTitle syntax="jsligo">
 let reset_state = (no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
 </SyntaxTitle>
-Generate a number of random bootstrapped accounts with a default amount of 4000000 tez. The passed list can be used to overwrite the amount.
-By default, the state only has two bootstrapped accounts.
+Generate a number of random bootstrapped accounts with a default
+amount of 4000000 tez. The passed list can be used to overwrite the
+amount. By default, the state only has two bootstrapped accounts.
+
+Notice that since Ithaca, a percentage of an account's balance is
+frozen (5% in testing mode) in case the account can be taken to be a
+validator ([see
+here](https://tezos.gitlab.io/alpha/consensus.html#validator-selection-staking-balance-active-stake-and-frozen-deposits)),
+and thus `Test.get_balance` can show a different amount to the one
+being set with `Test.reset_state`.
 
 <SyntaxTitle syntax="pascaligo">
 val baker_account : (string * key) -> tez option -> unit
