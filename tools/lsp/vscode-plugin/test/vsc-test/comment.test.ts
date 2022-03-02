@@ -18,7 +18,7 @@ function getBlockComment(lang: Dialect): [string, string] {
   }
 }
 
-async function lineCommentTest(lang: Dialect) {
+function lineCommentTest(lang: Dialect) {
   test(`Line comments are inserted correctly (${getLang(lang)})`, async () => {
     const ext = getExt(lang)
     const uri = await vscode.Uri.file(path.join(contractsDir, 'bugs', `LIGO-425.${ext}`))
@@ -35,7 +35,7 @@ async function lineCommentTest(lang: Dialect) {
   }).timeout(5000) // 2000 is not enough
 }
 
-async function blockCommentTest(lang: Dialect) {
+function blockCommentTest(lang: Dialect) {
   test(`Block comments are inserted correctly (${getLang(lang)})`, async () => {
     const ext = getExt(lang)
     const uri = await vscode.Uri.file(path.join(contractsDir, 'bugs', `LIGO-425.${ext}`))
