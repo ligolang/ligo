@@ -20,7 +20,7 @@ let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) 
 
 let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
     : Ast_typed.expression =
-  let Compiler_options.{ init_env ; infer ; _ } = options.middle_end in
+  let Compiler_options.{ init_env ; _ } = options.middle_end in
   let env = Environment.append init_prog init_env in
 
   let typed = trace ~raise checking_tracer @@ Checking.type_expression ~options:options.middle_end ~env expr in
@@ -66,6 +66,7 @@ let list_mod_declarations (m : Ast_core.module_) : Ast_core.type_variable list =
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration) with
       | Declaration_module {module_binder;_} -> module_binder::prev
+      | Module_alias {alias;_} -> alias::prev
       | _ -> prev)
     ~init:[] m
 
