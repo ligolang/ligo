@@ -61,7 +61,7 @@ export const HeaderComponent = () => {
         
         <Link href="https://ligolang.org/docs/intro/installation">Install</Link>
         <Link href="https://ligolang.org/docs/intro/introduction">Docs</Link>
-        <Link href="https://ligolang.org/docs/tutorials/get-started/tezos-taco-shop-smart-contract">
+        <Link href="https://ligolang.org/docs/tutorials/getting-started/getting-started">
           Tutorials
         </Link>
         <Link href="https://forum.tezosagora.org/tag/ligo" target="_blank">Blog</Link>
