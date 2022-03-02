@@ -25,6 +25,7 @@ import UnliftIO.Environment (lookupEnv)
 import UnliftIO.Exception (displayException, tryIO)
 import UnliftIO.MVar (tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
+import Witherable (ordNubOn)
 
 import Language.LSP.Util (sendInfo)
 import Log qualified
@@ -66,13 +67,12 @@ getIndexDirectory contractDir = do
   ligoProjectFileM <- checkForLigoProjectFile contractDir
   maybe (askForIndexDirectory contractDir) pure (indexOptsM <|> fmap FromLigoProject ligoProjectFileM)
 
--- TODO: Write config to root directory, if set
 askForIndexDirectory :: FilePath -> RIO IndexOptions
 askForIndexDirectory contractDir = do
   rootDirectoryM <- S.getRootPath
   gitDirectoryM <- mkGitDirectory
   let
-    suggestions = catMaybes
+    suggestions = ordNubOn indexOptionsPath $ catMaybes
       [ FromRoot <$> rootDirectoryM
       , FromGitProject <$> gitDirectoryM
       , Just DoNotIndex
