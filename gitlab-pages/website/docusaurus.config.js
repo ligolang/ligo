@@ -271,7 +271,7 @@ const siteConfig = {
       ],
       copyright: `© ${new Date().getFullYear()} LIGO. All rights reserved.`,
     },
-    image: 'img/docusaurus.png',
+    image: 'img/logo.svg',
     sidebarCollapsible: true,
     prism: {
       theme: require('prism-react-renderer/themes/github'),
