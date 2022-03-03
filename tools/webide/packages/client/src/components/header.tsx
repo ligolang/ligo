@@ -68,7 +68,9 @@ export const HeaderComponent = () => {
         <Link href="https://ligolang.org/contact">
           Ask Questions
         </Link>
-      
+        <Link href="https://ligolang.org/docs/next/intro/changelog/">
+          Changelog
+        </Link>
       </Group>
       <Link cheatSheetStyle href="https://ligolang.org/docs/api/cheat-sheet" target="_blank">
           Cheat Sheet
