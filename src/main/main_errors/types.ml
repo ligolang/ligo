@@ -19,6 +19,8 @@ type all =
  | `Main_unknown_failwith_type
  | `Main_unknown
  | `Main_execution_failed of Simple_utils.Runned_result.failwith
+ | `Main_cannot_open_global_constants of string
+ | `Main_cannot_parse_global_constants of string * string
 
  | `Unparsing_michelson_tracer of tezos_alpha_error list
  | `Parsing_payload_tracer of tezos_alpha_error list

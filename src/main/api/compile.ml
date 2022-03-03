@@ -16,13 +16,23 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
           Compiler_options.make ~raw_options ~protocol_version ()
       in
-      let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; views  ; _ } = options.backend in
+      let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; views ; constants ; file_constants ; _ } = options.backend in
       let Compiler_options.{ entry_point ; _ } = options.frontend in
       let code,env = Build.build_contract ~raise ~add_warning ~options entry_point source_file in
       let views =
         Build.build_views ~raise ~add_warning ~options entry_point (views,env) source_file
       in
-      Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck code views
+      let file_constants = match file_constants with
+        | None -> []
+        | Some fn ->
+           try
+             let buf = In_channel.read_all fn in
+             let json = Yojson.Basic.from_string buf in
+             json |> Yojson.Basic.Util.to_list |> List.map ~f:Yojson.Basic.Util.to_string
+           with Sys_error _ -> raise.raise (`Main_cannot_open_global_constants fn)
+              | Yojson.Json_error s -> raise.raise (`Main_cannot_parse_global_constants (fn, s)) in
+      let constants = constants @ file_constants in
+      Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck ~constants code views
 
 let expression (raw_options : Compiler_options.raw) expression init_file display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
