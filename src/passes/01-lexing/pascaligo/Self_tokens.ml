@@ -53,7 +53,7 @@ let old_syntax_support tokens =
   | End _ :: rest -> 
       let result = insert_lbracket 0 [] result in
       (* Yes, this is ugly - however the other option would be way more invasive, while we don't want to keep this code. *)
-      prerr_endline "Warning: deprecated case syntax. Cases are now expected to be wrapped inside brackets, without a closing `end` keyword. ";
+      print_endline "Warning: deprecated case syntax. Cases are now expected to be wrapped inside brackets, without a closing `end` keyword. ";
       List.rev_append (ghost_RBRACKET :: result) rest
   | (Begin _ as b) :: rest ->
       inner (indent + 1) (b :: result) rest
