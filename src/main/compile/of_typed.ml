@@ -72,12 +72,16 @@ let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type ->
     | _ -> raise.raise @@ main_entrypoint_not_a_function
   )
 
-let rec get_views : Ast_typed.program -> (expression_variable * location) list = fun p ->
+let get_views : Ast_typed.program -> (expression_variable * location) list = fun p ->
   let f : (expression_variable * location) list -> declaration_loc -> (expression_variable * location) list =
     fun acc {wrap_content=decl ; location=_ } ->
       match decl with
       | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder, Ast_typed.Var.get_location binder)::acc
-      | Declaration_module { module_binder=_ ; module_ ; module_attr=_} -> get_views module_ @ acc
+      (* TODO: check for [@view] attributes in the AST and warn if [@view] is used anywhere other than top-level 
+        (e.g. warn if [@view] is used inside a module)
+        Write a pass to check for known attributes (source_attributes -> known_attributes)
+        *)
+      (* | Declaration_module { module_binder=_ ; module_ ; module_attr=_} -> get_views module_ @ acc *)
       | _ -> acc
   in
   List.fold ~init:[] ~f p

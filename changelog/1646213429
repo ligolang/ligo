@@ -1,0 +1,6 @@
+---
+  title: "Fix broken Tutorials link in web-ide page"
+  merge_request: "1596"
+  author: "melwyn95"
+  type: "fixed"
+
