@@ -26,8 +26,8 @@ let commit = ([p, s] : [bytes, storage]) : return_ => {
     { date: Tezos.now + 86400, salted_hash: p };
   const updated_map : commit_set =
     Big_map.update(Tezos.sender(Some (commit)), s.commits);
-  const s = {...s, commits: updated_map};
-  return [([] as list<operation>), s]
+  const s_ = {...s, commits: updated_map};
+  return [([] as list<operation>), s_]
 }
   
 let reveal = ([p, s] : [reveal, storage]) : return_ => {
@@ -36,8 +36,8 @@ let reveal = ([p, s] : [reveal, storage]) : return_ => {
   } else {
     const commit : commit =
       match(Big_map.find_opt(sender, s.commits), {
-        "Some": (c: commit) => c,
-        "None": () => failwith("You have not made a commitment to hash against yet.")
+        Some: (c: commit) => c,
+        None: () => failwith("You have not made a commitment to hash against yet.")
       });
     if (Tezos.now < commit.date) {
       failwith("It has not been 24 hours since your commit yet.");
@@ -47,7 +47,7 @@ let reveal = ([p, s] : [reveal, storage]) : return_ => {
       if (salted != commit.salted_hash) {
         /* TODO */
       } else {
-        if (s.hashed = Crypto.sha256(p.hashable)) {
+        if (s.hashed == Crypto.sha256(p.hashable)) {
           let s : storage = {...s, unused: false};
           return [p.message(), s];
         } else {
@@ -60,6 +60,6 @@ let reveal = ([p, s] : [reveal, storage]) : return_ => {
 
 let main = ([p, s] : [parameter, storage]) : return_ =>
   match(p, {
-    "Commit": (c: bytes) => commit([c, s]),
-    "Reveal": (r: reveal) => reveal([r, s])
+    Commit: (c: bytes) => commit([c, s]),
+    Reveal: (r: reveal) => reveal([r, s])
   });

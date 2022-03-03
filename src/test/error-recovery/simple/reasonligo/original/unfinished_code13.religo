@@ -2,7 +2,7 @@ type sum_aggregator = { counter : int, sum : int }
 
 let counter = (n : int) : int => {
   let initial : sum_aggregator = { counter : 0, sum : 0 };
-  let rec aggregate : (sum_aggregator => int) =
+  let aggregate : (sum_aggregator => int) =
     (prev : sum_aggregator) => prev.sum;
   aggregate (initial)
 }
@@ -11,8 +11,8 @@ type sum_aggregator = { counter : int, sum : int }
 
 let counter = (n : int) : int => {
   let initial : sum_aggregator = { counter : 0, sum : 0 };
-  let rec aggregate : (sum_aggregator => int) =
-    (prev : sum_aggregator) => {
+  let rec aggregate =
+    (prev : sum_aggregator) : int => {
       if (prev.counter <= n) {
         aggregate
           ({
