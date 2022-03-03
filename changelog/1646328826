@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1603'
+title: 'Global constants: register global constants for compile-contract'
+type: added

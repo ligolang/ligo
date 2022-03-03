@@ -128,6 +128,8 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_invalid_source a -> Format.fprintf f "@[<hv>Invalid command line option \"--source\". @.The provided source address \"%s\" is invalid. A valid Tezos address is a string prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@]" a
     | `Main_invalid_sender a -> Format.fprintf f "@[<hv>Invalid command line option \"--sender\". @.The provided sender address \"%s\" is invalid. A valid Tezos address is a string prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@]" a
     | `Main_invalid_timestamp t -> Format.fprintf f "@[<hv>Invalid command line option \"--now\". @.The provided now \"%s\" is invalid. It should use RFC3339 notation in a string, or the number of seconds since Epoch.@]" t
+    | `Main_cannot_open_global_constants s -> Format.fprintf f "@[<hv>Cannot open global constants file. @.Check that the provided file \"%s\" exists.@]" s
+    | `Main_cannot_parse_global_constants (fn, s) -> Format.fprintf f "@[<hv>Cannot parse global constants file: %s. @.Check that the provided file consists of JSON list of strings (one string per Michelson constant). @.JSON Error: %s@]" fn s
 
     | `Unparsing_michelson_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
@@ -352,6 +354,11 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
     let value = `String t in
     let content = `Assoc [("message", message) ; ("value", value)] in
     json_error ~stage:"parsing command line parameters" ~content
+  | `Main_cannot_open_global_constants _ ->
+    json_error ~stage:"global constants parsing" ~content:(`String "cannot open global constants file")
+  | `Main_cannot_parse_global_constants _ ->
+    json_error ~stage:"global constants parsing" ~content:(`String "cannot parse global constants file")
+
 
   | `Unparsing_michelson_tracer _ ->
     json_error ~stage:"michelson execution" ~content:(`String "error unparsing michelson result")

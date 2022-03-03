@@ -43,9 +43,22 @@ let syntax =
 let on_chain_views : _ Command.Param.t =
   let open Command.Param in
   let doc  = "VIEWS A list of declaration name that will be compiled as on-chain views, separated by ','" in
-  let spec = optional_with_default Default_options.views 
+  let spec = optional_with_default Default_options.views
     @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
   flag ~doc ~aliases:["v"] "--views" spec
+
+let constants : _ Command.Param.t =
+  let open Command.Param in
+  let doc  = "CONSTANTS A list of global constants that will be assumed in the context, separated by ','" in
+  let spec = optional_with_default Default_options.constants
+    @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
+  flag ~doc ~aliases:["c"] "--constants" spec
+
+let file_constants : _ Command.Param.t =
+  let open Command.Param in
+  let doc  = "FILE_CONSTANTS A file with a JSON list of strings with Michelson code. Those Michelson values will be registered as global constants in the context." in
+  let spec = optional string in
+  flag ~doc "--file-constants" spec
 
 let steps =
   let open Command.Param in
@@ -232,8 +245,8 @@ let (<$>) f a = Command.Param.return f <*> a
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
-  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking michelson_format output_file show_warnings warning_as_error michelson_comments project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~show_warnings ~warning_as_error ~project_root () in
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~show_warnings ~warning_as_error ~constants ~file_constants ~project_root () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -242,7 +255,7 @@ let compile_file =
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> project_root )
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root )
 
 
 let compile_parameter =
