@@ -272,6 +272,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   (* Top-level errors *)
   | `Build_error_tracer e -> json_error ~stage:"build system" ~content:(BuildSystem.Errors.error_jsonformat e)
   | `Main_invalid_generator_name _ ->
+     (* TODO: wrap content into Assoc with "message" field *)
     json_error ~stage:"command line interpreter" ~content:(`String "bad generator name")
   | `Main_invalid_syntax_name _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad syntax name")

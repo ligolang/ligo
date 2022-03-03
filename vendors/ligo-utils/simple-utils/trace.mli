@@ -11,27 +11,50 @@ warning_with @@ fun add_warning get_warnings ->
 val warning_with : (('a -> unit) -> (unit -> 'a list) -> 'b) -> 'b
 
 
-(* The function [try_with] is a wrapper for errors.
+(* [try_with] is a wrapper for error that may works in two modes:
+   - [fast_fail = false] i.e. recovery mode that allows raise a fatal error by
+     [raise exn] or remember non-fatal errors by [log_error exn] that can be
+     retrieved by [get_errors ()];
+   - [fast_fail = true] in that [log_error] behaves like [raise].
 
-   The wrapper defines a raise function that raise a local exception to
-   be used in case of error.  Generally the wrapper will be use as follows:
+   The main goal is to defer decisions whether to raise or log an error and how to
+   handle the former case. It allows combine and reuse recoverable pipelines that
+   try to accumulate as most as can errors and non-recoverable pipelines.
 
+   Generally the wrapper will be use in fast fail mode as such :
      [let result = try_with f handler]
+   where f is a function that will use the raise function to throw error
+   and handler is called with the error parameter is the exception was raised
 
-   where [f] is a function that will use the raise function to throw
-   error and handler is called with the error parameter is the
-   exception was raised *)
+   In the non-"fast fail" mode it will used as such:
+   [let sum_option_int (v1 v2 : int option) : 'e list * int =
+      try_with' ~fast_fail:true
+        (fun ~raise ->
+             let v1 = validate_option ~raise ~err:InvalidArgument ~default:0 v1 in
+             let v2 = validate_option ~raise ~err:InvalidArgument ~default:0 v2 in
+             (raise.get_errors (), v1 + v2)
+        (fun ~raise err -> (err :: raise.get_errors (), 0)
+   ] *)
 
-type 't raise = { raise : 'a . 't -> 'a }
-val try_with : (raise:'t raise -> 'b) -> ('t -> 'b) -> 'b
-
+type 't raise = { raise : 'a . 't -> 'a;
+                 log_error : 't -> unit;
+                 get_errors : unit -> 't list;
+                 fast_fail : bool; }
+(* [try_with f handler] call [f] with [~raise] argument and in case of fatal
+   error [err] call [handler err]. *)
+val try_with  : ?fast_fail:bool -> (raise:'t raise -> 'b) -> ('t -> 'b) -> 'b
+(* Similar to [try_with] but allows use [~raise] in the handler *)
+val try_with' : ?fast_fail:bool -> (raise:'t raise -> 'b) -> (raise: 't raise -> 't -> 'b) -> 'b
 (*
-Wrap the try_with in a stdlib result = Ok 'value | Error 'error
+Wrap the [try_with] in a stdlib [result = Ok 'value | Error 'error]
  *)
 val to_stdlib_result : (raise:'error raise -> 'value) -> ('value, 'error) result
 
+(* Wrap [try_wait'] and return value and all logged errors with fatal one if it happens *)
+val extract_all_errors : (raise:'error raise -> 'value) -> 'error list * 'value option
+
 (*
-Act as a map for the propagated error
+Act as a map for the propagated error. Save [fast_fail] mode.
 *)
 val trace : raise:'b raise -> ('a -> 'b) -> (raise:'a raise -> 'c) -> 'c
 (* Similar but erase the previous error instead of casting it *)
@@ -39,6 +62,8 @@ val trace_strong : raise:'a raise -> 'a -> (raise:'b raise -> 'c) -> 'c
 
 (* Unwrap an option using our own error instead of exception *)
 val trace_option : raise:'a raise -> 'a -> 'b option -> 'b
+(* Check that option contains some value otherwise returns default and log error *)
+val validate_option : raise:'a raise -> err:'a -> default:'b -> 'b option -> 'b
 
 (* Raise error if the option is Some *)
 val trace_assert_fail_option : raise:'a raise -> 'a -> 'b option -> unit
@@ -61,6 +86,10 @@ val bind_exists : raise:'a raise -> ((raise:'a raise -> 'b) * (raise:'a raise ->
 val bind_map_or :
   ('a -> 'b) -> ('c -> raise:'d raise -> 'b) -> ('c -> raise:'a raise -> 'b) ->
   'c -> 'b
+
+(* Dummy raise instance for debug and workarounds.
+   Don't use it in production! *)
+val raise_failwith : string -> 't raise
 
 (*
 Assert module, raise exception if the assertion is false

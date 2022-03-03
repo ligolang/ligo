@@ -2,6 +2,7 @@ open Types
 open Misc
 
 module Formatter = Formatter
+module Api_helper = Api_helper
 
 type sub_module = { type_env : tenv  ; bindings : bindings_map }
 
