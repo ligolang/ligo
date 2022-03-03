@@ -330,6 +330,15 @@ let find_external_file ~file ~inclusion_list =
     in
     s2 >= s1 && aux 0
   in
+  (* dont do prefix
+  basename -> 
+  split by __
+  reverse
+  drop 2
+  reverse
+  join by __
+
+  *)
   let segs = Path.segs (Path.v file) in
   Option.bind segs (fun segs -> 
     match segs with
