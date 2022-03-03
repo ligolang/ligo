@@ -80,18 +80,54 @@ module Path = struct
   (* [normalize] gets rid of ".." & "." from Path.t *)
   let normalize : t -> t = Option.map Fpath.normalize
 
+  let join : string -> string -> string =
+    fun a b ->
+      let ends_with_dir_sep = Str.string_match (Str.regexp (Format.sprintf "%s$" Filename.dir_sep)) b 0 in
+      let starts_with_dir_sep = Str.string_match (Str.regexp (Format.sprintf "^%s" Filename.dir_sep)) a 0 in
+      match starts_with_dir_sep, ends_with_dir_sep with
+      | false, false -> a ^ Fpath.dir_sep ^ b
+      | false, true  
+      | true, false  -> a ^ b
+      | true, true   -> a ^ b (* TODO: fix this case ... *)
 end
 
 (* Module with constants related esy *)
 module Esy = struct 
-  (* TODO: Use a "path join" function instead of ^ to avoid having duplicate slashes *)
-  let ( / ) = fun a b -> a ^ Path.dir_sep ^ b
+  let ( / ) = Path.join
   
   let installation_json_path path = 
     path / "_esy" / "default" / "installation.json"
 
   let lock_file_path path =
     path / "esy.lock" / "index.json"
+
+  let path_separator = "__" 
+
+  (* TODO: docs
+    why??
+    
+  *)
+  let extract_pkg_name path =
+    let module List = Core.List in
+    Filename.basename path
+      |> Str.split (Str.regexp path_separator)
+      |> List.rev
+      |> fun xs -> List.drop xs 2
+      |> List.rev
+      |> String.concat path_separator
+
+  (*    
+    TODO: docs
+   Esy transforms the path of package names, '-' in the project name are transformed to '_' 
+   & '_' in the project name are transformed to '__'
+   ...
+ *)
+  let normalize_pkg_name pkg_name = pkg_name
+    |> String.split_on_char '_'
+    |> String.concat "__"
+    |> String.split_on_char '-' 
+    |> String.concat "_"
+     
 end
 
 
@@ -295,7 +331,7 @@ let get_inclusion_list ~file (module_resolutions : t option) =
       )
   | None -> []
 
-(* the function [find_external_file] specifically resolves files
+(* [find_external_file] specifically resolves files
    for ligo packages downloaded via esy.
 
    the [inclusion_list] contains a list of paths. 
@@ -310,54 +346,19 @@ let get_inclusion_list ~file (module_resolutions : t option) =
    e.g. "ligo-list-helpers/list.mligo" - 
     package name = ligo-list-helpers
     rest of path = list.mligo
-
-   Esy transforms the path of package names, '-' in the project name are
-   transformed to '_' & '_' in the project name are transformed to '__'
-   before searching for the path of package we transform it accordingly
-
-   We find the path with the longest prefix, once the package path is
-   identified, the file path is package path / rest of path
 *)
 let find_external_file ~file ~inclusion_list = 
-  let starts_with ~prefix s =
-    let s1 = String.length prefix in
-    let s2 = String.length s in
-    let rec aux i =
-      if i >= s1 || i >= s2 then true
-      (* This won't raise an exception as we have done the bounds check above *)
-      else if prefix.[i] = s.[i] then aux (i + 1)
-      else false
-    in
-    s2 >= s1 && aux 0
-  in
-  (* dont do prefix
-  basename -> 
-  split by __
-  reverse
-  drop 2
-  reverse
-  join by __
-
-  *)
   let segs = Path.segs (Path.v file) in
   Option.bind segs (fun segs -> 
     match segs with
       pkg_name::rest_of_path -> 
+        let normalized_pkg_name = Esy.normalize_pkg_name pkg_name in
+        let dir = List.find_opt (fun pkg_path ->
+          normalized_pkg_name = Esy.extract_pkg_name pkg_path) inclusion_list in
         let rest_of_path = String.concat Filename.dir_sep rest_of_path in
-        let normalized_pkg_name = pkg_name
-          |> String.split_on_char '_'
-          |> String.concat "__"
-          |> String.split_on_char '-' 
-          |> String.concat "_" in
-        let dir = List.find_opt (fun dir ->
-          let basename = Filename.basename dir in
-          let found = starts_with ~prefix:normalized_pkg_name basename in
-          if not found 
-          then starts_with ~prefix:pkg_name basename 
-          else found
-        ) inclusion_list in
         Option.map (fun dir -> 
-          let path = dir ^ Filename.dir_sep ^ rest_of_path in
+          (* TODO: use Path.join here ... *)
+          let path = dir ^ Fpath.dir_sep ^ rest_of_path in
           path
         ) dir
     | _ -> None
