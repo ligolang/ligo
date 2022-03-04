@@ -7,9 +7,6 @@ description: Hangzhou changes
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-> Important: This is only available for protocol Hangzhou (i.e. `--protocol hangzhou` command line option).
-
-> Note: this is a temporary documentation page and will be moved to another location.
 
 ## API
 
@@ -356,6 +353,10 @@ function main (const _ : unit ; const s : storage) : list (operation) * storage 
 
 </Syntax>
 
+> Note: `[@view]` attribute is only supported for top-level functions.
+>
+> The use of `[@view]` attribute anywhere other than top-level will be ignored.
+
 A few primitives have a slightly different meaning when executed as part of a view:
 
 - `Tezos.balance` represents the current amount of mutez held by the contract attached to the view
@@ -397,5 +398,5 @@ function view_call (const name : string; const parameter : int; const addr: addr
 
 ### Global constant
 
-The new primitive `Test.constant` allows you to use a predefined constant already registered on chain.
+The new primitive `Tezos.constant` allows you to use a predefined constant already registered on chain.
 It accepts a hash in the form of a string and will require a type annotation.
