@@ -21,9 +21,9 @@ let output_file output_directory file s =
 let vim_syntax_highlighting dir file textmate = 
   let vim_output = SyntaxHighlighting.VIM.to_vim textmate in
   output_file dir file vim_output;
-  `Ok "Success"
+  `Ok (Printf.printf "Success\n")
 
-let vscode_syntax_highlighting: string -> string -> string -> string -> SyntaxHighlighting.Core.t -> string Term.ret = fun dir syntax_file language_file syntax textmate ->
+let vscode_syntax_highlighting: string -> string -> string -> string -> SyntaxHighlighting.Core.t -> unit Term.ret = fun dir syntax_file language_file syntax textmate ->
   let jsons = SyntaxHighlighting.Textmate.to_jsons syntax textmate in
   match jsons with 
     Ok (syntax_highlighting_json, language_conf_json) -> 
@@ -31,7 +31,7 @@ let vscode_syntax_highlighting: string -> string -> string -> string -> SyntaxHi
       output_file dir syntax_file s;
       let s = Yojson.Safe.pretty_to_string language_conf_json in
       output_file dir language_file s;
-      `Ok "Success" 
+      `Ok (Printf.printf "Success\n") 
   | Error SyntaxHighlighting.Core.Referenced_rule_does_not_exist s -> `Error (false, Format.sprintf "Referenced rule '%s' does not exist." s)
   | Error Meta_name_some_but_empty s -> `Error (false, Format.sprintf  "%s.name has no value, but is expected to." s)
   | Error Begin_cant_be_empty s -> `Error (false, Format.sprintf  "%s.begin_ can't be empty." s)
@@ -51,15 +51,15 @@ let emacs_syntax_highlighting dir syntaxes =
   ) syntaxes;
   let emacs_output = Buffer.contents buffer in
   output_file dir "ligo-mode.el" emacs_output;
-  `Ok "Success"
+  `Ok (Printf.printf "Success\n")
 
-let ( let* ) o f : string Term.ret  =
+let ( let* ) o f : unit Term.ret  =
   match o with
   | `Error _ as e -> e
   | `Help _ as h -> h
   | `Ok x -> f x
 
-let output: string -> string -> string -> _ Term.ret = fun vscode_directory vim_directory emacs_directory ->
+let output: string -> string -> string -> unit Term.ret = fun vscode_directory vim_directory emacs_directory ->
   if not (Sys.is_directory vscode_directory) then 
     `Error (false, "Not a valid directory to output VSCode files")
   else if not (Sys.is_directory vim_directory) then
@@ -77,12 +77,14 @@ let output: string -> string -> string -> _ Term.ret = fun vscode_directory vim_
                                                         ("mligo", CameLIGO.syntax_highlighting);
                                                         ("religo", ReasonLIGO.syntax_highlighting)]
     in
-    `Ok "Successfully generated syntaxes"  
+    `Ok (print_endline "Successfully generated syntaxes")
   )
 
-let generate_syntax_highlighting =
+let generate_syntax_highlighting : unit Cmd.t =
   let doc = "generate syntax highlighting" in
-  let exits = Term.default_exits in
-  Term.(ret (const output $ vscode_directory $ vim_directory $ emacs_directory)), Term.info "LigoSyntaxHighlighting" ~exits ~doc
+  let exits = Cmd.Exit.defaults in
+  let info = Cmd.info "LigoSyntaxHighlighting" ~exits ~doc in
+  let terms = Term.(ret (const output $ vscode_directory $ vim_directory $ emacs_directory)) in 
+  Cmd.v info terms
 
-let () = Term.(exit @@ eval generate_syntax_highlighting)
+let () = Stdlib.exit @@ Cmd.eval generate_syntax_highlighting
