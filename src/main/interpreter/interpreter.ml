@@ -170,7 +170,6 @@ let rec apply_comparison :
 let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
-  let protocol_version = options.middle_end.protocol_version in
   let eval_ligo = eval_ligo ~raise ~steps ~options in
   let locs = List.map ~f:(fun (_, _, c) -> c) operands in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
@@ -708,22 +707,15 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       Test operators
     >>>>>>>>
     *)
-    | ( C_TEST_ORIGINATE_FROM_FILE, args) -> (
-      match protocol_version, args with
-      (* | Environment.Protocols.Edo , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ->
-        let>> (code,size) = Compile_contract_from_file (source_file,entryp,[]) in
-        let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
-        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ]) *)
-      | Environment.Protocols.Hangzhou , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ] ->
-        let views = List.map
-          ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
-          views
-        in
-        let>> (code,size) = Compile_contract_from_file (source_file,entryp,views) in
-        let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
-        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
-      | _ -> fail @@ Errors.generic_error loc "Unbound primitive. Check the protocol version you are using"
-    )
+    | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ]) ->
+      let views = List.map
+                    ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
+                    views
+      in
+      let>> (code,size) = Compile_contract_from_file (source_file,entryp,views) in
+      let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
+      return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
+    | ( C_TEST_ORIGINATE_FROM_FILE , _  ) -> fail @@ error_type
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
       let contract = { address; entrypoint = None } in
       let>> res = External_call (loc,calltrace,contract,param,amt) in
