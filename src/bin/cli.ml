@@ -674,7 +674,7 @@ let repl =
   let summary   = "interactive ligo interpreter" in
   let _readme () = "" in
   Command.basic ~summary
-  (f <$> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
+  (f <$> req_syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
 
 let install =
   let summary   = "install ligo packages declared in package.json" in
