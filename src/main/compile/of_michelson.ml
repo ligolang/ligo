@@ -3,13 +3,6 @@ open Tezos_utils
 open Proto_alpha_utils
 open Trace
 
-let node_to_canonical ~raise m =
-    let open Tezos_micheline.Micheline in
-    let x = inject_locations (fun _ -> 0) (strip_locations m) in
-    let x = strip_locations x in
-    Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer @@
-      Memory_proto_alpha.Protocol.Michelson_v1_primitives.prims_of_strings x
-
 let parse_constant ~raise code =
   let open Tezos_micheline in
   let open Tezos_micheline.Micheline in
@@ -22,7 +15,8 @@ let parse_constant ~raise code =
                  | _ :: _ -> raise.raise (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
                  | [] -> map_node (fun _ -> ()) (fun x -> x) code
              ) in
-  (node_to_canonical ~raise code)
+  Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer @@
+    Memory_proto_alpha.node_to_canonical code
 
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise :

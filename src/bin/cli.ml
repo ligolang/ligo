@@ -301,11 +301,27 @@ let compile_storage =
   Command.basic ~summary ~readme
   (f <$> source_file <*> expression "STORAGE" <*> entry_point <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> project_root )
 
+let compile_constant =
+  let f syntax expression protocol_version init_file display_format without_run show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings @@
+    Api.Compile.constant raw_options expression init_file display_format
+    in
+  let summary   = "compile constant to a Michelson value and its hash." in
+  let readme () = "This sub-command compiles a LIGO expression to a \
+                   Michelson value and its hash as a global constant. \
+                   It works by compiling the LIGO \
+                   expression to a Michelson expression and then \
+                   interpreting it using Michelson's interpreter." in
+  Command.basic ~summary ~readme
+  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> warn <*> werror <*> project_root )
+
 let compile_group = Command.group ~summary:"compile a ligo program to michelson" @@
   [ "contract",   compile_file;
     "expression", compile_expression;
     "parameter",  compile_parameter;
-    "storage",    compile_storage;]
+    "storage",    compile_storage;
+    "constant",   compile_constant;]
 
 (** Transpile commands *)
 let transpile_contract =
