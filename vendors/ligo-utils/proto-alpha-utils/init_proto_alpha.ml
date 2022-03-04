@@ -176,7 +176,7 @@ module Context_init = struct
 
   let main n =
     init n >>=? fun ((ctxt, header, hash), accounts, contracts) ->
-    let timestamp = Environment.Time.of_seconds @@ 1645576185L
+    let timestamp = Environment.Time.of_seconds @@ 1645576185L in
     begin_construction ~timestamp ~header ~hash ctxt >>=? fun ctxt ->
     return (ctxt, accounts, contracts)
 
