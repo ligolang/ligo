@@ -12,7 +12,7 @@ let%expect_test _ =
   (src/command.ml.Exit_called (status 1))
   Raised at Core_kernel__Command.exit in file "src/command.ml", line 23, characters 34-64
   Called from Core_kernel__Command.Exn.handle_uncaught_and_exit in file "src/command.ml", line 32, characters 12-16
-  Called from Cli.run in file "src/bin/cli.ml", line 700, characters 2-49
+  Called from Cli.run in file "src/bin/cli.ml", line 716, characters 2-49
   Called from Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 25, characters 18-31
   Called from Cli_expect_tests__Help_tests.(fun) in file "src/bin/expect_tests/help_tests.ml", line 5, characters 2-18
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
@@ -237,6 +237,39 @@ let%expect_test _ =
                                    (alias: --protocol)
       [-help]                      print this help text and exit
                                    (alias: -?)
+
+    (src/command.ml.Exit_called (status 0)) |} ]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "constant" ; "-help" ] ;
+  [%expect {|
+    compile constant to a Michelson value and its hash.
+
+      ligo compile constant SYNTAX _EXPRESSION
+
+    This sub-command compiles a LIGO expression to a Michelson value and its hash as a global constant. It works by compiling the LIGO expression to a Michelson expression and then interpreting it using Michelson's interpreter.
+
+    === flags ===
+
+      [--display-format format]  the format that will be used by the CLI. Available
+                                 formats are 'dev', 'json', and 'human-readable'
+                                 (default). When human-readable lacks details (we
+                                 are still tweaking it), please contact us and use
+                                 another format in the meanwhile.
+                                 (alias: --format)
+      [--init-file FILENAME]     the path to the smart contract file to be used for
+                                 context initialization.
+      [--no-warn]                disable warning messages
+      [--project-root PATH]      The path to root of the project.
+      [--werror]                 treat warnings as errors
+      [--without-run]            disable running of compiled expression.
+      [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
+                                 LIGO environment (edo ,
+                                 hangzhou). By default, the current protocol (edo)
+                                 will be used
+                                 (alias: --protocol)
+      [-help]                    print this help text and exit
+                                 (alias: -?)
 
     (src/command.ml.Exit_called (status 0)) |} ]
 
