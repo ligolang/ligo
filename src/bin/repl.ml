@@ -230,9 +230,9 @@ let main (raw_options : Compiler_options.raw) display_format now amount balance 
   let syntax = Syntax.of_string_opt (Syntax_name raw_options.syntax) None in
   let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
   match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
-  | _, None, _ -> Error ("", "Please check syntax name.")
-  | None, _, _ -> Error ("", "Please check protocol name.")
-  | _, _, None -> Error ("", "Please check run options.")
+  | _, None, _ -> Error ("Please check syntax name.", "")
+  | None, _, _ -> Error ("Please check protocol name.", "")
+  | _, _, None -> Error ("Please check run options.", "")
   | Some protocol, Some syntax, Some dry_run_opts ->
     begin
       print_endline welcome_msg;
