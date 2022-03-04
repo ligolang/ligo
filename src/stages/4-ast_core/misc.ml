@@ -80,11 +80,6 @@ let rec assert_list_eq f = fun a b -> match (a,b) with
     assert_list_eq f tla tlb
   )
 
-let layout_eq a b = match (a,b) with
-  | L_comb, L_comb
-  | L_tree, L_tree -> true
-  | _ -> false
-
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Simple_utils.Option in
   match (a.type_content, b.type_content) with
