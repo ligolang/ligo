@@ -165,7 +165,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Depurification_tracer _e -> () (*no error in this pass*)
     | `Desugaring_tracer _e -> () (*no error in this pass*)
     | `Sugaring_tracer _e -> () (*no error in this pass*)
-    | `Inference_tracer e -> Inference.Errors.error_ppformat ~display_format f e
     | `Checking_tracer e -> Checking.Errors.error_ppformat ~display_format f e
     | `Self_ast_typed_tracer e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
     | `Aggregation_tracer e -> Aggregation.Errors.error_ppformat ~display_format f e
@@ -238,7 +237,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_aggregated e -> Aggregation.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
-    | `Main_decompile_inferred e -> Inference.Errors.error_ppformat ~display_format f  e
 
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
   )
@@ -394,7 +392,6 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Depurification_tracer _ -> `Null (*no error in this pass*)
   | `Desugaring_tracer _ -> `Null (*no error in this pass*)
   | `Sugaring_tracer _ -> `Null (*no error in this pass*)
-  | `Inference_tracer e -> Inference.Errors.error_jsonformat e
   | `Checking_tracer e -> Checking.Errors.error_jsonformat e
   | `Self_ast_typed_tracer e -> Self_ast_typed.Errors.error_jsonformat e
   | `Aggregation_tracer e -> Aggregation.Errors.error_jsonformat e
@@ -419,7 +416,6 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
   | `Main_decompile_aggregated e -> Aggregation.Errors.error_jsonformat e
   | `Main_decompile_typed e -> Checking.Errors.error_jsonformat e
-  | `Main_decompile_inferred e -> Inference.Errors.error_jsonformat e
 
   | `Repl_unexpected ->
      let message = `String "unexpected error" in

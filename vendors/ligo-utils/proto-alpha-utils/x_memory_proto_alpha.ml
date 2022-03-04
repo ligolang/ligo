@@ -114,6 +114,12 @@ let strings_of_prims michelson =
   let michelson = Michelson_v1_primitives.strings_of_prims michelson in
   Tezos_micheline.Micheline.root michelson
 
+let node_to_canonical m =
+    let open Tezos_micheline.Micheline in
+    let x = inject_locations (fun _ -> 0) (strip_locations m) in
+    let x = strip_locations x in
+    Michelson_v1_primitives.prims_of_strings x
+
 let unparse_michelson_data
     ?(tezos_context = (dummy_environment ()).tezos_context)
     ty value =

@@ -2,7 +2,7 @@
 
 (executables
  (names test doc_test repl_test parser_negative_tests vendors_test
-   inference_test contract_test mydebugplease)
+   contract_test mydebugplease)
  (libraries simple-utils tezos-memory-proto-alpha ligo repl interpreter
    alcotest tezos-utils tezos-crypto))
 
@@ -43,11 +43,6 @@
   (source_tree projects)))
 
 (rule
- (alias inference_test)
- (action
-  (run ./inference_test.exe)))
-
-(rule
  (alias contract_test)
  (action
   (setenv
@@ -69,7 +64,6 @@
   (alias doc-test)
   (alias parser-negative-tests)
   (alias repl-test)
-  (alias inference_test)
   (alias contract_test)
   (alias error-recovery/recovery-test)))
 

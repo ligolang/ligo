@@ -243,6 +243,26 @@ let evaluate_expression ~raise ?options exp exp_type =
     | Success (_, value) -> value
     | Fail res -> raise.raise @@ Errors.main_execution_failed res
 
+let evaluate_constant ~raise ?options exp exp_type =
+  let etv = run_expression ~raise ?options exp exp_type in
+  match etv with
+    | Success (_, value) ->
+       let value_ = Trace.trace_alpha_tzresult ~raise (Errors.unparsing_michelson_tracer) @@
+                     Memory_proto_alpha.node_to_canonical value in
+       let (_, hash, _) = Trace.trace_alpha_tzresult_lwt ~raise (fun _ -> Errors.main_unknown) @@
+                            Memory_proto_alpha.(register_constant (dummy_environment ()).tezos_context value_) in
+       (hash, value)
+    | Fail res -> raise.raise @@ Errors.main_execution_failed res
+
 let clean_expression exp =
   let open Tezos_micheline.Micheline in
   inject_locations (fun v -> v) (strip_locations exp)
+
+let clean_constant ~raise exp =
+  let open Tezos_micheline.Micheline in
+  let value = inject_locations (fun v -> v) (strip_locations exp)in
+  let value_ = Trace.trace_alpha_tzresult ~raise (Errors.unparsing_michelson_tracer) @@
+                Memory_proto_alpha.node_to_canonical value in
+  let (_, hash, _) = Trace.trace_alpha_tzresult_lwt ~raise (fun _ -> Errors.main_unknown) @@
+                       Memory_proto_alpha.(register_constant (dummy_environment ()).tezos_context value_) in
+  (hash, value)

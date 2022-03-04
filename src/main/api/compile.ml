@@ -53,6 +53,25 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
       else
         Run.evaluate_expression ~raise compiled_exp.expr compiled_exp.expr_ty
 
+let constant (raw_options : Compiler_options.raw) constants init_file display_format () =
+    let warning_as_error = raw_options.warning_as_error in
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_constant_format []) get_warnings @@
+      fun ~raise ->
+      let options =
+        let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+        Compiler_options.make ~protocol_version ~raw_options ()
+      in
+      let Compiler_options.{ syntax ; _ } = options.frontend in
+      let Compiler_options.{ without_run ; _ } = options.backend in
+      let (mini_c_exp,_) = Build.build_expression ~raise ~add_warning ~options syntax constants init_file in
+      let compiled_exp   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
+      let (hash, value) = if without_run then
+                            Run.clean_constant ~raise compiled_exp.expr
+                          else
+                            Run.evaluate_constant ~raise compiled_exp.expr compiled_exp.expr_ty in
+      (hash, no_comment @@ value)
+
 let parameter (raw_options : Compiler_options.raw) source_file entry_point expression amount balance sender source now display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
     Trace.warning_with @@ fun add_warning get_warnings ->

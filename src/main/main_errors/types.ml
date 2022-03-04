@@ -41,7 +41,6 @@ type all =
  | `Depurification_tracer of Purification.Errors.purification_error
  | `Desugaring_tracer of Desugaring.Errors.desugaring_error
  | `Sugaring_tracer   of Desugaring.Errors.desugaring_error
- | `Inference_tracer of Inference.Errors.typer_error
  | `Checking_tracer of Checking.Errors.typer_error
  | `Self_ast_typed_tracer of Self_ast_typed.Errors.self_ast_typed_error
  | `Spilling_tracer of Spilling.Errors.spilling_error
@@ -66,7 +65,6 @@ type all =
  | `Main_decompile_mini_c of Spilling.Errors.spilling_error
  | `Main_decompile_aggregated of Aggregation.Errors.aggregation_error
  | `Main_decompile_typed of Checking.Errors.typer_error
- | `Main_decompile_inferred of Inference.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
  | `Main_view_not_a_function of Ast_typed.type_variable

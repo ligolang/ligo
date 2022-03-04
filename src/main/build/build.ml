@@ -48,8 +48,7 @@ module M (Params : Params) =
       fun env file_name meta c_unit ->
       let options = Compiler_options.set_init_env options env in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-      let inferred = Ligo_compile.Of_core.infer ~raise ~options:options.middle_end ast_core in
-      let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env inferred in
+      let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core in
       ast_typed
 
   end

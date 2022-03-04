@@ -152,6 +152,8 @@ let rec use_lambda_instr : _ michelson -> _ michelson =
   match x with
   | Seq (l, args) ->
     Seq (l, List.map ~f:use_lambda_instr args)
+  | Prim (_, "PUSH", [Prim (_, "lambda", [_; _], _); (Prim (_, "constant", _, _))], _) ->
+    x
   | Prim (l, "PUSH", [Prim (_, "lambda", [arg; ret], _); code], _) ->
     Prim (l, "LAMBDA", [arg; ret; code], [])
   | Prim (_, "PUSH", _, _) ->
@@ -360,6 +362,7 @@ let opt_beta3 : _ peep3 = function
     Prim (_, "EXEC", _, _) ->
       (match flatten_seqs code with
        | Seq (_, code) -> Some code
+       | Prim (_, "constant", _, _) -> Some [code]
        | _ -> None)
   | _ -> None
 
