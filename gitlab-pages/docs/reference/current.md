@@ -1302,3 +1302,110 @@ let main = (x: [parameter, storage]): return_ => {
 ```
 
 </Syntax>
+
+## Chest
+
+<SyntaxTitle syntax="pascaligo">
+type chest
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type chest
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type chest
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type chest
+</SyntaxTitle>
+A type for chests
+
+<SyntaxTitle syntax="pascaligo">
+type chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type chest_key
+</SyntaxTitle>
+A type for chest keys
+
+<SyntaxTitle syntax="pascaligo">
+type chest_opening_result is
+    Ok_opening of bytes
+  | Fail_decrypt
+  | Fail_timelock
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type chest_opening_result =
+    Ok_opening of bytes
+  | Fail_decrypt
+  | Fail_timelock
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type chest_opening_result =
+    Ok_opening(bytes)
+  | Fail_decrypt
+  | Fail_timelock
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type chest_opening_result =
+   ["Ok_opening", bytes]
+ | ["Fail_decrypt"]
+ | ["Fail_timelock"];
+</SyntaxTitle>
+
+A type for the result of chest opening, see `Tezos.open_chest`
+
+
+<SyntaxTitle syntax="pascaligo">
+val open_chest : chest_key -> chest -> nat -> chest_opening_result
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val open_chest : chest_key -> chest -> nat -> chest_opening_result
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let open_chest : chest_key => chest => nat => chest_opening_result
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let open_chest : chest_key => chest => nat => chest_opening_result
+</SyntaxTitle>
+
+## On Chain Views
+
+<SyntaxTitle syntax="pascaligo">
+val call_view&lt;arg,reg&gt; : string -> arg -> address -> option (ret)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val call_view : string -> 'arg -> address -> 'ret option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let call_view : string => 'arg => address => option ('ret)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let call_view : string => 'arg => address => option &lt;&apos;ret&gt;
+</SyntaxTitle>
+
+The primitive `Tezos.call_view` will allow you to call another contract view and get its result by providing the view name; the contract address and the parameter of the view. If the address is nonexistent; the name does not match of of the contract
+view or the parameter type do not match, `Tezos.call_view` will return `None`.
+
+## Global Constants
+
+<SyntaxTitle syntax="pascaligo">
+function constant: string -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val constant : string -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let constant : string => 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let constant : string => 'a
+</SyntaxTitle>
+
+The new primitive `Tezos.constant` allows you to use a predefined constant already registered on chain.
+It accepts a hash in the form of a string and will require a type annotation.

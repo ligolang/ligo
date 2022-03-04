@@ -186,20 +186,6 @@ let originate = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;
 Originate a contract with an entrypoint function, initial storage and initial balance.
 
 <SyntaxTitle syntax="pascaligo">
-val set_now : timestamp -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val set_now : timestamp -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let set_now: timestamp => unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let set_now = (now: timestamp) => unit
-</SyntaxTitle>
-Set the timestamp of the predecessor block.
-
-<SyntaxTitle syntax="pascaligo">
 val set_source : address -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -781,3 +767,36 @@ corresponding to big map identifiers. This function allows to override
 the value of a particular big map identifier. It should not be
 normally needed, except in particular circumstances such as using
 custom bootstrap contracts that initialize big maps.
+
+
+<SyntaxTitle syntax="pascaligo">
+val create_chest : bytes -> nat -> chest * chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_chest : bytes -> nat -> chest * chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_chest : bytes => nat => (chest , chest_key)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_chest : bytes => nat => [chest , chest_key]
+</SyntaxTitle>
+
+Generate a locked value, the RSA parameters and encrypt the payload. Also returns the chest key
+Exposes tezos timelock library function [create_chest_and_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L197)
+
+<SyntaxTitle syntax="pascaligo">
+val create_chest_key : chest -> nat -> chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_chest_key : chest -> nat -> chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_chest_key : chest => nat => chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_chest_key : chest => nat => chest_key
+</SyntaxTitle>
+
+Unlock the value and create the time-lock proof.
+Exposes tezos timelock library function [create_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L201).

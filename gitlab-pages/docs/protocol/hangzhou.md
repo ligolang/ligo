@@ -64,6 +64,7 @@ type chest_opening_result =
  | ["Fail_decrypt"]
  | ["Fail_timelock"];
 </SyntaxTitle>
+
 A type for the result of chest opening, see `Tezos.open_chest`
 
 ### New primitives
