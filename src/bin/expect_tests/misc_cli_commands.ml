@@ -65,3 +65,12 @@ let%expect_test _ =
   [%expect {|
     Invalid protocol version 'do_not_exist'. Available versions: hangzhou ,
     ithaca |}] ;
+
+  run_ligo_bad [ "repl" ; "camelig0" ] ;
+  [%expect {| Please check syntax name. |}] ;
+
+  run_ligo_bad [ "repl" ; "cameligo" ; "--protocol" ; "h" ] ;
+  [%expect {| Please check protocol name. |}] ;
+
+  run_ligo_bad [ "repl" ; "cameligo" ; "--sender" ; "foo" ] ;
+  [%expect {| Please check run options. |}] ;

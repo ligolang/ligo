@@ -2285,7 +2285,19 @@ let%expect_test _ =
     { parameter unit ;
       storage int ;
       code { CDR ;
-             LAMBDA int int (constant "myhash") ;
+             LAMBDA int int (constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2") ;
+             SWAP ;
+             EXEC ;
+             NIL operation ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage int ;
+      code { CDR ;
+             LAMBDA int int (constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2") ;
              SWAP ;
              EXEC ;
              NIL operation ;

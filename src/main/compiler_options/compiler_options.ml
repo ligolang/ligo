@@ -43,6 +43,8 @@ type backend = {
   disable_michelson_typechecking : bool ;
   without_run : bool ;
   views : string list ;
+  constants : string list ;
+  file_constants : string option ;
 }
 
 type t = {
@@ -92,6 +94,8 @@ let make :
         disable_michelson_typechecking = raw_options.disable_michelson_typechecking;
         without_run = raw_options.without_run;
         views = raw_options.views ;
+        constants = raw_options.constants ;
+        file_constants = raw_options.file_constants ;
       } 
       in
       { 

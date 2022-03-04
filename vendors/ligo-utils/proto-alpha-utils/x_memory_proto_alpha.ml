@@ -271,13 +271,16 @@ type typecheck_res =
   | Err_gas
   | Err_unknown
 
-let typecheck_contract contract =
+let typecheck_contract ?(environment = dummy_environment ()) contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
   let legacy = false in
-  Script_ir_translator.typecheck_code ~show_types:true ~legacy (dummy_environment ()).tezos_context contract' >>= fun x ->
+  Script_ir_translator.typecheck_code ~show_types:true ~legacy environment.tezos_context contract' >>= fun x ->
   match x with
   | Ok _ -> return @@ contract
   | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
+
+let register_constant tezos_context constant =
+  Alpha_context.Global_constants_storage.register tezos_context constant
 
 type 'a interpret_res =
   | Succeed of 'a
