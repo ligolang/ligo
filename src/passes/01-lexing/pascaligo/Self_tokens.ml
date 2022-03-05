@@ -6,6 +6,7 @@
 module Core   = LexerLib.Core
 module Region = Simple_utils.Region
 module Utils  = Simple_utils.Utils
+module Location  = Simple_utils.Location
 
 (* Signature *)
 
@@ -33,27 +34,31 @@ type message = string Region.reg
 type token = Token.t
 type lex_unit = token Core.lex_unit
 
+let add_warning: (Main_warnings.all -> unit) option ref  = ref None
+
 let old_syntax_support tokens =
   let open! Token in
 
   let rec insert_lbracket indent result = function
-    (Of _ as o) :: rest when indent = 0 -> 
-      List.rev_append (o :: ghost_LBRACKET :: result) rest
+    (Of of_ as o) :: rest when indent = 0 -> 
+      List.rev_append (o :: ghost_LBRACKET :: result) rest, of_#region
   | (End _  as hd) :: rest -> 
       insert_lbracket (indent + 1) (hd :: result) rest
   | (Begin _ as hd) :: rest ->
       insert_lbracket (indent - 1) (hd :: result) rest
   | hd :: tl -> insert_lbracket indent (hd :: result) tl
-  | [] -> List.rev result
+  | [] -> List.rev result, Region.ghost
   in
 
   let rec inner indent result = function
     (End _ as end_) :: rest when indent > 0 -> 
       inner (indent - 1) (end_ :: result) rest
-  | End _ :: rest -> 
-      let result = insert_lbracket 0 [] result in
-      (* Yes, this is ugly - however the other option would be way more invasive, while we don't want to keep this code. *)
-      print_endline "Warning: deprecated case syntax. Cases are now expected to be wrapped inside brackets, without a closing `end` keyword. ";
+  | End e :: rest ->
+      let result, start = insert_lbracket 0 [] result in
+      let loc = Location.lift (Region.cover start e#region) in
+      (match !add_warning with 
+        Some add_warning -> add_warning (Main_warnings.pascaligo_deprecated_case loc)
+      | None -> ());
       List.rev_append (ghost_RBRACKET :: result) rest
   | (Begin _ as b) :: rest ->
       inner (indent + 1) (b :: result) rest

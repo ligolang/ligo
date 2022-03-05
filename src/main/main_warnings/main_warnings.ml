@@ -7,9 +7,12 @@ type all =
   | `Self_ast_typed_warning_muchused of Location.t * string
   | `Self_ast_imperative_warning_layout of (Location.t * Ast_imperative.label)
   | `Main_view_ignored of Location.t
+  | `Pascaligo_deprecated_case of Location.t
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
+
+let pascaligo_deprecated_case loc = `Pascaligo_deprecated_case loc
 
 let pp : display_format:string display_format ->
   Format.formatter -> all -> unit =
@@ -19,6 +22,9 @@ let pp : display_format:string display_format ->
     match a with
     | `Main_view_ignored loc ->
       Format.fprintf f "@[<hv>%a@.This view will be ignored, command line option override [@ view] annotation@.@]"
+      Snippet.pp loc
+    | `Pascaligo_deprecated_case loc ->
+      Format.fprintf f "@[<hv>%a@.Deprecated syntax behind `of`. An opening bracket `[` is expected behind `of` and `end` is expected to be replaced with a closing bracket `]`.@.@]"
       Snippet.pp loc
     | `Self_ast_typed_warning_unused (loc, s) ->
         Format.fprintf f
@@ -44,6 +50,15 @@ let to_json : all -> Yojson.Safe.t = fun a ->
   | `Main_view_ignored loc ->
     let message = `String "command line option overwrites annotated views" in
     let stage   = "Main" in
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage ~content
+  | `Pascaligo_deprecated_case loc ->
+    let message = `String "deprecated case syntax" in
+    let stage   = "lexer" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
                       ("message", message);
