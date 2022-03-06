@@ -90,7 +90,7 @@ let list_declarations (m : Ast_typed.module_) : expression_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
-      match (el.wrap_content : Ast_typed.declaration) with
+      match el.wrap_content with
       | Declaration_constant {binder;_} -> binder::prev
       | _ -> prev)
     ~init:[] m
@@ -99,7 +99,7 @@ let list_type_declarations (m : Ast_typed.module_) : type_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
-      match (el.wrap_content : Ast_typed.declaration) with
+      match el.wrap_content with
       | Declaration_type {type_binder;_} -> type_binder::prev
       | _ -> prev)
     ~init:[] m
@@ -108,8 +108,7 @@ let list_mod_declarations (m : Ast_typed.module_) : module_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
-      match (el.wrap_content : Ast_typed.declaration) with
+      match el.wrap_content with
       | Declaration_module {module_binder;_} -> module_binder::prev
-      | Module_alias {alias;_} -> alias::prev
       | _ -> prev)
     ~init:[] m

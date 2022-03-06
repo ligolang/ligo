@@ -21,8 +21,7 @@ let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : A
   let meta          = Of_source.extract_meta ~raise stx f in
   let c_unit,_      = Of_source.compile ~raise ~options:options.frontend ~meta f in
   let core          = to_core ~raise ~add_warning ~options ~meta c_unit f in
-  let inferred      = Of_core.infer ~raise ~options:options.middle_end core in
-  let typed         = Of_core.typecheck ~raise ~add_warning ~options form inferred in
+  let typed         = Of_core.typecheck ~raise ~add_warning ~options form core in
   typed
 
 let to_mini_c ~raise ~add_warning ~options f stx env =
@@ -47,16 +46,13 @@ let type_expression_string ~raise ~options syntax expression init_prog =
   let typed_exp         = Of_core.compile_expression ~raise ~options ~init_prog core_exp in
   typed_exp
 
-let type_contract_string ~raise ~add_warning ~options syntax expression env =
+let type_contract_string ~raise ~add_warning ~options syntax expression =
   let meta          = Of_source.make_meta_from_syntax syntax in
   let c_unit, _     = Of_source.compile_string_without_preproc expression in
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
   let core          = Of_sugar.compile sugar in
-  let middle_end_opt = options.Compiler_options.middle_end in
-  let middle_end_opt = { middle_end_opt with init_env = env } in
-  let inferred      = Of_core.infer ~raise ~options:middle_end_opt core in
-  let typed         = Of_core.typecheck ~raise ~add_warning ~options Env inferred in
+  let typed         = Of_core.typecheck ~raise ~add_warning ~options Env core in
   typed,core
 
 let type_expression ~raise ~options source_file syntax expression init_prog =
