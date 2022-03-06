@@ -64,6 +64,12 @@ let old_syntax_support tokens =
       inner (indent + 1) (b :: result) rest
   | (Case _ as c) :: rest ->
       inner indent (c :: result) rest
+  | (SEMI s) :: (Else _ as e ) :: rest ->
+      let loc = Location.lift s#region in
+      (match !add_warning with 
+        Some add_warning -> add_warning (Main_warnings.pascaligo_deprecated_semi_before_else loc)
+      | None -> ());
+      inner indent (e :: result) rest
   | hd :: tl -> inner indent (hd :: result) tl
   | [] -> List.rev result
   in
