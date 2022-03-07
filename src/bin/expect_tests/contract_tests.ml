@@ -2279,17 +2279,47 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_complex.mligo" ; "Add 999" ] ;
   [%expect{| (Left (Left 999)) |}]
 
+(* Global constants *)
+
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--disable-michelson-typechecking" ] ;
   [%expect {|
     { parameter unit ;
       storage int ;
       code { CDR ;
-             LAMBDA int int (constant "myhash") ;
-             SWAP ;
-             EXEC ;
+             constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2" ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage int ;
+      code { CDR ;
+             constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2" ;
+             NIL operation ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "constant" ; "cameligo" ; "fun (x : int) -> if x > 3 then x * 2 else x * String.length \"fja\" + 1" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    Michelson consant as JSON string:
+    "{ PUSH int 3 ;\n  SWAP ;\n  DUP ;\n  DUG 2 ;\n  COMPARE ;\n  GT ;\n  IF { PUSH int 2 ; SWAP ; MUL }\n     { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }"
+    This string can be passed in `--constants` argument when compiling a contract.
+
+    Remember to register it in the network, e.g.:
+    > tezos-client register global constant "{ PUSH int 3 ;
+      SWAP ;
+      DUP ;
+      DUG 2 ;
+      COMPARE ;
+      GT ;
+      IF { PUSH int 2 ; SWAP ; MUL }
+         { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }" from bootstrap1
+
+    Constant hash:
+    expruVivewmRtHKQn7h986tVPUzB65Z8w7QM1WP1X6DxcVWNs85USK |}]
 
 (* Test pairing_check and bls12_381_g1/g2/fr literals *)
 let%expect_test _ =

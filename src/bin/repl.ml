@@ -105,7 +105,7 @@ let try_declaration ~raise ~raw_options state s =
   try
     try_with (fun ~raise ->
       let typed_prg,core_prg =
-        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s state.env in
+        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s in
       let env = Environment.append typed_prg state.env in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))
@@ -230,9 +230,9 @@ let main (raw_options : Compiler_options.raw) display_format now amount balance 
   let syntax = Syntax.of_string_opt (Syntax_name raw_options.syntax) None in
   let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
   match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
-  | _, None, _ -> Error ("", "Please check syntax name.")
-  | None, _, _ -> Error ("", "Please check protocol name.")
-  | _, _, None -> Error ("", "Please check run options.")
+  | _, None, _ -> Error ("Please check syntax name.", "")
+  | None, _, _ -> Error ("Please check protocol name.", "")
+  | _, _, None -> Error ("Please check run options.", "")
   | Some protocol, Some syntax, Some dry_run_opts ->
     begin
       print_endline welcome_msg;

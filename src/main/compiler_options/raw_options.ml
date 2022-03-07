@@ -23,6 +23,8 @@ type raw = {
   disable_michelson_typechecking : bool ;
   without_run : bool ;
   views : string list ;
+  constants : string list ;
+  file_constants : string option ;
 }
 
 module Default_options = struct 
@@ -51,6 +53,8 @@ module Default_options = struct
   let disable_michelson_typechecking = false
   let without_run = false
   let views = []
+  let constants = []
+  let file_constants = None
 end
 
 let make 
@@ -69,6 +73,8 @@ let make
   ?(disable_michelson_typechecking = Default_options.disable_michelson_typechecking)
   ?(without_run = Default_options.without_run)
   ?(views = Default_options.views)
+  ?(constants = Default_options.constants)
+  ?(file_constants = Default_options.file_constants)
   () = 
 {
   (* Formatter *)
@@ -95,6 +101,8 @@ let make
   disable_michelson_typechecking ;
   without_run ;
   views ;
+  constants ;
+  file_constants ;
 }
 
 let default =
@@ -123,4 +131,6 @@ let default =
   disable_michelson_typechecking = Default_options.disable_michelson_typechecking ;
   without_run = Default_options.without_run ;
   views = Default_options.views ;
+  constants = Default_options.constants ;
+  file_constants = Default_options.file_constants ;
 }
