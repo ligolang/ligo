@@ -141,6 +141,7 @@ module.exports = grammar({
       prec(10, // see 'accessor_chain' for explanation of precedence
         common.withAttrs($, seq(
           field("field_name", $.FieldName),
+          // FIXME: Type annotation is optional.
           ':',
           field("field_type", $._type_expr),
         ))),
