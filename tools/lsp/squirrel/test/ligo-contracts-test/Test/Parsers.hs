@@ -91,9 +91,6 @@ okayTests =
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
       , "negative" </> "error_function_arguments.religo"
       , "negative" </> "error_syntax.ligo"
-      , "heap.ligo"
-      , "tutorials" </> "inter-contract-calls" </> "CreateAndCall.ligo"
-      , "k.ligo"
       ]
     , tdIgnoreDirs = []
     }
