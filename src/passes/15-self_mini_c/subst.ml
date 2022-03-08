@@ -467,13 +467,13 @@ let%expect_test _ =
   |}] ;
 
   (* old bug *)
-  TypeVar.reset_counter () ;
+  ValueVar.reset_counter () ;
   let y0 = ValueVar.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x
     ~expr:(var y) ;
   [%expect{|
-    (fun y -> (fun y#8 -> ((x)@((y)@(y#8)))))[x := y] =
-    fun y -> (fun y#8 -> ((y)@((y)@(y#8))))
+    (fun y -> (fun y#2 -> ((x)@((y)@(y#2)))))[x := y] =
+    fun y -> (fun y#2 -> ((y)@((y)@(y#2))))
   |}] ;
