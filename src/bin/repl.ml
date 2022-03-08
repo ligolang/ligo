@@ -121,7 +121,23 @@ let try_declaration ~raise ~raw_options state s =
   | Failure _ ->
      raise.raise `Repl_unexpected
 
+let resolve_file_name file_name project_root =
+  if Stdlib.Sys.file_exists file_name then file_name
+  else
+    match project_root with
+      Some project_root ->
+        let open Preprocessor in
+        let module_resolutions = ModRes.make project_root in
+        let inclusion_list = ModRes.get_root_inclusion_list module_resolutions in
+        (* let () = List.iter inclusion_list ~f:print_endline in *)
+        let external_file = ModRes.find_external_file ~file:file_name ~inclusion_list in
+        (match external_file with
+          Some external_file -> external_file
+        | None -> file_name)
+    | None -> file_name
+
 let import_file ~raise ~raw_options state file_name module_name =
+  let file_name = resolve_file_name file_name state.project_root in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ = Build.build_context ~raise ~add_warning ~options file_name in
@@ -130,11 +146,12 @@ let import_file ~raise ~raw_options state file_name module_name =
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
 
-let use_file ~raise ~raw_options state s =
+let use_file ~raise ~raw_options state file_name =
+  let file_name = resolve_file_name file_name state.project_root in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
-  let module' = Build.build_context ~raise ~add_warning ~options s in
+  let module' = Build.build_context ~raise ~add_warning ~options file_name in
   let env = Environment.append module' state.env in
   let state = { state with env = env;
                             top_level = concat_modules ~declaration:false state.top_level module'

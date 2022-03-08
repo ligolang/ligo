@@ -1,3 +1,5 @@
+(* TODO: use binding operators e.g. let* etc. *)
+
 module SMap = Simple_utils.Map.String
 
 type inclusion_list = string list
@@ -89,6 +91,13 @@ module Path = struct
       | false, true  
       | true, false  -> a ^ b
       | true, true   -> a ^ b (* TODO: fix this case ... *)
+
+  let get_absolute_path ?(project_root=".") path = 
+    let path' = v path in
+    if is_abs path' then path'
+    else 
+      v ((Sys.getcwd ()) ^  dir_sep ^ project_root ^ dir_sep ^ path) (* TODO: use Path.join *)
+        |> normalize 
 end
 
 (* Module with constants related esy *)
@@ -144,7 +153,7 @@ end
   }
    
 *)
-let clean_installation_json installation_json =
+let clean_installation_json project_root installation_json =
   match installation_json with
     None -> None
   | Some installation_json -> 
@@ -154,7 +163,8 @@ let clean_installation_json installation_json =
     List.fold_left2 
       (fun m key value -> 
         Option.bind m (fun m -> 
-          let value = JsonHelpers.string value in
+          let value = Option.bind (JsonHelpers.string value) (Path.get_absolute_path ~project_root) in
+          let value = Option.map Fpath.to_string value in
           Option.map (fun value -> SMap.add key value m) value
         )) 
       (Some SMap.empty) 
@@ -222,16 +232,20 @@ let clean_lock_file_json lock_json =
       Some root, Some node -> Some ({ root ; node })
     | _ -> None
 
-let resolve_path installation path = SMap.find_opt path installation
+let resolve_path project_root installation pkg_name = 
+  let path = SMap.find_opt pkg_name installation in
+  let path = Option.bind path (Path.get_absolute_path ~project_root) in
+  let path = Option.map Fpath.to_string path in
+  path 
 
-(* [resolve_paths] takes the install.json {string SMap.t} and 
+(* [resolve_paths] takes the installation.json {string SMap.t} and 
    the Map constructed by [find_dependencies] and resolves the the
    package names into file system paths *)
-let resolve_paths installation graph =
+let resolve_paths project_root installation graph : (string * (string list)) list option =
   SMap.fold (fun k v xs ->
     Option.bind xs (fun xs -> 
-      let resolved = traverse (List.map (resolve_path installation) v) in
-      let k = resolve_path installation k in
+      let resolved = traverse (List.map (resolve_path project_root installation) v) in
+      let k = resolve_path project_root installation k in
       (match k,resolved with
         Some k, Some resolved ->
           let paths = List.sort String.compare resolved in 
@@ -267,20 +281,26 @@ let find_dependencies (lock_file : lock_file) : dependency_list SMap.t =
 let make project_root : t option =
   let installation_json = Esy.installation_json_path project_root 
     |> JsonHelpers.from_file_opt
-    |> clean_installation_json
+    |> clean_installation_json project_root
   in
   let lock_file_json = Esy.lock_file_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_lock_file_json
   in
+  (* let () = if Option.is_some installation_json then print_endline "FOUND installation" else print_endline "MISSING installation" in *)
+  (* let () = if Option.is_some lock_file_json then print_endline "FOUND lock" else print_endline "MISSING lock" in *)
   (match installation_json,lock_file_json with
     Some installation_json, Some lock_file_json ->
       let dependencies = find_dependencies lock_file_json in
-      let resolutions = resolve_paths installation_json dependencies in
-      let root_path = resolve_path installation_json lock_file_json.root in
+      let resolutions = resolve_paths project_root installation_json dependencies in
+      (* let () = if Option.is_some resolutions then print_endline "FOUND resolutions" else print_endline "MISSING resolutions" in *)
+      let root_path = resolve_path project_root installation_json lock_file_json.root in
+      (* let () = if Option.is_some root_path then print_endline "FOUND root_path" else print_endline "MISSING root_path" in *)
       (match root_path, resolutions with
         Some root_path, Some resolutions -> Some { root_path ; resolutions = resolutions }
-      | _ -> None)
+      | _ -> 
+        (* let () = print_endline "Cannot make module res" in *)
+        None)
   | _ -> None)
 
 (* [get_root_inclusion_list] is used in the case when external dependencies are
@@ -290,25 +310,20 @@ let make project_root : t option =
 *)
 let get_root_inclusion_list (module_resolutions : t option) = 
   match module_resolutions with
-  | Some module_resolutions  ->
+  | Some module_resolutions ->
     let root_path = module_resolutions.root_path in
     let root_inclusion_list = List.find_opt 
-      (fun (path,_) -> path = root_path) 
+      (fun (path,_) -> 
+        (* let () = Format.printf "%s - %s\n" path root_path in *)
+        path = root_path) 
       module_resolutions.resolutions in
     (match root_inclusion_list with 
       Some (_,root_inclusion_list) -> root_inclusion_list
     | None -> [])
   | None -> []
 
-let get_absolute_path path = 
-  let path' = Path.v path in
-  if Path.is_abs path' then path'
-  else 
-    Path.v ((Sys.getcwd ()) ^ Path.dir_sep ^ path) 
-      |> Path.normalize 
-
-(* [get_inclusion_list] takes [file] and [module_resolutions]
-    and returns the inclusion list (list of paths
+(* [get_inclusion_list ~file module_resolutions] 
+    returns the inclusion list (list of paths
     of dependencies of that project/dependency) 
    
    e.g. #include "ligo-list-helpers/list.mligo" 
@@ -320,10 +335,10 @@ let get_absolute_path path =
 let get_inclusion_list ~file (module_resolutions : t option) =
   match module_resolutions with
     Some module_resolutions ->
-      let path = get_absolute_path file in
+      let path = Path.get_absolute_path file in
       (match List.find_opt (fun (mod_path, _) ->
         let mod_path = Path.v mod_path in
-        Path.is_prefix mod_path path
+        Path.is_prefix mod_path path (* do we need to do Path.is_prefix? now that we are comparing 2 absolute paths*)
         ) module_resolutions.resolutions 
       with
         Some (_,paths) -> paths
@@ -347,14 +362,15 @@ let get_inclusion_list ~file (module_resolutions : t option) =
     package name = ligo-list-helpers
     rest of path = list.mligo
 *)
-let find_external_file ~file ~inclusion_list = 
+let find_external_file ~file ~inclusion_list =
   let segs = Path.segs (Path.v file) in
   Option.bind segs (fun segs -> 
     match segs with
       pkg_name::rest_of_path -> 
         let normalized_pkg_name = Esy.normalize_pkg_name pkg_name in
         let dir = List.find_opt (fun pkg_path ->
-          normalized_pkg_name = Esy.extract_pkg_name pkg_path) inclusion_list in
+          normalized_pkg_name = Esy.extract_pkg_name pkg_path ||
+          pkg_name = Filename.basename pkg_path) inclusion_list in
         let rest_of_path = String.concat Filename.dir_sep rest_of_path in
         Option.map (fun dir -> 
           (* TODO: use Path.join here ... *)
@@ -363,3 +379,5 @@ let find_external_file ~file ~inclusion_list =
         ) dir
     | _ -> None
   )
+
+(* TODO: pp for ModRes.t *)
