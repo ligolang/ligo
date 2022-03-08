@@ -68,6 +68,8 @@ data RioEnv = RioEnv
   -- ^ Provides a way to look which temporary files correspond to which open files.
   , reIndexOpts :: MVar IndexOptions
   -- ^ Stores the user's choice (or lack of) in how the project should be indexed.
+  , reBuildGraph :: MVar (Includes FilePath)
+  -- ^ Represents the build graph for all files that were looked up.
   }
 
 -- TODO: The lsp library provides no way to update the Config in the LspM monad

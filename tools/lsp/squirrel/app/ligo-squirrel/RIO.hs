@@ -36,6 +36,7 @@ newRioEnv = do
   reIncludes <- newMVar G.empty
   reTempFiles <- newIO
   reIndexOpts <- newEmptyMVar
+  reBuildGraph <- newMVar G.empty
   pure RioEnv {..}
 
 initializeRio :: RIO ()
