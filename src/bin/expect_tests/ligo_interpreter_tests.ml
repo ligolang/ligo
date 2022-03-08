@@ -543,7 +543,6 @@ let%expect_test _ =
      baker account initial balance must at least reach 8000 tez |}]
 
 let%expect_test _ =
-(* TODO: this error is not ideal, we should trace that*)
   run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 2-26:
