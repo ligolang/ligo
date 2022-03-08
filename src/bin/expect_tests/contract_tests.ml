@@ -42,8 +42,7 @@ File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, chara
 129 |   ]
 
 Invalid type(s).
-Expected: "record[card_patterns -> map (nat , record[coefficient -> tez , quantity -> nat]) , cards -> map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]", but got: "
-sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]". |}] ;
+Expected: "storage", but got: "parameter". |}] ;
 
   run_ligo_bad [ "compile" ; "parameter" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect {|
@@ -59,8 +58,7 @@ File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, chara
 129 |   ]
 
 Invalid type(s).
-Expected: "sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]", but got: "
-record[card_patterns -> map (nat , record[coefficient -> tez , quantity -> nat]) , cards -> map (nat , record[card_owner -> address , card_pattern -> nat]) , next_id -> nat]". |}] ;
+Expected: "parameter", but got: "storage". |}] ;
 
   ()
 
@@ -1994,8 +1992,8 @@ let%expect_test _ =
     File "../../test/contracts/negative/bad_annotation_unpack.mligo", line 1, characters 9-42:
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
 
-    Incorrect argument.
-    Expected an option, but got an argument of type "string". |}]
+    Invalid type(s).
+    Expected: "string", but got: "option ('a)". |}]
 
 (* check annotations' capitalization *)
 let%expect_test _ =

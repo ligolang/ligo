@@ -112,9 +112,9 @@ let destruct_for_alls (t : type_expression) =
   in destruct_for_alls [] t
 
 (* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
-let destruct_arrows (t : type_expression) =
+let destruct_arrows_n (t : type_expression) (n : int) =
   let rec destruct_arrows type_vars (t : type_expression) = match t.type_content with
-    | T_arrow { type1 ; type2 } ->
+    | T_arrow { type1 ; type2 } when List.length type_vars < n ->
        destruct_arrows (type1 :: type_vars) type2
     | _ -> (type_vars, t)
   in destruct_arrows [] t

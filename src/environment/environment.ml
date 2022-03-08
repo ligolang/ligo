@@ -27,7 +27,7 @@ let to_core_program env = List.rev env
 let append_core = append
 
 (* This is an stdlib *)
-let star = ()
+let star = Type
 (*
   Make sure all the type value laoded in the environment have a `Ast_core` value attached to them (`type_meta` field of `type_expression`)
 *)

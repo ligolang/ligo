@@ -720,7 +720,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
           fun param type_ ->
             let (param,ploc) = r_split param in
             let ty_binder = TypeVar.of_input_var ~loc:ploc (quote_var param.name.value) in
-            t_abstraction ~loc:(Location.lift region) ty_binder () type_
+            t_abstraction ~loc:(Location.lift region) ty_binder Type type_
         in
         List.fold_right ~f:aux ~init:rhs lst
     in

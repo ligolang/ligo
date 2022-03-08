@@ -668,7 +668,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
     in
     let lhs_type = Option.map lhs_type ~f:(fun t ->
       List.fold_right fv ~init:t ~f:(fun v t ->
-        t_for_all (v) () t)) in
+        t_for_all (v) Type t)) in
     return_1 @@ ({var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)
   | _ ->raise.raise @@ unsupported_pattern_type @@ binders
   in aux binders
@@ -728,7 +728,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
           fun param type_ ->
             let (param,loc) = r_split param in
             let ty_binder = TypeVar.of_input_var ~loc (quote_var param.name.value) in
-            t_abstraction ~loc:(Location.lift region) ty_binder () type_
+            t_abstraction ~loc:(Location.lift region) ty_binder Type type_
         in
         List.fold_right ~f:aux ~init:rhs lst
     in

@@ -26,8 +26,7 @@ let%expect_test _ =
       9 |   | Sub si -> Sub si
 
     Invalid type(s).
-    Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "
-    sum[Add -> int , Sub -> int]". |}];
+    Expected: "( list (operation) * op )", but got: "op". |}];
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "--entry-point"; "unvalid"];
   [%expect {|
@@ -86,7 +85,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s).
-    Expected: "list (string)", but got: "option (int)". |} ] ;
+    Expected: "list (string)", but got: "option ('a)". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_3.mligo" ] ;
   [%expect {|
@@ -96,7 +95,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s).
-    Expected: "( int * string * bool )", but got: "( int * string )". |} ] ;
+    Expected: "( int * string * bool )", but got: "toto". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|
@@ -106,7 +105,7 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , c -> bool , d -> string]", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
+    Expected: "tata", but got: "toto". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_5.mligo" ] ;
   [%expect {|
@@ -134,7 +133,7 @@ let%expect_test _ =
       5 |
 
     Invalid type(s).
-    Expected: "record[a -> int , b -> string]", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
+    Expected: "toto", but got: "record[a -> int , b -> string , c -> bool]". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_1.jsligo" ] ;
   [%expect {|
@@ -144,7 +143,7 @@ let%expect_test _ =
      11 |     return [list([]) as list<operation>, newStorage];
 
     Invalid type(s).
-    Expected: "nat", but got: "( nat * nat )". |} ] ;
+    Expected: "nat", but got: "( storage * nat )". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|
@@ -153,8 +152,11 @@ let%expect_test _ =
      45 |     Big_map.update new_id new_id_details identities
      46 |   in
 
-    Incorrect argument.
-    Expected an option, but got an argument of type "record[controller -> address , owner -> address , profile -> bytes]". |}]
+    Invalid arguments.
+    Expected an argument of type ('a, option ('b), map ('a ,
+    'b)) or ('a, option ('b), big_map ('a ,
+    'b)), but got an argument of type int, record[controller -> address , owner -> address , profile -> bytes], big_map (int ,
+    record[controller -> address , owner -> address , profile -> bytes]). |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -201,8 +203,8 @@ let%expect_test _ =
       2 |
       3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
 
-    Incorrect argument.
-    Expected an option, but got an argument of type "int". |} ]
+    Invalid type(s).
+    Expected: "option", but got: "option ('a)". |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;
@@ -217,10 +219,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;
   [%expect {|
-      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 6, characters 9-45:
-        5 | let get_add_entrypoint (addr : address) =
-        6 |   match (Tezos.get_entrypoint_opt "%add" addr) with
+      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 8, characters 13-53:
         7 |     Some contract -> contract
+        8 |   | None -> (failwith "The entrypoint does not exist" : int contract)
+        9 |
   
-      Can't infer the complete type of this value, please add a type annotation.
-      The value has type 'a contract option, here 'a can't be inferred |}]
+      Invalid type(s).
+      Expected: "contract ('a)", but got: "contract (int)". |}]
