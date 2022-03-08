@@ -81,7 +81,7 @@ let map: ('a => 'b) => option('a) => option('b)
 let map: (f : ((item: 'a) => 'b), value : option&lt;'a&gt;) => option&lt;'b&gt;
 </SyntaxTitle>
 
-Applied the mapper function to the value if it is wrapped in the `Some` constructor
+Applies the mapper function to the value if it is wrapped in the `Some` constructor.
 
 If the value is `None` the function is not executed/applied.
 
