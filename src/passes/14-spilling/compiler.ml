@@ -385,8 +385,8 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
         let var = compile_variable @@ fst x in
         return @@ E_let_in (expr, false, ((var, tree.type_), body))
       | Pair (x, y) ->
-        let x_var = Var.fresh () in
-        let y_var = Var.fresh () in
+        let x_var = ValueVar.fresh () in
+        let y_var = ValueVar.fresh () in
         let x_ty = x.type_ in
         let y_ty = y.type_ in
         let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
@@ -515,7 +515,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       let path = List.map ~f:snd path in
       let update = self update in
       let record = self record in
-      let record_var = Var.fresh () in
+      let record_var = ValueVar.fresh () in
       let car (e : expression) : expression =
         match e.type_expression.type_content with
         | T_tuple [(_, a); _] ->
@@ -556,7 +556,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
           let f' = self f in
           let input' = compile_type ~raise input in
           let output' = compile_type ~raise output in
-          let binder = Var.fresh ~name:"iterated" () in
+          let binder = ValueVar.fresh ~name:"iterated" () in
           let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
           ((binder , input'), application)
         in
@@ -643,8 +643,8 @@ and compile_expression ~raise (ae:AST.expression) : expression =
             let match_cons = get_case "Cons" in
             let nil = self (fst match_nil) in
             let cons =
-              let hd = Var.fresh () in
-              let tl = Var.fresh () in
+              let hd = ValueVar.fresh () in
+              let tl = ValueVar.fresh () in
               let proj_t = t_pair (None,list_ty) (None,expr'.type_expression) in
               let proj = Expression.make (ec_pair (e_var hd list_ty) (e_var tl expr'.type_expression)) proj_t in
               let cons_body = self (fst match_cons) in
@@ -697,13 +697,13 @@ and compile_expression ~raise (ae:AST.expression) : expression =
                 | ((`Node (a , b)) , tv) ->
                   let a' =
                     let a_ty = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                    let left_var = Var.fresh ~name:"left" () in
+                    let left_var = ValueVar.fresh ~name:"left" () in
                     let e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                     ((left_var , a_ty) , e)
                   in
                   let b' =
                     let b_ty = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                    let right_var = Var.fresh ~name:"right" () in
+                    let right_var = ValueVar.fresh ~name:"right" () in
                     let e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                     ((right_var , b_ty) , e)
                   in
@@ -770,7 +770,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   and replace_callback ~raise : AST.expression_variable -> type_expression -> bool -> AST.expression -> expression = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       | E_let_in li ->
-        let shadowed = shadowed || AST.Var.equal li.let_binder fun_name in
+        let shadowed = shadowed || AST.ValueVar.equal li.let_binder fun_name in
         let let_result = replace_callback ~raise fun_name loop_type shadowed li.let_result in
         let rhs = compile_expression ~raise li.rhs in
         let ty  = compile_type ~raise li.rhs.type_expression in
@@ -781,7 +781,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
         matching ~raise fun_name loop_type shadowed m ty
       | E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
-        | E_variable name, false when AST.Var.equal fun_name name ->
+        | E_variable name, false when AST.ValueVar.equal fun_name name ->
           let expr = compile_expression ~raise args in
           Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type
         | _ ->
@@ -811,8 +811,8 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
           let match_cons = get_case "Cons" in
           let nil = self (fst match_nil) in
           let cons =
-            let hd = Var.fresh () in
-            let tl = Var.fresh () in
+            let hd = ValueVar.fresh () in
+            let tl = ValueVar.fresh () in
             let proj_t = t_pair (None,list_ty) (None,expr'.type_expression) in
             let proj = Expression.make (ec_pair (e_var hd list_ty) (e_var tl expr'.type_expression)) proj_t in
             let cons_body = self (fst match_cons) in
@@ -865,13 +865,13 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
               | ((`Node (a , b)) , tv) ->
                 let a' =
                   let a_ty = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                  let left_var = Var.fresh ~name:"left" () in
+                  let left_var = ValueVar.fresh ~name:"left" () in
                   let e = aux (((Expression.make (E_variable left_var) a_ty))) a in
                   ((left_var , a_ty) , e)
                 in
                 let b' =
                   let b_ty = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                  let right_var = Var.fresh ~name:"right" () in
+                  let right_var = ValueVar.fresh ~name:"right" () in
                   let e = aux (((Expression.make (E_variable right_var) b_ty))) b in
                   ((right_var , b_ty) , e)
                 in
@@ -889,7 +889,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let loop_type = t_union (None, input_type) (None, output_type) in
   let (body,binder) = map_lambda fun_name loop_type lambda.result in
   let binder = compile_variable lambda.binder :: binder in
-  let loc = Ast_typed.Var.get_location fun_name in
+  let loc = Ast_typed.ValueVar.get_location fun_name in
   let binder = match binder with hd::[] -> hd | _ -> raise.raise @@ unsupported_recursive_function loc fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((compile_variable lambda.binder, input_type), body), expr)) output_type in

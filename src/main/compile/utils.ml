@@ -14,7 +14,7 @@ let to_sugar ~raise ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
 
 let to_core ~raise ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
   let sugar  = to_sugar ~raise ~add_warning ~options ~meta c_unit file_path in
-  let core   = Of_sugar.compile sugar in
+  let core   = Of_sugar.compile ~raise sugar in
   core
 
 let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : Ast_typed.program =
@@ -42,7 +42,7 @@ let type_expression_string ~raise ~options syntax expression init_prog =
   let c_unit_exp, _     = Of_source.compile_string_without_preproc expression in
   let imperative_exp    = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
-  let core_exp          = Of_sugar.compile_expression sugar_exp in
+  let core_exp          = Of_sugar.compile_expression ~raise sugar_exp in
   let typed_exp         = Of_core.compile_expression ~raise ~options ~init_prog core_exp in
   typed_exp
 
@@ -51,7 +51,7 @@ let type_contract_string ~raise ~add_warning ~options syntax expression =
   let c_unit, _     = Of_source.compile_string_without_preproc expression in
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
-  let core          = Of_sugar.compile sugar in
+  let core          = Of_sugar.compile ~raise sugar in
   let typed         = Of_core.typecheck ~raise ~add_warning ~options Env core in
   typed,core
 
@@ -60,7 +60,7 @@ let type_expression ~raise ~options source_file syntax expression init_prog =
   let c_unit_exp, _     = Of_source.compile_string ~raise ~options:options.Compiler_options.frontend ~meta expression in
   let imperative_exp    = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
-  let core_exp          = Of_sugar.compile_expression sugar_exp in
+  let core_exp          = Of_sugar.compile_expression ~raise sugar_exp in
   let typed_exp         = Of_core.compile_expression ~raise ~options ~init_prog core_exp in
   typed_exp
 
@@ -85,7 +85,7 @@ let compile_contract_input ~raise ~options parameter storage source_file syntax 
   let aggregated_prg = Of_typed.compile_program ~raise init_prog in
   let imperative = Of_c_unit.compile_contract_input ~raise ~meta parameter storage in
   let sugar      = Of_imperative.compile_expression ~raise imperative in
-  let core       = Of_sugar.compile_expression sugar in
+  let core       = Of_sugar.compile_expression ~raise sugar in
   let typed      = Of_core.compile_expression ~raise ~options ~init_prog core in
   let aggregated = Of_typed.compile_expression_in_context ~raise typed aggregated_prg  in
   let mini_c     = Of_aggregated.compile_expression ~raise aggregated in

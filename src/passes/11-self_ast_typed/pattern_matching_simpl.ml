@@ -3,7 +3,7 @@
   patterns matching a given expression alternates between variable and constructors.
 
   Those generated failwith expressions could be avoided but would unnecessarily complicate the pattern matching compiler.
-  
+
   An example of such generated FAILWITH would be:
   ```
   match (u1,u2) with
@@ -26,11 +26,11 @@
         | Nil -> failwith "PARTIAL_MATCH"
         | Cons (c,d) -> a + b + c + d
   ```
-  
+
   This pass aims to remove those partial match failwiths by folding over the AST, and simplify a case-expression that appears
   inside another case expression for the same variable.
   If failwith expressions still remain after this pass, the matching expression is anomalous (redundant/exhaustive).
-  That triggers a rather 'generic' error. 
+  That triggers a rather 'generic' error.
 
   TODO: It might be desirable to allow anomalous patterns when users wants it, leaving the generated failwiths (?)
   TODO: This approach is naive, with a more sophisticated approach it is possible to descriminate between non-exhaustive/redundant/unused patterns
@@ -43,7 +43,7 @@ let map_expression = Helpers.map_expression
 open Ast_typed
 open Simple_utils.Trace
 
-module SimplMap = Simple_utils.Map.Make( struct type t = expression_variable let compare = Var.compare end)
+module SimplMap = Simple_utils.Map.Make(ValueVar)
 
 type simpl_map = ((label * expression_variable) list) SimplMap.t
 
@@ -73,7 +73,7 @@ let substitute_var_in_body : expression_variable -> expression_variable -> expre
       fun () exp ->
         let ret continue exp = (continue,(),exp) in
         match exp.expression_content with
-        | E_variable var when Var.equal var to_subst -> ret true { exp with expression_content = E_variable new_var }
+        | E_variable var when ValueVar.equal var to_subst -> ret true { exp with expression_content = E_variable new_var }
         | _ -> ret true exp
     in
     let ((), res) = fold_map_expression aux () body in

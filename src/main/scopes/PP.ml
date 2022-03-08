@@ -43,7 +43,7 @@ let rec def_to_yojson : def -> Yojson.Safe.t = function
       | Unresolved -> `Assoc [ "unresolved" , `Null ]
     in
     `Assoc [
-      ("name", `String (Misc.get_binder_name name));
+      ("name", `String name);
       ("range", Location.to_yojson range);
       ("body_range", Location.to_yojson body_range);
       ("t", type_case_to_yojson t );

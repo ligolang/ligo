@@ -3,16 +3,21 @@ open Simple_utils.Trace
 (* Helpers *)
 
 let get_declarations_core core_prg =
-     let func_declarations  = Ligo_compile.Of_core.list_declarations core_prg in
-     let type_declarations  = Ligo_compile.Of_core.list_type_declarations core_prg in
-     let mod_declarations  = Ligo_compile.Of_core.list_mod_declarations core_prg in
+     let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
+     let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_core.list_type_declarations core_prg in
+     let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ Ligo_compile.Of_core.list_mod_declarations core_prg in
      func_declarations @ type_declarations @ mod_declarations
 
 let get_declarations_typed typed_prg =
-     let func_declarations  = Ligo_compile.Of_typed.list_declarations typed_prg in
-     let type_declarations  = Ligo_compile.Of_typed.list_type_declarations typed_prg in
-     let mod_declarations  = Ligo_compile.Of_typed.list_mod_declarations typed_prg in
+     let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_typed.list_declarations typed_prg in
+     let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_typed.list_type_declarations typed_prg in
+     let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ Ligo_compile.Of_typed.list_mod_declarations typed_prg in
      func_declarations @ type_declarations @ mod_declarations
+
+let pp_declaration ppf = function
+    `Value a  -> Ast_core.PP.expression_variable ppf a
+  | `Type a   -> Ast_core.PP.type_variable       ppf a
+  | `Module a -> Ast_core.PP.module_variable     ppf a
 
 (* Error and warnings *)
 
@@ -35,12 +40,12 @@ let repl_result_ppformat ~display_format f = function
   | Defined_values_core module_ ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Ast_core.PP.expression_variable f
+                                  pp_declaration f
                                   (get_declarations_core module_))
   | Defined_values_typed module' ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Ast_typed.PP.expression_variable f
+                                  pp_declaration f
                                   (get_declarations_typed module'))
   | Just_ok -> Simple_utils.PP_helpers.string f "Done."
 
@@ -51,15 +56,15 @@ let repl_result_jsonformat = function
   | Defined_values_core module_ ->
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
-     let name n = `Assoc [("name", Ast_core.type_variable_to_yojson n)] in
-     let defs = List.map ~f:name (func_declarations @ type_declarations) in
-     `Assoc [("definitions", `List defs)]
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.ValueVar.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
+     `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
-     let name n = `Assoc [("name", Ast_typed.type_variable_to_yojson n)] in
-     let defs = List.map ~f:name (func_declarations @ type_declarations) in
-     `Assoc [("definitions", `List defs)]
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.ValueVar.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
+     `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Just_ok -> `Assoc []
 
 let repl_result_format : 'a format = {
@@ -125,7 +130,7 @@ let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ = Build.build_context ~raise ~add_warning ~options file_name in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.Var.of_input_var module_name;module_;module_attr={public=true}}]) in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
@@ -185,7 +190,7 @@ let parse_and_eval ~raw_options display_format state s =
     | Use s -> use_file ~raw_options state s
     | Import (fn, mn) -> import_file state ~raw_options fn mn
     | Expr s -> try_declaration ~raw_options state s in
-  eval display_format state c                    
+  eval display_format state c
 
 let welcome_msg = "Welcome to LIGO's interpreter!
 Included directives:

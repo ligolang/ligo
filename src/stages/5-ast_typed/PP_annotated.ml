@@ -54,7 +54,7 @@ let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
-let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
+let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" TypeVar.pp t
 
 open Format
 

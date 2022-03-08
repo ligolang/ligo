@@ -19,17 +19,15 @@ module Environment (* : ENVIRONMENT *) = struct
   type element = environment_element
   type t = environment
 
-  let compare_var : expression_variable -> expression_variable -> int = Var.compare
-  let var_equal = Var.equal
   let empty : t = []
   let add : element -> t -> t  = List.cons
   let concat : t list -> t  = List.concat
-  let get_opt : expression_variable -> t -> type_expression option = fun e lst -> List.Assoc.find ~equal:var_equal lst e
+  let get_opt : expression_variable -> t -> type_expression option = fun e lst -> List.Assoc.find ~equal:ValueVar.equal lst e
   let has : expression_variable -> t -> bool = fun s t ->
     match get_opt s t with
     | None -> false
     | Some _ -> true
-  let get_i_opt : expression_variable -> t -> (type_expression * int) option =fun x lst -> List.find_mapi ~f:(fun i (e,t) -> if var_equal e x then Some (t,i) else None) lst
+  let get_i_opt : expression_variable -> t -> (type_expression * int) option =fun x lst -> List.find_mapi ~f:(fun i (e,t) -> if ValueVar.equal e x then Some (t,i) else None) lst
   let of_list : element list -> t = fun x -> x
   let to_list : t -> element list = fun x -> x
   let get_names : t -> expression_variable list = List.map ~f:fst
@@ -39,8 +37,8 @@ module Environment (* : ENVIRONMENT *) = struct
     let e_lst =
       let e_lst = to_list env in
       let aux selector (s , _) =
-        match List.mem ~equal:var_equal selector s with
-        | true -> List.remove_element ~compare:compare_var s selector , keep
+        match List.mem ~equal:ValueVar.equal selector s with
+        | true -> List.remove_element ~compare:ValueVar.compare s selector , keep
         | false -> selector , not keep in
       let e_lst' =
         if Bool.equal rev keep

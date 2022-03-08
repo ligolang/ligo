@@ -130,7 +130,7 @@ fun ~raise ~options c d ->
 let loc = d.location in
 let return ?(loc = loc) c (d : O.declaration) = c,Location.wrap ~loc d in
 match Location.unwrap d with
-  | Declaration_type {type_binder ; _} when Ast_core.Helpers.is_generalizable_variable type_binder ->
+  | Declaration_type {type_binder ; _} when Ast_core.TypeVar.is_generalizable type_binder ->
     raise.raise (wrong_generalizable d.location type_binder)
   | Declaration_type {type_binder ; type_expr; type_attr={public}} -> (
     let tv = evaluate_type ~raise c type_expr in
@@ -309,7 +309,7 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
   | T_variable name -> (
     match Context.get_type c name with
     | Some x -> x
-    | None when I.Var.is_generalizable name ->
+    | None when I.TypeVar.is_generalizable name ->
        (* Case happening when trying to use a variable that is not in
           the context, but it is generalizable: we hint the user
           that the variable could be put in the extended context
@@ -694,7 +694,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
       let case_exp = { case_exp with location = e.location } in
       return case_exp.expression_content case_exp.type_expression
     | _ ->
-      let matcheevar = I.Var.fresh () in
+      let matcheevar = I.ValueVar.fresh () in
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:(type_expression' ~options ~args:[] ?last:None) ~body_t:(tv_opt) matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       let x = O.E_let_in { let_binder = matcheevar ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false } } in
@@ -730,7 +730,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
     let context = Context.add_value pre_context binder type_expression in
     let let_result = type_expression' ~raise ~options context let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
-  | E_type_in {type_binder; _} when Ast_core.Helpers.is_generalizable_variable type_binder ->
+  | E_type_in {type_binder; _} when Ast_core.TypeVar.is_generalizable type_binder ->
     raise.raise (wrong_generalizable e.location type_binder)
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise context rhs in
@@ -864,7 +864,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     return @@ I.T_arrow arr
   | O.T_constant {language=_;injection;parameters} ->
     let arguments = List.map ~f:self parameters in
-    let type_operator = I.Var.fresh ~name:(Stage_common.Constant.to_string injection) () in
+    let type_operator = I.TypeVar.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_module_accessor ma ->
     let ma = Stage_common.Maps.module_access self ma in
