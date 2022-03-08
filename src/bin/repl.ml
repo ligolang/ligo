@@ -2,17 +2,40 @@ open Simple_utils.Trace
 
 (* Helpers *)
 
+
 let get_declarations_core core_prg =
-     let func_declarations  = Ligo_compile.Of_core.list_declarations core_prg in
-     let type_declarations  = Ligo_compile.Of_core.list_type_declarations core_prg in
-     let mod_declarations  = Ligo_compile.Of_core.list_mod_declarations core_prg in
-     func_declarations @ type_declarations @ mod_declarations
+  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
+     the absolute file path, and the REPL prints an absolute file path which is confusing
+     So we ignore the module declarations which which have their module_binder as some absolute path.
+     The imported module name will still be printed by the REPL as it is added as a module alias. 
+     Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
+  *)
+  let ignore_module_variable_which_is_absolute_path module_variable =
+    let module_variable = try Stage_common.Var.to_name_exn module_variable with _ -> "" in
+    not @@ Caml.Sys.file_exists module_variable in
+
+  let func_declarations = Ligo_compile.Of_core.list_declarations core_prg in
+  let type_declarations = Ligo_compile.Of_core.list_type_declarations core_prg in
+  let mod_declarations  = Ligo_compile.Of_core.list_mod_declarations core_prg in
+  let mod_declarations  = List.filter mod_declarations ~f:ignore_module_variable_which_is_absolute_path in
+  func_declarations @ type_declarations @ mod_declarations
 
 let get_declarations_typed typed_prg =
-     let func_declarations  = Ligo_compile.Of_typed.list_declarations typed_prg in
-     let type_declarations  = Ligo_compile.Of_typed.list_type_declarations typed_prg in
-     let mod_declarations  = Ligo_compile.Of_typed.list_mod_declarations typed_prg in
-     func_declarations @ type_declarations @ mod_declarations
+  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
+     the absolute file path, and the REPL prints an absolute file path which is confusing
+     So we ignore the module declarations which which have their module_binder as some absolute path.
+     The imported module name will still be printed by the REPL as it is added as a module alias. 
+     Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
+  *)
+  let ignore_module_variable_which_is_absolute_path module_variable =
+    let module_variable = try Stage_common.Var.to_name_exn module_variable with _ -> "" in
+    not @@ Caml.Sys.file_exists module_variable in
+
+  let func_declarations = Ligo_compile.Of_typed.list_declarations typed_prg in
+  let type_declarations = Ligo_compile.Of_typed.list_type_declarations typed_prg in
+  let mod_declarations  = Ligo_compile.Of_typed.list_mod_declarations typed_prg in
+  let mod_declarations  = List.filter mod_declarations ~f:ignore_module_variable_which_is_absolute_path in
+  func_declarations @ type_declarations @ mod_declarations
 
 (* Error and warnings *)
 

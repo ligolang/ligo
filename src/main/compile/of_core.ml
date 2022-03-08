@@ -59,7 +59,7 @@ let list_type_declarations (m : Ast_core.module_) : Ast_core.type_variable list 
       | _ -> prev)
     ~init:[] m
 
-let list_mod_declarations (m : Ast_core.module_) : Ast_core.type_variable list =
+let list_mod_declarations (m : Ast_core.module_) : Ast_core.module_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Location in

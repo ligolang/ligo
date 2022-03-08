@@ -110,5 +110,6 @@ let list_mod_declarations (m : Ast_typed.module_) : module_variable list =
       let open Simple_utils.Location in
       match el.wrap_content with
       | Declaration_module {module_binder;_} -> module_binder::prev
+      | Module_alias {alias;_} -> alias::prev
       | _ -> prev)
     ~init:[] m
