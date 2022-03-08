@@ -4,10 +4,7 @@ open Simple_utils.Trace
 module I = Ast_core
 module O = Ast_typed
 
-(* The `table` represents the substitutions that have been inferred.
-   For example, if matching `a -> b -> a` with `int -> bool -> int`,
-   it should have information such as `[a ↦ int; b ↦ bool]`. *)
-module TMap = Simple_utils.Map.Make(struct type t = O.type_variable let compare x y = I.Var.compare x y end)
+module TMap = O.Helpers.TMap
 
 let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') table (type_matched : O.type_expression) (type_ : O.type_expression) =
   let open O in
@@ -104,8 +101,7 @@ let build_type_insts ~raise ~loc (forall : O.expression) table bound_variables =
   let rec build_type_insts (forall : O.expression) = function
     | [] -> forall
     | av :: avs' ->
+       let type_ = trace_option ~raise (Errors.not_annotated loc) @@ O.Helpers.TMap.find_opt av table in
        let O.{ ty_binder ; type_ = t ; kind = _ } = trace_option ~raise (corner_case "Expected a for all type quantifier") @@ O.get_t_for_all forall.type_expression in
-       assert (I.Var.equal ty_binder av);
-       let type_ = trace_option ~raise (Errors.not_annotated loc) @@ TMap.find_opt av table in
-       build_type_insts (O.make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_type av type_ t)) avs' in
+       build_type_insts O.(make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_no_capture_type ty_binder type_ t)) avs' in
   build_type_insts forall bound_variables

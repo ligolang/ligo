@@ -153,11 +153,11 @@ and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~rai
 
 module O = Ast_typed
 
-type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> test:bool -> protocol_version:Ligo_proto.t -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
+type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> options:Compiler_options.middle_end -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
 
 (* Given a ligo type, construct the corresponding typer *)
-let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
-  ignore test; ignore protocol_version;
+let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~options ~loc lst tv_opt ->
+  ignore options;
   let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
   Simple_utils.Trace.try_with (fun ~raise ->
       let table = Inference.infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) lamb_type lst tv_opt in
@@ -173,14 +173,14 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
         None)
 
 let typer_of_old_typer (typer : raise:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
-  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
-  ignore error; ignore test; ignore protocol_version;
+  fun ~error ~raise ~options ~loc lst tv_opt ->
+  ignore error; ignore options;
   Some (typer ~raise loc lst tv_opt)
 
 let typer_of_comparator (typer : raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
-  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
-  ignore error; ignore protocol_version;
-  Some (typer ~raise ~test loc lst tv_opt)
+  fun ~error ~raise ~options ~loc lst tv_opt ->
+  ignore error;
+  Some (typer ~raise ~test:options.test loc lst tv_opt)
 
 let raise_of_errors ~raise ~loc lst = function
   | [] ->
@@ -193,28 +193,28 @@ let raise_of_errors ~raise ~loc lst = function
 
 (* Given a list of typers, make a new typer that tries them in order *)
 let rec any_of : typer list -> typer = fun typers ->
-  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
+  fun ~error ~raise ~options ~loc lst tv_opt ->
   match typers with
   | [] -> raise_of_errors ~raise ~loc lst (! error)
   | typer :: typers ->
-     match typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
+     match typer ~error ~raise ~options ~loc lst tv_opt with
      | Some tv -> Some tv
-     | None -> any_of typers ~error ~raise ~test ~protocol_version ~loc lst tv_opt
+     | None -> any_of typers ~error ~raise ~options ~loc lst tv_opt
 
 let per_protocol (typer_per_protocol : Ligo_proto.t -> typer) : typer  =
-  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
-  typer_per_protocol protocol_version ~error ~raise ~test ~protocol_version ~loc lst tv_opt
+  fun ~error ~raise ~options ~loc lst tv_opt ->
+  typer_per_protocol options.protocol_version ~error ~raise ~options ~loc lst tv_opt
 
 (* This prevents wraps a typer, allowing usage only in Hangzhou *)
 let only_supported_hangzhou c (typer : typer) : typer =
-  fun ~error ~raise ~test ~protocol_version ~loc lst tv_opt ->
-  match protocol_version with
-  | Ligo_proto.Hangzhou -> typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt
+  fun ~error ~raise ~options ~loc lst tv_opt ->
+  match options.protocol_version with
+  | Ligo_proto.Hangzhou -> typer ~error ~raise ~options ~loc lst tv_opt
   | Ligo_proto.Edo ->
     raise.raise @@ corner_case (
       Format.asprintf "Unsupported constant %a in protocol %s"
         PP.constant' c
-        (Ligo_proto.variant_to_string protocol_version)
+        (Ligo_proto.variant_to_string options.protocol_version)
     )
 
 module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
@@ -222,13 +222,13 @@ type t = typer CTMap.t
 
 module Constant_types = struct
 
-  let a_var = O.Var.of_input_var "'a"
-  let b_var = O.Var.of_input_var "'b"
-  let c_var = O.Var.of_input_var "'c"
+  let a_var = O.TypeVar.of_input_var "'a"
+  let b_var = O.TypeVar.of_input_var "'b"
+  let c_var = O.TypeVar.of_input_var "'c"
 
   (* Helpers *)
   let for_all binder f =
-    let binder = O.Var.of_input_var ("'" ^ binder) in
+    let binder = O.TypeVar.of_input_var ("'" ^ binder) in
     t_for_all binder Type (f (t_variable binder ()))
 
   let (^->) arg ret = t_arrow arg ret ()
@@ -251,38 +251,10 @@ module Constant_types = struct
 
   let tbl : t = CTMap.of_list [
                     (* LOOPS *)
-(* let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
- *   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
- *   let () = assert_eq_1 ~raise ~loc arg init in
- *   let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
- *   in init
- * 
- * (\* Continue and Stop are just syntactic sugar for building a pair (bool * a') *\)
- * let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
- *   t_pair (t_bool ()) arg
- * 
- * let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
- *   (t_pair (t_bool ()) arg) *)
-(* let loop_left ~raise loc = typer_2 ~raise loc "LOOP_LEFT" @@ fun body init ->
- *   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
- *   let (left,right) = trace_option ~raise (expected_variant loc result) @@ get_t_or result in
- *   let () = assert_eq_1 ~raise ~loc arg init in
- *   let () = assert_eq_1 ~raise ~loc init left
- *   in right
- * 
- * let loop_continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
- *   t_sum_ez [("left",arg);("right",arg)]
- * 
- * let loop_stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
- *   t_sum_ez [("left",arg);("right",arg)] *)
-  (* | C_LOOP_LEFT           -> loop_left ~raise loc ;
-   * | C_LEFT                -> loop_continue ~raise loc ;
-   * | C_LOOP_CONTINUE       -> loop_continue ~raise loc ;
-   * | C_LOOP_STOP           -> loop_stop ~raise loc ; *)
-                    of_type C_LOOP_LEFT O.(for_all "a" @@ fun a -> for_all "b" -> fun b -> (a ^-> t_pair a b) ^-> a ^-> b);
-                    of_type C_LEFT O.(for_all "a" @@ fun a -> a ^-> t_or a a);
-                    of_type C_LOOP_CONTINUE O.(for_all "a" @@ fun a -> a ^-> t_or a a);
-                    of_type C_LOOP_STOP O.(for_all "a" @@ fun a -> a ^-> t_or a a);
+                    of_type C_LOOP_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> t_sum_ez [("left", a) ; ("right", b)]) ^-> a ^-> b);
+                    of_type C_LEFT O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
+                    of_type C_LOOP_CONTINUE O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
+                    of_type C_LOOP_STOP O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
                     of_types C_FOLD [
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_list b ^-> a ^-> a);
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_set b ^-> a ^-> a);
@@ -589,12 +561,12 @@ module Constant_types = struct
                   ]
 end
 
-let constant_typers ~raise ~test ~protocol_version loc c =
+let constant_typers ~raise ~options loc c =
   match CTMap.find_opt c Constant_types.tbl with
   | Some typer ->
      fun lst tv_opt ->
      let error = ref [] in
-     (match typer ~error ~raise ~test ~protocol_version ~loc lst tv_opt with
+     (match typer ~error ~raise ~options ~loc lst tv_opt with
       | Some tv -> tv
       | None -> raise.raise (corner_case @@ Format.asprintf "Cannot type constant %a" PP.constant' c))
   | _ ->
