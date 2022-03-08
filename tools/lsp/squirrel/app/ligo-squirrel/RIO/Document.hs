@@ -19,7 +19,7 @@ module RIO.Document
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
-import Algebra.Graph.Class qualified as G hiding (overlay)
+import Algebra.Graph.Class qualified as G hiding (overlay, vertex)
 import Control.Arrow ((&&&))
 import Control.Lens ((??))
 import Control.Monad (join, void, (<=<))
@@ -41,15 +41,15 @@ import UnliftIO.Directory
   ( Permissions (writable), doesDirectoryExist, doesFileExist, getPermissions
   , setPermissions
   )
-import UnliftIO.Exception (throwIO, tryIO)
+import UnliftIO.Exception (tryIO)
 import UnliftIO.MVar (modifyMVar, modifyMVar_, newMVar, readMVar, swapMVar, tryReadMVar, withMVar)
 import UnliftIO.STM (atomically)
 import Witherable (iwither)
 
 import AST
- ( ContractInfo, ContractInfo', ContractNotFoundException (..), pattern FindContract
- , FindFilepath (..), HasScopeForest, Includes (..), ParsedContract (..), ParsedContractInfo
- , addLigoErrToMsg, addScopes, addShallowScopes, contractFile, lookupContract
+ ( ContractInfo, ContractInfo', pattern FindContract, FindFilepath (..), HasScopeForest
+ , Includes (..), ParsedContract (..), ParsedContractInfo, addLigoErrToMsg, addScopes
+ , addShallowScopes, contractFile, lookupContract
  )
 import AST.Includes (extractIncludedFiles, includesGraph', insertPreprocessorRanges)
 import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
@@ -233,25 +233,33 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
-        $(Log.debug) [Log.i|Can't find #{J.fromNormalizedFilePath normFp} in inclusions graph, loading #{root}...|]
+        let fp = J.fromNormalizedFilePath normFp
+        $(Log.debug) [Log.i|Can't find #{fp} in inclusions graph, loading #{root}...|]
         (Includes paths, msgs) <- loadDirectory root rootFileName
 
         let buildGraph = Includes $ G.gmap srcPath paths
         buildGraphVar <- asks reBuildGraph
         void $ swapMVar buildGraphVar buildGraph
 
-        connectedContracts <-
+        connectedContractsE <-
           maybe
-            (throwIO $ ContractNotFoundException rootFileName buildGraph)
-            pure
+            -- User may have opened a file that's outside the indexing directory.
+            -- Load it.
+            (fmap Left . loadPreprocessed =<< pathToSrc fp)
+            (pure . Right)
           $ find (Map.member (_cFile $ _getContract rootContract) . G.adjacencyMap)
           $ wcc paths
-        let
-          parseCached src = do
-            let srcMsgs = Map.lookup src msgs
+        case connectedContractsE of
+          Left (src, msg) -> do
             parsed <- parse src
-            insertPreprocessorRanges $ foldr addLigoErrToMsg parsed $ join $ maybeToList srcMsgs
-        Includes <$> traverseAMConcurrently parseCached connectedContracts
+            Includes . G.vertex <$> insertPreprocessorRanges (maybe id addLigoErrToMsg msg parsed)
+          Right connectedContracts -> do
+            let
+              parseCached src = do
+                let srcMsgs = Map.lookup src msgs
+                parsed <- parse src
+                insertPreprocessorRanges $ foldr addLigoErrToMsg parsed $ join $ maybeToList srcMsgs
+            Includes <$> traverseAMConcurrently parseCached connectedContracts
       -- We've cached this contract, incrementally update the inclusions graph.
       Just (Includes oldIncludes) -> do
         (rootContract', toList -> includeEdges) <- extractIncludedFiles True rootContract
