@@ -231,6 +231,7 @@ let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.t
       return (V_Ct (C_address address))
     | ( C_ADDRESS , _  ) -> fail @@ error_type
     | ( C_BYTES_PACK , [ value ] ) ->
+      let* () = check_value value in
       let value_ty = List.nth_exn types 0 in
       let>> value = Pack (loc, value, value_ty) in
       return value
