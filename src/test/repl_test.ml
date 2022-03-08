@@ -168,15 +168,34 @@ let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
       "x";
     ]
     [
-      "uniq_concat , reverse , concat ,
-      ./.ligo/source/i/ligo_set_helpers__1.0.3__6998bccf/set.mligo";
-      "sum , reverse ,
-      concat";
+      "uniq_concat , reverse , concat ,\n/home/melwyn95/projects/ligo/_build/default/src/test/projects/demo/.ligo/source/i/ligo_set_helpers__1.0.3__6998bccf/set.mligo";
+      "sum , reverse ,\nconcat";
       "y";
       "24";
       "x";
       "42";
     ]
+    ()
+
+let test_import_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
+  let project_root = Some "projects/demo" in
+  let raw_options = { raw_options with project_root = project_root } in
+  test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
+      "#import \"ligo-foo/foo.mligo\" \"Foo\"";
+      "#import \"ligo-list-helpers/list.mligo\" \"ListX\"";
+      "#import \"ligo-test_2/test2.mligo\" \"Test2\"";
+      "#import \"ligo_test_1/test1.mligo\" \"Test1\"";
+      "Test1.x";
+      "Test2.y";
+    ]
+    [
+      "Done.";
+      "Done.";
+      "Done.";
+      "Done.";
+      "42";
+      "24";
+      ]
     ()
 
 let () =
@@ -200,7 +219,7 @@ let () =
       ] ;
     test_suite "REPL + package-management" [
       test "#use external packages" (test_use_external_packages ~raw_options);
-      (* test #import *)
+      test "#import external packages" (test_import_external_packages ~raw_options);
     ] ;
   ] ;
   ()
