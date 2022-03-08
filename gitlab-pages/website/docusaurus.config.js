@@ -210,7 +210,8 @@ const siteConfig = {
         { href: 'https://forum.tezosagora.org/tag/ligo', label: 'Blog', position: 'left' },
         // TODO: { href: "/odoc", label: "API" },
         // { doc: 'contributors/origin', label: 'Contribute' },
-        { to: '/contact', label: 'Ask Questions', position: 'left' }
+        { to: '/contact', label: 'Ask Questions', position: 'left' },
+        { to: '/docs/next/intro/changelog/', label: 'Changelog', position: 'left' }
       ],
     },
     footer: {
@@ -271,7 +272,7 @@ const siteConfig = {
       ],
       copyright: `© ${new Date().getFullYear()} LIGO. All rights reserved.`,
     },
-    image: 'img/docusaurus.png',
+    image: 'img/logo.svg',
     sidebarCollapsible: true,
     prism: {
       theme: require('prism-react-renderer/themes/github'),

@@ -5,11 +5,11 @@ let declarations_ppformat ~display_format f (source_file,decls) =
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file ;
-    List.iter ~f: (fun decl -> Format.fprintf f "%a\n" Stage_common.Var.pp decl) decls
+    List.iter ~f: (fun decl -> Format.fprintf f "%a\n" Ast_typed.ValueVar.pp decl) decls
 
 let declarations_jsonformat (source_file,decls) : json =
   (* Use to_name instead of to_yojson for compality with IDE *)
-  let json_decl = List.map ~f:(fun decl -> `String (Stage_common.Var.to_name_exn decl)) decls in
+  let json_decl = List.map ~f:(fun decl -> `String (Ast_typed.ValueVar.to_name_exn decl)) decls in
   `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
 
 let declarations_format : 'a format = {
@@ -127,6 +127,16 @@ module Michelson_formatter = struct
       let code_as_str = Format.asprintf "%a" (pp_json ?comment:(comment_encoding michelson_comments)) a in
       `Assoc [("json_code" , `String code_as_str)]
 
+  let michelson_constant_ppformat michelson_comments ~display_format f (hash, a) =
+    match display_format with
+    | Human_readable | Dev -> (
+       let code =
+         `String (Format.asprintf "%a" (pp_comment ~comment:(comment michelson_comments)) a) |>
+           Yojson.Safe.pretty_to_string in
+       let code_no_newlines = Str.global_replace (Str.regexp_string "\\n") "\n" code in
+       let hash = Format.asprintf "%a" Memory_proto_alpha.Protocol.Script_expr_hash.pp hash in
+       Format.fprintf f "Michelson consant as JSON string:@.%s@.This string can be passed in `--constants` argument when compiling a contract.@.@.Remember to register it in the network, e.g.:@.> tezos-client register global constant %s from bootstrap1@.@.Constant hash:@.%s" code code_no_newlines hash
+    )
 
   let convert_michelson_comments : [> `All | `Env | `Location | `Source ] list -> michelson_comments =
     let none = {location = false; source = false; env = false} in
@@ -147,5 +157,11 @@ module Michelson_formatter = struct
   let michelson_format : michelson_format -> _ -> 'a format = fun mf michelson_comments -> {
     pp = michelson_ppformat mf (convert_michelson_comments michelson_comments);
     to_json = michelson_jsonformat mf (convert_michelson_comments michelson_comments);
+  }
+
+  let michelson_constant_format : _ -> (Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_expr_hash.t *
+(Location.t, string) Tezos_micheline.Micheline.node) format = fun michelson_comments -> {
+    pp = michelson_constant_ppformat (convert_michelson_comments michelson_comments);
+    to_json = fun (_, a) -> michelson_jsonformat `Text (convert_michelson_comments michelson_comments) a;
   }
 end

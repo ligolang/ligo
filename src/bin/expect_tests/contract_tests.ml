@@ -32,10 +32,14 @@ let%expect_test _ =
   [%expect {|
 Invalid command line argument.
 The provided storage does not have the correct type for the contract.
-File "../../test/contracts/coase.ligo", line 124, characters 9-13:
+File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
 123 |
 124 | function main (const action : parameter; const s : storage) : return is
 125 |   case action of [
+126 |     Buy_single (bs)      -> buy_single (bs, s)
+127 |   | Sell_single (as)     -> sell_single (as, s)
+128 |   | Transfer_single (at) -> transfer_single (at, s)
+129 |   ]
 
 Invalid type(s).
 Expected: "storage", but got: "parameter". |}] ;
@@ -44,10 +48,14 @@ Expected: "storage", but got: "parameter". |}] ;
   [%expect {|
 Invalid command line argument.
 The provided parameter does not have the correct type for the given entrypoint.
-File "../../test/contracts/coase.ligo", line 124, characters 9-13:
+File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
 123 |
 124 | function main (const action : parameter; const s : storage) : return is
 125 |   case action of [
+126 |     Buy_single (bs)      -> buy_single (bs, s)
+127 |   | Sell_single (as)     -> sell_single (as, s)
+128 |   | Transfer_single (at) -> transfer_single (at, s)
+129 |   ]
 
 Invalid type(s).
 Expected: "parameter", but got: "storage". |}] ;
@@ -1107,7 +1115,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (gen#3) return let _x = +1 in let ()#6 = let _x = +2 in UNIT() in let ()#5 = let _x = +23 in UNIT() in let ()#4 = let _x = +42 in UNIT() in _x |}]
+  [%expect {| const y = lambda (_#2) return let _x = +1 in let ()#5 = let _x = +2 in UNIT() in let ()#4 = let _x = +23 in UNIT() in let ()#3 = let _x = +42 in UNIT() in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1620,26 +1628,26 @@ const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
-  lambda (gen#1 : unit) return let s = "test" in
-                               let p0 = (f0)@(s) in
-                               {
-                                  ASSERTION(p0);
-                                  let p1 = (f1)@(s) in
-                                  {
-                                     ASSERTION(p1);
-                                     let p2 = (f2)@(s) in
-                                     {
-                                        ASSERTION(p2);
-                                        s
-                                     }
-                                  }
-                               }
+  lambda (_#2 : unit) return let s = "test" in
+                             let p0 = (f0)@(s) in
+                             {
+                                ASSERTION(p0);
+                                let p1 = (f1)@(s) in
+                                {
+                                   ASSERTION(p1);
+                                   let p2 = (f2)@(s) in
+                                   {
+                                      ASSERTION(p2);
+                                      s
+                                   }
+                                }
+                             }
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in
                           let z = 3 in
                           ADD(ADD(x ,y) ,z)
 const x =  match (+1 , (+2 , +3)) with
-            | (gen#2,(x,gen#3)) -> x
+            | (_#3,(x,_#4)) -> x
     |}];
 
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.religo"];
@@ -1654,26 +1662,26 @@ const f0 = lambda (_a : string) return TRUE()
 const f1 = lambda (_a : string) return TRUE()
 const f2 = lambda (_a : string) return TRUE()
 const letin_nesting =
-  lambda (gen#1 : unit) return let s = "test" in
-                               let p0 = (f0)@(s) in
-                               {
-                                  ASSERTION(p0);
-                                  let p1 = (f1)@(s) in
-                                  {
-                                     ASSERTION(p1);
-                                     let p2 = (f2)@(s) in
-                                     {
-                                        ASSERTION(p2);
-                                        s
-                                     }
-                                  }
-                               }
+  lambda (_#2 : unit) return let s = "test" in
+                             let p0 = (f0)@(s) in
+                             {
+                                ASSERTION(p0);
+                                let p1 = (f1)@(s) in
+                                {
+                                   ASSERTION(p1);
+                                   let p2 = (f2)@(s) in
+                                   {
+                                      ASSERTION(p2);
+                                      s
+                                   }
+                                }
+                             }
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in
                           let z = 3 in
                           ADD(ADD(x ,y) ,z)
 const x =  match (+1 , (+2 , +3)) with
-            | (gen#2,(x,gen#3)) -> x
+            | (gen#3,(x,gen#4)) -> x
     |}];
 
   run_ligo_bad ["print" ; "ast-typed"; contract "existential.mligo"];
@@ -1965,7 +1973,7 @@ let%expect_test _ =
 (* remove unused declarations *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "remove_unused_module.mligo" ] ;
-  [%expect {|
+  [%expect{|
     { parameter unit ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
@@ -2006,17 +2014,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#5 = EQ(n ,
-    0) in  match gen#5 with
-            | False unit_proj#6 ->
+    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#4 = EQ(n ,
+    0) in  match gen#4 with
+            | False unit_proj#5 ->
               (f)@(SUB(n ,
-              1)) | True unit_proj#7 ->
+              1)) | True unit_proj#6 ->
                     1 ) in (f)@(4)
-    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#8 = EQ(n ,
-    0) in  match gen#8 with
-            | False unit_proj#9 ->
+    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#7 = EQ(n ,
+    0) in  match gen#7 with
+            | False unit_proj#8 ->
               (h)@(SUB(n ,
-              1)) | True unit_proj#10 ->
+              1)) | True unit_proj#9 ->
                     1 ) in h) ) |}]
 
 let%expect_test _ =
@@ -2240,26 +2248,25 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-                     const c = lambda (gen#6) return CREATE_CONTRACT(lambda (gen#3) return
-                      match gen#3 with
-                       | ( gen#5 , gen#4 ) ->
+                     const c = lambda (gen#5) return CREATE_CONTRACT(lambda (gen#2) return
+                      match gen#2 with
+                       | ( _#4 , _#3 ) ->
                        ( LIST_EMPTY() , unit ) ,
                      NONE() ,
                      0mutez ,
                      unit)
-                     const foo = let gen#13 = (c)@(unit) in  match gen#13 with
+                     const foo = let gen#11 = (c)@(unit) in  match gen#11 with
                                                               | ( _a , _b ) ->
                                                               unit
-                     const c = lambda (gen#7) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let gen#16 = (c)@(unit) in  match gen#16 with
+                     const c = lambda (gen#6) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+                     const foo = let gen#13 = (c)@(unit) in  match gen#13 with
                                                               | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
                                                               unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
-  [%expect {|
-    let #Foo#x#35 = L(54) in let #Foo#y#36 = #Foo#x#35 in L(unit) |}]
+  [%expect{| let #Foo#x#2 = L(54) in let #Foo#y#3 = #Foo#x#2 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
@@ -2277,17 +2284,47 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_complex.mligo" ; "Add 999" ] ;
   [%expect{| (Left (Left 999)) |}]
 
+(* Global constants *)
+
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--disable-michelson-typechecking" ] ;
   [%expect {|
     { parameter unit ;
       storage int ;
       code { CDR ;
-             LAMBDA int int (constant "myhash") ;
-             SWAP ;
-             EXEC ;
+             constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2" ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage int ;
+      code { CDR ;
+             constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2" ;
+             NIL operation ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "constant" ; "cameligo" ; "fun (x : int) -> if x > 3 then x * 2 else x * String.length \"fja\" + 1" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    Michelson consant as JSON string:
+    "{ PUSH int 3 ;\n  SWAP ;\n  DUP ;\n  DUG 2 ;\n  COMPARE ;\n  GT ;\n  IF { PUSH int 2 ; SWAP ; MUL }\n     { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }"
+    This string can be passed in `--constants` argument when compiling a contract.
+
+    Remember to register it in the network, e.g.:
+    > tezos-client register global constant "{ PUSH int 3 ;
+      SWAP ;
+      DUP ;
+      DUG 2 ;
+      COMPARE ;
+      GT ;
+      IF { PUSH int 2 ; SWAP ; MUL }
+         { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }" from bootstrap1
+
+    Constant hash:
+    expruVivewmRtHKQn7h986tVPUzB65Z8w7QM1WP1X6DxcVWNs85USK |}]
 
 (* Test pairing_check and bls12_381_g1/g2/fr literals *)
 let%expect_test _ =

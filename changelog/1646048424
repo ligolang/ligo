@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1587'
+title: 'Fix: type instantiation bug when reusing same var.'
+type: fixed

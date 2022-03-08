@@ -251,9 +251,38 @@ module Constant_types = struct
 
   let tbl : t = CTMap.of_list [
                     (* LOOPS *)
-                    of_type C_FOLD_WHILE O.(for_all "a" @@ fun a -> (a ^-> t_pair (t_bool ()) a) ^-> a ^-> a);
-                    of_type C_FOLD_CONTINUE O.(for_all "a" @@ fun a -> a ^-> t_pair (t_bool ()) a);
-                    of_type C_FOLD_STOP O.(for_all "a" @@ fun a -> a ^-> t_pair (t_bool ()) a);
+(* let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
+ *   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
+ *   let () = assert_eq_1 ~raise ~loc arg init in
+ *   let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
+ *   in init
+ * 
+ * (\* Continue and Stop are just syntactic sugar for building a pair (bool * a') *\)
+ * let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
+ *   t_pair (t_bool ()) arg
+ * 
+ * let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
+ *   (t_pair (t_bool ()) arg) *)
+(* let loop_left ~raise loc = typer_2 ~raise loc "LOOP_LEFT" @@ fun body init ->
+ *   let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
+ *   let (left,right) = trace_option ~raise (expected_variant loc result) @@ get_t_or result in
+ *   let () = assert_eq_1 ~raise ~loc arg init in
+ *   let () = assert_eq_1 ~raise ~loc init left
+ *   in right
+ * 
+ * let loop_continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
+ *   t_sum_ez [("left",arg);("right",arg)]
+ * 
+ * let loop_stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
+ *   t_sum_ez [("left",arg);("right",arg)] *)
+  (* | C_LOOP_LEFT           -> loop_left ~raise loc ;
+   * | C_LEFT                -> loop_continue ~raise loc ;
+   * | C_LOOP_CONTINUE       -> loop_continue ~raise loc ;
+   * | C_LOOP_STOP           -> loop_stop ~raise loc ; *)
+                    of_type C_LOOP_LEFT O.(for_all "a" @@ fun a -> for_all "b" -> fun b -> (a ^-> t_pair a b) ^-> a ^-> b);
+                    of_type C_LEFT O.(for_all "a" @@ fun a -> a ^-> t_or a a);
+                    of_type C_LOOP_CONTINUE O.(for_all "a" @@ fun a -> a ^-> t_or a a);
+                    of_type C_LOOP_STOP O.(for_all "a" @@ fun a -> a ^-> t_or a a);
                     of_types C_FOLD [
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_list b ^-> a ^-> a);
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_set b ^-> a ^-> a);

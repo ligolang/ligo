@@ -116,15 +116,15 @@ module JSON = struct
     
   and language_features: Core.language_features -> Yojson.Safe.t = fun l ->
     `Assoc (
-      comments l.comments
+      comments l.comments_insertion
       @ brackets "brackets" l.brackets
       @ brackets "autoClosingPairs" l.auto_closing_pairs
       @ brackets "surroundingPairs" l.surrounding_pairs)
 
-  and comments: Core.language_features_comments -> (string * Yojson.Safe.t) list = fun c ->
+  and comments: string Core.language_features_comments -> (string * Yojson.Safe.t) list = fun c ->
     [("comments", `Assoc (
-      ["lineComment", `String c.line_comment.Core.textmate;
-       "blockComment", `List [`String (fst c.block_comment).Core.textmate; `String (snd c.block_comment).Core.textmate]]
+      ["lineComment", `String c.line_comment;
+       "blockComment", `List [`String (fst c.block_comment); `String (snd c.block_comment)]]
     ))]
     
     and brackets: string -> (string * string) list -> (string * Yojson.Safe.t) list = fun name l ->

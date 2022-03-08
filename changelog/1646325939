@@ -1,0 +1,6 @@
+---
+  title: "Support old case syntax + mention as deprecated"
+  merge_request: "1606"
+  author: "@SanderSpies"
+  type: "fixed"
+

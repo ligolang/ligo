@@ -116,7 +116,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_missing_funarg_annotation (v) ->
       Format.fprintf f
         "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
-          Snippet.pp (Stage_common.Var.get_location v)
+          Snippet.pp (Ast_core.ValueVar.get_location v)
           Ast_typed.PP.expression_variable v
     | `Typer_michelson_comb_no_record loc ->
       Format.fprintf f
@@ -574,9 +574,9 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_missing_funarg_annotation v ->
     let message = Format.asprintf "Missing type annotation for argument" in
     let content = `Assoc [
-      ("value", Stage_common.Types.expression_variable_to_yojson v );
+      ("value", Ast_core.ValueVar.to_yojson v );
       ("message", `String message );
-      ("location", Location.to_yojson @@ Stage_common.Var.get_location v); ] in
+      ("location", Location.to_yojson @@ Ast_core.ValueVar.get_location v); ] in
     json_error ~stage ~content
   | `Typer_michelson_comb_no_record loc ->
     let message = `String "michelson pair comb can only be used on a record type" in
@@ -686,7 +686,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
   | `Typer_type_constant_wrong_number_of_arguments (op, e, a, loc) ->
     let message = `String "Wrong number of arguments for type constant" in
     let loc = Format.asprintf "%a" Location.pp loc in
-    let op = Ast_core.Yojson.option Ast_core.Var.to_yojson op in
+    let op = Ast_core.Yojson.option Ast_core.TypeVar.to_yojson op in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);

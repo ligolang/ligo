@@ -167,10 +167,10 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
-  let eval_ligo = eval_ligo ~raise ~steps ~protocol_version ~options in
+  let eval_ligo = eval_ligo ~raise ~steps ~options in
   let locs = List.map ~f:(fun (_, _, c) -> c) operands in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
@@ -227,10 +227,6 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       if Z.Compare.(>) a' Z.zero then return_some @@ V_Ct (C_nat a')
       else return_none ()
     | ( C_IS_NAT , _  ) -> fail @@ error_type
-    | ( C_FOLD_CONTINUE  , [ v ] ) -> return @@ v_pair (v_bool true  , v)
-    | ( C_FOLD_CONTINUE , _  ) -> fail @@ error_type
-    | ( C_FOLD_STOP      , [ v ] ) -> return @@ v_pair (v_bool false , v)
-    | ( C_FOLD_STOP , _  ) -> fail @@ error_type
     | ( C_ADDRESS , [ V_Ct (C_contract { address ; entrypoint=_}) ] ) ->
       return (V_Ct (C_address address))
     | ( C_ADDRESS , _  ) -> fail @@ error_type
@@ -472,16 +468,6 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
         )
         (V_Ct C_unit) elts
     | ( C_MAP_ITER , _  ) -> fail @@ error_type
-    | ( C_FOLD_WHILE , [ V_Func_val {arg_binder ; body ; env; rec_name=_; orig_lambda=_}  ; init ] ) -> (
-      let* arg_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let rec aux b el =
-        let env' = Env.extend env arg_binder (arg_ty, el) in
-        let* res = eval_ligo body calltrace env' in
-        let (b',el') = try Option.value_exn (extract_fold_while_result res) with _ -> (failwith "bad pair") in
-        if b then aux b' el' else return el' in
-      aux true init
-    )
-    | ( C_FOLD_WHILE , _  ) -> fail @@ error_type
     (* ternary *)
     | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
       (*TODO : allign with tezos*)
@@ -494,6 +480,23 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       else
         return @@ V_Ct (C_bytes (Bytes.sub bytes ~pos:start ~len:length))
     | ( C_SLICE , _  ) -> fail @@ error_type
+    | ( C_LOOP_LEFT , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_} ; init ] ) -> (
+      let* init_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let rec aux cur_env =
+        let env' = Env.extend env arg_binder (init_ty, cur_env) in
+        let* ret = eval_ligo body calltrace env' in
+        match ret with
+        | V_Construct ("##Loop_continue", v) -> aux v
+        | V_Construct ("##Loop_stop", v) -> return v
+        | _ -> fail @@ error_type
+      in
+      aux init
+    )
+    | ( C_LOOP_LEFT , _ ) -> fail @@ error_type
+    | C_LOOP_CONTINUE , [ v ] -> return (v_ctor "##Loop_continue" v)
+    | ( C_LOOP_CONTINUE , _ ) -> fail @@ error_type
+    | C_LOOP_STOP , [ v ]  -> return (v_ctor "##Loop_stop" v)
+    | ( C_LOOP_STOP , _ ) -> fail @@ error_type
     | ( C_LIST_FOLD_LEFT , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_}  ; init ; V_List elts ] ) ->
       let* lst_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
       let* acc_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
@@ -688,7 +691,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     >>>>>>>>
     *)
     | ( C_TEST_ORIGINATE_FROM_FILE, args) -> (
-      match protocol_version, args with
+      match options.Compiler_options.backend.protocol_version, args with
       | Environment.Protocols.Edo , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ->
         let>> (code,size) = Compile_contract_from_file (source_file,entryp,[]) in
         let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
@@ -969,11 +972,11 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
       return @@ V_Ct (C_bytes chest_key)
-    | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) -> 
+    | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) ->
       let>> vp = Get_voting_power (loc, calltrace, hk) in
       return vp
     | ( C_TEST_GET_VOTING_POWER , _ ) -> fail @@ error_type
-    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) -> 
+    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) ->
       let>> tvp = Get_total_voting_power (loc, calltrace) in
       return tvp
     | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type
@@ -985,7 +988,7 @@ let rec apply_operator ~raise ~steps ~protocol_version ~options : Location.t -> 
       fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
     | ( C_POLYMORPHIC_ADD , _ ) ->
       fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
-    | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER | C_LOOP_LEFT | C_LOOP_CONTINUE | C_LOOP_STOP |
+    | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
          C_FOLD_LEFT | C_FOLD_RIGHT | C_EDIV | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
@@ -1041,9 +1044,9 @@ and eval_literal : AST.literal -> value Monad.t = function
   )
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~protocol_version ~options in
+    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
     let open Monad in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace "Out of fuel") else return () in
     match term.expression_content with
@@ -1120,7 +1123,7 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
           let* value = eval_ligo ae calltrace env in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
-      apply_operator ~raise ~steps ~protocol_version ~options term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label c ; element = { expression_content = E_literal (Literal_unit) ; _ } } when String.equal c "True" ->
       return @@ V_Ct (C_bool true)
@@ -1221,9 +1224,9 @@ and eval_ligo ~raise ~steps ~protocol_version ~options : AST.expression -> callt
       | _ -> failwith "impossible"
     )
 
-and try_eval ~raise ~steps ~protocol_version ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~protocol_version ~options expr [] env) state r
+and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
 
-let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((string * value) list) =
+let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) list) =
   fun prg ->
   let decl_lst = prg in
   (* Pass over declarations, for each "test"-prefixed one, add a new
@@ -1232,7 +1235,7 @@ let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((
     let ds, defs = r in
     match decl.Location.wrap_content with
     | Ast_typed.Declaration_constant { binder ; expr ; _ } ->
-       if not (Var.is_generated binder) && (Base.String.is_prefix (Var.to_name_exn binder) ~prefix:"test") then
+       if not (ValueVar.is_generated binder) && (String.is_prefix (ValueVar.to_name_exn binder) ~prefix:"test") then
          let expr = Ast_typed.e_a_variable binder expr.type_expression in
          (* TODO: check that variables are unique, as they are ignored *)
          decl :: ds, (binder, expr.type_expression) :: defs
@@ -1242,19 +1245,19 @@ let eval_test ~raise ~steps ~options ~protocol_version : Ast_typed.program -> ((
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
-  let initial_state = Tezos_state.init_ctxt ~raise protocol_version [] in
+  let initial_state = Tezos_state.init_ctxt ~raise options.Compiler_options.backend.protocol_version [] in
   let f (n, t) r =
-    let s, _ = Var.internal_get_name_and_counter n in
+    let s, _ = ValueVar.internal_get_name_and_counter n in
     LMap.add (Label s) (Ast_typed.e_a_variable n t) r in
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
   let expr = Self_ast_aggregated.expression_mono expr in
-  let value, _ = try_eval ~raise ~steps ~protocol_version ~options expr Env.empty_env initial_state None in
+  let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = Var.internal_get_name_and_counter n in
+      let s, _ = ValueVar.internal_get_name_and_counter n in
       match LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in

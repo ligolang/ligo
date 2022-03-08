@@ -187,7 +187,7 @@ Originate a contract with an entrypoint function, initial storage and initial ba
 function set_now : timestamp -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val set_now : string -> unit
+val set_now : timestamp -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let set_now: timestamp => unit

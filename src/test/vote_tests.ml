@@ -2,7 +2,7 @@ open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
-let get_program = get_program "./contracts/vote.mligo" (Contract (Stage_common.Var.of_input_var "main"))
+let get_program = get_program "./contracts/vote.mligo"
 
 open Ast_imperative
 

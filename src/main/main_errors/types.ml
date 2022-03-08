@@ -19,6 +19,8 @@ type all =
  | `Main_unknown_failwith_type
  | `Main_unknown
  | `Main_execution_failed of Simple_utils.Runned_result.failwith
+ | `Main_cannot_open_global_constants of string
+ | `Main_cannot_parse_global_constants of string * string
 
  | `Unparsing_michelson_tracer of tezos_alpha_error list
  | `Parsing_payload_tracer of tezos_alpha_error list
@@ -39,7 +41,6 @@ type all =
  | `Depurification_tracer of Purification.Errors.purification_error
  | `Desugaring_tracer of Desugaring.Errors.desugaring_error
  | `Sugaring_tracer   of Desugaring.Errors.desugaring_error
- | `Inference_tracer of Inference.Errors.typer_error
  | `Checking_tracer of Checking.Errors.typer_error
  | `Self_ast_typed_tracer of Self_ast_typed.Errors.self_ast_typed_error
  | `Spilling_tracer of Spilling.Errors.spilling_error
@@ -64,10 +65,9 @@ type all =
  | `Main_decompile_mini_c of Spilling.Errors.spilling_error
  | `Main_decompile_aggregated of Aggregation.Errors.aggregation_error
  | `Main_decompile_typed of Checking.Errors.typer_error
- | `Main_decompile_inferred of Inference.Errors.typer_error
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
- | `Main_view_not_a_function of Ast_typed.type_variable
+ | `Main_view_not_a_function of Ast_typed.expression_variable
  | `Main_invalid_balance of string
  | `Main_invalid_amount of string
  | `Main_invalid_sender of string

@@ -73,6 +73,10 @@ let syntax_highlighting =
           }
         );
       };
+      comments_insertion = {
+        line_comment = "//";
+        block_comment = ("/*", "*/");
+      };
       brackets = [
         ("{", "}");
         ("[", "]");
