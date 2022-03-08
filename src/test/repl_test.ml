@@ -168,7 +168,7 @@ let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
       "x";
     ]
     [
-      "uniq_concat , reverse , concat ,\n/home/melwyn95/projects/ligo/_build/default/src/test/projects/demo/.ligo/source/i/ligo_set_helpers__1.0.3__6998bccf/set.mligo";
+      "uniq_concat , reverse , concat ,\nSetX";
       "sum , reverse ,\nconcat";
       "y";
       "24";
