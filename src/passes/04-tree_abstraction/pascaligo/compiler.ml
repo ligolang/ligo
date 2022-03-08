@@ -1071,7 +1071,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
           let aux : CST.variable -> AST.type_expression -> AST.type_expression =
             fun param type_ ->
               let ty_binder = compile_type_var param in
-              t_abstraction ~loc:(Location.lift region) ty_binder () type_
+              t_abstraction ~loc:(Location.lift region) ty_binder Type type_
           in
           List.fold_right ~f:aux ~init:rhs lst in
       let ast =
