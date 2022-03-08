@@ -77,7 +77,7 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
-        let entry_point = Stage_common.Var.of_input_var entry_point in
+        let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         let options = Compiler_options.make ~protocol_version ~raw_options () in
         let Compiler_options.{ syntax ; _ } = options.frontend in
@@ -107,7 +107,7 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         let options = Compiler_options.make ~protocol_version ~raw_options () in
         let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in
-        let entry_point = Stage_common.Var.of_input_var entry_point in
+        let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
         let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in

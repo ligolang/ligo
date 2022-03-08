@@ -22,7 +22,7 @@ let dry_run (raw_options : Compiler_options.raw) source_file parameter storage a
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
       let options = Compiler_options.make ~protocol_version ~raw_options () in
       let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in
-      let entry_point = Stage_common.Var.of_input_var entry_point in
+      let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
       let typed_prg = Build.build_context ~raise ~add_warning ~options source_file in
       let aggregated_prg = Compile.Of_typed.apply_to_entrypoint_contract ~raise typed_prg entry_point in
       let mini_c_prg = Compile.Of_aggregated.compile_expression ~raise aggregated_prg in
@@ -72,7 +72,7 @@ let evaluate_call (raw_options : Compiler_options.raw) source_file parameter amo
       let c_unit_param,_   = Compile.Of_source.compile_string ~raise ~options:options.frontend ~meta parameter in
       let imperative_param = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_param in
       let sugar_param      = Compile.Of_imperative.compile_expression ~raise imperative_param in
-      let core_param       = Compile.Of_sugar.compile_expression sugar_param in
+      let core_param       = Compile.Of_sugar.compile_expression ~raise sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in
       let typed_app        = Compile.Of_core.compile_expression ~raise ~options ~init_prog app in
       let app_aggregated   = Compile.Of_typed.compile_expression_in_context ~raise typed_app aggregated_prg in

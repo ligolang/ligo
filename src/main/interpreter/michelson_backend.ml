@@ -101,10 +101,10 @@ let clean_location_with v x =
 let clean_locations e t =
   clean_location_with () e, clean_location_with () t
 
-let add_ast_env ?(name = Ast_aggregated.Var.fresh ()) env binder body =
+let add_ast_env ?(name = Ast_aggregated.ValueVar.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation) (e : expression) =
-    if Var.compare let_binder binder <> 0 && Var.compare let_binder name <> 0 then
+    if ValueVar.compare let_binder binder <> 0 && ValueVar.compare let_binder name <> 0 then
       e_a_let_in let_binder expr e { inline = false ; no_mutation ; view = false ; public = false }
     else
       e in
@@ -391,11 +391,11 @@ and make_subst_ast_env_exp ~raise env expr =
   let rec aux (fv) acc = function
     | [] -> acc
     | Expression { name; item ; no_mutation } :: tl ->
-       if List.mem fv name ~equal:Var.equal then
-         let expr = val_to_ast ~raise ~loc:(Var.get_location name) item.eval_term item.ast_type in
+       if List.mem fv name ~equal:ValueVar.equal then
+         let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
          let expr_fv = get_fv expr in
-         let fv = List.remove_element ~compare:Var.compare name fv in
-         let fv = List.dedup_and_sort ~compare:Var.compare (fv @ expr_fv) in
+         let fv = List.remove_element ~compare:ValueVar.compare name fv in
+         let fv = List.dedup_and_sort ~compare:ValueVar.compare (fv @ expr_fv) in
          aux fv ((name, expr, no_mutation) :: acc) tl
        else
          aux fv acc tl in

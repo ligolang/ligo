@@ -272,7 +272,7 @@ const siteConfig = {
       ],
       copyright: `© ${new Date().getFullYear()} LIGO. All rights reserved.`,
     },
-    image: 'img/logo.svg',
+    image: 'img/logo.png',
     sidebarCollapsible: true,
     prism: {
       theme: require('prism-react-renderer/themes/github'),

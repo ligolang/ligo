@@ -2,8 +2,6 @@ open Test_helpers
 
 let mfile_FA1  = "./contracts/FA1.mligo"
 
-let get_program f st = get_program ~st f (Contract (Ast_typed.Var.of_input_var "main"))
-
 let compile_main ~raise ~add_warning f _s () =
   Test_helpers.compile_main ~raise ~add_warning f ()
 
@@ -28,7 +26,7 @@ let sender = e_address @@ sender
 let external_contract = e_annotation (e_constant (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract (t_nat ()))
 
 let transfer ~raise ~add_warning f s () =
-  let program = get_program ~raise ~add_warning f s () in
+  let program = get_program ~raise ~add_warning f ~st:s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("total_supply",e_nat 300);
@@ -44,7 +42,7 @@ let transfer ~raise ~add_warning f s () =
   expect_eq ~raise program ~options "transfer" input expected
 
 let transfer_not_e_balance ~raise ~add_warning f s () =
-  let program = get_program ~raise ~add_warning f s () in
+  let program = get_program ~raise ~add_warning f ~st:s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 0); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", from_); ("spender", sender)], e_nat 100)]);
@@ -57,7 +55,7 @@ let transfer_not_e_balance ~raise ~add_warning f s () =
   "NotEnoughBalance"
 
 let get_balance ~raise ~add_warning f s () =
-  let program = get_program ~raise ~add_warning f s () in
+  let program = get_program ~raise ~add_warning f ~st:s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);
@@ -70,7 +68,7 @@ let get_balance ~raise ~add_warning f s () =
   expect_eq ~raise program ~options "getBalance" input expected
 
 let get_total_supply ~raise ~add_warning f s () =
-  let program = get_program ~raise ~add_warning f s () in
+  let program = get_program ~raise ~add_warning f ~st:s () in
   let storage = e_record_ez [
     ("tokens", e_big_map [(sender, e_nat 100); (from_, e_nat 100); (to_, e_nat 100)]);
     ("allowances", e_big_map [(e_record_ez [("owner", sender); ("spender", from_)], e_nat 100)]);

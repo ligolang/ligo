@@ -119,7 +119,9 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     : Ast_imperative.module_ =
   let parse_and_abstract =
     match meta.syntax with
-      PascaLIGO _ -> parse_and_abstract_pascaligo
+      PascaLIGO _ -> 
+        Parsing.Pascaligo.Self_tokens.add_warning := Some add_warning;
+        parse_and_abstract_pascaligo
     | CameLIGO    -> parse_and_abstract_cameligo
     | ReasonLIGO  -> parse_and_abstract_reasonligo
     | JsLIGO      -> parse_and_abstract_jsligo in

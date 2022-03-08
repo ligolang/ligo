@@ -26,7 +26,7 @@ let expression expression new_syntax syntax new_dialect display_format () =
       let c_unit_expr,_ = Compile.Of_source.compile_string ~raise ~options:options.frontend ~meta expression in
       let imperative    = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_expr in
       let sugar         = Compile.Of_imperative.compile_expression ~raise imperative in
-      let core          = Compile.Of_sugar.compile_expression sugar in
+      let core          = Compile.Of_sugar.compile_expression ~raise sugar in
       (* Decompiling chain *)
       let dialect       = Syntax_types.Dialect_name new_dialect in
       let n_syntax      = Syntax.of_string_opt ~raise ~dialect (Syntax_name new_syntax) None in

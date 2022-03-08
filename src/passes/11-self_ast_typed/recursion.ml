@@ -4,7 +4,7 @@ open Ast_typed
 open Errors
 open Simple_utils.Trace
 
-let var_equal = Var.equal
+let var_equal = ValueVar.equal
 
 let rec check_recursive_call ~raise : expression_variable -> bool -> expression -> unit = fun n final_path e ->
   match e.expression_content with
